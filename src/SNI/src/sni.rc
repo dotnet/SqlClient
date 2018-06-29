@@ -1,0 +1,12 @@
+#include "winver.h"
+#include "sqlver.h"
+
+#define VER_FILETYPE                VFT_DLL
+#define VER_FILESUBTYPE             VFT2_UNKNOWN
+#define VER_FILEDESCRIPTION_STR     VER_FILEDESC_PREFIX_STR "SQL Networking Interface"
+#define VER_INTERNALNAME_STR        "sni.dll"
+#define VER_ORIGINALFILENAME_STR    "sni.dll"
+#define VER_LEGALCOPYRIGHT_YEARS	"1994-" VER_LASTLEGALCOPYRIGHT_YEAR
+#define VER_LANGNEUTRAL
+
+#include "common.ver"

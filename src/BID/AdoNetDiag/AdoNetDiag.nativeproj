@@ -1,0 +1,44 @@
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(_NTDRIVE)$(_NTROOT)\tools\Microsoft.DevDiv.Native.settings.targets" />
+  <PropertyGroup>
+    <OutputName>AdoNetDiag</OutputName>
+    <TargetType>DYNLINK</TargetType>
+    <OutputPath>$(BinariesDirectory)</OutputPath>
+    <DllDef>AdoNetDiag.def</DllDef>
+    <UserCDefines>$(UserCDefines);UNICODE;_UNICODE</UserCDefines>
+    <UserIncludes>..\Inc;$(NdpIncPath);$(NDP_CommonIncPath);$(ClrIncPath)</UserIncludes>
+    <EnableCxxPCHHeaders>true</EnableCxxPCHHeaders>
+    <PCHRootName>stdafx</PCHRootName>
+    <ClNativeExceptionHandling>sync</ClNativeExceptionHandling>
+    <DebugCrts Condition="'$(DebugBuild)' == 'true'">true</DebugCrts>
+    <DllEntryPoint>_DllMainCRTStartup</DllEntryPoint>
+    <LinkUseCMT>true</LinkUseCMT>
+    <NtUp>false</NtUp>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <RCResourceFile Include="AdoNetDiag.rc" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <CppCompile Include="shared.cpp" />
+    <CppCompile Include="services.cpp" />
+    <CppCompile Include="EtwObject.cpp" />
+    <CppCompile Include="ModuleObject.cpp" />
+    <CppCompile Include="ModulePool.cpp" />
+    <CppCompile Include="AdoNetDiag.cpp" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <TargetLib Include="$(SdkLibPath)\kernel32.lib" />
+    <TargetLib Include="$(SdkLibPath)\user32.lib" />
+    <TargetLib Include="$(SdkLibPath)\advapi32.lib" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <CopyFile Include="AdoNetDiag.mof"><DestFolder>$(OutputPath)</DestFolder></CopyFile>
+    <CopyFile Include="AdoNetDiag.mof.uninstall"><DestFolder>$(OutputPath)</DestFolder></CopyFile>
+  </ItemGroup>
+
+  <Import Project="$(_NTDRIVE)$(_NTROOT)\tools\Microsoft.DevDiv.Native.targets" />
+</Project>

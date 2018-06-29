@@ -1,0 +1,1 @@
+TraceRPT /y AdoNetTrace.etl

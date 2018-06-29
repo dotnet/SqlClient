@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(_NTDRIVE)$(_NTROOT)\tools\Microsoft.DevDiv.Native.settings.targets" />
+  <PropertyGroup>
+    <OutputName>SNI</OutputName>
+    <TargetType>LIBRARY</TargetType>
+    <UserCDefines>$(UserCDefines);APSTUDIO_INVOKED;SNI_BASED_CLIENT;SOSINTEGRATION_ON;QLGC;SNIX</UserCDefines>
+    <ClAdditionalOptions>$(ClAdditionalOptions) /DUNICODE /D_UNICODE</ClAdditionalOptions>
+    <ClNativeExceptionHandling>sync</ClNativeExceptionHandling>
+    <CrtSecureDeprecate>true</CrtSecureDeprecate>
+    <CrtSecureSclOn>true</CrtSecureSclOn>
+    <UserIncludes>..\include;..\..\..\..\BID\INC;..\nlregc</UserIncludes>
+    <BuildProjectReferences>true</BuildProjectReferences>
+
+    <Win32WinNt>0x0600</Win32WinNt>
+
+    <!-- force MultiThreadedDLL intead of allowing it to become MultiThreadedDebugDLL -->
+    <ClRuntimeLibrary>MultiThreadedDLL</ClRuntimeLibrary>
+
+    <!-- always build non-debug -->
+    <DebugBuild>false</DebugBuild>
+    <LibMakeLib>true</LibMakeLib>
+
+    <BinplaceSymbols>false</BinplaceSymbols>
+    <CopyBuildOutputToOutputDirectory>false</CopyBuildOutputToOutputDirectory>
+    <CopyOutputSymbolsToOutputDirectory>false</CopyOutputSymbolsToOutputDirectory>
+  </PropertyGroup>
+  <ItemGroup>
+    <CppCompile Include="sni.cpp" />
+    <CppCompile Include="sni_prov.cpp" />
+    <CppCompile Include="via.cpp" />
+    <CppCompile Include="viahelper.cpp" />
+    <CppCompile Include="smux.cpp" />
+    <CppCompile Include="np.cpp" />
+    <CppCompile Include="ssl.cpp" />
+    <CppCompile Include="tcp.cpp" />
+    <CppCompile Include="sm.cpp" />
+    <CppCompile Include="sm_shiloh.cpp" />
+    <CppCompile Include="sni_fedauth.cpp" />
+    <CppCompile Include="sni_sspi.cpp" />
+    <CppCompile Include="sni_spn.cpp" />
+    <CppCompile Include="sni_error.cpp" />
+    <CppCompile Include="util.cpp" />
+    <CppCompile Include="open.cpp" />
+    <CppCompile Include="reg.cpp" />
+    <CppCompile Include="ssrp.cpp" />
+    <CppCompile Include="SNI_ServiceBindings.cpp" />
+    <CppCompile Include="localdb.cpp" />
+    <CppCompile Include="ctaip.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <TargetLib Include="$(SdkLibPath)\kernel32.lib" />
+    <TargetLib Include="$(SdkLibPath)\advapi32.lib" />
+    <TargetLib Include="$(SdkLibPath)\rpcrt4.lib" />
+    <TargetLib Include="$(SdkLibPath)\user32.lib" />
+    <TargetLib Include="$(SdkLibPath)\version.lib" />
+    <TargetLib Include="$(SdkLibPath)\ws2_32.lib" />
+    <TargetLib Include="$(SdkLibPath)\mswsock.lib" />
+    <TargetLib Include="$(SdkLibPath)\crypt32.lib" />
+    <TargetLib Include="$(SdkLibPath)\dbghelp.lib" />
+    <TargetLib Include="$(SdkLibPath)\Ntdsapi.lib" />
+    <TargetLib Include="$(SdkLibPath)\Shlwapi.lib" />
+    <TargetLib Include="$(SdkLibPath)\netapi32.lib" />
+    <TargetLib Include="$(BinariesDirectory)\lib\$(BuildArchitecture)\bidinit.lib">
+      <ProjectReference>..\..\bidinit\src\bidinit.nativeproj</ProjectReference>
+    </TargetLib>
+    <TargetLib Include="$(BinariesDirectory)\lib\$(BuildArchitecture)\NLRegCW.lib">
+      <ProjectReference>..\NLRegC\unicode\unicode.nativeproj</ProjectReference>
+    </TargetLib>
+  </ItemGroup>
+  <Import Project="$(_NTDRIVE)$(_NTROOT)\tools\Microsoft.DevDiv.Native.targets" />
+</Project>

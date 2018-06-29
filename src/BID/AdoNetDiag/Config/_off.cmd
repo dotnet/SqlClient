@@ -1,0 +1,1 @@
+@Logman stop AdoNetTrace -ets

@@ -1,0 +1,33 @@
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(_NTDRIVE)$(_NTROOT)\tools\Microsoft.DevDiv.Native.settings.targets" />
+  <PropertyGroup>
+    <OutputName>NLRegCA</OutputName>
+    <TargetType>LIBRARY</TargetType>
+    <ClAdditionalOptions>$(ClAdditionalOptions) /UUNICODE /U_UNICODE</ClAdditionalOptions>
+    <ClNativeExceptionHandling>sync</ClNativeExceptionHandling>
+    <CrtSecureDeprecate>true</CrtSecureDeprecate>
+    <CrtSecureSclOn>true</CrtSecureSclOn>
+    <BuildProjectReferences>true</BuildProjectReferences>
+
+    <!-- force MultiThreadedDLL intead of allowing it to become MultiThreadedDebugDLL -->
+    <ClRuntimeLibrary>MultiThreadedDLL</ClRuntimeLibrary>
+
+    <!-- always build non-debug -->
+    <DebugBuild>false</DebugBuild>
+    <LibMakeLib>true</LibMakeLib>
+
+    <BinplaceSymbols>false</BinplaceSymbols>
+    <CopyBuildOutputToOutputDirectory>false</CopyBuildOutputToOutputDirectory>
+    <CopyOutputSymbolsToOutputDirectory>false</CopyOutputSymbolsToOutputDirectory>
+  </PropertyGroup>
+  <ItemGroup>
+    <CppCompile Include="..\NLregC.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <TargetLib Include="$(SdkLibPath)\kernel32.lib" />
+    <TargetLib Include="$(SdkLibPath)\advapi32.lib" />
+    <TargetLib Include="$(SdkLibPath)\rpcrt4.lib" />
+    <TargetLib Include="$(SdkLibPath)\rpcns4.lib" />
+  </ItemGroup>
+  <Import Project="$(_NTDRIVE)$(_NTROOT)\tools\Microsoft.DevDiv.Native.targets" />
+</Project>
