@@ -1,0 +1,157 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<!-- 
+   This file contains CDF specific settings common to all projects.
+
+   <Import Project="$(_NTDRIVE)$(_NTROOT)\ndp\cdf\Microsoft.CDF.Settings.targets" />
+-->
+
+  <PropertyGroup>
+    <!-- The DevDiv settings for this it to set to false when project type is native. Because 
+         'Project to project references are not compatible with build.exe multiproc'
+         We need native projects to build with references as well to prevent races, so we enable it 
+         by default for ndp -->
+    <BuildProjectReferences Condition="'$(BuildProjectReferences)' == ''">true</BuildProjectReferences>
+
+    <!-- Properties to distinguish between Razzle environment and non-Razzle environment for
+      VS-based development -->
+    <CdfRootPath Condition="'$(CdfRootPath)' == ''">$(_NTDRIVE)$(_NTROOT)\ndp\cdf</CdfRootPath>
+    <BuildFromRazzle>true</BuildFromRazzle>
+    <BuildFromRazzle Condition="'$(COMPLUS_Version)' == '' or $(COMPLUS_InstallRoot) == ''">false</BuildFromRazzle>
+    <BinariesDirectory Condition="('$(BinariesDirectory)' == '') AND ('$(ADP_BINROOT_FOR_VS)' != '')">$(ADP_BINROOT_FOR_VS)</BinariesDirectory>
+    <BinariesDirectory Condition="('$(BinariesDirectory)' == '') AND ('$(DD_BuiltTarget)' != '')">$(DD_BuiltTarget)</BinariesDirectory>
+    <BinariesDirectory Condition="'$(BinariesDirectory)' == '' OR !Exists('$(BinariesDirectory)')">$(CdfRootPath)\..\..\..\binaries\x86chk</BinariesDirectory>
+  </PropertyGroup>
+
+  <Import Condition="'$(BuildFromRazzle)' == 'true'" Project="$(_NTDRIVE)$(_NTROOT)\InternalAPIs\NDP_Common\inc\Microsoft.Ndp.Settings.targets" />
+
+  <!-- Enable TFS integration in the IDE. -->
+  <PropertyGroup>
+    <SccProjectName>SAK</SccProjectName>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccProvider>SAK</SccProvider>
+  </PropertyGroup>
+
+  <Choose>
+    <!-- Development project properties -->
+    <When Condition=" '$(BuildFromRazzle)' != 'true' ">
+      <PropertyGroup>
+        <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+        <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+        <ProductVersion>8.0.30703</ProductVersion>
+        <SchemaVersion>2.0</SchemaVersion>
+        <AppDesignerFolder>Properties</AppDesignerFolder>
+        <DefineConstants>CODE_ANALYSIS;DEBUG;TRACE</DefineConstants>
+        <SignAssembly>true</SignAssembly>
+        <DelaySign>true</DelaySign>
+
+        <AssemblyOriginatorKeyFile>$(CdfRootPath)\..\..\tools\devdiv\35MSSharedLib1024.snk</AssemblyOriginatorKeyFile>
+
+        <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+        <DebugSymbols>true</DebugSymbols>
+        <DebugType>full</DebugType>
+        <Optimize>false</Optimize>
+        <OutputPath>$(BinariesDirectory)\CDF</OutputPath>
+        <ErrorReport>prompt</ErrorReport>
+        <WarningLevel>4</WarningLevel>
+
+        <!--
+          Set all paths to have same value as in Razzle, so we can use the same references in both VS and Razzle.
+        -->
+        <SdkRefPath>$(CdfRootPath)\..\..\public\sdk\ref\v4.0</SdkRefPath>
+        <AdpRefPath>$(CdfRootPath)\..\..\InternalApis\adp\ref\v4.5</AdpRefPath>
+        <ClrIncPath>$(CdfRootPath)\..\..\InternalApis\clr\inc</ClrIncPath>
+        <DpToolsRefPath>$(CdfRootPath)\..\..\InternalApis\DPTools\ref\v4.5\chk</DpToolsRefPath>
+        <EnvRefPath>$(CdfRootPath)\..\..\InternalApis\env\ref\v4.5\chk</EnvRefPath>
+        <NDP_CommonIncPath>$(CdfRootPath)\..\..\InternalApis\NDP_Common\inc</NDP_CommonIncPath>
+        <NDP_FXRefPath>$(CdfRootPath)\..\..\InternalApis\NDP_FX\ref\v4.5</NDP_FXRefPath>
+        <VenusRefPath>$(CdfRootPath)\..\..\InternalApis\venus\ref\v4.5\chk</VenusRefPath>
+        <VSCommonIncPath>$(CdfRootPath)\..\..\InternalApis\vscommon\inc</VSCommonIncPath>
+        <VSCommonRefPath>$(CdfRootPath)\..\..\InternalApis\vscommon\ref\v4.5\chk</VSCommonRefPath>
+        <VSProjectRefPath>$(CdfRootPath)\..\..\InternalApis\vsprojct\ref\v4.5\chk</VSProjectRefPath>
+        <WhidbeyNetRedistPath>$(CdfRootPath)\..\..\ExternalApis\Whidbey\NetRedist</WhidbeyNetRedistPath>
+        <WhitehorseRefPath>$(CdfRootPath)\..\..\InternalApis\whitehorse\ref\v4.5\chk</WhitehorseRefPath>
+        <WPFRefPath>$(CdfRootPath)\..\..\InternalApis\wpf\ref\v4.5</WPFRefPath>
+      </PropertyGroup>
+
+      <!-- Define Intermediate directories to match Razzle environment -->
+      <PropertyGroup>
+        <PartitionName>adp</PartitionName>
+        <BuildType>Checked</BuildType>
+        <_BuildArch>x86</_BuildArch>
+
+        <DirectorySuffix Condition="'$(BuildType)' == 'Checked'">c</DirectorySuffix >
+        <ObjectDirectory>obj$(DirectorySuffix)</ObjectDirectory>
+        <EnlistmentRootPath>$([System.IO.Path]::GetFullPath($(CdfRootPath)\..\..))</EnlistmentRootPath>
+        <RazzleToolPath>$([System.IO.Path]::GetFullPath($(CdfRootPath)\..\..\tools))</RazzleToolPath>
+
+        <IntermediateRootPath Condition="$(IntermediateRootPath)==''">$(EnlistmentRootPath)\..\Intermediate</IntermediateRootPath>
+        <!-- Apparently $(MSBuildProjectFullPath) is sometimes empty when reinvoking msbuild -->
+        <InternalObjectRootPathStarter>$(MSBuildProjectFullPath)</InternalObjectRootPathStarter>
+        <InternalObjectRootPathStarter Condition=" '$(InternalObjectRootPathStarter)' == '' ">$(MSBuildProjectDirectory)</InternalObjectRootPathStarter>
+          <!-- fetch the name of the project file being executed -->
+        <InternalObjectRootPathLeaf>$([System.IO.Path]::GetFileName($(InternalObjectRootPathStarter)))</InternalObjectRootPathLeaf>
+          <!-- hash the relative path to that project - otherwise we get path length issues -->
+        <InternalHashedValue>$(InternalObjectRootPathStarter.Substring($(EnlistmentRootPath.Length)).ToLower().GetHashCode())</InternalHashedValue>
+          <!-- keep rc happy -->
+        <InternalHashedValue>$(InternalHashedValue.Replace('-', '_'))</InternalHashedValue>
+        <InternalObjectRootPathLeaf Condition="$(PartitionName)!=''">$(PartitionName)\$(InternalObjectRootPathLeaf)</InternalObjectRootPathLeaf>
+        <InternalObjectRootPath>$(IntermediateRootPath)\$(InternalObjectRootPathLeaf)_$(InternalHashedValue)</InternalObjectRootPath>
+        <InternalHashedValue />
+        <InternalObjectRootPathStarter />
+        <InternalObjectRootPathLeaf />
+
+        <RealBuildArchitecture>$(BuildArchitecture)</RealBuildArchitecture>
+        <RealBuildArchitecture Condition="'$(_BuildArch)' == 'x86'">x86</RealBuildArchitecture>
+        <Internal_ObjectDirectoryFullPath>$(InternalObjectRootPath)\$(ObjectDirectory)</Internal_ObjectDirectoryFullPath>
+        <PrebuildCmdOpts/>
+        <BaseIntermediateOutputPath Condition="'$(BaseIntermediateOutputPath)'==''">$(Internal_ObjectDirectoryFullPath)\</BaseIntermediateOutputPath>
+        <IntermediateOutputDirectory>$(BaseIntermediateOutputPath)$(RealBuildArchitecture)</IntermediateOutputDirectory>
+        <IntermediateOutputPath>$(IntermediateOutputDirectory)\</IntermediateOutputPath>
+      </PropertyGroup>
+
+      <!--
+        VS requires csproj files to have the following two property groups. Without them, you are unable to open the project
+        properties window or run unit test projects.
+      -->
+      <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+      </PropertyGroup>
+      <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+      </PropertyGroup>
+    </When>
+
+    <!-- Razzle build project properties -->
+    <When Condition=" '$(BuildFromRazzle)' == 'true' ">
+      <!-- common assembly level settings -->
+      <PropertyGroup>
+        <!-- Workaround the MSBuild issue for parallel building -->
+        <TrackFileAccess>false</TrackFileAccess>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <OutputPath>$(BinariesDirectory)\CDF</OutputPath>
+        <RootOutputPath>$(BinariesDirectory)\CDF</RootOutputPath>
+        <BinplaceSymbols>true</BinplaceSymbols>
+        <CdfBinariesDirectory>$(BinariesDirectory)\cdf</CdfBinariesDirectory>
+        <Iis7RefPath Condition="'$(Iis7RefPath)' ==''">$(ExternalApisPath)\Windows\IIS7\ref\</Iis7RefPath>
+        <PowershellRefPath Condition="'$(PowershellRefPath)' ==''">$(ExternalApisPath)\Windows\PowerShell\v2.0</PowershellRefPath>
+        <VrgProcessVersions>$(OldStyleNDPVersionIncFile) $(NDP_CommonIncPath)\asm_version.h</VrgProcessVersions>
+
+
+        <!-- unlike with sources file, the project file is not picking up $(CLDfines) equivalent -->
+        <RawClDefines Condition="'$(BuildArchitecture)' == 'amd64'">_AMD64_</RawClDefines>
+        <RawClDefines Condition="'$(BuildArchitecture)' == 'ia64'">_IA64_=1</RawClDefines>
+        <RawClDefines Condition="'$(BuildArchitecture)' == 'i386'">_X86_=1</RawClDefines>
+        <RawClDefines Condition="'$(BuildArchitecture)' == 'arm'">_ARM_=1</RawClDefines>
+      </PropertyGroup>
+
+      <PropertyGroup Condition="'$(DebugBuild)' == 'true'">
+        <PrepareForCodeAnalysis>true</PrepareForCodeAnalysis>
+      </PropertyGroup>
+
+      <ItemGroup Condition="'$(DevdivCodeAnalysis)' != 'true'">
+        <CodeAnalysisDictionary Include="$(_NTDRIVE)$(_NTROOT)\ndp\cdf\suitesrc\Suites\ExitCriteria\Security\FxCop\Common\CustomDictionary.xml"/>
+      </ItemGroup>
+    </When>
+  </Choose>
+</Project>
+

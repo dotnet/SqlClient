@@ -6,7 +6,7 @@
     <OutputPath>$(BinariesDirectory)</OutputPath>
     <DllDef>AdoNetDiag.def</DllDef>
     <UserCDefines>$(UserCDefines);UNICODE;_UNICODE</UserCDefines>
-    <UserIncludes>..\Inc;$(NdpIncPath);$(NDP_CommonIncPath);$(ClrIncPath)</UserIncludes>
+    <UserIncludes>..\Inc;$(NdpIncPath);</UserIncludes>
     <EnableCxxPCHHeaders>true</EnableCxxPCHHeaders>
     <PCHRootName>stdafx</PCHRootName>
     <ClNativeExceptionHandling>sync</ClNativeExceptionHandling>

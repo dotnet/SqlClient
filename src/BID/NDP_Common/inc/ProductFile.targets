@@ -1,0 +1,284 @@
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <RunCopyProductFilesAfterTargets Condition="'$(RunCopyProductFilesAfterTargets)'==''">CopyFilesToOutputDirectory</RunCopyProductFilesAfterTargets>
+    <ProductOutputFile Condition="'$(ProductOutputFile)'==''">$(IntermediateOutputPath)$(TargetName)$(TargetExt)</ProductOutputFile>
+    <ProductOutputPdb Condition="'$(ProductOutputPdb)'==''">$(IntermediateOutputPath)$(TargetName).pdb</ProductOutputPdb>
+  </PropertyGroup>
+  
+  <PropertyGroup Condition="'$(ProjectLanguage)'=='native'">
+    <RunCopyProductFilesAfterTargets Condition="'$(CopyAfterTargetsOverride)' == ''">Link</RunCopyProductFilesAfterTargets>
+    <RunCopyProductFilesAfterTargets Condition="'$(CopyAfterTargetsOverride)' != ''">$(CopyAfterTargetsOverride)</RunCopyProductFilesAfterTargets>
+    <ProductOutputFile Condition="'$(ProductOutputFileOverride)' == ''">@(Internal_LinkOutputFile)</ProductOutputFile>
+    <ProductOutputFile Condition="'$(ProductOutputFileOverride)' != ''">$(ProductOutputFileOverride)</ProductOutputFile>
+    <ProductOutputPdb Condition="'$(LinkResourceOnlyDll)'!='true' and '$(ProductOutputPdbOverride)'==''">@(Internal_ProgramDataBaseFileName)</ProductOutputPdb>
+    <ProductOutputPdb Condition="'$(LinkResourceOnlyDll)'!='true' and '$(ProductOutputPdbOverride)'!=''">$(ProductOutputPdbOverride)</ProductOutputPdb>
+    <ProductOutputPdb Condition="'$(LinkResourceOnlyDll)'=='true'"></ProductOutputPdb>
+    <ProductOutputPath Condition="'$(ProductOutputPath)'==''">$(IntermediateOutputPath)</ProductOutputPath>
+  </PropertyGroup>
+
+  <Target Name="GatherProductFiles">
+      <!-- Default Product Paths for ProjectK Libraries -->
+      <ItemGroup Condition="'$(IsProjectKLibrary)'=='true'">
+        <ProductFile Include="$(ProductOutputFile)" Condition="'$(ProductOutputFile)'!=''">
+          <ProductName>ProjectK</ProductName>
+          <ProductPath>Runtime</ProductPath>
+        </ProductFile>
+        <ProductFile Include="$(ProductOutputPdb)" Condition="'$(ProductOutputPdb)'!=''">
+          <ProductName>ProjectK</ProductName>
+          <ProductPath>Runtime</ProductPath>
+        </ProductFile>
+      </ItemGroup>
+
+    <ItemGroup Condition="'$(OneCoreToolsPath)'!=''">
+      <ProductFile Include="$(ProductOutputFile)" Condition="'$(ProductOutputFile)'!=''">
+        <ProductName>OneCore</ProductName>
+        <ProductPath>Tools\$(OneCoreToolsPath)</ProductPath>
+      </ProductFile>
+      <ProductFile Include="$(ProductOutputPdb)" Condition="'$(ProductOutputPdb)'!=''">
+        <ProductName>OneCore</ProductName>
+        <ProductPath>Tools\$(OneCoreToolsPath)</ProductPath>
+      </ProductFile>
+    </ItemGroup>
+      
+      <!-- Default Product Paths for Phone Libraries -->
+      <ItemGroup Condition="'$(IsPhoneLibrary)'=='true'">
+        <ProductFile Include="$(ProductOutputFile)" Condition="'$(ProductOutputFile)'!=''">
+          <ProductName>Phone</ProductName>
+          <ProductPath>Runtime</ProductPath>
+        </ProductFile>
+        <ProductFile Include="$(ProductOutputPdb)" Condition="'$(ProductOutputPdb)'!=''">
+          <ProductName>Phone</ProductName>
+          <ProductPath>Runtime</ProductPath>
+        </ProductFile>
+      </ItemGroup>
+
+      <!-- Default Product Paths for Test.Net Libraries -->
+      <!-- Test.Net is meant to be the union of all CoreCLR profiles-->
+      <PropertyGroup Condition="'$(IsTestNetLibrary)'=='true'">
+          <IsCoreClrLibrary>true</IsCoreClrLibrary>
+      </PropertyGroup>
+      <ItemGroup Condition="'$(IsTestNetLibrary)'=='true'">
+        <ProductFile Include="$(ProductOutputFile)" Condition="'$(ProductOutputFile)'!=''">
+          <ProductName>TestNet</ProductName>
+          <ProductPath>Libraries</ProductPath>
+        </ProductFile>
+        <ProductFile Include="$(ProductOutputPdb)" Condition="'$(ProductOutputPdb)'!=''">
+          <ProductName>TestNet</ProductName>
+          <ProductPath>Libraries</ProductPath>
+        </ProductFile>
+      </ItemGroup> 
+      <ItemGroup Condition="'$(IsCoreClrLibrary)'=='true'">
+        <ProductFile Include="$(ProductOutputFile)" Condition="'$(ProductOutputFile)'!='' and '$(ProjectLanguage)'!='native'">
+          <ProductName>OneCore</ProductName>
+          <ProductPath>IL</ProductPath>
+        </ProductFile>
+        <ProductFile Include="$(ProductOutputPdb)" Condition="'$(ProductOutputPdb)'!='' and '$(ProjectLanguage)'!='native'">
+          <ProductName>OneCore</ProductName>
+          <ProductPath>IL</ProductPath>
+        </ProductFile>
+        <ProductFile Include="$(ProductOutputFile)" Condition="'$(ProductOutputFile)'!='' and '$(ProjectLanguage)'=='native'">
+          <ProductName>OneCore</ProductName>
+          <ProductPath>\</ProductPath>
+        </ProductFile>
+        <ProductFile Include="$(ProductOutputPdb)" Condition="'$(ProductOutputPdb)'!='' and '$(ProjectLanguage)'=='native'">
+          <ProductName>OneCore</ProductName>
+          <ProductPath>\</ProductPath>
+        </ProductFile>
+      </ItemGroup>
+        
+      <!-- Default Product Paths for Test.Net Dependencies -->
+      <!-- Keeping these files separate from Test.Net assemblies allows users to easily grab 
+           only Test.Net extensions (from TestNet\Libraries) or Test.Net with a complete
+           CoreCLR (from TestNet\Libraries + TestNet\Runtime) depending on their scenario -->
+      <PropertyGroup Condition="'$(IsTestNetCoreRuntimeLibrary)'=='true'">
+          <IsCoreClrCoreRuntimeLibrary>true</IsCoreClrCoreRuntimeLibrary>
+      </PropertyGroup>
+      <ItemGroup Condition="'$(IsTestNetCoreRuntimeLibrary)'=='true'">
+        <ProductFile Include="$(ProductOutputFile)" Condition="'$(ProductOutputFile)'!=''">
+          <ProductName>TestNet</ProductName>
+          <ProductPath>Runtime</ProductPath>
+        </ProductFile>
+        <ProductFile Include="$(ProductOutputPdb)" Condition="'$(ProductOutputPdb)'!=''">
+          <ProductName>TestNet</ProductName>
+          <ProductPath>Runtime</ProductPath>
+        </ProductFile>
+      </ItemGroup>
+      <ItemGroup Condition="'$(IsCoreClrCoreRuntimeLibrary)'=='true'">
+        <ProductFile Include="$(ProductOutputFile)" Condition="'$(ProductOutputFile)'!='' and '$(ProjectLanguage)'!='native'">
+          <ProductName>OneCore</ProductName>
+          <ProductPath>IL</ProductPath>
+        </ProductFile>
+        <ProductFile Include="$(ProductOutputPdb)" Condition="'$(ProductOutputPdb)'!='' and '$(ProjectLanguage)'!='native'">
+          <ProductName>OneCore</ProductName>
+          <ProductPath>IL</ProductPath>
+        </ProductFile>
+        <ProductFile Include="$(ProductOutputFile)" Condition="'$(ProductOutputFile)'!='' and '$(ProjectLanguage)'=='native'">
+          <ProductName>OneCore</ProductName>
+          <ProductPath>\</ProductPath>
+        </ProductFile>
+        <ProductFile Include="$(ProductOutputPdb)" Condition="'$(ProductOutputPdb)'!='' and '$(ProjectLanguage)'=='native'">
+          <ProductName>OneCore</ProductName>
+          <ProductPath>\</ProductPath>
+        </ProductFile>
+      </ItemGroup>
+    
+      <ItemGroup Condition="'$(IsTestNetHost)'=='true'">
+        <ProductFile Include="$(ProductOutputFile)" Condition="'$(ProductOutputFile)'!=''">
+          <ProductName>TestNet</ProductName>
+          <ProductPath>Host</ProductPath>
+        </ProductFile>
+        <ProductFile Include="$(ProductOutputPdb)" Condition="'$(ProductOutputPdb)'!=''">
+          <ProductName>TestNet</ProductName>
+          <ProductPath>Host</ProductPath>
+        </ProductFile>
+      </ItemGroup>
+      
+      <!-- Default Product Paths for ProjectN Libraries -->
+      <ItemGroup Condition="'$(IsProjectNLibrary)'=='true'">
+        <ProductFile Include="$(ProductOutputFile)" Condition="'$(ProductOutputFile)'!='' and '$(ProjectLanguage)'!='native'">
+          <ProductName>ProjectN</ProductName>
+          <ProductPath>layout\ilc\lib\IL\</ProductPath>
+        </ProductFile>
+        <ProductFile Include="$(ProductOutputPdb)" Condition="'$(ProductOutputPdb)'!=''  and '$(ProjectLanguage)'!='native'">
+          <ProductName>ProjectN</ProductName>
+          <ProductPath>layout\ilc\lib\IL\</ProductPath>
+        </ProductFile>
+        <ProductFile Include="$(ProductOutputFile)" Condition="'$(ProductOutputFile)'!='' and '$(ProjectLanguage)'=='native'">
+          <ProductName>ProjectN</ProductName>
+          <ProductPath>layout\ILC\Lib\runtime\</ProductPath>
+        </ProductFile>
+        <ProductFile Include="$(ProductOutputPdb)" Condition="'$(ProductOutputPdb)'!=''  and '$(ProjectLanguage)'=='native'">
+          <ProductName>ProjectN</ProductName>
+          <ProductPath>Symbols.Pri\retail\dll</ProductPath>
+        </ProductFile>
+      </ItemGroup>
+      
+      <ItemGroup Condition="'$(IsDesktopTool)'=='true'">
+        <ProductFile Include="$(ProductOutputFile)" Condition="'$(ProductOutputFile)'!=''">
+          <ProductName>OneCore</ProductName>
+          <ProductPath>Tools\Desktop</ProductPath>
+        </ProductFile>
+        <ProductFile Include="$(ProductOutputPdb)" Condition="'$(ProductOutputPdb)'!=''">
+          <ProductName>OneCore</ProductName>
+          <ProductPath>Tools\Desktop</ProductPath>
+        </ProductFile>
+      </ItemGroup>
+      
+      <ItemGroup Condition="'@(CoreClrDesktopTool)'!=''">
+        <ProductFile Include="%(CoreClrDesktopTool.SrcOverRide)%(CoreClrDesktopTool.Identity)" Condition="'%(CoreClrDesktopTool.SrcOverRide)'!=''"> 
+          <ProductName>OneCore</ProductName>
+          <ProductPath>Tools\Desktop</ProductPath>
+        </ProductFile>
+      </ItemGroup>
+
+      <!-- Default Product Paths for Phone Tools -->
+      <ItemGroup Condition="'$(IsPhoneTool)'=='true'">
+        <ProductFile Include="$(ProductOutputFile)" Condition="'$(ProductOutputFile)'!=''">
+          <ProductName>Phone</ProductName>
+          <ProductPath>Tools</ProductPath>
+        </ProductFile>
+        <ProductFile Include="$(ProductOutputPdb)" Condition="'$(ProductOutputPdb)'!=''">
+          <ProductName>Phone</ProductName>
+          <ProductPath>Tools</ProductPath>
+        </ProductFile>
+      </ItemGroup>
+      
+      <!-- Default Product Paths for ProjectK Tools -->
+      <ItemGroup Condition="'$(IsProjectKTool)'=='true'">
+        <ProductFile Include="$(ProductOutputFile)" Condition="'$(ProductOutputFile)'!=''">
+          <ProductName>ProjectK</ProductName>
+          <ProductPath>Tools</ProductPath>
+        </ProductFile>
+        <ProductFile Include="$(ProductOutputPdb)" Condition="'$(ProductOutputPdb)'!=''">
+          <ProductName>ProjectK</ProductName>
+          <ProductPath>Tools</ProductPath>
+        </ProductFile>
+      </ItemGroup>
+      
+      <!-- Default Product Paths for TestNet Tools -->
+      <ItemGroup Condition="'$(IsTestNetTool)'=='true'">
+        <ProductFile Include="$(ProductOutputFile)" Condition="'$(ProductOutputFile)'!=''">
+          <ProductName>TestNet</ProductName>
+          <ProductPath>Tools</ProductPath>
+        </ProductFile>
+        <ProductFile Include="$(ProductOutputPdb)" Condition="'$(ProductOutputPdb)'!=''">
+          <ProductName>TestNet</ProductName>
+          <ProductPath>Tools</ProductPath>
+        </ProductFile>
+        <ProductFile Include="$(ProductOutputFile)" Condition="'$(ProductOutputFile)'!=''">
+          <ProductName>OneCore</ProductName>
+          <ProductPath>Tools</ProductPath>
+        </ProductFile>
+        <ProductFile Include="$(ProductOutputPdb)" Condition="'$(ProductOutputPdb)'!=''">
+          <ProductName>OneCore</ProductName>
+          <ProductPath>Tools</ProductPath>
+        </ProductFile>
+      </ItemGroup>
+      
+      <ItemGroup Condition="'$(IsMDILCompileSDK)'=='true'">
+        <ProductFile Include="$(ProductOutputFile)" Condition="'$(ProductOutputFile)'!=''">
+          <ProductName>Phone</ProductName>
+          <ProductPath>WindowsPhoneMDILCompilerSDK</ProductPath>
+        </ProductFile>
+      </ItemGroup>
+
+      <ItemGroup Condition="'$(IsCoreClrSDK)'=='true'">
+        <ProductFile Include="$(ProductOutputFile)" Condition="'$(ProductOutputFile)'!=''">
+          <ProductName>OneCore</ProductName>
+          <ProductPath>SDK</ProductPath>
+        </ProductFile>
+        <ProductFile Include="$(ProductOutputPdb)" Condition="'$(ProductOutputPdb)'!=''">
+          <ProductName>OneCore</ProductName>
+          <ProductPath>SDK</ProductPath>
+        </ProductFile>
+      </ItemGroup>
+      
+      <ItemGroup Condition="'@(CoreClrSDKLib)'!=''">
+        <ProductFile Include="$(ProductOutputPath)%(CoreClrSDKLib.Identity)"> 
+          <ProductName>OneCore</ProductName>
+          <ProductPath>SDK\lib</ProductPath>
+        </ProductFile>
+      </ItemGroup>
+
+      <ItemGroup Condition="'@(CoreClrSDKHeader)'!=''">
+        <ProductFile Include="%(CoreClrSDKHeader.SrcOverRide)%(CoreClrSDKHeader.Identity)" Condition="'%(CoreClrSDKHeader.SrcOverRide)'!=''"> 
+          <ProductName>OneCore</ProductName>
+          <ProductPath>SDK</ProductPath>
+        </ProductFile>
+      </ItemGroup>
+  </Target>
+
+  <!-- Copy the ProductFiles to the correct location in the binary output -->
+  <Target Name="CopyProductFiles" DependsOnTargets="GatherProductFiles;CoreCopyProductFiles" AfterTargets="$(RunCopyProductFilesAfterTargets)" />
+  
+  <Target Name="CoreCopyProductFiles" Condition="'@(ProductFile)' != ''">
+    <Error Condition="'$(OutputRootPath)' == ''"
+       Text="DropProductFiles.targets: OutputRootPath property must be defined." />
+
+    <Error Condition="'%(ProductFile.ProductName)'==''"
+       Text="Missing ProductFile.ProductName metadata for %(ProductFile.Identity)." />
+
+    <Error Condition="'%(ProductFile.ProductPath)'==''"
+       Text="Missing ProductFile.ProductPath metadata for %(ProductFile.Identity)." />
+
+    <PropertyGroup>
+      <OutputRootPath Condition="!HasTrailingSlash('$(OutputRootPath)')">$(OutputRootPath)\</OutputRootPath>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProductFile>
+        <ProductFullPath Condition="'%(ProductFile.ProductPath)'=='root'">$(OutputRootPath)%(ProductName)\</ProductFullPath>
+        <ProductFullPath Condition="'%(ProductFile.ProductPath)'!='root'">$(OutputRootPath)%(ProductName)\%(ProductPath)</ProductFullPath>
+      </ProductFile>
+    </ItemGroup>
+
+    <Copy SourceFiles="@(ProductFile)"
+          DestinationFolder="%(ProductFullPath)"
+          SkipUnchangedFiles="true">
+      <Output TaskParameter="CopiedFiles" ItemName="FileWrites" />
+    </Copy>
+  </Target>
+
+</Project>
+

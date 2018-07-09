@@ -1,0 +1,22 @@
+// ==++==
+// 
+//   Copyright (c) Microsoft Corporation.  All rights reserved.
+// 
+// ==--==
+
+// 
+// Resource string for the legal copyright string for command line applications that cannot display the
+// copyright character.  This resource should be used instead of VER_LEGALCOPYRIGHT_LOGO_STR for any
+// application that requires localizable resources.
+// 
+// A default resource ID for the copyright string will be provided as IDS_LEGALCOPYRIGHT_LOGO, however if
+// this resource ID conflicts with an existing ID you can override the default by pre-defining the
+// IDS_LEGALCOPYRIGHT_LOGO macro before including this file.
+// 
+
+#include <copyrightstring.h>
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_LEGALCOPYRIGHT_LOGO     VER_LEGALCOPYRIGHT_LOGO_STR
+END
