@@ -26,9 +26,6 @@
     <ClCompile Include="ModulePool.cpp" />
     <ClCompile Include="AdoNetDiag.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\bidinit\src\bidinit.vcxproj" />
-  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{D9B7F399-79D3-45ED-A027-E3C0E7285F9C}</ProjectGuid>
