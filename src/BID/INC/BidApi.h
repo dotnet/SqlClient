@@ -364,14 +364,14 @@ extern  DWORD               _bidGblFlags;
 #define BID_FNAMEA          _bidFNxA(_bid_FNAME)
 #define BID_FNAMEW          _bidFNxW(_bid_FNAME)
 
-#define BID_TAG1A(kwds)     _bidFNxA(_BID_TCS_OPEN) ## _bidFNxA(_bid_FNAME) ## \
-                            _bidFNxA(_BID_TCS_SEPARATOR) ## _bidFNxA(kwds) ## _bidFNxA(_BID_TCS_CLOSE)
+#define BID_TAG1A(kwds)     _bidFNxA(_BID_TCS_OPEN) _bidFNxA(_bid_FNAME) \
+                            _bidFNxA(_BID_TCS_SEPARATOR) _bidFNxA(kwds) _bidFNxA(_BID_TCS_CLOSE)
 
-#define BID_TAG1W(kwds)     _bidFNxW(_BID_TCS_OPEN) ## _bidFNxW(_bid_FNAME) ## \
-                            _bidFNxW(_BID_TCS_SEPARATOR) ## _bidFNxW(kwds) ## _bidFNxW(_BID_TCS_CLOSE)
+#define BID_TAG1W(kwds)     _bidFNxW(_BID_TCS_OPEN) _bidFNxW(_bid_FNAME) \
+                            _bidFNxW(_BID_TCS_SEPARATOR) _bidFNxW(kwds) _bidFNxW(_BID_TCS_CLOSE)
 
-#define BID_TAGA            _bidFNxA(_BID_TCS_OPEN) ## _bidFNxA(_bid_FNAME) ## _bidFNxA(_BID_TCS_CLOSE)
-#define BID_TAGW            _bidFNxW(_BID_TCS_OPEN) ## _bidFNxW(_bid_FNAME) ## _bidFNxW(_BID_TCS_CLOSE)
+#define BID_TAGA            _bidFNxA(_BID_TCS_OPEN) _bidFNxA(_bid_FNAME) _bidFNxA(_BID_TCS_CLOSE)
+#define BID_TAGW            _bidFNxW(_BID_TCS_OPEN) _bidFNxW(_bid_FNAME) _bidFNxW(_BID_TCS_CLOSE)
 
 #ifdef _UNICODE
   #define BID_TAG           BID_TAGW

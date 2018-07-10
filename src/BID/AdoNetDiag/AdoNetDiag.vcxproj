@@ -104,20 +104,21 @@ WARNINGS</PreprocessorDefinitions -->
       <PrecompiledHeader>Create</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>%(PreprocessorDefinitions);UNICODE;_UNICODE</PreprocessorDefinitions>
-      <ShowIncludes>true</ShowIncludes>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);UNICODE;_UNICODE;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <ShowIncludes>false</ShowIncludes>
       <PrecompiledHeaderOutputFile>$(IntDir)stdafx.pch</PrecompiledHeaderOutputFile>
       <DisableSpecificWarnings>4960;4961;4603;4627;4838;4456;4457;4458;4459;4091;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <CompileAs>CompileAsCpp</CompileAs>
       <ControlFlowGuard>false</ControlFlowGuard>
       <ForcedIncludeFiles>E:\NetFXDev3\src\tools\devdiv\inc\warning.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
-      <PreprocessToFile>true</PreprocessToFile>
+      <PreprocessToFile>false</PreprocessToFile>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>false</MinimalRebuild>
       <CallingConvention>StdCall</CallingConvention>
       <TreatWarningAsError>true</TreatWarningAsError>
       <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
       <RemoveUnreferencedCodeData>false</RemoveUnreferencedCodeData>
+      <LanguageStandard>stdcpp14</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -129,20 +130,21 @@ WARNINGS</PreprocessorDefinitions -->
       <PrecompiledHeader>Create</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>%(PreprocessorDefinitions);UNICODE;_UNICODE</PreprocessorDefinitions>
-      <ShowIncludes>true</ShowIncludes>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);UNICODE;_UNICODE;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <ShowIncludes>false</ShowIncludes>
       <PrecompiledHeaderOutputFile>$(IntDir)stdafx.pch</PrecompiledHeaderOutputFile>
       <DisableSpecificWarnings>4960;4961;4603;4627;4838;4456;4457;4458;4459;4091;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <CompileAs>CompileAsCpp</CompileAs>
       <ControlFlowGuard>false</ControlFlowGuard>
       <ForcedIncludeFiles>E:\NetFXDev3\src\tools\devdiv\inc\warning.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
-      <PreprocessToFile>true</PreprocessToFile>
+      <PreprocessToFile>false</PreprocessToFile>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>false</MinimalRebuild>
       <CallingConvention>StdCall</CallingConvention>
       <TreatWarningAsError>true</TreatWarningAsError>
       <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
       <RemoveUnreferencedCodeData>false</RemoveUnreferencedCodeData>
+      <LanguageStandard>stdcpp14</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
