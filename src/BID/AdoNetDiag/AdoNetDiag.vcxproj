@@ -118,12 +118,19 @@ WARNINGS</PreprocessorDefinitions -->
       <TreatWarningAsError>true</TreatWarningAsError>
       <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
       <RemoveUnreferencedCodeData>false</RemoveUnreferencedCodeData>
-      <LanguageStandard>stdcpp14</LanguageStandard>
+      <LanguageStandard>
+      </LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Lib>
+      <ModuleDefinitionFile>AdoNetDiag.def</ModuleDefinitionFile>
+      <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
+      <Verbose>true</Verbose>
+      <AdditionalOptions>/IGNORE:4070,4221 %(AdditionalOptions)</AdditionalOptions>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -144,12 +151,19 @@ WARNINGS</PreprocessorDefinitions -->
       <TreatWarningAsError>true</TreatWarningAsError>
       <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
       <RemoveUnreferencedCodeData>false</RemoveUnreferencedCodeData>
-      <LanguageStandard>stdcpp14</LanguageStandard>
+      <LanguageStandard>
+      </LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Lib>
+      <ModuleDefinitionFile>AdoNetDiag.def</ModuleDefinitionFile>
+      <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
+      <Verbose>true</Verbose>
+      <AdditionalOptions>/IGNORE:4070,4221 %(AdditionalOptions)</AdditionalOptions>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
