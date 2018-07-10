@@ -18,32 +18,14 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="shared.cpp" />
-    <ClCompile Include="services.cpp" />
-    <ClCompile Include="EtwObject.cpp" />
-    <ClCompile Include="ModuleObject.cpp" />
-    <ClCompile Include="ModulePool.cpp" />
-    <ClCompile Include="AdoNetDiag.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\bidinit\src\bidinit.vcxproj" />
-  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{D9B7F399-79D3-45ED-A027-E3C0E7285F9C}</ProjectGuid>
+    <ProjectGuid>{5A328E8A-7722-472B-B6F5-601F0F870CC8}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
+    <RootNamespace>bidinit</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <PropertyGroup>
-    <!-- PreprocessorDefinitions>$(PreprocessorDefinitions);UNICODE;_UNICODE;_CRT_SECURE_NO_
-WARNINGS</PreprocessorDefinitions -->
-    <EnableCxxPCHHeaders>true</EnableCxxPCHHeaders>
-    <PCHRootName>stdafx</PCHRootName>
-    <ClNativeExceptionHandling>sync</ClNativeExceptionHandling>
-    <!-- UserIncludes>..\Inc;$(NdpIncPath);$(NDP_CommonIncPath);$(ClrIncPath)</UserIncludes -->
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
@@ -90,11 +72,9 @@ WARNINGS</PreprocessorDefinitions -->
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>D:\OOBSqlClient\Microsoft.Data.SqlClient\src\BID\INC;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>D:\OOBSqlClient\Microsoft.Data.SqlClient\src\BID\INC;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -104,67 +84,66 @@ WARNINGS</PreprocessorDefinitions -->
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PrecompiledHeader>Create</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>%(PreprocessorDefinitions);UNICODE;_UNICODE;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
-      <ShowIncludes>false</ShowIncludes>
-      <PrecompiledHeaderOutputFile>$(IntDir)stdafx.pch</PrecompiledHeaderOutputFile>
-      <DisableSpecificWarnings>4960;4961;4603;4627;4838;4456;4457;4458;4459;4091;%(DisableSpecificWarnings)</DisableSpecificWarnings>
-      <CompileAs>CompileAsCpp</CompileAs>
-      <ControlFlowGuard>false</ControlFlowGuard>
-      <ForcedIncludeFiles>E:\NetFXDev3\src\tools\devdiv\inc\warning.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
-      <PreprocessToFile>false</PreprocessToFile>
-      <StringPooling>true</StringPooling>
-      <MinimalRebuild>false</MinimalRebuild>
-      <CallingConvention>StdCall</CallingConvention>
+      <PreprocessorDefinitions>_CRT_STDIO_LEGACY_WIDE_SPECIFIERS</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\BID\INC;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PrecompiledHeaderFile />
+      <PrecompiledHeaderOutputFile />
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <TreatWarningAsError>true</TreatWarningAsError>
+      <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
+      <MinimalRebuild>false</MinimalRebuild>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
       <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
       <RemoveUnreferencedCodeData>false</RemoveUnreferencedCodeData>
-      <LanguageStandard>
-      </LanguageStandard>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <CallingConvention>StdCall</CallingConvention>
+      <CompileAs>CompileAsCpp</CompileAs>
+      <DisableSpecificWarnings>4960;4961;4603;4627;4838;4456;4457;4458;4459;4091;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <ModuleDefinitionFile>AdoNetDiag.def</ModuleDefinitionFile>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
-      <Verbose>true</Verbose>
+      <SubSystem>Console</SubSystem>
       <AdditionalOptions>/IGNORE:4070,4221 %(AdditionalOptions)</AdditionalOptions>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PrecompiledHeader>Create</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>%(PreprocessorDefinitions);UNICODE;_UNICODE;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
-      <ShowIncludes>false</ShowIncludes>
-      <PrecompiledHeaderOutputFile>$(IntDir)stdafx.pch</PrecompiledHeaderOutputFile>
-      <DisableSpecificWarnings>4960;4961;4603;4627;4838;4456;4457;4458;4459;4091;%(DisableSpecificWarnings)</DisableSpecificWarnings>
-      <CompileAs>CompileAsCpp</CompileAs>
-      <ControlFlowGuard>false</ControlFlowGuard>
-      <ForcedIncludeFiles>E:\NetFXDev3\src\tools\devdiv\inc\warning.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
-      <PreprocessToFile>false</PreprocessToFile>
-      <StringPooling>true</StringPooling>
-      <MinimalRebuild>false</MinimalRebuild>
-      <CallingConvention>StdCall</CallingConvention>
+      <PreprocessorDefinitions>_CRT_STDIO_LEGACY_WIDE_SPECIFIERS</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\BID\INC;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PrecompiledHeaderFile />
+      <PrecompiledHeaderOutputFile />
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <TreatWarningAsError>true</TreatWarningAsError>
+      <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
+      <OmitFramePointers>false</OmitFramePointers>
+      <MinimalRebuild>false</MinimalRebuild>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
       <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
       <RemoveUnreferencedCodeData>false</RemoveUnreferencedCodeData>
-      <LanguageStandard>
-      </LanguageStandard>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <CallingConvention>StdCall</CallingConvention>
+      <CompileAs>CompileAsCpp</CompileAs>
+      <DisableSpecificWarnings>4960;4961;4603;4627;4838;4456;4457;4458;4459;4091;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <ModuleDefinitionFile>AdoNetDiag.def</ModuleDefinitionFile>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
-      <Verbose>true</Verbose>
+      <SubSystem>Console</SubSystem>
       <AdditionalOptions>/IGNORE:4070,4221 %(AdditionalOptions)</AdditionalOptions>
     </Lib>
   </ItemDefinitionGroup>
@@ -202,6 +181,13 @@ WARNINGS</PreprocessorDefinitions -->
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="targetver.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="bidinit.cpp" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

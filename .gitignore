@@ -32,3 +32,4 @@
 *.app
 .vs/
 x64/
+Debug/
