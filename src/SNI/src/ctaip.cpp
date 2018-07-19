@@ -142,7 +142,8 @@ DWORD CrTrAdditionalInfoProtocol::InitX(__in LPVOID pInfo)
             else
             {
                 if (pCtaipInfo->fFromDataSecurityProxy)
-                {
+                {
+
                     m_securityProxyTokenType = CTAIPPacket::CTAIPTokenType::CTAIPPacketToken_FromSecurityProxy;
                 }
             }
@@ -517,7 +518,8 @@ DWORD CrTrAdditionalInfoProtocol::SetClientAddress(__in_bcount(cbAddress) LPCBYT
 {
     if (cbAddress > sizeof(m_addressDataBuf))
     {
-        return ERROR_INSUFFICIENT_BUFFER;
+        return ERROR_INSUFFICIENT_BUFFER;
+
     }
 
     memcpy(m_addressDataBuf, prgbAddress, cbAddress);
