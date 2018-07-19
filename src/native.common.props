@@ -9,6 +9,8 @@
   <PropertyGroup>
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)..\bin\$(Configuration)\$(Platform)\$(MSBuildProjectName)\</OutDir>
+    <IntermediateDir>$(SolutionDir)..\intermediate\$(Configuration)\$(Platform)\$(MSBuildProjectName)\</IntermediateDir>
+    <IntDir>$(IntermediateDir)</IntDir>
   </PropertyGroup>
   <Target Name="DisplayMessages">  
       <Message Text="Solution Dir = $(SolutionDir)" />  

@@ -45,8 +45,8 @@
     <ProjectReference Include="..\bidinit\src\bidinit.vcxproj">
       <Project>{5a328e8a-7722-472b-b6f5-601f0f870cc8}</Project>
     </ProjectReference>
-    <ProjectReference Include="NLRegC\ascii\ascii.vcxproj">
-      <Project>{4d396432-7121-4b9f-ada2-51a9f897f216}</Project>
+    <ProjectReference Include="NLRegC\unicode\unicode.vcxproj">
+      <Project>{8de60d76-ba9a-43be-ba26-f8845ca0bf17}</Project>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -93,7 +93,6 @@
     <Import Project="..\native.common.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  
   <ItemDefinitionGroup>
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
