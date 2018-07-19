@@ -18,6 +18,7 @@
   </Target>
   <ItemDefinitionGroup>
     <ClCompile>
+      <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <PreprocessorDefinitions>_UNICODE;UNICODE;_CRT_STDIO_LEGACY_WIDE_SPECIFIERS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
