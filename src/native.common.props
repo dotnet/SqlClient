@@ -3,6 +3,17 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup />
+  <PropertyGroup>
+      <SolutionDir>$([System.IO.Path]::GetDirectoryName($(MSBuildThisFileDirectory)))\</SolutionDir>
+  </PropertyGroup>
+  <PropertyGroup>
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)..\bin\$(Configuration)\$(Platform)\$(MSBuildProjectName)\</OutDir>
+  </PropertyGroup>
+  <Target Name="DisplayMessages">  
+      <Message Text="Solution Dir = $(SolutionDir)" />  
+      <Message Text="Project Extension = $(MSBuildProjectName)" />  
+  </Target>
   <ItemDefinitionGroup>
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
