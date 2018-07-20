@@ -20,8 +20,10 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
+      <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <PreprocessorDefinitions>_UNICODE;UNICODE;_CRT_STDIO_LEGACY_WIDE_SPECIFIERS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ForceConformanceInForLoopScope>false</ForceConformanceInForLoopScope>
       <StructMemberAlignment>8Bytes</StructMemberAlignment>
       <DisableSpecificWarnings>4960;4961;4603;4627;4838;4456;4457;4458;4459;4091;4996;4703;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <CallingConvention>FastCall</CallingConvention>
