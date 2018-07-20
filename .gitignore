@@ -30,7 +30,12 @@
 *.exe
 *.out
 *.app
+
+#Folders
 .vs/
 x64/
 Debug/
 intermediate/
+
+#logs
+msbuild.log
