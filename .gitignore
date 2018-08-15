@@ -39,3 +39,5 @@ intermediate/
 
 #logs
 msbuild.log
+*.user
+bin/
