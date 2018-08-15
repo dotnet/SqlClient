@@ -1,0 +1,30 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <!--
+        This file is used by fx src directory.
+     -->
+
+    <Import Project="$(_NTDRIVE)$(_NTROOT)\InternalAPIs\NDP_Common\Inc\Microsoft.Ndp.targets" />
+
+    <!--
+      MsBuild by default copies the symbols in the same directory as the binary.
+      For Fx, the symbols files should be copied only in the Symbols and Symbols.Pri directories: this is what we 
+      did in Whidbey, this is what we will do in Orcas.
+
+      There is no setting to disable MsBuild from copying the symbols in the same directory as the binary.
+      So we implement our own target to disable symbols being copied.
+      NOTE: the symbols will still be copied to Symbols and Symbols.Pri directories.
+    -->
+    <Target Name="AfterCompile">
+      <CreateProperty Value="false" Condition="'$(DoNotCopySymbolsToOutputFolder)'=='true'">
+        <Output TaskParameter="Value" PropertyName="_DebugSymbolsProduced"/>
+      </CreateProperty>
+    </Target>
+
+    <PropertyGroup>
+      <PrepareForRunDependsOn>
+        $(PrepareForRunDependsOn);
+        AfterCompile;
+      </PrepareForRunDependsOn>
+    </PropertyGroup>
+
+</Project>

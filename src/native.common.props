@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <PropertyGroup>
+      <SolutionDir>$([System.IO.Path]::GetDirectoryName($(MSBuildThisFileDirectory)))\</SolutionDir>
+  </PropertyGroup>
+  <PropertyGroup>
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)..\bin\$(Configuration)\$(Platform)\$(MSBuildProjectName)\</OutDir>
+    <IntermediateDir>$(SolutionDir)..\intermediate\$(Configuration)\$(Platform)\$(MSBuildProjectName)\</IntermediateDir>
+    <IntDir>$(IntermediateDir)</IntDir>
+  </PropertyGroup>
+  <Target Name="DisplayMessages">  
+      <Message Text="Solution Dir = $(SolutionDir)" />  
+      <Message Text="Project Extension = $(MSBuildProjectName)" />  
+  </Target>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <PreprocessorDefinitions>_UNICODE;UNICODE;_CRT_STDIO_LEGACY_WIDE_SPECIFIERS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ForceConformanceInForLoopScope>false</ForceConformanceInForLoopScope>
+      <StructMemberAlignment>8Bytes</StructMemberAlignment>
+      <DisableSpecificWarnings>4960;4961;4603;4627;4838;4456;4457;4458;4459;4091;4996;4703;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <CallingConvention>FastCall</CallingConvention>
+    </ClCompile>
+    <Lib>
+      <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
+      <Verbose>true</Verbose>
+      <AdditionalOptions>/IGNORE:4070,4221 %(AdditionalOptions)</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup />
+</Project>

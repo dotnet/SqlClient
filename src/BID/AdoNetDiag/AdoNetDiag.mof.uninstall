@@ -1,0 +1,47 @@
+#pragma classflags("forceupdate")
+#pragma namespace ("\\\\.\\Root\\WMI")
+
+/////////////////////////////////////////////////////////////////////////////
+//
+//  ADONETDIAG.ETW.Uninstall
+
+#pragma deleteclass("Bid2Etw_ADONETDIAG_ETW", NOFAIL)
+#pragma deleteclass("Bid2Etw_ADONETDIAG_ETW_Trace", NOFAIL)
+#pragma deleteclass("Bid2Etw_ADONETDIAG_ETW_Trace_TextA", NOFAIL)
+#pragma deleteclass("Bid2Etw_ADONETDIAG_ETW_Trace_TextW", NOFAIL)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+//  System.Data.1
+
+#pragma deleteclass("Bid2Etw_System_Data_1", NOFAIL)
+#pragma deleteclass("Bid2Etw_System_Data_1_Trace", NOFAIL)
+#pragma deleteclass("Bid2Etw_System_Data_1_Trace_TextA", NOFAIL)
+#pragma deleteclass("Bid2Etw_System_Data_1_Trace_TextW", NOFAIL)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+//  System.Data.Entity.1.Uninstall
+
+#pragma deleteclass("Bid2Etw_System_Data_Entity_1", NOFAIL)
+#pragma deleteclass("Bid2Etw_System_Data_Entity_1_Trace", NOFAIL)
+#pragma deleteclass("Bid2Etw_System_Data_Entity_1_Trace_TextA", NOFAIL)
+#pragma deleteclass("Bid2Etw_System_Data_Entity_1_Trace_TextW", NOFAIL)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+//  System.Data.SNI.1.Uninstall
+
+#pragma deleteclass("Bid2Etw_System_Data_SNI_1", NOFAIL)
+#pragma deleteclass("Bid2Etw_System_Data_SNI_1_Trace", NOFAIL)
+#pragma deleteclass("Bid2Etw_System_Data_SNI_1_Trace_TextA", NOFAIL)
+#pragma deleteclass("Bid2Etw_System_Data_SNI_1_Trace_TextW", NOFAIL)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+//  System.Data.OracleClient.1.Uninstall
+
+#pragma deleteclass("Bid2Etw_System_Data_OracleClient_1", NOFAIL)
+#pragma deleteclass("Bid2Etw_System_Data_OracleClient_1_Trace", NOFAIL)
+#pragma deleteclass("Bid2Etw_System_Data_OracleClient_1_Trace_TextA", NOFAIL)
+#pragma deleteclass("Bid2Etw_System_Data_OracleClient_1_Trace_TextW", NOFAIL)

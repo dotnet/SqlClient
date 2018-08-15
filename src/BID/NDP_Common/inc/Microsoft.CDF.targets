@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project InitialTargets="CreateIntermediateOutputPath" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<!-- 
+   This file contains CDF specific extensions to the DevDiv targets.
+
+   <Import Project="$(CdfRootPath)\ndp\cdf\Microsoft.CDF.targets" />
+-->
+
+  <PropertyGroup>
+    <CdfRootPath Condition="'$(CdfRootPath)' == ''">$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'Microsoft.CDF.targets'))</CdfRootPath>
+    <EnlistmentRootPath Condition="'$(EnlistmentRootPath)' == ''">$([System.IO.Path]::GetFullPath($(CdfRootPath)\..\..))</EnlistmentRootPath>
+    <BuildFromRazzle Condition="'$(BuildFromRazzle)' == ''">true</BuildFromRazzle>
+    <BuildFromRazzle Condition="'$(COMPLUS_Version)' == '' or $(COMPLUS_InstallRoot) == ''">false</BuildFromRazzle>
+  </PropertyGroup>
+
+  <!-- Enable code analysis-->
+  <PropertyGroup Condition="'$(DevdivCodeAnalysis)' != 'true'">
+    <!-- Using CodeAnalysis project 
+      This feature is depecrated and will be disabled when RunCodeAnalysis
+      handle RuleSet
+      -->
+    <CodeAnalysisRules>;</CodeAnalysisRules>
+    <CodeAnalysisRuleSet>none</CodeAnalysisRuleSet>
+    <CodeAnalysisProject>$(CdfRootPath)\tools\FxCopRules\CDF\default.FxCop</CodeAnalysisProject>
+    <CodeAnalysisReporting>errors</CodeAnalysisReporting>
+  </PropertyGroup>
+
+  <Import Condition="'$(BuildFromRazzle)' == 'true'" Project="$(EnlistmentRootPath)\InternalAPIs\NDP_Common\inc\Microsoft.Ndp.targets" />
+  <Import Condition="'$(BuildFromRazzle)' != 'true'" Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+
+  <!-- Need to be here otherwise it's overwritten by the Import above -->
+  <PropertyGroup Condition="'$(DevdivCodeAnalysis)' != 'true'">
+      <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <!-- Enable StyleCop -->
+  <Import Project="$(CdfRootpath)\tools\StyleCop\CDFStyleCop.targets" />
+
+  <ItemGroup>
+    <ExcludeFromStyleCop Include="$(IntermediateOutputDirectory)\AssemblyAttributes.cs" />
+    <ExcludeFromStyleCop Include="$(IntermediateOutputDirectory)\AssemblyRefs.cs" />
+    <ExcludeFromStyleCop Include="$(IntermediateOutputDirectory)\Resources.cs" />
+    <ExcludeFromStyleCop Include="$(IntermediateOutputDirectory)\wsatconfig.cs" />
+    <ExcludeFromStyleCop Include="$(IntermediateOutputDirectory)\wsatui.cs" />
+    <ExcludeFromStyleCop Include="$(IntermediateOutputDirectory)\wsatui.cs" />
+    <ExcludeFromStyleCop Include="$(IntermediateOutputDirectory)\svctraceviewer.cs" />
+    <ExcludeFromStyleCop Include="$(IntermediateOutputDirectory)\smdiagnostics.cs" />
+  </ItemGroup>
+
+  <!-- Define the CL includes that that generate the assembly attributes. -->
+  <ItemGroup>
+    <Internal_ClDefines Condition="'$(SecurityActionRequestMinimumExecution)' == 'true'"  Include="SECURITYACTION_REQUESTMINIMUM_EXECUTION=1"/>
+    <Internal_ClDefines Condition="'$(SecurityActionRequestMinimumExecution)' == 'false'" Include="SECURITYACTION_REQUESTMINIMUM_EXECUTION=0"/>
+    <Internal_ClDefines Condition="'$(EnableSecurityTransparency)' == 'true'"  Include="ENABLE_SECURITYTRANSPARENCY=1"/>
+    <Internal_ClDefines Condition="'$(EnableSecurityTransparency)' == 'false'" Include="ENABLE_SECURITYTRANSPARENCY=0"/>
+    <Internal_ClDefines Condition="'$(SecurityCriticalScopeExplicit)' == 'true'"  Include="SECURITYCRITICALSCOPE_EXPLICIT=1"/>
+    <Internal_ClDefines Condition="'$(SecurityCriticalScopeExplicit)' == 'false'" Include="SECURITYCRITICALSCOPE_EXPLICIT=0"/>
+  </ItemGroup>
+
+  <!-- Deal with assembly signing. -->
+  <PropertyGroup>
+    <SignAssemblyAttribute Condition="'$(SignAssemblyAttribute)' == ''">true</SignAssemblyAttribute>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(AssemblyKeyFile)' == ''">
+    <AssemblyKeyFile Condition="'$(AssemblyKeyType)' == 'ECMA'">$(DevDivToolsPath)\EcmaPublicKey.snk</AssemblyKeyFile>
+    <AssemblyKeyFile Condition="'$(AssemblyKeyType)' == 'MSSHARED'">$(DevDivToolsPath)\35MSSharedLib1024.snk</AssemblyKeyFile>
+  </PropertyGroup>
+
+  <!-- Deal with asmmeta generation. -->
+  <PropertyGroup>
+    <PublishMetaAssemblyToSDK Condition="'$(PublishMetaAssemblyPath)' == ''">$(CreateMetaAssembly)</PublishMetaAssemblyToSDK>
+  </PropertyGroup>
+
+  <!-- Generate PerfCounter Strings -->
+  <PropertyGroup>
+    <BuildDependsOn Condition="'$(PerfDataSource2)' != '' And '$(PerfDataClass)' != ''">
+      GeneratePerfCountersPerfData;
+      GeneratePerfCounterStrings;
+      $(BuildDependsOn)
+    </BuildDependsOn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Clean Include="$(IntermediateOutputPath)\$(PerfDataSource2)" Condition="'$(PerfDataSource2)' != '' And '$(PerfDataClass)' != ''"/>
+  </ItemGroup>
+  <ItemGroup Condition="'$(PerfDataSource2)' != '' And '$(PerfDataClass)' != ''">
+    <ExcludeFromStyleCop Include="$(IntermediateOutputPath)\$(PerfDataSource2)" />
+    <ExcludeFromStyleCop Include="$(IntermediateOutputPath)\PerformanceCounterStrings.cs" />
+  </ItemGroup>
+  
+  <Target Name="GeneratePerfCountersPerfData"
+          DependsOnTargets="WriteOldStyleNdpVersionIncFile"
+          Inputs="$(PerfDataSource2).source" Outputs="$(IntermediateOutputPath)\$(PerfDataSource2)">
+    <Exec Command="$(PerlCommand) $(DevDivToolsPath)\vrgprocess.pl $(PerfDataSource2).source $(VrgProcessVersions) &gt; $(IntermediateOutputPath)\$(PerfDataSource2)" />
+  </Target>
+  <Target Name="GeneratePerfCounterStrings" Inputs="$(IntermediateOutputPath)\$(PerfDataSource2)" Outputs="$(IntermediateOutputPath)\PerformanceCounterStrings.cs">
+    <Exec Command="$(EnlistmentRootPath)\ndp\cdf\tools\bin\PerfDataParser.exe /p:$(IntermediateOutputPath)\$(PerfDataSource2) /targetdir:$(IntermediateOutputPath) /classname:$(PerfDataClass)" />
+  </Target>
+
+  <!-- Generate Friends.cs file -->
+  <PropertyGroup>
+    <BuildDependsOn Condition="'$(GenerateFriends)' == 'true'">
+      GenerateFriends;
+      $(BuildDependsOn)
+    </BuildDependsOn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Clean Include="$(IntermediateOutputPath)\Friends.cs" Condition="'$(GenerateFriends)' != 'true'"/>
+  </ItemGroup>
+  <ItemGroup Condition="'$(GenerateFriends)' == 'true'">
+    <ExcludeFromStyleCop Include="$(IntermediateOutputPath)\Friends.cs" />
+  </ItemGroup>
+  
+  <Target Name="GenerateFriends"
+          DependsOnTargets="WriteOldStyleNdpVersionIncFile"
+          Inputs="Friends.cs.source" Outputs="$(IntermediateOutputPath)\Friends.cs">    
+    <Exec Command="$(PerlCommand) $(DevDivToolsPath)\vrgprocess.pl Friends.cs.source $(VrgProcessVersions) &gt; $(IntermediateOutputPath)\Friends.cs" />
+  </Target>
+
+  <!-- Generate DiagnosticUtility.cs file  -->
+  <PropertyGroup>
+    <BuildDependsOn Condition="'$(GenerateDiagnosticUtility)' == 'true'">
+      GenerateDiagnosticUtility;
+      $(BuildDependsOn)
+    </BuildDependsOn>
+    <NamespaceToReplace Condition="'$(NamespaceToReplace)' == ''">$(AssemblyName)</NamespaceToReplace>
+    <TraceSourceNameToReplace Condition="'$(TraceSourceNameToReplace)' == ''">$(AssemblyName)</TraceSourceNameToReplace>
+    <TraceSourceTypeToReplace Condition="'$(TraceSourceTypeToReplace)' == ''">PiiTraceSource</TraceSourceTypeToReplace>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(GenerateDiagnosticUtility)' == 'true'">
+    <ExcludeFromStyleCop Include="$(IntermediateOutputPath)\DiagnosticUtility.cs" />
+  </ItemGroup>
+  <Target Name="GenerateDiagnosticUtility"
+          DependsOnTargets="WriteOldStyleNdpVersionIncFile"
+          Inputs="$(CdfRootPath)\src\WCF\SMDiagnostics\DiagnosticUtility.cs" Outputs="$(IntermediateOutputPath)\DiagnosticUtility.cs">    
+    <Exec Command="$(PerlCommand) $(DevDivToolsPath)\vrgprocess.pl $(CdfRootPath)\src\WCF\SMDiagnostics\DiagnosticUtility.cs $(VrgProcessVersions) &gt; $(IntermediateOutputPath)\DiagnosticUtility.cs" />
+    <Exec Command="rep.exe -noundo NamespaceToReplace &quot;$(NamespaceToReplace)&quot; $(IntermediateOutputPath)\DiagnosticUtility.cs" />
+    <Exec Command="rep.exe -noundo TraceSourceNameToReplace &quot;$(TraceSourceNameToReplace)&quot; $(IntermediateOutputPath)\DiagnosticUtility.cs" />
+    <Exec Command="rep.exe -noundo TraceSourceType $(TraceSourceTypeToReplace) $(IntermediateOutputPath)\DiagnosticUtility.cs" />
+  </Target>
+  
+  <!-- Managed String Resource File Generation -->
+  <ItemGroup Condition="$(StringResourceFile) != ''">
+    <StringResourceFileItem Include="$(StringResourceFile)">
+      <Visible>false</Visible>
+    </StringResourceFileItem>
+  </ItemGroup>
+  <PropertyGroup Condition="$(StringResourceFile) != ''">
+     <StringResourceCodeFile>@(StringResourceFileItem->'$(IntermediateOutputPath)\%(FileName).Designer.cs')</StringResourceCodeFile>
+     <StringResourceCodeTempFile>@(StringResourceFileItem->'%(FileName).Designer.cs')</StringResourceCodeTempFile>
+     <StringResourceLogicalName>$(ResourcesNamespace).@(StringResourceFileItem->'%(FileName).resources')</StringResourceLogicalName>
+     <AutoGenItemTargets>$(AutoGenItemTargets);GenerateStringResourceCodeFile</AutoGenItemTargets>
+     <StringResourceFileVisible>true</StringResourceFileVisible>
+  </PropertyGroup>
+  <ItemGroup Condition="$(StringResourceFile) != ''">
+    <Compile Include="$(StringResourceCodeFile)">
+      <Visible>$(StringResourceFileVisible)</Visible>
+      <ExcludeFromStyleCop>true</ExcludeFromStyleCop>
+    </Compile>
+    <EmbeddedResource Include="$(StringResourceFile)">
+      <LogicalName>$(StringResourceLogicalName)</LogicalName>
+      <Visible>$(StringResourceFileVisible)</Visible>
+    </EmbeddedResource>
+    <Clean Include="$(StringResourceCodeFile)">
+      <Visible>false</Visible>
+    </Clean>
+  </ItemGroup>
+  <Target Name="GenerateStringResourceCodeFile" Inputs="$(StringResourceFile);$(EnlistmentRootPath)\ndp\cdf\tools\bin\StrictResXFileCodeGenerator.exe" Outputs="$(StringResourceCodeFile)">
+    <Exec Command="$(EnlistmentRootPath)\ndp\cdf\tools\bin\StrictResXFileCodeGenerator.exe $(ResourcesNamespace) $(StringResourceFile)" />
+    <Copy SourceFiles="$(StringResourceCodeTempFile)" DestinationFolder="$(IntermediateOutputPath)" />
+    <Delete Files="$(StringResourceCodeTempFile)"/>
+  </Target>
+  
+  <!-- UseWcfCommonResStrings property means auto-include devdiv-wide files for copyright header-->
+  <ItemGroup Condition="$(UseWcfCommonResStrings)=='true'">
+    <TextStringResource Include="$(CdfRootPath)\src\wcf\tools\WcfCommonResStrings\CommonResStrings.txt">
+      <ResFile>CommonResStrings</ResFile>
+      <Sealed>true</Sealed>
+      <Visibility>internal</Visibility>
+      <NoStringResourcesClass>true</NoStringResourcesClass>
+      <GenerateResource>true</GenerateResource>
+      <FullClassName>Microsoft.Tools.ServiceModel.CommonResStrings</FullClassName>
+    </TextStringResource>
+    <Compile Include="$(CdfRootPath)\src\wcf\tools\WcfCommonResStrings\CommonResStrings.cs">
+      <ExcludeFromStyleCop>true</ExcludeFromStyleCop>
+    </Compile>
+  </ItemGroup>
+
+  
+  <!-- Create $(AssemblyName).txt from Resource.txt for TextStringResources-->
+  <PropertyGroup Condition="$(GenerateAssemblyNameResourceText) =='true'">
+    <GenerateTextStringResourcesDependsOn>
+      GenerateAssemblyNameResourceText;
+      $(GenerateTextStringResourcesDependsOn)
+    </GenerateTextStringResourcesDependsOn>
+  </PropertyGroup>
+  <ItemGroup Condition="$(GenerateAssemblyNameResourceText) =='true'">
+    <Clean Include="$(IntermediateOutputPath)\$(AssemblyName).txt"/>
+  </ItemGroup>
+  <Target Name="GenerateAssemblyNameResourceText" Inputs="Resources.txt" Outputs="$(IntermediateOutputPath)\$(AssemblyName).txt">
+    <Copy OverwriteReadOnlyFiles="true" Retries="10" RetryDelayMilliseconds="500" SourceFiles="Resources.txt" DestinationFiles="$(IntermediateOutputPath)\$(AssemblyName).txt" />
+  </Target>
+
+  <!-- Event Trace Resource File Generation -->
+  <ItemGroup Condition="$(EventDefinitionFile) != ''">
+    <EventDefinitionFileItem Include="$(EventDefinitionFile)">
+      <Visible>false</Visible>
+    </EventDefinitionFileItem>
+  </ItemGroup>
+  <PropertyGroup Condition="$(EventDefinitionFile) != ''">
+    <EventDefinitionCodeFile>@(EventDefinitionFileItem->'%(RootDir)%(Directory)%(FileName).Designer.cs')</EventDefinitionCodeFile>
+    <EventDefinitionCodeTempFile>@(EventDefinitionFileItem->'$(IntermediateOutputPath)\%(FileName).Designer.cs')</EventDefinitionCodeTempFile>
+    <StrictEventDefCodeGenerator>$(CdfRootPath)\tools\bin\StrictEventDefCodeGenerator.exe</StrictEventDefCodeGenerator>
+    <EtwAutoFileGenerateBatchCmd>$(CdfRootPath)\tools\bin\competw_autogen.bat</EtwAutoFileGenerateBatchCmd>
+    <EventDefinitionResourceLogicalName>$(ResourcesNamespace).@(EventDefinitionFileItem->'%(FileName).resources')</EventDefinitionResourceLogicalName>
+    <AutoGenItemTargets>$(AutoGenItemTargets);GenerateEventDefinitionCodeFile</AutoGenItemTargets>
+    <EventDefinitionFileVisible>true</EventDefinitionFileVisible>
+  </PropertyGroup>
+  <ItemGroup Condition="$(EventDefinitionFile) != ''">
+    <Compile Include="$(EventDefinitionCodeFile)">
+      <Visible>$(EventDefinitionFileVisible)</Visible>
+      <ExcludeFromStyleCop>true</ExcludeFromStyleCop>
+    </Compile>
+    <EmbeddedResource Include="$(EventDefinitionFile)">
+      <LogicalName>$(EventDefinitionResourceLogicalName)</LogicalName>
+      <Visible>$(EventDefinitionFileVisible)</Visible>
+    </EmbeddedResource>
+    <Clean Include="$(EventDefinitionCodeTempFile)">
+      <Visible>false</Visible>
+    </Clean>
+  </ItemGroup>
+  <Target Name="GenerateEventDefinitionCodeFile" Inputs="$(EventDefinitionFile);$(StrictEventDefCodeGenerator)"
+          Outputs="$(EventDefinitionCodeFile)">
+    <Exec Condition="$(AllowPartialTrustedCalls) != ''" Command="$(EtwAutoFileGenerateBatchCmd) $(StrictEventDefCodeGenerator) $(ResourcesNamespace) $(EventDefinitionFile) $(EventDefinitionCodeTempFile) $(EventDefinitionCodeFile) true $(AllowPartialTrustedCalls)" />
+    <Exec Condition="$(AllowPartialTrustedCalls) == ''" Command="$(EtwAutoFileGenerateBatchCmd) $(StrictEventDefCodeGenerator) $(ResourcesNamespace) $(EventDefinitionFile) $(EventDefinitionCodeTempFile) $(EventDefinitionCodeFile) true false" />
+  </Target>
+  
+  <!-- NetFx40: shared trace file -->
+  <PropertyGroup Condition="$(GenerateFxTraceFile) != '' And $(GenerateFxTraceFile) != 'false'">
+    <FxTraceNameSpaceToReplace Condition="'$(FxTraceNameSpaceToReplace)' == ''">$(AssemblyName)</FxTraceNameSpaceToReplace>
+    <FxTraceSharedFile>$(EnlistmentRootPath)\ndp\cdf\src\System.ServiceModel.Internals\FxTrace.Shared.cs</FxTraceSharedFile>
+    <AutoGenItemTargets>$(AutoGenItemTargets);GenerateFxTraceFile</AutoGenItemTargets>
+    <FxTraceFileVisible>true</FxTraceFileVisible>
+    <FxTraceFile>$(IntermediateOutputPath)\FxTrace.cs</FxTraceFile>
+  </PropertyGroup>
+  <ItemGroup Condition="$(GenerateFxTraceFile) != '' And $(GenerateFxTraceFile) != 'false'">
+    <Compile Include="$(FxTraceFile)">
+      <Visible>$(FxTraceFileVisible)</Visible>
+      <ExcludeFromStyleCop>true</ExcludeFromStyleCop>
+    </Compile>
+    <Clean Include="$(FxTraceFile)">
+      <Visible>false</Visible>
+    </Clean>
+  </ItemGroup>
+  <Target Name="GenerateFxTraceFile" Inputs="$(FxTraceSharedFile)" Outputs="$(FxTraceFile)">
+    <Exec Command="$(EnlistmentRootPath)\tools\perl\bin\perl.exe -pe &quot;s/TEMPLATE_NAMESPACE/$(FxTraceNameSpaceToReplace)/g; s/TRACESOURCE_NAME/$(GenerateFxTraceFile)/g&quot; $(FxTraceSharedFile) > $(FxTraceFile)" />
+  </Target>
+
+
+
+  <!-- define target for autogen files -->
+  <Target Name="AutoGenItems">
+    <CallTarget Targets="$(AutoGenItemTargets)" />
+  </Target>
+
+  <!-- target to create IntermediateOutputPath -->
+  <Target Name="CreateIntermediateOutputPath">
+    <MakeDir Directories="$(IntermediateOutputPath)" Condition="!Exists('$(IntermediateOutputPath)')"/>
+  </Target>
+  
+  <PropertyGroup>
+    <BuildDependsOn>
+      AutoGenItems;
+      $(BuildDependsOn)
+    </BuildDependsOn>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PostBuildEvent>$(PostBuildEvent)</PostBuildEvent>
+  </PropertyGroup>
+</Project>

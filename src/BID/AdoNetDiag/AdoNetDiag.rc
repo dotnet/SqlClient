@@ -1,0 +1,6 @@
+
+#define FX_VER_FILEDESCRIPTION_STR ".NET Framework"
+
+#include "fxver.h"
+#include "fxver.rc"
+

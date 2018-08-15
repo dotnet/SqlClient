@@ -1,0 +1,70 @@
+﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    
+    <!-- 
+       HACK ALERT:  As part of recent updates, Both GenSR and ResGen now support ifdefs in their input files.
+       Many of the BCL Sources use this feature to allow sharing of resources between CoreCLR and the full
+       Runtime.  Currently (5/30/2008) MSBuild doesn't support passing defines to ResGen and the DevDiv level
+       target for GenSR also doesn't support this feature.  This file overrides some of the GenerateTextStringResources
+       targets to allow a TextStringResource element to specify two optional pieces of metadata, ResGenDefines and
+       GenSRDefines which are passed to an externally run ResGen instance and a GenSR instance.  
+
+       If you need this behavior, include this file after the Microsoft.DevDiv.targets file.
+
+       Long term we'd like to get this behavior as part of the default ruleset in Microsoft.DevDiv.targets but we'll
+       hold off on that until the internal ResGen task that MSBuild uses is able to support defines natively.
+    -->
+
+    <Target Name="GenerateStringResources">    
+        <ItemGroup>
+            <EmbeddedResource Include="@(TextStringResource)" 
+                              Condition="'%(TextStringResource.GenerateResource)' == 'true' and '%(TextStringResource.ResGenDefines)' == ''">
+                <!-- "Resx" indicates it should go through GenerateResource -->
+                <Type>Resx</Type>
+                <WithCulture>false</WithCulture>           
+                <ManifestResourceName>%(Filename)</ManifestResourceName>
+            </EmbeddedResource>
+            <Internal_ResGenDefines Remove="" />
+            <Internal_ResGenDefines Include="%(TextStringResource.ResGenDefines)" />
+        </ItemGroup>
+
+        <Exec Command="$(ResGenCommand) %(TextStringResource.Identity) $(IntermediateOutputPath)%(TextStringResource.Filename).resources @(Internal_ResGenDefines->'/D:%(Identity)', ' ')"
+              Condition="'%(TextStringResource.GenerateResource)' == 'true' and '%(TextStringResource.ResGenDefines)' != ''" />
+
+        <ItemGroup>
+           <EmbeddedResource Include="@(TextStringResource->'$(IntermediateOutputPath)%(Filename).resources')"
+                             Condition="'%(TextStringResource.GenerateResource)' == 'true' and '%(TextStringResource.ResGenDefines)' != ''">
+                <WithCulture>false</WithCulture>           
+                <ManifestResourceName>%(Filename)</ManifestResourceName>
+           </EmbeddedResource>
+           <Internal_ResGenDefines Remove="" />
+        </ItemGroup>
+
+    </Target>
+
+    <Target Name="GenerateStringResourcesClass"
+            Inputs="$(MSBuildAllProjects);@(TextStringResource)"
+            Outputs="@(TextStringResource->'$(IntermediateOutputPath)%(Filename)$(DefaultSourceExtension)')"
+            Condition="'@(TextStringResource)' != ''">
+
+        <!-- We do not currently use GenerateResource task here because the GenSR script 
+           generates a slightly different strongly typed resource code format -->
+
+        <!-- Sealed classes -->
+        <Exec Command="$(GenSRCommand) %(TextStringResource.Identity) $(IntermediateOutputPath)%(TextStringResource.Filename)$(DefaultSourceExtension) %(TextStringResource.FullClassName) %(TextStringResource.ResFile) %(TextStringResource.Visibility) 1 -D %(TextStringResource.GenSRDefines)"
+              StandardOutputImportance="Normal"
+              Condition="'%(TextStringResource.Sealed)' == 'true' and '%(TextStringResource.FullClassName)' != '' and '%(TextStringResource.NoStringResourcesClass)' != 'true'"
+              Outputs="$(IntermediateOutputPath)%(TextStringResource.Filename)$(DefaultSourceExtension)">
+            <Output TaskParameter="Outputs" ItemName="Compile"/>
+        </Exec>
+
+        <!-- Unsealed classes -->
+        <Exec Command="$(GenSRCommand) %(TextStringResource.Identity) $(IntermediateOutputPath)%(TextStringResource.Filename)$(DefaultSourceExtension) %(TextStringResource.FullClassName) %(TextStringResource.ResFile) %(TextStringResource.Visibility) -D %(TextStringResource.GenSRDefines)"
+              StandardOutputImportance="Normal"
+              Condition="'%(TextStringResource.Sealed)' != 'true' and '%(TextStringResource.FullClassName)' != '' and '%(TextStringResource.NoStringResourcesClass)' != 'true'"
+              Outputs="$(IntermediateOutputPath)%(TextStringResource.Filename)$(DefaultSourceExtension)">
+            <Output TaskParameter="Outputs" ItemName="Compile"/>
+        </Exec>
+    </Target>
+
+</Project>
+
