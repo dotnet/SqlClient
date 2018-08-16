@@ -97,7 +97,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>SNIX;SNI_BASED_CLIENT;__fastcall=__cdecl;_fastcall=__cdecl</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>D:\OOBSqlClient\Microsoft.Data.SqlClient\src\SNI\include;D:\OOBSqlClient\Microsoft.Data.SqlClient\src\SNI\src;D:\OOBSqlClient\Microsoft.Data.SqlClient\src\BID\INC;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\SNI\include;..\SNI\src;..\BID\INC;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>Async</ExceptionHandling>
       <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
       <ForceConformanceInForLoopScope>false</ForceConformanceInForLoopScope>
@@ -117,7 +117,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>SNIX;SNI_BASED_CLIENT;__fastcall=__cdecl;_fastcall=__cdecl</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>D:\OOBSqlClient\Microsoft.Data.SqlClient\src\SNI\include;D:\OOBSqlClient\Microsoft.Data.SqlClient\src\SNI\src;D:\OOBSqlClient\Microsoft.Data.SqlClient\src\BID\INC;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\SNI\include;..\SNI\src;..\BID\INC;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>Async</ExceptionHandling>
       <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
       <ForceConformanceInForLoopScope>false</ForceConformanceInForLoopScope>
@@ -139,7 +139,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>SNIX;SNI_BASED_CLIENT;__fastcall=__cdecl;_fastcall=__cdecl</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>D:\OOBSqlClient\Microsoft.Data.SqlClient\src\SNI\include;D:\OOBSqlClient\Microsoft.Data.SqlClient\src\SNI\src;D:\OOBSqlClient\Microsoft.Data.SqlClient\src\BID\INC;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\SNI\include;..\SNI\src;..\BID\INC;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>Async</ExceptionHandling>
       <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
       <ForceConformanceInForLoopScope>false</ForceConformanceInForLoopScope>
@@ -163,7 +163,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>SNIX;SNI_BASED_CLIENT;__fastcall=__cdecl;_fastcall=__cdecl</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>D:\OOBSqlClient\Microsoft.Data.SqlClient\src\SNI\include;D:\OOBSqlClient\Microsoft.Data.SqlClient\src\SNI\src;D:\OOBSqlClient\Microsoft.Data.SqlClient\src\BID\INC;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\SNI\include;..\SNI\src;..\BID\INC;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>Async</ExceptionHandling>
       <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
       <ForceConformanceInForLoopScope>false</ForceConformanceInForLoopScope>
