@@ -7,32 +7,95 @@
       <SolutionDir>$([System.IO.Path]::GetDirectoryName($(MSBuildThisFileDirectory)))\</SolutionDir>
   </PropertyGroup>
   <PropertyGroup>
-    <LinkIncremental>true</LinkIncremental>
+    <LinkIncremental>True</LinkIncremental>
     <OutDir>$(SolutionDir)..\bin\$(Configuration)\$(Platform)\$(MSBuildProjectName)\</OutDir>
     <IntermediateDir>$(SolutionDir)..\intermediate\$(Configuration)\$(Platform)\$(MSBuildProjectName)\</IntermediateDir>
     <IntDir>$(IntermediateDir)</IntDir>
   </PropertyGroup>
+
+  <!-- Begin Generate Debug Symbols -->
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
+      <DebugType>full</DebugType>
+      <DebugSymbols>True</DebugSymbols>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
+      <DebugType>pdbonly</DebugType>
+      <DebugSymbols>True</DebugSymbols>
+  </PropertyGroup>
+  <!-- End Generate Debug Symbols -->
+
   <Target Name="DisplayMessages">  
       <Message Text="Solution Dir = $(SolutionDir)" />  
       <Message Text="Project Extension = $(MSBuildProjectName)" />  
   </Target>
+  
   <ItemDefinitionGroup>
     <ClCompile>
-      <Optimization>Disabled</Optimization>
+      <DiagnosticsFormat>Caret</DiagnosticsFormat>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <SuppressStartupBanner>True</SuppressStartupBanner>
       <WarningLevel>Level3</WarningLevel>
-      <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
-      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <PreprocessorDefinitions>_UNICODE;UNICODE;_CRT_STDIO_LEGACY_WIDE_SPECIFIERS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ForceConformanceInForLoopScope>false</ForceConformanceInForLoopScope>
+      <TreatWarningAsError>True</TreatWarningAsError>
+      <OmitFramePointers>False</OmitFramePointers>
+      <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
+      <StringPooling>True</StringPooling>
+      <MinimalRebuild>False</MinimalRebuild>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <StructMemberAlignment>8Bytes</StructMemberAlignment>
-      <DisableSpecificWarnings>4960;4961;4603;4627;4838;4456;4457;4458;4459;4091;4996;4703;%(DisableSpecificWarnings)</DisableSpecificWarnings>
-      <CallingConvention>FastCall</CallingConvention>
+      <BufferSecurityCheck>True</BufferSecurityCheck>
+      <FunctionLevelLinking>True</FunctionLevelLinking>
+      <TreatWChar_tAsBuiltInType>False</TreatWChar_tAsBuiltInType>
+      <ForceConformanceInForLoopScope>False</ForceConformanceInForLoopScope>
+      <RuntimeTypeInfo>False</RuntimeTypeInfo>
+      <CompileAs>CompileAsCpp</CompileAs>
+      <UseFullPaths>True</UseFullPaths>
+      <OmitDefaultLibName>True</OmitDefaultLibName>
+      <RemoveUnreferencedCodeData>False</RemoveUnreferencedCodeData>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <CallingConvention>StdCall</CallingConvention>
+      <AdditionalOptions>/Zo /d2guard4 /d2guardcfgfuncptr /d2nocfgrngchk</AdditionalOptions>
+      <DisableSpecificWarnings>4091;4267;4456;4457;4458;4459;4603;4627;4838;4960;4961;</DisableSpecificWarnings>
+      <PreprocessorDefinitions>_CRT_STDIO_LEGACY_WIDE_SPECIFIERS;DEV10;WIN32;NT_UP=1;DEVL=1;_WIN32_WINNT=0x0600;_WIN32_IE=0x0900;WINNT=1;NT_INST=0;CONDITION_HANDLING=1;NTDDI_VERSION=NTDDI_VISTA</PreprocessorDefinitions>
     </ClCompile>
     <Lib>
-      <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
-      <Verbose>true</Verbose>
+      <IgnoreAllDefaultLibraries>True</IgnoreAllDefaultLibraries>
+      <Verbose>True</Verbose>
       <AdditionalOptions>/IGNORE:4070,4221 %(AdditionalOptions)</AdditionalOptions>
     </Lib>
+    </ItemDefinitionGroup> 
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <EnableEnhancedInstructionSet>NoExtensions</EnableEnhancedInstructionSet>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);FPO=1;STD_CALL;_X86_=1;i386=1;</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <Optimization>Full</Optimization>
+      <EnableEnhancedInstructionSet>NoExtensions</EnableEnhancedInstructionSet>
+      <WholeProgramOptimization>True</WholeProgramOptimization>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);FPO=1;STD_CALL;_X86_=1;i386=1;NDEBUG</PreprocessorDefinitions>
+      <DisableSpecificWarnings>4951;4952;4953;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+  </ItemDefinitionGroup>
+
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+       <PreprocessorDefinitions>%(PreprocessorDefinitions);_AMD64_;_AMD64_SIMULATOR_;_AMD64_SIMULATOR_PERF_;_AMD64_WORKAROUND_;_WIN64;AMD64;_SKIP_IF_SIMULATOR_</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <Optimization>Full</Optimization>
+      <WholeProgramOptimization>True</WholeProgramOptimization>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);_AMD64_;_AMD64_SIMULATOR_;_AMD64_SIMULATOR_PERF_;_AMD64_WORKAROUND_;_WIN64;AMD64;_SKIP_IF_SIMULATOR_;NDEBUG</PreprocessorDefinitions>
+      <DisableSpecificWarnings>4951;4952;4953;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup />
 </Project>

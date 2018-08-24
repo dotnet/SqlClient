@@ -924,8 +924,11 @@ DWORD SNIxInitialize()
 	// Are we running under NT or Win9x?
 	OSVERSIONINFO VersionInformation;
 	VersionInformation.dwOSVersionInfoSize = sizeof( OSVERSIONINFO );
-
+// warning C4996: 'GetVersionExW': was declared deprecated
+// Deprecated. Use VerifyVersionInfo* or IsWindows* macros from VersionHelpers.
+#pragma warning( disable : 4996 )
 	if( GetVersionEx(&VersionInformation) ==  TRUE )
+#pragma warning( default : 4996 )
 	{
 		if( VersionInformation.dwPlatformId == VER_PLATFORM_WIN32_NT )
 			gfIsWin9x = FALSE;
@@ -1276,8 +1279,11 @@ DWORD SNIInitializeEx(void * pmo,
 	}
 
 	g_osviSNI.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-
+// warning C4996: 'GetVersionExW': was declared deprecated
+// Deprecated. Use VerifyVersionInfo* or IsWindows* macros from VersionHelpers.
+#pragma warning( disable : 4996 )
 	if( !GetVersionEx( &g_osviSNI ) )
+#pragma warning( default : 4996 )
 	{
 		dwError = GetLastError();
 

@@ -4563,8 +4563,11 @@ DWORD Ssl::LoadSecurityLibrary()
 	OSVERSIONINFO osvi;
 
 	osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-	
+// warning C4996: 'GetVersionExW': was declared deprecated
+// Deprecated. Use VerifyVersionInfo* or IsWindows* macros from VersionHelpers.
+#pragma warning( disable : 4996 )
 	if( !GetVersionEx( &osvi ) )
+#pragma warning( default: 4996 )
 	{
 		dwRet = GetLastError();
 
