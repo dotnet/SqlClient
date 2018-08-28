@@ -13,6 +13,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NLRegCW", "SNI\NLRegC\unico
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SNIManagedWrapper", "managedwrapper\SNIManagedWrapper.vcxproj", "{7905527B-E689-4AA9-AEE2-CE200E804311}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Data.SqlClient", "Microsoft.Data.SqlClient\netcore\src\Microsoft.Data.SqlClient.csproj", "{37431336-5307-4184-9356-C4B7E47DC714}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -73,6 +75,18 @@ Global
 		{7905527B-E689-4AA9-AEE2-CE200E804311}.Release|x64.Build.0 = Release|x64
 		{7905527B-E689-4AA9-AEE2-CE200E804311}.Release|x86.ActiveCfg = Release|Win32
 		{7905527B-E689-4AA9-AEE2-CE200E804311}.Release|x86.Build.0 = Release|Win32
+		{37431336-5307-4184-9356-C4B7E47DC714}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{37431336-5307-4184-9356-C4B7E47DC714}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{37431336-5307-4184-9356-C4B7E47DC714}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{37431336-5307-4184-9356-C4B7E47DC714}.Debug|x64.Build.0 = Debug|Any CPU
+		{37431336-5307-4184-9356-C4B7E47DC714}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{37431336-5307-4184-9356-C4B7E47DC714}.Debug|x86.Build.0 = Debug|Any CPU
+		{37431336-5307-4184-9356-C4B7E47DC714}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{37431336-5307-4184-9356-C4B7E47DC714}.Release|Any CPU.Build.0 = Release|Any CPU
+		{37431336-5307-4184-9356-C4B7E47DC714}.Release|x64.ActiveCfg = Release|Any CPU
+		{37431336-5307-4184-9356-C4B7E47DC714}.Release|x64.Build.0 = Release|Any CPU
+		{37431336-5307-4184-9356-C4B7E47DC714}.Release|x86.ActiveCfg = Release|Any CPU
+		{37431336-5307-4184-9356-C4B7E47DC714}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

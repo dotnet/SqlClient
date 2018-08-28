@@ -41,3 +41,4 @@ intermediate/
 msbuild.log
 *.user
 bin/
+obj/
