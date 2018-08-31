@@ -2,33 +2,33 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup />
+  
   <PropertyGroup>
       <SolutionDir>$([System.IO.Path]::GetDirectoryName($(MSBuildThisFileDirectory)))\</SolutionDir>
   </PropertyGroup>
   <PropertyGroup>
-    <LinkIncremental>True</LinkIncremental>
     <OutDir>$(SolutionDir)..\bin\$(Configuration)\$(Platform)\$(MSBuildProjectName)\</OutDir>
     <IntermediateDir>$(SolutionDir)..\intermediate\$(Configuration)\$(Platform)\$(MSBuildProjectName)\</IntermediateDir>
     <IntDir>$(IntermediateDir)</IntDir>
   </PropertyGroup>
 
-  <!-- Begin Generate Debug Symbols -->
   <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
-      <DebugType>full</DebugType>
-      <DebugSymbols>True</DebugSymbols>
+    <DebugType>Full</DebugType>
+    <DebugSymbols>True</DebugSymbols>
+    <LinkIncremental>True</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
-      <DebugType>pdbonly</DebugType>
-      <DebugSymbols>True</DebugSymbols>
+    <DebugType>Pdbonly</DebugType>
+    <DebugSymbols>True</DebugSymbols>
+    <LinkIncremental>False</LinkIncremental>
   </PropertyGroup>
-  <!-- End Generate Debug Symbols -->
 
   <Target Name="DisplayMessages">  
-      <Message Text="Solution Dir = $(SolutionDir)" />  
-      <Message Text="Project Extension = $(MSBuildProjectName)" />  
+    <Message Text="Solution Dir = $(SolutionDir)" />  
+    <Message Text="Project Extension = $(MSBuildProjectName)" />  
   </Target>
   
+  <!-- Begin Section Common Properties for all projects -->
   <ItemDefinitionGroup>
     <ClCompile>
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
@@ -60,16 +60,25 @@
     </ClCompile>
     <Lib>
       <IgnoreAllDefaultLibraries>True</IgnoreAllDefaultLibraries>
-      <Verbose>True</Verbose>
+      <Verbose>False</Verbose>
       <AdditionalOptions>/IGNORE:4070,4221 %(AdditionalOptions)</AdditionalOptions>
     </Lib>
     </ItemDefinitionGroup> 
+    <!-- End Section Common Properties for all projects -->
+
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <EnableEnhancedInstructionSet>NoExtensions</EnableEnhancedInstructionSet>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);FPO=1;STD_CALL;_X86_=1;i386=1;</PreprocessorDefinitions>
     </ClCompile>
+    <Lib>
+      <TargetMachine>MachineX86</TargetMachine>
+      <AdditionalOptions>/SUBSYSTEM:CONSOLE,"5.01" %(AdditionalOptions)</AdditionalOptions>
+    </Lib>
+    <Link>
+      <GenerateDebugInformation>True</GenerateDebugInformation>
+    </Link>
   </ItemDefinitionGroup>
 
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -80,6 +89,15 @@
       <PreprocessorDefinitions>%(PreprocessorDefinitions);FPO=1;STD_CALL;_X86_=1;i386=1;NDEBUG</PreprocessorDefinitions>
       <DisableSpecificWarnings>4951;4952;4953;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
+    <Lib>
+      <TargetMachine>MachineX86</TargetMachine>
+      <AdditionalOptions>/SUBSYSTEM:CONSOLE,"5.01" %(AdditionalOptions)</AdditionalOptions>
+    </Lib>
+    <Link>
+      <EnableCOMDATFolding>True</EnableCOMDATFolding>
+      <OptimizeReferences>True</OptimizeReferences>
+      <GenerateDebugInformation>True</GenerateDebugInformation>
+    </Link>
   </ItemDefinitionGroup>
 
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -87,15 +105,32 @@
       <Optimization>Disabled</Optimization>
        <PreprocessorDefinitions>%(PreprocessorDefinitions);_AMD64_;_AMD64_SIMULATOR_;_AMD64_SIMULATOR_PERF_;_AMD64_WORKAROUND_;_WIN64;AMD64;_SKIP_IF_SIMULATOR_</PreprocessorDefinitions>
     </ClCompile>
+    <Lib>
+      <TargetMachine>MachineX64</TargetMachine>
+      <AdditionalOptions>/SUBSYSTEM:CONSOLE,"6.00" %(AdditionalOptions)</AdditionalOptions>
+    </Lib>
+    <Link>
+      <GenerateDebugInformation>True</GenerateDebugInformation>
+    </Link>
   </ItemDefinitionGroup>
 
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <Optimization>Full</Optimization>
+      <Optimization >Full</Optimization>
       <WholeProgramOptimization>True</WholeProgramOptimization>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);_AMD64_;_AMD64_SIMULATOR_;_AMD64_SIMULATOR_PERF_;_AMD64_WORKAROUND_;_WIN64;AMD64;_SKIP_IF_SIMULATOR_;NDEBUG</PreprocessorDefinitions>
       <DisableSpecificWarnings>4951;4952;4953;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
+    <Lib>
+      <TargetMachine>MachineX64</TargetMachine>
+      <AdditionalOptions>/SUBSYSTEM:CONSOLE,"6.00" %(AdditionalOptions)</AdditionalOptions>
+    </Lib>
+    <Link>
+      <EnableCOMDATFolding>True</EnableCOMDATFolding>
+      <OptimizeReferences>True</OptimizeReferences>
+      <GenerateDebugInformation>True</GenerateDebugInformation>
+    </Link>
   </ItemDefinitionGroup>
+  
   <ItemGroup />
 </Project>
