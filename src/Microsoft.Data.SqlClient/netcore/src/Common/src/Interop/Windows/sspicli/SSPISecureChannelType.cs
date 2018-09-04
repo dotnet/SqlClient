@@ -7,6 +7,8 @@ using System.Runtime.InteropServices;
 
 namespace System.Net
 {
+    using SR = Strings;
+
     // Schannel SSPI interface.
     internal class SSPISecureChannelType : SSPIInterface
     {
@@ -128,7 +130,7 @@ namespace System.Net
                 }
                 else
                 {
-                    throw new ArgumentException(SR.Format(SR.SSPIInvalidHandleType, handleType.FullName), nameof(handleType));
+                    throw new ArgumentException(System.SR.Format(SR.SSPIInvalidHandleType, handleType.FullName), nameof(handleType));
                 }
             }
             fixed (byte* bufferPtr = buffer)

@@ -17,6 +17,8 @@ using System.Transactions;
 
 namespace Microsoft.Data.Common
 {
+    using SR = System.Strings;
+
     internal static partial class ADP
     {
         // NOTE: Initializing a Task in SQL CLR requires the "UNSAFE" permission set (http://msdn.microsoft.com/en-us/library/ms172338.aspx)
@@ -189,7 +191,7 @@ namespace Microsoft.Data.Common
 
         internal static ArgumentOutOfRangeException NotSupportedEnumerationValue(Type type, string value, string method)
         {
-            return ArgumentOutOfRange(SR.Format(SR.ADP_NotSupportedEnumerationValue, type.Name, value, method), type.Name);
+            return ArgumentOutOfRange(System.SR.Format(SR.ADP_NotSupportedEnumerationValue, type.Name, value, method), type.Name);
         }
 
         internal static InvalidOperationException DataAdapter(string error)
@@ -204,21 +206,21 @@ namespace Microsoft.Data.Common
 
         internal static ArgumentException InvalidMultipartName(string property, string value)
         {
-            ArgumentException e = new ArgumentException(SR.Format(SR.ADP_InvalidMultipartName, property, value));
+            ArgumentException e = new ArgumentException(System.SR.Format(SR.ADP_InvalidMultipartName, property, value));
             TraceExceptionAsReturnValue(e);
             return e;
         }
 
         internal static ArgumentException InvalidMultipartNameIncorrectUsageOfQuotes(string property, string value)
         {
-            ArgumentException e = new ArgumentException(SR.Format(SR.ADP_InvalidMultipartNameQuoteUsage, property, value));
+            ArgumentException e = new ArgumentException(System.SR.Format(SR.ADP_InvalidMultipartNameQuoteUsage, property, value));
             TraceExceptionAsReturnValue(e);
             return e;
         }
 
         internal static ArgumentException InvalidMultipartNameToManyParts(string property, string value, int limit)
         {
-            ArgumentException e = new ArgumentException(SR.Format(SR.ADP_InvalidMultipartNameToManyParts, property, value, limit));
+            ArgumentException e = new ArgumentException(System.SR.Format(SR.ADP_InvalidMultipartNameToManyParts, property, value, limit));
             TraceExceptionAsReturnValue(e);
             return e;
         }
@@ -275,7 +277,7 @@ namespace Microsoft.Data.Common
         // Invalid Enumeration
         internal static ArgumentOutOfRangeException InvalidEnumerationValue(Type type, int value)
         {
-            return ArgumentOutOfRange(SR.Format(SR.ADP_InvalidEnumerationValue, type.Name, value.ToString(CultureInfo.InvariantCulture)), type.Name);
+            return ArgumentOutOfRange(System.SR.Format(SR.ADP_InvalidEnumerationValue, type.Name, value.ToString(CultureInfo.InvariantCulture)), type.Name);
         }
 
         //
@@ -283,15 +285,15 @@ namespace Microsoft.Data.Common
         //
         internal static ArgumentException ConnectionStringSyntax(int index)
         {
-            return Argument(SR.Format(SR.ADP_ConnectionStringSyntax, index));
+            return Argument(System.SR.Format(SR.ADP_ConnectionStringSyntax, index));
         }
         internal static ArgumentException KeywordNotSupported(string keyword)
         {
-            return Argument(SR.Format(SR.ADP_KeywordNotSupported, keyword));
+            return Argument(System.SR.Format(SR.ADP_KeywordNotSupported, keyword));
         }
         internal static ArgumentException ConvertFailed(Type fromType, Type toType, Exception innerException)
         {
-            return ADP.Argument(SR.Format(SR.SqlConvert_ConvertFailed, fromType.FullName, toType.FullName), innerException);
+            return ADP.Argument(System.SR.Format(SR.SqlConvert_ConvertFailed, fromType.FullName, toType.FullName), innerException);
         }
 
         //
@@ -303,7 +305,7 @@ namespace Microsoft.Data.Common
         }
         internal static Exception InvalidConnectionOptionValue(string key, Exception inner)
         {
-            return Argument(SR.Format(SR.ADP_InvalidConnectionOptionValue, key), inner);
+            return Argument(System.SR.Format(SR.ADP_InvalidConnectionOptionValue, key), inner);
         }
 
         //
@@ -311,23 +313,23 @@ namespace Microsoft.Data.Common
         //
         internal static ArgumentException CollectionRemoveInvalidObject(Type itemType, ICollection collection)
         {
-            return Argument(SR.Format(SR.ADP_CollectionRemoveInvalidObject, itemType.Name, collection.GetType().Name));
+            return Argument(System.SR.Format(SR.ADP_CollectionRemoveInvalidObject, itemType.Name, collection.GetType().Name));
         }
         internal static ArgumentNullException CollectionNullValue(string parameter, Type collection, Type itemType)
         {
-            return ArgumentNull(parameter, SR.Format(SR.ADP_CollectionNullValue, collection.Name, itemType.Name));
+            return ArgumentNull(parameter, System.SR.Format(SR.ADP_CollectionNullValue, collection.Name, itemType.Name));
         }
         internal static IndexOutOfRangeException CollectionIndexInt32(int index, Type collection, int count)
         {
-            return IndexOutOfRange(SR.Format(SR.ADP_CollectionIndexInt32, index.ToString(CultureInfo.InvariantCulture), collection.Name, count.ToString(CultureInfo.InvariantCulture)));
+            return IndexOutOfRange(System.SR.Format(SR.ADP_CollectionIndexInt32, index.ToString(CultureInfo.InvariantCulture), collection.Name, count.ToString(CultureInfo.InvariantCulture)));
         }
         internal static IndexOutOfRangeException CollectionIndexString(Type itemType, string propertyName, string propertyValue, Type collection)
         {
-            return IndexOutOfRange(SR.Format(SR.ADP_CollectionIndexString, itemType.Name, propertyName, propertyValue, collection.Name));
+            return IndexOutOfRange(System.SR.Format(SR.ADP_CollectionIndexString, itemType.Name, propertyName, propertyValue, collection.Name));
         }
         internal static InvalidCastException CollectionInvalidType(Type collection, Type itemType, object invalidValue)
         {
-            return InvalidCast(SR.Format(SR.ADP_CollectionInvalidType, collection.Name, itemType.Name, invalidValue.GetType().Name));
+            return InvalidCast(System.SR.Format(SR.ADP_CollectionInvalidType, collection.Name, itemType.Name, invalidValue.GetType().Name));
         }
 
         //
@@ -349,7 +351,7 @@ namespace Microsoft.Data.Common
                 case (ConnectionState.Open | ConnectionState.Fetching):
                     return SR.ADP_ConnectionStateMsg_OpenFetching;
                 default:
-                    return SR.Format(SR.ADP_ConnectionStateMsg, state.ToString());
+                    return System.SR.Format(SR.ADP_ConnectionStateMsg, state.ToString());
             }
         }
 
@@ -358,7 +360,7 @@ namespace Microsoft.Data.Common
         //
         internal static Exception StreamClosed([CallerMemberName] string method = "")
         {
-            return InvalidOperation(SR.Format(SR.ADP_StreamClosed, method));
+            return InvalidOperation(System.SR.Format(SR.ADP_StreamClosed, method));
         }
 
         internal static string BuildQuotedString(string quotePrefix, string quoteSuffix, string unQuotedString)
@@ -388,11 +390,11 @@ namespace Microsoft.Data.Common
         //
         internal static ArgumentException ParametersIsNotParent(Type parameterType, ICollection collection)
         {
-            return Argument(SR.Format(SR.ADP_CollectionIsNotParent, parameterType.Name, collection.GetType().Name));
+            return Argument(System.SR.Format(SR.ADP_CollectionIsNotParent, parameterType.Name, collection.GetType().Name));
         }
         internal static ArgumentException ParametersIsParent(Type parameterType, ICollection collection)
         {
-            return Argument(SR.Format(SR.ADP_CollectionIsNotParent, parameterType.Name, collection.GetType().Name));
+            return Argument(System.SR.Format(SR.ADP_CollectionIsNotParent, parameterType.Name, collection.GetType().Name));
         }
 
 
@@ -438,7 +440,7 @@ namespace Microsoft.Data.Common
 
         internal static Exception InternalError(InternalErrorCode internalError)
         {
-            return InvalidOperation(SR.Format(SR.ADP_InternalProviderError, (int)internalError));
+            return InvalidOperation(System.SR.Format(SR.ADP_InternalProviderError, (int)internalError));
         }
 
         //
@@ -446,23 +448,23 @@ namespace Microsoft.Data.Common
         //
         internal static Exception DataReaderClosed([CallerMemberName] string method = "")
         {
-            return InvalidOperation(SR.Format(SR.ADP_DataReaderClosed, method));
+            return InvalidOperation(System.SR.Format(SR.ADP_DataReaderClosed, method));
         }
         internal static ArgumentOutOfRangeException InvalidSourceBufferIndex(int maxLen, long srcOffset, string parameterName)
         {
-            return ArgumentOutOfRange(SR.Format(SR.ADP_InvalidSourceBufferIndex, maxLen.ToString(CultureInfo.InvariantCulture), srcOffset.ToString(CultureInfo.InvariantCulture)), parameterName);
+            return ArgumentOutOfRange(System.SR.Format(SR.ADP_InvalidSourceBufferIndex, maxLen.ToString(CultureInfo.InvariantCulture), srcOffset.ToString(CultureInfo.InvariantCulture)), parameterName);
         }
         internal static ArgumentOutOfRangeException InvalidDestinationBufferIndex(int maxLen, int dstOffset, string parameterName)
         {
-            return ArgumentOutOfRange(SR.Format(SR.ADP_InvalidDestinationBufferIndex, maxLen.ToString(CultureInfo.InvariantCulture), dstOffset.ToString(CultureInfo.InvariantCulture)), parameterName);
+            return ArgumentOutOfRange(System.SR.Format(SR.ADP_InvalidDestinationBufferIndex, maxLen.ToString(CultureInfo.InvariantCulture), dstOffset.ToString(CultureInfo.InvariantCulture)), parameterName);
         }
         internal static IndexOutOfRangeException InvalidBufferSizeOrIndex(int numBytes, int bufferIndex)
         {
-            return IndexOutOfRange(SR.Format(SR.SQL_InvalidBufferSizeOrIndex, numBytes.ToString(CultureInfo.InvariantCulture), bufferIndex.ToString(CultureInfo.InvariantCulture)));
+            return IndexOutOfRange(System.SR.Format(SR.SQL_InvalidBufferSizeOrIndex, numBytes.ToString(CultureInfo.InvariantCulture), bufferIndex.ToString(CultureInfo.InvariantCulture)));
         }
         internal static Exception InvalidDataLength(long length)
         {
-            return IndexOutOfRange(SR.Format(SR.SQL_InvalidDataLength, length.ToString(CultureInfo.InvariantCulture)));
+            return IndexOutOfRange(System.SR.Format(SR.SQL_InvalidDataLength, length.ToString(CultureInfo.InvariantCulture)));
         }
 
         internal static bool CompareInsensitiveInvariant(string strvalue, string strconst) =>

@@ -18,6 +18,8 @@ using System.Data;
 
 namespace Microsoft.Data.SqlClient
 {
+    using SR = System.Strings;
+
     internal static class AsyncHelper
     {
         internal static Task CreateContinuationTask(Task task, Action onSuccess, SqlInternalConnectionTds connectionToDoom = null, Action<Exception> onFailure = null)
@@ -164,7 +166,7 @@ namespace Microsoft.Data.SqlClient
         //
         internal static Exception CannotGetDTCAddress()
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SQL_CannotGetDTCAddress));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SQL_CannotGetDTCAddress));
         }
 
         internal static Exception InvalidInternalPacketSize(string str)
@@ -173,59 +175,59 @@ namespace Microsoft.Data.SqlClient
         }
         internal static Exception InvalidPacketSize()
         {
-            return ADP.ArgumentOutOfRange(SR.GetString(SR.SQL_InvalidTDSPacketSize));
+            return ADP.ArgumentOutOfRange(System.SR.GetString(SR.SQL_InvalidTDSPacketSize));
         }
         internal static Exception InvalidPacketSizeValue()
         {
-            return ADP.Argument(SR.GetString(SR.SQL_InvalidPacketSizeValue));
+            return ADP.Argument(System.SR.GetString(SR.SQL_InvalidPacketSizeValue));
         }
         internal static Exception InvalidSSPIPacketSize()
         {
-            return ADP.Argument(SR.GetString(SR.SQL_InvalidSSPIPacketSize));
+            return ADP.Argument(System.SR.GetString(SR.SQL_InvalidSSPIPacketSize));
         }
         internal static Exception NullEmptyTransactionName()
         {
-            return ADP.Argument(SR.GetString(SR.SQL_NullEmptyTransactionName));
+            return ADP.Argument(System.SR.GetString(SR.SQL_NullEmptyTransactionName));
         }
         internal static Exception UserInstanceFailoverNotCompatible()
         {
-            return ADP.Argument(SR.GetString(SR.SQL_UserInstanceFailoverNotCompatible));
+            return ADP.Argument(System.SR.GetString(SR.SQL_UserInstanceFailoverNotCompatible));
         }
         internal static Exception ParsingErrorLibraryType(ParsingErrorState state, int libraryType)
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SQL_ParsingErrorAuthLibraryType, ((int)state).ToString(CultureInfo.InvariantCulture), libraryType));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SQL_ParsingErrorAuthLibraryType, ((int)state).ToString(CultureInfo.InvariantCulture), libraryType));
         }       
         internal static Exception InvalidSQLServerVersionUnknown()
         {
-            return ADP.DataAdapter(SR.GetString(SR.SQL_InvalidSQLServerVersionUnknown));
+            return ADP.DataAdapter(System.SR.GetString(SR.SQL_InvalidSQLServerVersionUnknown));
         }
         internal static Exception SynchronousCallMayNotPend()
         {
-            return new Exception(SR.GetString(SR.Sql_InternalError));
+            return new Exception(System.SR.GetString(SR.Sql_InternalError));
         }
         internal static Exception ConnectionLockedForBcpEvent()
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SQL_ConnectionLockedForBcpEvent));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SQL_ConnectionLockedForBcpEvent));
         }
         internal static Exception InstanceFailure()
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SQL_InstanceFailure));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SQL_InstanceFailure));
         }
         internal static Exception ChangePasswordArgumentMissing(string argumentName)
         {
-            return ADP.ArgumentNull(SR.GetString(SR.SQL_ChangePasswordArgumentMissing, argumentName));
+            return ADP.ArgumentNull(System.SR.GetString(SR.SQL_ChangePasswordArgumentMissing, argumentName));
         }
         internal static Exception ChangePasswordConflictsWithSSPI()
         {
-            return ADP.Argument(SR.GetString(SR.SQL_ChangePasswordConflictsWithSSPI));
+            return ADP.Argument(System.SR.GetString(SR.SQL_ChangePasswordConflictsWithSSPI));
         }
         internal static Exception ChangePasswordRequiresYukon()
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SQL_ChangePasswordRequiresYukon));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SQL_ChangePasswordRequiresYukon));
         }
         static internal Exception ChangePasswordUseOfUnallowedKey(string key)
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SQL_ChangePasswordUseOfUnallowedKey, key));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SQL_ChangePasswordUseOfUnallowedKey, key));
         }
 
         //
@@ -233,30 +235,30 @@ namespace Microsoft.Data.SqlClient
         //
         internal static Exception GlobalTransactionsNotEnabled()
         {
-            return ADP.InvalidOperation(SR.GetString(SR.GT_Disabled));
+            return ADP.InvalidOperation(System.SR.GetString(SR.GT_Disabled));
         }
         internal static Exception UnknownSysTxIsolationLevel(System.Transactions.IsolationLevel isolationLevel)
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SQL_UnknownSysTxIsolationLevel, isolationLevel.ToString()));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SQL_UnknownSysTxIsolationLevel, isolationLevel.ToString()));
         }
 
 
         internal static Exception InvalidPartnerConfiguration(string server, string database)
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SQL_InvalidPartnerConfiguration, server, database));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SQL_InvalidPartnerConfiguration, server, database));
         }
         internal static Exception MARSUnspportedOnConnection()
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SQL_MarsUnsupportedOnConnection));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SQL_MarsUnsupportedOnConnection));
         }
 
         internal static Exception CannotModifyPropertyAsyncOperationInProgress([CallerMemberName] string property = "")
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SQL_CannotModifyPropertyAsyncOperationInProgress, property));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SQL_CannotModifyPropertyAsyncOperationInProgress, property));
         }
         internal static Exception NonLocalSSEInstance()
         {
-            return ADP.NotSupported(SR.GetString(SR.SQL_NonLocalSSEInstance));
+            return ADP.NotSupported(System.SR.GetString(SR.SQL_NonLocalSSEInstance));
         }
         //
         // SQL.DataCommand
@@ -264,7 +266,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static ArgumentOutOfRangeException NotSupportedEnumerationValue(Type type, int value)
         {
-            return ADP.ArgumentOutOfRange(SR.GetString(SR.SQL_NotSupportedEnumerationValue, type.Name, value.ToString(System.Globalization.CultureInfo.InvariantCulture)), type.Name);
+            return ADP.ArgumentOutOfRange(System.SR.GetString(SR.SQL_NotSupportedEnumerationValue, type.Name, value.ToString(System.Globalization.CultureInfo.InvariantCulture)), type.Name);
         }
 
         internal static ArgumentOutOfRangeException NotSupportedCommandType(CommandType value)
@@ -310,23 +312,23 @@ namespace Microsoft.Data.SqlClient
 
         internal static Exception OperationCancelled()
         {
-            Exception exception = ADP.InvalidOperation(SR.GetString(SR.SQL_OperationCancelled));
+            Exception exception = ADP.InvalidOperation(System.SR.GetString(SR.SQL_OperationCancelled));
             return exception;
         }
 
         internal static Exception PendingBeginXXXExists()
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SQL_PendingBeginXXXExists));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SQL_PendingBeginXXXExists));
         }
 
         internal static ArgumentOutOfRangeException InvalidSqlDependencyTimeout(string param)
         {
-            return ADP.ArgumentOutOfRange(SR.GetString(SR.SqlDependency_InvalidTimeout), param);
+            return ADP.ArgumentOutOfRange(System.SR.GetString(SR.SqlDependency_InvalidTimeout), param);
         }
 
         internal static Exception NonXmlResult()
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SQL_NonXmlResult));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SQL_NonXmlResult));
         }
 
         //
@@ -334,27 +336,27 @@ namespace Microsoft.Data.SqlClient
         //
         internal static Exception InvalidUdt3PartNameFormat()
         {
-            return ADP.Argument(SR.GetString(SR.SQL_InvalidUdt3PartNameFormat));
+            return ADP.Argument(System.SR.GetString(SR.SQL_InvalidUdt3PartNameFormat));
         }
         internal static Exception InvalidParameterTypeNameFormat()
         {
-            return ADP.Argument(SR.GetString(SR.SQL_InvalidParameterTypeNameFormat));
+            return ADP.Argument(System.SR.GetString(SR.SQL_InvalidParameterTypeNameFormat));
         }
         internal static Exception InvalidParameterNameLength(string value)
         {
-            return ADP.Argument(SR.GetString(SR.SQL_InvalidParameterNameLength, value));
+            return ADP.Argument(System.SR.GetString(SR.SQL_InvalidParameterNameLength, value));
         }
         internal static Exception PrecisionValueOutOfRange(byte precision)
         {
-            return ADP.Argument(SR.GetString(SR.SQL_PrecisionValueOutOfRange, precision.ToString(CultureInfo.InvariantCulture)));
+            return ADP.Argument(System.SR.GetString(SR.SQL_PrecisionValueOutOfRange, precision.ToString(CultureInfo.InvariantCulture)));
         }
         internal static Exception ScaleValueOutOfRange(byte scale)
         {
-            return ADP.Argument(SR.GetString(SR.SQL_ScaleValueOutOfRange, scale.ToString(CultureInfo.InvariantCulture)));
+            return ADP.Argument(System.SR.GetString(SR.SQL_ScaleValueOutOfRange, scale.ToString(CultureInfo.InvariantCulture)));
         }
         internal static Exception TimeScaleValueOutOfRange(byte scale)
         {
-            return ADP.Argument(SR.GetString(SR.SQL_TimeScaleValueOutOfRange, scale.ToString(CultureInfo.InvariantCulture)));
+            return ADP.Argument(System.SR.GetString(SR.SQL_TimeScaleValueOutOfRange, scale.ToString(CultureInfo.InvariantCulture)));
         }
         internal static Exception InvalidSqlDbType(SqlDbType value)
         {
@@ -362,41 +364,41 @@ namespace Microsoft.Data.SqlClient
         }
         internal static Exception UnsupportedTVPOutputParameter(ParameterDirection direction, string paramName)
         {
-            return ADP.NotSupported(SR.GetString(SR.SqlParameter_UnsupportedTVPOutputParameter,
+            return ADP.NotSupported(System.SR.GetString(SR.SqlParameter_UnsupportedTVPOutputParameter,
                         direction.ToString(), paramName));
         }
         internal static Exception DBNullNotSupportedForTVPValues(string paramName)
         {
-            return ADP.NotSupported(SR.GetString(SR.SqlParameter_DBNullNotSupportedForTVP, paramName));
+            return ADP.NotSupported(System.SR.GetString(SR.SqlParameter_DBNullNotSupportedForTVP, paramName));
         }
         internal static Exception UnexpectedTypeNameForNonStructParams(string paramName)
         {
-            return ADP.NotSupported(SR.GetString(SR.SqlParameter_UnexpectedTypeNameForNonStruct, paramName));
+            return ADP.NotSupported(System.SR.GetString(SR.SqlParameter_UnexpectedTypeNameForNonStruct, paramName));
         }
         internal static Exception ParameterInvalidVariant(string paramName)
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SQL_ParameterInvalidVariant, paramName));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SQL_ParameterInvalidVariant, paramName));
         }
 
         internal static Exception MustSetTypeNameForParam(string paramType, string paramName)
         {
-            return ADP.Argument(SR.GetString(SR.SQL_ParameterTypeNameRequired, paramType, paramName));
+            return ADP.Argument(System.SR.GetString(SR.SQL_ParameterTypeNameRequired, paramType, paramName));
         }
         internal static Exception NullSchemaTableDataTypeNotSupported(string columnName)
         {
-            return ADP.Argument(SR.GetString(SR.NullSchemaTableDataTypeNotSupported, columnName));
+            return ADP.Argument(System.SR.GetString(SR.NullSchemaTableDataTypeNotSupported, columnName));
         }
         internal static Exception InvalidSchemaTableOrdinals()
         {
-            return ADP.Argument(SR.GetString(SR.InvalidSchemaTableOrdinals));
+            return ADP.Argument(System.SR.GetString(SR.InvalidSchemaTableOrdinals));
         }
         internal static Exception EnumeratedRecordMetaDataChanged(string fieldName, int recordNumber)
         {
-            return ADP.Argument(SR.GetString(SR.SQL_EnumeratedRecordMetaDataChanged, fieldName, recordNumber));
+            return ADP.Argument(System.SR.GetString(SR.SQL_EnumeratedRecordMetaDataChanged, fieldName, recordNumber));
         }
         internal static Exception EnumeratedRecordFieldCountChanged(int recordNumber)
         {
-            return ADP.Argument(SR.GetString(SR.SQL_EnumeratedRecordFieldCountChanged, recordNumber));
+            return ADP.Argument(System.SR.GetString(SR.SQL_EnumeratedRecordFieldCountChanged, recordNumber));
         }
 
         //
@@ -408,39 +410,39 @@ namespace Microsoft.Data.SqlClient
         //
         internal static Exception InvalidTDSVersion()
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SQL_InvalidTDSVersion));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SQL_InvalidTDSVersion));
         }
         internal static Exception ParsingError()
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SQL_ParsingError));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SQL_ParsingError));
         }
         static internal Exception ParsingError(ParsingErrorState state)
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SQL_ParsingErrorWithState, ((int)state).ToString(CultureInfo.InvariantCulture)));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SQL_ParsingErrorWithState, ((int)state).ToString(CultureInfo.InvariantCulture)));
         }
         static internal Exception ParsingErrorValue(ParsingErrorState state, int value)
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SQL_ParsingErrorValue, ((int)state).ToString(CultureInfo.InvariantCulture), value));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SQL_ParsingErrorValue, ((int)state).ToString(CultureInfo.InvariantCulture), value));
         }
         static internal Exception ParsingErrorFeatureId(ParsingErrorState state, int featureId)
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SQL_ParsingErrorFeatureId, ((int)state).ToString(CultureInfo.InvariantCulture), featureId));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SQL_ParsingErrorFeatureId, ((int)state).ToString(CultureInfo.InvariantCulture), featureId));
         }
         internal static Exception MoneyOverflow(string moneyValue)
         {
-            return ADP.Overflow(SR.GetString(SR.SQL_MoneyOverflow, moneyValue));
+            return ADP.Overflow(System.SR.GetString(SR.SQL_MoneyOverflow, moneyValue));
         }
         internal static Exception SmallDateTimeOverflow(string datetime)
         {
-            return ADP.Overflow(SR.GetString(SR.SQL_SmallDateTimeOverflow, datetime));
+            return ADP.Overflow(System.SR.GetString(SR.SQL_SmallDateTimeOverflow, datetime));
         }
         internal static Exception SNIPacketAllocationFailure()
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SQL_SNIPacketAllocationFailure));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SQL_SNIPacketAllocationFailure));
         }
         internal static Exception TimeOverflow(string time)
         {
-            return ADP.Overflow(SR.GetString(SR.SQL_TimeOverflow, time));
+            return ADP.Overflow(System.SR.GetString(SR.SQL_TimeOverflow, time));
         }
 
         //
@@ -448,37 +450,37 @@ namespace Microsoft.Data.SqlClient
         //
         internal static Exception InvalidRead()
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SQL_InvalidRead));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SQL_InvalidRead));
         }
 
         internal static Exception NonBlobColumn(string columnName)
         {
-            return ADP.InvalidCast(SR.GetString(SR.SQL_NonBlobColumn, columnName));
+            return ADP.InvalidCast(System.SR.GetString(SR.SQL_NonBlobColumn, columnName));
         }
 
         internal static Exception NonCharColumn(string columnName)
         {
-            return ADP.InvalidCast(SR.GetString(SR.SQL_NonCharColumn, columnName));
+            return ADP.InvalidCast(System.SR.GetString(SR.SQL_NonCharColumn, columnName));
         }
 
         internal static Exception StreamNotSupportOnColumnType(string columnName)
         {
-            return ADP.InvalidCast(SR.GetString(SR.SQL_StreamNotSupportOnColumnType, columnName));
+            return ADP.InvalidCast(System.SR.GetString(SR.SQL_StreamNotSupportOnColumnType, columnName));
         }
 
         internal static Exception TextReaderNotSupportOnColumnType(string columnName)
         {
-            return ADP.InvalidCast(SR.GetString(SR.SQL_TextReaderNotSupportOnColumnType, columnName));
+            return ADP.InvalidCast(System.SR.GetString(SR.SQL_TextReaderNotSupportOnColumnType, columnName));
         }
 
         internal static Exception XmlReaderNotSupportOnColumnType(string columnName)
         {
-            return ADP.InvalidCast(SR.GetString(SR.SQL_XmlReaderNotSupportOnColumnType, columnName));
+            return ADP.InvalidCast(System.SR.GetString(SR.SQL_XmlReaderNotSupportOnColumnType, columnName));
         }
 
         internal static Exception UDTUnexpectedResult(string exceptionText)
         {
-            return ADP.TypeLoad(SR.GetString(SR.SQLUDT_Unexpected, exceptionText));
+            return ADP.TypeLoad(System.SR.GetString(SR.SQLUDT_Unexpected, exceptionText));
         }
 
         //
@@ -486,42 +488,42 @@ namespace Microsoft.Data.SqlClient
         //
         internal static Exception SqlCommandHasExistingSqlNotificationRequest()
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SQLNotify_AlreadyHasCommand));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SQLNotify_AlreadyHasCommand));
         }
 
         internal static Exception SqlDepDefaultOptionsButNoStart()
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SqlDependency_DefaultOptionsButNoStart));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SqlDependency_DefaultOptionsButNoStart));
         }
 
         internal static Exception SqlDependencyDatabaseBrokerDisabled()
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SqlDependency_DatabaseBrokerDisabled));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SqlDependency_DatabaseBrokerDisabled));
         }
 
         internal static Exception SqlDependencyEventNoDuplicate()
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SqlDependency_EventNoDuplicate));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SqlDependency_EventNoDuplicate));
         }
 
         internal static Exception SqlDependencyDuplicateStart()
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SqlDependency_DuplicateStart));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SqlDependency_DuplicateStart));
         }
 
         internal static Exception SqlDependencyIdMismatch()
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SqlDependency_IdMismatch));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SqlDependency_IdMismatch));
         }
 
         internal static Exception SqlDependencyNoMatchingServerStart()
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SqlDependency_NoMatchingServerStart));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SqlDependency_NoMatchingServerStart));
         }
 
         internal static Exception SqlDependencyNoMatchingServerDatabaseStart()
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SqlDependency_NoMatchingServerDatabaseStart));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SqlDependency_NoMatchingServerDatabaseStart));
         }
 
         //
@@ -529,7 +531,7 @@ namespace Microsoft.Data.SqlClient
         //
         internal static TransactionPromotionException PromotionFailed(Exception inner)
         {
-            TransactionPromotionException e = new TransactionPromotionException(SR.GetString(SR.SqlDelegatedTransaction_PromotionFailed), inner);
+            TransactionPromotionException e = new TransactionPromotionException(System.SR.GetString(SR.SqlDelegatedTransaction_PromotionFailed), inner);
             ADP.TraceExceptionAsReturnValue(e);
             return e;
         }
@@ -540,24 +542,24 @@ namespace Microsoft.Data.SqlClient
         //
         internal static Exception UnexpectedUdtTypeNameForNonUdtParams()
         {
-            return ADP.Argument(SR.GetString(SR.SQLUDT_UnexpectedUdtTypeName));
+            return ADP.Argument(System.SR.GetString(SR.SQLUDT_UnexpectedUdtTypeName));
         }
         internal static Exception MustSetUdtTypeNameForUdtParams()
         {
-            return ADP.Argument(SR.GetString(SR.SQLUDT_InvalidUdtTypeName));
+            return ADP.Argument(System.SR.GetString(SR.SQLUDT_InvalidUdtTypeName));
         }
         internal static Exception UDTInvalidSqlType(string typeName)
         {
-            return ADP.Argument(SR.GetString(SR.SQLUDT_InvalidSqlType, typeName));
+            return ADP.Argument(System.SR.GetString(SR.SQLUDT_InvalidSqlType, typeName));
         }
         internal static Exception InvalidSqlDbTypeForConstructor(SqlDbType type)
         {
-            return ADP.Argument(SR.GetString(SR.SqlMetaData_InvalidSqlDbTypeForConstructorFormat, type.ToString()));
+            return ADP.Argument(System.SR.GetString(SR.SqlMetaData_InvalidSqlDbTypeForConstructorFormat, type.ToString()));
         }
 
         internal static Exception NameTooLong(string parameterName)
         {
-            return ADP.Argument(SR.GetString(SR.SqlMetaData_NameTooLong), parameterName);
+            return ADP.Argument(System.SR.GetString(SR.SqlMetaData_NameTooLong), parameterName);
         }
 
         internal static Exception InvalidSortOrder(SortOrder order)
@@ -567,40 +569,40 @@ namespace Microsoft.Data.SqlClient
 
         internal static Exception MustSpecifyBothSortOrderAndOrdinal(SortOrder order, int ordinal)
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SqlMetaData_SpecifyBothSortOrderAndOrdinal, order.ToString(), ordinal));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SqlMetaData_SpecifyBothSortOrderAndOrdinal, order.ToString(), ordinal));
         }
 
         internal static Exception UnsupportedColumnTypeForSqlProvider(string columnName, string typeName)
         {
-            return ADP.Argument(SR.GetString(SR.SqlProvider_InvalidDataColumnType, columnName, typeName));
+            return ADP.Argument(System.SR.GetString(SR.SqlProvider_InvalidDataColumnType, columnName, typeName));
         }
         internal static Exception InvalidColumnMaxLength(string columnName, long maxLength)
         {
-            return ADP.Argument(SR.GetString(SR.SqlProvider_InvalidDataColumnMaxLength, columnName, maxLength));
+            return ADP.Argument(System.SR.GetString(SR.SqlProvider_InvalidDataColumnMaxLength, columnName, maxLength));
         }
         internal static Exception InvalidColumnPrecScale()
         {
-            return ADP.Argument(SR.GetString(SR.SqlMisc_InvalidPrecScaleMessage));
+            return ADP.Argument(System.SR.GetString(SR.SqlMisc_InvalidPrecScaleMessage));
         }
         internal static Exception NotEnoughColumnsInStructuredType()
         {
-            return ADP.Argument(SR.GetString(SR.SqlProvider_NotEnoughColumnsInStructuredType));
+            return ADP.Argument(System.SR.GetString(SR.SqlProvider_NotEnoughColumnsInStructuredType));
         }
         internal static Exception DuplicateSortOrdinal(int sortOrdinal)
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SqlProvider_DuplicateSortOrdinal, sortOrdinal));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SqlProvider_DuplicateSortOrdinal, sortOrdinal));
         }
         internal static Exception MissingSortOrdinal(int sortOrdinal)
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SqlProvider_MissingSortOrdinal, sortOrdinal));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SqlProvider_MissingSortOrdinal, sortOrdinal));
         }
         internal static Exception SortOrdinalGreaterThanFieldCount(int columnOrdinal, int sortOrdinal)
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SqlProvider_SortOrdinalGreaterThanFieldCount, sortOrdinal, columnOrdinal));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SqlProvider_SortOrdinalGreaterThanFieldCount, sortOrdinal, columnOrdinal));
         }
         internal static Exception IEnumerableOfSqlDataRecordHasNoRows()
         {
-            return ADP.Argument(SR.GetString(SR.IEnumerableOfSqlDataRecordHasNoRows));
+            return ADP.Argument(System.SR.GetString(SR.IEnumerableOfSqlDataRecordHasNoRows));
         }
 
 
@@ -611,19 +613,19 @@ namespace Microsoft.Data.SqlClient
         //
         internal static Exception BulkLoadMappingInaccessible()
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SQL_BulkLoadMappingInaccessible));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SQL_BulkLoadMappingInaccessible));
         }
         internal static Exception BulkLoadMappingsNamesOrOrdinalsOnly()
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SQL_BulkLoadMappingsNamesOrOrdinalsOnly));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SQL_BulkLoadMappingsNamesOrOrdinalsOnly));
         }
         internal static Exception BulkLoadCannotConvertValue(Type sourcetype, MetaType metatype, Exception e)
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SQL_BulkLoadCannotConvertValue, sourcetype.Name, metatype.TypeName), e);
+            return ADP.InvalidOperation(System.SR.GetString(SR.SQL_BulkLoadCannotConvertValue, sourcetype.Name, metatype.TypeName), e);
         }
         internal static Exception BulkLoadNonMatchingColumnMapping()
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SQL_BulkLoadNonMatchingColumnMapping));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SQL_BulkLoadNonMatchingColumnMapping));
         }
         internal static Exception BulkLoadNonMatchingColumnName(string columnName)
         {
@@ -631,59 +633,59 @@ namespace Microsoft.Data.SqlClient
         }
         internal static Exception BulkLoadNonMatchingColumnName(string columnName, Exception e)
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SQL_BulkLoadNonMatchingColumnName, columnName), e);
+            return ADP.InvalidOperation(System.SR.GetString(SR.SQL_BulkLoadNonMatchingColumnName, columnName), e);
         }
         internal static Exception BulkLoadStringTooLong()
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SQL_BulkLoadStringTooLong));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SQL_BulkLoadStringTooLong));
         }
         internal static Exception BulkLoadInvalidVariantValue()
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SQL_BulkLoadInvalidVariantValue));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SQL_BulkLoadInvalidVariantValue));
         }
         internal static Exception BulkLoadInvalidTimeout(int timeout)
         {
-            return ADP.Argument(SR.GetString(SR.SQL_BulkLoadInvalidTimeout, timeout.ToString(CultureInfo.InvariantCulture)));
+            return ADP.Argument(System.SR.GetString(SR.SQL_BulkLoadInvalidTimeout, timeout.ToString(CultureInfo.InvariantCulture)));
         }
         internal static Exception BulkLoadExistingTransaction()
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SQL_BulkLoadExistingTransaction));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SQL_BulkLoadExistingTransaction));
         }
         internal static Exception BulkLoadNoCollation()
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SQL_BulkLoadNoCollation));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SQL_BulkLoadNoCollation));
         }
         internal static Exception BulkLoadConflictingTransactionOption()
         {
-            return ADP.Argument(SR.GetString(SR.SQL_BulkLoadConflictingTransactionOption));
+            return ADP.Argument(System.SR.GetString(SR.SQL_BulkLoadConflictingTransactionOption));
         }
         internal static Exception BulkLoadLcidMismatch(int sourceLcid, string sourceColumnName, int destinationLcid, string destinationColumnName)
         {
-            return ADP.InvalidOperation(SR.GetString(SR.Sql_BulkLoadLcidMismatch, sourceLcid, sourceColumnName, destinationLcid, destinationColumnName));
+            return ADP.InvalidOperation(System.SR.GetString(SR.Sql_BulkLoadLcidMismatch, sourceLcid, sourceColumnName, destinationLcid, destinationColumnName));
         }
         internal static Exception InvalidOperationInsideEvent()
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SQL_BulkLoadInvalidOperationInsideEvent));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SQL_BulkLoadInvalidOperationInsideEvent));
         }
         internal static Exception BulkLoadMissingDestinationTable()
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SQL_BulkLoadMissingDestinationTable));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SQL_BulkLoadMissingDestinationTable));
         }
         internal static Exception BulkLoadInvalidDestinationTable(string tableName, Exception inner)
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SQL_BulkLoadInvalidDestinationTable, tableName), inner);
+            return ADP.InvalidOperation(System.SR.GetString(SR.SQL_BulkLoadInvalidDestinationTable, tableName), inner);
         }
         internal static Exception BulkLoadBulkLoadNotAllowDBNull(string columnName)
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SQL_BulkLoadNotAllowDBNull, columnName));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SQL_BulkLoadNotAllowDBNull, columnName));
         }
         internal static Exception BulkLoadPendingOperation()
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SQL_BulkLoadPendingOperation));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SQL_BulkLoadPendingOperation));
         }
         internal static Exception InvalidTableDerivedPrecisionForTvp(string columnName, byte precision)
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SqlParameter_InvalidTableDerivedPrecisionForTvp, precision, columnName, System.Data.SqlTypes.SqlDecimal.MaxPrecision));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SqlParameter_InvalidTableDerivedPrecisionForTvp, precision, columnName, System.Data.SqlTypes.SqlDecimal.MaxPrecision));
         }
 
         //
@@ -691,17 +693,17 @@ namespace Microsoft.Data.SqlClient
         //
         internal static Exception ConnectionDoomed()
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SQL_ConnectionDoomed));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SQL_ConnectionDoomed));
         }
 
         internal static Exception OpenResultCountExceeded()
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SQL_OpenResultCountExceeded));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SQL_OpenResultCountExceeded));
         }
 
         internal static Exception UnsupportedSysTxForGlobalTransactions()
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SQL_UnsupportedSysTxVersion));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SQL_UnsupportedSysTxVersion));
         }
 
         internal static readonly byte[] AttentionHeader = new byte[] {
@@ -726,7 +728,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal static Exception MultiSubnetFailoverWithFailoverPartner(bool serverProvidedFailoverPartner, SqlInternalConnectionTds internalConnection)
         {
-            string msg = SR.GetString(SR.SQLMSF_FailoverPartnerNotSupported);
+            string msg = System.SR.GetString(SR.SQLMSF_FailoverPartnerNotSupported);
             if (serverProvidedFailoverPartner)
             {
                 // Replacing InvalidOperation with SQL exception
@@ -766,13 +768,13 @@ namespace Microsoft.Data.SqlClient
 
         internal static Exception ROR_FailoverNotSupportedConnString()
         {
-            return ADP.Argument(SR.GetString(SR.SQLROR_FailoverNotSupported));
+            return ADP.Argument(System.SR.GetString(SR.SQLROR_FailoverNotSupported));
         }
 
         internal static Exception ROR_FailoverNotSupportedServer(SqlInternalConnectionTds internalConnection)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (SR.GetString(SR.SQLROR_FailoverNotSupported)), "", 0));
+            errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (System.SR.GetString(SR.SQLROR_FailoverNotSupported)), "", 0));
             SqlException exc = SqlException.CreateException(errors, null, internalConnection);
             exc._doNotReconnect = true;
             return exc;
@@ -781,7 +783,7 @@ namespace Microsoft.Data.SqlClient
         internal static Exception ROR_RecursiveRoutingNotSupported(SqlInternalConnectionTds internalConnection)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (SR.GetString(SR.SQLROR_RecursiveRoutingNotSupported)), "", 0));
+            errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (System.SR.GetString(SR.SQLROR_RecursiveRoutingNotSupported)), "", 0));
             SqlException exc = SqlException.CreateException(errors, null, internalConnection);
             exc._doNotReconnect = true;
             return exc;
@@ -790,7 +792,7 @@ namespace Microsoft.Data.SqlClient
         internal static Exception ROR_UnexpectedRoutingInfo(SqlInternalConnectionTds internalConnection)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (SR.GetString(SR.SQLROR_UnexpectedRoutingInfo)), "", 0));
+            errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (System.SR.GetString(SR.SQLROR_UnexpectedRoutingInfo)), "", 0));
             SqlException exc = SqlException.CreateException(errors, null, internalConnection);
             exc._doNotReconnect = true;
             return exc;
@@ -799,7 +801,7 @@ namespace Microsoft.Data.SqlClient
         internal static Exception ROR_InvalidRoutingInfo(SqlInternalConnectionTds internalConnection)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (SR.GetString(SR.SQLROR_InvalidRoutingInfo)), "", 0));
+            errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (System.SR.GetString(SR.SQLROR_InvalidRoutingInfo)), "", 0));
             SqlException exc = SqlException.CreateException(errors, null, internalConnection);
             exc._doNotReconnect = true;
             return exc;
@@ -808,7 +810,7 @@ namespace Microsoft.Data.SqlClient
         internal static Exception ROR_TimeoutAfterRoutingInfo(SqlInternalConnectionTds internalConnection)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (SR.GetString(SR.SQLROR_TimeoutAfterRoutingInfo)), "", 0));
+            errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (System.SR.GetString(SR.SQLROR_TimeoutAfterRoutingInfo)), "", 0));
             SqlException exc = SqlException.CreateException(errors, null, internalConnection);
             exc._doNotReconnect = true;
             return exc;
@@ -836,7 +838,7 @@ namespace Microsoft.Data.SqlClient
         internal static Exception CR_NextAttemptWillExceedQueryTimeout(SqlException innerException, Guid connectionId)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(0, 0, TdsEnums.MIN_ERROR_CLASS, null, SR.GetString(SR.SQLCR_NextAttemptWillExceedQueryTimeout), "", 0));
+            errors.Add(new SqlError(0, 0, TdsEnums.MIN_ERROR_CLASS, null, System.SR.GetString(SR.SQLCR_NextAttemptWillExceedQueryTimeout), "", 0));
             SqlException exc = SqlException.CreateException(errors, "", connectionId, innerException);
             return exc;
         }
@@ -844,7 +846,7 @@ namespace Microsoft.Data.SqlClient
         internal static Exception CR_EncryptionChanged(SqlInternalConnectionTds internalConnection)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, SR.GetString(SR.SQLCR_EncryptionChanged), "", 0));
+            errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, System.SR.GetString(SR.SQLCR_EncryptionChanged), "", 0));
             SqlException exc = SqlException.CreateException(errors, "", internalConnection);
             return exc;
         }
@@ -852,7 +854,7 @@ namespace Microsoft.Data.SqlClient
         internal static SqlException CR_AllAttemptsFailed(SqlException innerException, Guid connectionId)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(0, 0, TdsEnums.MIN_ERROR_CLASS, null, SR.GetString(SR.SQLCR_AllAttemptsFailed), "", 0));
+            errors.Add(new SqlError(0, 0, TdsEnums.MIN_ERROR_CLASS, null, System.SR.GetString(SR.SQLCR_AllAttemptsFailed), "", 0));
             SqlException exc = SqlException.CreateException(errors, "", connectionId, innerException);
             return exc;
         }
@@ -860,7 +862,7 @@ namespace Microsoft.Data.SqlClient
         internal static SqlException CR_NoCRAckAtReconnection(SqlInternalConnectionTds internalConnection)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, SR.GetString(SR.SQLCR_NoCRAckAtReconnection), "", 0));
+            errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, System.SR.GetString(SR.SQLCR_NoCRAckAtReconnection), "", 0));
             SqlException exc = SqlException.CreateException(errors, "", internalConnection);
             return exc;
         }
@@ -868,7 +870,7 @@ namespace Microsoft.Data.SqlClient
         internal static SqlException CR_TDSVersionNotPreserved(SqlInternalConnectionTds internalConnection)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, SR.GetString(SR.SQLCR_TDSVestionNotPreserved), "", 0));
+            errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, System.SR.GetString(SR.SQLCR_TDSVestionNotPreserved), "", 0));
             SqlException exc = SqlException.CreateException(errors, "", internalConnection);
             return exc;
         }
@@ -876,7 +878,7 @@ namespace Microsoft.Data.SqlClient
         internal static SqlException CR_UnrecoverableServer(Guid connectionId)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, SR.GetString(SR.SQLCR_UnrecoverableServer), "", 0));
+            errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, System.SR.GetString(SR.SQLCR_UnrecoverableServer), "", 0));
             SqlException exc = SqlException.CreateException(errors, "", connectionId);
             return exc;
         }
@@ -884,22 +886,22 @@ namespace Microsoft.Data.SqlClient
         internal static SqlException CR_UnrecoverableClient(Guid connectionId)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, SR.GetString(SR.SQLCR_UnrecoverableClient), "", 0));
+            errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, System.SR.GetString(SR.SQLCR_UnrecoverableClient), "", 0));
             SqlException exc = SqlException.CreateException(errors, "", connectionId);
             return exc;
         }
 
         internal static Exception StreamWriteNotSupported()
         {
-            return ADP.NotSupported(SR.GetString(SR.SQL_StreamWriteNotSupported));
+            return ADP.NotSupported(System.SR.GetString(SR.SQL_StreamWriteNotSupported));
         }
         internal static Exception StreamReadNotSupported()
         {
-            return ADP.NotSupported(SR.GetString(SR.SQL_StreamReadNotSupported));
+            return ADP.NotSupported(System.SR.GetString(SR.SQL_StreamReadNotSupported));
         }
         internal static Exception StreamSeekNotSupported()
         {
-            return ADP.NotSupported(SR.GetString(SR.SQL_StreamSeekNotSupported));
+            return ADP.NotSupported(System.SR.GetString(SR.SQL_StreamSeekNotSupported));
         }
         internal static System.Data.SqlTypes.SqlNullValueException SqlNullValue()
         {
@@ -908,31 +910,31 @@ namespace Microsoft.Data.SqlClient
         }
         internal static Exception SubclassMustOverride()
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SqlMisc_SubclassMustOverride));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SqlMisc_SubclassMustOverride));
         }
 
         // ProjectK\CoreCLR specific errors
         internal static Exception UnsupportedKeyword(string keyword)
         {
-            return ADP.NotSupported(SR.GetString(SR.SQL_UnsupportedKeyword, keyword));
+            return ADP.NotSupported(System.SR.GetString(SR.SQL_UnsupportedKeyword, keyword));
         }
         internal static Exception NetworkLibraryKeywordNotSupported()
         {
-            return ADP.NotSupported(SR.GetString(SR.SQL_NetworkLibraryNotSupported));
+            return ADP.NotSupported(System.SR.GetString(SR.SQL_NetworkLibraryNotSupported));
         }
         internal static Exception UnsupportedFeatureAndToken(SqlInternalConnectionTds internalConnection, string token)
         {
-            var innerException = ADP.NotSupported(SR.GetString(SR.SQL_UnsupportedToken, token));
+            var innerException = ADP.NotSupported(System.SR.GetString(SR.SQL_UnsupportedToken, token));
 
             SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, SR.GetString(SR.SQL_UnsupportedFeature), "", 0));
+            errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, System.SR.GetString(SR.SQL_UnsupportedFeature), "", 0));
             SqlException exc = SqlException.CreateException(errors, "", internalConnection, innerException);
             return exc;
         }
 
         internal static Exception BatchedUpdatesNotAvailableOnContextConnection()
         {
-            return ADP.InvalidOperation(SR.GetString(SR.SQL_BatchedUpdatesNotAvailableOnContextConnection));
+            return ADP.InvalidOperation(System.SR.GetString(SR.SQL_BatchedUpdatesNotAvailableOnContextConnection));
         }
 
         /// <summary>
@@ -943,7 +945,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(sniError > 0 && sniError <= (int)SNINativeMethodWrapper.SniSpecialErrors.MaxErrorValue, "SNI error is out of range");
 
             string errorMessageId = string.Format((IFormatProvider)null, "SNI_ERROR_{0}", sniError);
-            return SR.GetResourceString(errorMessageId, errorMessageId);
+            return System.SR.GetResourceString(errorMessageId, errorMessageId);
         }
 
         // Default values for SqlDependency and SqlNotificationRequest
@@ -968,123 +970,123 @@ namespace Microsoft.Data.SqlClient
 
         internal static string CultureIdError()
         {
-            return SR.GetString(SR.SQL_CultureIdError);
+            return System.SR.GetString(SR.SQL_CultureIdError);
         }
         internal static string EncryptionNotSupportedByClient()
         {
-            return SR.GetString(SR.SQL_EncryptionNotSupportedByClient);
+            return System.SR.GetString(SR.SQL_EncryptionNotSupportedByClient);
         }
         internal static string EncryptionNotSupportedByServer()
         {
-            return SR.GetString(SR.SQL_EncryptionNotSupportedByServer);
+            return System.SR.GetString(SR.SQL_EncryptionNotSupportedByServer);
         }
         internal static string OperationCancelled()
         {
-            return SR.GetString(SR.SQL_OperationCancelled);
+            return System.SR.GetString(SR.SQL_OperationCancelled);
         }
         internal static string SevereError()
         {
-            return SR.GetString(SR.SQL_SevereError);
+            return System.SR.GetString(SR.SQL_SevereError);
         }
         internal static string SSPIInitializeError()
         {
-            return SR.GetString(SR.SQL_SSPIInitializeError);
+            return System.SR.GetString(SR.SQL_SSPIInitializeError);
         }
         internal static string SSPIGenerateError()
         {
-            return SR.GetString(SR.SQL_SSPIGenerateError);
+            return System.SR.GetString(SR.SQL_SSPIGenerateError);
         }
         internal static string SqlServerBrowserNotAccessible()
         {
-            return SR.GetString(SR.SQL_SqlServerBrowserNotAccessible);
+            return System.SR.GetString(SR.SQL_SqlServerBrowserNotAccessible);
         }
         internal static string KerberosTicketMissingError()
         {
-            return SR.GetString(SR.SQL_KerberosTicketMissingError);
+            return System.SR.GetString(SR.SQL_KerberosTicketMissingError);
         }
         internal static string Timeout()
         {
-            return SR.GetString(SR.SQL_Timeout);
+            return System.SR.GetString(SR.SQL_Timeout);
         }
         internal static string Timeout_PreLogin_Begin()
         {
-            return SR.GetString(SR.SQL_Timeout_PreLogin_Begin);
+            return System.SR.GetString(SR.SQL_Timeout_PreLogin_Begin);
         }
         internal static string Timeout_PreLogin_InitializeConnection()
         {
-            return SR.GetString(SR.SQL_Timeout_PreLogin_InitializeConnection);
+            return System.SR.GetString(SR.SQL_Timeout_PreLogin_InitializeConnection);
         }
         internal static string Timeout_PreLogin_SendHandshake()
         {
-            return SR.GetString(SR.SQL_Timeout_PreLogin_SendHandshake);
+            return System.SR.GetString(SR.SQL_Timeout_PreLogin_SendHandshake);
         }
         internal static string Timeout_PreLogin_ConsumeHandshake()
         {
-            return SR.GetString(SR.SQL_Timeout_PreLogin_ConsumeHandshake);
+            return System.SR.GetString(SR.SQL_Timeout_PreLogin_ConsumeHandshake);
         }
         internal static string Timeout_Login_Begin()
         {
-            return SR.GetString(SR.SQL_Timeout_Login_Begin);
+            return System.SR.GetString(SR.SQL_Timeout_Login_Begin);
         }
         internal static string Timeout_Login_ProcessConnectionAuth()
         {
-            return SR.GetString(SR.SQL_Timeout_Login_ProcessConnectionAuth);
+            return System.SR.GetString(SR.SQL_Timeout_Login_ProcessConnectionAuth);
         }
         internal static string Timeout_PostLogin()
         {
-            return SR.GetString(SR.SQL_Timeout_PostLogin);
+            return System.SR.GetString(SR.SQL_Timeout_PostLogin);
         }
         internal static string Timeout_FailoverInfo()
         {
-            return SR.GetString(SR.SQL_Timeout_FailoverInfo);
+            return System.SR.GetString(SR.SQL_Timeout_FailoverInfo);
         }
         internal static string Timeout_RoutingDestination()
         {
-            return SR.GetString(SR.SQL_Timeout_RoutingDestinationInfo);
+            return System.SR.GetString(SR.SQL_Timeout_RoutingDestinationInfo);
         }
         internal static string Duration_PreLogin_Begin(long PreLoginBeginDuration)
         {
-            return SR.GetString(SR.SQL_Duration_PreLogin_Begin, PreLoginBeginDuration);
+            return System.SR.GetString(SR.SQL_Duration_PreLogin_Begin, PreLoginBeginDuration);
         }
         internal static string Duration_PreLoginHandshake(long PreLoginBeginDuration, long PreLoginHandshakeDuration)
         {
-            return SR.GetString(SR.SQL_Duration_PreLoginHandshake, PreLoginBeginDuration, PreLoginHandshakeDuration);
+            return System.SR.GetString(SR.SQL_Duration_PreLoginHandshake, PreLoginBeginDuration, PreLoginHandshakeDuration);
         }
         internal static string Duration_Login_Begin(long PreLoginBeginDuration, long PreLoginHandshakeDuration, long LoginBeginDuration)
         {
-            return SR.GetString(SR.SQL_Duration_Login_Begin, PreLoginBeginDuration, PreLoginHandshakeDuration, LoginBeginDuration);
+            return System.SR.GetString(SR.SQL_Duration_Login_Begin, PreLoginBeginDuration, PreLoginHandshakeDuration, LoginBeginDuration);
         }
         internal static string Duration_Login_ProcessConnectionAuth(long PreLoginBeginDuration, long PreLoginHandshakeDuration, long LoginBeginDuration, long LoginAuthDuration)
         {
-            return SR.GetString(SR.SQL_Duration_Login_ProcessConnectionAuth, PreLoginBeginDuration, PreLoginHandshakeDuration, LoginBeginDuration, LoginAuthDuration);
+            return System.SR.GetString(SR.SQL_Duration_Login_ProcessConnectionAuth, PreLoginBeginDuration, PreLoginHandshakeDuration, LoginBeginDuration, LoginAuthDuration);
         }
         internal static string Duration_PostLogin(long PreLoginBeginDuration, long PreLoginHandshakeDuration, long LoginBeginDuration, long LoginAuthDuration, long PostLoginDuration)
         {
-            return SR.GetString(SR.SQL_Duration_PostLogin, PreLoginBeginDuration, PreLoginHandshakeDuration, LoginBeginDuration, LoginAuthDuration, PostLoginDuration);
+            return System.SR.GetString(SR.SQL_Duration_PostLogin, PreLoginBeginDuration, PreLoginHandshakeDuration, LoginBeginDuration, LoginAuthDuration, PostLoginDuration);
         }
         internal static string UserInstanceFailure()
         {
-            return SR.GetString(SR.SQL_UserInstanceFailure);
+            return System.SR.GetString(SR.SQL_UserInstanceFailure);
         }
         internal static string PreloginError()
         {
-            return SR.GetString(SR.Snix_PreLogin);
+            return System.SR.GetString(SR.Snix_PreLogin);
         }
         internal static string ExClientConnectionId()
         {
-            return SR.GetString(SR.SQL_ExClientConnectionId);
+            return System.SR.GetString(SR.SQL_ExClientConnectionId);
         }
         internal static string ExErrorNumberStateClass()
         {
-            return SR.GetString(SR.SQL_ExErrorNumberStateClass);
+            return System.SR.GetString(SR.SQL_ExErrorNumberStateClass);
         }
         internal static string ExOriginalClientConnectionId()
         {
-            return SR.GetString(SR.SQL_ExOriginalClientConnectionId);
+            return System.SR.GetString(SR.SQL_ExOriginalClientConnectionId);
         }
         internal static string ExRoutingDestination()
         {
-            return SR.GetString(SR.SQL_ExRoutingDestination);
+            return System.SR.GetString(SR.SQL_ExRoutingDestination);
         }
     }
 

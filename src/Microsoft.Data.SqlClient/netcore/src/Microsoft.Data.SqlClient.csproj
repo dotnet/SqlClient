@@ -3,6 +3,8 @@
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
     <TargetFramework>netcoreapp2.1</TargetFramework>
     <LangVersion>7.2</LangVersion>
+    <!-- Workaround for absence of Assembly File. This should pick up the assembly version from the build -->
+    <AssemblyFileVersion>4.8.0.0</AssemblyFileVersion>
     <OSGroup Condition="'$(OSGroup)' == ''">Windows_NT</OSGroup>
     <IsPartialFacadeAssembly Condition="'$(TargetsNetFx)' == 'true'">true</IsPartialFacadeAssembly>
     <TargetsWindows Condition="'$(OSGroup)'=='Windows_NT'">true</TargetsWindows>
@@ -16,8 +18,8 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <IntermediateOutputPath>..\..\..\obj\$(OSGroup).$(Configuration).$(Platform)</IntermediateOutputPath>  
-    <OutputPath>..\..\..\bin\$(OSGroup).$(Configuration).$(Platform)</OutputPath>
+    <IntermediateOutputPath>..\..\..\..\obj\$(OSGroup).$(Configuration).$(Platform)</IntermediateOutputPath>  
+    <OutputPath>..\..\..\..\bin\$(OSGroup).$(Configuration).$(Platform)</OutputPath>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>  
   <PropertyGroup Condition="'$(TargetGroup)'=='netcoreapp'">
@@ -30,9 +32,7 @@
     <Compile Include="System\Data\SqlClient\PoolBlockingPeriod.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(IsPartialFacadeAssembly)' != 'true' AND '$(OSGroup)' != 'AnyOS'">
-    <!-- TODO: Move this to Resx generator. Adding the Generated SR Files from .Net Core as is -->
-    <Compile Include="SR.cs" />
-    
+    <Compile Include="SR.cs" />    
     <Compile Include="$(CommonPath)\System\SR.cs" />
     <Compile Include="Microsoft\SqlServer\Server\ITypedGetters.cs" />
     <Compile Include="Microsoft\SqlServer\Server\ITypedGettersV3.cs" />
@@ -546,6 +546,14 @@
     <Reference Include="System.Data" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Resources\Strings.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Strings.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  
+  <ItemGroup>
     <EmbeddedResource Include="Resources\Microsoft.Data.SqlClient.SqlMetaData.xml">
       <LogicalName>Microsoft.Data.SqlClient.SqlMetaData.xml</LogicalName>
     </EmbeddedResource>
@@ -564,6 +572,14 @@
     <PackageReference Include="System.Text.Encoding.CodePages" Version="4.5.0" />
     <PackageReference Include="runtime.native.System.Data.SqlClient.sni" Version="4.4.0" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Update="Resources\Strings.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Strings.Designer.cs</LastGenOutput>
+      <CustomToolNamespace>System</CustomToolNamespace>
+    </EmbeddedResource>
+  </ItemGroup>
+  
   <Import Project=".\GenerateThisAssemblyCs.targets" Condition="'$(IsPartialFacadeAssembly)' != 'true'" />
 
 </Project>

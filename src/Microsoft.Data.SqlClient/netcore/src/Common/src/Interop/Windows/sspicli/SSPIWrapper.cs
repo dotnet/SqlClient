@@ -9,6 +9,8 @@ using System.Runtime.InteropServices;
 
 namespace System.Net
 {
+    using SR = Strings;
+
     internal static class SSPIWrapper
     {
         internal static SecurityPackageInfoClass[] EnumerateSecurityPackages(SSPIInterface secModule)
@@ -95,7 +97,7 @@ namespace System.Net
 
             if (errorCode != 0)
             {
-                if (NetEventSource.IsEnabled) NetEventSource.Error(null, SR.Format(SR.net_log_operation_failed_with_error, nameof(AcquireDefaultCredential), $"0x{errorCode:X}"));
+                if (NetEventSource.IsEnabled) NetEventSource.Error(null, System.SR.Format(SR.net_log_operation_failed_with_error, nameof(AcquireDefaultCredential), $"0x{errorCode:X}"));
                 throw new Win32Exception(errorCode);
             }
             return outCredential;
@@ -110,7 +112,7 @@ namespace System.Net
 
             if (errorCode != 0)
             {
-                if (NetEventSource.IsEnabled) NetEventSource.Error(null, SR.Format(SR.net_log_operation_failed_with_error, nameof(AcquireCredentialsHandle), $"0x{errorCode:X}"));
+                if (NetEventSource.IsEnabled) NetEventSource.Error(null, System.SR.Format(SR.net_log_operation_failed_with_error, nameof(AcquireCredentialsHandle), $"0x{errorCode:X}"));
                 throw new Win32Exception(errorCode);
             }
 
@@ -134,7 +136,7 @@ namespace System.Net
 
             if (errorCode != 0)
             {
-                if (NetEventSource.IsEnabled) NetEventSource.Error(null, SR.Format(SR.net_log_operation_failed_with_error, nameof(AcquireCredentialsHandle), $"0x{errorCode:X}"));
+                if (NetEventSource.IsEnabled) NetEventSource.Error(null, System.SR.Format(SR.net_log_operation_failed_with_error, nameof(AcquireCredentialsHandle), $"0x{errorCode:X}"));
                 throw new Win32Exception(errorCode);
             }
 
@@ -341,11 +343,11 @@ namespace System.Net
                     {
                         if (errorCode == Interop.SspiCli.SEC_I_RENEGOTIATE)
                         {
-                            NetEventSource.Error(null, SR.Format(SR.event_OperationReturnedSomething, op, "SEC_I_RENEGOTIATE"));
+                            NetEventSource.Error(null, System.SR.Format(SR.event_OperationReturnedSomething, op, "SEC_I_RENEGOTIATE"));
                         }
                         else
                         {
-                            NetEventSource.Error(null, SR.Format(SR.net_log_operation_failed_with_error, op, $"0x{0:X}"));
+                            NetEventSource.Error(null, System.SR.Format(SR.net_log_operation_failed_with_error, op, $"0x{0:X}"));
                         }
                     }
 
@@ -444,7 +446,7 @@ namespace System.Net
                     break;
 
                 default:
-                    throw new ArgumentException(SR.Format(SR.net_invalid_enum, nameof(contextAttribute)), nameof(contextAttribute));
+                    throw new ArgumentException(System.SR.Format(SR.net_invalid_enum, nameof(contextAttribute)), nameof(contextAttribute));
             }
 
             SafeHandle sspiHandle = null;

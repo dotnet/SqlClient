@@ -4179,7 +4179,7 @@ namespace Microsoft.Data.SqlClient
                     buffer[map[i]] = data.SqlValue;
                     if (stateObj._longlen != 0)
                     {
-                        throw new SqlTruncateException(SR.GetString(SR.SqlMisc_TruncationMaxDataMessage));
+                        throw new SqlTruncateException(SR.GetString(Strings.SqlMisc_TruncationMaxDataMessage));
                     }
                 }
                 data.Clear();

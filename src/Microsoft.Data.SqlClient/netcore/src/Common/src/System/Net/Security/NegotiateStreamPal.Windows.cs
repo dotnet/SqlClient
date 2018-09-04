@@ -7,6 +7,8 @@ using System.ComponentModel;
 
 namespace System.Net.Security
 {
+    using SR = System.Strings;
+
     //
     // The class does the real work in authentication and
     // user data encryption with NEGO SSPI package.
@@ -39,7 +41,7 @@ namespace System.Net.Security
 
                 if (result != Interop.SECURITY_STATUS.OK)
                 {
-                    if (NetEventSource.IsEnabled) NetEventSource.Error(null, SR.Format(SR.net_log_operation_failed_with_error, nameof(Interop.SspiCli.SspiEncodeStringsAsAuthIdentity), $"0x{(int)result:X}"));
+                    if (NetEventSource.IsEnabled) NetEventSource.Error(null, System.SR.Format(SR.net_log_operation_failed_with_error, nameof(Interop.SspiCli.SspiEncodeStringsAsAuthIdentity), $"0x{(int)result:X}"));
                     throw new Win32Exception((int)result);
                 }
 
