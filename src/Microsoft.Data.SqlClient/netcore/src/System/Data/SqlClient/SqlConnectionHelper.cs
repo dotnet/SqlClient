@@ -11,7 +11,6 @@ using Microsoft.Data.ProviderBase;
 using System;
 using System.Data;
 using System.Data.Common;
-using System.Data.ProviderBase;
 using System.Diagnostics;
 using System.Threading;
 using System.Transactions;

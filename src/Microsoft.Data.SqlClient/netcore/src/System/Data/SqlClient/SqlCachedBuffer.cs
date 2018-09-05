@@ -9,6 +9,7 @@ using System.Data.SqlTypes;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Data.Common;
+using Microsoft.Data.SqlTypes;
 
 namespace Microsoft.Data.SqlClient
 {

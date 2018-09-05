@@ -5,7 +5,7 @@
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
 
-namespace System.Data.Sql
+namespace Microsoft.Data.Sql
 {
     public sealed class SqlNotificationRequest
     {

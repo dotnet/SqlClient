@@ -8,6 +8,7 @@ using System.Data.SqlTypes;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System;
+using Microsoft.Data.SqlTypes;
 
 namespace Microsoft.Data.SqlClient
 {

@@ -4,7 +4,7 @@
 
 using System.Collections;
 using System.Data.Common;
-using System.Data.ProviderBase;
+using Microsoft.Data.ProviderBase;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,7 +18,6 @@ using System.Security;
 using System;
 using Microsoft.Data.Common;
 using System.Data;
-using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient
 {

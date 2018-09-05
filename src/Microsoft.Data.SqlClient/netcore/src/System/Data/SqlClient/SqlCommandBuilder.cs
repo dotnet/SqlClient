@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using Microsoft.Data.Common;
+using Microsoft.Data.Sql;
 using System;
 using System.ComponentModel;
 using System.Data;

@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlTypes;
 using System;
 using System.Collections.Generic;
 using System.Data.Common;

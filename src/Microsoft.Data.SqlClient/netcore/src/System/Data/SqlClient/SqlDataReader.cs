@@ -5,7 +5,7 @@
 using System.Collections;
 using System.Collections.ObjectModel;
 using System.Data.Common;
-using System.Data.ProviderBase;
+using Microsoft.Data.ProviderBase;
 using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.IO;
@@ -20,6 +20,7 @@ using System.Globalization;
 using System.Data;
 using Microsoft.Data.Common;
 using System;
+using Microsoft.Data.SqlTypes;
 
 namespace Microsoft.Data.SqlClient
 {

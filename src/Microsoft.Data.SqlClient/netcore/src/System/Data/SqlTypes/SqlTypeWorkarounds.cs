@@ -2,12 +2,14 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
+using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Xml;
 
-namespace System.Data.SqlTypes
+namespace Microsoft.Data.SqlTypes
 {
     /// <summary>
     /// This type provides workarounds for the separation between System.Data.Common

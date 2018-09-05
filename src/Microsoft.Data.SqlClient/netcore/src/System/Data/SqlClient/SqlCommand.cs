@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
-using System.Data.Sql;
 using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.IO;
@@ -16,6 +15,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using Microsoft.Data.Common;
+using Microsoft.Data.Sql;
 using Microsoft.SqlServer.Server;
 
 namespace Microsoft.Data.SqlClient

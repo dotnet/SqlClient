@@ -5,10 +5,10 @@
 
 using Microsoft.Data.Common;
 using System.Collections.Generic;
-using System.Data.Common;
+using System.Data;
 using System.Globalization;
 
-namespace System.Data.ProviderBase
+namespace Microsoft.Data.ProviderBase
 {
     internal class BasicFieldNameLookup
     {

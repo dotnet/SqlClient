@@ -4,6 +4,7 @@
 
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlTypes;
 using System;
 using System.Collections.Generic;
 using System.Data;

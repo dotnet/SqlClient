@@ -2,7 +2,9 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-namespace System.Data.Common
+using System;
+
+namespace Microsoft.Data.Common
 {
     // DbConnectionPoolKey: Base class implementation of a key to connection pool groups
     //  Only connection string is used as a key

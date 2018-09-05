@@ -3,11 +3,10 @@
 // See the LICENSE file in the project root for more information.
 
 
-//------------------------------------------------------------------------------
-
+using System;
 using System.Globalization;
 
-namespace System.Data.Common
+namespace Microsoft.Data.Common
 {
     /// <summary>
     /// This class defines the data structure for ActivityId used for correlated tracing between client (bid trace event) and server (XEvent).

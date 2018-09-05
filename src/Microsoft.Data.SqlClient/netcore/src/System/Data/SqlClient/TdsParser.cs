@@ -16,6 +16,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using Microsoft.Data.Common;
+using Microsoft.Data.Sql;
+using Microsoft.Data.SqlTypes;
 using Microsoft.SqlServer.Server;
 using MSS = Microsoft.SqlServer.Server;
 

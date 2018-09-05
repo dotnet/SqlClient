@@ -4,7 +4,6 @@
 
 using System.Collections.Generic;
 using System.Data.Common;
-using System.Data.ProviderBase;
 using System.Diagnostics;
 using System.Globalization;
 using System.Threading;

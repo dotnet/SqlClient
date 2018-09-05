@@ -4,7 +4,7 @@
 
 using System;
 using System.Data;
-using System.Data.ProviderBase;
+using Microsoft.Data.ProviderBase;
 using System.Data.SqlTypes;
 using System.Diagnostics;
 using Microsoft.Data.Common;

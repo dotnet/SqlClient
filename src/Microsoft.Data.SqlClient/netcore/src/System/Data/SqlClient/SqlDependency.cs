@@ -4,7 +4,7 @@
 
 using System.Collections.Generic;
 using System.Data.Common;
-using System.Data.ProviderBase;
+using Microsoft.Data.ProviderBase;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -12,9 +12,9 @@ using System.Text;
 using System.Threading;
 using System.Xml;
 using System.Data.Sql;
-using Microsoft.Data.ProviderBase;
 using System;
 using Microsoft.Data.Common;
+using Microsoft.Data.Sql;
 
 namespace Microsoft.Data.SqlClient
 {
