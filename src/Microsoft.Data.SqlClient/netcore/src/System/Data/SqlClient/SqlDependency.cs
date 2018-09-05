@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
-using System.Data.Common;
 using Microsoft.Data.ProviderBase;
 using System.Diagnostics;
 using System.Globalization;
@@ -11,7 +10,6 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Xml;
-using System.Data.Sql;
 using System;
 using Microsoft.Data.Common;
 using Microsoft.Data.Sql;

@@ -5,10 +5,8 @@
 using Microsoft.Data.Common;
 using Microsoft.Data.Sql;
 using System;
-using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
-using System.Data.Sql;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
