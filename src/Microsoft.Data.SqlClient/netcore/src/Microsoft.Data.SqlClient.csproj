@@ -19,8 +19,8 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <IntermediateOutputPath>..\..\..\..\obj\$(OSGroup).$(Configuration).$(Platform)</IntermediateOutputPath>  
-    <OutputPath>..\..\..\..\bin\$(OSGroup).$(Configuration).$(Platform)</OutputPath>
+    <IntermediateOutputPath>..\..\..\..\obj\$(Configuration).$(Platform)</IntermediateOutputPath>  
+    <OutputPath>..\..\..\..\bin\$(Configuration).$(Platform)</OutputPath>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>  
   <PropertyGroup Condition="'$(TargetGroup)'=='netcoreapp'">
