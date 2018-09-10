@@ -8,6 +8,10 @@
     <Configurations>netstandard-Unix-Debug;netstandard-Unix-Release;netstandard-Windows_NT-Debug;netstandard-Windows_NT-Release</Configurations>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
+  <PropertyGroup>
+    <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)</IntermediateOutputPath>  
+    <OutputPath>$(BinFolder)$(Configuration).$(Platform)</OutputPath>
+  </PropertyGroup>
   <ItemGroup>
     <Compile Include="ApplicationIntentFilterType.cs" />
     <Compile Include="AuthenticatingTDSServer.cs" />
@@ -28,10 +32,10 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\TDS.EndPoint\TDS.EndPoint.csproj">
+    <ProjectReference Include="$(TestsPath)tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj">
       <Name>TDS.EndPoint</Name>
     </ProjectReference>
-    <ProjectReference Include="..\TDS\TDS.csproj">
+    <ProjectReference Include="$(TestsPath)tools\TDS\TDS\TDS.csproj">
       <Name>TDS</Name>
     </ProjectReference>
   </ItemGroup>

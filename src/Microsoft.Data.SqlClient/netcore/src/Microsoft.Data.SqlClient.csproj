@@ -15,12 +15,11 @@
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <TargetGroup Condition="'$(TargetFramework)'=='netcoreapp2.1'">netcoreapp</TargetGroup>
     <TargetGroup Condition="'$(TargetFramework)'=='netstandard2.0'">netstandard</TargetGroup>
-    <CommonPath>Common\src</CommonPath>
   </PropertyGroup>
 
   <PropertyGroup>
-    <IntermediateOutputPath>..\..\..\..\obj\$(Configuration).$(Platform)</IntermediateOutputPath>  
-    <OutputPath>..\..\..\..\bin\$(Configuration).$(Platform)</OutputPath>
+    <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)</IntermediateOutputPath>  
+    <OutputPath>$(BinFolder)$(Configuration).$(Platform)</OutputPath>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>  
   <PropertyGroup Condition="'$(TargetGroup)'=='netcoreapp'">

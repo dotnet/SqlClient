@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ProjectDir>$(MSBuildThisFileDirectory)</ProjectDir>
+    <ManagedSourceCode>$(ProjectDir)Microsoft.Data.SqlClient\</ManagedSourceCode>
+    <NetCoreSource>$(ManagedSourceCode)netcore\</NetCoreSource>
+    <NetFxSource>$(ManagedSourceCode)netfx\</NetFxSource>
+    <BinFolder>$(ProjectDir)..\bin\</BinFolder>
+    <ObjFolder>$(ProjectDir)..\obj\</ObjFolder>
+    <CommonPath>$(NetCoreSource)src\Common\src</CommonPath>
+    <CommonTestPath>$(NetCoreSource)src\Common\tests</CommonTestPath>
+    <TestsPath>$(ProjectDir)Microsoft.Data.SqlClient\tests\</TestsPath>
+  </PropertyGroup>
+</Project>

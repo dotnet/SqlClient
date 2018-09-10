@@ -8,6 +8,10 @@
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <Configurations>netstandard-Unix-Debug;netstandard-Unix-Release;netstandard-Windows_NT-Debug;netstandard-Windows_NT-Release</Configurations>
   </PropertyGroup>
+  <PropertyGroup>
+    <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)</IntermediateOutputPath>  
+    <OutputPath>$(BinFolder)$(Configuration).$(Platform)</OutputPath>
+  </PropertyGroup>
   <ItemGroup>
     <Compile Include="FederatedAuthentication\FederatedAuthenticationTicketService.cs" />
     <Compile Include="FederatedAuthentication\IFederatedAuthenticationTicket.cs" />
@@ -51,7 +55,7 @@
     <Compile Include="SSPI\SSPIContext.Unix.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\TDS\TDS.csproj">
+    <ProjectReference Include="$(TestsPath)tools\TDS\TDS\TDS.csproj">
       <Name>TDS</Name>
     </ProjectReference>
   </ItemGroup>

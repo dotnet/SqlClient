@@ -8,6 +8,10 @@
     <Configurations>netstandard-Unix-Debug;netstandard-Unix-Release;netstandard-Windows_NT-Debug;netstandard-Windows_NT-Release</Configurations>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
+  <PropertyGroup>
+    <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)</IntermediateOutputPath>  
+    <OutputPath>$(BinFolder)$(Configuration).$(Platform)</OutputPath>
+  </PropertyGroup>
   <ItemGroup>
     <Compile Include="AllHeaders\TDSQueryNotificationsHeader.cs" />
     <Compile Include="AllHeaders\TDSTraceHeader.cs" />
