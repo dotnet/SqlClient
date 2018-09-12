@@ -59,4 +59,7 @@
       <Name>TDS</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Security.Principal.Windows" Version="4.5.0" />
+  </ItemGroup>
 </Project>
