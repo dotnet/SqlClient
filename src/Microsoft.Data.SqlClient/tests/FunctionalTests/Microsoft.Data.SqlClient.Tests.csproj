@@ -1,0 +1,64 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Configurations>netstandard-Unix-Debug;netstandard-Unix-Release;netstandard-Windows_NT-Debug;netstandard-Windows_NT-Release</Configurations>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <TargetFrameworks>netcoreapp2.1</TargetFrameworks>
+  </PropertyGroup>
+  <PropertyGroup>
+    <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)</IntermediateOutputPath>  
+    <OutputPath>$(BinFolder)$(Configuration).$(Platform)</OutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="SqlConnectionBasicTests.cs" />
+    <Compile Include="TestTdsServer.cs" />
+    <!-- Compile Include="AADAccessTokenTest.cs" />
+    <Compile Include="CloneTests.cs" />
+    <Compile Include="BaseProviderAsyncTest\BaseProviderAsyncTest.cs" />
+    <Compile Include="BaseProviderAsyncTest\MockCommand.cs" />
+    <Compile Include="BaseProviderAsyncTest\MockConnection.cs" />
+    <Compile Include="BaseProviderAsyncTest\MockDataReader.cs" />
+    <Compile Include="SqlCredentialTest.cs" />
+    <Compile Include="DiagnosticTest.cs" />
+    <Compile Include="AmbientTransactionFailureTest.cs" />
+    <Compile Include="ExceptionTest.cs" />
+    <Compile Include="FakeDiagnosticListenerObserver.cs" />
+    <Compile Include="SqlBulkCopyColumnMappingCollectionTest.cs" />
+    <Compile Include="SqlDataRecordTest.cs" />
+    <Compile Include="SqlMetaDataTest.cs" />
+    <Compile Include="SqlParameterTest.cs" />
+    <Compile Include="SqlClientFactoryTest.cs" />
+    <Compile Include="SqlConnectionTest.RetrieveStatistics.cs" />
+    <Compile Include="SqlErrorCollectionTest.cs" />
+    <Compile Include="TcpDefaultForAzureTest.cs" />
+    <Compile Include="..\ManualTests\DataCommon\DataTestUtility.cs" / -->
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.8.0" />
+    <PackageReference Include="xunit" Version="2.3.1" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.3.1" />
+    <PackageReference Include="Microsoft.xunit.netcore.extensions" Version="2.2.0-preview1-03110-01" />
+    <PackageReference Include="System.Text.RegularExpressions" Version="4.3.0" />
+    <PackageReference Include="microsoft.dotnet.buildtools.testsuite" Version="2.2.0-preview1-03110-01" />
+    <PackageReference Include="System.Linq.Expressions" Version="4.3.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- ProjectReference Include="..\ManualTests\SQL\UdtTest\UDTs\Address\Address.csproj">
+      <Project>{d1392b54-998a-4f27-bc17-4ce149117bcc}</Project>
+      <Name>Address</Name>
+    </ProjectReference -->
+    <ProjectReference Include="$(TestsPath)Tools\TDS\TDS.Servers\TDS.Servers.csproj">
+      <Name>TDS.Servers</Name>
+    </ProjectReference>
+    <ProjectReference Include="$(TestsPath)Tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj">
+      <Name>TDS.EndPoint</Name>
+    </ProjectReference>
+    <ProjectReference Include="$(TestsPath)Tools\TDS\TDS\TDS.csproj">
+      <Name>TDS</Name>
+    </ProjectReference>
+    <ProjectReference Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
+    <!-- ProjectReference Include="$(CommonTestPath)\System\Diagnostics\RemoteExecutorConsoleApp\RemoteExecutorConsoleApp.csproj">
+      <Project>{69e46a6f-9966-45a5-8945-2559fe337827}</Project>
+      <Name>RemoteExecutorConsoleApp</Name>
+    </ProjectReference -->
+  </ItemGroup>
+</Project>
