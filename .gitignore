@@ -31,14 +31,19 @@
 *.out
 *.app
 
-#Folders
+# Folders
 .vs/
 x64/
 Debug/
 intermediate/
-
-#logs
-msbuild.log
-*.user
 bin/
 obj/
+src/packages/
+src/Microsoft.Data.SqlClient/netcore/src/obj/
+src/Microsoft.Data.SqlClient/netfx/src/System/Data/packages/
+
+# Logs
+msbuild.log
+*.user
+UpgradeLog.htm
+

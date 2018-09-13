@@ -7,11 +7,11 @@
       <SolutionDir>$([System.IO.Path]::GetDirectoryName($(MSBuildThisFileDirectory)))\</SolutionDir>
   </PropertyGroup>
   <PropertyGroup>
-    <OutDir>$(SolutionDir)..\bin\$(Configuration)\$(Platform)\$(MSBuildProjectName)\</OutDir>
-    <IntermediateDir>$(SolutionDir)..\intermediate\$(Configuration)\$(Platform)\$(MSBuildProjectName)\</IntermediateDir>
+    <OutDir>$(BinFolder)$(Configuration).$(Platform)\$(MSBuildProjectName)\</OutDir>
+    <IntermediateDir>$(ObjFolder)$(Configuration).$(Platform)\$(MSBuildProjectName)\</IntermediateDir>
     <IntDir>$(IntermediateDir)</IntDir>
   </PropertyGroup>
-
+  
   <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
     <DebugType>Full</DebugType>
     <DebugSymbols>True</DebugSymbols>
@@ -26,6 +26,8 @@
   <Target Name="DisplayMessages">  
     <Message Text="Solution Dir = $(SolutionDir)" />  
     <Message Text="Project Extension = $(MSBuildProjectName)" />  
+    <Message Text="Bin Dir = $(BinFolder)" />  
+    <Message Text="Obj Dir= $(ObjFolder)" />  
   </Target>
   
   <!-- Begin Section Common Properties for all projects -->

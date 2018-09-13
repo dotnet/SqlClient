@@ -2919,7 +2919,7 @@ LONG NLregC::CSgetAliases( __out_bcount_opt(*pdwBufferSize) __nullnullterminated
 		// Preserving 2.x cliconfg behavior: if the "ConnecTo" key is
 		// missing return an empty list.  Note: we are not creating 
 		// this key during Setup because (a) it is not owed by NLregC/SNI, 
-		// (b) it is shared with MDAC 2.x and System.Data.SqlClient.  
+		// (b) it is shared with MDAC 2.x and Microsoft.Data.SqlClient.  
 		//
 		// Note: we'll do this on any error (e.g. lack of permission), 
 		// not just missing key.  

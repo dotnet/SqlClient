@@ -40,7 +40,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 
 
 //
-//  The C# interface for the BID (Built-In Diagnostics) infrastructure consistis of two files that
+//  The C# interface for the BID (Built-In Diagnostics) infrastructure consists of two files that
 //  implement the wrapper class Bid:
 //
 //      internal sealed partial class Bid
