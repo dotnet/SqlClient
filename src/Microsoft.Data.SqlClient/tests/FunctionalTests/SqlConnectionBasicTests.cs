@@ -25,9 +25,7 @@ namespace Microsoft.Data.SqlClient.Tests
             }
         }
 
-        //TODO: Bring in the platform detection condition
-        // ActiveIssue:https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/4830
-        //[ConditionalFact(typeof(PlatformDetection), nameof(PlatformDetection.IsNotWindowsNanoServer), nameof(PlatformDetection.IsNotArmProcess))] 
+        [ConditionalFact(typeof(PlatformDetection), nameof(PlatformDetection.IsNotWindowsNanoServer), nameof(PlatformDetection.IsNotArmProcess))] 
         [ActiveIssue(4830, TestPlatforms.AnyUnix)]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void IntegratedAuthConnectionTest()

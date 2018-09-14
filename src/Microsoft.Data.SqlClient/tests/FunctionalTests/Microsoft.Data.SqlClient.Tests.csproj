@@ -56,6 +56,9 @@
     <ProjectReference Include="$(TestsPath)Tools\TDS\TDS\TDS.csproj">
       <Name>TDS</Name>
     </ProjectReference>
+    <ProjectReference Include="$(TestsPath)Tools\CoreFx.Private.TestUtilities\CoreFx.Private.TestUtilities.csproj">
+      <Name>CoreFx.Private.TestUtilities</Name>
+    </ProjectReference>
     <ProjectReference Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
     <!-- ProjectReference Include="$(CommonTestPath)\System\Diagnostics\RemoteExecutorConsoleApp\RemoteExecutorConsoleApp.csproj">
       <Project>{69e46a6f-9966-45a5-8945-2559fe337827}</Project>
