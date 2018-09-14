@@ -8,7 +8,6 @@ using Microsoft.SqlServer.TDS.Servers;
 using System;
 using System.Net;
 using System.Runtime.CompilerServices;
-using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data.SqlClient.Tests
 {
