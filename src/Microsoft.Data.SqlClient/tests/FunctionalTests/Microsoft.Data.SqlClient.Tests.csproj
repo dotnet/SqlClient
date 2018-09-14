@@ -26,12 +26,11 @@
     <Compile Include="AmbientTransactionFailureTest.cs" />
     <Compile Include="SqlConnectionTest.RetrieveStatistics.cs" />
     <Compile Include="FakeDiagnosticListenerObserver.cs" />
-    
-    <!-- Compile Include="TcpDefaultForAzureTest.cs" />
     <Compile Include="SqlMetaDataTest.cs" />
-    <Compile Include="DiagnosticTest.cs" />
     <Compile Include="ExceptionTest.cs" />
-    <Compile Include="$(TestsPath)ManualTests\DataCommon\DataTestUtility.cs" / -->
+    <Compile Include="TcpDefaultForAzureTest.cs" />
+    <!-- Compile Include="DiagnosticTest.cs" / -->
+    <Compile Include="$(TestsPath)ManualTests\DataCommon\DataTestUtility.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.8.0" />
@@ -58,6 +57,9 @@
     </ProjectReference>
     <ProjectReference Include="$(TestsPath)Tools\CoreFx.Private.TestUtilities\CoreFx.Private.TestUtilities.csproj">
       <Name>CoreFx.Private.TestUtilities</Name>
+    </ProjectReference>
+    <ProjectReference Include="$(TestsPath)ManualTests\SQL\UdtTest\UDTs\Address\Address.csproj">
+      <Name>Address</Name>
     </ProjectReference>
     <ProjectReference Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
     <!-- ProjectReference Include="$(CommonTestPath)\System\Diagnostics\RemoteExecutorConsoleApp\RemoteExecutorConsoleApp.csproj">
