@@ -7,8 +7,8 @@
       <SolutionDir>$([System.IO.Path]::GetDirectoryName($(MSBuildThisFileDirectory)))\</SolutionDir>
   </PropertyGroup>
   <PropertyGroup>
-    <OutDir>$(BinFolder)$(Configuration).$(Platform)\$(MSBuildProjectName)\</OutDir>
-    <IntermediateDir>$(ObjFolder)$(Configuration).$(Platform)\$(MSBuildProjectName)\</IntermediateDir>
+    <OutDir>$(BinFolder)$(Configuration).$(PlatformTarget)\$(MSBuildProjectName)\</OutDir>
+    <IntermediateDir>$(ObjFolder)$(Configuration).$(PlatformTarget)\$(MSBuildProjectName)\</IntermediateDir>
     <IntDir>$(IntermediateDir)</IntDir>
   </PropertyGroup>
   
