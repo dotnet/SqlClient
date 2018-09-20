@@ -11,10 +11,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
     internal static class ConnectionHelper
     {
         private static Assembly s_systemDotData = Assembly.Load(new AssemblyName(typeof(SqlConnection).GetTypeInfo().Assembly.FullName));
-        private static Type s_sqlConnection = s_systemDotData.GetType("System.Data.SqlClient.SqlConnection");
-        private static Type s_sqlInternalConnection = s_systemDotData.GetType("System.Data.SqlClient.SqlInternalConnection");
-        private static Type s_sqlInternalConnectionTds = s_systemDotData.GetType("System.Data.SqlClient.SqlInternalConnectionTds");
-        private static Type s_dbConnectionInternal = s_systemDotData.GetType("System.Data.ProviderBase.DbConnectionInternal");
+        private static Type s_sqlConnection = s_systemDotData.GetType("Microsoft.Data.SqlClient.SqlConnection");
+        private static Type s_sqlInternalConnection = s_systemDotData.GetType("Microsoft.Data.SqlClient.SqlInternalConnection");
+        private static Type s_sqlInternalConnectionTds = s_systemDotData.GetType("Microsoft.Data.SqlClient.SqlInternalConnectionTds");
+        private static Type s_dbConnectionInternal = s_systemDotData.GetType("Microsoft.Data.ProviderBase.DbConnectionInternal");
         private static PropertyInfo s_sqlConnectionInternalConnection = s_sqlConnection.GetProperty("InnerConnection", BindingFlags.Instance | BindingFlags.NonPublic);
         private static PropertyInfo s_dbConnectionInternalPool = s_dbConnectionInternal.GetProperty("Pool", BindingFlags.Instance | BindingFlags.NonPublic);
         private static MethodInfo s_dbConnectionInternalIsConnectionAlive = s_dbConnectionInternal.GetMethod("IsConnectionAlive", BindingFlags.Instance | BindingFlags.NonPublic);
