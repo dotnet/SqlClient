@@ -28,7 +28,7 @@ namespace System.Net.Security
 
         internal static string QueryContextClientSpecifiedSpn(SafeDeleteContext securityContext)
         {
-            throw new PlatformNotSupportedException(SR.net_nego_server_not_supported);
+            throw new PlatformNotSupportedException(Strings.net_nego_server_not_supported);
         }
 
         internal static string QueryContextAuthenticationPackage(SafeDeleteContext securityContext)
@@ -227,14 +227,14 @@ namespace System.Net.Security
             // TODO (Issue #3718): The second buffer can contain a channel binding which is not supported
             if ((null != inSecurityBufferArray) && (inSecurityBufferArray.Length > 1))
             {
-                throw new PlatformNotSupportedException(SR.net_nego_channel_binding_not_supported);
+                throw new PlatformNotSupportedException(Strings.net_nego_channel_binding_not_supported);
             }
 
             SafeFreeNegoCredentials negoCredentialsHandle = (SafeFreeNegoCredentials)credentialsHandle;
 
             if (negoCredentialsHandle.IsDefault && string.IsNullOrEmpty(spn))
             {
-                throw new PlatformNotSupportedException(SR.net_nego_not_supported_empty_target_with_defaultcreds);
+                throw new PlatformNotSupportedException(Strings.net_nego_not_supported_empty_target_with_defaultcreds);
             }
 
             SecurityStatusPal status = EstablishSecurityContext(
@@ -252,7 +252,7 @@ namespace System.Net.Security
                 ContextFlagsPal mask = ContextFlagsPal.Confidentiality;
                 if ((requestedContextFlags & mask) != (contextFlags & mask))
                 {
-                    throw new PlatformNotSupportedException(SR.net_nego_protection_level_not_supported);
+                    throw new PlatformNotSupportedException(Strings.net_nego_protection_level_not_supported);
                 }
             }
 
@@ -267,7 +267,7 @@ namespace System.Net.Security
             SecurityBuffer outSecurityBuffer,
             ref ContextFlagsPal contextFlags)
         {
-            throw new PlatformNotSupportedException(SR.net_nego_server_not_supported);
+            throw new PlatformNotSupportedException(Strings.net_nego_server_not_supported);
         }
 
         internal static Win32Exception CreateExceptionFromError(SecurityStatusPal statusCode)
@@ -290,7 +290,7 @@ namespace System.Net.Security
         {
             if (isServer)
             {
-                throw new PlatformNotSupportedException(SR.net_nego_server_not_supported);
+                throw new PlatformNotSupportedException(Strings.net_nego_server_not_supported);
             }
 
             bool isEmptyCredential = string.IsNullOrWhiteSpace(credential.UserName) ||
@@ -299,7 +299,7 @@ namespace System.Net.Security
             if (ntlmOnly && isEmptyCredential)
             {
                 // NTLM authentication is not possible with default credentials which are no-op 
-                throw new PlatformNotSupportedException(SR.net_ntlm_not_possible_default_cred);
+                throw new PlatformNotSupportedException(Strings.net_ntlm_not_possible_default_cred);
             }
 
             try
