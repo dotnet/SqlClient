@@ -10,9 +10,9 @@
     <CommonPath>$(NetCoreSource)src\Common\src</CommonPath>
     <CommonTestPath>$(NetCoreSource)src\Common\tests</CommonTestPath>
     <TestsPath>$(ProjectDir)Microsoft.Data.SqlClient\tests\</TestsPath>
-    <TargetsWindows Condition="'$(OS)' == 'Windows_NT'">true</TargetsWindows>
-    <TargetsWindows Condition="'$(OS)' != 'Windows_NT'">false</TargetsWindows>
-    <TargetsUnix Condition="'$(OS)' == 'Unix'">true</TargetsUnix>
-    <TargetsUnix Condition="'$(OS)' != 'Unix'">false</TargetsUnix>
+    <TargetsWindows Condition="'$(OS)' == 'Windows_NT' AND '$(OSGroup)' == ''">true</TargetsWindows>
+    <TargetsWindows Condition="'$(OS)' != 'Windows_NT' AND '$(OSGroup)' == ''">false</TargetsWindows>
+    <TargetsUnix Condition="'$(OS)' == 'Unix' AND '$(OSGroup)' == ''">true</TargetsUnix>
+    <TargetsUnix Condition="'$(OS)' != 'Unix' AND '$(OSGroup)' == ''">false</TargetsUnix>
   </PropertyGroup>
 </Project>
