@@ -46,16 +46,16 @@
       <Project>{d1392b54-998a-4f27-bc17-4ce149117bcc}</Project>
       <Name>Address</Name>
     </ProjectReference -->
-    <ProjectReference Include="$(TestsPath)Tools\TDS\TDS.Servers\TDS.Servers.csproj">
+    <ProjectReference Include="$(TestsPath)tools\TDS\TDS.Servers\TDS.Servers.csproj">
       <Name>TDS.Servers</Name>
     </ProjectReference>
-    <ProjectReference Include="$(TestsPath)Tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj">
+    <ProjectReference Include="$(TestsPath)tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj">
       <Name>TDS.EndPoint</Name>
     </ProjectReference>
-    <ProjectReference Include="$(TestsPath)Tools\TDS\TDS\TDS.csproj">
+    <ProjectReference Include="$(TestsPath)tools\TDS\TDS\TDS.csproj">
       <Name>TDS</Name>
     </ProjectReference>
-    <ProjectReference Include="$(TestsPath)Tools\CoreFx.Private.TestUtilities\CoreFx.Private.TestUtilities.csproj">
+    <ProjectReference Include="$(TestsPath)tools\CoreFx.Private.TestUtilities\CoreFx.Private.TestUtilities.csproj">
       <Name>CoreFx.Private.TestUtilities</Name>
     </ProjectReference>
     <ProjectReference Include="$(TestsPath)ManualTests\SQL\UdtTest\UDTs\Address\Address.csproj">
