@@ -1258,7 +1258,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to System.Data.SqlClient is not supported on this platform..
+        ///   Looks up a localized string similar to Microsoft.Data.SqlClient is not supported on this platform..
         /// </summary>
         internal static string PlatformNotSupported_DataSqlClient {
             get {

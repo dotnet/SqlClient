@@ -9,7 +9,7 @@ namespace Microsoft.Data.SqlClient
     internal sealed class TdsParserStateObjectFactory
     {
 
-        private const string UseLegacyNetworkingOnWindows = "System.Data.SqlClient.UseLegacyNetworkingOnWindows";
+        private const string UseLegacyNetworkingOnWindows = "Microsoft.Data.SqlClient.UseLegacyNetworkingOnWindows";
 
         public static readonly TdsParserStateObjectFactory Singleton = new TdsParserStateObjectFactory();
 
