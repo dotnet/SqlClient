@@ -445,8 +445,8 @@ namespace Microsoft.Data.SqlClient {
         [
         DefaultValue(null),
         Editor("Microsoft.VSDesigner.Data.Design.DbConnectionEditor, " + AssemblyRef.MicrosoftVSDesigner, "System.Drawing.Design.UITypeEditor, " + AssemblyRef.SystemDrawing),
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Data),
-        ResDescriptionAttribute(ResHelper.ResourceNames.DbCommand_Connection),
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_Connection),
         ]
         new public SqlConnection Connection {
             get {
@@ -550,8 +550,8 @@ namespace Microsoft.Data.SqlClient {
 
         [
         DefaultValue(true),
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Notification),
-        ResDescriptionAttribute(ResHelper.ResourceNames.SqlCommand_NotificationAutoEnlist),
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Notification),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlCommand_NotificationAutoEnlist),
         ]
         public bool NotificationAutoEnlist {
             get {
@@ -565,8 +565,8 @@ namespace Microsoft.Data.SqlClient {
         [
         Browsable(false),
         DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden), // MDAC 90471
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Notification),
-        ResDescriptionAttribute(ResHelper.ResourceNames.SqlCommand_Notification),
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Notification),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlCommand_Notification),
         ]
         public SqlNotificationRequest Notification {
             get {
@@ -594,7 +594,7 @@ namespace Microsoft.Data.SqlClient {
         [
         Browsable(false),
         DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
-        ResDescriptionAttribute(ResHelper.ResourceNames.DbCommand_Transaction),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_Transaction),
         ]
         new public SqlTransaction Transaction {
             get {
@@ -631,8 +631,8 @@ namespace Microsoft.Data.SqlClient {
         DefaultValue(""),
         Editor("Microsoft.VSDesigner.Data.SQL.Design.SqlCommandTextEditor, " + AssemblyRef.MicrosoftVSDesigner, "System.Drawing.Design.UITypeEditor, " + AssemblyRef.SystemDrawing),
         RefreshProperties(RefreshProperties.All), // MDAC 67707
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Data),
-        ResDescriptionAttribute(ResHelper.ResourceNames.DbCommand_CommandText),
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_CommandText),
         ]
         override public string CommandText { // V1.2.3300, XXXCommand V1.0.5000
             get {
@@ -655,8 +655,8 @@ namespace Microsoft.Data.SqlClient {
         [
         Browsable(false),
         DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Data),
-        ResDescriptionAttribute(ResHelper.ResourceNames.TCE_SqlCommand_ColumnEncryptionSetting),
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.TCE_SqlCommand_ColumnEncryptionSetting),
         ]
         public SqlCommandColumnEncryptionSetting ColumnEncryptionSetting {
             get {
@@ -665,8 +665,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Data),
-        ResDescriptionAttribute(ResHelper.ResourceNames.DbCommand_CommandTimeout),
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_CommandTimeout),
         ]
         override public int CommandTimeout { // V1.2.3300, XXXCommand V1.0.5000
             get {
@@ -698,8 +698,8 @@ namespace Microsoft.Data.SqlClient {
         [
         DefaultValue(System.Data.CommandType.Text),
         RefreshProperties(RefreshProperties.All),
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Data),
-        ResDescriptionAttribute(ResHelper.ResourceNames.DbCommand_CommandType),
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_CommandType),
         ]
         override public CommandType CommandType { // V1.2.3300, XXXCommand V1.0.5000
             get {
@@ -746,8 +746,8 @@ namespace Microsoft.Data.SqlClient {
 
         [
         DesignerSerializationVisibility(DesignerSerializationVisibility.Content),
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Data),
-        ResDescriptionAttribute(ResHelper.ResourceNames.DbCommand_Parameters),
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_Parameters),
         ]
         new public SqlParameterCollection Parameters {
             get {
@@ -785,8 +785,8 @@ namespace Microsoft.Data.SqlClient {
 
         [
         DefaultValue(System.Data.UpdateRowSource.Both),
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Update),
-        ResDescriptionAttribute(ResHelper.ResourceNames.DbCommand_UpdatedRowSource),
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Update),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_UpdatedRowSource),
         ]
         override public UpdateRowSource UpdatedRowSource { // V1.2.3300, XXXCommand V1.0.5000
             get {
@@ -807,8 +807,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_StatementCompleted),
-        ResDescriptionAttribute(ResHelper.ResourceNames.DbCommand_StatementCompleted),
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_StatementCompleted),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_StatementCompleted),
         ]
         public event StatementCompletedEventHandler StatementCompleted {
             add {
@@ -2752,7 +2752,7 @@ namespace Microsoft.Data.SqlClient {
             ValidateCommand(ADP.DeriveParameters, false /*not async*/);
 
             // Use common parser for SqlClient and OleDb - parse into 4 parts - Server, Catalog, Schema, ProcedureName
-            string[] parsedSProc = MultipartIdentifier.ParseMultipartIdentifier(this.CommandText, "[\"", "]\"", Res.SQL_SqlCommandCommandText, false);
+            string[] parsedSProc = MultipartIdentifier.ParseMultipartIdentifier(this.CommandText, "[\"", "]\"", Strings.SQL_SqlCommandCommandText, false);
             if (null == parsedSProc[3] || ADP.IsEmpty(parsedSProc[3]))
             {
                 throw ADP.NoStoredProcedureExists(this.CommandText);

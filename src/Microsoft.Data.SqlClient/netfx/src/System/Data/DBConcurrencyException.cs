@@ -17,7 +17,7 @@ namespace Microsoft.Data {
     public sealed class DBConcurrencyException  : SystemException {
         private DataRow[] _dataRows;
 
-        public DBConcurrencyException() : this(ResHelper.GetString(Res.ADP_DBConcurrencyExceptionMessage), null) { // MDAC 84941
+        public DBConcurrencyException() : this(StringsHelper.GetString(Strings.ADP_DBConcurrencyExceptionMessage), null) { // MDAC 84941
         }
 
         public DBConcurrencyException(string message) : this(message, null) {

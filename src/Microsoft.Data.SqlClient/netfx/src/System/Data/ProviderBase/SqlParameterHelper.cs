@@ -55,8 +55,8 @@ namespace Microsoft.Data.SqlClient
 
         [
         RefreshProperties(RefreshProperties.All),
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Data),
-        ResDescriptionAttribute(ResHelper.ResourceNames.DbParameter_Direction),
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.DbParameter_Direction),
         ]
         override public ParameterDirection Direction { // V1.2.3300, XXXParameter V1.0.3300
             get {
@@ -93,8 +93,8 @@ namespace Microsoft.Data.SqlClient
         [
         Browsable(false),
         EditorBrowsableAttribute(EditorBrowsableState.Advanced), // MDAC 69508
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Data),
-        ResDescriptionAttribute(ResHelper.ResourceNames.DbParameter_Offset),
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.DbParameter_Offset),
         ]
         public int Offset {
             get {
@@ -116,8 +116,8 @@ namespace Microsoft.Data.SqlClient
 #endif
 
         [
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Data),
-        ResDescriptionAttribute(ResHelper.ResourceNames.DbParameter_Size),
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.DbParameter_Size),
         ]
         override public int Size { // V1.2.3300, XXXParameter V1.0.3300
             get {
@@ -150,8 +150,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         [
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Update),
-        ResDescriptionAttribute(ResHelper.ResourceNames.DbParameter_SourceColumn),
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Update),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.DbParameter_SourceColumn),
         ]
         override public string SourceColumn { // V1.2.3300, XXXParameter V1.0.3300
             get {
@@ -173,8 +173,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         [
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Update),
-        ResDescriptionAttribute(ResHelper.ResourceNames.DbParameter_SourceVersion),
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Update),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.DbParameter_SourceVersion),
         ]
         override public DataRowVersion SourceVersion { // V1.2.3300, XXXParameter V1.0.3300
             get {

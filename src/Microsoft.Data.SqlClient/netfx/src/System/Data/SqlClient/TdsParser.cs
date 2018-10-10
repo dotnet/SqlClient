@@ -1470,10 +1470,10 @@ namespace Microsoft.Data.SqlClient {
 
             Debug.Assert(!ADP.IsEmpty(errorMessage),"Empty error message received from SNI");
 
-            string sqlContextInfo = ResHelper.GetString(Enum.GetName(typeof(SniContext), stateObj.SniContext));
+            string sqlContextInfo = StringsHelper.GetString(Enum.GetName(typeof(SniContext), stateObj.SniContext));
 
             string providerRid = String.Format((IFormatProvider)null,"SNI_PN{0}", (int)sniError.provider);
-            string providerName = ResHelper.GetString(providerRid);
+            string providerName = StringsHelper.GetString(providerRid);
             Debug.Assert(!ADP.IsEmpty(providerName), String.Format((IFormatProvider)null,"invalid providerResourceId '{0}'", providerRid));
             uint win32ErrorCode = sniError.nativeError;
 
@@ -4819,7 +4819,7 @@ namespace Microsoft.Data.SqlClient {
                 }
                 string tableName = value;
                 length -= (tableLen * 2); // wide bytes
-                mpt = new MultiPartTableName(MultipartIdentifier.ParseMultipartIdentifier(tableName, "[\"", "]\"", Res.SQL_TDSParserTableName, false));
+                mpt = new MultiPartTableName(MultipartIdentifier.ParseMultipartIdentifier(tableName, "[\"", "]\"", Strings.SQL_TDSParserTableName, false));
             }
 
             multiPartTableName = mpt;
@@ -5004,7 +5004,7 @@ namespace Microsoft.Data.SqlClient {
                     }
                     buffer[map[i]] = data.SqlValue;
                     if (stateObj._longlen != 0) {
-                        throw new SqlTruncateException(ResHelper.GetString(Res.SqlMisc_TruncationMaxDataMessage));
+                        throw new SqlTruncateException(StringsHelper.GetString(Strings.SqlMisc_TruncationMaxDataMessage));
                     }
                 }
                 data.Clear();
@@ -7899,7 +7899,7 @@ namespace Microsoft.Data.SqlClient {
                                 Debug.Assert(authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated || authentication == SqlAuthenticationMethod.ActiveDirectoryPassword);
                             }
 
-                            _physicalStateObj.AddError(new SqlError(0, (byte)0x00, (byte)TdsEnums.MIN_ERROR_CLASS, _server, ResHelper.GetString(Res.SQL_ADALInitializeError, authentication.ToString("G"), result.ToString("X")), TdsEnums.INIT_ADAL_PACKAGE, 0));
+                            _physicalStateObj.AddError(new SqlError(0, (byte)0x00, (byte)TdsEnums.MIN_ERROR_CLASS, _server, StringsHelper.GetString(Strings.SQL_ADALInitializeError, authentication.ToString("G"), result.ToString("X")), TdsEnums.INIT_ADAL_PACKAGE, 0));
 
                             ThrowExceptionAndWarning(_physicalStateObj);
                         }

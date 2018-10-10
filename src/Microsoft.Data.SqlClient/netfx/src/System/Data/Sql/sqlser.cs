@@ -115,7 +115,7 @@ namespace Microsoft.SqlServer.Server {
                 udtAttr = (SqlUserDefinedTypeAttribute) attr[0];
             }
             else {
-                throw InvalidUdtException.Create(t, Res.SqlUdtReason_NoUdtAttribute);
+                throw InvalidUdtException.Create(t, Strings.SqlUdtReason_NoUdtAttribute);
             }
             return udtAttr;
         }
@@ -198,7 +198,7 @@ namespace Microsoft.SqlServer.Server {
         }
 
         private void DontDoIt() {
-            throw new Exception(ResHelper.GetString(Res.Sql_InternalError));
+            throw new Exception(StringsHelper.GetString(Strings.Sql_InternalError));
         }
 
         public override bool CanRead {

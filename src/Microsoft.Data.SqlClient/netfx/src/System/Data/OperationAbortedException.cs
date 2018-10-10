@@ -27,10 +27,10 @@ namespace Microsoft.Data {
         static internal OperationAbortedException Aborted(Exception inner) {
             OperationAbortedException e;
             if (inner == null) {
-                e = new OperationAbortedException(ResHelper.GetString(Res.ADP_OperationAborted), null);
+                e = new OperationAbortedException(StringsHelper.GetString(Strings.ADP_OperationAborted), null);
             }
             else {
-                e = new OperationAbortedException(ResHelper.GetString(Res.ADP_OperationAbortedExceptionMessage), inner);
+                e = new OperationAbortedException(StringsHelper.GetString(Strings.ADP_OperationAbortedExceptionMessage), inner);
             }
             ADP.TraceExceptionAsReturnValue(e);
             return e;

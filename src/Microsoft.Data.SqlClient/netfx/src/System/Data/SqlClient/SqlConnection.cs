@@ -99,8 +99,8 @@ namespace Microsoft.Data.SqlClient
 
         [
         DefaultValue(null),
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Data),
-        ResDescriptionAttribute(ResHelper.ResourceNames.TCE_SqlConnection_TrustedColumnMasterKeyPaths),
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.TCE_SqlConnection_TrustedColumnMasterKeyPaths),
         ]
         static public IDictionary<string, IList<string>> ColumnEncryptionTrustedMasterKeyPaths
         {
@@ -117,8 +117,8 @@ namespace Microsoft.Data.SqlClient
 
         [
         DefaultValue(null),
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Data),
-        ResDescriptionAttribute(ResHelper.ResourceNames.TCE_SqlConnection_ColumnEncryptionQueryMetadataCacheEnabled),
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.TCE_SqlConnection_ColumnEncryptionQueryMetadataCacheEnabled),
         ]
         static public bool ColumnEncryptionQueryMetadataCacheEnabled 
         {
@@ -139,8 +139,8 @@ namespace Microsoft.Data.SqlClient
 
         [
         DefaultValue(null),
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Data),
-        ResDescriptionAttribute(ResHelper.ResourceNames.TCE_SqlConnection_ColumnEncryptionKeyCacheTtl),
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.TCE_SqlConnection_ColumnEncryptionKeyCacheTtl),
         ]
         static public TimeSpan ColumnEncryptionKeyCacheTtl
         {
@@ -397,8 +397,8 @@ namespace Microsoft.Data.SqlClient
 
         [
         DefaultValue(false),
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Data),
-        ResDescriptionAttribute(ResHelper.ResourceNames.SqlConnection_StatisticsEnabled),
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlConnection_StatisticsEnabled),
         ]
         public bool StatisticsEnabled {
             get {
@@ -554,7 +554,7 @@ namespace Microsoft.Data.SqlClient
         [
         Browsable(false),
         DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
-        ResDescriptionAttribute(ResHelper.ResourceNames.SqlConnection_AccessToken),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlConnection_AccessToken),
         ]
         public string AccessToken {
             get {
@@ -592,9 +592,9 @@ namespace Microsoft.Data.SqlClient
 #pragma warning restore 618
         SettingsBindableAttribute(true),
         RefreshProperties(RefreshProperties.All),
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Data),
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
         Editor("Microsoft.VSDesigner.Data.SQL.Design.SqlConnectionStringEditor, " + AssemblyRef.MicrosoftVSDesigner, "System.Drawing.Design.UITypeEditor, " + AssemblyRef.SystemDrawing),
-        ResDescriptionAttribute(ResHelper.ResourceNames.SqlConnection_ConnectionString),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlConnection_ConnectionString),
         ]
         override public string ConnectionString {
             get {
@@ -625,7 +625,7 @@ namespace Microsoft.Data.SqlClient
 
         [
         DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
-        ResDescriptionAttribute(ResHelper.ResourceNames.SqlConnection_ConnectionTimeout),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlConnection_ConnectionTimeout),
         ]
         override public int ConnectionTimeout {
             get {
@@ -636,7 +636,7 @@ namespace Microsoft.Data.SqlClient
 
         [
         DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
-        ResDescriptionAttribute(ResHelper.ResourceNames.SqlConnection_Database),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlConnection_Database),
         ]
         override public string Database {
             // if the connection is open, we need to ask the inner connection what it's
@@ -660,7 +660,7 @@ namespace Microsoft.Data.SqlClient
         [
         Browsable(true),
         DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
-        ResDescriptionAttribute(ResHelper.ResourceNames.SqlConnection_DataSource),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlConnection_DataSource),
         ]
         override public string DataSource {
             get {
@@ -680,8 +680,8 @@ namespace Microsoft.Data.SqlClient
 
         [
         DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Data),
-        ResDescriptionAttribute(ResHelper.ResourceNames.SqlConnection_PacketSize),
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlConnection_PacketSize),
         ]
         public int PacketSize {
             // if the connection is open, we need to ask the inner connection what it's
@@ -708,8 +708,8 @@ namespace Microsoft.Data.SqlClient
 
         [
         DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Data),
-        ResDescriptionAttribute(ResHelper.ResourceNames.SqlConnection_ClientConnectionId),
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlConnection_ClientConnectionId),
         ]
         public Guid ClientConnectionId {
             get {
@@ -732,7 +732,7 @@ namespace Microsoft.Data.SqlClient
         [
         Browsable(false),
         DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
-        ResDescriptionAttribute(ResHelper.ResourceNames.SqlConnection_ServerVersion),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlConnection_ServerVersion),
         ]
         override public string ServerVersion {
             get {
@@ -743,7 +743,7 @@ namespace Microsoft.Data.SqlClient
         [
         Browsable(false),
         DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
-        ResDescriptionAttribute(ResHelper.ResourceNames.DbConnection_State),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnection_State),
         ]
         override public ConnectionState State {
             get {
@@ -764,8 +764,8 @@ namespace Microsoft.Data.SqlClient
 
         [
         DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Data),
-        ResDescriptionAttribute(ResHelper.ResourceNames.SqlConnection_WorkstationId),
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlConnection_WorkstationId),
         ]
         public string WorkstationId {
             get {
@@ -791,7 +791,7 @@ namespace Microsoft.Data.SqlClient
         [
         Browsable(false),
         DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
-        ResDescriptionAttribute(ResHelper.ResourceNames.SqlConnection_Credential),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlConnection_Credential),
         ]
         public SqlCredential Credential
         {
@@ -896,8 +896,8 @@ namespace Microsoft.Data.SqlClient
         //
 
         [
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_InfoMessage),
-        ResDescriptionAttribute(ResHelper.ResourceNames.DbConnection_InfoMessage),
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_InfoMessage),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnection_InfoMessage),
         ]
         public event SqlInfoMessageEventHandler InfoMessage {
             add {
@@ -1969,7 +1969,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // This overload is called by the Command object when executing stored procedures.  Note that
+        // This overload is called by the Command object when executing stored proceduStrings.  Note that
         // if SQLDebug has never been called, it is a noop.
         internal void CheckSQLDebug() {
             if (null != _sdc)

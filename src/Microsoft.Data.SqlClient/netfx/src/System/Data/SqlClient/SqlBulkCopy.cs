@@ -423,7 +423,7 @@ namespace Microsoft.Data.SqlClient {
         private string CreateInitialQuery() {
             string[] parts;
             try {
-                parts = MultipartIdentifier.ParseMultipartIdentifier(this.DestinationTableName, "[\"", "]\"", Res.SQL_BulkCopyDestinationTableName, true);
+                parts = MultipartIdentifier.ParseMultipartIdentifier(this.DestinationTableName, "[\"", "]\"", Strings.SQL_BulkCopyDestinationTableName, true);
             }
             catch (Exception e) {
                 throw SQL.BulkLoadInvalidDestinationTable(this.DestinationTableName, e);

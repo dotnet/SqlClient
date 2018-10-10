@@ -502,8 +502,8 @@ namespace Microsoft.Data.SqlClient
         }
         /*
                 [DisplayName(DbConnectionStringKeywords.NamedConnection)]
-                [ResCategoryAttribute(Res.DataCategory_NamedConnectionString)]
-                [ResDescriptionAttribute(Res.DbConnectionString_NamedConnection)]
+                [ResCategoryAttribute(Strings.DataCategory_NamedConnectionString)]
+                [ResDescriptionAttribute(Strings.DbConnectionString_NamedConnection)]
                 [RefreshPropertiesAttribute(RefreshProperties.All)]
                 [TypeConverter(typeof(NamedConnectionStringConverter))]
                 public string NamedConnection {

@@ -82,7 +82,7 @@ namespace Microsoft.Data
                             {
                                 SNINativeMethodWrapper.SNI_Error sniError = new SNINativeMethodWrapper.SNI_Error();
                                 SNINativeMethodWrapper.SNIGetLastError(sniError);
-                                throw CreateLocalDBException(errorMessage: ResHelper.GetString("LocalDB_FailedGetDLLHandle"), sniError: (int)sniError.sniError);
+                                throw CreateLocalDBException(errorMessage: StringsHelper.GetString("LocalDB_FailedGetDLLHandle"), sniError: (int)sniError.sniError);
                             }
                         }
                     }
@@ -121,7 +121,7 @@ namespace Microsoft.Data
                             {
                                 int hResult=Marshal.GetLastWin32Error();
                                 Bid.Trace("<sc.LocalDBAPI.LocalDBCreateInstance> GetProcAddress for LocalDBCreateInstance error 0x{%X}",hResult);
-                                throw CreateLocalDBException(errorMessage: ResHelper.GetString("LocalDB_MethodNotFound"));
+                                throw CreateLocalDBException(errorMessage: StringsHelper.GetString("LocalDB_MethodNotFound"));
                             }
                             s_localDBCreateInstance = (LocalDBCreateInstanceDelegate)Marshal.GetDelegateForFunctionPointer(functionAddr, typeof(LocalDBCreateInstanceDelegate));
                         }
@@ -163,7 +163,7 @@ namespace Microsoft.Data
                                 // SNI checks for LocalDBFormatMessage during DLL loading, so it is practically impossibe to get this error.
                                 int hResult=Marshal.GetLastWin32Error();
                                 Bid.Trace("<sc.LocalDBAPI.LocalDBFormatMessage> GetProcAddress for LocalDBFormatMessage error 0x{%X}", hResult);
-                                throw CreateLocalDBException(errorMessage: ResHelper.GetString("LocalDB_MethodNotFound"));
+                                throw CreateLocalDBException(errorMessage: StringsHelper.GetString("LocalDB_MethodNotFound"));
                             }
                             s_localDBFormatMessage = (LocalDBFormatMessageDelegate)Marshal.GetDelegateForFunctionPointer(functionAddr, typeof(LocalDBFormatMessageDelegate));                            
                         }
@@ -206,12 +206,12 @@ namespace Microsoft.Data
                     if (hResult >= 0)
                         return buffer.ToString();
                     else
-                        return string.Format(CultureInfo.CurrentCulture, "{0} (0x{1:X}).", ResHelper.GetString("LocalDB_UnobtainableMessage"), hResult);
+                        return string.Format(CultureInfo.CurrentCulture, "{0} (0x{1:X}).", StringsHelper.GetString("LocalDB_UnobtainableMessage"), hResult);
                 }
             }
             catch (SqlException exc)
             {
-                return string.Format(CultureInfo.CurrentCulture, "{0} ({1}).", ResHelper.GetString("LocalDB_UnobtainableMessage"), exc.Message);
+                return string.Format(CultureInfo.CurrentCulture, "{0} ({1}).", StringsHelper.GetString("LocalDB_UnobtainableMessage"), exc.Message);
             }
         }
 
@@ -309,7 +309,7 @@ namespace Microsoft.Data
                             // validate section type
                             LocalDBConfigurationSection configSection = section as LocalDBConfigurationSection;
                             if (configSection == null) 
-                                throw CreateLocalDBException(errorMessage: ResHelper.GetString("LocalDB_BadConfigSectionType"));
+                                throw CreateLocalDBException(errorMessage: StringsHelper.GetString("LocalDB_BadConfigSectionType"));
                             foreach (LocalDBInstanceElement confElement in configSection.LocalDbInstances)
                             {
                                 Debug.Assert(confElement.Name != null && confElement.Version != null, "Both name and version should not be null");
@@ -339,13 +339,13 @@ namespace Microsoft.Data
             Debug.Assert(!instance.Contains("\0"), "Instance name should contain embedded nulls");
 
             if (instanceInfo.version.Contains("\0"))
-                throw CreateLocalDBException(errorMessage: ResHelper.GetString("LocalDB_InvalidVersion"), instance: instance);
+                throw CreateLocalDBException(errorMessage: StringsHelper.GetString("LocalDB_InvalidVersion"), instance: instance);
          
             // LocalDBCreateInstance is thread- and cross-process safe method, it is OK to call from two threads simultaneously
             int hr = LocalDBCreateInstance(instanceInfo.version, instance, flags: 0);
             Bid.Trace("<sc.LocalDBAPI.CreateLocalDBInstance> Starting creation of instance %ls version %ls", instance, instanceInfo.version);
             if (hr < 0)
-                throw CreateLocalDBException(errorMessage: ResHelper.GetString("LocalDB_CreateFailed"), instance: instance, localDbError: hr);
+                throw CreateLocalDBException(errorMessage: StringsHelper.GetString("LocalDB_CreateFailed"), instance: instance, localDbError: hr);
             Bid.Trace("<sc.LocalDBAPI.CreateLocalDBInstance> Finished creation of instance %ls", instance);
             instanceInfo.created=true; // mark instance as created
 

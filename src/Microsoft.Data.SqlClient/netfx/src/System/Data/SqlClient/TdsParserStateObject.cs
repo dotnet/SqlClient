@@ -1142,7 +1142,7 @@ namespace Microsoft.Data.SqlClient {
                         // copy remainder of unused data
                         int remainingData = _inBytesRead - _inBytesUsed;
                         if ((temp.Length < _inBytesUsed + remainingData) || (_inBuff.Length < remainingData)) {
-                          string errormessage = ResHelper.GetString(Res.SQL_InvalidInternalPacketSize) + ' ' + temp.Length + ", " + _inBytesUsed + ", " + remainingData + ", " + _inBuff.Length;
+                          string errormessage = StringsHelper.GetString(Strings.SQL_InvalidInternalPacketSize) + ' ' + temp.Length + ", " + _inBytesUsed + ", " + remainingData + ", " + _inBuff.Length;
                           throw SQL.InvalidInternalPacketSize (errormessage);
                         }
                         Buffer.BlockCopy(temp, _inBytesUsed, _inBuff, 0, remainingData);
@@ -2411,7 +2411,7 @@ namespace Microsoft.Data.SqlClient {
                 if (getDataError == TdsEnums.SNI_SUCCESS) {
                     if (_inBuff.Length < dataSize) {
                         Debug.Assert(true, "Unexpected dataSize on Read");
-                        throw SQL.InvalidInternalPacketSize (ResHelper.GetString(Res.SqlMisc_InvalidArraySizeMessage));
+                        throw SQL.InvalidInternalPacketSize (StringsHelper.GetString(Strings.SqlMisc_InvalidArraySizeMessage));
                     }
 
                     _lastSuccessfulIOTimer._value = DateTime.UtcNow.Ticks;

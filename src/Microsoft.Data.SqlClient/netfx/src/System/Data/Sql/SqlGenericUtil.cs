@@ -25,10 +25,10 @@ namespace Microsoft.Data.Sql {
         //
 
         static internal Exception NullCommandText() {
-            return ADP.Argument(ResHelper.GetString(Res.Sql_NullCommandText));
+            return ADP.Argument(StringsHelper.GetString(Strings.Sql_NullCommandText));
         }
         static internal Exception MismatchedMetaDataDirectionArrayLengths() {
-            return ADP.Argument(ResHelper.GetString(Res.Sql_MismatchedMetaDataDirectionArrayLengths));
+            return ADP.Argument(StringsHelper.GetString(Strings.Sql_MismatchedMetaDataDirectionArrayLengths));
         }
     }
 

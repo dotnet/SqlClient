@@ -58,7 +58,7 @@ namespace Microsoft.SqlServer.Server {
             set {
                 // MaxByteSize of -1 means 2GB and is valid, as well as 0 to MaxByteSizeValue
                 if (value < -1 || value > MaxByteSizeValue) {
-                    throw ADP.ArgumentOutOfRange(ResHelper.GetString(Res.SQLUDT_MaxByteSizeValue), "MaxByteSize", value);
+                    throw ADP.ArgumentOutOfRange(StringsHelper.GetString(Strings.SQLUDT_MaxByteSizeValue), "MaxByteSize", value);
                 }
                 this.m_MaxByteSize = value;
             }

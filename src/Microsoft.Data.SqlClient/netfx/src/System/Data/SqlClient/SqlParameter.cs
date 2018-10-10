@@ -233,8 +233,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Xml),
-        ResDescriptionAttribute(ResHelper.ResourceNames.SqlParameter_XmlSchemaCollectionDatabase),
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Xml),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlParameter_XmlSchemaCollectionDatabase),
         ]
         public string  XmlSchemaCollectionDatabase {
             get {
@@ -247,8 +247,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Xml),
-        ResDescriptionAttribute(ResHelper.ResourceNames.SqlParameter_XmlSchemaCollectionOwningSchema),
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Xml),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlParameter_XmlSchemaCollectionOwningSchema),
         ]
         public string XmlSchemaCollectionOwningSchema {
             get {
@@ -261,8 +261,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Xml),
-        ResDescriptionAttribute(ResHelper.ResourceNames.SqlParameter_XmlSchemaCollectionName),
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Xml),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlParameter_XmlSchemaCollectionName),
         ]
         public string XmlSchemaCollectionName {
             get {
@@ -276,8 +276,8 @@ namespace Microsoft.Data.SqlClient {
 
         [
         DefaultValue(false),
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Data),
-        ResDescriptionAttribute(ResHelper.ResourceNames.TCE_SqlParameter_ForceColumnEncryption),
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.TCE_SqlParameter_ForceColumnEncryption),
         ]
         public bool ForceColumnEncryption {
             get; 
@@ -524,8 +524,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Data),
-        ResDescriptionAttribute(ResHelper.ResourceNames.SqlParameter_ParameterName),
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlParameter_ParameterName),
         ]
         override public string ParameterName {
             get {
@@ -558,8 +558,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [DefaultValue((Byte)0)] // MDAC 65862
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Data)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbDataParameter_Precision)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbDataParameter_Precision)]
         public new Byte Precision {
             get {
                 return PrecisionInternal;
@@ -595,8 +595,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [DefaultValue((Byte)0)] // MDAC 65862
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Data)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbDataParameter_Scale)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbDataParameter_Scale)]
         public new Byte Scale {
             get {
                 return ScaleInternal;
@@ -630,8 +630,8 @@ namespace Microsoft.Data.SqlClient {
 
         [
         RefreshProperties(RefreshProperties.All),
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Data),
-        ResDescriptionAttribute(ResHelper.ResourceNames.SqlParameter_SqlDbType),
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlParameter_SqlDbType),
         System.Data.Common.DbProviderSpecificTypePropertyAttribute(true),
         ]
         public SqlDbType SqlDbType {
@@ -738,8 +738,8 @@ namespace Microsoft.Data.SqlClient {
 
         [
         RefreshProperties(RefreshProperties.All),
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Data),
-        ResDescriptionAttribute(ResHelper.ResourceNames.DbParameter_Value),
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.DbParameter_Value),
         TypeConverterAttribute(typeof(StringConverter)),
         ]
         override public object Value { // V1.2.3300, XXXParameter V1.0.3300
@@ -1741,10 +1741,10 @@ namespace Microsoft.Data.SqlClient {
             try {
                 string errorMsg;
                 if (isUdtTypeName) {
-                    errorMsg = Res.SQL_UDTTypeName;
+                    errorMsg = Strings.SQL_UDTTypeName;
                 }
                 else {
-                    errorMsg = Res.SQL_TypeName;
+                    errorMsg = Strings.SQL_TypeName;
                 }
                 return MultipartIdentifier.ParseMultipartIdentifier(typeName, "[\"", "]\"", '.', 3, true, errorMsg, true);
             }

@@ -304,8 +304,8 @@ namespace Microsoft.Data.SqlClient {
         // -----------------
 
         [
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Data),
-        ResDescriptionAttribute(ResHelper.ResourceNames.SqlDependency_HasChanges)
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlDependency_HasChanges)
         ]
         public bool HasChanges {
             get {
@@ -314,8 +314,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Data),
-        ResDescriptionAttribute(ResHelper.ResourceNames.SqlDependency_Id)
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlDependency_Id)
         ]
         public string Id {
             get {
@@ -368,8 +368,8 @@ namespace Microsoft.Data.SqlClient {
         // ------
 
         [
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Data),
-        ResDescriptionAttribute(ResHelper.ResourceNames.SqlDependency_OnChange)
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlDependency_OnChange)
         ]
         public event OnChangeEventHandler OnChange {
             // EventHandlers to be fired when dependency is notified.
@@ -431,8 +431,8 @@ namespace Microsoft.Data.SqlClient {
         // --------------
 
         [
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Data),
-        ResDescriptionAttribute(ResHelper.ResourceNames.SqlDependency_AddCommandDependency)
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlDependency_AddCommandDependency)
         ]
         public void AddCommandDependency(SqlCommand command) {
             // Adds command to dependency collection so we automatically create the SqlNotificationsRequest object

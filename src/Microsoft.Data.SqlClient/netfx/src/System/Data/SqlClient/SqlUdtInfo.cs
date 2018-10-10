@@ -32,7 +32,7 @@ namespace Microsoft.Data.SqlClient {
         internal static SqlUdtInfo GetFromType(Type target) {
             SqlUdtInfo udtAttr = TryGetFromType(target);
             if (udtAttr == null) {
-                throw InvalidUdtException.Create(target, Res.SqlUdtReason_NoUdtAttribute);
+                throw InvalidUdtException.Create(target, Strings.SqlUdtReason_NoUdtAttribute);
             }
             return udtAttr;
         }

@@ -19,7 +19,7 @@ namespace Microsoft.Data
 
         protected override string GetLocalizedString(string value)
         {
-            return ResHelper.GetString(value);
+            return StringsHelper.GetString(value);
         }
     }
 }

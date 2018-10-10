@@ -37,8 +37,8 @@ namespace Microsoft.SqlServer.Server {
         }
 
         internal static InvalidUdtException Create(Type udtType, string resourceReason) {
-            string reason = ResHelper.GetString(resourceReason);
-            string message = ResHelper.GetString(Res.SqlUdt_InvalidUdtMessage, udtType.FullName, reason);
+            string reason = StringsHelper.GetString(resourceReason);
+            string message = StringsHelper.GetString(Strings.SqlUdt_InvalidUdtMessage, udtType.FullName, reason);
             InvalidUdtException e =  new InvalidUdtException(message);
             ADP.TraceExceptionAsReturnValue(e);
             return e;

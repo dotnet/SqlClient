@@ -258,7 +258,7 @@ namespace Microsoft.SqlServer.Server {
                 n = new BinaryOrderedUdtNormalizer(t, false);
             }
             if (n == null)
-                throw new Exception(ResHelper.GetString(Res.Sql_CanotCreateNormalizer, t.FullName));
+                throw new Exception(StringsHelper.GetString(Strings.Sql_CanotCreateNormalizer, t.FullName));
             n.m_skipNormalize = false;
             return n;
         }

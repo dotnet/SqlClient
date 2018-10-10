@@ -64,8 +64,8 @@ namespace Microsoft.Data.SqlClient {
         [
         DefaultValue(null),
         Editor("Microsoft.VSDesigner.Data.Design.DBCommandEditor, " + AssemblyRef.MicrosoftVSDesigner, "System.Drawing.Design.UITypeEditor, " + AssemblyRef.SystemDrawing),
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Update),
-        ResDescriptionAttribute(ResHelper.ResourceNames.DbDataAdapter_DeleteCommand),
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Update),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.DbDataAdapter_DeleteCommand),
         ]
         new public SqlCommand DeleteCommand {
             get { return _deleteCommand; }
@@ -80,8 +80,8 @@ namespace Microsoft.Data.SqlClient {
         [
         DefaultValue(null),
         Editor("Microsoft.VSDesigner.Data.Design.DBCommandEditor, " + AssemblyRef.MicrosoftVSDesigner, "System.Drawing.Design.UITypeEditor, " + AssemblyRef.SystemDrawing),
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Update),
-        ResDescriptionAttribute(ResHelper.ResourceNames.DbDataAdapter_InsertCommand),
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Update),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.DbDataAdapter_InsertCommand),
         ]
         new public SqlCommand InsertCommand {
             get { return _insertCommand; }
@@ -96,8 +96,8 @@ namespace Microsoft.Data.SqlClient {
         [
         DefaultValue(null),
         Editor("Microsoft.VSDesigner.Data.Design.DBCommandEditor, " + AssemblyRef.MicrosoftVSDesigner, "System.Drawing.Design.UITypeEditor, " + AssemblyRef.SystemDrawing),
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Fill),
-        ResDescriptionAttribute(ResHelper.ResourceNames.DbDataAdapter_SelectCommand),
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Fill),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.DbDataAdapter_SelectCommand),
         ]
         new public SqlCommand SelectCommand {
             get { return _selectCommand; }
@@ -126,8 +126,8 @@ namespace Microsoft.Data.SqlClient {
         [
         DefaultValue(null),
         Editor("Microsoft.VSDesigner.Data.Design.DBCommandEditor, " + AssemblyRef.MicrosoftVSDesigner, "System.Drawing.Design.UITypeEditor, " + AssemblyRef.SystemDrawing),
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Update),
-        ResDescriptionAttribute(ResHelper.ResourceNames.DbDataAdapter_UpdateCommand),
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Update),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.DbDataAdapter_UpdateCommand),
         ]
         new public SqlCommand UpdateCommand {
             get { return _updateCommand; }
@@ -140,8 +140,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Update),
-        ResDescriptionAttribute(ResHelper.ResourceNames.DbDataAdapter_RowUpdated),
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Update),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.DbDataAdapter_RowUpdated),
         ]
         public event SqlRowUpdatedEventHandler RowUpdated {
             add {
@@ -153,8 +153,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Update),
-        ResDescriptionAttribute(ResHelper.ResourceNames.DbDataAdapter_RowUpdating),
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Update),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.DbDataAdapter_RowUpdating),
         ]
         public event SqlRowUpdatingEventHandler RowUpdating {
             add {

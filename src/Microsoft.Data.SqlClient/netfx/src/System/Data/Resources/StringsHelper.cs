@@ -11,7 +11,7 @@ using System.Threading;
 
 namespace Microsoft.Data
 {
-    internal class ResHelper : Res
+    internal class StringsHelper : Strings
     {
         internal class ResourceNames
         {
@@ -275,44 +275,13 @@ namespace Microsoft.Data
             internal const string TCE_SqlParameter_ForceColumnEncryption = "TCE_SqlParameter_ForceColumnEncryption";
         }
 
-        static ResHelper loader = null;
-        ResourceManager resources;
-
-        internal ResHelper()
-        {
-            resources = new ResourceManager("Microsoft.Data", this.GetType().Assembly);
-        }
-
-        private static ResHelper GetLoader()
-        {
-            if (loader == null)
-            {
-                ResHelper sr = new ResHelper();
-                Interlocked.CompareExchange(ref loader, sr, null);
-            }
-            return loader;
-        }
-
         private static CultureInfo CultureHelper
         {
             get { return null/*use ResourceManager default, CultureInfo.CurrentUICulture*/; }
         }
 
-        public static ResourceManager Resources
+        public static string GetString(string res, params object[] args)
         {
-            get
-            {
-                return GetLoader().resources;
-            }
-        }
-
-        public static string GetString(string name, params object[] args)
-        {
-            ResHelper sys = GetLoader();
-            if (sys == null)
-                return null;
-            string res = sys.resources.GetString(name, ResHelper.Culture);
-
             if (args != null && args.Length > 0)
             {
                 for (int i = 0; i < args.Length; i++)

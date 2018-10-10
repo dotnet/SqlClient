@@ -330,8 +330,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [DisplayName(DbConnectionStringKeywords.ApplicationIntent)]
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Initialization)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbConnectionString_ApplicationIntent)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Initialization)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_ApplicationIntent)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
         public ApplicationIntent ApplicationIntent {
             get { return _applicationIntent; }
@@ -346,8 +346,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [DisplayName(DbConnectionStringKeywords.ApplicationName)]
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Context)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbConnectionString_ApplicationName)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Context)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_ApplicationName)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
         public string ApplicationName {
             get { return _applicationName; }
@@ -358,8 +358,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [DisplayName(DbConnectionStringKeywords.AsynchronousProcessing)]
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Initialization)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbConnectionString_AsynchronousProcessing)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Initialization)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_AsynchronousProcessing)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
         public bool AsynchronousProcessing {
             get { return _asynchronousProcessing; }
@@ -370,8 +370,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [DisplayName(DbConnectionStringKeywords.AttachDBFilename)]
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Source)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbConnectionString_AttachDBFilename)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Source)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_AttachDBFilename)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
         // TODO: hand off to VS, they derive from FileNameEditor and set the OpenDialogFilter to *.MDF
         [Editor("System.Windows.Forms.Design.FileNameEditor, " + AssemblyRef.SystemDesign, "System.Drawing.Design.UITypeEditor, " + AssemblyRef.SystemDrawing)]
@@ -384,8 +384,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [DisplayName(DbConnectionStringKeywords.PoolBlockingPeriod)]
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Pooling)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbConnectionString_PoolBlockingPeriod)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Pooling)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_PoolBlockingPeriod)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
         public PoolBlockingPeriod PoolBlockingPeriod
         {
@@ -405,8 +405,8 @@ namespace Microsoft.Data.SqlClient {
         [Browsable(false)]
         [DisplayName(DbConnectionStringKeywords.ConnectionReset)]
         [Obsolete("ConnectionReset has been deprecated.  SqlConnection will ignore the 'connection reset' keyword and always reset the connection")] // SQLPT 41700
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Pooling)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbConnectionString_ConnectionReset)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Pooling)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_ConnectionReset)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
         public bool ConnectionReset {
             get { return _connectionReset; }
@@ -417,8 +417,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [DisplayName(DbConnectionStringKeywords.ContextConnection)]
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Source)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbConnectionString_ContextConnection)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Source)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_ContextConnection)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
         public bool ContextConnection {
             get { return _contextConnection; }
@@ -429,8 +429,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [DisplayName(DbConnectionStringKeywords.ConnectTimeout)]
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Initialization)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbConnectionString_ConnectTimeout)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Initialization)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_ConnectTimeout)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
         public int ConnectTimeout {
             get { return _connectTimeout; }
@@ -444,8 +444,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [DisplayName(DbConnectionStringKeywords.CurrentLanguage)]
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Initialization)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbConnectionString_CurrentLanguage)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Initialization)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_CurrentLanguage)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
         public string CurrentLanguage {
             get { return _currentLanguage; }
@@ -456,8 +456,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [DisplayName(DbConnectionStringKeywords.DataSource)]
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Source)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbConnectionString_DataSource)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Source)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_DataSource)]
         [RefreshProperties(RefreshProperties.All)]
         [TypeConverter(typeof(SqlDataSourceConverter))]
         public string DataSource {
@@ -469,8 +469,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [DisplayName(DbConnectionStringKeywords.Encrypt)]
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Security)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbConnectionString_Encrypt)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Security)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_Encrypt)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
         public bool Encrypt {
             get { return _encrypt; }
@@ -481,8 +481,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [DisplayName(DbConnectionStringKeywords.ColumnEncryptionSetting)]
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Security)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.TCE_DbConnectionString_ColumnEncryptionSetting)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Security)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.TCE_DbConnectionString_ColumnEncryptionSetting)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
         public SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting {
             get { return _columnEncryptionSetting; }
@@ -497,8 +497,8 @@ namespace Microsoft.Data.SqlClient {
         }
         
         [DisplayName(DbConnectionStringKeywords.EnclaveAttestationUrl)]
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Security)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.TCE_DbConnectionString_EnclaveAttestationUrl)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Security)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.TCE_DbConnectionString_EnclaveAttestationUrl)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
         public string EnclaveAttestationUrl {
             get { return _enclaveAttestationUrl; }
@@ -509,8 +509,8 @@ namespace Microsoft.Data.SqlClient {
         }
         
         [DisplayName(DbConnectionStringKeywords.TrustServerCertificate)]
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Security)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbConnectionString_TrustServerCertificate)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Security)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_TrustServerCertificate)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
         public bool TrustServerCertificate {
             get { return _trustServerCertificate; }
@@ -521,8 +521,8 @@ namespace Microsoft.Data.SqlClient {
         }
         
         [DisplayName(DbConnectionStringKeywords.Enlist)]
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Pooling)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbConnectionString_Enlist)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Pooling)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_Enlist)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
         public bool Enlist {
             get { return _enlist; }
@@ -533,8 +533,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [DisplayName(DbConnectionStringKeywords.FailoverPartner)]
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Source)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbConnectionString_FailoverPartner)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Source)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_FailoverPartner)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
         [TypeConverter(typeof(SqlDataSourceConverter))]
         public string FailoverPartner {
@@ -546,8 +546,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [DisplayName(DbConnectionStringKeywords.InitialCatalog)]
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Source)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbConnectionString_InitialCatalog)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Source)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_InitialCatalog)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
         [TypeConverter(typeof(SqlInitialCatalogConverter))]
         public string InitialCatalog {
@@ -559,8 +559,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [DisplayName(DbConnectionStringKeywords.IntegratedSecurity)]
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Security)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbConnectionString_IntegratedSecurity)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Security)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_IntegratedSecurity)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
         public bool IntegratedSecurity {
             get { return _integratedSecurity; }
@@ -571,8 +571,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [DisplayName(DbConnectionStringKeywords.Authentication)]
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Security)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbConnectionString_Authentication)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Security)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_Authentication)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
         public SqlAuthenticationMethod Authentication {
             get { return _authentication; }
@@ -610,8 +610,8 @@ namespace Microsoft.Data.SqlClient {
 #endif
 
         [DisplayName(DbConnectionStringKeywords.LoadBalanceTimeout)]
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Pooling)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbConnectionString_LoadBalanceTimeout)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Pooling)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_LoadBalanceTimeout)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
         public int LoadBalanceTimeout {
             get { return _loadBalanceTimeout; }
@@ -625,8 +625,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [DisplayName(DbConnectionStringKeywords.MaxPoolSize)]
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Pooling)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbConnectionString_MaxPoolSize)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Pooling)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_MaxPoolSize)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
         public int MaxPoolSize {
             get { return _maxPoolSize; }
@@ -640,8 +640,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [DisplayName(DbConnectionStringKeywords.ConnectRetryCount)]
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_ConnectionResilency)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbConnectionString_ConnectRetryCount)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_ConnectionResilency)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_ConnectRetryCount)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
         public int ConnectRetryCount {
             get { return _connectRetryCount; }
@@ -655,8 +655,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [DisplayName(DbConnectionStringKeywords.ConnectRetryInterval)]
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_ConnectionResilency)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbConnectionString_ConnectRetryInterval)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_ConnectionResilency)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_ConnectRetryInterval)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
         public int ConnectRetryInterval {
             get { return _connectRetryInterval; }
@@ -672,8 +672,8 @@ namespace Microsoft.Data.SqlClient {
 
 
         [DisplayName(DbConnectionStringKeywords.MinPoolSize)]
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Pooling)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbConnectionString_MinPoolSize)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Pooling)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_MinPoolSize)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
         public int MinPoolSize {
             get { return _minPoolSize; }
@@ -687,8 +687,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [DisplayName(DbConnectionStringKeywords.MultipleActiveResultSets)]
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Advanced)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbConnectionString_MultipleActiveResultSets)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Advanced)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_MultipleActiveResultSets)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
         public bool MultipleActiveResultSets {
             get { return _multipleActiveResultSets; }
@@ -700,8 +700,8 @@ namespace Microsoft.Data.SqlClient {
 
         [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", Justification = "Reviewed and Approved by UE")]
         [DisplayName(DbConnectionStringKeywords.MultiSubnetFailover)]
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Source)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbConnectionString_MultiSubnetFailover)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Source)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_MultiSubnetFailover)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
         public bool MultiSubnetFailover {
             get { return _multiSubnetFailover; }
@@ -712,8 +712,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [DisplayName(DbConnectionStringKeywords.TransparentNetworkIPResolution)]
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Source)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbConnectionString_TransparentNetworkIPResolution)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Source)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_TransparentNetworkIPResolution)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
         public bool TransparentNetworkIPResolution
         {
@@ -738,8 +738,8 @@ namespace Microsoft.Data.SqlClient {
         }
 */
         [DisplayName(DbConnectionStringKeywords.NetworkLibrary)]
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Advanced)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbConnectionString_NetworkLibrary)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Advanced)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_NetworkLibrary)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
         [TypeConverter(typeof(NetworkLibraryConverter))]
         public string NetworkLibrary {
@@ -781,8 +781,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [DisplayName(DbConnectionStringKeywords.PacketSize)]
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Advanced)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbConnectionString_PacketSize)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Advanced)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_PacketSize)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
         public int PacketSize {
             get { return _packetSize; }
@@ -797,8 +797,8 @@ namespace Microsoft.Data.SqlClient {
 
         [DisplayName(DbConnectionStringKeywords.Password)]
         [PasswordPropertyTextAttribute(true)]
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Security)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbConnectionString_Password)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Security)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_Password)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
         public string Password {
             get { return _password; }
@@ -809,8 +809,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [DisplayName(DbConnectionStringKeywords.PersistSecurityInfo)]
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Security)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbConnectionString_PersistSecurityInfo)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Security)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_PersistSecurityInfo)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
         public bool PersistSecurityInfo {
             get { return _persistSecurityInfo; }
@@ -821,8 +821,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [DisplayName(DbConnectionStringKeywords.Pooling)]
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Pooling)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbConnectionString_Pooling)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Pooling)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_Pooling)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
         public bool Pooling {
             get { return _pooling; }
@@ -833,8 +833,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [DisplayName(DbConnectionStringKeywords.Replication)]
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Replication)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbConnectionString_Replication )]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Replication)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_Replication )]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
         public bool Replication {
             get { return _replication; }
@@ -845,8 +845,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [DisplayName(DbConnectionStringKeywords.TransactionBinding)]
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Advanced)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbConnectionString_TransactionBinding)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Advanced)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_TransactionBinding)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
         public string TransactionBinding {
             get { return _transactionBinding; }
@@ -857,8 +857,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [DisplayName(DbConnectionStringKeywords.TypeSystemVersion)]
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Advanced)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbConnectionString_TypeSystemVersion)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Advanced)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_TypeSystemVersion)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
         public string TypeSystemVersion {
             get { return _typeSystemVersion; }
@@ -869,8 +869,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [DisplayName(DbConnectionStringKeywords.UserID)]
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Security)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbConnectionString_UserID)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Security)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_UserID)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
         public string UserID {
             get { return _userID; }
@@ -881,8 +881,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [DisplayName(DbConnectionStringKeywords.UserInstance)]
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Source)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbConnectionString_UserInstance)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Source)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_UserInstance)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
         public bool UserInstance {
             get { return _userInstance; }
@@ -893,8 +893,8 @@ namespace Microsoft.Data.SqlClient {
         }
 
         [DisplayName(DbConnectionStringKeywords.WorkstationID)]
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Context)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbConnectionString_WorkstationID)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Context)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_WorkstationID)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
         public string WorkstationID {
             get { return _workstationID; }

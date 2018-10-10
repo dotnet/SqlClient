@@ -249,7 +249,7 @@ namespace Microsoft.Data.SqlTypes
 
                     case SqlBytesCharsState.Stream:
                         if (m_stream.Length > x_lMaxLen)
-                            throw new SqlTypeException(ResHelper.GetString(Res.SqlMisc_BufferInsufficientMessage));
+                            throw new SqlTypeException(StringsHelper.GetString(Strings.SqlMisc_BufferInsufficientMessage));
                         buffer = new char[m_stream.Length];
                         if (m_stream.Position != 0)
                             m_stream.Seek(0, SeekOrigin.Begin);
@@ -358,7 +358,7 @@ namespace Microsoft.Data.SqlTypes
                 // If the buffer is null, raise exception
                 //
                 if (null == m_rgchBuf)
-                    throw new SqlTypeException(ResHelper.GetString(Res.SqlMisc_NoBufferMessage));
+                    throw new SqlTypeException(StringsHelper.GetString(Strings.SqlMisc_NoBufferMessage));
 
                 if (value > (long)m_rgchBuf.Length)
                     throw new ArgumentOutOfRangeException("value");
@@ -433,12 +433,12 @@ namespace Microsoft.Data.SqlTypes
                     throw new ArgumentNullException("buffer");
 
                 if (m_rgchBuf == null)
-                    throw new SqlTypeException(ResHelper.GetString(Res.SqlMisc_NoBufferMessage));
+                    throw new SqlTypeException(StringsHelper.GetString(Strings.SqlMisc_NoBufferMessage));
 
                 if (offset < 0)
                     throw new ArgumentOutOfRangeException("offset");
                 if (offset > m_rgchBuf.Length)
-                    throw new SqlTypeException(ResHelper.GetString(Res.SqlMisc_BufferInsufficientMessage));
+                    throw new SqlTypeException(StringsHelper.GetString(Strings.SqlMisc_BufferInsufficientMessage));
 
                 if (offsetInBuffer < 0 || offsetInBuffer > buffer.Length)
                     throw new ArgumentOutOfRangeException("offsetInBuffer");
@@ -447,7 +447,7 @@ namespace Microsoft.Data.SqlTypes
                     throw new ArgumentOutOfRangeException("count");
 
                 if (count > m_rgchBuf.Length - offset)
-                    throw new SqlTypeException(ResHelper.GetString(Res.SqlMisc_BufferInsufficientMessage));
+                    throw new SqlTypeException(StringsHelper.GetString(Strings.SqlMisc_BufferInsufficientMessage));
 
                 if (IsNull)
                 {
@@ -455,7 +455,7 @@ namespace Microsoft.Data.SqlTypes
                     // offset zero.
                     //
                     if (offset != 0)
-                        throw new SqlTypeException(ResHelper.GetString(Res.SqlMisc_WriteNonZeroOffsetOnNullMessage));
+                        throw new SqlTypeException(StringsHelper.GetString(Strings.SqlMisc_WriteNonZeroOffsetOnNullMessage));
 
                     // treat as if our current length is zero.
                     // Note this has to be done after all inputs are validated, so that
@@ -469,7 +469,7 @@ namespace Microsoft.Data.SqlTypes
                     // Don't allow writing from an offset that this larger than current length.
                     // It would leave uninitialized data in the buffer.
                     //
-                    throw new SqlTypeException(ResHelper.GetString(Res.SqlMisc_WriteOffsetLargerThanLenMessage));
+                    throw new SqlTypeException(StringsHelper.GetString(Strings.SqlMisc_WriteOffsetLargerThanLenMessage));
                 }
 
                 if (count != 0)
@@ -543,7 +543,7 @@ namespace Microsoft.Data.SqlTypes
 
             long lStreamLen = m_stream.Length;
             if (lStreamLen >= x_lMaxLen)
-                throw new SqlTypeException(ResHelper.GetString(Res.SqlMisc_BufferInsufficientMessage));
+                throw new SqlTypeException(StringsHelper.GetString(Strings.SqlMisc_BufferInsufficientMessage));
 
             if (m_rgchBuf == null || m_rgchBuf.Length < lStreamLen)
                 m_rgchBuf = new char[lStreamLen];

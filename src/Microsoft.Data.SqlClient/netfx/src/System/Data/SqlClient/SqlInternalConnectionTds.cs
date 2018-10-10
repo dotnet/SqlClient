@@ -2460,10 +2460,10 @@ namespace Microsoft.Data.SqlClient
 
                         // Error[0]
                         SqlErrorCollection sqlErs = new SqlErrorCollection();
-                        sqlErs.Add(new SqlError(0, (byte)0x00, (byte)TdsEnums.MIN_ERROR_CLASS, ConnectionOptions.DataSource, ResHelper.GetString(Res.SQL_ADALFailure, username, ConnectionOptions.Authentication.ToString("G")), ActiveDirectoryAuthentication.AdalGetAccessTokenFunctionName, 0));
+                        sqlErs.Add(new SqlError(0, (byte)0x00, (byte)TdsEnums.MIN_ERROR_CLASS, ConnectionOptions.DataSource, StringsHelper.GetString(Strings.SQL_ADALFailure, username, ConnectionOptions.Authentication.ToString("G")), ActiveDirectoryAuthentication.AdalGetAccessTokenFunctionName, 0));
 
                         // Error[1]
-                        string errorMessage1 = ResHelper.GetString(Res.SQL_ADALInnerException, errorStatus, adalException.GetState());
+                        string errorMessage1 = StringsHelper.GetString(Strings.SQL_ADALInnerException, errorStatus, adalException.GetState());
                         sqlErs.Add(new SqlError(0, (byte)0x00, (byte)TdsEnums.MIN_ERROR_CLASS, ConnectionOptions.DataSource, errorMessage1, ActiveDirectoryAuthentication.AdalGetAccessTokenFunctionName, 0));
 
                         // Error[2]

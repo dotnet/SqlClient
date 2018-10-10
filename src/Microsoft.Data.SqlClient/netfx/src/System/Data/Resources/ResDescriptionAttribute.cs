@@ -38,7 +38,7 @@ namespace Microsoft.Data
                 if (!replaced)
                 {
                     replaced = true;
-                    DescriptionValue = ResHelper.GetString(base.Description);
+                    DescriptionValue = StringsHelper.GetString(base.Description);
                 }
                 return base.Description;
             }

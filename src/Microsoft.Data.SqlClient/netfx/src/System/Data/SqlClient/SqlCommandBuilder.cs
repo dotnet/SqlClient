@@ -65,8 +65,8 @@ namespace Microsoft.Data.SqlClient {
 
         [
         DefaultValue(null),
-        ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Update),
-        ResDescriptionAttribute(ResHelper.ResourceNames.SqlCommandBuilder_DataAdapter), // MDAC 60524
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Update),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlCommandBuilder_DataAdapter), // MDAC 60524
         ]
         new public SqlDataAdapter DataAdapter {
             get {

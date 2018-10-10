@@ -113,8 +113,8 @@ namespace Microsoft.Data.Common {
         }
 
         [RefreshPropertiesAttribute(RefreshProperties.All)]
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Data)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbConnectionString_ConnectionString)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_ConnectionString)]
         public string ConnectionString {
             get {
                 Bid.Trace("<comm.DbConnectionStringBuilder.get_ConnectionString|API> %d#\n", ObjectID);
@@ -412,7 +412,7 @@ namespace Microsoft.Data.Common {
                                 useAttributes = new Attribute[] {
                                     BrowsableAttribute.Yes,
                                     PasswordPropertyTextAttribute.Yes,
-                                    new ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Security),
+                                    new ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Security),
                                     RefreshPropertiesAttribute.All,
                                 };
                             }

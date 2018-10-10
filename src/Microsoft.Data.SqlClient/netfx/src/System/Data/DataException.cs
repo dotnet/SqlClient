@@ -27,7 +27,7 @@ namespace Microsoft.Data {
         : base(info, context) {
         }
         public DataException()
-        : base(ResHelper.GetString(Res.DataSet_DefaultDataException)) {
+        : base(StringsHelper.GetString(Strings.DataSet_DefaultDataException)) {
             HResult = HResults.Data;
         }
 
@@ -47,7 +47,7 @@ namespace Microsoft.Data {
         protected ConstraintException(SerializationInfo info, StreamingContext context)
         : base(info, context) {
         }
-        public ConstraintException()         : base(ResHelper.GetString(Res.DataSet_DefaultConstraintException)) {
+        public ConstraintException()         : base(StringsHelper.GetString(Strings.DataSet_DefaultConstraintException)) {
             HResult = HResults.DataConstraint;
         }
         public ConstraintException(string s) : base(s) {
@@ -69,7 +69,7 @@ namespace Microsoft.Data {
         ///       Initializes a new instance of the <see cref='System.Data.DeletedRowInaccessibleException'/> class.
         ///    </para>
         /// </devdoc>
-        public DeletedRowInaccessibleException() : base(ResHelper.GetString(Res.DataSet_DefaultDeletedRowInaccessibleException)) {
+        public DeletedRowInaccessibleException() : base(StringsHelper.GetString(Strings.DataSet_DefaultDeletedRowInaccessibleException)) {
             HResult = HResults.DataDeletedRowInaccessible;
         }
 
@@ -92,7 +92,7 @@ namespace Microsoft.Data {
         protected DuplicateNameException(SerializationInfo info, StreamingContext context)
         : base(info, context) {
         }
-        public DuplicateNameException() : base(ResHelper.GetString(Res.DataSet_DefaultDuplicateNameException)) {
+        public DuplicateNameException() : base(StringsHelper.GetString(Strings.DataSet_DefaultDuplicateNameException)) {
             HResult = HResults.DataDuplicateName;
         }
 
@@ -110,7 +110,7 @@ namespace Microsoft.Data {
         protected InRowChangingEventException(SerializationInfo info, StreamingContext context)
         : base(info, context) {
         }
-        public InRowChangingEventException() : base(ResHelper.GetString(Res.DataSet_DefaultInRowChangingEventException)) {
+        public InRowChangingEventException() : base(StringsHelper.GetString(Strings.DataSet_DefaultInRowChangingEventException)) {
             HResult = HResults.DataInRowChangingEvent;
         }
 
@@ -128,7 +128,7 @@ namespace Microsoft.Data {
         protected InvalidConstraintException(SerializationInfo info, StreamingContext context)
         : base(info, context) {
         }
-        public InvalidConstraintException() : base(ResHelper.GetString(Res.DataSet_DefaultInvalidConstraintException)) {
+        public InvalidConstraintException() : base(StringsHelper.GetString(Strings.DataSet_DefaultInvalidConstraintException)) {
             HResult = HResults.DataInvalidConstraint;
         }
 
@@ -146,7 +146,7 @@ namespace Microsoft.Data {
         protected MissingPrimaryKeyException(SerializationInfo info, StreamingContext context)
         : base(info, context) {
         }
-        public MissingPrimaryKeyException() : base(ResHelper.GetString(Res.DataSet_DefaultMissingPrimaryKeyException)) {
+        public MissingPrimaryKeyException() : base(StringsHelper.GetString(Strings.DataSet_DefaultMissingPrimaryKeyException)) {
             HResult = HResults.DataMissingPrimaryKey;
         }
 
@@ -164,7 +164,7 @@ namespace Microsoft.Data {
         protected NoNullAllowedException(SerializationInfo info, StreamingContext context)
         : base(info, context) {
         }
-        public NoNullAllowedException() : base(ResHelper.GetString(Res.DataSet_DefaultNoNullAllowedException)) {
+        public NoNullAllowedException() : base(StringsHelper.GetString(Strings.DataSet_DefaultNoNullAllowedException)) {
             HResult = HResults.DataNoNullAllowed;
         }
 
@@ -182,7 +182,7 @@ namespace Microsoft.Data {
         protected ReadOnlyException(SerializationInfo info, StreamingContext context)
         : base(info, context) {
         }
-        public ReadOnlyException() : base(ResHelper.GetString(Res.DataSet_DefaultReadOnlyException)) {
+        public ReadOnlyException() : base(StringsHelper.GetString(Strings.DataSet_DefaultReadOnlyException)) {
             HResult = HResults.DataReadOnly;
         }
 
@@ -200,7 +200,7 @@ namespace Microsoft.Data {
         protected RowNotInTableException(SerializationInfo info, StreamingContext context)
         : base(info, context) {
         }
-        public RowNotInTableException() : base(ResHelper.GetString(Res.DataSet_DefaultRowNotInTableException)) {
+        public RowNotInTableException() : base(StringsHelper.GetString(Strings.DataSet_DefaultRowNotInTableException)) {
             HResult = HResults.DataRowNotInTable;
         }
 
@@ -218,7 +218,7 @@ namespace Microsoft.Data {
         protected VersionNotFoundException(SerializationInfo info, StreamingContext context)
         : base(info, context) {
         }
-        public VersionNotFoundException() : base(ResHelper.GetString(Res.DataSet_DefaultVersionNotFoundException)) {
+        public VersionNotFoundException() : base(StringsHelper.GetString(Strings.DataSet_DefaultVersionNotFoundException)) {
             HResult = HResults.DataVersionNotFound;
         }
 
@@ -316,7 +316,7 @@ namespace Microsoft.Data {
         }
 
         static private InvalidEnumArgumentException _InvalidEnumArgumentException<T>(T value) {
-            string msg = ResHelper.GetString(Res.ADP_InvalidEnumerationValue, typeof(T).Name, value.ToString());
+            string msg = StringsHelper.GetString(Strings.ADP_InvalidEnumerationValue, typeof(T).Name, value.ToString());
             return _InvalidEnumArgumentException(msg);
         }
 
@@ -393,16 +393,16 @@ namespace Microsoft.Data {
         // Consider: whether we need to keep our own texts from Data_ArgumentNull and Data_ArgumentOutOfRange?
         // Unfortunately ours and the system ones are not consisten between each other. Try to raise this isue in "URT user comunity"
         static public Exception ArgumentNull(string paramName) {
-            return _ArgumentNull(paramName, ResHelper.GetString(Res.Data_ArgumentNull, paramName));
+            return _ArgumentNull(paramName, StringsHelper.GetString(Strings.Data_ArgumentNull, paramName));
         }
         static public Exception ArgumentOutOfRange(string paramName) {
-            return _ArgumentOutOfRange(paramName, ResHelper.GetString(Res.Data_ArgumentOutOfRange, paramName));
+            return _ArgumentOutOfRange(paramName, StringsHelper.GetString(Strings.Data_ArgumentOutOfRange, paramName));
         }
         static public Exception BadObjectPropertyAccess(string error) {
-            return _InvalidOperation(ResHelper.GetString(Res.DataConstraint_BadObjectPropertyAccess, error));
+            return _InvalidOperation(StringsHelper.GetString(Strings.DataConstraint_BadObjectPropertyAccess, error));
         }
         static public Exception ArgumentContainsNull(string paramName) {
-            return _Argument(paramName, ResHelper.GetString(Res.Data_ArgumentContainsNull, paramName));
+            return _Argument(paramName, StringsHelper.GetString(Strings.Data_ArgumentContainsNull, paramName));
         }
 
 
@@ -411,16 +411,16 @@ namespace Microsoft.Data {
         //
 
         static public Exception CannotModifyCollection() {
-            return _Argument(ResHelper.GetString(Res.Data_CannotModifyCollection));
+            return _Argument(StringsHelper.GetString(Strings.Data_CannotModifyCollection));
         }
         static public Exception CaseInsensitiveNameConflict(string name) {
-            return _Argument(ResHelper.GetString(Res.Data_CaseInsensitiveNameConflict, name));
+            return _Argument(StringsHelper.GetString(Strings.Data_CaseInsensitiveNameConflict, name));
         }
         static public Exception NamespaceNameConflict(string name) {
-            return _Argument(ResHelper.GetString(Res.Data_NamespaceNameConflict, name));
+            return _Argument(StringsHelper.GetString(Strings.Data_NamespaceNameConflict, name));
         }
         static public Exception InvalidOffsetLength() {
-            return _Argument(ResHelper.GetString(Res.Data_InvalidOffsetLength));
+            return _Argument(StringsHelper.GetString(Strings.Data_InvalidOffsetLength));
         }
 
         //
@@ -428,74 +428,74 @@ namespace Microsoft.Data {
         //
 
         static public Exception ColumnNotInTheTable(string column, string table) {
-            return _Argument(ResHelper.GetString(Res.DataColumn_NotInTheTable, column, table));
+            return _Argument(StringsHelper.GetString(Strings.DataColumn_NotInTheTable, column, table));
         }
 
         static public Exception ColumnNotInAnyTable() {
-            return _Argument(ResHelper.GetString(Res.DataColumn_NotInAnyTable));
+            return _Argument(StringsHelper.GetString(Strings.DataColumn_NotInAnyTable));
         }
 
         static public Exception ColumnOutOfRange(int index) {
-            return _IndexOutOfRange(ResHelper.GetString(Res.DataColumns_OutOfRange, (index).ToString(CultureInfo.InvariantCulture)));
+            return _IndexOutOfRange(StringsHelper.GetString(Strings.DataColumns_OutOfRange, (index).ToString(CultureInfo.InvariantCulture)));
         }
         static public Exception ColumnOutOfRange(string column) {
-            return _IndexOutOfRange(ResHelper.GetString(Res.DataColumns_OutOfRange, column));
+            return _IndexOutOfRange(StringsHelper.GetString(Strings.DataColumns_OutOfRange, column));
         }
 
         static public Exception CannotAddColumn1(string column) {
-            return _Argument(ResHelper.GetString(Res.DataColumns_Add1, column));
+            return _Argument(StringsHelper.GetString(Strings.DataColumns_Add1, column));
         }
 
         static public Exception CannotAddColumn2(string column) {
-            return _Argument(ResHelper.GetString(Res.DataColumns_Add2, column));
+            return _Argument(StringsHelper.GetString(Strings.DataColumns_Add2, column));
         }
 
         static public Exception CannotAddColumn3() {
-            return _Argument(ResHelper.GetString(Res.DataColumns_Add3));
+            return _Argument(StringsHelper.GetString(Strings.DataColumns_Add3));
         }
 
         static public Exception CannotAddColumn4(string column) {
-            return _Argument(ResHelper.GetString(Res.DataColumns_Add4, column));
+            return _Argument(StringsHelper.GetString(Strings.DataColumns_Add4, column));
         }
 
         static public Exception CannotAddDuplicate(string column) {
-            return _DuplicateName(ResHelper.GetString(Res.DataColumns_AddDuplicate, column));
+            return _DuplicateName(StringsHelper.GetString(Strings.DataColumns_AddDuplicate, column));
         }
 
         static public Exception CannotAddDuplicate2(string table) {
-            return _DuplicateName(ResHelper.GetString(Res.DataColumns_AddDuplicate2, table));
+            return _DuplicateName(StringsHelper.GetString(Strings.DataColumns_AddDuplicate2, table));
         }
 
         static public Exception CannotAddDuplicate3(string table) {
-            return _DuplicateName(ResHelper.GetString(Res.DataColumns_AddDuplicate3, table));
+            return _DuplicateName(StringsHelper.GetString(Strings.DataColumns_AddDuplicate3, table));
         }
 
         static public Exception CannotRemoveColumn() {
-            return _Argument(ResHelper.GetString(Res.DataColumns_Remove));
+            return _Argument(StringsHelper.GetString(Strings.DataColumns_Remove));
         }
 
         static public Exception CannotRemovePrimaryKey() {
-            return _Argument(ResHelper.GetString(Res.DataColumns_RemovePrimaryKey));
+            return _Argument(StringsHelper.GetString(Strings.DataColumns_RemovePrimaryKey));
         }
 
         static public Exception CannotRemoveChildKey(string relation) {
-            return _Argument(ResHelper.GetString(Res.DataColumns_RemoveChildKey, relation));
+            return _Argument(StringsHelper.GetString(Strings.DataColumns_RemoveChildKey, relation));
         }
 
         static public Exception CannotRemoveConstraint(string constraint, string table) {
-            return _Argument(ResHelper.GetString(Res.DataColumns_RemoveConstraint, constraint, table));
+            return _Argument(StringsHelper.GetString(Strings.DataColumns_RemoveConstraint, constraint, table));
         }
 
         static public Exception CannotRemoveExpression(string column, string expression) {
-            return _Argument(ResHelper.GetString(Res.DataColumns_RemoveExpression, column, expression));
+            return _Argument(StringsHelper.GetString(Strings.DataColumns_RemoveExpression, column, expression));
         }
 
         static public Exception ColumnNotInTheUnderlyingTable(string column, string table) {
-            return _Argument(ResHelper.GetString(Res.DataColumn_NotInTheUnderlyingTable, column, table));
+            return _Argument(StringsHelper.GetString(Strings.DataColumn_NotInTheUnderlyingTable, column, table));
         }
 
         static public Exception InvalidOrdinal(string name, int ordinal) {
-            return _ArgumentOutOfRange(name, ResHelper.GetString(Res.DataColumn_OrdinalExceedMaximun, (ordinal).ToString(CultureInfo.InvariantCulture)));
+            return _ArgumentOutOfRange(name, StringsHelper.GetString(Strings.DataColumn_OrdinalExceedMaximun, (ordinal).ToString(CultureInfo.InvariantCulture)));
         }
 
         //
@@ -503,19 +503,19 @@ namespace Microsoft.Data {
         //
 
         static public Exception AddPrimaryKeyConstraint() {
-            return _Argument(ResHelper.GetString(Res.DataConstraint_AddPrimaryKeyConstraint));
+            return _Argument(StringsHelper.GetString(Strings.DataConstraint_AddPrimaryKeyConstraint));
         }
 
         static public Exception NoConstraintName() {
-            return _Argument(ResHelper.GetString(Res.DataConstraint_NoName));
+            return _Argument(StringsHelper.GetString(Strings.DataConstraint_NoName));
         }
 
         static public Exception ConstraintViolation(string constraint) {
-            return _Constraint(ResHelper.GetString(Res.DataConstraint_Violation, constraint));
+            return _Constraint(StringsHelper.GetString(Strings.DataConstraint_Violation, constraint));
         }
 
         static public Exception ConstraintNotInTheTable(string constraint) {
-            return _Argument(ResHelper.GetString(Res.DataConstraint_NotInTheTable,constraint));
+            return _Argument(StringsHelper.GetString(Strings.DataConstraint_NotInTheTable,constraint));
         }
 
         static public string KeysToString(object[] keys) {
@@ -531,10 +531,10 @@ namespace Microsoft.Data {
                 for (int i = 0; i < columns.Length; i++) {
                     columnNames += columns[i].ColumnName + (i < columns.Length - 1 ? ", " : "");
                 }
-                return ResHelper.GetString(Res.DataConstraint_ViolationValue, columnNames, KeysToString(values));
+                return StringsHelper.GetString(Strings.DataConstraint_ViolationValue, columnNames, KeysToString(values));
             }
             else {
-                return ResHelper.GetString(Res.DataConstraint_ViolationValue, columns[0].ColumnName, Convert.ToString(values[0], null));
+                return StringsHelper.GetString(Strings.DataConstraint_ViolationValue, columns[0].ColumnName, Convert.ToString(values[0], null));
             }
         }
         static public Exception ConstraintViolation(DataColumn[] columns, object[] values) {
@@ -542,70 +542,70 @@ namespace Microsoft.Data {
         }
 
         static public Exception ConstraintOutOfRange(int index) {
-            return _IndexOutOfRange(ResHelper.GetString(Res.DataConstraint_OutOfRange, (index).ToString(CultureInfo.InvariantCulture)));
+            return _IndexOutOfRange(StringsHelper.GetString(Strings.DataConstraint_OutOfRange, (index).ToString(CultureInfo.InvariantCulture)));
         }
 
         static public Exception DuplicateConstraint(string constraint) {
-            return _Data(ResHelper.GetString(Res.DataConstraint_Duplicate, constraint));
+            return _Data(StringsHelper.GetString(Strings.DataConstraint_Duplicate, constraint));
         }
 
         static public Exception DuplicateConstraintName(string constraint) {
-            return _DuplicateName(ResHelper.GetString(Res.DataConstraint_DuplicateName, constraint));
+            return _DuplicateName(StringsHelper.GetString(Strings.DataConstraint_DuplicateName, constraint));
         }
 
         static public Exception NeededForForeignKeyConstraint(UniqueConstraint key, ForeignKeyConstraint fk) {
-            return _Argument(ResHelper.GetString(Res.DataConstraint_NeededForForeignKeyConstraint, key.ConstraintName, fk.ConstraintName));
+            return _Argument(StringsHelper.GetString(Strings.DataConstraint_NeededForForeignKeyConstraint, key.ConstraintName, fk.ConstraintName));
         }
 
         static public Exception UniqueConstraintViolation() {
-            return _Argument(ResHelper.GetString(Res.DataConstraint_UniqueViolation));
+            return _Argument(StringsHelper.GetString(Strings.DataConstraint_UniqueViolation));
         }
 
         static public Exception ConstraintForeignTable() {
-            return _Argument(ResHelper.GetString(Res.DataConstraint_ForeignTable));
+            return _Argument(StringsHelper.GetString(Strings.DataConstraint_ForeignTable));
         }
 
         static public Exception ConstraintParentValues() {
-            return _Argument(ResHelper.GetString(Res.DataConstraint_ParentValues));
+            return _Argument(StringsHelper.GetString(Strings.DataConstraint_ParentValues));
         }
 
         static public Exception ConstraintAddFailed(DataTable table) {
-            return _InvalidConstraint(ResHelper.GetString(Res.DataConstraint_AddFailed, table.TableName));
+            return _InvalidConstraint(StringsHelper.GetString(Strings.DataConstraint_AddFailed, table.TableName));
         }
 
         static public Exception ConstraintRemoveFailed() {
-            return _Argument(ResHelper.GetString(Res.DataConstraint_RemoveFailed));
+            return _Argument(StringsHelper.GetString(Strings.DataConstraint_RemoveFailed));
         }
 
         static public Exception FailedCascadeDelete(string constraint) {
-            return _InvalidConstraint(ResHelper.GetString(Res.DataConstraint_CascadeDelete, constraint));
+            return _InvalidConstraint(StringsHelper.GetString(Strings.DataConstraint_CascadeDelete, constraint));
         }
 
         static public Exception FailedCascadeUpdate(string constraint) {
-            return _InvalidConstraint(ResHelper.GetString(Res.DataConstraint_CascadeUpdate, constraint));
+            return _InvalidConstraint(StringsHelper.GetString(Strings.DataConstraint_CascadeUpdate, constraint));
         }
 
         static public Exception FailedClearParentTable(string table, string constraint, string childTable) {
-            return _InvalidConstraint(ResHelper.GetString(Res.DataConstraint_ClearParentTable, table, constraint, childTable));
+            return _InvalidConstraint(StringsHelper.GetString(Strings.DataConstraint_ClearParentTable, table, constraint, childTable));
         }
 
         static public Exception ForeignKeyViolation(string constraint, object[] keys) {
-            return _InvalidConstraint(ResHelper.GetString(Res.DataConstraint_ForeignKeyViolation, constraint, KeysToString(keys)));
+            return _InvalidConstraint(StringsHelper.GetString(Strings.DataConstraint_ForeignKeyViolation, constraint, KeysToString(keys)));
         }
 
         static public Exception RemoveParentRow(ForeignKeyConstraint constraint) {
-            return _InvalidConstraint(ResHelper.GetString(Res.DataConstraint_RemoveParentRow, constraint.ConstraintName));
+            return _InvalidConstraint(StringsHelper.GetString(Strings.DataConstraint_RemoveParentRow, constraint.ConstraintName));
         }
 
         static public string MaxLengthViolationText(string  columnName) {
-            return ResHelper.GetString(Res.DataColumn_ExceedMaxLength, columnName);
+            return StringsHelper.GetString(Strings.DataColumn_ExceedMaxLength, columnName);
         }
         static public string NotAllowDBNullViolationText(string  columnName) {
-            return ResHelper.GetString(Res.DataColumn_NotAllowDBNull, columnName);
+            return StringsHelper.GetString(Strings.DataColumn_NotAllowDBNull, columnName);
         }
 
         static public Exception CantAddConstraintToMultipleNestedTable(string tableName) {
-            return _Argument(ResHelper.GetString(Res.DataConstraint_CantAddConstraintToMultipleNestedTable, tableName));
+            return _Argument(StringsHelper.GetString(Strings.DataConstraint_CantAddConstraintToMultipleNestedTable, tableName));
         }
 
         //
@@ -613,142 +613,142 @@ namespace Microsoft.Data {
         //
 
         static public Exception AutoIncrementAndExpression() {
-            return _Argument(ResHelper.GetString(Res.DataColumn_AutoIncrementAndExpression));
+            return _Argument(StringsHelper.GetString(Strings.DataColumn_AutoIncrementAndExpression));
         }
         static public Exception AutoIncrementAndDefaultValue() {
-            return _Argument(ResHelper.GetString(Res.DataColumn_AutoIncrementAndDefaultValue));
+            return _Argument(StringsHelper.GetString(Strings.DataColumn_AutoIncrementAndDefaultValue));
         }
         static public Exception AutoIncrementSeed() {
-            return _Argument(ResHelper.GetString(Res.DataColumn_AutoIncrementSeed));
+            return _Argument(StringsHelper.GetString(Strings.DataColumn_AutoIncrementSeed));
         }
         static public Exception CantChangeDataType() {
-            return _Argument(ResHelper.GetString(Res.DataColumn_ChangeDataType));
+            return _Argument(StringsHelper.GetString(Strings.DataColumn_ChangeDataType));
         }
         static public Exception NullDataType() {
-            return _Argument(ResHelper.GetString(Res.DataColumn_NullDataType));
+            return _Argument(StringsHelper.GetString(Strings.DataColumn_NullDataType));
         }
         static public Exception ColumnNameRequired() {
-            return _Argument(ResHelper.GetString(Res.DataColumn_NameRequired));
+            return _Argument(StringsHelper.GetString(Strings.DataColumn_NameRequired));
         }
         static public Exception DefaultValueAndAutoIncrement() {
-            return _Argument(ResHelper.GetString(Res.DataColumn_DefaultValueAndAutoIncrement));
+            return _Argument(StringsHelper.GetString(Strings.DataColumn_DefaultValueAndAutoIncrement));
         }
         static public Exception DefaultValueDataType(string column, Type defaultType, Type columnType, Exception inner) {
             if (column.Length == 0) {
-                return _Argument(ResHelper.GetString(Res.DataColumn_DefaultValueDataType1, defaultType.FullName, columnType.FullName), inner);
+                return _Argument(StringsHelper.GetString(Strings.DataColumn_DefaultValueDataType1, defaultType.FullName, columnType.FullName), inner);
             }
             else {
-                return _Argument(ResHelper.GetString(Res.DataColumn_DefaultValueDataType, column, defaultType.FullName, columnType.FullName), inner);
+                return _Argument(StringsHelper.GetString(Strings.DataColumn_DefaultValueDataType, column, defaultType.FullName, columnType.FullName), inner);
             }
         }
         static public Exception DefaultValueColumnDataType(string column, Type defaultType, Type columnType, Exception inner) {
-            return _Argument(ResHelper.GetString(Res.DataColumn_DefaultValueColumnDataType, column, defaultType.FullName, columnType.FullName), inner);
+            return _Argument(StringsHelper.GetString(Strings.DataColumn_DefaultValueColumnDataType, column, defaultType.FullName, columnType.FullName), inner);
         }
 
         static public Exception ExpressionAndUnique() {
-            return _Argument(ResHelper.GetString(Res.DataColumn_ExpressionAndUnique));
+            return _Argument(StringsHelper.GetString(Strings.DataColumn_ExpressionAndUnique));
         }
         static public Exception ExpressionAndReadOnly() {
-            return _Argument(ResHelper.GetString(Res.DataColumn_ExpressionAndReadOnly));
+            return _Argument(StringsHelper.GetString(Strings.DataColumn_ExpressionAndReadOnly));
         }
 
         static public Exception ExpressionAndConstraint(DataColumn column, Constraint constraint) {
-            return _Argument(ResHelper.GetString(Res.DataColumn_ExpressionAndConstraint, column.ColumnName, constraint.ConstraintName));
+            return _Argument(StringsHelper.GetString(Strings.DataColumn_ExpressionAndConstraint, column.ColumnName, constraint.ConstraintName));
         }
 
         static public Exception ExpressionInConstraint(DataColumn column) {
-            return _Argument(ResHelper.GetString(Res.DataColumn_ExpressionInConstraint, column.ColumnName));
+            return _Argument(StringsHelper.GetString(Strings.DataColumn_ExpressionInConstraint, column.ColumnName));
         }
 
         static public Exception ExpressionCircular() {
-            return _Argument(ResHelper.GetString(Res.DataColumn_ExpressionCircular));
+            return _Argument(StringsHelper.GetString(Strings.DataColumn_ExpressionCircular));
         }
 
         static public Exception NonUniqueValues(string column) {
-            return _InvalidConstraint(ResHelper.GetString(Res.DataColumn_NonUniqueValues, column));
+            return _InvalidConstraint(StringsHelper.GetString(Strings.DataColumn_NonUniqueValues, column));
         }
 
         static public Exception NullKeyValues(string column) {
-            return _Data(ResHelper.GetString(Res.DataColumn_NullKeyValues, column));
+            return _Data(StringsHelper.GetString(Strings.DataColumn_NullKeyValues, column));
         }
         static public Exception NullValues(string column) {
-            return _NoNullAllowed(ResHelper.GetString(Res.DataColumn_NullValues, column));
+            return _NoNullAllowed(StringsHelper.GetString(Strings.DataColumn_NullValues, column));
         }
 
         static public Exception ReadOnlyAndExpression() {
-            return _ReadOnly(ResHelper.GetString(Res.DataColumn_ReadOnlyAndExpression));
+            return _ReadOnly(StringsHelper.GetString(Strings.DataColumn_ReadOnlyAndExpression));
         }
 
         static public Exception ReadOnly(string column) {
-            return _ReadOnly(ResHelper.GetString(Res.DataColumn_ReadOnly, column));
+            return _ReadOnly(StringsHelper.GetString(Strings.DataColumn_ReadOnly, column));
         }
 
         static public Exception UniqueAndExpression() {
-            return _Argument(ResHelper.GetString(Res.DataColumn_UniqueAndExpression));
+            return _Argument(StringsHelper.GetString(Strings.DataColumn_UniqueAndExpression));
         }
 
         static public Exception SetFailed(object value, DataColumn column, Type type, Exception innerException) {
-            return _Argument(innerException.Message + ResHelper.GetString(Res.DataColumn_SetFailed, value.ToString(), column.ColumnName, type.Name), innerException);
+            return _Argument(innerException.Message + StringsHelper.GetString(Strings.DataColumn_SetFailed, value.ToString(), column.ColumnName, type.Name), innerException);
         }
 
         static public Exception CannotSetToNull(DataColumn column) {
-            return _Argument(ResHelper.GetString(Res.DataColumn_CannotSetToNull, column.ColumnName));
+            return _Argument(StringsHelper.GetString(Strings.DataColumn_CannotSetToNull, column.ColumnName));
         }
 
         static public Exception LongerThanMaxLength(DataColumn column) {
-            return _Argument(ResHelper.GetString(Res.DataColumn_LongerThanMaxLength, column.ColumnName));
+            return _Argument(StringsHelper.GetString(Strings.DataColumn_LongerThanMaxLength, column.ColumnName));
         }
 
         static public Exception CannotSetMaxLength(DataColumn column, int value) {
-            return _Argument(ResHelper.GetString(Res.DataColumn_CannotSetMaxLength, column.ColumnName, value.ToString(CultureInfo.InvariantCulture)));
+            return _Argument(StringsHelper.GetString(Strings.DataColumn_CannotSetMaxLength, column.ColumnName, value.ToString(CultureInfo.InvariantCulture)));
         }
 
         static public Exception CannotSetMaxLength2(DataColumn column) {
-            return _Argument(ResHelper.GetString(Res.DataColumn_CannotSetMaxLength2, column.ColumnName));
+            return _Argument(StringsHelper.GetString(Strings.DataColumn_CannotSetMaxLength2, column.ColumnName));
         }
 
         static public Exception CannotSetSimpleContentType(String columnName, Type type) {
-            return _Argument(ResHelper.GetString(Res.DataColumn_CannotSimpleContentType, columnName, type));
+            return _Argument(StringsHelper.GetString(Strings.DataColumn_CannotSimpleContentType, columnName, type));
         }
 
         static public Exception CannotSetSimpleContent(String columnName, Type type) {
-            return _Argument(ResHelper.GetString(Res.DataColumn_CannotSimpleContent, columnName, type));
+            return _Argument(StringsHelper.GetString(Strings.DataColumn_CannotSimpleContent, columnName, type));
         }
 
         static public Exception CannotChangeNamespace(String columnName) {
-            return _Argument(ResHelper.GetString(Res.DataColumn_CannotChangeNamespace, columnName));
+            return _Argument(StringsHelper.GetString(Strings.DataColumn_CannotChangeNamespace, columnName));
         }
 
         static public Exception HasToBeStringType(DataColumn column) {
-            return _Argument(ResHelper.GetString(Res.DataColumn_HasToBeStringType, column.ColumnName));
+            return _Argument(StringsHelper.GetString(Strings.DataColumn_HasToBeStringType, column.ColumnName));
         }
 
         static public Exception AutoIncrementCannotSetIfHasData(string typeName) {
-            return _Argument(ResHelper.GetString(Res.DataColumn_AutoIncrementCannotSetIfHasData, typeName));
+            return _Argument(StringsHelper.GetString(Strings.DataColumn_AutoIncrementCannotSetIfHasData, typeName));
         }
 
         static public Exception INullableUDTwithoutStaticNull(string typeName) {
-            return _Argument(ResHelper.GetString( Res.DataColumn_INullableUDTwithoutStaticNull, typeName));
+            return _Argument(StringsHelper.GetString(Strings.DataColumn_INullableUDTwithoutStaticNull, typeName));
         }
 
         static public Exception IComparableNotImplemented(string typeName) {
-            return _Data(ResHelper.GetString(Res.DataStorage_IComparableNotDefined, typeName));
+            return _Data(StringsHelper.GetString(Strings.DataStorage_IComparableNotDefined, typeName));
         }
 
         static public Exception UDTImplementsIChangeTrackingButnotIRevertible(string typeName) {
-            return _InvalidOperation(ResHelper.GetString(Res.DataColumn_UDTImplementsIChangeTrackingButnotIRevertible, typeName));
+            return _InvalidOperation(StringsHelper.GetString(Strings.DataColumn_UDTImplementsIChangeTrackingButnotIRevertible, typeName));
         }
 
         static public Exception SetAddedAndModifiedCalledOnnonUnchanged() {
-            return _InvalidOperation(ResHelper.GetString(Res.DataColumn_SetAddedAndModifiedCalledOnNonUnchanged));
+            return _InvalidOperation(StringsHelper.GetString(Strings.DataColumn_SetAddedAndModifiedCalledOnNonUnchanged));
         }
 
         static public Exception InvalidDataColumnMapping(Type type) {
-            return _Argument(ResHelper.GetString(Res.DataColumn_InvalidDataColumnMapping, type.AssemblyQualifiedName));
+            return _Argument(StringsHelper.GetString(Strings.DataColumn_InvalidDataColumnMapping, type.AssemblyQualifiedName));
         }
 
         static public Exception CannotSetDateTimeModeForNonDateTimeColumns() {
-            return _InvalidOperation(ResHelper.GetString(Res.DataColumn_CannotSetDateTimeModeForNonDateTimeColumns));
+            return _InvalidOperation(StringsHelper.GetString(Strings.DataColumn_CannotSetDateTimeModeForNonDateTimeColumns));
         }
 
         static public Exception InvalidDateTimeMode(DataSetDateTime mode) {
@@ -756,11 +756,11 @@ namespace Microsoft.Data {
         }
 
         static public Exception CantChangeDateTimeMode(DataSetDateTime oldValue, DataSetDateTime newValue) {
-            return _InvalidOperation(ResHelper.GetString(Res.DataColumn_DateTimeMode, oldValue.ToString(), newValue.ToString()));
+            return _InvalidOperation(StringsHelper.GetString(Strings.DataColumn_DateTimeMode, oldValue.ToString(), newValue.ToString()));
         }
 
         static public Exception ColumnTypeNotSupported() {
-            return Microsoft.Data.Common.ADP.NotSupported(ResHelper.GetString(Res.DataColumn_NullableTypesNotSupported));
+            return Microsoft.Data.Common.ADP.NotSupported(StringsHelper.GetString(Strings.DataColumn_NullableTypesNotSupported));
         }
 
         //
@@ -768,91 +768,91 @@ namespace Microsoft.Data {
         //
 
         static public Exception SetFailed(string name) {
-            return _Data(ResHelper.GetString(Res.DataView_SetFailed, name));
+            return _Data(StringsHelper.GetString(Strings.DataView_SetFailed, name));
         }
 
         static public Exception SetDataSetFailed() {
-            return _Data(ResHelper.GetString(Res.DataView_SetDataSetFailed));
+            return _Data(StringsHelper.GetString(Strings.DataView_SetDataSetFailed));
         }
 
         static public Exception SetRowStateFilter() {
-            return _Data(ResHelper.GetString(Res.DataView_SetRowStateFilter));
+            return _Data(StringsHelper.GetString(Strings.DataView_SetRowStateFilter));
         }
 
         static public Exception CanNotSetDataSet() {
-            return _Data(ResHelper.GetString(Res.DataView_CanNotSetDataSet));
+            return _Data(StringsHelper.GetString(Strings.DataView_CanNotSetDataSet));
         }
 
         static public Exception CanNotUseDataViewManager() {
-            return _Data(ResHelper.GetString(Res.DataView_CanNotUseDataViewManager));
+            return _Data(StringsHelper.GetString(Strings.DataView_CanNotUseDataViewManager));
         }
 
         static public Exception CanNotSetTable() {
-            return _Data(ResHelper.GetString(Res.DataView_CanNotSetTable));
+            return _Data(StringsHelper.GetString(Strings.DataView_CanNotSetTable));
         }
 
         static public Exception CanNotUse() {
-            return _Data(ResHelper.GetString(Res.DataView_CanNotUse));
+            return _Data(StringsHelper.GetString(Strings.DataView_CanNotUse));
         }
 
         static public Exception CanNotBindTable() {
-            return _Data(ResHelper.GetString(Res.DataView_CanNotBindTable));
+            return _Data(StringsHelper.GetString(Strings.DataView_CanNotBindTable));
         }
 
         static public Exception SetTable() {
-            return _Data(ResHelper.GetString(Res.DataView_SetTable));
+            return _Data(StringsHelper.GetString(Strings.DataView_SetTable));
         }
 
         static public Exception SetIListObject() {
-            return _Argument(ResHelper.GetString(Res.DataView_SetIListObject));
+            return _Argument(StringsHelper.GetString(Strings.DataView_SetIListObject));
         }
 
         static public Exception AddNewNotAllowNull() {
-            return _Data(ResHelper.GetString(Res.DataView_AddNewNotAllowNull));
+            return _Data(StringsHelper.GetString(Strings.DataView_AddNewNotAllowNull));
         }
 
         static public Exception NotOpen() {
-            return _Data(ResHelper.GetString(Res.DataView_NotOpen));
+            return _Data(StringsHelper.GetString(Strings.DataView_NotOpen));
         }
 
         static public Exception CreateChildView() {
-            return _Argument(ResHelper.GetString(Res.DataView_CreateChildView));
+            return _Argument(StringsHelper.GetString(Strings.DataView_CreateChildView));
         }
 
         static public Exception CanNotDelete() {
-            return _Data(ResHelper.GetString(Res.DataView_CanNotDelete));
+            return _Data(StringsHelper.GetString(Strings.DataView_CanNotDelete));
         }
 
         static public Exception CanNotEdit() {
-            return _Data(ResHelper.GetString(Res.DataView_CanNotEdit));
+            return _Data(StringsHelper.GetString(Strings.DataView_CanNotEdit));
         }
 
         static public Exception GetElementIndex(Int32 index) {
-            return _IndexOutOfRange(ResHelper.GetString(Res.DataView_GetElementIndex, (index).ToString(CultureInfo.InvariantCulture)));
+            return _IndexOutOfRange(StringsHelper.GetString(Strings.DataView_GetElementIndex, (index).ToString(CultureInfo.InvariantCulture)));
         }
 
         static public Exception AddExternalObject() {
-            return _Argument(ResHelper.GetString(Res.DataView_AddExternalObject));
+            return _Argument(StringsHelper.GetString(Strings.DataView_AddExternalObject));
         }
 
         static public Exception CanNotClear() {
-            return _Argument(ResHelper.GetString(Res.DataView_CanNotClear));
+            return _Argument(StringsHelper.GetString(Strings.DataView_CanNotClear));
         }
 
         static public Exception InsertExternalObject() {
-            return _Argument(ResHelper.GetString(Res.DataView_InsertExternalObject));
+            return _Argument(StringsHelper.GetString(Strings.DataView_InsertExternalObject));
         }
 
         static public Exception RemoveExternalObject() {
-            return _Argument(ResHelper.GetString(Res.DataView_RemoveExternalObject));
+            return _Argument(StringsHelper.GetString(Strings.DataView_RemoveExternalObject));
         }
 
         static public Exception PropertyNotFound(string property, string table) {
-            return _Argument(ResHelper.GetString(Res.DataROWView_PropertyNotFound, property, table));
+            return _Argument(StringsHelper.GetString(Strings.DataROWView_PropertyNotFound, property, table));
         }
 
         static public Exception ColumnToSortIsOutOfRange(string column) {
-            return _Argument(ResHelper.GetString(Res.DataColumns_OutOfRange, column));
+            return _Argument(StringsHelper.GetString(Strings.DataColumns_OutOfRange, column));
         }
 
         //
@@ -860,19 +860,19 @@ namespace Microsoft.Data {
         //
 
         static public Exception KeyTableMismatch() {
-            return _InvalidConstraint(ResHelper.GetString(Res.DataKey_TableMismatch));
+            return _InvalidConstraint(StringsHelper.GetString(Strings.DataKey_TableMismatch));
         }
 
         static public Exception KeyNoColumns() {
-            return _InvalidConstraint(ResHelper.GetString(Res.DataKey_NoColumns));
+            return _InvalidConstraint(StringsHelper.GetString(Strings.DataKey_NoColumns));
         }
 
         static public Exception KeyTooManyColumns(int cols) {
-            return _InvalidConstraint(ResHelper.GetString(Res.DataKey_TooManyColumns, (cols).ToString(CultureInfo.InvariantCulture)));
+            return _InvalidConstraint(StringsHelper.GetString(Strings.DataKey_TooManyColumns, (cols).ToString(CultureInfo.InvariantCulture)));
         }
 
         static public Exception KeyDuplicateColumns(string columnName) {
-            return _InvalidConstraint(ResHelper.GetString(Res.DataKey_DuplicateColumns, columnName));
+            return _InvalidConstraint(StringsHelper.GetString(Strings.DataKey_DuplicateColumns, columnName));
         }
 
         //
@@ -880,80 +880,80 @@ namespace Microsoft.Data {
         //
 
         static public Exception RelationDataSetMismatch() {
-            return _InvalidConstraint(ResHelper.GetString(Res.DataRelation_DataSetMismatch));
+            return _InvalidConstraint(StringsHelper.GetString(Strings.DataRelation_DataSetMismatch));
         }
 
         static public Exception NoRelationName() {
-            return _Argument(ResHelper.GetString(Res.DataRelation_NoName));
+            return _Argument(StringsHelper.GetString(Strings.DataRelation_NoName));
         }
 
         static public Exception ColumnsTypeMismatch() {
-            return _InvalidConstraint(ResHelper.GetString(Res.DataRelation_ColumnsTypeMismatch));
+            return _InvalidConstraint(StringsHelper.GetString(Strings.DataRelation_ColumnsTypeMismatch));
         }
 
         static public Exception KeyLengthMismatch() {
-            return _Argument(ResHelper.GetString(Res.DataRelation_KeyLengthMismatch));
+            return _Argument(StringsHelper.GetString(Strings.DataRelation_KeyLengthMismatch));
         }
 
         static public Exception KeyLengthZero() {
-            return _Argument(ResHelper.GetString(Res.DataRelation_KeyZeroLength));
+            return _Argument(StringsHelper.GetString(Strings.DataRelation_KeyZeroLength));
         }
 
         static public Exception ForeignRelation() {
-            return _Argument(ResHelper.GetString(Res.DataRelation_ForeignDataSet));
+            return _Argument(StringsHelper.GetString(Strings.DataRelation_ForeignDataSet));
         }
 
         static public Exception KeyColumnsIdentical() {
-            return _InvalidConstraint(ResHelper.GetString(Res.DataRelation_KeyColumnsIdentical));
+            return _InvalidConstraint(StringsHelper.GetString(Strings.DataRelation_KeyColumnsIdentical));
         }
 
         static public Exception RelationForeignTable(string t1, string t2) {
-            return _InvalidConstraint(ResHelper.GetString(Res.DataRelation_ForeignTable, t1, t2));
+            return _InvalidConstraint(StringsHelper.GetString(Strings.DataRelation_ForeignTable, t1, t2));
         }
 
         static public Exception GetParentRowTableMismatch(string t1, string t2) {
-            return _InvalidConstraint(ResHelper.GetString(Res.DataRelation_GetParentRowTableMismatch, t1, t2));
+            return _InvalidConstraint(StringsHelper.GetString(Strings.DataRelation_GetParentRowTableMismatch, t1, t2));
         }
 
         static public Exception SetParentRowTableMismatch(string t1, string t2) {
-            return _InvalidConstraint(ResHelper.GetString(Res.DataRelation_SetParentRowTableMismatch, t1, t2));
+            return _InvalidConstraint(StringsHelper.GetString(Strings.DataRelation_SetParentRowTableMismatch, t1, t2));
         }
 
         static public Exception RelationForeignRow() {
-            return _Argument(ResHelper.GetString(Res.DataRelation_ForeignRow));
+            return _Argument(StringsHelper.GetString(Strings.DataRelation_ForeignRow));
         }
 
         static public Exception RelationNestedReadOnly() {
-            return _Argument(ResHelper.GetString(Res.DataRelation_RelationNestedReadOnly));
+            return _Argument(StringsHelper.GetString(Strings.DataRelation_RelationNestedReadOnly));
         }
 
         static public Exception TableCantBeNestedInTwoTables(string tableName) {
-            return _Argument(ResHelper.GetString(Res.DataRelation_TableCantBeNestedInTwoTables, tableName));
+            return _Argument(StringsHelper.GetString(Strings.DataRelation_TableCantBeNestedInTwoTables, tableName));
         }
 
         static public Exception LoopInNestedRelations(string tableName) {
-            return _Argument(ResHelper.GetString(Res.DataRelation_LoopInNestedRelations, tableName));
+            return _Argument(StringsHelper.GetString(Strings.DataRelation_LoopInNestedRelations, tableName));
         }
 
         static public Exception RelationDoesNotExist() {
-            return _Argument(ResHelper.GetString(Res.DataRelation_DoesNotExist));
+            return _Argument(StringsHelper.GetString(Strings.DataRelation_DoesNotExist));
         }
 
         static public Exception ParentRowNotInTheDataSet() {
-            return _Argument(ResHelper.GetString(Res.DataRow_ParentRowNotInTheDataSet));
+            return _Argument(StringsHelper.GetString(Strings.DataRow_ParentRowNotInTheDataSet));
         }
 
         static public Exception ParentOrChildColumnsDoNotHaveDataSet() {
-            return _InvalidConstraint(ResHelper.GetString(Res.DataRelation_ParentOrChildColumnsDoNotHaveDataSet));
+            return _InvalidConstraint(StringsHelper.GetString(Strings.DataRelation_ParentOrChildColumnsDoNotHaveDataSet));
         }
 
         static public Exception InValidNestedRelation(string childTableName) {
-            return _InvalidOperation(ResHelper.GetString(Res.DataRelation_InValidNestedRelation, childTableName));
+            return _InvalidOperation(StringsHelper.GetString(Strings.DataRelation_InValidNestedRelation, childTableName));
         }
 
 
         static public Exception InvalidParentNamespaceinNestedRelation(string childTableName) {
-            return _InvalidOperation(ResHelper.GetString(Res.DataRelation_InValidNamespaceInNestedRelation, childTableName));
+            return _InvalidOperation(StringsHelper.GetString(Strings.DataRelation_InValidNamespaceInNestedRelation, childTableName));
         }
 
         //
@@ -961,92 +961,92 @@ namespace Microsoft.Data {
         //
 
         static public Exception RowNotInTheDataSet() {
-            return _Argument(ResHelper.GetString(Res.DataRow_NotInTheDataSet));
+            return _Argument(StringsHelper.GetString(Strings.DataRow_NotInTheDataSet));
         }
 
         static public Exception RowNotInTheTable() {
-            return _RowNotInTable(ResHelper.GetString(Res.DataRow_NotInTheTable));
+            return _RowNotInTable(StringsHelper.GetString(Strings.DataRow_NotInTheTable));
         }
         static public Exception EditInRowChanging() {
-            return _InRowChangingEvent(ResHelper.GetString(Res.DataRow_EditInRowChanging));
+            return _InRowChangingEvent(StringsHelper.GetString(Strings.DataRow_EditInRowChanging));
         }
 
         static public Exception EndEditInRowChanging() {
-            return _InRowChangingEvent(ResHelper.GetString(Res.DataRow_EndEditInRowChanging));
+            return _InRowChangingEvent(StringsHelper.GetString(Strings.DataRow_EndEditInRowChanging));
         }
 
         static public Exception BeginEditInRowChanging() {
-            return _InRowChangingEvent(ResHelper.GetString(Res.DataRow_BeginEditInRowChanging));
+            return _InRowChangingEvent(StringsHelper.GetString(Strings.DataRow_BeginEditInRowChanging));
         }
 
         static public Exception CancelEditInRowChanging() {
-            return _InRowChangingEvent(ResHelper.GetString(Res.DataRow_CancelEditInRowChanging));
+            return _InRowChangingEvent(StringsHelper.GetString(Strings.DataRow_CancelEditInRowChanging));
         }
 
         static public Exception DeleteInRowDeleting() {
-            return _InRowChangingEvent(ResHelper.GetString(Res.DataRow_DeleteInRowDeleting));
+            return _InRowChangingEvent(StringsHelper.GetString(Strings.DataRow_DeleteInRowDeleting));
         }
 
         static public Exception ValueArrayLength() {
-            return _Argument(ResHelper.GetString(Res.DataRow_ValuesArrayLength));
+            return _Argument(StringsHelper.GetString(Strings.DataRow_ValuesArrayLength));
         }
 
         static public Exception NoCurrentData() {
-            return _VersionNotFound(ResHelper.GetString(Res.DataRow_NoCurrentData));
+            return _VersionNotFound(StringsHelper.GetString(Strings.DataRow_NoCurrentData));
         }
 
         static public Exception NoOriginalData() {
-            return _VersionNotFound(ResHelper.GetString(Res.DataRow_NoOriginalData));
+            return _VersionNotFound(StringsHelper.GetString(Strings.DataRow_NoOriginalData));
         }
 
         static public Exception NoProposedData() {
-            return _VersionNotFound(ResHelper.GetString(Res.DataRow_NoProposedData));
+            return _VersionNotFound(StringsHelper.GetString(Strings.DataRow_NoProposedData));
         }
 
         static public Exception RowRemovedFromTheTable() {
-            return _RowNotInTable(ResHelper.GetString(Res.DataRow_RemovedFromTheTable));
+            return _RowNotInTable(StringsHelper.GetString(Strings.DataRow_RemovedFromTheTable));
         }
 
         static public Exception DeletedRowInaccessible() {
-            return _DeletedRowInaccessible(ResHelper.GetString(Res.DataRow_DeletedRowInaccessible));
+            return _DeletedRowInaccessible(StringsHelper.GetString(Strings.DataRow_DeletedRowInaccessible));
         }
 
         static public Exception RowAlreadyDeleted() {
-            return _DeletedRowInaccessible(ResHelper.GetString(Res.DataRow_AlreadyDeleted));
+            return _DeletedRowInaccessible(StringsHelper.GetString(Strings.DataRow_AlreadyDeleted));
         }
 
         static public Exception RowEmpty() {
-            return _Argument(ResHelper.GetString(Res.DataRow_Empty));
+            return _Argument(StringsHelper.GetString(Strings.DataRow_Empty));
         }
 
         static public Exception InvalidRowVersion() {
-            return _Data(ResHelper.GetString(Res.DataRow_InvalidVersion));
+            return _Data(StringsHelper.GetString(Strings.DataRow_InvalidVersion));
         }
 
         static public Exception RowOutOfRange() {
-            return _IndexOutOfRange(ResHelper.GetString(Res.DataRow_RowOutOfRange));
+            return _IndexOutOfRange(StringsHelper.GetString(Strings.DataRow_RowOutOfRange));
         }
         static public Exception RowOutOfRange(int index) {
-            return _IndexOutOfRange(ResHelper.GetString(Res.DataRow_OutOfRange, (index).ToString(CultureInfo.InvariantCulture)));
+            return _IndexOutOfRange(StringsHelper.GetString(Strings.DataRow_OutOfRange, (index).ToString(CultureInfo.InvariantCulture)));
         }
         static public Exception RowInsertOutOfRange(int index) {
-            return _IndexOutOfRange(ResHelper.GetString(Res.DataRow_RowInsertOutOfRange, (index).ToString(CultureInfo.InvariantCulture)));
+            return _IndexOutOfRange(StringsHelper.GetString(Strings.DataRow_RowInsertOutOfRange, (index).ToString(CultureInfo.InvariantCulture)));
         }
 
         static public Exception RowInsertTwice(int index, string tableName) {
-            return _IndexOutOfRange(ResHelper.GetString(Res.DataRow_RowInsertTwice, (index).ToString(CultureInfo.InvariantCulture), tableName));
+            return _IndexOutOfRange(StringsHelper.GetString(Strings.DataRow_RowInsertTwice, (index).ToString(CultureInfo.InvariantCulture), tableName));
         }
 
         static public Exception RowInsertMissing( string tableName) {
-            return _IndexOutOfRange(ResHelper.GetString(Res.DataRow_RowInsertMissing, tableName));
+            return _IndexOutOfRange(StringsHelper.GetString(Strings.DataRow_RowInsertMissing, tableName));
         }
 
         static public Exception RowAlreadyRemoved() {
-            return _Data(ResHelper.GetString(Res.DataRow_AlreadyRemoved));
+            return _Data(StringsHelper.GetString(Strings.DataRow_AlreadyRemoved));
         }
 
         static public Exception MultipleParents() {
-            return _Data(ResHelper.GetString(Res.DataRow_MultipleParents));
+            return _Data(StringsHelper.GetString(Strings.DataRow_MultipleParents));
         }
 
         static public Exception InvalidRowState(DataRowState state) {
@@ -1054,7 +1054,7 @@ namespace Microsoft.Data {
         }
 
         static public Exception InvalidRowBitPattern() {
-            return _Argument(ResHelper.GetString(Res.DataRow_InvalidRowBitPattern));
+            return _Argument(StringsHelper.GetString(Strings.DataRow_InvalidRowBitPattern));
         }
 
         //
@@ -1062,101 +1062,101 @@ namespace Microsoft.Data {
         //
 
         static internal Exception SetDataSetNameToEmpty() {
-            return _Argument(ResHelper.GetString(Res.DataSet_SetNameToEmpty));
+            return _Argument(StringsHelper.GetString(Strings.DataSet_SetNameToEmpty));
         }
         static internal Exception SetDataSetNameConflicting(string name) {
-            return _Argument(ResHelper.GetString(Res.DataSet_SetDataSetNameConflicting, name));
+            return _Argument(StringsHelper.GetString(Strings.DataSet_SetDataSetNameConflicting, name));
         }
         static public Exception DataSetUnsupportedSchema(string ns) {
-            return _Argument(ResHelper.GetString(Res.DataSet_UnsupportedSchema, ns));
+            return _Argument(StringsHelper.GetString(Strings.DataSet_UnsupportedSchema, ns));
         }
         static public Exception MergeMissingDefinition(string obj) {
-            return _Argument(ResHelper.GetString(Res.DataMerge_MissingDefinition, obj));
+            return _Argument(StringsHelper.GetString(Strings.DataMerge_MissingDefinition, obj));
         }
         static public Exception TablesInDifferentSets() {
-            return _Argument(ResHelper.GetString(Res.DataRelation_TablesInDifferentSets));
+            return _Argument(StringsHelper.GetString(Strings.DataRelation_TablesInDifferentSets));
         }
         static public Exception RelationAlreadyExists() {
-            return _Argument(ResHelper.GetString(Res.DataRelation_AlreadyExists));
+            return _Argument(StringsHelper.GetString(Strings.DataRelation_AlreadyExists));
         }
         static public Exception RowAlreadyInOtherCollection() {
-            return _Argument(ResHelper.GetString(Res.DataRow_AlreadyInOtherCollection));
+            return _Argument(StringsHelper.GetString(Strings.DataRow_AlreadyInOtherCollection));
         }
         static public Exception RowAlreadyInTheCollection() {
-            return _Argument(ResHelper.GetString(Res.DataRow_AlreadyInTheCollection));
+            return _Argument(StringsHelper.GetString(Strings.DataRow_AlreadyInTheCollection));
         }
         static public Exception TableMissingPrimaryKey() {
-            return _MissingPrimaryKey(ResHelper.GetString(Res.DataTable_MissingPrimaryKey));
+            return _MissingPrimaryKey(StringsHelper.GetString(Strings.DataTable_MissingPrimaryKey));
         }
         static public Exception RecordStateRange() {
-            return _Argument(ResHelper.GetString(Res.DataIndex_RecordStateRange));
+            return _Argument(StringsHelper.GetString(Strings.DataIndex_RecordStateRange));
         }
         static public Exception IndexKeyLength(int length, int keyLength) {
             if(length == 0) {
-                return _Argument(ResHelper.GetString(Res.DataIndex_FindWithoutSortOrder));
+                return _Argument(StringsHelper.GetString(Strings.DataIndex_FindWithoutSortOrder));
             }
             else {
-                return _Argument(ResHelper.GetString(Res.DataIndex_KeyLength, (length).ToString(CultureInfo.InvariantCulture), (keyLength).ToString(CultureInfo.InvariantCulture)));
+                return _Argument(StringsHelper.GetString(Strings.DataIndex_KeyLength, (length).ToString(CultureInfo.InvariantCulture), (keyLength).ToString(CultureInfo.InvariantCulture)));
             }
         }
 
         static public Exception RemovePrimaryKey(DataTable table) {
             if (table.TableName.Length == 0) {
-                return _Argument(ResHelper.GetString(Res.DataKey_RemovePrimaryKey));
+                return _Argument(StringsHelper.GetString(Strings.DataKey_RemovePrimaryKey));
             }
             else {
-                return _Argument(ResHelper.GetString(Res.DataKey_RemovePrimaryKey1, table.TableName));
+                return _Argument(StringsHelper.GetString(Strings.DataKey_RemovePrimaryKey1, table.TableName));
             }
         }
         static public Exception RelationAlreadyInOtherDataSet() {
-            return _Argument(ResHelper.GetString(Res.DataRelation_AlreadyInOtherDataSet));
+            return _Argument(StringsHelper.GetString(Strings.DataRelation_AlreadyInOtherDataSet));
         }
         static public Exception RelationAlreadyInTheDataSet() {
-            return _Argument(ResHelper.GetString(Res.DataRelation_AlreadyInTheDataSet));
+            return _Argument(StringsHelper.GetString(Strings.DataRelation_AlreadyInTheDataSet));
         }
         static public Exception RelationNotInTheDataSet(string relation) {
-            return _Argument(ResHelper.GetString(Res.DataRelation_NotInTheDataSet,relation));
+            return _Argument(StringsHelper.GetString(Strings.DataRelation_NotInTheDataSet,relation));
         }
         static public Exception RelationOutOfRange(object index) {
-            return _IndexOutOfRange(ResHelper.GetString(Res.DataRelation_OutOfRange, Convert.ToString(index, null)));
+            return _IndexOutOfRange(StringsHelper.GetString(Strings.DataRelation_OutOfRange, Convert.ToString(index, null)));
         }
         static public Exception DuplicateRelation(string relation) {
-            return _DuplicateName(ResHelper.GetString(Res.DataRelation_DuplicateName, relation));
+            return _DuplicateName(StringsHelper.GetString(Strings.DataRelation_DuplicateName, relation));
         }
         static public Exception RelationTableNull() {
-            return _Argument(ResHelper.GetString(Res.DataRelation_TableNull));
+            return _Argument(StringsHelper.GetString(Strings.DataRelation_TableNull));
         }
         static public Exception RelationDataSetNull() {
-            return _Argument(ResHelper.GetString(Res.DataRelation_TableNull));
+            return _Argument(StringsHelper.GetString(Strings.DataRelation_TableNull));
         }
         static public Exception RelationTableWasRemoved() {
-            return _Argument(ResHelper.GetString(Res.DataRelation_TableWasRemoved));
+            return _Argument(StringsHelper.GetString(Strings.DataRelation_TableWasRemoved));
         }
         static public Exception ParentTableMismatch() {
-            return _Argument(ResHelper.GetString(Res.DataRelation_ParentTableMismatch));
+            return _Argument(StringsHelper.GetString(Strings.DataRelation_ParentTableMismatch));
         }
         static public Exception ChildTableMismatch() {
-            return _Argument(ResHelper.GetString(Res.DataRelation_ChildTableMismatch));
+            return _Argument(StringsHelper.GetString(Strings.DataRelation_ChildTableMismatch));
         }
         static public Exception EnforceConstraint() {
-            return _Constraint(ResHelper.GetString(Res.Data_EnforceConstraints));
+            return _Constraint(StringsHelper.GetString(Strings.Data_EnforceConstraints));
         }
         static public Exception CaseLocaleMismatch() {
-            return _Argument(ResHelper.GetString(Res.DataRelation_CaseLocaleMismatch));
+            return _Argument(StringsHelper.GetString(Strings.DataRelation_CaseLocaleMismatch));
         }
         static public Exception CannotChangeCaseLocale() {
             return CannotChangeCaseLocale(null);
         }
         static public Exception CannotChangeCaseLocale(Exception innerException) {
-            return _Argument(ResHelper.GetString(Res.DataSet_CannotChangeCaseLocale), innerException);
+            return _Argument(StringsHelper.GetString(Strings.DataSet_CannotChangeCaseLocale), innerException);
         }
 
         static public Exception CannotChangeSchemaSerializationMode() {
-            return _InvalidOperation(ResHelper.GetString(Res.DataSet_CannotChangeSchemaSerializationMode));
+            return _InvalidOperation(StringsHelper.GetString(Strings.DataSet_CannotChangeSchemaSerializationMode));
         }
 
         static public Exception InvalidSchemaSerializationMode(Type enumType, string mode) {
-            return _InvalidEnumArgumentException(ResHelper.GetString(Res.ADP_InvalidEnumerationValue, enumType.Name, mode));
+            return _InvalidEnumArgumentException(StringsHelper.GetString(Strings.ADP_InvalidEnumerationValue, enumType.Name, mode));
         }
 
         static public Exception InvalidRemotingFormat(SerializationFormat mode) {
@@ -1175,92 +1175,92 @@ namespace Microsoft.Data {
         // DataTable and DataTableCollection
         //
         static public Exception TableForeignPrimaryKey() {
-            return _Argument(ResHelper.GetString(Res.DataTable_ForeignPrimaryKey));
+            return _Argument(StringsHelper.GetString(Strings.DataTable_ForeignPrimaryKey));
         }
         static public Exception TableCannotAddToSimpleContent() {
-            return _Argument(ResHelper.GetString(Res.DataTable_CannotAddToSimpleContent));
+            return _Argument(StringsHelper.GetString(Strings.DataTable_CannotAddToSimpleContent));
         }
         static public Exception NoTableName() {
-            return _Argument(ResHelper.GetString(Res.DataTable_NoName));
+            return _Argument(StringsHelper.GetString(Strings.DataTable_NoName));
         }
         static public Exception MultipleTextOnlyColumns() {
-            return _Argument(ResHelper.GetString(Res.DataTable_MultipleSimpleContentColumns));
+            return _Argument(StringsHelper.GetString(Strings.DataTable_MultipleSimpleContentColumns));
         }
         static public Exception InvalidSortString(string sort) {
-            return _Argument(ResHelper.GetString(Res.DataTable_InvalidSortString, sort));
+            return _Argument(StringsHelper.GetString(Strings.DataTable_InvalidSortString, sort));
         }
         static public Exception DuplicateTableName(string table) {
-            return _DuplicateName(ResHelper.GetString(Res.DataTable_DuplicateName, table));
+            return _DuplicateName(StringsHelper.GetString(Strings.DataTable_DuplicateName, table));
         }
         static public Exception DuplicateTableName2(string table, string ns) {
-            return _DuplicateName(ResHelper.GetString(Res.DataTable_DuplicateName2, table, ns));
+            return _DuplicateName(StringsHelper.GetString(Strings.DataTable_DuplicateName2, table, ns));
         }
         static public Exception SelfnestedDatasetConflictingName(string table) {
-            return _DuplicateName(ResHelper.GetString(Res.DataTable_SelfnestedDatasetConflictingName, table));
+            return _DuplicateName(StringsHelper.GetString(Strings.DataTable_SelfnestedDatasetConflictingName, table));
         }
         static public Exception DatasetConflictingName(string table) {
-            return _DuplicateName(ResHelper.GetString(Res.DataTable_DatasetConflictingName, table));
+            return _DuplicateName(StringsHelper.GetString(Strings.DataTable_DatasetConflictingName, table));
         }
         static public Exception TableAlreadyInOtherDataSet() {
-            return _Argument(ResHelper.GetString(Res.DataTable_AlreadyInOtherDataSet));
+            return _Argument(StringsHelper.GetString(Strings.DataTable_AlreadyInOtherDataSet));
         }
         static public Exception TableAlreadyInTheDataSet() {
-            return _Argument(ResHelper.GetString(Res.DataTable_AlreadyInTheDataSet));
+            return _Argument(StringsHelper.GetString(Strings.DataTable_AlreadyInTheDataSet));
         }
         static public Exception TableOutOfRange(int index) {
-            return _IndexOutOfRange(ResHelper.GetString(Res.DataTable_OutOfRange, (index).ToString(CultureInfo.InvariantCulture)));
+            return _IndexOutOfRange(StringsHelper.GetString(Strings.DataTable_OutOfRange, (index).ToString(CultureInfo.InvariantCulture)));
         }
         static public Exception TableNotInTheDataSet(string table) {
-            return _Argument(ResHelper.GetString(Res.DataTable_NotInTheDataSet, table));
+            return _Argument(StringsHelper.GetString(Strings.DataTable_NotInTheDataSet, table));
         }
         static public Exception TableInRelation() {
-            return _Argument(ResHelper.GetString(Res.DataTable_InRelation));
+            return _Argument(StringsHelper.GetString(Strings.DataTable_InRelation));
         }
         static public Exception TableInConstraint(DataTable table, Constraint constraint) {
-            return _Argument(ResHelper.GetString(Res.DataTable_InConstraint, table.TableName, constraint.ConstraintName));
+            return _Argument(StringsHelper.GetString(Strings.DataTable_InConstraint, table.TableName, constraint.ConstraintName));
         }
 
         static public Exception CanNotSerializeDataTableHierarchy() {
-            return _InvalidOperation(ResHelper.GetString(Res.DataTable_CanNotSerializeDataTableHierarchy));
+            return _InvalidOperation(StringsHelper.GetString(Strings.DataTable_CanNotSerializeDataTableHierarchy));
         }
 
         static public Exception CanNotRemoteDataTable() {
-            return _InvalidOperation(ResHelper.GetString(Res.DataTable_CanNotRemoteDataTable));
+            return _InvalidOperation(StringsHelper.GetString(Strings.DataTable_CanNotRemoteDataTable));
         }
 
         static public Exception CanNotSetRemotingFormat() {
-            return _Argument(ResHelper.GetString(Res.DataTable_CanNotSetRemotingFormat));
+            return _Argument(StringsHelper.GetString(Strings.DataTable_CanNotSetRemotingFormat));
         }
 
         static public Exception CanNotSerializeDataTableWithEmptyName() {
-            return _InvalidOperation(ResHelper.GetString(Res.DataTable_CanNotSerializeDataTableWithEmptyName));
+            return _InvalidOperation(StringsHelper.GetString(Strings.DataTable_CanNotSerializeDataTableWithEmptyName));
         }
 
         static public Exception TableNotFound (string tableName) {
-            return _Argument(ResHelper.GetString(Res.DataTable_TableNotFound, tableName));
+            return _Argument(StringsHelper.GetString(Strings.DataTable_TableNotFound, tableName));
         }
 
 
         static public Exception InvalidStorageType(TypeCode typecode) {
-            return _Data(ResHelper.GetString(Res.DataStorage_InvalidStorageType, ((Enum) typecode).ToString()));
+            return _Data(StringsHelper.GetString(Strings.DataStorage_InvalidStorageType, ((Enum) typecode).ToString()));
         }
 
         static public Exception RangeArgument(Int32 min, Int32 max) {
-            return _Argument(ResHelper.GetString(Res.Range_Argument, (min).ToString(CultureInfo.InvariantCulture), (max).ToString(CultureInfo.InvariantCulture)));
+            return _Argument(StringsHelper.GetString(Strings.Range_Argument, (min).ToString(CultureInfo.InvariantCulture), (max).ToString(CultureInfo.InvariantCulture)));
         }
         static public Exception NullRange() {
-            return _Data(ResHelper.GetString(Res.Range_NullRange));
+            return _Data(StringsHelper.GetString(Strings.Range_NullRange));
         }
         static public Exception NegativeMinimumCapacity() {
-            return _Argument(ResHelper.GetString(Res.RecordManager_MinimumCapacity));
+            return _Argument(StringsHelper.GetString(Strings.RecordManager_MinimumCapacity));
         }
         static public Exception ProblematicChars(char charValue) {
             string xchar = "0x" + ((UInt16)charValue).ToString("X", CultureInfo.InvariantCulture);
-            return _Argument(ResHelper.GetString(Res.DataStorage_ProblematicChars, xchar));
+            return _Argument(StringsHelper.GetString(Strings.DataStorage_ProblematicChars, xchar));
         }
 
         static public Exception StorageSetFailed() {
-            return _Argument(ResHelper.GetString(Res.DataStorage_SetInvalidDataType));
+            return _Argument(StringsHelper.GetString(Strings.DataStorage_SetInvalidDataType));
         }
 
 
@@ -1268,7 +1268,7 @@ namespace Microsoft.Data {
         // XML schema
         //
         static public Exception SimpleTypeNotSupported() {
-            return _Data(ResHelper.GetString(Res.Xml_SimpleTypeNotSupported));
+            return _Data(StringsHelper.GetString(Strings.Xml_SimpleTypeNotSupported));
         }
 
         static public Exception MissingAttribute(string attribute) {
@@ -1276,120 +1276,120 @@ namespace Microsoft.Data {
         }
 
         static public Exception MissingAttribute(string element, string attribute) {
-            return _Data(ResHelper.GetString(Res.Xml_MissingAttribute, element, attribute));
+            return _Data(StringsHelper.GetString(Strings.Xml_MissingAttribute, element, attribute));
         }
 
         static public Exception InvalidAttributeValue(string name, string value) {
-            return _Data(ResHelper.GetString(Res.Xml_ValueOutOfRange, name, value));
+            return _Data(StringsHelper.GetString(Strings.Xml_ValueOutOfRange, name, value));
         }
 
         static public Exception AttributeValues(string name, string value1, string value2) {
-            return _Data(ResHelper.GetString(Res.Xml_AttributeValues, name, value1, value2));
+            return _Data(StringsHelper.GetString(Strings.Xml_AttributeValues, name, value1, value2));
         }
 
         static public Exception ElementTypeNotFound(string name) {
-            return _Data(ResHelper.GetString(Res.Xml_ElementTypeNotFound, name));
+            return _Data(StringsHelper.GetString(Strings.Xml_ElementTypeNotFound, name));
         }
 
         static public Exception RelationParentNameMissing(string rel) {
-            return _Data(ResHelper.GetString(Res.Xml_RelationParentNameMissing, rel));
+            return _Data(StringsHelper.GetString(Strings.Xml_RelationParentNameMissing, rel));
         }
 
         static public Exception RelationChildNameMissing(string rel) {
-            return _Data(ResHelper.GetString(Res.Xml_RelationChildNameMissing, rel));
+            return _Data(StringsHelper.GetString(Strings.Xml_RelationChildNameMissing, rel));
         }
 
         static public Exception RelationTableKeyMissing(string rel) {
-            return _Data(ResHelper.GetString(Res.Xml_RelationTableKeyMissing, rel));
+            return _Data(StringsHelper.GetString(Strings.Xml_RelationTableKeyMissing, rel));
         }
 
         static public Exception RelationChildKeyMissing(string rel) {
-            return _Data(ResHelper.GetString(Res.Xml_RelationChildKeyMissing, rel));
+            return _Data(StringsHelper.GetString(Strings.Xml_RelationChildKeyMissing, rel));
         }
 
         static public Exception UndefinedDatatype(string name) {
-            return _Data(ResHelper.GetString(Res.Xml_UndefinedDatatype, name));
+            return _Data(StringsHelper.GetString(Strings.Xml_UndefinedDatatype, name));
         }
 
         static public Exception DatatypeNotDefined() {
-            return _Data(ResHelper.GetString(Res.Xml_DatatypeNotDefined));
+            return _Data(StringsHelper.GetString(Strings.Xml_DatatypeNotDefined));
         }
 
         static public Exception MismatchKeyLength() {
-            return _Data(ResHelper.GetString(Res.Xml_MismatchKeyLength));
+            return _Data(StringsHelper.GetString(Strings.Xml_MismatchKeyLength));
         }
 
         static public Exception InvalidField(string name) {
-            return _Data(ResHelper.GetString(Res.Xml_InvalidField, name));
+            return _Data(StringsHelper.GetString(Strings.Xml_InvalidField, name));
         }
 
         static public Exception InvalidSelector(string name) {
-            return _Data(ResHelper.GetString(Res.Xml_InvalidSelector, name));
+            return _Data(StringsHelper.GetString(Strings.Xml_InvalidSelector, name));
         }
 
         static public Exception CircularComplexType(string name) {
-            return _Data(ResHelper.GetString(Res.Xml_CircularComplexType, name));
+            return _Data(StringsHelper.GetString(Strings.Xml_CircularComplexType, name));
         }
 
         static public Exception CannotInstantiateAbstract(string name) {
-            return _Data(ResHelper.GetString(Res.Xml_CannotInstantiateAbstract, name));
+            return _Data(StringsHelper.GetString(Strings.Xml_CannotInstantiateAbstract, name));
         }
 
         static public Exception InvalidKey(string name) {
-            return _Data(ResHelper.GetString(Res.Xml_InvalidKey, name));
+            return _Data(StringsHelper.GetString(Strings.Xml_InvalidKey, name));
         }
 
         static public Exception DiffgramMissingTable(string name) {
-            return _Data(ResHelper.GetString(Res.Xml_MissingTable, name));
+            return _Data(StringsHelper.GetString(Strings.Xml_MissingTable, name));
         }
 
         static public Exception DiffgramMissingSQL() {
-            return _Data(ResHelper.GetString(Res.Xml_MissingSQL));
+            return _Data(StringsHelper.GetString(Strings.Xml_MissingSQL));
         }
 
         static public Exception DuplicateConstraintRead(string str) {
-            return _Data(ResHelper.GetString(Res.Xml_DuplicateConstraint, str));
+            return _Data(StringsHelper.GetString(Strings.Xml_DuplicateConstraint, str));
         }
 
         static public Exception ColumnTypeConflict(string name) {
-            return _Data(ResHelper.GetString(Res.Xml_ColumnConflict, name));
+            return _Data(StringsHelper.GetString(Strings.Xml_ColumnConflict, name));
         }
 
         static public Exception CannotConvert(string name, string type) {
-            return _Data(ResHelper.GetString(Res.Xml_CannotConvert, name, type));
+            return _Data(StringsHelper.GetString(Strings.Xml_CannotConvert, name, type));
         }
 
         static public Exception InvalidPrefix(string name) {
-            return _Data(ResHelper.GetString(Res.Xml_InvalidPrefix, name));
+            return _Data(StringsHelper.GetString(Strings.Xml_InvalidPrefix, name));
         }
 
         static public Exception CanNotDeserializeObjectType() {
-            return _InvalidOperation(ResHelper.GetString(Res.Xml_CanNotDeserializeObjectType));
+            return _InvalidOperation(StringsHelper.GetString(Strings.Xml_CanNotDeserializeObjectType));
         }
 
         static public Exception IsDataSetAttributeMissingInSchema() {
-            return _Data(ResHelper.GetString(Res.Xml_IsDataSetAttributeMissingInSchema));
+            return _Data(StringsHelper.GetString(Strings.Xml_IsDataSetAttributeMissingInSchema));
         }
         static public Exception TooManyIsDataSetAtributeInSchema() {
-            return _Data(ResHelper.GetString(Res.Xml_TooManyIsDataSetAtributeInSchema));
+            return _Data(StringsHelper.GetString(Strings.Xml_TooManyIsDataSetAtributeInSchema));
         }
 
         // XML save
         static public Exception NestedCircular(string name) {
-            return _Data(ResHelper.GetString(Res.Xml_NestedCircular, name));
+            return _Data(StringsHelper.GetString(Strings.Xml_NestedCircular, name));
         }
 
         static public Exception MultipleParentRows(string tableQName) {
-            return _Data(ResHelper.GetString(Res.Xml_MultipleParentRows, tableQName));
+            return _Data(StringsHelper.GetString(Strings.Xml_MultipleParentRows, tableQName));
         }
 
         static public Exception PolymorphismNotSupported(string typeName) {
-            return _InvalidOperation(ResHelper.GetString(Res.Xml_PolymorphismNotSupported, typeName));
+            return _InvalidOperation(StringsHelper.GetString(Strings.Xml_PolymorphismNotSupported, typeName));
         }
 
 
         static public Exception DataTableInferenceNotSupported() {
-            return _InvalidOperation(ResHelper.GetString(Res.Xml_DataTableInferenceNotSupported));
+            return _InvalidOperation(StringsHelper.GetString(Strings.Xml_DataTableInferenceNotSupported));
         }
 
         /// <summary>throw DataException for multitarget failure</summary>
@@ -1397,21 +1397,21 @@ namespace Microsoft.Data {
         /// <exception cref="DataException">always thrown</exception>
         static internal void ThrowMultipleTargetConverter(Exception innerException)
         {
-            string res = (null != innerException) ? Res.Xml_MultipleTargetConverterError : Res.Xml_MultipleTargetConverterEmpty;
-            ThrowDataException(ResHelper.GetString(res), innerException);
+            string res = (null != innerException) ? Strings.Xml_MultipleTargetConverterError : Strings.Xml_MultipleTargetConverterEmpty;
+            ThrowDataException(StringsHelper.GetString(res), innerException);
         }
 
         //
         // Merge
         //
         static public Exception DuplicateDeclaration(string name) {
-            return _Data(ResHelper.GetString(Res.Xml_MergeDuplicateDeclaration, name));
+            return _Data(StringsHelper.GetString(Strings.Xml_MergeDuplicateDeclaration, name));
         }
 
 
         //Read Xml data
         static public Exception FoundEntity() {
-            return _Data(ResHelper.GetString(Res.Xml_FoundEntity));
+            return _Data(StringsHelper.GetString(Strings.Xml_FoundEntity));
         }
 
         // ATTENTION: name has to be localized string here:
@@ -1421,46 +1421,46 @@ namespace Microsoft.Data {
 
         // SqlConvert
         static public DataException ConvertFailed(Type type1, Type type2) {
-            return _Data(ResHelper.GetString(Res.SqlConvert_ConvertFailed, type1.FullName, type2.FullName));
+            return _Data(StringsHelper.GetString(Strings.SqlConvert_ConvertFailed, type1.FullName, type2.FullName));
         }
 
         // DataTableReader
         static public Exception InvalidDataTableReader(string tableName) {
-            return _InvalidOperation(ResHelper.GetString(Res.DataTableReader_InvalidDataTableReader, tableName));
+            return _InvalidOperation(StringsHelper.GetString(Strings.DataTableReader_InvalidDataTableReader, tableName));
         }
 
         static public Exception DataTableReaderSchemaIsInvalid(string tableName) {
-            return _InvalidOperation(ResHelper.GetString(Res.DataTableReader_SchemaInvalidDataTableReader, tableName));
+            return _InvalidOperation(StringsHelper.GetString(Strings.DataTableReader_SchemaInvalidDataTableReader, tableName));
         }
 
         static public Exception CannotCreateDataReaderOnEmptyDataSet() {
-            return _Argument(ResHelper.GetString(Res.DataTableReader_CannotCreateDataReaderOnEmptyDataSet));
+            return _Argument(StringsHelper.GetString(Strings.DataTableReader_CannotCreateDataReaderOnEmptyDataSet));
         }
 
         static public Exception DataTableReaderArgumentIsEmpty() {
-            return _Argument(ResHelper.GetString(Res.DataTableReader_DataTableReaderArgumentIsEmpty));
+            return _Argument(StringsHelper.GetString(Strings.DataTableReader_DataTableReaderArgumentIsEmpty));
         }
 
         static public Exception ArgumentContainsNullValue() {
-            return _Argument(ResHelper.GetString(Res.DataTableReader_ArgumentContainsNullValue));
+            return _Argument(StringsHelper.GetString(Strings.DataTableReader_ArgumentContainsNullValue));
         }
 
         static public Exception InvalidCurrentRowInDataTableReader() {
-            return _DeletedRowInaccessible(ResHelper.GetString(Res.DataTableReader_InvalidRowInDataTableReader));
+            return _DeletedRowInaccessible(StringsHelper.GetString(Strings.DataTableReader_InvalidRowInDataTableReader));
         }
 
         static public Exception EmptyDataTableReader(string tableName) {
-            return _DeletedRowInaccessible(ResHelper.GetString(Res.DataTableReader_DataTableCleared, tableName));
+            return _DeletedRowInaccessible(StringsHelper.GetString(Strings.DataTableReader_DataTableCleared, tableName));
         }
 
 
         //
         static internal Exception InvalidDuplicateNamedSimpleTypeDelaration(string stName, string errorStr) {
-            return _Argument(ResHelper.GetString(Res.NamedSimpleType_InvalidDuplicateNamedSimpleTypeDelaration, stName, errorStr));
+            return _Argument(StringsHelper.GetString(Strings.NamedSimpleType_InvalidDuplicateNamedSimpleTypeDelaration, stName, errorStr));
         }
 
         static public Exception EnumeratorModified() {
-            return _InvalidOperation(ResHelper.GetString(Res.RbTree_EnumerationBroken));
+            return _InvalidOperation(StringsHelper.GetString(Strings.RbTree_EnumerationBroken));
         }
     }// ExceptionBuilder
 }

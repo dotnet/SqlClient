@@ -6,7 +6,7 @@
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
     <!-- Workaround for absence of Assembly File. This should pick up the assembly version from the build -->
     <AssemblyFileVersion>4.8.0.0</AssemblyFileVersion>
-    <OutputType>module</OutputType>
+    <OutputType>Library</OutputType>
     <BuildProjectReferences>true</BuildProjectReferences>
     <!-- we build a netmodule, but defining TargetExt was the easiest way to get the assemblyrefs.cs built with "system.data.dll" instead of "system.data.netmodule" -->
     <GenerateAssemblyRefs>true</GenerateAssemblyRefs>
@@ -111,14 +111,14 @@
     <Compile Include="OnChangedEventHandler.cs" />
     <Compile Include="ParameterPeekAheadValue.cs" />
     <Compile Include="PoolBlockingPeriod.cs" />
-    <Compile Include="..\Resources\Res.Designer.cs">
-      <Link>Resources\Res.Designer.cs</Link>
+    <Compile Include="..\Resources\Strings.Designer.cs">
+      <Link>Resources\Strings.Designer.cs</Link>
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
-      <DependentUpon>Res.resx</DependentUpon>
+      <DependentUpon>Strings.resx</DependentUpon>
     </Compile>
-    <Compile Include="..\Resources\ResHelper.cs">
-      <Link>Resources\ResHelper.cs</Link>
+    <Compile Include="..\Resources\StringsHelper.cs">
+      <Link>Resources\StringsHelper.cs</Link>
     </Compile>
     <Compile Include="..\Resources\ResCategoryAttribute.cs">
       <Link>Resources\ResCategoryAttribute.cs</Link>
@@ -265,21 +265,21 @@
     <Compile Include="..\..\..\Misc\PrivilegedConfigurationManager.cs">
       <Link>Misc\PrivilegedConfigurationManager.cs</Link>
     </Compile>
-        <Compile Include="..\..\..\Common\src\System\Data\Common\DbConnectionPoolKey.cs">
+    <Compile Include="..\..\..\Common\src\System\Data\Common\DbConnectionPoolKey.cs">
       <Link>Common\DbConnectionPoolKey.cs</Link>
     </Compile>
-        <Compile Include="..\..\..\Common\src\System\Data\Common\MultipartIdentifier.cs">
+    <Compile Include="..\..\..\Common\src\System\Data\Common\MultipartIdentifier.cs">
       <Link>Common\MultipartIdentifier.cs</Link>
     </Compile>
-            <Compile Include="..\..\..\Common\src\System\Data\Common\DBDataPermission.cs">
+    <Compile Include="..\..\..\Common\src\System\Data\Common\DBDataPermission.cs">
       <Link>Common\DBDataPermission.cs</Link>
     </Compile>
-                <Compile Include="..\..\..\Common\src\System\Data\Common\DBDataPermissionAttribute.cs">
+    <Compile Include="..\..\..\Common\src\System\Data\Common\DBDataPermissionAttribute.cs">
       <Link>Common\DBDataPermissionAttribute.cs</Link>
     </Compile>
     <Compile Include="..\..\..\Common\src\System\Data\Common\NameValuePermission.cs">
       <Link>Common\NameValuePermission.cs</Link>
-    </Compile>  
+    </Compile>
     <Compile Include="..\Common\AdapterSwitches.cs">
       <Link>Common\AdapterSwitches.cs</Link>
     </Compile>
@@ -313,7 +313,7 @@
         <Compile Include="..\Common\DbConnectionString.cs">
       <Link>ProviderCommon\DbConnectionString.cs</Link>
     </Compile>
-        <Compile Include="..\Common\NameValuePair.cs">
+    <Compile Include="..\Common\NameValuePair.cs">
       <Link>SqlClient\NameValuePair.cs</Link>
     </Compile>
     <Compile Include="..\IDbDataParameter.cs">
@@ -331,12 +331,12 @@
     <Compile Include="..\FillErrorEventHandler.cs">
       <Link>ProviderCommon\Events\FillErrorEventHandler.cs</Link>
     </Compile>
-        <Compile Include="..\Common\UnsafeNativeMethods.cs">
+    <Compile Include="..\Common\UnsafeNativeMethods.cs">
       <Link>ProviderCommon\UnsafeNativeMethods.cs</Link>
-   </Compile>
-           <Compile Include="..\Common\SafeNativeMethods.cs">
+    </Compile>
+    <Compile Include="..\Common\SafeNativeMethods.cs">
       <Link>ProviderCommon\SafeNativeMethods.cs</Link>
-   </Compile>
+    </Compile>
     <Compile Include="..\IColumnMapping.cs">
       <Link>ProviderCommon\Base\IColumnMapping.cs</Link>
     </Compile>
@@ -407,7 +407,6 @@
     <Compile Include="..\ProviderBase\SqlParameterHelper.cs">
       <Link>ProviderCommon\SqlParameterHelper.cs</Link>
     </Compile>
-   
     <Compile Include="..\ProviderBase\DbReferenceCollection.cs">
       <Link>ProviderCommon\DbReferenceCollection.cs</Link>
     </Compile>
@@ -417,7 +416,7 @@
     <Compile Include="..\ProviderBase\TimeoutTimer.cs">
       <Link>ProviderCommon\TimeoutTimer.cs</Link>
     </Compile>
-        <Compile Include="..\SqlEventSource.cs">
+    <Compile Include="..\SqlEventSource.cs">
       <Link>ProviderCommon\SqlEventSource.cs</Link>
     </Compile>
     <Compile Include="..\RelationshipConverter.cs">
@@ -570,8 +569,8 @@
     <None Include="..\..\..\BID\INC\CS\AssemblyTemplate_BID.cs">
       <Link>BID\AssemblyTemplate_BID.cs</Link>
     </None>
-    <Compile Include="DataClassification\SensitivityClassification.cs" /> 
-        <Compile Include="..\ProviderBase\FieldNameLookup.cs">
+    <Compile Include="DataClassification\SensitivityClassification.cs" />
+    <Compile Include="..\ProviderBase\FieldNameLookup.cs">
       <Link>ProviderCommon\FieldNameLookup.cs</Link>
     </Compile>
     <Compile Include="..\OperationAbortedException.cs">
@@ -585,11 +584,12 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="..\Resources\Res.resx">
-      <Link>Resources\Res.resx</Link>
-      <CustomToolNamespace>Microsoft.Data</CustomToolNamespace>
+    <EmbeddedResource Include="..\Resources\Strings.resx">
+      <Link>Resources\Strings.resx</Link>
+      <CustomToolNamespace>System</CustomToolNamespace>
       <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Res.Designer.cs</LastGenOutput>
+      <LastGenOutput>Strings.Designer.cs</LastGenOutput>
+      <LogicalName>SqlClient.Resources.Strings</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
