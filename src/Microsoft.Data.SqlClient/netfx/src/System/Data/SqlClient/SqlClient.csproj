@@ -2,68 +2,84 @@
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
-    <!-- Workaround for absence of Assembly File. This should pick up the assembly version from the build -->
-    <AssemblyFileVersion>4.8.0.0</AssemblyFileVersion>
-    <OutputType>Library</OutputType>
-    <BuildProjectReferences>true</BuildProjectReferences>
-    <!-- we build a netmodule, but defining TargetExt was the easiest way to get the assemblyrefs.cs built with "system.data.dll" instead of "system.data.netmodule" -->
-    <GenerateAssemblyRefs>true</GenerateAssemblyRefs>
-    <TargetExt>.dll</TargetExt>
-    <!-- compile properties -->
-    <DefineConstants>USEOFFSET</DefineConstants>
-    <NoWarn>649</NoWarn>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <!-- visual studio properties -->
     <ProjectGuid>{407890AC-9876-4FEF-A6F1-F36A876BAADE}</ProjectGuid>
-    <!-- Define the architecture we are using; this is useful for ARM, where msbuild\csc does not define anything for us -->
-    <DefineConstants>$(DefineConstants);ARCH_$(BuildArchitecture);TRACE;</DefineConstants>
+    <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <EnableLocalAppContext>true</EnableLocalAppContext>
-  </PropertyGroup>
-  <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SqlClient</RootNamespace>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <OutputPath>$(BinFolder)$(Configuration).$(Platform)\$(AssemblyName)</OutputPath>
+    <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)\$(AssemblyName)</IntermediateOutputPath>
+    
+    <!-- Workaround for absence of Assembly File. This should pick up the assembly version from the build -->
+    <AssemblyFileVersion>4.8.0.0</AssemblyFileVersion>
+    
+    <!-- CSC Compiler Options -->
+    <NoConfig>True</NoConfig>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
+    <NoWarn>649,1699,1570,1572,1573,1591,1701,1702</NoWarn>
+    <GenerateFullPaths>True</GenerateFullPaths>
+    <NoStandardLib>True</NoStandardLib>
+    <WarningLevel>4</WarningLevel>
     <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile />
-    <OutputPath>$(BinFolder)\$(Configuration).$(Platform)\$(AssemblyName)</OutputPath>
-    <IntermediateOutputPath>$(ObjFolder)\$(Configuration).$(Platform)\$(AssemblyName)</IntermediateOutputPath>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
-    <DebugSymbols>true</DebugSymbols>
-    <DefineConstants>$(DefineConstants);DEBUG</DefineConstants>
-    <DebugType>full</DebugType>
-    <PlatformTarget>x64</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
+    <HighEntropyVA>True</HighEntropyVA>
+    <DebugSymbols>True</DebugSymbols>
+    <NoLogo>True</NoLogo>
+    <SubsystemVersion>6.00</SubsystemVersion>
+    <OutputType>Module</OutputType>
+    <!--TreatWarningsAsErrors needs to be updated to True -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <Utf8Output>True</Utf8Output>
+    <WarningsNotAsErrors>472,8073,649,675,1570,1574,1584,1658,1701,1717,3002,3003,1058</WarningsNotAsErrors>
+    <ErrorReport>None</ErrorReport>
+    
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <BuildProjectReferences>True</BuildProjectReferences>
+    <GenerateAssemblyRefs>True</GenerateAssemblyRefs>
+    <!-- <TargetExt>.dll</TargetExt> -->
+    
+    <DefineConstants>$(DefineConstants);USEOFFSET;CODE_ANALYSIS_BASELINE;FEATURE_LEGACYSURFACEAREA;FEATURE_UTF32;FEATURE_UTF7;TRACE;</DefineConstants>
+    
+    <!-- Preprocess properties -->
+    <AllowPartialTrustedCalls>true</AllowPartialTrustedCalls>
+    <AssemblyKeyType>ECMA</AssemblyKeyType>
+
+    <!-- the RawClDefines was the only way to get AssemblyAttributes.cs to not include [SecurityRules] which break the link step -->
+    <GenerateAssemblyAttribute>true</GenerateAssemblyAttribute>
+    <RawClDefines>$(RawClDefines);SUPPRESS_SECURITY_RULES=1</RawClDefines>
+    
+    <!-- ADO.NET internal defines -->
+    <UseOwnAssemblyVersionOnly Condition="'$(AdoNetService)'=='true'">true</UseOwnAssemblyVersionOnly>
+    <DefineConstants Condition="'$(AdoNetService)'=='true'">$(DefineConstants);ADONET_SERVICE;ADONET_CERT_AUTH;ADONET_ORIGINAL_CLIENT_ADDRESS</DefineConstants>
+    <ComCompatibleSideBySide>True</ComCompatibleSideBySide>
+    <GenerateTargetFrameworkAttribute>False</GenerateTargetFrameworkAttribute>
+  </PropertyGroup>
+
+  <!-- ********************** Configuration and Platform specific properties ********************* -->
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <DefineConstants>$(DefineConstants);ARCH_amd64;DEBUG;DBG;_DEBUG;_LOGGING;RESOURCE_ANNOTATION_WORK;WIN64</DefineConstants>
+    <DebugType>Full</DebugType>
+    <Optimize>False</Optimize>
+    <!-- <PlatformTarget>x64</PlatformTarget> -->
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>x64</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <DefineConstants>$(DefineConstants);ARCH_amd64;RETAIL;WIN64</DefineConstants>
+    <DebugType>Pdbonly</DebugType>
+    <Optimize>True</Optimize>
+    <!-- <PlatformTarget>x64</PlatformTarget> -->
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|Win32'">
-    <DebugSymbols>true</DebugSymbols>
-    <DefineConstants>$(DefineConstants);DEBUG</DefineConstants>
-    <DebugType>full</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <DefineConstants>$(DefineConstants);ARCH_i386;DEBUG;DBG;_DEBUG;_LOGGING;RESOURCE_ANNOTATION_WORK;WIN32</DefineConstants>
+    <DebugType>Full</DebugType>
+    <Optimize>False</Optimize>
+    <!-- <PlatformTarget>x86</PlatformTarget> -->
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|Win32'">
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <DefineConstants>$(DefineConstants);ARCH_i386;RETAIL;WIN32</DefineConstants>
+    <DebugType>Pdbonly</DebugType>
+    <Optimize>True</Optimize>
+    <!-- <PlatformTarget>x86</PlatformTarget> -->
   </PropertyGroup>
+  <!-- ******************************************************************************************* -->
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
