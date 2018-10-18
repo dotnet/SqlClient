@@ -3,15 +3,21 @@
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <ProjectGuid>{407890AC-9876-4FEF-A6F1-F36A876BAADE}</ProjectGuid>
-    <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
+    <RootNamespace>SqlClient</RootNamespace>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <EnableLocalAppContext>true</EnableLocalAppContext>
-    <OutputPath>$(BinFolder)$(Configuration).$(Platform)\$(AssemblyName)</OutputPath>
-    <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)\$(AssemblyName)</IntermediateOutputPath>
-    
+    <ResourceFileName>SqlClient.Resources.Strings</ResourceFileName>
+    <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
     <!-- Workaround for absence of Assembly File. This should pick up the assembly version from the build -->
     <AssemblyFileVersion>4.8.0.0</AssemblyFileVersion>
-    
+
+    <BinPath>$(BinFolder)$(Configuration).$(Platform)\</BinPath>
+    <ObjPath>$(ObjFolder)$(Configuration).$(Platform)\</ObjPath>
+    <OutputPath>$(BinPath)$(AssemblyName)</OutputPath>
+    <IntermediateOutputPath>$(ObjPath)$(AssemblyName)</IntermediateOutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup>
     <!-- CSC Compiler Options -->
     <NoConfig>True</NoConfig>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
@@ -59,25 +65,25 @@
     <DefineConstants>$(DefineConstants);ARCH_amd64;DEBUG;DBG;_DEBUG;_LOGGING;RESOURCE_ANNOTATION_WORK;WIN64</DefineConstants>
     <DebugType>Full</DebugType>
     <Optimize>False</Optimize>
-    <!-- <PlatformTarget>x64</PlatformTarget> -->
+    <OutputPlatform>x64</OutputPlatform>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
     <DefineConstants>$(DefineConstants);ARCH_amd64;RETAIL;WIN64</DefineConstants>
     <DebugType>Pdbonly</DebugType>
     <Optimize>True</Optimize>
-    <!-- <PlatformTarget>x64</PlatformTarget> -->
+    <OutputPlatform>x64</OutputPlatform>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|Win32'">
     <DefineConstants>$(DefineConstants);ARCH_i386;DEBUG;DBG;_DEBUG;_LOGGING;RESOURCE_ANNOTATION_WORK;WIN32</DefineConstants>
     <DebugType>Full</DebugType>
     <Optimize>False</Optimize>
-    <!-- <PlatformTarget>x86</PlatformTarget> -->
+    <OutputPlatform>x86</OutputPlatform>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|Win32'">
     <DefineConstants>$(DefineConstants);ARCH_i386;RETAIL;WIN32</DefineConstants>
     <DebugType>Pdbonly</DebugType>
     <Optimize>True</Optimize>
-    <!-- <PlatformTarget>x86</PlatformTarget> -->
+    <OutputPlatform>x86</OutputPlatform>
   </PropertyGroup>
   <!-- ******************************************************************************************* -->
   <ItemGroup>
@@ -94,21 +100,21 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <AddModules Include="$(ObjFolder)$(Configuration).$(Platform)\SNIManagedWrapper\SniManagedWrapper.obj">
+    <AddModules Include="$(ObjPath)SNIManagedWrapper\SniManagedWrapper.obj">
       <ProjectReference>..\managedwrapper\SniManagedWrapper.vcxproj</ProjectReference>
     </AddModules>
   </ItemGroup>
   <ItemGroup>
-    <TargetLib Include="$(BinFolder)$(Configuration).$(Platform)\bidinit\bidinit.lib">
+    <TargetLib Include="$(BinPath)bidinit\bidinit.lib">
       <ProjectReference>..\bidinit\src\bidinit.vcxproj</ProjectReference>
     </TargetLib>
-    <TargetLib Include="$(BinFolder)$(Configuration).$(Platform)\SNI\SNI.lib">
+    <TargetLib Include="$(BinPath)SNI\SNI.lib">
       <ProjectReference>..\SNI\SNI.vcxproj</ProjectReference>
     </TargetLib>
-    <TargetLib Include="$(BinFolder)$(Configuration).$(Platform)\SNIManagedWrapper\SNIManagedWrapper.lib">
+    <TargetLib Include="$(BinPath)SNIManagedWrapper\SNIManagedWrapper.lib">
       <ProjectReference>..\managedwrapper\SNIManagedWrapper.vcxproj</ProjectReference>
     </TargetLib>
-    <TargetLib Include="$(BinFolder)$(Configuration).$(Platform)\ascii\NLREGCA.lib">
+    <TargetLib Include="$(BinPath)ascii\NLREGCA.lib">
       <ProjectReference>..\SNI\NLRegC\ascii\ascii.vcxproj</ProjectReference>
     </TargetLib>
   </ItemGroup>
@@ -320,13 +326,13 @@
     <Compile Include="..\Common\DbConnectionStringCommon.cs">
       <Link>ProviderCommon\DbConnectionStringCommon.cs</Link>
     </Compile>
-        <Compile Include="..\Common\DbConnectionStringBuilder.cs">
+    <Compile Include="..\Common\DbConnectionStringBuilder.cs">
       <Link>ProviderCommon\DbConnectionStringBuilder.cs</Link>
     </Compile>
-         <Compile Include="..\Common\DbProviderFactory.cs">
+    <Compile Include="..\Common\DbProviderFactory.cs">
       <Link>ProviderCommon\DbProviderFactory.cs</Link>
     </Compile>
-        <Compile Include="..\Common\DbConnectionString.cs">
+    <Compile Include="..\Common\DbConnectionString.cs">
       <Link>ProviderCommon\DbConnectionString.cs</Link>
     </Compile>
     <Compile Include="..\Common\NameValuePair.cs">
@@ -605,9 +611,10 @@
       <CustomToolNamespace>System</CustomToolNamespace>
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Strings.Designer.cs</LastGenOutput>
-      <LogicalName>SqlClient.Resources.Strings</LogicalName>
+      <LogicalName>$(ResourceFileName)</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\..\..\Misc\GenerateThisAssemblyCs.targets" />
+  <Import Project="$(NetFxSource)tools\targets\LinkLibraries.targets" />
 </Project>

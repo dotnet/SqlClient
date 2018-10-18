@@ -54,6 +54,7 @@
       <UseFullPaths>True</UseFullPaths>
       <OmitDefaultLibName>True</OmitDefaultLibName>
       <RemoveUnreferencedCodeData>False</RemoveUnreferencedCodeData>
+      <SupportJustMyCode>false</SupportJustMyCode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <CallingConvention>StdCall</CallingConvention>
       <AdditionalOptions>/Zo /d2guard4 /d2guardcfgfuncptr /d2nocfgrngchk</AdditionalOptions>
