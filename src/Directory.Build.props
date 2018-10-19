@@ -14,5 +14,6 @@
     <TargetsWindows Condition="'$(OS)' != 'Windows_NT' AND '$(OSGroup)' == ''">false</TargetsWindows>
     <TargetsUnix Condition="'$(OS)' == 'Unix' AND '$(OSGroup)' == ''">true</TargetsUnix>
     <TargetsUnix Condition="'$(OS)' != 'Unix' AND '$(OSGroup)' == ''">false</TargetsUnix>
+    <AssemblyFileVersion>4.8.0.1</AssemblyFileVersion>
   </PropertyGroup>
 </Project>
