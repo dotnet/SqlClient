@@ -2442,12 +2442,11 @@ namespace Microsoft.Data.SqlClient {
             try {
                 RegisterForConnectionCloseNotification(ref returnedTask);
 
-                Action<Task<int>> retry = null;
-                retry = (t) => {
+                Task<int>.Factory.FromAsync(BeginExecuteNonQueryAsync, EndExecuteNonQueryAsync, null).ContinueWith((t) => {
                     registration.Dispose();
                     if (t.IsFaulted) {
                         Exception e = t.Exception.InnerException;
-
+                        source.SetException(e);
                     }
                     else {
                         if (t.IsCanceled) {
@@ -2457,9 +2456,7 @@ namespace Microsoft.Data.SqlClient {
                             source.SetResult(t.Result);
                         }
                     }
-                };
-
-                Task<int>.Factory.FromAsync(BeginExecuteNonQueryAsync, EndExecuteNonQueryAsync, null).ContinueWith(retry, TaskScheduler.Default);
+                }, TaskScheduler.Default);
             }
             catch (Exception e) {
                 source.SetException(e);
@@ -2509,12 +2506,11 @@ namespace Microsoft.Data.SqlClient {
             try {
                 RegisterForConnectionCloseNotification(ref returnedTask);
                 
-                Action<Task<SqlDataReader>> retry = null;
-                retry = (t) => {
+                Task<SqlDataReader>.Factory.FromAsync(BeginExecuteReaderAsync, EndExecuteReaderAsync, behavior, null).ContinueWith((t) => {
                     registration.Dispose();
                     if (t.IsFaulted) {
                         Exception e = t.Exception.InnerException;
-
+                        source.SetException(e);
                     }
                     else {
                         if (t.IsCanceled) {
@@ -2524,9 +2520,7 @@ namespace Microsoft.Data.SqlClient {
                             source.SetResult(t.Result);
                         }
                     }
-                };
-
-                Task<SqlDataReader>.Factory.FromAsync(BeginExecuteReaderAsync, EndExecuteReaderAsync, behavior, null).ContinueWith(retry, TaskScheduler.Default);
+                }, TaskScheduler.Default);
             }
             catch (Exception e) {
                 source.SetException(e);
