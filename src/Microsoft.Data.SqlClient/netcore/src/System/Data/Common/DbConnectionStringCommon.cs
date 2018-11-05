@@ -228,7 +228,7 @@ namespace Microsoft.Data.Common
 
         // SqlClient
         internal const ApplicationIntent ApplicationIntent = Microsoft.Data.SqlClient.ApplicationIntent.ReadWrite;
-        internal const string ApplicationName = "Core .Net SqlClient Data Provider";
+        internal const string ApplicationName = "Core Microsoft SqlClient Data Provider";
         internal const string AttachDBFilename = "";
         internal const int ConnectTimeout = 15;
         internal const string CurrentLanguage = "";
