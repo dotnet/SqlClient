@@ -64,7 +64,7 @@ Function SetupLinkerCommand()
 
 Function AddLinkerArguments()
 {
-  $LinkerArguments = "/OUT:`"${BinPath}${AssemblyName}\${AssemblyName}.dll`" /VERSION:`"10.0`" /INCREMENTAL:NO /NOLOGO /WX /NODEFAULTLIB /ASSEMBLYRESOURCE:`"${ObjPath}${AssemblyName}\${ResourceFileName}.resources`" /MANIFESTFILE:${AssemblyName}.dll.mt /DEBUG /PDB:${BinPath}${AssemblyName}\${AssemblyName}.pdb /SUBSYSTEM:CONSOLE,`"6.00`" /STACK:`"0x100000`",`"0x1000`" /LARGEADDRESSAWARE /OPT:REF /RELEASE /MACHINE:${OutputPlatform} /LTCG /CLRUNMANAGEDCODECHECK:NO /CLRIMAGETYPE:IJW /CLRTHREADATTRIBUTE:STA /DYNAMICBASE /guard:cf /DEBUGTYPE:`"cv,fixup`" /OSVERSION:`"6.00`" /PDBCOMPRESS /IGNORE:`"4248,4070,4221`" /DLL "
+  $LinkerArguments = "/OUT:`"${BinPath}${AssemblyName}\${AssemblyName}.dll`" /VERSION:`"10.0`" /INCREMENTAL:NO /NOLOGO /WX /NODEFAULTLIB /ASSEMBLYRESOURCE:`"${ObjPath}${AssemblyName}\${ResourceFileName}.resources`" /ASSEMBLYRESOURCE:`"${BinPath}${AssemblyName}\Resources\Microsoft.Data.SqlClient.SqlMetaData.xml`" /MANIFESTFILE:${AssemblyName}.dll.mt /DEBUG /PDB:${BinPath}${AssemblyName}\${AssemblyName}.pdb /SUBSYSTEM:CONSOLE,`"6.00`" /STACK:`"0x100000`",`"0x1000`" /LARGEADDRESSAWARE /OPT:REF /RELEASE /MACHINE:${OutputPlatform} /LTCG /CLRUNMANAGEDCODECHECK:NO /CLRIMAGETYPE:IJW /CLRTHREADATTRIBUTE:STA /DYNAMICBASE /guard:cf /DEBUGTYPE:`"cv,fixup`" /OSVERSION:`"6.00`" /PDBCOMPRESS /IGNORE:`"4248,4070,4221`" /DLL "
 
   if($OutputPlatform -ieq "x86") 
   {

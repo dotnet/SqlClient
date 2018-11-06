@@ -261,9 +261,9 @@
     <Compile Include="..\SqlTypes\SqlStreamChars.cs" />
     <Compile Include="..\SqlTypes\SqlChars.cs" />
     <Compile Include="..\DataException.cs" />
-    <Compile Include="..\Common\NativeMethods.cs"/>
-    <Compile Include="..\Common\System.Data_BID.cs"/>
-    <Compile Include="..\Common\GreenMethods.cs"/>
+    <Compile Include="..\Common\NativeMethods.cs" />
+    <Compile Include="..\Common\System.Data_BID.cs" />
+    <Compile Include="..\Common\GreenMethods.cs" />
     <Compile Include="..\Common\SQLResource.cs">
       <Link>..\SqlTypes\SQLResource.cs</Link>
     </Compile>
@@ -610,6 +610,11 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Strings.Designer.cs</LastGenOutput>
       <LogicalName>$(ResourceFileName)</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\Resources\Microsoft.Data.SqlClient.SqlMetaData.xml">
+      <Link>Resources\Microsoft.Data.SqlClient.SqlMetaData.xml</Link>
+      <LogicalName>Microsoft.Data.SqlClient.SqlMetaData.xml</LogicalName>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
