@@ -1008,7 +1008,7 @@ namespace Microsoft.Data.SqlClient
         }
         internal static string Timeout()
         {
-            return System.SR.GetString(SR.SQL_Timeout);
+            return System.SR.GetString(SR.SQL_Timeout_Execution);
         }
         internal static string Timeout_PreLogin_Begin()
         {

@@ -1773,7 +1773,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             Task closeTask = Task.Run(() => reader.Dispose());
 
                             // Wait for the task to see the timeout
-                            string errorMessage = SystemDataResourceManager.Instance.SQL_Timeout;
+                            string errorMessage = SystemDataResourceManager.Instance.SQL_Timeout_Execution;
                             DataTestUtility.AssertThrowsWrapper<AggregateException, SqlException>(() => task.Wait(), innerExceptionMessage: errorMessage);
                         }
                     }
@@ -1815,7 +1815,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             reader.SetDefaultTimeout(30000);
 
                             // Close will now observe the stored timeout error
-                            string errorMessage = SystemDataResourceManager.Instance.SQL_Timeout;
+                            string errorMessage = SystemDataResourceManager.Instance.SQL_Timeout_Execution;
                             DataTestUtility.AssertThrowsWrapper<SqlException>(reader.Dispose, errorMessage);
                         }
                     }

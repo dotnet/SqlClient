@@ -1332,6 +1332,9 @@
   <data name="SqlFileStream_NotSupported" xml:space="preserve">
     <value>SqlFileStream is not supported on this platform.</value>
   </data>
+  <data name="SQL_Timeout_Execution" xml:space="preserve">
+    <value>Execution Timeout Expired.  The timeout period elapsed prior to completion of the operation or the server is not responding.</value>
+  </data>
   <data name="TCE_CertificateNotFound" xml:space="preserve">
     <value>Certificate with thumbprint '{0}' not found in certificate store '{1}' in certificate location '{2}'.</value>
   </data>

@@ -2795,7 +2795,18 @@ namespace System {
                 return ResourceManager.GetString("SQL_Timeout", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Execution Timeout Expired.  The timeout period elapsed prior to completion of the operation or the server is not responding..
+        /// </summary>
+        internal static string SQL_Timeout_Execution
+        {
+            get
+            {
+                return ResourceManager.GetString("SQL_Timeout_Execution", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to This failure occurred while attempting to connect to the {0} server..
         /// </summary>

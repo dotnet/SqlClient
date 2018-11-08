@@ -345,7 +345,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         SqlTransaction tx2 = connection2.BeginTransaction(IsolationLevel.ReadCommitted);
                         command2.Transaction = tx2;
 
-                        DataTestUtility.AssertThrowsWrapper<SqlException>(() => command2.ExecuteReader(), SystemDataResourceManager.Instance.SQL_Timeout as string);
+                        DataTestUtility.AssertThrowsWrapper<SqlException>(() => command2.ExecuteReader(), SystemDataResourceManager.Instance.SQL_Timeout_Execution as string);
 
                         tx2.Rollback();
                         connection2.Close();
