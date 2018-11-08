@@ -22,6 +22,7 @@ namespace Microsoft.Data.SqlClient {
     using System.Threading.Tasks;
     using System.Runtime.CompilerServices;
     using System.Runtime.ExceptionServices;
+    using System.Data.SqlClient;
 
     static internal class AsyncHelper {
         internal static Task CreateContinuationTask(Task task, Action onSuccess, SqlInternalConnectionTds connectionToDoom = null, Action<Exception> onFailure = null) {

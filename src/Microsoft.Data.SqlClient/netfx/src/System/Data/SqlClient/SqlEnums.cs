@@ -22,7 +22,6 @@ namespace Microsoft.Data.SqlClient {
     using System.Data.Common;
     using System.Data.SqlTypes;
     using System.Data.OleDb;
-    using SqlChars = SqlTypes.SqlChars;
 
     internal sealed class MetaType {
         internal readonly Type      ClassType;   // com+ type

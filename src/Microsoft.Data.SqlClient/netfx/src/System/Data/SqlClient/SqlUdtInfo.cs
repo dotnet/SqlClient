@@ -11,6 +11,7 @@ namespace Microsoft.Data.SqlClient {
 
     using System;
     using System.Collections.Generic;
+    using System.Reflection;
     using Microsoft.SqlServer.Server;
 
     internal class SqlUdtInfo {
@@ -32,7 +33,10 @@ namespace Microsoft.Data.SqlClient {
         internal static SqlUdtInfo GetFromType(Type target) {
             SqlUdtInfo udtAttr = TryGetFromType(target);
             if (udtAttr == null) {
-                throw InvalidUdtException.Create(target, Strings.SqlUdtReason_NoUdtAttribute);
+                Type myType = typeof(InvalidUdtException);
+                var arguments = new Type[] { typeof(Type), typeof(String) };
+                MethodInfo Create = myType.GetMethod("Create", arguments);
+                Create.Invoke(null, new object[] { Strings.SqlUdtReason_NoUdtAttribute });
             }
             return udtAttr;
         }

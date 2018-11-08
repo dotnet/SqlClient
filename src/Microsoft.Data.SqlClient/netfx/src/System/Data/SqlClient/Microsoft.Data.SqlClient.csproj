@@ -13,7 +13,6 @@
     <OutputPath>$(BinPath)$(AssemblyName)\</OutputPath>
     <IntermediateOutputPath>$(ObjPath)$(AssemblyName)\</IntermediateOutputPath>
   </PropertyGroup>
-
   <PropertyGroup>
     <!-- CSC Compiler Options -->
     <NoConfig>True</NoConfig>
@@ -34,29 +33,23 @@
     <Utf8Output>True</Utf8Output>
     <WarningsNotAsErrors>472,8073,649,675,1570,1574,1584,1658,1701,1717,3002,3003,1058</WarningsNotAsErrors>
     <ErrorReport>None</ErrorReport>
-    
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <BuildProjectReferences>True</BuildProjectReferences>
     <GenerateAssemblyRefs>True</GenerateAssemblyRefs>
     <!-- <TargetExt>.dll</TargetExt> -->
-    
     <DefineConstants>$(DefineConstants);USEOFFSET;CODE_ANALYSIS_BASELINE;FEATURE_LEGACYSURFACEAREA;FEATURE_UTF32;FEATURE_UTF7;TRACE;</DefineConstants>
-    
     <!-- Preprocess properties -->
     <AllowPartialTrustedCalls>true</AllowPartialTrustedCalls>
     <AssemblyKeyType>ECMA</AssemblyKeyType>
-
     <!-- the RawClDefines was the only way to get AssemblyAttributes.cs to not include [SecurityRules] which break the link step -->
     <GenerateAssemblyAttribute>true</GenerateAssemblyAttribute>
     <RawClDefines>$(RawClDefines);SUPPRESS_SECURITY_RULES=1</RawClDefines>
-    
     <!-- ADO.NET internal defines -->
     <UseOwnAssemblyVersionOnly Condition="'$(AdoNetService)'=='true'">true</UseOwnAssemblyVersionOnly>
     <DefineConstants Condition="'$(AdoNetService)'=='true'">$(DefineConstants);ADONET_SERVICE;ADONET_CERT_AUTH;ADONET_ORIGINAL_CLIENT_ADDRESS</DefineConstants>
     <ComCompatibleSideBySide>True</ComCompatibleSideBySide>
     <GenerateTargetFrameworkAttribute>False</GenerateTargetFrameworkAttribute>
   </PropertyGroup>
-
   <!-- ********************** Configuration and Platform specific properties ********************* -->
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DefineConstants>$(DefineConstants);ARCH_amd64;DEBUG;DBG;_DEBUG;_LOGGING;RESOURCE_ANNOTATION_WORK;WIN64</DefineConstants>
@@ -149,7 +142,6 @@
     <Compile Include="RowsCopiedEventArgs.cs" />
     <Compile Include="RowsCopiedEventHandler.cs" />
     <Compile Include="SignatureVerificationCache.cs" />
-    <Compile Include="SortOrder.cs" />
     <Compile Include="SqlAeadAes256CbcHmac256Algorithm.cs" />
     <Compile Include="SqlAeadAes256CbcHmac256EncryptionKey.cs" />
     <Compile Include="SqlAeadAes256CbcHmac256Factory.cs" />
@@ -259,14 +251,11 @@
     <Compile Include="SqlClientWrapperSmiStreamChars.cs" />
     <Compile Include="..\SqlTypes\SqlTypeWorkarounds.cs" />
     <Compile Include="..\SqlTypes\SqlStreamChars.cs" />
-    <Compile Include="..\SqlTypes\SqlChars.cs" />
     <Compile Include="..\DataException.cs" />
     <Compile Include="..\Common\NativeMethods.cs" />
     <Compile Include="..\Common\System.Data_BID.cs" />
     <Compile Include="..\Common\GreenMethods.cs" />
-    <Compile Include="..\Common\SQLResource.cs">
-      <Link>..\SqlTypes\SQLResource.cs</Link>
-    </Compile>
+    <Compile Include="..\Common\SQLResource.cs"/>
     <Compile Include="..\..\..\Misc\ExternDll.cs">
       <Link>NativeMethods\ExternDll.cs</Link>
     </Compile>
@@ -463,9 +452,6 @@
     <Compile Include="..\..\..\Microsoft\SqlServer\Server\MetadataUtilsSmi.cs">
       <Link>Microsoft\SqlServer\Server\MetadataUtilsSmi.cs</Link>
     </Compile>
-    <Compile Include="..\..\..\Microsoft\SqlServer\Server\SqlDataRecord.cs">
-      <Link>Microsoft\SqlServer\Server\SqlDataRecord.cs</Link>
-    </Compile>
     <Compile Include="..\..\..\Microsoft\SqlServer\Server\SmiConnection.cs">
       <Link>Microsoft\SqlServer\Server\SmiConnection.cs</Link>
     </Compile>
@@ -529,59 +515,17 @@
     <Compile Include="..\..\..\Microsoft\SqlServer\Server\SmiXetterTypeCode.cs">
       <Link>Microsoft\SqlServer\Server\SmiXetterTypeCode.cs</Link>
     </Compile>
-    <Compile Include="..\..\..\Microsoft\SqlServer\Server\sqlcontext.cs">
-      <Link>Microsoft\SqlServer\Server\sqlcontext.cs</Link>
-    </Compile>
-    <Compile Include="..\..\..\Microsoft\SqlServer\Server\SqlTriggerContext.cs">
-      <Link>Microsoft\SqlServer\Server\SqlTriggerContext.cs</Link>
-    </Compile>
-    <Compile Include="..\..\..\Microsoft\SqlServer\Server\sqlpipe.cs">
-      <Link>Microsoft\SqlServer\Server\sqlpipe.cs</Link>
-    </Compile>
     <Compile Include="..\Sql\sqlser.cs">
       <Link>ProviderCommon\sqlser.cs</Link>
     </Compile>
-    <Compile Include="..\Sql\SqlMetaData.cs">
-      <Link>ProviderCommon\SqlMetaData.cs</Link>
-    </Compile>
-    <Compile Include="..\Sql\IBinarySerialize.cs">
-      <Link>ProviderCommon\IBinarySerialize.cs</Link>
-    </Compile>
-    <Compile Include="..\Sql\invalidudtexception.cs">
-      <Link>ProviderCommon\invalidudtexception.cs</Link>
-    </Compile>
-    <Compile Include="..\Sql\SqlDataSourceEnumerator.cs">
-      <Link>ProviderCommon\SqlDataSourceEnumerator.cs</Link>
-    </Compile>
-    <Compile Include="..\Sql\SqlFacetAttribute.cs">
-      <Link>ProviderCommon\SqlFacetAttribute.cs</Link>
-    </Compile>
-    <Compile Include="..\Sql\SqlFunctionAttribute.cs">
-      <Link>ProviderCommon\SqlFunctionAttribute.cs</Link>
-    </Compile>
     <Compile Include="..\Sql\SqlGenericUtil.cs">
       <Link>ProviderCommon\SqlGenericUtil.cs</Link>
-    </Compile>
-    <Compile Include="..\Sql\SqlMethodAttribute.cs">
-      <Link>ProviderCommon\SqlMethodAttribute.cs</Link>
     </Compile>
     <Compile Include="..\Sql\sqlnorm.cs">
       <Link>ProviderCommon\sqlnorm.cs</Link>
     </Compile>
     <Compile Include="..\Sql\SqlNotificationRequest.cs">
       <Link>ProviderCommon\SqlNotificationRequest.cs</Link>
-    </Compile>
-    <Compile Include="..\Sql\SqlProcedureAttribute.cs">
-      <Link>ProviderCommon\SqlProcedureAttribute.cs</Link>
-    </Compile>
-    <Compile Include="..\Sql\SqlTriggerAttribute.cs">
-      <Link>ProviderCommon\SqlTriggerAttribute.cs</Link>
-    </Compile>
-    <Compile Include="..\Sql\SqlUserDefinedAggregateAttribute.cs">
-      <Link>ProviderCommon\SqlUserDefinedAggregateAttribute.cs</Link>
-    </Compile>
-    <Compile Include="..\Sql\SqlUserDefinedTypeAttribute.cs">
-      <Link>ProviderCommon\SqlUserDefinedTypeAttribute.cs</Link>
     </Compile>
     <Compile Include="..\..\..\BID\INC\CS\BidPrivateBase.cs">
       <Link>BID\bidPrivateBase.cs</Link>

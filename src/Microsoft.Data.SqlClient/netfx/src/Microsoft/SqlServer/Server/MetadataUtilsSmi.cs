@@ -18,6 +18,7 @@ namespace Microsoft.SqlServer.Server {
     using System.Data;
     using System.Data.Common;
     using System.Globalization;
+    using System.Reflection;
 
 
     // Utilities for manipulating smi-related metadata.
@@ -483,10 +484,10 @@ namespace Microsoft.SqlServer.Server {
             }
         }
 
-        static internal SqlMetaData SmiExtendedMetaDataToSqlMetaData(SmiExtendedMetaData source) {
-            if (SqlDbType.Xml == source.SqlDbType) {
-                return new SqlMetaData(source.Name,
-                    source.SqlDbType,
+        static internal SqlMetaData SmiExtendedMetaDataToSqlMetaData(SmiExtendedMetaData source)
+        {
+            SqlMetaData sqlMetaDataInstance = (SqlMetaData)Activator.CreateInstance(typeof(SqlMetaData), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance,
+            null, new object[] {source.Name, source.SqlDbType,
                     source.MaxLength,
                     source.Precision,
                     source.Scale,
@@ -496,7 +497,12 @@ namespace Microsoft.SqlServer.Server {
                     source.TypeSpecificNamePart2,
                     source.TypeSpecificNamePart3,
                     true,
-                    source.Type);
+                    source.Type }
+                , null);
+
+            if (SqlDbType.Xml == source.SqlDbType)
+            {
+                return sqlMetaDataInstance;
             }
 
             return new SqlMetaData(source.Name,
@@ -525,7 +531,9 @@ namespace Microsoft.SqlServer.Server {
             else if (SqlDbType.Udt == source.SqlDbType) {
                 // Split the input name. UdtTypeName is specified as single 3 part name.
                 // NOTE: ParseUdtTypeName throws if format is incorrect
-                string typeName = source.ServerTypeName;
+                PropertyInfo serverTypeNameProperty = source.GetType().GetProperty("ServerTypeName", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                MethodInfo getter = serverTypeNameProperty.GetGetMethod(nonPublic: true);
+                String typeName = (string)getter.Invoke(source, null);
                 if (null != typeName) {
                     String[] names = SqlParameter.ParseTypeName(typeName, true /* is for UdtTypeName */);
 

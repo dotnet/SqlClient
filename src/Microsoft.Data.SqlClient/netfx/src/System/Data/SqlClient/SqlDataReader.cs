@@ -28,7 +28,6 @@ namespace Microsoft.Data.SqlClient
     using System.Data;
     using System.Data.SqlTypes;
     using Microsoft.Data.SqlClient.DataClassification;
-    using SqlChars = SqlTypes.SqlChars;
 
     public class SqlDataReader : DbDataReader, IDataReader {
 

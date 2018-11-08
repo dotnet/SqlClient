@@ -42,7 +42,6 @@ namespace Microsoft.Data.SqlClient
     using System.Diagnostics.CodeAnalysis;
     using System.Data;
     using System.Data.Common;
-    using DbProviderFactory = Common.DbProviderFactory;
 
     [DefaultEvent("InfoMessage")]
     public sealed partial class SqlConnection: DbConnection, ICloneable {

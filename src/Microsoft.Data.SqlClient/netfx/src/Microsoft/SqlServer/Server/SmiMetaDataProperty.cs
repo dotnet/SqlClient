@@ -14,6 +14,7 @@ namespace Microsoft.SqlServer.Server {
     using Microsoft.Data.SqlClient;
     using System.Diagnostics;
     using System.Globalization;
+    using System.Data.SqlClient;
 
     // SmiMetaDataProperty defines an extended, optional property to be used on the SmiMetaData class
     //  This approach to adding properties is added combat the growing number of sparsely-used properties 
@@ -193,7 +194,7 @@ namespace Microsoft.SqlServer.Server {
                     delimit = true;
                 }
 
-                if (Microsoft.Data.SqlClient.SortOrder.Unspecified != columnOrd.Order) {
+                if (System.Data.SqlClient.SortOrder.Unspecified != columnOrd.Order) {
                     returnValue += columnOrd.TraceString();
                 }
             }

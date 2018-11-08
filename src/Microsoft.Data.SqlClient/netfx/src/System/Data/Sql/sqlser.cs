@@ -115,7 +115,10 @@ namespace Microsoft.SqlServer.Server {
                 udtAttr = (SqlUserDefinedTypeAttribute) attr[0];
             }
             else {
-                throw InvalidUdtException.Create(t, Strings.SqlUdtReason_NoUdtAttribute);
+                Type InvalidUdtExceptionType = typeof(InvalidUdtException);
+                var arguments = new Type[] { typeof(Type), typeof(String) };
+                MethodInfo Create = InvalidUdtExceptionType.GetMethod("Create", arguments);
+                Create.Invoke(null, new object[] { t, Strings.SqlUdtReason_NoUdtAttribute });
             }
             return udtAttr;
         }

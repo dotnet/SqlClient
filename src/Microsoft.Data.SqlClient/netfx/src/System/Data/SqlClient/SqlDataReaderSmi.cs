@@ -21,7 +21,6 @@ namespace Microsoft.Data.SqlClient {
     using System.Data;
     using System.Data.SqlTypes;
     using System.Data.Common;
-    using SqlChars = SqlTypes.SqlChars;
 
     // SqlServer provider's implementation of ISqlReader.
     //    Supports ISqlReader and ISqlResultSet objects.

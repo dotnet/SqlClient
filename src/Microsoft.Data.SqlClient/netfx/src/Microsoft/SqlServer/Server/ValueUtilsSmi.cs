@@ -21,7 +21,6 @@ namespace Microsoft.SqlServer.Server {
     using System.Data.SqlTypes;
     using System.Data;
     using System.Data.Common;
-    using SqlChars = Data.SqlTypes.SqlChars;
 
 
     // Utilities for manipulating values with the Smi interface.
@@ -402,7 +401,12 @@ namespace Microsoft.SqlServer.Server {
                     {    // InProc only
                         Stream s = new SmiGettersStream(sink, getters, ordinal, metaData);
                         SqlStreamChars sc = CopyIntoNewSmiScratchStreamChars(s, sink, context);
-                        result = new SqlChars(sc);
+
+                        Type SqlCharsType = (typeof(SqlChars));
+                        Type[] argTypes = new Type[] { typeof(SqlStreamChars) };
+                        SqlChars SqlCharsInstance = (SqlChars)SqlCharsType.GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance,
+                              null, argTypes, null).Invoke(null);
+                        result = SqlCharsInstance;
                     }
                 }
             }

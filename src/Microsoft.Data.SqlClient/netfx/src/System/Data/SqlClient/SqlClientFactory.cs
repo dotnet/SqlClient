@@ -6,12 +6,12 @@
 // <owner current="true" primary="false">blained</owner>
 //------------------------------------------------------------------------------
 
-using Microsoft.Data.Sql;
 using System.Security;
 using System.Security.Permissions;
 using System.Data.Common;
 using System;
 using Microsoft.Data.Common;
+using System.Data.Sql;
 using DbConnectionStringBuilder = Microsoft.Data.Common.DbConnectionStringBuilder;
 using DbProviderFactory = Microsoft.Data.Common.DbProviderFactory;
 
@@ -42,7 +42,7 @@ namespace Microsoft.Data.SqlClient {
             return new SqlConnection();
         }
 
-        public override DbConnectionStringBuilder CreateConnectionStringBuilder() {
+        public override DbConnectionStringBuilder CreateConnectionStringBuilder() { 
             return new SqlConnectionStringBuilder();
         }
 

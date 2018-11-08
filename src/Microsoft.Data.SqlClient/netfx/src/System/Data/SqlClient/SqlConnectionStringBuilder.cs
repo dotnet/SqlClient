@@ -15,6 +15,7 @@
     using System.Globalization;
     using System.Diagnostics.CodeAnalysis;
     using System.Data;
+    using System.Reflection;
 
 namespace Microsoft.Data.SqlClient {
 
@@ -1377,8 +1378,10 @@ namespace Microsoft.Data.SqlClient {
                 if (null == _standardValues) {
                     // Get the sources rowset for the SQLOLEDB enumerator
                     DataTable table = SqlClientFactory.Instance.CreateDataSourceEnumerator().GetDataSources();
-                    DataColumn serverName = table.Columns[Microsoft.Data.Sql.SqlDataSourceEnumerator.ServerName];
-                    DataColumn instanceName = table.Columns[Microsoft.Data.Sql.SqlDataSourceEnumerator.InstanceName];
+                    string ServerName = typeof(System.Data.Sql.SqlDataSourceEnumerator).GetField("ServerName", BindingFlags.NonPublic | BindingFlags.Static).GetValue(null).ToString();
+                    string InstanceName = typeof(System.Data.Sql.SqlDataSourceEnumerator).GetField("InstanceName", BindingFlags.NonPublic | BindingFlags.Static).GetValue(null).ToString();
+                    DataColumn serverName = table.Columns[ServerName];
+                    DataColumn instanceName = table.Columns[InstanceName];
                     DataRowCollection rows = table.Rows;
 
                     string[] serverNames = new string[rows.Count];

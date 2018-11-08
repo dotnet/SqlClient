@@ -22,6 +22,8 @@ namespace Microsoft.Data.SqlClient {
     using MSS = Microsoft.SqlServer.Server;
     using System.Data;
     using System.Data.Common;
+    using System.Reflection;
+    using System.Data.SqlClient;
 
     internal abstract class DataFeed  {       
     }
@@ -351,8 +353,13 @@ namespace Microsoft.Data.SqlClient {
 				else {
 					maxlen = MSS.SmiMetaData.GetDefaultForType( mt.SqlDbType ).MaxLength;
 				}
-                return new SqlMetaData(this.ParameterName, mt.SqlDbType, maxlen, GetActualPrecision(), GetActualScale(), LocaleId, CompareInfo,
-                                       XmlSchemaCollectionDatabase, XmlSchemaCollectionOwningSchema, XmlSchemaCollectionName, mt.IsPlp, _udtType);
+                Type SqlMetaDataType = (typeof(SqlMetaData));
+                var argTypes = new Type[] { typeof(string), typeof(SqlDbType), typeof(long), typeof(byte), typeof(byte), typeof(long), typeof(SqlCompareOptions),
+                 typeof(string), typeof(string), typeof(string), typeof(MetaType), typeof(Type)};
+
+                SqlMetaData SqlMetaDataInstance = (SqlMetaData)SqlMetaDataType.GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance,
+                      null, argTypes, null).Invoke(null);
+                return SqlMetaDataInstance;
             }
         }
 
@@ -1186,8 +1193,13 @@ namespace Microsoft.Data.SqlClient {
                                     hasDefault = true;
                                 }
 
-                                sort[i].Order = colMeta.SortOrder;
-                                if (SortOrder.Unspecified != colMeta.SortOrder) {
+                                PropertyInfo serverTypeNameProperty = colMeta.GetType().GetProperty("SortOrder", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                                MethodInfo getter = serverTypeNameProperty.GetGetMethod(nonPublic: true);
+                                SortOrder sortOrder = (SortOrder)getter.Invoke(colMeta, null);
+
+                                sort[i].Order = sortOrder;
+                                if (SortOrder.Unspecified != sortOrder)
+                                {
                                     // SqlMetaData takes care of checking for negative sort ordinals with specified sort order
 
                                     // bail early if there's no way sort order could be monotonically increasing

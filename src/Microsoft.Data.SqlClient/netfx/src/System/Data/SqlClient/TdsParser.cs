@@ -26,7 +26,8 @@ namespace Microsoft.Data.SqlClient {
     using Microsoft.Data.SqlClient.DataClassification;
     using System.Data.SqlTypes;
     using System.Data;
- 
+    using System.Data.SqlClient;
+
     // The TdsParser Object controls reading/writing to the netlib, parsing the tds,
     // and surfacing objects to the user.
     sealed internal class TdsParser {
