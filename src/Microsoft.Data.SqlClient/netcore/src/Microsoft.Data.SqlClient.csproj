@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
     <TargetFrameworks>netcoreapp2.1;netstandard2.0</TargetFrameworks>
@@ -30,6 +30,23 @@
   </ItemGroup>
   <ItemGroup Condition="'$(IsPartialFacadeAssembly)' != 'true' AND '$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netcoreapp'">
     <Compile Include="System\Data\SqlClient\PoolBlockingPeriod.cs" />
+    <Compile Include="System\Data\SqlClient\SqlConnection.netcoreapp.cs" />
+    <Compile Include="System\Data\SqlClient\SqlSymmetricKeyCache.cs" />
+    <Compile Include="System\Data\SqlClient\SqlSecurityUtility.cs" />
+    <Compile Include="System\Data\SqlClient\SignatureVerificationCache.cs" />
+    <Compile Include="System\Data\SqlClient\SqlAeadAes256CbcHmac256Algorithm.cs" />
+    <Compile Include="System\Data\SqlClient\SqlAeadAes256CbcHmac256EncryptionKey.cs" />
+    <Compile Include="System\Data\SqlClient\SqlAeadAes256CbcHmac256Factory.cs" />
+    <Compile Include="System\Data\SqlClient\SqlAes256CbcAlgorithm.cs" />
+    <Compile Include="System\Data\SqlClient\SqlAes256CbcFactory.cs" />
+    <Compile Include="System\Data\SqlClient\SqlClientEncryptionAlgorithm.cs" />
+    <Compile Include="System\Data\SqlClient\SqlClientEncryptionAlgorithmFactory.cs" />
+    <Compile Include="System\Data\SqlClient\SqlClientEncryptionAlgorithmFactoryList.cs" />
+    <Compile Include="System\Data\SqlClient\SqlClientEncryptionType.cs" />
+    <Compile Include="System\Data\SqlClient\SqlClientSymmetricKey.cs" />
+    <Compile Include="System\Data\SqlClient\SqlColumnEncryptionKeyStoreProvider.cs" />
+    <Compile Include="System\Data\SqlClient\AlwaysEncryptedHelperClasses.cs" />
+    <Compile Include="System\Data\SqlClient\SqlUtil.netcoreapp.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(IsPartialFacadeAssembly)' != 'true' AND '$(OSGroup)' != 'AnyOS'">    
     <Compile Include="$(CommonPath)\System\SR.cs" />
@@ -228,6 +245,9 @@
   <!-- SqlFileStream Unix Netcoreapp only -->
   <ItemGroup Condition="'$(TargetGroup)' == 'netcoreapp' AND '$(TargetsUnix)' == 'true'">
     <Compile Include="System\Data\SqlClient\SqlFileStream.Unsupported.cs" />
+    <Compile Include="System\Data\SqlClient\SqlColumnEncryptionCertificateStoreProvider.Unix.cs" />
+    <Compile Include="System\Data\SqlClient\SqlColumnEncryptionCngProvider.Unix.cs" />
+    <Compile Include="System\Data\SqlClient\SqlColumnEncryptionCspProvider.Unix.cs" />
   </ItemGroup>
   <!-- SqlFileStream Windows Netcoreapp only -->
   <ItemGroup Condition="'$(TargetGroup)' == 'netcoreapp' AND '$(TargetsWindows)' == 'true'">
@@ -277,6 +297,9 @@
       <Link>Common\Interop\Windows\Interop.RtlNtStatusToDosError.cs</Link>
     </Compile>
     <Compile Include="System\Data\SqlClient\SqlFileStream.Windows.cs" />
+    <Compile Include="System\Data\SqlClient\SqlColumnEncryptionCertificateStoreProvider.Windows.cs" />
+    <Compile Include="System\Data\SqlClient\SqlColumnEncryptionCngProvider.Windows.cs" />
+    <Compile Include="System\Data\SqlClient\SqlColumnEncryptionCspProvider.Windows.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(IsPartialFacadeAssembly)' != 'true' AND '$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netcoreapp'">
     <Compile Include="System\Data\Common\DbConnectionStringCommon.NetCoreApp.cs" />
@@ -536,6 +559,8 @@
     <PackageReference Include="System.Xml.ReaderWriter" Version="4.3.1" />
     <PackageReference Include="System.Resources.ResourceManager" Version="4.3.0" />
     <PackageReference Include="System.Buffers" Version="4.5.0" />
+    <PackageReference Include="System.Runtime.Caching" Version="4.5.0" />
+    <PackageReference Include="System.Security.Cryptography.Cng" Version="4.5.0" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Update="Resources\Strings.resx">

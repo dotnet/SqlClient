@@ -928,6 +928,22 @@ namespace Microsoft.Data.SqlClient
                     return null;
             }
         }
+
+        // TCE Related constants
+        internal const byte CustomCipherAlgorithmId = 0; // Id used for custom encryption algorithm.
+
+        internal const int AES_256_CBC = 1;
+        internal const int AEAD_AES_256_CBC_HMAC_SHA256 = 2;
+
+        // TCE Param names for exec handling
+        internal const string TCE_PARAM_CIPHERTEXT = "cipherText";
+        internal const string TCE_PARAM_CIPHER_ALGORITHM_ID = "cipherAlgorithmId";
+        internal const string TCE_PARAM_COLUMNENCRYPTION_KEY = "columnEncryptionKey";
+        internal const string TCE_PARAM_ENCRYPTION_ALGORITHM = "encryptionAlgorithm";
+        internal const string TCE_PARAM_ENCRYPTIONTYPE = "encryptionType";
+        internal const string TCE_PARAM_ENCRYPTIONKEY = "encryptionKey";
+        internal const string TCE_PARAM_MASTERKEY_PATH = "masterKeyPath";
+        internal const string TCE_PARAM_ENCRYPTED_CEK = "encryptedColumnEncryptionKey";
     }
 
     internal enum SniContext

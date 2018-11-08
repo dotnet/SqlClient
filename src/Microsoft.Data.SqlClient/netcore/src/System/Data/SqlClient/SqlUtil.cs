@@ -15,6 +15,8 @@ using System.Transactions;
 using System;
 using Microsoft.Data.Common;
 using System.Data;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -146,7 +148,7 @@ namespace Microsoft.Data.SqlClient
     }
 
 
-    internal static class SQL
+    internal static partial class SQL
     {
         // The class SQL defines the exceptions that are specific to the SQL Adapter.
         // The class contains functions that take the proper informational variables and then construct

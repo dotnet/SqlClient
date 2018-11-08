@@ -18,6 +18,10 @@ using System.Security;
 using System;
 using Microsoft.Data.Common;
 using System.Data;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace Microsoft.Data.SqlClient
 {

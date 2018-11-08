@@ -490,7 +490,7 @@
     <value>Failed to generate SSPI context.</value>
   </data>
   <data name="SQL_KerberosTicketMissingError" xml:space="preserve">
-    <value>Cannot authenticate using Kerberos. Ensure Kerberos has been initialized on the client with 'kinit' and a Service Principal Name has been registered for the SQL Server to allow Kerberos authentication.</value>  
+    <value>Cannot authenticate using Kerberos. Ensure Kerberos has been initialized on the client with 'kinit' and a Service Principal Name has been registered for the SQL Server to allow Kerberos authentication.</value>
   </data>
   <data name="SQL_SqlServerBrowserNotAccessible" xml:space="preserve">
     <value>Cannot connect to SQL Server Browser. Ensure SQL Server Browser has been started.</value>
@@ -1311,10 +1311,10 @@
   <data name="ADP_InvalidMixedUsageOfCredentialAndAccessToken" xml:space="preserve">
     <value>Cannot set the Credential property if the AccessToken property is already set.</value>
   </data>
- <data name="SQL_ParsingErrorFeatureId" xml:space="preserve"> 
+  <data name="SQL_ParsingErrorFeatureId" xml:space="preserve">
     <value>Internal connection fatal error. Error state: {0}, Feature Id: {1}.</value>
   </data>
-  <data name="SQL_ParsingErrorAuthLibraryType" xml:space="preserve"> 
+  <data name="SQL_ParsingErrorAuthLibraryType" xml:space="preserve">
     <value>Internal connection fatal error. Error state: {0}, Authentication Library Type: {1}.</value>
   </data>
   <data name="SqlFileStream_InvalidPath" xml:space="preserve">
@@ -1331,5 +1331,236 @@
   </data>
   <data name="SqlFileStream_NotSupported" xml:space="preserve">
     <value>SqlFileStream is not supported on this platform.</value>
+  </data>
+  <data name="TCE_CertificateNotFound" xml:space="preserve">
+    <value>Certificate with thumbprint '{0}' not found in certificate store '{1}' in certificate location '{2}'.</value>
+  </data>
+  <data name="TCE_CertificateNotFoundSysErr" xml:space="preserve">
+    <value>Certificate with thumbprint '{0}' not found in certificate store '{1}' in certificate location '{2}'. Verify the certificate path in the column master key definition in the database is correct, and the certificate has been imported correctly into the certificate location/store.</value>
+  </data>
+  <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
+    <value>Certificate specified in key path '{0}' does not have a private key to encrypt a column encryption key. Verify the certificate is imported correctly.</value>
+  </data>
+  <data name="TCE_CertificateWithNoPrivateKeySysErr" xml:space="preserve">
+    <value>Certificate specified in key path '{0}' does not have a private key to decrypt a column encryption key. Verify the certificate is imported correctly.</value>
+  </data>
+  <data name="TCE_ColumnMasterKeySignatureNotFound" xml:space="preserve">
+    <value>Internal error. The signature returned by SQL Server for enclave-enabled column master key, specified at key path '{0}', cannot be null or empty.</value>
+  </data>
+  <data name="TCE_ColumnMasterKeySignatureVerificationFailed" xml:space="preserve">
+    <value>The signature returned by SQL Server for the column master key, specified in key path '{0}', is invalid (does not match the computed signature). Recreate column master key metadata, making sure the signature inside the metadata is computed using the column master key being referenced in the metadata. If the error persists, please contact Microsoft for assistance.</value>
+  </data>
+  <data name="TCE_DecryptionFailed" xml:space="preserve">
+    <value>Decryption failed. The last 10 bytes of the encrypted column encryption key are: '{0}'. The first 10 bytes of ciphertext are: '{1}'.</value>
+  </data>
+  <data name="TCE_EmptyArgumentInternal" xml:space="preserve">
+    <value>Internal Error. Argument '{0}' cannot be empty when executing method '{1}.{2}'.</value>
+  </data>
+  <data name="TCE_EmptyCertificateThumbprint" xml:space="preserve">
+    <value>Empty certificate thumbprint specified in certificate path '{0}'.</value>
+  </data>
+  <data name="TCE_EmptyCertificateThumbprintSysErr" xml:space="preserve">
+    <value>Internal error. Empty certificate thumbprint specified in certificate path '{0}'.</value>
+  </data>
+  <data name="TCE_EmptyCngKeyId" xml:space="preserve">
+    <value>Empty key identifier specified in column master key path: '{0}'. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+  </data>
+  <data name="TCE_EmptyCngKeyIdSysErr" xml:space="preserve">
+    <value>Internal error. Empty key identifier specified in column master key path: '{0}'. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+  </data>
+  <data name="TCE_EmptyCngName" xml:space="preserve">
+    <value>Empty Microsoft Cryptography API: Next Generation (CNG) provider name specified in column master key path: '{0}'. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+  </data>
+  <data name="TCE_EmptyCngNameSysErr" xml:space="preserve">
+    <value>Internal error. Empty Microsoft Cryptography API: Next Generation (CNG) provider name specified in column master key path: '{0}'. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+  </data>
+  <data name="TCE_EmptyColumnEncryptionKey" xml:space="preserve">
+    <value>Empty column encryption key specified.</value>
+  </data>
+  <data name="TCE_EmptyCspKeyId" xml:space="preserve">
+    <value>Empty key identifier specified in column master key path: '{0}'. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+  </data>
+  <data name="TCE_EmptyCspKeyIdSysErr" xml:space="preserve">
+    <value>Internal error. Empty key identifier specified in column master key path: '{0}'. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+  </data>
+  <data name="TCE_EmptyCspName" xml:space="preserve">
+    <value>Empty Microsoft cryptographic service provider (CSP) name specified in column master key path: '{0}'. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+  </data>
+  <data name="TCE_EmptyCspNameSysErr" xml:space="preserve">
+    <value>Internal error. Empty Microsoft cryptographic service provider (CSP) name specified in column master key path: '{0}'. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+  </data>
+  <data name="TCE_EmptyEncryptedColumnEncryptionKey" xml:space="preserve">
+    <value>Internal error. Empty encrypted column encryption key specified.</value>
+  </data>
+  <data name="TCE_InvalidAlgorithmVersion" xml:space="preserve">
+    <value>The specified ciphertext's encryption algorithm version '{0}' does not match the expected encryption algorithm version '{1}'.</value>
+  </data>
+  <data name="TCE_InvalidAlgorithmVersionInEncryptedCEK" xml:space="preserve">
+    <value>Specified encrypted column encryption key contains an invalid encryption algorithm version '{0}'. Expected version is '{1}'.</value>
+  </data>
+  <data name="TCE_InvalidAuthenticationTag" xml:space="preserve">
+    <value>Specified ciphertext has an invalid authentication tag.</value>
+  </data>
+  <data name="TCE_InvalidCertificateLocation" xml:space="preserve">
+    <value>Invalid certificate location '{0}' in certificate path '{1}'. Use the following format: &lt;certificate location&gt;{4}&lt;certificate store&gt;{4}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{2}' or '{3}'.</value>
+  </data>
+  <data name="TCE_InvalidCertificateLocationSysErr" xml:space="preserve">
+    <value>Internal error. Invalid certificate location '{0}' in certificate path '{1}'. Use the following format: &lt;certificate location&gt;{4}&lt;certificate store&gt;{4}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{2}' or '{3}'.</value>
+  </data>
+  <data name="TCE_InvalidCertificatePath" xml:space="preserve">
+    <value>Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{1}' or '{2}'.</value>
+  </data>
+  <data name="TCE_InvalidCertificatePathSysErr" xml:space="preserve">
+    <value>Internal error. Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{1}' or '{2}'.</value>
+  </data>
+  <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
+    <value>The specified encrypted column encryption key signature does not match the signature computed with the column master key (certificate) in '{0}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.</value>
+  </data>
+  <data name="TCE_InvalidCertificateStore" xml:space="preserve">
+    <value>Invalid certificate store '{0}' specified in certificate path '{1}'. Expected value: '{2}'.</value>
+  </data>
+  <data name="TCE_InvalidCertificateStoreSysErr" xml:space="preserve">
+    <value>Internal error. Invalid certificate store '{0}' specified in certificate path '{1}'. Expected value: '{2}'.</value>
+  </data>
+  <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
+    <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (certificate) in '{2}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.</value>
+  </data>
+  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCng" xml:space="preserve">
+    <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (asymmetric key) in '{2}'. The encrypted column encryption key may be corrupt, or the specified Microsoft Cryptography API: Next Generation (CNG) provider path may be incorrect.</value>
+  </data>
+  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCsp" xml:space="preserve">
+    <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (asymmetric key) in '{2}'. The encrypted column encryption key may be corrupt, or the specified Microsoft Cryptographic Service provider (CSP) path may be incorrect.</value>
+  </data>
+  <data name="TCE_InvalidCipherTextSize" xml:space="preserve">
+    <value>Specified ciphertext has an invalid size of {0} bytes, which is below the minimum {1} bytes required for decryption.</value>
+  </data>
+  <data name="TCE_InvalidCngKey" xml:space="preserve">
+    <value>An error occurred while opening the Microsoft Cryptography API: Next Generation (CNG) key: '{0}'. Verify that the CNG provider name '{1}' is valid, installed on the machine, and the key '{2}' exists.</value>
+  </data>
+  <data name="TCE_InvalidCngKeySysErr" xml:space="preserve">
+    <value>Internal error. An error occurred while opening the Microsoft Cryptography API: Next Generation (CNG) key: '{0}'. Verify that the CNG provider name '{1}' is valid, installed on the machine, and the key '{2}' exists.</value>
+  </data>
+  <data name="TCE_InvalidCngPath" xml:space="preserve">
+    <value>Invalid column master key path: '{0}'. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+  </data>
+  <data name="TCE_InvalidCngPathSysErr" xml:space="preserve">
+    <value>Internal error. Invalid column master key path: '{0}'. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+  </data>
+  <data name="TCE_InvalidCspKeyId" xml:space="preserve">
+    <value>Invalid key identifier: '{0}'. Verify that the key identifier in column master key path: '{1}' is valid and exists in the CSP.</value>
+  </data>
+  <data name="TCE_InvalidCspKeyIdSysErr" xml:space="preserve">
+    <value>Internal error. Invalid key identifier: '{0}'. Verify that the key identifier in column master key path: '{1}' is valid and exists in the CSP.</value>
+  </data>
+  <data name="TCE_InvalidCspName" xml:space="preserve">
+    <value>Invalid Microsoft cryptographic service provider (CSP) name: '{0}'. Verify that the CSP provider name in column master key path: '{1}' is valid and installed on the machine.</value>
+  </data>
+  <data name="TCE_InvalidCspNameSysErr" xml:space="preserve">
+    <value>Internal error. Invalid Microsoft cryptographic service provider (CSP) name: '{0}'. Verify that the CSP provider name in column master key path: '{1}' is valid and installed on the machine.</value>
+  </data>
+  <data name="TCE_InvalidCspPath" xml:space="preserve">
+    <value>Invalid column master key path: '{0}'. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+  </data>
+  <data name="TCE_InvalidCspPathSysErr" xml:space="preserve">
+    <value>Internal error. Invalid column master key path: '{0}'. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+  </data>
+  <data name="TCE_InvalidEncryptionType" xml:space="preserve">
+    <value>Encryption type '{1}' specified for the column in the database is either invalid or corrupted. Valid encryption types for algorithm '{0}' are: {2}.</value>
+  </data>
+  <data name="TCE_InvalidKeyEncryptionAlgorithm" xml:space="preserve">
+    <value>Invalid key encryption algorithm specified: '{0}'. Expected value: '{1}'.</value>
+  </data>
+  <data name="TCE_InvalidKeyEncryptionAlgorithmSysErr" xml:space="preserve">
+    <value>Internal error. Invalid key encryption algorithm specified: '{0}'. Expected value: '{1}'.</value>
+  </data>
+  <data name="TCE_InvalidKeySize" xml:space="preserve">
+    <value>The column encryption key has been successfully decrypted but it's length: {1} does not match the length: {2} for algorithm '{0}'. Verify the encrypted value of the column encryption key in the database.</value>
+  </data>
+  <data name="TCE_InvalidKeyStoreProviderName" xml:space="preserve">
+    <value>Invalid key store provider name: '{0}'. A key store provider name must denote either a system key store provider or a registered custom key store provider. Valid system key store provider names are: {1}. Valid (currently registered) custom key store provider names are: {2}. Please verify key store provider information in column master key definitions in the database, and verify all custom key store providers used in your application are registered properly.</value>
+  </data>
+  <data name="TCE_InvalidSignature" xml:space="preserve">
+    <value>The specified encrypted column encryption key signature does not match the signature computed with the column master key (asymmetric key) in '{0}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.</value>
+  </data>
+  <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
+    <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key (certificate) in '{2}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.</value>
+  </data>
+  <data name="TCE_InvalidSignatureInEncryptedCEKCng" xml:space="preserve">
+    <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key (asymmetric key) in '{2}'. The encrypted column encryption key may be corrupt, or the specified Microsoft Cryptography API: Next Generation (CNG) provider path may be incorrect.</value>
+  </data>
+  <data name="TCE_InvalidSignatureInEncryptedCEKCsp" xml:space="preserve">
+    <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key (asymmetric key) in '{2}'. The encrypted column encryption key may be corrupt, or the specified Microsoft cryptographic service provider (CSP) path may be incorrect.</value>
+  </data>
+  <data name="TCE_KeyDecryptionFailed" xml:space="preserve">
+    <value>Failed to decrypt a column encryption key using key store provider: '{0}'. Verify the properties of the column encryption key and its column master key in your database. The last 10 bytes of the encrypted column encryption key are: '{1}'.</value>
+  </data>
+  <data name="TCE_KeyDecryptionFailedCertStore" xml:space="preserve">
+    <value>Failed to decrypt a column encryption key using key store provider: '{0}'. The last 10 bytes of the encrypted column encryption key are: '{1}'.</value>
+  </data>
+  <data name="TCE_LargeCertificatePathLength" xml:space="preserve">
+    <value>Specified certificate path has {0} bytes, which exceeds maximum length of {1} bytes.</value>
+  </data>
+  <data name="TCE_LargeCertificatePathLengthSysErr" xml:space="preserve">
+    <value>Internal error. Specified certificate path has {0} bytes, which exceeds maximum length of {1} bytes.</value>
+  </data>
+  <data name="TCE_NullArgumentInternal" xml:space="preserve">
+    <value>Internal Error. Argument '{0}' cannot be null when executing method '{1}.{2}'.</value>
+  </data>
+  <data name="TCE_NullCertificatePath" xml:space="preserve">
+    <value>Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{0}' or '{1}'.</value>
+  </data>
+  <data name="TCE_NullCertificatePathSysErr" xml:space="preserve">
+    <value>Internal error. Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{0}' or '{1}'.</value>
+  </data>
+  <data name="TCE_NullCipherText" xml:space="preserve">
+    <value>Internal error. Ciphertext value cannot be null.</value>
+  </data>
+  <data name="TCE_NullCngPath" xml:space="preserve">
+    <value>Column master key path cannot be null. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{0}&lt;Key Identifier&gt;.</value>
+  </data>
+  <data name="TCE_NullCngPathSysErr" xml:space="preserve">
+    <value>Internal error. Column master key path cannot be null. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{0}&lt;Key Identifier&gt;.</value>
+  </data>
+  <data name="TCE_NullColumnEncryptionAlgorithm" xml:space="preserve">
+    <value>Internal error. Encryption algorithm cannot be null. Valid algorithms are: {0}.</value>
+  </data>
+  <data name="TCE_NullColumnEncryptionKey" xml:space="preserve">
+    <value>Column encryption key cannot be null.</value>
+  </data>
+  <data name="TCE_NullColumnEncryptionKeySysErr" xml:space="preserve">
+    <value>Internal error. Column encryption key cannot be null.</value>
+  </data>
+  <data name="TCE_NullCspPath" xml:space="preserve">
+    <value>Column master key path cannot be null. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{0}&lt;Key Identifier&gt;.</value>
+  </data>
+  <data name="TCE_NullCspPathSysErr" xml:space="preserve">
+    <value>Internal error. Column master key path cannot be null. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{0}&lt;Key Identifier&gt;.</value>
+  </data>
+  <data name="TCE_NullEncryptedColumnEncryptionKey" xml:space="preserve">
+    <value>Internal error. Encrypted column encryption key cannot be null.</value>
+  </data>
+  <data name="TCE_NullKeyEncryptionAlgorithm" xml:space="preserve">
+    <value>Key encryption algorithm cannot be null.</value>
+  </data>
+  <data name="TCE_NullKeyEncryptionAlgorithmSysErr" xml:space="preserve">
+    <value>Internal error. Key encryption algorithm cannot be null.</value>
+  </data>
+  <data name="TCE_NullPlainText" xml:space="preserve">
+    <value>Internal error. Plaintext value cannot be null.</value>
+  </data>
+  <data name="TCE_UnableToVerifyColumnMasterKeySignature" xml:space="preserve">
+    <value>Unable to verify a column master key signature. Error message: {0}</value>
+  </data>
+  <data name="TCE_UnknownColumnEncryptionAlgorithm" xml:space="preserve">
+    <value>Encryption algorithm '{0}' for the column in the database is either invalid or corrupted. Valid algorithms are: {1}.</value>
+  </data>
+  <data name="TCE_UnknownColumnEncryptionAlgorithmId" xml:space="preserve">
+    <value>Encryption algorithm id '{0}' for the column in the database is either invalid or corrupted. Valid encryption algorithm ids are: {1}.</value>
+  </data>
+  <data name="TCE_UnrecognizedKeyStoreProviderName" xml:space="preserve">
+    <value>Failed to decrypt a column encryption key. Invalid key store provider name: '{0}'. A key store provider name must denote either a system key store provider or a registered custom key store provider. Valid system key store provider names are: {1}. Valid (currently registered) custom key store provider names are: {2}. Please verify key store provider information in column master key definitions in the database, and verify all custom key store providers used in your application are registered properly.</value>
+  </data>
+  <data name="TCE_UntrustedKeyPath" xml:space="preserve">
+    <value>Column master key path '{0}' received from server '{1}' is not a trusted key path.</value>
   </data>
 </root>
