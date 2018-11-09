@@ -17,7 +17,6 @@ namespace Microsoft.Data.ProviderBase {
     using System.Threading.Tasks;
     using System.Data.Common;
     using System.Data;
-    using DbProviderFactory = Common.DbProviderFactory;
 
     internal abstract class DbConnectionFactory {
         private Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup>  _connectionPoolGroups;

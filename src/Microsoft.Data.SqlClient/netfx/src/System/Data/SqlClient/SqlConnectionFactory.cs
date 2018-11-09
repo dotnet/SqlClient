@@ -9,7 +9,6 @@
 namespace Microsoft.Data.SqlClient
 {
     using System;
-    using Microsoft.Data.Common;
     using Microsoft.Data.ProviderBase;
     using System.Collections.Specialized;
     using System.Configuration;
@@ -19,7 +18,7 @@ namespace Microsoft.Data.SqlClient
 
     using Microsoft.SqlServer.Server;
     using System.Data.Common;
-    using DbProviderFactory = Common.DbProviderFactory;
+    using Microsoft.Data.Common;
 
     sealed internal class SqlConnectionFactory : DbConnectionFactory {
         private SqlConnectionFactory() : base(SqlPerformanceCounters.SingletonInstance) {

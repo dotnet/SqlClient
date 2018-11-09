@@ -6,16 +6,17 @@
 // <owner current="true" primary="false">stevesta</owner>
 //------------------------------------------------------------------------------
 
-    using System;
-    using System.Collections;
-    using System.Collections.Generic;
-    using System.ComponentModel;
-    using Microsoft.Data.Common;
-    using System.Diagnostics;
-    using System.Globalization;
-    using System.Diagnostics.CodeAnalysis;
-    using System.Data;
-    using System.Reflection;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.ComponentModel;
+using Microsoft.Data.Common;
+using System.Diagnostics;
+using System.Globalization;
+using System.Diagnostics.CodeAnalysis;
+using System.Data;
+using System.Reflection;
+using System.Data.Common;
 
 namespace Microsoft.Data.SqlClient {
 
@@ -971,18 +972,6 @@ namespace Microsoft.Data.SqlClient {
         /// <param name="value"></param>
         private static SqlConnectionColumnEncryptionSetting ConvertToColumnEncryptionSetting(string keyword, object value) {
             return DbConnectionStringBuilderUtil.ConvertToColumnEncryptionSetting(keyword, value);
-        }
-
-        internal override string ConvertValueToString(object value)
-        {
-            if (value is SqlAuthenticationMethod)
-            {
-                return DbConnectionStringBuilderUtil.AuthenticationTypeToString((SqlAuthenticationMethod)value);
-            }
-            else
-            {
-                return base.ConvertValueToString(value);
-            }
         }
 
         private object GetAt(Keywords index) {

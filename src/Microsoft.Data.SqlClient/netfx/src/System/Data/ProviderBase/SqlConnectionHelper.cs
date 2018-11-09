@@ -17,7 +17,6 @@ namespace Microsoft.Data.SqlClient
     using System.Data;
     using System.Data.Common;
     using DBDataPermission = Microsoft.Data.Common.DBDataPermission;
-    using DbProviderFactory = Common.DbProviderFactory;
 
     public sealed partial class SqlConnection : DbConnection {
         private static readonly DbConnectionFactory     _connectionFactory = SqlConnectionFactory.SingletonInstance;

@@ -6,12 +6,13 @@
 // <owner current="true" primary="false">stevesta</owner>
 //------------------------------------------------------------------------------
 
-    using System;
-    using System.Collections.Generic;
-    using System.ComponentModel;
-    using System.Diagnostics;
-    using System.Globalization;
-    using Microsoft.Data.SqlClient;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data.Common;
+using System.Diagnostics;
+using System.Globalization;
+using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data.Common {
 
@@ -51,87 +52,7 @@ namespace Microsoft.Data.Common {
     }
 */
 
-    internal class DbConnectionStringBuilderDescriptor : PropertyDescriptor {
-        private Type _componentType;
-        private Type _propertyType;
-        private bool _isReadOnly;
-        private bool _refreshOnChange;
-
-        internal DbConnectionStringBuilderDescriptor(string propertyName, Type componentType, Type propertyType, bool isReadOnly, Attribute[] attributes) : base(propertyName, attributes) {
-            //Bid.Trace("<comm.DbConnectionStringBuilderDescriptor|INFO> propertyName='%ls', propertyType='%ls'\n", propertyName, propertyType.Name);
-            _componentType = componentType;
-            _propertyType = propertyType;
-            _isReadOnly = isReadOnly;
-        }
-
-        internal bool RefreshOnChange {
-            get {
-                return _refreshOnChange;
-            }
-            set {
-                _refreshOnChange = value;
-            }
-        }
-
-        public override Type ComponentType {
-            get {
-                return _componentType;
-            }
-        }
-        public override bool IsReadOnly {
-            get {
-                return _isReadOnly;
-            }
-        }
-        public override Type PropertyType {
-            get {
-                return _propertyType;
-            }
-        }
-        public override bool CanResetValue(object component) {
-            DbConnectionStringBuilder builder = (component as DbConnectionStringBuilder);
-            return ((null != builder) && builder.ShouldSerialize(DisplayName));
-        }
-        public override object GetValue(object component) {
-            DbConnectionStringBuilder builder = (component as DbConnectionStringBuilder);
-            if (null != builder) {
-                object value;
-                if (builder.TryGetValue(DisplayName, out value)) {
-                    return value;
-                }
-            }
-            return null;
-        }
-        public override void ResetValue(object component) {
-            DbConnectionStringBuilder builder = (component as DbConnectionStringBuilder);
-            if (null != builder) {
-                builder.Remove(DisplayName);
-
-                if (RefreshOnChange) {
-                    builder.ClearPropertyDescriptors();
-                }
-            }
-        }
-        public override void SetValue(object component, object value) {
-            DbConnectionStringBuilder builder = (component as DbConnectionStringBuilder);
-            if (null != builder) {
-                // via the editor, empty string does a defacto Reset
-                if ((typeof(string) == PropertyType) && String.Empty.Equals(value)) {
-                    value = null;
-                }
-                builder[DisplayName] = value;
-
-                if (RefreshOnChange) {
-                    builder.ClearPropertyDescriptors();
-                }
-            }
-        }
-        public override bool ShouldSerializeValue(object component) {
-            DbConnectionStringBuilder builder = (component as DbConnectionStringBuilder);
-            return ((null != builder) && builder.ShouldSerialize(DisplayName));
-        }
-    }
-
+    
     [Serializable()]
     internal sealed class ReadOnlyCollection<T> : System.Collections.ICollection, ICollection<T> {
         private T[] _items;
@@ -589,33 +510,39 @@ namespace Microsoft.Data.Common {
 
             bool isSuccess = false;
 
-            if (StringComparer.InvariantCultureIgnoreCase.Equals(value, SqlPasswordString))
+            if (StringComparer.InvariantCultureIgnoreCase.Equals(value, SqlPasswordString) 
+                || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.SqlPassword, CultureInfo.InvariantCulture)))
             {
                 result = SqlAuthenticationMethod.SqlPassword;
                 isSuccess = true;
             }
-            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, ActiveDirectoryPasswordString))
+            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, ActiveDirectoryPasswordString)
+                || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.ActiveDirectoryPassword, CultureInfo.InvariantCulture)))
             {
                 result = SqlAuthenticationMethod.ActiveDirectoryPassword;
                 isSuccess = true;
             }
-            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, ActiveDirectoryIntegratedString))
+            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, ActiveDirectoryIntegratedString)
+                || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.ActiveDirectoryIntegrated, CultureInfo.InvariantCulture)))
             {
                 result = SqlAuthenticationMethod.ActiveDirectoryIntegrated;
                 isSuccess = true;
             }
-            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, ActiveDirectoryInteractiveString))
+            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, ActiveDirectoryInteractiveString)
+                || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.ActiveDirectoryInteractive, CultureInfo.InvariantCulture)))
             {
                 result = SqlAuthenticationMethod.ActiveDirectoryInteractive;
                 isSuccess = true;
             }
 #if ADONET_CERT_AUTH            
-            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, SqlCertificateString)) {
+            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, SqlCertificateString)
+                || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.SqlCertificate, CultureInfo.InvariantCulture))) {
                 result = SqlAuthenticationMethod.SqlCertificate;
                 isSuccess = true;
             }
 #endif
-            else {
+            else
+            {
                 result = DbConnectionStringDefaults.Authentication;
             }
             return isSuccess;

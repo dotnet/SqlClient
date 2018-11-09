@@ -307,12 +307,6 @@
     <Compile Include="..\Common\DbConnectionStringCommon.cs">
       <Link>ProviderCommon\DbConnectionStringCommon.cs</Link>
     </Compile>
-    <Compile Include="..\Common\DbConnectionStringBuilder.cs">
-      <Link>ProviderCommon\DbConnectionStringBuilder.cs</Link>
-    </Compile>
-    <Compile Include="..\Common\DbProviderFactory.cs">
-      <Link>ProviderCommon\DbProviderFactory.cs</Link>
-    </Compile>
     <Compile Include="..\Common\DbConnectionString.cs">
       <Link>ProviderCommon\DbConnectionString.cs</Link>
     </Compile>

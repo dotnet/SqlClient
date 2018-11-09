@@ -12,8 +12,6 @@ using System.Data.Common;
 using System;
 using Microsoft.Data.Common;
 using System.Data.Sql;
-using DbConnectionStringBuilder = Microsoft.Data.Common.DbConnectionStringBuilder;
-using DbProviderFactory = Microsoft.Data.Common.DbProviderFactory;
 
 namespace Microsoft.Data.SqlClient {
 
