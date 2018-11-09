@@ -20,6 +20,7 @@ namespace Microsoft.Data.Common {
     using System.Security.Permissions;
     using System.Text;
     using System.Text.RegularExpressions;
+    using System.Data;
 
     [Serializable] // MDAC 83147
     internal sealed class DBConnectionString {

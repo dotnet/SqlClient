@@ -13,6 +13,8 @@ namespace Microsoft.Data.Common {
     using System.Security;
     using System.Security.Permissions;
     using System;
+    using System.Data;
+    using System.Data.Common;
 
     [SecurityPermissionAttribute(SecurityAction.InheritanceDemand, ControlEvidence=true, ControlPolicy=true)]
     [Serializable]

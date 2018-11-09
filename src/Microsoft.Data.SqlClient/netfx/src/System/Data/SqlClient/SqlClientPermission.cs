@@ -8,9 +8,12 @@
 
 namespace Microsoft.Data.SqlClient {
     using System;
-    using Microsoft.Data.Common;
     using System.Security;
     using System.Security.Permissions;
+    using System.Data;
+    using System.Data.Common;
+    using Microsoft.Data.Common;
+    using DBDataPermission = Microsoft.Data.Common.DBDataPermission;
 
     [Serializable] 
     public sealed class SqlClientPermission :  DBDataPermission {

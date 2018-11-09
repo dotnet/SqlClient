@@ -283,9 +283,6 @@
     <Compile Include="..\..\..\Common\src\System\Data\Common\DBDataPermission.cs">
       <Link>Common\DBDataPermission.cs</Link>
     </Compile>
-    <Compile Include="..\..\..\Common\src\System\Data\Common\DBDataPermissionAttribute.cs">
-      <Link>Common\DBDataPermissionAttribute.cs</Link>
-    </Compile>
     <Compile Include="..\..\..\Common\src\System\Data\Common\NameValuePermission.cs">
       <Link>Common\NameValuePermission.cs</Link>
     </Compile>
@@ -297,9 +294,6 @@
     </Compile>
     <Compile Include="..\RecordsAffectedEventHandler.cs">
       <Link>SqlClient\RecordsAffectedEventHandler.cs</Link>
-    </Compile>
-    <Compile Include="..\IDbDataAdapter.cs">
-      <Link>ProviderCommon\Base\IDbDataAdapter.cs</Link>
     </Compile>
     <Compile Include="..\Common\ActivityCorrelator.cs">
       <Link>SqlClient\ActivityCorrelator.cs</Link>
@@ -331,35 +325,11 @@
     <Compile Include="..\AssemblyRef.cs">
       <Link>ProviderCommon\AssemblyRef.cs</Link>
     </Compile>
-    <Compile Include="..\DBConcurrencyException.cs">
-      <Link>ProviderCommon\DBConcurrencyException.cs</Link>
-    </Compile>
-    <Compile Include="..\FillErrorEventArgs.cs">
-      <Link>ProviderCommon\Events\FillErrorEventArgs.cs</Link>
-    </Compile>
-    <Compile Include="..\FillErrorEventHandler.cs">
-      <Link>ProviderCommon\Events\FillErrorEventHandler.cs</Link>
-    </Compile>
     <Compile Include="..\Common\UnsafeNativeMethods.cs">
       <Link>ProviderCommon\UnsafeNativeMethods.cs</Link>
     </Compile>
     <Compile Include="..\Common\SafeNativeMethods.cs">
       <Link>ProviderCommon\SafeNativeMethods.cs</Link>
-    </Compile>
-    <Compile Include="..\IColumnMapping.cs">
-      <Link>ProviderCommon\Base\IColumnMapping.cs</Link>
-    </Compile>
-    <Compile Include="..\IColumnMappingCollection.cs">
-      <Link>ProviderCommon\Base\IColumnMappingCollection.cs</Link>
-    </Compile>
-    <Compile Include="..\DataSysAttribute.cs">
-      <Link>Misc\DataSysAttribute.cs</Link>
-    </Compile>
-    <Compile Include="..\ITableMapping.cs">
-      <Link>ProviderCommon\Base\ITableMapping.cs</Link>
-    </Compile>
-    <Compile Include="..\ITableMappingCollection.cs">
-      <Link>ProviderCommon\Base\ITableMappingCollection.cs</Link>
     </Compile>
     <Compile Include="..\ProviderBase\DataReaderContainer.cs">
       <Link>ProviderCommon\DataReaderContainer.cs</Link>
@@ -539,12 +509,6 @@
     </Compile>
     <Compile Include="..\OperationAbortedException.cs">
       <Link>SqlClient\OperationAbortedException.cs</Link>
-    </Compile>
-    <Compile Include="..\StateChangeEvent.cs">
-      <Link>ProviderCommon\Events\StateChangeEvent.cs</Link>
-    </Compile>
-    <Compile Include="..\StateChangeEventHandler.cs">
-      <Link>ProviderCommon\Events\StateChangeEventHandler.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>

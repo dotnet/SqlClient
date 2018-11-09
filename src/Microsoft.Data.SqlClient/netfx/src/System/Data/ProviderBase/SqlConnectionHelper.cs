@@ -17,7 +17,6 @@ namespace Microsoft.Data.SqlClient
     using System.Data;
     using System.Data.Common;
     using DBDataPermission = Microsoft.Data.Common.DBDataPermission;
-    using KeyRestrictionBehavior = Microsoft.Data.KeyRestrictionBehavior;
     using DbProviderFactory = Common.DbProviderFactory;
 
     public sealed partial class SqlConnection : DbConnection {
