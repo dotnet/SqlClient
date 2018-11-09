@@ -268,9 +268,6 @@
     <Compile Include="..\..\..\Misc\AppContextDefaultValues.cs">
       <Link>Misc\AppContextDefaultValues.cs</Link>
     </Compile>
-    <Compile Include="..\AcceptRejectRule.cs">
-      <Link>DataSet\Enums\AcceptRejectRule.cs</Link>
-    </Compile>
     <Compile Include="..\..\..\Misc\PrivilegedConfigurationManager.cs">
       <Link>Misc\PrivilegedConfigurationManager.cs</Link>
     </Compile>
@@ -288,12 +285,6 @@
     </Compile>
     <Compile Include="..\Common\AdapterSwitches.cs">
       <Link>Common\AdapterSwitches.cs</Link>
-    </Compile>
-    <Compile Include="..\RecordsAffectedEventArgs.cs">
-      <Link>SqlClient\RecordsAffectedEventArgs.cs</Link>
-    </Compile>
-    <Compile Include="..\RecordsAffectedEventHandler.cs">
-      <Link>SqlClient\RecordsAffectedEventHandler.cs</Link>
     </Compile>
     <Compile Include="..\Common\ActivityCorrelator.cs">
       <Link>SqlClient\ActivityCorrelator.cs</Link>
