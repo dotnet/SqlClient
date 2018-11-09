@@ -319,9 +319,6 @@
     <Compile Include="..\Common\NameValuePair.cs">
       <Link>SqlClient\NameValuePair.cs</Link>
     </Compile>
-    <Compile Include="..\IDbDataParameter.cs">
-      <Link>ProviderCommon\IDbDataParameter.cs</Link>
-    </Compile>
     <Compile Include="..\AssemblyRef.cs">
       <Link>ProviderCommon\AssemblyRef.cs</Link>
     </Compile>
