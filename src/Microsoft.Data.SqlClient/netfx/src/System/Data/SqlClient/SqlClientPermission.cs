@@ -13,8 +13,7 @@ namespace Microsoft.Data.SqlClient {
     using System.Data;
     using System.Data.Common;
     using Microsoft.Data.Common;
-    using DBDataPermission = System.Data.Common.DBDataPermission;
-    using System.Reflection;
+    using DBDataPermission = Microsoft.Data.Common.DBDataPermission;
 
     [Serializable] 
     public sealed class SqlClientPermission :  DBDataPermission {
@@ -37,31 +36,15 @@ namespace Microsoft.Data.SqlClient {
         internal SqlClientPermission(SqlClientPermissionAttribute permissionAttribute) : base(permissionAttribute) { // for CreatePermission
         }
 
-        internal SqlClientPermission(SqlConnectionString constr) : base(PermissionState.None) { // for Open
+        internal SqlClientPermission(SqlConnectionString constr) : base(constr) { // for Open
             if ((null == constr) || constr.IsEmpty) {
                 base.Add(ADP.StrEmpty, ADP.StrEmpty, KeyRestrictionBehavior.AllowOnly);
-            }
-            else
-            {
-                AllowBlankPassword = constr.HasBlankPassword; // MDAC 84563
-                AddPermissionEntry(constr);
             }
         }
 
         public override void Add(string connectionString, string restrictions, KeyRestrictionBehavior behavior) {
             DBConnectionString constr = new DBConnectionString(connectionString, restrictions, behavior, SqlConnectionString.GetParseSynonyms(), false);
             AddPermissionEntry(constr);
-        }
-
-        private void AddPermissionEntry(object constr)
-        {
-            Type[] arguments = null;
-            if (constr is DBConnectionString)
-                arguments = new Type[] { typeof(DBConnectionString) };
-            else if(constr is SqlConnectionString)
-                arguments = new Type[] { typeof(SqlConnectionString) };
-            MethodInfo addPermissionEntryMethodInfo = typeof(DBDataPermission).GetMethod("AddPermissionEntry", arguments);
-            addPermissionEntryMethodInfo.Invoke(null, new object[] { constr });
         }
 
         override public IPermission Copy () {

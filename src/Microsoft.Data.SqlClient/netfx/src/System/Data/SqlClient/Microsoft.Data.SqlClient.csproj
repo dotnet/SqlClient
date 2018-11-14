@@ -277,6 +277,9 @@
     <Compile Include="..\..\..\Common\src\System\Data\Common\MultipartIdentifier.cs">
       <Link>Common\MultipartIdentifier.cs</Link>
     </Compile>
+    <Compile Include="..\..\..\Common\src\System\Data\Common\DBDataPermission.cs">
+      <Link>Common\DBDataPermission.cs</Link>
+    </Compile>
     <Compile Include="..\..\..\Common\src\System\Data\Common\NameValuePermission.cs">
       <Link>Common\NameValuePermission.cs</Link>
     </Compile>
