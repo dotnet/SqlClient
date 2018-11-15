@@ -10,7 +10,9 @@ param(
     [Parameter(Mandatory=$true)]
     [string]$Platform,
     [Parameter(Mandatory=$true)]
-    [string]$ProjectRoot
+    [string]$ProjectRoot,
+    [Parameter(Mandatory=$true)]
+    [string]$TargetOSGroup
     )
 
     $buildTool = 'dotnet build'
@@ -21,7 +23,7 @@ param(
                     "$testPath/tools/CoreFx.Private.TestUtilities/CoreFx.Private.TestUtilities.csproj",
                     "$testPath/ManualTests/SQL/UdtTest/UDTs/Address/Address.csproj",
                     "$testPath/FunctionalTests/Microsoft.Data.SqlClient.Tests.csproj"
-    $buildArguments = "/p:Platform='$Platform' /p:Configuration='$Configuration'"
+    $buildArguments = "/p:Platform='$Platform' /p:Configuration='$Configuration' /p:TargetOSGroup='$TargetOSGroup'"
 
     foreach ($projectPath in $projectPaths)
     {

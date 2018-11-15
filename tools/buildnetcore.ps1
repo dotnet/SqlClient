@@ -10,13 +10,15 @@ param(
     [Parameter(Mandatory=$true)]
     [string]$Platform,
     [Parameter(Mandatory=$true)]
-    [string]$ProjectRoot
+    [string]$ProjectRoot,
+    [Parameter(Mandatory=$true)]
+    [string]$TargetOSGroup
     )
 
     $buildTool = 'msbuild'
     $netcoreSrcPath = "$ProjectRoot/src/Microsoft.Data.SqlClient/netcore/src"
     $projectPaths = "$netcoreSrcPath/Microsoft.Data.SqlClient.csproj"
-    $buildArguments = "/p:Platform='$Platform' /p:Configuration='$Configuration'"
+    $buildArguments = "/p:Platform='$Platform' /p:Configuration='$Configuration' /p:TargetOSGroup='$TargetOSGroup'"
 
     foreach ($projectPath in $projectPaths)
     {
