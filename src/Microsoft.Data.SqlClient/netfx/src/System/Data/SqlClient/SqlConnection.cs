@@ -543,11 +543,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        //override protected DbProviderFactory DbProviderFactory {
-        //    get {
-        //        return SqlClientFactory.Instance;
-        //    }
-        //}
+        override protected DbProviderFactory DbProviderFactory {
+            get {
+                return SqlClientFactory.Instance;
+            }
+        }
 
         // AccessToken: To be used for token based authentication
         [
