@@ -26,5 +26,8 @@ param(
     foreach ($projectPath in $projectPaths)
     {
         $buildCmd = "$buildTool $projectPath $buildArguments"
+        Write-Output "*************************************** Build Command ***************************************"
+        Write-Output $buildCmd
+        Write-Output "******************************************************************************"
         Invoke-Expression  $buildCmd
     }

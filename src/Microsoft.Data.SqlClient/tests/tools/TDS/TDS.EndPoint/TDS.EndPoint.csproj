@@ -1,10 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <ProjectGuid>{1FF891B4-D3DE-4CCE-887C-CB48F5351A45}</ProjectGuid>
     <RootNamespace>Microsoft.SqlServer.TDS.EndPoint</RootNamespace>
     <AssemblyName>Microsoft.SqlServer.TDS.EndPoint</AssemblyName>
     <ClsCompliant>false</ClsCompliant>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework  Condition="'$(TargetOSGroup)' == '' OR '$(TargetOSGroup)' == Unix">netstandard2.0</TargetFramework> 
+    <TargetFrameworks Condition="'$(TargetOSGroup)' == Windows">netstandard2.0;net46</TargetFrameworks> 
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <Configurations>netstandard-Unix-Debug;netstandard-Unix-Release;netstandard-Windows_NT-Debug;netstandard-Windows_NT-Release</Configurations>
   </PropertyGroup>

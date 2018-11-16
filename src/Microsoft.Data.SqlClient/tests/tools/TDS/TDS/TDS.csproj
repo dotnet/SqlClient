@@ -1,7 +1,8 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <ProjectGuid>{8DC9D1A0-351B-47BC-A90F-B9DA542550E9}</ProjectGuid>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework  Condition="'$(TargetOSGroup)' == '' OR '$(TargetOSGroup)' == Unix">netstandard2.0</TargetFramework> 
+    <TargetFrameworks Condition="'$(TargetOSGroup)' == Windows">netstandard2.0;net46</TargetFrameworks> 
     <RootNamespace>Microsoft.SqlServer.TDS</RootNamespace>
     <AssemblyName>Microsoft.SqlServer.TDS</AssemblyName>
     <ClsCompliant>false</ClsCompliant>

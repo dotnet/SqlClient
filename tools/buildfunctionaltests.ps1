@@ -25,8 +25,16 @@ param(
                     "$testPath/FunctionalTests/Microsoft.Data.SqlClient.Tests.csproj"
     $buildArguments = "/p:Platform='$Platform' /p:Configuration='$Configuration' /p:TargetOSGroup='$TargetOSGroup'"
 
+    if($TargetOSGroup -like "Unix")
+    {
+        $buildArguments = $buildArguments + " /p:TargetsWindows=false /p:TargetsUnix=true"
+    }
+
     foreach ($projectPath in $projectPaths)
     {
         $buildCmd = "$buildTool $projectPath $buildArguments"
+        Write-Output "*************************************** Build Command ***************************************"
+        Write-Output $buildCmd
+        Write-Output "******************************************************************************"
         Invoke-Expression  $buildCmd
     }

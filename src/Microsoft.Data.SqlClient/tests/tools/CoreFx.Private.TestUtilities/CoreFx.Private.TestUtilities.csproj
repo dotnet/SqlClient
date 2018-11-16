@@ -8,8 +8,10 @@
     <NoWarn Condition="'$(TargetGroup)' == 'netstandard'">$(NoWarn);CS3021</NoWarn>
     <GeneratePlatformNotSupportedAssemblyMessage Condition="'$(TargetGroup)' == 'netstandard'">Test Utilities are not supported on this platform</GeneratePlatformNotSupportedAssemblyMessage>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <TargetFrameworks>netcoreapp2.1</TargetFrameworks>
+    <TargetFramework  Condition="'$(TargetOSGroup)' == '' OR '$(TargetOSGroup)' == Unix">netcoreapp2.1</TargetFramework> 
+    <TargetFrameworks Condition="'$(TargetOSGroup)' == Windows">netcoreapp2.1;net46</TargetFrameworks> 
     <TargetGroup Condition="'$(TargetFramework)'=='netcoreapp2.1'">netcoreapp</TargetGroup>
+    <TargetGroup Condition="'$(TargetFramework)'=='net46'">netfx</TargetGroup>
   </PropertyGroup>
   <ItemGroup Condition="'$(TargetGroup)' != 'netstandard'">
     <Compile Include="System\AdminHelpers.cs" />
@@ -95,7 +97,7 @@
     <ReferenceFromRuntime Include="Xunit.NetCore.Extensions" />
     <ReferenceFromRuntime Include="xunit.assert" />
     <ReferenceFromRuntime Condition="'$(TargetGroup)' != 'uapaot'" Include="Microsoft.DotNet.PlatformAbstractions" />
-    <PackageReference Include="xunit" Version="2.3.1" />
+    <PackageReference Include="xunit" Version="2.4.0" />
     <PackageReference Include="System.Memory" Version="4.5.1" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)' != 'netfx'">

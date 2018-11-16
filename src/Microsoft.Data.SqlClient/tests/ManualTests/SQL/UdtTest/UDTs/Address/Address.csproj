@@ -1,10 +1,17 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <ProjectGuid>{D1392B54-998A-4F27-BC17-4CE149117BCC}</ProjectGuid>
-    <Configurations>netstandard-Debug;netstandard-Release</Configurations>
-    <TargetFrameworks>netcoreapp2.1</TargetFrameworks>
+    <TargetFramework  Condition="'$(TargetOSGroup)' == '' OR '$(TargetOSGroup)' == Unix">netcoreapp2.1</TargetFramework> 
+    <TargetFrameworks Condition="'$(TargetOSGroup)' == Windows">netcoreapp2.1;net46</TargetFrameworks> 
+    <TargetGroup Condition="'$(TargetFramework)'=='netcoreapp2.1'">netcoreapp</TargetGroup>
+    <TargetGroup Condition="'$(TargetFramework)'=='net46'">netfx</TargetGroup>
+    <TestTargetPlatform Condition="'$(Platform)'=='x86'">Win32</TestTargetPlatform>
+    <TestTargetPlatform Condition="'$(Platform)'=='Any CPU' OR '$(Platform)'=='x64'">x64</TestTargetPlatform>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
+    <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
+   <Reference Condition="'$(TargetGroup)'=='netfx'" Include="Microsoft.Data.SqlClient">
+       <HintPath>$(BinFolder)$(Configuration).$(TestTargetPlatform)\Microsoft.Data.SqlClient\Microsoft.Data.SqlClient.dll</HintPath>
+   </Reference>
   </ItemGroup>
 </Project>
