@@ -13,21 +13,37 @@ param(
     [string]$ProjectRoot
     )
 
-    $buildTool = 'msbuild'
-    $netfxSrcPath = "$ProjectRoot/src/Microsoft.Data.SqlClient/netfx/src"
-    $projectPaths = "$netfxSrcPath/bidinit/src/bidinit.vcxproj",
-                    "$netfxSrcPath/SNI/NLRegC/ascii/ascii.vcxproj",
-                    "$netfxSrcPath/SNI/NLRegC/unicode/unicode.vcxproj ",
-                    "$netfxSrcPath/SNI/SNI.vcxproj",
-                    "$netfxSrcPath/managedwrapper/SNIManagedWrapper.vcxproj",
-                    "$netfxSrcPath/System/Data/SqlClient/Microsoft.Data.SqlClient.csproj"
-    $buildArguments = "/p:Platform='$Platform' /p:Configuration='$Configuration'"
-
-    foreach ($projectPath in $projectPaths)
+    # Check if MsBuild exists in the path, if not then setup Enviornment Variables.
+    Function CheckMSBuild()
     {
-        $buildCmd = "$buildTool $projectPath $buildArguments"
-        Write-Output "*************************************** Build Command ***************************************"
-        Write-Output $buildCmd
-        Write-Output "******************************************************************************"
-        Invoke-Expression  $buildCmd
+        if(![bool](Get-Command -Name "msbuild.exe" -ErrorAction SilentlyContinue))
+        {
+            Invoke-Expression "& `"$ProjectRoot/tools/setupEnvVariables.ps1`""
+        }
     }
+    Function BuildDriverAndTests()
+    {
+        $buildTool = 'msbuild'
+        $netfxSrcPath = "$ProjectRoot/src/Microsoft.Data.SqlClient/netfx/src"
+        $projectPaths = "$netfxSrcPath/bidinit/src/bidinit.vcxproj",
+                        "$netfxSrcPath/SNI/NLRegC/ascii/ascii.vcxproj",
+                        "$netfxSrcPath/SNI/NLRegC/unicode/unicode.vcxproj ",
+                        "$netfxSrcPath/SNI/SNI.vcxproj",
+                        "$netfxSrcPath/managedwrapper/SNIManagedWrapper.vcxproj",
+                        "$netfxSrcPath/System/Data/SqlClient/Microsoft.Data.SqlClient.csproj"
+        $buildArguments = "/p:Platform='$Platform' /p:Configuration='$Configuration'"
+    
+        foreach ($projectPath in $projectPaths)
+        {
+            $buildCmd = "$buildTool $projectPath $buildArguments"
+            Write-Output "*************************************** Build Command ***************************************"
+            Write-Output $buildCmd
+            Write-Output "******************************************************************************"
+            Invoke-Expression  $buildCmd
+        }
+    }
+
+    CheckMSBuild
+    BuildDriverAndTests
+
+   
