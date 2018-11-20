@@ -10,8 +10,8 @@
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
     <BinPath>$(BinFolder)$(Configuration).$(Platform)\</BinPath>
     <ObjPath>$(ObjFolder)$(Configuration).$(Platform)\</ObjPath>
-    <OutputPath>$(BinPath)$(AssemblyName)\</OutputPath>
-    <IntermediateOutputPath>$(ObjPath)$(AssemblyName)\</IntermediateOutputPath>
+    <OutputPath>$(BinPath)$(AssemblyName)\netfx\</OutputPath>
+    <IntermediateOutputPath>$(ObjPath)$(AssemblyName)\netfx\</IntermediateOutputPath>  
   </PropertyGroup>
   <PropertyGroup>
     <!-- CSC Compiler Options -->
@@ -28,6 +28,8 @@
     <NoLogo>True</NoLogo>
     <SubsystemVersion>6.00</SubsystemVersion>
     <OutputType>Module</OutputType>
+    <!-- We need TargetExt for this project to be referenced by other projects -->
+    <TargetExt>.dll</TargetExt>
     <!--TreatWarningsAsErrors needs to be updated to True -->
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <Utf8Output>True</Utf8Output>

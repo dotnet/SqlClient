@@ -175,6 +175,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SpecialCharacterNames.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_SpecialCharacterNames"));
         }
 
+        [ActiveIssue(5518)]
         [CheckConnStrSetupFact]
         public void Bug903514Test()
         {

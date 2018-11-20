@@ -10,6 +10,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class Bug903514
     {
+        [ActiveIssue(5518)]
         public static void Test(string constr, string dstTable)
         {
             using (SqlConnection dstConn = new SqlConnection(constr))

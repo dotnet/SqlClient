@@ -1,10 +1,19 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <RootNamespace>Utf8String</RootNamespace>
+    <AssemblyName>Utf8String</AssemblyName>
     <ProjectGuid>{E0A6BB21-574B-43D9-890D-6E1144F2EE9E}</ProjectGuid>
-    <Configurations>netstandard-Debug;netstandard-Release</Configurations>
-    <TargetFrameworks>netcoreapp2.1</TargetFrameworks>
+    <TargetFramework Condition="'$(TestTargetOS)' == '' OR '$(TestTargetOS)' == 'WindowsNetCore' OR '$(TestTargetOS)' == 'UnixNetCore'">netcoreapp2.1</TargetFramework>
+    <TargetFramework Condition="'$(TestTargetOS)' == WindowsNetFx">net46</TargetFramework>
+    <TargetGroup Condition="'$(TargetFramework)'=='netcoreapp2.1'">netcoreapp</TargetGroup>
+    <TargetGroup Condition="'$(TargetFramework)'=='net46'">netfx</TargetGroup>
+  </PropertyGroup>
+  <PropertyGroup>
+    <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)\$(AssemblyName)</IntermediateOutputPath>  
+    <OutputPath>$(BinFolder)$(Configuration).$(Platform)\$(AssemblyName)</OutputPath>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
+    <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
+    <ProjectReference Condition="'$(TargetGroup)'=='netfx'" Include="$(NetFxSource)src\System\Data\SqlClient\Microsoft.Data.SqlClient.csproj" />
   </ItemGroup>
 </Project>

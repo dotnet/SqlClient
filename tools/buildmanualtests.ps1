@@ -1,9 +1,8 @@
-# Script: buildfunctionaltests.ps1
-# Author: Keerat Singh
-# Date:   14-Nov-2018
-# Comments: This script builds the functional tests and its dependencies with specified arguments.
+# Script: buildmanualtests.ps1
+# Author: Afsaneh Rafighi, Keerat Singh
+# Date:   16-Nov-2018
+# Comments: This script builds the manual tests and its dependencies with specified arguments.
 #
-
 param(
     [Parameter(Mandatory=$true)]
     [string]$Configuration,
@@ -20,8 +19,7 @@ param(
     # Restore required dependencies
     Function RestorePackages()
     {
-        
-        $buildCmd = "dotnet restore '$testPath/FunctionalTests/Microsoft.Data.SqlClient.Tests.csproj' /p:TestTargetOS='$TestTargetOS'"
+        $buildCmd = "dotnet restore '$testPath/ManualTests/Microsoft.Data.SqlClient.ManualTesting.Tests.csproj' /p:TestTargetOS='$TestTargetOS'"
         Write-Output "*************************************** Restoring Packages ***************************************"
         Write-Output $buildCmd
         Write-Output "******************************************************************************"
@@ -30,30 +28,29 @@ param(
 
     Function SetBuildArguments()
     {
-        if ($TestTargetOS -like "*Windows*" -and  $Platform -like "x86")
+        if ($TestTargetOS -like "*Windows*" -and  $Platform -like 'x86')
         {
             $Platform = 'Win32'
         }
 
         $buildArguments = "/p:Platform='$Platform' /p:Configuration='$Configuration' /p:TestTargetOS='$TestTargetOS' /p:BuildProjectReferences=false"
-
-        if($TestTargetOS -like "*Unix*")
+        
+        if ($TestTargetOS -like "*Unix*")
         {
             $buildArguments = $buildArguments + " /p:TargetsWindows=false /p:TargetsUnix=true"
         }
-        
+
         return $buildArguments
+
     }
     Function BuildTests()
     {
         $buildArguments = SetBuildArguments
-        $projectPaths = "$testPath/tools/TDS/TDS/TDS.csproj",
-                        "$testPath/tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj",
-                        "$testPath/tools/TDS/TDS.Servers/TDS.Servers.csproj",
-                        "$testPath/tools/CoreFx.Private.TestUtilities/CoreFx.Private.TestUtilities.csproj",
-                        "$testPath/ManualTests/SQL/UdtTest/UDTs/Address/Address.csproj",
-                        "$testPath/FunctionalTests/Microsoft.Data.SqlClient.Tests.csproj"
-
+        $projectPaths =  "$testPath/ManualTests/SQL/UdtTest/UDTs/Address/Address.csproj",
+                        "$testPath/ManualTests/SQL/UdtTest/UDTs/Circle/Circle.csproj",
+                        "$testPath/ManualTests/SQL/UdtTest/UDTs/Shapes/Shapes.csproj",
+                        "$testPath/ManualTests/SQL/UdtTest/UDTs/Utf8String/Utf8String.csproj","$testPath/tools/CoreFx.Private.TestUtilities/CoreFx.Private.TestUtilities.csproj",
+                        "$testPath/ManualTests/Microsoft.Data.SqlClient.ManualTesting.Tests.csproj"
         foreach ($projectPath in $projectPaths)
         {
             $buildCmd = "$buildTool $projectPath $buildArguments"
@@ -63,5 +60,6 @@ param(
             Invoke-Expression  $buildCmd
         }
     }
+
     RestorePackages
     BuildTests

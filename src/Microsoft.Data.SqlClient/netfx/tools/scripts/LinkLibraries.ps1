@@ -64,7 +64,7 @@ Function SetupLinkerCommand()
 
 Function AddLinkerArguments()
 {
-  $LinkerArguments = "/OUT:`"${BinPath}${AssemblyName}\${AssemblyName}.dll`" /VERSION:`"10.0`" /INCREMENTAL:NO /NOLOGO /WX /NODEFAULTLIB /ASSEMBLYRESOURCE:`"${ObjPath}${AssemblyName}\${ResourceFileName}.resources`" /ASSEMBLYRESOURCE:`"${BinPath}${AssemblyName}\Resources\Microsoft.Data.SqlClient.SqlMetaData.xml`" /MANIFESTFILE:${AssemblyName}.dll.mt /DEBUG /PDB:${BinPath}${AssemblyName}\${AssemblyName}.pdb /SUBSYSTEM:CONSOLE,`"6.00`" /STACK:`"0x100000`",`"0x1000`" /LARGEADDRESSAWARE /OPT:REF /RELEASE /MACHINE:${OutputPlatform} /LTCG /CLRUNMANAGEDCODECHECK:NO /CLRIMAGETYPE:IJW /CLRTHREADATTRIBUTE:STA /DYNAMICBASE /guard:cf /DEBUGTYPE:`"cv,fixup`" /OSVERSION:`"6.00`" /PDBCOMPRESS /IGNORE:`"4248,4070,4221`" /DLL "
+  $LinkerArguments = "/OUT:`"${BinPath}${AssemblyName}\netfx\${AssemblyName}.dll`" /VERSION:`"10.0`" /INCREMENTAL:NO /NOLOGO /WX /NODEFAULTLIB /ASSEMBLYRESOURCE:`"${ObjPath}${AssemblyName}\netfx\${ResourceFileName}.resources`" /ASSEMBLYRESOURCE:`"${BinPath}${AssemblyName}\netfx\Resources\Microsoft.Data.SqlClient.SqlMetaData.xml`" /MANIFESTFILE:${AssemblyName}.dll.mt /DEBUG /PDB:${BinPath}${AssemblyName}\netfx\${AssemblyName}.pdb /SUBSYSTEM:CONSOLE,`"6.00`" /STACK:`"0x100000`",`"0x1000`" /LARGEADDRESSAWARE /OPT:REF /RELEASE /MACHINE:${OutputPlatform} /LTCG /CLRUNMANAGEDCODECHECK:NO /CLRIMAGETYPE:IJW /CLRTHREADATTRIBUTE:STA /DYNAMICBASE /guard:cf /DEBUGTYPE:`"cv,fixup`" /OSVERSION:`"6.00`" /PDBCOMPRESS /IGNORE:`"4248,4070,4221`" /DLL "
 
   if($OutputPlatform -ieq "x86") 
   {
@@ -86,12 +86,19 @@ Function AddLinkerArguments()
   return $LinkerArguments
 }
 
+Function RenameAssembly()
+{
+  # Create of copy of Microsoft.Data.SqlClient.dll as Microsoft.Data.SqlClient.netmodule.
+  Write-Output "************************** RENAMING ${BinPath}${AssemblyName}\netfx\${AssemblyName}.dll TO NETMODULE ***************************"
+  Copy-Item -Path "${BinPath}${AssemblyName}\netfx\${AssemblyName}.dll" -Destination "${BinPath}${AssemblyName}\netfx\${AssemblyName}.netmodule"
+}
+
 Function AddLibraryDependencies()
 {
   $LibSuffix = ""
   if($OutputConfiguration -ieq "Debug") { $LibSuffix = "d" }
     
-  $LibraryDependencies = "`"${BinPath}${AssemblyName}\SniManagedWrapper.obj`" `"${BinPath}${AssemblyName}\${AssemblyName}.netmodule`" `"${BinPath}SNI\sni.lib`" `"${BinPath}ascii\NLRegCA.lib`" `"${BinPath}bidinit\bidinit.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\advapi32.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\kernel32.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\version.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\ws2_32.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\mswsock.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\crypt32.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\Shlwapi.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\netapi32.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\user32.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\uuid.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\ole32.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\Rpcrt4.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\secur32.lib`" `"${NETFXSdkLibPath}um\${OutputPlatform}\mscoree.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\version.lib`" `"${VCToolsLibPath}${OutputPlatform}\ptrustm${LibSuffix}.lib`" `"${VCToolsLibPath}${OutputPlatform}\msvcrt${LibSuffix}.lib`" `"${VCToolsLibPath}${OutputPlatform}\msvcmrt${LibSuffix}.lib`" `"${VCToolsLibPath}${OutputPlatform}\nothrownew.obj`" `"${VCToolsLibPath}${OutputPlatform}\vcruntime${LibSuffix}.lib`" `"${VCToolsLibPath}${OutputPlatform}\legacy_stdio_wide_specifiers.lib`" `"${WindowsSdkLibPath}ucrt\${OutputPlatform}\ucrt${LibSuffix}.lib`""
+  $LibraryDependencies = "`"${BinPath}${AssemblyName}\netfx\SniManagedWrapper.obj`" `"${BinPath}${AssemblyName}\netfx\${AssemblyName}.netmodule`" `"${BinPath}SNI\sni.lib`" `"${BinPath}ascii\NLRegCA.lib`" `"${BinPath}bidinit\bidinit.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\advapi32.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\kernel32.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\version.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\ws2_32.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\mswsock.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\crypt32.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\Shlwapi.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\netapi32.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\user32.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\uuid.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\ole32.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\Rpcrt4.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\secur32.lib`" `"${NETFXSdkLibPath}um\${OutputPlatform}\mscoree.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\version.lib`" `"${VCToolsLibPath}${OutputPlatform}\ptrustm${LibSuffix}.lib`" `"${VCToolsLibPath}${OutputPlatform}\msvcrt${LibSuffix}.lib`" `"${VCToolsLibPath}${OutputPlatform}\msvcmrt${LibSuffix}.lib`" `"${VCToolsLibPath}${OutputPlatform}\nothrownew.obj`" `"${VCToolsLibPath}${OutputPlatform}\vcruntime${LibSuffix}.lib`" `"${VCToolsLibPath}${OutputPlatform}\legacy_stdio_wide_specifiers.lib`" `"${WindowsSdkLibPath}ucrt\${OutputPlatform}\ucrt${LibSuffix}.lib`""
   return $LibraryDependencies
 }
 
@@ -116,6 +123,7 @@ Function PrintVariables()
 }
 SetupVariables
 PrintVariables
+RenameAssembly
 $LinkerCommand = SetupLinkerCommand
 
 # Print the Linker Command during Debug Mode

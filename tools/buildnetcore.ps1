@@ -12,24 +12,33 @@ param(
     [Parameter(Mandatory=$true)]
     [string]$ProjectRoot,
     [Parameter(Mandatory=$true)]
-    [string]$TargetOSGroup
+    [string]$TestTargetOS
     )
 
-    $buildTool = 'dotnet build'
+    $buildTool ='dotnet msbuild'
     $netcoreSrcPath = "$ProjectRoot/src/Microsoft.Data.SqlClient/netcore/src"
     $projectPaths = "$netcoreSrcPath/Microsoft.Data.SqlClient.csproj"
-    $buildArguments = "/p:Platform='$Platform' /p:Configuration='$Configuration' /p:TargetOSGroup='$TargetOSGroup'"
-    
-    if ($TargetOSGroup -like "Unix")
+
+    Function SetBuildArguments()
     {
-        $buildArguments = $buildArguments + " /p:OSGroup=Unix"
+        $buildArguments = "/p:Platform='$Platform' /p:Configuration='$Configuration' /p:TestTargetOS='$TestTargetOS'"
+        if($TestTargetOS -like "*Unix*")
+        {
+            $buildArguments = $buildArguments + " /p:OSGroup=Unix"
+        }
+        return $buildArguments
+    }
+    Function BuildDriver()
+    {
+        $buildArguments = SetBuildArguments
+        foreach ($projectPath in $projectPaths)
+        {
+            $buildCmd = "$buildTool $projectPath $buildArguments"
+            Write-Output "*************************************** Build Command ***************************************"
+            Write-Output $buildCmd
+            Write-Output "******************************************************************************"
+            Invoke-Expression  $buildCmd
+        }
     }
 
-    foreach ($projectPath in $projectPaths)
-    {
-        $buildCmd = "$buildTool $projectPath $buildArguments"
-        Write-Output "*************************************** Build Command ***************************************"
-        Write-Output $buildCmd
-        Write-Output "******************************************************************************"
-        Invoke-Expression  $buildCmd
-    }
+    BuildDriver

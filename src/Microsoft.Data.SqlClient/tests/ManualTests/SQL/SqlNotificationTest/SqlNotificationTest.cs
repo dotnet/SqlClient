@@ -226,6 +226,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// <summary>
         /// SqlDependecy premature timeout
         /// </summary>
+        [ActiveIssue(5539)]
         [CheckConnStrSetupFact]
         public void Test_SingleDependency_Timeout()
         {

@@ -10,6 +10,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class AsyncTest
     {
+        [ActiveIssue(5533)]
         [CheckConnStrSetupFact]
         public static void TestReadAsyncTimeConsumed()
         {

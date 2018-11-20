@@ -113,6 +113,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             CancelAndDisposePreparedCommand(s_connStr);
         }
 
+        [ActiveIssue(5541)]
         [CheckConnStrSetupFact]
         public static void TimeOutDuringRead()
         {

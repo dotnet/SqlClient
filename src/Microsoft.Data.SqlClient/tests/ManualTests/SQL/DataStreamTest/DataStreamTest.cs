@@ -30,6 +30,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        [ActiveIssue(5540)]
         [CheckConnStrSetupFact]
         public static void RunAllTestsForSingleServer_TCP()
         {

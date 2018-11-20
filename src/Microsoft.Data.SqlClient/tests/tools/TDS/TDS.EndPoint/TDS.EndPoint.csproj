@@ -1,17 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <ProjectGuid>{1FF891B4-D3DE-4CCE-887C-CB48F5351A45}</ProjectGuid>
     <RootNamespace>Microsoft.SqlServer.TDS.EndPoint</RootNamespace>
     <AssemblyName>Microsoft.SqlServer.TDS.EndPoint</AssemblyName>
+    <ProjectGuid>{1FF891B4-D3DE-4CCE-887C-CB48F5351A45}</ProjectGuid>
+    <TargetFramework Condition="'$(TestTargetOS)' == '' OR '$(TestTargetOS)' == 'WindowsNetCore' OR '$(TestTargetOS)' == 'UnixNetCore'">netcoreapp2.1</TargetFramework>
+    <TargetFramework Condition="'$(TestTargetOS)' == WindowsNetFx">net46</TargetFramework>
     <ClsCompliant>false</ClsCompliant>
-    <TargetFramework  Condition="'$(TargetOSGroup)' == '' OR '$(TargetOSGroup)' == Unix">netstandard2.0</TargetFramework> 
-    <TargetFrameworks Condition="'$(TargetOSGroup)' == Windows">netstandard2.0;net46</TargetFrameworks> 
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <Configurations>netstandard-Unix-Debug;netstandard-Unix-Release;netstandard-Windows_NT-Debug;netstandard-Windows_NT-Release</Configurations>
   </PropertyGroup>
   <PropertyGroup>
-    <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)</IntermediateOutputPath>  
-    <OutputPath>$(BinFolder)$(Configuration).$(Platform)</OutputPath>
+    <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)\$(AssemblyName)</IntermediateOutputPath>
+    <OutputPath>$(BinFolder)$(Configuration).$(Platform)\$(AssemblyName)</OutputPath>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="FederatedAuthentication\FederatedAuthenticationTicketService.cs" />

@@ -40,6 +40,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        [ActiveIssue(5534)]
         [CheckConnStrSetupFact]
         public static void GetValueTest()
         {
@@ -239,7 +240,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
             }
         }
-
+#if netcoreapp
         [CheckConnStrSetupFact]
         public static void TestUdtSchemaMetadata()
         {
@@ -277,7 +278,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
             }
         }
-
+#endif
         private static void AssertSqlUdtAssemblyQualifiedName(string assemblyQualifiedName, string expectedType)
         {
             List<string> parts = assemblyQualifiedName.Split(',').Select(x => x.Trim()).ToList();

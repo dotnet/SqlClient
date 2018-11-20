@@ -6,10 +6,13 @@
 
 param(
     [Parameter(Mandatory=$true)]
-    [string]$TargetOSGroup,
+    [string]$TestTargetOS,
     [string]$Configuration='Release',
-    [string]$ProjectRoot=$PWD
+    [string]$ProjectRoot=$PWD,
+    [Parameter(Mandatory=$true)]
+    [string]$AssemblyFileVersion
     )
+    
     # Check if MsBuild exists in the path, if not then setup Enviornment Variables.
     Function CheckMSBuild()
     {
@@ -21,18 +24,27 @@ param(
     }
     Function BuildDriverAndTests()
     {
-        #Build NetFx and Functional Tests(x86,x64) only if targeting Windows
-        if($TargetOSGroup -like "Windows")
+        switch ( $TestTargetOS )
         {
-            CheckMSBuild
-            Invoke-Expression "& `"$ProjectRoot/tools/buildnetfx.ps1`" -Platform 'Win32' -Configuration $Configuration -ProjectRoot $ProjectRoot"
-            Invoke-Expression "& `"$ProjectRoot/tools/buildnetfx.ps1`" -Platform 'x64' -Configuration $Configuration -ProjectRoot $ProjectRoot"
-            Invoke-Expression "& `"$ProjectRoot/tools/buildfunctionaltests.ps1`" -Platform 'x86' -Configuration $Configuration -ProjectRoot $ProjectRoot -TargetOSGroup $TargetOSGroup"
-            Invoke-Expression "& `"$ProjectRoot/tools/buildfunctionaltests.ps1`" -Platform 'x64' -Configuration $Configuration -ProjectRoot $ProjectRoot -TargetOSGroup $TargetOSGroup"
+            'WindowsNetFx'
+            {
+                CheckMSBuild
+                Invoke-Expression "& `"$ProjectRoot/tools/buildnetfx.ps1`" -Platform 'Win32' -Configuration $Configuration -ProjectRoot $ProjectRoot -AssemblyFileVersion $AssemblyFileVersion"
+                Invoke-Expression "& `"$ProjectRoot/tools/buildnetfx.ps1`" -Platform 'x64' -Configuration $Configuration -ProjectRoot $ProjectRoot -AssemblyFileVersion $AssemblyFileVersion"
+                Invoke-Expression "& `"$ProjectRoot/tools/buildfunctionaltests.ps1`" -Platform 'x86' -Configuration $Configuration -ProjectRoot $ProjectRoot -TestTargetOS $TestTargetOS"
+                Invoke-Expression "& `"$ProjectRoot/tools/buildfunctionaltests.ps1`" -Platform 'x64' -Configuration $Configuration -ProjectRoot $ProjectRoot -TestTargetOS $TestTargetOS"
+                Invoke-Expression "& `"$ProjectRoot/tools/buildmanualtests.ps1`" -Platform 'x86' -Configuration $Configuration -ProjectRoot $ProjectRoot -TestTargetOS $TestTargetOS"
+                Invoke-Expression "& `"$ProjectRoot/tools/buildmanualtests.ps1`" -Platform 'x64' -Configuration $Configuration -ProjectRoot $ProjectRoot -TestTargetOS $TestTargetOS"
+                break
+            }
+            { 'WindowsNetCore', 'UnixNetCore'}
+            {
+                Invoke-Expression "& `"$ProjectRoot/tools/buildnetcore.ps1`" -Platform 'AnyCPU' -Configuration $Configuration -ProjectRoot $ProjectRoot -TestTargetOS $TestTargetOS"
+                Invoke-Expression "& `"$ProjectRoot/tools/buildfunctionaltests.ps1`" -Platform 'AnyCPU' -Configuration $Configuration -ProjectRoot $ProjectRoot -TestTargetOS $TestTargetOS"
+                Invoke-Expression "& `"$ProjectRoot/tools/buildmanualtests.ps1`" -Platform 'AnyCPU' -Configuration $Configuration -ProjectRoot $ProjectRoot -TestTargetOS $TestTargetOS"
+                break;
+            }
         }
-
-        Invoke-Expression "& `"$ProjectRoot/tools/buildnetcore.ps1`" -Platform 'Any CPU' -Configuration $Configuration -ProjectRoot $ProjectRoot -TargetOSGroup $TargetOSGroup"
-        Invoke-Expression "& `"$ProjectRoot/tools/buildfunctionaltests.ps1`" -Platform 'Any CPU' -Configuration $Configuration -ProjectRoot $ProjectRoot -TargetOSGroup $TargetOSGroup"
     }
 
     BuildDriverAndTests

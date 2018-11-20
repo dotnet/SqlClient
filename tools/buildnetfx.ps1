@@ -10,9 +10,12 @@ param(
     [Parameter(Mandatory=$true)]
     [string]$Platform,
     [Parameter(Mandatory=$true)]
-    [string]$ProjectRoot
+    [string]$ProjectRoot,
+    [Parameter(Mandatory=$true)]
+    [string]$AssemblyFileVersion
     )
 
+    $buildTool = 'msbuild'
     # Check if MsBuild exists in the path, if not then setup Enviornment Variables.
     Function CheckMSBuild()
     {
@@ -21,9 +24,8 @@ param(
             Invoke-Expression "& `"$ProjectRoot/tools/setupEnvVariables.ps1`""
         }
     }
-    Function BuildDriverAndTests()
+    Function BuildDriver()
     {
-        $buildTool = 'msbuild'
         $netfxSrcPath = "$ProjectRoot/src/Microsoft.Data.SqlClient/netfx/src"
         $projectPaths = "$netfxSrcPath/bidinit/src/bidinit.vcxproj",
                         "$netfxSrcPath/SNI/NLRegC/ascii/ascii.vcxproj",
@@ -31,10 +33,14 @@ param(
                         "$netfxSrcPath/SNI/SNI.vcxproj",
                         "$netfxSrcPath/managedwrapper/SNIManagedWrapper.vcxproj",
                         "$netfxSrcPath/System/Data/SqlClient/Microsoft.Data.SqlClient.csproj"
-        $buildArguments = "/p:Platform='$Platform' /p:Configuration='$Configuration'"
+        $buildArguments = "/p:Platform='$Platform' /p:Configuration='$Configuration' "
     
         foreach ($projectPath in $projectPaths)
         {
+            if($projectPath -like "*Microsoft.Data.SqlClient.csproj*")
+            {
+                $buildArguments += "/p:AssemblyFileVersion='$AssemblyFileVersion'"
+            }
             $buildCmd = "$buildTool $projectPath $buildArguments"
             Write-Output "*************************************** Build Command ***************************************"
             Write-Output $buildCmd
@@ -44,6 +50,6 @@ param(
     }
 
     CheckMSBuild
-    BuildDriverAndTests
+    BuildDriver
 
    

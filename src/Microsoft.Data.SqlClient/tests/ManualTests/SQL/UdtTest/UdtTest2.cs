@@ -8,9 +8,11 @@ using System.Data.SqlTypes;
 using System.Reflection;
 using System.Text;
 using Microsoft.SqlServer.Server;
+using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [ActiveIssue(5536)]
     public class UdtTest2
     {
         private string _connStr = null;

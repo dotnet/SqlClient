@@ -11,6 +11,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [ActiveIssue(5538)]
     public class SplitPacketTest
     {
         private int Port = -1;
@@ -43,7 +44,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SplitPacketSize = 1;
             OpenConnection();
         }
-
+      
         [CheckConnStrSetupFact]
         public void AlmostFullHeaderTest()
         {

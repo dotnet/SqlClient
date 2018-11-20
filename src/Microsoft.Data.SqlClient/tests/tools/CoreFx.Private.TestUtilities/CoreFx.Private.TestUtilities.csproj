@@ -1,17 +1,22 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <RootNamespace>CoreFx.Private.TestUtilities</RootNamespace>
     <AssemblyName>CoreFx.Private.TestUtilities</AssemblyName>
     <ProjectGuid>{EBDB0247-CA43-4226-B7A1-8FEF21061D09}</ProjectGuid>
+    <TargetFramework Condition="'$(TestTargetOS)' == '' OR '$(TestTargetOS)' == 'WindowsNetCore' OR '$(TestTargetOS)' == 'UnixNetCore'">netcoreapp2.1</TargetFramework>
+    <TargetFramework Condition="'$(TestTargetOS)' == WindowsNetFx">net46</TargetFramework>
+    <TargetGroup Condition="'$(TargetFramework)'=='netcoreapp2.1'">netcoreapp</TargetGroup>
+    <TargetGroup Condition="'$(TargetFramework)'=='net46'">netfx</TargetGroup>
     <ClsCompliant>false</ClsCompliant>
     <ShouldWriteSigningRequired>false</ShouldWriteSigningRequired>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <NoWarn Condition="'$(TargetGroup)' == 'netstandard'">$(NoWarn);CS3021</NoWarn>
     <GeneratePlatformNotSupportedAssemblyMessage Condition="'$(TargetGroup)' == 'netstandard'">Test Utilities are not supported on this platform</GeneratePlatformNotSupportedAssemblyMessage>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <TargetFramework  Condition="'$(TargetOSGroup)' == '' OR '$(TargetOSGroup)' == Unix">netcoreapp2.1</TargetFramework> 
-    <TargetFrameworks Condition="'$(TargetOSGroup)' == Windows">netcoreapp2.1;net46</TargetFrameworks> 
-    <TargetGroup Condition="'$(TargetFramework)'=='netcoreapp2.1'">netcoreapp</TargetGroup>
-    <TargetGroup Condition="'$(TargetFramework)'=='net46'">netfx</TargetGroup>
+  </PropertyGroup>
+  <PropertyGroup>
+    <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)\$(AssemblyName)</IntermediateOutputPath>  
+    <OutputPath>$(BinFolder)$(Configuration).$(Platform)\$(AssemblyName)</OutputPath>
   </PropertyGroup>
   <ItemGroup Condition="'$(TargetGroup)' != 'netstandard'">
     <Compile Include="System\AdminHelpers.cs" />

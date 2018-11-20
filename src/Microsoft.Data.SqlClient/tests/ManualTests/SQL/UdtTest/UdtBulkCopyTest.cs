@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -10,6 +11,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         private string _connStr;
 
+        [ActiveIssue(5535)]
         [CheckConnStrSetupFact]
         public void RunCopyTest()
         {

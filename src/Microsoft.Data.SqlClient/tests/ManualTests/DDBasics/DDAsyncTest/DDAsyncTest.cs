@@ -11,6 +11,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class DDAsyncTest
     {
+        [ActiveIssue(5532)]
         [CheckConnStrSetupFact]
         public static void OpenConnection_WithAsyncTrue_ThrowsNotSupportedException()
         {
