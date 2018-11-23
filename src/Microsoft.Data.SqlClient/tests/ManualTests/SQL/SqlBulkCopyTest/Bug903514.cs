@@ -10,7 +10,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class Bug903514
     {
-        [ActiveIssue(5518)]
         public static void Test(string constr, string dstTable)
         {
             using (SqlConnection dstConn = new SqlConnection(constr))
@@ -87,7 +86,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                     catch (Exception e)
                     {
-                        Assert.True(e.Message.Contains("Timeout expired") && 0 != timeout, "Unexpected exception: " + e);
+                        Assert.True(e.Message.Contains("Timeout Expired") && 0 != timeout, "Unexpected exception: " + e);
                     }
                 }
             }

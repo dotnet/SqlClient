@@ -11,12 +11,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class DDAsyncTest
     {
-        [ActiveIssue(5532)]
+        [SkipOnTargetFramework(~TargetFrameworkMonikers.NetFramework)]
         [CheckConnStrSetupFact]
         public static void OpenConnection_WithAsyncTrue_ThrowsNotSupportedException()
         {
+            //Fails on NetCore
             var asyncConnectionString = DataTestUtility.TcpConnStr + ";async=true";
             Assert.Throws<NotSupportedException>(() => { new SqlConnection(asyncConnectionString); });
+        }
+        
+        [SkipOnTargetFramework(~TargetFrameworkMonikers.Netcoreapp)]
+        [CheckConnStrSetupFact]
+        public static void OpenConnection_WithAsyncTrue()
+        {
+            // Passes on NetFx
+            var asyncConnectionString = DataTestUtility.TcpConnStr + ";async=true";
+            SqlConnection connection = new SqlConnection(asyncConnectionString);
         }
 
         #region <<ExecuteCommand_WithNewConnection>>

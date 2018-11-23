@@ -40,9 +40,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ActiveIssue(5534)]
+        [SkipOnTargetFramework(~TargetFrameworkMonikers.NetFramework)]
         [CheckConnStrSetupFact]
-        public static void GetValueTest()
+        public static void GetValueTestThrowsExceptionOnNetCore()
         {
             using (SqlConnection conn = new SqlConnection(DataTestUtility.TcpConnStr))
             using (SqlCommand cmd = new SqlCommand("select hierarchyid::Parse('/1/') as col0", conn))
@@ -55,6 +55,23 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     // SqlHierarchyId is part of Microsoft.SqlServer.Types, which is not supported in Core
                     Assert.Throws<FileNotFoundException>(() => reader.GetValue(0));
                     Assert.Throws<FileNotFoundException>(() => reader.GetSqlValue(0));
+                }
+            }
+        }
+        
+        [SkipOnTargetFramework(~TargetFrameworkMonikers.Netcoreapp)]
+        [CheckConnStrSetupFact]
+        public static void GetValueTest()
+        {
+            using (SqlConnection conn = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlCommand cmd = new SqlCommand("select hierarchyid::Parse('/1/') as col0", conn))
+            {
+                conn.Open();
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    Assert.True(reader.Read());
+                    reader.GetValue(0);
+                    reader.GetSqlValue(0);
                 }
             }
         }
