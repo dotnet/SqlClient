@@ -38,7 +38,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                return ADP.ArgumentNull(TdsEnums.TCE_PARAM_ENCRYPTION_ALGORITHM, System.SR.GetString(SR.TCE_NullKeyEncryptionAlgorithmSysErr));
+                return ADP.ArgumentNull(TdsEnums.TCE_PARAM_ENCRYPTION_ALGORITHM, System.SR.GetString(SR.TCE_NullKeyEncryptionAlgorithm));
             }
         }
 

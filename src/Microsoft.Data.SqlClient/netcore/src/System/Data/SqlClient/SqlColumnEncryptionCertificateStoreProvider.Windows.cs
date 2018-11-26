@@ -3,13 +3,10 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Text;
-using System.Data.Common;
 using System.Diagnostics;
-using System.Globalization;
-using System.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -508,8 +505,8 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(certificate != null);
             Debug.Assert(certificate.HasPrivateKey, "Attempting to encrypt with cert without privatekey");
 
-            RSACryptoServiceProvider rscp = (RSACryptoServiceProvider)certificate.PublicKey.Key;
-            return rscp.Encrypt(plainText, fOAEP: true);
+            RSA rsa = certificate.GetRSAPublicKey();
+            return rsa.Encrypt(plainText, RSAEncryptionPadding.OaepSHA1);
         }
 
         /// <summary>
@@ -524,8 +521,8 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(certificate != null);
             Debug.Assert(certificate.HasPrivateKey, "Attempting to decrypt with cert without privatekey");
 
-            RSACryptoServiceProvider rscp = (RSACryptoServiceProvider)certificate.PrivateKey;
-            return rscp.Decrypt(cipherText, fOAEP: true);
+            RSA rsa = certificate.GetRSAPrivateKey();
+            return rsa.Decrypt(cipherText, RSAEncryptionPadding.OaepSHA1);
         }
 
         /// <summary>
@@ -540,11 +537,10 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(certificate != null);
             Debug.Assert(certificate.HasPrivateKey, "Attempting to sign with cert without privatekey");
 
-            // Prepare RSACryptoServiceProvider from certificate's private key
-            RSACryptoServiceProvider rscp = GetCSPFromCertificatePrivateKey(certificate);
+            RSA rsa = certificate.GetRSAPrivateKey();
 
             // Prepare RSAPKCS1SignatureFormatter for signing the passed in hash
-            RSAPKCS1SignatureFormatter rsaFormatter = new RSAPKCS1SignatureFormatter(rscp);
+            RSAPKCS1SignatureFormatter rsaFormatter = new RSAPKCS1SignatureFormatter(rsa);
 
             //Set the hash algorithm to SHA256.
             rsaFormatter.SetHashAlgorithm(_hashingAlgorithm);
@@ -567,47 +563,16 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(certificate != null);
             Debug.Assert(certificate.HasPrivateKey, "Attempting to sign with cert without privatekey");
 
-            // Prepare RSACryptoServiceProvider from certificate's private key
-            RSACryptoServiceProvider rscp = GetCSPFromCertificatePrivateKey(certificate);
+            RSA rsa = certificate.GetRSAPrivateKey();
 
             // Prepare RSAPKCS1SignatureFormatter for signing the passed in hash
-            RSAPKCS1SignatureDeformatter rsaDeFormatter = new RSAPKCS1SignatureDeformatter(rscp);
+            RSAPKCS1SignatureDeformatter rsaDeFormatter = new RSAPKCS1SignatureDeformatter(rsa);
 
             //Set the hash algorithm to SHA256.
             rsaDeFormatter.SetHashAlgorithm(_hashingAlgorithm);
 
             //Create a signature for HashValue and return it. 
             return rsaDeFormatter.VerifySignature(dataToVerify, signature);
-        }
-
-        /// <summary>
-        /// Prepares RSACryptoServiceProvider from a given certificate's private key
-        /// </summary>
-        /// <param name="certificate"></param>
-        /// <returns></returns>
-        private RSACryptoServiceProvider GetCSPFromCertificatePrivateKey(X509Certificate2 certificate)
-        {
-            const int rsaAesProviderType = 24;
-
-            CspParameters privateKeyParams = new CspParameters();
-            privateKeyParams = new CspParameters();
-            privateKeyParams.KeyContainerName = ((RSACryptoServiceProvider)certificate.PrivateKey).CspKeyContainerInfo.KeyContainerName;
-            privateKeyParams.ProviderType = rsaAesProviderType /*PROV_RSA_AES*/;
-            privateKeyParams.KeyNumber = (int)((RSACryptoServiceProvider)certificate.PrivateKey).CspKeyContainerInfo.KeyNumber;
-
-            // For CurrentUser store, use UseExistingKey
-            // For LocalMachine store, use UseMachineKeyStore
-            // CspKeyContainerInfo.MachineKeyStore already contains the appropriate information so just use it.
-            if (((RSACryptoServiceProvider)certificate.PrivateKey).CspKeyContainerInfo.MachineKeyStore)
-            {
-                privateKeyParams.Flags = CspProviderFlags.UseMachineKeyStore;
-            }
-            else
-            {
-                privateKeyParams.Flags = CspProviderFlags.UseExistingKey;
-            }
-
-            return new RSACryptoServiceProvider(privateKeyParams);
         }
     }
 }

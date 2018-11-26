@@ -11,6 +11,7 @@
     <OutputPath>$(BinFolder)$(Configuration).FunctionalTests</OutputPath>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="AlwaysEncryptedTests\SqlColumnEncryptionCertificateStoreProviderShould.cs" />
     <Compile Include="SqlConnectionBasicTests.cs" />
     <Compile Include="TestTdsServer.cs" />
     <Compile Include="AADAccessTokenTest.cs" />

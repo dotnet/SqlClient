@@ -26,7 +26,7 @@ namespace Microsoft.Data.SqlClient
         /// <returns>Plain text column encryption key</returns>
         public override byte[] DecryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] encryptedColumnEncryptionKey)
         {
-            throw new NotSupportedException();
+            throw new PlatformNotSupportedException();
         }
 
         /// <summary>
@@ -39,7 +39,7 @@ namespace Microsoft.Data.SqlClient
         /// <returns>Encrypted column encryption key</returns>
         public override byte[] EncryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] columnEncryptionKey)
         {
-            throw new NotSupportedException();
+            throw new PlatformNotSupportedException();
         }
 
         /// <summary>
@@ -51,7 +51,7 @@ namespace Microsoft.Data.SqlClient
         /// <returns>Signature for master key metadata</returns>
         public override byte[] SignColumnMasterKeyMetadata(string masterKeyPath, bool allowEnclaveComputations)
         {
-            throw new NotSupportedException();
+            throw new PlatformNotSupportedException();
         }
 
         /// <summary>
@@ -64,7 +64,7 @@ namespace Microsoft.Data.SqlClient
         /// <returns>Boolean indicating whether the master key metadata can be verified based on the provided signature</returns>
         public override bool VerifyColumnMasterKeyMetadata(string masterKeyPath, bool allowEnclaveComputations, byte[] signature)
         {
-            throw new NotSupportedException();
+            throw new PlatformNotSupportedException();
         }
     }
 }
