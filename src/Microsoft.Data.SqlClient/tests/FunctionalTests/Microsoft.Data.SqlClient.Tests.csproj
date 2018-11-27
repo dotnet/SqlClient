@@ -12,6 +12,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="AlwaysEncryptedTests\SqlColumnEncryptionCertificateStoreProviderShould.cs" />
+    <Compile Include="AlwaysEncryptedTests\SqlColumnEncryptionCngProviderShould.cs" />
+    <Compile Include="AlwaysEncryptedTests\SqlColumnEncryptionCspProviderShould.cs" />
+    <Compile Include="AlwaysEncryptedTests\TestFixtures.cs" />
     <Compile Include="SqlConnectionBasicTests.cs" />
     <Compile Include="TestTdsServer.cs" />
     <Compile Include="AADAccessTokenTest.cs" />
