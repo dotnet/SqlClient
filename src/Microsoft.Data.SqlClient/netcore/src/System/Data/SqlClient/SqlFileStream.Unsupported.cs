@@ -5,7 +5,7 @@
 using System;
 using System.IO;
 
-namespace System.Data.SqlTypes
+namespace Microsoft.Data.SqlTypes
 {
     public sealed partial class SqlFileStream : System.IO.Stream
     {

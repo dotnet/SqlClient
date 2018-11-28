@@ -17,7 +17,10 @@ param(
 
     $buildTool ='dotnet msbuild'
     $netcoreSrcPath = "$ProjectRoot/src/Microsoft.Data.SqlClient/netcore/src"
-    $projectPaths = "$netcoreSrcPath/Microsoft.Data.SqlClient.csproj"
+    $netcoreRefPath = "$ProjectRoot/src/Microsoft.Data.SqlClient/netcore/ref"
+
+    $projectPaths = "$netcoreSrcPath/Microsoft.Data.SqlClient.csproj",
+                    "$netcoreRefPath/Microsoft.Data.SqlClient.csproj"
 
     Function SetBuildArguments()
     {
