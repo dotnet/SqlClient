@@ -541,7 +541,6 @@ namespace Microsoft.Data.SqlClient
 
             // Prepare RSAPKCS1SignatureFormatter for signing the passed in hash
             RSAPKCS1SignatureFormatter rsaFormatter = new RSAPKCS1SignatureFormatter(rsa);
-
             //Set the hash algorithm to SHA256.
             rsaFormatter.SetHashAlgorithm(_hashingAlgorithm);
 

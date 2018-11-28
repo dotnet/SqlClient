@@ -944,6 +944,8 @@ namespace Microsoft.Data.SqlClient
         internal const string TCE_PARAM_ENCRYPTIONKEY = "encryptionKey";
         internal const string TCE_PARAM_MASTERKEY_PATH = "masterKeyPath";
         internal const string TCE_PARAM_ENCRYPTED_CEK = "encryptedColumnEncryptionKey";
+        internal const string TCE_PARAM_CLIENT_KEYSTORE_PROVIDERS = "clientKeyStoreProviders";
+        internal const string TCE_PARAM_FORCE_COLUMN_ENCRYPTION = "ForceColumnEncryption(true)";
     }
 
     internal enum SniContext

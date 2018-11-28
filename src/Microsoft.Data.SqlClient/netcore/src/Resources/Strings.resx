@@ -1566,4 +1566,100 @@
   <data name="TCE_UntrustedKeyPath" xml:space="preserve">
     <value>Column master key path '{0}' received from server '{1}' is not a trusted key path.</value>
   </data>
+  <data name="TCE_AttestationInfoNotReturnedFromSQLServer" xml:space="preserve">
+    <value>Attestation information was not returned by SQL Server. Enclave type is '{0}' and enclave attestation URL is '{1}'.</value>
+  </data>
+  <data name="TCE_CannotCreateSqlColumnEncryptionEnclaveProvider" xml:space="preserve">
+    <value>Failed to instantiate an enclave provider with type '{1}' for name '{0}'. Error message: {2}</value>
+  </data>
+  <data name="TCE_CannotGetSqlColumnEncryptionEnclaveProviderConfig" xml:space="preserve">
+    <value>Failed to read the configuration section for enclave providers. Make sure the section is correctly formatted in your application configuration file. Error Message: {0}</value>
+  </data>
+  <data name="TCE_CanOnlyCallOnce" xml:space="preserve">
+    <value>Key store providers cannot be set more than once.</value>
+  </data>
+  <data name="TCE_ColumnEncryptionKeysNotFound" xml:space="preserve">
+    <value>Internal Error. Encrypted column encryption keys not found when trying to send the keys to the enclave.</value>
+  </data>
+  <data name="TCE_EmptyArgumentInConstructorInternal" xml:space="preserve">
+    <value>Internal Error. Empty argument '{0}' specified when constructing an object of type '{1}'. '{0}' cannot be empty.</value>
+  </data>
+  <data name="TCE_EmptyProviderName" xml:space="preserve">
+    <value>Invalid key store provider name specified. Key store provider names cannot be null or empty.</value>
+  </data>
+  <data name="TCE_EnclaveComputationsNotSupported" xml:space="preserve">
+    <value>You have specified the enclave attestation URL in the connection string, but the SQL Server instance in use does not support enclave based computations.</value>
+  </data>
+  <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
+    <value>No enclave provider found for enclave type '{0}'. Please specify the provider in the application configuration.</value>
+  </data>
+  <data name="TCE_EnclaveProvidersNotConfiguredForEnclaveBasedQuery" xml:space="preserve">
+    <value>Executing a query requires enclave computations, but the application configuration is missing the enclave provider section.</value>
+  </data>
+  <data name="TCE_EnclaveTypeNotReturned" xml:space="preserve">
+    <value>You have specified the enclave attestation URL in the connection string, but the SQL Server instance did not return an enclave type. Please make sure the enclave type is correctly configured in your instance.</value>
+  </data>
+  <data name="TCE_EnclaveTypeNullForEnclaveBasedQuery" xml:space="preserve">
+    <value>Internal Error. Enclave type received from SQL Server is null or empty when executing a query requiring enclave computations.</value>
+  </data>
+  <data name="TCE_ExceptionWhenGeneratingEnclavePackage" xml:space="preserve">
+    <value>Error encountered while generating package to be sent to enclave. Error message: {0}</value>
+  </data>
+  <data name="TCE_FailedToEncryptRegisterRulesBytePackage" xml:space="preserve">
+    <value>Internal Error.  Failed to encrypt byte package to be sent to the enclave. Error Message: {0}</value>
+  </data>
+  <data name="TCE_InsufficientBuffer" xml:space="preserve">
+    <value>Internal Error. The buffer specified by argument '{0}' for method '{1}.{2}' has insufficient space.</value>
+  </data>
+  <data name="TCE_InvalidAttestationParameterUnableToConvertToUnsignedInt" xml:space="preserve">
+    <value>Invalid attestation parameters specified by the enclave provider for enclave type '{0}'. Error occurred when converting the value '{1}' of parameter '{2}' to unsigned int. Error Message: {3}</value>
+  </data>
+  <data name="TCE_InvalidCustomKeyStoreProviderName" xml:space="preserve">
+    <value>Invalid key store provider name '{0}'. '{1}' prefix is reserved for system key store providers.</value>
+  </data>
+  <data name="TCE_InvalidDatabaseIdUnableToCastToUnsignedInt" xml:space="preserve">
+    <value>Internal Error. The given database id '{0}' is not valid. Error occurred when converting the database id to unsigned int. Error Message: {1}</value>
+  </data>
+  <data name="TCE_InvalidKeyIdUnableToCastToUnsignedShort" xml:space="preserve">
+    <value>Internal Error. The given key id '{0}' is not valid. Error occurred when converting the key id to unsigned short. Error Message: {1}</value>
+  </data>
+  <data name="TCE_NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage" xml:space="preserve">
+    <value>Error occured when generating enclave package. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is '{0}'.</value>
+  </data>
+  <data name="TCE_NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe" xml:space="preserve">
+    <value>Error occured when reading '{0}' resultset. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is '{1}'.</value>
+  </data>
+  <data name="TCE_NotSupportedByServer" xml:space="preserve">
+    <value>{0} instance in use does not support column encryption.</value>
+  </data>
+  <data name="TCE_NullArgumentInConstructorInternal" xml:space="preserve">
+    <value>Internal Error. Null argument '{0}' specified when constructing an object of type '{1}'. '{0}' cannot be null.</value>
+  </data>
+  <data name="TCE_NullCustomKeyStoreProviderDictionary" xml:space="preserve">
+    <value>Column encryption key store provider dictionary cannot be null. Expecting a non-null value.</value>
+  </data>
+  <data name="TCE_NullEnclavePackageForEnclaveBasedQuery" xml:space="preserve">
+    <value>Internal Error. Enclave package is null during execution of an enclave based query. Enclave type is '{0}' and enclaveAttestationUrl is '{1}'.</value>
+  </data>
+  <data name="TCE_NullEnclaveSessionDuringQueryExecution" xml:space="preserve">
+    <value>Internal Error. Enclave session is null during query execution. Enclave type is '{0}' and enclaveAttestationUrl is '{1}'.</value>
+  </data>
+  <data name="TCE_NullEnclaveSessionReturnedFromProvider" xml:space="preserve">
+    <value>Unable to communicate with the enclave. Null enclave session information received from the enclave provider. Enclave type is '{0}' and enclave attestation URL is '{1}'.</value>
+  </data>
+  <data name="TCE_NullProviderValue" xml:space="preserve">
+    <value>Null reference specified for key store provider '{0}'. Expecting a non-null value.</value>
+  </data>
+  <data name="TCE_OffsetOutOfBounds" xml:space="preserve">
+    <value>Internal Error. Failed to serialize keys to be sent to the enclave. The start offset specified by argument '{0}' for method {1}.{2} is out of bounds.</value>
+  </data>
+  <data name="TCE_SqlColumnEncryptionEnclaveProviderNameCannotBeEmpty" xml:space="preserve">
+    <value>Internal Error. SqlColumnEncryptionEnclaveProviderName cannot be null or empty.</value>
+  </data>
+  <data name="TCE_UnsupportedDatatype" xml:space="preserve">
+    <value>Encryption and decryption of data type '{0}' is not supported.</value>
+  </data>
+  <data name="TCE_UnsupportedNormalizationVersion" xml:space="preserve">
+    <value>Normalization version '{0}' received from {2} is not supported. Valid normalization versions are: {1}.</value>
+  </data>
 </root>

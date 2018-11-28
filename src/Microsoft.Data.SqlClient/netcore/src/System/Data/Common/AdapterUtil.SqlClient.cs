@@ -579,6 +579,7 @@ namespace Microsoft.Data.Common
         }
 
         // global constant strings
+        internal const string ColumnEncryptionSystemProviderNamePrefix = "MSSQL_";
         internal const string Parameter = "Parameter";
         internal const string ParameterName = "ParameterName";
         internal const string ParameterSetPosition = "set_Position";

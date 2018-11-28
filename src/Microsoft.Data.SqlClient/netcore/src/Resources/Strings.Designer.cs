@@ -2795,18 +2795,16 @@ namespace System {
                 return ResourceManager.GetString("SQL_Timeout", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Execution Timeout Expired.  The timeout period elapsed prior to completion of the operation or the server is not responding..
         /// </summary>
-        internal static string SQL_Timeout_Execution
-        {
-            get
-            {
+        internal static string SQL_Timeout_Execution {
+            get {
                 return ResourceManager.GetString("SQL_Timeout_Execution", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to This failure occurred while attempting to connect to the {0} server..
         /// </summary>
@@ -3717,6 +3715,42 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Attestation information was not returned by SQL Server. Enclave type is &apos;{0}&apos; and enclave attestation URL is &apos;{1}&apos;..
+        /// </summary>
+        internal static string TCE_AttestationInfoNotReturnedFromSQLServer {
+            get {
+                return ResourceManager.GetString("TCE_AttestationInfoNotReturnedFromSQLServer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to instantiate an enclave provider with type &apos;{1}&apos; for name &apos;{0}&apos;. Error message: {2}.
+        /// </summary>
+        internal static string TCE_CannotCreateSqlColumnEncryptionEnclaveProvider {
+            get {
+                return ResourceManager.GetString("TCE_CannotCreateSqlColumnEncryptionEnclaveProvider", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to read the configuration section for enclave providers. Make sure the section is correctly formatted in your application configuration file. Error Message: {0}.
+        /// </summary>
+        internal static string TCE_CannotGetSqlColumnEncryptionEnclaveProviderConfig {
+            get {
+                return ResourceManager.GetString("TCE_CannotGetSqlColumnEncryptionEnclaveProviderConfig", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Key store providers cannot be set more than once..
+        /// </summary>
+        internal static string TCE_CanOnlyCallOnce {
+            get {
+                return ResourceManager.GetString("TCE_CanOnlyCallOnce", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Certificate with thumbprint &apos;{0}&apos; not found in certificate store &apos;{1}&apos; in certificate location &apos;{2}&apos;..
         /// </summary>
         internal static string TCE_CertificateNotFound {
@@ -3753,6 +3787,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Internal Error. Encrypted column encryption keys not found when trying to send the keys to the enclave..
+        /// </summary>
+        internal static string TCE_ColumnEncryptionKeysNotFound {
+            get {
+                return ResourceManager.GetString("TCE_ColumnEncryptionKeysNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Internal error. The signature returned by SQL Server for enclave-enabled column master key, specified at key path &apos;{0}&apos;, cannot be null or empty..
         /// </summary>
         internal static string TCE_ColumnMasterKeySignatureNotFound {
@@ -3776,6 +3819,15 @@ namespace System {
         internal static string TCE_DecryptionFailed {
             get {
                 return ResourceManager.GetString("TCE_DecryptionFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Internal Error. Empty argument &apos;{0}&apos; specified when constructing an object of type &apos;{1}&apos;. &apos;{0}&apos; cannot be empty..
+        /// </summary>
+        internal static string TCE_EmptyArgumentInConstructorInternal {
+            get {
+                return ResourceManager.GetString("TCE_EmptyArgumentInConstructorInternal", resourceCulture);
             }
         }
         
@@ -3897,6 +3949,87 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Invalid key store provider name specified. Key store provider names cannot be null or empty..
+        /// </summary>
+        internal static string TCE_EmptyProviderName {
+            get {
+                return ResourceManager.GetString("TCE_EmptyProviderName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You have specified the enclave attestation URL in the connection string, but the SQL Server instance in use does not support enclave based computations..
+        /// </summary>
+        internal static string TCE_EnclaveComputationsNotSupported {
+            get {
+                return ResourceManager.GetString("TCE_EnclaveComputationsNotSupported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No enclave provider found for enclave type &apos;{0}&apos;. Please specify the provider in the application configuration..
+        /// </summary>
+        internal static string TCE_EnclaveProviderNotFound {
+            get {
+                return ResourceManager.GetString("TCE_EnclaveProviderNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Executing a query requires enclave computations, but the application configuration is missing the enclave provider section..
+        /// </summary>
+        internal static string TCE_EnclaveProvidersNotConfiguredForEnclaveBasedQuery {
+            get {
+                return ResourceManager.GetString("TCE_EnclaveProvidersNotConfiguredForEnclaveBasedQuery", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You have specified the enclave attestation URL in the connection string, but the SQL Server instance did not return an enclave type. Please make sure the enclave type is correctly configured in your instance..
+        /// </summary>
+        internal static string TCE_EnclaveTypeNotReturned {
+            get {
+                return ResourceManager.GetString("TCE_EnclaveTypeNotReturned", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Internal Error. Enclave type received from SQL Server is null or empty when executing a query requiring enclave computations..
+        /// </summary>
+        internal static string TCE_EnclaveTypeNullForEnclaveBasedQuery {
+            get {
+                return ResourceManager.GetString("TCE_EnclaveTypeNullForEnclaveBasedQuery", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Error encountered while generating package to be sent to enclave. Error message: {0}.
+        /// </summary>
+        internal static string TCE_ExceptionWhenGeneratingEnclavePackage {
+            get {
+                return ResourceManager.GetString("TCE_ExceptionWhenGeneratingEnclavePackage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Internal Error.  Failed to encrypt byte package to be sent to the enclave. Error Message: {0}.
+        /// </summary>
+        internal static string TCE_FailedToEncryptRegisterRulesBytePackage {
+            get {
+                return ResourceManager.GetString("TCE_FailedToEncryptRegisterRulesBytePackage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Internal Error. The buffer specified by argument &apos;{0}&apos; for method &apos;{1}.{2}&apos; has insufficient space..
+        /// </summary>
+        internal static string TCE_InsufficientBuffer {
+            get {
+                return ResourceManager.GetString("TCE_InsufficientBuffer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The specified ciphertext&apos;s encryption algorithm version &apos;{0}&apos; does not match the expected encryption algorithm version &apos;{1}&apos;..
         /// </summary>
         internal static string TCE_InvalidAlgorithmVersion {
@@ -3911,6 +4044,15 @@ namespace System {
         internal static string TCE_InvalidAlgorithmVersionInEncryptedCEK {
             get {
                 return ResourceManager.GetString("TCE_InvalidAlgorithmVersionInEncryptedCEK", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid attestation parameters specified by the enclave provider for enclave type &apos;{0}&apos;. Error occurred when converting the value &apos;{1}&apos; of parameter &apos;{2}&apos; to unsigned int. Error Message: {3}.
+        /// </summary>
+        internal static string TCE_InvalidAttestationParameterUnableToConvertToUnsignedInt {
+            get {
+                return ResourceManager.GetString("TCE_InvalidAttestationParameterUnableToConvertToUnsignedInt", resourceCulture);
             }
         }
         
@@ -4113,6 +4255,24 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Invalid key store provider name &apos;{0}&apos;. &apos;{1}&apos; prefix is reserved for system key store providers..
+        /// </summary>
+        internal static string TCE_InvalidCustomKeyStoreProviderName {
+            get {
+                return ResourceManager.GetString("TCE_InvalidCustomKeyStoreProviderName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Internal Error. The given database id &apos;{0}&apos; is not valid. Error occurred when converting the database id to unsigned int. Error Message: {1}.
+        /// </summary>
+        internal static string TCE_InvalidDatabaseIdUnableToCastToUnsignedInt {
+            get {
+                return ResourceManager.GetString("TCE_InvalidDatabaseIdUnableToCastToUnsignedInt", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Encryption type &apos;{1}&apos; specified for the column in the database is either invalid or corrupted. Valid encryption types for algorithm &apos;{0}&apos; are: {2}..
         /// </summary>
         internal static string TCE_InvalidEncryptionType {
@@ -4136,6 +4296,15 @@ namespace System {
         internal static string TCE_InvalidKeyEncryptionAlgorithmSysErr {
             get {
                 return ResourceManager.GetString("TCE_InvalidKeyEncryptionAlgorithmSysErr", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Internal Error. The given key id &apos;{0}&apos; is not valid. Error occurred when converting the key id to unsigned short. Error Message: {1}.
+        /// </summary>
+        internal static string TCE_InvalidKeyIdUnableToCastToUnsignedShort {
+            get {
+                return ResourceManager.GetString("TCE_InvalidKeyIdUnableToCastToUnsignedShort", resourceCulture);
             }
         }
         
@@ -4226,6 +4395,42 @@ namespace System {
         internal static string TCE_LargeCertificatePathLengthSysErr {
             get {
                 return ResourceManager.GetString("TCE_LargeCertificatePathLengthSysErr", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Error occured when generating enclave package. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is &apos;{0}&apos;..
+        /// </summary>
+        internal static string TCE_NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage {
+            get {
+                return ResourceManager.GetString("TCE_NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Error occured when reading &apos;{0}&apos; resultset. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is &apos;{1}&apos;..
+        /// </summary>
+        internal static string TCE_NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe {
+            get {
+                return ResourceManager.GetString("TCE_NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} instance in use does not support column encryption..
+        /// </summary>
+        internal static string TCE_NotSupportedByServer {
+            get {
+                return ResourceManager.GetString("TCE_NotSupportedByServer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Internal Error. Null argument &apos;{0}&apos; specified when constructing an object of type &apos;{1}&apos;. &apos;{0}&apos; cannot be null..
+        /// </summary>
+        internal static string TCE_NullArgumentInConstructorInternal {
+            get {
+                return ResourceManager.GetString("TCE_NullArgumentInConstructorInternal", resourceCulture);
             }
         }
         
@@ -4329,6 +4534,42 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Column encryption key store provider dictionary cannot be null. Expecting a non-null value..
+        /// </summary>
+        internal static string TCE_NullCustomKeyStoreProviderDictionary {
+            get {
+                return ResourceManager.GetString("TCE_NullCustomKeyStoreProviderDictionary", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Internal Error. Enclave package is null during execution of an enclave based query. Enclave type is &apos;{0}&apos; and enclaveAttestationUrl is &apos;{1}&apos;..
+        /// </summary>
+        internal static string TCE_NullEnclavePackageForEnclaveBasedQuery {
+            get {
+                return ResourceManager.GetString("TCE_NullEnclavePackageForEnclaveBasedQuery", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Internal Error. Enclave session is null during query execution. Enclave type is &apos;{0}&apos; and enclaveAttestationUrl is &apos;{1}&apos;..
+        /// </summary>
+        internal static string TCE_NullEnclaveSessionDuringQueryExecution {
+            get {
+                return ResourceManager.GetString("TCE_NullEnclaveSessionDuringQueryExecution", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to communicate with the enclave. Null enclave session information received from the enclave provider. Enclave type is &apos;{0}&apos; and enclave attestation URL is &apos;{1}&apos;..
+        /// </summary>
+        internal static string TCE_NullEnclaveSessionReturnedFromProvider {
+            get {
+                return ResourceManager.GetString("TCE_NullEnclaveSessionReturnedFromProvider", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Internal error. Encrypted column encryption key cannot be null..
         /// </summary>
         internal static string TCE_NullEncryptedColumnEncryptionKey {
@@ -4365,6 +4606,33 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Null reference specified for key store provider &apos;{0}&apos;. Expecting a non-null value..
+        /// </summary>
+        internal static string TCE_NullProviderValue {
+            get {
+                return ResourceManager.GetString("TCE_NullProviderValue", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Internal Error. Failed to serialize keys to be sent to the enclave. The start offset specified by argument &apos;{0}&apos; for method {1}.{2} is out of bounds..
+        /// </summary>
+        internal static string TCE_OffsetOutOfBounds {
+            get {
+                return ResourceManager.GetString("TCE_OffsetOutOfBounds", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Internal Error. SqlColumnEncryptionEnclaveProviderName cannot be null or empty..
+        /// </summary>
+        internal static string TCE_SqlColumnEncryptionEnclaveProviderNameCannotBeEmpty {
+            get {
+                return ResourceManager.GetString("TCE_SqlColumnEncryptionEnclaveProviderNameCannotBeEmpty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Unable to verify a column master key signature. Error message: {0}.
         /// </summary>
         internal static string TCE_UnableToVerifyColumnMasterKeySignature {
@@ -4397,6 +4665,24 @@ namespace System {
         internal static string TCE_UnrecognizedKeyStoreProviderName {
             get {
                 return ResourceManager.GetString("TCE_UnrecognizedKeyStoreProviderName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Encryption and decryption of data type &apos;{0}&apos; is not supported..
+        /// </summary>
+        internal static string TCE_UnsupportedDatatype {
+            get {
+                return ResourceManager.GetString("TCE_UnsupportedDatatype", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Normalization version &apos;{0}&apos; received from {2} is not supported. Valid normalization versions are: {1}..
+        /// </summary>
+        internal static string TCE_UnsupportedNormalizationVersion {
+            get {
+                return ResourceManager.GetString("TCE_UnsupportedNormalizationVersion", resourceCulture);
             }
         }
         

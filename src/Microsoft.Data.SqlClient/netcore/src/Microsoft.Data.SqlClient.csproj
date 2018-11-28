@@ -45,6 +45,12 @@
     <Compile Include="System\Data\SqlClient\SqlColumnEncryptionKeyStoreProvider.cs" />
     <Compile Include="System\Data\SqlClient\AlwaysEncryptedHelperClasses.cs" />
     <Compile Include="System\Data\SqlClient\SqlUtil.netcoreapp.cs" />
+    <Compile Include="System\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.cs" />
+    <Compile Include="System\Data\SqlClient\SqlEnclaveAttestationParameters.cs" />
+    <Compile Include="System\Data\SqlClient\SqlEnclaveSession.cs" />
+    <Compile Include="System\Data\SqlClient\SqlColumnEncryptionEnclaveProviderConfigurationManager.cs" />
+    <Compile Include="System\Data\SqlClient\ColumnEncryptionKeyInfo.cs" />
+    <Compile Include="System\Data\SqlClient\EnclaveDelegate.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(IsPartialFacadeAssembly)' != 'true' AND '$(OSGroup)' != 'AnyOS'">    
     <Compile Include="$(CommonPath)\System\SR.cs" />
@@ -545,6 +551,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Condition="'$(TargetsWindows)' == 'true' And '$(IsPartialFacadeAssembly)' != 'true' and '$(IsUAPAssembly)' != 'true'" Include="Microsoft.Win32.Registry" Version="4.5.0" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="4.5.0" />
     <PackageReference Include="System.Security.Permissions" Version="4.5.0" />
     <PackageReference Include="System.Security.Principal.Windows" Version="4.5.0" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="4.5.0" />
