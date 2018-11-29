@@ -12,7 +12,7 @@ using Microsoft.Data.SqlTypes;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal sealed class SqlBuffer
+    internal sealed partial class SqlBuffer
     {
         internal enum StorageType
         {
@@ -1043,12 +1043,12 @@ namespace Microsoft.Data.SqlClient
             _isNull = false;
         }
 
-        internal void SetToTime(byte[] bytes, int length, byte scale)
+        internal void SetToTime(byte[] bytes, int length, byte scale, byte denormalizedScale)
         {
             Debug.Assert(IsEmpty, "setting value a second time?");
 
             _type = StorageType.Time;
-            FillInTimeInfo(ref _value._timeInfo, bytes, length, scale);
+            FillInTimeInfo(ref _value._timeInfo, bytes, length, scale, denormalizedScale);
             _isNull = false;
         }
 
@@ -1062,12 +1062,12 @@ namespace Microsoft.Data.SqlClient
             _isNull = false;
         }
 
-        internal void SetToDateTime2(byte[] bytes, int length, byte scale)
+        internal void SetToDateTime2(byte[] bytes, int length, byte scale, byte denormalizedScale)
         {
             Debug.Assert(IsEmpty, "setting value a second time?");
 
             _type = StorageType.DateTime2;
-            FillInTimeInfo(ref _value._dateTime2Info.timeInfo, bytes, length - 3, scale); // remaining 3 bytes is for date
+            FillInTimeInfo(ref _value._dateTime2Info.timeInfo, bytes, length - 3, scale, denormalizedScale); // remaining 3 bytes is for date
             _value._dateTime2Info.date = GetDateFromByteArray(bytes, length - 3); // 3 bytes for date
             _isNull = false;
         }
@@ -1083,14 +1083,14 @@ namespace Microsoft.Data.SqlClient
             _isNull = false;
         }
 
-        internal void SetToDateTimeOffset(byte[] bytes, int length, byte scale)
+        internal void SetToDateTimeOffset(byte[] bytes, int length, byte scale, byte denormalizedScale)
         {
             Debug.Assert(IsEmpty, "setting value a second time?");
 
             _type = StorageType.DateTimeOffset;
-            FillInTimeInfo(ref _value._dateTimeOffsetInfo.dateTime2Info.timeInfo, bytes, length - 5, scale); // remaining 5 bytes are for date and offset
+            FillInTimeInfo(ref _value._dateTimeOffsetInfo.dateTime2Info.timeInfo, bytes, length - 5, scale, denormalizedScale); // remaining 5 bytes are for date and offset
             _value._dateTimeOffsetInfo.dateTime2Info.date = GetDateFromByteArray(bytes, length - 5); // 3 bytes for date
-            _value._dateTimeOffsetInfo.offset = (short)(bytes[length - 2] + (bytes[length - 1] << 8)); // 2 bytes for offset (Int16)
+            _value._dateTimeOffsetInfo.offset = (Int16)(bytes[length - 2] + (bytes[length - 1] << 8)); // 2 bytes for offset (Int16)
             _isNull = false;
         }
 
@@ -1107,22 +1107,27 @@ namespace Microsoft.Data.SqlClient
             _isNull = false;
         }
 
-        private static void FillInTimeInfo(ref TimeInfo timeInfo, byte[] timeBytes, int length, byte scale)
+        private static void FillInTimeInfo(ref TimeInfo timeInfo, byte[] timeBytes, int length, byte scale, byte denormalizedScale)
         {
             Debug.Assert(3 <= length && length <= 5, "invalid data length for timeInfo: " + length);
             Debug.Assert(0 <= scale && scale <= 7, "invalid scale: " + scale);
+            Debug.Assert(0 <= denormalizedScale && denormalizedScale <= 7, "invalid denormalized scale: " + denormalizedScale);
 
-            long tickUnits = (long)timeBytes[0] + ((long)timeBytes[1] << 8) + ((long)timeBytes[2] << 16);
+            Int64 tickUnits = (Int64)timeBytes[0] + ((Int64)timeBytes[1] << 8) + ((Int64)timeBytes[2] << 16);
             if (length > 3)
             {
-                tickUnits += ((long)timeBytes[3] << 24);
+                tickUnits += ((Int64)timeBytes[3] << 24);
             }
             if (length > 4)
             {
-                tickUnits += ((long)timeBytes[4] << 32);
+                tickUnits += ((Int64)timeBytes[4] << 32);
             }
             timeInfo.ticks = tickUnits * TdsEnums.TICKS_FROM_SCALE[scale];
-            timeInfo.scale = scale;
+
+            // Once the deserialization has been completed using the value scale, we need to set the actual denormalized scale, 
+            // coming from the data type, on the original result, so that it has the proper scale setting.
+            // This only applies for values that got serialized/deserialized for encryption. Otherwise, both scales should be equal.
+            timeInfo.scale = denormalizedScale;
         }
 
         private static int GetDateFromByteArray(byte[] buf, int offset)
