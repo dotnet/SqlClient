@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="BuildAll" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="src/Directory.Build.props" />
+
+  <PropertyGroup>
+    <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
+    <!-- Flag to control if NetFx driver should be built or not -->
+    <BuildNetFx Condition="'$(BuildNetFx)'   == '' AND '$(TargetsWindows)' == 'true'">true</BuildNetFx>
+    <BuildNetFx Condition="'$(TargetsUnix)' == 'true'">false</BuildNetFx>
+    <TestOS     Condition="'$(TestTargetOS)' == '' AND '$(TargetsWindows)' == 'true'">Windows</TestOS>
+    <TestOS     Condition="'$(TestTargetOS)' == '' AND '$(TargetsUnix)'    == 'true'">Unix</TestOS>
+    <ProjectProperties>Configuration=$(Configuration);AssemblyFileVersion=$(AssemblyFileVersion);TargetsWindows=$(TargetsWindows);TargetsUnix=$(TargetsUnix)</ProjectProperties>
+    <TestProjectProperties>BuildProjectReferences=false;$(ProjectProperties)</TestProjectProperties>
+  </PropertyGroup>
+
+  <!-- Populate all the C++ projects -->
+  <ItemGroup Condition="'$(BuildNetFx)' == 'true'">
+    <NativeProject Include="**/bidinit.vcxproj" />
+    <NativeProject Include="**/ascii.vcxproj" />
+    <NativeProject Include="**/unicode.vcxproj" />
+    <NativeProject Include="**/SNI.vcxproj" />
+    <NativeProject Include="**/SNIManagedWrapper.vcxproj" />
+  </ItemGroup>
+
+  <!-- Populate all managed projects -->
+  <ItemGroup>
+    <NetFxDriver     Include="**/netfx/**/Microsoft.Data.SqlClient*.csproj" Condition="'$(BuildNetFx)' == 'true'"/>
+    <NetCoreDriver   Include="**/netcore/**/Microsoft.Data.SqlClient*.csproj"/>
+    <FunctionalTests Include="**/tools/TDS/TDS/TDS.csproj" />
+    <FunctionalTests Include="**/tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
+    <FunctionalTests Include="**/tools/TDS/TDS.Servers/TDS.Servers.csproj" />
+    <FunctionalTests Include="**/tools/CoreFx.Private.TestUtilities/CoreFx.Private.TestUtilities.csproj" />
+    <FunctionalTests Include="**/ManualTests/SQL/UdtTest/UDTs/Address/Address.csproj" />
+    <FunctionalTests Include="**/Microsoft.Data.SqlClient.Tests.csproj" />
+
+    <ManualTests     Include="**/ManualTests/SQL/UdtTest/UDTs/Address/Address.csproj" />
+    <ManualTests     Include="**/ManualTests/SQL/UdtTest/UDTs/Circle/Circle.csproj" />
+    <ManualTests     Include="**/ManualTests/SQL/UdtTest/UDTs/Shapes/Shapes.csproj" />
+    <ManualTests     Include="**/ManualTests/SQL/UdtTest/UDTs/Utf8String/Utf8String.csproj" />
+    <ManualTests     Include="**/tools/CoreFx.Private.TestUtilities/CoreFx.Private.TestUtilities.csproj" />
+    <ManualTests     Include="**/ManualTests/Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" />
+  </ItemGroup>
+
+  <Target Name="Restore">
+    <MSBuild Projects="@(NetCoreDriver)" Targets="restore" />
+    <MSBuild Projects="@(ManualTests)" Targets="restore"/>
+    <MSBuild Projects="@(FunctionalTests)" Targets="restore"/>
+  </Target>
+
+  <Target Name="RestoreNetFx">
+    <MSBuild Projects="@(ManualTests)" Targets="restore" Properties="TestTargetOS=$(TestOS)NetFx" Condition="'$(BuildNetFx)' == 'true'"/>
+    <MSBuild Projects="@(FunctionalTests)" Targets="restore" Properties="TestTargetOS=$(TestOS)NetFx" Condition="'$(BuildNetFx)' == 'true'"/>
+  </Target>
+
+  <!-- Top Level Build targets -->
+  <Target Name="BuildAll"        DependsOnTargets="BuildFramework;Restore;BuildCore" />
+  <Target Name="BuildTestsCore"  DependsOnTargets="BuildFunctionalTestsCore;BuildManualTestsCore" />
+  <Target Name="BuildTestsNetFx" DependsOnTargets="BuildFunctionalTestsNetFx;BuildManualTestsNetFx" />
+
+  <Target Name="BuildFramework">
+    <MSBuild Projects="@(NativeProject)" Properties="Platform=Win32;$(ProjectProperties)" Condition="'$(BuildNetFx)' == 'true'" />
+    <MSBuild Projects="@(NativeProject)" Properties="Platform=x64;$(ProjectProperties)"   Condition="'$(BuildNetFx)' == 'true'" />
+    <MSBuild Projects="@(NetFxDriver)"   Properties="Platform=Win32;$(ProjectProperties)" Condition="'$(BuildNetFx)' == 'true'" />
+    <MSBuild Projects="@(NetFxDriver)"   Properties="Platform=x64;$(ProjectProperties)"   Condition="'$(BuildNetFx)' == 'true'" />
+  </Target>
+
+  <Target Name="BuildCore" DependsOnTargets="Restore">
+    <MSBuild Projects="@(NetCoreDriver)"   Properties="Platform=AnyCPU;$(ProjectProperties)" />
+  </Target>
+
+  <Target Name="BuildFunctionalTestsCore" DependsOnTargets="Restore">
+    <MSBuild Projects="@(FunctionalTests)" Properties="TestTargetOS=$(TestOS)NetCore;Platform=AnyCPU;$(TestProjectProperties)" />
+  </Target>
+
+  <Target Name="BuildManualTestsCore" DependsOnTargets="Restore">
+    <MSBuild Projects="@(ManualTests)"   Properties="TestTargetOS=$(TestOS)NetCore;Platform=AnyCPU;$(TestProjectProperties)" />
+  </Target>
+
+  <Target Name="BuildFunctionalTestsNetFx" DependsOnTargets="RestoreNetFx">
+    <!-- Only build platform specific tests on Windows for .Net Framework -->
+    <MSBuild Projects="@(FunctionalTests)"   Properties="TestTargetOS=$(TestOS)NetFx;Platform=Win32;$(TestProjectProperties)" Condition="'$(BuildNetFx)' == 'true'"/>
+    <MSBuild Projects="@(FunctionalTests)"   Properties="TestTargetOS=$(TestOS)NetFx;Platform=x64;$(TestProjectProperties)"   Condition="'$(BuildNetFx)' == 'true'"/>
+  </Target>
+
+  <Target Name="BuildManualTestsNetFx" DependsOnTargets="RestoreNetFx">
+    <MSBuild Projects="@(ManualTests)"   Properties="TestTargetOS=$(TestOS)NetFx;Platform=Win32;$(TestProjectProperties)" Condition="'$(BuildNetFx)' == 'true'"/>
+    <MSBuild Projects="@(ManualTests)"   Properties="TestTargetOS=$(TestOS)NetFx;Platform=x64;$(TestProjectProperties)"   Condition="'$(BuildNetFx)' == 'true'"/>
+  </Target>
+
+  <Target Name="Clean">
+    <RemoveDir Directories="$(BinFolder)" />
+    <RemoveDir Directories="$(ObjFolder)" />
+  </Target>
+
+</Project>

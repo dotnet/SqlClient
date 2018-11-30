@@ -24,27 +24,39 @@ param(
     }
     Function BuildDriverAndTests()
     {
+        $cmd = ""
         switch ( $TestTargetOS )
         {
             'WindowsNetFx'
             {
                 CheckMSBuild
-                Invoke-Expression "& `"$ProjectRoot/tools/buildnetfx.ps1`" -Platform 'Win32' -Configuration $Configuration -ProjectRoot $ProjectRoot -AssemblyFileVersion $AssemblyFileVersion"
-                Invoke-Expression "& `"$ProjectRoot/tools/buildnetfx.ps1`" -Platform 'x64' -Configuration $Configuration -ProjectRoot $ProjectRoot -AssemblyFileVersion $AssemblyFileVersion"
-                Invoke-Expression "& `"$ProjectRoot/tools/buildfunctionaltests.ps1`" -Platform 'x86' -Configuration $Configuration -ProjectRoot $ProjectRoot -TestTargetOS $TestTargetOS"
-                Invoke-Expression "& `"$ProjectRoot/tools/buildfunctionaltests.ps1`" -Platform 'x64' -Configuration $Configuration -ProjectRoot $ProjectRoot -TestTargetOS $TestTargetOS"
-                Invoke-Expression "& `"$ProjectRoot/tools/buildmanualtests.ps1`" -Platform 'x86' -Configuration $Configuration -ProjectRoot $ProjectRoot -TestTargetOS $TestTargetOS"
-                Invoke-Expression "& `"$ProjectRoot/tools/buildmanualtests.ps1`" -Platform 'x64' -Configuration $Configuration -ProjectRoot $ProjectRoot -TestTargetOS $TestTargetOS"
+                $buildcmd     = "msbuild /p:Configuration='$Configuration'"
+                $testbuildcmd = "msbuild /t:BuildTestsNetFx /p:Configuration='$Configuration'"
                 break
             }
-            { 'WindowsNetCore', 'UnixNetCore'}
+            'WindowsNetCore'
             {
-                Invoke-Expression "& `"$ProjectRoot/tools/buildnetcore.ps1`" -Platform 'AnyCPU' -Configuration $Configuration -ProjectRoot $ProjectRoot -TestTargetOS $TestTargetOS"
-                Invoke-Expression "& `"$ProjectRoot/tools/buildfunctionaltests.ps1`" -Platform 'AnyCPU' -Configuration $Configuration -ProjectRoot $ProjectRoot -TestTargetOS $TestTargetOS"
-                Invoke-Expression "& `"$ProjectRoot/tools/buildmanualtests.ps1`" -Platform 'AnyCPU' -Configuration $Configuration -ProjectRoot $ProjectRoot -TestTargetOS $TestTargetOS"
+                $buildcmd     = "msbuild /p:Configuration='$Configuration' /p:BuildNetFx=false"
+                $testbuildcmd =  "msbuild /t:BuildTestsCore /p:Configuration='$Configuration' /p:OSGroup=Windows_NT"
+                break;
+            }
+            'UnixNetCore'
+            {
+                $buildcmd     =  "dotnet msbuild /p:Configuration='$Configuration'"
+                $testbuildcmd =  "dotnet msbuild /t:BuildTestsCore /p:Configuration='$Configuration' /p:OSGroup=Unix"
                 break;
             }
         }
+        Invoke-Expression $buildcmd
+        if($LASTEXITCODE -eq 1) {
+            Write-Error "Failed $buildcmd with Status: $LASTEXITCODE"
+        }
+
+        Invoke-Expression $testbuildcmd
+        if($LASTEXITCODE -eq 1) {
+            Write-Error "Failed $testbuildcmd with Status: $LASTEXITCODE"
+        }
     }
 
+    $ErrorActionPreference = "Stop"
     BuildDriverAndTests

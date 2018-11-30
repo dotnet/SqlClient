@@ -48,21 +48,21 @@ Visual Studio 2017 with the following profile components. This can be saved to a
 * Execute the following commands.
  
 ### Build Driver:
-`WindowsNetFx` (Builds Microsoft.Data.SqlClient netfx(x86,x64), Functional and Manual Tests)(x86,x64):  
-```
-./build.ps1 -Configuration "Release" -TestTargetOS "WindowsNetFx" -AssemblyFileVersion "1.0.0.0"
-```
+Microsoft.Data.SqlClient for NetFx (Win32 and x64) and .Net Core
 
-`WindowsNetCore` (Builds Microsoft.Data.SqlClient netcore(AnyCPU), Functional and Manual Tests)(AnyCPU):  
-```
-./build.ps1 -Configuration "Release" -TestTargetOS "WindowsNetCore" -AssemblyFileVersion "1.0.0.0"
-```
+`msbuild` Creates the Debug version. Automatically detects the OS on which the driver is being built and builds the appropriate flavor
+`msbuild /p:Configuration=Release` Creates the Release version
 
-`UnixNetCore` (Builds Microsoft.Data.SqlClient netcore(AnyCPU), Functional and Manual Tests)(AnyCPU):  
-```
-./build.ps1 -Configuration "Release" -TestTargetOS "UnixNetCore" -AssemblyFileVersion "1.0.0.0"
-```
- 
+Skip building NetFx Driver on Windows. On Unix the netfx driver build is automatically skipped
+`msbuild /p:BuildNetFx=false`
+
+Build Unix specific debug driver on Windows
+`msbuild /p:OSGroup=Unix`
+
+## Build Tests:
+`msbuild /t:BuildTestsCore`
+`msbuild /t:BuildTestsNetFx`
+
 ### Run Functional Tests:  
 `Windows` (netcoreapp2.1):  
 ```

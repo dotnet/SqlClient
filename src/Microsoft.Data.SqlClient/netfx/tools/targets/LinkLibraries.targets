@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-     <Target Name="LinkLibraries" AfterTargets="CopyFilesToOutputDirectory">
+    <Target Name="LinkLibraries" AfterTargets="CopyFilesToOutputDirectory">
     <Exec Command="powershell.exe -NonInteractive -executionpolicy Unrestricted ^
     -command &quot;&amp;$(NetFxSource)tools\scripts\LinkLibraries.ps1 -OutputPlatform '$(OutputPlatform)' -OutputConfiguration '$(Configuration)' -BinPath '$(BinPath)' -ObjPath '$(ObjPath)' -AssemblyName '$(AssemblyName)' -ResourceFileName '$(ResourceFileName)' -AssemblyVersion '$(AssemblyFileVersion)'&quot;" />
   </Target>

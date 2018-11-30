@@ -12,8 +12,10 @@
     <TestsPath>$(ProjectDir)Microsoft.Data.SqlClient\tests\</TestsPath>
     <TargetsWindows Condition="'$(OS)' == 'Windows_NT' AND '$(OSGroup)' == ''">true</TargetsWindows>
     <TargetsWindows Condition="'$(OS)' != 'Windows_NT' AND '$(OSGroup)' == ''">false</TargetsWindows>
+    <TargetsWindows Condition="'$(OSGroup)' == 'Windows_NT'">true</TargetsWindows>
     <TargetsUnix Condition="'$(OS)' == 'Unix' AND '$(OSGroup)' == ''">true</TargetsUnix>
     <TargetsUnix Condition="'$(OS)' != 'Unix' AND '$(OSGroup)' == ''">false</TargetsUnix>
-    <AssemblyFileVersion>1.0.0.0</AssemblyFileVersion>
+    <TargetsUnix Condition="'$(OSGroup)' == 'Unix'">true</TargetsUnix>
+    <AssemblyFileVersion Condition="'$(AssemblyFileVersion)' == ''">1.0.0.0</AssemblyFileVersion>
   </PropertyGroup>
 </Project>
