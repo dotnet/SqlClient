@@ -121,6 +121,73 @@ namespace Microsoft.Data.Common
             }
         }
 
+        /// <summary>
+        /// Column Encryption Setting.
+        /// </summary>
+        const string ColumnEncryptionSettingEnabledString = "Enabled";
+        const string ColumnEncryptionSettingDisabledString = "Disabled";
+
+        /// <summary>
+        /// Convert a string value to the corresponding SqlConnectionColumnEncryptionSetting.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="result"></param>
+        /// <returns></returns>
+        internal static bool TryConvertToColumnEncryptionSetting(string value, out SqlConnectionColumnEncryptionSetting result)
+        {
+            bool isSuccess = false;
+
+            if (StringComparer.InvariantCultureIgnoreCase.Equals(value, ColumnEncryptionSettingEnabledString))
+            {
+                result = SqlConnectionColumnEncryptionSetting.Enabled;
+                isSuccess = true;
+            }
+            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, ColumnEncryptionSettingDisabledString))
+            {
+                result = SqlConnectionColumnEncryptionSetting.Disabled;
+                isSuccess = true;
+            }
+            else
+            {
+                result = DbConnectionStringDefaults.ColumnEncryptionSetting;
+            }
+
+            return isSuccess;
+        }
+
+        /// <summary>
+        /// Is it a valid connection level column encryption setting ?
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        internal static bool IsValidColumnEncryptionSetting(SqlConnectionColumnEncryptionSetting value)
+        {
+            Debug.Assert(Enum.GetNames(typeof(SqlConnectionColumnEncryptionSetting)).Length == 2, "SqlConnectionColumnEncryptionSetting enum has changed, update needed");
+            return value == SqlConnectionColumnEncryptionSetting.Enabled || value == SqlConnectionColumnEncryptionSetting.Disabled;
+        }
+
+        /// <summary>
+        /// Convert connection level column encryption setting value to string.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        internal static string ColumnEncryptionSettingToString(SqlConnectionColumnEncryptionSetting value)
+        {
+            Debug.Assert(IsValidColumnEncryptionSetting(value), "value is not a valid connection level column encryption setting.");
+
+            switch (value)
+            {
+                case SqlConnectionColumnEncryptionSetting.Enabled:
+                    return ColumnEncryptionSettingEnabledString;
+                case SqlConnectionColumnEncryptionSetting.Disabled:
+                    return ColumnEncryptionSettingDisabledString;
+
+                default:
+                    return null;
+            }
+        }
+
+
         internal static bool IsValidApplicationIntentValue(ApplicationIntent value)
         {
             Debug.Assert(Enum.GetNames(typeof(ApplicationIntent)).Length == 2, "ApplicationIntent enum has changed, update needed");
@@ -219,6 +286,82 @@ namespace Microsoft.Data.Common
                 }
             }
         }
+
+        /// <summary>
+        /// Convert the provided value to a SqlConnectionColumnEncryptionSetting.
+        /// </summary>
+        /// <param name="keyword"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        internal static SqlConnectionColumnEncryptionSetting ConvertToColumnEncryptionSetting(string keyword, object value)
+        {
+            if (null == value)
+            {
+                return DbConnectionStringDefaults.ColumnEncryptionSetting;
+            }
+
+            string sValue = (value as string);
+            SqlConnectionColumnEncryptionSetting result;
+            if (null != sValue)
+            {
+                if (TryConvertToColumnEncryptionSetting(sValue, out result))
+                {
+                    return result;
+                }
+
+                // try again after remove leading & trailing whitespaces.
+                sValue = sValue.Trim();
+                if (TryConvertToColumnEncryptionSetting(sValue, out result))
+                {
+                    return result;
+                }
+
+                // string values must be valid
+                throw ADP.InvalidConnectionOptionValue(keyword);
+            }
+            else
+            {
+                // the value is not string, try other options
+                SqlConnectionColumnEncryptionSetting eValue;
+
+                if (value is SqlConnectionColumnEncryptionSetting)
+                {
+                    // quick path for the most common case
+                    eValue = (SqlConnectionColumnEncryptionSetting)value;
+                }
+                else if (value.GetType().IsEnum)
+                {
+                    // explicitly block scenarios in which user tries to use wrong enum types, like:
+                    // builder["SqlConnectionColumnEncryptionSetting"] = EnvironmentVariableTarget.Process;
+                    // workaround: explicitly cast non-SqlConnectionColumnEncryptionSetting enums to int
+                    throw ADP.ConvertFailed(value.GetType(), typeof(SqlConnectionColumnEncryptionSetting), null);
+                }
+                else
+                {
+                    try
+                    {
+                        // Enum.ToObject allows only integral and enum values (enums are blocked above), rasing ArgumentException for the rest
+                        eValue = (SqlConnectionColumnEncryptionSetting)Enum.ToObject(typeof(SqlConnectionColumnEncryptionSetting), value);
+                    }
+                    catch (ArgumentException e)
+                    {
+                        // to be consistent with the messages we send in case of wrong type usage, replace 
+                        // the error with our exception, and keep the original one as inner one for troubleshooting
+                        throw ADP.ConvertFailed(value.GetType(), typeof(SqlConnectionColumnEncryptionSetting), e);
+                    }
+                }
+
+                // ensure value is in valid range
+                if (IsValidColumnEncryptionSetting(eValue))
+                {
+                    return eValue;
+                }
+                else
+                {
+                    throw ADP.InvalidEnumerationValue(typeof(SqlConnectionColumnEncryptionSetting), (int)eValue);
+                }
+            }
+        }
     }
 
     internal static partial class DbConnectionStringDefaults
@@ -256,6 +399,7 @@ namespace Microsoft.Data.Common
         internal const string TransactionBinding = "Implicit Unbind";
         internal const int ConnectRetryCount = 1;
         internal const int ConnectRetryInterval = 10;
+        internal static readonly SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Disabled;
     }
 
 
@@ -288,6 +432,7 @@ namespace Microsoft.Data.Common
         internal const string WorkstationID = "Workstation ID";
         internal const string ConnectRetryCount = "ConnectRetryCount";
         internal const string ConnectRetryInterval = "ConnectRetryInterval";
+        internal const string ColumnEncryptionSetting = "Column Encryption Setting";
 
         // common keywords (OleDb, OracleClient, SqlClient)
         internal const string DataSource = "Data Source";

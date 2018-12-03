@@ -366,7 +366,7 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-    sealed internal class _SqlMetaDataSet
+    sealed internal partial class _SqlMetaDataSet
     {
         internal ushort id;             // for altrow-columns only
         internal int[] indexMap;
@@ -485,7 +485,7 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-    internal class SqlMetaDataPriv
+    internal partial class SqlMetaDataPriv
     {
         internal SqlDbType type;    // SqlDbType enum value
         internal byte tdsType; // underlying tds type
@@ -572,6 +572,8 @@ namespace Microsoft.Data.SqlClient
         internal int warningsIndexStart;
         internal int warningsIndexEnd;
         internal SqlErrorCollection warnings;
+
+        internal bool needsFetchParameterEncryptionMetadata;
 
         internal string GetCommandTextOrRpcName()
         {

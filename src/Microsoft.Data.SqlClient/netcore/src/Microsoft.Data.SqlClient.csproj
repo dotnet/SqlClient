@@ -55,6 +55,7 @@
     <Compile Include="System\Data\SqlClient\SqlColumnEncryptionEnclaveProviderConfigurationManager.cs" />
     <Compile Include="System\Data\SqlClient\ColumnEncryptionKeyInfo.cs" />
     <Compile Include="System\Data\SqlClient\EnclaveDelegate.cs" />
+    <Compile Include="System\Data\SqlClient\SqlParameter.NetCoreApp.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(IsPartialFacadeAssembly)' != 'true' AND '$(OSGroup)' != 'AnyOS'">    
     <Compile Include="$(CommonPath)\System\SR.cs" />

@@ -84,6 +84,13 @@ namespace Microsoft.Data.SqlClient
         private bool _coercedValueIsDataFeed;
         private int _actualSize = -1;
 
+        /// <summary>
+        /// Indicates if the parameter encryption metadata received by sp_describe_parameter_encryption.
+        /// For unencrypted parameters, the encryption metadata should still be sent (and will indicate 
+        /// that no encryption is needed).
+        /// </summary>
+        internal bool HasReceivedMetadata { get; set; }
+
         private DataRowVersion _sourceVersion;
 
         public SqlParameter() : base()
@@ -269,6 +276,12 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        public bool ForceColumnEncryption
+        {
+            get;
+            set;
+        }
+
         public override DbType DbType
         {
             get
@@ -332,6 +345,24 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <summary>
+        /// Get SMI Metadata to write out type_info stream.
+        /// </summary>
+        /// <returns></returns>
+        internal SmiParameterMetaData GetMetadataForTypeInfo()
+        {
+            ParameterPeekAheadValue peekAhead = null;
+
+            if (_internalMetaType == null)
+            {
+                _internalMetaType = GetMetaTypeOnly();
+            }
+
+            return MetaDataForSmi(out peekAhead);
+        }
+
+        // IMPORTANT DEVNOTE: This method is being used for parameter encryption functionality, to get the type_info TDS object from SqlParameter.
+        // Please consider impact to that when changing this method. Refer to the callers of SqlParameter.GetMetadataForTypeInfo().
         internal MSS.SmiParameterMetaData MetaDataForSmi(out ParameterPeekAheadValue peekAhead)
         {
             peekAhead = null;
@@ -1130,6 +1161,7 @@ namespace Microsoft.Data.SqlClient
             destination._coercedValueIsDataFeed = _coercedValueIsDataFeed;
             destination._coercedValueIsSqlType = _coercedValueIsSqlType;
             destination._actualSize = _actualSize;
+            destination.ForceColumnEncryption = ForceColumnEncryption;
         }
 
         public override DataRowVersion SourceVersion

@@ -204,6 +204,7 @@ namespace Microsoft.Data.SqlClient
         public const byte FEATUREEXT_TERMINATOR = 0xFF;
         public const byte FEATUREEXT_SRECOVERY = 0x01;
         public const byte FEATUREEXT_FEDAUTH = 0x02;
+        public const byte FEATUREEXT_TCE = 0x04;
         public const byte FEATUREEXT_GLOBALTRANSACTIONS = 0x05;
         public const byte FEATUREEXT_UTF8SUPPORT = 0x0A;
 
@@ -213,6 +214,7 @@ namespace Microsoft.Data.SqlClient
             None = 0,
             SessionRecovery = 1,
             FedAuth = 2,
+            Tce = 4,
             GlobalTransactions = 16,
             UTF8Support = 512,
         }
@@ -333,6 +335,7 @@ namespace Microsoft.Data.SqlClient
         //   second byte
         public const byte ClrFixedLen = 0x1;    // Fixed length CLR type
         public const byte IsColumnSet = 0x4;    // Column is an XML representation of an aggregation of other columns
+        public const byte IsEncrypted = 0x8;    // Column is encrypted using TCE
 
         // null values
         public const uint VARLONGNULL = 0xffffffff; // null value for text and image types
@@ -496,7 +499,7 @@ namespace Microsoft.Data.SqlClient
         // RPC parameter class
         public const byte RPC_PARAM_BYREF = 0x1;
         public const byte RPC_PARAM_DEFAULT = 0x2;
-        public const byte RPC_PARAM_IS_LOB_COOKIE = 0x8;
+        public const byte RPC_PARAM_ENCRYPTED = 0x8;
 
         // SQL parameter list text
         public const string PARAM_OUTPUT = "output";
@@ -530,6 +533,10 @@ namespace Microsoft.Data.SqlClient
         public const int PASSWORD_EXPIRED = 18488;
         public const int IMPERSONATION_FAILED = 1346;
         public const int P_TOKENTOOLONG = 103;
+
+        // SQL error that indicates retry for Always Encrypted
+        public const int TCE_CONVERSION_ERROR_CLIENT_RETRY = 33514;
+        public const int TCE_ENCLAVE_INVALID_SESSION_HANDLE = 33195;
 
         // SNI\Win32 error values
         // NOTE: these are simply windows system error codes, not SNI specific
@@ -883,6 +890,9 @@ namespace Microsoft.Data.SqlClient
             1,
         };
 
+        internal const int MAX_TIME_SCALE = 7; // Maximum scale for time-related types
+        internal const int MAX_TIME_LENGTH = 5; // Maximum length for time
+        internal const int MAX_DATETIME2_LENGTH = 8; // Maximum length for datetime2
         internal const int WHIDBEY_DATE_LENGTH = 10;
         internal static readonly int[] WHIDBEY_TIME_LENGTH = { 8, 10, 11, 12, 13, 14, 15, 16 };
         internal static readonly int[] WHIDBEY_DATETIME2_LENGTH = { 19, 21, 22, 23, 24, 25, 26, 27 };
@@ -930,6 +940,10 @@ namespace Microsoft.Data.SqlClient
         }
 
         // TCE Related constants
+        internal const byte MAX_SUPPORTED_TCE_VERSION = 0x02; // max version
+        internal const byte MIN_TCE_VERSION_WITH_ENCLAVE_SUPPORT = 0x02; // min version with enclave support
+        internal const ushort MAX_TCE_CIPHERINFO_SIZE = 2048; // max size of cipherinfo blob
+        internal const long MAX_TCE_CIPHERTEXT_SIZE = 2147483648; // max size of encrypted blob- currently 2GB.
         internal const byte CustomCipherAlgorithmId = 0; // Id used for custom encryption algorithm.
 
         internal const int AES_256_CBC = 1;
@@ -989,6 +1003,91 @@ namespace Microsoft.Data.SqlClient
         CorruptedTdsStream = 18,
         ProcessSniPacketFailed = 19,
         FedAuthRequiredPreLoginResponseInvalidValue = 20,
+        TceUnknownVersion = 21,
+        TceInvalidVersion = 22,
+        TceInvalidOrdinalIntoCipherInfoTable = 23,
+    }
+
+    /// <summary>
+    /// Column Encryption Setting to be used for the SqlConnection.
+    /// </summary>
+    public enum SqlConnectionColumnEncryptionSetting
+    {
+        /// <summary>
+        /// Disables column encryption by default on all commands on this connection.
+        /// </summary>
+        Disabled = 0,
+
+        /// <summary>
+        /// Enables column encryption by default on all commands on this connection.
+        /// </summary>
+        Enabled,
+    }
+
+    /// <summary>
+    /// Column Encryption Setting to be used for the SqlCommand.
+    /// </summary>
+    public enum SqlCommandColumnEncryptionSetting
+    {
+        /// <summary>
+        /// if “Column Encryption Setting=Enabled” in the connection string, use Enabled. Otherwise, maps to Disabled.
+        /// </summary>
+        UseConnectionSetting = 0,
+
+        /// <summary>
+        /// Enables TCE for the command. Overrides the connection level setting for this command.
+        /// </summary>
+        Enabled,
+
+        /// <summary>
+        /// Parameters will not be encrypted, only the ResultSet will be decrypted. This is an optimization for queries that do not pass any encrypted input parameters.
+        /// Overrides the connection level setting for this command.
+        /// </summary>
+        ResultSetOnly,
+
+        /// <summary>
+        /// Disables TCE for the command.Overrides the connection level setting for this command.
+        /// </summary>
+        Disabled,
+    }
+
+    // Fields in the first resultset of "sp_describe_parameter_encryption".
+    // We expect the server to return the fields in the resultset in the same order as mentioned below.
+    // If the server changes the below order, then transparent parameter encryption will break.
+    internal enum DescribeParameterEncryptionResultSet1
+    {
+        KeyOrdinal = 0,
+        DbId,
+        KeyId,
+        KeyVersion,
+        KeyMdVersion,
+        EncryptedKey,
+        ProviderName,
+        KeyPath,
+        KeyEncryptionAlgorithm,
+        IsRequestedByEnclave,
+        KeySignature,
+    }
+
+    // Fields in the second resultset of "sp_describe_parameter_encryption"
+    // We expect the server to return the fields in the resultset in the same order as mentioned below.
+    // If the server changes the below order, then transparent parameter encryption will break.
+    internal enum DescribeParameterEncryptionResultSet2
+    {
+        ParameterOrdinal = 0,
+        ParameterName,
+        ColumnEncryptionAlgorithm,
+        ColumnEncrytionType,
+        ColumnEncryptionKeyOrdinal,
+        NormalizationRuleVersion,
+    }
+
+    // Fields in the third resultset of "sp_describe_parameter_encryption".
+    // We expect the server to return the fields in the resultset in the same order as mentioned below.
+    // If the server changes the below order, then transparent parameter encryption will break.
+    internal enum DescribeParameterEncryptionResultSet3
+    {
+        AttestationInfo = 0,
     }
 }
 

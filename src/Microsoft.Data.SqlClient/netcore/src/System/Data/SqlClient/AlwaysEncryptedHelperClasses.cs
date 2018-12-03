@@ -2,11 +2,14 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using Microsoft.SqlServer.Server;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace Microsoft.Data.SqlClient
 {
+
     /// <summary>
     /// <para> Represents a single encrypted value for a CEK. It contains the encrypted CEK,
     ///  the store type, name,the key path and encryption algorithm.</para>
@@ -186,6 +189,59 @@ namespace Microsoft.Data.SqlClient
             _cekVersion = 0;
             _cekMdVersion = null;
             _columnEncryptionKeyValues = new List<SqlEncryptionKeyInfo>();
+        }
+    }
+
+    /// <summary> 
+    /// <para> Represents a table with various CEKs used in a resultset. Each entry corresponds to one (unique) CEK. The CEK
+    /// may have been encrypted using multiple master keys (giving us multiple CEK values). All these values form one single
+    /// entry in this table.</para>
+    ///</summary>
+    internal struct SqlTceCipherInfoTable
+    {
+        private readonly SqlTceCipherInfoEntry[] keyList;
+
+        internal SqlTceCipherInfoTable(int tabSize)
+        {
+            Debug.Assert(0 < tabSize, "Invalid Table Size");
+            keyList = new SqlTceCipherInfoEntry[tabSize];
+        }
+
+        internal SqlTceCipherInfoEntry this[int index]
+        {
+            get
+            {
+                Debug.Assert(index < keyList.Length, "Invalid index specified.");
+                return keyList[index];
+            }
+            set
+            {
+                Debug.Assert(index < keyList.Length, "Invalid index specified.");
+                keyList[index] = value;
+            }
+        }
+
+        internal int Size
+        {
+            get
+            {
+                return keyList.Length;
+            }
+        }
+    }
+
+    sealed internal partial class _SqlMetaDataSet
+    {
+        internal readonly SqlTceCipherInfoTable? cekTable; // table of "column encryption keys" used for this metadataset
+
+        internal _SqlMetaDataSet(int count, SqlTceCipherInfoTable? cipherTable)
+        {
+            cekTable = cipherTable;
+            _metaDataArray = new _SqlMetaData[count];
+            for (int i = 0; i < _metaDataArray.Length; ++i)
+            {
+               _metaDataArray[i] = new _SqlMetaData(i);
+            }
         }
     }
 
@@ -372,6 +428,175 @@ namespace Microsoft.Data.SqlClient
         internal bool IsAlgorithmInitialized()
         {
             return (null != _sqlClientEncryptionAlgorithm) ? true : false;
+        }
+    }
+
+    internal partial class SqlMetaDataPriv
+    {
+        internal bool isEncrypted; // TCE encrypted?
+        internal SqlMetaDataPriv baseTI;   // for encrypted columns, represents the TYPE_INFO for plaintext value
+        internal SqlCipherMetadata cipherMD; // Cipher related metadata for encrypted columns.
+
+        /// <summary>
+        /// Is the algorithm handle for the cipher encryption initialized ?
+        /// </summary>
+        /// <returns></returns>
+        internal bool IsAlgorithmInitialized()
+        {
+            if (null != cipherMD)
+            {
+                return cipherMD.IsAlgorithmInitialized();
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Returns the normalization rule version byte.
+        /// </summary>
+        /// <returns></returns>
+        internal byte NormalizationRuleVersion
+        {
+            get
+            {
+                if (null != cipherMD)
+                {
+                    return cipherMD.NormalizationRuleVersion;
+                }
+
+                return 0x00;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Class encapsulating additional information when sending encrypted input parameters.
+    /// </summary>
+    sealed internal class SqlColumnEncryptionInputParameterInfo
+    {
+        /// <summary>
+        /// Metadata of the parameter to write the TYPE_INFO of the unencrypted column data type.
+        /// </summary>
+        private readonly SmiParameterMetaData _smiParameterMetadata;
+
+        /// <summary>
+        /// Column encryption related metadata.
+        /// </summary>
+        private readonly SqlCipherMetadata _cipherMetadata;
+
+        /// <summary>
+        /// Serialized format for a subset of members.
+        /// Does not include _smiParameterMetadata's serialization.
+        /// </summary>
+        private readonly byte[] _serializedWireFormat;
+
+        /// <summary>
+        /// Return the SMI Parameter Metadata.
+        /// </summary>
+        internal SmiParameterMetaData ParameterMetadata
+        {
+            get
+            {
+                return _smiParameterMetadata;
+            }
+        }
+
+        /// <summary>
+        /// Return the serialized format for some members.
+        /// This is pre-calculated and cached since members are immutable.
+        /// Does not include _smiParameterMetadata's serialization.
+        /// </summary>
+        internal byte[] SerializedWireFormat
+        {
+            get
+            {
+                return _serializedWireFormat;
+            }
+        }
+
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="smiParameterMetadata"></param>
+        /// <param name="cipherMetadata"></param>
+        internal SqlColumnEncryptionInputParameterInfo(SmiParameterMetaData smiParameterMetadata, SqlCipherMetadata cipherMetadata)
+        {
+            Debug.Assert(smiParameterMetadata != null, "smiParameterMetadata should not be null.");
+            Debug.Assert(cipherMetadata != null, "cipherMetadata should not be null");
+            Debug.Assert(cipherMetadata.EncryptionKeyInfo.HasValue, "cipherMetadata.EncryptionKeyInfo.HasValue should be true.");
+
+            _smiParameterMetadata = smiParameterMetadata;
+            _cipherMetadata = cipherMetadata;
+            _serializedWireFormat = SerializeToWriteFormat();
+        }
+
+        /// <summary>
+        /// Serializes some data members to wire format.
+        /// </summary>
+        private byte[] SerializeToWriteFormat()
+        {
+            int totalLength = 0;
+
+            // CipherAlgorithmId.
+            totalLength += sizeof(byte);
+
+            // Encryption Type.
+            totalLength += sizeof(byte);
+
+            // Database id of the encryption key.
+            totalLength += sizeof(int);
+
+            // Id of the encryption key.
+            totalLength += sizeof(int);
+
+            // Version of the encryption key.
+            totalLength += sizeof(int);
+
+            // Metadata version of the encryption key.
+            totalLength += _cipherMetadata.EncryptionKeyInfo.Value.cekMdVersion.Length;
+
+            // Normalization Rule Version.
+            totalLength += sizeof(byte);
+
+            byte[] serializedWireFormat = new byte[totalLength];
+
+            // No:of bytes consumed till now. Running variable.
+            int consumedBytes = 0;
+
+            // 1 - Write Cipher Algorithm Id.
+            serializedWireFormat[consumedBytes++] = _cipherMetadata.CipherAlgorithmId;
+
+            // 2 - Write Encryption Type.
+            serializedWireFormat[consumedBytes++] = _cipherMetadata.EncryptionType;
+
+            // 3 - Write the database id of the encryption key.
+            SerializeIntIntoBuffer(_cipherMetadata.EncryptionKeyInfo.Value.databaseId, serializedWireFormat, ref consumedBytes);
+
+            // 4 - Write the id of the encryption key.
+            SerializeIntIntoBuffer(_cipherMetadata.EncryptionKeyInfo.Value.cekId, serializedWireFormat, ref consumedBytes);
+
+            // 5 - Write the version of the encryption key.
+            SerializeIntIntoBuffer(_cipherMetadata.EncryptionKeyInfo.Value.cekVersion, serializedWireFormat, ref consumedBytes);
+
+            // 6 - Write the metadata version of the encryption key.
+            Buffer.BlockCopy(_cipherMetadata.EncryptionKeyInfo.Value.cekMdVersion, 0, serializedWireFormat, consumedBytes, _cipherMetadata.EncryptionKeyInfo.Value.cekMdVersion.Length);
+            consumedBytes += _cipherMetadata.EncryptionKeyInfo.Value.cekMdVersion.Length;
+
+            // 7 - Write Normalization Rule Version.
+            serializedWireFormat[consumedBytes++] = _cipherMetadata.NormalizationRuleVersion;
+
+            return serializedWireFormat;
+        }
+
+        /// <summary>
+        /// Serializes an int into the provided buffer and offset.
+        /// </summary>
+        private void SerializeIntIntoBuffer(int value, byte[] buffer, ref int offset)
+        {
+            buffer[offset++] = (byte)(value & 0xff);
+            buffer[offset++] = (byte)((value >> 8) & 0xff);
+            buffer[offset++] = (byte)((value >> 16) & 0xff);
+            buffer[offset++] = (byte)((value >> 24) & 0xff);
         }
     }
 }
