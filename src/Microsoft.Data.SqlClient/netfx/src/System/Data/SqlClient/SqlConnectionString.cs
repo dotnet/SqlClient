@@ -497,11 +497,11 @@ namespace Microsoft.Data.SqlClient {
 
             if (!string.IsNullOrEmpty(_certificate)) {
                 
-                if (Authentication == SqlClient.SqlAuthenticationMethod.NotSpecified) {
+                if (Authentication == SqlClient.SqlAuthenticationMethod.NotSpecified && !_integratedSecurity) {
                     _authType = SqlClient.SqlAuthenticationMethod.SqlCertificate;
                 }
 
-                if (Authentication != SqlClient.SqlAuthenticationMethod.SqlCertificate || HasUserIdKeyword || HasPasswordKeyword || _integratedSecurity) {
+                if (Authentication == SqlClient.SqlAuthenticationMethod.SqlCertificate && (HasUserIdKeyword || HasPasswordKeyword || _integratedSecurity)) { 
                     throw SQL.InvalidCertAuth();
                 }
             }
@@ -590,11 +590,11 @@ namespace Microsoft.Data.SqlClient {
         internal string EnclaveAttestationUrl { get { return _enclaveAttestationUrl; } }
 #if ADONET_CERT_AUTH        
         internal string Certificate { get { return _certificate; } }
+        internal bool UsesCertificate { get { return _authType == SqlClient.SqlAuthenticationMethod.SqlCertificate; } }
 #else
         internal string Certificate { get { return null; } }
+        internal bool UsesCertificate { get { return false; } }
 #endif
-        internal bool UsesCertificate { get { return !string.IsNullOrEmpty(this.Certificate); } }
-
         internal bool PersistSecurityInfo { get { return _persistSecurityInfo; } }
         internal bool Pooling { get { return _pooling; } }
         internal bool Replication { get { return _replication; } }
