@@ -819,7 +819,7 @@ namespace Microsoft.Data.Common {
         internal const int    LoadBalanceTimeout             = 0; // default of 0 means don't use
         internal const bool   MultipleActiveResultSets       = false;
         internal const bool   MultiSubnetFailover            = false;
-        internal const bool   TransparentNetworkIPResolution = true;
+        internal static readonly bool TransparentNetworkIPResolution = LocalAppContextSwitches.DisableTNIRByDefault ? false : true;
         internal const int    MaxPoolSize                    = 100;
         internal const int    MinPoolSize                    = 0;
         internal const string NetworkLibrary                 = "";

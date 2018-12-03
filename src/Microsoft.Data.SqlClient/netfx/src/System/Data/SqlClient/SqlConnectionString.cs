@@ -42,7 +42,7 @@ namespace Microsoft.Data.SqlClient {
             internal const  int    Max_Pool_Size                  = 100;
             internal const  int    Min_Pool_Size                  = 0;
             internal const  bool   MultiSubnetFailover            = DbConnectionStringDefaults.MultiSubnetFailover;
-            internal const  bool   TransparentNetworkIPResolution = DbConnectionStringDefaults.TransparentNetworkIPResolution;
+            internal static readonly bool TransparentNetworkIPResolution = DbConnectionStringDefaults.TransparentNetworkIPResolution;
             internal const  string Network_Library                = "";
             internal const  int    Packet_Size                    = 8000;
             internal const  string Password                       = "";

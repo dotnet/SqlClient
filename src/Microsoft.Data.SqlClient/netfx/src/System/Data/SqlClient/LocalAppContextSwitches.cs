@@ -31,5 +31,16 @@ namespace Microsoft.Data.SqlClient
                 return LocalAppContext.GetCachedSwitchValue(UseMinimumLoginTimeoutString, ref _useMinimumLoginTimeout);
             }
         }
+
+        internal const string DisableTNIRByDefaultString = @"Switch.Microsoft.Data.SqlClient.DisableTNIRByDefaultInConnectionString";
+        private static int _disableTNIRByDefault;
+        public static bool DisableTNIRByDefault
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                return LocalAppContext.GetCachedSwitchValue(DisableTNIRByDefaultString, ref _disableTNIRByDefault);
+            }
+        }
     }
 }
