@@ -89,7 +89,7 @@
 
   <Target Name="Clean">
     <RemoveDir Directories="$(BinFolder)" />
-    <RemoveDir Directories="$(ObjFolder)" />
+    <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".","obj", SearchOption.AllDirectories))' />
   </Target>
 
 </Project>
