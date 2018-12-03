@@ -1351,8 +1351,10 @@ namespace Microsoft.Data.SqlClient
                 _federatedAuthenticationRequested = true;
             }
 
-            // The TCE, DATACLASSIFICATION and GLOBALTRANSACTIONS feature are implicitly requested
+            // The TCE, DATACLASSIFICATION and GLOBALTRANSACTIONS, UTF8 support feature are implicitly requested
             requestedFeatures |= TdsEnums.FeatureExtension.Tce | TdsEnums.FeatureExtension.DataClassification | TdsEnums.FeatureExtension.GlobalTransactions;
+
+            requestedFeatures |= TdsEnums.FeatureExtension.UTF8Support;
 
             // The AzureSQLSupport feature is implicitly set for ReadOnly login
             if (ConnectionOptions.ApplicationIntent == ApplicationIntent.ReadOnly) {
@@ -2677,6 +2679,20 @@ namespace Microsoft.Data.SqlClient
                         }
                         byte enabled = data[1];
                         _parser.DataClassificationVersion = (enabled == 0) ? TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED : supportedDataClassificationVersion;
+                        break;
+                    }
+
+                case TdsEnums.FEATUREEXT_UTF8SUPPORT: {
+                        if (Bid.AdvancedOn)
+                        {
+                            Bid.Trace("<sc.SqlInternalConnectionTds.OnFeatureExtAck> %d#, Received feature extension acknowledgement for UTF8 support\n", ObjectID);
+                        }
+
+                        if (data.Length < 1)
+                        {
+                            Bid.Trace("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> %d#, Unknown value for UTF8 support\n", ObjectID);
+                            throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+                        }
                         break;
                     }
 

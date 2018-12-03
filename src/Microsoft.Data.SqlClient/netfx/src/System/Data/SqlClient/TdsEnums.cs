@@ -209,6 +209,7 @@ namespace Microsoft.Data.SqlClient {
         // 0x07 is for x_eFeatureExtensionId_ClientSideTelemetry 
         public const byte FEATUREEXT_AZURESQLSUPPORT = 0x08;
         public const byte FEATUREEXT_DATACLASSIFICATION = 0x09;
+        public const byte FEATUREEXT_UTF8SUPPORT = 0x0A;
 
         [Flags]
         public enum FeatureExtension:uint {
@@ -219,7 +220,10 @@ namespace Microsoft.Data.SqlClient {
             GlobalTransactions  = 1 << (TdsEnums.FEATUREEXT_GLOBALTRANSACTIONS - 1),
             AzureSQLSupport     = 1 << (TdsEnums.FEATUREEXT_AZURESQLSUPPORT - 1),
             DataClassification  = 1 << (TdsEnums.FEATUREEXT_DATACLASSIFICATION - 1),
+            UTF8Support         = 1 << (TdsEnums.FEATUREEXT_UTF8SUPPORT - 1),
         }
+
+        public const uint UTF8_IN_TDSCOLLATION = 0x4000000;
 
         public const byte FEDAUTHLIB_LIVEID        = 0X00;
         public const byte FEDAUTHLIB_SECURITYTOKEN = 0x01;

@@ -2587,12 +2587,19 @@ namespace Microsoft.Data.SqlClient {
                                 return false;
                             }
 
-                            // give the parser the new collation values in case parameters don't specify one
-                            _defaultCollation = env.newCollation;
-                            int newCodePage = GetCodePage(env.newCollation, stateObj);
-                            if (newCodePage != _defaultCodePage) {
-                                _defaultCodePage = newCodePage;
-                                _defaultEncoding = System.Text.Encoding.GetEncoding(_defaultCodePage);
+                            if ((env.newCollation.info & TdsEnums.UTF8_IN_TDSCOLLATION) == TdsEnums.UTF8_IN_TDSCOLLATION) { // UTF8 collation
+                                _defaultEncoding = Encoding.UTF8;
+                                _defaultCollation = env.newCollation;
+                                _defaultLCID = env.newCollation.LCID;
+                            }
+                            else {
+                                // give the parser the new collation values in case parameters don't specify one
+                                _defaultCollation = env.newCollation;
+                                int newCodePage = GetCodePage(env.newCollation, stateObj);
+                                if (newCodePage != _defaultCodePage) {
+                                    _defaultCodePage = newCodePage;
+                                    _defaultEncoding = System.Text.Encoding.GetEncoding(_defaultCodePage);
+                                }
                             }
                             _defaultLCID = env.newCollation.LCID;
                         }
@@ -3777,16 +3784,21 @@ namespace Microsoft.Data.SqlClient {
                     return false;
                 }
 
-                int codePage = GetCodePage(rec.collation, stateObj);
-
-                // if the column lcid is the same as the default, use the default encoder
-                if (codePage == _defaultCodePage) {
-                    rec.codePage = _defaultCodePage;
-                    rec.encoding = _defaultEncoding;
+                if ((rec.collation.info & TdsEnums.UTF8_IN_TDSCOLLATION) == TdsEnums.UTF8_IN_TDSCOLLATION) { // UTF8 collation
+                    rec.encoding = Encoding.UTF8;
                 }
                 else {
-                    rec.codePage = codePage;
-                    rec.encoding = System.Text.Encoding.GetEncoding(rec.codePage);
+                    int codePage = GetCodePage(rec.collation, stateObj);
+
+                    // if the column lcid is the same as the default, use the default encoder
+                    if (codePage == _defaultCodePage) {
+                        rec.codePage = _defaultCodePage;
+                        rec.encoding = _defaultEncoding;
+                    }
+                    else {
+                        rec.codePage = codePage;
+                        rec.encoding = System.Text.Encoding.GetEncoding(rec.codePage);
+                    }
                 }
             }
 
@@ -4527,15 +4539,20 @@ namespace Microsoft.Data.SqlClient {
                     return false;
                 }
 
-                int codePage = GetCodePage(col.collation, stateObj);
-
-                if (codePage == _defaultCodePage) {
-                    col.codePage = _defaultCodePage;
-                    col.encoding = _defaultEncoding;
+                if ((col.collation.info & TdsEnums.UTF8_IN_TDSCOLLATION) == TdsEnums.UTF8_IN_TDSCOLLATION) { // UTF8 collation
+                    col.encoding = Encoding.UTF8;
                 }
                 else {
-                    col.codePage = codePage;
-                    col.encoding = System.Text.Encoding.GetEncoding(col.codePage);
+                    int codePage = GetCodePage(col.collation, stateObj);
+
+                    if (codePage == _defaultCodePage) {
+                        col.codePage = _defaultCodePage;
+                        col.encoding = _defaultEncoding;
+                    }
+                    else {
+                        col.codePage = codePage;
+                        col.encoding = System.Text.Encoding.GetEncoding(col.codePage);
+                    }
                 }
             }
 
@@ -7328,6 +7345,18 @@ namespace Microsoft.Data.SqlClient {
             return len;
         }
 
+        internal int WriteUTF8SupportFeatureRequest(bool write /* if false just calculates the length */) {
+            int len = 5; // 1byte = featureID, 4bytes = featureData length
+
+            if (write)
+            {
+                // Write Feature ID
+                _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_UTF8SUPPORT);
+                WriteInt(0, _physicalStateObj); // we don't send any data
+            }
+
+            return len;
+        }
 
         internal void TdsLogin(SqlLogin rec,
                                TdsEnums.FeatureExtension requestedFeatures,
@@ -7488,6 +7517,9 @@ namespace Microsoft.Data.SqlClient {
                     }
                     if ((requestedFeatures & TdsEnums.FeatureExtension.DataClassification) != 0) {
                         length += WriteDataClassificationFeatureRequest(false);
+                    }
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.UTF8Support) != 0) {
+                        length += WriteUTF8SupportFeatureRequest(false);
                     }
                     length++; // for terminator
                 }
@@ -7728,7 +7760,10 @@ namespace Microsoft.Data.SqlClient {
                     }
                     if ((requestedFeatures & TdsEnums.FeatureExtension.DataClassification) != 0) {
                         WriteDataClassificationFeatureRequest(true);
-                    };
+                    }
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.UTF8Support) != 0) {
+                        WriteUTF8SupportFeatureRequest(true);
+                    }
                     _physicalStateObj.WriteByte(0xFF); // terminator
                 }
             } // try
@@ -9776,6 +9811,11 @@ namespace Microsoft.Data.SqlClient {
                     _defaultEncoding = metadata.encoding;
                 }
                 if (metadata.collation != null) {
+                    // Replace encoding if it is UTF8
+                    if ((metadata.collation.info & TdsEnums.UTF8_IN_TDSCOLLATION) == TdsEnums.UTF8_IN_TDSCOLLATION) {
+                        _defaultEncoding = Encoding.UTF8;
+                    }
+
                     _defaultCollation = metadata.collation;
                     _defaultLCID = _defaultCollation.LCID;
                 }
