@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Threading;
+using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -13,7 +14,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         private static ManualResetEvent workerCompletedEvent = new ManualResetEvent(false);
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
         public static void TestMultipleConnectionToMirroredServer()
         {
             string mirroringStateDesc;

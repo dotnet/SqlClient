@@ -40,7 +40,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         #region StartStop_Tests
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
         public void Test_DoubleStart_SameConnStr()
         {
             Assert.True(SqlDependency.Start(_startConnectionString), "Failed to start listener.");
@@ -52,7 +52,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.True(SqlDependency.Stop(_startConnectionString), "Failed to stop listener.");
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
         public void Test_DoubleStart_DifferentConnStr()
         {
             SqlConnectionStringBuilder cb = new SqlConnectionStringBuilder(_startConnectionString);
@@ -77,7 +77,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
         public void Test_Start_DifferentDB()
         {
             SqlConnectionStringBuilder cb = new SqlConnectionStringBuilder(_startConnectionString)
@@ -98,7 +98,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         #region SqlDependency_Tests
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
         public void Test_SingleDependency_NoStart()
         {
             using (SqlConnection conn = new SqlConnection(_execConnectionString))
@@ -116,7 +116,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
         public void Test_SingleDependency_Stopped()
         {
             SqlDependency.Start(_startConnectionString);
@@ -138,7 +138,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
         public void Test_SingleDependency_AllDefaults_SqlAuth()
         {
             Assert.True(SqlDependency.Start(_startConnectionString), "Failed to start listener.");
@@ -182,7 +182,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
         public void Test_SingleDependency_CustomQueue_SqlAuth()
         {
             Assert.True(SqlDependency.Start(_startConnectionString, _queueName), "Failed to start listener.");

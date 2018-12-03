@@ -14,8 +14,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public static class MARSTest
     {
         private static readonly string _connStr = (new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr) { MultipleActiveResultSets = true }).ConnectionString;
-        
-        [CheckConnStrSetupFact]
+
+        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public static void NamedPipesMARSTest()
         {

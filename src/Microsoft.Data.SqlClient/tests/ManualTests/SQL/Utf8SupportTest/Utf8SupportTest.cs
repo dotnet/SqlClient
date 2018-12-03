@@ -4,7 +4,7 @@ using Xunit;
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class Utf8SupportTest
-    {
+    {        
         [CheckConnStrSetupFact]
         public static void CheckSupportUtf8ConnectionProperty()
         {

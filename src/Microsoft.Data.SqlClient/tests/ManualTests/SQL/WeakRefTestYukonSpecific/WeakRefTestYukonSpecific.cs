@@ -32,11 +32,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             TestReaderMarsCase("Case 4: ExecuteReader*5 Connection Close, ExecuteReader.", connectionString, ReaderTestType.ConnectionClose, ReaderVerificationType.ExecuteReader);
             TestReaderMarsCase("Case 5: ExecuteReader*5 GC, Connection Close, ExecuteReader.", connectionString, ReaderTestType.ReaderGCConnectionClose, ReaderVerificationType.ExecuteReader);
 
-            TestReaderMarsCase("Case 6: ExecuteReader*5 Close, ChangeDatabase.", connectionString, ReaderTestType.ReaderClose, ReaderVerificationType.ChangeDatabase);
-            TestReaderMarsCase("Case 7: ExecuteReader*5 Dispose, ChangeDatabase.", connectionString, ReaderTestType.ReaderDispose, ReaderVerificationType.ChangeDatabase);
-            TestReaderMarsCase("Case 8: ExecuteReader*5 GC, ChangeDatabase.", connectionString, ReaderTestType.ReaderGC, ReaderVerificationType.ChangeDatabase);
-            TestReaderMarsCase("Case 9: ExecuteReader*5 Connection Close, ChangeDatabase.", connectionString, ReaderTestType.ConnectionClose, ReaderVerificationType.ChangeDatabase);
-            TestReaderMarsCase("Case 10: ExecuteReader*5 GC, Connection Close, ChangeDatabase.", connectionString, ReaderTestType.ReaderGCConnectionClose, ReaderVerificationType.ChangeDatabase);
+            if (TestHelpers.IsNotAzureServer())
+            {
+                TestReaderMarsCase("Case 6: ExecuteReader*5 Close, ChangeDatabase.", connectionString, ReaderTestType.ReaderClose, ReaderVerificationType.ChangeDatabase);
+                TestReaderMarsCase("Case 7: ExecuteReader*5 Dispose, ChangeDatabase.", connectionString, ReaderTestType.ReaderDispose, ReaderVerificationType.ChangeDatabase);
+                TestReaderMarsCase("Case 8: ExecuteReader*5 GC, ChangeDatabase.", connectionString, ReaderTestType.ReaderGC, ReaderVerificationType.ChangeDatabase);
+                TestReaderMarsCase("Case 9: ExecuteReader*5 Connection Close, ChangeDatabase.", connectionString, ReaderTestType.ConnectionClose, ReaderVerificationType.ChangeDatabase);
+                TestReaderMarsCase("Case 10: ExecuteReader*5 GC, Connection Close, ChangeDatabase.", connectionString, ReaderTestType.ReaderGCConnectionClose, ReaderVerificationType.ChangeDatabase);
+            }
 
             TestReaderMarsCase("Case 11: ExecuteReader*5 Close, BeginTransaction.", connectionString, ReaderTestType.ReaderClose, ReaderVerificationType.BeginTransaction);
             TestReaderMarsCase("Case 12: ExecuteReader*5 Dispose, BeginTransaction.", connectionString, ReaderTestType.ReaderDispose, ReaderVerificationType.BeginTransaction);

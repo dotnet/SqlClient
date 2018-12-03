@@ -11,13 +11,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class TransactionEnlistmentTest
     {
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
         public static void TestAutoEnlistment_TxScopeComplete()
         {
             RunTestSet(TestCase_AutoEnlistment_TxScopeComplete);
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
         public static void TestAutoEnlistment_TxScopeNonComplete()
         {
             RunTestSet(TestCase_AutoEnlistment_TxScopeNonComplete);
