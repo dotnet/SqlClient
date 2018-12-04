@@ -153,6 +153,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             connBuilder.Password = "password";
             connBuilder.InitialCatalog = "test";
             connBuilder.PersistSecurityInfo = true;
+            connBuilder.ConnectTimeout = 5;
             if (policy != null)
             {
                 connBuilder.PoolBlockingPeriod = policy.Value;
