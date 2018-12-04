@@ -4,8 +4,6 @@ Home of Microsoft.Data.SqlClient
 
 ## Pre-Requisites
 
-Install [PowerShell-Core](https://github.com/PowerShell/PowerShell) on your local Machine 
-
 Visual Studio 2017 with the following profile components. This can be saved to a text file and imported into the Visual Studio installer.
 
 ```
@@ -43,7 +41,6 @@ Visual Studio 2017 with the following profile components. This can be saved to a
 ```
 
 
-* Open Powershell-Core Shell
 * Go to the root folder of the Git Repo
 * Execute the following commands.
  
@@ -58,6 +55,9 @@ Skip building NetFx Driver on Windows. On Unix the netfx driver build is automat
 
 Build Unix specific debug driver on Windows
 `msbuild /p:OSGroup=Unix`
+
+Build driver for all Operating Systems
+`msbuild /t:BuildAllOSes` - When run on Windows, it Builds Netfx driver for windows and .Net Core driver for Windows and Unix. 
 
 ## Build Tests:
 `msbuild /t:BuildTestsCore`

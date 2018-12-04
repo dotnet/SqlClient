@@ -5,7 +5,6 @@
     <ManagedSourceCode>$(ProjectDir)Microsoft.Data.SqlClient\</ManagedSourceCode>
     <NetCoreSource>$(ManagedSourceCode)netcore\</NetCoreSource>
     <NetFxSource>$(ManagedSourceCode)netfx\</NetFxSource>
-    <BinFolder>$(ProjectDir)..\bin\</BinFolder>
     <ObjFolder>$(ProjectDir)..\obj\</ObjFolder>
     <CommonPath>$(NetCoreSource)src\Common\src</CommonPath>
     <CommonTestPath>$(NetCoreSource)src\Common\tests</CommonTestPath>
@@ -16,6 +15,8 @@
     <TargetsUnix Condition="'$(OS)' == 'Unix' AND '$(OSGroup)' == ''">true</TargetsUnix>
     <TargetsUnix Condition="'$(OS)' != 'Unix' AND '$(OSGroup)' == ''">false</TargetsUnix>
     <TargetsUnix Condition="'$(OSGroup)' == 'Unix'">true</TargetsUnix>
+    <BinFolder Condition="'$(TargetsWindows)' == 'true'">$(ProjectDir)..\bin\Windows_NT\</BinFolder>
+    <BinFolder Condition="'$(TargetsUnix)'    == 'true'">$(ProjectDir)..\bin\Unix\</BinFolder>
     <AssemblyFileVersion Condition="'$(AssemblyFileVersion)' == ''">1.0.0.0</AssemblyFileVersion>
   </PropertyGroup>
 </Project>
