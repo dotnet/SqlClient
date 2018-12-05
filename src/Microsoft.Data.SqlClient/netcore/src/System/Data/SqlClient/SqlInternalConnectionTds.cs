@@ -14,6 +14,7 @@ using System.Security;
 using System;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
+using System.Text;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -118,6 +119,9 @@ namespace Microsoft.Data.SqlClient
         internal bool _federatedAuthenticationRequested;
         internal bool _federatedAuthenticationAcknowledged;
         internal byte[] _accessTokenInBytes;
+
+        // TCE flags
+        internal byte _tceVersionSupported;
 
         // The errors in the transient error set are contained in
         // https://azure.microsoft.com/en-us/documentation/articles/sql-database-develop-error-messages/#transient-faults-connection-loss-and-other-temporary-errors
@@ -800,6 +804,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void DecrementAsyncCount()
         {
+            Debug.Assert(_asyncCommandCount > 0);
             Interlocked.Decrement(ref _asyncCommandCount);
         }
 
@@ -1956,6 +1961,32 @@ namespace Microsoft.Data.SqlClient
                         _federatedAuthenticationAcknowledged = true;
                         break;
                     }
+                case TdsEnums.FEATUREEXT_TCE:
+                {
+                    if (data.Length < 1)
+                    {
+                        throw SQL.ParsingError(ParsingErrorState.TceUnknownVersion);
+                    }
+
+                    byte supportedTceVersion = data[0];
+                    if (0 == supportedTceVersion || supportedTceVersion > TdsEnums.MAX_SUPPORTED_TCE_VERSION)
+                    {
+                        throw SQL.ParsingErrorValue(ParsingErrorState.TceInvalidVersion, supportedTceVersion);
+                    }
+
+                    _tceVersionSupported = supportedTceVersion;
+                    Debug.Assert(_tceVersionSupported <= TdsEnums.MAX_SUPPORTED_TCE_VERSION, "Client support TCE version 2");
+                    _parser.IsColumnEncryptionSupported = true;
+                    _parser.TceVersionSupported = _tceVersionSupported;
+
+                    if (data.Length > 1)
+                    {
+                        // Extract the type of enclave being used by the server.
+                        _parser.EnclaveType = Encoding.Unicode.GetString(data, 2, (data.Length - 2));
+                    }
+
+                    break;
+                }
 
                 case TdsEnums.FEATUREEXT_UTF8SUPPORT:
                     {

@@ -28,14 +28,16 @@ namespace Microsoft.Data.SqlClient
             internal readonly SqlParameterCollection Parameters;
             internal readonly int ReturnParameterIndex;
             internal readonly CommandType CmdType;
+            internal readonly SqlCommandColumnEncryptionSetting ColumnEncryptionSetting;
 
-            internal LocalCommand(string commandText, SqlParameterCollection parameters, int returnParameterIndex, CommandType cmdType)
+            internal LocalCommand(string commandText, SqlParameterCollection parameters, int returnParameterIndex, CommandType cmdType, SqlCommandColumnEncryptionSetting columnEncryptionSetting)
             {
                 Debug.Assert(0 <= commandText.Length, "no text");
                 CommandText = commandText;
                 Parameters = parameters;
                 ReturnParameterIndex = returnParameterIndex;
                 CmdType = cmdType;
+                ColumnEncryptionSetting = columnEncryptionSetting;
             }
         }
 
@@ -203,7 +205,7 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
             }
-            LocalCommand cmd = new LocalCommand(cmdText, parameters, returnParameterIndex, command.CommandType);
+            LocalCommand cmd = new LocalCommand(cmdText, parameters, returnParameterIndex, command.CommandType, command.ColumnEncryptionSetting);
             CommandList.Add(cmd);
         }
 
@@ -270,7 +272,7 @@ namespace Microsoft.Data.SqlClient
             for (int ii = 0; ii < _commandList.Count; ii++)
             {
                 LocalCommand cmd = _commandList[ii];
-                BatchCommand.AddBatchCommand(cmd.CommandText, cmd.Parameters, cmd.CmdType);
+                BatchCommand.AddBatchCommand(cmd.CommandText, cmd.Parameters, cmd.CmdType, cmd.ColumnEncryptionSetting);
             }
 
             return BatchCommand.ExecuteBatchRPCCommand();

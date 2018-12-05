@@ -505,7 +505,10 @@ namespace Microsoft.Data.Common
         {
             return ADP.Argument(System.SR.GetString(SR.ADP_ParameterValueOutOfRange, value.ToString()));
         }
-
+        internal static ArgumentException ParameterValueOutOfRange(String value)
+        {
+            return ADP.Argument(System.SR.GetString(SR.ADP_ParameterValueOutOfRange, value));
+        }
         internal static ArgumentException VersionDoesNotSupportDataType(string typeName)
         {
             return Argument(System.SR.GetString(SR.ADP_VersionDoesNotSupportDataType, typeName));

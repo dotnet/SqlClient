@@ -399,7 +399,8 @@ namespace Microsoft.Data.Common
         internal const string TransactionBinding = "Implicit Unbind";
         internal const int ConnectRetryCount = 1;
         internal const int ConnectRetryInterval = 10;
-        internal static readonly SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Disabled;
+        internal const SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Disabled;
+        internal const string EnclaveAttestationUrl = "";
     }
 
 
@@ -433,6 +434,7 @@ namespace Microsoft.Data.Common
         internal const string ConnectRetryCount = "ConnectRetryCount";
         internal const string ConnectRetryInterval = "ConnectRetryInterval";
         internal const string ColumnEncryptionSetting = "Column Encryption Setting";
+        internal const string EnclaveAttestationUrl = "Enclave Attestation Url";
 
         // common keywords (OleDb, OracleClient, SqlClient)
         internal const string DataSource = "Data Source";

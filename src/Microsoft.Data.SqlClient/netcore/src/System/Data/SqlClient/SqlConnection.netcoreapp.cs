@@ -42,9 +42,6 @@ namespace Microsoft.Data.SqlClient
                 {SqlColumnEncryptionCspProvider.ProviderName, new SqlColumnEncryptionCspProvider()}
             };
 
-
-        static public TimeSpan ColumnEncryptionKeyCacheTtl { get; set; } = TimeSpan.FromHours(2);
-
         /// <summary>
         /// Custom provider list should be provided by the user. We shallow copy the user supplied dictionary into a ReadOnlyDictionary.
         /// Custom provider list can only supplied once per application.
@@ -71,6 +68,16 @@ namespace Microsoft.Data.SqlClient
                 return _ColumnEncryptionTrustedMasterKeyPaths;
             }
         }
+
+        /// <summary>
+        /// Defines whether query metadata caching is enabled.
+        /// </summary>
+        static public bool ColumnEncryptionQueryMetadataCacheEnabled { get; set; } = true;
+
+        /// <summary>
+        /// Defines whether query metadata caching is enabled.
+        /// </summary>
+        static public TimeSpan ColumnEncryptionKeyCacheTtl { get; set; } = TimeSpan.FromHours(2);
 
         /// <summary>
         /// This function should only be called once in an app. This does shallow copying of the dictionary so that 
@@ -193,5 +200,28 @@ namespace Microsoft.Data.SqlClient
             return new List<string>();
         }
 
+        /// <summary>
+        /// Is this connection using column encryption ?
+        /// </summary>
+        internal bool IsColumnEncryptionSettingEnabled
+        {
+            get
+            {
+                SqlConnectionString opt = (SqlConnectionString)ConnectionOptions;
+                return opt != null ? opt.ColumnEncryptionSetting == SqlConnectionColumnEncryptionSetting.Enabled : false;
+            }
+        }
+
+        /// <summary>
+        /// Get enclave attestation url to be used with enclave based Always Encrypted
+        /// </summary>
+        internal string EnclaveAttestationUrl
+        {
+            get
+            {
+                SqlConnectionString opt = (SqlConnectionString)ConnectionOptions;
+                return opt.EnclaveAttestationUrl;
+            }
+        }
     }
 }

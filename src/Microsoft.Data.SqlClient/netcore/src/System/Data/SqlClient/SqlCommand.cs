@@ -28,6 +28,18 @@ namespace Microsoft.Data.SqlClient
         private UpdateRowSource _updatedRowSource = UpdateRowSource.Both;
         private bool _designTimeInvisible;
 
+        /// <summary>
+        /// Indicates if the column encryption setting was set at-least once in the batch rpc mode, when using AddBatchCommand.
+        /// </summary>
+        private bool _wasBatchModeColumnEncryptionSettingSetOnce;
+
+        /// <summary>
+        /// Column Encryption Override. Defaults to SqlConnectionSetting, in which case
+        /// it will be Enabled if SqlConnectionOptions.IsColumnEncryptionSettingEnabled = true, Disabled if false.
+        /// This may also be used to set other behavior which overrides connection level setting.
+        /// </summary>
+        private SqlCommandColumnEncryptionSetting _columnEncryptionSetting = SqlCommandColumnEncryptionSetting.UseConnectionSetting;
+
         internal SqlDependency _sqlDep;
 
         private static readonly DiagnosticListener _diagnosticListener = new DiagnosticListener(SqlClientDiagnosticListenerExtensions.DiagnosticListenerName);
@@ -210,6 +222,11 @@ namespace Microsoft.Data.SqlClient
         private _SqlRPC[] _SqlRPCBatchArray;
         private List<SqlParameterCollection> _parameterCollectionList;
         private int _currentlyExecutingBatch;
+
+        /// <summary>
+        /// A flag to indicate whether we postponed caching the query metadata for this command.
+        /// </summary>
+        internal bool CachingQueryMetadataPostponed { get; set; }
 
 
         public SqlCommand() : base()
@@ -407,6 +424,8 @@ namespace Microsoft.Data.SqlClient
                 }
             }
         }
+
+        public SqlCommandColumnEncryptionSetting ColumnEncryptionSetting => _columnEncryptionSetting;
 
         override public int CommandTimeout
         {
@@ -3796,7 +3815,24 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal void AddBatchCommand(string commandText, SqlParameterCollection parameters, CommandType cmdType)
+        /// <summary>
+        /// Set the column encryption setting to the new one.
+        /// Do not allow conflicting column encryption settings.
+        /// </summary>
+        private void SetColumnEncryptionSetting(SqlCommandColumnEncryptionSetting newColumnEncryptionSetting)
+        {
+            if (!this._wasBatchModeColumnEncryptionSettingSetOnce)
+            {
+                this._columnEncryptionSetting = newColumnEncryptionSetting;
+                this._wasBatchModeColumnEncryptionSettingSetOnce = true;
+            }
+            else if(this._columnEncryptionSetting != newColumnEncryptionSetting)
+            {
+                throw SQL.BatchedUpdateColumnEncryptionSettingMismatch();
+            }
+        }
+
+        internal void AddBatchCommand(string commandText, SqlParameterCollection parameters, CommandType cmdType, SqlCommandColumnEncryptionSetting columnEncryptionSetting)
         {
             Debug.Assert(BatchRPCMode, "Command is not in batch RPC Mode");
             Debug.Assert(_RPCList != null);
@@ -3806,6 +3842,9 @@ namespace Microsoft.Data.SqlClient
 
             CommandText = commandText;
             CommandType = cmdType;
+
+            // Set the column encryption setting.
+            SetColumnEncryptionSetting(columnEncryptionSetting);
 
             GetStateObject();
             if (cmdType == CommandType.StoredProcedure)

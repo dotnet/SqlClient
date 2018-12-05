@@ -249,6 +249,10 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.InvalidOperation(System.SR.GetString(SR.SQL_InvalidPartnerConfiguration, server, database));
         }
+        static internal Exception BatchedUpdateColumnEncryptionSettingMismatch()
+        {
+            return ADP.InvalidOperation(System.SR.GetString(SR.TCE_BatchedUpdateColumnEncryptionSettingMismatch, "SqlCommandColumnEncryptionSetting", "SelectCommand", "InsertCommand", "UpdateCommand", "DeleteCommand"));
+        }
         internal static Exception MARSUnspportedOnConnection()
         {
             return ADP.InvalidOperation(System.SR.GetString(SR.SQL_MarsUnsupportedOnConnection));

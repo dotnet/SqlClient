@@ -3724,6 +3724,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to {0} should be identical on all commands ({1}, {2}, {3}, {4}) when doing batch updates..
+        /// </summary>
+        internal static string TCE_BatchedUpdateColumnEncryptionSettingMismatch {
+            get {
+                return ResourceManager.GetString("TCE_BatchedUpdateColumnEncryptionSettingMismatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Failed to instantiate an enclave provider with type &apos;{1}&apos; for name &apos;{0}&apos;. Error message: {2}.
         /// </summary>
         internal static string TCE_CannotCreateSqlColumnEncryptionEnclaveProvider {

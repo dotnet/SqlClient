@@ -1662,4 +1662,7 @@
   <data name="TCE_UnsupportedNormalizationVersion" xml:space="preserve">
     <value>Normalization version '{0}' received from {2} is not supported. Valid normalization versions are: {1}.</value>
   </data>
+  <data name="TCE_BatchedUpdateColumnEncryptionSettingMismatch" xml:space="preserve">
+    <value>{0} should be identical on all commands ({1}, {2}, {3}, {4}) when doing batch updates.</value>
+  </data>
 </root>

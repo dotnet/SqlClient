@@ -63,6 +63,9 @@ namespace Microsoft.Data.SqlClient
 
             ConnectRetryInterval,
 
+            ColumnEncryptionSetting,
+            EnclaveAttestationUrl,
+
             // keep the count value last
             KeywordsCount
         }
@@ -105,6 +108,8 @@ namespace Microsoft.Data.SqlClient
         private bool _pooling = DbConnectionStringDefaults.Pooling;
         private bool _replication = DbConnectionStringDefaults.Replication;
         private bool _userInstance = DbConnectionStringDefaults.UserInstance;
+        private SqlConnectionColumnEncryptionSetting _columnEncryptionSetting = DbConnectionStringDefaults.ColumnEncryptionSetting;
+        private string _enclaveAttestationUrl = DbConnectionStringDefaults.EnclaveAttestationUrl;
 
         private static string[] CreateValidKeywords()
         {
@@ -142,6 +147,8 @@ namespace Microsoft.Data.SqlClient
             validKeywords[(int)Keywords.WorkstationID] = DbConnectionStringKeywords.WorkstationID;
             validKeywords[(int)Keywords.ConnectRetryCount] = DbConnectionStringKeywords.ConnectRetryCount;
             validKeywords[(int)Keywords.ConnectRetryInterval] = DbConnectionStringKeywords.ConnectRetryInterval;
+            validKeywords[(int)Keywords.ColumnEncryptionSetting] = DbConnectionStringKeywords.ColumnEncryptionSetting;
+            validKeywords[(int)Keywords.EnclaveAttestationUrl] = DbConnectionStringKeywords.EnclaveAttestationUrl;
             return validKeywords;
         }
 
@@ -181,6 +188,8 @@ namespace Microsoft.Data.SqlClient
             hash.Add(DbConnectionStringKeywords.WorkstationID, Keywords.WorkstationID);
             hash.Add(DbConnectionStringKeywords.ConnectRetryCount, Keywords.ConnectRetryCount);
             hash.Add(DbConnectionStringKeywords.ConnectRetryInterval, Keywords.ConnectRetryInterval);
+            hash.Add(DbConnectionStringKeywords.ColumnEncryptionSetting, Keywords.ColumnEncryptionSetting);
+            hash.Add(DbConnectionStringKeywords.EnclaveAttestationUrl, Keywords.EnclaveAttestationUrl);
 
             hash.Add(DbConnectionStringSynonyms.APP, Keywords.ApplicationName);
             hash.Add(DbConnectionStringSynonyms.EXTENDEDPROPERTIES, Keywords.AttachDBFilename);
@@ -251,6 +260,8 @@ namespace Microsoft.Data.SqlClient
                         case Keywords.PacketSize: PacketSize = ConvertToInt32(value); break;
 
                         case Keywords.IntegratedSecurity: IntegratedSecurity = ConvertToIntegratedSecurity(value); break;
+                        case Keywords.ColumnEncryptionSetting: ColumnEncryptionSetting = ConvertToColumnEncryptionSetting(keyword, value); break;
+                        case Keywords.EnclaveAttestationUrl: EnclaveAttestationUrl = ConvertToString(value); break;
 #if netcoreapp
                         case Keywords.PoolBlockingPeriod: PoolBlockingPeriod = ConvertToPoolBlockingPeriod(keyword, value); break;
 #endif
@@ -354,6 +365,33 @@ namespace Microsoft.Data.SqlClient
             {
                 SetValue(DbConnectionStringKeywords.Encrypt, value);
                 _encrypt = value;
+            }
+        }
+
+        
+        public SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting
+        {
+            get { return _columnEncryptionSetting; }
+            set
+            {
+                if (!DbConnectionStringBuilderUtil.IsValidColumnEncryptionSetting(value))
+                {
+                    throw ADP.InvalidEnumerationValue(typeof(SqlConnectionColumnEncryptionSetting), (int)value);
+                }
+
+                SetColumnEncryptionSettingValue(value);
+                _columnEncryptionSetting = value;
+            }
+        }
+
+        
+        public string EnclaveAttestationUrl
+        {
+            get { return _enclaveAttestationUrl; }
+            set
+            {
+                SetValue(DbConnectionStringKeywords.EnclaveAttestationUrl, value);
+                _enclaveAttestationUrl = value;
             }
         }
 
@@ -678,6 +716,16 @@ namespace Microsoft.Data.SqlClient
             return DbConnectionStringBuilderUtil.ConvertToApplicationIntent(keyword, value);
         }
 
+        /// <summary>
+        /// Convert to SqlConnectionColumnEncryptionSetting.
+        /// </summary>
+        /// <param name="keyword"></param>
+        /// <param name="value"></param>
+        private static SqlConnectionColumnEncryptionSetting ConvertToColumnEncryptionSetting(string keyword, object value)
+        {
+            return DbConnectionStringBuilderUtil.ConvertToColumnEncryptionSetting(keyword, value);
+        }
+
         private object GetAt(Keywords index)
         {
             switch (index)
@@ -715,6 +763,8 @@ namespace Microsoft.Data.SqlClient
                 case Keywords.WorkstationID: return WorkstationID;
                 case Keywords.ConnectRetryCount: return ConnectRetryCount;
                 case Keywords.ConnectRetryInterval: return ConnectRetryInterval;
+                case Keywords.ColumnEncryptionSetting: return ColumnEncryptionSetting;
+                case Keywords.EnclaveAttestationUrl: return EnclaveAttestationUrl;
 
                 default:
                     Debug.Assert(false, "unexpected keyword");
@@ -848,6 +898,12 @@ namespace Microsoft.Data.SqlClient
                 case Keywords.WorkstationID:
                     _workstationID = DbConnectionStringDefaults.WorkstationID;
                     break;
+                case Keywords.ColumnEncryptionSetting:
+                    _columnEncryptionSetting = DbConnectionStringDefaults.ColumnEncryptionSetting;
+                    break;
+                case Keywords.EnclaveAttestationUrl:
+                    _enclaveAttestationUrl = DbConnectionStringDefaults.EnclaveAttestationUrl;
+                    break;
                 default:
                     Debug.Assert(false, "unexpected keyword");
                     throw UnsupportedKeyword(s_validKeywords[(int)index]);
@@ -871,6 +927,11 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(DbConnectionStringBuilderUtil.IsValidApplicationIntentValue(value), "invalid value");
             base[DbConnectionStringKeywords.ApplicationIntent] = DbConnectionStringBuilderUtil.ApplicationIntentToString(value);
+        }
+        private void SetColumnEncryptionSettingValue(SqlConnectionColumnEncryptionSetting value)
+        {
+            Debug.Assert(DbConnectionStringBuilderUtil.IsValidColumnEncryptionSetting(value), "Invalid value for SqlConnectionColumnEncryptionSetting");
+            base[DbConnectionStringKeywords.ColumnEncryptionSetting] = DbConnectionStringBuilderUtil.ColumnEncryptionSettingToString(value);
         }
 
         public override bool ShouldSerialize(string keyword)

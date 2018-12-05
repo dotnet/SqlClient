@@ -48,6 +48,8 @@ namespace Microsoft.Data.SqlClient
             internal const bool Replication = false;
             internal const int Connect_Retry_Count = 1;
             internal const int Connect_Retry_Interval = 10;
+            internal const SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Disabled;
+            internal const string EnclaveAttestationUrl = "";
         }
 
         // SqlConnection ConnectionString Options
@@ -61,6 +63,8 @@ namespace Microsoft.Data.SqlClient
 #if netcoreapp
             internal const string PoolBlockingPeriod = "poolblockingperiod";
 #endif
+            internal const string ColumnEncryptionSetting = "column encryption setting";
+            internal const string EnclaveAttestationUrl = "enclave attestation url";
             internal const string Connect_Timeout = "connect timeout";
             internal const string Connection_Reset = "connection reset";
             internal const string Context_Connection = "context connection";
@@ -180,6 +184,8 @@ namespace Microsoft.Data.SqlClient
         private readonly bool _replication;
         private readonly bool _userInstance;
         private readonly bool _multiSubnetFailover;
+        private readonly SqlConnectionColumnEncryptionSetting _columnEncryptionSetting;
+        private readonly string _enclaveAttestationUrl;
 
         private readonly int _connectTimeout;
         private readonly int _loadBalanceTimeout;
@@ -252,6 +258,8 @@ namespace Microsoft.Data.SqlClient
             _initialCatalog = ConvertValueToString(KEY.Initial_Catalog, DEFAULT.Initial_Catalog);
             _password = ConvertValueToString(KEY.Password, DEFAULT.Password);
             _trustServerCertificate = ConvertValueToBoolean(KEY.TrustServerCertificate, DEFAULT.TrustServerCertificate);
+            _columnEncryptionSetting = ConvertValueToColumnEncryptionSetting();
+            _enclaveAttestationUrl = ConvertValueToString(KEY.EnclaveAttestationUrl, DEFAULT.EnclaveAttestationUrl);
 
             // Temporary string - this value is stored internally as an enum.
             string typeSystemVersionString = ConvertValueToString(KEY.Type_System_Version, null);
@@ -443,6 +451,8 @@ namespace Microsoft.Data.SqlClient
             _applicationIntent = connectionOptions._applicationIntent;
             _connectRetryCount = connectionOptions._connectRetryCount;
             _connectRetryInterval = connectionOptions._connectRetryInterval;
+            _columnEncryptionSetting = connectionOptions._columnEncryptionSetting;
+            _enclaveAttestationUrl = connectionOptions._enclaveAttestationUrl;
 
             ValidateValueLength(_dataSource, TdsEnums.MAXLEN_SERVERNAME, KEY.Data_Source);
         }
@@ -460,7 +470,8 @@ namespace Microsoft.Data.SqlClient
         internal bool Enlist { get { return _enlist; } }
         internal bool MARS { get { return _mars; } }
         internal bool MultiSubnetFailover { get { return _multiSubnetFailover; } }
-
+        internal SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting { get { return _columnEncryptionSetting; } }
+        internal string EnclaveAttestationUrl { get { return _enclaveAttestationUrl; } }
         internal bool PersistSecurityInfo { get { return _persistSecurityInfo; } }
         internal bool Pooling { get { return _pooling; } }
         internal bool Replication { get { return _replication; } }
@@ -532,6 +543,8 @@ namespace Microsoft.Data.SqlClient
                     { KEY.TrustServerCertificate, KEY.TrustServerCertificate },
                     { KEY.TransactionBinding, KEY.TransactionBinding },
                     { KEY.Type_System_Version, KEY.Type_System_Version },
+                    { KEY.ColumnEncryptionSetting, KEY.ColumnEncryptionSetting },
+                    { KEY.EnclaveAttestationUrl, KEY.EnclaveAttestationUrl },
                     { KEY.User_ID, KEY.User_ID },
                     { KEY.User_Instance, KEY.User_Instance },
                     { KEY.Workstation_Id, KEY.Workstation_Id },
@@ -623,6 +636,31 @@ namespace Microsoft.Data.SqlClient
             if (ContainsKey(keyword))
             {
                 throw SQL.UnsupportedKeyword(keyword);
+            }
+        }
+
+        /// <summary>
+        /// Convert the value to SqlConnectionColumnEncryptionSetting.
+        /// </summary>
+        /// <returns></returns>
+        internal SqlConnectionColumnEncryptionSetting ConvertValueToColumnEncryptionSetting()
+        {
+            if (!TryGetParsetableValue(KEY.ColumnEncryptionSetting, out string value))
+            {
+                return DEFAULT.ColumnEncryptionSetting;
+            }
+
+            try
+            {
+                return DbConnectionStringBuilderUtil.ConvertToColumnEncryptionSetting(KEY.ColumnEncryptionSetting, value);
+            }
+            catch (FormatException e)
+            {
+                throw ADP.InvalidConnectionOptionValue(KEY.ColumnEncryptionSetting, e);
+            }
+            catch (OverflowException e)
+            {
+                throw ADP.InvalidConnectionOptionValue(KEY.ColumnEncryptionSetting, e);
             }
         }
     }

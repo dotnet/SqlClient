@@ -129,6 +129,11 @@ namespace Microsoft.Data.SqlClient
         internal Decoder _plpdecoder = null;             // Decoder object to process plp character data
         internal bool _accumulateInfoEvents = false;               // TRUE - accumulate info messages during TdsParser.Run, FALSE - fire them
         internal List<SqlError> _pendingInfoEvents = null;
+        internal byte[] _bLongBytes = null;                 // scratch buffer to serialize Long values (8 bytes).
+        internal byte[] _bIntBytes = null;                 // scratch buffer to serialize Int values (4 bytes).
+        internal byte[] _bShortBytes = null;                 // scratch buffer to serialize Short values (2 bytes).
+        internal byte[] _bDecimalBytes = null;                 // scratch buffer to serialize decimal values (17 bytes).
+
 
         //
         // DO NOT USE THIS BUFFER FOR OTHER THINGS.

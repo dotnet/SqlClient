@@ -136,6 +136,35 @@ namespace Microsoft.Data.SqlClient
         // NOTE: You must take the internal connection's _parserLock before modifying this
         internal bool _asyncWrite = false;
 
+        // TCE supported flag, used to determine if new TDS fields are present. This is 
+        // useful when talking to downlevel/uplevel server.
+        private bool _serverSupportsColumnEncryption = false;
+
+        /// <summary>
+        /// Get or set if column encryption is supported by the server.
+        /// </summary>
+        internal bool IsColumnEncryptionSupported
+        {
+            get
+            {
+                return _serverSupportsColumnEncryption;
+            }
+            set
+            {
+                _serverSupportsColumnEncryption = value;
+            }
+        }
+
+        /// <summary>
+        /// TCE version supported by the server
+        /// </summary>
+        internal byte TceVersionSupported { get; set; }
+
+        /// <summary>
+        /// Type of enclave being used by the server
+        /// </summary>
+        internal string EnclaveType { get; set; }
+
         internal TdsParser(bool MARS, bool fAsynchronous)
         {
             _fMARS = MARS; // may change during Connect to pre Yukon servers
