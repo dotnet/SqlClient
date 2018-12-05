@@ -5,32 +5,6 @@ namespace Microsoft.Data
         internal OperationAbortedException() { }
     }
 }
-namespace Microsoft.Data.Common
-{
-    [System.Security.Permissions.SecurityPermissionAttribute(System.Security.Permissions.SecurityAction.InheritanceDemand, ControlEvidence = true, ControlPolicy = true)]
-    public abstract partial class DBDataPermission : System.Security.CodeAccessPermission, System.Security.Permissions.IUnrestrictedPermission
-    {
-        [System.ObsoleteAttribute("DBDataPermission() has been deprecated.  Use the DBDataPermission(PermissionState.None) constructor.  http://go.microsoft.com/fwlink/?linkid=14202", true)]
-        protected DBDataPermission() { }
-        protected DBDataPermission(Microsoft.Data.Common.DBDataPermission permission) { }
-        protected DBDataPermission(System.Data.Common.DBDataPermissionAttribute permissionAttribute) { }
-        protected DBDataPermission(System.Security.Permissions.PermissionState state) { }
-        [System.ObsoleteAttribute("DBDataPermission(PermissionState state,Boolean allowBlankPassword) has been deprecated.  Use the DBDataPermission(PermissionState.None) constructor.  http://go.microsoft.com/fwlink/?linkid=14202", true)]
-        protected DBDataPermission(System.Security.Permissions.PermissionState state, bool allowBlankPassword) { }
-        public bool AllowBlankPassword { get { throw null; } set { } }
-        public virtual void Add(string connectionString, string restrictions, System.Data.KeyRestrictionBehavior behavior) { }
-        protected void Clear() { }
-        public override System.Security.IPermission Copy() { throw null; }
-        [System.Security.Permissions.PermissionSetAttribute(System.Security.Permissions.SecurityAction.Demand, Name = "FullTrust")]
-        protected virtual Microsoft.Data.Common.DBDataPermission CreateInstance() { throw null; }
-        public override void FromXml(System.Security.SecurityElement securityElement) { }
-        public override System.Security.IPermission Intersect(System.Security.IPermission target) { throw null; }
-        public override bool IsSubsetOf(System.Security.IPermission target) { throw null; }
-        public bool IsUnrestricted() { throw null; }
-        public override System.Security.SecurityElement ToXml() { throw null; }
-        public override System.Security.IPermission Union(System.Security.IPermission target) { throw null; }
-    }
-}
 namespace Microsoft.Data.Sql
 {
     public sealed partial class SqlNotificationRequest
@@ -208,7 +182,7 @@ namespace Microsoft.Data.SqlClient
         public static readonly string ViewColumns;
         public static readonly string Views;
     }
-    public sealed partial class SqlClientPermission : Microsoft.Data.Common.DBDataPermission
+    public sealed partial class SqlClientPermission : System.Data.Common.DBDataPermission
     {
         [System.ObsoleteAttribute("SqlClientPermission() has been deprecated.  Use the SqlClientPermission(PermissionState.None) constructor.  http://go.microsoft.com/fwlink/?linkid=14202", true)]
         public SqlClientPermission() : base(default(System.Security.Permissions.PermissionState)) { }
