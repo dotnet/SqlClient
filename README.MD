@@ -66,41 +66,41 @@ Build driver for all Operating Systems
 ### Run Functional Tests:  
 `Windows` (netcoreapp2.1):  
 ```
-dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" /p:Platform="AnyCPU" /p:Configuration="Release" /p:TestTargetOS="WindowsNetCore" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests"
+dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" /p:Platform="AnyCPU" /p:Configuration="Release" /p:TestTargetOS="WindowsNetCore" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonwindowstests"
 ```
  
 `Windows` (net46 x86):  
 ```
-dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" /p:Platform="Win32" /p:Configuration="Release" /p:TestTargetOS="WindowsNetFx" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonwindowstests"`
+dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" /p:Platform="Win32" /p:Configuration="Release" /p:TestTargetOS="WindowsNetFx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests"`
  ```
 
 `Windows` (net46 x64):  
 ```
-dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" /p:Platform="x64" /p:Configuration="Release" /p:TestTargetOS="WindowsNetFx" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonwindowstests"`
+dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" /p:Platform="x64" /p:Configuration="Release" /p:TestTargetOS="WindowsNetFx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests"`
 ```
 
 `Unix` (netcoreapp2.1):  
 ```
-dotnet test "src/Microsoft.Data.SqlClient/tests/FunctionalTests/Microsoft.Data.SqlClient.Tests.csproj" /p:Platform="AnyCPU" /p:Configuration="Release" /p:TestTargetOS="UnixNetCore" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonlinuxtests&category!=nonuaptests"`
+dotnet test "src/Microsoft.Data.SqlClient/tests/FunctionalTests/Microsoft.Data.SqlClient.Tests.csproj" /p:Platform="AnyCPU" /p:Configuration="Release" /p:TestTargetOS="UnixNetCore" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonlinuxtests&category!=nonuaptests"`
 ```
 
 ### Run Manual Tests:  
 `Windows` (netcoreapp2.1):  
 ```
-dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" /p:Platform="AnyCPU" /p:Configuration="Release" /p:TestTargetOS="WindowsNetCore" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests"`
+dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" /p:Platform="AnyCPU" /p:Configuration="Release" /p:TestTargetOS="WindowsNetCore" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonwindowstests"`
 ```
 
 `Windows` (net46 x86):  
 ```
-dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" /p:Platform="Win32" /p:Configuration="Release" /p:TestTargetOS="WindowsNetFx" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonwindowstests"`
+dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" /p:Platform="Win32" /p:Configuration="Release" /p:TestTargetOS="WindowsNetFx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests"`
 ```
 
 `Windows` (net46 x64):  
 ```
-dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" /p:Platform="x64" /p:Configuration="Release" /p:TestTargetOS="WindowsNetFx" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonwindowstests"`
+dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" /p:Platform="x64" /p:Configuration="Release" /p:TestTargetOS="WindowsNetFx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests"`
 ```
 
 `Unix` (netcoreapp2.1):  
 ```
-dotnet test "src/Microsoft.Data.SqlClient/tests/ManualTests/Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" /p:Platform="AnyCPU" /p:Configuration="Release" /p:TestTargetOS="UnixNetCore" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonlinuxtests&category!=nonuaptests"`
+dotnet test "src/Microsoft.Data.SqlClient/tests/ManualTests/Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" /p:Platform="AnyCPU" /p:Configuration="Release" /p:TestTargetOS="UnixNetCore" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonlinuxtests&category!=nonuaptests"`
 ```

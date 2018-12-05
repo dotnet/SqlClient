@@ -40,7 +40,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [SkipOnTargetFramework(~TargetFrameworkMonikers.NetFramework)]
+        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [CheckConnStrSetupFact]
         public static void GetValueTestThrowsExceptionOnNetCore()
         {
@@ -59,7 +59,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
         
-        [SkipOnTargetFramework(~TargetFrameworkMonikers.Netcoreapp)]
+        [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp)]
         [CheckConnStrSetupFact]
         public static void GetValueTest()
         {

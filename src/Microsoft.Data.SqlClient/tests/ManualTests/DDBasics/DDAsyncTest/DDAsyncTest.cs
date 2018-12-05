@@ -11,7 +11,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class DDAsyncTest
     {
-        [SkipOnTargetFramework(~TargetFrameworkMonikers.NetFramework)]
+        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [CheckConnStrSetupFact]
         public static void OpenConnection_WithAsyncTrue_ThrowsNotSupportedException()
         {
@@ -20,7 +20,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Throws<NotSupportedException>(() => { new SqlConnection(asyncConnectionString); });
         }
         
-        [SkipOnTargetFramework(~TargetFrameworkMonikers.Netcoreapp)]
+        [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp)]
         [CheckConnStrSetupFact]
         public static void OpenConnection_WithAsyncTrue()
         {
