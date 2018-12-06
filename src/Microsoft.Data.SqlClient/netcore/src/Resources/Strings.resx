@@ -1665,4 +1665,10 @@
   <data name="TCE_BatchedUpdateColumnEncryptionSettingMismatch" xml:space="preserve">
     <value>{0} should be identical on all commands ({1}, {2}, {3}, {4}) when doing batch updates.</value>
   </data>
+  <data name="TCE_SequentialAccessNotSupportedOnEncryptedColumn" xml:space="preserve">
+    <value>Retrieving encrypted column '{0}' with {1} is not supported.</value>
+  </data>
+  <data name="TCE_StreamNotSupportOnEncryptedColumn" xml:space="preserve">
+    <value>Retrieving encrypted column '{0}' as a {1} is not supported.</value>
+  </data>
 </root>

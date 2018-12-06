@@ -4633,11 +4633,29 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Retrieving encrypted column &apos;{0}&apos; with {1} is not supported..
+        /// </summary>
+        internal static string TCE_SequentialAccessNotSupportedOnEncryptedColumn {
+            get {
+                return ResourceManager.GetString("TCE_SequentialAccessNotSupportedOnEncryptedColumn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Internal Error. SqlColumnEncryptionEnclaveProviderName cannot be null or empty..
         /// </summary>
         internal static string TCE_SqlColumnEncryptionEnclaveProviderNameCannotBeEmpty {
             get {
                 return ResourceManager.GetString("TCE_SqlColumnEncryptionEnclaveProviderNameCannotBeEmpty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Retrieving encrypted column &apos;{0}&apos; as a {1} is not supported..
+        /// </summary>
+        internal static string TCE_StreamNotSupportOnEncryptedColumn {
+            get {
+                return ResourceManager.GetString("TCE_StreamNotSupportOnEncryptedColumn", resourceCulture);
             }
         }
         

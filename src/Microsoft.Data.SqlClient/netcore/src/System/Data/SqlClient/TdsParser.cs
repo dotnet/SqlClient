@@ -4217,7 +4217,9 @@ namespace Microsoft.Data.SqlClient
             return true;
         }
 
-        internal object GetNullSqlValue(SqlBuffer nullVal, SqlMetaDataPriv md)
+        internal static object GetNullSqlValue(SqlBuffer nullVal, SqlMetaDataPriv md,
+            SqlCommandColumnEncryptionSetting columnEncryptionSetting = SqlCommandColumnEncryptionSetting.Disabled,
+            SqlInternalConnectionTds connection = null)
         {
             switch (md.type)
             {
@@ -4493,7 +4495,9 @@ namespace Microsoft.Data.SqlClient
             return true;
         }
 
-        internal bool TryReadSqlValue(SqlBuffer value, SqlMetaDataPriv md, int length, TdsParserStateObject stateObj)
+        internal bool TryReadSqlValue(SqlBuffer value, SqlMetaDataPriv md, int length, TdsParserStateObject stateObj,
+            SqlCommandColumnEncryptionSetting columnEncryptionOverride = SqlCommandColumnEncryptionSetting.Disabled,
+            string columnName = "")
         {
             bool isPlp = md.metaType.IsPlp;
             byte tdsType = md.tdsType;

@@ -3821,12 +3821,12 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private void SetColumnEncryptionSetting(SqlCommandColumnEncryptionSetting newColumnEncryptionSetting)
         {
-            if (!this._wasBatchModeColumnEncryptionSettingSetOnce)
+            if (!_wasBatchModeColumnEncryptionSettingSetOnce)
             {
-                this._columnEncryptionSetting = newColumnEncryptionSetting;
-                this._wasBatchModeColumnEncryptionSettingSetOnce = true;
+                _columnEncryptionSetting = newColumnEncryptionSetting;
+                _wasBatchModeColumnEncryptionSettingSetOnce = true;
             }
-            else if(this._columnEncryptionSetting != newColumnEncryptionSetting)
+            else if(_columnEncryptionSetting != newColumnEncryptionSetting)
             {
                 throw SQL.BatchedUpdateColumnEncryptionSettingMismatch();
             }

@@ -41,13 +41,11 @@
     <Compile Include="System\Data\SqlClient\SqlAeadAes256CbcHmac256Factory.cs" />
     <Compile Include="System\Data\SqlClient\SqlAes256CbcAlgorithm.cs" />
     <Compile Include="System\Data\SqlClient\SqlAes256CbcFactory.cs" />
-    <Compile Include="System\Data\SqlClient\SqlClientEncryptionAlgorithm.cs" />
     <Compile Include="System\Data\SqlClient\SqlClientEncryptionAlgorithmFactory.cs" />
     <Compile Include="System\Data\SqlClient\SqlClientEncryptionAlgorithmFactoryList.cs" />
     <Compile Include="System\Data\SqlClient\SqlClientEncryptionType.cs" />
     <Compile Include="System\Data\SqlClient\SqlClientSymmetricKey.cs" />
     <Compile Include="System\Data\SqlClient\SqlColumnEncryptionKeyStoreProvider.cs" />
-    <Compile Include="System\Data\SqlClient\AlwaysEncryptedHelperClasses.cs" />
     <Compile Include="System\Data\SqlClient\SqlUtil.netcoreapp.cs" />
     <Compile Include="System\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.cs" />
     <Compile Include="System\Data\SqlClient\SqlEnclaveAttestationParameters.cs" />
@@ -251,6 +249,8 @@
     <Compile Include="System\Data\SqlClient\TdsParserStateObjectManaged.cs" />
     <Compile Include="Interop\SNINativeMethodWrapper.Common.cs" />
     <Compile Include="System\Data\SqlClient\SqlCredential.cs" />
+    <Compile Include="System\Data\SqlClient\AlwaysEncryptedHelperClasses.cs" />
+    <Compile Include="System\Data\SqlClient\SqlClientEncryptionAlgorithm.cs" />
   </ItemGroup>
   <!-- SqlFileStream Unix Netcoreapp only -->
   <ItemGroup Condition="'$(TargetGroup)' == 'netcoreapp' AND '$(TargetsUnix)' == 'true'">

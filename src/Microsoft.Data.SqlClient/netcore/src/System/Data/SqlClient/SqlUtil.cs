@@ -474,6 +474,16 @@ namespace Microsoft.Data.SqlClient
             return ADP.InvalidCast(System.SR.GetString(SR.SQL_StreamNotSupportOnColumnType, columnName));
         }
 
+        internal static Exception StreamNotSupportOnEncryptedColumn(string columnName)
+        {
+            return ADP.InvalidOperation(System.SR.GetString(SR.TCE_StreamNotSupportOnEncryptedColumn, columnName, "Stream"));
+        }
+
+        internal static Exception SequentialAccessNotSupportedOnEncryptedColumn(string columnName)
+        {
+            return ADP.InvalidOperation(System.SR.GetString(SR.TCE_SequentialAccessNotSupportedOnEncryptedColumn, columnName, "CommandBehavior=SequentialAccess"));
+        }
+
         internal static Exception TextReaderNotSupportOnColumnType(string columnName)
         {
             return ADP.InvalidCast(System.SR.GetString(SR.SQL_TextReaderNotSupportOnColumnType, columnName));
