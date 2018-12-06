@@ -638,6 +638,13 @@ namespace Microsoft.SqlServer.Server {
             return maxLength;
         }
 
+        private static CultureInfo GetColumnLocale(DataColumn column)
+        {
+            PropertyInfo localeProperty = column.GetType().GetProperty("Locale", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            MethodInfo getter = localeProperty.GetGetMethod(nonPublic: true);
+            return (CultureInfo)getter.Invoke(column, null);
+        }
+
         // Extract metadata for a single DataColumn
         static internal SmiExtendedMetaData SmiMetaDataFromDataColumn(DataColumn column, DataTable parent) {
             SqlDbType dbType = InferSqlDbTypeFromType_Katmai(column.DataType);
@@ -723,16 +730,13 @@ namespace Microsoft.SqlServer.Server {
                 scale = 0;
             }
 
-            // Since DataColumn.Locale is not accessible because it is internal and in a separate assembly, 
-            // we try to get the Locale from the parent
-            CultureInfo columnLocale = ((null != parent) ? parent.Locale : CultureInfo.CurrentCulture);
-
+            CultureInfo locale = GetColumnLocale(column);
             return new SmiExtendedMetaData(
                                         dbType, 
                                         maxLength, 
                                         precision, 
                                         scale,
-                                        columnLocale.LCID, 
+                                        locale.LCID,
                                         SmiMetaData.DefaultNVarChar.CompareOptions, 
                                         column.DataType, 
                                         false,  // no support for multi-valued columns in a TVP yet
