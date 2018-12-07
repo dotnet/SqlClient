@@ -23,6 +23,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private const int CompareMargin = 2;
         private static bool AreConnectionStringsSetup() => DataTestUtility.AreConnStringsSetup();
 
+        [OuterLoop()]
         [ConditionalTheory(nameof(AreConnectionStringsSetup))]
         [InlineData("Azure with Default Policy must Disable blocking (*.database.windows.net)", new object[] { AzureEndpointSample })]
         [InlineData("Azure with Default Policy must Disable blocking (*.database.chinacloudapi.cn)", new object[] { AzureChinaEnpointSample })]
@@ -47,6 +48,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             PoolBlockingPeriodAzureTest(connString, policy);
         }
 
+        [OuterLoop()]
         [ConditionalTheory(nameof(AreConnectionStringsSetup))]
         [InlineData("NonAzure with Default Policy must Enable blocking", new object[] { NonExistentServer })]
         [InlineData("NonAzure with Auto Policy must Enable Blocking", new object[] { NonExistentServer, PoolBlockingPeriod.Auto })]
@@ -68,6 +70,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             PoolBlockingPeriodNonAzureTest(connString, policy);
         }
 
+        [OuterLoop()]
         [ConditionalTheory(nameof(AreConnectionStringsSetup))]
         [InlineData("Test policy with Auto (lowercase)", "auto")]
         [InlineData("Test policy with Auto (PascalCase)", "Auto")]
