@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Target Name="GenerateNugetPackage" Condition="'$(GenerateNuget)' == 'true'">
+      <Message Text="Setting NugetPackageVersion to $(NugetPackageVersion)" />
+      <Exec Command="powershell.exe -NonInteractive -executionpolicy Unrestricted ^
+      -command &quot;&amp;$(ToolsDir)scripts\downloadLatestNuget.ps1 -nugetDestPath '$(NuGetRoot)'&quot;" />
+      <Exec Command="$(NuGetCmd) pack $(ToolsDir)specs\Microsoft.Data.Sqlclient.nuspec -Version $(NugetPackageVersion) -OutputDirectory $(PackagesDir)" />
+  </Target>
+</Project>

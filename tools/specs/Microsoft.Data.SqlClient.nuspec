@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata minClientVersion="2.12">
+    <id>Microsoft.Data.SqlClient</id>
+    <version>1.0.0</version>
+    <title>Microsoft.Data.SqlClient</title>
+    <authors>Microsoft</authors>
+    <owners>microsoft,dotnetframework</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <!-- <licenseUrl>https://github.com/dotnet/corefx/blob/master/LICENSE.TXT</licenseUrl> -->
+    <projectUrl>https://dot.net/</projectUrl>
+    <iconUrl>http://go.microsoft.com/fwlink/?LinkID=288859</iconUrl>
+    <description>Provides the data provider for SQL Server. These classes provide access to versions of SQL Server and encapsulate database-specific protocols, including tabular data stream (TDS)
+
+Commonly Used Types:
+Microsoft.Data.SqlClient.SqlConnection
+Microsoft.Data.SqlClient.SqlException
+Microsoft.Data.SqlClient.SqlParameter
+Microsoft.Data.SqlClient.SqlDataReader
+Microsoft.Data.SqlClient.SqlCommand
+Microsoft.Data.SqlClient.SqlTransaction
+Microsoft.Data.SqlClient.SqlParameterCollection
+Microsoft.Data.SqlClient.SqlClientFactory
+ 
+When using NuGet 3.x this package requires at least version 3.4.</description>
+    <releaseNotes>https://go.microsoft.com/fwlink/?LinkID=799421</releaseNotes>
+    <copyright>© Microsoft Corporation. All rights reserved.</copyright>
+    <serviceable>true</serviceable>
+    <dependencies>
+      <group targetFramework=".NETFramework4.6">
+        <dependency id="System.Data.Common" version="4.3.0" />
+      </group>
+      <group targetFramework=".NETCoreApp2.1">
+        <dependency id="Microsoft.Win32.Registry" version="4.5.0" exclude="Compile" />
+        <dependency id="runtime.native.System.Data.SqlClient.sni" version="4.4.0" exclude="Compile" />
+        <dependency id="System.Security.Principal.Windows" version="4.5.0" exclude="Compile" />
+        <dependency id="System.Text.Encoding.CodePages" version="4.5.0" exclude="Compile" />
+        <dependency id="System.Configuration.ConfigurationManager" version="4.5.0" exclude="Compile" />
+      </group>
+      <group targetFramework=".NETStandard2.0">
+        <dependency id="Microsoft.Win32.Registry" version="4.5.0" exclude="Compile" />
+        <dependency id="runtime.native.System.Data.SqlClient.sni" version="4.4.0" exclude="Compile" />
+        <dependency id="System.Buffers" version="4.4.0" exclude="Compile" />
+        <dependency id="System.Diagnostics.DiagnosticSource" version="4.5.0" exclude="Compile" />
+        <dependency id="System.Memory" version="4.5.1" exclude="Compile" />
+        <dependency id="System.Security.Principal.Windows" version="4.5.0" exclude="Compile" />
+        <dependency id="System.Text.Encoding.CodePages" version="4.5.0" exclude="Compile" />
+        <dependency id="System.Configuration.ConfigurationManager" version="4.5.0" exclude="Compile" />
+      </group>
+    </dependencies>
+    <frameworkAssemblies>
+      <frameworkAssembly assemblyName="mscorlib" targetFramework=".NETFramework4.6" />
+      <frameworkAssembly assemblyName="System.Data" targetFramework=".NETFramework4.6" />
+    </frameworkAssemblies>
+  </metadata>
+  <files>
+    <!--  NetFx Files  -->
+    <file src="..\..\bin\Windows_NT\Release.Win32\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.dll" target="lib\netfx.x86\" exclude="" />
+    <file src="..\..\bin\Windows_NT\Release.Win32\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.dll" target="lib\netfx.AnyCPU\" exclude="" />
+    <file src="..\..\bin\Windows_NT\Release.x64\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.dll" target="lib\netfx.x64\" exclude="" />
+    
+    <!--  NetCore Files  -->
+    <file src="..\..\bin\AnyOS\Release\Microsoft.Data.SqlClient\ref\netcoreapp2.1\Microsoft.Data.SqlClient.dll" target="ref\netcoreapp2.1\" exclude="" />
+    <file src="..\..\bin\AnyOS\Release\Microsoft.Data.SqlClient\ref\netstandard2.0\Microsoft.Data.SqlClient.dll" target="ref\netstandard2.0\" exclude="" />
+    <file src="..\..\bin\AnyOS\Release.AnyCPU\Microsoft.Data.SqlClient\netcore\netcoreapp2.1\Microsoft.Data.SqlClient.dll" target="lib\netcoreapp2.1\" exclude="" />
+    <file src="..\..\bin\AnyOS\Release.AnyCPU\Microsoft.Data.SqlClient\netcore\netstandard2.0\Microsoft.Data.SqlClient.dll" target="lib\netstandard2.0\" exclude="" />
+    <file src="..\..\bin\Windows_NT\Release.AnyCPU\Microsoft.Data.SqlClient\netcore\netcoreapp2.1\Microsoft.Data.SqlClient.dll" target="runtimes\win\lib\netcoreapp2.1\" exclude="" />
+    <file src="..\..\bin\Windows_NT\Release.AnyCPU\Microsoft.Data.SqlClient\netcore\netstandard2.0\Microsoft.Data.SqlClient.dll" target="runtimes\win\lib\netstandard2.0\" exclude="" />
+    <file src="..\..\bin\Unix\Release.AnyCPU\Microsoft.Data.SqlClient\netcore\netcoreapp2.1\Microsoft.Data.SqlClient.dll" target="runtimes\unix\lib\netcoreapp2.1\" exclude="" />
+    <file src="..\..\bin\Unix\Release.AnyCPU\Microsoft.Data.SqlClient\netcore\netstandard2.0\Microsoft.Data.SqlClient.dll" target="runtimes\unix\lib\netstandard2.0\" exclude="" />
+ </files>
+</package>

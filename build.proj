@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" DefaultTargets="BuildAll" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="src/Directory.Build.props" />
+  <Import Project="$(ToolsDir)targets\GenerateNugetPackage.targets" />
 
   <PropertyGroup>
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
@@ -9,6 +10,7 @@
     <BuildNetFx Condition="'$(TargetsUnix)' == 'true'">false</BuildNetFx>
     <TestOS     Condition="'$(TestTargetOS)' == '' AND '$(TargetsWindows)' == 'true'">Windows</TestOS>
     <TestOS     Condition="'$(TestTargetOS)' == '' AND '$(TargetsUnix)'    == 'true'">Unix</TestOS>
+    <GenerateNuget Condition="'$(GenerateNuget)' == ''">true</GenerateNuget>
     <ProjectProperties>Configuration=$(Configuration);AssemblyFileVersion=$(AssemblyFileVersion);TargetsWindows=$(TargetsWindows);TargetsUnix=$(TargetsUnix)</ProjectProperties>
     <TestProjectProperties>BuildProjectReferences=false;$(ProjectProperties)</TestProjectProperties>
   </PropertyGroup>
@@ -48,22 +50,22 @@
     <MSBuild Projects="@(FunctionalTests)" Targets="restore"/>
   </Target>
 
-  <Target Name="RestoreNetFx">
-    <MSBuild Projects="@(ManualTests)" Targets="restore" Properties="TestTargetOS=$(TestOS)NetFx" Condition="'$(BuildNetFx)' == 'true'"/>
-    <MSBuild Projects="@(FunctionalTests)" Targets="restore" Properties="TestTargetOS=$(TestOS)NetFx" Condition="'$(BuildNetFx)' == 'true'"/>
+  <Target Name="RestoreNetFx" Condition="'$(BuildNetFx)' == 'true'">
+    <MSBuild Projects="@(ManualTests)" Targets="restore" Properties="TestTargetOS=$(TestOS)NetFx" />
+    <MSBuild Projects="@(FunctionalTests)" Targets="restore" Properties="TestTargetOS=$(TestOS)NetFx" />
   </Target>
 
   <!-- Top Level Build targets -->
   <Target Name="BuildAll"        DependsOnTargets="Restore;BuildFramework;BuildCore" />
+  <Target Name="BuildAllConfigurations"    DependsOnTargets="Restore;BuildFramework;BuildCoreAllOSes;GenerateNugetPackage" />
   <Target Name="BuildTestsCore"  DependsOnTargets="BuildFunctionalTestsCore;BuildManualTestsCore" />
   <Target Name="BuildTestsNetFx" DependsOnTargets="BuildFunctionalTestsNetFx;BuildManualTestsNetFx" />
-  <Target Name="BuildAllOSes"    DependsOnTargets="Restore;BuildFramework;BuildCoreAllOSes;" />
 
-  <Target Name="BuildFramework">
-    <MSBuild Projects="@(NativeProject)" Properties="Platform=Win32;$(ProjectProperties)" Condition="'$(BuildNetFx)' == 'true'" />
-    <MSBuild Projects="@(NativeProject)" Properties="Platform=x64;$(ProjectProperties)"   Condition="'$(BuildNetFx)' == 'true'" />
-    <MSBuild Projects="@(NetFxDriver)"   Properties="Platform=Win32;$(ProjectProperties)" Condition="'$(BuildNetFx)' == 'true'" />
-    <MSBuild Projects="@(NetFxDriver)"   Properties="Platform=x64;$(ProjectProperties)"   Condition="'$(BuildNetFx)' == 'true'" />
+  <Target Name="BuildFramework" Condition="'$(BuildNetFx)' == 'true'">
+    <MSBuild Projects="@(NativeProject)" Properties="Platform=Win32;$(ProjectProperties)" />
+    <MSBuild Projects="@(NativeProject)" Properties="Platform=x64;$(ProjectProperties)" />
+    <MSBuild Projects="@(NetFxDriver)"   Properties="Platform=Win32;$(ProjectProperties)" />
+    <MSBuild Projects="@(NetFxDriver)"   Properties="Platform=x64;$(ProjectProperties)" />
   </Target>
 
   <Target Name="BuildCore" DependsOnTargets="Restore">
@@ -73,6 +75,7 @@
   <Target Name="BuildCoreAllOSes" DependsOnTargets="Restore">
     <MSBuild Projects="@(NetCoreDriver)"  Properties="$(ProjectProperties);Platform=AnyCPU;OSGroup=Unix;"  RemoveProperties="TargetsWindows;TargetsUnix;" />
     <MSBuild Projects="@(NetCoreDriver)"  Properties="$(ProjectProperties);Platform=AnyCPU;OSGroup=Windows_NT;"  RemoveProperties="TargetsWindows;TargetsUnix;" />
+    <MSBuild Projects="@(NetCoreDriver)"  Properties="$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;"  RemoveProperties="TargetsWindows;TargetsUnix;" />
   </Target>
 
   <Target Name="BuildFunctionalTestsCore" DependsOnTargets="Restore">
@@ -83,20 +86,22 @@
     <MSBuild Projects="@(ManualTests)"   Properties="TestTargetOS=$(TestOS)NetCore;Platform=AnyCPU;$(TestProjectProperties)" />
   </Target>
 
-  <Target Name="BuildFunctionalTestsNetFx" DependsOnTargets="RestoreNetFx">
+  <Target Name="BuildFunctionalTestsNetFx" DependsOnTargets="RestoreNetFx" Condition="'$(BuildNetFx)' == 'true'">
     <!-- Only build platform specific tests on Windows for .Net Framework -->
-    <MSBuild Projects="@(FunctionalTests)"   Properties="TestTargetOS=$(TestOS)NetFx;Platform=Win32;$(TestProjectProperties)" Condition="'$(BuildNetFx)' == 'true'"/>
-    <MSBuild Projects="@(FunctionalTests)"   Properties="TestTargetOS=$(TestOS)NetFx;Platform=x64;$(TestProjectProperties)"   Condition="'$(BuildNetFx)' == 'true'"/>
+    <MSBuild Projects="@(FunctionalTests)"   Properties="TestTargetOS=$(TestOS)NetFx;Platform=Win32;$(TestProjectProperties)" />
+    <MSBuild Projects="@(FunctionalTests)"   Properties="TestTargetOS=$(TestOS)NetFx;Platform=x64;$(TestProjectProperties)" />
   </Target>
 
-  <Target Name="BuildManualTestsNetFx" DependsOnTargets="RestoreNetFx">
-    <MSBuild Projects="@(ManualTests)"   Properties="TestTargetOS=$(TestOS)NetFx;Platform=Win32;$(TestProjectProperties)" Condition="'$(BuildNetFx)' == 'true'"/>
-    <MSBuild Projects="@(ManualTests)"   Properties="TestTargetOS=$(TestOS)NetFx;Platform=x64;$(TestProjectProperties)"   Condition="'$(BuildNetFx)' == 'true'"/>
+  <Target Name="BuildManualTestsNetFx" DependsOnTargets="RestoreNetFx" Condition="'$(BuildNetFx)' == 'true'">
+    <MSBuild Projects="@(ManualTests)"   Properties="TestTargetOS=$(TestOS)NetFx;Platform=Win32;$(TestProjectProperties)" />
+    <MSBuild Projects="@(ManualTests)"   Properties="TestTargetOS=$(TestOS)NetFx;Platform=x64;$(TestProjectProperties)" />
   </Target>
 
   <Target Name="Clean">
     <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".","bin", SearchOption.AllDirectories))' />
     <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".","obj", SearchOption.AllDirectories))' />
+    <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".","packages", SearchOption.AllDirectories))' />
+    <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".",".nuget", SearchOption.AllDirectories))' />
   </Target>
 
 </Project>
