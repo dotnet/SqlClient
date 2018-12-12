@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 using System.Xml;
 using Microsoft.Data.Common;
 using Microsoft.Data.Sql;
+using Microsoft.Data.SqlClient.DataClassification;
 using Microsoft.Data.SqlTypes;
 using Microsoft.SqlServer.Server;
 using MSS = Microsoft.SqlServer.Server;
@@ -165,11 +166,23 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal string EnclaveType { get; set; }
 
+        /// <summary>
+        /// Get if data classification is enabled by the server.
+        /// </summary>
+        internal bool IsDataClassificationEnabled =>
+                (DataClassificationVersion != TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED);
+            
+        /// <summary>
+        /// Get or set data classification version.  A value of 0 means that sensitivity classification is not enabled.
+        /// </summary>
+        internal int DataClassificationVersion { get; set; }
+
         internal TdsParser(bool MARS, bool fAsynchronous)
         {
             _fMARS = MARS; // may change during Connect to pre Yukon servers
             
             _physicalStateObj = TdsParserStateObjectFactory.Singleton.CreateTdsParserStateObject(this);
+            DataClassificationVersion = TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED;
         }
 
         internal SqlInternalConnectionTds Connection
@@ -1573,6 +1586,8 @@ namespace Microsoft.Data.SqlClient
                 token == TdsEnums.SQLRETURNSTATUS ||
                 token == TdsEnums.SQLCOLNAME ||
                 token == TdsEnums.SQLCOLFMT ||
+                token == TdsEnums.SQLRESCOLSRCS ||
+                token == TdsEnums.SQLDATACLASSIFICATION ||
                 token == TdsEnums.SQLCOLMETADATA ||
                 token == TdsEnums.SQLALTMETADATA ||
                 token == TdsEnums.SQLTABNAME ||
@@ -2015,6 +2030,32 @@ namespace Microsoft.Data.SqlClient
                                     return false;
                                 }
 
+                                if (TdsEnums.SQLDATACLASSIFICATION == peekedToken)
+                                {
+                                    byte dataClassificationToken;
+                                    if (!stateObj.TryReadByte(out dataClassificationToken))
+                                    {
+                                        return false;
+                                    }
+                                    Debug.Assert(TdsEnums.SQLDATACLASSIFICATION == dataClassificationToken);
+
+                                    SensitivityClassification sensitivityClassification;
+                                    if (!TryProcessDataClassification(stateObj, out sensitivityClassification))
+                                    {
+                                        return false;
+                                    }
+                                    if (!dataStream.TrySetSensitivityClassification(sensitivityClassification))
+                                    {
+                                        return false;
+                                    }
+
+                                    // update peekedToken
+                                    if (!stateObj.TryPeekByte(out peekedToken))
+                                    {
+                                        return false;
+                                    }
+                                }
+
                                 if (!dataStream.TrySetMetaData(stateObj._cleanupMetaData, (TdsEnums.SQLTABNAME == peekedToken || TdsEnums.SQLCOLINFO == peekedToken)))
                                 {
                                     return false;
@@ -2125,7 +2166,14 @@ namespace Microsoft.Data.SqlClient
                             }
                             break;
                         }
-
+                    case TdsEnums.SQLRESCOLSRCS:
+                        {
+                            if (!TryProcessResColSrcs(stateObj, tokenLength))
+                            {
+                                return false;
+                            }
+                            break;
+                        }
                     default:
                         Debug.Fail("Unhandled token:  " + token.ToString(CultureInfo.InvariantCulture));
                         break;
@@ -2779,6 +2827,175 @@ namespace Microsoft.Data.SqlClient
                     _connHandler.OnFeatureExtAck(featureId, data);
                 }
             } while (featureId != TdsEnums.FEATUREEXT_TERMINATOR);
+            return true;
+        }
+
+        private bool TryReadByteString(TdsParserStateObject stateObj, out string value)
+        {
+            value = string.Empty;
+
+            byte byteLen;
+            if (!stateObj.TryReadByte(out byteLen))
+            {
+                return false;
+            }
+
+            if (!stateObj.TryReadString(byteLen, out value))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool TryReadSensitivityLabel(TdsParserStateObject stateObj, out string label, out string id)
+        {
+            label = string.Empty;
+            id = string.Empty;
+
+            if (!TryReadByteString(stateObj, out label))
+            {
+                return false;
+            }
+
+            if (!TryReadByteString(stateObj, out id))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool TryReadSensitivityInformationType(TdsParserStateObject stateObj, out string informationType, out string id)
+        {
+            informationType = string.Empty;
+            id = string.Empty;
+
+            if (!TryReadByteString(stateObj, out informationType))
+            {
+                return false;
+            }
+
+            if (!TryReadByteString(stateObj, out id))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool TryProcessDataClassification(TdsParserStateObject stateObj, out SensitivityClassification sensitivityClassification)
+        {
+            if (this.DataClassificationVersion == 0)
+            {
+                throw SQL.ParsingError(ParsingErrorState.DataClassificationNotExpected);
+            }
+
+            sensitivityClassification = null;
+
+            // get the labels
+            UInt16 numLabels;
+            if (!stateObj.TryReadUInt16(out numLabels))
+            {
+                return false;
+            }
+            var labels = new List<Label>(numLabels);
+            for (UInt16 i = 0; i < numLabels; i++)
+            {
+                string label;
+                string id;
+                if (!TryReadSensitivityLabel(stateObj, out label, out id))
+                {
+                    return false;
+                }
+                labels.Add(new Label(label, id));
+            }
+
+            // get the information types
+            UInt16 numInformationTypes;
+            if (!stateObj.TryReadUInt16(out numInformationTypes))
+            {
+                return false;
+            }
+            var informationTypes = new List<InformationType>(numInformationTypes);
+            for (UInt16 i = 0; i < numInformationTypes; i++)
+            {
+                string informationType;
+                string id;
+                if (!TryReadSensitivityInformationType(stateObj, out informationType, out id))
+                {
+                    return false;
+                }
+                informationTypes.Add(new InformationType(informationType, id));
+            }
+
+            // get the per column classification data (corresponds to order of output columns for query)
+            UInt16 numResultColumns;
+            if (!stateObj.TryReadUInt16(out numResultColumns))
+            {
+                return false;
+            }
+            var columnSensitivities = new List<ColumnSensitivity>(numResultColumns);
+            for (UInt16 columnNum = 0; columnNum < numResultColumns; columnNum++)
+            {
+                // get sensitivity properties for all the different sources which were used in generating the column output
+                UInt16 numSources;
+                if (!stateObj.TryReadUInt16(out numSources))
+                {
+                    return false;
+                }
+                var sensitivityProperties = new List<SensitivityProperty>(numSources);
+                for (UInt16 sourceNum = 0; sourceNum < numSources; sourceNum++)
+                {
+                    // get the label index and then lookup label to use for source
+                    UInt16 labelIndex;
+                    if (!stateObj.TryReadUInt16(out labelIndex))
+                    {
+                        return false;
+                    }
+                    Label label = null;
+                    if (labelIndex != UInt16.MaxValue)
+                    {
+                        if (labelIndex >= labels.Count)
+                        {
+                            throw SQL.ParsingError(ParsingErrorState.DataClassificationInvalidLabelIndex);
+                        }
+                        label = labels[labelIndex];
+                    }
+
+                    // get the information type index and then lookup information type to use for source
+                    UInt16 informationTypeIndex;
+                    if (!stateObj.TryReadUInt16(out informationTypeIndex))
+                    {
+                        return false;
+                    }
+                    InformationType informationType = null;
+                    if (informationTypeIndex != UInt16.MaxValue)
+                    {
+                        if (informationTypeIndex >= informationTypes.Count)
+                        {
+                            throw SQL.ParsingError(ParsingErrorState.DataClassificationInvalidInformationTypeIndex);
+                        }
+                        informationType = informationTypes[informationTypeIndex];
+                    }
+
+                    // add sentivity properties for the source
+                    sensitivityProperties.Add(new SensitivityProperty(label, informationType));
+                }
+                columnSensitivities.Add(new ColumnSensitivity(sensitivityProperties));
+            }
+
+            sensitivityClassification = new SensitivityClassification(labels, informationTypes, columnSensitivities);
+
+            return true;
+        }
+
+        private bool TryProcessResColSrcs(TdsParserStateObject stateObj, int tokenLength)
+        {
+            if (!stateObj.TrySkipBytes(tokenLength))
+            {
+                return false;
+            }
             return true;
         }
 
@@ -6115,6 +6332,21 @@ namespace Microsoft.Data.SqlClient
             return totalLen;
         }
 
+        internal int WriteDataClassificationFeatureRequest(bool write /* if false just calculates the length */)
+        {
+            int len = 6; // 1byte = featureID, 4bytes = featureData length, 1 bytes = Version
+
+            if (write)
+            {
+                // Write Feature ID, legth of the version# field and Sensitivity Classification Version#
+                _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_DATACLASSIFICATION);
+                WriteInt(1, _physicalStateObj);
+                _physicalStateObj.WriteByte(TdsEnums.MAX_SUPPORTED_DATA_CLASSIFICATION_VERSION);
+            }
+
+            return len; // size of data written
+        }
+
         internal int WriteGlobalTransactionsFeatureRequest(bool write /* if false just calculates the length */)
         {
             int len = 5; // 1byte = featureID, 4bytes = featureData length
@@ -6283,6 +6515,10 @@ namespace Microsoft.Data.SqlClient
                 if ((requestedFeatures & TdsEnums.FeatureExtension.GlobalTransactions) != 0)
                 {
                     length += WriteGlobalTransactionsFeatureRequest(false);
+                }
+                if ((requestedFeatures & TdsEnums.FeatureExtension.DataClassification) != 0)
+                {
+                    length += WriteDataClassificationFeatureRequest(false);
                 }
                 if ((requestedFeatures & TdsEnums.FeatureExtension.UTF8Support) != 0)
                 {
@@ -6530,6 +6766,10 @@ namespace Microsoft.Data.SqlClient
                     if ((requestedFeatures & TdsEnums.FeatureExtension.GlobalTransactions) != 0)
                     {
                         WriteGlobalTransactionsFeatureRequest(true);
+                    }
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.DataClassification) != 0)
+                    {
+                        length += WriteDataClassificationFeatureRequest(true);
                     }
                     if ((requestedFeatures & TdsEnums.FeatureExtension.UTF8Support) != 0)
                     {

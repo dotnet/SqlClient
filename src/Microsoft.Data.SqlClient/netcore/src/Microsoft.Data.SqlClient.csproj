@@ -252,6 +252,7 @@
     <Compile Include="System\Data\SqlClient\SqlCredential.cs" />
     <Compile Include="System\Data\SqlClient\AlwaysEncryptedHelperClasses.cs" />
     <Compile Include="System\Data\SqlClient\SqlClientEncryptionAlgorithm.cs" />
+    <Compile Include="System\Data\SqlClient\DataClassification\SensitivityClassification.cs" />
   </ItemGroup>
   <!-- SqlFileStream Unix Netcoreapp only -->
   <ItemGroup Condition="'$(TargetGroup)' == 'netcoreapp' AND '$(TargetsUnix)' == 'true'">

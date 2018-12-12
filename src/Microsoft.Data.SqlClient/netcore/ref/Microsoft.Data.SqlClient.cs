@@ -626,6 +626,7 @@ namespace Microsoft.Data.SqlClient
         public override object this[int i] { get { throw null; } }
         public override object this[string name] { get { throw null; } }
         public override int RecordsAffected { get { throw null; } }
+        public Microsoft.Data.SqlClient.DataClassification.SensitivityClassification SensitivityClassification { get { throw null; } }
         public override int VisibleFieldCount { get { throw null; } }
         public override bool GetBoolean(int i) { throw null; }
         public override byte GetByte(int i) { throw null; }
@@ -831,6 +832,39 @@ namespace Microsoft.Data.SqlClient
         public SqlCredential(string userId, System.Security.SecureString password) { }
         public string UserId { get { throw null; } }
         public System.Security.SecureString Password { get { throw null; } }
+    }
+}
+namespace Microsoft.Data.SqlClient.DataClassification
+{
+    public partial class ColumnSensitivity
+    {
+        public ColumnSensitivity(System.Collections.Generic.IList<Microsoft.Data.SqlClient.DataClassification.SensitivityProperty> sensitivityProperties) { }
+        public System.Collections.ObjectModel.ReadOnlyCollection<Microsoft.Data.SqlClient.DataClassification.SensitivityProperty> SensitivityProperties { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
+    }
+    public partial class InformationType
+    {
+        public InformationType(string name, string id) { }
+        public string Id { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
+        public string Name { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
+    }
+    public partial class Label
+    {
+        public Label(string name, string id) { }
+        public string Id { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
+        public string Name { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
+    }
+    public partial class SensitivityClassification
+    {
+        public SensitivityClassification(System.Collections.Generic.IList<Microsoft.Data.SqlClient.DataClassification.Label> labels, System.Collections.Generic.IList<Microsoft.Data.SqlClient.DataClassification.InformationType> informationTypes, System.Collections.Generic.IList<Microsoft.Data.SqlClient.DataClassification.ColumnSensitivity> columnSensitivity) { }
+        public System.Collections.ObjectModel.ReadOnlyCollection<Microsoft.Data.SqlClient.DataClassification.ColumnSensitivity> ColumnSensitivities { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
+        public System.Collections.ObjectModel.ReadOnlyCollection<Microsoft.Data.SqlClient.DataClassification.InformationType> InformationTypes { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
+        public System.Collections.ObjectModel.ReadOnlyCollection<Microsoft.Data.SqlClient.DataClassification.Label> Labels { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
+    }
+    public partial class SensitivityProperty
+    {
+        public SensitivityProperty(Microsoft.Data.SqlClient.DataClassification.Label label, Microsoft.Data.SqlClient.DataClassification.InformationType informationType) { }
+        public Microsoft.Data.SqlClient.DataClassification.InformationType InformationType { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
+        public Microsoft.Data.SqlClient.DataClassification.Label Label { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
     }
 }
 namespace Microsoft.Data

@@ -141,6 +141,9 @@ namespace Microsoft.Data.SqlClient
         public const byte SQLALTMETADATA = 0x88;    // Alt column metadata including name
         public const byte SQLSSPI = 0xed;    // SSPI data
 
+        public const byte SQLRESCOLSRCS = 0xa2;
+        public const byte SQLDATACLASSIFICATION = 0xa3;
+
         // Environment change notification streams
         // TYPE on TDS ENVCHANGE token stream (from sql\ntdbms\include\odsapi.h)
         //
@@ -206,17 +209,23 @@ namespace Microsoft.Data.SqlClient
         public const byte FEATUREEXT_FEDAUTH = 0x02;
         public const byte FEATUREEXT_TCE = 0x04;
         public const byte FEATUREEXT_GLOBALTRANSACTIONS = 0x05;
+        // 0x06 is for x_eFeatureExtensionId_LoginToken 
+        // 0x07 is for x_eFeatureExtensionId_ClientSideTelemetry 
+        public const byte FEATUREEXT_AZURESQLSUPPORT = 0x08;
+        public const byte FEATUREEXT_DATACLASSIFICATION = 0x09;
         public const byte FEATUREEXT_UTF8SUPPORT = 0x0A;
 
         [Flags]
         public enum FeatureExtension : uint
         {
             None = 0,
-            SessionRecovery = 1,
-            FedAuth = 2,
-            Tce = 4,
-            GlobalTransactions = 16,
-            UTF8Support = 512,
+            SessionRecovery = 1 << (TdsEnums.FEATUREEXT_SRECOVERY - 1),
+            FedAuth = 1 << (TdsEnums.FEATUREEXT_FEDAUTH - 1),
+            Tce = 1 << (TdsEnums.FEATUREEXT_TCE - 1),
+            GlobalTransactions = 1 << (TdsEnums.FEATUREEXT_GLOBALTRANSACTIONS - 1),
+            AzureSQLSupport = 1 << (TdsEnums.FEATUREEXT_AZURESQLSUPPORT - 1),
+            DataClassification = 1 << (TdsEnums.FEATUREEXT_DATACLASSIFICATION - 1),
+            UTF8Support = 1 << (TdsEnums.FEATUREEXT_UTF8SUPPORT - 1),
         }
 
         public const uint UTF8_IN_TDSCOLLATION = 0x4000000;
@@ -898,6 +907,10 @@ namespace Microsoft.Data.SqlClient
         internal static readonly int[] WHIDBEY_DATETIME2_LENGTH = { 19, 21, 22, 23, 24, 25, 26, 27 };
         internal static readonly int[] WHIDBEY_DATETIMEOFFSET_LENGTH = { 26, 28, 29, 30, 31, 32, 33, 34 };
 
+        // Data Classification constants
+        internal const byte DATA_CLASSIFICATION_NOT_ENABLED = 0x00;
+        internal const byte MAX_SUPPORTED_DATA_CLASSIFICATION_VERSION = 0x01;
+
         // Needed for UapAot, since we cannot use Enum.GetName() on SniContext.
         // Enum.GetName() uses reflection, which is blocked on UapAot for internal types
         // like SniContext.
@@ -1006,6 +1019,10 @@ namespace Microsoft.Data.SqlClient
         TceUnknownVersion = 21,
         TceInvalidVersion = 22,
         TceInvalidOrdinalIntoCipherInfoTable = 23,
+        DataClassificationInvalidVersion = 24,
+        DataClassificationNotExpected = 25,
+        DataClassificationInvalidLabelIndex = 26,
+        DataClassificationInvalidInformationTypeIndex = 27
     }
 
     /// <summary>

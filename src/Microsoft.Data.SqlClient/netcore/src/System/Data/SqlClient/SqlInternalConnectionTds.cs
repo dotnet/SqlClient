@@ -1160,8 +1160,8 @@ namespace Microsoft.Data.SqlClient
                 _federatedAuthenticationRequested = true;
             }
 
-            // The GLOBALTRANSACTIONS and UTF8 support features are implicitly requested
-            requestedFeatures |= TdsEnums.FeatureExtension.GlobalTransactions | TdsEnums.FeatureExtension.UTF8Support;
+            // The GLOBALTRANSACTIONS, DATACLASSIFICATION  and UTF8 support features are implicitly requested
+            requestedFeatures |= TdsEnums.FeatureExtension.GlobalTransactions | TdsEnums.FeatureExtension.DataClassification | TdsEnums.FeatureExtension.UTF8Support;
             _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData);
         }
 
@@ -1994,6 +1994,26 @@ namespace Microsoft.Data.SqlClient
                         {
                             throw SQL.ParsingError();
                         }
+                        break;
+                    }
+                case TdsEnums.FEATUREEXT_DATACLASSIFICATION:
+                    {
+                        if (data.Length < 1)
+                        {
+                            throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+                        }
+                        byte supportedDataClassificationVersion = data[0];
+                        if ((0 == supportedDataClassificationVersion) || (supportedDataClassificationVersion > TdsEnums.MAX_SUPPORTED_DATA_CLASSIFICATION_VERSION))
+                        {
+                            throw SQL.ParsingErrorValue(ParsingErrorState.DataClassificationInvalidVersion, supportedDataClassificationVersion);
+                        }
+
+                        if (data.Length != 2)
+                        {
+                            throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+                        }
+                        byte enabled = data[1];
+                        _parser.DataClassificationVersion = (enabled == 0) ? TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED : supportedDataClassificationVersion;
                         break;
                     }
                 default:

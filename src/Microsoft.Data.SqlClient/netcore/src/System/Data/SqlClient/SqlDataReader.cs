@@ -21,6 +21,7 @@ using System.Data;
 using Microsoft.Data.Common;
 using System;
 using Microsoft.Data.SqlTypes;
+using Microsoft.Data.SqlClient.DataClassification;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -144,6 +145,8 @@ namespace Microsoft.Data.SqlClient
                 return _connection;
             }
         }
+
+        public SensitivityClassification SensitivityClassification { get; internal set; }
 
         override public int Depth
         {
@@ -3833,6 +3836,12 @@ namespace Microsoft.Data.SqlClient
             _fieldNameLookup = null;
             _metaDataConsumed = false;
             _browseModeInfoConsumed = false;
+        }
+
+        internal bool TrySetSensitivityClassification(SensitivityClassification sensitivityClassification)
+        {
+            SensitivityClassification = sensitivityClassification;
+            return true;
         }
 
         internal bool TrySetMetaData(_SqlMetaDataSet metaData, bool moreInfo)
