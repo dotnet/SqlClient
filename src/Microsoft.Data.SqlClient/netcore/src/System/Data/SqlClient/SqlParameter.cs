@@ -12,9 +12,7 @@ using System.Globalization;
 using System.Reflection;
 using System.Xml;
 using MSS = Microsoft.SqlServer.Server;
-
 using Microsoft.SqlServer.Server;
-
 using System.ComponentModel.Design.Serialization;
 using System.Data;
 using System;
@@ -85,11 +83,22 @@ namespace Microsoft.Data.SqlClient
         private int _actualSize = -1;
 
         /// <summary>
+        /// Get or set the encryption related metadata of this SqlParameter.
+        /// Should be set to a non-null value only once.
+        /// </summary>
+        internal SqlCipherMetadata CipherMetadata { get; set; }
+
+        /// <summary>
         /// Indicates if the parameter encryption metadata received by sp_describe_parameter_encryption.
         /// For unencrypted parameters, the encryption metadata should still be sent (and will indicate 
         /// that no encryption is needed).
         /// </summary>
         internal bool HasReceivedMetadata { get; set; }
+
+        /// <summary>
+        /// Returns the normalization rule version number as a byte
+        /// </summary>
+        internal byte NormalizationRuleVersion => CipherMetadata?.NormalizationRuleVersion ?? 0x00;
 
         private DataRowVersion _sourceVersion;
 

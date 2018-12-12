@@ -3796,6 +3796,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Failed to decrypt column &apos;{0}&apos;..
+        /// </summary>
+        internal static string TCE_ColumnDecryptionFailed {
+            get {
+                return ResourceManager.GetString("TCE_ColumnDecryptionFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Internal Error. Encrypted column encryption keys not found when trying to send the keys to the enclave..
         /// </summary>
         internal static string TCE_ColumnEncryptionKeysNotFound {
@@ -4629,6 +4638,33 @@ namespace System {
         internal static string TCE_OffsetOutOfBounds {
             get {
                 return ResourceManager.GetString("TCE_OffsetOutOfBounds", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to encrypt parameter &apos;{0}&apos;..
+        /// </summary>
+        internal static string TCE_ParamEncryptionFailed {
+            get {
+                return ResourceManager.GetString("TCE_ParamEncryptionFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot set {0} for {3} &apos;{1}&apos; because encryption is not enabled for the statement or procedure &apos;{2}&apos;..
+        /// </summary>
+        internal static string TCE_ParamInvalidForceColumnEncryptionSetting {
+            get {
+                return ResourceManager.GetString("TCE_ParamInvalidForceColumnEncryptionSetting", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot execute statement or procedure &apos;{1}&apos; because {2} was set for {3} &apos;{0}&apos; and the database expects this parameter to be sent as plaintext. This may be due to a configuration error..
+        /// </summary>
+        internal static string TCE_ParamUnExpectedEncryptionMetadata {
+            get {
+                return ResourceManager.GetString("TCE_ParamUnExpectedEncryptionMetadata", resourceCulture);
             }
         }
         

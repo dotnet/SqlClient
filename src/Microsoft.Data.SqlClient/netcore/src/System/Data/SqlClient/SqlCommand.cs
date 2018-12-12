@@ -78,6 +78,8 @@ namespace Microsoft.Data.SqlClient
         private EXECTYPE _execType = EXECTYPE.UNPREPARED; // by default, assume the user is not sharing a connection so the command has not been prepared
         private _SqlRPC[] _rpcArrayOf1 = null;                // Used for RPC executes
 
+        internal EnclavePackage enclavePackage = null;
+
         // cut down on object creation and cache all these
         // cached metadata
         private _SqlMetaDataSet _cachedMetaData;
@@ -201,6 +203,10 @@ namespace Microsoft.Data.SqlClient
         // _rowsAffected is cumulative for ExecuteNonQuery across all rpc batches
         internal int _rowsAffected = -1; // rows affected by the command
 
+        // number of rows affected by sp_describe_parameter_encryption.
+        // The below line is used only for debug asserts and not exposed publicly or impacts functionality otherwise.
+        private int _rowsAffectedBySpDescribeParameterEncryption = -1;
+
         private SqlNotificationRequest _notification;
 
         // transaction support
@@ -220,14 +226,26 @@ namespace Microsoft.Data.SqlClient
         private bool _batchRPCMode;
         private List<_SqlRPC> _RPCList;
         private _SqlRPC[] _SqlRPCBatchArray;
+        private _SqlRPC[] _sqlRPCParameterEncryptionReqArray;
         private List<SqlParameterCollection> _parameterCollectionList;
         private int _currentlyExecutingBatch;
+
+        /// <summary>
+        /// This variable is used to keep track of which RPC batch's results are being read when reading the results of
+        /// describe parameter encryption RPC requests in BatchRPCMode.
+        /// </summary>
+        private int _currentlyExecutingDescribeParameterEncryptionRPC;
+
+        /// <summary>
+        /// A flag to indicate if we have in-progress describe parameter encryption RPC requests.
+        /// Reset to false when completed.
+        /// </summary>
+        internal bool IsDescribeParameterEncryptionRPCCurrentlyInProgress { get; }
 
         /// <summary>
         /// A flag to indicate whether we postponed caching the query metadata for this command.
         /// </summary>
         internal bool CachingQueryMetadataPostponed { get; set; }
-
 
         public SqlCommand() : base()
         {
@@ -2561,7 +2579,7 @@ namespace Microsoft.Data.SqlClient
                     Debug.Assert(!IsPrepared, "Batch RPC should not be prepared!");
                     Debug.Assert(!IsDirty, "Batch RPC should not be marked as dirty!");
                     Debug.Assert(_SqlRPCBatchArray != null, "RunExecuteReader rpc array not provided");
-                    writeTask = _stateObj.Parser.TdsExecuteRPC( _SqlRPCBatchArray, timeout, inSchema, this.Notification, _stateObj, CommandType.StoredProcedure == CommandType, sync: !asyncWrite);
+                    writeTask = _stateObj.Parser.TdsExecuteRPC(this, _SqlRPCBatchArray, timeout, inSchema, this.Notification, _stateObj, CommandType.StoredProcedure == CommandType, sync: !asyncWrite);
                 }
                 else if ((System.Data.CommandType.Text == this.CommandType) && (0 == GetParameterCount(_parameters)))
                 {
@@ -2612,7 +2630,7 @@ namespace Microsoft.Data.SqlClient
                     rpc.options = TdsEnums.RPC_NOMETADATA;
 
                     Debug.Assert(_rpcArrayOf1[0] == rpc);
-                    writeTask = _stateObj.Parser.TdsExecuteRPC(_rpcArrayOf1, timeout, inSchema, this.Notification, _stateObj, CommandType.StoredProcedure == CommandType, sync: !asyncWrite);
+                    writeTask = _stateObj.Parser.TdsExecuteRPC(this, _rpcArrayOf1, timeout, inSchema, this.Notification, _stateObj, CommandType.StoredProcedure == CommandType, sync: !asyncWrite);
                 }
                 else
                 {
@@ -2638,7 +2656,7 @@ namespace Microsoft.Data.SqlClient
 
                     // execute sp
                     Debug.Assert(_rpcArrayOf1[0] == rpc);
-                    writeTask = _stateObj.Parser.TdsExecuteRPC(_rpcArrayOf1, timeout, inSchema, this.Notification, _stateObj, CommandType.StoredProcedure == CommandType, sync: !asyncWrite);
+                    writeTask = _stateObj.Parser.TdsExecuteRPC(this, _rpcArrayOf1, timeout, inSchema, this.Notification, _stateObj, CommandType.StoredProcedure == CommandType, sync: !asyncWrite);
                 }
 
                 Debug.Assert(writeTask == null || async, "Returned task in sync mode");
@@ -2957,6 +2975,47 @@ namespace Microsoft.Data.SqlClient
                 stateObj.CloseSession();
             }
         }
+
+        /// <summary>
+        /// IMPORTANT NOTE: This is created as a copy of OnDoneProc below for Transparent Column Encryption improvement
+        /// as there is not much time, to address regressions. Will revisit removing the duplication, when we have time again.
+        /// </summary>
+        internal void OnDoneDescribeParameterEncryptionProc(TdsParserStateObject stateObj)
+        {
+            // called per rpc batch complete
+            if (BatchRPCMode)
+            {
+                // track the records affected for the just completed rpc batch
+                // _rowsAffected is cumulative for ExecuteNonQuery across all rpc batches
+                _sqlRPCParameterEncryptionReqArray[_currentlyExecutingDescribeParameterEncryptionRPC].cumulativeRecordsAffected = _rowsAffected;
+
+                _sqlRPCParameterEncryptionReqArray[_currentlyExecutingDescribeParameterEncryptionRPC].recordsAffected =
+                    (((0 < _currentlyExecutingDescribeParameterEncryptionRPC) && (0 <= _rowsAffected))
+                        ? (_rowsAffected - Math.Max(_sqlRPCParameterEncryptionReqArray[_currentlyExecutingDescribeParameterEncryptionRPC - 1].cumulativeRecordsAffected, 0))
+                        : _rowsAffected);
+
+                // track the error collection (not available from TdsParser after ExecuteNonQuery)
+                // and the which errors are associated with the just completed rpc batch
+                _sqlRPCParameterEncryptionReqArray[_currentlyExecutingDescribeParameterEncryptionRPC].errorsIndexStart =
+                    ((0 < _currentlyExecutingDescribeParameterEncryptionRPC)
+                        ? _sqlRPCParameterEncryptionReqArray[_currentlyExecutingDescribeParameterEncryptionRPC - 1].errorsIndexEnd
+                        : 0);
+                _sqlRPCParameterEncryptionReqArray[_currentlyExecutingDescribeParameterEncryptionRPC].errorsIndexEnd = stateObj.ErrorCount;
+                _sqlRPCParameterEncryptionReqArray[_currentlyExecutingDescribeParameterEncryptionRPC].errors = stateObj._errors;
+
+                // track the warning collection (not available from TdsParser after ExecuteNonQuery)
+                // and the which warnings are associated with the just completed rpc batch
+                _sqlRPCParameterEncryptionReqArray[_currentlyExecutingDescribeParameterEncryptionRPC].warningsIndexStart =
+                    ((0 < _currentlyExecutingDescribeParameterEncryptionRPC)
+                        ? _sqlRPCParameterEncryptionReqArray[_currentlyExecutingDescribeParameterEncryptionRPC - 1].warningsIndexEnd
+                        : 0);
+                _sqlRPCParameterEncryptionReqArray[_currentlyExecutingDescribeParameterEncryptionRPC].warningsIndexEnd = stateObj.WarningCount;
+                _sqlRPCParameterEncryptionReqArray[_currentlyExecutingDescribeParameterEncryptionRPC].warnings = stateObj._warnings;
+
+                _currentlyExecutingDescribeParameterEncryptionRPC++;
+            }
+        }
+
         internal void OnDoneProc()
         { // called per rpc batch complete
             if (BatchRPCMode)
@@ -3749,6 +3808,29 @@ namespace Microsoft.Data.SqlClient
                     _parameters.IsDirty = _dirty;
                 }
                 _cachedMetaData = null;
+            }
+        }
+
+        /// <summary>
+        /// Get or set the number of records affected by SpDescribeParameterEncryption.
+        /// The below line is used only for debug asserts and not exposed publicly or impacts functionality otherwise.
+        /// </summary>
+        internal int RowsAffectedByDescribeParameterEncryption
+        {
+            get
+            {
+                return _rowsAffectedBySpDescribeParameterEncryption;
+            }
+            set
+            {
+                if (-1 == _rowsAffectedBySpDescribeParameterEncryption)
+                {
+                    _rowsAffectedBySpDescribeParameterEncryption = value;
+                }
+                else if (0 < value)
+                {
+                    _rowsAffectedBySpDescribeParameterEncryption += value;
+                }
             }
         }
 

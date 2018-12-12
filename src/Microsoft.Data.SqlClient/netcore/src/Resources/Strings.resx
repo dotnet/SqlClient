@@ -1671,4 +1671,16 @@
   <data name="TCE_StreamNotSupportOnEncryptedColumn" xml:space="preserve">
     <value>Retrieving encrypted column '{0}' as a {1} is not supported.</value>
   </data>
+  <data name="TCE_ColumnDecryptionFailed" xml:space="preserve">
+    <value>Failed to decrypt column '{0}'.</value>
+  </data>
+  <data name="TCE_ParamEncryptionFailed" xml:space="preserve">
+    <value>Failed to encrypt parameter '{0}'.</value>
+  </data>
+  <data name="TCE_ParamInvalidForceColumnEncryptionSetting" xml:space="preserve">
+    <value>Cannot set {0} for {3} '{1}' because encryption is not enabled for the statement or procedure '{2}'.</value>
+  </data>
+  <data name="TCE_ParamUnExpectedEncryptionMetadata" xml:space="preserve">
+    <value>Cannot execute statement or procedure '{1}' because {2} was set for {3} '{0}' and the database expects this parameter to be sent as plaintext. This may be due to a configuration error.</value>
+  </data>
 </root>

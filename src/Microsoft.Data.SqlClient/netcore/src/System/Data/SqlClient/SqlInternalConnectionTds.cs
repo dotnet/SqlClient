@@ -300,9 +300,6 @@ namespace Microsoft.Data.SqlClient
         // OTHER STATE VARIABLES AND REFERENCES
 
         internal Guid _clientConnectionId = Guid.Empty;
-
-        // Routing information (ROR)
-        private RoutingInfo _routingInfo = null;
         private Guid _originalClientConnectionId = Guid.Empty;
         private string _routingDestination = null;
         private readonly TimeoutTimer _timeout;
@@ -452,6 +449,8 @@ namespace Microsoft.Data.SqlClient
                 return _routingDestination;
             }
         }
+
+        internal RoutingInfo RoutingInfo { get; private set; } = null;
 
         internal override SqlInternalTransaction CurrentTransaction
         {
@@ -1033,7 +1032,7 @@ namespace Microsoft.Data.SqlClient
         {
             _parser.Run(RunBehavior.UntilDone, null, null, null, _parser._physicalStateObj);
 
-            if (_routingInfo == null)
+            if (RoutingInfo == null)
             { // ROR should not affect state of connection recovery
                 if (_federatedAuthenticationRequested && !_federatedAuthenticationAcknowledged)
                 {
@@ -1348,7 +1347,7 @@ namespace Microsoft.Data.SqlClient
                         throw SQL.MultiSubnetFailoverWithFailoverPartner(serverProvidedFailoverPartner: true, internalConnection: this);
                     }
 
-                    if (_routingInfo != null)
+                    if (RoutingInfo != null)
                     {
                         if (routingAttempts > 0)
                         {
@@ -1360,7 +1359,7 @@ namespace Microsoft.Data.SqlClient
                             throw SQL.ROR_TimeoutAfterRoutingInfo(this);
                         }
 
-                        serverInfo = new ServerInfo(ConnectionOptions, _routingInfo, serverInfo.ResolvedServerName);
+                        serverInfo = new ServerInfo(ConnectionOptions, RoutingInfo, serverInfo.ResolvedServerName);
                         _timeoutErrorInternal.SetInternalSourceType(SqlConnectionInternalSourceType.RoutingDestination);
                         _originalClientConnectionId = _clientConnectionId;
                         _routingDestination = serverInfo.UserServerName;
@@ -1554,7 +1553,7 @@ namespace Microsoft.Data.SqlClient
                             withFailover: true
                             );
 
-                    if (_routingInfo != null)
+                    if (RoutingInfo != null)
                     {
                         // We are in login with failover scenation and server sent routing information
                         // If it is read-only routing - we did not supply AppIntent=RO (it should be checked before)
@@ -1643,7 +1642,7 @@ namespace Microsoft.Data.SqlClient
                                 TimeoutTimer timeout,
                                 bool withFailover = false)
         {
-            _routingInfo = null; // forget routing information 
+            RoutingInfo = null; // forget routing information 
 
             _parser._physicalStateObj.SniContext = SniContext.Snix_Connect;
 
@@ -1755,7 +1754,7 @@ namespace Microsoft.Data.SqlClient
         { // true if we are only draining environment change tokens, used by TdsParser
             get
             {
-                return _routingInfo != null; // connection was routed, ignore rest of env change
+                return RoutingInfo != null; // connection was routed, ignore rest of env change
             }
         }
 
@@ -1842,7 +1841,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         throw SQL.ROR_InvalidRoutingInfo(this);
                     }
-                    _routingInfo = rec.newRoutingInfo;
+                    RoutingInfo = rec.newRoutingInfo;
                     break;
 
                 default:
@@ -1869,7 +1868,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void OnFeatureExtAck(int featureId, byte[] data)
         {
-            if (_routingInfo != null)
+            if (RoutingInfo != null)
             {
                 return;
             }
