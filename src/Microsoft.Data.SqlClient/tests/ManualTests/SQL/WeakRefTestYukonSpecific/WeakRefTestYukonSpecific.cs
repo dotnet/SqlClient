@@ -94,8 +94,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static int GCCount = 0;
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        private static void TestReaderMarsCase(string caseName, string connectionString, ReaderTestType testType, ReaderVerificationType verificationType)
+        private static void TestReaderMarsCase(string caseName, string connectionString, ReaderTestType testType, ReaderVerificationType verificationType, [CallerMemberName] string methodName = "")
         {
+            Console.WriteLine($"TestReaderMarsCase called by {methodName} for Case {caseName} and {testType}");
             WeakReference weak = null;
             SqlCommand[] cmd = new SqlCommand[CONCURRENT_COMMANDS];
             SqlDataReader[] gch = new SqlDataReader[CONCURRENT_COMMANDS];
