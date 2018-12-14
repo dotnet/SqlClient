@@ -55,9 +55,10 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
   </metadata>
   <files>
     <!--  NetFx Files  -->
-    <file src="..\..\bin\Windows_NT\Release.Win32\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.dll" target="lib\netfx.x86\" exclude="" />
-    <file src="..\..\bin\Windows_NT\Release.Win32\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.dll" target="lib\netfx.AnyCPU\" exclude="" />
-    <file src="..\..\bin\Windows_NT\Release.x64\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.dll" target="lib\netfx.x64\" exclude="" />
+    <file src="..\..\bin\Windows_NT\Release\Microsoft.Data.SqlClient\ref\net46\Microsoft.Data.SqlClient.dll" target="ref\net46\" exclude="" />
+    <file src="..\..\bin\Windows_NT\Release.Win32\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.dll" target="lib\net46\" exclude="" />
+    <file src="..\..\bin\Windows_NT\Release.Win32\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.dll" target="runtimes\win-x86\lib\net46\" exclude="" />
+    <file src="..\..\bin\Windows_NT\Release.x64\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.dll" target="runtimes\win-x64\lib\net46\" exclude="" />
     
     <!--  NetCore Files  -->
     <file src="..\..\bin\AnyOS\Release\Microsoft.Data.SqlClient\ref\netcoreapp2.1\Microsoft.Data.SqlClient.dll" target="ref\netcoreapp2.1\" exclude="" />
