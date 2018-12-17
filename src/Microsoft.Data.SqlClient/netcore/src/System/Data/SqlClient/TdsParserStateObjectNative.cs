@@ -14,6 +14,8 @@ namespace Microsoft.Data.SqlClient
 {
     internal class TdsParserStateObjectNative : TdsParserStateObject
     {
+        private static readonly object s_cachedEmptyReadPacketObjectPointer = (object)IntPtr.Zero;
+
         private SNIHandle _sessionHandle = null;              // the SNI handle we're to work on
 
         private SNIPacket _sniPacket = null;                // Will have to re-vamp this for MARS
@@ -37,7 +39,7 @@ namespace Microsoft.Data.SqlClient
 
         internal override object SessionHandle => _sessionHandle;
 
-        protected override object EmptyReadPacket => IntPtr.Zero;
+        protected override object EmptyReadPacket => s_cachedEmptyReadPacketObjectPointer;
 
         protected override void CreateSessionHandle(TdsParserStateObject physicalConnection, bool async)
         {
