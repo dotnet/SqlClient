@@ -539,6 +539,7 @@
   <ItemGroup Condition="('$(OSGroup)' != 'AnyOS' AND '$(IsUAPAssembly)' == 'true') OR '$(TargetGroup)' == 'netcoreapp'">
     <Reference Include="System.Transactions.Local" />
     <Reference Include="System.Collections.NonGeneric" />
+    <Reference Include="System.Memory" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetsNetFx)' == 'true'">
     <Reference Include="mscorlib" />

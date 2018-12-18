@@ -729,7 +729,7 @@ namespace Microsoft.Data.SqlClient
             byte[] payload = new byte[_physicalStateObj._inBytesPacket];
 
             Debug.Assert(_physicalStateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-            result = _physicalStateObj.TryReadByteArray(payload, 0, payload.Length);
+            result = _physicalStateObj.TryReadByteArray(payload, payload.Length);
             if (!result) { throw SQL.SynchronousCallMayNotPend(); }
 
             if (payload[0] == 0xaa)
@@ -2585,7 +2585,7 @@ namespace Microsoft.Data.SqlClient
                             return false;
                         }
                         env.newBinValue = new byte[env.newLength];
-                        if (!stateObj.TryReadByteArray(env.newBinValue, 0, env.newLength))
+                        if (!stateObj.TryReadByteArray(env.newBinValue, env.newLength))
                         { // read new value with 4 byte length
                             return false;
                         }
@@ -2677,7 +2677,7 @@ namespace Microsoft.Data.SqlClient
             }
             env.newLength = byteLength;
             env.newBinValue = new byte[env.newLength];
-            if (!stateObj.TryReadByteArray(env.newBinValue, 0, env.newLength))
+            if (!stateObj.TryReadByteArray(env.newBinValue, env.newLength))
             {
                 return false;
             }
@@ -2687,7 +2687,7 @@ namespace Microsoft.Data.SqlClient
             }
             env.oldLength = byteLength;
             env.oldBinValue = new byte[env.oldLength];
-            if (!stateObj.TryReadByteArray(env.oldBinValue, 0, env.oldLength))
+            if (!stateObj.TryReadByteArray(env.oldBinValue, env.oldLength))
             {
                 return false;
             }
@@ -2943,7 +2943,7 @@ namespace Microsoft.Data.SqlClient
                     byte[] data = new byte[dataLen];
                     if (dataLen > 0)
                     {
-                        if (!stateObj.TryReadByteArray(data, 0, checked((int)dataLen)))
+                        if (!stateObj.TryReadByteArray(data, checked((int)dataLen)))
                         {
                             return false;
                         }
@@ -3242,7 +3242,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 if (buffer != null)
                 {
-                    if (!stateObj.TryReadByteArray(buffer, 0, stateLen))
+                    if (!stateObj.TryReadByteArray(buffer, stateLen))
                     {
                         return false;
                     }
@@ -3280,7 +3280,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             byte[] b = new byte[TdsEnums.VERSION_SIZE];
-            if (!stateObj.TryReadByteArray(b, 0, b.Length))
+            if (!stateObj.TryReadByteArray(b, b.Length))
             {
                 return false;
             }
@@ -4093,7 +4093,7 @@ namespace Microsoft.Data.SqlClient
 
             // Read the key MD Version
             byte[] keyMDVersion = new byte[8];
-            if (!stateObj.TryReadByteArray(keyMDVersion, 0, 8)) {
+            if (!stateObj.TryReadByteArray(keyMDVersion, 8)) {
                 return false;
             }
 
@@ -4122,7 +4122,7 @@ namespace Microsoft.Data.SqlClient
                 encryptedCek = new byte[length];
 
                 // Read the actual encrypted CEK
-                if (!stateObj.TryReadByteArray (encryptedCek, 0, length)) {
+                if (!stateObj.TryReadByteArray (encryptedCek, length)) {
                     return false;
                 }
 
@@ -5392,19 +5392,19 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLTIME:
                     // We normalize to maximum precision to allow conversion across different precisions.
                     Debug.Assert(length == 5, "invalid length for time type!");
-                    value.SetToTime(unencryptedBytes, length, TdsEnums.MAX_TIME_SCALE, denormalizedScale);
+                    value.SetToTime(unencryptedBytes.AsSpan().Slice(0,length), TdsEnums.MAX_TIME_SCALE, denormalizedScale);
                     break;
 
                 case TdsEnums.SQLDATETIME2:
                     // We normalize to maximum precision to allow conversion across different precisions.
                     Debug.Assert(length == 8, "invalid length for datetime2 type!");
-                    value.SetToDateTime2(unencryptedBytes, length, TdsEnums.MAX_TIME_SCALE, denormalizedScale);
+                    value.SetToDateTime2(unencryptedBytes.AsSpan().Slice(0, length), TdsEnums.MAX_TIME_SCALE, denormalizedScale);
                     break;
 
                 case TdsEnums.SQLDATETIMEOFFSET:
                     // We normalize to maximum precision to allow conversion across different precisions.
                     Debug.Assert(length == 10, "invalid length for datetimeoffset type!");
-                    value.SetToDateTimeOffset(unencryptedBytes, length, TdsEnums.MAX_TIME_SCALE, denormalizedScale);
+                    value.SetToDateTimeOffset(unencryptedBytes.AsSpan().Slice(0, length), TdsEnums.MAX_TIME_SCALE, denormalizedScale);
                     break;
 
                 default:
@@ -5469,7 +5469,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         //Debug.Assert(length > 0 && length < (long)(Int32.MaxValue), "Bad length for column");
                         b = new byte[length];
-                        if (!stateObj.TryReadByteArray(b, 0, length))
+                        if (!stateObj.TryReadByteArray(b, length))
                         {
                             return false;
                         }
@@ -5553,33 +5553,33 @@ namespace Microsoft.Data.SqlClient
 
         private bool TryReadSqlDateTime(SqlBuffer value, byte tdsType, int length, byte scale, TdsParserStateObject stateObj)
         {
-            byte[] datetimeBuffer = new byte[length];
+            Span<byte> datetimeBuffer = ((uint)length <= 16) ? stackalloc byte[16] : new byte[length];
 
-            if (!stateObj.TryReadByteArray(datetimeBuffer, 0, length))
+            if (!stateObj.TryReadByteArray(datetimeBuffer, length))
             {
                 return false;
             }
-
+            ReadOnlySpan<byte> dateTimeData = datetimeBuffer.Slice(0, length);
             switch (tdsType)
             {
                 case TdsEnums.SQLDATE:
                     Debug.Assert(length == 3, "invalid length for date type!");
-                    value.SetToDate(datetimeBuffer);
+                    value.SetToDate(dateTimeData);
                     break;
 
                 case TdsEnums.SQLTIME:
                     Debug.Assert(3 <= length && length <= 5, "invalid length for time type!");
-                    value.SetToTime(datetimeBuffer, length, scale, scale);
+                    value.SetToTime(dateTimeData, scale, scale);
                     break;
 
                 case TdsEnums.SQLDATETIME2:
                     Debug.Assert(6 <= length && length <= 8, "invalid length for datetime2 type!");
-                    value.SetToDateTime2(datetimeBuffer, length, scale, scale);
+                    value.SetToDateTime2(dateTimeData, scale, scale);
                     break;
 
                 case TdsEnums.SQLDATETIMEOFFSET:
                     Debug.Assert(8 <= length && length <= 10, "invalid length for datetimeoffset type!");
-                    value.SetToDateTimeOffset(datetimeBuffer, length, scale, scale);
+                    value.SetToDateTimeOffset(dateTimeData, scale, scale);
                     break;
 
                 default:
@@ -5773,7 +5773,7 @@ namespace Microsoft.Data.SqlClient
 
                         byte[] b = new byte[length];
 
-                        if (!stateObj.TryReadByteArray(b, 0, length))
+                        if (!stateObj.TryReadByteArray(b, length))
                         {
                             return false;
                         }
@@ -5790,7 +5790,7 @@ namespace Microsoft.Data.SqlClient
                         // Note: Better not come here with plp data!!
                         Debug.Assert(length <= TdsEnums.MAXSIZE);
                         byte[] b = new byte[length];
-                        if (!stateObj.TryReadByteArray(b, 0, length))
+                        if (!stateObj.TryReadByteArray(b, length))
                         {
                             return false;
                         }
@@ -7833,7 +7833,7 @@ namespace Microsoft.Data.SqlClient
 
             // read SSPI data received from server
             Debug.Assert(_physicalStateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-            bool result = _physicalStateObj.TryReadByteArray(receivedBuff, 0, receivedLength);
+            bool result = _physicalStateObj.TryReadByteArray(receivedBuff, receivedLength);
             if (!result) { throw SQL.SynchronousCallMayNotPend(); }
 
             // allocate send buffer and initialize length
