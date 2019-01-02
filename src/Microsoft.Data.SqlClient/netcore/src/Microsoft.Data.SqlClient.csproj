@@ -41,6 +41,10 @@
     <Compile Include="System\Data\SqlClient\ColumnEncryptionKeyInfo.cs" />
     <Compile Include="System\Data\SqlClient\EnclaveDelegate.cs" />
     <Compile Include="System\Data\SqlClient\SqlQueryMetadataCache.cs" />
+    <Compile Include="System\Data\SqlClient\SNI\SNIPacket.NetCoreApp.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(IsPartialFacadeAssembly)' != 'true' AND '$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netstandard'">
+    <Compile Include="System\Data\SqlClient\SNI\SNIPacket.NetStandard.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(IsPartialFacadeAssembly)' != 'true' AND '$(OSGroup)' != 'AnyOS'">    
     <Compile Include="$(CommonPath)\System\SR.cs" />
