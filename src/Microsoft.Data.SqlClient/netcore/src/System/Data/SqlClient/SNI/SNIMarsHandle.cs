@@ -152,6 +152,7 @@ namespace Microsoft.Data.SqlClient.SNI
             return smuxPacket;
         }
 
+        /// <summary>
         /// Send a packet synchronously
         /// </summary>
         /// <param name="packet">SNI packet</param>
@@ -318,7 +319,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 _packetEvent.Set();
             }
 
-            ((TdsParserStateObject)_callbackObject).ReadAsyncCallback(packet, 1);
+            ((TdsParserStateObject)_callbackObject).ReadAsyncCallback(PacketHandle.FromManagedPacket(packet), 1);
         }
 
         /// <summary>
@@ -332,7 +333,7 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 Debug.Assert(_callbackObject != null);
 
-                ((TdsParserStateObject)_callbackObject).WriteAsyncCallback(packet, sniErrorCode);
+                ((TdsParserStateObject)_callbackObject).WriteAsyncCallback(PacketHandle.FromManagedPacket(packet), sniErrorCode);
             }
         }
 
@@ -378,7 +379,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     _asyncReceives--;
                     Debug.Assert(_callbackObject != null);
 
-                    ((TdsParserStateObject)_callbackObject).ReadAsyncCallback(packet, 0);
+                    ((TdsParserStateObject)_callbackObject).ReadAsyncCallback(PacketHandle.FromManagedPacket(packet), 0);
                 }
             }
 
@@ -468,7 +469,6 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <summary>
         /// Check SNI handle connection
         /// </summary>
-        /// <param name="handle"></param>
         /// <returns>SNI error status</returns>
         public override uint CheckConnection()
         {

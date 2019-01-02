@@ -22,7 +22,6 @@ namespace Microsoft.Data.SqlClient.SNI
         private string _description;
         private SNIAsyncCallback _completionCallback;
 
-        private ArrayPool<byte>  _arrayPool = ArrayPool<byte>.Shared;
         private bool _isBufferFromArrayPool = false;
 
         public SNIPacket() { }
@@ -99,14 +98,14 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 if (_isBufferFromArrayPool)
                 {
-                    _arrayPool.Return(_data);
+                    ArrayPool<byte>.Shared.Return(_data);
                 }
                 _data = null;
             }
 
             if (_data == null)
             {
-                _data = _arrayPool.Rent(capacity);
+                _data = ArrayPool<byte>.Shared.Rent(capacity);
                 _isBufferFromArrayPool = true;
             }
 
@@ -222,7 +221,7 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 if(_isBufferFromArrayPool)
                 {
-                    _arrayPool.Return(_data);
+                    ArrayPool<byte>.Shared.Return(_data);
                 }
                 _data = null;
                 _capacity = 0;
@@ -288,7 +287,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <summary>
         /// Check packet equality
         /// </summary>
-        /// <param name="obj"></param>
+        /// <param name="packet"></param>
         /// <returns>true if equal</returns>
         public bool Equals(SNIPacket packet)
         {

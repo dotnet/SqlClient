@@ -101,7 +101,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (null != stateObj)
                 {
-                    stateObj.ReadAsyncCallback(IntPtr.Zero, packet, error);
+                    stateObj.ReadAsyncCallback(IntPtr.Zero, PacketHandle.FromNativePointer(packet), error);
                 }
             }
         }
@@ -122,7 +122,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (null != stateObj)
                 {
-                    stateObj.WriteAsyncCallback(IntPtr.Zero, packet, error);
+                    stateObj.WriteAsyncCallback(IntPtr.Zero, PacketHandle.FromNativePointer(packet), error);
                 }
             }
         }
