@@ -41,4 +41,6 @@
   <Import Project="$(ToolsDir)props\Versions.props" />
   <!-- Provides Tool properties -->
   <Import Project="$(ToolsDir)props\Tools.props" />
+  <!-- Provides Build properties -->
+  <Import Project="$(ToolsDir)props\AssemblyInfo.props" />
 </Project>

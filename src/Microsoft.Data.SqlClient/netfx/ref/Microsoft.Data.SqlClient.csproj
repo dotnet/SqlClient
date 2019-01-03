@@ -4,6 +4,7 @@
     <TargetFrameworks>net46</TargetFrameworks>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration)\$(AssemblyName)\ref\</IntermediateOutputPath>  
     <OutputPath>$(BinFolder)$(Configuration)\$(AssemblyName)\ref\</OutputPath>
+    <Product>Framework $(BaseProduct)</Product>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Microsoft.Data.SqlClient.cs" />

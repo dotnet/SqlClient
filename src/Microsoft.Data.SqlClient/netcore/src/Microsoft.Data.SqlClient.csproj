@@ -4,8 +4,6 @@
     <TargetFrameworks>netcoreapp2.1;netstandard2.0</TargetFrameworks>
     <LangVersion>7.2</LangVersion>
     <GeneratePlatformNotSupportedAssemblyMessage Condition="'$(OSGroup)' == 'AnyOS'">$(AssemblyName) is not supported on this platform.</GeneratePlatformNotSupportedAssemblyMessage>
-    <!-- Workaround for absence of Assembly File. This should pick up the assembly version from the build -->
-    <AssemblyFileVersion>4.8.0.0</AssemblyFileVersion>
     <OSGroup Condition="'$(OSGroup)' == ''">Windows_NT</OSGroup>
     <IsPartialFacadeAssembly Condition="'$(TargetsNetFx)' == 'true'">true</IsPartialFacadeAssembly>
     <TargetsWindows Condition="'$(OSGroup)'=='Windows_NT'">true</TargetsWindows>
@@ -14,13 +12,11 @@
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <TargetGroup Condition="'$(TargetFramework)'=='netcoreapp2.1'">netcoreapp</TargetGroup>
     <TargetGroup Condition="'$(TargetFramework)'=='netstandard2.0'">netstandard</TargetGroup>
-  </PropertyGroup>
-
-  <PropertyGroup>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)\$(AssemblyName)\netcore\</IntermediateOutputPath>  
     <OutputPath>$(BinFolder)$(Configuration).$(Platform)\$(AssemblyName)\netcore\</OutputPath>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>  
+    <Product>Core $(BaseProduct)</Product>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(TargetGroup)'=='netcoreapp'">
     <DefineConstants>$(DefineConstants);netcoreapp</DefineConstants>
   </PropertyGroup>
