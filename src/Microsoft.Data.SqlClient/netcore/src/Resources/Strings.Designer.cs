@@ -4291,6 +4291,24 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Internal error. Error occurred when populating enclave metadata. The referenced column encryption key ordinal &apos;{0}&apos; is missing in the encryption metadata returned by SQL Server. Max ordinal is &apos;{1}&apos;..
+        /// </summary>
+        internal static string TCE_InvalidEncryptionKeyOrdinalEnclaveMetadata {
+            get {
+                return ResourceManager.GetString("TCE_InvalidEncryptionKeyOrdinalEnclaveMetadata", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Internal error. Error occurred when populating parameter metadata. The referenced column encryption key ordinal &apos;{0}&apos; is missing in the encryption metadata returned by SQL Server. Max ordinal is &apos;{1}&apos;..
+        /// </summary>
+        internal static string TCE_InvalidEncryptionKeyOrdinalParameterMetadata {
+            get {
+                return ResourceManager.GetString("TCE_InvalidEncryptionKeyOrdinalParameterMetadata", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Encryption type &apos;{1}&apos; specified for the column in the database is either invalid or corrupted. Valid encryption types for algorithm &apos;{0}&apos; are: {2}..
         /// </summary>
         internal static string TCE_InvalidEncryptionType {
@@ -4413,6 +4431,15 @@ namespace System {
         internal static string TCE_LargeCertificatePathLengthSysErr {
             get {
                 return ResourceManager.GetString("TCE_LargeCertificatePathLengthSysErr", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Internal error. Error occurred when parsing the results of &apos;{0}&apos;. The attestation information resultset is expected to contain only one row, but it contains multiple rows..
+        /// </summary>
+        internal static string TCE_MultipleRowsReturnedForAttestationInfo {
+            get {
+                return ResourceManager.GetString("TCE_MultipleRowsReturnedForAttestationInfo", resourceCulture);
             }
         }
         
@@ -4642,11 +4669,29 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Failed to decrypt parameter &apos;{0}&apos;..
+        /// </summary>
+        internal static string TCE_ParamDecryptionFailed {
+            get {
+                return ResourceManager.GetString("TCE_ParamDecryptionFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Failed to encrypt parameter &apos;{0}&apos;..
         /// </summary>
         internal static string TCE_ParamEncryptionFailed {
             get {
                 return ResourceManager.GetString("TCE_ParamEncryptionFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Internal error. Metadata for parameter &apos;{1}&apos; in statement or procedure &apos;{2}&apos; is missing in resultset returned by {0}..
+        /// </summary>
+        internal static string TCE_ParamEncryptionMetaDataMissing {
+            get {
+                return ResourceManager.GetString("TCE_ParamEncryptionMetaDataMissing", resourceCulture);
             }
         }
         
@@ -4665,6 +4710,15 @@ namespace System {
         internal static string TCE_ParamUnExpectedEncryptionMetadata {
             get {
                 return ResourceManager.GetString("TCE_ParamUnExpectedEncryptionMetadata", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Internal error. Metadata for parameters for command &apos;{1}&apos; in a batch is missing in the resultset returned by {0}..
+        /// </summary>
+        internal static string TCE_ProcEncryptionMetaDataMissing {
+            get {
+                return ResourceManager.GetString("TCE_ProcEncryptionMetaDataMissing", resourceCulture);
             }
         }
         
@@ -4701,6 +4755,24 @@ namespace System {
         internal static string TCE_UnableToVerifyColumnMasterKeySignature {
             get {
                 return ResourceManager.GetString("TCE_UnableToVerifyColumnMasterKeySignature", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Internal error. The result returned by &apos;{0}&apos; is invalid. The attestation information resultset is missing for enclave type &apos;{1}&apos;..
+        /// </summary>
+        internal static string TCE_UnexpectedDescribeParamFormatAttestationInfo {
+            get {
+                return ResourceManager.GetString("TCE_UnexpectedDescribeParamFormatAttestationInfo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Internal error. The result returned by &apos;{0}&apos; is invalid. The parameter metadata resultset is missing..
+        /// </summary>
+        internal static string TCE_UnexpectedDescribeParamFormatParameterMetadata {
+            get {
+                return ResourceManager.GetString("TCE_UnexpectedDescribeParamFormatParameterMetadata", resourceCulture);
             }
         }
         

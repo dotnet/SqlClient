@@ -220,8 +220,7 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-
-    internal static partial class SQL
+    internal static class SQL
     {
         // The class SQL defines the exceptions that are specific to the SQL Adapter.
         // The class contains functions that take the proper informational variables and then construct
@@ -1027,272 +1026,19 @@ namespace Microsoft.Data.SqlClient
             return ADP.InvalidOperation(System.SR.GetString(SR.SQL_BatchedUpdatesNotAvailableOnContextConnection));
         }
 
-        //
-        // Always Encrypted - Cryptographic Algorithms Error messages
-        //
-        internal static Exception NullPlainText()
-        {
-            return ADP.ArgumentNull(System.SR.GetString(SR.TCE_NullPlainText));
-        }
+        #region Always Encrypted Errors
 
-        internal static Exception NullCipherText()
-        {
-            return ADP.ArgumentNull(System.SR.GetString(SR.TCE_NullCipherText));
-        }
-
-        internal static Exception NullColumnEncryptionAlgorithm(string supportedAlgorithms)
-        {
-            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_ENCRYPTION_ALGORITHM, System.SR.GetString(SR.TCE_NullColumnEncryptionAlgorithm, supportedAlgorithms));
-        }
-
-        internal static Exception NullColumnEncryptionKeySysErr()
-        {
-            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_ENCRYPTIONKEY, System.SR.GetString(SR.TCE_NullColumnEncryptionKeySysErr));
-        }
-
-        internal static Exception InvalidKeySize(string algorithmName, int actualKeylength, int expectedLength)
-        {
-            return ADP.Argument(System.SR.GetString(SR.TCE_InvalidKeySize, algorithmName, actualKeylength, expectedLength), TdsEnums.TCE_PARAM_ENCRYPTIONKEY);
-        }
-
-        internal static Exception InvalidEncryptionType(string algorithmName, SqlClientEncryptionType encryptionType, params SqlClientEncryptionType[] validEncryptionTypes)
-        {
-            const string valueSeparator = @", ";
-            return ADP.Argument(System.SR.GetString(SR.TCE_InvalidEncryptionType, algorithmName, encryptionType.ToString(), string.Join(valueSeparator, validEncryptionTypes.Select((validEncryptionType => @"'" + validEncryptionType + @"'")))), TdsEnums.TCE_PARAM_ENCRYPTIONTYPE);
-        }
-
-        internal static Exception InvalidCipherTextSize(int actualSize, int minimumSize)
-        {
-            return ADP.Argument(System.SR.GetString(SR.TCE_InvalidCipherTextSize, actualSize, minimumSize), TdsEnums.TCE_PARAM_CIPHERTEXT);
-        }
-
-        internal static Exception InvalidAlgorithmVersion(byte actual, byte expected)
-        {
-            return ADP.Argument(System.SR.GetString(SR.TCE_InvalidAlgorithmVersion, actual.ToString(@"X2"), expected.ToString(@"X2")), TdsEnums.TCE_PARAM_CIPHERTEXT);
-        }
-
-        internal static Exception InvalidAuthenticationTag()
-        {
-            return ADP.Argument(System.SR.GetString(SR.TCE_InvalidAuthenticationTag), TdsEnums.TCE_PARAM_CIPHERTEXT);
-        }
-
-        //
-        // Always Encrypted - Errors when establishing secure channel
-        //
-        internal static Exception NullArgumentInConstructorInternal(string argumentName, string objectUnderConstruction)
-        {
-            return ADP.ArgumentNull(argumentName, System.SR.GetString(SR.TCE_NullArgumentInConstructorInternal, argumentName, objectUnderConstruction));
-        }
-
-        internal static Exception EmptyArgumentInConstructorInternal(string argumentName, string objectUnderConstruction)
-        {
-            return ADP.Argument(System.SR.GetString(SR.TCE_EmptyArgumentInConstructorInternal, argumentName, objectUnderConstruction));
-        }
-
-        internal static Exception NullArgumentInternal(string argumentName, string type, string method)
-        {
-            return ADP.ArgumentNull(argumentName, System.SR.GetString(SR.TCE_NullArgumentInternal, argumentName, type, method));
-        }
-
-        internal static Exception EmptyArgumentInternal(string argumentName, string type, string method)
-        {
-            return ADP.Argument(System.SR.GetString(SR.TCE_EmptyArgumentInternal, argumentName, type, method));
-        }
-
-        //
-        // Always Encrypted - Client side query processing errors.
-        //
-        internal static Exception UnrecognizedKeyStoreProviderName(string providerName, List<string> systemProviders, List<string> customProviders)
-        {
-            const string valueSeparator = @", ";
-            string systemProviderStr = string.Join(valueSeparator, systemProviders.Select(provider => @"'" + provider + @"'"));
-            string customProviderStr = string.Join(valueSeparator, customProviders.Select(provider => @"'" + provider + @"'"));
-            return ADP.Argument(System.SR.GetString(SR.TCE_UnrecognizedKeyStoreProviderName, providerName, systemProviderStr, customProviderStr));
-        }
-
-        internal static Exception KeyDecryptionFailed(string providerName, string keyHex, Exception e)
-        {
-
-            if (providerName.Equals(SqlColumnEncryptionCertificateStoreProvider.ProviderName))
-            {
-                return GetExceptionArray(null, System.SR.GetString(SR.TCE_KeyDecryptionFailedCertStore, providerName, keyHex), e);
-            }
-            else
-            {
-                return GetExceptionArray(null, System.SR.GetString(SR.TCE_KeyDecryptionFailed, providerName, keyHex), e);
-            }
-        }
-
-        internal static Exception UnknownColumnEncryptionAlgorithmId(int algoId, string supportAlgorithmIds)
-        {
-            return ADP.Argument(System.SR.GetString(SR.TCE_UnknownColumnEncryptionAlgorithmId, algoId, supportAlgorithmIds), TdsEnums.TCE_PARAM_CIPHER_ALGORITHM_ID);
-        }
-
-        internal static Exception UnknownColumnEncryptionAlgorithm(string algorithmName, string supportedAlgorithms)
-        {
-            return ADP.Argument(System.SR.GetString(SR.TCE_UnknownColumnEncryptionAlgorithm, algorithmName, supportedAlgorithms));
-        }
-
-        internal static Exception UnsupportedNormalizationVersion(byte version)
-        {
-            return ADP.Argument(System.SR.GetString(SR.TCE_UnsupportedNormalizationVersion, version, "'1'", "SQL Server"));
-        }
-
-        internal static Exception UnsupportedDatatypeEncryption(string dataType)
-        {
-            return ADP.Argument(System.SR.GetString(SR.TCE_UnsupportedDatatype, dataType));
-        }
-
-        internal static Exception ThrowDecryptionFailed(string keyStr, string valStr, Exception e)
-        {
-            return GetExceptionArray(null, System.SR.GetString(SR.TCE_DecryptionFailed, keyStr, valStr), e);
-        }
-
-        internal static Exception UntrustedKeyPath(string keyPath, string serverName)
-        {
-            return ADP.Argument(System.SR.GetString(SR.TCE_UntrustedKeyPath, keyPath, serverName));
-        }
-
-        //
-        // TCE- Generic toplevel failures.
-        //
-        internal static Exception GetExceptionArray (string serverName, string errorMessage, Exception e) {
-            // Create and throw an exception array
-            SqlErrorCollection sqlErs = new SqlErrorCollection();
-            Exception exceptionToInclude = (null != e.InnerException) ? e.InnerException : e;
-            sqlErs.Add (new SqlError(infoNumber:0, errorState:(byte)0x00, errorClass:(byte)TdsEnums.MIN_ERROR_CLASS, server:serverName, errorMessage:errorMessage, procedure:null, lineNumber:0));
-
-            if (e is SqlException) {
-                SqlException exThrown = (SqlException)e;
-                SqlErrorCollection errorList = exThrown.Errors;
-                for (int i =0; i < exThrown.Errors.Count; i++) {
-                    sqlErs.Add(errorList[i]);
-                }
-            }
-            else {
-                sqlErs.Add (new SqlError(infoNumber:0, errorState:(byte)0x00, errorClass:(byte)TdsEnums.MIN_ERROR_CLASS, server:serverName, errorMessage:e.Message, procedure:null, lineNumber:0));
-            }
-
-            return SqlException.CreateException(sqlErs, "", null, exceptionToInclude);
-        }
-
-        internal static Exception ColumnDecryptionFailed(string columnName, string serverName, Exception e)
-        {
-            return GetExceptionArray(serverName, System.SR.GetString(SR.TCE_ColumnDecryptionFailed, columnName), e);
-        }
-
-        internal static Exception ParamEncryptionFailed(string paramName, string serverName, Exception e)
-        {
-            return GetExceptionArray(serverName, System.SR.GetString(SR.TCE_ParamEncryptionFailed, paramName), e);
-        }
-
-        //
-        // Always Encrypted - Errors from sp_describe_parameter_encryption
-        //
-        internal static Exception UnableToVerifyColumnMasterKeySignature(Exception innerExeption)
-        {
-            return ADP.InvalidOperation(System.SR.GetString(SR.TCE_UnableToVerifyColumnMasterKeySignature, innerExeption.Message), innerExeption);
-        }
-
-        internal static Exception ColumnMasterKeySignatureVerificationFailed(string cmkPath)
-        {
-            return ADP.InvalidOperation(System.SR.GetString(SR.TCE_ColumnMasterKeySignatureVerificationFailed, cmkPath));
-        }
-
-        internal static Exception InvalidKeyStoreProviderName(string providerName, List<string> systemProviders, List<string> customProviders)
-        {
-            const string valueSeparator = @", ";
-            string systemProviderStr = string.Join(valueSeparator, systemProviders.Select(provider => $"'{provider}'"));
-            string customProviderStr = string.Join(valueSeparator, customProviders.Select(provider => $"'{provider}'"));
-            return ADP.Argument(System.SR.GetString(SR.TCE_InvalidKeyStoreProviderName, providerName, systemProviderStr, customProviderStr));
-        }
-
-        internal static Exception ParamInvalidForceColumnEncryptionSetting(string paramName, string procedureName)
-        {
-            return ADP.InvalidOperation(System.SR.GetString(SR.TCE_ParamInvalidForceColumnEncryptionSetting, TdsEnums.TCE_PARAM_FORCE_COLUMN_ENCRYPTION, paramName, procedureName, "SqlParameter"));
-        }
-
-        internal static Exception ParamUnExpectedEncryptionMetadata(string paramName, string procedureName)
-        {
-            return ADP.InvalidOperation(System.SR.GetString(SR.TCE_ParamUnExpectedEncryptionMetadata, paramName, procedureName, TdsEnums.TCE_PARAM_FORCE_COLUMN_ENCRYPTION, "SqlParameter"));
-        }
-
-        internal static Exception ColumnMasterKeySignatureNotFound(string cmkPath)
-        {
-            return ADP.Argument(System.SR.GetString(SR.TCE_ColumnMasterKeySignatureNotFound, cmkPath));
-        }
-
-        //
-        // TCE- SQL connection related error messages
-        //
-        internal static Exception TceNotSupported()
-        {
-            return ADP.InvalidOperation(System.SR.GetString(SR.TCE_NotSupportedByServer, "SQL Server"));
-        }
-
-        internal static Exception EnclaveComputationsNotSupported()
-        {
-            return ADP.InvalidOperation(System.SR.GetString(SR.TCE_EnclaveComputationsNotSupported));
-        }
-
-        internal static Exception EnclaveTypeNotReturned()
-        {
-            return ADP.InvalidOperation(System.SR.GetString(SR.TCE_EnclaveTypeNotReturned));
-        }
-
-        //
-        // TCE- Extensibility related error messages
-        //
-        internal static Exception CanOnlyCallOnce()
-        {
-            return ADP.InvalidOperation(System.SR.GetString(SR.TCE_CanOnlyCallOnce));
-        }
-
-        internal static Exception NullCustomKeyStoreProviderDictionary()
-        {
-            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_CLIENT_KEYSTORE_PROVIDERS, System.SR.GetString(SR.TCE_NullCustomKeyStoreProviderDictionary));
-        }
-
-        internal static Exception InvalidCustomKeyStoreProviderName(string providerName, string prefix)
-        {
-            return ADP.Argument(System.SR.GetString(SR.TCE_InvalidCustomKeyStoreProviderName, providerName, prefix), TdsEnums.TCE_PARAM_CLIENT_KEYSTORE_PROVIDERS);
-        }
-
-        internal static Exception NullProviderValue(string providerName)
-        {
-            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_CLIENT_KEYSTORE_PROVIDERS, System.SR.GetString(SR.TCE_NullProviderValue, providerName));
-        }
-
-        internal static Exception EmptyProviderName()
-        {
-            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_CLIENT_KEYSTORE_PROVIDERS, System.SR.GetString(SR.TCE_EmptyProviderName));
-        }
-
-        //
-        // Always Encrypted - Certificate Store Provider Errors.
-        //
+        #region Always Encrypted - Certificate Store Provider Errors
         internal static Exception InvalidKeyEncryptionAlgorithm(string encryptionAlgorithm, string validEncryptionAlgorithm, bool isSystemOp)
         {
-            if (isSystemOp)
-            {
-                return ADP.Argument(System.SR.GetString(SR.TCE_InvalidKeyEncryptionAlgorithmSysErr, encryptionAlgorithm, validEncryptionAlgorithm), TdsEnums.TCE_PARAM_ENCRYPTION_ALGORITHM);
-            }
-            else
-            {
-                return ADP.Argument(System.SR.GetString(SR.TCE_InvalidKeyEncryptionAlgorithm, encryptionAlgorithm, validEncryptionAlgorithm), TdsEnums.TCE_PARAM_ENCRYPTION_ALGORITHM);
-            }
+            string message = isSystemOp ? SR.TCE_InvalidKeyEncryptionAlgorithmSysErr : SR.TCE_InvalidKeyEncryptionAlgorithm;
+            return ADP.Argument(System.SR.GetString(message, encryptionAlgorithm, validEncryptionAlgorithm), TdsEnums.TCE_PARAM_ENCRYPTION_ALGORITHM);
         }
 
         internal static Exception NullKeyEncryptionAlgorithm(bool isSystemOp)
         {
-            if (isSystemOp)
-            {
-                return ADP.ArgumentNull(TdsEnums.TCE_PARAM_ENCRYPTION_ALGORITHM, System.SR.GetString(SR.TCE_NullKeyEncryptionAlgorithmSysErr));
-            }
-            else
-            {
-                return ADP.ArgumentNull(TdsEnums.TCE_PARAM_ENCRYPTION_ALGORITHM, System.SR.GetString(SR.TCE_NullKeyEncryptionAlgorithm));
-            }
+            string message = isSystemOp ? SR.TCE_NullKeyEncryptionAlgorithmSysErr : SR.TCE_NullKeyEncryptionAlgorithm;
+            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_ENCRYPTION_ALGORITHM, System.SR.GetString(message));
         }
 
         internal static Exception EmptyColumnEncryptionKey()
@@ -1317,221 +1063,113 @@ namespace Microsoft.Data.SqlClient
 
         internal static Exception LargeCertificatePathLength(int actualLength, int maxLength, bool isSystemOp)
         {
-            if (isSystemOp)
-            {
-                return ADP.Argument(System.SR.GetString(SR.TCE_LargeCertificatePathLengthSysErr, actualLength, maxLength), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-            }
-            else
-            {
-                return ADP.Argument(System.SR.GetString(SR.TCE_LargeCertificatePathLength, actualLength, maxLength), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-            }
+            string message = isSystemOp ? SR.TCE_LargeCertificatePathLengthSysErr : SR.TCE_LargeCertificatePathLength;
+            return ADP.Argument(System.SR.GetString(message, actualLength, maxLength), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+
         }
 
         internal static Exception NullCertificatePath(string[] validLocations, bool isSystemOp)
         {
             Debug.Assert(2 == validLocations.Length);
-            if (isSystemOp)
-            {
-                return ADP.ArgumentNull(TdsEnums.TCE_PARAM_MASTERKEY_PATH, System.SR.GetString(SR.TCE_NullCertificatePathSysErr, validLocations[0], validLocations[1], @"/"));
-            }
-            else
-            {
-                return ADP.ArgumentNull(TdsEnums.TCE_PARAM_MASTERKEY_PATH, System.SR.GetString(SR.TCE_NullCertificatePath, validLocations[0], validLocations[1], @"/"));
-            }
+            string message = isSystemOp ? SR.TCE_NullCertificatePathSysErr : SR.TCE_NullCertificatePath;
+            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_MASTERKEY_PATH, System.SR.GetString(message, validLocations[0], validLocations[1], @"/"));
         }
 
         internal static Exception NullCspKeyPath(bool isSystemOp)
         {
-            if (isSystemOp)
-            {
-                return ADP.ArgumentNull(TdsEnums.TCE_PARAM_MASTERKEY_PATH, System.SR.GetString(SR.TCE_NullCspPathSysErr, @"/"));
-            }
-            else
-            {
-                return ADP.ArgumentNull(TdsEnums.TCE_PARAM_MASTERKEY_PATH, System.SR.GetString(SR.TCE_NullCspPath, @"/"));
-            }
+            string message = isSystemOp ? SR.TCE_NullCspPathSysErr : SR.TCE_NullCspPath;
+            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_MASTERKEY_PATH, System.SR.GetString(message, @"/"));
         }
 
         internal static Exception NullCngKeyPath(bool isSystemOp)
         {
-            if (isSystemOp)
-            {
-                return ADP.ArgumentNull(TdsEnums.TCE_PARAM_MASTERKEY_PATH, System.SR.GetString(SR.TCE_NullCngPathSysErr, @"/"));
-            }
-            else
-            {
-                return ADP.ArgumentNull(TdsEnums.TCE_PARAM_MASTERKEY_PATH, System.SR.GetString(SR.TCE_NullCngPath, @"/"));
-            }
+            string message = isSystemOp ? SR.TCE_NullCngPathSysErr : SR.TCE_NullCngPath;
+            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_MASTERKEY_PATH, System.SR.GetString(message, @"/"));
         }
 
         internal static Exception InvalidCertificatePath(string actualCertificatePath, string[] validLocations, bool isSystemOp)
         {
             Debug.Assert(2 == validLocations.Length);
-            if (isSystemOp)
-            {
-                return ADP.Argument(System.SR.GetString(SR.TCE_InvalidCertificatePathSysErr, actualCertificatePath, validLocations[0], validLocations[1], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-            }
-            else
-            {
-                return ADP.Argument(System.SR.GetString(SR.TCE_InvalidCertificatePath, actualCertificatePath, validLocations[0], validLocations[1], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-            }
+            string message = isSystemOp ? SR.TCE_InvalidCertificatePathSysErr : SR.TCE_InvalidCertificatePath;
+            return ADP.Argument(System.SR.GetString(message, actualCertificatePath, validLocations[0], validLocations[1], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
         }
 
         internal static Exception InvalidCspPath(string masterKeyPath, bool isSystemOp)
         {
-            if (isSystemOp)
-            {
-                return ADP.Argument(System.SR.GetString(SR.TCE_InvalidCspPathSysErr, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-            }
-            else
-            {
-                return ADP.Argument(System.SR.GetString(SR.TCE_InvalidCspPath, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-            }
+            string message = isSystemOp ? SR.TCE_InvalidCspPathSysErr : SR.TCE_InvalidCspPath;
+            return ADP.Argument(System.SR.GetString(message, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
         }
 
         internal static Exception InvalidCngPath(string masterKeyPath, bool isSystemOp)
         {
-            if (isSystemOp)
-            {
-                return ADP.Argument(System.SR.GetString(SR.TCE_InvalidCngPathSysErr, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-            }
-            else
-            {
-                return ADP.Argument(System.SR.GetString(SR.TCE_InvalidCngPath, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-            }
+            string message = isSystemOp ? SR.TCE_InvalidCngPathSysErr : SR.TCE_InvalidCngPath;
+            return ADP.Argument(System.SR.GetString(message, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
         }
 
         internal static Exception EmptyCspName(string masterKeyPath, bool isSystemOp)
         {
-            if (isSystemOp)
-            {
-                return ADP.Argument(System.SR.GetString(SR.TCE_EmptyCspNameSysErr, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-            }
-            else
-            {
-                return ADP.Argument(System.SR.GetString(SR.TCE_EmptyCspName, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-            }
+            string message = isSystemOp ? SR.TCE_EmptyCspNameSysErr : SR.TCE_EmptyCspName;
+            return ADP.Argument(System.SR.GetString(message, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
         }
 
         internal static Exception EmptyCngName(string masterKeyPath, bool isSystemOp)
         {
-            if (isSystemOp)
-            {
-                return ADP.Argument(System.SR.GetString(SR.TCE_EmptyCngNameSysErr, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-            }
-            else
-            {
-                return ADP.Argument(System.SR.GetString(SR.TCE_EmptyCngName, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-            }
+            string message = isSystemOp ? SR.TCE_EmptyCngNameSysErr : SR.TCE_EmptyCngName;
+            return ADP.Argument(System.SR.GetString(message, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
         }
 
         internal static Exception EmptyCspKeyId(string masterKeyPath, bool isSystemOp)
         {
-            if (isSystemOp)
-            {
-                return ADP.Argument(System.SR.GetString(SR.TCE_EmptyCspKeyIdSysErr, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-            }
-            else
-            {
-                return ADP.Argument(System.SR.GetString(SR.TCE_EmptyCspKeyId, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-            }
+            string message = isSystemOp ? SR.TCE_EmptyCspKeyIdSysErr : SR.TCE_EmptyCspKeyId;
+            return ADP.Argument(System.SR.GetString(message, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
         }
 
         internal static Exception EmptyCngKeyId(string masterKeyPath, bool isSystemOp)
         {
-            if (isSystemOp)
-            {
-                return ADP.Argument(System.SR.GetString(SR.TCE_EmptyCngKeyIdSysErr, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-            }
-            else
-            {
-                return ADP.Argument(System.SR.GetString(SR.TCE_EmptyCngKeyId, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-            }
+            string message = isSystemOp ? SR.TCE_EmptyCngKeyIdSysErr : SR.TCE_EmptyCngKeyId;
+            return ADP.Argument(System.SR.GetString(message, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
         }
 
         internal static Exception InvalidCspName(string cspName, string masterKeyPath, bool isSystemOp)
         {
-            if (isSystemOp)
-            {
-                return ADP.Argument(System.SR.GetString(SR.TCE_InvalidCspNameSysErr, cspName, masterKeyPath), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-            }
-            else
-            {
-                return ADP.Argument(System.SR.GetString(SR.TCE_InvalidCspName, cspName, masterKeyPath), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-            }
+            string message = isSystemOp ? SR.TCE_InvalidCspNameSysErr : SR.TCE_InvalidCspName;
+            return ADP.Argument(System.SR.GetString(message, cspName, masterKeyPath), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
         }
 
         internal static Exception InvalidCspKeyIdentifier(string keyIdentifier, string masterKeyPath, bool isSystemOp)
         {
-            if (isSystemOp)
-            {
-                return ADP.Argument(System.SR.GetString(SR.TCE_InvalidCspKeyIdSysErr, keyIdentifier, masterKeyPath), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-            }
-            else
-            {
-                return ADP.Argument(System.SR.GetString(SR.TCE_InvalidCspKeyId, keyIdentifier, masterKeyPath), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-            }
+            string message = isSystemOp ? SR.TCE_InvalidCspKeyIdSysErr : SR.TCE_InvalidCspKeyId;
+            return ADP.Argument(System.SR.GetString(message, keyIdentifier, masterKeyPath), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
         }
 
         internal static Exception InvalidCngKey(string masterKeyPath, string cngProviderName, string keyIdentifier, bool isSystemOp)
         {
-            if (isSystemOp)
-            {
-                return ADP.Argument(System.SR.GetString(SR.TCE_InvalidCngKeySysErr, masterKeyPath, cngProviderName, keyIdentifier), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-            }
-            else
-            {
-                return ADP.Argument(System.SR.GetString(SR.TCE_InvalidCngKey, masterKeyPath, cngProviderName, keyIdentifier), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-            }
+            string message = isSystemOp ? SR.TCE_InvalidCngKeySysErr : SR.TCE_InvalidCngKey;
+            return ADP.Argument(System.SR.GetString(message, masterKeyPath, cngProviderName, keyIdentifier), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
         }
 
         internal static Exception InvalidCertificateLocation(string certificateLocation, string certificatePath, string[] validLocations, bool isSystemOp)
         {
-            Debug.Assert(2 == validLocations.Length);
-            if (isSystemOp)
-            {
-                return ADP.Argument(System.SR.GetString(SR.TCE_InvalidCertificateLocationSysErr, certificateLocation, certificatePath, validLocations[0], validLocations[1], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-            }
-            else
-            {
-                return ADP.Argument(System.SR.GetString(SR.TCE_InvalidCertificateLocation, certificateLocation, certificatePath, validLocations[0], validLocations[1], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-            }
+            string message = isSystemOp ? SR.TCE_InvalidCertificateLocationSysErr : SR.TCE_InvalidCertificateLocation;
+            return ADP.Argument(System.SR.GetString(message, certificateLocation, certificatePath, validLocations[0], validLocations[1], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
         }
 
         internal static Exception InvalidCertificateStore(string certificateStore, string certificatePath, string validCertificateStore, bool isSystemOp)
         {
-            if (isSystemOp)
-            {
-                return ADP.Argument(System.SR.GetString(SR.TCE_InvalidCertificateStoreSysErr, certificateStore, certificatePath, validCertificateStore), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-            }
-            else
-            {
-                return ADP.Argument(System.SR.GetString(SR.TCE_InvalidCertificateStore, certificateStore, certificatePath, validCertificateStore), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-            }
+            string message = isSystemOp ? SR.TCE_InvalidCertificateStoreSysErr : SR.TCE_InvalidCertificateStore;
+            return ADP.Argument(System.SR.GetString(message, certificateStore, certificatePath, validCertificateStore), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
         }
 
         internal static Exception EmptyCertificateThumbprint(string certificatePath, bool isSystemOp)
         {
-            if (isSystemOp)
-            {
-                return ADP.Argument(System.SR.GetString(SR.TCE_EmptyCertificateThumbprintSysErr, certificatePath), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-            }
-            else
-            {
-                return ADP.Argument(System.SR.GetString(SR.TCE_EmptyCertificateThumbprint, certificatePath), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-            }
+            string message = isSystemOp ? SR.TCE_EmptyCertificateThumbprintSysErr : SR.TCE_EmptyCertificateThumbprint;
+            return ADP.Argument(System.SR.GetString(message, certificatePath), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
         }
 
         internal static Exception CertificateNotFound(string thumbprint, string certificateLocation, string certificateStore, bool isSystemOp)
         {
-            if (isSystemOp)
-            {
-                return ADP.Argument(System.SR.GetString(SR.TCE_CertificateNotFoundSysErr, thumbprint, certificateLocation, certificateStore), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-            }
-            else
-            {
-                return ADP.Argument(System.SR.GetString(SR.TCE_CertificateNotFound, thumbprint, certificateLocation, certificateStore), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-            }
+            string message = isSystemOp ? SR.TCE_CertificateNotFoundSysErr : SR.TCE_CertificateNotFound;
+            return ADP.Argument(System.SR.GetString(message, thumbprint, certificateLocation, certificateStore), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
         }
 
         internal static Exception InvalidAlgorithmVersionInEncryptedCEK(byte actual, byte expected)
@@ -1581,15 +1219,411 @@ namespace Microsoft.Data.SqlClient
 
         internal static Exception CertificateWithNoPrivateKey(string keyPath, bool isSystemOp)
         {
-            if (isSystemOp)
+            string message = isSystemOp ? SR.TCE_CertificateWithNoPrivateKeySysErr : SR.TCE_CertificateWithNoPrivateKey;
+            return ADP.Argument(System.SR.GetString(message, keyPath), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+        }
+        #endregion Always Encrypted - Certificate Store Provider Errors
+
+        #region Always Encrypted - Cryptographic Algorithms Error messages
+        internal static Exception NullPlainText()
+        {
+            return ADP.ArgumentNull(System.SR.GetString(SR.TCE_NullPlainText));
+        }
+
+        internal static Exception NullCipherText()
+        {
+            return ADP.ArgumentNull(System.SR.GetString(SR.TCE_NullCipherText));
+        }
+
+        internal static Exception NullColumnEncryptionAlgorithm(string supportedAlgorithms)
+        {
+            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_ENCRYPTION_ALGORITHM, System.SR.GetString(SR.TCE_NullColumnEncryptionAlgorithm, supportedAlgorithms));
+        }
+
+        internal static Exception NullColumnEncryptionKeySysErr()
+        {
+            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_ENCRYPTIONKEY, System.SR.GetString(SR.TCE_NullColumnEncryptionKeySysErr));
+        }
+
+        internal static Exception InvalidKeySize(string algorithmName, int actualKeylength, int expectedLength)
+        {
+            return ADP.Argument(System.SR.GetString(SR.TCE_InvalidKeySize, algorithmName, actualKeylength, expectedLength), TdsEnums.TCE_PARAM_ENCRYPTIONKEY);
+        }
+
+        internal static Exception InvalidEncryptionType(string algorithmName, SqlClientEncryptionType encryptionType, params SqlClientEncryptionType[] validEncryptionTypes)
+        {
+            const string valueSeparator = @", ";
+            return ADP.Argument(System.SR.GetString(SR.TCE_InvalidEncryptionType, algorithmName, encryptionType.ToString(), string.Join(valueSeparator, validEncryptionTypes.Select((validEncryptionType => @"'" + validEncryptionType + @"'")))), TdsEnums.TCE_PARAM_ENCRYPTIONTYPE);
+        }
+
+        internal static Exception InvalidCipherTextSize(int actualSize, int minimumSize)
+        {
+            return ADP.Argument(System.SR.GetString(SR.TCE_InvalidCipherTextSize, actualSize, minimumSize), TdsEnums.TCE_PARAM_CIPHERTEXT);
+        }
+
+        internal static Exception InvalidAlgorithmVersion(byte actual, byte expected)
+        {
+            return ADP.Argument(System.SR.GetString(SR.TCE_InvalidAlgorithmVersion, actual.ToString(@"X2"), expected.ToString(@"X2")), TdsEnums.TCE_PARAM_CIPHERTEXT);
+        }
+
+        internal static Exception InvalidAuthenticationTag()
+        {
+            return ADP.Argument(System.SR.GetString(SR.TCE_InvalidAuthenticationTag), TdsEnums.TCE_PARAM_CIPHERTEXT);
+        }
+        #endregion Always Encrypted - Cryptographic Algorithms Error messages
+
+        #region Always Encrypted - Errors from sp_describe_parameter_encryption
+        static internal Exception UnexpectedDescribeParamFormatParameterMetadata()
+        {
+            return ADP.Argument(System.SR.GetString(SR.TCE_UnexpectedDescribeParamFormatParameterMetadata, "sp_describe_parameter_encryption"));
+        }
+
+        static internal Exception UnexpectedDescribeParamFormatAttestationInfo(string enclaveType)
+        {
+            return ADP.Argument(System.SR.GetString(SR.TCE_UnexpectedDescribeParamFormatAttestationInfo, "sp_describe_parameter_encryption", enclaveType));
+        }
+
+        static internal Exception InvalidEncryptionKeyOrdinalEnclaveMetadata(int ordinal, int maxOrdinal)
+        {
+            return ADP.InvalidOperation(System.SR.GetString(SR.TCE_InvalidEncryptionKeyOrdinalEnclaveMetadata, ordinal, maxOrdinal));
+        }
+
+        static internal Exception InvalidEncryptionKeyOrdinalParameterMetadata(int ordinal, int maxOrdinal)
+        {
+            return ADP.InvalidOperation(System.SR.GetString(SR.TCE_InvalidEncryptionKeyOrdinalParameterMetadata, ordinal, maxOrdinal));
+        }
+
+        public static Exception MultipleRowsReturnedForAttestationInfo()
+        {
+            return ADP.InvalidOperation(System.SR.GetString(SR.TCE_MultipleRowsReturnedForAttestationInfo, "sp_describe_parameter_encryption"));
+        }
+
+        static internal Exception ParamEncryptionMetadataMissing(string paramName, string procedureName)
+        {
+            return ADP.Argument(System.SR.GetString(SR.TCE_ParamEncryptionMetaDataMissing, "sp_describe_parameter_encryption", paramName, procedureName));
+        }
+
+        static internal Exception ProcEncryptionMetadataMissing(string procedureName)
+        {
+            return ADP.Argument(System.SR.GetString(SR.TCE_ProcEncryptionMetaDataMissing, "sp_describe_parameter_encryption", procedureName));
+        }
+
+        internal static Exception UnableToVerifyColumnMasterKeySignature(Exception innerExeption)
+        {
+            return ADP.InvalidOperation(System.SR.GetString(SR.TCE_UnableToVerifyColumnMasterKeySignature, innerExeption.Message), innerExeption);
+        }
+
+        internal static Exception ColumnMasterKeySignatureVerificationFailed(string cmkPath)
+        {
+            return ADP.InvalidOperation(System.SR.GetString(SR.TCE_ColumnMasterKeySignatureVerificationFailed, cmkPath));
+        }
+
+        internal static Exception InvalidKeyStoreProviderName(string providerName, List<string> systemProviders, List<string> customProviders)
+        {
+            const string valueSeparator = @", ";
+            string systemProviderStr = string.Join(valueSeparator, systemProviders.Select(provider => $"'{provider}'"));
+            string customProviderStr = string.Join(valueSeparator, customProviders.Select(provider => $"'{provider}'"));
+            return ADP.Argument(System.SR.GetString(SR.TCE_InvalidKeyStoreProviderName, providerName, systemProviderStr, customProviderStr));
+        }
+
+        internal static Exception ParamInvalidForceColumnEncryptionSetting(string paramName, string procedureName)
+        {
+            return ADP.InvalidOperation(System.SR.GetString(SR.TCE_ParamInvalidForceColumnEncryptionSetting, TdsEnums.TCE_PARAM_FORCE_COLUMN_ENCRYPTION, paramName, procedureName, "SqlParameter"));
+        }
+
+        internal static Exception ParamUnExpectedEncryptionMetadata(string paramName, string procedureName)
+        {
+            return ADP.InvalidOperation(System.SR.GetString(SR.TCE_ParamUnExpectedEncryptionMetadata, paramName, procedureName, TdsEnums.TCE_PARAM_FORCE_COLUMN_ENCRYPTION, "SqlParameter"));
+        }
+
+        internal static Exception ColumnMasterKeySignatureNotFound(string cmkPath)
+        {
+            return ADP.Argument(System.SR.GetString(SR.TCE_ColumnMasterKeySignatureNotFound, cmkPath));
+        }
+        #endregion Always Encrypted - Errors from sp_describe_parameter_encryption
+
+        #region Always Encrypted - Errors from secure channel Communication
+
+        internal static Exception ExceptionWhenGeneratingEnclavePackage(Exception innerExeption)
+        {
+            return ADP.InvalidOperation(System.SR.GetString(SR.TCE_ExceptionWhenGeneratingEnclavePackage, innerExeption.Message), innerExeption);
+        }
+
+        internal static Exception FailedToEncryptRegisterRulesBytePackage(Exception innerExeption)
+        {
+            return ADP.InvalidOperation(System.SR.GetString(SR.TCE_FailedToEncryptRegisterRulesBytePackage, innerExeption.Message), innerExeption);
+        }
+
+        internal static Exception InvalidKeyIdUnableToCastToUnsignedShort(int keyId, Exception innerException)
+        {
+            return ADP.Argument(System.SR.GetString(SR.TCE_InvalidKeyIdUnableToCastToUnsignedShort, keyId, innerException.Message), innerException);
+        }
+
+        internal static Exception InvalidDatabaseIdUnableToCastToUnsignedInt(int databaseId, Exception innerException)
+        {
+            return ADP.Argument(System.SR.GetString(SR.TCE_InvalidDatabaseIdUnableToCastToUnsignedInt, databaseId, innerException.Message), innerException);
+        }
+
+        internal static Exception InvalidAttestationParameterUnableToConvertToUnsignedInt(string variableName, int intValue, string enclaveType, Exception innerException)
+        {
+            return ADP.Argument(System.SR.GetString(SR.TCE_InvalidAttestationParameterUnableToConvertToUnsignedInt, enclaveType, intValue, variableName, innerException.Message), innerException);
+        }
+
+        internal static Exception OffsetOutOfBounds(string argument, string type, string method)
+        {
+            return ADP.Argument(System.SR.GetString(SR.TCE_OffsetOutOfBounds, type, method));
+        }
+
+        internal static Exception InsufficientBuffer(string argument, string type, string method)
+        {
+            return ADP.Argument(System.SR.GetString(SR.TCE_InsufficientBuffer, argument, type, method));
+        }
+
+        internal static Exception ColumnEncryptionKeysNotFound()
+        {
+            return ADP.Argument(System.SR.GetString(SR.TCE_ColumnEncryptionKeysNotFound));
+        }
+
+        #endregion Always Encrypted - Errors from secure channel Communication
+
+        #region Always Encrypted - Errors when performing attestation
+        static internal Exception AttestationInfoNotReturnedFromSqlServer(string enclaveType, string enclaveAttestationUrl)
+        {
+            return ADP.Argument(System.SR.GetString(SR.TCE_AttestationInfoNotReturnedFromSQLServer, enclaveType, enclaveAttestationUrl));
+        }
+        #endregion Always Encrypted - Errors when performing attestation
+
+        #region Always Encrypted - Errors when establishing secure channel
+        internal static Exception NullArgumentInConstructorInternal(string argumentName, string objectUnderConstruction)
+        {
+            return ADP.ArgumentNull(argumentName, System.SR.GetString(SR.TCE_NullArgumentInConstructorInternal, argumentName, objectUnderConstruction));
+        }
+
+        internal static Exception EmptyArgumentInConstructorInternal(string argumentName, string objectUnderConstruction)
+        {
+            return ADP.Argument(System.SR.GetString(SR.TCE_EmptyArgumentInConstructorInternal, argumentName, objectUnderConstruction));
+        }
+
+        internal static Exception NullArgumentInternal(string argumentName, string type, string method)
+        {
+            return ADP.ArgumentNull(argumentName, System.SR.GetString(SR.TCE_NullArgumentInternal, argumentName, type, method));
+        }
+
+        internal static Exception EmptyArgumentInternal(string argumentName, string type, string method)
+        {
+            return ADP.Argument(System.SR.GetString(SR.TCE_EmptyArgumentInternal, argumentName, type, method));
+        }
+        #endregion Always Encrypted - Errors when establishing secure channel
+
+        #region Always Encrypted - Enclave provider/configuration errors
+
+        internal static Exception CannotGetSqlColumnEncryptionEnclaveProviderConfig(Exception innerException)
+        {
+            return ADP.InvalidOperation(System.SR.GetString(SR.TCE_CannotGetSqlColumnEncryptionEnclaveProviderConfig, innerException.Message), innerException);
+        }
+
+        internal static Exception CannotCreateSqlColumnEncryptionEnclaveProvider(string providerName, string type, Exception innerException)
+        {
+            return ADP.InvalidOperation(System.SR.GetString(SR.TCE_CannotCreateSqlColumnEncryptionEnclaveProvider, providerName, type, innerException.Message), innerException);
+        }
+
+        internal static Exception SqlColumnEncryptionEnclaveProviderNameCannotBeEmpty()
+        {
+            return ADP.InvalidOperation(System.SR.GetString(SR.TCE_SqlColumnEncryptionEnclaveProviderNameCannotBeEmpty));
+        }
+
+        static internal Exception NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe(string enclaveType)
+        {
+            return ADP.InvalidOperation(System.SR.GetString(SR.TCE_NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe, "sp_describe_parameter_encryption", enclaveType));
+        }
+
+        static internal Exception NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage(string enclaveType)
+        {
+            return ADP.InvalidOperation(System.SR.GetString(SR.TCE_NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage, enclaveType));
+        }
+
+        static internal Exception EnclaveTypeNullForEnclaveBasedQuery()
+        {
+            return ADP.InvalidOperation(System.SR.GetString(SR.TCE_EnclaveTypeNullForEnclaveBasedQuery));
+        }
+
+        internal static Exception EnclaveProvidersNotConfiguredForEnclaveBasedQuery()
+        {
+            return ADP.InvalidOperation(System.SR.GetString(SR.TCE_EnclaveProvidersNotConfiguredForEnclaveBasedQuery));
+        }
+
+        internal static Exception EnclaveProviderNotFound(string enclaveType)
+        {
+            return ADP.InvalidOperation(System.SR.GetString(SR.TCE_EnclaveProviderNotFound, enclaveType));
+        }
+
+        internal static Exception NullEnclaveSessionReturnedFromProvider(string enclaveType, string attestationUrl)
+        {
+            return ADP.InvalidOperation(System.SR.GetString(SR.TCE_NullEnclaveSessionReturnedFromProvider, enclaveType, attestationUrl));
+        }
+
+        #endregion Always Encrypted - Enclave provider/configuration errors
+
+        #region Always Encrypted - Generic toplevel failures
+
+        internal static Exception GetExceptionArray(string serverName, string errorMessage, Exception e)
+        {
+            // Create and throw an exception array
+            SqlErrorCollection sqlErs = new SqlErrorCollection();
+            Exception exceptionToInclude = (null != e.InnerException) ? e.InnerException : e;
+            sqlErs.Add(new SqlError(infoNumber: 0, errorState: (byte)0x00, errorClass: (byte)TdsEnums.MIN_ERROR_CLASS, server: serverName, errorMessage: errorMessage, procedure: null, lineNumber: 0));
+
+            if (e is SqlException)
             {
-                return ADP.Argument(System.SR.GetString(SR.TCE_CertificateWithNoPrivateKeySysErr, keyPath), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+                SqlException exThrown = (SqlException)e;
+                SqlErrorCollection errorList = exThrown.Errors;
+                for (int i = 0; i < exThrown.Errors.Count; i++)
+                {
+                    sqlErs.Add(errorList[i]);
+                }
             }
             else
             {
-                return ADP.Argument(System.SR.GetString(SR.TCE_CertificateWithNoPrivateKey, keyPath), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+                sqlErs.Add(new SqlError(infoNumber: 0, errorState: (byte)0x00, errorClass: (byte)TdsEnums.MIN_ERROR_CLASS, server: serverName, errorMessage: e.Message, procedure: null, lineNumber: 0));
+            }
+
+            return SqlException.CreateException(sqlErs, "", null, exceptionToInclude);
+        }
+
+        internal static Exception ColumnDecryptionFailed(string columnName, string serverName, Exception e)
+        {
+            return GetExceptionArray(serverName, System.SR.GetString(SR.TCE_ColumnDecryptionFailed, columnName), e);
+        }
+
+        internal static Exception ParamEncryptionFailed(string paramName, string serverName, Exception e)
+        {
+            return GetExceptionArray(serverName, System.SR.GetString(SR.TCE_ParamEncryptionFailed, paramName), e);
+        }
+
+        static internal Exception ParamDecryptionFailed(string paramName, string serverName, Exception e)
+        {
+            return GetExceptionArray(serverName, System.SR.GetString(SR.TCE_ParamDecryptionFailed, paramName), e);
+        }
+        #endregion Always Encrypted - Generic toplevel failures
+
+        #region Always Encrypted - Client side query processing errors
+
+        internal static Exception UnknownColumnEncryptionAlgorithm(string algorithmName, string supportedAlgorithms)
+        {
+            return ADP.Argument(System.SR.GetString(SR.TCE_UnknownColumnEncryptionAlgorithm, algorithmName, supportedAlgorithms));
+        }
+
+        internal static Exception UnknownColumnEncryptionAlgorithmId(int algoId, string supportAlgorithmIds)
+        {
+            return ADP.Argument(System.SR.GetString(SR.TCE_UnknownColumnEncryptionAlgorithmId, algoId, supportAlgorithmIds), TdsEnums.TCE_PARAM_CIPHER_ALGORITHM_ID);
+        }
+
+        internal static Exception UnsupportedNormalizationVersion(byte version)
+        {
+            return ADP.Argument(System.SR.GetString(SR.TCE_UnsupportedNormalizationVersion, version, "'1'", "SQL Server"));
+        }
+
+        internal static Exception UnrecognizedKeyStoreProviderName(string providerName, List<string> systemProviders, List<string> customProviders)
+        {
+            const string valueSeparator = @", ";
+            string systemProviderStr = string.Join(valueSeparator, systemProviders.Select(provider => @"'" + provider + @"'"));
+            string customProviderStr = string.Join(valueSeparator, customProviders.Select(provider => @"'" + provider + @"'"));
+            return ADP.Argument(System.SR.GetString(SR.TCE_UnrecognizedKeyStoreProviderName, providerName, systemProviderStr, customProviderStr));
+        }
+
+        static internal Exception InvalidDataTypeForEncryptedParameter(string parameterName, int actualDataType, int expectedDataType)
+        {
+            return ADP.Argument(System.SR.GetString(SR.TCE_NullProviderValue, parameterName, actualDataType, expectedDataType));
+        }
+
+        internal static Exception KeyDecryptionFailed(string providerName, string keyHex, Exception e)
+        {
+
+            if (providerName.Equals(SqlColumnEncryptionCertificateStoreProvider.ProviderName))
+            {
+                return GetExceptionArray(null, System.SR.GetString(SR.TCE_KeyDecryptionFailedCertStore, providerName, keyHex), e);
+            }
+            else
+            {
+                return GetExceptionArray(null, System.SR.GetString(SR.TCE_KeyDecryptionFailed, providerName, keyHex), e);
             }
         }
+
+        internal static Exception UntrustedKeyPath(string keyPath, string serverName)
+        {
+            return ADP.Argument(System.SR.GetString(SR.TCE_UntrustedKeyPath, keyPath, serverName));
+        }
+
+        internal static Exception UnsupportedDatatypeEncryption(string dataType)
+        {
+            return ADP.Argument(System.SR.GetString(SR.TCE_UnsupportedDatatype, dataType));
+        }
+
+        internal static Exception ThrowDecryptionFailed(string keyStr, string valStr, Exception e)
+        {
+            return GetExceptionArray(null, System.SR.GetString(SR.TCE_DecryptionFailed, keyStr, valStr), e);
+        }
+
+        internal static Exception NullEnclaveSessionDuringQueryExecution(string enclaveType, string enclaveAttestationUrl)
+        {
+            return ADP.Argument(System.SR.GetString(SR.TCE_NullEnclaveSessionDuringQueryExecution, enclaveType, enclaveAttestationUrl));
+        }
+
+        static internal Exception NullEnclavePackageForEnclaveBasedQuery(string enclaveType, string enclaveAttestationUrl)
+        {
+            return ADP.Argument(System.SR.GetString(SR.TCE_NullEnclavePackageForEnclaveBasedQuery, enclaveType, enclaveAttestationUrl));
+        }
+        
+        #endregion Always Encrypted - Client side query processing errors
+
+        #region Always Encrypted - SQL connection related error messages
+        
+        internal static Exception TceNotSupported()
+        {
+            return ADP.InvalidOperation(System.SR.GetString(SR.TCE_NotSupportedByServer, "SQL Server"));
+        }
+
+        internal static Exception EnclaveComputationsNotSupported()
+        {
+            return ADP.InvalidOperation(System.SR.GetString(SR.TCE_EnclaveComputationsNotSupported));
+        }
+
+        internal static Exception EnclaveTypeNotReturned()
+        {
+            return ADP.InvalidOperation(System.SR.GetString(SR.TCE_EnclaveTypeNotReturned));
+        }
+        #endregion Always Encrypted - SQL connection related error messages
+
+        #region Always Encrypted - Extensibility related error messages
+        
+
+        internal static Exception CanOnlyCallOnce()
+        {
+            return ADP.InvalidOperation(System.SR.GetString(SR.TCE_CanOnlyCallOnce));
+        }
+
+        internal static Exception NullCustomKeyStoreProviderDictionary()
+        {
+            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_CLIENT_KEYSTORE_PROVIDERS, System.SR.GetString(SR.TCE_NullCustomKeyStoreProviderDictionary));
+        }
+
+        internal static Exception InvalidCustomKeyStoreProviderName(string providerName, string prefix)
+        {
+            return ADP.Argument(System.SR.GetString(SR.TCE_InvalidCustomKeyStoreProviderName, providerName, prefix), TdsEnums.TCE_PARAM_CLIENT_KEYSTORE_PROVIDERS);
+        }
+
+        internal static Exception NullProviderValue(string providerName)
+        {
+            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_CLIENT_KEYSTORE_PROVIDERS, System.SR.GetString(SR.TCE_NullProviderValue, providerName));
+        }
+
+        internal static Exception EmptyProviderName()
+        {
+            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_CLIENT_KEYSTORE_PROVIDERS, System.SR.GetString(SR.TCE_EmptyProviderName));
+        }
+        #endregion Always Encrypted - Extensibility related error messages
+
+        #endregion Always Encrypted Errors
 
         /// <summary>
         /// gets a message for SNI error (sniError must be valid, non-zero error code)

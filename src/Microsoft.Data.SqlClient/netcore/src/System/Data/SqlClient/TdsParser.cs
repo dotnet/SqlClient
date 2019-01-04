@@ -137,24 +137,10 @@ namespace Microsoft.Data.SqlClient
         // NOTE: You must take the internal connection's _parserLock before modifying this
         internal bool _asyncWrite = false;
 
-        // TCE supported flag, used to determine if new TDS fields are present. This is 
-        // useful when talking to downlevel/uplevel server.
-        private bool _serverSupportsColumnEncryption = false;
-
         /// <summary>
         /// Get or set if column encryption is supported by the server.
         /// </summary>
-        internal bool IsColumnEncryptionSupported
-        {
-            get
-            {
-                return _serverSupportsColumnEncryption;
-            }
-            set
-            {
-                _serverSupportsColumnEncryption = value;
-            }
-        }
+        internal bool IsColumnEncryptionSupported { get; set; } = false;
 
         /// <summary>
         /// TCE version supported by the server
@@ -298,8 +284,6 @@ namespace Microsoft.Data.SqlClient
                 _statistics = value;
             }
         }
-
-
 
         internal int IncrementNonTransactedOpenResultCount()
         {
@@ -1402,7 +1386,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         //
-        // Takes a 16 bit short and writes it.
+        // Takes a 16 bit short and writes it to the returned buffer.
         //
         internal byte[] SerializeShort(int v, TdsParserStateObject stateObj)
         {
@@ -2137,7 +2121,7 @@ namespace Microsoft.Data.SqlClient
                             {
                                 _SqlMetaDataSet metadata;
                                 if (!TryProcessMetaData(tokenLength, stateObj, out metadata, cmdHandler?.ColumnEncryptionSetting ?? SqlCommandColumnEncryptionSetting.UseConnectionSetting))
-                                    {
+                                {
                                     return false;
                                 }
                                 stateObj._cleanupMetaData = metadata;
@@ -3511,7 +3495,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Check if the column is encrypted.
-            if (_serverSupportsColumnEncryption)
+            if (IsColumnEncryptionSupported)
             {
                 rec.isEncrypted = (TdsEnums.IsEncrypted == (flags & TdsEnums.IsEncrypted));
             }
@@ -3667,7 +3651,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // For encrypted parameters, read the unencrypted type and encryption information.
-            if (_serverSupportsColumnEncryption && rec.isEncrypted)
+            if (IsColumnEncryptionSupported && rec.isEncrypted)
             {
                 if (!TryProcessTceCryptoMetadata(stateObj, rec, cipherTable: null, columnEncryptionSetting: columnEncryptionSetting, isReturnValue: true))
                 {
@@ -4227,7 +4211,7 @@ namespace Microsoft.Data.SqlClient
 
             // Read the cipher info table first 
             SqlTceCipherInfoTable? cipherTable = null;
-            if (_serverSupportsColumnEncryption)
+            if (IsColumnEncryptionSupported)
             {
                 if (!TryProcessCipherInfoTable(stateObj, out cipherTable))
                 {
@@ -4253,7 +4237,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         private bool IsVarTimeTds(byte tdsType) => tdsType == TdsEnums.SQLTIME || tdsType == TdsEnums.SQLDATETIME2 || tdsType == TdsEnums.SQLDATETIMEOFFSET;
-        
+
         private bool TryProcessTypeInfo (TdsParserStateObject stateObj, SqlMetaDataPriv col, UInt32 userType) {
             byte byteLen;
             byte tdsType;
@@ -4432,7 +4416,7 @@ namespace Microsoft.Data.SqlClient
 
             col.isColumnSet = (TdsEnums.IsColumnSet == (flags & TdsEnums.IsColumnSet));
 
-            if (fColMD && _serverSupportsColumnEncryption)
+            if (fColMD && IsColumnEncryptionSupported)
             {
                 col.isEncrypted = (TdsEnums.IsEncrypted == (flags & TdsEnums.IsEncrypted));
             }
@@ -4454,7 +4438,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Read the TCE column cryptoinfo
-            if (fColMD && _serverSupportsColumnEncryption && col.isEncrypted)
+            if (fColMD && IsColumnEncryptionSupported && col.isEncrypted)
             {
                 // If the column is encrypted, we should have a valid cipherTable
                 if (cipherTable.HasValue && !TryProcessTceCryptoMetadata(stateObj, col, cipherTable.Value, columnEncryptionSetting, isReturnValue: false))
@@ -5172,6 +5156,8 @@ namespace Microsoft.Data.SqlClient
             byte denormalizedScale = md.baseTI.scale;
 
             Debug.Assert(false == md.baseTI.isEncrypted, "Double encryption detected");
+            //DEVNOTE: When modifying the following routines (for deserialization) please pay attention to 
+            // deserialization code in DecryptWithKey () method and modify it accordingly.
             switch (tdsType)
             {
                 // We normalize to allow conversion across data types. All data types below are serialized into a BIGINT.
@@ -5402,7 +5388,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLTIME:
                     // We normalize to maximum precision to allow conversion across different precisions.
                     Debug.Assert(length == 5, "invalid length for time type!");
-                    value.SetToTime(unencryptedBytes.AsSpan().Slice(0,length), TdsEnums.MAX_TIME_SCALE, denormalizedScale);
+                    value.SetToTime(unencryptedBytes.AsSpan().Slice(0, length), TdsEnums.MAX_TIME_SCALE, denormalizedScale);
                     break;
 
                 case TdsEnums.SQLDATETIME2:
@@ -7317,7 +7303,7 @@ namespace Microsoft.Data.SqlClient
 
             if (write)
             {
-                // Write Feature ID, legth of the version# field and TCE Version#
+                // Write Feature ID, length of the version# field and TCE Version#
                 _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_TCE);
                 WriteInt(1, _physicalStateObj);
                 _physicalStateObj.WriteByte(TdsEnums.MAX_SUPPORTED_TCE_VERSION);
@@ -7332,7 +7318,7 @@ namespace Microsoft.Data.SqlClient
 
             if (write)
             {
-                // Write Feature ID, legth of the version# field and Sensitivity Classification Version#
+                // Write Feature ID, length of the version# field and Sensitivity Classification Version#
                 _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_DATACLASSIFICATION);
                 WriteInt(1, _physicalStateObj);
                 _physicalStateObj.WriteByte(TdsEnums.MAX_SUPPORTED_DATA_CLASSIFICATION_VERSION);
@@ -8871,20 +8857,11 @@ namespace Microsoft.Data.SqlClient
                                         task = completion.Task;
                                     }
 
-                                    TDSExecuteRPCParameterSetupWriteCompletion(
-                                        cmd,
-                                        rpcArray,
-                                        timeout,
-                                        inSchema,
-                                        notificationRequest,
-                                        stateObj,
-                                        isCommandProc,
-                                        sync,
-                                        completion,
-                                        ii,
-                                        i + 1,
-                                        writeParamTask
-                                    );
+                                    AsyncHelper.ContinueTask(writeParamTask, completion,
+                                        () => TdsExecuteRPC(cmd, rpcArray, timeout, inSchema, notificationRequest, stateObj, isCommandProc, sync, completion,
+                                                              startRpc: ii, startParam: i + 1),
+                                        connectionToDoom: _connHandler,
+                                        onFailure: exc => TdsExecuteRPC_OnFailure(exc, stateObj));
 
                                     // Take care of releasing the locks
                                     if (releaseConnectionLock)
@@ -8982,22 +8959,23 @@ namespace Microsoft.Data.SqlClient
                 writeParamTask,
                 completion,
                 () => TdsExecuteRPC(
-                        cmd,
-                        rpcArray,
-                        timeout,
-                        inSchema,
-                        notificationRequest,
-                        stateObj,
-                        isCommandProc,
-                        sync,
-                        completion,
-                        startRpc,
-                        startParam
-                      ),
+                    cmd,
+                    rpcArray,
+                    timeout,
+                    inSchema,
+                    notificationRequest,
+                    stateObj,
+                    isCommandProc,
+                    sync,
+                    completion,
+                    startRpc,
+                    startParam
+                ),
                 connectionToDoom: _connHandler,
                 onFailure: exc => TdsExecuteRPC_OnFailure(exc, stateObj)
             );
         }
+
         // This is in its own method to avoid always allocating the lambda in  TDSExecuteRPCParameter 
         private void TDSExecuteRPCParameterSetupFlushCompletion(TdsParserStateObject stateObj, TaskCompletionSource<object> completion, Task execFlushTask, bool taskReleaseConnectionLock)
         {
@@ -9510,7 +9488,7 @@ namespace Microsoft.Data.SqlClient
         /// <returns></returns>
         internal void LoadColumnEncryptionKeys(_SqlMetaDataSet metadataCollection, string serverName)
         {
-            if (_serverSupportsColumnEncryption && ShouldEncryptValuesForBulkCopy())
+            if (IsColumnEncryptionSupported && ShouldEncryptValuesForBulkCopy())
             {
                 for (int col = 0; col < metadataCollection.Length; col++)
                 {
@@ -9558,7 +9536,7 @@ namespace Microsoft.Data.SqlClient
         /// <returns></returns>
         internal void WriteCekTable(_SqlMetaDataSet metadataCollection, TdsParserStateObject stateObj)
         {
-            if (!_serverSupportsColumnEncryption)
+            if (!IsColumnEncryptionSupported)
             {
                 return;
             }
@@ -9628,7 +9606,7 @@ namespace Microsoft.Data.SqlClient
         /// <returns></returns>
         internal void WriteCryptoMetadata(_SqlMetaData md, TdsParserStateObject stateObj)
         {
-            if (!_serverSupportsColumnEncryption || // TCE Feature supported
+            if (!IsColumnEncryptionSupported || // TCE Feature supported
                 !md.isEncrypted || // Column is not encrypted
                 !ShouldEncryptValuesForBulkCopy())
             { // TCE disabled on connection string
@@ -9688,7 +9666,7 @@ namespace Microsoft.Data.SqlClient
                     flags |= md.isIdentity ? TdsEnums.Identity : (ushort)0;
 
                     // Write the next byte of flags
-                    if (_serverSupportsColumnEncryption)
+                    if (IsColumnEncryptionSupported)
                     { // TCE Supported
                         if (ShouldEncryptValuesForBulkCopy())
                         { // TCE enabled on connection options
@@ -9752,10 +9730,17 @@ namespace Microsoft.Data.SqlClient
         /// Determines if a column value should be encrypted when using BulkCopy (based on connectionstring setting).
         /// </summary>
         /// <returns></returns>
-        internal bool ShouldEncryptValuesForBulkCopy() => null != _connHandler && 
-                                                           null != _connHandler.ConnectionOptions &&
-                                                           SqlConnectionColumnEncryptionSetting.Enabled == _connHandler.ConnectionOptions.ColumnEncryptionSetting;
-            
+        internal bool ShouldEncryptValuesForBulkCopy()
+        {
+            if (null != _connHandler &&
+                null != _connHandler.ConnectionOptions &&
+                SqlConnectionColumnEncryptionSetting.Enabled == _connHandler.ConnectionOptions.ColumnEncryptionSetting)
+            {
+                return true;
+            }
+
+            return false;
+        }
 
         /// <summary>
         /// Encrypts a column value (for SqlBulkCopy) 
@@ -9763,7 +9748,7 @@ namespace Microsoft.Data.SqlClient
         /// <returns></returns>
         internal object EncryptColumnValue(object value, SqlMetaDataPriv metadata, string column, TdsParserStateObject stateObj, bool isDataFeed, bool isSqlType)
         {
-            Debug.Assert(_serverSupportsColumnEncryption, "Server doesn't support encryption, yet we received encryption metadata");
+            Debug.Assert(IsColumnEncryptionSupported, "Server doesn't support encryption, yet we received encryption metadata");
             Debug.Assert(ShouldEncryptValuesForBulkCopy(), "Encryption attempted when not requested");
 
             if (isDataFeed)
@@ -9789,7 +9774,8 @@ namespace Microsoft.Data.SqlClient
                     actualLengthInBytes = (isSqlType) ? ((SqlBinary)value).Length : ((byte[])value).Length;
                     if (metadata.baseTI.length > 0 &&
                         actualLengthInBytes > metadata.baseTI.length)
-                    { // see comments agove
+                    {
+                        // see comments above
                         actualLengthInBytes = metadata.baseTI.length;
                     }
                     break;
@@ -11434,7 +11420,6 @@ namespace Microsoft.Data.SqlClient
                 default:
                     throw SQL.UnsupportedDatatypeEncryption(type.TypeName);
             } // switch
-            // Debug.WriteLine("value:  " + value.ToString(CultureInfo.InvariantCulture));
         }
 
         // For MAX types, this method can only write everything in one big chunk. If multiple

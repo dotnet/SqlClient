@@ -9,7 +9,7 @@ namespace Microsoft.Data.SqlClient
     /// <summary>
     /// Encapsulates the information SqlClient sends to SQL Server to initiate the process of attesting and creating a secure session with the enclave, SQL Server uses for computations on columns protected using Always Encrypted.
     /// </summary>
-    public class SqlEnclaveAttestationParameters
+    public partial class SqlEnclaveAttestationParameters
     {
 
         private static readonly string _clientDiffieHellmanKeyName = "ClientDiffieHellmanKey";
@@ -22,12 +22,6 @@ namespace Microsoft.Data.SqlClient
         /// Identifies an enclave attestation protocol.  
         /// </summary>
         public int Protocol { get; }
-
-
-        /// <summary>
-        /// A Diffie-Hellman algorithm encapsulating a key pair, SqlClient uses to establish a secure session with the enclave. 
-        /// </summary>
-        public ECDiffieHellmanCng ClientDiffieHellmanKey { get; }
 
         /// <summary>
         /// The information used to initiate the process of attesting the enclave. The format and the content of this information is specific to the attestation protocol. 
@@ -58,22 +52,6 @@ namespace Microsoft.Data.SqlClient
             }
 
             return returnValue;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of SqlEnclaveAttestationParameters.
-        /// </summary>
-        /// <param name="protocol">Identifies an enclave attestation protocol.</param>
-        /// <param name="input">The input of the enclave attestation protocol.</param>
-        /// <param name="clientDiffieHellmanKey">A Diffie-Hellman algorithm encapsulating a client-side key pair.</param>
-        public SqlEnclaveAttestationParameters(int protocol, byte[] input, ECDiffieHellmanCng clientDiffieHellmanKey)
-        {
-            if (null == clientDiffieHellmanKey) { throw SQL.NullArgumentInConstructorInternal(_clientDiffieHellmanKeyName, _className); }
-            if (null == input) { throw SQL.NullArgumentInConstructorInternal(_inputName, _className); }
-
-            _input = input;
-            Protocol = protocol;
-            ClientDiffieHellmanKey = clientDiffieHellmanKey;
         }
     }
 }

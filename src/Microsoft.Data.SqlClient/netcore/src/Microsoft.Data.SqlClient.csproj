@@ -23,20 +23,18 @@
   <ItemGroup Condition="'$(TargetGroup)' == 'netstandard' OR '$(TargetGroup)' == 'netcoreapp' OR '$(IsUAPAssembly)' == 'true' ">
     <Compile Include="System.Data.SqlClient.TypeForwards.cs" />
   </ItemGroup>
+  <ItemGroup Condition="'$(IsPartialFacadeAssembly)' != 'true' AND '$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netstandard'">
+    <Compile Include="System\Data\SqlClient\EnclaveDelegate.NetStandard.cs" />
+  </ItemGroup>
   <ItemGroup Condition="'$(IsPartialFacadeAssembly)' != 'true' AND '$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netcoreapp'">
     <Compile Include="System\Data\Common\DbConnectionStringCommon.NetCoreApp.cs" />
     <Compile Include="System\Data\ProviderBase\DbConnectionPool.NetCoreApp.cs" />
     <Compile Include="System\Data\SqlClient\SqlConnectionString.NetCoreApp.cs" />
     <Compile Include="System\Data\SqlClient\SqlConnectionStringBuilder.NetCoreApp.cs" />
     <Compile Include="System\Data\SqlClient\PoolBlockingPeriod.cs" />
-    <Compile Include="System\Data\SqlClient\SqlConnection.netcoreapp.cs" />
-    <Compile Include="System\Data\SqlClient\SqlUtil.netcoreapp.cs" />
-    <Compile Include="System\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.cs" />
-    <Compile Include="System\Data\SqlClient\SqlEnclaveAttestationParameters.cs" />
-    <Compile Include="System\Data\SqlClient\SqlColumnEncryptionEnclaveProviderConfigurationManager.cs" />
-    <Compile Include="System\Data\SqlClient\ColumnEncryptionKeyInfo.cs" />
-    <Compile Include="System\Data\SqlClient\EnclaveDelegate.cs" />
-    <Compile Include="System\Data\SqlClient\SqlQueryMetadataCache.cs" />
+    <Compile Include="System\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.NetCoreApp.cs" />
+    <Compile Include="System\Data\SqlClient\SqlEnclaveAttestationParameters.NetCoreApp.cs" />
+    <Compile Include="System\Data\SqlClient\EnclaveDelegate.NetCoreApp.cs" />
     <Compile Include="System\Data\SqlClient\SNI\SNIPacket.NetCoreApp.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(IsPartialFacadeAssembly)' != 'true' AND '$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netstandard'">
@@ -252,6 +250,12 @@
     <Compile Include="System\Data\SqlClient\SqlColumnEncryptionKeyStoreProvider.cs" />
     <Compile Include="System\Data\SqlClient\EnclavePackage.cs" />
     <Compile Include="System\Data\SqlClient\SqlEnclaveSession.cs" />
+    <Compile Include="System\Data\SqlClient\SqlQueryMetadataCache.cs" />
+    <Compile Include="System\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.cs" />
+    <Compile Include="System\Data\SqlClient\SqlEnclaveAttestationParameters.cs" />
+    <Compile Include="System\Data\SqlClient\SqlColumnEncryptionEnclaveProviderConfigurationManager.cs" />
+    <Compile Include="System\Data\SqlClient\ColumnEncryptionKeyInfo.cs" />
+    <Compile Include="System\Data\SqlClient\EnclaveDelegate.cs" />
     <Compile Include="System\Data\SqlClient\DataClassification\SensitivityClassification.cs" />
   </ItemGroup>
   <!-- Windows only -->

@@ -21,11 +21,29 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Configuration;
 
 namespace Microsoft.Data.SqlClient
 {
     public sealed partial class SqlConnection : DbConnection, ICloneable
     {
+        static SqlConnection()
+        {
+            SqlColumnEncryptionEnclaveProviderConfigurationSection sqlColumnEncryptionEnclaveProviderConfigurationSection = null;
+            try
+            {
+                sqlColumnEncryptionEnclaveProviderConfigurationSection = (SqlColumnEncryptionEnclaveProviderConfigurationSection)ConfigurationManager.GetSection("SqlColumnEncryptionEnclaveProviders");
+            }
+            catch (ConfigurationErrorsException e)
+            {
+                throw SQL.CannotGetSqlColumnEncryptionEnclaveProviderConfig(e);
+            }
+
+            sqlColumnEncryptionEnclaveProviderConfigurationManager = new SqlColumnEncryptionEnclaveProviderConfigurationManager(sqlColumnEncryptionEnclaveProviderConfigurationSection);
+        }
+
+        static internal readonly SqlColumnEncryptionEnclaveProviderConfigurationManager sqlColumnEncryptionEnclaveProviderConfigurationManager;
+
         private bool _AsyncCommandInProgress;
 
         // SQLStatistics support
@@ -61,7 +79,7 @@ namespace Microsoft.Data.SqlClient
         internal bool _applyTransientFaultHandling = false;
 
         // System column encryption key store providers are added by default
-        static private readonly Dictionary<string, SqlColumnEncryptionKeyStoreProvider> _SystemColumnEncryptionKeyStoreProviders
+        private static readonly Dictionary<string, SqlColumnEncryptionKeyStoreProvider> _SystemColumnEncryptionKeyStoreProviders
             = new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>(capacity: 1, comparer: StringComparer.OrdinalIgnoreCase)
                 {
                     {SqlColumnEncryptionCertificateStoreProvider.ProviderName, new SqlColumnEncryptionCertificateStoreProvider()},
@@ -70,20 +88,20 @@ namespace Microsoft.Data.SqlClient
                 };
 
         // Lock to control setting of _CustomColumnEncryptionKeyStoreProviders
-        static private readonly Object _CustomColumnEncryptionKeyProvidersLock = new Object();
+        private static readonly Object _CustomColumnEncryptionKeyProvidersLock = new Object();
 
         /// <summary>
         /// Custom provider list should be provided by the user. We shallow copy the user supplied dictionary into a ReadOnlyDictionary.
         /// Custom provider list can only supplied once per application.
         /// </summary>
-        static private ReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> _CustomColumnEncryptionKeyStoreProviders;
+        private static ReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> _CustomColumnEncryptionKeyStoreProviders;
 
         /// <summary>
         /// Dictionary object holding trusted key paths for various SQL Servers.
         /// Key to the dictionary is a SQL Server Name
         /// IList contains a list of trusted key paths.
         /// </summary>
-        static private readonly ConcurrentDictionary<string, IList<string>> _ColumnEncryptionTrustedMasterKeyPaths
+        private static readonly ConcurrentDictionary<string, IList<string>> _ColumnEncryptionTrustedMasterKeyPaths
             = new ConcurrentDictionary<string, IList<string>>(concurrencyLevel: 4 * Environment.ProcessorCount /* default value in ConcurrentDictionary*/,
                 capacity: 1,
                 comparer: StringComparer.OrdinalIgnoreCase);
@@ -91,14 +109,14 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Defines whether query metadata caching is enabled.
         /// </summary>
-        static public TimeSpan ColumnEncryptionKeyCacheTtl { get; set; } = TimeSpan.FromHours(2);
+        public static TimeSpan ColumnEncryptionKeyCacheTtl { get; set; } = TimeSpan.FromHours(2);
 
         /// <summary>
         /// Defines whether query metadata caching is enabled.
         /// </summary>
-        static public bool ColumnEncryptionQueryMetadataCacheEnabled { get; set; } = true;
+        public static bool ColumnEncryptionQueryMetadataCacheEnabled { get; set; } = true;
 
-        static public IDictionary<string, IList<string>> ColumnEncryptionTrustedMasterKeyPaths => _ColumnEncryptionTrustedMasterKeyPaths;
+        public static IDictionary<string, IList<string>> ColumnEncryptionTrustedMasterKeyPaths => _ColumnEncryptionTrustedMasterKeyPaths;
 
         public SqlConnection(string connectionString) : this()
         {
@@ -229,7 +247,7 @@ namespace Microsoft.Data.SqlClient
         /// SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customKeyStoreProviders);
         /// </summary>
         /// <param name="customProviders">Custom column encryption key provider dictionary</param>
-        static public void RegisterColumnEncryptionKeyStoreProviders(IDictionary<string, SqlColumnEncryptionKeyStoreProvider> customProviders)
+        public static void RegisterColumnEncryptionKeyStoreProviders(IDictionary<string, SqlColumnEncryptionKeyStoreProvider> customProviders)
         {
 
             // Return when the provided dictionary is null.
