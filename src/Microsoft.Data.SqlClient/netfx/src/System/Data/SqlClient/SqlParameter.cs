@@ -358,7 +358,8 @@ namespace Microsoft.Data.SqlClient {
                  typeof(string), typeof(string), typeof(string), typeof(MetaType), typeof(Type)};
 
                 SqlMetaData SqlMetaDataInstance = (SqlMetaData)SqlMetaDataType.GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance,
-                      null, argTypes, null).Invoke(null);
+                      null, argTypes, null).Invoke(new Object[] { this.ParameterName, mt.SqlDbType, maxlen, GetActualPrecision(), GetActualScale(), LocaleId, CompareInfo,
+                                       XmlSchemaCollectionDatabase, XmlSchemaCollectionOwningSchema, XmlSchemaCollectionName, mt.IsPlp, _udtType });
                 return SqlMetaDataInstance;
             }
         }
