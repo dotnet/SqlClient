@@ -11,6 +11,10 @@ namespace Microsoft.Data.SqlClient
     /// </summary>
     public partial class SqlEnclaveAttestationParameters
     {
+        private static readonly string _clientDiffieHellmanKeyName = "ClientDiffieHellmanKey";
+        private static readonly string _inputName = "input";
+        private static readonly string _className = "EnclaveAttestationParameters";
+
         /// <summary>
         /// A Diffie-Hellman algorithm encapsulating a key pair, SqlClient uses to establish a secure session with the enclave. 
         /// </summary>

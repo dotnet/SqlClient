@@ -11,12 +11,7 @@ namespace Microsoft.Data.SqlClient
     /// </summary>
     public partial class SqlEnclaveAttestationParameters
     {
-
-        private static readonly string _clientDiffieHellmanKeyName = "ClientDiffieHellmanKey";
-        private static readonly string _inputName = "input";
-        private static readonly string _className = "EnclaveAttestationParameters";
-
-        private readonly byte[] _input;
+        private readonly byte[] _input = null;
 
         /// <summary>
         /// Identifies an enclave attestation protocol.  

@@ -19,7 +19,6 @@ namespace Microsoft.Data.SqlClient
         private static readonly string GetAttestationInfoQueryString = String.Format(@"Select GetTrustedModuleIdentityAndAttestationInfo({0}) as attestationInfo", 0);
         private static readonly string ClassName = "EnclaveDelegate";
         private static readonly string GetDecryptedKeysToBeSentToEnclaveName = "GetDecryptedKeysToBeSentToEnclave";
-        private static readonly string GetSerializedAttestationParametersName = "GetSerializedAttestationParameters";
         private static readonly string ComputeQueryStringHashName = "ComputeQueryStringHash";
 
         private readonly Object _lock = new Object();

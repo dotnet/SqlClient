@@ -15,6 +15,8 @@ namespace Microsoft.Data.SqlClient
     /// </summary>
     internal partial class EnclaveDelegate
     {
+        private static readonly string GetSerializedAttestationParametersName = "GetSerializedAttestationParameters";
+
         internal byte[] GetSerializedAttestationParameters(SqlEnclaveAttestationParameters sqlEnclaveAttestationParameters, string enclaveType)
         {
             byte[] attestationProtocolBytes = null;
