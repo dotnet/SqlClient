@@ -405,7 +405,7 @@ namespace Microsoft.SqlServer.Server {
                         Type SqlCharsType = (typeof(SqlChars));
                         Type[] argTypes = new Type[] { typeof(SqlStreamChars) };
                         SqlChars SqlCharsInstance = (SqlChars)SqlCharsType.GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance,
-                              null, argTypes, null).Invoke(null);
+                              null, argTypes, null).Invoke(new Object[] { sc });
                         result = SqlCharsInstance;
                     }
                 }
