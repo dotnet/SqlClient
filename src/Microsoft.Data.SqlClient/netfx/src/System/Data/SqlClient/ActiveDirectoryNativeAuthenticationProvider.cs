@@ -49,12 +49,12 @@ namespace Microsoft.Data.SqlClient
 
         public override void BeforeLoad(SqlAuthenticationMethod authentication)
         {
-           // _logger.LogInfo(_type, "BeforeLoad", $"being loaded into SqlAuthProviders for {authentication}.");
+            _logger.LogInfo(_type, "BeforeLoad", $"being loaded into SqlAuthProviders for {authentication}.");
         }
 
         public override void BeforeUnload(SqlAuthenticationMethod authentication)
         {
-            //_logger.LogInfo(_type, "BeforeUnload", $"being unloaded from SqlAuthProviders for {authentication}.");
+            _logger.LogInfo(_type, "BeforeUnload", $"being unloaded from SqlAuthProviders for {authentication}.");
         }
     }
 }

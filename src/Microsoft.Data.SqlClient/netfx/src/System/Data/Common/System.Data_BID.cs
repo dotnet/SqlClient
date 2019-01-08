@@ -18,7 +18,7 @@ using System.Runtime.Versioning;
                             + "comm = System.Data.Common;"
                             + "odbc = System.Data.Odbc;"
                             + "oledb= System.Data.OleDb;"
-                            + "prov = System.Data.ProviderBase;"
+                            + "prov = Microsoft.Data.ProviderBase;"
                             + "sc   = System.Data.Sql;"
                             + "sql  = Microsoft.Data.SqlClient;" 
                             + "cqt  = System.Data.Common.CommandTrees;" 
