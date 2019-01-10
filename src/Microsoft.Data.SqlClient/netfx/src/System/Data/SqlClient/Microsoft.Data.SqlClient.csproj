@@ -78,6 +78,10 @@
     <Optimize>True</Optimize>
     <OutputPlatform>x86</OutputPlatform>
   </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(KeyFile)</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
   <!-- ******************************************************************************************* -->
   <ItemGroup>
     <Reference Include="System" />
@@ -90,6 +94,7 @@
     <Reference Include="System.EnterpriseServices" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="$(KeyFile)" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
@@ -257,7 +262,7 @@
     <Compile Include="..\Common\NativeMethods.cs" />
     <Compile Include="..\Common\System.Data_BID.cs" />
     <Compile Include="..\Common\GreenMethods.cs" />
-    <Compile Include="..\Common\SQLResource.cs"/>
+    <Compile Include="..\Common\SQLResource.cs" />
     <Compile Include="..\..\..\Misc\ExternDll.cs">
       <Link>NativeMethods\ExternDll.cs</Link>
     </Compile>
