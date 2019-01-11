@@ -6,6 +6,5 @@
     <Company>Microsoft Corporation</Company>
     <BaseProduct>Microsoft SqlClient Data Provider</BaseProduct>
     <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
-    <KeyFile>$(ToolsDir)keys\netfxKeypair.snk</KeyFile>
   </PropertyGroup>
 </Project>

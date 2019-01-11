@@ -78,10 +78,6 @@
     <Optimize>True</Optimize>
     <OutputPlatform>x86</OutputPlatform>
   </PropertyGroup>
-  <PropertyGroup>
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>$(KeyFile)</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
   <!-- ******************************************************************************************* -->
   <ItemGroup>
     <Reference Include="System" />
@@ -94,7 +90,6 @@
     <Reference Include="System.EnterpriseServices" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="$(KeyFile)" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
