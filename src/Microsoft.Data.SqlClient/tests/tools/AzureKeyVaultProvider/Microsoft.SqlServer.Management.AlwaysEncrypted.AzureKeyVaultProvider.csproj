@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework Condition="'$(TestTargetOS)' == '' OR '$(TestTargetOS)' == 'WindowsNetCore' OR '$(TestTargetOS)' == 'UnixNetCore'">netcoreapp2.1</TargetFramework>
+    <TargetFramework Condition="'$(TestTargetOS)' == 'WindowsNetFx'">net46</TargetFramework>
+    <TargetGroup Condition="'$(TargetFramework)'=='netcoreapp2.1'">netcoreapp</TargetGroup>
+    <TargetGroup Condition="'$(TargetFramework)'=='net46'">netfx</TargetGroup>
+  </PropertyGroup>
+  <PropertyGroup>
+    <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)\$(AssemblyName)</IntermediateOutputPath>  
+    <OutputPath>$(BinFolder)$(Configuration).$(Platform)\$(AssemblyName)</OutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
+    <ProjectReference Condition="'$(TargetGroup)'=='netfx'" Include="$(NetFxSource)src\System\Data\SqlClient\Microsoft.Data.SqlClient.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Azure.KeyVault" Version="3.0.2" />
+    <PackageReference Include="Microsoft.Azure.KeyVault.WebKey" Version="3.0.2" />
+    <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.18" />
+    <PackageReference Include="Microsoft.Rest.ClientRuntime.Azure" Version="3.3.18" />
+  </ItemGroup>
+</Project>

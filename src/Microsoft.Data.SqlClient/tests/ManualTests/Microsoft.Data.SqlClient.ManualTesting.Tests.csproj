@@ -180,6 +180,9 @@
     <ProjectReference Include="$(TestsPath)tools\CoreFx.Private.TestUtilities\CoreFx.Private.TestUtilities.csproj">
       <Name>CoreFx.Private.TestUtilities</Name>
     </ProjectReference>
+    <ProjectReference Include="$(TestsPath)tools\AzureKeyVaultProvider\Microsoft.SqlServer.Management.AlwaysEncrypted.AzureKeyVaultProvider.csproj">
+      <Name>Microsoft.SqlServer.Management.AlwaysEncrypted.AzureKeyVaultProvider</Name>
+    </ProjectReference>
     <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
     <ProjectReference Condition="'$(TargetGroup)'=='netfx'" Include="$(NetFxSource)src\System\Data\SqlClient\Microsoft.Data.SqlClient.csproj" />
   </ItemGroup>

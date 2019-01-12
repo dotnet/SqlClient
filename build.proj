@@ -40,14 +40,22 @@
     <ManualTests     Include="**/ManualTests/SQL/UdtTest/UDTs/Shapes/Shapes.csproj" />
     <ManualTests     Include="**/ManualTests/SQL/UdtTest/UDTs/Utf8String/Utf8String.csproj" />
     <ManualTests     Include="**/tools/CoreFx.Private.TestUtilities/CoreFx.Private.TestUtilities.csproj" />
+    <ManualTests     Include="**/tools/AzureKeyVaultProvider/Microsoft.SqlServer.Management.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
     <ManualTests     Include="**/ManualTests/Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" />
+
+    <NugetPackageSources Include="https://api.nuget.org/v3/index.json" />
+    <NugetPackageSources Include="https://dotnetfeed.blob.core.windows.net/dotnet-core/index.json" />
+    <NugetPackageSources Include="https://dotnet.myget.org/F/dotnet-core/api/v3/index.json" />
   </ItemGroup>
 
   <Target Name="Restore">
-    <MSBuild Projects="@(NetCoreDriver)" Targets="restore" />
-    <MSBuild Projects="@(NetFxDriver)" Targets="restore" />
-    <MSBuild Projects="@(ManualTests)" Targets="restore"/>
-    <MSBuild Projects="@(FunctionalTests)" Targets="restore"/>
+    <PropertyGroup>
+      <NugetPackageSourcesProperty>@(NugetPackageSources)</NugetPackageSourcesProperty>
+    </PropertyGroup>
+    <MSBuild Projects="@(NetCoreDriver)" Targets="restore" Properties="RestoreSources=$(NugetPackageSourcesProperty)" />
+    <MSBuild Projects="@(NetFxDriver)" Targets="restore" Properties="RestoreSources=$(NugetPackageSourcesProperty)" />
+    <MSBuild Projects="@(ManualTests)" Targets="restore" Properties="RestoreSources=$(NugetPackageSourcesProperty)" />
+    <MSBuild Projects="@(FunctionalTests)" Targets="restore" Properties="RestoreSources=$(NugetPackageSourcesProperty)" />
   </Target>
 
   <Target Name="RestoreNetFx" Condition="'$(BuildNetFx)' == 'true'">
