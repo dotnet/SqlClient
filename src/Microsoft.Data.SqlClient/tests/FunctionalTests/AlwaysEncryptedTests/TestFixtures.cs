@@ -24,5 +24,25 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
             return data;
         }
+
+        /// <summary>
+        /// Function that would construct a connection string with default parameters.
+        /// </summary>
+        /// <returns></returns>
+        public static string DefaultConnectionString(SqlConnectionColumnEncryptionSetting columnEncryptionSetting, bool fEnclaveEnabled, string enclaveAttestationUrl)
+        {
+            SqlConnectionStringBuilder csb = new SqlConnectionStringBuilder();
+            csb.DataSource = "localhost,12345";
+            csb.Pooling = false;
+            csb.Encrypt = false;
+            csb.ConnectTimeout = 65534;
+            csb.UserID = "prodUser1@FedAuthAzureSqlDb.onmicrosoft.com";
+            csb.ColumnEncryptionSetting = columnEncryptionSetting;
+            if (fEnclaveEnabled)
+            {
+                csb.EnclaveAttestationUrl = enclaveAttestationUrl;
+            }
+            return csb.ConnectionString;
+        }
     }
 }
