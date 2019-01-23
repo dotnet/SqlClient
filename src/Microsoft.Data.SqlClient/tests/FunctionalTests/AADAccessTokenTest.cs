@@ -19,6 +19,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("Test combination of Access Token and Credentials", new object[] { "sampleUserId" })]
         public void InvalidCombinationOfAccessToken(string description, object[] Params)
         {
+            string _ = description; // Using C# Discards as workaround to the XUnit warning.
             _builder = new SqlConnectionStringBuilder
             {
                 ["Data Source"] = "sample.database.windows.net"

@@ -37,6 +37,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [InlineData("Azure with Never Policy must Disable Blocking", new object[] { AzureEndpointSample, PoolBlockingPeriod.NeverBlock })]
         public void TestAzureBlockingPeriod(string description, object[] Params)
         {
+            string _ = description; // Using C# Discards as workaround to the XUnit warning.
             string serverName = Params[0] as string;
             PoolBlockingPeriod? policy = null;
             if (Params.Length > 1)
@@ -58,6 +59,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [InlineData("NonAzure (which contains azure endpoint - nonexistent.database.windows.net.else) with Default Policy must Enable Blocking", new object[] { "nonexistent.database.windows.net.else" })]
         public void TestNonAzureBlockingPeriod(string description, object[] Params)
         {
+            string _ = description; // Using C# Discards as workaround to the XUnit warning.
             string serverName = Params[0] as string;
             PoolBlockingPeriod? policy = null;
 
@@ -80,6 +82,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [InlineData("Test policy with Never (PascalCase)", "NeverBlock")]
         public void TestSetPolicyWithVariations(string description, string policyString)
         {
+            string _ = description; // Using C# Discards as workaround to the XUnit warning.
             PoolBlockingPeriod? policy = null;
             if (policyString.ToLower().Contains("auto"))
             {
