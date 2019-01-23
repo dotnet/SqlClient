@@ -17,6 +17,18 @@
     <Compile Include="$(CommonTestPath)\System\Collections\DictionaryExtensions.cs">
       <Link>Common\System\Collections\DictionaryExtensions.cs</Link>
     </Compile>
+    <Compile Include="AlwaysEncrypted\ApiShould.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ApiTestTable.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ColumnEncryptionKey.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ColumnMasterKey.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CspColumnMasterKey.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\DbObject.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ICreatable.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\IDroppable.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\SqlParameterPropertiesTable.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategy.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\Table.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CertificateUtility.cs" />
     <Compile Include="DataCommon\CheckConnStrSetupFactAttribute.cs" />
     <Compile Include="SQL\AdapterTest\AdapterTest.cs" />
     <Compile Include="SQL\AsyncTest\BeginExecAsyncTest.cs" />

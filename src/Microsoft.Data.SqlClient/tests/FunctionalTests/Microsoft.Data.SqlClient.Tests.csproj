@@ -11,6 +11,7 @@
     <OutputPath>$(BinFolder)$(Configuration).FunctionalTests</OutputPath>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="AlwaysEncryptedTests\ConnectionStringBuilderShould.cs" />
     <Compile Include="AlwaysEncryptedTests\SqlColumnEncryptionCertificateStoreProviderShould.cs" />
     <Compile Include="AlwaysEncryptedTests\SqlColumnEncryptionCngProviderShould.cs" />
     <Compile Include="AlwaysEncryptedTests\SqlColumnEncryptionCspProviderShould.cs" />
