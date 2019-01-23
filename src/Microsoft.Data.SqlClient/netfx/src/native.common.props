@@ -37,12 +37,11 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-      <SolutionDir>$([System.IO.Path]::GetDirectoryName($(MSBuildThisFileDirectory)))\</SolutionDir>
-  </PropertyGroup>
-  <PropertyGroup>
+    <SolutionDir>$([System.IO.Path]::GetDirectoryName($(MSBuildThisFileDirectory)))\</SolutionDir>
     <OutDir>$(BinFolder)$(Configuration).$(Platform)\$(MSBuildProjectName)\</OutDir>
     <IntermediateDir>$(ObjFolder)$(Configuration).$(Platform)\$(MSBuildProjectName)\</IntermediateDir>
     <IntDir>$(IntermediateDir)</IntDir>
+    <SpectreMitigation>Spectre</SpectreMitigation>
   </PropertyGroup>
   <PropertyGroup Condition="$(Configuration.Contains('Debug'))" Label="Configuration">
     <DebugType>Full</DebugType>
@@ -54,7 +53,6 @@
     <DebugSymbols>True</DebugSymbols>
     <LinkIncremental>False</LinkIncremental>
   </PropertyGroup>
-
   <Target Name="DisplayMessages">  
     <Message Text="Solution Dir = $(SolutionDir)" />  
     <Message Text="Project Extension = $(MSBuildProjectName)" />  

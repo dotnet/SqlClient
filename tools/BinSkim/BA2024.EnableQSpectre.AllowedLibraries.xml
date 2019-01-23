@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Properties>
+  <Properties Key="BA2024.EnableSpectreMitigations.Options">
+    <Properties Key="AllowedLibraries" Type="IL.Rules.StringToVersionMap">
+        <Property Key="libcmt.lib,cxx" Value="19.14.26428.1" Type="System.Version" />
+        <Property Key="libcpmt.lib,cxx" Value="19.14.26428.1" Type="System.Version" />
+        <Property Key="libvcruntime.lib,cxx" Value="19.14.26428.1" Type="System.Version" />
+        <Property Key="msvcrt.lib,cxx" Value="19.14.26428.1" Type="System.Version" />
+        <Property Key="msvcrt.lib,c" Value="19.14.26428.1" Type="System.Version" />
+        <Property Key="legacy_stdio_wide_specifiers.lib,cxx" Value="19.14.26428.1" Type="System.Version" />
+        <Property Key="ptrustm.lib,cxx" Value="19.14.26428.1" Type="System.Version" />
+        <Property Key="nothrownew.obj,cxx" Value="19.14.26428.1" Type="System.Version" />
+    </Properties>
+  </Properties>
+</Properties>
