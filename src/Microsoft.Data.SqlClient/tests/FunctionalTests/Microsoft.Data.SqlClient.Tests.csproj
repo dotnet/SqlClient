@@ -73,7 +73,7 @@
       <Name>CoreFx.Private.TestUtilities</Name>
     </ProjectReference>
       <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
-      <ProjectReference Condition="'$(TargetGroup)'=='netfx'" Include="$(NetFxSource)src\System\Data\SqlClient\Microsoft.Data.SqlClient.csproj" />  
+      <ProjectReference Condition="'$(TargetGroup)'=='netfx'" Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
      <!-- <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="$(CommonTestPath)\System\Diagnostics\RemoteExecutorConsoleApp\RemoteExecutorConsoleApp.csproj"> -->
       <!-- <Project>{69e46a6f-9966-45a5-8945-2559fe337827}</Project> -->
       <!-- <Name>RemoteExecutorConsoleApp</Name> -->
