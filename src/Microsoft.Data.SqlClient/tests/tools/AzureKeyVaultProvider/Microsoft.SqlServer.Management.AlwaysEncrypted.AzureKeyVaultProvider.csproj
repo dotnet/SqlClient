@@ -1,12 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework Condition="'$(TestTargetOS)' == '' OR '$(TestTargetOS)' == 'WindowsNetCore' OR '$(TestTargetOS)' == 'UnixNetCore'">netcoreapp2.1</TargetFramework>
-    <TargetFramework Condition="'$(TestTargetOS)' == 'WindowsNetFx'">net46</TargetFramework>
+  <RootNamespace>AzureKeyVaultProvider</RootNamespace>
+  <AssemblyName>AzureKeyVaultProvider</AssemblyName>
+  <ProjectGuid>{E9EFFBE2-4C0D-451D-9E9B-A1CE952870ED}</ProjectGuid>
     <TargetGroup Condition="'$(TargetFramework)'=='netcoreapp2.1'">netcoreapp</TargetGroup>
     <TargetGroup Condition="'$(TargetFramework)'=='net46'">netfx</TargetGroup>
-  </PropertyGroup>
-  <PropertyGroup>
+    <Configurations>Debug;Release;net46-Release;net46-Debug;netcoreapp2.1-Debug;netcoreapp2.1-Release</Configurations>
+    <Platforms>AnyCPU;x86;x64</Platforms>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)\$(AssemblyName)</IntermediateOutputPath>  
     <OutputPath>$(BinFolder)$(Configuration).$(Platform)\$(AssemblyName)</OutputPath>
   </PropertyGroup>

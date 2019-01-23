@@ -3,16 +3,15 @@
     <RootNamespace>Address</RootNamespace>
     <AssemblyName>Address</AssemblyName>
     <ProjectGuid>{D1392B54-998A-4F27-BC17-4CE149117BCC}</ProjectGuid>
-    <TargetFramework Condition="'$(TestTargetOS)' == '' OR '$(TestTargetOS)' == 'WindowsNetCore' OR '$(TestTargetOS)' == 'UnixNetCore'">netcoreapp2.1</TargetFramework>
-    <TargetFramework Condition="'$(TestTargetOS)' == WindowsNetFx">net46</TargetFramework>
     <TargetGroup Condition="'$(TargetFramework)'=='netcoreapp2.1'">netcoreapp</TargetGroup>
     <TargetGroup Condition="'$(TargetFramework)'=='net46'">netfx</TargetGroup>
-  </PropertyGroup>
-  <PropertyGroup>
+    <Platforms>AnyCPU;x86;x64</Platforms>
+    <Configurations>Debug;Release;net46-Release;net46-Debug;netcoreapp2.1-Debug;netcoreapp2.1-Release</Configurations>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)\$(AssemblyName)</IntermediateOutputPath>  
     <OutputPath>$(BinFolder)$(Configuration).$(Platform)\$(AssemblyName)</OutputPath>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
+    <ProjectReference Condition="'$(TargetGroup)'=='netfx'" Include="$(NetFxSource)src\System\Data\SqlClient\Microsoft.Data.SqlClient.csproj" />
   </ItemGroup>
 </Project>

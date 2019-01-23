@@ -1,24 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="Debug|Win32">
-      <Configuration>Debug</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|Win32">
-      <Configuration>Release</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Debug|x64">
-      <Configuration>Debug</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|x64">
-      <Configuration>Release</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
-  </ItemGroup>
-  
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{BABEF527-0076-48CC-B42B-872151DAD85E}</ProjectGuid>
@@ -26,30 +7,21 @@
     <RootNamespace>SNI</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
-
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <PropertyGroup  Label="Configuration">
+  <PropertyGroup Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
-    <UseDebugLibraries Condition="'$(Configuration)'=='Debug'">True</UseDebugLibraries>
-    <UseDebugLibraries Condition="'$(Configuration)'=='Release'">False</UseDebugLibraries>
-    <WholeProgramOptimization Condition="'$(Configuration)'=='Release'">True</WholeProgramOptimization>
   </PropertyGroup>
-
-
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings" />
   <ImportGroup Label="Shared" />
-
   <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\native.common.props" />
   </ImportGroup>
-
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup />
-  
   <ItemDefinitionGroup>
     <ClCompile>
       <AdditionalIncludeDirectories>NLRegC;..\BID\INC;include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -57,7 +29,6 @@
       <PreprocessorDefinitions>%(PreprocessorDefinitions);APSTUDIO_INVOKED;SNI_BASED_CLIENT;SOSINTEGRATION_ON;QLGC;SNIX;</PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
-
   <ItemGroup>
     <ClCompile Include="src\ctaip.cpp" />
     <ClCompile Include="src\localDB.cpp" />
@@ -81,7 +52,6 @@
     <ClCompile Include="src\via.cpp" />
     <ClCompile Include="src\viahelper.cpp" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\bidinit\src\bidinit.vcxproj">
       <Project>{5a328e8a-7722-472b-b6f5-601f0f870cc8}</Project>
@@ -90,7 +60,6 @@
       <Project>{8de60d76-ba9a-43be-ba26-f8845ca0bf17}</Project>
     </ProjectReference>
   </ItemGroup>
-
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

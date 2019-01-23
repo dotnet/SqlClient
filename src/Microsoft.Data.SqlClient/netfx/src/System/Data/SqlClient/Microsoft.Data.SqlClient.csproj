@@ -14,6 +14,7 @@
     <IntermediateOutputPath>$(ObjPath)$(AssemblyName)\netfx\</IntermediateOutputPath>
     <Product>Framework $(BaseProduct)</Product>
   </PropertyGroup>
+  
   <PropertyGroup>
     <!-- CSC Compiler Options -->
     <NoConfig>True</NoConfig>
@@ -53,32 +54,41 @@
     <ComCompatibleSideBySide>True</ComCompatibleSideBySide>
     <GenerateTargetFrameworkAttribute>False</GenerateTargetFrameworkAttribute>
   </PropertyGroup>
+
   <!-- ********************** Configuration and Platform specific properties ********************* -->
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
-    <DefineConstants>$(DefineConstants);ARCH_amd64;DEBUG;DBG;_DEBUG;_LOGGING;RESOURCE_ANNOTATION_WORK;WIN64</DefineConstants>
+  <!-- All Available Configurations-->
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|Win32'" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|Win32'" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'net46-Debug|Win32'" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'net46-Debug|x64'" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'net46-Release|Win32'" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'net46-Release|x64'" />
+
+  <PropertyGroup Condition="$(Configuration.Contains('Debug'))">
+    <DefineConstants>$(DefineConstants);DEBUG;DBG;_DEBUG;_LOGGING;RESOURCE_ANNOTATION_WORK;</DefineConstants>
     <DebugType>Full</DebugType>
     <Optimize>False</Optimize>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$(Platform)=='x64'">
+    <DefineConstants>$(DefineConstants);ARCH_amd64;WIN64;</DefineConstants>
     <OutputPlatform>x64</OutputPlatform>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
-    <DefineConstants>$(DefineConstants);ARCH_amd64;RETAIL;WIN64</DefineConstants>
+
+  <PropertyGroup Condition="$(Configuration.Contains('Release'))">
+    <DefineConstants>$(DefineConstants);RETAIL;</DefineConstants>
     <DebugType>Pdbonly</DebugType>
     <Optimize>True</Optimize>
-    <OutputPlatform>x64</OutputPlatform>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|Win32'">
-    <DefineConstants>$(DefineConstants);ARCH_i386;DEBUG;DBG;_DEBUG;_LOGGING;RESOURCE_ANNOTATION_WORK;WIN32</DefineConstants>
-    <DebugType>Full</DebugType>
-    <Optimize>False</Optimize>
-    <OutputPlatform>x86</OutputPlatform>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|Win32'">
-    <DefineConstants>$(DefineConstants);ARCH_i386;RETAIL;WIN32</DefineConstants>
-    <DebugType>Pdbonly</DebugType>
-    <Optimize>True</Optimize>
+
+  <PropertyGroup Condition="$(Platform)=='Win32'">
+    <DefineConstants>$(DefineConstants);ARCH_i386;WIN32</DefineConstants>
     <OutputPlatform>x86</OutputPlatform>
   </PropertyGroup>
   <!-- ******************************************************************************************* -->
+  
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
