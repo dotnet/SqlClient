@@ -27,7 +27,7 @@ namespace Microsoft.Data
                             {
                                 SNINativeMethodWrapper.SNI_Error sniError;
                                 SNINativeMethodWrapper.SNIGetLastError(out sniError);
-                                throw CreateLocalDBException(errorMessage: SR.GetString("LocalDB_FailedGetDLLHandle"), sniError: (int)sniError.sniError);
+                                throw CreateLocalDBException(errorMessage: SRHelper.GetString("LocalDB_FailedGetDLLHandle"), sniError: (int)sniError.sniError);
                             }
                         }
                     }

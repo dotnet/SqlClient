@@ -8,8 +8,6 @@ using System.Runtime.InteropServices;
 namespace System.Net
 {
 
-    using SR = System.Strings;
-
     // Authentication SSPI (Kerberos, NTLM, Negotiate and WDigest):
     internal class SSPIAuthType : SSPIInterface
     {
@@ -157,7 +155,7 @@ namespace System.Net
                 }
                 else
                 {
-                    throw new ArgumentException(System.SR.Format(SR.SSPIInvalidHandleType, handleType.FullName), nameof(handleType));
+                    throw new ArgumentException(SRHelper.Format(SR.SSPIInvalidHandleType, handleType.FullName), nameof(handleType));
                 }
             }
 

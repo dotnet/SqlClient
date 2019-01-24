@@ -38,7 +38,7 @@ namespace Microsoft.Data
                             if (functionAddr == IntPtr.Zero)
                             {
                                 int hResult = Marshal.GetLastWin32Error();
-                                throw CreateLocalDBException(errorMessage: Strings.LocalDB_MethodNotFound);
+                                throw CreateLocalDBException(errorMessage: SR.LocalDB_MethodNotFound);
                             }
                             s_localDBFormatMessage = Marshal.GetDelegateForFunctionPointer<LocalDBFormatMessageDelegate>(functionAddr);
                         }
@@ -82,12 +82,12 @@ namespace Microsoft.Data
                     if (hResult >= 0)
                         return buffer.ToString();
                     else
-                        return string.Format(CultureInfo.CurrentCulture, "{0} (0x{1:X}).", Strings.LocalDB_UnobtainableMessage, hResult);
+                        return string.Format(CultureInfo.CurrentCulture, "{0} (0x{1:X}).", SR.LocalDB_UnobtainableMessage, hResult);
                 }
             }
             catch (SqlException exc)
             {
-                return string.Format(CultureInfo.CurrentCulture, "{0} ({1}).", Strings.LocalDB_UnobtainableMessage, exc.Message);
+                return string.Format(CultureInfo.CurrentCulture, "{0} ({1}).", SR.LocalDB_UnobtainableMessage, exc.Message);
             }
         }
 

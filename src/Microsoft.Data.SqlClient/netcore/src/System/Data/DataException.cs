@@ -40,7 +40,7 @@ namespace Microsoft.Data
         }
         public static Exception InvalidOffsetLength()
         {
-            return _Argument(SR.GetString(Strings.Data_InvalidOffsetLength));
+            return _Argument(SRHelper.GetString(SR.Data_InvalidOffsetLength));
         }
     }// ExceptionBuilder
 }

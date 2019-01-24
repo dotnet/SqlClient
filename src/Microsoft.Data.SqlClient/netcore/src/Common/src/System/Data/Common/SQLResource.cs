@@ -6,8 +6,6 @@ using System;
 
 namespace Microsoft.Data.SqlTypes
 {
-    using SR = System.Strings;
-
     internal static class SQLResource
     {
         internal static string NullString => SR.SqlMisc_NullString;
@@ -52,22 +50,22 @@ namespace Microsoft.Data.SqlTypes
 
         internal static string InvalidOpStreamClosed(string method)
         {
-            return System.SR.Format(SR.SqlMisc_InvalidOpStreamClosed, method);
+            return System.SRHelper.Format(SR.SqlMisc_InvalidOpStreamClosed, method);
         }
 
         internal static string InvalidOpStreamNonWritable(string method)
         {
-            return System.SR.Format(SR.SqlMisc_InvalidOpStreamNonWritable, method);
+            return System.SRHelper.Format(SR.SqlMisc_InvalidOpStreamNonWritable, method);
         }
 
         internal static string InvalidOpStreamNonReadable(string method)
         {
-            return System.SR.Format(SR.SqlMisc_InvalidOpStreamNonReadable, method);
+            return System.SRHelper.Format(SR.SqlMisc_InvalidOpStreamNonReadable, method);
         }
 
         internal static string InvalidOpStreamNonSeekable(string method)
         {
-            return System.SR.Format(SR.SqlMisc_InvalidOpStreamNonSeekable, method);
+            return System.SRHelper.Format(SR.SqlMisc_InvalidOpStreamNonSeekable, method);
         }
     } // SqlResource
 } // namespace System

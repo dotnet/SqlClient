@@ -411,7 +411,7 @@ namespace Microsoft.Data.SqlClient
             string[] parts;
             try
             {
-                parts = MultipartIdentifier.ParseMultipartIdentifier(this.DestinationTableName, "[\"", "]\"", Strings.SQL_BulkCopyDestinationTableName, true);
+                parts = MultipartIdentifier.ParseMultipartIdentifier(this.DestinationTableName, "[\"", "]\"", SR.SQL_BulkCopyDestinationTableName, true);
             }
             catch (Exception e)
             {

@@ -3,7 +3,7 @@
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
     <TargetFrameworks>netcoreapp2.1;netstandard2.0</TargetFrameworks>
     <LangVersion>7.2</LangVersion>
-    <GeneratePlatformNotSupportedAssemblyMessage Condition="'$(OSGroup)' == 'AnyOS'">$(AssemblyName) is not supported on this platform.</GeneratePlatformNotSupportedAssemblyMessage>
+    <GeneratePlatformNotSupportedAssemblyMessage Condition="'$(OSGroup)' == 'AnyOS'">SR.PlatformNotSupported_DataSqlClient</GeneratePlatformNotSupportedAssemblyMessage>
     <OSGroup Condition="'$(OSGroup)' == ''">Windows_NT</OSGroup>
     <IsPartialFacadeAssembly Condition="'$(TargetsNetFx)' == 'true'">true</IsPartialFacadeAssembly>
     <TargetsWindows Condition="'$(OSGroup)'=='Windows_NT'">true</TargetsWindows>
@@ -43,7 +43,6 @@
     <Compile Include="System\Data\SqlClient\SNI\SNIPacket.NetStandard.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(IsPartialFacadeAssembly)' != 'true' AND '$(OSGroup)' != 'AnyOS'">    
-    <Compile Include="$(CommonPath)\System\SR.cs" />
     <Compile Include="Microsoft\SqlServer\Server\ITypedGetters.cs" />
     <Compile Include="Microsoft\SqlServer\Server\ITypedGettersV3.cs" />
     <Compile Include="Microsoft\SqlServer\Server\ITypedSetters.cs" />
@@ -75,7 +74,6 @@
       <Link>System\Data\Common\AdapterUtil.Drivers.cs</Link>
     </Compile>
     <Compile Include="System\Data\Common\AdapterUtil.SqlClient.cs" />
-    <Compile Include="System\Data\Common\SR.cs" />
     <Compile Include="System\Data\Common\DbConnectionOptions.cs" />
     <Compile Include="$(CommonPath)\System\Data\Common\DbConnectionOptions.Common.cs">
       <Link>System\Data\Common\DbConnectionOptions.Common.cs</Link>
@@ -558,11 +556,12 @@
     <Reference Include="System.Data" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Resources\Strings.Designer.cs">
+    <Compile Include="Resources\SR.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
-      <DependentUpon>Strings.resx</DependentUpon>
+      <DependentUpon>SR.resx</DependentUpon>
     </Compile>
+    <Compile Include="Resources\SRHelper.cs" />
   </ItemGroup>
   
   <ItemGroup>
@@ -589,9 +588,9 @@
     <PackageReference Include="System.Security.Cryptography.Cng" Version="4.5.0" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Update="Resources\Strings.resx">
+    <EmbeddedResource Update="Resources\SR.resx">
       <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Strings.Designer.cs</LastGenOutput>
+      <LastGenOutput>SR.Designer.cs</LastGenOutput>
       <CustomToolNamespace>System</CustomToolNamespace>
     </EmbeddedResource>
   </ItemGroup>
