@@ -8,6 +8,7 @@
 
 using System;
 using System.Reflection;
+using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data.Common {
     internal static class GreenMethods {

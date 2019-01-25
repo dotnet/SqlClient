@@ -136,6 +136,7 @@
     <Compile Include="OnChangedEventHandler.cs" />
     <Compile Include="ParameterPeekAheadValue.cs" />
     <Compile Include="PoolBlockingPeriod.cs" />
+    <Compile Include="AssemblyRef.cs" />
     <Compile Include="..\Resources\Strings.Designer.cs">
       <Link>Resources\Strings.Designer.cs</Link>
       <AutoGen>True</AutoGen>
@@ -312,9 +313,6 @@
     </Compile>
     <Compile Include="..\Common\NameValuePair.cs">
       <Link>SqlClient\NameValuePair.cs</Link>
-    </Compile>
-    <Compile Include="..\AssemblyRef.cs">
-      <Link>ProviderCommon\AssemblyRef.cs</Link>
     </Compile>
     <Compile Include="..\Common\UnsafeNativeMethods.cs">
       <Link>ProviderCommon\UnsafeNativeMethods.cs</Link>
@@ -519,5 +517,6 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\..\..\Misc\GenerateThisAssemblyCs.targets" />
   <Import Project="$(NetFxSource)tools\targets\GenerateAssemblyInfo.targets" />
+  <Import Project="$(NetFxSource)tools\targets\GenerateAssemblyRef.targets" />
   <Import Project="$(NetFxSource)tools\targets\LinkLibraries.targets" />
 </Project>

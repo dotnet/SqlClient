@@ -8,7 +8,7 @@
 
 using Microsoft.Data;
 
-[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("System.Data.DataSetExtensions, PublicKey="+AssemblyRef.EcmaPublicKeyFull)] // DevDiv Bugs 92166
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("System.Data.DataSetExtensions, PublicKey="+Microsoft.Data.SqlClient.AssemblyRef.EcmaPublicKeyFull)] // DevDiv Bugs 92166
 
 namespace Microsoft.Data.SqlClient
 {
