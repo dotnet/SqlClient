@@ -6,7 +6,9 @@
     <RootNamespace>SqlClient</RootNamespace>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <EnableLocalAppContext>true</EnableLocalAppContext>
-    <ResourceFileName>SqlClient.Resources.Strings</ResourceFileName>
+    <ResxFileName>Strings</ResxFileName>
+    <ResourceFileName>SqlClient.Resources.$(ResxFileName)</ResourceFileName>
+    <GeneratedSourceFileName>$(ResxFileName).ResourceNames.cs</GeneratedSourceFileName>
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
     <BinPath>$(BinFolder)$(Configuration).$(Platform)\</BinPath>
     <ObjPath>$(ObjFolder)$(Configuration).$(Platform)\</ObjPath>
@@ -136,12 +138,6 @@
     <Compile Include="Microsoft\Data\SqlClient\ParameterPeekAheadValue.cs" />
     <Compile Include="Microsoft\Data\SqlClient\PoolBlockingPeriod.cs" />
     <Compile Include="Microsoft\Data\SqlClient\AssemblyRef.cs" />
-    <Compile Include="Resources\Strings.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Strings.resx</DependentUpon>
-    </Compile>
-    <Compile Include="Resources\StringsHelper.cs" />
     <Compile Include="Resources\ResCategoryAttribute.cs" />
     <Compile Include="Resources\ResDescriptionAttribute.cs" />
     <Compile Include="Microsoft\Data\SqlClient\RowsCopiedEventArgs.cs" />
@@ -331,11 +327,18 @@
     <Compile Include="Microsoft\Data\ProviderBase\FieldNameLookup.cs" />
     <Compile Include="Microsoft\Data\OperationAbortedException.cs" />
   </ItemGroup>
+  <!-- Resources  -->
   <ItemGroup>
-    <EmbeddedResource Include="Resources\Strings.resx">
+    <Compile Include="Resources\$(ResxFileName).Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>$(ResxFileName).resx</DependentUpon>
+    </Compile>
+    <Compile Include="Resources\$(ResxFileName)Helper.cs" />
+    <EmbeddedResource Include="Resources\$(ResxFileName).resx">
       <CustomToolNamespace>System</CustomToolNamespace>
       <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Strings.Designer.cs</LastGenOutput>
+      <LastGenOutput>$(ResxFileName).Designer.cs</LastGenOutput>
       <LogicalName>$(ResourceFileName)</LogicalName>
       <ManifestResourceName>$(ResourceFileName)</ManifestResourceName>
     </EmbeddedResource>
@@ -345,6 +348,7 @@
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(NetFxSource)tools\targets\GenerateResourceStringsSource.targets" />
   <Import Project="$(NetFxSource)tools\targets\GenerateThisAssemblyCs.targets" />
   <Import Project="$(NetFxSource)tools\targets\GenerateAssemblyRef.targets" />
   <Import Project="$(NetFxSource)tools\targets\GenerateAssemblyInfo.targets" />
