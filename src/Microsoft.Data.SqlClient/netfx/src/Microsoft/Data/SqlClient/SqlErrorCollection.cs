@@ -58,7 +58,7 @@ namespace Microsoft.Data.SqlClient {
         }
 
         public int Count {
-            get { return this.errors.Count;}
+            get { return SysSqlErrorCollection?.Count ?? this.errors.Count;}
         }
 
         object System.Collections.ICollection.SyncRoot { // MDAC 68481
