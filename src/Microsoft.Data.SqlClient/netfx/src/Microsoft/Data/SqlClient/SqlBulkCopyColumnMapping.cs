@@ -28,59 +28,119 @@ namespace Microsoft.Data.SqlClient
         // _sourceColumnOrdinal(s) will be copied to _internalSourceColumnOrdinal when WriteToServer executes.
         internal int            _internalDestinationColumnOrdinal;
         internal int            _internalSourceColumnOrdinal;   // -1 indicates an undetermined value
+        internal System.Data.SqlClient.SqlBulkCopyColumnMapping _sysBulkCopyColumnMapping;
+
+        internal System.Data.SqlClient.SqlBulkCopyColumnMapping SysBulkCopyColumnMapping
+        {
+            get
+            {
+                return _sysBulkCopyColumnMapping;
+            }
+            set
+            {
+                _sysBulkCopyColumnMapping = value;
+            }
+        }
+
+        public SqlBulkCopyColumnMapping(System.Data.SqlClient.SqlBulkCopyColumnMapping sqlBulkCopyColumnMapping)
+        {
+            SysBulkCopyColumnMapping = sqlBulkCopyColumnMapping;
+        }
 
         public string DestinationColumn {
             get {
+                if(SysBulkCopyColumnMapping != null)
+                {
+                    return SysBulkCopyColumnMapping.DestinationColumn;
+                }
                 if (_destinationColumnName != null) {
                     return _destinationColumnName;
                 }
                 return string.Empty;
             }
             set {
-                _destinationColumnOrdinal = _internalDestinationColumnOrdinal = -1;
-                _destinationColumnName = value;
+                if (SysBulkCopyColumnMapping != null)
+                {
+                    SysBulkCopyColumnMapping.DestinationColumn = value;
+                }
+                else
+                {
+                    _destinationColumnOrdinal = _internalDestinationColumnOrdinal = -1;
+                    _destinationColumnName = value;
+                }
             }
         }
 
         public int DestinationOrdinal {
-            get {
-                    return _destinationColumnOrdinal;
+            get
+            {
+                return SysBulkCopyColumnMapping?.DestinationOrdinal ?? _destinationColumnOrdinal;
             }
             set {
-                if (value >= 0) {
-                    _destinationColumnName = null;
-                    _destinationColumnOrdinal = _internalDestinationColumnOrdinal = value;
+                if (SysBulkCopyColumnMapping != null)
+                {
+                    SysBulkCopyColumnMapping.DestinationOrdinal = value;
                 }
-                else {
-                    throw ADP.IndexOutOfRange(value);
+                else
+                {
+                    if (value >= 0)
+                    {
+                        _destinationColumnName = null;
+                        _destinationColumnOrdinal = _internalDestinationColumnOrdinal = value;
+                    }
+                    else
+                    {
+                        throw ADP.IndexOutOfRange(value);
+                    }
                 }
             }
         }
 
         public string SourceColumn {
             get {
+                if (SysBulkCopyColumnMapping != null)
+                {
+                    return SysBulkCopyColumnMapping.SourceColumn;
+                }
                 if (_sourceColumnName != null) {
                     return _sourceColumnName;
                 }
                 return string.Empty;
             }
-            set {
-                _sourceColumnOrdinal = _internalSourceColumnOrdinal = -1;
-                _sourceColumnName = value;
+            set
+            {
+                if (SysBulkCopyColumnMapping != null)
+                {
+                    SysBulkCopyColumnMapping.SourceColumn = value;
+                }
+                else
+                {
+                    _sourceColumnOrdinal = _internalSourceColumnOrdinal = -1;
+                    _sourceColumnName = value;
+                }
             }
         }
 
         public int SourceOrdinal {
             get {
-                    return _sourceColumnOrdinal;
+                return SysBulkCopyColumnMapping?.SourceOrdinal ?? _sourceColumnOrdinal;
             }
             set {
-                if (value >= 0) {
-                    _sourceColumnName = null;
-                    _sourceColumnOrdinal = _internalSourceColumnOrdinal = value;
+                if (SysBulkCopyColumnMapping != null)
+                {
+                    SysBulkCopyColumnMapping.SourceOrdinal = value;
                 }
-                else {
-                    throw ADP.IndexOutOfRange(value);
+                else
+                {
+                    if (value >= 0)
+                    {
+                        _sourceColumnName = null;
+                        _sourceColumnOrdinal = _internalSourceColumnOrdinal = value;
+                    }
+                    else
+                    {
+                        throw ADP.IndexOutOfRange(value);
+                    }
                 }
             }
         }

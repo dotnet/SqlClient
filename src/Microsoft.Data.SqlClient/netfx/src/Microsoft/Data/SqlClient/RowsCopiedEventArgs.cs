@@ -12,23 +12,34 @@ namespace Microsoft.Data.SqlClient {
         private bool            _abort;
         private long             _rowsCopied;
 
+        private System.Data.SqlClient.SqlRowsCopiedEventArgs SysSqlRowsCopiedEventArgs { get; set; }
+
+        internal SqlRowsCopiedEventArgs(System.Data.SqlClient.SqlRowsCopiedEventArgs sqlRowsCopiedEventArgs)
+        {
+            SysSqlRowsCopiedEventArgs = sqlRowsCopiedEventArgs;
+        }
+
         public SqlRowsCopiedEventArgs (long rowsCopied) {
             _rowsCopied = rowsCopied;
         }
 
         public bool Abort {
             get {
-                return _abort;
+                return SysSqlRowsCopiedEventArgs?.Abort ?? _abort;
             }
             set {
-                _abort = value;
+                if (SysSqlRowsCopiedEventArgs != null) {
+                    SysSqlRowsCopiedEventArgs.Abort = value;
+                }
+                else {
+                    _abort = value;
+                }
             }
-
         }
 
         public long RowsCopied {
             get {
-                return _rowsCopied;
+                return SysSqlRowsCopiedEventArgs?.RowsCopied ?? _rowsCopied;
             }
         }
     }
