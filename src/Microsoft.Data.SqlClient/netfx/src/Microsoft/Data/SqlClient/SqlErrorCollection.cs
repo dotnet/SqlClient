@@ -10,22 +10,51 @@ namespace Microsoft.Data.SqlClient {
 
     using System;
     using System.Collections;
+    using System.Collections.Generic;
     using System.ComponentModel;
 
     [Serializable, ListBindable(false)]
     public sealed class SqlErrorCollection : ICollection {
 
         private ArrayList errors = new ArrayList();
+        private System.Data.SqlClient.SqlErrorCollection SysSqlErrorCollection { get; set; }
 
-        internal SqlErrorCollection() {
+        internal SqlErrorCollection() {}
+
+        // Constructor for backward compatibility.
+        internal SqlErrorCollection(System.Data.SqlClient.SqlErrorCollection sqlErrorCollection)
+        {
+            SysSqlErrorCollection = sqlErrorCollection;
         }
 
         public void CopyTo (Array array, int index) {
-            this.errors.CopyTo(array, index);
+            if (null != SysSqlErrorCollection)
+            {
+                SysSqlErrorCollection.CopyTo(array, index);
+            }
+            else
+            {
+                this.errors.CopyTo(array, index);
+            }
         }
 
         public void CopyTo (SqlError[] array, int index) {
-            this.errors.CopyTo(array, index);
+            if (null != SysSqlErrorCollection)
+            {
+                List<SqlError> retList = new List<SqlError>();
+                System.Data.SqlClient.SqlError[] sysArray = new System.Data.SqlClient.SqlError[SysSqlErrorCollection.Count];
+                SysSqlErrorCollection.CopyTo(sysArray, index);
+                foreach (System.Data.SqlClient.SqlError item in sysArray)
+                {
+                    retList.Add(new SqlError(item));
+                }
+
+                retList.CopyTo(array, index);
+            }
+            else
+            {
+                this.errors.CopyTo(array, index);
+            }
         }
 
         public int Count {
@@ -42,12 +71,20 @@ namespace Microsoft.Data.SqlClient {
 
         public SqlError this[int index] {
             get {
-                return (SqlError) this.errors[index];
+                if (null != SysSqlErrorCollection) {
+                    return new SqlError(SysSqlErrorCollection[index]);
+                }
+                return (SqlError)this.errors[index];
             }
         }
 
         public IEnumerator GetEnumerator() {
-            return errors.GetEnumerator();
+            if (null != SysSqlErrorCollection) {
+                return SysSqlErrorCollection.GetEnumerator();
+            }
+            else {
+                return errors.GetEnumerator();
+            }
         }
 
         internal void Add(SqlError error) {

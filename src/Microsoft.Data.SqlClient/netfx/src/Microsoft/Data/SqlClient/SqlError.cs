@@ -27,6 +27,8 @@ namespace Microsoft.Data.SqlClient {
         [System.Runtime.Serialization.OptionalFieldAttribute(VersionAdded=4)]
         private int win32ErrorCode;
 
+        private System.Data.SqlClient.SqlError SysSqlError { get; set; }
+
         internal SqlError(int infoNumber, byte errorState, byte errorClass, string server, string errorMessage, string procedure, int lineNumber, uint win32ErrorCode)
             : this(infoNumber, errorState, errorClass, server, errorMessage, procedure, lineNumber)
         {
@@ -49,47 +51,53 @@ namespace Microsoft.Data.SqlClient {
             this.win32ErrorCode = 0;
         }
 
+        // Constructor for backward compatibility.
+        internal SqlError(System.Data.SqlClient.SqlError sqlError)
+        {
+            SysSqlError = sqlError;
+        }
+
         // bug fix - MDAC #49280 - SqlError does not implement ToString();
         // I did not include an exception stack because the correct exception stack is only available 
         // on SqlException, and to obtain that the SqlError would have to have backpointers all the
         // way back to SqlException.  If the user needs a call stack, they can obtain it on SqlException.
         public override string ToString() {
             //return this.GetType().ToString() + ": " + this.message;
-            return typeof(SqlError).ToString() + ": " + this.message; // since this is sealed so we can change GetType to typeof
+            return SysSqlError?.ToString() ?? typeof(SqlError).ToString() + ": " + this.message; // since this is sealed so we can change GetType to typeof
         }
 
         // bug fix - MDAC #48965 - missing source of exception
         // fixed by BlaineD
         public string Source {
-            get { return this.source;}
+            get { return SysSqlError?.Source ?? this.source;}
         }
 
         public int Number {
-            get { return this.number;}
+            get { return SysSqlError?.Number ?? this.number;}
         }
 
         public byte State {
-            get { return this.state;}
+            get { return SysSqlError?.State ?? this.state;}
         }
 
         public byte Class {
-            get { return this.errorClass;}
+            get { return SysSqlError?.Class ?? this.errorClass;}
         }
 
         public string Server {
-            get { return this.server;}
+            get { return SysSqlError?.Server ?? this.server;}
         }
 
         public string Message {
-            get { return this.message;}
+            get { return SysSqlError?.Message ?? this.message;}
         }
 
         public string Procedure {
-            get { return this.procedure;}
+            get { return SysSqlError?.Procedure ?? this.procedure;}
         }
 
         public int LineNumber {
-            get { return this.lineNumber;}
+            get { return SysSqlError?.LineNumber ?? this.lineNumber;}
         }
 
         internal int Win32ErrorCode {

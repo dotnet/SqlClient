@@ -273,7 +273,7 @@ namespace Microsoft.Data.SqlClient
 
         private SqlDebugContext _sdc;   // SQL Debugging support
 
-        private bool    _AsyncCommandInProgress;
+        private bool _AsyncCommandInProgress;
 
         // SQLStatistics support
         internal SqlStatistics _statistics;
@@ -337,7 +337,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (UsesActiveDirectoryIntegrated(connectionOptions))
                 {
-                     throw SQL.SettingCredentialWithIntegratedArgument();
+                    throw SQL.SettingCredentialWithIntegratedArgument();
                 }
 
                 Credential = credential;
@@ -363,6 +363,24 @@ namespace Microsoft.Data.SqlClient
             _clientCertificateRetrievalCallback = connection._clientCertificateRetrievalCallback;
             _originalNetworkAddressInfo = connection._originalNetworkAddressInfo;
             CacheConnectionStringProperties();
+        }
+
+        public SqlConnection(System.Data.SqlClient.SqlConnection sqlConnection)
+        {
+            // Hold System.Data.SqlClient.SqlConnection object in a property.
+            SysSqlConnection = sqlConnection;
+
+            // Callback to subscribe SD.InfoMessage.
+            Action<object, System.Data.SqlClient.SqlInfoMessageEventArgs> SqlInfoMessageCallback =
+                (object sender, System.Data.SqlClient.SqlInfoMessageEventArgs args) =>
+                {
+                    //call MD.handler
+                    OnInfoMessage(new SqlInfoMessageEventArgs(args));
+                };
+
+            // Subscribe SD.InfoMessage.
+            System.Data.SqlClient.SqlInfoMessageEventHandler handler = new System.Data.SqlClient.SqlInfoMessageEventHandler(SqlInfoMessageCallback);
+            SysSqlConnection.InfoMessage += handler;
         }
 
         // This method will be called once connection string is set or changed. 
@@ -401,9 +419,15 @@ namespace Microsoft.Data.SqlClient
         ]
         public bool StatisticsEnabled {
             get {
-                return (_collectstats);
+                return SysSqlConnection?.StatisticsEnabled ?? _collectstats;
             }
             set {
+                if (null != SysSqlConnection)
+                {
+                    SysSqlConnection.StatisticsEnabled = value;
+                    return;
+                }
+
                 if (IsContextConnection) {
                     if (value) {
                         throw SQL.NotAvailableOnContextConnection();
@@ -477,6 +501,8 @@ namespace Microsoft.Data.SqlClient
                 return opt.EnclaveAttestationUrl;
             }
         }
+
+        private System.Data.SqlClient.SqlConnection SysSqlConnection { get; set; }
 
         // Is this connection is a Context Connection?
         private bool UsesContextConnection(SqlConnectionString opt)
@@ -557,6 +583,11 @@ namespace Microsoft.Data.SqlClient
         ]
         public string AccessToken {
             get {
+                if (null != SysSqlConnection)
+                {
+                    return SysSqlConnection.AccessToken;
+                }
+
                 string result = _accessToken;
                 // When a connection is connecting or is ever opened, make AccessToken available only if "Persist Security Info" is set to true
                 // otherwise, return null
@@ -568,6 +599,12 @@ namespace Microsoft.Data.SqlClient
                 return result;
             }
             set {
+                if (null != SysSqlConnection)
+                {
+                    SysSqlConnection.AccessToken = value;
+                    return;
+                }
+
                 // If a connection is connecting or is ever opened, AccessToken cannot be set
                 if (!InnerConnection.AllowSetConnectionString) {
                     throw ADP.OpenConnectionPropertySet("AccessToken", InnerConnection.State);
@@ -597,9 +634,15 @@ namespace Microsoft.Data.SqlClient
         ]
         override public string ConnectionString {
             get {
-                return ConnectionString_Get();
+                return SysSqlConnection?.ConnectionString ?? ConnectionString_Get();
             }
             set {
+                if (null != SysSqlConnection)
+                {
+                    SysSqlConnection.ConnectionString = value;
+                    return;
+                }
+
                 if(_credential != null || _accessToken != null) {
                     SqlConnectionString connectionOptions = new SqlConnectionString(value);
                     if(_credential != null) {
@@ -628,6 +671,11 @@ namespace Microsoft.Data.SqlClient
         ]
         override public int ConnectionTimeout {
             get {
+                if (null != SysSqlConnection)
+                {
+                    return SysSqlConnection.ConnectionTimeout;
+                }
+
                 SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
                 return ((null != constr) ? constr.ConnectTimeout : SqlConnectionString.DEFAULT.Connect_Timeout);
             }
@@ -642,6 +690,11 @@ namespace Microsoft.Data.SqlClient
             // current catalog is because it may have gotten changed, otherwise we can
             // just return what the connection string had.
             get {
+                if (null != SysSqlConnection)
+                {
+                    return SysSqlConnection.Database;
+                }
+
                 SqlInternalConnection innerConnection = (InnerConnection as SqlInternalConnection);
                 string result;
 
@@ -663,6 +716,11 @@ namespace Microsoft.Data.SqlClient
         ]
         override public string DataSource {
             get {
+                if (null != SysSqlConnection)
+                {
+                    return SysSqlConnection.DataSource;
+                }
+
                 SqlInternalConnection innerConnection = (InnerConnection as SqlInternalConnection);
                 string result;
 
@@ -687,6 +745,11 @@ namespace Microsoft.Data.SqlClient
             // current packet size is because it may have gotten changed, otherwise we
             // can just return what the connection string had.
             get {
+                if (null != SysSqlConnection)
+                {
+                    return SysSqlConnection.PacketSize;
+                }
+
                 if (IsContextConnection) {
                     throw SQL.NotAvailableOnContextConnection();
                 }
@@ -712,6 +775,10 @@ namespace Microsoft.Data.SqlClient
         ]
         public Guid ClientConnectionId {
             get {
+                if (null != SysSqlConnection)
+                {
+                    return SysSqlConnection.ClientConnectionId;
+                }
 
                 SqlInternalConnectionTds innerConnection = (InnerConnection as SqlInternalConnectionTds);
 
@@ -735,7 +802,7 @@ namespace Microsoft.Data.SqlClient
         ]
         override public string ServerVersion {
             get {
-                return GetOpenConnection().ServerVersion;
+                return SysSqlConnection?.ServerVersion ?? GetOpenConnection().ServerVersion;
             }
         }
 
@@ -746,7 +813,12 @@ namespace Microsoft.Data.SqlClient
         ]
         override public ConnectionState State {
             get {
-                Task reconnectTask=_currentReconnectionTask;
+                if (null != SysSqlConnection)
+                {
+                    return SysSqlConnection.State;
+                }
+
+                Task reconnectTask = _currentReconnectionTask;
                 if (reconnectTask != null && !reconnectTask.IsCompleted) {
                     return ConnectionState.Open;
                 }
@@ -768,6 +840,11 @@ namespace Microsoft.Data.SqlClient
         ]
         public string WorkstationId {
             get {
+                if (null != SysSqlConnection)
+                {
+                    return SysSqlConnection.WorkstationId;
+                }
+
                 if (IsContextConnection) {
                     throw SQL.NotAvailableOnContextConnection();
                 }
@@ -796,6 +873,11 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
+                if (null != SysSqlConnection)
+                {
+                    return new SqlCredential(SysSqlConnection.Credential);
+                }
+
                 SqlCredential result = _credential;
 
                 // When a connection is connecting or is ever opened, make credential available only if "Persist Security Info" is set to true
@@ -811,6 +893,12 @@ namespace Microsoft.Data.SqlClient
 
             set
             {
+                if (null != SysSqlConnection)
+                {
+                    SysSqlConnection.Credential = value.SysSqlCredential;
+                    return;
+                }
+
                 // If a connection is connecting or is ever opened, user id/password cannot be set
                 if (!InnerConnection.AllowSetConnectionString)
                 {
@@ -909,9 +997,15 @@ namespace Microsoft.Data.SqlClient
 
         public bool FireInfoMessageEventOnUserErrors {
             get {
-                return _fireInfoMessageEventOnUserErrors;
+                return SysSqlConnection?.FireInfoMessageEventOnUserErrors ?? _fireInfoMessageEventOnUserErrors;
             }
             set {
+                if (null != SysSqlConnection)
+                {
+                    SysSqlConnection.FireInfoMessageEventOnUserErrors = value;
+                    return;
+                }
+
                 _fireInfoMessageEventOnUserErrors = value;
             }
         }
@@ -966,22 +1060,56 @@ namespace Microsoft.Data.SqlClient
         // PUBLIC METHODS
         //
 
-        new public SqlTransaction BeginTransaction() {
-            // this is just a delegate. The actual method tracks executiontime
+        new public SqlTransaction BeginTransaction()
+        {
+            if (null != SysSqlConnection) {
+                try
+                {
+                    return new SqlTransaction(SysSqlConnection.BeginTransaction(), this);
+                }
+                catch (System.Data.SqlClient.SqlException sdExp) {
+                    SqlException mdExp = SqlException.CreateException(sdExp, sdExp.Server, sdExp.ClientConnectionId);
+                    throw mdExp;
+                }
+            }
             return BeginTransaction(IsolationLevel.Unspecified, null);
         }
 
         new public SqlTransaction BeginTransaction(IsolationLevel iso) {
             // this is just a delegate. The actual method tracks executiontime
+            if (null != SysSqlConnection)
+            {
+                try
+                {
+                    return new SqlTransaction(SysSqlConnection.BeginTransaction(iso), this);
+                }
+                catch (System.Data.SqlClient.SqlException sdExp)
+                {
+                    SqlException mdExp = SqlException.CreateException(sdExp, sdExp.Server, sdExp.ClientConnectionId);
+                    throw mdExp;
+                }
+            }
             return BeginTransaction(iso, null);
         }
 
         public SqlTransaction BeginTransaction(string transactionName) {
-                // Use transaction names only on the outermost pair of nested
-                // BEGIN...COMMIT or BEGIN...ROLLBACK statements.  Transaction names
-                // are ignored for nested BEGIN's.  The only way to rollback a nested
-                // transaction is to have a save point from a SAVE TRANSACTION call.
-                return BeginTransaction(IsolationLevel.Unspecified, transactionName);
+            // Use transaction names only on the outermost pair of nested
+            // BEGIN...COMMIT or BEGIN...ROLLBACK statements.  Transaction names
+            // are ignored for nested BEGIN's.  The only way to rollback a nested
+            // transaction is to have a save point from a SAVE TRANSACTION call.
+            if (null != SysSqlConnection)
+            {
+                try
+                {
+                    return new SqlTransaction(SysSqlConnection.BeginTransaction(transactionName), this);
+                }
+                catch (System.Data.SqlClient.SqlException sdExp)
+                {
+                    SqlException mdExp = SqlException.CreateException(sdExp, sdExp.Server, sdExp.ClientConnectionId);
+                    throw mdExp;
+                }
+            }
+            return BeginTransaction(IsolationLevel.Unspecified, transactionName);
         }
 
         // suppress this message - we cannot use SafeHandle here. Also, see notes in the code (VSTFDEVDIV# 560355)
@@ -1008,6 +1136,19 @@ namespace Microsoft.Data.SqlClient
         }
 
         public SqlTransaction BeginTransaction(IsolationLevel iso, string transactionName) {
+            if (null != SysSqlConnection)
+            {
+                try
+                {
+                    return new SqlTransaction(SysSqlConnection.BeginTransaction(iso, transactionName), this);
+                }
+                catch (System.Data.SqlClient.SqlException sdExp)
+                {
+                    SqlException mdExp = SqlException.CreateException(sdExp, sdExp.Server, sdExp.ClientConnectionId);
+                    throw mdExp;
+                }
+            }
+
             WaitForPendingReconnection();
             SqlStatistics statistics = null;
             IntPtr hscp;
@@ -1044,46 +1185,61 @@ namespace Microsoft.Data.SqlClient
         }
 
         override public void ChangeDatabase(string database) {
-            SqlStatistics statistics = null;
-            RepairInnerConnection();
-            Bid.CorrelationTrace("<sc.SqlConnection.ChangeDatabase|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
-            TdsParser bestEffortCleanupTarget = null;
-            RuntimeHelpers.PrepareConstrainedRegions();
-            try {
-#if DEBUG
-                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
-
+            if (SysSqlConnection != null)
+            {
+                try
+                {
+                    SysSqlConnection.ChangeDatabase(database);
+                }
+                catch (System.Data.SqlClient.SqlException sdExp)
+                {
+                    SqlException mdExp = SqlException.CreateException(sdExp, sdExp.Server, sdExp.ClientConnectionId);
+                    throw mdExp;
+                }
+            }
+            else
+            {
+                SqlStatistics statistics = null;
+                RepairInnerConnection();
+                Bid.CorrelationTrace("<sc.SqlConnection.ChangeDatabase|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
+                TdsParser bestEffortCleanupTarget = null;
                 RuntimeHelpers.PrepareConstrainedRegions();
                 try {
-                    tdsReliabilitySection.Start();
+#if DEBUG
+                    TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+
+                    RuntimeHelpers.PrepareConstrainedRegions();
+                    try {
+                        tdsReliabilitySection.Start();
 #else
                 {
 #endif //DEBUG
-                    bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(this);
-                    statistics = SqlStatistics.StartTimer(Statistics);
-                    InnerConnection.ChangeDatabase(database);
-                }
+                        bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(this);
+                        statistics = SqlStatistics.StartTimer(Statistics);
+                        InnerConnection.ChangeDatabase(database);
+                    }
 #if DEBUG
-                finally {
-                    tdsReliabilitySection.Stop();
-                }
+                    finally {
+                        tdsReliabilitySection.Stop();
+                    }
 #endif //DEBUG
-            }
-            catch (System.OutOfMemoryException e) {
-                Abort(e);
-                throw;
-            }
-            catch (System.StackOverflowException e) {
-                Abort(e);
-                throw;
-            }
-            catch (System.Threading.ThreadAbortException e) {
-                Abort(e);
-                SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-                throw;
-            }
-            finally {
-                SqlStatistics.StopTimer(statistics);
+                }
+                catch (System.OutOfMemoryException e) {
+                    Abort(e);
+                    throw;
+                }
+                catch (System.StackOverflowException e) {
+                    Abort(e);
+                    throw;
+                }
+                catch (System.Threading.ThreadAbortException e) {
+                    Abort(e);
+                    SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
+                    throw;
+                }
+                finally {
+                    SqlStatistics.StopTimer(statistics);
+                }
             }
         }
 
@@ -1121,85 +1277,105 @@ namespace Microsoft.Data.SqlClient
         }
 
         override public void Close() {
-            IntPtr hscp;
-            Bid.ScopeEnter(out hscp, "<sc.SqlConnection.Close|API> %d#" , ObjectID);
-            Bid.CorrelationTrace("<sc.SqlConnection.Close|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
-            try {
-                SqlStatistics statistics = null;
-
-                TdsParser bestEffortCleanupTarget = null;
-                RuntimeHelpers.PrepareConstrainedRegions();
+            if (SysSqlConnection != null)
+            {
+                try
+                {
+                    SysSqlConnection.Close();
+                }
+                catch (System.Data.SqlClient.SqlException sdExp)
+                {
+                    SqlException mdExp = SqlException.CreateException(sdExp, sdExp.Server, sdExp.ClientConnectionId);
+                    throw mdExp;
+                }
+            }
+            else
+            {
+                IntPtr hscp;
+                Bid.ScopeEnter(out hscp, "<sc.SqlConnection.Close|API> %d#" , ObjectID);
+                Bid.CorrelationTrace("<sc.SqlConnection.Close|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
                 try {
-#if DEBUG
-                    TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+                    SqlStatistics statistics = null;
 
+                    TdsParser bestEffortCleanupTarget = null;
                     RuntimeHelpers.PrepareConstrainedRegions();
                     try {
-                        tdsReliabilitySection.Start();
+#if DEBUG
+                        TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+
+                        RuntimeHelpers.PrepareConstrainedRegions();
+                        try {
+                            tdsReliabilitySection.Start();
 #else
                     {
 #endif //DEBUG
-                        bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(this);
-                        statistics = SqlStatistics.StartTimer(Statistics);
+                            bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(this);
+                            statistics = SqlStatistics.StartTimer(Statistics);
 
-                        Task reconnectTask = _currentReconnectionTask;
-                        if (reconnectTask != null && !reconnectTask.IsCompleted) {
-                            CancellationTokenSource cts = _reconnectionCancellationSource;
-                            if (cts != null) {
-                                cts.Cancel();
+                            Task reconnectTask = _currentReconnectionTask;
+                            if (reconnectTask != null && !reconnectTask.IsCompleted) {
+                                CancellationTokenSource cts = _reconnectionCancellationSource;
+                                if (cts != null) {
+                                    cts.Cancel();
+                                }
+                                AsyncHelper.WaitForCompletion(reconnectTask, 0, null, rethrowExceptions: false); // we do not need to deal with possible exceptions in reconnection
+                                if (State != ConnectionState.Open) {// if we cancelled before the connection was opened 
+                                    OnStateChange(DbConnectionInternal.StateChangeClosed);
+                                }
                             }
-                            AsyncHelper.WaitForCompletion(reconnectTask, 0, null, rethrowExceptions: false); // we do not need to deal with possible exceptions in reconnection
-                            if (State != ConnectionState.Open) {// if we cancelled before the connection was opened 
-                                OnStateChange(DbConnectionInternal.StateChangeClosed);
+                            CancelOpenAndWait();
+                            CloseInnerConnection();
+                            GC.SuppressFinalize(this);
+
+                            if (null != Statistics) {
+                                ADP.TimerCurrent(out _statistics._closeTimestamp);
                             }
                         }
-                        CancelOpenAndWait(); 
-                        CloseInnerConnection();
-                        GC.SuppressFinalize(this);
-
-                        if (null != Statistics) {
-                            ADP.TimerCurrent(out _statistics._closeTimestamp);
+#if DEBUG
+                        finally {
+                            tdsReliabilitySection.Stop();
                         }
-                    }
- #if DEBUG
-                    finally {
-                        tdsReliabilitySection.Stop();
-                    }
 #endif //DEBUG
-                }
-                catch (System.OutOfMemoryException e) {
-                    Abort(e);
-                    throw;
-                }
-                catch (System.StackOverflowException e) {
-                    Abort(e);
-                    throw;
-                }
-                catch (System.Threading.ThreadAbortException e) {
-                    Abort(e);
-                    SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-                    throw;
+                    }
+                    catch (System.OutOfMemoryException e) {
+                        Abort(e);
+                        throw;
+                    }
+                    catch (System.StackOverflowException e) {
+                        Abort(e);
+                        throw;
+                    }
+                    catch (System.Threading.ThreadAbortException e) {
+                        Abort(e);
+                        SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
+                        throw;
+                    }
+                    finally {
+                        SqlStatistics.StopTimer(statistics);
+                        //dispose windows identity once connection is closed.
+                        if (_lastIdentity != null)
+                        {
+                            _lastIdentity.Dispose();
+                        }
+                    }
                 }
                 finally {
-                    SqlStatistics.StopTimer(statistics);
-                    //dispose windows identity once connection is closed.
-                    if (_lastIdentity != null)
-                    {
-                        _lastIdentity.Dispose();
+                    SqlDebugContext sdc =  _sdc;
+                    _sdc = null;
+                    Bid.ScopeLeave(ref hscp);
+                    if (sdc != null) {
+                        sdc.Dispose();
                     }
-                }
-            }
-            finally {
-                SqlDebugContext  sdc = _sdc;
-                _sdc = null;
-                Bid.ScopeLeave(ref hscp);
-                if (sdc != null) {
-                   sdc.Dispose();
                 }
             }
         }
 
         new public SqlCommand CreateCommand() {
+            if (SysSqlConnection != null)
+            {
+                return new SqlCommand(SysSqlConnection.CreateCommand());
+            }
+            
             return new SqlCommand(null, this);
         }
 
@@ -1224,44 +1400,67 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        public void EnlistDistributedTransaction(System.EnterpriseServices.ITransaction transaction) {
-            if (IsContextConnection) {
-                throw SQL.NotAvailableOnContextConnection();
+        public void EnlistDistributedTransaction(System.EnterpriseServices.ITransaction transaction)
+        {
+            if (null != SysSqlConnection)
+            {
+                SysSqlConnection.EnlistDistributedTransaction(transaction);
             }
+            else
+            {
+                if (IsContextConnection) {
+                    throw SQL.NotAvailableOnContextConnection();
+                }
 
-            EnlistDistributedTransactionHelper(transaction);
+                EnlistDistributedTransactionHelper(transaction);
+            }
         }
 
         override public void Open() {
-            IntPtr hscp;
-            Bid.ScopeEnter(out hscp, "<sc.SqlConnection.Open|API> %d#", ObjectID) ;
-            Bid.CorrelationTrace("<sc.SqlConnection.Open|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
-           
-            try {
-                if (StatisticsEnabled) {
-                    if (null == _statistics) {
-                        _statistics = new SqlStatistics();
-                    }
-                    else {
-                        _statistics.ContinueOnNewConnection();
-                    }
+            if (SysSqlConnection != null)
+            {
+                try
+                {
+                    SysSqlConnection.Open();
                 }
+                catch (System.Data.SqlClient.SqlException sdExp)
+                {
+                    SqlException mdExp = SqlException.CreateException(sdExp, sdExp.Server, sdExp.ClientConnectionId);
+                    throw mdExp;
+                }
+            }
+            else
+            {
+                IntPtr hscp;
+                Bid.ScopeEnter(out hscp, "<sc.SqlConnection.Open|API> %d#", ObjectID);
+                Bid.CorrelationTrace("<sc.SqlConnection.Open|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
 
-                SqlStatistics statistics = null;
-                RuntimeHelpers.PrepareConstrainedRegions();
                 try {
-                    statistics = SqlStatistics.StartTimer(Statistics);
+                    if (StatisticsEnabled) {
+                        if (null == _statistics) {
+                            _statistics = new SqlStatistics();
+                        }
+                        else {
+                            _statistics.ContinueOnNewConnection();
+                        }
+                    }
 
-                    if (!TryOpen(null)) {
-                        throw ADP.InternalError(ADP.InternalErrorCode.SynchronousConnectReturnedPending);
+                    SqlStatistics statistics = null;
+                    RuntimeHelpers.PrepareConstrainedRegions();
+                    try {
+                        statistics = SqlStatistics.StartTimer(Statistics);
+
+                        if (!TryOpen(null)) {
+                            throw ADP.InternalError(ADP.InternalErrorCode.SynchronousConnectReturnedPending);
+                        }
+                    }
+                    finally {
+                        SqlStatistics.StopTimer(statistics);
                     }
                 }
                 finally {
-                    SqlStatistics.StopTimer(statistics);
+                    Bid.ScopeLeave(ref hscp);
                 }
-            }
-            finally {
-                Bid.ScopeLeave(ref hscp);
             }
         }
 
@@ -1438,72 +1637,87 @@ namespace Microsoft.Data.SqlClient
         }
 
         public override Task OpenAsync(CancellationToken cancellationToken) {
-            IntPtr hscp;
-            Bid.ScopeEnter(out hscp, "<sc.SqlConnection.OpenAsync|API> %d#", ObjectID) ;
-            Bid.CorrelationTrace("<sc.SqlConnection.OpenAsync|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
-            try {
-
-                if (StatisticsEnabled) {
-                    if (null == _statistics) {
-                        _statistics = new SqlStatistics();
-                    }
-                    else {
-                        _statistics.ContinueOnNewConnection();
-                    }
+            if (null != SysSqlConnection)
+            {
+                try
+                {
+                    return SysSqlConnection.OpenAsync(cancellationToken);
                 }
-
-                SqlStatistics statistics = null;
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try {
-                    statistics = SqlStatistics.StartTimer(Statistics);
-
-                    System.Transactions.Transaction transaction = ADP.GetCurrentTransaction();
-                    TaskCompletionSource<DbConnectionInternal> completion = new TaskCompletionSource<DbConnectionInternal>(transaction);
-                    TaskCompletionSource<object> result = new TaskCompletionSource<object>();
-
-                    if (cancellationToken.IsCancellationRequested) {
-                        result.SetCanceled();
-                        return result.Task;
-                    }
-
-                    if (IsContextConnection) {
-                        // Async not supported on Context Connections
-                        result.SetException(ADP.ExceptionWithStackTrace(SQL.NotAvailableOnContextConnection()));
-                        return result.Task;
-                    }
-
-                    bool completed;
-                    
-                    try {
-                        completed = TryOpen(completion);
-                    }
-                    catch (Exception e) {
-                        result.SetException(e);
-                        return result.Task;
-                    }
-                    
-                    if (completed) {
-                        result.SetResult(null);
-                    }
-                    else {
-                        CancellationTokenRegistration registration = new CancellationTokenRegistration();
-                        if (cancellationToken.CanBeCanceled) {
-                            registration = cancellationToken.Register(() => completion.TrySetCanceled());
-                        }
-                        OpenAsyncRetry retry = new OpenAsyncRetry(this, completion, result, registration);
-                        _currentCompletion = new Tuple<TaskCompletionSource<DbConnectionInternal>, Task>(completion, result.Task);
-                        completion.Task.ContinueWith(retry.Retry, TaskScheduler.Default);
-                        return result.Task;
-                    }
-
-                    return result.Task;
-                }
-                finally {
-                    SqlStatistics.StopTimer(statistics);
+                catch (System.Data.SqlClient.SqlException sdExp)
+                {
+                    SqlException mdExp = SqlException.CreateException(sdExp, sdExp.Server, sdExp.ClientConnectionId);
+                    throw mdExp;
                 }
             }
-            finally {
-                Bid.ScopeLeave(ref hscp);
+            else
+            {
+                IntPtr hscp;
+                Bid.ScopeEnter(out hscp, "<sc.SqlConnection.OpenAsync|API> %d#", ObjectID);
+                Bid.CorrelationTrace("<sc.SqlConnection.OpenAsync|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
+                try {
+
+                    if (StatisticsEnabled) {
+                        if (null == _statistics) {
+                            _statistics = new SqlStatistics();
+                        }
+                        else {
+                            _statistics.ContinueOnNewConnection();
+                        }
+                    }
+
+                    SqlStatistics statistics = null;
+                    RuntimeHelpers.PrepareConstrainedRegions();
+                    try {
+                        statistics = SqlStatistics.StartTimer(Statistics);
+
+                        System.Transactions.Transaction transaction = ADP.GetCurrentTransaction();
+                        TaskCompletionSource<DbConnectionInternal> completion = new TaskCompletionSource<DbConnectionInternal>(transaction);
+                        TaskCompletionSource<object> result = new TaskCompletionSource<object>();
+
+                        if (cancellationToken.IsCancellationRequested) {
+                            result.SetCanceled();
+                            return result.Task;
+                        }
+
+                        if (IsContextConnection) {
+                            // Async not supported on Context Connections
+                            result.SetException(ADP.ExceptionWithStackTrace(SQL.NotAvailableOnContextConnection()));
+                            return result.Task;
+                        }
+
+                        bool completed;
+
+                        try {
+                            completed = TryOpen(completion);
+                        }
+                        catch (Exception e) {
+                            result.SetException(e);
+                            return result.Task;
+                        }
+
+                        if (completed) {
+                            result.SetResult(null);
+                        }
+                        else {
+                            CancellationTokenRegistration registration = new CancellationTokenRegistration();
+                            if (cancellationToken.CanBeCanceled) {
+                                registration = cancellationToken.Register(() => completion.TrySetCanceled());
+                            }
+                            OpenAsyncRetry retry = new OpenAsyncRetry(this, completion, result, registration);
+                            _currentCompletion = new Tuple<TaskCompletionSource<DbConnectionInternal>, Task>(completion, result.Task);
+                            completion.Task.ContinueWith(retry.Retry, TaskScheduler.Default);
+                            return result.Task;
+                        }
+
+                        return result.Task;
+                    }
+                    finally {
+                        SqlStatistics.StopTimer(statistics);
+                    }
+                }
+                finally {
+                    Bid.ScopeLeave(ref hscp);
+                }
             }
         }
 
@@ -2217,30 +2431,44 @@ namespace Microsoft.Data.SqlClient
         }
 
         public void ResetStatistics() {
-            if (IsContextConnection) {
-                throw SQL.NotAvailableOnContextConnection();
+            if (null != SysSqlConnection)
+            {
+                SysSqlConnection.ResetStatistics();
             }
+            else
+            {
+                if (IsContextConnection) {
+                    throw SQL.NotAvailableOnContextConnection();
+                }
 
-            if (null != Statistics) {
-                Statistics.Reset();
-                if (ConnectionState.Open == State) {
-                    // update timestamp;
-                    ADP.TimerCurrent(out _statistics._openTimestamp);
+                if (null != Statistics) {
+                    Statistics.Reset();
+                    if (ConnectionState.Open == State) {
+                        // update timestamp;
+                        ADP.TimerCurrent(out _statistics._openTimestamp);
+                    }
                 }
             }
         }
 
         public IDictionary RetrieveStatistics() {
-            if (IsContextConnection) {
-                throw SQL.NotAvailableOnContextConnection();
+            if (null != SysSqlConnection)
+            {
+                return SysSqlConnection.RetrieveStatistics();
             }
+            else
+            {
+                if (IsContextConnection) {
+                    throw SQL.NotAvailableOnContextConnection();
+                }
 
-            if (null != Statistics) {
-                UpdateStatistics();
-                return Statistics.GetHashtable();
-            }
-            else {
-                return new SqlStatistics().GetHashtable();
+                if (null != Statistics) {
+                    UpdateStatistics();
+                    return Statistics.GetHashtable();
+                }
+                else {
+                    return new SqlStatistics().GetHashtable();
+                }
             }
         }
 
