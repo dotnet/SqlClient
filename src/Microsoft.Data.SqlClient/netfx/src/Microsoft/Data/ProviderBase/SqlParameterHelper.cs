@@ -60,21 +60,37 @@ namespace Microsoft.Data.SqlClient
         ]
         override public ParameterDirection Direction { // V1.2.3300, XXXParameter V1.0.3300
             get {
-                ParameterDirection direction = _direction;
-                return ((0 != direction) ? direction : ParameterDirection.Input);
+                if (SysSqlParameter != null)
+                {
+                    return SysSqlParameter.Direction;
+                }
+                else
+                {
+                    ParameterDirection direction = _direction;
+                    return ((0 != direction) ? direction : ParameterDirection.Input);
+                }
             }
             set {
-                if (_direction != value) {
-                    switch (value) { // @perfnote: Enum.IsDefined
-                    case ParameterDirection.Input:
-                    case ParameterDirection.Output:
-                    case ParameterDirection.InputOutput:
-                    case ParameterDirection.ReturnValue:
-                        PropertyChanging();
-                        _direction = value;
-                        break;
-                    default:
-                        throw ADP.InvalidParameterDirection(value);
+                if (SysSqlParameter != null)
+                {
+                    SysSqlParameter.Direction = value;
+                }
+                else
+                {
+                    if (_direction != value)
+                    {
+                        switch (value)
+                        { // @perfnote: Enum.IsDefined
+                            case ParameterDirection.Input:
+                            case ParameterDirection.Output:
+                            case ParameterDirection.InputOutput:
+                            case ParameterDirection.ReturnValue:
+                                PropertyChanging();
+                                _direction = value;
+                                break;
+                            default:
+                                throw ADP.InvalidParameterDirection(value);
+                        }
                     }
                 }
             }
@@ -82,10 +98,17 @@ namespace Microsoft.Data.SqlClient
 
         override public bool IsNullable { // V1.2.3300, XXXParameter V1.0.3300
             get {
-                return _isNullable;
+                return SysSqlParameter?.IsNullable ?? _isNullable;
             }
             set {
-                _isNullable = value;
+                if (SysSqlParameter != null)
+                {
+                    SysSqlParameter.IsNullable = value;
+                }
+                else
+                {
+                    _isNullable = value;
+                }
             }
         }
 
@@ -98,13 +121,28 @@ namespace Microsoft.Data.SqlClient
         ]
         public int Offset {
             get {
-                return _offset;
+                if (SysSqlParameter != null)
+                {
+                    return SysSqlParameter.Offset;
+                }
+                else
+                {
+                    return _offset;
+                }
             }
             set {
-                if (value < 0) {
-                    throw ADP.InvalidOffsetValue(value);
+                if (SysSqlParameter != null)
+                {
+                    SysSqlParameter.Offset = value;
                 }
-                _offset = value;
+                else
+                {
+                    if (value < 0)
+                    {
+                        throw ADP.InvalidOffsetValue(value);
+                    }
+                    _offset = value;
+                }
             }
         }
 #else
@@ -121,19 +159,36 @@ namespace Microsoft.Data.SqlClient
         ]
         override public int Size { // V1.2.3300, XXXParameter V1.0.3300
             get {
-                int size = _size;
-                if (0 == size) {
-                    size = ValueSize(Value);
+                if (SysSqlParameter != null)
+                {
+                    return SysSqlParameter.Size;
                 }
-                return size;
+                else
+                {
+                    int size = _size;
+                    if (0 == size)
+                    {
+                        size = ValueSize(Value);
+                    }
+                    return size;
+                }
             }
             set {
-                if (_size != value) {
-                    if (value < -1) {
-                        throw ADP.InvalidSizeValue(value);
+                if (SysSqlParameter != null)
+                {
+                    SysSqlParameter.Size = value;
+                }
+                else
+                {
+                    if (_size != value)
+                    {
+                        if (value < -1)
+                        {
+                            throw ADP.InvalidSizeValue(value);
+                        }
+                        PropertyChanging();
+                        _size = value;
                     }
-                    PropertyChanging();
-                    _size = value;
                 }
             }
         }
@@ -155,20 +210,48 @@ namespace Microsoft.Data.SqlClient
         ]
         override public string SourceColumn { // V1.2.3300, XXXParameter V1.0.3300
             get {
-                string sourceColumn = _sourceColumn;
-                return ((null != sourceColumn) ? sourceColumn : ADP.StrEmpty);
+                if (SysSqlParameter != null)
+                {
+                    return SysSqlParameter.SourceColumn;
+                }
+                else
+                {
+                    string sourceColumn = _sourceColumn;
+                    return ((null != sourceColumn) ? sourceColumn : ADP.StrEmpty);
+                }
             }
             set {
-                _sourceColumn = value;
+                if (SysSqlParameter != null)
+                {
+                    SysSqlParameter.SourceColumn = value;
+                }
+                else
+                {
+                    _sourceColumn = value;
+                }
             }
         }
 
         public override bool SourceColumnNullMapping {
             get {
-                return _sourceColumnNullMapping;
+                if (SysSqlParameter != null)
+                {
+                    return SysSqlParameter.SourceColumnNullMapping;
+                }
+                else
+                {
+                    return _sourceColumnNullMapping;
+                }
             }
             set {
-                _sourceColumnNullMapping = value;
+                if (SysSqlParameter != null)
+                {
+                    SysSqlParameter.SourceColumnNullMapping = value;
+                }
+                else
+                {
+                    _sourceColumnNullMapping = value;
+                }
             }
         }
 
@@ -178,19 +261,34 @@ namespace Microsoft.Data.SqlClient
         ]
         override public DataRowVersion SourceVersion { // V1.2.3300, XXXParameter V1.0.3300
             get {
-                DataRowVersion sourceVersion = _sourceVersion;
-                return ((0 != sourceVersion) ? sourceVersion : DataRowVersion.Current);
+                if (SysSqlParameter != null)
+                {
+                    return SysSqlParameter.SourceVersion;
+                }
+                else
+                {
+                    DataRowVersion sourceVersion = _sourceVersion;
+                    return ((0 != sourceVersion) ? sourceVersion : DataRowVersion.Current);
+                }
             }
             set {
-                switch(value) { // @perfnote: Enum.IsDefined
-                case DataRowVersion.Original:
-                case DataRowVersion.Current:
-                case DataRowVersion.Proposed:
-                case DataRowVersion.Default:
-                    _sourceVersion = value;
-                    break;
-                default:
-                    throw ADP.InvalidDataRowVersion(value);
+                if (SysSqlParameter != null)
+                {
+                    SysSqlParameter.SourceVersion = value;
+                }
+                else
+                {
+                    switch (value)
+                    { // @perfnote: Enum.IsDefined
+                        case DataRowVersion.Original:
+                        case DataRowVersion.Current:
+                        case DataRowVersion.Proposed:
+                        case DataRowVersion.Default:
+                            _sourceVersion = value;
+                            break;
+                        default:
+                            throw ADP.InvalidDataRowVersion(value);
+                    }
                 }
             }
         }
@@ -231,7 +329,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         override public string ToString() { // V1.2.3300, XXXParameter V1.0.3300
-            return ParameterName;
+            return SysSqlParameter?.ToString() ?? ParameterName;
         }
 
         private byte ValuePrecisionCore(object value) { // V1.2.3300

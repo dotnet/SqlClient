@@ -152,23 +152,26 @@ namespace Microsoft.Data.SqlClient {
             return exception;
         }
 
-        static internal SqlException CreateException(SqlErrorCollection errorCollection, string serverVersion, Guid conId, Exception innerException = null) {
-            Debug.Assert(null != errorCollection && errorCollection.Count > 0, "no errorCollection?");
-            
-            // concat all messages together MDAC 65533
+        // Providing API to create Microsoft.Data.SqlClient Sqlexception from System.Data.SqlClient SqlException
+        // for backward compat
+        static internal SqlException CreateException(System.Data.SqlClient.SqlException sysSqlException, string serverVersion, Guid conId) {
+            Debug.Assert(null != sysSqlException.Errors && sysSqlException.Errors.Count > 0, "no errorCollection?");
+
+            // concat all messages together MDAC 65533 and
+            //copy from System.Data.SqlClient.SqlException.ErrorCollection to Microsoft.Data.SqlClient.SqlException.ErrorCollection
+            SqlErrorCollection errorCollection = new SqlErrorCollection();
             StringBuilder message = new StringBuilder();
-            for (int i = 0; i < errorCollection.Count; i++) {
+
+            for (int i = 0; i < sysSqlException.Errors.Count; i++) {
                 if (i > 0) {
                     message.Append(Environment.NewLine);
                 }
-                message.Append(errorCollection[i].Message);
+                message.Append(sysSqlException.Errors[i].Message);
+                errorCollection.Add(new SqlError(sysSqlException.Errors[i].Number, sysSqlException.Errors[i].State, sysSqlException.Errors[i].Class, sysSqlException.Errors[i].Server, sysSqlException.Errors[i].Message, sysSqlException.Errors[i].Procedure, sysSqlException.Errors[i].LineNumber));
             }
 
-            if (innerException == null && errorCollection[0].Win32ErrorCode != 0 && errorCollection[0].Win32ErrorCode != -1) {
-                innerException = new Win32Exception(errorCollection[0].Win32ErrorCode);
-            }
-
-            SqlException exception = new SqlException(message.ToString(), errorCollection, innerException, conId);
+            //pass the System.Data.SqlClient SqlException as an inner exception in the constructor
+            SqlException exception = new SqlException(message.ToString(), errorCollection, sysSqlException, conId);
 
             exception.Data.Add("HelpLink.ProdName",    "Microsoft SQL Server");
 
@@ -182,6 +185,43 @@ namespace Microsoft.Data.SqlClient {
 
             return exception;
         }
+
+        static internal SqlException CreateException(SqlErrorCollection errorCollection, string serverVersion, Guid conId, Exception innerException = null)
+        {
+            Debug.Assert(null != errorCollection && errorCollection.Count > 0, "no errorCollection?");
+
+            // concat all messages together MDAC 65533
+            StringBuilder message = new StringBuilder();
+            for (int i = 0; i < errorCollection.Count; i++)
+            {
+                if (i > 0)
+                {
+                    message.Append(Environment.NewLine);
+                }
+                message.Append(errorCollection[i].Message);
+            }
+
+            if (innerException == null && errorCollection[0].Win32ErrorCode != 0 && errorCollection[0].Win32ErrorCode != -1)
+            {
+                innerException = new Win32Exception(errorCollection[0].Win32ErrorCode);
+            }
+
+            SqlException exception = new SqlException(message.ToString(), errorCollection, innerException, conId);
+
+            exception.Data.Add("HelpLink.ProdName", "Microsoft SQL Server");
+
+            if (!ADP.IsEmpty(serverVersion))
+            {
+                exception.Data.Add("HelpLink.ProdVer", serverVersion);
+            }
+            exception.Data.Add("HelpLink.EvtSrc", "MSSQLServer");
+            exception.Data.Add("HelpLink.EvtID", errorCollection[0].Number.ToString(CultureInfo.InvariantCulture));
+            exception.Data.Add("HelpLink.BaseHelpUrl", "http://go.microsoft.com/fwlink");
+            exception.Data.Add("HelpLink.LinkId", "20476");
+
+            return exception;
+        }
+
 
         internal SqlException InternalClone() {
             SqlException exception = new SqlException(Message, _errors, InnerException, _clientConnectionId);

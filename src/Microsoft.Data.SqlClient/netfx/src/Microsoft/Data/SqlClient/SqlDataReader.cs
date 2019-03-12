@@ -95,6 +95,7 @@ namespace Microsoft.Data.SqlClient
         private Snapshot _snapshot;
         private CancellationTokenSource _cancelAsyncOnCloseTokenSource;
         private CancellationToken _cancelAsyncOnCloseToken;
+        private System.Data.SqlClient.SqlDataReader _sysSqlDataReader;
 
         // Used for checking if the Type parameter provided to GetValue<T> is an INullable
         internal static readonly Type _typeofINullable = typeof(INullable);
@@ -128,6 +129,11 @@ namespace Microsoft.Data.SqlClient
             _columnDataCharsIndex = -1;
         }
 
+        internal SqlDataReader(System.Data.SqlClient.SqlDataReader sqlDataReader) {
+
+            SysSqlDataReader = sqlDataReader;
+        }
+
         internal bool BrowseModeInfoConsumed {
             set {
                 _browseModeInfoConsumed = value;
@@ -137,6 +143,17 @@ namespace Microsoft.Data.SqlClient
         internal SqlCommand Command {
             get {
                 return _command;
+            }
+        }
+
+        internal System.Data.SqlClient.SqlDataReader SysSqlDataReader {
+            get
+            {
+                return _sysSqlDataReader;
+            }
+            set
+            {
+                _sysSqlDataReader = value;
             }
         }
 
@@ -150,48 +167,75 @@ namespace Microsoft.Data.SqlClient
 
         override public int Depth {
             get {
-                if (this.IsClosed) {
-                    throw ADP.DataReaderClosed("Depth");
+                if (SysSqlDataReader != null)
+                {
+                    return SysSqlDataReader.Depth;
                 }
+                else
+                {
+                    if (this.IsClosed)
+                    {
+                        throw ADP.DataReaderClosed("Depth");
+                    }
 
-                return 0;
+                    return 0;
+                }
             }
         }
 
         // fields/attributes collection
         override public int FieldCount {
             get {
-                if (this.IsClosed) {
-                    throw ADP.DataReaderClosed("FieldCount");
+                if (SysSqlDataReader != null)
+                {
+                    return SysSqlDataReader.FieldCount;
                 }
-                if (_currentTask != null) {
-                    throw ADP.AsyncOperationPending();
-                }
+                else
+                {
+                    if (this.IsClosed)
+                    {
+                        throw ADP.DataReaderClosed("FieldCount");
+                    }
+                    if (_currentTask != null)
+                    {
+                        throw ADP.AsyncOperationPending();
+                    }
 
-                if (MetaData == null) {
-                    return 0;
-                }
+                    if (MetaData == null)
+                    {
+                        return 0;
+                    }
 
-                return _metaData.Length;
+                    return _metaData.Length;
+                }
             }
         }
 
         override public bool HasRows {
             get {
-                if (this.IsClosed) {
-                    throw ADP.DataReaderClosed("HasRows");
+                if (SysSqlDataReader != null)
+                {
+                    return SysSqlDataReader.HasRows;
                 }
-                if (_currentTask != null) {
-                    throw ADP.AsyncOperationPending();
-                }
+                else
+                {
+                    if (this.IsClosed)
+                    {
+                        throw ADP.DataReaderClosed("HasRows");
+                    }
+                    if (_currentTask != null)
+                    {
+                        throw ADP.AsyncOperationPending();
+                    }
 
-                return _hasRows;
+                    return _hasRows;
+                }
             }
         }
 
         override public bool IsClosed {
             get {
-                return _isClosed;
+                return SysSqlDataReader?.IsClosed ?? _isClosed;
             }
         }
 
@@ -354,11 +398,19 @@ namespace Microsoft.Data.SqlClient
 
         override public int RecordsAffected {
             get {
-                if (null != _command)
-                    return _command.InternalRecordsAffected;
+                if (SysSqlDataReader != null)
+                {
+                    return SysSqlDataReader.RecordsAffected;
+                }
+                else
+                {
 
-                // cached locally for after Close() when command is nulled out
-                return _recordsAffected;
+                    if (null != _command)
+                        return _command.InternalRecordsAffected;
+
+                    // cached locally for after Close() when command is nulled out
+                    return _recordsAffected;
+                }
             }
         }
 
@@ -385,27 +437,36 @@ namespace Microsoft.Data.SqlClient
 
         override public int VisibleFieldCount {
             get {
-                if (this.IsClosed) {
-                    throw ADP.DataReaderClosed("VisibleFieldCount");
+                if (SysSqlDataReader != null)
+                {
+                    return SysSqlDataReader.VisibleFieldCount;
                 }
-                _SqlMetaDataSet md = this.MetaData;
-                if (md == null) {
-                    return 0;
+                else
+                {
+                    if (this.IsClosed)
+                    {
+                        throw ADP.DataReaderClosed("VisibleFieldCount");
+                    }
+                    _SqlMetaDataSet md = this.MetaData;
+                    if (md == null)
+                    {
+                        return 0;
+                    }
+                    return (md.visibleColumns);
                 }
-                return (md.visibleColumns);
             }
         }
 
         // this operator
         override public object this[int i] {
             get {
-                return GetValue(i);
+                    return GetValue(i);
             }
         }
 
         override public object this[string name] {
             get {
-                return GetValue(GetOrdinal(name));
+                    return GetValue(GetOrdinal(name));
             }
         }
 
@@ -801,82 +862,89 @@ namespace Microsoft.Data.SqlClient
         }
 
         override public void Close() {
-            SqlStatistics statistics = null;
-            IntPtr hscp;
-            Bid.ScopeEnter(out hscp, "<sc.SqlDataReader.Close|API> %d#", ObjectID);
-            try {
-                statistics = SqlStatistics.StartTimer(Statistics);
-                TdsParserStateObject stateObj = _stateObj;
-
-                // Request that the current task is stopped
-                _cancelAsyncOnCloseTokenSource.Cancel();
-                var currentTask = _currentTask;
-                if ((currentTask != null) && (!currentTask.IsCompleted)) {
-                    try {
-                        // Wait for the task to complete
-                        ((IAsyncResult)currentTask).AsyncWaitHandle.WaitOne();
-
-                        // Ensure that we've finished reading any pending data
-                        var networkPacketTaskSource = stateObj._networkPacketTaskSource;
-                        if (networkPacketTaskSource != null) {
-                            ((IAsyncResult)networkPacketTaskSource.Task).AsyncWaitHandle.WaitOne();
-                        }
-                    }
-                    catch (Exception) {
-                        // If we receive any exceptions while waiting, something has gone horribly wrong and we need to doom the connection and fast-fail the reader
-                        _connection.InnerConnection.DoomThisConnection();
-                        _isClosed = true;
-
-                        if (stateObj != null) {
-                            lock (stateObj) {
-                                _stateObj = null;
-                                _command = null;
-                                _connection = null;
-                            }
-                        }
-
-                        throw;
-                    }
-                }
-
-                // Close down any active Streams and TextReaders (this will also wait for them to finish their async tasks)
-                // NOTE: This must be done outside of the lock on the stateObj otherwise it will deadlock with CleanupAfterAsyncInvocation
-                CloseActiveSequentialStreamAndTextReader();
-
-                if (stateObj != null) {
-
-                    // protect against concurrent close and cancel
-                    lock (stateObj) {
-
-                        if (_stateObj != null ) {  // reader not closed while we waited for the lock
-
-                            // TryCloseInternal will clear out the snapshot when it is done
-                            if (_snapshot != null) {
-#if DEBUG
-                                // The stack trace for replays will differ since they weren't captured during close
-                                stateObj._permitReplayStackTraceToDiffer = true;
-#endif
-                                PrepareForAsyncContinuation();
-                            }
-
-                            SetTimeout(_defaultTimeoutMilliseconds);
-
-                            // Close can be called from async methods in error cases,
-                            // in which case we need to switch to syncOverAsync
-                            stateObj._syncOverAsync = true;
-
-                            if (!TryCloseInternal(true /*closeReader*/)) {
-                                throw SQL.SynchronousCallMayNotPend();
-                            }
-
-                            // DO NOT USE stateObj after this point - it has been returned to the TdsParser's session pool and potentially handed out to another thread
-                        }
-                    }
-                }
+            if (SysSqlDataReader != null)
+            {
+                SysSqlDataReader.Close();
             }
-            finally {
-                SqlStatistics.StopTimer(statistics);
-                Bid.ScopeLeave(ref hscp);
+            else
+            { 
+                SqlStatistics statistics = null;
+                IntPtr hscp;
+                Bid.ScopeEnter(out hscp, "<sc.SqlDataReader.Close|API> %d#", ObjectID);
+                try {
+                    statistics = SqlStatistics.StartTimer(Statistics);
+                    TdsParserStateObject stateObj = _stateObj;
+
+                    // Request that the current task is stopped
+                    _cancelAsyncOnCloseTokenSource.Cancel();
+                    var currentTask = _currentTask;
+                    if ((currentTask != null) && (!currentTask.IsCompleted)) {
+                        try {
+                            // Wait for the task to complete
+                            ((IAsyncResult)currentTask).AsyncWaitHandle.WaitOne();
+
+                            // Ensure that we've finished reading any pending data
+                            var networkPacketTaskSource = stateObj._networkPacketTaskSource;
+                            if (networkPacketTaskSource != null) {
+                                ((IAsyncResult)networkPacketTaskSource.Task).AsyncWaitHandle.WaitOne();
+                            }
+                        }
+                        catch (Exception) {
+                            // If we receive any exceptions while waiting, something has gone horribly wrong and we need to doom the connection and fast-fail the reader
+                            _connection.InnerConnection.DoomThisConnection();
+                            _isClosed = true;
+
+                            if (stateObj != null) {
+                                lock (stateObj) {
+                                    _stateObj = null;
+                                    _command = null;
+                                    _connection = null;
+                                }
+                            }
+
+                            throw;
+                        }
+                    }
+
+                    // Close down any active Streams and TextReaders (this will also wait for them to finish their async tasks)
+                    // NOTE: This must be done outside of the lock on the stateObj otherwise it will deadlock with CleanupAfterAsyncInvocation
+                    CloseActiveSequentialStreamAndTextReader();
+
+                    if (stateObj != null) {
+
+                        // protect against concurrent close and cancel
+                        lock (stateObj) {
+
+                            if (_stateObj != null ) {  // reader not closed while we waited for the lock
+
+                                // TryCloseInternal will clear out the snapshot when it is done
+                                if (_snapshot != null) {
+    #if DEBUG
+                                    // The stack trace for replays will differ since they weren't captured during close
+                                    stateObj._permitReplayStackTraceToDiffer = true;
+    #endif
+                                    PrepareForAsyncContinuation();
+                                }
+
+                                SetTimeout(_defaultTimeoutMilliseconds);
+
+                                // Close can be called from async methods in error cases,
+                                // in which case we need to switch to syncOverAsync
+                                stateObj._syncOverAsync = true;
+
+                                if (!TryCloseInternal(true /*closeReader*/)) {
+                                    throw SQL.SynchronousCallMayNotPend();
+                                }
+
+                                // DO NOT USE stateObj after this point - it has been returned to the TdsParser's session pool and potentially handed out to another thread
+                            }
+                        }
+                    }
+                }
+                finally {
+                    SqlStatistics.StopTimer(statistics);
+                    Bid.ScopeLeave(ref hscp);
+                }
             }
         }
 
@@ -1163,15 +1231,21 @@ namespace Microsoft.Data.SqlClient
         }
 
         override public string GetDataTypeName(int i) {
-            SqlStatistics statistics = null;
-            try {
-                statistics = SqlStatistics.StartTimer(Statistics);
-                CheckMetaDataIsReady(columnIndex: i);
-
-                return GetDataTypeNameInternal(_metaData[i]);
+            if (SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetDataTypeName(i);
             }
-            finally {
-                SqlStatistics.StopTimer(statistics);
+            else {               
+                SqlStatistics statistics = null;
+                try {
+                    statistics = SqlStatistics.StartTimer(Statistics);
+                    CheckMetaDataIsReady(columnIndex: i);
+
+                    return GetDataTypeNameInternal(_metaData[i]);
+                }
+                finally {
+                    SqlStatistics.StopTimer(statistics);
+                }
             }
         }
 
@@ -1224,19 +1298,32 @@ namespace Microsoft.Data.SqlClient
         }
 
         override public IEnumerator GetEnumerator() {
-            return new DbEnumerator(this, IsCommandBehavior(CommandBehavior.CloseConnection));
+            if (SysSqlDataReader != null)
+            {
+                return new DbEnumerator(SysSqlDataReader, IsCommandBehavior(CommandBehavior.CloseConnection));
+            }
+            else
+            {
+                return new DbEnumerator(this, IsCommandBehavior(CommandBehavior.CloseConnection));
+            }
         }
 
         override public Type GetFieldType(int i) {
-            SqlStatistics statistics = null;
-            try {
-                statistics = SqlStatistics.StartTimer(Statistics);
-                CheckMetaDataIsReady(columnIndex: i);
-
-                return GetFieldTypeInternal(_metaData[i]);
+            if (SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetFieldType(i);
             }
-            finally {
-                SqlStatistics.StopTimer(statistics);
+            else { 
+                SqlStatistics statistics = null;
+                try {
+                    statistics = SqlStatistics.StartTimer(Statistics);
+                    CheckMetaDataIsReady(columnIndex: i);
+
+                    return GetFieldTypeInternal(_metaData[i]);
+                }
+                finally {
+                    SqlStatistics.StopTimer(statistics);
+                }
             }
         }
 
@@ -1309,22 +1396,36 @@ namespace Microsoft.Data.SqlClient
         }
 
         override public string GetName(int i) {
-            CheckMetaDataIsReady(columnIndex: i);
+            if (SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetName(i);
+            }
+            else {
+            
+                CheckMetaDataIsReady(columnIndex: i);
 
-            Debug.Assert(null != _metaData[i].column, "MDAC 66681");
-            return _metaData[i].column;
+                Debug.Assert(null != _metaData[i].column, "MDAC 66681");
+                return _metaData[i].column;
+            }
         }
 
         override public Type GetProviderSpecificFieldType(int i) {
-            SqlStatistics statistics = null;
-            try {
-                statistics = SqlStatistics.StartTimer(Statistics);
-                CheckMetaDataIsReady(columnIndex: i);
-
-                return GetProviderSpecificFieldTypeInternal(_metaData[i]);
+            if (SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetProviderSpecificFieldType(i);
             }
-            finally {
-                SqlStatistics.StopTimer(statistics);
+            else {            
+
+                SqlStatistics statistics = null;
+                try {
+                    statistics = SqlStatistics.StartTimer(Statistics);
+                    CheckMetaDataIsReady(columnIndex: i);
+
+                    return GetProviderSpecificFieldTypeInternal(_metaData[i]);
+                }
+                finally {
+                    SqlStatistics.StopTimer(statistics);
+                }
             }
         }
 
@@ -1374,158 +1475,224 @@ namespace Microsoft.Data.SqlClient
 
         // named field access
         override public int GetOrdinal(string name) {
-            SqlStatistics statistics = null;
-            try {
-                statistics = SqlStatistics.StartTimer(Statistics);
-                if (null == _fieldNameLookup) {
-                    CheckMetaDataIsReady();
-                    _fieldNameLookup = new FieldNameLookup(this, _defaultLCID);
-                }
-                return _fieldNameLookup.GetOrdinal(name); // MDAC 71470
+            if (SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetOrdinal(name);
             }
-            finally {
-                SqlStatistics.StopTimer(statistics);
+            else
+            {
+                SqlStatistics statistics = null;
+                try {
+                    statistics = SqlStatistics.StartTimer(Statistics);
+                    if (null == _fieldNameLookup) {
+                        CheckMetaDataIsReady();
+                        _fieldNameLookup = new FieldNameLookup(this, _defaultLCID);
+                    }
+                    return _fieldNameLookup.GetOrdinal(name); // MDAC 71470
+                }
+                finally {
+                    SqlStatistics.StopTimer(statistics);
+                }
             }
         }
 
         override public object GetProviderSpecificValue(int i) {
-            return GetSqlValue(i);
+            if (SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetProviderSpecificValue(i);
+            }
+            else
+            {
+                return GetSqlValue(i);
+            }
         }
 
         override public int GetProviderSpecificValues(object[] values) {
-            return GetSqlValues(values);
+            if (SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetProviderSpecificValues(values);
+            }
+            else
+            {
+                return GetSqlValues(values);
+            }
         }
 
         override public DataTable GetSchemaTable() {
-            SqlStatistics statistics = null;
-            IntPtr hscp;
-            Bid.ScopeEnter(out hscp, "<sc.SqlDataReader.GetSchemaTable|API> %d#", ObjectID);
-            try {
-                statistics = SqlStatistics.StartTimer(Statistics);
-                if (null == _metaData || null == _metaData.schemaTable) {
-                    if (null != this.MetaData) {
-
-                        _metaData.schemaTable = BuildSchemaTable();
-                        Debug.Assert(null != _metaData.schemaTable, "No schema information yet!");
-                        // filter table?
-                    }
-                }
-                if (null != _metaData) {
-                    return _metaData.schemaTable;
-                }
-                return null;
+            if (SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetSchemaTable();
             }
-            finally {
-                SqlStatistics.StopTimer(statistics);
-                Bid.ScopeLeave(ref hscp);
+            else
+            {
+                SqlStatistics statistics = null;
+                IntPtr hscp;
+                Bid.ScopeEnter(out hscp, "<sc.SqlDataReader.GetSchemaTable|API> %d#", ObjectID);
+                try {
+                    statistics = SqlStatistics.StartTimer(Statistics);
+                    if (null == _metaData || null == _metaData.schemaTable) {
+                        if (null != this.MetaData) {
+
+                            _metaData.schemaTable = BuildSchemaTable();
+                            Debug.Assert(null != _metaData.schemaTable, "No schema information yet!");
+                            // filter table?
+                        }
+                    }
+                    if (null != _metaData) {
+                        return _metaData.schemaTable;
+                    }
+                    return null;
+                }
+                finally {
+                    SqlStatistics.StopTimer(statistics);
+                    Bid.ScopeLeave(ref hscp);
+                }
             }
         }
 
         override public bool GetBoolean(int i) {
-            ReadColumn(i);
-            return _data[i].Boolean;
+            if (SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetBoolean(i);
+            }
+            else
+            {
+                ReadColumn(i);
+                return _data[i].Boolean;
+            }
         }
 
         virtual public XmlReader GetXmlReader(int i) {
-            // NOTE: sql_variant can not contain a XML data type: http://msdn.microsoft.com/en-us/library/ms173829.aspx
-            // If this ever changes, the following code should be changed to be like GetStream\GetTextReader
-            CheckDataIsReady(columnIndex: i, methodName: "GetXmlReader");
-
-            MetaType mt = _metaData[i].metaType;
-
-            // XmlReader only allowed on XML types
-            if (mt.SqlDbType != SqlDbType.Xml) {
-                throw SQL.XmlReaderNotSupportOnColumnType(_metaData[i].column);
+            if(SysSqlDataReader != null)
+            { 
+                return SysSqlDataReader.GetXmlReader(i);
             }
+            else
+            { 
+                // NOTE: sql_variant can not contain a XML data type: http://msdn.microsoft.com/en-us/library/ms173829.aspx
+                // If this ever changes, the following code should be changed to be like GetStream\GetTextReader
+                CheckDataIsReady(columnIndex: i, methodName: "GetXmlReader");
 
-            if (IsCommandBehavior(CommandBehavior.SequentialAccess)) {
-                // Wrap the sequential stream in an XmlReader
-                _currentStream = new SqlSequentialStream(this, i);
-                _lastColumnWithDataChunkRead = i;
-                return SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(_currentStream, closeInput: true);
-            }
-            else {
-                // Need to call ReadColumn, since we want to access the internal data structures (i.e. SqlBinary) rather than calling anther Get*() method
-                ReadColumn(i);
+                MetaType mt = _metaData[i].metaType;
 
-                if (_data[i].IsNull) {
-                    // A 'null' stream
-                    return SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(new MemoryStream(new byte[0], writable: false), closeInput: true);
+                // XmlReader only allowed on XML types
+                if (mt.SqlDbType != SqlDbType.Xml) {
+                    throw SQL.XmlReaderNotSupportOnColumnType(_metaData[i].column);
+                }
+
+                if (IsCommandBehavior(CommandBehavior.SequentialAccess)) {
+                    // Wrap the sequential stream in an XmlReader
+                    _currentStream = new SqlSequentialStream(this, i);
+                    _lastColumnWithDataChunkRead = i;
+                    return SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(_currentStream, closeInput: true);
                 }
                 else {
-                    // Grab already read data
-                    return _data[i].SqlXml.CreateReader();
+                    // Need to call ReadColumn, since we want to access the internal data structures (i.e. SqlBinary) rather than calling anther Get*() method
+                    ReadColumn(i);
+
+                    if (_data[i].IsNull) {
+                        // A 'null' stream
+                        return SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(new MemoryStream(new byte[0], writable: false), closeInput: true);
+                    }
+                    else {
+                        // Grab already read data
+                        return _data[i].SqlXml.CreateReader();
+                    }
                 }
             }
         }
 
         override public Stream GetStream(int i) {
-            CheckDataIsReady(columnIndex: i, methodName: "GetStream");
-
-            // Streaming is not supported on encrypted columns.
-            if (_metaData[i] != null && _metaData[i].cipherMD != null) {
-                throw SQL.StreamNotSupportOnEncryptedColumn(_metaData[i].column);
+            if (SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetStream(i);
             }
+            else
+            { 
+                CheckDataIsReady(columnIndex: i, methodName: "GetStream");
 
-            // Stream is only for Binary, Image, VarBinary, Udt and Xml types
-            // NOTE: IsBinType also includes Timestamp for some reason...
-            MetaType mt = _metaData[i].metaType;
-            if (((!mt.IsBinType) || (mt.SqlDbType == SqlDbType.Timestamp)) && (mt.SqlDbType != SqlDbType.Variant)) {
-                throw SQL.StreamNotSupportOnColumnType(_metaData[i].column);
-            }
+                // Streaming is not supported on encrypted columns.
+                if (_metaData[i] != null && _metaData[i].cipherMD != null) {
+                    throw SQL.StreamNotSupportOnEncryptedColumn(_metaData[i].column);
+                }
 
-            // For non-variant types with sequential access, we support proper streaming
-            if ((mt.SqlDbType != SqlDbType.Variant) && (IsCommandBehavior(CommandBehavior.SequentialAccess))) {
-                _currentStream = new SqlSequentialStream(this, i);
-                _lastColumnWithDataChunkRead = i;
-                return _currentStream;
-            }
-            else {
-                // Need to call ReadColumn, since we want to access the internal data structures (i.e. SqlBinary) rather than calling anther Get*() method
-                ReadColumn(i);
+                // Stream is only for Binary, Image, VarBinary, Udt and Xml types
+                // NOTE: IsBinType also includes Timestamp for some reason...
+                MetaType mt = _metaData[i].metaType;
+                if (((!mt.IsBinType) || (mt.SqlDbType == SqlDbType.Timestamp)) && (mt.SqlDbType != SqlDbType.Variant)) {
+                    throw SQL.StreamNotSupportOnColumnType(_metaData[i].column);
+                }
 
-                byte[] data;
-                if (_data[i].IsNull) {
-                    // A 'null' stream
-                    data = new byte[0];
+                // For non-variant types with sequential access, we support proper streaming
+                if ((mt.SqlDbType != SqlDbType.Variant) && (IsCommandBehavior(CommandBehavior.SequentialAccess))) {
+                    _currentStream = new SqlSequentialStream(this, i);
+                    _lastColumnWithDataChunkRead = i;
+                    return _currentStream;
                 }
                 else {
-                    // Grab already read data
-                    data = _data[i].SqlBinary.Value;
-                }
+                    // Need to call ReadColumn, since we want to access the internal data structures (i.e. SqlBinary) rather than calling anther Get*() method
+                    ReadColumn(i);
 
-                // If non-sequential then we just have a read-only MemoryStream
-                return new MemoryStream(data, writable: false);
+                    byte[] data;
+                    if (_data[i].IsNull) {
+                        // A 'null' stream
+                        data = new byte[0];
+                    }
+                    else {
+                        // Grab already read data
+                        data = _data[i].SqlBinary.Value;
+                    }
+
+                    // If non-sequential then we just have a read-only MemoryStream
+                    return new MemoryStream(data, writable: false);
+                }
             }
         }
 
         override public byte GetByte(int i) {
-            ReadColumn(i);
-            return _data[i].Byte;
+            if (SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetByte(i);
+            }
+            else
+            {
+                ReadColumn(i);
+                return _data[i].Byte;
+            }
         }
 
         override public long GetBytes(int i, long dataIndex, byte[] buffer, int bufferIndex, int length) {
-            SqlStatistics statistics = null;
-            long  cbBytes = 0;
-
-            CheckDataIsReady(columnIndex: i, allowPartiallyReadColumn: true, methodName: "GetBytes");
-
-            // don't allow get bytes on non-long or non-binary columns
-            MetaType mt = _metaData[i].metaType;
-            if (!(mt.IsLong || mt.IsBinType) || (SqlDbType.Xml == mt.SqlDbType)) {
-                throw SQL.NonBlobColumn(_metaData[i].column);
+            if (SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetBytes(i, dataIndex, buffer, bufferIndex, length);
             }
+            else
+            {
+                SqlStatistics statistics = null;
+                long cbBytes = 0;
 
-            try {
-                statistics = SqlStatistics.StartTimer(Statistics);
-                SetTimeout(_defaultTimeoutMilliseconds);
-                cbBytes = GetBytesInternal(i, dataIndex, buffer, bufferIndex, length);
-                _lastColumnWithDataChunkRead = i;
+                CheckDataIsReady(columnIndex: i, allowPartiallyReadColumn: true, methodName: "GetBytes");
+
+                // don't allow get bytes on non-long or non-binary columns
+                MetaType mt = _metaData[i].metaType;
+                if (!(mt.IsLong || mt.IsBinType) || (SqlDbType.Xml == mt.SqlDbType))
+                {
+                    throw SQL.NonBlobColumn(_metaData[i].column);
+                }
+
+                try
+                {
+                    statistics = SqlStatistics.StartTimer(Statistics);
+                    SetTimeout(_defaultTimeoutMilliseconds);
+                    cbBytes = GetBytesInternal(i, dataIndex, buffer, bufferIndex, length);
+                    _lastColumnWithDataChunkRead = i;
+                }
+                finally
+                {
+                    SqlStatistics.StopTimer(statistics);
+                }
+                return cbBytes;
             }
-            finally {
-                SqlStatistics.StopTimer(statistics);
-            }
-            return cbBytes;
         }
 
         // Used (indirectly) by SqlCommand.CompleteXmlReader
@@ -1871,215 +2038,270 @@ namespace Microsoft.Data.SqlClient
         }
 
         override public TextReader GetTextReader(int i) {
-            CheckDataIsReady(columnIndex: i, methodName: "GetTextReader");
-
-            // Xml type is not supported
-            MetaType mt = null;
-
-            if (_metaData[i].cipherMD != null) {
-                Debug.Assert(_metaData[i].baseTI != null, "_metaData[i].baseTI should not be null.");
-                mt = _metaData[i].baseTI.metaType;
+            if (SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetTextReader(i);
             }
-            else {
-                mt = _metaData[i].metaType;
-            }
+            else
+            {
+                CheckDataIsReady(columnIndex: i, methodName: "GetTextReader");
 
-            Debug.Assert(mt != null, @"mt should not be null.");
+                // Xml type is not supported
+                MetaType mt = null;
 
-            if (((!mt.IsCharType) && (mt.SqlDbType != SqlDbType.Variant)) || (mt.SqlDbType == SqlDbType.Xml)) {
-                throw SQL.TextReaderNotSupportOnColumnType(_metaData[i].column);
-            }
-
-            // For non-variant types with sequential access, we support proper streaming
-            if ((mt.SqlDbType != SqlDbType.Variant) && (IsCommandBehavior(CommandBehavior.SequentialAccess))) {
-                if (_metaData[i].cipherMD != null) {
-                    throw SQL.SequentialAccessNotSupportedOnEncryptedColumn(_metaData[i].column);
-                }
-
-                System.Text.Encoding encoding;
-                if (mt.IsNCharType)
+                if (_metaData[i].cipherMD != null)
                 {
-                    // NChar types always use unicode
-                    encoding = SqlUnicodeEncoding.SqlUnicodeEncodingInstance;
+                    Debug.Assert(_metaData[i].baseTI != null, "_metaData[i].baseTI should not be null.");
+                    mt = _metaData[i].baseTI.metaType;
                 }
                 else
                 {
-                    encoding = _metaData[i].encoding;
+                    mt = _metaData[i].metaType;
                 }
 
-                _currentTextReader = new SqlSequentialTextReader(this, i, encoding);
-                _lastColumnWithDataChunkRead = i;
-                return _currentTextReader;
-            }
-            else {
-                // Need to call ReadColumn, since we want to access the internal data structures (i.e. SqlString) rather than calling anther Get*() method
-                ReadColumn(i);
+                Debug.Assert(mt != null, @"mt should not be null.");
 
-                string data;
-                if (_data[i].IsNull) {
-                    // A 'null' stream
-                    data = string.Empty;
-                }
-                else {
-                    // Grab already read data
-                    data = _data[i].SqlString.Value;
+                if (((!mt.IsCharType) && (mt.SqlDbType != SqlDbType.Variant)) || (mt.SqlDbType == SqlDbType.Xml))
+                {
+                    throw SQL.TextReaderNotSupportOnColumnType(_metaData[i].column);
                 }
 
-                // We've already read the data, so just wrap it in a StringReader
-                return new StringReader(data);
+                // For non-variant types with sequential access, we support proper streaming
+                if ((mt.SqlDbType != SqlDbType.Variant) && (IsCommandBehavior(CommandBehavior.SequentialAccess)))
+                {
+                    if (_metaData[i].cipherMD != null)
+                    {
+                        throw SQL.SequentialAccessNotSupportedOnEncryptedColumn(_metaData[i].column);
+                    }
+
+                    System.Text.Encoding encoding;
+                    if (mt.IsNCharType)
+                    {
+                        // NChar types always use unicode
+                        encoding = SqlUnicodeEncoding.SqlUnicodeEncodingInstance;
+                    }
+                    else
+                    {
+                        encoding = _metaData[i].encoding;
+                    }
+
+                    _currentTextReader = new SqlSequentialTextReader(this, i, encoding);
+                    _lastColumnWithDataChunkRead = i;
+                    return _currentTextReader;
+                }
+                else
+                {
+                    // Need to call ReadColumn, since we want to access the internal data structures (i.e. SqlString) rather than calling anther Get*() method
+                    ReadColumn(i);
+
+                    string data;
+                    if (_data[i].IsNull)
+                    {
+                        // A 'null' stream
+                        data = string.Empty;
+                    }
+                    else
+                    {
+                        // Grab already read data
+                        data = _data[i].SqlString.Value;
+                    }
+
+                    // We've already read the data, so just wrap it in a StringReader
+                    return new StringReader(data);
+                }
+
             }
         }
 
         [ EditorBrowsableAttribute(EditorBrowsableState.Never) ] // MDAC 69508
         override public char GetChar(int i) {
-            throw ADP.NotSupported();
+            if (SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetChar(i);
+            }
+            else
+            {
+                throw ADP.NotSupported();
+            }
         }
 
         override public long GetChars(int i, long dataIndex, char[] buffer, int bufferIndex, int length) {
-            SqlStatistics statistics = null;
-
-            CheckMetaDataIsReady(columnIndex: i);
-
-            if (_currentTask != null) {
-                throw ADP.AsyncOperationPending();
+            if (SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetChars(i, dataIndex, buffer, bufferIndex, length);
             }
+            else
+            {
+                SqlStatistics statistics = null;
 
-            MetaType mt = null;
-            if (_metaData[i].cipherMD != null) {
-                Debug.Assert(_metaData[i].baseTI != null, @"_metaData[i].baseTI should not be null.");
-                mt = _metaData[i].baseTI.metaType;
-            }
-            else {
-                mt = _metaData[i].metaType;
-            }
+                CheckMetaDataIsReady(columnIndex: i);
 
-            Debug.Assert(mt != null, "mt should not be null.");
+                if (_currentTask != null)
+                {
+                    throw ADP.AsyncOperationPending();
+                }
 
-            SqlDbType sqlDbType;
-            if (_metaData[i].cipherMD != null) {
-                Debug.Assert(_metaData[i].baseTI != null, @"_metaData[i].baseTI should not be null.");
-                sqlDbType = _metaData[i].baseTI.type;
-            }
-            else {
-                sqlDbType = _metaData[i].type;
-            }
+                MetaType mt = null;
+                if (_metaData[i].cipherMD != null)
+                {
+                    Debug.Assert(_metaData[i].baseTI != null, @"_metaData[i].baseTI should not be null.");
+                    mt = _metaData[i].baseTI.metaType;
+                }
+                else
+                {
+                    mt = _metaData[i].metaType;
+                }
 
-            try {
-                statistics = SqlStatistics.StartTimer(Statistics);
-                SetTimeout(_defaultTimeoutMilliseconds);
-                if ((mt.IsPlp) &&
-                    (IsCommandBehavior(CommandBehavior.SequentialAccess)) ) {
-                    if (length < 0) {
-                        throw ADP.InvalidDataLength(length);
-                    }
+                Debug.Assert(mt != null, "mt should not be null.");
 
-                    if (_metaData[i].cipherMD != null) {
-                        throw SQL.SequentialAccessNotSupportedOnEncryptedColumn(_metaData[i].column);
-                    }
+                SqlDbType sqlDbType;
+                if (_metaData[i].cipherMD != null)
+                {
+                    Debug.Assert(_metaData[i].baseTI != null, @"_metaData[i].baseTI should not be null.");
+                    sqlDbType = _metaData[i].baseTI.type;
+                }
+                else
+                {
+                    sqlDbType = _metaData[i].type;
+                }
 
-                    // if bad buffer index, throw
-                    if ((bufferIndex < 0) || (buffer != null && bufferIndex >= buffer.Length)) {
-                        throw ADP.InvalidDestinationBufferIndex(buffer.Length, bufferIndex, "bufferIndex");
-                    }
-
-                    // if there is not enough room in the buffer for data
-                    if (buffer != null && (length + bufferIndex > buffer.Length)) {
-                        throw ADP.InvalidBufferSizeOrIndex(length, bufferIndex);
-                    }
-                    long charsRead = 0;
-                    if ( sqlDbType == SqlDbType.Xml ) {
-                        try {
-                            CheckDataIsReady(columnIndex: i, allowPartiallyReadColumn: true, methodName: "GetChars");
+                try
+                {
+                    statistics = SqlStatistics.StartTimer(Statistics);
+                    SetTimeout(_defaultTimeoutMilliseconds);
+                    if ((mt.IsPlp) &&
+                        (IsCommandBehavior(CommandBehavior.SequentialAccess)))
+                    {
+                        if (length < 0)
+                        {
+                            throw ADP.InvalidDataLength(length);
                         }
-                        catch (Exception ex) {
-                            // Dev11 Bug #315513: Exception type breaking change from 4.0 RTM when calling GetChars on null xml
-                            // We need to wrap all exceptions inside a TargetInvocationException to simulate calling CreateSqlReader via MethodInfo.Invoke
-                            if (ADP.IsCatchableExceptionType(ex)) {
-                                throw new TargetInvocationException(ex);
-                            }
-                            else {
-                                throw;
-                            }
+
+                        if (_metaData[i].cipherMD != null)
+                        {
+                            throw SQL.SequentialAccessNotSupportedOnEncryptedColumn(_metaData[i].column);
                         }
-                        charsRead = GetStreamingXmlChars(i, dataIndex, buffer, bufferIndex, length);
-                    }
-                    else {
-                        CheckDataIsReady(columnIndex: i, allowPartiallyReadColumn: true, methodName: "GetChars");
-                        charsRead = GetCharsFromPlpData(i, dataIndex, buffer, bufferIndex, length);
-                    }
-                    _lastColumnWithDataChunkRead = i;
-                    return charsRead;
-                }
 
-                // Did we start reading this value yet?
-                if ((_sharedState._nextColumnDataToRead == (i+1)) && (_sharedState._nextColumnHeaderToRead == (i+1)) && (_columnDataChars != null) && (IsCommandBehavior(CommandBehavior.SequentialAccess)) && (dataIndex < _columnDataCharsRead)) {
-                    // Don't allow re-read of same chars in sequential access mode
-                    throw ADP.NonSeqByteAccess(dataIndex, _columnDataCharsRead, ADP.GetChars);
-                }
+                        // if bad buffer index, throw
+                        if ((bufferIndex < 0) || (buffer != null && bufferIndex >= buffer.Length))
+                        {
+                            throw ADP.InvalidDestinationBufferIndex(buffer.Length, bufferIndex, "bufferIndex");
+                        }
 
-                if (_columnDataCharsIndex != i) {
-                    // if the object doesn't contain a char[] then the user will get an exception
-                    string s = GetSqlString(i).Value;
-
-                    _columnDataChars = s.ToCharArray();
-                    _columnDataCharsRead = 0;
-                    _columnDataCharsIndex = i;
-                }
-
-                int cchars = _columnDataChars.Length;
-
-                // note that since we are caching in an array, and arrays aren't 64 bit ready yet,
-                // we need can cast to int if the dataIndex is in range
-                if (dataIndex > Int32.MaxValue) {
-                    throw ADP.InvalidSourceBufferIndex(cchars, dataIndex, "dataIndex");
-                }
-                int ndataIndex = (int)dataIndex;
-
-                // if no buffer is passed in, return the number of characters we have
-                if (null == buffer)
-                    return cchars;
-
-                // if dataIndex outside of data range, return 0
-                if (ndataIndex < 0 || ndataIndex >= cchars)
-                    return 0;
-
-                try {
-                    if (ndataIndex < cchars) {
-                        // help the user out in the case where there's less data than requested
-                        if ((ndataIndex + length) > cchars)
-                            cchars = cchars - ndataIndex;
+                        // if there is not enough room in the buffer for data
+                        if (buffer != null && (length + bufferIndex > buffer.Length))
+                        {
+                            throw ADP.InvalidBufferSizeOrIndex(length, bufferIndex);
+                        }
+                        long charsRead = 0;
+                        if (sqlDbType == SqlDbType.Xml)
+                        {
+                            try
+                            {
+                                CheckDataIsReady(columnIndex: i, allowPartiallyReadColumn: true, methodName: "GetChars");
+                            }
+                            catch (Exception ex)
+                            {
+                                // Dev11 Bug #315513: Exception type breaking change from 4.0 RTM when calling GetChars on null xml
+                                // We need to wrap all exceptions inside a TargetInvocationException to simulate calling CreateSqlReader via MethodInfo.Invoke
+                                if (ADP.IsCatchableExceptionType(ex))
+                                {
+                                    throw new TargetInvocationException(ex);
+                                }
+                                else
+                                {
+                                    throw;
+                                }
+                            }
+                            charsRead = GetStreamingXmlChars(i, dataIndex, buffer, bufferIndex, length);
+                        }
                         else
-                            cchars = length;
+                        {
+                            CheckDataIsReady(columnIndex: i, allowPartiallyReadColumn: true, methodName: "GetChars");
+                            charsRead = GetCharsFromPlpData(i, dataIndex, buffer, bufferIndex, length);
+                        }
+                        _lastColumnWithDataChunkRead = i;
+                        return charsRead;
                     }
 
-                    Array.Copy(_columnDataChars, ndataIndex, buffer, bufferIndex, cchars);
-                    _columnDataCharsRead += cchars;
-                }
-                catch (Exception e) {
-                    // UNDONE - should not be catching all exceptions!!!
-                    if (!ADP.IsCatchableExceptionType(e)) {
+                    // Did we start reading this value yet?
+                    if ((_sharedState._nextColumnDataToRead == (i + 1)) && (_sharedState._nextColumnHeaderToRead == (i + 1)) && (_columnDataChars != null) && (IsCommandBehavior(CommandBehavior.SequentialAccess)) && (dataIndex < _columnDataCharsRead))
+                    {
+                        // Don't allow re-read of same chars in sequential access mode
+                        throw ADP.NonSeqByteAccess(dataIndex, _columnDataCharsRead, ADP.GetChars);
+                    }
+
+                    if (_columnDataCharsIndex != i)
+                    {
+                        // if the object doesn't contain a char[] then the user will get an exception
+                        string s = GetSqlString(i).Value;
+
+                        _columnDataChars = s.ToCharArray();
+                        _columnDataCharsRead = 0;
+                        _columnDataCharsIndex = i;
+                    }
+
+                    int cchars = _columnDataChars.Length;
+
+                    // note that since we are caching in an array, and arrays aren't 64 bit ready yet,
+                    // we need can cast to int if the dataIndex is in range
+                    if (dataIndex > Int32.MaxValue)
+                    {
+                        throw ADP.InvalidSourceBufferIndex(cchars, dataIndex, "dataIndex");
+                    }
+                    int ndataIndex = (int)dataIndex;
+
+                    // if no buffer is passed in, return the number of characters we have
+                    if (null == buffer)
+                        return cchars;
+
+                    // if dataIndex outside of data range, return 0
+                    if (ndataIndex < 0 || ndataIndex >= cchars)
+                        return 0;
+
+                    try
+                    {
+                        if (ndataIndex < cchars)
+                        {
+                            // help the user out in the case where there's less data than requested
+                            if ((ndataIndex + length) > cchars)
+                                cchars = cchars - ndataIndex;
+                            else
+                                cchars = length;
+                        }
+
+                        Array.Copy(_columnDataChars, ndataIndex, buffer, bufferIndex, cchars);
+                        _columnDataCharsRead += cchars;
+                    }
+                    catch (Exception e)
+                    {
+                        // UNDONE - should not be catching all exceptions!!!
+                        if (!ADP.IsCatchableExceptionType(e))
+                        {
+                            throw;
+                        }
+                        cchars = _columnDataChars.Length;
+
+                        if (length < 0)
+                            throw ADP.InvalidDataLength(length);
+
+                        // if bad buffer index, throw
+                        if (bufferIndex < 0 || bufferIndex >= buffer.Length)
+                            throw ADP.InvalidDestinationBufferIndex(buffer.Length, bufferIndex, "bufferIndex");
+
+                        // if there is not enough room in the buffer for data
+                        if (cchars + bufferIndex > buffer.Length)
+                            throw ADP.InvalidBufferSizeOrIndex(cchars, bufferIndex);
+
                         throw;
                     }
-                    cchars = _columnDataChars.Length;
 
-                    if (length < 0)
-                       throw ADP.InvalidDataLength(length);
-
-                    // if bad buffer index, throw
-                    if (bufferIndex < 0 || bufferIndex >= buffer.Length)
-                        throw ADP.InvalidDestinationBufferIndex(buffer.Length, bufferIndex, "bufferIndex");
-
-                    // if there is not enough room in the buffer for data
-                    if (cchars + bufferIndex > buffer.Length)
-                        throw ADP.InvalidBufferSizeOrIndex(cchars, bufferIndex);
-
-                    throw;
+                    return cchars;
                 }
-
-                return cchars;
-            }
-            finally {
-                SqlStatistics.StopTimer(statistics);
+                finally
+                {
+                    SqlStatistics.StopTimer(statistics);
+                }
             }
         }
 
@@ -2231,186 +2453,362 @@ namespace Microsoft.Data.SqlClient
         }
 
         override public DateTime GetDateTime(int i) {
-            ReadColumn(i);
-
-            DateTime dt = _data[i].DateTime;
-            // This accessor can be called for regular DateTime column. In this case we should not throw
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].IsNewKatmaiDateTimeType) {
-                // TypeSystem.SQLServer2005 or less
-
-                // If the above succeeds, then we received a valid DateTime instance, now we need to force
-                // an InvalidCastException since DateTime is not exposed with the version knob in this setting.
-                // To do so, we simply force the exception by casting the string representation of the value
-                // To DateTime.
-                object temp = (object) _data[i].String;
-                dt = (DateTime) temp;
+            if (SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetDateTime(i);
             }
+            else
+            {
+                ReadColumn(i);
 
-            return dt;
+                DateTime dt = _data[i].DateTime;
+                // This accessor can be called for regular DateTime column. In this case we should not throw
+                if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].IsNewKatmaiDateTimeType)
+                {
+                    // TypeSystem.SQLServer2005 or less
+
+                    // If the above succeeds, then we received a valid DateTime instance, now we need to force
+                    // an InvalidCastException since DateTime is not exposed with the version knob in this setting.
+                    // To do so, we simply force the exception by casting the string representation of the value
+                    // To DateTime.
+                    object temp = (object)_data[i].String;
+                    dt = (DateTime)temp;
+                }
+
+                return dt;
+            }
         }
 
         override public Decimal GetDecimal(int i) {
-            ReadColumn(i);
-            return _data[i].Decimal;
+            if (SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetDecimal(i);
+            }
+            else
+            {
+                ReadColumn(i);
+                return _data[i].Decimal;
+            }
         }
 
         override public double GetDouble(int i) {
-            ReadColumn(i);
-            return _data[i].Double;
+            if (SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetDouble(i);
+            }
+            else
+            {
+                ReadColumn(i);
+                return _data[i].Double;
+            }
         }
 
         override public float GetFloat(int i) {
-            ReadColumn(i);
-            return _data[i].Single;
+            if (SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetFloat(i);
+            }
+            else
+            {
+                ReadColumn(i);
+                return _data[i].Single;
+            }
         }
 
         override public Guid GetGuid(int i) {
-            ReadColumn(i);
-            return _data[i].SqlGuid.Value;
+            if (SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetGuid(i);
+            }
+            else
+            {
+                ReadColumn(i);
+                return _data[i].SqlGuid.Value;
+            }
         }
 
         override public Int16 GetInt16(int i) {
-            ReadColumn(i);
-            return _data[i].Int16;
+            if (SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetInt16(i);
+            }
+            else
+            {
+                ReadColumn(i);
+                return _data[i].Int16;
+            }
         }
 
         override public Int32 GetInt32(int i) {
-            ReadColumn(i);
-            return _data[i].Int32;
+            if (SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetInt32(i);
+            }
+            else
+            {
+                ReadColumn(i);
+                return _data[i].Int32;
+            }
         }
 
         override public Int64 GetInt64(int i) {
-            ReadColumn(i);
-            return _data[i].Int64;
+            if (SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetInt64(i);
+            }
+            else
+            {
+                ReadColumn(i);
+                return _data[i].Int64;
+            }
         }
 
         virtual public SqlBoolean GetSqlBoolean(int i) {
-            ReadColumn(i);
-            return _data[i].SqlBoolean;
+            if(SysSqlDataReader != null)
+            { 
+                return SysSqlDataReader.GetSqlBoolean(i);
+            }
+            else
+            { 
+                ReadColumn(i);
+                return _data[i].SqlBoolean;
+            }
         }
 
         virtual public SqlBinary GetSqlBinary(int i) {
-            ReadColumn(i, setTimeout: true, allowPartiallyReadColumn: true);
-            return _data[i].SqlBinary;
+            if(SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetSqlBinary(i);
+            }
+            else
+            { 
+                ReadColumn(i, setTimeout: true, allowPartiallyReadColumn: true);
+                return _data[i].SqlBinary;
+            }
         }
 
         virtual public SqlByte GetSqlByte(int i) {
-            ReadColumn(i);
-            return _data[i].SqlByte;
+            if(SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetSqlByte(i);
+            }
+            else
+            { 
+                ReadColumn(i);
+                return _data[i].SqlByte;
+            }
         }
 
         virtual public SqlBytes GetSqlBytes(int i) {
-            ReadColumn(i);
-            SqlBinary data = _data[i].SqlBinary;
-            return new SqlBytes(data);
+            if(SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetSqlBytes(i);
+            }
+            else
+            { 
+                ReadColumn(i);
+                SqlBinary data = _data[i].SqlBinary;
+                return new SqlBytes(data);
+            }
         }
 
         virtual public SqlChars GetSqlChars(int i) {
-            ReadColumn(i);
-            SqlString data;
-            // Convert Katmai types to string
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].IsNewKatmaiDateTimeType)
+            if(SysSqlDataReader != null)
             {
-                data = _data[i].KatmaiDateTimeSqlString;
-            } else {
-                data = _data[i].SqlString;
+                return SysSqlDataReader.GetSqlChars(i);
             }
-            return new SqlChars(data);
+            else
+            { 
+                ReadColumn(i);
+                SqlString data;
+                // Convert Katmai types to string
+                if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].IsNewKatmaiDateTimeType)
+                {
+                    data = _data[i].KatmaiDateTimeSqlString;
+                } else {
+                    data = _data[i].SqlString;
+                }
+                return new SqlChars(data);
+            }
         }
 
         virtual public SqlDateTime GetSqlDateTime(int i) {
-            ReadColumn(i);
-            return _data[i].SqlDateTime;
+            if(SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetSqlDateTime(i);
+            }
+            else
+            { 
+                ReadColumn(i);
+                return _data[i].SqlDateTime;
+            }
         }
 
         virtual public SqlDecimal GetSqlDecimal(int i) {
-            ReadColumn(i);
-            return _data[i].SqlDecimal;
+            if(SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetSqlDecimal(i);
+            }
+            else
+            { 
+                ReadColumn(i);
+                return _data[i].SqlDecimal;
+            }
         }
 
         virtual public SqlGuid GetSqlGuid(int i) {
-            ReadColumn(i);
-            return _data[i].SqlGuid;
+            if(SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetSqlGuid(i);
+            }
+            else
+            { 
+                ReadColumn(i);
+                return _data[i].SqlGuid;
+            }
         }
 
         virtual public SqlDouble GetSqlDouble(int i) {
-            ReadColumn(i);
-            return _data[i].SqlDouble;
+            if(SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetSqlDouble(i);
+            }
+            else
+            { 
+                ReadColumn(i);
+                return _data[i].SqlDouble;
+            }
         }
 
         virtual public SqlInt16 GetSqlInt16(int i) {
-            ReadColumn(i);
-            return _data[i].SqlInt16;
+            if(SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetSqlInt16(i);
+            }
+            else
+            { 
+                ReadColumn(i);
+                return _data[i].SqlInt16;
+            }
         }
 
         virtual public SqlInt32 GetSqlInt32(int i) {
-            ReadColumn(i);
-            return _data[i].SqlInt32;
+            if(SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetSqlInt32(i);
+            }
+            else
+            { 
+                ReadColumn(i);
+                return _data[i].SqlInt32;
+            }
         }
 
         virtual public SqlInt64 GetSqlInt64(int i) {
-            ReadColumn(i);
-            return _data[i].SqlInt64;
+            if(SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetSqlInt64(i);
+            }
+            else
+            { 
+                ReadColumn(i);
+                return _data[i].SqlInt64;
+            }
         }
 
         virtual public SqlMoney GetSqlMoney(int i) {
-            ReadColumn(i);
-            return _data[i].SqlMoney;
+            if(SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetSqlMoney(i);
+            }
+            else
+            { 
+                ReadColumn(i);
+                return _data[i].SqlMoney;
+            }
         }
 
         virtual public SqlSingle GetSqlSingle(int i) {
-            ReadColumn(i);
-            return _data[i].SqlSingle;
+            if(SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetSqlSingle(i);
+            }
+            else
+            { 
+                ReadColumn(i);
+                return _data[i].SqlSingle;
+            }
         }
 
         // UNDONE: need non-unicode SqlString support
         virtual public SqlString GetSqlString(int i) {
-            ReadColumn(i);
-
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].IsNewKatmaiDateTimeType) {
-                return _data[i].KatmaiDateTimeSqlString;
+            if(SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetSqlString(i);
             }
+            else
+            { 
+                ReadColumn(i);
 
-            return _data[i].SqlString;
+                if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].IsNewKatmaiDateTimeType) {
+                    return _data[i].KatmaiDateTimeSqlString;
+                }
+
+                return _data[i].SqlString;
+            }
         }
 
         virtual public SqlXml GetSqlXml(int i){
-            ReadColumn(i);
-            SqlXml sx = null;
-
-            if (_typeSystem != SqlConnectionString.TypeSystem.SQLServer2000) {
-                // TypeSystem.SQLServer2005
-
-                sx = _data[i].IsNull ? SqlXml.Null : _data[i].SqlCachedBuffer.ToSqlXml();
+            if(SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetSqlXml(i);
             }
-            else {
-                // TypeSystem.SQLServer2000
+            else
+            { 
+                ReadColumn(i);
+                SqlXml sx = null;
 
-                // First, attempt to obtain SqlXml value.  If not SqlXml, we will throw the appropriate
-                // cast exception.
-                sx = _data[i].IsNull ? SqlXml.Null : _data[i].SqlCachedBuffer.ToSqlXml();
+                if (_typeSystem != SqlConnectionString.TypeSystem.SQLServer2000) {
+                    // TypeSystem.SQLServer2005
 
-                // If the above succeeds, then we received a valid SqlXml instance, now we need to force
-                // an InvalidCastException since SqlXml is not exposed with the version knob in this setting.
-                // To do so, we simply force the exception by casting the string representation of the value
-                // To SqlXml.
-                object temp = (object) _data[i].String;
-                sx = (SqlXml) temp;
+                    sx = _data[i].IsNull ? SqlXml.Null : _data[i].SqlCachedBuffer.ToSqlXml();
+                }
+                else {
+                    // TypeSystem.SQLServer2000
+
+                    // First, attempt to obtain SqlXml value.  If not SqlXml, we will throw the appropriate
+                    // cast exception.
+                    sx = _data[i].IsNull ? SqlXml.Null : _data[i].SqlCachedBuffer.ToSqlXml();
+
+                    // If the above succeeds, then we received a valid SqlXml instance, now we need to force
+                    // an InvalidCastException since SqlXml is not exposed with the version knob in this setting.
+                    // To do so, we simply force the exception by casting the string representation of the value
+                    // To SqlXml.
+                    object temp = (object) _data[i].String;
+                    sx = (SqlXml) temp;
+                }
+
+                return sx;
             }
-
-            return sx;
         }
 
         virtual public object GetSqlValue(int i) {
-            SqlStatistics statistics = null;
-            try {
-                statistics = SqlStatistics.StartTimer(Statistics);
-
-                SetTimeout(_defaultTimeoutMilliseconds);
-                return GetSqlValueInternal(i);
+            if(SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetSqlValue(i);
             }
-            finally {
-                SqlStatistics.StopTimer(statistics);
+            else
+            { 
+                SqlStatistics statistics = null;
+                try {
+                    statistics = SqlStatistics.StartTimer(Statistics);
+
+                    SetTimeout(_defaultTimeoutMilliseconds);
+                    return GetSqlValueInternal(i);
+                }
+                finally {
+                    SqlStatistics.StopTimer(statistics);
+                }
             }
         }
 
@@ -2470,101 +2868,148 @@ namespace Microsoft.Data.SqlClient
         }
 
         virtual public int GetSqlValues(object[] values){
-            SqlStatistics statistics = null;
-            try {
-                statistics = SqlStatistics.StartTimer(Statistics);
-                CheckDataIsReady();
-                if (null == values) {
-                    throw ADP.ArgumentNull("values");
-                }
-
-                SetTimeout(_defaultTimeoutMilliseconds);
-
-                int copyLen = (values.Length < _metaData.visibleColumns) ? values.Length : _metaData.visibleColumns;
-
-                for (int i = 0; i < copyLen; i++) {
-                    values[_metaData.indexMap[i]] = GetSqlValueInternal(i);
-                }
-                return copyLen;
+            if(SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetSqlValues(values);
             }
-            finally {
-                SqlStatistics.StopTimer(statistics);
+            else
+            { 
+                SqlStatistics statistics = null;
+                try {
+                    statistics = SqlStatistics.StartTimer(Statistics);
+                    CheckDataIsReady();
+                    if (null == values) {
+                        throw ADP.ArgumentNull("values");
+                    }
+
+                    SetTimeout(_defaultTimeoutMilliseconds);
+
+                    int copyLen = (values.Length < _metaData.visibleColumns) ? values.Length : _metaData.visibleColumns;
+
+                    for (int i = 0; i < copyLen; i++) {
+                        values[_metaData.indexMap[i]] = GetSqlValueInternal(i);
+                    }
+                    return copyLen;
+                }
+                finally {
+                    SqlStatistics.StopTimer(statistics);
+                }
             }
         }
 
         override public string GetString(int i) {
-            ReadColumn(i);
-
-            // Convert katmai value to string if type system knob is 2005 or earlier
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].IsNewKatmaiDateTimeType) {
-                return _data[i].KatmaiDateTimeString;
+            if (SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetString(i);
             }
+            else
+            {
+                ReadColumn(i);
 
-            return _data[i].String;
+                // Convert katmai value to string if type system knob is 2005 or earlier
+                if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].IsNewKatmaiDateTimeType)
+                {
+                    return _data[i].KatmaiDateTimeString;
+                }
+
+                return _data[i].String;
+            }
         }
 
         override public T GetFieldValue<T>(int i) {
-            SqlStatistics statistics = null;
-            try {
-                statistics = SqlStatistics.StartTimer(Statistics);
-
-                SetTimeout(_defaultTimeoutMilliseconds);
-                return GetFieldValueInternal<T>(i);
+            if (SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetFieldValue<T>(i);
             }
-            finally {
-                SqlStatistics.StopTimer(statistics);
+            else
+            {
+                SqlStatistics statistics = null;
+                try
+                {
+                    statistics = SqlStatistics.StartTimer(Statistics);
+
+                    SetTimeout(_defaultTimeoutMilliseconds);
+                    return GetFieldValueInternal<T>(i);
+                }
+                finally
+                {
+                    SqlStatistics.StopTimer(statistics);
+                }
             }
         }
 
         override public object GetValue(int i) {
-            SqlStatistics statistics = null;
-            try {
-                statistics = SqlStatistics.StartTimer(Statistics);
-
-                SetTimeout(_defaultTimeoutMilliseconds);
-                return GetValueInternal(i);
+            if (SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetValue(i);
             }
-            finally {
-                SqlStatistics.StopTimer(statistics);
+            else
+            {
+                SqlStatistics statistics = null;
+                try
+                {
+                    statistics = SqlStatistics.StartTimer(Statistics);
+
+                    SetTimeout(_defaultTimeoutMilliseconds);
+                    return GetValueInternal(i);
+                }
+                finally
+                {
+                    SqlStatistics.StopTimer(statistics);
+                }
             }
         }
 
         virtual public TimeSpan GetTimeSpan(int i) {
-            ReadColumn(i);
-
-            TimeSpan t = _data[i].Time;
-
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005) {
-                // TypeSystem.SQLServer2005 or less
-
-                // If the above succeeds, then we received a valid TimeSpan instance, now we need to force
-                // an InvalidCastException since TimeSpan is not exposed with the version knob in this setting.
-                // To do so, we simply force the exception by casting the string representation of the value
-                // To TimeSpan.
-                object temp = (object) _data[i].String;
-                t = (TimeSpan) temp;
+            if(SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetTimeSpan(i);
             }
+            else
+            { 
+                ReadColumn(i);
 
-            return t;
+                TimeSpan t = _data[i].Time;
+
+                if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005) {
+                    // TypeSystem.SQLServer2005 or less
+
+                    // If the above succeeds, then we received a valid TimeSpan instance, now we need to force
+                    // an InvalidCastException since TimeSpan is not exposed with the version knob in this setting.
+                    // To do so, we simply force the exception by casting the string representation of the value
+                    // To TimeSpan.
+                    object temp = (object) _data[i].String;
+                    t = (TimeSpan) temp;
+                }
+
+                return t;
+            }
         }
 
         virtual public DateTimeOffset GetDateTimeOffset(int i) {
-            ReadColumn(i);
-
-            DateTimeOffset dto = _data[i].DateTimeOffset;
-
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005) {
-                // TypeSystem.SQLServer2005 or less
-
-                // If the above succeeds, then we received a valid DateTimeOffset instance, now we need to force
-                // an InvalidCastException since DateTime is not exposed with the version knob in this setting.
-                // To do so, we simply force the exception by casting the string representation of the value
-                // To DateTimeOffset.
-                object temp = (object) _data[i].String;
-                dto = (DateTimeOffset) temp;
+            if(SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetDateTimeOffset(i);
             }
+            else
+            { 
+                ReadColumn(i);
 
-            return dto;
+                DateTimeOffset dto = _data[i].DateTimeOffset;
+
+                if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005) {
+                    // TypeSystem.SQLServer2005 or less
+
+                    // If the above succeeds, then we received a valid DateTimeOffset instance, now we need to force
+                    // an InvalidCastException since DateTime is not exposed with the version knob in this setting.
+                    // To do so, we simply force the exception by casting the string representation of the value
+                    // To DateTimeOffset.
+                    object temp = (object) _data[i].String;
+                    dto = (DateTimeOffset) temp;
+                }
+
+                return dto;
+            }
         }
 
         private object GetValueInternal(int i) {
@@ -2673,49 +3118,62 @@ namespace Microsoft.Data.SqlClient
         }
 
         override public int GetValues(object[] values) {
-            SqlStatistics statistics = null;
-            bool sequentialAccess = IsCommandBehavior(CommandBehavior.SequentialAccess);
-
-            try {
-                statistics = SqlStatistics.StartTimer(Statistics);
-
-                if (null == values) {
-                    throw ADP.ArgumentNull("values");
-                }
-
-                CheckMetaDataIsReady();
-
-                int copyLen = (values.Length < _metaData.visibleColumns) ? values.Length : _metaData.visibleColumns;
-                int maximumColumn = copyLen - 1;
-
-                SetTimeout(_defaultTimeoutMilliseconds);
-
-                // Temporarily disable sequential access
-                _commandBehavior &= ~CommandBehavior.SequentialAccess;
-
-                // Read in all of the columns in one TryReadColumn call
-                bool result = TryReadColumn(maximumColumn, setTimeout: false);
-                if (!result) { throw SQL.SynchronousCallMayNotPend(); }
-
-                for (int i = 0; i < copyLen; i++) {
-                    // Get the usable, TypeSystem-compatible value from the iternal buffer
-                    values[_metaData.indexMap[i]] = GetValueFromSqlBufferInternal(_data[i], _metaData[i]);
-
-                    // If this is sequential access, then we need to wipe the internal buffer
-                    if ((sequentialAccess) && (i < maximumColumn)) {
-                        _data[i].Clear();
-                    }
-                }
-
-                return copyLen;
+            if (SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetValues(values);
             }
-            finally {
-                // Restore sequential access
-                if (sequentialAccess) {
-                    _commandBehavior |= CommandBehavior.SequentialAccess;
-                }
+            else
+            {
+                SqlStatistics statistics = null;
+                bool sequentialAccess = IsCommandBehavior(CommandBehavior.SequentialAccess);
 
-                SqlStatistics.StopTimer(statistics);
+                try
+                {
+                    statistics = SqlStatistics.StartTimer(Statistics);
+
+                    if (null == values)
+                    {
+                        throw ADP.ArgumentNull("values");
+                    }
+
+                    CheckMetaDataIsReady();
+
+                    int copyLen = (values.Length < _metaData.visibleColumns) ? values.Length : _metaData.visibleColumns;
+                    int maximumColumn = copyLen - 1;
+
+                    SetTimeout(_defaultTimeoutMilliseconds);
+
+                    // Temporarily disable sequential access
+                    _commandBehavior &= ~CommandBehavior.SequentialAccess;
+
+                    // Read in all of the columns in one TryReadColumn call
+                    bool result = TryReadColumn(maximumColumn, setTimeout: false);
+                    if (!result) { throw SQL.SynchronousCallMayNotPend(); }
+
+                    for (int i = 0; i < copyLen; i++)
+                    {
+                        // Get the usable, TypeSystem-compatible value from the iternal buffer
+                        values[_metaData.indexMap[i]] = GetValueFromSqlBufferInternal(_data[i], _metaData[i]);
+
+                        // If this is sequential access, then we need to wipe the internal buffer
+                        if ((sequentialAccess) && (i < maximumColumn))
+                        {
+                            _data[i].Clear();
+                        }
+                    }
+
+                    return copyLen;
+                }
+                finally
+                {
+                    // Restore sequential access
+                    if (sequentialAccess)
+                    {
+                        _commandBehavior |= CommandBehavior.SequentialAccess;
+                    }
+
+                    SqlStatistics.StopTimer(statistics);
+                }
             }
         }
 
@@ -2918,24 +3376,33 @@ namespace Microsoft.Data.SqlClient
         }
 
         override public bool IsDBNull(int i) {
-            if ((IsCommandBehavior(CommandBehavior.SequentialAccess)) && ((_sharedState._nextColumnHeaderToRead > i + 1) || (_lastColumnWithDataChunkRead > i))) {
-                // Bug 447026 : A breaking change in System.Data .NET 4.5 for calling IsDBNull on commands in SequentialAccess mode
-                // http://vstfdevdiv:8080/web/wi.aspx?pcguid=22f9acc9-569a-41ff-b6ac-fac1b6370209&id=447026
-                // In .Net 4.0 and previous, it was possible to read a previous column using IsDBNull when in sequential mode
-                // However, since it had already gone past the column, the current IsNull value is simply returned
-
-                // To replicate this behavior we will skip CheckHeaderIsReady\ReadColumnHeader and instead just check that the reader is ready and the column is valid
-                CheckMetaDataIsReady(columnIndex: i);
+            if (SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.IsDBNull(i);
             }
-            else {
-                CheckHeaderIsReady(columnIndex: i, methodName: "IsDBNull");
+            else
+            {
+                if ((IsCommandBehavior(CommandBehavior.SequentialAccess)) && ((_sharedState._nextColumnHeaderToRead > i + 1) || (_lastColumnWithDataChunkRead > i)))
+                {
+                    // Bug 447026 : A breaking change in System.Data .NET 4.5 for calling IsDBNull on commands in SequentialAccess mode
+                    // http://vstfdevdiv:8080/web/wi.aspx?pcguid=22f9acc9-569a-41ff-b6ac-fac1b6370209&id=447026
+                    // In .Net 4.0 and previous, it was possible to read a previous column using IsDBNull when in sequential mode
+                    // However, since it had already gone past the column, the current IsNull value is simply returned
 
-                SetTimeout(_defaultTimeoutMilliseconds);
+                    // To replicate this behavior we will skip CheckHeaderIsReady\ReadColumnHeader and instead just check that the reader is ready and the column is valid
+                    CheckMetaDataIsReady(columnIndex: i);
+                }
+                else
+                {
+                    CheckHeaderIsReady(columnIndex: i, methodName: "IsDBNull");
 
-                ReadColumnHeader(i);    // header data only
+                    SetTimeout(_defaultTimeoutMilliseconds);
+
+                    ReadColumnHeader(i);    // header data only
+                }
+
+                return _data[i].IsNull;
             }
-
-            return _data[i].IsNull;
         }
 
         protected internal bool IsCommandBehavior(CommandBehavior condition) {
@@ -2943,18 +3410,26 @@ namespace Microsoft.Data.SqlClient
         }
 
         override public bool NextResult() {
-            if (_currentTask != null) {
-                throw SQL.PendingBeginXXXExists();
+            if (SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.NextResult();
             }
+            else
+            {
+                if (_currentTask != null)
+                {
+                    throw SQL.PendingBeginXXXExists();
+                }
 
-            bool more;
-            bool result;
+                bool more;
+                bool result;
 
-            Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-            result = TryNextResult(out more);
+                Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
+                result = TryNextResult(out more);
 
-            if (!result) { throw SQL.SynchronousCallMayNotPend(); }
-            return more;
+                if (!result) { throw SQL.SynchronousCallMayNotPend(); }
+                return more;
+            }
         }
 
         // recordset is automatically positioned on the first result set
@@ -3117,19 +3592,35 @@ namespace Microsoft.Data.SqlClient
 
         // user must call Read() to position on the first row
         override public bool Read() {
-            if (_currentTask != null) {
-                throw SQL.PendingBeginXXXExists();
+            if(SysSqlDataReader != null)
+            {
+                try
+                { 
+                    return SysSqlDataReader.Read();
+                }
+                catch (System.Data.SqlClient.SqlException sysExp)
+                {
+                    SqlException mdExp = SqlException.CreateException(sysExp, sysExp.Server, sysExp.ClientConnectionId);
+                    throw mdExp;
+                }
             }
+            else
+            { 
+                if (_currentTask != null) {
+                    throw SQL.PendingBeginXXXExists();
+                }
 
-            bool more;
-            bool result;
+                bool more;
+                bool result;
 
-            Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-            result = TryReadInternal(true, out more);
+                Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
+                result = TryReadInternal(true, out more);
 
-            if (!result) { throw SQL.SynchronousCallMayNotPend(); }
-            return more;
+                if (!result) { throw SQL.SynchronousCallMayNotPend(); }
+                return more;
+            }
         }
+
 
         // user must call Read() to position on the first row
         private bool TryReadInternal(bool setTimeout, out bool more) {
@@ -3938,62 +4429,77 @@ namespace Microsoft.Data.SqlClient
         }
 
         public override Task<bool> NextResultAsync(CancellationToken cancellationToken) {
-            IntPtr hscp;
-            Bid.ScopeEnter(out hscp, "<sc.SqlDataReader.NextResultAsync|API> %d#", ObjectID);
-
-            try {
-                TaskCompletionSource<bool> source = new TaskCompletionSource<bool>();
-
-                if (IsClosed) {
-                    source.SetException(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed("NextResultAsync")));
-                    return source.Task;
+            if(SysSqlDataReader != null)
+            {
+                try
+                { 
+                    return SysSqlDataReader.NextResultAsync(cancellationToken);
                 }
+                catch (System.Data.SqlClient.SqlException sysExp)
+                {
+                    SqlException mdExp = SqlException.CreateException(sysExp, sysExp.Server, sysExp.ClientConnectionId);
+                    throw mdExp;
+                }
+            }
+            else
+            { 
+                IntPtr hscp;
+                Bid.ScopeEnter(out hscp, "<sc.SqlDataReader.NextResultAsync|API> %d#", ObjectID);
 
-                IDisposable registration = null;
-                if (cancellationToken.CanBeCanceled) {
-                    if (cancellationToken.IsCancellationRequested) {
-                        source.SetCanceled();
+                try {
+                    TaskCompletionSource<bool> source = new TaskCompletionSource<bool>();
+
+                    if (IsClosed) {
+                        source.SetException(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed("NextResultAsync")));
                         return source.Task;
                     }
-                    registration = cancellationToken.Register(_command.CancelIgnoreFailure);
-                }
 
-                Task original = Interlocked.CompareExchange(ref _currentTask, source.Task, null);
-                if (original != null) {
-                    source.SetException(ADP.ExceptionWithStackTrace(SQL.PendingBeginXXXExists()));
-                    return source.Task;
-                }
-
-                // Check if cancellation due to close is requested (this needs to be done after setting _currentTask)
-                if (_cancelAsyncOnCloseToken.IsCancellationRequested) {
-                    source.SetCanceled();
-                    _currentTask = null;
-                    return source.Task;
-                }
-
-                PrepareAsyncInvocation(useSnapshot: true);
-
-                Func<Task, Task<bool>> moreFunc = null;
-
-                moreFunc = (t) => {
-                    if (t != null) {
-                        Bid.Trace("<sc.SqlDataReader.NextResultAsync> attempt retry %d#\n", ObjectID);
-                        PrepareForAsyncContinuation();
+                    IDisposable registration = null;
+                    if (cancellationToken.CanBeCanceled) {
+                        if (cancellationToken.IsCancellationRequested) {
+                            source.SetCanceled();
+                            return source.Task;
+                        }
+                        registration = cancellationToken.Register(_command.CancelIgnoreFailure);
                     }
 
-                    bool more;
-                    if (TryNextResult(out more)) {
-                        // completed
-                        return more ? ADP.TrueTask : ADP.FalseTask;
+                    Task original = Interlocked.CompareExchange(ref _currentTask, source.Task, null);
+                    if (original != null) {
+                        source.SetException(ADP.ExceptionWithStackTrace(SQL.PendingBeginXXXExists()));
+                        return source.Task;
                     }
 
-                    return ContinueRetryable(moreFunc);
-                };
+                    // Check if cancellation due to close is requested (this needs to be done after setting _currentTask)
+                    if (_cancelAsyncOnCloseToken.IsCancellationRequested) {
+                        source.SetCanceled();
+                        _currentTask = null;
+                        return source.Task;
+                    }
 
-                return InvokeRetryable(moreFunc, source, registration);
-            }
-            finally {
-                Bid.ScopeLeave(ref hscp);
+                    PrepareAsyncInvocation(useSnapshot: true);
+
+                    Func<Task, Task<bool>> moreFunc = null;
+
+                    moreFunc = (t) => {
+                        if (t != null) {
+                            Bid.Trace("<sc.SqlDataReader.NextResultAsync> attempt retry %d#\n", ObjectID);
+                            PrepareForAsyncContinuation();
+                        }
+
+                        bool more;
+                        if (TryNextResult(out more)) {
+                            // completed
+                            return more ? ADP.TrueTask : ADP.FalseTask;
+                        }
+
+                        return ContinueRetryable(moreFunc);
+                    };
+
+                    return InvokeRetryable(moreFunc, source, registration);
+                }
+                finally {
+                    Bid.ScopeLeave(ref hscp);
+                }
             }
         }
 
@@ -4191,212 +4697,379 @@ namespace Microsoft.Data.SqlClient
         }
 
         public override Task<bool> ReadAsync(CancellationToken cancellationToken) {
-            IntPtr hscp;
-            Bid.ScopeEnter(out hscp, "<sc.SqlDataReader.ReadAsync|API> %d#", ObjectID);
+            if(SysSqlDataReader != null)
+            {
+                try
+                { 
+                    return SysSqlDataReader.ReadAsync(cancellationToken);
+                }
+                catch (System.Data.SqlClient.SqlException sysExp)
+                {
+                    SqlException mdExp = SqlException.CreateException(sysExp, sysExp.Server, sysExp.ClientConnectionId);
+                    throw mdExp;
+                }
+            }
+            else
+            { 
+                IntPtr hscp;
+                Bid.ScopeEnter(out hscp, "<sc.SqlDataReader.ReadAsync|API> %d#", ObjectID);
 
-            try {
-                if (IsClosed) {
-                    return ADP.CreatedTaskWithException<bool>(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed("ReadAsync")));
+                try {
+                    if (IsClosed) {
+                        return ADP.CreatedTaskWithException<bool>(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed("ReadAsync")));
+                    }
+
+                    // If user's token is canceled, return a canceled task
+                    if (cancellationToken.IsCancellationRequested) {
+                        return ADP.CreatedTaskWithCancellation<bool>();
+                    }
+
+                    // Check for existing async
+                    if (_currentTask != null) {
+                        return ADP.CreatedTaskWithException<bool>(ADP.ExceptionWithStackTrace(SQL.PendingBeginXXXExists()));
+                    }
+
+                    // These variables will be captured in moreFunc so that we can skip searching for a row token once one has been read
+                    bool rowTokenRead = false;
+                    bool more = false;
+
+                    // Shortcut, do we have enough data to immediately do the ReadAsync?
+                    try {
+                        // First, check if we can finish reading the current row
+                        // NOTE: If we are in SingleRow mode and we've read that single row (i.e. _haltRead == true), then skip the shortcut
+                        if ((!_haltRead) && ((!_sharedState._dataReady) || (WillHaveEnoughData(_metaData.Length - 1)))) {
+
+    #if DEBUG
+                            try {
+                                _stateObj._shouldHaveEnoughData = true;
+    #endif
+                                if (_sharedState._dataReady) {
+                                    // Clean off current row
+                                    CleanPartialReadReliable();
+                                }
+
+                                // If there a ROW token ready (as well as any metadata for the row)
+                                if (_stateObj.IsRowTokenReady()) {
+                                    // Read the ROW token
+                                    bool result = TryReadInternal(true, out more);
+                                    Debug.Assert(result, "Should not have run out of data");
+
+                                    rowTokenRead = true;
+                                    if (more) {
+                                        // Sequential mode, nothing left to do
+                                        if (IsCommandBehavior(CommandBehavior.SequentialAccess)) {
+                                            return ADP.TrueTask;
+                                        }
+                                        // For non-sequential, check if we can read the row data now
+                                        else if (WillHaveEnoughData(_metaData.Length - 1)) {
+                                            // Read row data
+                                            result = TryReadColumn(_metaData.Length - 1, setTimeout: true);
+                                            Debug.Assert(result, "Should not have run out of data");
+                                            return ADP.TrueTask;
+                                        }
+                                    }
+                                    else {
+                                        // No data left, return
+                                        return ADP.FalseTask;
+                                    }
+                                }
+    #if DEBUG
+                            }
+                            finally {
+                                _stateObj._shouldHaveEnoughData = false;
+                            }
+    #endif
+                        }
+                    }
+                    catch (Exception ex) {
+                        if (!ADP.IsCatchableExceptionType(ex)) {
+                            throw;
+                        }
+                        return ADP.CreatedTaskWithException<bool>(ex);
+                    }
+
+                    TaskCompletionSource<bool> source = new TaskCompletionSource<bool>();
+                    Task original = Interlocked.CompareExchange(ref _currentTask, source.Task, null);
+                    if (original != null) {
+                        source.SetException(ADP.ExceptionWithStackTrace(SQL.PendingBeginXXXExists()));
+                        return source.Task;
+                    }
+
+                    // Check if cancellation due to close is requested (this needs to be done after setting _currentTask)
+                    if (_cancelAsyncOnCloseToken.IsCancellationRequested) {
+                        source.SetCanceled();
+                        _currentTask = null;
+                        return source.Task;
+                    }
+
+                    IDisposable registration = null;
+                    if (cancellationToken.CanBeCanceled) {
+                        registration = cancellationToken.Register(_command.CancelIgnoreFailure);
+                    }
+
+                    PrepareAsyncInvocation(useSnapshot: true);
+
+                    Func<Task, Task<bool>> moreFunc = null;
+                    moreFunc = (t) => {
+                        if (t != null) {
+                            Bid.Trace("<sc.SqlDataReader.ReadAsync> attempt retry %d#\n", ObjectID);
+                            PrepareForAsyncContinuation();
+                        }
+
+                        if (rowTokenRead || TryReadInternal(true, out more)) {
+
+                            // If there are no more rows, or this is Sequential Access, then we are done
+                            if (!more || (_commandBehavior & CommandBehavior.SequentialAccess) == CommandBehavior.SequentialAccess) {
+                                // completed
+                                return more ? ADP.TrueTask : ADP.FalseTask;
+                            }
+                            else {
+                                // First time reading the row token - update the snapshot
+                                if (!rowTokenRead) {
+                                    rowTokenRead = true;
+                                    _snapshot = null;
+                                    PrepareAsyncInvocation(useSnapshot: true);
+                                }
+
+                                // if non-sequentialaccess then read entire row before returning
+                                if (TryReadColumn(_metaData.Length - 1, true)) {
+                                    // completed
+                                    return ADP.TrueTask;
+                                }
+                            }
+                        }
+
+                        return ContinueRetryable(moreFunc);
+                    };
+
+                    return InvokeRetryable(moreFunc, source, registration);
+                }
+                finally {
+                    Bid.ScopeLeave(ref hscp);
+                }
+            }
+        }
+
+        override public Task<bool> IsDBNullAsync(int i, CancellationToken cancellationToken) {
+            if (SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.IsDBNullAsync(i, cancellationToken);
+            }
+            else
+            {
+                try
+                {
+                    CheckHeaderIsReady(columnIndex: i, methodName: "IsDBNullAsync");
+                }
+                catch (Exception ex)
+                {
+                    if (!ADP.IsCatchableExceptionType(ex))
+                    {
+                        throw;
+                    }
+                    return ADP.CreatedTaskWithException<bool>(ex);
+                }
+
+                // Shortcut - if there are no issues and the data is already read, then just return the value
+                if ((_sharedState._nextColumnHeaderToRead > i) && (!cancellationToken.IsCancellationRequested) && (_currentTask == null))
+                {
+                    var data = _data;
+                    if (data != null)
+                    {
+                        return data[i].IsNull ? ADP.TrueTask : ADP.FalseTask;
+                    }
+                    else
+                    {
+                        // Reader was closed between the CheckHeaderIsReady and accessing _data - throw closed exception
+                        return ADP.CreatedTaskWithException<bool>(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed("IsDBNullAsync")));
+                    }
+                }
+                else
+                {
+                    // Throw if there is any current task
+                    if (_currentTask != null)
+                    {
+                        return ADP.CreatedTaskWithException<bool>(ADP.ExceptionWithStackTrace(ADP.AsyncOperationPending()));
+                    }
+
+                    // If user's token is canceled, return a canceled task
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        return ADP.CreatedTaskWithCancellation<bool>();
+                    }
+
+                    // Shortcut - if we have enough data, then run sync
+                    try
+                    {
+                        if (WillHaveEnoughData(i, headerOnly: true))
+                        {
+#if DEBUG
+                            try
+                            {
+                                _stateObj._shouldHaveEnoughData = true;
+#endif
+                                ReadColumnHeader(i);
+                                return _data[i].IsNull ? ADP.TrueTask : ADP.FalseTask;
+#if DEBUG
+                            }
+                            finally
+                            {
+                                _stateObj._shouldHaveEnoughData = false;
+                            }
+#endif
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        if (!ADP.IsCatchableExceptionType(ex))
+                        {
+                            throw;
+                        }
+                        return ADP.CreatedTaskWithException<bool>(ex);
+                    }
+
+                    // Setup and check for pending task
+                    TaskCompletionSource<bool> source = new TaskCompletionSource<bool>();
+                    Task original = Interlocked.CompareExchange(ref _currentTask, source.Task, null);
+                    if (original != null)
+                    {
+                        source.SetException(ADP.ExceptionWithStackTrace(ADP.AsyncOperationPending()));
+                        return source.Task;
+                    }
+
+                    // Check if cancellation due to close is requested (this needs to be done after setting _currentTask)
+                    if (_cancelAsyncOnCloseToken.IsCancellationRequested)
+                    {
+                        source.SetCanceled();
+                        _currentTask = null;
+                        return source.Task;
+                    }
+
+                    // Setup cancellations
+                    IDisposable registration = null;
+                    if (cancellationToken.CanBeCanceled)
+                    {
+                        registration = cancellationToken.Register(_command.CancelIgnoreFailure);
+                    }
+
+                    // Setup async
+                    PrepareAsyncInvocation(useSnapshot: true);
+
+                    // Setup the retryable function
+                    Func<Task, Task<bool>> moreFunc = null;
+                    moreFunc = (t) =>
+                    {
+                        if (t != null)
+                        {
+                            PrepareForAsyncContinuation();
+                        }
+
+                        if (TryReadColumnHeader(i))
+                        {
+                            return _data[i].IsNull ? ADP.TrueTask : ADP.FalseTask;
+                        }
+                        else
+                        {
+                            return ContinueRetryable(moreFunc);
+                        }
+                    };
+
+                    // Go!
+                    return InvokeRetryable(moreFunc, source, registration);
+                }
+            }
+        }
+
+        override public Task<T> GetFieldValueAsync<T>(int i, CancellationToken cancellationToken) {
+            if (SysSqlDataReader != null)
+            {
+                return SysSqlDataReader.GetFieldValueAsync<T>(i,cancellationToken);
+            }
+            else
+            {
+
+                try
+                {
+                    CheckDataIsReady(columnIndex: i, methodName: "GetFieldValueAsync");
+
+                    // Shortcut - if there are no issues and the data is already read, then just return the value
+                    if ((!IsCommandBehavior(CommandBehavior.SequentialAccess)) && (_sharedState._nextColumnDataToRead > i) && (!cancellationToken.IsCancellationRequested) && (_currentTask == null))
+                    {
+                        var data = _data;
+                        var metaData = _metaData;
+                        if ((data != null) && (metaData != null))
+                        {
+                            return Task.FromResult<T>(GetFieldValueFromSqlBufferInternal<T>(data[i], metaData[i]));
+                        }
+                        else
+                        {
+                            // Reader was closed between the CheckDataIsReady and accessing _data\_metaData - throw closed exception
+                            return ADP.CreatedTaskWithException<T>(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed("GetFieldValueAsync")));
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    if (!ADP.IsCatchableExceptionType(ex))
+                    {
+                        throw;
+                    }
+                    return ADP.CreatedTaskWithException<T>(ex);
+                }
+
+                // Throw if there is any current task
+                if (_currentTask != null)
+                {
+                    return ADP.CreatedTaskWithException<T>(ADP.ExceptionWithStackTrace(ADP.AsyncOperationPending()));
                 }
 
                 // If user's token is canceled, return a canceled task
-                if (cancellationToken.IsCancellationRequested) {
-                    return ADP.CreatedTaskWithCancellation<bool>();
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return ADP.CreatedTaskWithCancellation<T>();
                 }
 
-                // Check for existing async
-                if (_currentTask != null) {
-                    return ADP.CreatedTaskWithException<bool>(ADP.ExceptionWithStackTrace(SQL.PendingBeginXXXExists()));
-                }
-
-                // These variables will be captured in moreFunc so that we can skip searching for a row token once one has been read
-                bool rowTokenRead = false;
-                bool more = false;
-
-                // Shortcut, do we have enough data to immediately do the ReadAsync?
-                try {
-                    // First, check if we can finish reading the current row
-                    // NOTE: If we are in SingleRow mode and we've read that single row (i.e. _haltRead == true), then skip the shortcut
-                    if ((!_haltRead) && ((!_sharedState._dataReady) || (WillHaveEnoughData(_metaData.Length - 1)))) {
-
+                // Shortcut - if we have enough data, then run sync
+                try
+                {
+                    if (WillHaveEnoughData(i))
+                    {
 #if DEBUG
-                        try {
+                        try
+                        {
                             _stateObj._shouldHaveEnoughData = true;
 #endif
-                            if (_sharedState._dataReady) {
-                                // Clean off current row
-                                CleanPartialReadReliable();
-                            }
-
-                            // If there a ROW token ready (as well as any metadata for the row)
-                            if (_stateObj.IsRowTokenReady()) {
-                                // Read the ROW token
-                                bool result = TryReadInternal(true, out more);
-                                Debug.Assert(result, "Should not have run out of data");
-
-                                rowTokenRead = true;
-                                if (more) {
-                                    // Sequential mode, nothing left to do
-                                    if (IsCommandBehavior(CommandBehavior.SequentialAccess)) {
-                                        return ADP.TrueTask;
-                                    }
-                                    // For non-sequential, check if we can read the row data now
-                                    else if (WillHaveEnoughData(_metaData.Length - 1)) {
-                                        // Read row data
-                                        result = TryReadColumn(_metaData.Length - 1, setTimeout: true);
-                                        Debug.Assert(result, "Should not have run out of data");
-                                        return ADP.TrueTask;
-                                    }
-                                }
-                                else {
-                                    // No data left, return
-                                    return ADP.FalseTask;
-                                }
-                            }
+                            return Task.FromResult(GetFieldValueInternal<T>(i));
 #if DEBUG
                         }
-                        finally {
+                        finally
+                        {
                             _stateObj._shouldHaveEnoughData = false;
                         }
 #endif
                     }
                 }
-                catch (Exception ex) {
-                    if (!ADP.IsCatchableExceptionType(ex)) {
+                catch (Exception ex)
+                {
+                    if (!ADP.IsCatchableExceptionType(ex))
+                    {
                         throw;
                     }
-                    return ADP.CreatedTaskWithException<bool>(ex);
-                }
-
-                TaskCompletionSource<bool> source = new TaskCompletionSource<bool>();
-                Task original = Interlocked.CompareExchange(ref _currentTask, source.Task, null);
-                if (original != null) {
-                    source.SetException(ADP.ExceptionWithStackTrace(SQL.PendingBeginXXXExists()));
-                    return source.Task;
-                }
-
-                // Check if cancellation due to close is requested (this needs to be done after setting _currentTask)
-                if (_cancelAsyncOnCloseToken.IsCancellationRequested) {
-                    source.SetCanceled();
-                    _currentTask = null;
-                    return source.Task;
-                }
-
-                IDisposable registration = null;
-                if (cancellationToken.CanBeCanceled) {
-                    registration = cancellationToken.Register(_command.CancelIgnoreFailure);
-                }
-
-                PrepareAsyncInvocation(useSnapshot: true);
-
-                Func<Task, Task<bool>> moreFunc = null;
-                moreFunc = (t) => {
-                    if (t != null) {
-                        Bid.Trace("<sc.SqlDataReader.ReadAsync> attempt retry %d#\n", ObjectID);
-                        PrepareForAsyncContinuation();
-                    }
-
-                    if (rowTokenRead || TryReadInternal(true, out more)) {
-
-                        // If there are no more rows, or this is Sequential Access, then we are done
-                        if (!more || (_commandBehavior & CommandBehavior.SequentialAccess) == CommandBehavior.SequentialAccess) {
-                            // completed
-                            return more ? ADP.TrueTask : ADP.FalseTask;
-                        }
-                        else {
-                            // First time reading the row token - update the snapshot
-                            if (!rowTokenRead) {
-                                rowTokenRead = true;
-                                _snapshot = null;
-                                PrepareAsyncInvocation(useSnapshot: true);
-                            }
-
-                            // if non-sequentialaccess then read entire row before returning
-                            if (TryReadColumn(_metaData.Length - 1, true)) {
-                                // completed
-                                return ADP.TrueTask;
-                            }
-                        }
-                    }
-
-                    return ContinueRetryable(moreFunc);
-                };
-
-                return InvokeRetryable(moreFunc, source, registration);
-            }
-            finally {
-                Bid.ScopeLeave(ref hscp);
-            }
-        }
-
-        override public Task<bool> IsDBNullAsync(int i, CancellationToken cancellationToken) {
-
-            try {
-                CheckHeaderIsReady(columnIndex: i, methodName: "IsDBNullAsync");
-            }
-            catch (Exception ex) {
-                if (!ADP.IsCatchableExceptionType(ex)) {
-                    throw;
-                }
-                return ADP.CreatedTaskWithException<bool>(ex);
-            }
-
-            // Shortcut - if there are no issues and the data is already read, then just return the value
-            if ((_sharedState._nextColumnHeaderToRead > i) && (!cancellationToken.IsCancellationRequested) && (_currentTask == null)) {
-                var data = _data;
-                if (data != null) {
-                    return data[i].IsNull ? ADP.TrueTask : ADP.FalseTask;
-                }
-                else {
-                    // Reader was closed between the CheckHeaderIsReady and accessing _data - throw closed exception
-                    return ADP.CreatedTaskWithException<bool>(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed("IsDBNullAsync")));
-                }
-            }
-            else {
-                // Throw if there is any current task
-                if (_currentTask != null) {
-                    return ADP.CreatedTaskWithException<bool>(ADP.ExceptionWithStackTrace(ADP.AsyncOperationPending()));
-                }
-
-                // If user's token is canceled, return a canceled task
-                if (cancellationToken.IsCancellationRequested) {
-                    return ADP.CreatedTaskWithCancellation<bool>();
-                }
-
-                // Shortcut - if we have enough data, then run sync
-                try {
-                    if (WillHaveEnoughData(i, headerOnly: true)) {
-#if DEBUG
-                    try {
-                        _stateObj._shouldHaveEnoughData = true;
-#endif
-                    ReadColumnHeader(i);
-                    return _data[i].IsNull ? ADP.TrueTask : ADP.FalseTask;
-#if DEBUG
-                    }
-                    finally {
-                        _stateObj._shouldHaveEnoughData = false;
-                    }
-#endif
-                    }
-                }
-                catch (Exception ex) {
-                    if (!ADP.IsCatchableExceptionType(ex)) {
-                        throw;
-                    }
-                    return ADP.CreatedTaskWithException<bool>(ex);
+                    return ADP.CreatedTaskWithException<T>(ex);
                 }
 
                 // Setup and check for pending task
-                TaskCompletionSource<bool> source = new TaskCompletionSource<bool>();
+                TaskCompletionSource<T> source = new TaskCompletionSource<T>();
                 Task original = Interlocked.CompareExchange(ref _currentTask, source.Task, null);
-                if (original != null) {
+                if (original != null)
+                {
                     source.SetException(ADP.ExceptionWithStackTrace(ADP.AsyncOperationPending()));
                     return source.Task;
                 }
 
                 // Check if cancellation due to close is requested (this needs to be done after setting _currentTask)
-                if (_cancelAsyncOnCloseToken.IsCancellationRequested) {
+                if (_cancelAsyncOnCloseToken.IsCancellationRequested)
+                {
                     source.SetCanceled();
                     _currentTask = null;
                     return source.Task;
@@ -4404,7 +5077,8 @@ namespace Microsoft.Data.SqlClient
 
                 // Setup cancellations
                 IDisposable registration = null;
-                if (cancellationToken.CanBeCanceled) {
+                if (cancellationToken.CanBeCanceled)
+                {
                     registration = cancellationToken.Register(_command.CancelIgnoreFailure);
                 }
 
@@ -4412,16 +5086,20 @@ namespace Microsoft.Data.SqlClient
                 PrepareAsyncInvocation(useSnapshot: true);
 
                 // Setup the retryable function
-                Func<Task, Task<bool>> moreFunc = null;
-                moreFunc = (t) => {
-                    if (t != null) {
+                Func<Task, Task<T>> moreFunc = null;
+                moreFunc = (t) =>
+                {
+                    if (t != null)
+                    {
                         PrepareForAsyncContinuation();
                     }
 
-                    if (TryReadColumnHeader(i)) {
-                        return _data[i].IsNull ? ADP.TrueTask : ADP.FalseTask;
+                    if (TryReadColumn(i, setTimeout: false))
+                    {
+                        return Task.FromResult<T>(GetFieldValueFromSqlBufferInternal<T>(_data[i], _metaData[i]));
                     }
-                    else {
+                    else
+                    {
                         return ContinueRetryable(moreFunc);
                     }
                 };
@@ -4429,106 +5107,6 @@ namespace Microsoft.Data.SqlClient
                 // Go!
                 return InvokeRetryable(moreFunc, source, registration);
             }
-        }
-
-        override public Task<T> GetFieldValueAsync<T>(int i, CancellationToken cancellationToken) {
-
-            try {
-                CheckDataIsReady(columnIndex: i, methodName: "GetFieldValueAsync");
-
-                // Shortcut - if there are no issues and the data is already read, then just return the value
-                if ((!IsCommandBehavior(CommandBehavior.SequentialAccess)) && (_sharedState._nextColumnDataToRead > i) && (!cancellationToken.IsCancellationRequested) && (_currentTask == null)) {
-                    var data = _data;
-                    var metaData =_metaData;
-                    if ((data != null) && (metaData != null)) {
-                        return Task.FromResult<T>(GetFieldValueFromSqlBufferInternal<T>(data[i], metaData[i]));
-                    }
-                    else {
-                        // Reader was closed between the CheckDataIsReady and accessing _data\_metaData - throw closed exception
-                        return ADP.CreatedTaskWithException<T>(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed("GetFieldValueAsync")));
-                    }
-                }
-            } catch (Exception ex) {
-                if (!ADP.IsCatchableExceptionType(ex)) {
-                    throw;
-                }
-                return ADP.CreatedTaskWithException<T>(ex);
-            }
-
-            // Throw if there is any current task
-            if (_currentTask != null) {
-                return ADP.CreatedTaskWithException<T>(ADP.ExceptionWithStackTrace(ADP.AsyncOperationPending()));
-            }
-
-            // If user's token is canceled, return a canceled task
-            if (cancellationToken.IsCancellationRequested) {
-                return ADP.CreatedTaskWithCancellation<T>();
-            }
-
-            // Shortcut - if we have enough data, then run sync
-            try {
-                if (WillHaveEnoughData(i)) {
-#if DEBUG
-                    try {
-                        _stateObj._shouldHaveEnoughData = true;
-#endif
-                    return Task.FromResult(GetFieldValueInternal<T>(i));
-#if DEBUG
-                    }
-                    finally {
-                        _stateObj._shouldHaveEnoughData = false;
-                    }
-#endif
-                }
-            }
-            catch (Exception ex) {
-                if (!ADP.IsCatchableExceptionType(ex)) {
-                    throw;
-                }
-                return ADP.CreatedTaskWithException<T>(ex);
-            }
-
-            // Setup and check for pending task
-            TaskCompletionSource<T> source = new TaskCompletionSource<T>();
-            Task original = Interlocked.CompareExchange(ref _currentTask, source.Task, null);
-            if (original != null) {
-                source.SetException(ADP.ExceptionWithStackTrace(ADP.AsyncOperationPending()));
-                return source.Task;
-            }
-
-            // Check if cancellation due to close is requested (this needs to be done after setting _currentTask)
-            if (_cancelAsyncOnCloseToken.IsCancellationRequested) {
-                source.SetCanceled();
-                _currentTask = null;
-                return source.Task;
-            }
-
-            // Setup cancellations
-            IDisposable registration = null;
-            if (cancellationToken.CanBeCanceled) {
-                registration = cancellationToken.Register(_command.CancelIgnoreFailure);
-            }
-
-            // Setup async
-            PrepareAsyncInvocation(useSnapshot: true);
-
-            // Setup the retryable function
-            Func<Task, Task<T>> moreFunc = null;
-            moreFunc = (t) => {
-                if (t != null) {
-                    PrepareForAsyncContinuation();
-                }
-
-                if (TryReadColumn(i, setTimeout: false)) {
-                    return Task.FromResult<T>(GetFieldValueFromSqlBufferInternal<T>(_data[i], _metaData[i]));
-                }
-                else {
-                    return ContinueRetryable(moreFunc);
-                }
-            };
-
-            // Go!
-            return InvokeRetryable(moreFunc, source, registration);
         }
 
 #if DEBUG

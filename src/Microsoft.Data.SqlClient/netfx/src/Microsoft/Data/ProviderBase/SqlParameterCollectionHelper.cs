@@ -23,8 +23,15 @@ namespace Microsoft.Data.SqlClient
 
         override public int Count {
             get {
-                // NOTE: we don't construct the list just to get the count.
-                return ((null != _items) ? _items.Count : 0);
+                if (SysSqlParameterCollection != null)
+                {
+                    return SysSqlParameterCollection.Count;
+                }
+                else
+                {
+                    // NOTE: we don't construct the list just to get the count.
+                    return ((null != _items) ? _items.Count : 0);
+                }
             }
         }
 
@@ -42,25 +49,53 @@ namespace Microsoft.Data.SqlClient
 
         override public bool IsFixedSize {
             get {
-                return ((System.Collections.IList)InnerList).IsFixedSize;
+                if (SysSqlParameterCollection != null)
+                {
+                    return SysSqlParameterCollection.IsFixedSize;
+                }
+                else
+                {
+                    return ((System.Collections.IList)InnerList).IsFixedSize;
+                }
             }
         }
 
         override public bool IsReadOnly {
             get {
-                return ((System.Collections.IList)InnerList).IsReadOnly;
+                if (SysSqlParameterCollection != null)
+                {
+                    return SysSqlParameterCollection.IsReadOnly;
+                }
+                else
+                {
+                    return ((System.Collections.IList)InnerList).IsReadOnly;
+                }
             }
         }
 
         override public bool IsSynchronized {
             get {
-                return ((System.Collections.ICollection)InnerList).IsSynchronized;
+                if (SysSqlParameterCollection != null)
+                {
+                    return SysSqlParameterCollection.IsSynchronized;
+                }
+                else
+                {
+                    return ((System.Collections.ICollection)InnerList).IsSynchronized;
+                }
             }
         }
 
         override public object SyncRoot {
             get {
-                return ((System.Collections.ICollection)InnerList).SyncRoot;
+                if (SysSqlParameterCollection != null)
+                {
+                    return SysSqlParameterCollection.SyncRoot;
+                }
+                else
+                {
+                    return ((System.Collections.ICollection)InnerList).SyncRoot;
+                }
             }
         }
 
@@ -68,24 +103,41 @@ namespace Microsoft.Data.SqlClient
         EditorBrowsableAttribute(EditorBrowsableState.Never)
         ]
         override public int Add(object value) {
-            OnChange();  // fire event before value is validated
-            ValidateType(value);
-            Validate(-1, value);
-            InnerList.Add((SqlParameter)value);
-            return Count-1;
+            if (SysSqlParameterCollection != null)
+            {
+                return SysSqlParameterCollection.Add(value);
+            }
+            else
+            {
+                OnChange();  // fire event before value is validated
+                ValidateType(value);
+                Validate(-1, value);
+                InnerList.Add((SqlParameter)value);
+                return Count - 1;
+            }
         }
 
         override public void AddRange(System.Array values) {
-            OnChange();  // fire event before value is validated
-            if (null == values) {
-                throw ADP.ArgumentNull("values");
+            if (SysSqlParameterCollection != null)
+            {
+                SysSqlParameterCollection.AddRange(values);
             }
-            foreach(object value in values) {
-                ValidateType(value);
-            }
-            foreach(SqlParameter value in values) {
-                Validate(-1, value);
-                InnerList.Add((SqlParameter)value);
+            else
+            {
+                OnChange();  // fire event before value is validated
+                if (null == values)
+                {
+                    throw ADP.ArgumentNull("values");
+                }
+                foreach (object value in values)
+                {
+                    ValidateType(value);
+                }
+                foreach (SqlParameter value in values)
+                {
+                    Validate(-1, value);
+                    InnerList.Add((SqlParameter)value);
+                }
             }
         }
 
@@ -98,27 +150,51 @@ namespace Microsoft.Data.SqlClient
         }
 
         override public void Clear() {
-            OnChange();  // fire event before value is validated
-            List<SqlParameter> items = InnerList;
+            if (SysSqlParameterCollection != null)
+            {
+                SysSqlParameterCollection.Clear();
 
-            if (null != items) {
-                foreach(SqlParameter item in items) {
-                    item.ResetParent();
+            }
+            else
+            {
+                OnChange();  // fire event before value is validated
+                List<SqlParameter> items = InnerList;
+
+                if (null != items)
+                {
+                    foreach (SqlParameter item in items)
+                    {
+                        item.ResetParent();
+                    }
+                    items.Clear();
                 }
-                items.Clear();
             }
         }
 
         override public bool Contains(object value) {
-            return (-1 != IndexOf(value));
+            if (SysSqlParameterCollection != null)
+            {
+                return SysSqlParameterCollection.Contains(value);
+            }
+            else
+            {
+                return (-1 != IndexOf(value));
+            }
         }
 
         override public void CopyTo(Array array, int index) {
-            ((System.Collections.ICollection)InnerList).CopyTo(array, index);
+            if (SysSqlParameterCollection != null)
+            {
+                SysSqlParameterCollection.CopyTo(array, index);
+            }
+            else
+            {
+                ((System.Collections.ICollection)InnerList).CopyTo(array, index);
+            }
         }
 
         override public System.Collections.IEnumerator GetEnumerator() {
-            return ((System.Collections.ICollection)InnerList).GetEnumerator();
+            return SysSqlParameterCollection?.GetEnumerator() ?? ((System.Collections.ICollection)InnerList).GetEnumerator();
         }
 
         override protected DbParameter GetParameter(int index) {
@@ -157,33 +233,51 @@ namespace Microsoft.Data.SqlClient
         }
 
         override public int IndexOf(string parameterName) {
-            return IndexOf(InnerList, parameterName);
+            return SysSqlParameterCollection?.IndexOf(parameterName) ?? IndexOf(InnerList, parameterName);
         }
 
         override public int IndexOf(object value) {
-            if (null != value) {
-                ValidateType(value);
+            if (SysSqlParameterCollection != null)
+            {
+                return SysSqlParameterCollection.IndexOf(value);
+            }
+            else
+            {
+                if (null != value)
+                {
+                    ValidateType(value);
 
-                List<SqlParameter> items = InnerList;
+                    List<SqlParameter> items = InnerList;
 
-                if (null != items) {
-                    int count = items.Count;
+                    if (null != items)
+                    {
+                        int count = items.Count;
 
-                    for (int i = 0; i < count; i++) {
-                        if (value == items[i]) {
-                            return i;
+                        for (int i = 0; i < count; i++)
+                        {
+                            if (value == items[i])
+                            {
+                                return i;
+                            }
                         }
                     }
                 }
+                return -1;
             }
-            return -1;
         }
 
         override public void Insert(int index, object value) {
-            OnChange();  // fire event before value is validated
-            ValidateType(value);
-            Validate(-1, (SqlParameterCollection)value);
-            InnerList.Insert(index, (SqlParameter)value);
+            if (SysSqlParameterCollection != null)
+            {
+                SysSqlParameterCollection.Insert(index, value);
+            }
+            else
+            {
+                OnChange();  // fire event before value is validated
+                ValidateType(value);
+                Validate(-1, (SqlParameterCollection)value);
+                InnerList.Insert(index, (SqlParameter)value);
+            }
         }
 
         private void RangeCheck(int index) {
@@ -193,27 +287,50 @@ namespace Microsoft.Data.SqlClient
         }
 
         override public void Remove(object value) {
-            OnChange();  // fire event before value is validated
-            ValidateType(value);
-            int index = IndexOf(value);
-            if (-1 != index) {
-                RemoveIndex(index);
+            if (SysSqlParameterCollection != null)
+            {
+                SysSqlParameterCollection.Remove(value);
             }
-            else if (this != ((SqlParameter)value).CompareExchangeParent(null, this)) {
-                throw ADP.CollectionRemoveInvalidObject(ItemType, this);
+            else
+            {
+                OnChange();  // fire event before value is validated
+                ValidateType(value);
+                int index = IndexOf(value);
+                if (-1 != index)
+                {
+                    RemoveIndex(index);
+                }
+                else if (this != ((SqlParameter)value).CompareExchangeParent(null, this))
+                {
+                    throw ADP.CollectionRemoveInvalidObject(ItemType, this);
+                }
             }
         }
 
         override public void RemoveAt(int index) {
-            OnChange();  // fire event before value is validated
-            RangeCheck(index);
-            RemoveIndex(index);
+            if (SysSqlParameterCollection != null)
+            {
+                SysSqlParameterCollection.RemoveAt(index);
+            }
+            else
+            {
+                OnChange();  // fire event before value is validated
+                RangeCheck(index);
+                RemoveIndex(index);
+            }
         }
 
         override public void RemoveAt(string parameterName) {
-            OnChange();  // fire event before value is validated
-            int index = CheckName(parameterName);
-            RemoveIndex(index);
+            if (SysSqlParameterCollection != null)
+            {
+                SysSqlParameterCollection.RemoveAt(parameterName);
+            }
+            else
+            {
+                OnChange();  // fire event before value is validated
+                int index = CheckName(parameterName);
+                RemoveIndex(index);
+            }
         }
 
         private void RemoveIndex(int index) {
