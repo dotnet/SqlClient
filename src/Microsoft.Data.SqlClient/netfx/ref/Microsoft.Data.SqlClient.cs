@@ -77,6 +77,7 @@ namespace Microsoft.Data.SqlClient
         public SqlBulkCopy(Microsoft.Data.SqlClient.SqlConnection connection, Microsoft.Data.SqlClient.SqlBulkCopyOptions copyOptions, Microsoft.Data.SqlClient.SqlTransaction externalTransaction) { }
         public SqlBulkCopy(string connectionString) { }
         public SqlBulkCopy(string connectionString, Microsoft.Data.SqlClient.SqlBulkCopyOptions copyOptions) { }
+        public SqlBulkCopy(System.Data.SqlClient.SqlBulkCopy sqlBulkCopy) { }
         public int BatchSize { get { throw null; } set { } }
         public int BulkCopyTimeout { get { throw null; } set { } }
         public Microsoft.Data.SqlClient.SqlBulkCopyColumnMappingCollection ColumnMappings { get { throw null; } }
@@ -385,6 +386,7 @@ namespace Microsoft.Data.SqlClient
         public SqlConnection() { }
         public SqlConnection(string connectionString) { }
         public SqlConnection(string connectionString, Microsoft.Data.SqlClient.SqlCredential credential) { }
+        public SqlConnection(System.Data.SqlClient.SqlConnection sqlConnection) { }
         [System.ComponentModel.BrowsableAttribute(false)]
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
         public string AccessToken { get { throw null; } set { } }
