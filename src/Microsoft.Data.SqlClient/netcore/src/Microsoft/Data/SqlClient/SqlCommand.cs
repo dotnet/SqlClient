@@ -1542,7 +1542,10 @@ namespace Microsoft.Data.SqlClient
                 // Add callback after work is done to avoid overlapping Begin\End methods
                 if (callback != null)
                 {
-                    localCompletion.Task.ContinueWith((t) => callback(t), TaskScheduler.Default);
+                    localCompletion.Task.ContinueWith(
+                        (task, state) => ((AsyncCallback)state)(task),
+                        state: callback
+                    );
                 }
                 return localCompletion.Task;
             }
@@ -1859,7 +1862,10 @@ namespace Microsoft.Data.SqlClient
                 // Add callback after work is done to avoid overlapping Begin\End methods
                 if (callback != null)
                 {
-                    globalCompletion.Task.ContinueWith((t) => callback(t), TaskScheduler.Default);
+                    globalCompletion.Task.ContinueWith(
+                        (task, state) => ((AsyncCallback)state)(task),
+                        state: callback
+                    );
                 }
 
                 return globalCompletion.Task;
@@ -2889,9 +2895,13 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        AsyncHelper.ContinueTask(subTask, completion, () => completion.SetResult(null));
+                        AsyncHelper.ContinueTaskWithState(subTask, completion,
+                            state: completion,
+                            onSuccess: (state) => ((TaskCompletionSource<object>)state).SetResult(null)
+                        );
                     }
-                }, connectionToAbort: _activeConnection);
+                }
+            );
         }
 
         /// <summary>
@@ -4013,7 +4023,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             AsyncHelper.ContinueTask(subTask, completion, () => completion.SetResult(null));
                         }
-                    }, connectionToDoom: null,
+                    },
                     onFailure: ((exception) => {
                         if (_cachedAsyncState != null)
                         {
@@ -4029,8 +4039,8 @@ namespace Microsoft.Data.SqlClient
                         {
                             _cachedAsyncState.ResetAsyncState();
                         }
-                    }),
-                    connectionToAbort: _activeConnection);
+                    })
+                   );
                 task = completion.Task;
                 return ds;
             }
@@ -4294,15 +4304,17 @@ namespace Microsoft.Data.SqlClient
 
         private Task RunExecuteReaderTdsSetupContinuation(RunBehavior runBehavior, SqlDataReader ds, string optionSettings, Task writeTask)
         {
-            Task task = AsyncHelper.CreateContinuationTask(writeTask, () =>
-            {
+            Task task = AsyncHelper.CreateContinuationTask(writeTask,
+                onSuccess: () =>
+                {
                 _activeConnection.GetOpenTdsConnection(); // it will throw if connection is closed 
                 cachedAsyncState.SetAsyncReaderState(ds, runBehavior, optionSettings);
-            },
-            onFailure: (exc) =>
-            {
-                _activeConnection.GetOpenTdsConnection().DecrementAsyncCount();
-            });
+                },
+                onFailure: (exc) =>
+                {
+                    _activeConnection.GetOpenTdsConnection().DecrementAsyncCount();
+                }
+            );
             return task;
         }
 
@@ -4328,9 +4340,12 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        AsyncHelper.ContinueTask(subTask, completion, () => completion.SetResult(null));
+                        AsyncHelper.ContinueTaskWithState(subTask, completion,
+                             state: completion,
+                             onSuccess: (state) => ((TaskCompletionSource<object>)state).SetResult(null)
+                         );
                     }
-                }, connectionToAbort: _activeConnection
+                }
             );
         }
 

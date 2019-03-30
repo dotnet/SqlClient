@@ -8871,16 +8871,16 @@ namespace Microsoft.Data.SqlClient
                                     AsyncHelper.ContinueTask(writeParamTask, completion,
                                         () => TdsExecuteRPC(cmd, rpcArray, timeout, inSchema, notificationRequest, stateObj, isCommandProc, sync, completion,
                                                               startRpc: ii, startParam: i + 1),
-                                        connectionToDoom: _connHandler,
                                         onFailure: exc => TdsExecuteRPC_OnFailure(exc, stateObj));
 
                                     // Take care of releasing the locks
                                     if (releaseConnectionLock)
                                     {
-                                        task.ContinueWith(_ =>
-                                        {
-                                            _connHandler._parserLock.Release();
-                                        }, TaskScheduler.Default);
+                                        task.ContinueWith(
+                                             (_, state) => ((SqlInternalConnectionTds)state)._parserLock.Release(),
+                                             state: _connHandler,
+                                             TaskScheduler.Default
+                                         );
                                         releaseConnectionLock = false;
                                     }
 
@@ -8982,7 +8982,6 @@ namespace Microsoft.Data.SqlClient
                     startRpc,
                     startParam
                 ),
-                connectionToDoom: _connHandler,
                 onFailure: exc => TdsExecuteRPC_OnFailure(exc, stateObj)
             );
         }
@@ -10328,9 +10327,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    return AsyncHelper.CreateContinuationTask<int, TdsParserStateObject>(unterminatedWriteTask,
-                        WriteInt, 0, stateObj,
-                        connectionToDoom: _connHandler);
+                    return AsyncHelper.CreateContinuationTask<int, TdsParserStateObject>(unterminatedWriteTask, WriteInt, 0, stateObj);
                 }
             }
             else
