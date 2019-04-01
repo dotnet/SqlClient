@@ -119,7 +119,6 @@ namespace Microsoft.Data.SqlClient {
         private int _preparedConnectionCloseCount = -1;
         private int _preparedConnectionReconnectCount = -1;
 
-        private System.Data.SqlClient.SqlCommand _sysSqlcommand;                //used for backward compatibalitiy for system.data.sqlclient
         private SqlParameterCollection _parameters;
         private SqlConnection          _activeConnection;
         private bool                   _dirty            = false;               // true if the user changes the commandtext or number of parameters after the command is already prepared
@@ -443,10 +442,6 @@ namespace Microsoft.Data.SqlClient {
             }
         }
 
-        internal SqlCommand(System.Data.SqlClient.SqlCommand sqlCommand) : this() {
-            SysSqlCommand = sqlCommand;
-        }
-
         [
         DefaultValue(null),
         Editor("Microsoft.VSDesigner.Data.Design.DbConnectionEditor, " + AssemblyRef.MicrosoftVSDesigner, "System.Drawing.Design.UITypeEditor, " + AssemblyRef.SystemDrawing),
@@ -523,17 +518,6 @@ namespace Microsoft.Data.SqlClient {
             }
         }
 
-        internal System.Data.SqlClient.SqlCommand SysSqlCommand {
-            get
-            {
-                return _sysSqlcommand;
-            }
-            set
-            {
-                _sysSqlcommand = value;             
-            }
-        }
-
         override protected DbConnection DbConnection { // V1.2.3300
             get {
                 return Connection;
@@ -571,17 +555,10 @@ namespace Microsoft.Data.SqlClient {
         ]
         public bool NotificationAutoEnlist {
             get {
-                return SysSqlCommand?.NotificationAutoEnlist ?? _notificationAutoEnlist;
+                return _notificationAutoEnlist;
             }
             set {
-                if (SysSqlCommand != null)
-                {
-                    SysSqlCommand.NotificationAutoEnlist = value;
-                }
-                else
-                {
-                    _notificationAutoEnlist = value;
-                }
+                _notificationAutoEnlist = value;
             }
          }
 
@@ -591,34 +568,15 @@ namespace Microsoft.Data.SqlClient {
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Notification),
         ResDescriptionAttribute(StringsHelper.ResourceNames.SqlCommand_Notification),
         ]
-
         public SqlNotificationRequest Notification {
             get {
-                if (SysSqlCommand != null && SysSqlCommand.Notification != null)
-                {                    
-                    if(_notification == null) 
-                    {
-                        _notification = new SqlNotificationRequest();
-                    }
-                    // Copy over values from SysSqlCommand.Notification.
-                    _notification.UserData = SysSqlCommand.Notification.UserData;
-                    _notification.Options = SysSqlCommand.Notification.Options;
-                    _notification.Timeout = SysSqlCommand.Notification.Timeout;                    
-                }
-                return _notification;                
+                return _notification;
             }
             set {
-                if (SysSqlCommand != null)
-                {
-                    SysSqlCommand.Notification = new System.Data.Sql.SqlNotificationRequest(value.UserData, value.Options, value.Timeout);
-                }
-                else
-                {
-                    Bid.Trace("<sc.SqlCommand.set_Notification|API> %d#\n", ObjectID);
-                    _sqlDep = null;
-                    _notification = value;
-                }
-            }        
+                Bid.Trace("<sc.SqlCommand.set_Notification|API> %d#\n", ObjectID);
+                _sqlDep = null;
+                _notification = value;
+            }
         }
 
 
@@ -639,42 +597,24 @@ namespace Microsoft.Data.SqlClient {
         ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_Transaction),
         ]
         new public SqlTransaction Transaction {
-            get
-            {
-                if (SysSqlCommand != null)
-                {
-                    return new SqlTransaction(SysSqlCommand.Transaction, this.Connection);
+            get {
+                // if the transaction object has been zombied, just return null
+                if ((null != _transaction) && (null == _transaction.Connection)) { // MDAC 72720
+                    _transaction = null;
                 }
-                else
-                {
-                    // if the transaction object has been zombied, just return null
-                    if ((null != _transaction) && (null == _transaction.Connection))
-                    { // MDAC 72720
-                        _transaction = null;
-                    }
-                    return _transaction;
-                }
+                return _transaction;
             }
-            set
-            {
-                if (SysSqlCommand != null && null != value.SysSqlTransaction)
-                {
-                    SysSqlCommand.Transaction = value.SysSqlTransaction;
-                }
-                else
-                {
-                    // Don't allow the transaction to be changed while in a async opperation.
-                    if (_transaction != value && _activeConnection != null)
-                    { // If new value...
-                        if (cachedAsyncState.PendingAsyncOperation)
-                        { // If in pending async state, throw
-                            throw SQL.CannotModifyPropertyAsyncOperationInProgress(SQL.Transaction);
-                        }
+            set {
+                // Don't allow the transaction to be changed while in a async opperation.
+                if (_transaction != value && _activeConnection != null) { // If new value...
+                    if (cachedAsyncState.PendingAsyncOperation) { // If in pending async state, throw
+                        throw SQL.CannotModifyPropertyAsyncOperationInProgress(SQL.Transaction);
                     }
-                    // TODO: Add objid here
-                    Bid.Trace("<sc.SqlCommand.set_Transaction|API> %d#\n", ObjectID);
-                    _transaction = value;
                 }
+
+                // TODO: Add objid here
+                Bid.Trace("<sc.SqlCommand.set_Transaction|API> %d#\n", ObjectID);
+                _transaction = value;
             }
         }
 
@@ -696,34 +636,18 @@ namespace Microsoft.Data.SqlClient {
         ]
         override public string CommandText { // V1.2.3300, XXXCommand V1.0.5000
             get {
-                if (SysSqlCommand != null)
-                {
-                    return SysSqlCommand.CommandText;
-                }
-                else
-                {
-                    string value = _commandText;
-                    return ((null != value) ? value : ADP.StrEmpty);
-                }
+                string value = _commandText;
+                return ((null != value) ? value : ADP.StrEmpty);
             }
             set {
-                if (SysSqlCommand != null)
-                {
-                    SysSqlCommand.CommandText = value;
+                if (Bid.TraceOn) {
+                    Bid.Trace("<sc.SqlCommand.set_CommandText|API> %d#, '", ObjectID);
+                    Bid.PutStr(value); // Use PutStr to write out entire string
+                    Bid.Trace("'\n");
                 }
-                else
-                {
-                    if (Bid.TraceOn)
-                    {
-                        Bid.Trace("<sc.SqlCommand.set_CommandText|API> %d#, '", ObjectID);
-                        Bid.PutStr(value); // Use PutStr to write out entire string
-                        Bid.Trace("'\n");
-                    }
-                    if (0 != ADP.SrcCompare(_commandText, value))
-                    {
-                        PropertyChanging();
-                        _commandText = value;
-                    }
+                if (0 != ADP.SrcCompare(_commandText, value)) {
+                    PropertyChanging();
+                    _commandText = value;
                 }
             }
         }
@@ -736,7 +660,7 @@ namespace Microsoft.Data.SqlClient {
         ]
         public SqlCommandColumnEncryptionSetting ColumnEncryptionSetting {
             get {
-                return (SysSqlCommand != null) ? (Microsoft.Data.SqlClient.SqlCommandColumnEncryptionSetting)((int)SysSqlCommand.ColumnEncryptionSetting) : _columnEncryptionSetting;
+                return _columnEncryptionSetting;
             }
         }
 
@@ -746,41 +670,24 @@ namespace Microsoft.Data.SqlClient {
         ]
         override public int CommandTimeout { // V1.2.3300, XXXCommand V1.0.5000
             get {
-                return  SysSqlCommand?.CommandTimeout ?? _commandTimeout;
+                return _commandTimeout;
             }
             set {
-                if (SysSqlCommand != null)
-                {
-                    SysSqlCommand.CommandTimeout = value;
+                Bid.Trace("<sc.SqlCommand.set_CommandTimeout|API> %d#, %d\n", ObjectID, value);
+                if (value < 0) {
+                    throw ADP.InvalidCommandTimeout(value);
                 }
-                else
-                {
-                    Bid.Trace("<sc.SqlCommand.set_CommandTimeout|API> %d#, %d\n", ObjectID, value);
-                    if (value < 0)
-                    {
-                        throw ADP.InvalidCommandTimeout(value);
-                    }
-                    if (value != _commandTimeout)
-                    {
-                        PropertyChanging();
-                        _commandTimeout = value;
-                    }
+                if (value != _commandTimeout) {
+                    PropertyChanging();
+                    _commandTimeout = value;
                 }
             }
         }
 
         public void ResetCommandTimeout() { // V1.2.3300
-            if (SysSqlCommand != null)
-            {
-                SysSqlCommand.ResetCommandTimeout();
-            }
-            else
-            {
-                if (ADP.DefaultCommandTimeout != _commandTimeout)
-                {
-                    PropertyChanging();
-                    _commandTimeout = ADP.DefaultCommandTimeout;
-                }
+            if (ADP.DefaultCommandTimeout != _commandTimeout) {
+                PropertyChanging();
+                _commandTimeout = ADP.DefaultCommandTimeout;
             }
         }
 
@@ -796,38 +703,22 @@ namespace Microsoft.Data.SqlClient {
         ]
         override public CommandType CommandType { // V1.2.3300, XXXCommand V1.0.5000
             get {
-                if (SysSqlCommand != null)
-                {
-                    return SysSqlCommand.CommandType;
-                }
-                else
-                {
-                    CommandType cmdType = _commandType;
-                    return ((0 != cmdType) ? cmdType : CommandType.Text);
-                }
+                CommandType cmdType = _commandType;
+                return ((0 != cmdType) ? cmdType : CommandType.Text);
             }
             set {
-                if (SysSqlCommand != null)
-                {
-                    SysSqlCommand.CommandType = value;
-                }
-                else
-                {
-                    Bid.Trace("<sc.SqlCommand.set_CommandType|API> %d#, %d{ds.CommandType}\n", ObjectID, (int)value);
-                    if (_commandType != value)
-                    {
-                        switch (value)
-                        { // @perfnote: Enum.IsDefined
-                            case CommandType.Text:
-                            case CommandType.StoredProcedure:
-                                PropertyChanging();
-                                _commandType = value;
-                                break;
-                            case System.Data.CommandType.TableDirect:
-                                throw SQL.NotSupportedCommandType(value);
-                            default:
-                                throw ADP.InvalidCommandType(value);
-                        }
+                Bid.Trace("<sc.SqlCommand.set_CommandType|API> %d#, %d{ds.CommandType}\n", ObjectID, (int)value);
+                if (_commandType != value) {
+                    switch(value) { // @perfnote: Enum.IsDefined
+                    case CommandType.Text:
+                    case CommandType.StoredProcedure:
+                        PropertyChanging();
+                        _commandType = value;
+                        break;
+                    case System.Data.CommandType.TableDirect:
+                        throw SQL.NotSupportedCommandType(value);
+                    default:
+                        throw ADP.InvalidCommandType(value);
                     }
                 }
             }
@@ -845,19 +736,11 @@ namespace Microsoft.Data.SqlClient {
         ]
         public override bool DesignTimeVisible { // V1.2.3300, XXXCommand V1.0.5000
             get {
-                return SysSqlCommand?.DesignTimeVisible ?? !_designTimeInvisible;
+                return !_designTimeInvisible;
             }
             set {
-                if (SysSqlCommand != null)
-                {
-                    SysSqlCommand.DesignTimeVisible = value;
-                }
-                else
-                {
-                    _designTimeInvisible = !value;
-                    TypeDescriptor.Refresh(this); // VS7 208845
-                }
-
+                _designTimeInvisible = !value;
+                TypeDescriptor.Refresh(this); // VS7 208845
             }
         }
 
@@ -868,20 +751,12 @@ namespace Microsoft.Data.SqlClient {
         ]
         new public SqlParameterCollection Parameters {
             get {
-                if (SysSqlCommand != null)
-                {
-                    return new SqlParameterCollection(SysSqlCommand.Parameters);
+                if (null == this._parameters) {
+                    // delay the creation of the SqlParameterCollection
+                    // until user actually uses the Parameters property
+                    this._parameters = new SqlParameterCollection();
                 }
-                else
-                {
-                    if (null == this._parameters)
-                    {
-                        // delay the creation of the SqlParameterCollection
-                        // until user actually uses the Parameters property
-                        this._parameters = new SqlParameterCollection();
-                    }
-                    return this._parameters;
-                }
+                return this._parameters;
             }
         }
 
@@ -915,26 +790,18 @@ namespace Microsoft.Data.SqlClient {
         ]
         override public UpdateRowSource UpdatedRowSource { // V1.2.3300, XXXCommand V1.0.5000
             get {
-                return SysSqlCommand?.UpdatedRowSource ?? _updatedRowSource;
+                return _updatedRowSource;
             }
             set {
-                if (SysSqlCommand != null)
-                {
-                    SysSqlCommand.UpdatedRowSource = value;
-                }
-                else
-                {
-                    switch (value)
-                    { // @perfnote: Enum.IsDefined
-                        case UpdateRowSource.None:
-                        case UpdateRowSource.OutputParameters:
-                        case UpdateRowSource.FirstReturnedRecord:
-                        case UpdateRowSource.Both:
-                            _updatedRowSource = value;
-                            break;
-                        default:
-                            throw ADP.InvalidUpdateRowSource(value);
-                    }
+                switch(value) { // @perfnote: Enum.IsDefined
+                case UpdateRowSource.None:
+                case UpdateRowSource.OutputParameters:
+                case UpdateRowSource.FirstReturnedRecord:
+                case UpdateRowSource.Both:
+                    _updatedRowSource = value;
+                    break;
+                default:
+                    throw ADP.InvalidUpdateRowSource(value);
                 }
             }
         }
@@ -977,130 +844,108 @@ namespace Microsoft.Data.SqlClient {
         }
 
         override public void Prepare() {
-            if (SysSqlCommand != null)
-            {
-                SysSqlCommand.Prepare();
+            SqlConnection.ExecutePermission.Demand();
+
+            // Reset _pendingCancel upon entry into any Execute - used to synchronize state
+            // between entry into Execute* API and the thread obtaining the stateObject.
+            _pendingCancel = false;
+
+            // Context connection's prepare is a no-op
+            if (null != _activeConnection && _activeConnection.IsContextConnection) {
+                return;
             }
-            else
-            {
-                SqlConnection.ExecutePermission.Demand();
 
-                // Reset _pendingCancel upon entry into any Execute - used to synchronize state
-                // between entry into Execute* API and the thread obtaining the stateObject.
-                _pendingCancel = false;
+            SqlStatistics statistics = null;
+            IntPtr hscp;
+            Bid.ScopeEnter(out hscp, "<sc.SqlCommand.Prepare|API> %d#", ObjectID);
+            Bid.CorrelationTrace("<sc.SqlCommand.Prepare|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
+            statistics = SqlStatistics.StartTimer(Statistics);
 
-                // Context connection's prepare is a no-op
-                if (null != _activeConnection && _activeConnection.IsContextConnection)
-                {
-                    return;
+            // only prepare if batch with parameters
+            // MDAC BUG #'s 73776 & 72101
+            if (
+                this.IsPrepared && !this.IsDirty
+                || (this.CommandType == CommandType.StoredProcedure)
+                ||  (
+                        (System.Data.CommandType.Text == this.CommandType)
+                        && (0 == GetParameterCount (_parameters))
+                    )
+
+            ) {
+                if (null != Statistics) {
+                    Statistics.SafeIncrement (ref Statistics._prepares);
                 }
+                _hiddenPrepare = false;
+            }
+            else {
+                // Validate the command outside of the try\catch to avoid putting the _stateObj on error
+                ValidateCommand(ADP.Prepare, false /*not async*/);
 
-                SqlStatistics statistics = null;
-                IntPtr hscp;
-                Bid.ScopeEnter(out hscp, "<sc.SqlCommand.Prepare|API> %d#", ObjectID);
-                Bid.CorrelationTrace("<sc.SqlCommand.Prepare|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
-                statistics = SqlStatistics.StartTimer(Statistics);
+                bool processFinallyBlock = true;
+                TdsParser bestEffortCleanupTarget = null;
+                RuntimeHelpers.PrepareConstrainedRegions();
+                try {
+                    bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_activeConnection);
 
-                // only prepare if batch with parameters
-                // MDAC BUG #'s 73776 & 72101
-                if (
-                    this.IsPrepared && !this.IsDirty
-                    || (this.CommandType == CommandType.StoredProcedure)
-                    || (
-                            (System.Data.CommandType.Text == this.CommandType)
-                            && (0 == GetParameterCount(_parameters))
-                        )
+                    // NOTE: The state object isn't actually needed for this, but it is still here for back-compat (since it does a bunch of checks)
+                    GetStateObject();
 
-                )
-                {
-                    if (null != Statistics)
-                    {
-                        Statistics.SafeIncrement(ref Statistics._prepares);
-                    }
-                    _hiddenPrepare = false;
-                }
-                else
-                {
-                    // Validate the command outside of the try\catch to avoid putting the _stateObj on error
-                    ValidateCommand(ADP.Prepare, false /*not async*/);
-
-                    bool processFinallyBlock = true;
-                    TdsParser bestEffortCleanupTarget = null;
-                    RuntimeHelpers.PrepareConstrainedRegions();
-                    try
-                    {
-                        bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_activeConnection);
-
-                        // NOTE: The state object isn't actually needed for this, but it is still here for back-compat (since it does a bunch of checks)
-                        GetStateObject();
-
-                        // Loop through parameters ensuring that we do not have unspecified types, sizes, scales, or precisions
-                        if (null != _parameters)
-                        {
-                            int count = _parameters.Count;
-                            for (int i = 0; i < count; ++i)
-                            {
-                                _parameters[i].Prepare(this); // MDAC 67063
-                            }
+                    // Loop through parameters ensuring that we do not have unspecified types, sizes, scales, or precisions
+                    if (null != _parameters) {
+                        int count = _parameters.Count;
+                        for (int i = 0; i < count; ++i) {
+                            _parameters[i].Prepare(this); // MDAC 67063
                         }
+                    }
 
 #if DEBUG
-                        TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
-                        RuntimeHelpers.PrepareConstrainedRegions();
-                        try
-                        {
-                            tdsReliabilitySection.Start();
+                    TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+                    RuntimeHelpers.PrepareConstrainedRegions();
+                    try {
+                        tdsReliabilitySection.Start();
 #else
                     {
 #endif //DEBUG
-                            InternalPrepare();
-                        }
+                        InternalPrepare();
+                    }
 #if DEBUG
-                        finally
-                        {
-                            tdsReliabilitySection.Stop();
-                        }
+                    finally {
+                        tdsReliabilitySection.Stop();
+                    }
 #endif //DEBUG
-                    }
-                    catch (System.OutOfMemoryException e)
-                    {
-                        processFinallyBlock = false;
-                        _activeConnection.Abort(e);
-                        throw;
-                    }
-                    catch (System.StackOverflowException e)
-                    {
-                        processFinallyBlock = false;
-                        _activeConnection.Abort(e);
-                        throw;
-                    }
-                    catch (System.Threading.ThreadAbortException e)
-                    {
-                        processFinallyBlock = false;
-                        _activeConnection.Abort(e);
+                }
+                catch (System.OutOfMemoryException e) {
+                    processFinallyBlock = false;
+                    _activeConnection.Abort(e);
+                    throw;
+                }
+                catch (System.StackOverflowException e) {
+                    processFinallyBlock = false;
+                    _activeConnection.Abort(e);
+                    throw;
+                }
+                catch (System.Threading.ThreadAbortException e)  {
+                    processFinallyBlock = false;
+                    _activeConnection.Abort(e);
 
-                        SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-                        throw;
-                    }
-                    catch (Exception e)
-                    {
-                        processFinallyBlock = ADP.IsCatchableExceptionType(e);
-                        throw;
-                    }
-                    finally
-                    {
-                        if (processFinallyBlock)
-                        {
-                            _hiddenPrepare = false; // The command is now officially prepared
-
-                            ReliablePutStateObject();
-                        }
+                    SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
+                    throw;
+                }
+                catch (Exception e) {
+                    processFinallyBlock = ADP.IsCatchableExceptionType(e);
+                    throw;
+                }
+                finally {
+                    if (processFinallyBlock) {
+                        _hiddenPrepare = false; // The command is now officially prepared
+    
+                        ReliablePutStateObject();
                     }
                 }
-
-                SqlStatistics.StopTimer(statistics);
-                Bid.ScopeLeave(ref hscp);
             }
+
+            SqlStatistics.StopTimer(statistics);
+            Bid.ScopeLeave(ref hscp);
         }
 
         private void InternalPrepare() {
@@ -1167,141 +1012,115 @@ namespace Microsoft.Data.SqlClient {
         // because immediately after checkin the connection can be closed or removed via another thread.
         //
         override public void Cancel() {
-            if (SysSqlCommand != null)
-            {
-                SysSqlCommand.Cancel();
-            }
-            else
-            {
-                IntPtr hscp;
-                Bid.ScopeEnter(out hscp, "<sc.SqlCommand.Cancel|API> %d#", ObjectID);
+            IntPtr hscp;
+            Bid.ScopeEnter(out hscp, "<sc.SqlCommand.Cancel|API> %d#", ObjectID);
+            
+            Bid.CorrelationTrace("<sc.SqlCommand.Cancel|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
 
-                Bid.CorrelationTrace("<sc.SqlCommand.Cancel|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
+            SqlStatistics statistics = null;
+            try {
+                statistics = SqlStatistics.StartTimer(Statistics);
 
-                SqlStatistics statistics = null;
-                try
-                {
-                    statistics = SqlStatistics.StartTimer(Statistics);
-
-                    // If we are in reconnect phase simply cancel the waiting task
-                    var reconnectCompletionSource = _reconnectionCompletionSource;
-                    if (reconnectCompletionSource != null)
-                    {
-                        if (reconnectCompletionSource.TrySetCanceled())
-                        {
-                            return;
-                        }
-                    }
-
-                    // the pending data flag means that we are awaiting a response or are in the middle of proccessing a response
-                    // if we have no pending data, then there is nothing to cancel
-                    // if we have pending data, but it is not a result of this command, then we don't cancel either.  Note that
-                    // this model is implementable because we only allow one active command at any one time.  This code
-                    // will have to change we allow multiple outstanding batches
-
-                    // TODO: Cancel is dependent upon resolving issues with SNI (which currently doesn't support it) and with whether we decouple the command from the data reader.
-                    if (null == _activeConnection)
-                    {
+                // If we are in reconnect phase simply cancel the waiting task
+                var reconnectCompletionSource = _reconnectionCompletionSource;
+                if (reconnectCompletionSource != null) {
+                    if (reconnectCompletionSource.TrySetCanceled()) {                        
                         return;
                     }
-                    SqlInternalConnectionTds connection = (_activeConnection.InnerConnection as SqlInternalConnectionTds);
-                    if (null == connection)
-                    {  // Fail with out locking
+                }
+                
+                // the pending data flag means that we are awaiting a response or are in the middle of proccessing a response
+                // if we have no pending data, then there is nothing to cancel
+                // if we have pending data, but it is not a result of this command, then we don't cancel either.  Note that
+                // this model is implementable because we only allow one active command at any one time.  This code
+                // will have to change we allow multiple outstanding batches
+
+                // TODO: Cancel is dependent upon resolving issues with SNI (which currently doesn't support it) and with whether we decouple the command from the data reader.
+                if (null == _activeConnection) {
+                    return;
+                }
+                SqlInternalConnectionTds connection = (_activeConnection.InnerConnection as SqlInternalConnectionTds);
+                if (null == connection) {  // Fail with out locking
+                     return;
+                }
+
+                // The lock here is to protect against the command.cancel / connection.close race condition
+                // The SqlInternalConnectionTds is set to OpenBusy during close, once this happens the cast below will fail and 
+                // the command will no longer be cancelable.  It might be desirable to be able to cancel the close opperation, but this is
+                // outside of the scope of Whidbey RTM.  See (SqlConnection::Close) for other lock.
+                lock (connection) {                                              
+                    if (connection != (_activeConnection.InnerConnection as SqlInternalConnectionTds)) { // make sure the connection held on the active connection is what we have stored in our temp connection variable, if not between getting "connection" and takeing the lock, the connection has been closed
+                        return;
+                    }
+                    
+                    TdsParser parser = connection.Parser;
+                    if (null == parser) {
                         return;
                     }
 
-                    // The lock here is to protect against the command.cancel / connection.close race condition
-                    // The SqlInternalConnectionTds is set to OpenBusy during close, once this happens the cast below will fail and 
-                    // the command will no longer be cancelable.  It might be desirable to be able to cancel the close opperation, but this is
-                    // outside of the scope of Whidbey RTM.  See (SqlConnection::Close) for other lock.
-                    lock (connection)
-                    {
-                        if (connection != (_activeConnection.InnerConnection as SqlInternalConnectionTds))
-                        { // make sure the connection held on the active connection is what we have stored in our temp connection variable, if not between getting "connection" and takeing the lock, the connection has been closed
-                            return;
-                        }
-
-                        TdsParser parser = connection.Parser;
-                        if (null == parser)
-                        {
-                            return;
-                        }
-
-                        TdsParser bestEffortCleanupTarget = null;
-                        RuntimeHelpers.PrepareConstrainedRegions();
-                        try
-                        {
+                    TdsParser bestEffortCleanupTarget = null;
+                    RuntimeHelpers.PrepareConstrainedRegions();
+                    try {
 #if DEBUG
-                            TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+                        TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
-                            RuntimeHelpers.PrepareConstrainedRegions();
-                            try
-                            {
-                                tdsReliabilitySection.Start();
+                        RuntimeHelpers.PrepareConstrainedRegions();
+                        try {
+                            tdsReliabilitySection.Start();
 #else
                         {
 #endif //DEBUG
-                                bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_activeConnection);
+                            bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_activeConnection);
 
-                                if (!_pendingCancel)
-                                { // Do nothing if aleady pending.
-                                  // Before attempting actual cancel, set the _pendingCancel flag to false.
-                                  // This denotes to other thread before obtaining stateObject from the
-                                  // session pool that there is another thread wishing to cancel.
-                                  // The period in question is between entering the ExecuteAPI and obtaining 
-                                  // a stateObject.
-                                    _pendingCancel = true;
+                            if (!_pendingCancel) { // Do nothing if aleady pending.
+                                // Before attempting actual cancel, set the _pendingCancel flag to false.
+                                // This denotes to other thread before obtaining stateObject from the
+                                // session pool that there is another thread wishing to cancel.
+                                // The period in question is between entering the ExecuteAPI and obtaining 
+                                // a stateObject.
+                                _pendingCancel = true;
 
-                                    TdsParserStateObject stateObj = _stateObj;
-                                    if (null != stateObj)
-                                    {
-                                        stateObj.Cancel(ObjectID);
-                                    }
-                                    else
-                                    {
-                                        SqlDataReader reader = connection.FindLiveReader(this);
-                                        if (reader != null)
-                                        {
-                                            reader.Cancel(ObjectID);
-                                        }
+                                TdsParserStateObject stateObj = _stateObj;
+                                if (null != stateObj) {
+                                    stateObj.Cancel(ObjectID);
+                                }
+                                else {
+                                    SqlDataReader reader = connection.FindLiveReader(this);
+                                    if (reader != null) {
+                                        reader.Cancel(ObjectID);
                                     }
                                 }
                             }
+                        }
 #if DEBUG
-                            finally
-                            {
-                                tdsReliabilitySection.Stop();
-                            }
+                        finally {
+                            tdsReliabilitySection.Stop();
+                        }
 #endif //DEBUG
-                        }
-                        catch (System.OutOfMemoryException e)
-                        {
-                            _activeConnection.Abort(e);
-                            throw;
-                        }
-                        catch (System.StackOverflowException e)
-                        {
-                            _activeConnection.Abort(e);
-                            throw;
-                        }
-                        catch (System.Threading.ThreadAbortException e)
-                        {
-                            _activeConnection.Abort(e);
-                            SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-                            throw;
-                        }
+                    }
+                    catch (System.OutOfMemoryException e) {
+                        _activeConnection.Abort(e);
+                        throw;
+                    }
+                    catch (System.StackOverflowException e) {
+                        _activeConnection.Abort(e);
+                        throw;
+                    }
+                    catch (System.Threading.ThreadAbortException e)  {
+                        _activeConnection.Abort(e);
+                        SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
+                        throw;
                     }
                 }
-                finally
-                {
-                    SqlStatistics.StopTimer(statistics);
-                    Bid.ScopeLeave(ref hscp);
-                }
+            }
+            finally {
+                SqlStatistics.StopTimer(statistics);
+                Bid.ScopeLeave(ref hscp);
             }
         }
 
         new public SqlParameter CreateParameter() {
-            return new SqlParameter(SysSqlCommand?.CreateParameter()) ?? new SqlParameter();
+            return new SqlParameter();
         }
 
         override protected DbParameter CreateDbParameter() {
@@ -1323,54 +1142,36 @@ namespace Microsoft.Data.SqlClient {
         }
 
         override public object ExecuteScalar() {
-            if (SysSqlCommand != null)
-            {
-                try
-                {
-                    return SysSqlCommand.ExecuteScalar();
-                }
-                catch (System.Data.SqlClient.SqlException sysExp)
-                {
-                    SqlException mdExp = SqlException.CreateException(sysExp, sysExp.Server, sysExp.ClientConnectionId);
-                    throw mdExp;
-                }
+            SqlConnection.ExecutePermission.Demand();
+
+            // Reset _pendingCancel upon entry into any Execute - used to synchronize state
+            // between entry into Execute* API and the thread obtaining the stateObject.
+            _pendingCancel = false;
+
+            SqlStatistics statistics = null;
+            IntPtr hscp;
+            Bid.ScopeEnter(out hscp, "<sc.SqlCommand.ExecuteScalar|API> %d#", ObjectID);
+            Bid.CorrelationTrace("<sc.SqlCommand.ExecuteScalar|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
+
+            bool success = false;
+            int? sqlExceptionNumber = null;
+            try {
+                statistics = SqlStatistics.StartTimer(Statistics);
+                WriteBeginExecuteEvent();
+                SqlDataReader ds;
+                ds = RunExecuteReader(0, RunBehavior.ReturnImmediately, true, ADP.ExecuteScalar);
+                object result = CompleteExecuteScalar(ds, false);
+                success = true;
+                return result;
             }
-            else
-            {
-                SqlConnection.ExecutePermission.Demand();
-            
-                // Reset _pendingCancel upon entry into any Execute - used to synchronize state
-                // between entry into Execute* API and the thread obtaining the stateObject.
-                _pendingCancel = false;
-
-                SqlStatistics statistics = null;
-                IntPtr hscp;
-                Bid.ScopeEnter(out hscp, "<sc.SqlCommand.ExecuteScalar|API> %d#", ObjectID);
-                Bid.CorrelationTrace("<sc.SqlCommand.ExecuteScalar|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
-
-                bool success = false;
-                int? sqlExceptionNumber = null;
-                try
-                {
-                    statistics = SqlStatistics.StartTimer(Statistics);
-                    WriteBeginExecuteEvent();
-                    SqlDataReader ds;
-                    ds = RunExecuteReader(0, RunBehavior.ReturnImmediately, true, ADP.ExecuteScalar);
-                    object result = CompleteExecuteScalar(ds, false);
-                    success = true;
-                    return result;
-                }
-                catch (SqlException ex)
-                {
-                    sqlExceptionNumber = ex.Number;
-                    throw;
-                }
-                finally
-                {
-                    SqlStatistics.StopTimer(statistics);
-                    Bid.ScopeLeave(ref hscp);
-                    WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
-                }
+            catch (SqlException ex) {
+                sqlExceptionNumber = ex.Number;
+                throw;
+            }
+            finally {
+                SqlStatistics.StopTimer(statistics);
+                Bid.ScopeLeave(ref hscp);
+                WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
             }
         }
 
@@ -1398,52 +1199,34 @@ namespace Microsoft.Data.SqlClient {
         }
 
         override public int ExecuteNonQuery() {
-            if (SysSqlCommand != null)
-            {
-                try
-                {
-                    return SysSqlCommand.ExecuteNonQuery();
-                }
-                catch (System.Data.SqlClient.SqlException sysExp)
-                {
-                    SqlException mdExp = SqlException.CreateException(sysExp, sysExp.Server, sysExp.ClientConnectionId);
-                    throw mdExp;
-                }
+            SqlConnection.ExecutePermission.Demand();
+
+            // Reset _pendingCancel upon entry into any Execute - used to synchronize state
+            // between entry into Execute* API and the thread obtaining the stateObject.
+            _pendingCancel = false;
+
+            SqlStatistics statistics = null;
+            IntPtr hscp;
+            Bid.ScopeEnter(out hscp, "<sc.SqlCommand.ExecuteNonQuery|API> %d#", ObjectID);
+            Bid.CorrelationTrace("<sc.SqlCommand.ExecuteNonQuery|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
+            bool success = false;
+            int? sqlExceptionNumber = null;
+            try {
+                statistics = SqlStatistics.StartTimer(Statistics);
+                WriteBeginExecuteEvent();
+                bool usedCache;
+                InternalExecuteNonQuery(null, ADP.ExecuteNonQuery, false, CommandTimeout, out usedCache);
+                success = true;
+                return _rowsAffected;
             }
-            else
-            {
-                SqlConnection.ExecutePermission.Demand();
-
-                // Reset _pendingCancel upon entry into any Execute - used to synchronize state
-                // between entry into Execute* API and the thread obtaining the stateObject.
-                _pendingCancel = false;
-
-                SqlStatistics statistics = null;
-                IntPtr hscp;
-                Bid.ScopeEnter(out hscp, "<sc.SqlCommand.ExecuteNonQuery|API> %d#", ObjectID);
-                Bid.CorrelationTrace("<sc.SqlCommand.ExecuteNonQuery|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
-                bool success = false;
-                int? sqlExceptionNumber = null;
-                try
-                {
-                    statistics = SqlStatistics.StartTimer(Statistics);
-                    WriteBeginExecuteEvent();
-                    bool usedCache;
-                    InternalExecuteNonQuery(null, ADP.ExecuteNonQuery, false, CommandTimeout, out usedCache);
-                    success = true;
-                    return _rowsAffected;
-                }
-                catch (SqlException ex)
-                {
-                    sqlExceptionNumber = ex.Number;
-                    throw;
-                }
-                finally
-                {
-                    SqlStatistics.StopTimer(statistics);
-                    Bid.ScopeLeave(ref hscp);
-                    WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
-                }
+            catch (SqlException ex) {
+                sqlExceptionNumber = ex.Number;
+                throw;
+            }
+            finally {
+                SqlStatistics.StopTimer(statistics);
+                Bid.ScopeLeave(ref hscp);
+                WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous : true);
             }
         }
 
@@ -1472,45 +1255,15 @@ namespace Microsoft.Data.SqlClient {
 
         [System.Security.Permissions.HostProtectionAttribute(ExternalThreading=true)]
         public IAsyncResult BeginExecuteNonQuery() {
-            if (SysSqlCommand != null)
-            {
-                try
-                {
-                    return SysSqlCommand.BeginExecuteNonQuery();
-                }
-                catch (System.Data.SqlClient.SqlException sysExp)
-                {
-                    SqlException mdExp = SqlException.CreateException(sysExp, sysExp.Server, sysExp.ClientConnectionId);
-                    throw mdExp;
-                }
-            }
-            else
-            {
-                // BeginExecuteNonQuery will track ExecutionTime for us
-                return BeginExecuteNonQuery(null, null);
-            }
+            // BeginExecuteNonQuery will track ExecutionTime for us
+            return BeginExecuteNonQuery(null, null);
         }
 
         [System.Security.Permissions.HostProtectionAttribute(ExternalThreading=true)]
         public IAsyncResult BeginExecuteNonQuery(AsyncCallback callback, object stateObject) {
-            if (SysSqlCommand != null)
-            {
-                try
-                {
-                    return SysSqlCommand.BeginExecuteNonQuery(callback, stateObject);
-                }
-                catch (System.Data.SqlClient.SqlException sysExp)
-                {
-                    SqlException mdExp = SqlException.CreateException(sysExp, sysExp.Server, sysExp.ClientConnectionId);
-                    throw mdExp;
-                }
-            }
-            else
-            {
-                Bid.CorrelationTrace("<sc.SqlCommand.BeginExecuteNonQuery|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
-                SqlConnection.ExecutePermission.Demand();
-                return BeginExecuteNonQueryInternal(0, callback, stateObject, 0, inRetry: false);
-            }
+            Bid.CorrelationTrace("<sc.SqlCommand.BeginExecuteNonQuery|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
+            SqlConnection.ExecutePermission.Demand();
+            return BeginExecuteNonQueryInternal(0, callback, stateObject, 0, inRetry: false);
         }
 
         private IAsyncResult BeginExecuteNonQueryAsync(AsyncCallback callback, object stateObject) {
@@ -1688,28 +1441,11 @@ namespace Microsoft.Data.SqlClient {
         }
 
         public int EndExecuteNonQuery(IAsyncResult asyncResult) {
-            if (SysSqlCommand != null)
-            {
-                try
-                {
-                    return SysSqlCommand.EndExecuteNonQuery(asyncResult);
-                }
-                catch (System.Data.SqlClient.SqlException sysExp)
-                {
-                    SqlException mdExp = SqlException.CreateException(sysExp, sysExp.Server, sysExp.ClientConnectionId);
-                    throw mdExp;
-                }
-            }
-            else
-            {
-                try
-                {
-                    return EndExecuteNonQueryInternal(asyncResult);
-                }
-                finally
-                {
-                    Bid.CorrelationTrace("<sc.SqlCommand.EndExecuteNonQuery|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
-                }
+            try {
+                return EndExecuteNonQueryInternal(asyncResult);
+            } 
+            finally {
+                Bid.CorrelationTrace("<sc.SqlCommand.EndExecuteNonQuery|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
             }
         }
 
@@ -1974,101 +1710,51 @@ namespace Microsoft.Data.SqlClient {
         }
 
         public XmlReader ExecuteXmlReader() {
-            if (SysSqlCommand != null)
-            {
-                try
-                {
-                    return SysSqlCommand.ExecuteXmlReader();
-                }
-                catch (System.Data.SqlClient.SqlException sysExp)
-                {
-                    SqlException mdExp = SqlException.CreateException(sysExp, sysExp.Server, sysExp.ClientConnectionId);
-                    throw mdExp;
-                }
+            SqlConnection.ExecutePermission.Demand();
+
+            // Reset _pendingCancel upon entry into any Execute - used to synchronize state
+            // between entry into Execute* API and the thread obtaining the stateObject.
+            _pendingCancel = false;
+
+            SqlStatistics statistics = null;
+            IntPtr hscp;
+            Bid.ScopeEnter(out hscp, "<sc.SqlCommand.ExecuteXmlReader|API> %d#", ObjectID);
+            Bid.CorrelationTrace("<sc.SqlCommand.ExecuteXmlReader|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
+            bool success = false;
+            int? sqlExceptionNumber = null;
+            try {
+                statistics = SqlStatistics.StartTimer(Statistics);
+                WriteBeginExecuteEvent();
+
+                // use the reader to consume metadata
+                SqlDataReader ds;
+                ds = RunExecuteReader(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, true, ADP.ExecuteXmlReader);
+                XmlReader result = CompleteXmlReader(ds);
+                success = true;
+                return result;
             }
-            else
-            {
-                SqlConnection.ExecutePermission.Demand();
-
-                // Reset _pendingCancel upon entry into any Execute - used to synchronize state
-                // between entry into Execute* API and the thread obtaining the stateObject.
-                _pendingCancel = false;
-
-                SqlStatistics statistics = null;
-                IntPtr hscp;
-                Bid.ScopeEnter(out hscp, "<sc.SqlCommand.ExecuteXmlReader|API> %d#", ObjectID);
-                Bid.CorrelationTrace("<sc.SqlCommand.ExecuteXmlReader|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
-                bool success = false;
-                int? sqlExceptionNumber = null;
-                try
-                {
-                    statistics = SqlStatistics.StartTimer(Statistics);
-                    WriteBeginExecuteEvent();
-
-                    // use the reader to consume metadata
-                    SqlDataReader ds;
-                    ds = RunExecuteReader(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, true, ADP.ExecuteXmlReader);
-                    XmlReader result = CompleteXmlReader(ds);
-                    success = true;
-                    return result;
-                }
-                catch (SqlException ex)
-                {
-                    sqlExceptionNumber = ex.Number;
-                    throw;
-                }
-                finally
-                {
-                    SqlStatistics.StopTimer(statistics);
-                    Bid.ScopeLeave(ref hscp);
-                    WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
-                }
-
+            catch (SqlException ex) {
+                sqlExceptionNumber = ex.Number;
+                throw;
             }
-
+            finally {
+                SqlStatistics.StopTimer(statistics);
+                Bid.ScopeLeave(ref hscp);
+                WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous : true);
+            }
         }
 
         [System.Security.Permissions.HostProtectionAttribute(ExternalThreading=true)]
         public IAsyncResult BeginExecuteXmlReader() {
-            if (SysSqlCommand != null)
-            {
-                try
-                {
-                    return SysSqlCommand.BeginExecuteXmlReader();
-                }
-                catch (System.Data.SqlClient.SqlException sysExp)
-                {
-                    SqlException mdExp = SqlException.CreateException(sysExp, sysExp.Server, sysExp.ClientConnectionId);
-                    throw mdExp;
-                }
-            }
-            else
-            {
-                // BeginExecuteXmlReader will track executiontime
-                return BeginExecuteXmlReader(null, null);
-            }
+            // BeginExecuteXmlReader will track executiontime
+            return BeginExecuteXmlReader(null, null);
         }
 
         [System.Security.Permissions.HostProtectionAttribute(ExternalThreading=true)]
         public IAsyncResult BeginExecuteXmlReader(AsyncCallback callback, object stateObject) {
-            if (SysSqlCommand != null)
-            {
-                try
-                {
-                    return SysSqlCommand.BeginExecuteXmlReader(callback, stateObject);
-                }
-                catch (System.Data.SqlClient.SqlException sysExp)
-                {
-                    SqlException mdExp = SqlException.CreateException(sysExp, sysExp.Server, sysExp.ClientConnectionId);
-                    throw mdExp;
-                }
-            }
-            else
-            {
-                Bid.CorrelationTrace("<sc.SqlCommand.BeginExecuteXmlReader|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
-                SqlConnection.ExecutePermission.Demand();
-                return BeginExecuteXmlReaderInternal(CommandBehavior.SequentialAccess, callback, stateObject, 0, inRetry: false);
-            }
+            Bid.CorrelationTrace("<sc.SqlCommand.BeginExecuteXmlReader|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
+            SqlConnection.ExecutePermission.Demand();
+            return BeginExecuteXmlReaderInternal(CommandBehavior.SequentialAccess, callback, stateObject, 0, inRetry: false);
         }
 
         private IAsyncResult BeginExecuteXmlReaderAsync(AsyncCallback callback, object stateObject) {
@@ -2189,28 +1875,11 @@ namespace Microsoft.Data.SqlClient {
         }
 
         public XmlReader EndExecuteXmlReader(IAsyncResult asyncResult) {
-            if (SysSqlCommand != null)
-            {
-                try
-                {
-                    return SysSqlCommand.EndExecuteXmlReader(asyncResult);
-                }
-                catch (System.Data.SqlClient.SqlException sysExp)
-                {
-                    SqlException mdExp = SqlException.CreateException(sysExp, sysExp.Server, sysExp.ClientConnectionId);
-                    throw mdExp;
-                }
+            try {
+                return EndExecuteXmlReaderInternal(asyncResult);
             }
-            else
-            {
-                try
-                {
-                    return EndExecuteXmlReaderInternal(asyncResult);
-                }
-                finally
-                {
-                    Bid.CorrelationTrace("<sc.SqlCommand.EndExecuteXmlReader|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
-                }
+            finally {
+                Bid.CorrelationTrace("<sc.SqlCommand.EndExecuteXmlReader|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
             }
         }
 
@@ -2300,42 +1969,12 @@ namespace Microsoft.Data.SqlClient {
 
         [System.Security.Permissions.HostProtectionAttribute(ExternalThreading=true)]
         public IAsyncResult BeginExecuteReader() {
-            if (SysSqlCommand != null)
-            {
-                try
-                {
-                    return SysSqlCommand.BeginExecuteReader();
-                }
-                catch (System.Data.SqlClient.SqlException sysExp)
-                {
-                    SqlException mdExp = SqlException.CreateException(sysExp, sysExp.Server, sysExp.ClientConnectionId);
-                    throw mdExp;
-                }
-            }
-            else
-            {
-                return BeginExecuteReader(null, null, CommandBehavior.Default);
-            }
+            return BeginExecuteReader(null, null, CommandBehavior.Default);
         }
 
         [System.Security.Permissions.HostProtectionAttribute(ExternalThreading=true)]
         public IAsyncResult BeginExecuteReader(AsyncCallback callback, object stateObject) {
-            if (SysSqlCommand != null)
-            {
-                try
-                {
-                    return SysSqlCommand.BeginExecuteReader(callback, stateObject);
-                }
-                catch (System.Data.SqlClient.SqlException sysExp)
-                {
-                    SqlException mdExp = SqlException.CreateException(sysExp, sysExp.Server, sysExp.ClientConnectionId);
-                    throw mdExp;
-                }
-            }
-            else
-            {
-                return BeginExecuteReader(callback, stateObject, CommandBehavior.Default);
-            }
+            return BeginExecuteReader(callback, stateObject, CommandBehavior.Default);
         }
 
         override protected DbDataReader ExecuteDbDataReader(CommandBehavior behavior) {
@@ -2344,105 +1983,42 @@ namespace Microsoft.Data.SqlClient {
         }
 
         new public SqlDataReader ExecuteReader() {
-            if (SysSqlCommand != null)
-            {
-                try
-                {
-                    return new SqlDataReader(SysSqlCommand.ExecuteReader());
-                }
-                catch (System.Data.SqlClient.SqlException sysExp)
-                {
-                    SqlException mdExp = SqlException.CreateException(sysExp, sysExp.Server, sysExp.ClientConnectionId);
-                    throw mdExp;
-                }
+            SqlStatistics statistics = null;
+            IntPtr hscp;
+            Bid.ScopeEnter(out hscp, "<sc.SqlCommand.ExecuteReader|API> %d#", ObjectID);
+            Bid.CorrelationTrace("<sc.SqlCommand.ExecuteReader|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
+            try {
+                statistics = SqlStatistics.StartTimer(Statistics);
+                return ExecuteReader(CommandBehavior.Default, ADP.ExecuteReader);
             }
-            else
-            {
-                SqlStatistics statistics = null;
-                IntPtr hscp;
-                Bid.ScopeEnter(out hscp, "<sc.SqlCommand.ExecuteReader|API> %d#", ObjectID);
-                Bid.CorrelationTrace("<sc.SqlCommand.ExecuteReader|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
-                try
-                {
-                    statistics = SqlStatistics.StartTimer(Statistics);
-                    return ExecuteReader(CommandBehavior.Default, ADP.ExecuteReader);
-                }
-                finally
-                {
-                    SqlStatistics.StopTimer(statistics);
-                    Bid.ScopeLeave(ref hscp);
-                }
+            finally {
+                SqlStatistics.StopTimer(statistics);
+                Bid.ScopeLeave(ref hscp);
             }
-
         }
 
         new public SqlDataReader ExecuteReader(CommandBehavior behavior) {
-            if (SysSqlCommand != null)
-            {
-                try
-                {
-                    return new SqlDataReader(SysSqlCommand.ExecuteReader(behavior));
-                }
-                catch (System.Data.SqlClient.SqlException sysExp)
-                {
-                    SqlException mdExp = SqlException.CreateException(sysExp, sysExp.Server, sysExp.ClientConnectionId);
-                    throw mdExp;
-                }
+            IntPtr hscp;
+            Bid.ScopeEnter(out hscp, "<sc.SqlCommand.ExecuteReader|API> %d#, behavior=%d{ds.CommandBehavior}", ObjectID, (int)behavior);
+            Bid.CorrelationTrace("<sc.SqlCommand.ExecuteReader|API|Correlation> ObjectID%d#, behavior=%d{ds.CommandBehavior}, ActivityID %ls\n", ObjectID, (int)behavior);
+            try {
+                return ExecuteReader(behavior, ADP.ExecuteReader);
             }
-            else 
-            {
-                IntPtr hscp;
-                Bid.ScopeEnter(out hscp, "<sc.SqlCommand.ExecuteReader|API> %d#, behavior=%d{ds.CommandBehavior}", ObjectID, (int)behavior);
-                Bid.CorrelationTrace("<sc.SqlCommand.ExecuteReader|API|Correlation> ObjectID%d#, behavior=%d{ds.CommandBehavior}, ActivityID %ls\n", ObjectID, (int)behavior);
-                try {
-                    return ExecuteReader(behavior, ADP.ExecuteReader);
-                }
-                finally {
-                    Bid.ScopeLeave(ref hscp);
-                }
+            finally {
+                Bid.ScopeLeave(ref hscp);
             }
         }
 
         [System.Security.Permissions.HostProtectionAttribute(ExternalThreading=true)]
         public IAsyncResult BeginExecuteReader(CommandBehavior behavior) {
-            if (SysSqlCommand != null)
-            {
-                try
-                {
-                    return SysSqlCommand.BeginExecuteReader(null, null, behavior);
-                }
-                catch (System.Data.SqlClient.SqlException sysExp)
-                {
-                    SqlException mdExp = SqlException.CreateException(sysExp, sysExp.Server, sysExp.ClientConnectionId);
-                    throw mdExp;
-                }
-            }
-            else
-            {
-                return BeginExecuteReader(null, null, behavior);
-            }
+            return BeginExecuteReader(null, null, behavior);
         }
 
         [System.Security.Permissions.HostProtectionAttribute(ExternalThreading=true)]
         public IAsyncResult BeginExecuteReader(AsyncCallback callback, object stateObject, CommandBehavior behavior) {
-            if (SysSqlCommand != null)
-            {
-                try
-                {
-                    return SysSqlCommand.BeginExecuteReader(callback, stateObject, behavior);
-                }
-                catch (System.Data.SqlClient.SqlException sysExp)
-                {
-                    SqlException mdExp = SqlException.CreateException(sysExp, sysExp.Server, sysExp.ClientConnectionId);
-                    throw mdExp;
-                }
-            }
-            else
-            {
-                Bid.CorrelationTrace("<sc.SqlCommand.BeginExecuteReader|API|Correlation> ObjectID%d#, behavior=%d{ds.CommandBehavior}, ActivityID %ls\n", ObjectID, (int)behavior);
-                SqlConnection.ExecutePermission.Demand();
-                return BeginExecuteReaderInternal(behavior, callback, stateObject, 0, inRetry: false);
-            }
+            Bid.CorrelationTrace("<sc.SqlCommand.BeginExecuteReader|API|Correlation> ObjectID%d#, behavior=%d{ds.CommandBehavior}, ActivityID %ls\n", ObjectID, (int)behavior);
+            SqlConnection.ExecutePermission.Demand();
+            return BeginExecuteReaderInternal(behavior, callback, stateObject, 0, inRetry: false);
         }
 
         internal SqlDataReader ExecuteReader(CommandBehavior behavior, string method) {
@@ -2505,20 +2081,11 @@ namespace Microsoft.Data.SqlClient {
         }
 
         public SqlDataReader EndExecuteReader(IAsyncResult asyncResult) {
-            if (SysSqlCommand != null)
-            {
-                return new SqlDataReader(SysSqlCommand.EndExecuteReader(asyncResult));
-            }
-            else
-            {
-                try
-                {
-                    return EndExecuteReaderInternal(asyncResult);
-                }
-                finally
-                {
-                    Bid.CorrelationTrace("<sc.SqlCommand.EndExecuteReader|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
-                }
+            try {
+                return EndExecuteReaderInternal(asyncResult);
+            }          
+            finally {
+                Bid.CorrelationTrace("<sc.SqlCommand.EndExecuteReader|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
             }
         }
 
@@ -2856,69 +2423,46 @@ namespace Microsoft.Data.SqlClient {
         }
 
         public override Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken) {
-            if (SysSqlCommand != null)
-            {
-                try
-                {
-                    return SysSqlCommand.ExecuteNonQueryAsync(cancellationToken);
+
+            Bid.CorrelationTrace("<sc.SqlCommand.ExecuteNonQueryAsync|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
+            SqlConnection.ExecutePermission.Demand();
+
+            TaskCompletionSource<int> source = new TaskCompletionSource<int>();
+
+            CancellationTokenRegistration registration = new CancellationTokenRegistration();
+            if (cancellationToken.CanBeCanceled) {
+                if (cancellationToken.IsCancellationRequested) {
+                    source.SetCanceled();
+                    return source.Task;
                 }
-                catch (System.Data.SqlClient.SqlException sysExp)
-                {
-                    SqlException mdExp = SqlException.CreateException(sysExp, sysExp.Server, sysExp.ClientConnectionId);
-                    throw mdExp;
-                }
+                registration = cancellationToken.Register(CancelIgnoreFailure);
             }
-            else
-            {
-                Bid.CorrelationTrace("<sc.SqlCommand.ExecuteNonQueryAsync|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
-                SqlConnection.ExecutePermission.Demand();
 
-                TaskCompletionSource<int> source = new TaskCompletionSource<int>();
+            Task<int> returnedTask = source.Task;
+            try {
+                RegisterForConnectionCloseNotification(ref returnedTask);
 
-                CancellationTokenRegistration registration = new CancellationTokenRegistration();
-                if (cancellationToken.CanBeCanceled)
-                {
-                    if (cancellationToken.IsCancellationRequested)
-                    {
-                        source.SetCanceled();
-                        return source.Task;
+                Task<int>.Factory.FromAsync(BeginExecuteNonQueryAsync, EndExecuteNonQueryAsync, null).ContinueWith((t) => {
+                    registration.Dispose();
+                    if (t.IsFaulted) {
+                        Exception e = t.Exception.InnerException;
+                        source.SetException(e);
                     }
-                    registration = cancellationToken.Register(CancelIgnoreFailure);
-                }
-
-                Task<int> returnedTask = source.Task;
-                try
-                {
-                    RegisterForConnectionCloseNotification(ref returnedTask);
-
-                    Task<int>.Factory.FromAsync(BeginExecuteNonQueryAsync, EndExecuteNonQueryAsync, null).ContinueWith((t) =>
-                    {
-                        registration.Dispose();
-                        if (t.IsFaulted)
-                        {
-                            Exception e = t.Exception.InnerException;
-                            source.SetException(e);
+                    else {
+                        if (t.IsCanceled) {
+                            source.SetCanceled();
                         }
-                        else
-                        {
-                            if (t.IsCanceled)
-                            {
-                                source.SetCanceled();
-                            }
-                            else
-                            {
-                                source.SetResult(t.Result);
-                            }
+                        else {
+                            source.SetResult(t.Result);
                         }
-                    }, TaskScheduler.Default);
-                }
-                catch (Exception e)
-                {
-                    source.SetException(e);
-                }
-
-                return returnedTask;
+                    }
+                }, TaskScheduler.Default);
             }
+            catch (Exception e) {
+                source.SetException(e);
+            }
+
+            return returnedTask;
         }
 
         protected override Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken) {
@@ -2941,17 +2485,9 @@ namespace Microsoft.Data.SqlClient {
         new public Task<SqlDataReader> ExecuteReaderAsync(CancellationToken cancellationToken) {
             return ExecuteReaderAsync(CommandBehavior.Default, cancellationToken);
         }
-        private async Task<SqlDataReader> GetSqlDataReaderTask(System.Data.SqlClient.SqlDataReader sysSqlDataReader)
-        {
-           return await Task.Run(() => { return new SqlDataReader(sysSqlDataReader); });
-        }
 
         new public Task<SqlDataReader> ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken) {
-            if(SysSqlCommand != null)
-            {
-               Task<System.Data.SqlClient.SqlDataReader> sysSource = SysSqlCommand.ExecuteReaderAsync(behavior, cancellationToken);
-               return GetSqlDataReaderTask(sysSource.Result);
-            }
+
             Bid.CorrelationTrace("<sc.SqlCommand.ExecuteReaderAsync|API|Correlation> ObjectID%d#, behavior=%d{ds.CommandBehavior}, ActivityID %ls\n", ObjectID, (int)behavior);
             SqlConnection.ExecutePermission.Demand();
 
@@ -2995,176 +2531,106 @@ namespace Microsoft.Data.SqlClient {
 
         public override Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
         {
-            if (SysSqlCommand != null)
-            {
-                try
-                {
-                    return SysSqlCommand.ExecuteScalarAsync(cancellationToken);
+            return ExecuteReaderAsync(cancellationToken).ContinueWith((executeTask) => {
+                TaskCompletionSource<object> source = new TaskCompletionSource<object>();
+                if (executeTask.IsCanceled) {
+                    source.SetCanceled();
                 }
-                catch (System.Data.SqlClient.SqlException sysExp)
-                {
-                    SqlException mdExp = SqlException.CreateException(sysExp, sysExp.Server, sysExp.ClientConnectionId);
-                    throw mdExp;
+                else if (executeTask.IsFaulted) {
+                    source.SetException(executeTask.Exception.InnerException);
                 }
-            }
-            else
-            {
-                return ExecuteReaderAsync(cancellationToken).ContinueWith((executeTask) =>
-                {
-                    TaskCompletionSource<object> source = new TaskCompletionSource<object>();
-                    if (executeTask.IsCanceled)
-                    {
-                        source.SetCanceled();
-                    }
-                    else if (executeTask.IsFaulted)
-                    {
-                        source.SetException(executeTask.Exception.InnerException);
-                    }
-                    else
-                    {
-                        SqlDataReader reader = executeTask.Result;
-                        reader.ReadAsync(cancellationToken).ContinueWith((readTask) =>
-                        {
-                            try
-                            {
-                                if (readTask.IsCanceled)
-                                {
-                                    reader.Dispose();
-                                    source.SetCanceled();
-                                }
-                                else if (readTask.IsFaulted)
-                                {
-                                    reader.Dispose();
-                                    source.SetException(readTask.Exception.InnerException);
-                                }
-                                else
-                                {
-                                    Exception exception = null;
-                                    object result = null;
-                                    try
-                                    {
-                                        bool more = readTask.Result;
-                                        if (more && reader.FieldCount > 0)
-                                        {
-                                            try
-                                            {
-                                                result = reader.GetValue(0);
-                                            }
-                                            catch (Exception e)
-                                            {
-                                                exception = e;
-                                            }
-                                        }
-                                    }
-                                    finally
-                                    {
-                                        reader.Dispose();
-                                    }
-                                    if (exception != null)
-                                    {
-                                        source.SetException(exception);
-                                    }
-                                    else
-                                    {
-                                        source.SetResult(result);
-                                    }
-                                }
-                            }
-                            catch (Exception e)
-                            {
-                                // exception thrown by Dispose...
-                                source.SetException(e);
-                            }
-                        }, TaskScheduler.Default);
-                    }
-                    return source.Task;
-                }, TaskScheduler.Default).Unwrap();
-            }
-        }
-
-        public Task<XmlReader> ExecuteXmlReaderAsync() {
-            if (SysSqlCommand != null)
-            {
-                try
-                {
-                    return SysSqlCommand.ExecuteXmlReaderAsync();
-                }
-                catch (System.Data.SqlClient.SqlException sysExp)
-                {
-                    SqlException mdExp = SqlException.CreateException(sysExp, sysExp.Server, sysExp.ClientConnectionId);
-                    throw mdExp;
-                }
-            }
-            else
-            {
-                return ExecuteXmlReaderAsync(CancellationToken.None);
-            }
-        }
-
-        public Task<XmlReader> ExecuteXmlReaderAsync(CancellationToken cancellationToken) {
-            if (SysSqlCommand != null)
-            {
-                try
-                {
-                    return SysSqlCommand.ExecuteXmlReaderAsync(cancellationToken);
-                }
-                catch (System.Data.SqlClient.SqlException sysExp)
-                {
-                    SqlException mdExp = SqlException.CreateException(sysExp, sysExp.Server, sysExp.ClientConnectionId);
-                    throw mdExp;
-                }
-            }
-            else
-            {
-                Bid.CorrelationTrace("<sc.SqlCommand.ExecuteXmlReaderAsync|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
-                SqlConnection.ExecutePermission.Demand();
-
-                TaskCompletionSource<XmlReader> source = new TaskCompletionSource<XmlReader>();
-
-                CancellationTokenRegistration registration = new CancellationTokenRegistration();
-                if (cancellationToken.CanBeCanceled)
-                {
-                    if (cancellationToken.IsCancellationRequested)
-                    {
-                        source.SetCanceled();
-                        return source.Task;
-                    }
-                    registration = cancellationToken.Register(CancelIgnoreFailure);
-                }
-
-                Task<XmlReader> returnedTask = source.Task;
-                try
-                {
-                    RegisterForConnectionCloseNotification(ref returnedTask);
-
-                    Task<XmlReader>.Factory.FromAsync(BeginExecuteXmlReaderAsync, EndExecuteXmlReaderAsync, null).ContinueWith((t) =>
-                    {
-                        registration.Dispose();
-                        if (t.IsFaulted)
-                        {
-                            Exception e = t.Exception.InnerException;
-                            source.SetException(e);
-                        }
-                        else
-                        {
-                            if (t.IsCanceled)
-                            {
+                else {
+                    SqlDataReader reader = executeTask.Result;
+                    reader.ReadAsync(cancellationToken).ContinueWith((readTask) => {
+                        try {
+                            if (readTask.IsCanceled) {
+                                reader.Dispose();
                                 source.SetCanceled();
                             }
-                            else
-                            {
-                                source.SetResult(t.Result);
+                            else if (readTask.IsFaulted) {
+                                reader.Dispose();
+                                source.SetException(readTask.Exception.InnerException);
+                            } 
+                            else {
+                                Exception exception = null;
+                                object result = null;
+                                try {
+                                    bool more = readTask.Result;
+                                    if (more && reader.FieldCount > 0) {
+                                        try {
+                                            result = reader.GetValue(0);
+                                        } 
+                                        catch (Exception e) {
+                                            exception = e;
+                                        }
+                                    }
+                                }
+                                finally {
+                                    reader.Dispose();
+                                }
+                                if (exception != null) {
+                                    source.SetException(exception);
+                                }
+                                else {
+                                    source.SetResult(result);
+                                }
                             }
+                        }
+                        catch (Exception e) {
+                            // exception thrown by Dispose...
+                            source.SetException(e);
                         }
                     }, TaskScheduler.Default);
                 }
-                catch (Exception e)
-                {
-                    source.SetException(e);
-                }
+                return source.Task;
+            }, TaskScheduler.Default).Unwrap();
+        }
 
-                return returnedTask;
+        public Task<XmlReader> ExecuteXmlReaderAsync() {
+            return ExecuteXmlReaderAsync(CancellationToken.None);
+        }
+
+        public Task<XmlReader> ExecuteXmlReaderAsync(CancellationToken cancellationToken) {
+
+            Bid.CorrelationTrace("<sc.SqlCommand.ExecuteXmlReaderAsync|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
+            SqlConnection.ExecutePermission.Demand();
+
+            TaskCompletionSource<XmlReader> source = new TaskCompletionSource<XmlReader>();
+
+            CancellationTokenRegistration registration = new CancellationTokenRegistration();
+            if (cancellationToken.CanBeCanceled) {
+                if (cancellationToken.IsCancellationRequested) {
+                    source.SetCanceled();
+                    return source.Task;
+                }
+                registration = cancellationToken.Register(CancelIgnoreFailure);
             }
+
+            Task<XmlReader> returnedTask = source.Task;
+            try {
+                RegisterForConnectionCloseNotification(ref returnedTask);
+
+                Task<XmlReader>.Factory.FromAsync(BeginExecuteXmlReaderAsync, EndExecuteXmlReaderAsync, null).ContinueWith((t) => {
+                    registration.Dispose();
+                    if (t.IsFaulted) {
+                        Exception e = t.Exception.InnerException;
+                        source.SetException(e);
+                    }
+                    else {
+                        if (t.IsCanceled) {
+                            source.SetCanceled();
+                        }
+                        else {
+                            source.SetResult(t.Result);
+                        }
+                    }
+                }, TaskScheduler.Default);
+            }
+            catch (Exception e) {
+                source.SetException(e);
+            }
+
+            return returnedTask;
         }
 
         // If the user part is quoted, remove first and last brackets and then unquote any right square
@@ -5332,16 +4798,9 @@ namespace Microsoft.Data.SqlClient {
         }
 
         public SqlCommand Clone() {
-            if (SysSqlCommand != null)
-            {
-                return new SqlCommand(SysSqlCommand.Clone());
-            }
-            else
-            {
-                SqlCommand clone = new SqlCommand(this);
-                Bid.Trace("<sc.SqlCommand.Clone|API> %d#, clone=%d#\n", ObjectID, clone.ObjectID);
-                return clone;
-            }
+            SqlCommand clone = new SqlCommand(this);
+            Bid.Trace("<sc.SqlCommand.Clone|API> %d#, clone=%d#\n", ObjectID, clone.ObjectID);
+            return clone;
         }
 
         object ICloneable.Clone() {

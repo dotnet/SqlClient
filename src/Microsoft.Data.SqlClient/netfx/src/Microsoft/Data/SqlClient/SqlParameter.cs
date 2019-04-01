@@ -81,7 +81,6 @@ namespace Microsoft.Data.SqlClient {
         private bool                  _coercedValueIsSqlType;
         private bool                  _coercedValueIsDataFeed;
         private int                   _actualSize = -1;
-        private System.Data.SqlClient.SqlParameter _sysSqlParameter;
 
         /// <summary>
         /// Column Encryption Cipher Related Metadata.
@@ -191,20 +190,6 @@ namespace Microsoft.Data.SqlClient {
             this.SourceColumn = sourceColumn;
         }
 
-        internal SqlParameter(System.Data.SqlClient.SqlParameter sqlParameter) {
-            SysSqlParameter = sqlParameter;
-        }
-
-
-        internal System.Data.SqlClient.SqlParameter SysSqlParameter {
-            get {
-                return _sysSqlParameter;
-            }
-            set {
-                _sysSqlParameter = value;
-            }
-        }
-
         //
         // currently the user can't set this value.  it gets set by the returnvalue from tds
         //
@@ -223,48 +208,30 @@ namespace Microsoft.Data.SqlClient {
         public SqlCompareOptions CompareInfo {
             // Bits 21 through 25 represent the CompareInfo
             get {
-                if (SysSqlParameter != null)
-                {
-                    return SysSqlParameter.CompareInfo;
+                SqlCollation collation = _collation;
+                if (null != collation) {
+                    return collation.SqlCompareOptions;
                 }
-                else
-                {
-                    SqlCollation collation = _collation;
-                    if (null != collation)
-                    {
-                        return collation.SqlCompareOptions;
-                    }
-                    return SqlCompareOptions.None;
-                }
+                return SqlCompareOptions.None;
             }
             set {
-                if (SysSqlParameter != null)
-                {
-                    SysSqlParameter.CompareInfo = value;
+                SqlCollation collation = _collation;
+                if (null == collation) {
+                    _collation = collation = new SqlCollation();
                 }
-                else
-                {
-                    SqlCollation collation = _collation;
-                    if (null == collation)
-                    {
-                        _collation = collation = new SqlCollation();
-                    }
 
-                    // Copied from SQLString.x_iValidSqlCompareOptionMask
-                    // instead of this line:  if ((value & SqlString.x_iValidSqlCompareOptionMask) != value) {
-                    SqlCompareOptions validSqlCompareOptionMask =
-                        SqlCompareOptions.IgnoreCase | SqlCompareOptions.IgnoreWidth |
-                        SqlCompareOptions.IgnoreNonSpace | SqlCompareOptions.IgnoreKanaType |
-                        SqlCompareOptions.BinarySort | SqlCompareOptions.BinarySort2;
+                // Copied from SQLString.x_iValidSqlCompareOptionMask
+                // instead of this line:  if ((value & SqlString.x_iValidSqlCompareOptionMask) != value) {
+                SqlCompareOptions validSqlCompareOptionMask =
+                    SqlCompareOptions.IgnoreCase | SqlCompareOptions.IgnoreWidth |
+                    SqlCompareOptions.IgnoreNonSpace | SqlCompareOptions.IgnoreKanaType |
+                    SqlCompareOptions.BinarySort | SqlCompareOptions.BinarySort2;
 
-                    if ((value & validSqlCompareOptionMask) != value)
-                    {
-                        throw ADP.ArgumentOutOfRange("CompareInfo");
-                    }
-                    collation.SqlCompareOptions = value;
+                if ((value & validSqlCompareOptionMask) != value) {
+                    throw ADP.ArgumentOutOfRange("CompareInfo");
                 }
+                collation.SqlCompareOptions = value;
             }
-                
         }
 
         [
@@ -273,25 +240,11 @@ namespace Microsoft.Data.SqlClient {
         ]
         public string  XmlSchemaCollectionDatabase {
             get {
-                if (SysSqlParameter != null)
-                {
-                    return SysSqlParameter.XmlSchemaCollectionDatabase;
-                }
-                else
-                {
-                    string xmlSchemaCollectionDatabase = _xmlSchemaCollectionDatabase;
-                    return ((xmlSchemaCollectionDatabase != null) ? xmlSchemaCollectionDatabase : ADP.StrEmpty);
-                }
+                string xmlSchemaCollectionDatabase = _xmlSchemaCollectionDatabase;
+                return ((xmlSchemaCollectionDatabase != null) ? xmlSchemaCollectionDatabase : ADP.StrEmpty);
             }
             set {
-                if (SysSqlParameter != null)
-                {
-                    SysSqlParameter.XmlSchemaCollectionDatabase = value;
-                }
-                else
-                {
-                    _xmlSchemaCollectionDatabase = value;
-                }
+                _xmlSchemaCollectionDatabase = value;
             }
         }
 
@@ -301,25 +254,11 @@ namespace Microsoft.Data.SqlClient {
         ]
         public string XmlSchemaCollectionOwningSchema {
             get {
-                if (SysSqlParameter != null)
-                {
-                    return SysSqlParameter.XmlSchemaCollectionOwningSchema;
-                }
-                else
-                {
-                    string xmlSchemaCollectionOwningSchema = _xmlSchemaCollectionOwningSchema;
-                    return ((xmlSchemaCollectionOwningSchema != null) ? xmlSchemaCollectionOwningSchema : ADP.StrEmpty);
-                }
+                string xmlSchemaCollectionOwningSchema = _xmlSchemaCollectionOwningSchema;
+                return ((xmlSchemaCollectionOwningSchema != null) ? xmlSchemaCollectionOwningSchema : ADP.StrEmpty);
             }
             set {
-                if (SysSqlParameter != null)
-                {
-                    SysSqlParameter.XmlSchemaCollectionOwningSchema = value;
-                }
-                else
-                {
-                    _xmlSchemaCollectionOwningSchema = value;
-                }
+                _xmlSchemaCollectionOwningSchema = value;
             }
         }
 
@@ -329,25 +268,11 @@ namespace Microsoft.Data.SqlClient {
         ]
         public string XmlSchemaCollectionName {
             get {
-                if (SysSqlParameter != null)
-                {
-                    return SysSqlParameter.XmlSchemaCollectionName;
-                }
-                else
-                {
-                    string xmlSchemaCollectionName = _xmlSchemaCollectionName;
-                    return ((xmlSchemaCollectionName != null) ? xmlSchemaCollectionName : ADP.StrEmpty);
-                }
+                string xmlSchemaCollectionName = _xmlSchemaCollectionName;
+                return ((xmlSchemaCollectionName != null) ? xmlSchemaCollectionName : ADP.StrEmpty);
             }
             set {
-                if (SysSqlParameter != null)
-                {
-                    SysSqlParameter.XmlSchemaCollectionName = value;
-                }
-                else
-                {
-                    _xmlSchemaCollectionName = value;
-                }
+                _xmlSchemaCollectionName = value;
             }
         }
 
@@ -363,45 +288,23 @@ namespace Microsoft.Data.SqlClient {
 
         override public DbType DbType {
             get {
-                if (SysSqlParameter != null)
-                {
-                    return SysSqlParameter.DbType;
-                }
-                else
-                {
-                    return GetMetaTypeOnly().DbType;
-                }
+                return GetMetaTypeOnly().DbType;
             }
             set {
-                if (SysSqlParameter != null)
-                {
-                    SysSqlParameter.DbType = value;
-                }
-                else
-                {
-                    MetaType metatype = _metaType;
-                    if ((null == metatype) || (metatype.DbType != value) ||
-                            // SQLBU 504029: Two special datetime cases for backward compat
-                            //  DbType.Date and DbType.Time should always be treated as setting DbType.DateTime instead
-                            value == DbType.Date ||
-                            value == DbType.Time)
-                    {
-                        PropertyTypeChanging();
-                        _metaType = MetaType.GetMetaTypeFromDbType(value);
-                    }
+                MetaType metatype = _metaType;
+                if ((null == metatype) || (metatype.DbType != value) ||
+                        // SQLBU 504029: Two special datetime cases for backward compat
+                        //  DbType.Date and DbType.Time should always be treated as setting DbType.DateTime instead
+                        value == DbType.Date ||
+                        value == DbType.Time) {
+                    PropertyTypeChanging();
+                    _metaType = MetaType.GetMetaTypeFromDbType(value);
                 }
             }
         }
 
         public override void ResetDbType() {
-            if (SysSqlParameter != null)
-            {
-                SysSqlParameter.ResetSqlDbType();
-            }
-            else
-            {
-                ResetSqlDbType();
-            }
+            ResetSqlDbType();
         }
 
         internal MetaType InternalMetaType {
@@ -418,38 +321,21 @@ namespace Microsoft.Data.SqlClient {
         public int LocaleId {
             // Lowest 20 bits represent LocaleId
             get {
-                if (SysSqlParameter != null)
-                {
-                    return SysSqlParameter.LocaleId;
+                SqlCollation collation = _collation;
+                if (null != collation) {
+                    return collation.LCID;
                 }
-                else
-                {
-                    SqlCollation collation = _collation;
-                    if (null != collation)
-                    {
-                        return collation.LCID;
-                    }
-                    return 0;
-                }
+                return 0;
             }
             set {
-                if (SysSqlParameter != null)
-                {
-                    SysSqlParameter.LocaleId = value;
+                SqlCollation collation = _collation;
+                if (null == collation) {
+                    _collation = collation = new SqlCollation();
                 }
-                else
-                {
-                    SqlCollation collation = _collation;
-                    if (null == collation)
-                    {
-                        _collation = collation = new SqlCollation();
-                    }
-                    if (value != (SqlCollation.MaskLcid & value))
-                    {
-                        throw ADP.ArgumentOutOfRange("LocaleId");
-                    }
-                    collation.LCID = value;
+                if (value != (SqlCollation.MaskLcid & value)) {
+                    throw ADP.ArgumentOutOfRange("LocaleId");
                 }
+                collation.LCID = value;
             }
         }
 
@@ -651,36 +537,19 @@ namespace Microsoft.Data.SqlClient {
         ]
         override public string ParameterName {
             get {
-                if (SysSqlParameter != null)
-                {
-                    return SysSqlParameter.ParameterName;
-                }
-                else
-                {
-                    string parameterName = _parameterName;
-                    return ((null != parameterName) ? parameterName : ADP.StrEmpty);
-                }
+                string parameterName = _parameterName;
+                return ((null != parameterName) ? parameterName : ADP.StrEmpty);
             }
             set {
-                if (SysSqlParameter != null)
-                {
-                    SysSqlParameter.ParameterName = value;
+                if (ADP.IsEmpty(value) || (value.Length < TdsEnums.MAX_PARAMETER_NAME_LENGTH)
+                    || (('@' == value[0]) && (value.Length <= TdsEnums.MAX_PARAMETER_NAME_LENGTH))) {
+                    if (_parameterName != value) {
+                        PropertyChanging();
+                        _parameterName = value;
+                    }
                 }
-                else
-                {
-                    if (ADP.IsEmpty(value) || (value.Length < TdsEnums.MAX_PARAMETER_NAME_LENGTH)
-                        || (('@' == value[0]) && (value.Length <= TdsEnums.MAX_PARAMETER_NAME_LENGTH)))
-                    {
-                        if (_parameterName != value)
-                        {
-                            PropertyChanging();
-                            _parameterName = value;
-                        }
-                    }
-                    else
-                    {
-                        throw SQL.InvalidParameterNameLength(value);
-                    }
+                else {
+                    throw SQL.InvalidParameterNameLength(value);
                 }
             }
         }
@@ -701,24 +570,10 @@ namespace Microsoft.Data.SqlClient {
         [ResDescriptionAttribute(StringsHelper.ResourceNames.DbDataParameter_Precision)]
         public new Byte Precision {
             get {
-                if (SysSqlParameter != null)
-                {
-                    return SysSqlParameter.Precision;
-                }
-                else
-                {
-                    return PrecisionInternal;
-                }
+                return PrecisionInternal;
             }
             set {
-                if (SysSqlParameter != null)
-                {
-                    SysSqlParameter.Precision = value;
-                }
-                else
-                {
-                    PrecisionInternal = value;
-                }
+                PrecisionInternal = value;
             }
         }
 
@@ -752,24 +607,10 @@ namespace Microsoft.Data.SqlClient {
         [ResDescriptionAttribute(StringsHelper.ResourceNames.DbDataParameter_Scale)]
         public new Byte Scale {
             get {
-                if (SysSqlParameter != null)
-                {
-                    return SysSqlParameter.Scale;
-                }
-                else
-                {
-                    return ScaleInternal;
-                }
+                return ScaleInternal;
             }
             set {
-                if (SysSqlParameter != null)
-                {
-                    SysSqlParameter.Scale = value;
-                }
-                else
-                {
-                    ScaleInternal = value;
-                }
+                ScaleInternal = value;
             }
         }
         internal byte ScaleInternal {
@@ -803,39 +644,23 @@ namespace Microsoft.Data.SqlClient {
         ]
         public SqlDbType SqlDbType {
             get {
-                if (SysSqlParameter != null)
-                {
-                    return SysSqlParameter.SqlDbType;
-                }
-                else
-                {
-                    return GetMetaTypeOnly().SqlDbType;
-                }
+                return GetMetaTypeOnly().SqlDbType;
             }
             set {
-                if (SysSqlParameter != null)
-                {
-                    SysSqlParameter.SqlDbType = value;
+                MetaType metatype = _metaType;
+                // HACK!!!
+                // We didn't want to expose SmallVarBinary on SqlDbType so we 
+                // stuck it at the end of SqlDbType in v1.0, except that now 
+                // we have new data types after that and it's smack dab in the
+                // middle of the valid range.  To prevent folks from setting 
+                // this invalid value we have to have this code here until we
+                // can take the time to fix it later.
+                if ((SqlDbType)TdsEnums.SmallVarBinary == value) {
+                    throw SQL.InvalidSqlDbType(value);
                 }
-                else
-                {
-                    MetaType metatype = _metaType;
-                    // HACK!!!
-                    // We didn't want to expose SmallVarBinary on SqlDbType so we 
-                    // stuck it at the end of SqlDbType in v1.0, except that now 
-                    // we have new data types after that and it's smack dab in the
-                    // middle of the valid range.  To prevent folks from setting 
-                    // this invalid value we have to have this code here until we
-                    // can take the time to fix it later.
-                    if ((SqlDbType)TdsEnums.SmallVarBinary == value)
-                    {
-                        throw SQL.InvalidSqlDbType(value);
-                    }
-                    if ((null == metatype) || (metatype.SqlDbType != value))
-                    {
-                        PropertyTypeChanging();
-                        _metaType = MetaType.GetMetaTypeFromSqlDbType(value, value == SqlDbType.Structured);
-                    }
+                if ((null == metatype) || (metatype.SqlDbType != value)) {
+                    PropertyTypeChanging();
+                    _metaType = MetaType.GetMetaTypeFromSqlDbType(value, value == SqlDbType.Structured);
                 }
             }
         }
@@ -845,17 +670,9 @@ namespace Microsoft.Data.SqlClient {
         }
 
         public void ResetSqlDbType() {
-            if (SysSqlParameter != null)
-            {
-                SysSqlParameter.ResetSqlDbType();
-            }
-            else
-            {
-                if (null != _metaType)
-                {
-                    PropertyTypeChanging();
-                    _metaType = null;
-                }
+            if (null != _metaType) {
+                PropertyTypeChanging();
+                _metaType = null;
             }
         }
 
@@ -865,58 +682,37 @@ namespace Microsoft.Data.SqlClient {
         ]
         public object SqlValue {
             get {
-                if (SysSqlParameter != null)
-                {
-                    return SysSqlParameter.SqlValue;
+                if (_udtLoadError != null) { // SQL BU DT 329981
+                    throw _udtLoadError;
                 }
-                else
-                {
-                    if (_udtLoadError != null)
-                    { // SQL BU DT 329981
-                        throw _udtLoadError;
+
+                if (_value != null) {
+                    if (_value == DBNull.Value) {
+                        return MetaType.GetNullSqlValue(GetMetaTypeOnly().SqlType);
+                    }
+                    if (_value is INullable) {
+                          return _value;
                     }
 
-                    if (_value != null)
-                    {
-                        if (_value == DBNull.Value)
-                        {
-                            return MetaType.GetNullSqlValue(GetMetaTypeOnly().SqlType);
-                        }
-                        if (_value is INullable)
-                        {
+                    // SQLBU 503165: for Date and DateTime2, return the CLR object directly without converting it to a SqlValue
+                    // SQLBU 527900: GetMetaTypeOnly() will convert _value to a string in the case of char or char[], so only check
+                    //               the SqlDbType for DateTime. This is the only case when we might return the CLR value directly.
+                    if (_value is DateTime) {
+                        SqlDbType sqlDbType = GetMetaTypeOnly().SqlDbType;                        
+                        if (sqlDbType == SqlDbType.Date || sqlDbType == SqlDbType.DateTime2) {
                             return _value;
                         }
-
-                        // SQLBU 503165: for Date and DateTime2, return the CLR object directly without converting it to a SqlValue
-                        // SQLBU 527900: GetMetaTypeOnly() will convert _value to a string in the case of char or char[], so only check
-                        //               the SqlDbType for DateTime. This is the only case when we might return the CLR value directly.
-                        if (_value is DateTime)
-                        {
-                            SqlDbType sqlDbType = GetMetaTypeOnly().SqlDbType;
-                            if (sqlDbType == SqlDbType.Date || sqlDbType == SqlDbType.DateTime2)
-                            {
-                                return _value;
-                            }
-                        }
-
-                        return (MetaType.GetSqlValueFromComVariant(_value));
                     }
-                    else if (_sqlBufferReturnValue != null)
-                    {
-                        return _sqlBufferReturnValue.SqlValue;
-                    }
-                    return null;
+
+                    return (MetaType.GetSqlValueFromComVariant(_value));
                 }
+                else if (_sqlBufferReturnValue != null) {
+                    return _sqlBufferReturnValue.SqlValue;
+                }
+                return null;
             }
             set {
-                if (SysSqlParameter != null)
-                {
-                    SysSqlParameter.SqlValue = value;
-                }
-                else
-                {
-                    Value = value;
-                }
+                Value = value;
             }
         }
 
@@ -926,25 +722,11 @@ namespace Microsoft.Data.SqlClient {
         ]
         public String UdtTypeName {
             get {
-                if (SysSqlParameter != null)
-                {
-                    return SysSqlParameter.UdtTypeName;
-                }
-                else
-                {
-                    string typeName = _udtTypeName;
-                    return ((null != typeName) ? typeName : ADP.StrEmpty);
-                }
+                string typeName = _udtTypeName;
+                return ((null != typeName) ? typeName : ADP.StrEmpty);
             }
             set {
-                if (SysSqlParameter != null)
-                {
-                    SysSqlParameter.UdtTypeName = value;
-                }
-                else
-                {
-                    _udtTypeName = value;
-                }
+                _udtTypeName = value;
             }
         }
 
@@ -954,25 +736,11 @@ namespace Microsoft.Data.SqlClient {
         ]
         public String TypeName {
             get {
-                if (SysSqlParameter != null)
-                {
-                    return SysSqlParameter.TypeName;
-                }
-                else
-                {
-                    string typeName = _typeName;
-                    return ((null != typeName) ? typeName : ADP.StrEmpty);
-                }
+                string typeName = _typeName;
+                return ((null != typeName) ? typeName : ADP.StrEmpty);
             }
             set {
-                if (SysSqlParameter != null)
-                {
-                    SysSqlParameter.TypeName = value;
-                }
-                else
-                {
-                    _typeName = value;
-                }
+                _typeName = value;
             }
         }
 
@@ -984,48 +752,30 @@ namespace Microsoft.Data.SqlClient {
         ]
         override public object Value { // V1.2.3300, XXXParameter V1.0.3300
             get {
-                if (SysSqlParameter != null)
-                {
-                    return SysSqlParameter.Value;
+                if (_udtLoadError != null) { // SQL BU DT 329981
+                    throw _udtLoadError;
                 }
-                else
-                {
-                    if (_udtLoadError != null)
-                    { // SQL BU DT 329981
-                        throw _udtLoadError;
-                    }
 
-                    if (_value != null)
-                    {
-                        return _value;
-                    }
-                    else if (_sqlBufferReturnValue != null)
-                    {
-                        if (ParamaterIsSqlType)
-                        {
-                            return _sqlBufferReturnValue.SqlValue;
-                        }
-                        return _sqlBufferReturnValue.Value;
-                    }
-                    return null;
+                if (_value != null) {
+                    return _value;
                 }
+                else if (_sqlBufferReturnValue != null) {
+                    if (ParamaterIsSqlType) {
+                        return _sqlBufferReturnValue.SqlValue;
+                    }
+                    return _sqlBufferReturnValue.Value;
+                }
+                return null;
             }
             set {
-                if (SysSqlParameter != null)
-                {
-                    SysSqlParameter.Value = value;
-                }
-                else
-                {
-                    _value = value;
-                    _sqlBufferReturnValue = null;
-                    _coercedValue = null;
-                    _valueAsINullable = _value as INullable;
-                    _isSqlParameterSqlType = (_valueAsINullable != null);
-                    _isNull = ((_value == null) || (_value == DBNull.Value) || ((_isSqlParameterSqlType) && (_valueAsINullable.IsNull)));
-                    _udtLoadError = null;
-                    _actualSize = -1;
-                }
+                _value = value;
+                _sqlBufferReturnValue = null;
+                _coercedValue = null;
+                _valueAsINullable = _value as INullable;
+                _isSqlParameterSqlType = (_valueAsINullable != null);
+                _isNull = ((_value == null) || (_value == DBNull.Value) || ((_isSqlParameterSqlType) && (_valueAsINullable.IsNull)));
+                _udtLoadError = null;
+                _actualSize = -1;
             }
         }
 

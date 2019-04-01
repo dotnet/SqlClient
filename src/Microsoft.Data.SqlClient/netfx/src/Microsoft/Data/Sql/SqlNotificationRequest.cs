@@ -18,7 +18,6 @@ namespace Microsoft.Data.Sql {
         private string _userData;
         private string _options;
         private int    _timeout;
-        private System.Data.Sql.SqlNotificationRequest _sysSqlNotificationRequest;
 
         public SqlNotificationRequest() 
                 : this(null, null, SqlClient.SQL.SqlDependencyTimeoutDefault) {}
@@ -29,78 +28,39 @@ namespace Microsoft.Data.Sql {
             Options  = options;
         }
 
-        internal SqlNotificationRequest(System.Data.Sql.SqlNotificationRequest sqlNotificationRequest)
-        {
-            SysSqlNotificationRequest = sqlNotificationRequest;
-        }
-
-        internal System.Data.Sql.SqlNotificationRequest SysSqlNotificationRequest {
-            get {
-                return _sysSqlNotificationRequest;
-            }
-            set {
-                _sysSqlNotificationRequest = value;
-            }
-        }
-
-
         public string Options {
             get {
-                return SysSqlNotificationRequest?.Options ?? _options;
+                return _options;
             }
             set {
-                if (SysSqlNotificationRequest != null)
-                {
-                    SysSqlNotificationRequest.Options = value;
+                if ((null != value) && (UInt16.MaxValue < value.Length)) {
+                    throw ADP.ArgumentOutOfRange(String.Empty, ADP.ParameterService);
                 }
-                else
-                {
-                    if ((null != value) && (UInt16.MaxValue < value.Length))
-                    {
-                        throw ADP.ArgumentOutOfRange(String.Empty, ADP.ParameterService);
-                    }
-                    _options = value;
-                }
+                _options = value;
             }
         }
 
         public int Timeout {
             get {
-                return SysSqlNotificationRequest?.Timeout ?? _timeout;
+                return _timeout;
             }
             set {
-                if (SysSqlNotificationRequest != null)
-                {
-                    SysSqlNotificationRequest.Timeout = value;
+                if (0 > value) {
+                    throw ADP.ArgumentOutOfRange(String.Empty, ADP.ParameterTimeout);
                 }
-                else
-                {
-                    if (0 > value)
-                    {
-                        throw ADP.ArgumentOutOfRange(String.Empty, ADP.ParameterTimeout);
-                    }
-                    _timeout = value;
-                }
+                _timeout = value;
             }
         }
 
         public string UserData {
             get {
-                return SysSqlNotificationRequest?.UserData ?? _userData;
+                return _userData;
             }
             set {
-                if (SysSqlNotificationRequest != null)
-                {
-                    SysSqlNotificationRequest.UserData = value;
+                if ((null != value) && (UInt16.MaxValue < value.Length)) {
+                    throw ADP.ArgumentOutOfRange(String.Empty, ADP.ParameterUserData);
                 }
-                else
-                {
-                    if ((null != value) && (UInt16.MaxValue < value.Length))
-                    {
-                        throw ADP.ArgumentOutOfRange(String.Empty, ADP.ParameterUserData);
-                    }
-                    _userData = value;
-                }
+                _userData = value;
             }
         }        
     }
