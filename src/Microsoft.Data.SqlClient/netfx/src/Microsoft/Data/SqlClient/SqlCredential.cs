@@ -58,11 +58,6 @@ namespace Microsoft.Data.SqlClient
             _password = password;
         }
 
-        internal SqlCredential(System.Data.SqlClient.SqlCredential sqlCredential)
-        {
-            SysSqlCredential = sqlCredential;
-        }
-
         //
         // PUBLIC PROPERTIES
         //
@@ -70,7 +65,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                return SysSqlCredential?.UserId ?? _userId;
+                return _userId;
             }
         }
 
@@ -78,11 +73,9 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                return SysSqlCredential?.Password ?? _password;
+                return _password;
             }
         }
-
-        internal System.Data.SqlClient.SqlCredential SysSqlCredential { get; set; }
     }
 }   // Microsoft.Data.SqlClient namespace
 

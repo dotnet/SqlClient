@@ -42,24 +42,16 @@ namespace Microsoft.Data.SqlClient {
             }
         }
 
-        internal SqlTransaction(System.Data.SqlClient.SqlTransaction sqlTransaction,
-            SqlConnection sqlConnection) {
-            SysSqlTransaction = sqlTransaction;
-            _connection = sqlConnection;
-        }
-
         ////////////////////////////////////////////////////////////////////////////////////////
         // PROPERTIES
         ////////////////////////////////////////////////////////////////////////////////////////
 
         new public SqlConnection Connection { // MDAC 66655
             get {
-                if (IsZombied)
-                {
+                if (IsZombied) {
                     return null;
                 }
-                else
-                {
+                else {
                     return _connection;
                 }
             }
@@ -79,15 +71,8 @@ namespace Microsoft.Data.SqlClient {
 
         override public IsolationLevel IsolationLevel {
             get {
-                if (null != SysSqlTransaction)
-                {
-                    return SysSqlTransaction.IsolationLevel;
-                }
-                else
-                {
-                    ZombieCheck();
-                    return _isolationLevel;
-                }
+                ZombieCheck();
+                return _isolationLevel;
             }
         }
 
@@ -96,8 +81,6 @@ namespace Microsoft.Data.SqlClient {
                 return (null != _internalTransaction && _internalTransaction.IsCompleted);
             }
         }
-
-        internal System.Data.SqlClient.SqlTransaction SysSqlTransaction { get; set;}
 
         internal bool IsZombied {
             get {
@@ -126,68 +109,60 @@ namespace Microsoft.Data.SqlClient {
         // PUBLIC METHODS
         ////////////////////////////////////////////////////////////////////////////////////////
 
-        override public void Commit()
-        {
-            if (null != SysSqlTransaction)
-            {
-                SysSqlTransaction.Commit();
-            }
-            else
-            {
-                SqlConnection.ExecutePermission.Demand(); // MDAC 81476
+        override public void Commit() {
+            SqlConnection.ExecutePermission.Demand(); // MDAC 81476
 
-                ZombieCheck();
+            ZombieCheck();
+            
+            SqlStatistics statistics = null;
+            IntPtr hscp;
+            
+            Bid.ScopeEnter(out hscp, "<sc.SqlTransaction.Commit|API> %d#", ObjectID);
+            Bid.CorrelationTrace("<sc.SqlTransaction.Commit|API|Correlation> ObjectID%d#, ActivityID %ls", ObjectID);
 
-                SqlStatistics statistics = null;
-                IntPtr hscp;
+            TdsParser bestEffortCleanupTarget = null;
+            RuntimeHelpers.PrepareConstrainedRegions();
+            try {
+#if DEBUG
+                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
-                Bid.ScopeEnter(out hscp, "<sc.SqlTransaction.Commit|API> %d#", ObjectID);
-                Bid.CorrelationTrace("<sc.SqlTransaction.Commit|API|Correlation> ObjectID%d#, ActivityID %ls", ObjectID);
-
-                TdsParser bestEffortCleanupTarget = null;
                 RuntimeHelpers.PrepareConstrainedRegions();
                 try {
-#if DEBUG
-                    TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
-
-                    RuntimeHelpers.PrepareConstrainedRegions();
-                    try {
-                        tdsReliabilitySection.Start();
+                    tdsReliabilitySection.Start();
 #else
                 {
 #endif //DEBUG
-                        bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
-                        statistics = SqlStatistics.StartTimer(Statistics);
+                    bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
+                    statistics = SqlStatistics.StartTimer(Statistics);
 
-                        _isFromAPI = true;
+                    _isFromAPI = true;
 
-                        _internalTransaction.Commit();
-                    }
+                    _internalTransaction.Commit();
+                }
 #if DEBUG
-                    finally {
-                        tdsReliabilitySection.Stop();
-                    }
-#endif //DEBUG
-                }
-                catch (System.OutOfMemoryException e) {
-                    _connection.Abort(e);
-                    throw;
-                }
-                catch (System.StackOverflowException e) {
-                    _connection.Abort(e);
-                    throw;
-                }
-                catch (System.Threading.ThreadAbortException e)  {
-                    _connection.Abort(e);
-                    SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-                    throw;
-                }
                 finally {
-                    _isFromAPI = false;
-
-                    SqlStatistics.StopTimer(statistics);
-                    Bid.ScopeLeave(ref hscp);
+                    tdsReliabilitySection.Stop();
                 }
+#endif //DEBUG
+            }
+            catch (System.OutOfMemoryException e) {
+                _connection.Abort(e);
+                throw;
+            }
+            catch (System.StackOverflowException e) {
+                _connection.Abort(e);
+                throw;
+            }
+            catch (System.Threading.ThreadAbortException e)  {
+                _connection.Abort(e);
+                SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
+                throw;
+            }
+            finally {
+                _isFromAPI = false;
+                
+                SqlStatistics.StopTimer(statistics);
+                Bid.ScopeLeave(ref hscp);
             }
         }
 
@@ -234,89 +209,20 @@ namespace Microsoft.Data.SqlClient {
         }
 
         override public void Rollback() {
-            if (null != SysSqlTransaction)
-            {
-                SysSqlTransaction.Rollback();
-            }
-            else
-            {
-                if (IsYukonPartialZombie) {
-                    // Put something in the trace in case a customer has an issue
-                    if (Bid.AdvancedOn) {
-                        Bid.Trace("<sc.SqlTransaction.Rollback|ADV> %d# partial zombie no rollback required\n", ObjectID);
-                    }
-                    _internalTransaction = null; // yukon zombification
+            if (IsYukonPartialZombie) {
+                // Put something in the trace in case a customer has an issue
+                if (Bid.AdvancedOn) {
+                    Bid.Trace("<sc.SqlTransaction.Rollback|ADV> %d# partial zombie no rollback required\n", ObjectID);
                 }
-                else {
-                    ZombieCheck();
-
-                    SqlStatistics statistics = null;
-                    IntPtr hscp;
-                    Bid.ScopeEnter(out hscp, "<sc.SqlTransaction.Rollback|API> %d#", ObjectID);
-                    Bid.CorrelationTrace("<sc.SqlTransaction.Rollback|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
-
-                    TdsParser bestEffortCleanupTarget = null;
-                    RuntimeHelpers.PrepareConstrainedRegions();
-                    try {
-#if DEBUG
-                        TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
-
-                        RuntimeHelpers.PrepareConstrainedRegions();
-                        try {
-                            tdsReliabilitySection.Start();
-#else
-                    {
-#endif //DEBUG
-                            bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
-                            statistics = SqlStatistics.StartTimer(Statistics);
-
-                            _isFromAPI = true;
-
-                            _internalTransaction.Rollback();
-                        }
-#if DEBUG
-                        finally {
-                            tdsReliabilitySection.Stop();
-                        }
-#endif //DEBUG
-                    }
-                    catch (System.OutOfMemoryException e) {
-                        _connection.Abort(e);
-                        throw;
-                    }
-                    catch (System.StackOverflowException e) {
-                        _connection.Abort(e);
-                        throw;
-                    }
-                    catch (System.Threading.ThreadAbortException e)  {
-                        _connection.Abort(e);
-                        SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-                        throw;
-                    }
-                    finally {
-                        _isFromAPI = false;
-
-                        SqlStatistics.StopTimer(statistics);
-                        Bid.ScopeLeave(ref hscp);
-                    }
-                }
+                _internalTransaction = null; // yukon zombification
             }
-        }
-
-        public void Rollback(string transactionName) {
-            if (null != SysSqlTransaction)
-            {
-                SysSqlTransaction.Rollback(transactionName);
-            }
-            else
-            {
-                SqlConnection.ExecutePermission.Demand(); // MDAC 81476
-
+            else {
                 ZombieCheck();
 
                 SqlStatistics statistics = null;
                 IntPtr hscp;
-                Bid.ScopeEnter(out hscp, "<sc.SqlTransaction.Rollback|API> %d# transactionName='%ls'", ObjectID, transactionName);
+                Bid.ScopeEnter(out hscp, "<sc.SqlTransaction.Rollback|API> %d#", ObjectID);
+                Bid.CorrelationTrace("<sc.SqlTransaction.Rollback|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
 
                 TdsParser bestEffortCleanupTarget = null;
                 RuntimeHelpers.PrepareConstrainedRegions();
@@ -328,14 +234,14 @@ namespace Microsoft.Data.SqlClient {
                     try {
                         tdsReliabilitySection.Start();
 #else
-                {
+                    {
 #endif //DEBUG
                         bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
                         statistics = SqlStatistics.StartTimer(Statistics);
 
                         _isFromAPI = true;
-
-                        _internalTransaction.Rollback(transactionName);
+                        
+                        _internalTransaction.Rollback();
                     }
 #if DEBUG
                     finally {
@@ -358,68 +264,116 @@ namespace Microsoft.Data.SqlClient {
                 }
                 finally {
                     _isFromAPI = false;
-
+                    
                     SqlStatistics.StopTimer(statistics);
                     Bid.ScopeLeave(ref hscp);
                 }
             }
         }
 
-        public void Save(string savePointName) {
-            if (null != SysSqlTransaction)
-            {
-                SysSqlTransaction.Save(savePointName);
-            }
-            else
-            {
-                SqlConnection.ExecutePermission.Demand(); // MDAC 81476
+        public void Rollback(string transactionName) {
+            SqlConnection.ExecutePermission.Demand(); // MDAC 81476
 
-                ZombieCheck();
+            ZombieCheck();
 
-                SqlStatistics statistics = null;
-                IntPtr hscp;
-                Bid.ScopeEnter(out hscp, "<sc.SqlTransaction.Save|API> %d# savePointName='%ls'", ObjectID, savePointName);
+            SqlStatistics statistics = null;
+            IntPtr hscp;
+            Bid.ScopeEnter(out hscp, "<sc.SqlTransaction.Rollback|API> %d# transactionName='%ls'", ObjectID, transactionName);
 
-                TdsParser bestEffortCleanupTarget = null;
+            TdsParser bestEffortCleanupTarget = null;
+            RuntimeHelpers.PrepareConstrainedRegions();
+            try {
+#if DEBUG
+                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+
                 RuntimeHelpers.PrepareConstrainedRegions();
                 try {
-#if DEBUG
-                    TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
-
-                    RuntimeHelpers.PrepareConstrainedRegions();
-                    try {
-                        tdsReliabilitySection.Start();
+                    tdsReliabilitySection.Start();
 #else
                 {
 #endif //DEBUG
-                        bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
-                        statistics = SqlStatistics.StartTimer(Statistics);
+                    bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
+                    statistics = SqlStatistics.StartTimer(Statistics);
 
-                        _internalTransaction.Save(savePointName);
-                    }
+                    _isFromAPI = true;
+                    
+                    _internalTransaction.Rollback(transactionName);
+                }
 #if DEBUG
-                    finally {
-                        tdsReliabilitySection.Stop();
-                    }
-#endif //DEBUG
-                }
-                catch (System.OutOfMemoryException e) {
-                    _connection.Abort(e);
-                    throw;
-                }
-                catch (System.StackOverflowException e) {
-                    _connection.Abort(e);
-                    throw;
-                }
-                catch (System.Threading.ThreadAbortException e)  {
-                    _connection.Abort(e);
-                    SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-                    throw;
-                }
                 finally {
-                    SqlStatistics.StopTimer(statistics);
-                    Bid.ScopeLeave(ref hscp);
+                    tdsReliabilitySection.Stop();
                 }
+#endif //DEBUG
+            }
+            catch (System.OutOfMemoryException e) {
+                _connection.Abort(e);
+                throw;
+            }
+            catch (System.StackOverflowException e) {
+                _connection.Abort(e);
+                throw;
+            }
+            catch (System.Threading.ThreadAbortException e)  {
+                _connection.Abort(e);
+                SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
+                throw;
+            }
+            finally {
+                _isFromAPI = false;
+                
+                SqlStatistics.StopTimer(statistics);
+                Bid.ScopeLeave(ref hscp);
+            }
+        }
+
+        public void Save(string savePointName) {
+            SqlConnection.ExecutePermission.Demand(); // MDAC 81476
+
+            ZombieCheck();
+            
+            SqlStatistics statistics = null;
+            IntPtr hscp;
+            Bid.ScopeEnter(out hscp, "<sc.SqlTransaction.Save|API> %d# savePointName='%ls'", ObjectID, savePointName);
+
+            TdsParser bestEffortCleanupTarget = null;
+            RuntimeHelpers.PrepareConstrainedRegions();
+            try {
+#if DEBUG
+                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+
+                RuntimeHelpers.PrepareConstrainedRegions();
+                try {
+                    tdsReliabilitySection.Start();
+#else
+                {
+#endif //DEBUG
+                    bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
+                    statistics = SqlStatistics.StartTimer(Statistics);
+                    
+                    _internalTransaction.Save(savePointName);
+                }
+#if DEBUG
+                finally {
+                    tdsReliabilitySection.Stop();
+                }
+#endif //DEBUG
+            }
+            catch (System.OutOfMemoryException e) {
+                _connection.Abort(e);
+                throw;
+            }
+            catch (System.StackOverflowException e) {
+                _connection.Abort(e);
+                throw;
+            }
+            catch (System.Threading.ThreadAbortException e)  {
+                _connection.Abort(e);
+                SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
+                throw;
+            }
+            finally {
+                SqlStatistics.StopTimer(statistics);
+                Bid.ScopeLeave(ref hscp);
             }
         }
 

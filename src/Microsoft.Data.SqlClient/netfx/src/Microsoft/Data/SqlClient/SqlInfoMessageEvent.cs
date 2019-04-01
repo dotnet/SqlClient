@@ -15,21 +15,8 @@ namespace Microsoft.Data.SqlClient {
             this.exception = exception;
         }
 
-        internal SqlInfoMessageEventArgs(System.Data.SqlClient.SqlInfoMessageEventArgs sqlInfoMessageEventArgs)
-        {
-            SysSqlInfoMessageEventArgs = sqlInfoMessageEventArgs;
-        }
-
-        private System.Data.SqlClient.SqlInfoMessageEventArgs SysSqlInfoMessageEventArgs { get; set; }
-
         public SqlErrorCollection Errors {
-            get {
-                if (null != SysSqlInfoMessageEventArgs)
-                {
-                    return new SqlErrorCollection(SysSqlInfoMessageEventArgs.Errors);
-                }
-                return exception.Errors;
-            }
+            get { return exception.Errors;}
         }
 
         /*virtual protected*/private bool ShouldSerializeErrors() { // MDAC 65548
@@ -37,11 +24,11 @@ namespace Microsoft.Data.SqlClient {
         }
 
         public string Message { // MDAC 68482
-            get { return SysSqlInfoMessageEventArgs?.Message ?? exception.Message; }
+            get { return exception.Message; }
         }
 
         public string Source { // MDAC 68482
-            get { return SysSqlInfoMessageEventArgs?.Message ?? exception.Source; }
+            get { return exception.Source;}
         }
 
         override public string ToString() { // MDAC 68482
