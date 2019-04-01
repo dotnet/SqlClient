@@ -16,6 +16,7 @@ namespace Microsoft.Data.SqlClient {
     using System;
     using System.Collections;
     using System.Collections.Generic;
+    using Microsoft.Data;
     using Microsoft.Data.Common;
     using System.Diagnostics;
     using System.Runtime.CompilerServices;
@@ -256,7 +257,7 @@ namespace Microsoft.Data.SqlClient {
         private SqlInternalConnectionTds.SyncAsyncLock _parserLock = null;
 
         private SourceColumnMetadata[] _currentRowMetadata;
-        private System.Data.SqlClient.SqlBulkCopy _sysSqlBulkCopy;
+
         // for debug purpose only.
         // TODO: I will make this internal to use Reflection.
 #if DEBUG
@@ -270,34 +271,8 @@ namespace Microsoft.Data.SqlClient {
             }
         }
 #endif
-        internal System.Data.SqlClient.SqlBulkCopy SysSqlBulkCopy
-        {
-            get
-            {
-                return _sysSqlBulkCopy;
-            }
-            set
-            {
-                _sysSqlBulkCopy = value;
-            }
-        }
-
         // ctor
-        //       
-        public SqlBulkCopy(System.Data.SqlClient.SqlBulkCopy sqlBulkCopy)
-        {
-            SysSqlBulkCopy = sqlBulkCopy;
-
-            // Callback to subscribe S.D.SqlClient.OnRowsCopied.
-            void SqlRowsCopiedEventArgsCallback(object sender, System.Data.SqlClient.SqlRowsCopiedEventArgs args)
-            {
-                //call M.D.SqlClient.handler
-                OnRowsCopied(new SqlRowsCopiedEventArgs(args));
-            }
-            System.Data.SqlClient.SqlRowsCopiedEventHandler handler = new System.Data.SqlClient.SqlRowsCopiedEventHandler(SqlRowsCopiedEventArgsCallback);
-            SysSqlBulkCopy.SqlRowsCopied += handler;
-        }
-
+        //
         public SqlBulkCopy(SqlConnection connection) {
             if(connection == null) {
                 throw ADP.ArgumentNull("connection");
@@ -333,130 +308,72 @@ namespace Microsoft.Data.SqlClient {
             _copyOptions = copyOptions;
         }
 
-        public int BatchSize
-        {
-            get
-            {
-                return SysSqlBulkCopy?.BatchSize ?? _batchSize;
+        public int BatchSize {
+            get {
+                return _batchSize;
             }
-            set
-            {
-                if (SysSqlBulkCopy != null)
-                {
-                    SysSqlBulkCopy.BatchSize = value;
+            set {
+                if(value >= 0) {
+                    _batchSize = value;
                 }
-                else
-                {
-                    if (value >= 0)
-                    {
-                        _batchSize = value;
-                    }
-                    else
-                    {
-                        throw ADP.ArgumentOutOfRange("BatchSize");
-                    }
+                else {
+                    throw ADP.ArgumentOutOfRange("BatchSize");
                 }
             }
         }
 
-        public int BulkCopyTimeout
-        {
-            get
-            {
-                return SysSqlBulkCopy?.BulkCopyTimeout ?? _timeout;
+        public int BulkCopyTimeout {
+            get {
+                return _timeout;
             }
-            set
-            {
-                if (SysSqlBulkCopy != null)
-                {
-                    SysSqlBulkCopy.BulkCopyTimeout = value;
+            set {
+                if(value < 0) {
+                    throw SQL.BulkLoadInvalidTimeout(value);
                 }
-                else
-                {
-                    if (value < 0)
-                    {
-                        throw SQL.BulkLoadInvalidTimeout(value);
-                    }
-                    _timeout = value;
-                }
+                _timeout = value;
             }
         }
 
-        public bool EnableStreaming
-        {
-            get
-            {
-                return SysSqlBulkCopy?.EnableStreaming ?? _enableStreaming;
+        public bool EnableStreaming {
+            get {
+                return _enableStreaming;
             }
-            set
-            {
-                if (SysSqlBulkCopy != null)
-                {
-                    SysSqlBulkCopy.EnableStreaming = value;
-                }
-                else
-                {
-                    _enableStreaming = value;
-                }
+            set {
+                _enableStreaming = value;
             }
         }
 
         public SqlBulkCopyColumnMappingCollection ColumnMappings {
-            get
-            {
-                if (SysSqlBulkCopy != null)
-                {
-                    return new SqlBulkCopyColumnMappingCollection(SysSqlBulkCopy.ColumnMappings);
-                }
+            get {
                 return _columnMappings;
             }
         }
 
         public string DestinationTableName {
-            get
-            {
-                return SysSqlBulkCopy?.DestinationTableName ?? _destinationTableName;
+            get {
+                return _destinationTableName;
             }
             set {
-                if (SysSqlBulkCopy != null)
-                {
-                    SysSqlBulkCopy.DestinationTableName = value;
+                if(value == null) {
+                    throw ADP.ArgumentNull("DestinationTableName");
                 }
-                else
-                {
-                    if (value == null)
-                    {
-                        throw ADP.ArgumentNull("DestinationTableName");
-                    }
-                    else if (value.Length == 0)
-                    {
-                        throw ADP.ArgumentOutOfRange("DestinationTableName");
-                    }
-                    _destinationTableName = value;
+                else if(value.Length == 0) {
+                    throw ADP.ArgumentOutOfRange("DestinationTableName");
                 }
+                _destinationTableName = value;
             }
         }
 
         public int NotifyAfter {
-            get
-            {
-                return SysSqlBulkCopy?.NotifyAfter ?? _notifyAfter;
+            get {
+                return _notifyAfter;
             }
             set {
-                if (SysSqlBulkCopy != null)
-                {
-                    SysSqlBulkCopy.NotifyAfter = value;
+                if(value >= 0) {
+                    _notifyAfter = value;
                 }
-                else
-                {
-                    if (value >= 0)
-                    {
-                        _notifyAfter = value;
-                    }
-                    else
-                    {
-                        throw ADP.ArgumentOutOfRange("NotifyAfter");
-                    }
+                else {
+                    throw ADP.ArgumentOutOfRange("NotifyAfter");
                 }
             }
         }
@@ -469,7 +386,7 @@ namespace Microsoft.Data.SqlClient {
 
         public event SqlRowsCopiedEventHandler SqlRowsCopied {
             add {
-                    _rowsCopiedEventHandler += value;
+                _rowsCopiedEventHandler += value;
             }
             remove {
                 _rowsCopiedEventHandler -= value;
@@ -866,22 +783,12 @@ namespace Microsoft.Data.SqlClient {
         // Terminates the bulk copy operation.
         // Must be called at the end of the bulk copy session.
         //================================================================
-        public void Close()
-        {
-            if (SysSqlBulkCopy != null)
-            {
-                SysSqlBulkCopy.Close();
-
+        public void Close() {
+            if(_insideRowsCopiedEvent) {
+                throw SQL.InvalidOperationInsideEvent();
             }
-            else
-            {
-                if (_insideRowsCopiedEvent)
-                {
-                    throw SQL.InvalidOperationInsideEvent();
-                }
-                Dispose(true);
-                GC.SuppressFinalize(this);
-            }
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         private void Dispose(bool disposing) {
@@ -1552,87 +1459,63 @@ namespace Microsoft.Data.SqlClient {
         }
 
         public void WriteToServer(DbDataReader reader) {
-            if (SysSqlBulkCopy != null)
-            {
-                SysSqlBulkCopy.WriteToServer(reader);
+            SqlConnection.ExecutePermission.Demand();
+
+            if (reader == null) {
+                throw new ArgumentNullException("reader");
             }
-            else
-            {
-                SqlConnection.ExecutePermission.Demand();
+            
+            if (_isBulkCopyingInProgress) {
+                throw SQL.BulkLoadPendingOperation();
+            }
+            
+            SqlStatistics statistics = Statistics;
+            try {
+                statistics = SqlStatistics.StartTimer(Statistics);
+                _rowSource = reader;
+                _DbDataReaderRowSource = reader;
+                _SqlDataReaderRowSource = reader as SqlDataReader;
 
-                if (reader == null)
-                {
-                    throw new ArgumentNullException("reader");
+                if (_SqlDataReaderRowSource != null) {
+                    _rowSourceIsSqlDataReaderSmi = _SqlDataReaderRowSource is SqlDataReaderSmi;
                 }
-
-                if (_isBulkCopyingInProgress)
-                {
-                    throw SQL.BulkLoadPendingOperation();
-                }
-
-                SqlStatistics statistics = Statistics;
-                try
-                {
-                    statistics = SqlStatistics.StartTimer(Statistics);
-                    _rowSource = reader;
-                    _DbDataReaderRowSource = reader;
-                    _SqlDataReaderRowSource = reader as SqlDataReader;
-
-                    if (_SqlDataReaderRowSource != null)
-                    {
-                        _rowSourceIsSqlDataReaderSmi = _SqlDataReaderRowSource is SqlDataReaderSmi;
-                    }
-                    _dataTableSource = null;
-                    _rowSourceType = ValueSourceType.DbDataReader;
-                    _isAsyncBulkCopy = false;
-                    WriteRowSourceToServerAsync(reader.FieldCount, CancellationToken.None); //It returns null since _isAsyncBulkCopy = false; 
-                }
-                finally
-                {
-                    SqlStatistics.StopTimer(statistics);
-                }
+                _dataTableSource = null;
+                _rowSourceType = ValueSourceType.DbDataReader;
+                _isAsyncBulkCopy = false; 
+                WriteRowSourceToServerAsync(reader.FieldCount, CancellationToken.None); //It returns null since _isAsyncBulkCopy = false; 
+            }
+            finally {
+                SqlStatistics.StopTimer(statistics);
             }
         }
 
         public void WriteToServer(IDataReader reader) {
-            if (SysSqlBulkCopy != null)
-            {
-                SysSqlBulkCopy.WriteToServer(reader);
+            SqlConnection.ExecutePermission.Demand();
+
+            if (reader == null) {
+                throw new ArgumentNullException("reader");
             }
-            else
-            {
-                SqlConnection.ExecutePermission.Demand();
-
-                if (reader == null)
-                {
-                    throw new ArgumentNullException("reader");
+            
+            if (_isBulkCopyingInProgress) {
+                throw SQL.BulkLoadPendingOperation();
+            }
+            
+            SqlStatistics statistics = Statistics;
+            try {
+                statistics = SqlStatistics.StartTimer(Statistics);
+                _rowSource = reader;
+                _SqlDataReaderRowSource = _rowSource as SqlDataReader;
+                if (_SqlDataReaderRowSource != null) {
+                    _rowSourceIsSqlDataReaderSmi = _SqlDataReaderRowSource is SqlDataReaderSmi;
                 }
-
-                if (_isBulkCopyingInProgress)
-                {
-                    throw SQL.BulkLoadPendingOperation();
-                }
-
-                SqlStatistics statistics = Statistics;
-                try
-                {
-                    statistics = SqlStatistics.StartTimer(Statistics);
-                    _rowSource = reader;
-                    _SqlDataReaderRowSource = _rowSource as SqlDataReader;
-                    if (_SqlDataReaderRowSource != null)
-                    {
-                        _rowSourceIsSqlDataReaderSmi = _SqlDataReaderRowSource is SqlDataReaderSmi;
-                    }
-                    _DbDataReaderRowSource = _rowSource as DbDataReader;
-                    _dataTableSource = null;
-                    _rowSourceType = ValueSourceType.IDataReader;
-                    _isAsyncBulkCopy = false;
-                    WriteRowSourceToServerAsync(reader.FieldCount, CancellationToken.None); //It returns null since _isAsyncBulkCopy = false; 
-                }
-                finally
-                {
-                    SqlStatistics.StopTimer(statistics);
-                }
+                _DbDataReaderRowSource = _rowSource as DbDataReader;
+                _dataTableSource = null;
+                _rowSourceType = ValueSourceType.IDataReader;
+                _isAsyncBulkCopy = false; 
+                WriteRowSourceToServerAsync(reader.FieldCount, CancellationToken.None); //It returns null since _isAsyncBulkCopy = false; 
+            }
+            finally {
+                SqlStatistics.StopTimer(statistics);
             }
         }
 
@@ -1641,91 +1524,68 @@ namespace Microsoft.Data.SqlClient {
         }
 
         public void WriteToServer(DataTable table, DataRowState rowState) {
-            if (SysSqlBulkCopy != null)
-            {
-                SysSqlBulkCopy.WriteToServer(table, rowState);
+            SqlConnection.ExecutePermission.Demand();
+
+            if (table == null) {
+                throw new ArgumentNullException("table");
             }
-            else
-            {
-                SqlConnection.ExecutePermission.Demand();
 
-                if (table == null)
-                {
-                    throw new ArgumentNullException("table");
-                }
+            if (_isBulkCopyingInProgress) {
+                throw SQL.BulkLoadPendingOperation();
+            }
 
-                if (_isBulkCopyingInProgress)
-                {
-                    throw SQL.BulkLoadPendingOperation();
-                }
+            SqlStatistics statistics = Statistics;
+            try {
+                statistics = SqlStatistics.StartTimer(Statistics);
+                _rowStateToSkip = ((rowState == 0) || (rowState == DataRowState.Deleted)) ? DataRowState.Deleted : ~rowState | DataRowState.Deleted;
+                _rowSource = table;
+                _dataTableSource = table;
+                _SqlDataReaderRowSource = null;
+                _rowSourceType = ValueSourceType.DataTable;
+                _rowEnumerator = table.Rows.GetEnumerator();
+                _isAsyncBulkCopy = false;
 
-                SqlStatistics statistics = Statistics;
-                try
-                {
-                    statistics = SqlStatistics.StartTimer(Statistics);
-                    _rowStateToSkip = ((rowState == 0) || (rowState == DataRowState.Deleted)) ? DataRowState.Deleted : ~rowState | DataRowState.Deleted;
-                    _rowSource = table;
-                    _dataTableSource = table;
-                    _SqlDataReaderRowSource = null;
-                    _rowSourceType = ValueSourceType.DataTable;
-                    _rowEnumerator = table.Rows.GetEnumerator();
-                    _isAsyncBulkCopy = false;
-
-                    WriteRowSourceToServerAsync(table.Columns.Count, CancellationToken.None); //It returns null since _isAsyncBulkCopy = false; 
-                }
-                finally
-                {
-                    SqlStatistics.StopTimer(statistics);
-                }
+                WriteRowSourceToServerAsync(table.Columns.Count, CancellationToken.None); //It returns null since _isAsyncBulkCopy = false; 
+            }
+            finally {               
+                SqlStatistics.StopTimer(statistics);
             }
         }
 
         public void WriteToServer(DataRow[] rows) {
-            if (SysSqlBulkCopy != null)
-            {
-                SysSqlBulkCopy.WriteToServer(rows);
+            SqlConnection.ExecutePermission.Demand();
+
+            SqlStatistics statistics = Statistics;
+
+            if (rows == null) {
+                throw new ArgumentNullException("rows");
             }
-            else
-            {
-                SqlConnection.ExecutePermission.Demand();
 
-                SqlStatistics statistics = Statistics;
+            if (_isBulkCopyingInProgress) {
+                throw SQL.BulkLoadPendingOperation();
+            }
 
-                if (rows == null)
-                {
-                    throw new ArgumentNullException("rows");
-                }
+            if (rows.Length == 0) {
+                return; // nothing to do. user passed us an empty array
+            }
 
-                if (_isBulkCopyingInProgress)
-                {
-                    throw SQL.BulkLoadPendingOperation();
-                }
+            try {
+                statistics = SqlStatistics.StartTimer(Statistics);
+               
+                DataTable table = rows[0].Table;
+                Debug.Assert(null != table, "How can we have rows without a table?");
+                _rowStateToSkip = DataRowState.Deleted;      // Don't allow deleted rows
+                _rowSource = rows;
+                _dataTableSource = table;
+                _SqlDataReaderRowSource = null;
+                _rowSourceType = ValueSourceType.RowArray;
+                _rowEnumerator = rows.GetEnumerator();
+                _isAsyncBulkCopy = false;
 
-                if (rows.Length == 0)
-                {
-                    return; // nothing to do. user passed us an empty array
-                }
-
-                try
-                {
-                    statistics = SqlStatistics.StartTimer(Statistics);
-
-                    DataTable table = rows[0].Table;
-                    Debug.Assert(null != table, "How can we have rows without a table?");
-                    _rowStateToSkip = DataRowState.Deleted;      // Don't allow deleted rows
-                    _rowSource = rows;
-                    _dataTableSource = table;
-                    _SqlDataReaderRowSource = null;
-                    _rowSourceType = ValueSourceType.RowArray;
-                    _rowEnumerator = rows.GetEnumerator();
-                    _isAsyncBulkCopy = false;
-
-                    WriteRowSourceToServerAsync(table.Columns.Count, CancellationToken.None); //It returns null since _isAsyncBulkCopy = false; 
-                }
-                finally
-                {
-                    SqlStatistics.StopTimer(statistics);
-                }
+                WriteRowSourceToServerAsync(table.Columns.Count, CancellationToken.None); //It returns null since _isAsyncBulkCopy = false; 
+            }
+            finally {
+                SqlStatistics.StopTimer(statistics);
             }
         }
 
@@ -1735,172 +1595,112 @@ namespace Microsoft.Data.SqlClient {
         }
 
         public Task WriteToServerAsync(DataRow[] rows, CancellationToken cancellationToken) {
-            if (SysSqlBulkCopy != null)
-            {
-                try
-                {
-                    return SysSqlBulkCopy.WriteToServerAsync(rows, cancellationToken);
-                }
-                catch (System.Data.SqlClient.SqlException sysExp)
-                {
-                    SqlException mdExp = SqlException.CreateException(sysExp, sysExp.Server, sysExp.ClientConnectionId);
-                    throw mdExp;
-                }
+            Task resultTask = null;
+            SqlConnection.ExecutePermission.Demand();
+            
+            if (rows == null) {
+                throw new ArgumentNullException("rows");
             }
-            else
-            {
-                Task resultTask = null;
-                SqlConnection.ExecutePermission.Demand();
 
-                if (rows == null)
-                {
-                    throw new ArgumentNullException("rows");
-                }
-
-                if (_isBulkCopyingInProgress)
-                {
-                    throw SQL.BulkLoadPendingOperation();
-                }
-
-                SqlStatistics statistics = Statistics;
-                try
-                {
-                    statistics = SqlStatistics.StartTimer(Statistics);
-
-                    if (rows.Length == 0)
-                    {
-                        TaskCompletionSource<object> source = new TaskCompletionSource<object>();
-                        if (cancellationToken.IsCancellationRequested)
-                        {
-                            source.SetCanceled();
-                        }
-                        else
-                        {
-                            source.SetResult(null);
-                        }
-                        resultTask = source.Task;
-                        return resultTask; // nothing to do. user passed us an empty array. Return a completed Task.
+            if (_isBulkCopyingInProgress) {
+                throw SQL.BulkLoadPendingOperation();
+            }
+    
+            SqlStatistics statistics = Statistics;
+            try {
+                statistics = SqlStatistics.StartTimer(Statistics);
+                
+                if (rows.Length == 0) {
+                    TaskCompletionSource<object> source = new TaskCompletionSource<object>();
+                    if (cancellationToken.IsCancellationRequested) {
+                        source.SetCanceled();
                     }
-
-                    DataTable table = rows[0].Table;
-                    Debug.Assert(null != table, "How can we have rows without a table?");
-                    _rowStateToSkip = DataRowState.Deleted;      // Don't allow deleted rows
-                    _rowSource = rows;
-                    _dataTableSource = table;
-                    _SqlDataReaderRowSource = null;
-                    _rowSourceType = ValueSourceType.RowArray;
-                    _rowEnumerator = rows.GetEnumerator();
-                    _isAsyncBulkCopy = true;
-                    resultTask = WriteRowSourceToServerAsync(table.Columns.Count, cancellationToken); //It returns Task since _isAsyncBulkCopy = true; 
+                    else{
+                        source.SetResult(null);
+                    }
+                    resultTask = source.Task;
+                    return resultTask; // nothing to do. user passed us an empty array. Return a completed Task.
                 }
-                finally
-                {
-                    SqlStatistics.StopTimer(statistics);
-                }
-                return resultTask;
+               
+                DataTable table = rows[0].Table;
+                Debug.Assert(null != table, "How can we have rows without a table?");
+                _rowStateToSkip = DataRowState.Deleted;      // Don't allow deleted rows
+                _rowSource = rows;
+                _dataTableSource = table;
+                _SqlDataReaderRowSource = null;
+                _rowSourceType = ValueSourceType.RowArray;
+                _rowEnumerator = rows.GetEnumerator();
+                _isAsyncBulkCopy = true;
+                resultTask = WriteRowSourceToServerAsync(table.Columns.Count, cancellationToken); //It returns Task since _isAsyncBulkCopy = true; 
+            } 
+            finally{
+                SqlStatistics.StopTimer(statistics);
             }
+            return resultTask;
         }
 
         public Task WriteToServerAsync(DbDataReader reader) {
             return WriteToServerAsync(reader, CancellationToken.None);
         }
         public Task WriteToServerAsync(DbDataReader reader, CancellationToken cancellationToken) {
-            if (SysSqlBulkCopy != null)
-            {
-                try
-                {
-                    return SysSqlBulkCopy.WriteToServerAsync(reader, cancellationToken);
-                }
-                catch (System.Data.SqlClient.SqlException sysExp)
-                {
-                    SqlException mdExp = SqlException.CreateException(sysExp, sysExp.Server, sysExp.ClientConnectionId);
-                    throw mdExp;
-                }
+            Task resultTask = null;
+            SqlConnection.ExecutePermission.Demand();
+
+            if (reader == null) {
+                throw new ArgumentNullException("reader");
             }
-            else
-            {
-                Task resultTask = null;
-                SqlConnection.ExecutePermission.Demand();
 
-                if (reader == null)
-                {
-                    throw new ArgumentNullException("reader");
-                }
-
-                if (_isBulkCopyingInProgress)
-                {
-                    throw SQL.BulkLoadPendingOperation();
-                }
-
-                SqlStatistics statistics = Statistics;
-                try
-                {
-                    statistics = SqlStatistics.StartTimer(Statistics);
-                    _rowSource = reader;
-                    _SqlDataReaderRowSource = reader as SqlDataReader;
-                    _DbDataReaderRowSource = reader;
-                    _dataTableSource = null;
-                    _rowSourceType = ValueSourceType.DbDataReader;
-                    _isAsyncBulkCopy = true;
-                    resultTask = WriteRowSourceToServerAsync(reader.FieldCount, cancellationToken);  //It returns Task since _isAsyncBulkCopy = true; 
-                }
-                finally
-                {
-                    SqlStatistics.StopTimer(statistics);
-                }
-                return resultTask;
+            if (_isBulkCopyingInProgress) {
+                throw SQL.BulkLoadPendingOperation();
             }
+
+            SqlStatistics statistics = Statistics;
+            try {
+                statistics = SqlStatistics.StartTimer(Statistics);
+                _rowSource = reader;
+                _SqlDataReaderRowSource = reader as SqlDataReader;
+                _DbDataReaderRowSource = reader;
+                _dataTableSource = null;
+                _rowSourceType = ValueSourceType.DbDataReader;
+                _isAsyncBulkCopy = true;
+                resultTask = WriteRowSourceToServerAsync(reader.FieldCount, cancellationToken);  //It returns Task since _isAsyncBulkCopy = true; 
+            }
+            finally {
+                SqlStatistics.StopTimer(statistics);
+            }
+            return resultTask;
         }
 
         public Task WriteToServerAsync(IDataReader reader) {
             return WriteToServerAsync(reader, CancellationToken.None);
         }
         public Task WriteToServerAsync(IDataReader reader, CancellationToken cancellationToken) {
-            if (SysSqlBulkCopy != null)
-            {
-                try
-                {
-                    return SysSqlBulkCopy.WriteToServerAsync(reader, cancellationToken);
-                }
-                catch (System.Data.SqlClient.SqlException sysExp)
-                {
-                    SqlException mdExp = SqlException.CreateException(sysExp, sysExp.Server, sysExp.ClientConnectionId);
-                    throw mdExp;
-                }
+            Task resultTask = null;
+            SqlConnection.ExecutePermission.Demand();
+            
+            if (reader == null) {
+                throw new ArgumentNullException("reader");
             }
-            else
-            {
-                Task resultTask = null;
-                SqlConnection.ExecutePermission.Demand();
 
-                if (reader == null)
-                {
-                    throw new ArgumentNullException("reader");
-                }
-
-                if (_isBulkCopyingInProgress)
-                {
-                    throw SQL.BulkLoadPendingOperation();
-                }
-
-                SqlStatistics statistics = Statistics;
-                try
-                {
-                    statistics = SqlStatistics.StartTimer(Statistics);
-                    _rowSource = reader;
-                    _SqlDataReaderRowSource = _rowSource as SqlDataReader;
-                    _DbDataReaderRowSource = _rowSource as DbDataReader;
-                    _dataTableSource = null;
-                    _rowSourceType = ValueSourceType.IDataReader;
-                    _isAsyncBulkCopy = true;
-                    resultTask = WriteRowSourceToServerAsync(reader.FieldCount, cancellationToken);  //It returns Task since _isAsyncBulkCopy = true; 
-                }
-                finally
-                {
-                    SqlStatistics.StopTimer(statistics);
-                }
-                return resultTask;
+            if (_isBulkCopyingInProgress) {
+                throw SQL.BulkLoadPendingOperation();
             }
+
+            SqlStatistics statistics = Statistics;
+            try {
+                statistics = SqlStatistics.StartTimer(Statistics);    
+                _rowSource = reader;
+                _SqlDataReaderRowSource = _rowSource as SqlDataReader;
+                _DbDataReaderRowSource = _rowSource as DbDataReader;
+                _dataTableSource = null;
+                _rowSourceType = ValueSourceType.IDataReader;
+                _isAsyncBulkCopy = true;
+                resultTask = WriteRowSourceToServerAsync(reader.FieldCount, cancellationToken);  //It returns Task since _isAsyncBulkCopy = true; 
+            }
+            finally {
+                SqlStatistics.StopTimer(statistics);
+            }
+            return resultTask;
         }
 
         public Task WriteToServerAsync(DataTable table) {
@@ -1913,52 +1713,33 @@ namespace Microsoft.Data.SqlClient {
             return WriteToServerAsync(table, rowState, CancellationToken.None);
         }
         public Task WriteToServerAsync(DataTable table, DataRowState rowState, CancellationToken cancellationToken) {
-            if (SysSqlBulkCopy != null)
-            {
-                try
-                {
-                    return SysSqlBulkCopy.WriteToServerAsync(table, rowState, cancellationToken);
-                }
-                catch (System.Data.SqlClient.SqlException sysExp)
-                {
-                    SqlException mdExp = SqlException.CreateException(sysExp, sysExp.Server, sysExp.ClientConnectionId);
-                    throw mdExp;
-                }
+            Task resultTask = null;
+            SqlConnection.ExecutePermission.Demand();
+
+            if (table == null) {
+                throw new ArgumentNullException("table");
             }
-            else
-            {
-                Task resultTask = null;
-                SqlConnection.ExecutePermission.Demand();
 
-                if (table == null)
-                {
-                    throw new ArgumentNullException("table");
-                }
-
-                if (_isBulkCopyingInProgress)
-                {
-                    throw SQL.BulkLoadPendingOperation();
-                }
-
-                SqlStatistics statistics = Statistics;
-                try
-                {
-                    statistics = SqlStatistics.StartTimer(Statistics);
-                    _rowStateToSkip = ((rowState == 0) || (rowState == DataRowState.Deleted)) ? DataRowState.Deleted : ~rowState | DataRowState.Deleted;
-                    _rowSource = table;
-                    _SqlDataReaderRowSource = null;
-                    _dataTableSource = table;
-                    _rowSourceType = ValueSourceType.DataTable;
-                    _rowEnumerator = table.Rows.GetEnumerator();
-                    _isAsyncBulkCopy = true;
-                    resultTask = WriteRowSourceToServerAsync(table.Columns.Count, cancellationToken); //It returns Task since _isAsyncBulkCopy = true; 
-                }
-                finally
-                {
-                    SqlStatistics.StopTimer(statistics);
-                }
-                return resultTask;
+            if (_isBulkCopyingInProgress){
+                throw SQL.BulkLoadPendingOperation();
             }
+         
+            SqlStatistics statistics = Statistics;
+            try {
+                statistics = SqlStatistics.StartTimer(Statistics);
+                _rowStateToSkip = ((rowState == 0) || (rowState == DataRowState.Deleted)) ? DataRowState.Deleted : ~rowState | DataRowState.Deleted;
+                _rowSource = table;
+                _SqlDataReaderRowSource = null;
+                _dataTableSource = table;
+                _rowSourceType = ValueSourceType.DataTable;
+                _rowEnumerator = table.Rows.GetEnumerator();
+                _isAsyncBulkCopy = true;
+                resultTask = WriteRowSourceToServerAsync(table.Columns.Count, cancellationToken); //It returns Task since _isAsyncBulkCopy = true; 
+            }
+            finally {
+                SqlStatistics.StopTimer(statistics);
+            }
+            return resultTask;
         }
 
         // Writes row source. 
