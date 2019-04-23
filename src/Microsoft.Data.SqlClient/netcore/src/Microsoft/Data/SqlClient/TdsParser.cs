@@ -464,7 +464,8 @@ namespace Microsoft.Data.SqlClient
                 // Cache physical stateObj and connection.
                 _pMarsPhysicalConObj = _physicalStateObj;
 
-                if(TdsParserStateObjectFactory.UseManagedSNI) _pMarsPhysicalConObj.IncrementPendingCallbacks();
+                if (TdsParserStateObjectFactory.UseManagedSNI)
+                    _pMarsPhysicalConObj.IncrementPendingCallbacks();
 
                 uint info = 0;
                 uint error = _pMarsPhysicalConObj.EnableMars(ref info);
@@ -642,16 +643,13 @@ namespace Microsoft.Data.SqlClient
                         break;
 
                     case (int)PreLoginOptions.TRACEID:
-                        byte[] connectionIdBytes = _connHandler._clientConnectionId.ToByteArray();
-                        Debug.Assert(GUID_SIZE == connectionIdBytes.Length);
-                        Buffer.BlockCopy(connectionIdBytes, 0, payload, payloadLength, GUID_SIZE);
+                        FillGuidBytes(_connHandler._clientConnectionId, payload.AsSpan(payloadLength, GUID_SIZE));
                         payloadLength += GUID_SIZE;
                         offset += GUID_SIZE;
                         optionDataSize = GUID_SIZE;
 
                         ActivityCorrelator.ActivityId actId = ActivityCorrelator.Next();
-                        connectionIdBytes = actId.Id.ToByteArray();
-                        Buffer.BlockCopy(connectionIdBytes, 0, payload, payloadLength, GUID_SIZE);
+                        FillGuidBytes(actId.Id, payload.AsSpan(payloadLength, GUID_SIZE));
                         payloadLength += GUID_SIZE;
                         payload[payloadLength++] = (byte)(0x000000ff & actId.Sequence);
                         payload[payloadLength++] = (byte)((0x0000ff00 & actId.Sequence) >> 8);
@@ -1508,14 +1506,9 @@ namespace Microsoft.Data.SqlClient
 
         internal void WriteFloat(float v, TdsParserStateObject stateObj)
         {
-#if netcoreapp // BitConverter.TryGetBytes is only availble in netcoreapp 2.1> at this time, review support when changing
             Span<byte> bytes = stackalloc byte[sizeof(float)];
-            BitConverter.TryWriteBytes(bytes, v);
+            FillFloatBytes(v, bytes);
             stateObj.WriteByteSpan(bytes);
-#else
-            byte[] bytes = BitConverter.GetBytes(v);
-            stateObj.WriteByteArray(bytes, bytes.Length, 0); 
-#endif
         }
 
         //
@@ -1636,14 +1629,9 @@ namespace Microsoft.Data.SqlClient
 
         internal void WriteDouble(double v, TdsParserStateObject stateObj)
         {
-#if netcoreapp // BitConverter.TryGetBytes is only availble in netcoreapp 2.1> at this time, review support when changing
             Span<byte> bytes = stackalloc byte[sizeof(double)];
-            BitConverter.TryWriteBytes(bytes, v);
+            FillDoubleBytes(v, bytes);
             stateObj.WriteByteSpan(bytes);
-#else
-            byte[] bytes = BitConverter.GetBytes(v);
-            stateObj.WriteByteArray(bytes, bytes.Length, 0);
-#endif
         }
 
         internal void PrepareResetConnection(bool preserveTransaction)
@@ -6101,10 +6089,11 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLUNIQUEID:
                     {
                         System.Guid guid = (System.Guid)value;
-                        byte[] b = guid.ToByteArray();
+                        Span<byte> b = stackalloc byte[16];
+                        TdsParser.FillGuidBytes(guid, b);
 
                         Debug.Assert((length == b.Length) && (length == 16), "Invalid length for guid type in com+ object");
-                        stateObj.WriteByteArray(b, length, 0);
+                        stateObj.WriteByteSpan(b);
                         break;
                     }
 
@@ -6258,12 +6247,13 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLUNIQUEID:
                     {
                         System.Guid guid = (System.Guid)value;
-                        byte[] b = guid.ToByteArray();
+                        Span<byte> b = stackalloc byte[16];
+                        FillGuidBytes(guid, b);
 
                         length = b.Length;
                         Debug.Assert(length == 16, "Invalid length for guid type in com+ object");
                         WriteSqlVariantHeader(18, metatype.TDSType, metatype.PropBytes, stateObj);
-                        stateObj.WriteByteArray(b, length, 0);
+                        stateObj.WriteByteSpan(b);
                         break;
                     }
 
@@ -10388,11 +10378,21 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.SQLUNIQUEID:
                     {
-                        byte[] b = ((SqlGuid)value).ToByteArray();
+                        Debug.Assert(actualLength == 16, "Invalid length for guid type in com+ object");
+                        Span<byte> b = stackalloc byte[16];
+                        SqlGuid sqlGuid = (SqlGuid)value;
 
-                        Debug.Assert((actualLength == b.Length) && (actualLength == 16), "Invalid length for guid type in com+ object");
-                        stateObj.WriteByteArray(b, actualLength, 0);
+                        if (sqlGuid.IsNull)
+                        {
+                            b.Clear(); // this is needed because initlocals may be supressed in framework assemblies meaning the memory is not automaticaly zeroed 
+                        }
+                        else
+                        {
+                            FillGuidBytes(sqlGuid.Value, b);
+                        }
+                        stateObj.WriteByteSpan(b);
                         break;
+
                     }
 
                 case TdsEnums.SQLBITN:
@@ -11016,11 +11016,10 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.SQLUNIQUEID:
                     {
-                        System.Guid guid = (System.Guid)value;
-                        byte[] b = guid.ToByteArray();
-
-                        Debug.Assert((actualLength == b.Length) && (actualLength == 16), "Invalid length for guid type in com+ object");
-                        stateObj.WriteByteArray(b, actualLength, 0);
+                        Debug.Assert(actualLength == 16, "Invalid length for guid type in com+ object");
+                        Span<byte> b = stackalloc byte[16];
+                        FillGuidBytes((System.Guid)value, b);
+                        stateObj.WriteByteSpan(b);
                         break;
                     }
 

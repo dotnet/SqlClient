@@ -604,7 +604,13 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(
                 SmiXetterAccessMap.IsSetterAccessValid(_metaData, SmiXetterTypeCode.XetGuid));
 
+#if netcoreapp
+
+            Span<byte> bytes = stackalloc byte[16];
+            value.TryWriteBytes(bytes);
+#else
             byte[] bytes = value.ToByteArray();
+#endif
             Debug.Assert(SmiMetaData.DefaultUniqueIdentifier.MaxLength == bytes.Length, "Invalid length for guid bytes: " + bytes.Length);
 
             if (SqlDbType.Variant == _metaData.SqlDbType)
@@ -617,7 +623,11 @@ namespace Microsoft.Data.SqlClient
 
                 _stateObj.WriteByte((byte)_metaData.MaxLength);
             }
+#if netcoreapp
+            _stateObj.WriteByteSpan(bytes);
+#else
             _stateObj.WriteByteArray(bytes, bytes.Length, 0);
+#endif
         }
 
         // valid for SqlDbType.Time
@@ -693,7 +703,7 @@ namespace Microsoft.Data.SqlClient
             _variantType = value;
         }
 
-        #endregion
+#endregion
 
         #region private methods
         [Conditional("DEBUG")]
@@ -703,6 +713,6 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(offset == _currentOffset, "Invalid offset passed. Should be: " + _currentOffset + ", but was: " + offset);
 #endif
         }
-        #endregion
+#endregion
     }
 }

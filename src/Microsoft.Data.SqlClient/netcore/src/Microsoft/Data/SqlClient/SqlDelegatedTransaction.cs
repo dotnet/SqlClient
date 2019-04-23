@@ -11,7 +11,7 @@ using System.Transactions;
 
 namespace Microsoft.Data.SqlClient
 {
-    sealed internal class SqlDelegatedTransaction : IPromotableSinglePhaseNotification
+    sealed internal partial class SqlDelegatedTransaction : IPromotableSinglePhaseNotification
     {
         private static int _objectTypeCount;
         private readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
@@ -453,16 +453,6 @@ namespace Microsoft.Data.SqlClient
 
                 throw ADP.InternalError(ADP.InternalErrorCode.UnpooledObjectHasWrongOwner);  //TODO: Create a new code
             }
-        }
-
-        // Get the server-side Global Transaction Id from the PromotedDTCToken
-        // Skip first 4 bytes since they contain the version
-        private Guid GetGlobalTxnIdentifierFromToken()
-        {
-            byte[] txnGuid = new byte[16];
-            Array.Copy(_connection.PromotedDTCToken, _globalTransactionsTokenVersionSizeInBytes, // Skip the version
-                txnGuid, 0, txnGuid.Length);
-            return new Guid(txnGuid);
         }
     }
 }
