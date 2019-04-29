@@ -590,8 +590,8 @@ namespace Microsoft.Data.SqlClient {
 
 #if ADONET_CERT_AUTH
         [DisplayName(DbConnectionStringKeywords.Certificate)]
-        [ResCategoryAttribute(ResHelper.ResourceNames.DataCategory_Security)]
-        [ResDescriptionAttribute(ResHelper.ResourceNames.DbConnectionString_Certificate)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Security)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_Certificate)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
         public string Certificate {
             get { return _certificate; }
