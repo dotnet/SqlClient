@@ -5,11 +5,10 @@
     <version>1.0.0</version>
     <title>Microsoft.Data.SqlClient</title>
     <authors>Microsoft</authors>
-    <owners>microsoft,dotnetframework</owners>
-    <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <!-- <licenseUrl>https://github.com/dotnet/corefx/blob/master/LICENSE.TXT</licenseUrl> -->
-    <projectUrl>https://dot.net/</projectUrl>
-    <iconUrl>http://go.microsoft.com/fwlink/?LinkID=288859</iconUrl>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <license type="file">LICENSE.txt</license>
+    <projectUrl>https://aka.ms/sqlclientproject</projectUrl>
+    <iconUrl>https://go.microsoft.com/fwlink/?linkid=2090301</iconUrl>
     <description>Provides the data provider for SQL Server. These classes provide access to versions of SQL Server and encapsulate database-specific protocols, including tabular data stream (TDS)
 
 Commonly Used Types:
@@ -23,9 +22,9 @@ Microsoft.Data.SqlClient.SqlParameterCollection
 Microsoft.Data.SqlClient.SqlClientFactory
  
 When using NuGet 3.x this package requires at least version 3.4.</description>
-    <releaseNotes>https://go.microsoft.com/fwlink/?LinkID=799421</releaseNotes>
+    <releaseNotes>https://go.microsoft.com/fwlink/?linkid=2090501</releaseNotes>
     <copyright>© Microsoft Corporation. All rights reserved.</copyright>
-    <serviceable>true</serviceable>
+    <tags>sqlclient microsoft.data.sqlclient</tags>
     <dependencies>
       <group targetFramework=".NETFramework4.6">
         <dependency id="System.Data.Common" version="4.3.0" />
@@ -54,6 +53,8 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
     </frameworkAssemblies>
   </metadata>
   <files>
+    <file src="..\..\LICENSE.txt" target="" />
+    
     <!--  NetFx Files  -->
     <file src="..\..\bin\Windows_NT\$Configuration$\Microsoft.Data.SqlClient\ref\net46\Microsoft.Data.SqlClient.dll" target="ref\net46\" exclude="" />
     <file src="..\..\bin\Windows_NT\$Configuration$.Win32\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.dll" target="lib\net46\" exclude="" />
