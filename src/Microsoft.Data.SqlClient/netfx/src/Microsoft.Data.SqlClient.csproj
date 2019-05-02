@@ -352,5 +352,6 @@
   <Import Project="$(NetFxSource)tools\targets\GenerateThisAssemblyCs.targets" />
   <Import Project="$(NetFxSource)tools\targets\GenerateAssemblyRef.targets" />
   <Import Project="$(NetFxSource)tools\targets\GenerateAssemblyInfo.targets" />
+  <Import Project="$(NetFxSource)tools\targets\GenerateResourceFile.targets" />
   <Import Project="$(NetFxSource)tools\targets\LinkLibraries.targets" />
 </Project>

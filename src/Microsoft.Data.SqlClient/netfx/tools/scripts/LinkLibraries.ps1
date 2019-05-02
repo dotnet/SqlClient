@@ -54,6 +54,13 @@ Function SetupVariables()
   }
 }
 
+Function SetupResourceCompileCommand()
+{
+  $RcPath = "&`'${Env:WindowsSdkVerBinPath}\${OutputPlatform}\rc.exe`'"
+  $RcArguments = '/l"0x0409" /nologo /fo"${BinPath}${AssemblyName}\netfx\${AssemblyName}.res" "${ObjPath}${AssemblyName}\netfx\${AssemblyName}.rc"'
+  return "$RcPath $RcArguments"
+}
+
 Function SetupLinkerCommand()
 {
   $LinkerPath = "&`'${Env:VCToolsInstallDir}bin\Host${OutputPlatform}\${OutputPlatform}\link.exe`'"
@@ -98,8 +105,37 @@ Function AddLibraryDependencies()
   $LibSuffix = ""
   if($OutputConfiguration -ieq "Debug") { $LibSuffix = "d" }
     
-  $LibraryDependencies = "`"${BinPath}${AssemblyName}\netfx\SniManagedWrapper.obj`" `"${BinPath}${AssemblyName}\netfx\${AssemblyName}.netmodule`" `"${BinPath}SNI\sni.lib`" `"${BinPath}ascii\NLRegCA.lib`" `"${BinPath}bidinit\bidinit.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\advapi32.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\kernel32.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\version.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\ws2_32.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\mswsock.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\crypt32.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\Shlwapi.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\netapi32.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\user32.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\uuid.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\ole32.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\Rpcrt4.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\secur32.lib`" `"${NETFXSdkLibPath}um\${OutputPlatform}\mscoree.lib`" `"${WindowsSdkLibPath}um\${OutputPlatform}\version.lib`" `"${VCToolsLibPath}${OutputPlatform}\ptrustm${LibSuffix}.lib`" `"${VCToolsLibPath}${OutputPlatform}\msvcrt${LibSuffix}.lib`" `"${VCToolsLibPath}${OutputPlatform}\msvcmrt${LibSuffix}.lib`" `"${VCToolsLibPath}${OutputPlatform}\nothrownew.obj`" `"${VCToolsLibPath}${OutputPlatform}\vcruntime${LibSuffix}.lib`" `"${VCToolsLibPath}${OutputPlatform}\legacy_stdio_wide_specifiers.lib`" `"${WindowsSdkLibPath}ucrt\${OutputPlatform}\ucrt${LibSuffix}.lib`""
-  return $LibraryDependencies
+  $LibraryDependencies = @(
+    "${BinPath}${AssemblyName}\netfx\SniManagedWrapper.obj",
+    "${BinPath}${AssemblyName}\netfx\${AssemblyName}.netmodule",
+    "${BinPath}${AssemblyName}\netfx\${AssemblyName}.res",
+    "${BinPath}SNI\sni.lib",
+    "${BinPath}ascii\NLRegCA.lib",
+    "${BinPath}bidinit\bidinit.lib",
+    "${WindowsSdkLibPath}um\${OutputPlatform}\advapi32.lib",
+    "${WindowsSdkLibPath}um\${OutputPlatform}\kernel32.lib",
+    "${WindowsSdkLibPath}um\${OutputPlatform}\version.lib",
+    "${WindowsSdkLibPath}um\${OutputPlatform}\ws2_32.lib",
+    "${WindowsSdkLibPath}um\${OutputPlatform}\mswsock.lib",
+    "${WindowsSdkLibPath}um\${OutputPlatform}\crypt32.lib",
+    "${WindowsSdkLibPath}um\${OutputPlatform}\Shlwapi.lib",
+    "${WindowsSdkLibPath}um\${OutputPlatform}\netapi32.lib",
+    "${WindowsSdkLibPath}um\${OutputPlatform}\user32.lib",
+    "${WindowsSdkLibPath}um\${OutputPlatform}\uuid.lib",
+    "${WindowsSdkLibPath}um\${OutputPlatform}\ole32.lib",
+    "${WindowsSdkLibPath}um\${OutputPlatform}\Rpcrt4.lib",
+    "${WindowsSdkLibPath}um\${OutputPlatform}\secur32.lib",
+    "${NETFXSdkLibPath}um\${OutputPlatform}\mscoree.lib",
+    "${WindowsSdkLibPath}um\${OutputPlatform}\version.lib",
+    "${VCToolsLibPath}${OutputPlatform}\ptrustm${LibSuffix}.lib",
+    "${VCToolsLibPath}${OutputPlatform}\msvcrt${LibSuffix}.lib",
+    "${VCToolsLibPath}${OutputPlatform}\msvcmrt${LibSuffix}.lib",
+    "${VCToolsLibPath}${OutputPlatform}\nothrownew.obj",
+    "${VCToolsLibPath}${OutputPlatform}\vcruntime${LibSuffix}.lib",
+    "${VCToolsLibPath}${OutputPlatform}\legacy_stdio_wide_specifiers.lib",
+    "${WindowsSdkLibPath}ucrt\${OutputPlatform}\ucrt${LibSuffix}.lib"
+    )
+  return '"' + ($LibraryDependencies -join '" "') + '"'
 }
 
 Function PrintVariables()
@@ -121,9 +157,20 @@ Function PrintVariables()
   Get-ChildItem ENV:
   Write-Output "*********************************************************************"
 }
+
 SetupVariables
 PrintVariables
 RenameAssembly
+
+$ResourceCompileCommand = SetupResourceCompileCommand
+
+Write-Output "************************** RESOURCE COMPILE COMMAND ***************************"
+Write-Output $ResourceCompileCommand
+Write-Output "*********************************************************************"
+
+Write-Output "************** Resource Compile Command **************"
+Invoke-Expression $ResourceCompileCommand
+
 $LinkerCommand = SetupLinkerCommand
 
 # Print the Linker Command during Debug Mode
