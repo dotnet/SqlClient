@@ -14,7 +14,7 @@ The current preview of this library has been released under a proprietary, close
 
    *Warning	There was a mismatch between the processor architecture of the project being built "MSIL" and the processor architecture of the reference "Microsoft.Data.SqlClient*...
 
-   This is because Microsoft.Data.SqlClient targeting Framework contains a native code component and native components cannot target AnyCPU. To resolve the issue, change your application to target x86 or x64.
+   This is because Microsoft.Data.SqlClient targeting .NET Framework contains a native code component and native components cannot target AnyCPU. Currently x64 is the only platform supported when targeting .NET Framework. To resolve the warning, change your application to target x64.
 
 # Code of conduct
 
