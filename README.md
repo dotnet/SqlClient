@@ -10,7 +10,7 @@ The current preview of this library has been released under a proprietary, close
 
 ## Known issues
 
-1. When targeting **.NET Framework** and platform **AnyCPU**, you may see a build warning about processor architecture mismatch:
+1. When targeting **.NET Framework** and platform **AnyCPU** or **x86**, you may see a build warning about processor architecture mismatch:
 
    *Warning	There was a mismatch between the processor architecture of the project being built "MSIL" and the processor architecture of the reference "Microsoft.Data.SqlClient*...
 
