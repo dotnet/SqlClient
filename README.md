@@ -12,6 +12,10 @@ The current preview of this library has been released under a proprietary, close
 
 The Microsoft.Data.SqlClient package is available on [NuGet.org](https://www.nuget.org/packages?q=microsoft.data.sqlclient).
 
+## Release Notes
+
+All release notes are availabe under [release-notes](release-notes).
+
 ## Known issues
 
 1. When targeting **.NET Framework** and platform **AnyCPU** or **x86**, you may see a build warning about processor architecture mismatch:
