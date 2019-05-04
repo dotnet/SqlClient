@@ -8,6 +8,10 @@ The Microsoft.Data.SqlClient package supports .NET Framework 4.6+ (x64), .NET Co
 
 The current preview of this library has been released under a proprietary, closed source license. When the code is migrated to this repository, future releases from that code will be released under the MIT license.
 
+## Download
+
+The Microsoft.Data.SqlClient package is available on [NuGet.org](https://www.nuget.org/packages?q=microsoft.data.sqlclient).
+
 ## Known issues
 
 1. When targeting **.NET Framework** and platform **AnyCPU** or **x86**, you may see a build warning about processor architecture mismatch:
