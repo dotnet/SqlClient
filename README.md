@@ -12,7 +12,7 @@ The Microsoft.Data.SqlClient package is available on [NuGet.org](https://www.nug
 
 ## Release Notes
 
-All release notes are availabe under [release-notes](release-notes).
+All release notes are available under [release-notes](release-notes).
 
 ## Known issues
 
@@ -21,6 +21,10 @@ All release notes are availabe under [release-notes](release-notes).
    *Warning	There was a mismatch between the processor architecture of the project being built "MSIL" and the processor architecture of the reference "Microsoft.Data.SqlClient*...
 
    This is because Microsoft.Data.SqlClient targeting .NET Framework contains a native code component and native components cannot target AnyCPU. Currently x64 is the only platform supported when targeting .NET Framework. To resolve the warning, change your application to target x64. This will be resolved in a future release.
+
+## Still have questions?
+
+Check out our [FAQ](https://github.com/dotnet/SqlClient/wiki/Frequently-Asked-Questions). Still not answered? Create an [issue](https://github.com/dotnet/SqlClient/issues/new/choose) to ask a question.
 
 ## Code of conduct
 
