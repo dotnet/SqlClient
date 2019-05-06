@@ -8,7 +8,7 @@ The current preview of this library has been released under a proprietary, close
 
 ## Download
 
-The Microsoft.Data.SqlClient package is available on [NuGet.org](https://www.nuget.org/packages?q=microsoft.data.sqlclient).
+The Microsoft.Data.SqlClient package is available on [NuGet.org](https://www.nuget.org/packages/Microsoft.Data.SqlClient/).
 
 ## Release Notes
 
