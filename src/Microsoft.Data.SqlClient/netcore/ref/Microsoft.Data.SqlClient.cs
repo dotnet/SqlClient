@@ -734,7 +734,7 @@ namespace Microsoft.Data.SqlClient
         public override string ToString() { throw null; }
     }
     public delegate void SqlInfoMessageEventHandler(object sender, Microsoft.Data.SqlClient.SqlInfoMessageEventArgs e);
-    public sealed partial class SqlParameter : System.Data.Common.DbParameter, System.ICloneable
+    public sealed partial class SqlParameter : System.Data.Common.DbParameter, System.ICloneable, System.Data.IDataParameter, System.Data.IDbDataParameter
     {
         public SqlParameter() { }
         public SqlParameter(string parameterName, System.Data.SqlDbType dbType) { }
