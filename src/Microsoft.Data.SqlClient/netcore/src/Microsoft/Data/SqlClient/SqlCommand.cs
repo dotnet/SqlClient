@@ -1729,7 +1729,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal SqlDataReader EndExecuteReader(IAsyncResult asyncResult)
+        public SqlDataReader EndExecuteReader(IAsyncResult asyncResult)
         {
                 return EndExecuteReaderInternal(asyncResult);
         }
