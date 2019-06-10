@@ -20,16 +20,16 @@ Microsoft.Data.SqlClient.SqlCommand
 Microsoft.Data.SqlClient.SqlTransaction
 Microsoft.Data.SqlClient.SqlParameterCollection
 Microsoft.Data.SqlClient.SqlClientFactory
- 
+
 When using NuGet 3.x this package requires at least version 3.4.</description>
     <releaseNotes>https://go.microsoft.com/fwlink/?linkid=2090501</releaseNotes>
     <copyright>© Microsoft Corporation. All rights reserved.</copyright>
     <tags>sqlclient microsoft.data.sqlclient</tags>
     <dependencies>
-      <group targetFramework=".NETFramework4.6">
+      <group targetFramework="net46">
         <dependency id="System.Data.Common" version="4.3.0" />
       </group>
-      <group targetFramework=".NETCoreApp2.1">
+      <group targetFramework="netcoreapp2.1">
         <dependency id="Microsoft.Win32.Registry" version="4.5.0" exclude="Compile" />
         <dependency id="runtime.native.System.Data.SqlClient.sni" version="4.4.0" exclude="Compile" />
         <dependency id="System.Security.Principal.Windows" version="4.5.0" exclude="Compile" />
@@ -37,7 +37,7 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
         <dependency id="System.Configuration.ConfigurationManager" version="4.5.0" exclude="Compile" />
         <dependency id="System.Runtime.Caching" version="4.5.0" exclude="Compile" />
       </group>
-      <group targetFramework=".NETStandard2.0">
+      <group targetFramework="netstandard2.0">
         <dependency id="Microsoft.Win32.Registry" version="4.5.0" exclude="Compile" />
         <dependency id="runtime.native.System.Data.SqlClient.sni" version="4.4.0" exclude="Compile" />
         <dependency id="System.Buffers" version="4.4.0" exclude="Compile" />
@@ -49,19 +49,17 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
       </group>
     </dependencies>
     <frameworkAssemblies>
-      <frameworkAssembly assemblyName="mscorlib" targetFramework=".NETFramework4.6" />
-      <frameworkAssembly assemblyName="System.Data" targetFramework=".NETFramework4.6" />
+      <frameworkAssembly assemblyName="mscorlib" targetFramework="net46" />
+      <frameworkAssembly assemblyName="System.Data" targetFramework="net46" />
     </frameworkAssemblies>
   </metadata>
   <files>
     <file src="..\..\LICENSE.txt" target="" />
-    
+
     <!--  NetFx Files  -->
     <file src="..\..\bin\Windows_NT\$Configuration$\Microsoft.Data.SqlClient\ref\net46\Microsoft.Data.SqlClient.dll" target="ref\net46\" exclude="" />
-    <file src="..\..\bin\Windows_NT\$Configuration$.x64\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.dll" target="lib\net46\" exclude="" />
-    <file src="..\..\bin\Windows_NT\$Configuration$.Win32\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.dll" target="runtimes\win-x86\lib\net46\" exclude="" />
-    <file src="..\..\bin\Windows_NT\$Configuration$.x64\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.dll" target="runtimes\win-x64\lib\net46\" exclude="" />
-    
+    <file src="..\..\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.dll" target="lib\net46\" exclude="" />
+
     <!--  NetCore Files  -->
     <file src="..\..\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\netcoreapp2.1\Microsoft.Data.SqlClient.dll" target="ref\netcoreapp2.1\" exclude="" />
     <file src="..\..\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\netstandard2.0\Microsoft.Data.SqlClient.dll" target="ref\netstandard2.0\" exclude="" />
@@ -71,5 +69,5 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
     <file src="..\..\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\netstandard2.0\Microsoft.Data.SqlClient.dll" target="runtimes\win\lib\netstandard2.0\" exclude="" />
     <file src="..\..\bin\Unix\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\netcoreapp2.1\Microsoft.Data.SqlClient.dll" target="runtimes\unix\lib\netcoreapp2.1\" exclude="" />
     <file src="..\..\bin\Unix\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\netstandard2.0\Microsoft.Data.SqlClient.dll" target="runtimes\unix\lib\netstandard2.0\" exclude="" />
- </files>
+  </files>
 </package>

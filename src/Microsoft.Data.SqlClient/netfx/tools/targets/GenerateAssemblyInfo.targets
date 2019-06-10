@@ -26,7 +26,6 @@
             <AssemblyInfo Include="[assembly: System.Reflection.AssemblyFileVersionAttribute(&quot;$(AssemblyFileVersion)&quot;)]" />
             <AssemblyInfo Include="[assembly: System.Reflection.AssemblyInformationalVersionAttribute(&quot;$(Version)&quot;)]" />
             <AssemblyInfo Include="[assembly: System.Reflection.AssemblyConfigurationAttribute(&quot;$(Configuration)&quot;)]" />
-            <AssemblyInfo Include="[assembly: System.Security.AllowPartiallyTrustedCallers]" />
         </ItemGroup>
         <MakeDir Directories="$(IntermediateOutputPath)" />
         <WriteLinesToFile File="$(IntermediateOutputPath)$(AssemblyName).AssemblyInfo.cs" Overwrite="True" Lines="@(AssemblyInfo)" />

@@ -23,7 +23,7 @@
 #define ERROR_FAIL -1
 #define MAX_GATHERWRITE_BUFS 32
 #define SNIOPEN_TIMEOUT_VALUE INFINITE
-
+#define _SNI_EXPORT    __declspec(dllexport)
 // Maximum possible size of an SPN that SNI will compose, both for outgoing connectivity and for server-side registration
 extern const DWORD SNI_MAX_COMPOSED_SPN;
 
@@ -604,9 +604,9 @@ typedef struct
 // Function Declarations
 
 // Connection related functions
-extern "C" DWORD SNIInitialize(void * pmo = NULL);
+extern "C" _SNI_EXPORT DWORD __cdecl SNIInitialize(void * pmo = NULL);
 extern "C" DWORD SNIInitializeEx(void * pmo, const ProviderNum * rgProviders, DWORD cProviders, BOOL fIsSystemInst, BOOL fSandbox);
-extern "C" DWORD SNITerminate();
+extern "C" _SNI_EXPORT DWORD __cdecl SNITerminate();
 extern "C" DWORD SNIInitializeListener(__in SNI_CONSUMER_INFO * pConsumerInfo, __out HANDLE * pListenHandle);
 extern "C" DWORD SNITerminateListener(__inout HANDLE hListener);
 extern "C" DWORD SNIUpdateListener(HANDLE hListener, ProviderNum ProvNum, LPVOID pInfo);
@@ -625,7 +625,7 @@ extern "C" DWORD SNIOpenSync( __in SNI_CONSUMER_INFO * pConsumerInfo,
 					   int timeout);
 
 extern "C"  DWORD SNIClose(__inout SNI_Conn * pConn);
-extern "C"  DWORD SNIQueryInfo( UINT QType, __out VOID * pbQInfo);
+extern "C"  _SNI_EXPORT DWORD __cdecl SNIQueryInfo( UINT QType, __out VOID * pbQInfo);
 extern "C"  DWORD SNIGetInfo( __in SNI_Conn * pConn, UINT QType, __out VOID * pbQInfo);
 extern "C"  DWORD SNISetInfo( __out SNI_Conn * pConn, UINT QType, __in VOID * pbQInfo);
 extern "C"  DWORD SNIAddProvider(__inout SNI_Conn * pConn, ProviderNum ProvNum, __in LPVOID pInfo);
@@ -680,10 +680,10 @@ extern "C"  inline SNI_Packet * SNIPacketAllocateEx2( __in SNI_Conn * pConn,
 
 extern "C"  inline void SNIPacketZeroPayloadOnRelease(SNI_Packet * pPacket, DWORD cbBytesToZero = 0);
 extern "C"  inline void SNIPacketAddRef(__in SNI_Packet * pPacket);
-extern "C"  inline void SNIPacketRelease(__inout SNI_Packet * pPacket);
+extern "C"  _SNI_EXPORT inline void __cdecl SNIPacketRelease(__inout SNI_Packet * pPacket);
 extern "C"  inline void SNIPacketReset(SNI_Conn * pConn, SNI_Packet_IOType IOType, __out SNI_Packet * pPacket, ConsumerNum ConsNum);
 extern "C"  inline void SNIPacketGetData(__in SNI_Packet * pPacket, __deref_out_bcount(*pcbBuf) BYTE ** ppBuf, __out DWORD * pcbBuf);
-extern "C"  inline void SNIPacketSetData(__inout SNI_Packet * pPacket, __in_bcount(cbBuf) const BYTE * pbBuf, __in DWORD cbBuf);
+extern "C"  _SNI_EXPORT inline void __cdecl SNIPacketSetData(__inout SNI_Packet * pPacket, __in_bcount(cbBuf) const BYTE * pbBuf, __in DWORD cbBuf);
 extern "C"  inline void SNIPacketAppendData(__inout SNI_Packet * pPacket, __in_bcount(cbBuf) BYTE * pbBuf, __in DWORD cbBuf);
 extern "C"  inline void SNIPacketPrependData(__inout SNI_Packet * pPacket, __in_bcount(cbBuf) BYTE * pbBuf, __in DWORD cbBuf);
 extern "C"  inline void SNIPacketIncrementOffset(__inout SNI_Packet * pPacket, DWORD dwOffSet);
@@ -710,10 +710,10 @@ extern "C"  inline DWORD SNIPacketGetActualBytes(SNI_Packet * pPacket);
 extern "C" DWORD SNIWaitForSSLHandshakeToComplete( __in SNI_Conn * pConn, DWORD dwMilliseconds );
 
 // Error functions
-extern "C"  void SNIGetLastError( __out SNI_ERROR * pErrorStruct );
+extern "C"  _SNI_EXPORT void __cdecl SNIGetLastError( __out SNI_ERROR * pErrorStruct );
 
 // Security functions
-extern "C"  DWORD SNISecInitPackage(__out DWORD * pcbMaxToken);
+extern "C"  _SNI_EXPORT DWORD __cdecl SNISecInitPackage(__out DWORD * pcbMaxToken);
 extern "C"  DWORD SNISecInitPackageEx(__out DWORD * pcbMaxToken, __in BOOL fInitializeSPN, __in BOOL fInitializeServerCredential, __in ExtendedProtectionPolicy eExtendedProtectionLevel, __in_ecount_opt(dwcAcceptedSPNs) LPWSTR *pwszAcceptedSPNs, __in DWORD dwcAcceptedSPNs);
 extern "C"  DWORD SNISecTerminatePackage();
 extern "C"  DWORD SNISecGenServerContext( __in SNI_Conn * pConn,

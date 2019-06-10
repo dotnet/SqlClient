@@ -313,13 +313,14 @@ namespace Microsoft.Data.SqlClient
 
     }
 
+    [System.Security.Permissions.PermissionSetAttribute(System.Security.Permissions.SecurityAction.LinkDemand, Name = "FullTrust")]
     sealed internal class SqlPerformanceCounters : DbConnectionPoolCounters {
         private const string CategoryName = ".NET Data Provider for SqlServer";
         private const string CategoryHelp = "Counters for Microsoft.Data.SqlClient";
 
         public static readonly SqlPerformanceCounters SingletonInstance = new SqlPerformanceCounters();
 
-        [System.Diagnostics.PerformanceCounterPermissionAttribute(System.Security.Permissions.SecurityAction.Assert, PermissionAccess=PerformanceCounterPermissionAccess.Write, MachineName=".", CategoryName=CategoryName)]
+        [System.Diagnostics.PerformanceCounterPermissionAttribute(System.Security.Permissions.SecurityAction.Assert, PermissionAccess = PerformanceCounterPermissionAccess.Write, MachineName = ".", CategoryName = CategoryName)]
         private SqlPerformanceCounters() : base (CategoryName, CategoryHelp) {
         }
     }

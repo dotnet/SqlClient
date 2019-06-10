@@ -21,7 +21,7 @@
 
 #include "sni_common.hpp"
 #include "sni_error.hpp"
-
+#define _SNI_EXPORT    __declspec(dllexport)
 // Forward declaration for prototype
 class SNIMemRegion;
 
@@ -993,13 +993,12 @@ public:
 		InterlockedIncrement( &pPacket->m_cRef );
 	}
 
-	friend void SNIPacketRelease(SNI_Packet * pPacket)
+	friend void __cdecl SNIPacketRelease(SNI_Packet * pPacket)
 	{	
 		BidTraceU2( SNI_BID_TRACE_ON, SNIAPI_TAG _T("%u#{SNI_Packet}, ")
 												 _T("pPacket: %p{SNI_Packet*}\n"), 
 												 SNIPacketGetBidId(pPacket), 
 												 pPacket);
-		
 		Assert (pPacket);
 		Assert (pPacket->m_pConn);
 		Assert (pPacket->m_cRef > 0);
@@ -1162,7 +1161,7 @@ public:
 	// and adjusts the size accordingly
 	// Note: THIS DOES NOT ADJUST THE OFFSET VALUE
 	// Note: Typically to be used by consumers
-	friend void SNIPacketSetData(__inout SNI_Packet * pPacket, __in_bcount(cbBuf) const BYTE * pbBuf, __in DWORD cbBuf)
+	friend void __cdecl SNIPacketSetData(__inout SNI_Packet * pPacket, __in_bcount(cbBuf) const BYTE * pbBuf, __in DWORD cbBuf)
 	{
 #ifndef SNI_BASED_CLIENT
 		// If we adjust the offset or the data size, then zeroing the memory

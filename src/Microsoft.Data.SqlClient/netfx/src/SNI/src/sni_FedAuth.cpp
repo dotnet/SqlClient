@@ -5,7 +5,7 @@
 #include <corerror.h>
 #include <mscoree.h>
 #include "sni_FedAuth.hpp"
-
+#define _SNI_EXPORT    __declspec(dllexport)
 struct ADALFunctionTable g_ADAL = { nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
 static LONG g_cSNIFedAuthInitialized = 0;
 
@@ -35,7 +35,7 @@ extern SNICritSec *g_csSecPackageInitialize;
 //      is installed, but it appears to be corrupted/invalid/etc (e.g., top-level registry 
 //      key is present, but registry values are missing, have unexpected values, etc.,).
 //----------------------------------------------------------------------------
-DWORD SNISecADALInitialize()
+DWORD __cdecl SNISecADALInitialize()
 {
     DWORD dwError = ERROR_FAIL;
     HKEY hADALKey = nullptr;
@@ -209,7 +209,7 @@ BOOL IsTransientError(DWORD adalErrorCode)
 //      _FILETIME& fileTime
 //              The expiration time for the token in FILETIME format.
 //----------------------------------------------------------------------------
-DWORD SNISecADALGetAccessToken( __in LPCWSTR username,
+DWORD __cdecl SNISecADALGetAccessToken( __in LPCWSTR username,
                                 __in LPCWSTR password,
                                 __in LPCWSTR stsURL,
                                 __in LPCWSTR resource,

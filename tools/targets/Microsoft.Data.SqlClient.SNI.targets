@@ -1,0 +1,140 @@
+<!--
+ *
+ * Microsoft.Data.SqlClient.SNI.targets -
+ *
+ * WARNING: This MSBuild file requires MSBuild 4.0 features.
+ *
+-->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!--
+  ******************************************************************************
+  **                          Load Per-User Settings                          **
+  ******************************************************************************
+  -->
+
+  <!--
+      NOTE: If the per-user settings file exists, import it now.  The contained
+            settings, if any, will override the default ones provided below.
+  -->
+  <Import Condition="'$(MSBuildThisFileDirectory)' != '' And
+                     HasTrailingSlash('$(MSBuildThisFileDirectory)') And
+                     Exists('$(MSBuildThisFileDirectory)Microsoft.Data.SqlClient.SNI.targets.user')"
+          Project="$(MSBuildThisFileDirectory)Microsoft.Data.SqlClient.SNI.targets.user" />
+
+  <!--
+  ******************************************************************************
+  **                           Library Build Items                            **
+  ******************************************************************************
+  -->
+
+  <ItemGroup>
+    <SNIFiles Condition="'$(MSBuildThisFileDirectory)' != '' And
+                                   HasTrailingSlash('$(MSBuildThisFileDirectory)')"
+                        Include="$(MSBuildThisFileDirectory)**\SNI.*" />
+  </ItemGroup>
+
+  <!--
+  ******************************************************************************
+  **                          Library Content Items                           **
+  ******************************************************************************
+  -->
+
+  <ItemGroup Condition="'$(ContentSNIFiles)' != '' And
+                        '$(ContentSNIFiles)' != 'false' And
+                        '@(SNIFiles)' != ''">
+    <Content Include="@(SNIFiles)">
+      <Link>%(RecursiveDir)%(FileName)%(Extension)</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <!--
+  ******************************************************************************
+  **                          Library Build Targets                           **
+  ******************************************************************************
+  -->
+
+  <Target Name="CopySNIFiles"
+          Condition="'$(CopySNIFiles)' != 'false' And
+                     '$(OutDir)' != '' And
+                     HasTrailingSlash('$(OutDir)') And
+                     Exists('$(OutDir)')"
+          Inputs="@(SNIFiles)"
+          Outputs="@(SNIFiles -> '$(OutDir)%(RecursiveDir)%(Filename)%(Extension)')">
+    <!--
+        NOTE: Copy "SNI.dll" and all related files, for every
+              architecture that we support, to the build output directory.
+    -->
+    <Copy SourceFiles="@(SNIFiles)"
+          DestinationFiles="@(SNIFiles -> '$(OutDir)%(RecursiveDir)%(Filename)%(Extension)')" />
+  </Target>
+
+  <!--
+  ******************************************************************************
+  -->
+
+  <Target Name="CleanSNIFiles"
+          Condition="'$(CleanSNIFiles)' != 'false' And
+                     '$(OutDir)' != '' And
+                     HasTrailingSlash('$(OutDir)') And
+                     Exists('$(OutDir)')">
+    <!--
+        NOTE: Delete "SNI.dll" and all related files, for every
+              architecture that we support, from the build output directory.
+    -->
+    <Delete Files="@(SNIFiles -> '$(OutDir)%(RecursiveDir)%(Filename)%(Extension)')" />
+  </Target>
+
+  <!--
+  ******************************************************************************
+  -->
+
+  <Target Name="CollectSNIFiles"
+          Condition="'$(CollectSNIFiles)' != 'false'">
+    <ItemGroup>
+      <FilesForPackagingFromProject Include="@(SNIFiles)">
+        <DestinationRelativePath>bin\%(RecursiveDir)%(Filename)%(Extension)</DestinationRelativePath>
+      </FilesForPackagingFromProject>
+    </ItemGroup>
+  </Target>
+
+  <!--
+  ******************************************************************************
+  **                         Library Build Properties                         **
+  ******************************************************************************
+  -->
+
+  <PropertyGroup>
+    <PostBuildEventDependsOn>
+      $(PostBuildEventDependsOn);
+      CopySNIFiles;
+    </PostBuildEventDependsOn>
+    <BuildDependsOn>
+      $(BuildDependsOn);
+      CopySNIFiles;
+    </BuildDependsOn>
+    <CleanDependsOn>
+      $(CleanDependsOn);
+      CleanSNIFiles;
+    </CleanDependsOn>
+  </PropertyGroup>
+
+  <!--
+  ******************************************************************************
+  **            Library Publish Properties for Visual Studio 201x             **
+  ******************************************************************************
+  -->
+
+  <PropertyGroup Condition="'$(VisualStudioVersion)' == '' Or
+                            '$(VisualStudioVersion)' == '10.0' Or
+                            '$(VisualStudioVersion)' == '11.0' Or
+                            '$(VisualStudioVersion)' == '12.0' Or
+                            '$(VisualStudioVersion)' == '14.0' Or
+                            '$(VisualStudioVersion)' == '15.0' Or
+                            '$(VisualStudioVersion)' == '16.0'">
+    <PipelineCollectFilesPhaseDependsOn>
+      CollectSNIFiles;
+      $(PipelineCollectFilesPhaseDependsOn);
+    </PipelineCollectFilesPhaseDependsOn>
+  </PropertyGroup>
+</Project>

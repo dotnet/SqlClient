@@ -1430,7 +1430,7 @@ Exit:
 	return dwError;
 }
 
-DWORD SNIInitialize(void * pmo)
+DWORD __cdecl SNIInitialize(void * pmo)
 {
 	BidxScopeAutoSNI1( SNIAPI_TAG _T("pmo: %p\n"), pmo );
 	
@@ -1446,7 +1446,7 @@ DWORD SNIInitialize(void * pmo)
 }
 
 // TODO: Need to clean this up better
-DWORD SNITerminate()
+DWORD __cdecl SNITerminate()
 {
 	BidxScopeAutoSNI0( SNIAPI_TAG _T("\n") );
 	
@@ -2880,9 +2880,7 @@ DWORD SNIReadSync( 	__in SNI_Conn    * pConn,
 	*ppNewPacket = NULL;
 
 	DWORD dwError;
-	
 	dwError = pConn->m_pProvHead->ReadSync( ppNewPacket, timeout );
-
 	Assert( ERROR_IO_PENDING != dwError );
 
 	if( *ppNewPacket && (ERROR_SUCCESS == dwError) )
@@ -3144,7 +3142,7 @@ DWORD SNIClose(__inout SNI_Conn * pConn)
 	return dwError;
 }
 
-DWORD SNIQueryInfo(  UINT QType, __out VOID * pbQInfo)
+DWORD __cdecl SNIQueryInfo(  UINT QType, __out VOID * pbQInfo)
 {
 	BidxScopeAutoSNI2( SNIAPI_TAG _T( "QType: %d, pbQInfo: %p\n"), QType, pbQInfo);
 

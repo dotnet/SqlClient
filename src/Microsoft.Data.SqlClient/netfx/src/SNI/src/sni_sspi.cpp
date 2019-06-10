@@ -629,7 +629,7 @@ ErrorExit:
 }
 
 
-DWORD SNISecInitPackage(__out DWORD * pcbMaxToken)
+DWORD __cdecl SNISecInitPackage(__out DWORD * pcbMaxToken)
 {
 	BidxScopeAutoSNI1( SNIAPI_TAG _T("pcbMaxToken: %p{DWORD*}\n"), pcbMaxToken );
 

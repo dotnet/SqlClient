@@ -422,7 +422,7 @@ void SNIGetSystemError(__out_opt SNI_ERROR * pSNIerror, __in DWORD dwNativeError
 	
 }
 
-void SNIGetLastError( __out_opt SNI_ERROR * pSNIerror)
+void __cdecl SNIGetLastError( __out_opt SNI_ERROR * pSNIerror)
 {
 	DWORD dwCurMsgLen = 0;
 

@@ -21,7 +21,6 @@
     <NativeProject Include="**/ascii.vcxproj" />
     <NativeProject Include="**/unicode.vcxproj" />
     <NativeProject Include="**/SNI.vcxproj" />
-    <NativeProject Include="**/SNIManagedWrapper.vcxproj" />
   </ItemGroup>
 
   <!-- Populate all managed projects -->
@@ -76,8 +75,7 @@
   <Target Name="BuildFramework" DependsOnTargets="RestoreNetFx" Condition="'$(BuildNetFx)' == 'true'">
     <MSBuild Projects="@(NativeProject)" Properties="Platform=Win32;$(ProjectProperties)" />
     <MSBuild Projects="@(NativeProject)" Properties="Platform=x64;$(ProjectProperties)" />
-    <MSBuild Projects="@(NetFxDriver)"   Properties="Platform=Win32;$(ProjectProperties)" />
-    <MSBuild Projects="@(NetFxDriver)"   Properties="Platform=x64;$(ProjectProperties)" />
+    <MSBuild Projects="@(NetFxDriver)"   Properties="Platform=AnyCPU;$(ProjectProperties)" />
   </Target>
 
   <Target Name="BuildCore" DependsOnTargets="RestoreNetCore">

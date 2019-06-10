@@ -1425,7 +1425,7 @@ namespace Microsoft.Data.SqlClient {
             Debug.Assert(SniContext.Undefined!=stateObj.DebugOnlyCopyOfSniContext || ((_fMARS) && ((_state == TdsParserState.Closed) || (_state == TdsParserState.Broken))), "SniContext must not be None");
 #endif
             SNINativeMethodWrapper.SNI_Error sniError = new SNINativeMethodWrapper.SNI_Error();
-            SNINativeMethodWrapper.SNIGetLastError(sniError);
+            SNINativeMethodWrapper.SNIGetLastError(out sniError);
 
             if (sniError.sniError != 0) {
 
@@ -1449,13 +1449,7 @@ namespace Microsoft.Data.SqlClient {
 
             // error.errorMessage is null terminated with garbage beyond that, since fixed length
             string errorMessage;
-            int MessageLength = Array.IndexOf(sniError.errorMessage, '\0');
-            if (MessageLength == -1) {
-                errorMessage = String.Empty;  // If we don't see the expected null return nothing.
-            } else {
-                errorMessage = new String(sniError.errorMessage, 0, MessageLength);
-            }
-
+            errorMessage = string.IsNullOrEmpty(sniError.errorMessage) ? string.Empty : sniError.errorMessage;
             //  Format SNI errors and add Context Information
             //
             //  General syntax is:

@@ -16,6 +16,7 @@
 
 #include "adalerr.h"
 #include "adal.h"
+#define _SNI_EXPORT    __declspec(dllexport)
 
 enum class AdalOption
 {
@@ -153,8 +154,8 @@ struct ADALFunctionTable
 
 extern "C" struct ADALFunctionTable g_ADAL;
 
-extern "C" DWORD SNISecADALInitialize();
-extern "C" DWORD SNISecADALGetAccessToken( __in LPCWSTR userName,
+extern "C" _SNI_EXPORT DWORD __cdecl SNISecADALInitialize();
+extern "C" _SNI_EXPORT DWORD __cdecl SNISecADALGetAccessToken( __in LPCWSTR userName,
                                            __in LPCWSTR password,
                                            __in LPCWSTR stsURL,
                                            __in LPCWSTR resource,

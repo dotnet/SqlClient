@@ -45,7 +45,6 @@ namespace Microsoft.Data.SqlClient {
                 
         }
 
-        [System.Security.Permissions.SecurityPermissionAttribute(System.Security.Permissions.SecurityAction.LinkDemand, Flags=System.Security.Permissions.SecurityPermissionFlag.SerializationFormatter)]
         override public void GetObjectData(SerializationInfo si, StreamingContext context) {
             if (null == si) {
                 throw new ArgumentNullException("si");

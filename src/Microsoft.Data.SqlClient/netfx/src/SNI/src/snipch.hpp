@@ -7,9 +7,9 @@
 #ifndef _USE_OLD_IOSTREAMS
 #define _USE_OLD_IOSTREAMS
 #ifdef  _DEBUG
-#pragma comment(lib,"msvcirtd")
+#pragma comment(lib,"msvcrtd")
 #else   /* _DEBUG */
-#pragma comment(lib,"msvcirt")
+#pragma comment(lib,"msvcrt")
 #endif  /* _DEBUG */
 #endif  /* _USE_OLD_IOSTREAMS */
 
