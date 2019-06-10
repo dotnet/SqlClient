@@ -664,7 +664,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Internal .Net Framework Data Provider error {0}..
+        ///   Looks up a localized string similar to Internal .NET Framework Data Provider error {0}..
         /// </summary>
         internal static string ADP_InternalProviderError {
             get {
@@ -1933,7 +1933,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The requested .Net Framework Data Provider&apos;s implementation does not have an Instance field of a System.Data.Common.DbProviderFactory derived type..
+        ///   Looks up a localized string similar to The requested .NET Framework Data Provider&apos;s implementation does not have an Instance field of a System.Data.Common.DbProviderFactory derived type..
         /// </summary>
         internal static string ConfigProviderInvalid {
             get {
@@ -1942,7 +1942,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The missing .Net Framework Data Provider&apos;s assembly qualified name is required..
+        ///   Looks up a localized string similar to The missing .NET Framework Data Provider&apos;s assembly qualified name is required..
         /// </summary>
         internal static string ConfigProviderMissing {
             get {
@@ -1951,7 +1951,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Unable to find the requested .Net Framework Data Provider.  It may not be installed..
+        ///   Looks up a localized string similar to Unable to find the requested .NET Framework Data Provider.  It may not be installed..
         /// </summary>
         internal static string ConfigProviderNotFound {
             get {
@@ -1960,7 +1960,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Failed to find or load the registered .Net Framework Data Provider..
+        ///   Looks up a localized string similar to Failed to find or load the registered .NET Framework Data Provider..
         /// </summary>
         internal static string ConfigProviderNotInstalled {
             get {
@@ -5506,7 +5506,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to When true, enables usage of the Asynchronous functionality in the .Net Framework Data Provider..
+        ///   Looks up a localized string similar to When true, enables usage of the Asynchronous functionality in the .NET Framework Data Provider..
         /// </summary>
         internal static string DbConnectionString_AsynchronousProcessing {
             get {
@@ -7009,7 +7009,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The .Net Framework Odbc Data Provider requires Microsoft Data Access Components(MDAC) version 2.6 or later.  Version {0} was found currently installed..
+        ///   Looks up a localized string similar to The .NET Framework Odbc Data Provider requires Microsoft Data Access Components(MDAC) version 2.6 or later.  Version {0} was found currently installed..
         /// </summary>
         internal static string Odbc_MDACWrongVersion {
             get {
@@ -7045,7 +7045,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The {0} enumeration value, {1}, is not supported by the .Net Framework Odbc Data Provider..
+        ///   Looks up a localized string similar to The {0} enumeration value, {1}, is not supported by the .NET Framework Odbc Data Provider..
         /// </summary>
         internal static string ODBC_NotSupportedEnumerationValue {
             get {
@@ -7207,7 +7207,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to &apos;Asynchronous Processing&apos; is not a supported feature of the .Net Framework Data OLE DB Provider(Microsoft.Data.OleDb)..
+        ///   Looks up a localized string similar to &apos;Asynchronous Processing&apos; is not a supported feature of the .NET Framework Data OLE DB Provider(Microsoft.Data.OleDb)..
         /// </summary>
         internal static string OleDb_AsynchronousNotSupported {
             get {
@@ -7378,7 +7378,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to DBTYPE_VECTOR data is not supported by the .Net Framework Data OLE DB Provider(Microsoft.Data.OleDb)..
+        ///   Looks up a localized string similar to DBTYPE_VECTOR data is not supported by the .NET Framework Data OLE DB Provider(Microsoft.Data.OleDb)..
         /// </summary>
         internal static string OleDb_DBBindingGetVector {
             get {
@@ -7495,7 +7495,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The .Net Framework Data Providers require Microsoft Data Access Components(MDAC).  Please install Microsoft Data Access Components(MDAC) version 2.6 or later..
+        ///   Looks up a localized string similar to The .NET Framework Data Providers require Microsoft Data Access Components(MDAC).  Please install Microsoft Data Access Components(MDAC) version 2.6 or later..
         /// </summary>
         internal static string OleDb_MDACNotAvailable {
             get {
@@ -7504,7 +7504,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The .Net Framework OleDb Data Provider requires Microsoft Data Access Components(MDAC) version 2.6 or later.  Version {0} was found currently installed..
+        ///   Looks up a localized string similar to The .NET Framework OleDb Data Provider requires Microsoft Data Access Components(MDAC) version 2.6 or later.  Version {0} was found currently installed..
         /// </summary>
         internal static string OleDb_MDACWrongVersion {
             get {
@@ -7513,7 +7513,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The .Net Framework Data Provider for OLEDB (Microsoft.Data.OleDb) does not support the Microsoft OLE DB Provider for ODBC Drivers (MSDASQL). Use the .Net Framework Data Provider for ODBC (System.Data.Odbc)..
+        ///   Looks up a localized string similar to The .NET Framework Data Provider for OLEDB (Microsoft.Data.OleDb) does not support the Microsoft OLE DB Provider for ODBC Drivers (MSDASQL). Use the .NET Framework Data Provider for ODBC (System.Data.Odbc)..
         /// </summary>
         internal static string OleDb_MSDASQLNotSupported {
             get {
@@ -7576,7 +7576,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The {0} enumeration value, {1}, is not supported by the .Net Framework OleDb Data Provider..
+        ///   Looks up a localized string similar to The {0} enumeration value, {1}, is not supported by the .NET Framework OleDb Data Provider..
         /// </summary>
         internal static string OLEDB_NotSupportedEnumerationValue {
             get {
@@ -7603,7 +7603,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The .Net Framework Data Provider for OLEDB will not allow the OLE DB Provider to prompt the user in a non-interactive environment..
+        ///   Looks up a localized string similar to The .NET Framework Data Provider for OLEDB will not allow the OLE DB Provider to prompt the user in a non-interactive environment..
         /// </summary>
         internal static string OleDb_PossiblePromptNotUserInteractive {
             get {
@@ -9379,7 +9379,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Unsupported SQL Server version.  The .Net Framework SqlClient Data Provider can only be used with SQL Server versions 7.0 and later..
+        ///   Looks up a localized string similar to Unsupported SQL Server version.  The .NET Framework SqlClient Data Provider can only be used with SQL Server versions 7.0 and later..
         /// </summary>
         internal static string SQL_InvalidSQLServerVersionUnknown {
             get {
@@ -9523,7 +9523,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The {0} enumeration value, {1}, is not supported by the .Net Framework SqlClient Data Provider..
+        ///   Looks up a localized string similar to The {0} enumeration value, {1}, is not supported by the .NET Framework SqlClient Data Provider..
         /// </summary>
         internal static string SQL_NotSupportedEnumerationValue {
             get {

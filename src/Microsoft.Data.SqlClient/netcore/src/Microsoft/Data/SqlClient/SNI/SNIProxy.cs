@@ -249,7 +249,7 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 result = handle.SendAsync(clonedPacket, true);
             }
-            
+
             return result;
         }
 

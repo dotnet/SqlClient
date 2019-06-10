@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClient {
                  SingletonInstance = new SqlDependencyPerAppDomainDispatcher(); // singleton object
 
         // Dependency ID -> Dependency hashtable.  1 -> 1 mapping.
-        // 1) Used for ASP.Net to map from ID to dependency.  
+        // 1) Used for ASP.NET to map from ID to dependency.  
         // 2) Used to enumerate dependencies to invalidate based on server.
         private Dictionary<string, SqlDependency>       _dependencyIdToDependencyHash;
 
@@ -319,7 +319,7 @@ namespace Microsoft.Data.SqlClient {
             }
         }
 
-        // This method is called by SqlCommand to enable ASP.Net scenarios - map from ID to Dependency.
+        // This method is called by SqlCommand to enable ASP.NET scenarios - map from ID to Dependency.
         internal SqlDependency LookupDependencyEntry(string id) {
             IntPtr hscp;
             Bid.NotificationsScopeEnter(out hscp, "<sc.SqlDependencyPerAppDomainDispatcher.LookupDependencyEntry|DEP> %d#, Key: '%ls'", ObjectID, id);

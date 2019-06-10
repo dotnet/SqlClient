@@ -1933,7 +1933,7 @@ namespace Microsoft.Data.SqlClient {
             }
         }
         // fxcop:
-        // Use the .Net Event System whenever appropriate.
+        // Use the .NET Event System whenever appropriate.
 
         private bool FireRowsCopiedEvent(long rowsCopied) {
             // release lock to prevent possible deadlocks

@@ -2921,7 +2921,7 @@ namespace Microsoft.Data.SqlClient
             if ((IsCommandBehavior(CommandBehavior.SequentialAccess)) && ((_sharedState._nextColumnHeaderToRead > i + 1) || (_lastColumnWithDataChunkRead > i))) {
                 // Bug 447026 : A breaking change in System.Data .NET 4.5 for calling IsDBNull on commands in SequentialAccess mode
                 // http://vstfdevdiv:8080/web/wi.aspx?pcguid=22f9acc9-569a-41ff-b6ac-fac1b6370209&id=447026
-                // In .Net 4.0 and previous, it was possible to read a previous column using IsDBNull when in sequential mode
+                // In .NET 4.0 and previous, it was possible to read a previous column using IsDBNull when in sequential mode
                 // However, since it had already gone past the column, the current IsNull value is simply returned
 
                 // To replicate this behavior we will skip CheckHeaderIsReady\ReadColumnHeader and instead just check that the reader is ready and the column is valid

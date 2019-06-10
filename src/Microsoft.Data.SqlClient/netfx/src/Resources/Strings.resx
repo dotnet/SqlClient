@@ -1726,16 +1726,16 @@
     <value>The '{0}' property requires Microsoft WindowsNT or a WindowsNT based operating system.</value>
   </data>
   <data name="ConfigProviderNotFound" xml:space="preserve">
-    <value>Unable to find the requested .Net Framework Data Provider.  It may not be installed.</value>
+    <value>Unable to find the requested .NET Framework Data Provider.  It may not be installed.</value>
   </data>
   <data name="ConfigProviderInvalid" xml:space="preserve">
-    <value>The requested .Net Framework Data Provider's implementation does not have an Instance field of a System.Data.Common.DbProviderFactory derived type.</value>
+    <value>The requested .NET Framework Data Provider's implementation does not have an Instance field of a System.Data.Common.DbProviderFactory derived type.</value>
   </data>
   <data name="ConfigProviderNotInstalled" xml:space="preserve">
-    <value>Failed to find or load the registered .Net Framework Data Provider.</value>
+    <value>Failed to find or load the registered .NET Framework Data Provider.</value>
   </data>
   <data name="ConfigProviderMissing" xml:space="preserve">
-    <value>The missing .Net Framework Data Provider's assembly qualified name is required.</value>
+    <value>The missing .NET Framework Data Provider's assembly qualified name is required.</value>
   </data>
   <data name="ConfigBaseElementsOnly" xml:space="preserve">
     <value>Only elements allowed.</value>
@@ -1795,7 +1795,7 @@
     <value>Invalid UDL file.</value>
   </data>
   <data name="ADP_InternalProviderError" xml:space="preserve">
-    <value>Internal .Net Framework Data Provider error {0}.</value>
+    <value>Internal .NET Framework Data Provider error {0}.</value>
   </data>
   <data name="ADP_NoQuoteChange" xml:space="preserve">
     <value>The QuotePrefix and QuoteSuffix properties cannot be changed once an Insert, Update, or Delete command has been generated.</value>
@@ -1861,13 +1861,13 @@
     <value>The {0} enumeration value, {1}, is not supported by the {2} method.</value>
   </data>
   <data name="ODBC_NotSupportedEnumerationValue" xml:space="preserve">
-    <value>The {0} enumeration value, {1}, is not supported by the .Net Framework Odbc Data Provider.</value>
+    <value>The {0} enumeration value, {1}, is not supported by the .NET Framework Odbc Data Provider.</value>
   </data>
   <data name="OLEDB_NotSupportedEnumerationValue" xml:space="preserve">
-    <value>The {0} enumeration value, {1}, is not supported by the .Net Framework OleDb Data Provider.</value>
+    <value>The {0} enumeration value, {1}, is not supported by the .NET Framework OleDb Data Provider.</value>
   </data>
   <data name="SQL_NotSupportedEnumerationValue" xml:space="preserve">
-    <value>The {0} enumeration value, {1}, is not supported by the .Net Framework SqlClient Data Provider.</value>
+    <value>The {0} enumeration value, {1}, is not supported by the .NET Framework SqlClient Data Provider.</value>
   </data>
   <data name="ADP_ComputerNameEx" xml:space="preserve">
     <value>Unable to retrieve the ComputerNameDnsFullyQualified, {0}.</value>
@@ -2275,10 +2275,10 @@
     <value>An internal connection does not have an owner.</value>
   </data>
   <data name="Odbc_MDACWrongVersion" xml:space="preserve">
-    <value>The .Net Framework Odbc Data Provider requires Microsoft Data Access Components(MDAC) version 2.6 or later.  Version {0} was found currently installed.</value>
+    <value>The .NET Framework Odbc Data Provider requires Microsoft Data Access Components(MDAC) version 2.6 or later.  Version {0} was found currently installed.</value>
   </data>
   <data name="OleDb_MDACWrongVersion" xml:space="preserve">
-    <value>The .Net Framework OleDb Data Provider requires Microsoft Data Access Components(MDAC) version 2.6 or later.  Version {0} was found currently installed.</value>
+    <value>The .NET Framework OleDb Data Provider requires Microsoft Data Access Components(MDAC) version 2.6 or later.  Version {0} was found currently installed.</value>
   </data>
   <data name="OleDb_SchemaRowsetsNotSupported" xml:space="preserve">
     <value>'{0}' interface is not supported by the '{1}' provider.  GetOleDbSchemaTable is unavailable with the current provider.</value>
@@ -2290,13 +2290,13 @@
     <value>No error message available, result code: {0}.</value>
   </data>
   <data name="OleDb_MDACNotAvailable" xml:space="preserve">
-    <value>The .Net Framework Data Providers require Microsoft Data Access Components(MDAC).  Please install Microsoft Data Access Components(MDAC) version 2.6 or later.</value>
+    <value>The .NET Framework Data Providers require Microsoft Data Access Components(MDAC).  Please install Microsoft Data Access Components(MDAC) version 2.6 or later.</value>
   </data>
   <data name="OleDb_MSDASQLNotSupported" xml:space="preserve">
-    <value>The .Net Framework Data Provider for OLEDB (Microsoft.Data.OleDb) does not support the Microsoft OLE DB Provider for ODBC Drivers (MSDASQL). Use the .Net Framework Data Provider for ODBC (System.Data.Odbc).</value>
+    <value>The .NET Framework Data Provider for OLEDB (Microsoft.Data.OleDb) does not support the Microsoft OLE DB Provider for ODBC Drivers (MSDASQL). Use the .NET Framework Data Provider for ODBC (System.Data.Odbc).</value>
   </data>
   <data name="OleDb_PossiblePromptNotUserInteractive" xml:space="preserve">
-    <value>The .Net Framework Data Provider for OLEDB will not allow the OLE DB Provider to prompt the user in a non-interactive environment.</value>
+    <value>The .NET Framework Data Provider for OLEDB will not allow the OLE DB Provider to prompt the user in a non-interactive environment.</value>
   </data>
   <data name="OleDb_ProviderUnavailable" xml:space="preserve">
     <value>The '{0}' provider is not registered on the local machine.</value>
@@ -2311,7 +2311,7 @@
     <value>Format of the initialization string does not conform to the OLE DB specification.  Starting around char[{0}] in the connection string.</value>
   </data>
   <data name="OleDb_AsynchronousNotSupported" xml:space="preserve">
-    <value>'Asynchronous Processing' is not a supported feature of the .Net Framework Data OLE DB Provider(Microsoft.Data.OleDb).</value>
+    <value>'Asynchronous Processing' is not a supported feature of the .NET Framework Data OLE DB Provider(Microsoft.Data.OleDb).</value>
   </data>
   <data name="OleDb_NoProviderSpecified" xml:space="preserve">
     <value>An OLE DB Provider was not specified in the ConnectionString.  An example would be, 'Provider=SQLOLEDB;'.</value>
@@ -2464,7 +2464,7 @@
     <value>IErrorInfo.GetSource failed with {0}.</value>
   </data>
   <data name="OleDb_DBBindingGetVector" xml:space="preserve">
-    <value>DBTYPE_VECTOR data is not supported by the .Net Framework Data OLE DB Provider(Microsoft.Data.OleDb).</value>
+    <value>DBTYPE_VECTOR data is not supported by the .NET Framework Data OLE DB Provider(Microsoft.Data.OleDb).</value>
   </data>
   <data name="ADP_InvalidMinMaxPoolSizeValues" xml:space="preserve">
     <value>Invalid min or max pool size values, min pool size cannot be greater than the max pool size.</value>
@@ -2521,7 +2521,7 @@
     <value>The instance of SQL Server you attempted to connect to does not support CTAIP.</value>
   </data>
   <data name="SQL_InvalidSQLServerVersionUnknown" xml:space="preserve">
-    <value>Unsupported SQL Server version.  The .Net Framework SqlClient Data Provider can only be used with SQL Server versions 7.0 and later.</value>
+    <value>Unsupported SQL Server version.  The .NET Framework SqlClient Data Provider can only be used with SQL Server versions 7.0 and later.</value>
   </data>
   <data name="SQL_CannotModifyPropertyAsyncOperationInProgress" xml:space="preserve">
     <value>{0} cannot be changed while async operation is in progress.</value>
@@ -3199,7 +3199,7 @@
     <value>The name of the application.</value>
   </data>
   <data name="DbConnectionString_AsynchronousProcessing" xml:space="preserve">
-    <value>When true, enables usage of the Asynchronous functionality in the .Net Framework Data Provider.</value>
+    <value>When true, enables usage of the Asynchronous functionality in the .NET Framework Data Provider.</value>
   </data>
   <data name="DbConnectionString_AttachDBFilename" xml:space="preserve">
     <value>The name of the primary file, including the full path name, of an attachable database.</value>

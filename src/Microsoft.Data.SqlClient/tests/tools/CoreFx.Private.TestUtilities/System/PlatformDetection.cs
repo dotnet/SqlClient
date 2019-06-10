@@ -51,7 +51,7 @@ namespace System
             (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) &&
             (OpenSslVersion.Major >= 1 && (OpenSslVersion.Minor >= 1 || OpenSslVersion.Build >= 2)));
 
-        // Officially, .Net Native only supports processes running in an AppContainer. However, the majority of tests still work fine
+        // Officially, .NET Native only supports processes running in an AppContainer. However, the majority of tests still work fine
         // in a normal Win32 process and we often do so as running in an AppContainer imposes a substantial tax in debuggability
         // and investigatability. This predicate is used in ConditionalFacts to disable the specific tests that really need to be
         // running in AppContainer when running on .NetNative.

@@ -295,7 +295,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Internal .Net Framework Data Provider error {0}..
+        ///   Looks up a localized string similar to Internal .NET Framework Data Provider error {0}..
         /// </summary>
         internal static string ADP_InternalProviderError {
             get {
@@ -2428,7 +2428,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Unsupported SQL Server version.  The .Net Framework SqlClient Data Provider can only be used with SQL Server versions 7.0 and later..
+        ///   Looks up a localized string similar to Unsupported SQL Server version.  The .NET Framework SqlClient Data Provider can only be used with SQL Server versions 7.0 and later..
         /// </summary>
         internal static string SQL_InvalidSQLServerVersionUnknown {
             get {
@@ -2545,7 +2545,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The {0} enumeration value, {1}, is not supported by the .Net Framework SqlClient Data Provider..
+        ///   Looks up a localized string similar to The {0} enumeration value, {1}, is not supported by the .NET Framework SqlClient Data Provider..
         /// </summary>
         internal static string SQL_NotSupportedEnumerationValue {
             get {

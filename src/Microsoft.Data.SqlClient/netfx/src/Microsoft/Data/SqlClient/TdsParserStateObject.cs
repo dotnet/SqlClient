@@ -2396,7 +2396,7 @@ namespace Microsoft.Data.SqlClient {
         public void ProcessSniPacket(IntPtr packet, UInt32 error) {
             if (error != 0) {
                 if ((_parser.State == TdsParserState.Closed) || (_parser.State == TdsParserState.Broken)) {
-                    // Do nothing with with callback if closed or broken and error not 0 - callback can occur
+                    // Do nothing with callback if closed or broken and error not 0 - callback can occur
                     // after connection has been closed.  PROBLEM IN NETLIB - DESIGN FLAW.
                     return;
                 }
