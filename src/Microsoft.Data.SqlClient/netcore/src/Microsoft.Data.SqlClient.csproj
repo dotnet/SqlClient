@@ -229,8 +229,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNINpHandle.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIPacket.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIProxy.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SNIProxy.Windows.cs" Condition="'$(TargetsNetCoreApp)' != 'true' OR '$(TargetsUnix)' != 'true'" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SNIProxy.Unix.cs" Condition="'$(TargetsNetCoreApp)' == 'true' AND '$(TargetsUnix)' == 'true'" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNITcpHandle.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SslOverTdsStream.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNICommon.cs" />
