@@ -31,181 +31,181 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             AzureDistributedTransaction.Test();
         }
 
-        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void CopyAllFromReaderTest()
         {
             CopyAllFromReader.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_CopyAllFromReader"));
         }
 
-        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void CopyAllFromReader1Test()
         {
             CopyAllFromReader1.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_CopyAllFromReader1"));
         }
 
-        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void CopyMultipleReadersTest()
         {
             CopyMultipleReaders.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_CopyMultipleReaders"));
         }
 
-        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void CopySomeFromReaderTest()
         {
             CopySomeFromReader.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_CopySomeFromReader"));
         }
 
-        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void CopySomeFromDataTableTest()
         {
             CopySomeFromDataTable.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_CopySomeFromDataTable"));
         }
 
-        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void CopySomeFromRowArrayTest()
         {
             CopySomeFromRowArray.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_CopySomeFromRowArray"));
         }
 
-        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void CopyWithEventTest()
         {
             CopyWithEvent.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_CopyWithEvent"));
         }
 
-        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void CopyWithEvent1Test()
         {
             CopyWithEvent1.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_CopyWithEvent1"));
         }
 
-        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void InvalidAccessFromEventTest()
         {
             InvalidAccessFromEvent.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_InvalidAccessFromEvent"));
         }
 
-        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Bug84548Test()
         {
             Bug84548.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_Bug84548"));
         }
 
-        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void MissingTargetTableTest()
         {
             MissingTargetTable.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_MissingTargetTable"));
         }
 
-        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void MissingTargetColumnTest()
         {
             MissingTargetColumn.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_MissingTargetColumn"));
         }
 
-        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Bug85007Test()
         {
             Bug85007.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_Bug85007"));
         }
 
-        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void CheckConstraintsTest()
         {
             CheckConstraints.Test(dstConstr, AddGuid("SqlBulkCopyTest_Extensionsrc"), AddGuid("SqlBulkCopyTest_Extensiondst"));
         }
 
-        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void TransactionTest()
         {
             Transaction.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_Transaction0"));
         }
 
-        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Transaction1Test()
         {
             Transaction1.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_Transaction1"));
         }
 
-        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Transaction2Test()
         {
             Transaction2.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_Transaction2"));
         }
 
-        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Transaction3Test()
         {
             Transaction3.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_Transaction3"));
         }
 
-        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Transaction4Test()
         {
             Transaction4.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_Transaction4"));
         }
 
-        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void CopyVariantsTest()
         {
             CopyVariants.Test(dstConstr, AddGuid("SqlBulkCopyTest_Variants"));
         }
 
-        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Bug98182Test()
         {
             Bug98182.Test(dstConstr, AddGuid("SqlBulkCopyTest_Bug98182 "));
         }
 
-        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void FireTriggerTest()
         {
             FireTrigger.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_FireTrigger"));
         }
 
-        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void ErrorOnRowsMarkedAsDeletedTest()
         {
             ErrorOnRowsMarkedAsDeleted.Test(dstConstr, AddGuid("SqlBulkCopyTest_ErrorOnRowsMarkedAsDeleted"));
         }
 
-        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void SpecialCharacterNamesTest()
         {
             SpecialCharacterNames.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_SpecialCharacterNames"));
         }
 
-        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Bug903514Test()
         {
             Bug903514.Test(dstConstr, AddGuid("SqlBulkCopyTest_Bug903514"));
         }
 
-        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void ColumnCollationTest()
         {
             ColumnCollation.Test(dstConstr, AddGuid("SqlBulkCopyTest_ColumnCollation"));
         }
 
-        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void CopyAllFromReaderAsyncTest()
         {
             CopyAllFromReaderAsync.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_AsyncTest1")); //Async + Reader
         }
 
-        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void CopySomeFromRowArrayAsyncTest()
         {
             CopySomeFromRowArrayAsync.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_AsyncTest2")); //Async + Some Rows
         }
 
-        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void CopySomeFromDataTableAsyncTest()
         {
             CopySomeFromDataTableAsync.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_AsyncTest3")); //Async + Some Table
         }
 
-        [ConditionalFact(typeof(TestHelpers), nameof(TestHelpers.AreConnectionStringsSetup), nameof(TestHelpers.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void CopyWithEventAsyncTest()
         {
             CopyWithEventAsync.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_AsyncTest4")); //Async + Rows + Notification

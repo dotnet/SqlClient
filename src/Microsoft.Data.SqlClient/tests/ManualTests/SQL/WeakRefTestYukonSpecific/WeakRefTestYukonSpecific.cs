@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             TestReaderMarsCase("Case 4: ExecuteReader*5 Connection Close, ExecuteReader.", connectionString, ReaderTestType.ConnectionClose, ReaderVerificationType.ExecuteReader);
             TestReaderMarsCase("Case 5: ExecuteReader*5 GC, Connection Close, ExecuteReader.", connectionString, ReaderTestType.ReaderGCConnectionClose, ReaderVerificationType.ExecuteReader);
 
-            if (TestHelpers.IsNotAzureServer())
+            if (DataTestUtility.IsNotAzureServer())
             {
                 TestReaderMarsCase("Case 6: ExecuteReader*5 Close, ChangeDatabase.", connectionString, ReaderTestType.ReaderClose, ReaderVerificationType.ChangeDatabase);
                 TestReaderMarsCase("Case 7: ExecuteReader*5 Dispose, ChangeDatabase.", connectionString, ReaderTestType.ReaderDispose, ReaderVerificationType.ChangeDatabase);

@@ -12,10 +12,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private string _connStr;
 
         [ActiveIssue(5535)]
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsUdtTestDatabasePresent), nameof(DataTestUtility.AreConnStringsSetup))]
         public void RunCopyTest()
         {
-            _connStr = (new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr) { InitialCatalog = "UdtTestDb" }).ConnectionString;
+            _connStr = (new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr) { InitialCatalog = DataTestUtility.UdtTestDbName }).ConnectionString;
             SqlConnection conn = new SqlConnection(_connStr);
 
             string cities = DataTestUtility.GetUniqueNameForSqlServer("UdtBulkCopy_cities");
