@@ -20,7 +20,6 @@
      We should remove ResolveComReferenceSilent as soon as we can remove the dependency on mscoree. -->
     <ResolveComReferenceSilent>True</ResolveComReferenceSilent>
   </PropertyGroup>
-  
   <PropertyGroup>
     <!-- CSC Compiler Options -->
     <NoConfig>True</NoConfig>
@@ -56,7 +55,6 @@
     <ComCompatibleSideBySide>True</ComCompatibleSideBySide>
     <GenerateTargetFrameworkAttribute>False</GenerateTargetFrameworkAttribute>
   </PropertyGroup>
-
   <!-- ********************** Configuration and Platform specific properties ********************* -->
   <!-- All Available Configurations-->
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'" />
@@ -311,10 +309,6 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <None Include="$(BinFolder)$(Configuration).Win32\SNI\SNI.dll;$(BinFolder)$(Configuration).Win32\SNI\SNI.pdb" Link="x86\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="$(BinFolder)$(Configuration).x64\SNI\SNI.dll;$(BinFolder)$(Configuration).x64\SNI\SNI.pdb" Link="x64\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
-  </ItemGroup>
-  <ItemGroup>
     <COMReference Include="mscoree">
       <Guid>{5477469E-83B1-11D2-8B49-00A0C9B7C9C4}</Guid>
       <VersionMajor>2</VersionMajor>
@@ -324,6 +318,11 @@
       <Isolated>False</Isolated>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </COMReference>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.SqlClient.SNI">
+      <Version>1.0.19164.3-Preview</Version>
+    </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(NetFxSource)tools\targets\GenerateResourceStringsSource.targets" />

@@ -1,5 +1,0 @@
-ADONETDIAG.ETW
-System.Data.1
-System.Data.SNI.1
-System.Data.Entity.1
-System.Data.OracleClient.1

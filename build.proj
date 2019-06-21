@@ -15,14 +15,6 @@
     <TestProjectProperties>BuildProjectReferences=false;$(ProjectProperties)</TestProjectProperties>
   </PropertyGroup>
 
-  <!-- Populate all the C++ projects -->
-  <ItemGroup Condition="'$(BuildNetFx)' == 'true'">
-    <NativeProject Include="**/bidinit.vcxproj" />
-    <NativeProject Include="**/ascii.vcxproj" />
-    <NativeProject Include="**/unicode.vcxproj" />
-    <NativeProject Include="**/SNI.vcxproj" />
-  </ItemGroup>
-
   <!-- Populate all managed projects -->
   <ItemGroup>
     <NetFxDriver     Include="**/netfx/**/Microsoft.Data.SqlClient*.csproj" Condition="'$(BuildNetFx)' == 'true'"/>
@@ -45,6 +37,7 @@
     <NugetPackageSources Include="https://api.nuget.org/v3/index.json" />
     <NugetPackageSources Include="https://dotnetfeed.blob.core.windows.net/dotnet-core/index.json" />
     <NugetPackageSources Include="https://dotnet.myget.org/F/dotnet-core/api/v3/index.json" />
+    <NugetPackageSources Include="https://sqlclientdrivers.pkgs.visualstudio.com/_packaging/Microsoft.Data.SqlClient/nuget/v3/index.json" />
   </ItemGroup>
 
   <!-- Top Level Build targets -->
@@ -73,8 +66,6 @@
   </Target>
 
   <Target Name="BuildFramework" DependsOnTargets="RestoreNetFx" Condition="'$(BuildNetFx)' == 'true'">
-    <MSBuild Projects="@(NativeProject)" Properties="Platform=Win32;$(ProjectProperties)" />
-    <MSBuild Projects="@(NativeProject)" Properties="Platform=x64;$(ProjectProperties)" />
     <MSBuild Projects="@(NetFxDriver)"   Properties="Platform=AnyCPU;$(ProjectProperties)" />
   </Target>
 
