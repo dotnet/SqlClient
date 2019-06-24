@@ -14,7 +14,6 @@ namespace Microsoft.Data.SqlClient {
     public sealed class SqlError {
 
         // bug fix - MDAC 48965 - missing source of exception
-        // fixed by BlaineD
         private string source = TdsEnums.SQL_PROVIDER_NAME;
         private int    number;
         private byte   state;
@@ -59,7 +58,6 @@ namespace Microsoft.Data.SqlClient {
         }
 
         // bug fix - MDAC #48965 - missing source of exception
-        // fixed by BlaineD
         public string Source {
             get { return this.source;}
         }

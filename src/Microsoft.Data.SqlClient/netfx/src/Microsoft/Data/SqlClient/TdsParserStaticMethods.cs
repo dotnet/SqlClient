@@ -38,8 +38,8 @@ namespace Microsoft.Data.SqlClient {
                 // Put a try...catch... around this so we don't abort ANY connection if we can't read the registry.
                 string aliasLookup = (string) ADP.LocalMachineRegistryValue(folder, host);
                 if (!ADP.IsEmpty(aliasLookup)) {
-                    /* Result will be in the form of: "DBNMPNTW,\\blained1\pipe\sql\query". or
-                         Result will be in the form of: "DBNETLIB, via:\\blained1\pipe\sql\query".
+                    /* Result will be in the form of: "DBNMPNTW,\\server\pipe\sql\query". or
+                         Result will be in the form of: "DBNETLIB, via:\\server\pipe\sql\query".
 
                         supported formats:
                             tcp	- DBMSSOCN,[server|server\instance][,port]

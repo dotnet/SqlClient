@@ -646,7 +646,7 @@ namespace Microsoft.Data.SqlClient {
             // Should only be called for MARS - that is the only time we need to take
             // the ResetConnection lock!
 
-            // SQL BU DT 333026 - it was raised in a security review by BlaineD questioning whether
+            // SQL BU DT 333026 - it was raised in a security review questioning whether
             // we need to actually process the resulting packet (sp_reset ack or error) to know if the
             // reset actually succeeded.  There was a concern that if the reset failed and we proceeded
             // there might be a security issue present.  We have been assured by the server that if

@@ -1793,7 +1793,6 @@ namespace Microsoft.Data.SqlClient
             // time the connection state should change to what is passed in to this function is if
             // the parser is broken, then we should be closed.  Changed to passing in
             // TdsParserState, not ConnectionState.
-            // fixed by BlaineD
 
             if (breakConnection && (ConnectionState.Open == State)) {
 
@@ -1969,7 +1968,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // This overload is called by the Command object when executing stored proceduStrings.  Note that
+        // This overload is called by the Command object when executing stored procedures.  Note that
         // if SQLDebug has never been called, it is a noop.
         internal void CheckSQLDebug() {
             if (null != _sdc)

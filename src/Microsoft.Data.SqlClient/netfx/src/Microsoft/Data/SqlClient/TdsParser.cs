@@ -9623,8 +9623,8 @@ namespace Microsoft.Data.SqlClient {
 
                     // todo:
                     // for xml WriteTokenLength results in a no-op
-                    // discuss this with blaine ...
-                    // (LaleD) xml datatype does not have token length in its metadata. So it should be a noop.
+                    // discuss ...
+                    // xml datatype does not have token length in its metadata. So it should be a noop.
 
                     switch (md.type) {
                         case SqlDbType.Decimal:
