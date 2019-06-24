@@ -2581,21 +2581,26 @@ namespace Microsoft.Data.SqlClient {
                                 return false;
                             }
 
+                            // give the parser the new collation values in case parameters don't specify one          
+                            _defaultCollation = env.newCollation;
+                            _defaultLCID = env.newCollation.LCID;
+
+                            int newCodePage = GetCodePage(env.newCollation, stateObj);
+
                             if ((env.newCollation.info & TdsEnums.UTF8_IN_TDSCOLLATION) == TdsEnums.UTF8_IN_TDSCOLLATION) { // UTF8 collation
                                 _defaultEncoding = Encoding.UTF8;
-                                _defaultCollation = env.newCollation;
-                                _defaultLCID = env.newCollation.LCID;
+                                
+                                if (newCodePage != _defaultCodePage) {
+                                    _defaultCodePage = newCodePage;
+                                }
                             }
                             else {
-                                // give the parser the new collation values in case parameters don't specify one
-                                _defaultCollation = env.newCollation;
-                                int newCodePage = GetCodePage(env.newCollation, stateObj);
+                                                     
                                 if (newCodePage != _defaultCodePage) {
                                     _defaultCodePage = newCodePage;
                                     _defaultEncoding = System.Text.Encoding.GetEncoding(_defaultCodePage);
                                 }
                             }
-                            _defaultLCID = env.newCollation.LCID;
                         }
 
                         if (!stateObj.TryReadByte(out byteLength)) {
