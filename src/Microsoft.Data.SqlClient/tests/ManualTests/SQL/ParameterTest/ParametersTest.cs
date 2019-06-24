@@ -100,6 +100,51 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [CheckConnStrSetupFact]
+        public static void Test_Copy_SqlParameter()
+        {
+            using (var conn = new SqlConnection(s_connString))
+            {
+                const string cTableName = "#tmpTest";
+
+                // Create tmp table
+                var sCreateTable = "IF NOT EXISTS(";
+                sCreateTable += $"SELECT * FROM sysobjects WHERE name= '{ cTableName }' and xtype = 'U')";
+                sCreateTable += $"CREATE TABLE { cTableName }( BinValue binary(16)  null)";
+
+                conn.Open();
+                var cmd = new SqlCommand(sCreateTable, conn);
+                cmd.ExecuteNonQuery();
+
+                var dt = new DataTable("SourceDataTable");
+                dt.Columns.Add("SourceBinValue", typeof(byte[]));
+
+                dt.Rows.Add(Guid.NewGuid().ToByteArray());
+                dt.Rows.Add(DBNull.Value);
+
+                var cmdInsert = new SqlCommand();
+                cmdInsert.UpdatedRowSource = UpdateRowSource.None;
+                cmdInsert.Connection = conn;
+
+                cmdInsert.CommandText = $"INSERT { cTableName } (BinValue) ";
+                cmdInsert.CommandText += "Values(@BinValue)";
+                cmdInsert.Parameters.Add("@BinValue", SqlDbType.Binary, 16, "SourceBinValue");
+
+                var da = new SqlDataAdapter();
+
+                da.InsertCommand = cmdInsert;
+
+                da.UpdateBatchSize = 2;
+                da.AcceptChangesDuringUpdate = false;
+                da.Update(dt);
+
+                // End of test, cleanup tmp table;
+                var sDropTable = $"DROP TABLE IF EXISTS {cTableName}";
+                cmd = new SqlCommand(sDropTable, conn);
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        [CheckConnStrSetupFact]
         public static void Test_SqlParameter_Constructor()
         {
             using (var conn = new SqlConnection(s_connString))
