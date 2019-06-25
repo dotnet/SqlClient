@@ -8667,7 +8667,33 @@ namespace Microsoft.Data.SqlClient
 
                                     if (!isNull)
                                     {
-                                        udtVal = _connHandler.Connection.GetBytes(value, out format, out maxsize);
+                                        // When writing UDT parameter values to the TDS stream, allow sending byte[] or SqlBytes
+                                        // directly to the server and not rejected as invalid. This allows users to handle
+                                        // serialization and deserialization logic without having to have SqlClient be aware of
+                                        // the types and without using inefficient text representations.
+                                        if (value is byte[] rawBytes)
+                                        {
+                                            udtVal = rawBytes;
+                                        }
+                                        else if (value is SqlBytes sqlBytes)
+                                        {
+                                            switch (sqlBytes.Storage)
+                                            {
+                                                case StorageState.Buffer:
+                                                    // use the buffer directly, the only way to create it is with the correctly sized byte array
+                                                    udtVal = sqlBytes.Buffer;
+                                                    break;
+                                                case StorageState.Stream:
+                                                case StorageState.UnmanagedBuffer:
+                                                    // allocate a new byte array to store the data
+                                                    udtVal = sqlBytes.Value;
+                                                    break;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            udtVal = _connHandler.Connection.GetBytes(value, out format, out maxsize);
+                                        }
 
                                         Debug.Assert(null != udtVal, "GetBytes returned null instance. Make sure that it always returns non-null value");
                                         size = udtVal.Length;
