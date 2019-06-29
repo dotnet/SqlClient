@@ -555,7 +555,7 @@ namespace Microsoft.Data.SqlClient
 
                 // Check for excluded types
                 if ((metadata.type == SqlDbType.Timestamp)
-                    || ((metadata.isIdentity) && !IsCopyOption(SqlBulkCopyOptions.KeepIdentity)))
+                    || ((metadata.IsIdentity) && !IsCopyOption(SqlBulkCopyOptions.KeepIdentity)))
                 {
                     // Remove metadata for excluded columns
                     metaDataSet[i] = null;
@@ -1389,7 +1389,7 @@ namespace Microsoft.Data.SqlClient
 
             if (isNull)
             {
-                if (!metadata.isNullable)
+                if (!metadata.IsNullable)
                 {
                     throw SQL.BulkLoadBulkLoadNotAllowDBNull(metadata.column);
                 }
