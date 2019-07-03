@@ -66,8 +66,8 @@ namespace Microsoft.Data.SqlClient
         // Packet state variables
         internal byte _outputMessageType = 0;                   // tds header type
         internal byte _messageStatus;                               // tds header status
-        internal byte _outputPacketNumber = 1;                   // number of packets sent to server
-                                                                 // in message - start at 1 per ramas
+        internal byte _outputPacketNumber = 1;                   // number of packets sent to server in message - start at 1 per ramas
+        internal uint _outputPacketCount;
         internal bool _pendingData = false;
         internal volatile bool _fResetEventOwned = false;               // ResetEvent serializing call to sp_reset_connection
         internal volatile bool _fResetConnectionSent = false;               // For multiple packet execute
@@ -667,7 +667,7 @@ namespace Microsoft.Data.SqlClient
             // If the first sqlbulkcopy timeout, _outputPacketNumber may not be 1, 
             // the next sqlbulkcopy (same connection string) requires this to be 1, hence reset 
             // it here when exception happens in the first sqlbulkcopy
-            _outputPacketNumber = 1;
+            ResetPacketCounters();
 
             // VSDD#907507, if bulkcopy write timeout happens, it already sent the attention, 
             // so no need to send it again
@@ -1123,6 +1123,12 @@ namespace Microsoft.Data.SqlClient
         internal void ResetBuffer()
         {
             _outBytesUsed = _outputHeaderLen;
+        }
+
+        internal void ResetPacketCounters()
+        {
+            _outputPacketNumber = 1;
+            _outputPacketCount = 0;
         }
 
         internal bool SetPacketSize(int size)
@@ -3142,9 +3148,9 @@ namespace Microsoft.Data.SqlClient
                 state == TdsParserState.OpenLoggedIn &&
                 !_bulkCopyOpperationInProgress && // ignore the condition checking for bulk copy
                     _outBytesUsed == (_outputHeaderLen + BitConverter.ToInt32(_outBuff, _outputHeaderLen))
-                    && _outputPacketNumber == 1
+                    && _outputPacketCount == 0
                 || _outBytesUsed == _outputHeaderLen
-                    && _outputPacketNumber == 1)
+                    && _outputPacketCount == 0)
             {
                 return null;
             }
@@ -3157,17 +3163,18 @@ namespace Microsoft.Data.SqlClient
             if (willCancel)
             {
                 status = TdsEnums.ST_EOM | TdsEnums.ST_IGNORE;
-                _outputPacketNumber = 1;
+                ResetPacketCounters();
             }
             else if (TdsEnums.HARDFLUSH == flushMode)
             {
                 status = TdsEnums.ST_EOM;
-                _outputPacketNumber = 1;              // end of message - reset to 1 - per ramas                
+                ResetPacketCounters();
             }
             else if (TdsEnums.SOFTFLUSH == flushMode)
             {
                 status = TdsEnums.ST_BATCH;
                 _outputPacketNumber++;
+                _outputPacketCount++;
             }
             else
             {

@@ -2595,7 +2595,7 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     _stateObj.ResetBuffer();
-                    _stateObj._outputPacketNumber = 1;
+                    _stateObj.ResetPacketCounters();
                     // If _parser is closed, sending attention will raise debug assertion, so we avoid it (but not calling CancelRequest).
                     if (_parser.State == TdsParserState.OpenNotLoggedIn || _parser.State == TdsParserState.OpenLoggedIn)
                     {
