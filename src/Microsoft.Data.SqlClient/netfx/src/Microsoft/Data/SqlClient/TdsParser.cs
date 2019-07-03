@@ -3704,7 +3704,7 @@ namespace Microsoft.Data.SqlClient {
             // Sphinx sometimes sends fixed length return values
             if (_isShiloh) {
                 rec.tdsType = rec.metaType.NullableType;
-                rec.isNullable = true;
+                rec.IsNullable = true;
                 if (tdsLen == TdsEnums.SQL_USHORTVARMAXLEN) {
                     Debug.Assert(_isYukon, "plp data from pre-Yukon server");
                     rec.metaType = MetaType.GetMaxMetaTypeFromMetaType(rec.metaType);
@@ -3712,7 +3712,7 @@ namespace Microsoft.Data.SqlClient {
             }
             else {      // For sphinx, keep the fixed type if that is what is returned
                 if (rec.metaType.NullableType == tdsType)
-                    rec.isNullable = true;
+                    rec.IsNullable = true;
 
                 rec.tdsType = (byte)tdsType;
             }
@@ -3749,8 +3749,11 @@ namespace Microsoft.Data.SqlClient {
                     if (!stateObj.TryReadByte(out len)) {
                         return false;
                     }
+                    if (rec.xmlSchemaCollection is null) {
+                        rec.xmlSchemaCollection = new SqlMetaDataXmlSchemaCollection();
+                    }
                     if (len != 0) {
-                        if (!stateObj.TryReadString(len, out rec.xmlSchemaCollectionDatabase)) {
+                        if (!stateObj.TryReadString(len, out rec.xmlSchemaCollection.Database)) {
                             return false;
                         }
                     }
@@ -3759,7 +3762,7 @@ namespace Microsoft.Data.SqlClient {
                         return false;
                     }
                     if (len != 0) {
-                        if (!stateObj.TryReadString(len, out rec.xmlSchemaCollectionOwningSchema)) {
+                        if (!stateObj.TryReadString(len, out rec.xmlSchemaCollection.OwningSchema)) {
                             return false;
                         }
                     }
@@ -3770,7 +3773,7 @@ namespace Microsoft.Data.SqlClient {
                     }
 
                     if (slen != 0) {
-                        if (!stateObj.TryReadString(slen, out rec.xmlSchemaCollectionName)) {
+                        if (!stateObj.TryReadString(slen, out rec.xmlSchemaCollection.Name)) {
                             return false;
                         }
                     }
@@ -4434,7 +4437,7 @@ namespace Microsoft.Data.SqlClient {
 
             // If sphinx, do not change to nullable type
             if (_isShiloh)
-                col.tdsType = (col.isNullable ? col.metaType.NullableType : col.metaType.TDSType);
+                col.tdsType = (col.IsNullable ? col.metaType.NullableType : col.metaType.TDSType);
             else
                 col.tdsType = tdsType;
 
@@ -4465,8 +4468,11 @@ namespace Microsoft.Data.SqlClient {
                             if (!stateObj.TryReadByte(out byteLen)) {
                                 return false;
                             }
+                            if (col.xmlSchemaCollection is null) {
+                                col.xmlSchemaCollection = new SqlMetaDataXmlSchemaCollection();
+                            }
                             if (byteLen != 0) {
-                                if (!stateObj.TryReadString(byteLen, out col.xmlSchemaCollectionDatabase)) {
+                                if (!stateObj.TryReadString(byteLen, out col.xmlSchemaCollection.Database)) {
                                     return false;
                                 }
                             }
@@ -4475,7 +4481,7 @@ namespace Microsoft.Data.SqlClient {
                                 return false;
                             }
                             if (byteLen != 0) {
-                                if (!stateObj.TryReadString(byteLen, out col.xmlSchemaCollectionOwningSchema)) {
+                                if (!stateObj.TryReadString(byteLen, out col.xmlSchemaCollection.OwningSchema)) {
                                     return false;
                                 }
                             }
@@ -4485,7 +4491,7 @@ namespace Microsoft.Data.SqlClient {
                                 return false;
                             }
                             if (byteLen != 0) {
-                                if (!stateObj.TryReadString(shortLen, out col.xmlSchemaCollectionName)) {
+                                if (!stateObj.TryReadString(shortLen, out col.xmlSchemaCollection.Name)) {
                                     return false;
                                 }
                             }
@@ -4582,16 +4588,16 @@ namespace Microsoft.Data.SqlClient {
                 return false;
             }
 
-            col.updatability = (byte)((flags & TdsEnums.Updatability) >> 2);
-            col.isNullable = (TdsEnums.Nullable == (flags & TdsEnums.Nullable));
-            col.isIdentity = (TdsEnums.Identity == (flags & TdsEnums.Identity));
+            col.Updatability = (byte)((flags & TdsEnums.Updatability) >> 2);
+            col.IsNullable = (TdsEnums.Nullable == (flags & TdsEnums.Nullable));
+            col.IsIdentity = (TdsEnums.Identity == (flags & TdsEnums.Identity));
 
             // read second byte of column metadata flags
             if (!stateObj.TryReadByte(out flags)) {
                 return false;
             }
 
-            col.isColumnSet = (TdsEnums.IsColumnSet == (flags & TdsEnums.IsColumnSet));
+            col.IsColumnSet = (TdsEnums.IsColumnSet == (flags & TdsEnums.IsColumnSet));
             if (fColMD && _serverSupportsColumnEncryption) {
                 col.isEncrypted = (TdsEnums.IsEncrypted == (flags & TdsEnums.IsEncrypted));
             }
@@ -4660,8 +4666,11 @@ namespace Microsoft.Data.SqlClient {
             if (!stateObj.TryReadByte(out byteLength)) {
                 return false;
             }
+            if (metaData.udt is null) {
+                metaData.udt = new SqlMetaDataUdt();
+            }
             if (byteLength != 0) {
-                if (!stateObj.TryReadString(byteLength, out metaData.udtDatabaseName)) {
+                if (!stateObj.TryReadString(byteLength, out metaData.udt.DatabaseName)) {
                     return false;
                 }
             }
@@ -4671,7 +4680,7 @@ namespace Microsoft.Data.SqlClient {
                 return false;
             }
             if (byteLength != 0) {
-                if (!stateObj.TryReadString(byteLength, out metaData.udtSchemaName)) {
+                if (!stateObj.TryReadString(byteLength, out metaData.udt.SchemaName)) {
                     return false;
                 }
             }
@@ -4681,7 +4690,7 @@ namespace Microsoft.Data.SqlClient {
                 return false;
             }
             if (byteLength != 0) {
-                if (!stateObj.TryReadString(byteLength, out metaData.udtTypeName)) {
+                if (!stateObj.TryReadString(byteLength, out metaData.udt.TypeName)) {
                     return false;
                 }
             }
@@ -4690,7 +4699,7 @@ namespace Microsoft.Data.SqlClient {
                 return false;
             }
             if (shortLength != 0) {
-                if (!stateObj.TryReadString(shortLength, out metaData.udtAssemblyQualifiedName)) {
+                if (!stateObj.TryReadString(shortLength, out metaData.udt.AssemblyQualifiedName)) {
                     return false;
                 }
             }
@@ -4866,13 +4875,13 @@ namespace Microsoft.Data.SqlClient {
                     return false;
                 }
 
-                col.isDifferentName = (TdsEnums.SQLDifferentName == (status & TdsEnums.SQLDifferentName));
-                col.isExpression = (TdsEnums.SQLExpression == (status & TdsEnums.SQLExpression));
-                col.isKey = (TdsEnums.SQLKey == (status & TdsEnums.SQLKey));
-                col.isHidden = (TdsEnums.SQLHidden == (status & TdsEnums.SQLHidden));
+                col.IsDifferentName = (TdsEnums.SQLDifferentName == (status & TdsEnums.SQLDifferentName));
+                col.IsExpression = (TdsEnums.SQLExpression == (status & TdsEnums.SQLExpression));
+                col.IsKey = (TdsEnums.SQLKey == (status & TdsEnums.SQLKey));
+                col.IsHidden = (TdsEnums.SQLHidden == (status & TdsEnums.SQLHidden));
 
                 // read off the base table name if it is different than the select list column name
-                if (col.isDifferentName) {
+                if (col.IsDifferentName) {
                     byte len;
                     if (!stateObj.TryReadByte(out len)) {
                         return false;
@@ -4890,8 +4899,8 @@ namespace Microsoft.Data.SqlClient {
                 }
 
                 // MDAC 60109: expressions are readonly
-                if (col.isExpression) {
-                    col.updatability = 0;
+                if (col.IsExpression) {
+                    col.Updatability = 0;
                 }
             }
 
@@ -9639,9 +9648,9 @@ namespace Microsoft.Data.SqlClient {
 
                     // Write the flags
                     UInt16 flags;
-                    flags = (UInt16)(md.updatability << 2);
-                    flags |= (UInt16)(md.isNullable ? (UInt16)TdsEnums.Nullable : (UInt16)0);
-                    flags |= (UInt16)(md.isIdentity ? (UInt16)TdsEnums.Identity : (UInt16)0);
+                    flags = (UInt16)(md.Updatability << 2);
+                    flags |= (UInt16)(md.IsNullable ? (UInt16)TdsEnums.Nullable : (UInt16)0);
+                    flags |= (UInt16)(md.IsIdentity ? (UInt16)TdsEnums.Identity : (UInt16)0);
 
                     // Write the next byte of flags
                     if (_serverSupportsColumnEncryption) { // TCE Supported

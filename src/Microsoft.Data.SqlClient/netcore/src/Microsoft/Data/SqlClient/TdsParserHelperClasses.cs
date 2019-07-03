@@ -749,42 +749,42 @@ namespace Microsoft.Data.SqlClient
             this.encoding = original.encoding;
             this.metaType = original.metaType;
         }
+    }
 
-        sealed internal class SqlMetaDataXmlSchemaCollection
+    sealed internal class SqlMetaDataXmlSchemaCollection
+    {
+        internal string Database;
+        internal string OwningSchema;
+        internal string Name;
+
+        public void CopyFrom(SqlMetaDataXmlSchemaCollection original)
         {
-            internal string Database;
-            internal string OwningSchema;
-            internal string Name;
-
-            public void CopyFrom(SqlMetaDataXmlSchemaCollection original)
+            if (original != null)
             {
-                if (original != null)
-                {
-                    Database = original.Database;
-                    OwningSchema = original.OwningSchema;
-                    Name = original.Name;
-                }
+                Database = original.Database;
+                OwningSchema = original.OwningSchema;
+                Name = original.Name;
             }
         }
+    }
 
-        sealed internal class SqlMetaDataUdt
+    sealed internal class SqlMetaDataUdt
+    {
+        internal Type Type;
+        internal string DatabaseName;
+        internal string SchemaName;
+        internal string TypeName;
+        internal string AssemblyQualifiedName;
+
+        public void CopyFrom(SqlMetaDataUdt original)
         {
-            internal Type Type;
-            internal string DatabaseName;
-            internal string SchemaName;
-            internal string TypeName;
-            internal string AssemblyQualifiedName;
-
-            public void CopyFrom(SqlMetaDataUdt original)
+            if (original != null)
             {
-                if (original != null)
-                {
-                    Type = original.Type;
-                    DatabaseName = original.DatabaseName;
-                    SchemaName = original.SchemaName;
-                    TypeName = original.TypeName;
-                    AssemblyQualifiedName = original.AssemblyQualifiedName;
-                }
+                Type = original.Type;
+                DatabaseName = original.DatabaseName;
+                SchemaName = original.SchemaName;
+                TypeName = original.TypeName;
+                AssemblyQualifiedName = original.AssemblyQualifiedName;
             }
         }
     }

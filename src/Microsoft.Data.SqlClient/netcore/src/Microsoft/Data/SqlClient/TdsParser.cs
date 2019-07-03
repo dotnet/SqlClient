@@ -3578,7 +3578,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     if (rec.xmlSchemaCollection is null)
                     {
-                        rec.xmlSchemaCollection = new SqlMetaDataPriv.SqlMetaDataXmlSchemaCollection();
+                        rec.xmlSchemaCollection = new SqlMetaDataXmlSchemaCollection();
                     }
                     if (len != 0)
                     {
@@ -4286,7 +4286,7 @@ namespace Microsoft.Data.SqlClient
                         }
                         if (col.xmlSchemaCollection is null)
                         {
-                            col.xmlSchemaCollection = new SqlMetaDataPriv.SqlMetaDataXmlSchemaCollection();
+                            col.xmlSchemaCollection = new SqlMetaDataXmlSchemaCollection();
                         }
                         if (byteLen != 0) {
                             if (!stateObj.TryReadString(byteLen, out col.xmlSchemaCollection.Database)) {
@@ -12038,7 +12038,7 @@ namespace Microsoft.Data.SqlClient
             }
             if (metaData.udt is null)
             {
-                metaData.udt = new SqlMetaDataPriv.SqlMetaDataUdt();
+                metaData.udt = new SqlMetaDataUdt();
             }
             if (byteLength != 0)
             {

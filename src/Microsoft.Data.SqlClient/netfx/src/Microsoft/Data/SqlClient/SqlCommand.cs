@@ -5265,7 +5265,7 @@ namespace Microsoft.Data.SqlClient {
                         thisParam.SetSqlBuffer(rec.value);
                     }
 
-                    MetaType mt = MetaType.GetMetaTypeFromSqlDbType(rec.type, rec.isMultiValued);
+                    MetaType mt = MetaType.GetMetaTypeFromSqlDbType(rec.type, rec.IsMultiValued);
 
                     if (rec.type == SqlDbType.Decimal) {
                         thisParam.ScaleInternal = rec.scale;

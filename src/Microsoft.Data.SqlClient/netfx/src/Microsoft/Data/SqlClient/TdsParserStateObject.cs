@@ -2814,11 +2814,18 @@ namespace Microsoft.Data.SqlClient {
 
         // Dumps contents of buffer to SNI for network write.
         internal Task WritePacket(byte flushMode, bool canAccumulate = false) {
-            if  ((_parser.State == TdsParserState.Closed) || (_parser.State == TdsParserState.Broken)) {
+            TdsParserState state = _parser.State;
+            if  ((state == TdsParserState.Closed) || (state == TdsParserState.Broken)) {
                 throw ADP.ClosedConnectionError();
             }
 
-            if (_parser.IsYukonOrNewer && !_bulkCopyOpperationInProgress // ignore the condition checking for bulk copy (SQL BU 414551)
+            if (
+                // This appears to be an optimization to avoid writing empty packets in Yukon
+                // However, since we don't know the version prior to login IsYukonOrNewer was always false prior to login
+                // So removing the IsYukonOrNewer check causes issues since the login packet happens to meet the rest of the conditions below
+                // So we need to avoid this check prior to login completing
+                state == TdsParserState.OpenLoggedIn &&
+                !_bulkCopyOpperationInProgress // ignore the condition checking for bulk copy (SQL BU 414551)
                     && _outBytesUsed == (_outputHeaderLen + BitConverter.ToInt32(_outBuff, _outputHeaderLen))
                     && _outputPacketCount == 0
                 ||  _outBytesUsed == _outputHeaderLen
