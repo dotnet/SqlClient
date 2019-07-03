@@ -2638,9 +2638,9 @@ namespace Microsoft.Data.SqlClient
                 // If its a SQL Type or Nullable UDT
                 object rawValue = GetSqlValueFromSqlBufferInternal(data, metaData);
 
-                // Special case: User wants SqlString, but we have a SqlXml
-                // SqlXml can not be typecast into a SqlString, but we need to support SqlString on XML Types - so do a manual conversion
                 if (typeofT == _typeofSqlString) {
+                    // Special case: User wants SqlString, but we have a SqlXml
+                    // SqlXml can not be typecast into a SqlString, but we need to support SqlString on XML Types - so do a manual conversion
                     SqlXml xmlValue = rawValue as SqlXml;
                     if (xmlValue != null) {
                         if (xmlValue.IsNull) {
@@ -2655,18 +2655,47 @@ namespace Microsoft.Data.SqlClient
                 return (T)rawValue;
             }
             else {
-                // Otherwise Its a CLR or non-Nullable UDT
-                try {
-                    return (T)GetValueFromSqlBufferInternal(data, metaData);
-                }
-                catch (InvalidCastException) {
-                    if (data.IsNull) {
-                        // If the value was actually null, then we should throw a SqlNullValue instead
-                        throw SQL.SqlNullValue();
+                if (typeof(XmlReader) == typeofT) {
+                    if (metaData.metaType.SqlDbType != SqlDbType.Xml) {
+                        throw SQL.XmlReaderNotSupportOnColumnType(metaData.column);
                     }
                     else {
-                        // Legitmate InvalidCast, rethrow
-                        throw;
+                        object clrValue = null;
+                        if (!data.IsNull) {
+                            clrValue = GetValueFromSqlBufferInternal(data, metaData);
+                        }
+                        if (clrValue is null) { // covers IsNull and when there is data which is present but is a clr null somehow
+                            return (T)(object)SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(
+                                new MemoryStream(Array.Empty<byte>(), writable: false),
+                                closeInput: true
+                            );
+                        }
+                        else if (clrValue.GetType() == typeof(string)) {
+                            return (T)(object)SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(
+                                new StringReader(clrValue as string),
+                                closeInput: true
+                            );
+                        }
+                        else {
+                            // try the type cast to throw the invalid cast exception and inform the user what types they're trying to use and that why it is wrong
+                            return (T)clrValue;
+                        }
+                    }
+                }
+                else {
+                    // Otherwise Its a CLR or non-Nullable UDT
+                    try {
+                        return (T)GetValueFromSqlBufferInternal(data, metaData);
+                    }
+                    catch (InvalidCastException) {
+                        if (data.IsNull) {
+                            // If the value was actually null, then we should throw a SqlNullValue instead
+                            throw SQL.SqlNullValue();
+                        }
+                        else {
+                            // Legitmate InvalidCast, rethrow
+                            throw;
+                        }
                     }
                 }
             }
