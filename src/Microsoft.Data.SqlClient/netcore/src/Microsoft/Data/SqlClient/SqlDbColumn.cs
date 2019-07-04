@@ -52,7 +52,7 @@ namespace Microsoft.Data.SqlClient
                 NumericPrecision = _metadata.metaType.Precision;
             }
 
-            IsReadOnly = (0 == _metadata.Updatability);
+            IsReadOnly = _metadata.IsReadOnly;
 
             UdtAssemblyQualifiedName = _metadata.udt?.AssemblyQualifiedName;
 

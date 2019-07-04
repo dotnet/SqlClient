@@ -748,6 +748,19 @@ namespace Microsoft.Data.SqlClient
             this.codePage = original.codePage;
             this.encoding = original.encoding;
             this.metaType = original.metaType;
+            this.flags = original.flags;
+
+            if (original.udt != null)
+            {
+                udt = new SqlMetaDataUdt();
+                udt.CopyFrom(original.udt);
+            }
+
+            if (original.xmlSchemaCollection != null)
+            {
+                xmlSchemaCollection = new SqlMetaDataXmlSchemaCollection();
+                xmlSchemaCollection.CopyFrom(original.xmlSchemaCollection);
+            }
         }
     }
 

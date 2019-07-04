@@ -333,7 +333,7 @@ namespace Microsoft.Data.SqlClient
                                 colMetaData.baseColumn,
                                 colMetaData.IsKey,
                                 colMetaData.IsIdentity,
-                                0 == colMetaData.Updatability,
+                                colMetaData.IsReadOnly,
                                 colMetaData.IsExpression,
                                 colMetaData.IsDifferentName,
                                 colMetaData.IsHidden);
@@ -689,7 +689,7 @@ namespace Microsoft.Data.SqlClient
                     schemaRow[isRowVersion] = false;
                 }
 
-                schemaRow[isReadOnly] = (0 == col.Updatability);
+                schemaRow[isReadOnly] = col.IsReadOnly;
                 schemaRow[isColumnSet] = col.IsColumnSet;
 
                 if (!string.IsNullOrEmpty(col.serverName))
