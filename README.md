@@ -16,7 +16,7 @@ All release notes are available under [release-notes](release-notes).
 
 ## Known issues
 
-1. User Data Types (UDTs) do not work with Microsoft.Data.SqlClient.
+1. User Data Types (UDTs) may not work with Microsoft.Data.SqlClient.
 
 ## Still have questions?
 
