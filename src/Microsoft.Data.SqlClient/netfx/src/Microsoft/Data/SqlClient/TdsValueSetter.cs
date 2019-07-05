@@ -9,13 +9,13 @@
 
 namespace Microsoft.Data.SqlClient {
 
-    using Microsoft.SqlServer.Server;
+    using Microsoft.Data.SqlClient.Server;
     using System;
     using Microsoft.Data.Common;
     using System.Diagnostics;
     using System.Text;
 
-    using MSS = Microsoft.SqlServer.Server;
+    using MSS = Microsoft.Data.SqlClient.Server;
     using System.Data.SqlTypes;
     using System.Data;
 

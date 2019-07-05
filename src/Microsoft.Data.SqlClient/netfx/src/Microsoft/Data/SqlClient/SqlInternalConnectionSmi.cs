@@ -6,7 +6,7 @@
 // <owner current="true" primary="false">sukanyas</owner>
 //------------------------------------------------------------------------------
 
-using Microsoft.SqlServer.Server;
+using Microsoft.Data.SqlClient.Server;
 using Microsoft.Data.Common;
 using System.Diagnostics;
 using SysTx = System.Transactions;

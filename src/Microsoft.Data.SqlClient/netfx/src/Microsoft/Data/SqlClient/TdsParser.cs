@@ -22,7 +22,7 @@ namespace Microsoft.Data.SqlClient {
     using System.Threading.Tasks;
     using System.Xml;
     using Microsoft.Data.SqlTypes;
-    using MSS = Microsoft.SqlServer.Server;
+    using MSS = Microsoft.Data.SqlClient.Server;
     using Microsoft.Data.SqlClient.DataClassification;
     using System.Data.SqlTypes;
     using System.Data;
@@ -8687,7 +8687,7 @@ namespace Microsoft.Data.SqlClient {
                               }
                               else if (mt.SqlDbType == SqlDbType.Udt) {
                                   byte[] udtVal = null;
-                                  Microsoft.SqlServer.Server.Format format = Microsoft.SqlServer.Server.Format.Native;
+                                  MSS.Format format = MSS.Format.Native;
 
                                   Debug.Assert(_isYukon, "Invalid DataType UDT for non-Yukon or later server!");
 

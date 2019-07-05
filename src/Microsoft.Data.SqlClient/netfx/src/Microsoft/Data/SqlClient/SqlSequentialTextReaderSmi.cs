@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.Data.Common;
 using System.Diagnostics;
-using Microsoft.SqlServer.Server;
+using Microsoft.Data.SqlClient.Server;
 
 namespace Microsoft.Data.SqlClient
 {

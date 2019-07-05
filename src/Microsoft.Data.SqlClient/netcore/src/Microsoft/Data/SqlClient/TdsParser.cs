@@ -18,8 +18,8 @@ using Microsoft.Data.Common;
 using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.DataClassification;
 using Microsoft.Data.SqlTypes;
-using Microsoft.SqlServer.Server;
-using MSS = Microsoft.SqlServer.Server;
+using Microsoft.Data.SqlClient.Server;
+using MSS = Microsoft.Data.SqlClient.Server;
 
 namespace Microsoft.Data.SqlClient
 {

@@ -33,7 +33,7 @@ using System.Threading.Tasks;
 using SysTx = System.Transactions;
 using System.Xml;
 
-using Microsoft.SqlServer.Server;
+using Microsoft.Data.SqlClient.Server;
 using System.Data.Common;
 using System.Data.SqlTypes;
 

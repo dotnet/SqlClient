@@ -871,14 +871,14 @@ namespace Microsoft.Data.Common
             return Provider(System.SRHelper.GetString(SR.ADP_TransactionCompletedButNotDisposed));
         }
 
-        internal static ArgumentOutOfRangeException InvalidUserDefinedTypeSerializationFormat(Microsoft.SqlServer.Server.Format value)
+        internal static ArgumentOutOfRangeException InvalidUserDefinedTypeSerializationFormat(Microsoft.Data.SqlClient.Server.Format value)
         {
-            return InvalidEnumerationValue(typeof(Microsoft.SqlServer.Server.Format), (int)value);
+            return InvalidEnumerationValue(typeof(Microsoft.Data.SqlClient.Server.Format), (int)value);
         }
 
-        internal static ArgumentOutOfRangeException NotSupportedUserDefinedTypeSerializationFormat(Microsoft.SqlServer.Server.Format value, string method)
+        internal static ArgumentOutOfRangeException NotSupportedUserDefinedTypeSerializationFormat(Microsoft.Data.SqlClient.Server.Format value, string method)
         {
-            return NotSupportedEnumerationValue(typeof(Microsoft.SqlServer.Server.Format), value.ToString(), method);
+            return NotSupportedEnumerationValue(typeof(Microsoft.Data.SqlClient.Server.Format), value.ToString(), method);
         }
 
         internal static ArgumentOutOfRangeException ArgumentOutOfRange(string message, string parameterName, object value)

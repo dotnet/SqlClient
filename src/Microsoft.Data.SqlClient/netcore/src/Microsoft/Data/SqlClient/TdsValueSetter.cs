@@ -3,15 +3,14 @@
 // See the LICENSE file in the project root for more information.
 
 using Microsoft.Data.Common;
-using Microsoft.SqlServer.Server;
+using Microsoft.Data.SqlClient.Server;
 using System;
 using System.Data;
-using System.Data.Common;
 using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Text;
 
-using MSS = Microsoft.SqlServer.Server;
+using MSS = Microsoft.Data.SqlClient.Server;
 
 namespace Microsoft.Data.SqlClient
 {

@@ -3,7 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 
-using Microsoft.SqlServer.Server;
+using Microsoft.Data.SqlClient.Server;
 using System.Diagnostics;
 using System.Data.SqlTypes;
 using System;

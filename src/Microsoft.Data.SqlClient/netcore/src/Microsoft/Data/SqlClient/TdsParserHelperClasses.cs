@@ -15,7 +15,7 @@ using System.Text;
 using System.Threading;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlTypes;
-using Microsoft.SqlServer.Server;
+using Microsoft.Data.SqlClient.Server;
 
 namespace Microsoft.Data.SqlClient
 {

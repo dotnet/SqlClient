@@ -12,18 +12,18 @@ namespace Microsoft.Data.SqlClient {
     using System;
     using System.Collections.Generic;
     using System.Reflection;
-    using Microsoft.SqlServer.Server;
+    using Microsoft.Data.SqlClient.Server;
 
     internal class SqlUdtInfo {
-        internal readonly Microsoft.SqlServer.Server.Format SerializationFormat;
+        internal readonly Format SerializationFormat;
         internal readonly bool IsByteOrdered;
         internal readonly bool IsFixedLength;
         internal readonly int MaxByteSize;
         internal readonly string Name;
         internal readonly string ValidationMethodName;
 
-        private SqlUdtInfo(Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute attr) {
-            SerializationFormat = (Microsoft.SqlServer.Server.Format)attr.Format;
+        private SqlUdtInfo(SqlUserDefinedTypeAttribute attr) {
+            SerializationFormat = (Format)attr.Format;
             IsByteOrdered       = attr.IsByteOrdered;
             IsFixedLength       = attr.IsFixedLength;
             MaxByteSize         = attr.MaxByteSize;
@@ -32,7 +32,8 @@ namespace Microsoft.Data.SqlClient {
         }
         internal static SqlUdtInfo GetFromType(Type target) {
             SqlUdtInfo udtAttr = TryGetFromType(target);
-            if (udtAttr == null) {
+            if (udtAttr == null)
+            {
                 Type myType = typeof(InvalidUdtException);
                 var arguments = new Type[] { typeof(Type), typeof(String) };
                 MethodInfo Create = myType.GetMethod("Create", arguments);
@@ -54,9 +55,9 @@ namespace Microsoft.Data.SqlClient {
             SqlUdtInfo udtAttr = null;
             if (!m_types2UdtInfo.TryGetValue(target, out udtAttr)) {
                 // query SqlUserDefinedTypeAttribute first time and cache the result
-                object[] attr = target.GetCustomAttributes(typeof(Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute), false);
+                object[] attr = target.GetCustomAttributes(typeof(SqlUserDefinedTypeAttribute), false);
                 if (attr != null && attr.Length == 1) {
-                    udtAttr = new SqlUdtInfo((Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute)attr[0]);
+                    udtAttr = new SqlUdtInfo((SqlUserDefinedTypeAttribute)attr[0]);
                 }
                 m_types2UdtInfo.Add(target, udtAttr);
             }

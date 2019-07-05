@@ -15,7 +15,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 
-using Microsoft.SqlServer.Server;
+using Microsoft.Data.SqlClient.Server;
 using System.Globalization;
 using System.Data;
 using Microsoft.Data.Common;

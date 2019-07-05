@@ -9,7 +9,7 @@
 
 namespace Microsoft.Data.SqlClient {
 
-    using Microsoft.SqlServer.Server;
+    using Microsoft.Data.SqlClient.Server;
     using System;
     using System.Diagnostics;
     using System.Data.SqlTypes;

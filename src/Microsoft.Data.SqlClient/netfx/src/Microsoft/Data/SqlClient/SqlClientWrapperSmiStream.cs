@@ -6,7 +6,7 @@
 // <owner current="true" primary="false">stevesta</owner>
 //------------------------------------------------------------------------------
 
-namespace Microsoft.SqlServer.Server {
+namespace Microsoft.Data.SqlClient.Server {
 
     using System.Diagnostics;
     using System.IO;

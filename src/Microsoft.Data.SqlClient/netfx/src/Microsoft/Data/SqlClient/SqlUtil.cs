@@ -1628,7 +1628,7 @@ namespace Microsoft.Data.SqlClient {
         static internal Exception NotificationsNotAvailableOnContextConnection() {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_NotificationsNotAvailableOnContextConnection));
         }
-        static internal Exception UnexpectedSmiEvent(Microsoft.SqlServer.Server.SmiEventSink_Default.UnexpectedEventType eventType) {
+        static internal Exception UnexpectedSmiEvent(Microsoft.Data.SqlClient.Server.SmiEventSink_Default.UnexpectedEventType eventType) {
             Debug.Assert(false, "UnexpectedSmiEvent: "+eventType.ToString());    // Assert here, because these exceptions will most likely be eaten by the server.
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_UnexpectedSmiEvent, (int)eventType));
         }

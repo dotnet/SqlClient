@@ -37,7 +37,7 @@ namespace Microsoft.Data.SqlClient
     using System.Reflection;
     using System.Runtime.Versioning;
     
-    using Microsoft.SqlServer.Server;
+    using Microsoft.Data.SqlClient.Server;
     using System.Security.Principal;
     using System.Diagnostics.CodeAnalysis;
     using System.Data;
@@ -2323,12 +2323,12 @@ namespace Microsoft.Data.SqlClient
         }
 
         internal byte[] GetBytes(object o) {
-            Microsoft.SqlServer.Server.Format format  = Microsoft.SqlServer.Server.Format.Native;
+            Format format  = Format.Native;
             int    maxSize = 0;
             return GetBytes(o, out format, out maxSize);
         }
 
-        internal byte[] GetBytes(object o, out Microsoft.SqlServer.Server.Format format, out int maxSize) {
+        internal byte[] GetBytes(object o, out Format format, out int maxSize) {
             SqlUdtInfo attr = AssemblyCache.GetInfoFromType(o.GetType());
             maxSize = attr.MaxByteSize;
             format  = attr.SerializationFormat;

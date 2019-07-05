@@ -8,7 +8,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Data.SqlTypes;
 using System.IO;
-using Microsoft.SqlServer.Server;
+using Microsoft.Data.SqlClient.Server;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {

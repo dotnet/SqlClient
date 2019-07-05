@@ -30,6 +30,12 @@ namespace Microsoft.Data.SqlClient
         Auto = 0,
         NeverBlock = 2,
     }
+    public enum SortOrder
+    {
+        Ascending = 0,
+        Descending = 1,
+        Unspecified = -1,
+    }
     public abstract partial class SqlAuthenticationInitializer
     {
         protected SqlAuthenticationInitializer() { }
@@ -1024,5 +1030,240 @@ namespace Microsoft.Data.SqlClient.DataClassification
         public SensitivityProperty(Microsoft.Data.SqlClient.DataClassification.Label label, Microsoft.Data.SqlClient.DataClassification.InformationType informationType) { }
         public Microsoft.Data.SqlClient.DataClassification.InformationType InformationType { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
         public Microsoft.Data.SqlClient.DataClassification.Label Label { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
+    }
+}
+
+namespace Microsoft.Data.SqlClient.Server
+{
+    public sealed partial class InvalidUdtException : System.SystemException
+    {
+        internal InvalidUdtException() { }
+    }
+
+    public enum DataAccessKind
+    {
+        None = 0,
+        Read = 1
+    }
+    public enum SystemDataAccessKind
+    {
+        None = 0,
+        Read = 1
+    }
+
+    [System.AttributeUsage(System.AttributeTargets.Method, AllowMultiple = false, Inherited = false), System.SerializableAttribute]
+    public partial class SqlFunctionAttribute : System.Attribute
+    {
+        public SqlFunctionAttribute() { }
+        public bool IsDeterministic { get { throw null; } set { } }
+        public DataAccessKind DataAccess { get { throw null; } set { } }
+        public SystemDataAccessKind SystemDataAccess { get { throw null; } set { } }
+        public bool IsPrecise { get { throw null; } set { } }
+        public string Name { get { throw null; } set { } }
+        public string TableDefinition { get { throw null; } set { } }
+        public string FillRowMethodName { get { throw null; } set { } }
+    }
+
+    public partial class SqlDataRecord : System.Data.IDataRecord
+    {
+        public SqlDataRecord(params Microsoft.Data.SqlClient.Server.SqlMetaData[] metaData) { }
+        public virtual int FieldCount { get { throw null; } }
+        public virtual object this[int ordinal] { get { throw null; } }
+        public virtual object this[string name] { get { throw null; } }
+        public virtual bool GetBoolean(int ordinal) { throw null; }
+        public virtual byte GetByte(int ordinal) { throw null; }
+        public virtual long GetBytes(int ordinal, long fieldOffset, byte[] buffer, int bufferOffset, int length) { throw null; }
+        public virtual char GetChar(int ordinal) { throw null; }
+        public virtual long GetChars(int ordinal, long fieldOffset, char[] buffer, int bufferOffset, int length) { throw null; }
+        System.Data.IDataReader System.Data.IDataRecord.GetData(int ordinal) { throw null; }
+        public virtual string GetDataTypeName(int ordinal) { throw null; }
+        public virtual System.DateTime GetDateTime(int ordinal) { throw null; }
+        public virtual System.DateTimeOffset GetDateTimeOffset(int ordinal) { throw null; }
+        public virtual decimal GetDecimal(int ordinal) { throw null; }
+        public virtual double GetDouble(int ordinal) { throw null; }
+        public virtual System.Type GetFieldType(int ordinal) { throw null; }
+        public virtual float GetFloat(int ordinal) { throw null; }
+        public virtual System.Guid GetGuid(int ordinal) { throw null; }
+        public virtual short GetInt16(int ordinal) { throw null; }
+        public virtual int GetInt32(int ordinal) { throw null; }
+        public virtual long GetInt64(int ordinal) { throw null; }
+        public virtual string GetName(int ordinal) { throw null; }
+        public virtual int GetOrdinal(string name) { throw null; }
+        public virtual System.Data.SqlTypes.SqlBinary GetSqlBinary(int ordinal) { throw null; }
+        public virtual System.Data.SqlTypes.SqlBoolean GetSqlBoolean(int ordinal) { throw null; }
+        public virtual System.Data.SqlTypes.SqlByte GetSqlByte(int ordinal) { throw null; }
+        public virtual System.Data.SqlTypes.SqlBytes GetSqlBytes(int ordinal) { throw null; }
+        public virtual System.Data.SqlTypes.SqlChars GetSqlChars(int ordinal) { throw null; }
+        public virtual System.Data.SqlTypes.SqlDateTime GetSqlDateTime(int ordinal) { throw null; }
+        public virtual System.Data.SqlTypes.SqlDecimal GetSqlDecimal(int ordinal) { throw null; }
+        public virtual System.Data.SqlTypes.SqlDouble GetSqlDouble(int ordinal) { throw null; }
+        public virtual System.Type GetSqlFieldType(int ordinal) { throw null; }
+        public virtual System.Data.SqlTypes.SqlGuid GetSqlGuid(int ordinal) { throw null; }
+        public virtual System.Data.SqlTypes.SqlInt16 GetSqlInt16(int ordinal) { throw null; }
+        public virtual System.Data.SqlTypes.SqlInt32 GetSqlInt32(int ordinal) { throw null; }
+        public virtual System.Data.SqlTypes.SqlInt64 GetSqlInt64(int ordinal) { throw null; }
+        public virtual Microsoft.Data.SqlClient.Server.SqlMetaData GetSqlMetaData(int ordinal) { throw null; }
+        public virtual System.Data.SqlTypes.SqlMoney GetSqlMoney(int ordinal) { throw null; }
+        public virtual System.Data.SqlTypes.SqlSingle GetSqlSingle(int ordinal) { throw null; }
+        public virtual System.Data.SqlTypes.SqlString GetSqlString(int ordinal) { throw null; }
+        public virtual object GetSqlValue(int ordinal) { throw null; }
+        public virtual int GetSqlValues(object[] values) { throw null; }
+        public virtual System.Data.SqlTypes.SqlXml GetSqlXml(int ordinal) { throw null; }
+        public virtual string GetString(int ordinal) { throw null; }
+        public virtual System.TimeSpan GetTimeSpan(int ordinal) { throw null; }
+        public virtual object GetValue(int ordinal) { throw null; }
+        public virtual int GetValues(object[] values) { throw null; }
+        public virtual bool IsDBNull(int ordinal) { throw null; }
+        public virtual void SetBoolean(int ordinal, bool value) { }
+        public virtual void SetByte(int ordinal, byte value) { }
+        public virtual void SetBytes(int ordinal, long fieldOffset, byte[] buffer, int bufferOffset, int length) { }
+        public virtual void SetChar(int ordinal, char value) { }
+        public virtual void SetChars(int ordinal, long fieldOffset, char[] buffer, int bufferOffset, int length) { }
+        public virtual void SetDateTime(int ordinal, System.DateTime value) { }
+        public virtual void SetDateTimeOffset(int ordinal, System.DateTimeOffset value) { }
+        public virtual void SetDBNull(int ordinal) { }
+        public virtual void SetDecimal(int ordinal, decimal value) { }
+        public virtual void SetDouble(int ordinal, double value) { }
+        public virtual void SetFloat(int ordinal, float value) { }
+        public virtual void SetGuid(int ordinal, System.Guid value) { }
+        public virtual void SetInt16(int ordinal, short value) { }
+        public virtual void SetInt32(int ordinal, int value) { }
+        public virtual void SetInt64(int ordinal, long value) { }
+        public virtual void SetSqlBinary(int ordinal, System.Data.SqlTypes.SqlBinary value) { }
+        public virtual void SetSqlBoolean(int ordinal, System.Data.SqlTypes.SqlBoolean value) { }
+        public virtual void SetSqlByte(int ordinal, System.Data.SqlTypes.SqlByte value) { }
+        public virtual void SetSqlBytes(int ordinal, System.Data.SqlTypes.SqlBytes value) { }
+        public virtual void SetSqlChars(int ordinal, System.Data.SqlTypes.SqlChars value) { }
+        public virtual void SetSqlDateTime(int ordinal, System.Data.SqlTypes.SqlDateTime value) { }
+        public virtual void SetSqlDecimal(int ordinal, System.Data.SqlTypes.SqlDecimal value) { }
+        public virtual void SetSqlDouble(int ordinal, System.Data.SqlTypes.SqlDouble value) { }
+        public virtual void SetSqlGuid(int ordinal, System.Data.SqlTypes.SqlGuid value) { }
+        public virtual void SetSqlInt16(int ordinal, System.Data.SqlTypes.SqlInt16 value) { }
+        public virtual void SetSqlInt32(int ordinal, System.Data.SqlTypes.SqlInt32 value) { }
+        public virtual void SetSqlInt64(int ordinal, System.Data.SqlTypes.SqlInt64 value) { }
+        public virtual void SetSqlMoney(int ordinal, System.Data.SqlTypes.SqlMoney value) { }
+        public virtual void SetSqlSingle(int ordinal, System.Data.SqlTypes.SqlSingle value) { }
+        public virtual void SetSqlString(int ordinal, System.Data.SqlTypes.SqlString value) { }
+        public virtual void SetSqlXml(int ordinal, System.Data.SqlTypes.SqlXml value) { }
+        public virtual void SetString(int ordinal, string value) { }
+        public virtual void SetTimeSpan(int ordinal, System.TimeSpan value) { }
+        public virtual void SetValue(int ordinal, object value) { }
+        public virtual int SetValues(params object[] values) { throw null; }
+    }
+
+    public sealed partial class SqlMetaData
+    {
+        public SqlMetaData(string name, System.Data.SqlDbType dbType) { }
+        public SqlMetaData(string name, System.Data.SqlDbType dbType, bool useServerDefault, bool isUniqueKey, Microsoft.Data.SqlClient.SortOrder columnSortOrder, int sortOrdinal) { }
+        public SqlMetaData(string name, System.Data.SqlDbType dbType, byte precision, byte scale) { }
+        public SqlMetaData(string name, System.Data.SqlDbType dbType, byte precision, byte scale, bool useServerDefault, bool isUniqueKey, Microsoft.Data.SqlClient.SortOrder columnSortOrder, int sortOrdinal) { }
+        public SqlMetaData(string name, System.Data.SqlDbType dbType, long maxLength) { }
+        public SqlMetaData(string name, System.Data.SqlDbType dbType, long maxLength, bool useServerDefault, bool isUniqueKey, Microsoft.Data.SqlClient.SortOrder columnSortOrder, int sortOrdinal) { }
+        public SqlMetaData(string name, System.Data.SqlDbType dbType, long maxLength, byte precision, byte scale, long locale, System.Data.SqlTypes.SqlCompareOptions compareOptions, System.Type userDefinedType) { }
+        public SqlMetaData(string name, System.Data.SqlDbType dbType, long maxLength, byte precision, byte scale, long localeId, System.Data.SqlTypes.SqlCompareOptions compareOptions, System.Type userDefinedType, bool useServerDefault, bool isUniqueKey, Microsoft.Data.SqlClient.SortOrder columnSortOrder, int sortOrdinal) { }
+        public SqlMetaData(string name, System.Data.SqlDbType dbType, long maxLength, long locale, System.Data.SqlTypes.SqlCompareOptions compareOptions) { }
+        public SqlMetaData(string name, System.Data.SqlDbType dbType, long maxLength, long locale, System.Data.SqlTypes.SqlCompareOptions compareOptions, bool useServerDefault, bool isUniqueKey, Microsoft.Data.SqlClient.SortOrder columnSortOrder, int sortOrdinal) { }
+        public SqlMetaData(string name, System.Data.SqlDbType dbType, string database, string owningSchema, string objectName) { }
+        public SqlMetaData(string name, System.Data.SqlDbType dbType, string database, string owningSchema, string objectName, bool useServerDefault, bool isUniqueKey, Microsoft.Data.SqlClient.SortOrder columnSortOrder, int sortOrdinal) { }
+        public SqlMetaData(string name, System.Data.SqlDbType dbType, System.Type userDefinedType) { }
+        public SqlMetaData(string name, System.Data.SqlDbType dbType, System.Type userDefinedType, string serverTypeName) { }
+        public SqlMetaData(string name, System.Data.SqlDbType dbType, System.Type userDefinedType, string serverTypeName, bool useServerDefault, bool isUniqueKey, Microsoft.Data.SqlClient.SortOrder columnSortOrder, int sortOrdinal) { }
+
+        public System.Data.SqlTypes.SqlCompareOptions CompareOptions { get { throw null; } }
+        public System.Data.DbType DbType { get { throw null; } }
+        public bool IsUniqueKey { get { throw null; } }
+        public long LocaleId { get { throw null; } }
+        public static long Max { get { throw null; } }
+        public long MaxLength { get { throw null; } }
+        public string Name { get { throw null; } }
+        public byte Precision { get { throw null; } }
+        public byte Scale { get { throw null; } }
+        public Microsoft.Data.SqlClient.SortOrder SortOrder { get { throw null; } }
+        public int SortOrdinal { get { throw null; } }
+        public System.Data.SqlDbType SqlDbType { get { throw null; } }
+        public System.Type Type { get { throw null; } }
+        public string TypeName { get { throw null; } }
+        public bool UseServerDefault { get { throw null; } }
+        public string XmlSchemaCollectionDatabase { get { throw null; } }
+        public string XmlSchemaCollectionName { get { throw null; } }
+        public string XmlSchemaCollectionOwningSchema { get { throw null; } }
+        public bool Adjust(bool value) { throw null; }
+        public byte Adjust(byte value) { throw null; }
+        public byte[] Adjust(byte[] value) { throw null; }
+        public char Adjust(char value) { throw null; }
+        public char[] Adjust(char[] value) { throw null; }
+        public System.Data.SqlTypes.SqlBinary Adjust(System.Data.SqlTypes.SqlBinary value) { throw null; }
+        public System.Data.SqlTypes.SqlBoolean Adjust(System.Data.SqlTypes.SqlBoolean value) { throw null; }
+        public System.Data.SqlTypes.SqlByte Adjust(System.Data.SqlTypes.SqlByte value) { throw null; }
+        public System.Data.SqlTypes.SqlBytes Adjust(System.Data.SqlTypes.SqlBytes value) { throw null; }
+        public System.Data.SqlTypes.SqlChars Adjust(System.Data.SqlTypes.SqlChars value) { throw null; }
+        public System.Data.SqlTypes.SqlDateTime Adjust(System.Data.SqlTypes.SqlDateTime value) { throw null; }
+        public System.Data.SqlTypes.SqlDecimal Adjust(System.Data.SqlTypes.SqlDecimal value) { throw null; }
+        public System.Data.SqlTypes.SqlDouble Adjust(System.Data.SqlTypes.SqlDouble value) { throw null; }
+        public System.Data.SqlTypes.SqlGuid Adjust(System.Data.SqlTypes.SqlGuid value) { throw null; }
+        public System.Data.SqlTypes.SqlInt16 Adjust(System.Data.SqlTypes.SqlInt16 value) { throw null; }
+        public System.Data.SqlTypes.SqlInt32 Adjust(System.Data.SqlTypes.SqlInt32 value) { throw null; }
+        public System.Data.SqlTypes.SqlInt64 Adjust(System.Data.SqlTypes.SqlInt64 value) { throw null; }
+        public System.Data.SqlTypes.SqlMoney Adjust(System.Data.SqlTypes.SqlMoney value) { throw null; }
+        public System.Data.SqlTypes.SqlSingle Adjust(System.Data.SqlTypes.SqlSingle value) { throw null; }
+        public System.Data.SqlTypes.SqlString Adjust(System.Data.SqlTypes.SqlString value) { throw null; }
+        public System.Data.SqlTypes.SqlXml Adjust(System.Data.SqlTypes.SqlXml value) { throw null; }
+        public System.DateTime Adjust(System.DateTime value) { throw null; }
+        public System.DateTimeOffset Adjust(System.DateTimeOffset value) { throw null; }
+        public decimal Adjust(decimal value) { throw null; }
+        public double Adjust(double value) { throw null; }
+        public System.Guid Adjust(System.Guid value) { throw null; }
+        public short Adjust(short value) { throw null; }
+        public int Adjust(int value) { throw null; }
+        public long Adjust(long value) { throw null; }
+        public object Adjust(object value) { throw null; }
+        public float Adjust(float value) { throw null; }
+        public string Adjust(string value) { throw null; }
+        public System.TimeSpan Adjust(System.TimeSpan value) { throw null; }
+        public static Microsoft.Data.SqlClient.Server.SqlMetaData InferFromValue(object value, string name) { throw null; }
+    }
+
+    [System.AttributeUsage(System.AttributeTargets.Method, AllowMultiple = false, Inherited = false), System.SerializableAttribute]
+    public sealed partial class SqlMethodAttribute : SqlFunctionAttribute
+    {
+        public SqlMethodAttribute() { }
+        public bool OnNullCall { get { throw null; } set { } }
+        public bool IsMutator { get { throw null; } set { } }
+        public bool InvokeIfReceiverIsNull { get { throw null; } set { } }
+    }
+    public enum Format
+    {
+        Unknown = 0,
+        Native = 1,
+        UserDefined = 2
+    }
+    [System.AttributeUsage(System.AttributeTargets.Class | System.AttributeTargets.Struct, AllowMultiple = false, Inherited = false)]
+    public sealed partial class SqlUserDefinedAggregateAttribute : System.Attribute
+    {
+        public const int MaxByteSizeValue = 8000;
+        public SqlUserDefinedAggregateAttribute(Format format) { }
+        public int MaxByteSize { get { throw null; } set { } }
+        public bool IsInvariantToDuplicates { get { throw null; } set { } }
+        public bool IsInvariantToNulls { get { throw null; } set { } }
+        public bool IsInvariantToOrder { get { throw null; } set { } }
+        public bool IsNullIfEmpty { get { throw null; } set { } }
+        public Format Format { get { throw null; } }
+        public string Name { get { throw null; } set { } }
+    }
+    [System.AttributeUsage(System.AttributeTargets.Class | System.AttributeTargets.Struct, AllowMultiple = false, Inherited = true)]
+    public sealed partial class SqlUserDefinedTypeAttribute : System.Attribute
+    {
+        public SqlUserDefinedTypeAttribute(Format format) { }
+        public int MaxByteSize { get { throw null; } set { } }
+        public bool IsFixedLength { get { throw null; } set { } }
+        public bool IsByteOrdered { get { throw null; } set { } }
+        public Format Format { get { throw null; } }
+        public string ValidationMethodName { get { throw null; } set { } }
+        public string Name { get { throw null; } set { } }
+    }
+    public interface IBinarySerialize
+    {
+        void Read(System.IO.BinaryReader r);
+        void Write(System.IO.BinaryWriter w);
     }
 }

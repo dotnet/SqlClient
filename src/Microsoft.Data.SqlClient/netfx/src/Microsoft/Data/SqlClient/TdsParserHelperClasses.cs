@@ -18,7 +18,7 @@ namespace Microsoft.Data.SqlClient {
     using System.Security;
     using System.Globalization;
 
-    using Microsoft.SqlServer.Server; // for SMI metadata
+    using Microsoft.Data.SqlClient.Server; // for SMI metadata
     using Microsoft.Data.SqlTypes;
 
     internal enum CallbackType {

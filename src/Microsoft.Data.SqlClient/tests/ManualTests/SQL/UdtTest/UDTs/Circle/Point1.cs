@@ -6,8 +6,7 @@ using System;
 using System.IO;
 using System.Data.SqlTypes;
 using System.Text;
-
-using Microsoft.SqlServer.Server;
+using Microsoft.Data.SqlClient.Server;
 
 [Serializable]
 [SqlUserDefinedType(Format.UserDefined, IsByteOrdered = true, MaxByteSize = 9)]

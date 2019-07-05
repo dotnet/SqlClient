@@ -17,7 +17,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Transactions;
 
-using Microsoft.SqlServer.Server;
+using Microsoft.Data.SqlClient.Server;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests

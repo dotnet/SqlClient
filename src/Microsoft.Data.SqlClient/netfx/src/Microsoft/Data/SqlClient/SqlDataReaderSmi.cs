@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClient {
     using System.Diagnostics;        // for Conditional compilation
     using System.Diagnostics.CodeAnalysis;
     using System.Xml;
-    using Microsoft.SqlServer.Server;
+    using Microsoft.Data.SqlClient.Server;
     using Microsoft.Data.ProviderBase;
     using Microsoft.Data.Common;
     using System.Threading.Tasks;

@@ -22,6 +22,7 @@ using System.Runtime.InteropServices;
 using System.Security;
 using System.Security.Permissions;
 using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient.Server;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -691,21 +692,21 @@ namespace Microsoft.Data.Common {
             return NotSupportedEnumerationValue(typeof(StatementType), value.ToString(), method);
         }
 
-        static internal ArgumentOutOfRangeException InvalidUserDefinedTypeSerializationFormat(Microsoft.SqlServer.Server.Format value) {
+        static internal ArgumentOutOfRangeException InvalidUserDefinedTypeSerializationFormat(Format value) {
 #if DEBUG
             switch(value) {
-            case Microsoft.SqlServer.Server.Format.Unknown:
-            case Microsoft.SqlServer.Server.Format.Native:
-            case Microsoft.SqlServer.Server.Format.UserDefined:
+            case Format.Unknown:
+            case Format.Native:
+            case Format.UserDefined:
                 Debug.Assert(false, "valid UserDefinedTypeSerializationFormat " + value.ToString());
                 break;
             }
 #endif
-            return InvalidEnumerationValue(typeof(Microsoft.SqlServer.Server.Format), (int) value);
+            return InvalidEnumerationValue(typeof(Format), (int) value);
         }
 
-        static internal ArgumentOutOfRangeException NotSupportedUserDefinedTypeSerializationFormat(Microsoft.SqlServer.Server.Format value, string method) {
-            return ADP.NotSupportedEnumerationValue(typeof(Microsoft.SqlServer.Server.Format), value.ToString(), method);
+        static internal ArgumentOutOfRangeException NotSupportedUserDefinedTypeSerializationFormat(Format value, string method) {
+            return ADP.NotSupportedEnumerationValue(typeof(Format), value.ToString(), method);
         }
 
         //

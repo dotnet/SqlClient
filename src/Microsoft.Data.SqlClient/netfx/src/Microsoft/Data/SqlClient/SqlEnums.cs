@@ -17,7 +17,7 @@ namespace Microsoft.Data.SqlClient {
     using System.Xml;
     using System.IO;
 
-    using MSS=Microsoft.SqlServer.Server;
+    using MSS= Microsoft.Data.SqlClient.Server;
     using System.Data;
     using System.Data.Common;
     using System.Data.SqlTypes;
@@ -480,7 +480,7 @@ namespace Microsoft.Data.SqlClient {
         [Conditional("DEBUG")]
         private static void AssertIsUserDefinedTypeInstance(object sqlValue, string failedAssertMessage)
         {
-            Type type = sqlValue.GetType(); 
+            Type type = sqlValue.GetType();
             Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute[] attributes = (Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute[])type.GetCustomAttributes(typeof(Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute), true);
 
             Debug.Assert(attributes.Length > 0, failedAssertMessage);

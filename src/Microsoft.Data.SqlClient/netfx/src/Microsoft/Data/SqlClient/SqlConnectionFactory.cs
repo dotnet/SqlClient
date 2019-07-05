@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient
     using System.IO;
     using System.Runtime.Versioning;
 
-    using Microsoft.SqlServer.Server;
+    using Microsoft.Data.SqlClient.Server;
     using System.Data.Common;
     using Microsoft.Data.Common;
 

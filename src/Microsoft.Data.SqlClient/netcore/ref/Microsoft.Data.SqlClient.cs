@@ -2,7 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-namespace Microsoft.SqlServer.Server
+namespace Microsoft.Data.SqlClient.Server
 {
     public sealed partial class InvalidUdtException : System.SystemException
     {
@@ -10,7 +10,7 @@ namespace Microsoft.SqlServer.Server
     }
     public partial class SqlDataRecord : System.Data.IDataRecord
     {
-        public SqlDataRecord(params Microsoft.SqlServer.Server.SqlMetaData[] metaData) { }
+        public SqlDataRecord(params Microsoft.Data.SqlClient.Server.SqlMetaData[] metaData) { }
         public virtual int FieldCount { get { throw null; } }
         public virtual object this[int ordinal] { get { throw null; } }
         public virtual object this[string name] { get { throw null; } }
@@ -46,7 +46,7 @@ namespace Microsoft.SqlServer.Server
         public virtual System.Data.SqlTypes.SqlInt16 GetSqlInt16(int ordinal) { throw null; }
         public virtual System.Data.SqlTypes.SqlInt32 GetSqlInt32(int ordinal) { throw null; }
         public virtual System.Data.SqlTypes.SqlInt64 GetSqlInt64(int ordinal) { throw null; }
-        public virtual Microsoft.SqlServer.Server.SqlMetaData GetSqlMetaData(int ordinal) { throw null; }
+        public virtual Microsoft.Data.SqlClient.Server.SqlMetaData GetSqlMetaData(int ordinal) { throw null; }
         public virtual System.Data.SqlTypes.SqlMoney GetSqlMoney(int ordinal) { throw null; }
         public virtual System.Data.SqlTypes.SqlSingle GetSqlSingle(int ordinal) { throw null; }
         public virtual System.Data.SqlTypes.SqlString GetSqlString(int ordinal) { throw null; }
@@ -186,7 +186,7 @@ namespace Microsoft.SqlServer.Server
         public float Adjust(float value) { throw null; }
         public string Adjust(string value) { throw null; }
         public System.TimeSpan Adjust(System.TimeSpan value) { throw null; }
-        public static Microsoft.SqlServer.Server.SqlMetaData InferFromValue(object value, string name) { throw null; }
+        public static Microsoft.Data.SqlClient.Server.SqlMetaData InferFromValue(object value, string name) { throw null; }
     }
     [System.AttributeUsage(System.AttributeTargets.Method, AllowMultiple = false, Inherited = false), System.SerializableAttribute]
     public sealed partial class SqlMethodAttribute : SqlFunctionAttribute

@@ -11,7 +11,7 @@
 namespace Microsoft.Data.SqlClient {
 
     using System.Collections.Generic;
-    using Microsoft.SqlServer.Server;
+    using Microsoft.Data.SqlClient.Server;
 
 
     // simple storage to contain objects that must be generated prior to sending data, but

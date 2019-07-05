@@ -101,6 +101,16 @@
     <Compile Include="Microsoft\Data\SqlClient\ParameterPeekAheadValue.cs" />
     <Compile Include="Microsoft\Data\SqlClient\PoolBlockingPeriod.cs" />
     <Compile Include="Microsoft\Data\SqlClient\AssemblyRef.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\IBinarySerialize.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\InvalidUdtException.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\SqlDataRecord.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\SqlFunctionAttribute.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\SqlMetaData.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\SqlMethodAttribute.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\SqlUserDefinedAggregateAttribute.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\SqlUserDefinedTypeAttribute.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\TriggerAction.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SortOrder.cs" />
     <Compile Include="Resources\ResCategoryAttribute.cs" />
     <Compile Include="Resources\ResDescriptionAttribute.cs" />
     <Compile Include="Microsoft\Data\SqlClient\RowsCopiedEventArgs.cs" />
@@ -252,37 +262,37 @@
     <Compile Include="Microsoft\Data\ProviderBase\TimeoutTimer.cs" />
     <Compile Include="Microsoft\Data\SqlEventSource.cs" />
     <Compile Include="Microsoft\Data\RelationshipConverter.cs" />
-    <Compile Include="Microsoft\SqlServer\Server\ITypedGetters.cs" />
-    <Compile Include="Microsoft\SqlServer\Server\ITypedGettersV3.cs" />
-    <Compile Include="Microsoft\SqlServer\Server\ITypedSetters.cs" />
-    <Compile Include="Microsoft\SqlServer\Server\ITypedSettersV3.cs" />
-    <Compile Include="Microsoft\SqlServer\Server\ExtendedClrTypeCode.cs" />
-    <Compile Include="Microsoft\SqlServer\Server\MemoryRecordBuffer.cs" />
-    <Compile Include="Microsoft\SqlServer\Server\MetadataUtilsSmi.cs" />
-    <Compile Include="Microsoft\SqlServer\Server\SmiConnection.cs" />
-    <Compile Include="Microsoft\SqlServer\Server\SmiContext.cs" />
-    <Compile Include="Microsoft\SqlServer\Server\SmiContextFactory.cs" />
-    <Compile Include="Microsoft\SqlServer\Server\SmiEventSink.cs" />
-    <Compile Include="Microsoft\SqlServer\Server\SmiEventSink_Default.cs" />
-    <Compile Include="Microsoft\SqlServer\Server\SmiEventSink_DeferedProcessing.cs" />
-    <Compile Include="Microsoft\SqlServer\Server\SmiEventStream.cs" />
-    <Compile Include="Microsoft\SqlServer\Server\SmiExecuteType.cs" />
-    <Compile Include="Microsoft\SqlServer\Server\SmiGettersStream.cs" />
-    <Compile Include="Microsoft\SqlServer\Server\SmiLink.cs" />
-    <Compile Include="Microsoft\SqlServer\Server\SmiMetaData.cs" />
-    <Compile Include="Microsoft\SqlServer\Server\SmiMetaDataProperty.cs" />
-    <Compile Include="Microsoft\SqlServer\Server\SmiRecordBuffer.cs" />
-    <Compile Include="Microsoft\SqlServer\Server\SmiRequestExecutor.cs" />
-    <Compile Include="Microsoft\SqlServer\Server\SmiSettersStream.cs" />
-    <Compile Include="Microsoft\SqlServer\Server\SmiStream.cs" />
-    <Compile Include="Microsoft\SqlServer\Server\SmiTypedGetterSetter.cs" />
-    <Compile Include="Microsoft\SqlServer\Server\SmiXetterAccessMap.cs" />
-    <Compile Include="Microsoft\SqlServer\Server\SqlRecordBuffer.cs" />
-    <Compile Include="Microsoft\SqlServer\Server\ValueUtilsSmi.cs" />
-    <Compile Include="Microsoft\SqlServer\Server\SmiXetterTypeCode.cs" />
-    <Compile Include="Microsoft\Data\Sql\sqlser.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\ITypedGetters.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\ITypedGettersV3.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\ITypedSetters.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\ITypedSettersV3.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\ExtendedClrTypeCode.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\MemoryRecordBuffer.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\MetadataUtilsSmi.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\SmiConnection.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\SmiContext.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\SmiContextFactory.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\SmiEventSink.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\SmiEventSink_Default.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\SmiEventSink_DeferedProcessing.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\SmiEventStream.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\SmiExecuteType.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\SmiGettersStream.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\SmiLink.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\SmiMetaData.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\SmiMetaDataProperty.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\SmiRecordBuffer.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\SmiRequestExecutor.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\SmiSettersStream.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\SmiStream.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\SmiTypedGetterSetter.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\SmiXetterAccessMap.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\SqlRecordBuffer.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\ValueUtilsSmi.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\SmiXetterTypeCode.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\sqlser.cs" />
     <Compile Include="Microsoft\Data\Sql\SqlGenericUtil.cs" />
-    <Compile Include="Microsoft\Data\Sql\sqlnorm.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\sqlnorm.cs" />
     <Compile Include="Microsoft\Data\Sql\SqlNotificationRequest.cs" />
     <Compile Include="BID\INC\CS\BidPrivateBase.cs" />
     <None Include="BID\INC\CS\AssemblyTemplate_BID.cs" />
@@ -318,6 +328,9 @@
       <Isolated>False</Isolated>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </COMReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Microsoft\SqlServer\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.SqlClient.SNI">

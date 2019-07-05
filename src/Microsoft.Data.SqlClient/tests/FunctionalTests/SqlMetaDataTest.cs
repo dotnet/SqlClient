@@ -2,7 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using Microsoft.SqlServer.Server;
+using Microsoft.Data.SqlClient.Server;
 using System.Data;
 using System.Data.SqlClient;
 using Xunit;

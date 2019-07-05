@@ -9,7 +9,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Diagnostics.CodeAnalysis;
-using Microsoft.SqlServer.Server;
+using Microsoft.Data.SqlClient.Server;
 using System.Reflection;
 using System.IO;
 using System.Globalization;

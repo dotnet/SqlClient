@@ -21,7 +21,7 @@
 
 using System;
 using System.Diagnostics;
-using Microsoft.SqlServer.Server;
+using Microsoft.Data.SqlClient.Server;
 
 namespace Microsoft.Data.SqlClient {
 

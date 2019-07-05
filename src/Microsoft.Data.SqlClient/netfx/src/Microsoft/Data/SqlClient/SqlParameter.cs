@@ -17,9 +17,9 @@ namespace Microsoft.Data.SqlClient {
     using System.IO;
     using System.Globalization;
     using System.Xml;
-    using Microsoft.SqlServer.Server;
+    using Microsoft.Data.SqlClient.Server;
 
-    using MSS = Microsoft.SqlServer.Server;
+    using MSS = Microsoft.Data.SqlClient.Server;
     using System.Data;
     using System.Data.Common;
     using System.Reflection;

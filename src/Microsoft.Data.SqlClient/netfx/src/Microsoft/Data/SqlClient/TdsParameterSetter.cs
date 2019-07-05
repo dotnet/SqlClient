@@ -10,7 +10,7 @@
 namespace Microsoft.Data.SqlClient {
 
     using System.Diagnostics;
-    using Microsoft.SqlServer.Server;
+    using Microsoft.Data.SqlClient.Server;
 
     // Simple Getter/Setter for structured parameters to allow using common ValueUtilsSmi code.
     //  This is a stand-in to having a true SmiRequestExecutor class for TDS.

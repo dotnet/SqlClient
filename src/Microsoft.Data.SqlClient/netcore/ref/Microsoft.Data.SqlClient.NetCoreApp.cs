@@ -5,7 +5,7 @@
 // Changes to this file must follow the http://aka.ms/api-review process.
 // ------------------------------------------------------------------------------
 
-namespace Microsoft.SqlServer.Server
+namespace Microsoft.Data.SqlClient.Server
 {
     [System.AttributeUsageAttribute(System.AttributeTargets.Field | System.AttributeTargets.Property | System.AttributeTargets.ReturnValue | System.AttributeTargets.Parameter, AllowMultiple=false, Inherited=false)]
     public partial class SqlFacetAttribute : System.Attribute

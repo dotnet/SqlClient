@@ -21,7 +21,7 @@ namespace Microsoft.Data.SqlClient
     using System.Threading;
     using System.Xml;
 
-    using Microsoft.SqlServer.Server;
+    using Microsoft.Data.SqlClient.Server;
     using System.Threading.Tasks;
     using Microsoft.Data.ProviderBase;
     using System.Data.Common;

@@ -5,16 +5,15 @@
 using System;
 using System.Data.SqlTypes;
 using System.Globalization;
-
-using Microsoft.SqlServer.Server;
+using Microsoft.Data.SqlClient.Server;
 
 namespace Microsoft.Samples.SqlServer
 {
     [Serializable]
-    [Microsoft.SqlServer.Server.SqlUserDefinedType(Microsoft.SqlServer.Server.Format.UserDefined, IsByteOrdered = true, MaxByteSize = 8000)]
-    public class Utf8String : INullable, IComparable, Microsoft.SqlServer.Server.IBinarySerialize
+    [SqlUserDefinedType(Format.UserDefined, IsByteOrdered = true, MaxByteSize = 8000)]
+    public class Utf8String : INullable, IComparable, IBinarySerialize
     {
-        #region conversion to/from Unicode strings
+#region conversion to/from Unicode strings
         /// <summary>
         /// Parse the given string and return a utf8 representation for it.
         /// </summary>
@@ -67,7 +66,7 @@ namespace Microsoft.Samples.SqlServer
         /// <summary>
         /// Return a unicode string for this type.
         /// </summary>
-        [Microsoft.SqlServer.Server.SqlMethod(IsDeterministic = true, IsPrecise = true, DataAccess = Microsoft.SqlServer.Server.DataAccessKind.None, SystemDataAccess = Microsoft.SqlServer.Server.SystemDataAccessKind.None)]
+        [SqlMethod(IsDeterministic = true, IsPrecise = true, DataAccess = DataAccessKind.None, SystemDataAccess = SystemDataAccessKind.None)]
         public override string ToString()
         {
             if (this.IsNull)
@@ -114,8 +113,7 @@ namespace Microsoft.Samples.SqlServer
 
             return new SqlString(this.ToString(), culture.LCID, compareOptions);
         }
-
-        [Microsoft.SqlServer.Server.SqlMethod(IsDeterministic = true, IsPrecise = true)]
+        [SqlMethod(IsDeterministic = true, IsPrecise = true)]
         public SqlString GetSortKeyUsingCulture(string cultureName, bool ignoreCase,
             bool ignoreNonSpace, bool ignoreWidth)
         {
@@ -128,17 +126,15 @@ namespace Microsoft.Samples.SqlServer
             return this.GetSortKeyUsingCultureInternal(culture, ignoreCase,
                 ignoreNonSpace, ignoreWidth);
         }
-
-        [Microsoft.SqlServer.Server.SqlMethod(IsDeterministic = false)]
+        [SqlMethod(IsDeterministic = false)]
         public SqlString GetSortKey(bool ignoreCase, bool ignoreNonSpace, bool ignoreWidth)
         {
             return this.GetSortKeyUsingCultureInternal(CultureInfo.CurrentCulture,
                 ignoreCase, ignoreNonSpace, ignoreWidth);
         }
+#endregion
 
-        #endregion
-
-        #region comparison operators
+#region comparison operators
         public override bool Equals(object obj)
         {
             return this.CompareTo(obj) == 0;
@@ -237,9 +233,9 @@ namespace Microsoft.Samples.SqlServer
             return this.ToString().CompareTo(s.ToString());
         }
 
-        #endregion
+#endregion
 
-        #region private state and constructors
+#region private state and constructors
         private string m_String;
 
         private byte[] m_Bytes;
@@ -253,9 +249,9 @@ namespace Microsoft.Samples.SqlServer
         {
             this.m_Bytes = bytes;
         }
-        #endregion
+#endregion
 
-        #region UserDefinedType boilerplate code
+#region UserDefinedType boilerplate code
 
         public bool IsNull
         {
@@ -278,9 +274,9 @@ namespace Microsoft.Samples.SqlServer
         public Utf8String()
         {
         }
-        #endregion
+#endregion
 
-        #region IBinarySerialize Members
+#region IBinarySerialize Members
         public void Write(System.IO.BinaryWriter w)
         {
             byte header = (byte)(this.IsNull ? 1 : 0);
@@ -309,6 +305,6 @@ namespace Microsoft.Samples.SqlServer
 
             this.m_Bytes = r.ReadBytes(length);
         }
-        #endregion
+#endregion
     }
 }
