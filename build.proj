@@ -37,7 +37,6 @@
     <NugetPackageSources Include="https://api.nuget.org/v3/index.json" />
     <NugetPackageSources Include="https://dotnetfeed.blob.core.windows.net/dotnet-core/index.json" />
     <NugetPackageSources Include="https://dotnet.myget.org/F/dotnet-core/api/v3/index.json" />
-    <NugetPackageSources Include="https://sqlclientdrivers.pkgs.visualstudio.com/_packaging/Microsoft.Data.SqlClient/nuget/v3/index.json" />
   </ItemGroup>
 
   <!-- Top Level Build targets -->

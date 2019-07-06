@@ -28,7 +28,7 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
     <dependencies>
       <group targetFramework="net46">
         <dependency id="System.Data.Common" version="4.3.0" />
-        <dependency id="Microsoft.Data.SqlClient.sni" version="1.0.19164.3-Preview" />
+        <dependency id="Microsoft.Data.SqlClient.sni" version="1.0.19178.1-Preview" />
       </group>
       <group targetFramework="netcoreapp2.1">
         <dependency id="Microsoft.Win32.Registry" version="4.5.0" exclude="Compile" />
