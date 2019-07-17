@@ -1398,7 +1398,24 @@ namespace Microsoft.Data.SqlClient
 
             MetaType type = metadata.metaType;
             bool typeChanged = false;
-            try
+
+			// If the column is encrypted then we are going to transparently encrypt this column
+			// (based on connection string setting)- Use the metaType for the underlying
+			// value (unencrypted value) for conversion/casting purposes (below).
+			// Note - this flag is set if connection string options has TCE turned on
+			byte scale = metadata.scale;
+			byte precision = metadata.precision;
+			int length = metadata.length;
+			if (metadata.isEncrypted)
+			{
+				Debug.Assert(_parser.ShouldEncryptValuesForBulkCopy());
+				type = metadata.baseTI.metaType;
+				scale = metadata.baseTI.scale;
+				precision = metadata.baseTI.precision;
+				length = metadata.baseTI.length;
+			}
+
+			try
             {
                 MetaType mt;
                 switch (type.NullableType)
@@ -1423,16 +1440,16 @@ namespace Microsoft.Data.SqlClient
                             sqlValue = new SqlDecimal((decimal)value);
                         }
 
-                        if (sqlValue.Scale != metadata.scale)
+                        if (sqlValue.Scale != scale)
                         {
-                            sqlValue = TdsParser.AdjustSqlDecimalScale(sqlValue, metadata.scale);
+                            sqlValue = TdsParser.AdjustSqlDecimalScale(sqlValue, scale);
                         }
 
-                        if (sqlValue.Precision > metadata.precision)
+                        if (sqlValue.Precision > precision)
                         {
                             try
                             {
-                                sqlValue = SqlDecimal.ConvertToPrecScale(sqlValue, metadata.precision, sqlValue.Scale);
+                                sqlValue = SqlDecimal.ConvertToPrecScale(sqlValue, precision, sqlValue.Scale);
                             }
                             catch (SqlTruncateException)
                             {
@@ -1478,7 +1495,7 @@ namespace Microsoft.Data.SqlClient
                         if (!coercedToDataFeed)
                         {   // We do not need to test for TextDataFeed as it is only assigned to (N)VARCHAR(MAX)
                             int len = ((isSqlType) && (!typeChanged)) ? ((SqlString)value).Value.Length : ((string)value).Length;
-                            if (len > metadata.length / 2)
+                            if (len > length / 2)
                             {
                                 throw SQL.BulkLoadStringTooLong();
                             }
@@ -2066,7 +2083,16 @@ namespace Microsoft.Data.SqlClient
             if (!isDataFeed)
             {
                 value = ConvertValue(value, metadata, isNull, ref isSqlType, out isDataFeed);
-            }
+
+				// If column encryption is requested via connection string option, perform encryption here
+				if (!isNull && // if value is not NULL
+					metadata.isEncrypted)
+				{ // If we are transparently encrypting
+					Debug.Assert(_parser.ShouldEncryptValuesForBulkCopy());
+					value = _parser.EncryptColumnValue(value, metadata, metadata.column, _stateObj, isDataFeed, isSqlType);
+					isSqlType = false; // Its not a sql type anymore
+				}
+			}
 
             //write part
             Task writeTask = null;

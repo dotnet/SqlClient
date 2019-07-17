@@ -13,6 +13,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     {
         private readonly X509Certificate2 certificate;
         public Table ApiTestTable { get; private set; }
+        public Table BulkCopyAETestTable { get; private set; }
         public Table SqlParameterPropertiesTable { get; private set; }
 
         List<DbObject> databaseObjects = new List<DbObject>();
@@ -59,11 +60,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             ApiTestTable = new ApiTestTable(GenerateUniqueName("ApiTestTable"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
             tables.Add(ApiTestTable);
-            
+			
+            BulkCopyAETestTable = new BulkCopyAETestTable(GenerateUniqueName("BulkCopyAETestTable"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
+            tables.Add(BulkCopyAETestTable);
+
             SqlParameterPropertiesTable = new SqlParameterPropertiesTable(GenerateUniqueName("SqlParameterPropertiesTable"));
             tables.Add(SqlParameterPropertiesTable);
 
-            return tables;
+			return tables;
         }
 
         private string GenerateUniqueName(string baseName) => string.Concat("AE-", baseName, "-", Guid.NewGuid().ToString());
