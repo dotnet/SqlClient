@@ -44,8 +44,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ref", "ref", "{771F3F1E-7A6
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient", "Microsoft.Data.SqlClient\netfx\ref\Microsoft.Data.SqlClient.csproj", "{412BCCC8-19F6-489A-B594-E9A506816155}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.SqlServer.Management.AlwaysEncrypted.AzureKeyVaultProvider", "Microsoft.Data.SqlClient\tests\tools\AzureKeyVaultProvider\Microsoft.SqlServer.Management.AlwaysEncrypted.AzureKeyVaultProvider.csproj", "{E9EFFBE2-4C0D-451D-9E9B-A1CE952870ED}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -553,42 +551,6 @@ Global
 		{412BCCC8-19F6-489A-B594-E9A506816155}.Release|x64.Build.0 = Release|Any CPU
 		{412BCCC8-19F6-489A-B594-E9A506816155}.Release|x86.ActiveCfg = Release|Any CPU
 		{412BCCC8-19F6-489A-B594-E9A506816155}.Release|x86.Build.0 = Release|Any CPU
-		{E9EFFBE2-4C0D-451D-9E9B-A1CE952870ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E9EFFBE2-4C0D-451D-9E9B-A1CE952870ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E9EFFBE2-4C0D-451D-9E9B-A1CE952870ED}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{E9EFFBE2-4C0D-451D-9E9B-A1CE952870ED}.Debug|x64.Build.0 = Debug|Any CPU
-		{E9EFFBE2-4C0D-451D-9E9B-A1CE952870ED}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{E9EFFBE2-4C0D-451D-9E9B-A1CE952870ED}.Debug|x86.Build.0 = Debug|Any CPU
-		{E9EFFBE2-4C0D-451D-9E9B-A1CE952870ED}.net46-Debug|Any CPU.ActiveCfg = net46-Debug|Any CPU
-		{E9EFFBE2-4C0D-451D-9E9B-A1CE952870ED}.net46-Debug|Any CPU.Build.0 = net46-Debug|Any CPU
-		{E9EFFBE2-4C0D-451D-9E9B-A1CE952870ED}.net46-Debug|x64.ActiveCfg = net46-Debug|x64
-		{E9EFFBE2-4C0D-451D-9E9B-A1CE952870ED}.net46-Debug|x64.Build.0 = net46-Debug|x64
-		{E9EFFBE2-4C0D-451D-9E9B-A1CE952870ED}.net46-Debug|x86.ActiveCfg = net46-Debug|x86
-		{E9EFFBE2-4C0D-451D-9E9B-A1CE952870ED}.net46-Debug|x86.Build.0 = net46-Debug|x86
-		{E9EFFBE2-4C0D-451D-9E9B-A1CE952870ED}.net46-Release|Any CPU.ActiveCfg = net46-Release|Any CPU
-		{E9EFFBE2-4C0D-451D-9E9B-A1CE952870ED}.net46-Release|Any CPU.Build.0 = net46-Release|Any CPU
-		{E9EFFBE2-4C0D-451D-9E9B-A1CE952870ED}.net46-Release|x64.ActiveCfg = net46-Release|x64
-		{E9EFFBE2-4C0D-451D-9E9B-A1CE952870ED}.net46-Release|x64.Build.0 = net46-Release|x64
-		{E9EFFBE2-4C0D-451D-9E9B-A1CE952870ED}.net46-Release|x86.ActiveCfg = net46-Release|x86
-		{E9EFFBE2-4C0D-451D-9E9B-A1CE952870ED}.net46-Release|x86.Build.0 = net46-Release|x86
-		{E9EFFBE2-4C0D-451D-9E9B-A1CE952870ED}.netcoreapp2.1-Debug|Any CPU.ActiveCfg = netcoreapp2.1-Debug|Any CPU
-		{E9EFFBE2-4C0D-451D-9E9B-A1CE952870ED}.netcoreapp2.1-Debug|Any CPU.Build.0 = netcoreapp2.1-Debug|Any CPU
-		{E9EFFBE2-4C0D-451D-9E9B-A1CE952870ED}.netcoreapp2.1-Debug|x64.ActiveCfg = netcoreapp2.1-Debug|Any CPU
-		{E9EFFBE2-4C0D-451D-9E9B-A1CE952870ED}.netcoreapp2.1-Debug|x64.Build.0 = netcoreapp2.1-Debug|Any CPU
-		{E9EFFBE2-4C0D-451D-9E9B-A1CE952870ED}.netcoreapp2.1-Debug|x86.ActiveCfg = netcoreapp2.1-Debug|Any CPU
-		{E9EFFBE2-4C0D-451D-9E9B-A1CE952870ED}.netcoreapp2.1-Debug|x86.Build.0 = netcoreapp2.1-Debug|Any CPU
-		{E9EFFBE2-4C0D-451D-9E9B-A1CE952870ED}.netcoreapp2.1-Release|Any CPU.ActiveCfg = netcoreapp2.1-Release|Any CPU
-		{E9EFFBE2-4C0D-451D-9E9B-A1CE952870ED}.netcoreapp2.1-Release|Any CPU.Build.0 = netcoreapp2.1-Release|Any CPU
-		{E9EFFBE2-4C0D-451D-9E9B-A1CE952870ED}.netcoreapp2.1-Release|x64.ActiveCfg = netcoreapp2.1-Release|Any CPU
-		{E9EFFBE2-4C0D-451D-9E9B-A1CE952870ED}.netcoreapp2.1-Release|x64.Build.0 = netcoreapp2.1-Release|Any CPU
-		{E9EFFBE2-4C0D-451D-9E9B-A1CE952870ED}.netcoreapp2.1-Release|x86.ActiveCfg = netcoreapp2.1-Release|Any CPU
-		{E9EFFBE2-4C0D-451D-9E9B-A1CE952870ED}.netcoreapp2.1-Release|x86.Build.0 = netcoreapp2.1-Release|Any CPU
-		{E9EFFBE2-4C0D-451D-9E9B-A1CE952870ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E9EFFBE2-4C0D-451D-9E9B-A1CE952870ED}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E9EFFBE2-4C0D-451D-9E9B-A1CE952870ED}.Release|x64.ActiveCfg = Release|Any CPU
-		{E9EFFBE2-4C0D-451D-9E9B-A1CE952870ED}.Release|x64.Build.0 = Release|Any CPU
-		{E9EFFBE2-4C0D-451D-9E9B-A1CE952870ED}.Release|x86.ActiveCfg = Release|Any CPU
-		{E9EFFBE2-4C0D-451D-9E9B-A1CE952870ED}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -610,7 +572,6 @@ Global
 		{1C9FC4B8-54BC-4B6C-BB3A-F5CD59D80A9B} = {A2E7E470-5EFF-4828-B55E-FCBA3650F51C}
 		{771F3F1E-7A68-4A9D-ADA8-A24F1D5BE71D} = {3FDD425C-FE01-4B56-863E-1FCDD0677CF5}
 		{412BCCC8-19F6-489A-B594-E9A506816155} = {771F3F1E-7A68-4A9D-ADA8-A24F1D5BE71D}
-		{E9EFFBE2-4C0D-451D-9E9B-A1CE952870ED} = {0CC4817A-12F3-4357-912C-09315FAAD008}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {01D48116-37A2-4D33-B9EC-94793C702431}
