@@ -19,7 +19,6 @@ using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.DataClassification;
 using Microsoft.Data.SqlTypes;
 using Microsoft.Data.SqlClient.Server;
-using MSS = Microsoft.Data.SqlClient.Server;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -6338,7 +6337,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void WriteSqlVariantDateTime2(DateTime value, TdsParserStateObject stateObj)
         {
-            MSS.SmiMetaData dateTime2MetaData = MSS.SmiMetaData.DefaultDateTime2;
+            SmiMetaData dateTime2MetaData = SmiMetaData.DefaultDateTime2;
             // NOTE: 3 bytes added here to support additional header information for variant - internal type, scale prop, scale
             WriteSqlVariantHeader((int)(dateTime2MetaData.MaxLength + 3), TdsEnums.SQLDATETIME2, 1 /* one scale prop */, stateObj);
             stateObj.WriteByte(dateTime2MetaData.Scale); //scale property
@@ -6347,7 +6346,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void WriteSqlVariantDate(DateTime value, TdsParserStateObject stateObj)
         {
-            MSS.SmiMetaData dateMetaData = MSS.SmiMetaData.DefaultDate;
+            SmiMetaData dateMetaData = SmiMetaData.DefaultDate;
             // NOTE: 2 bytes added here to support additional header information for variant - internal type, scale prop (ignoring scale here)
             WriteSqlVariantHeader((int)(dateMetaData.MaxLength + 2), TdsEnums.SQLDATE, 0 /* one scale prop */, stateObj);
             WriteDate(value, stateObj);
@@ -9106,7 +9105,7 @@ namespace Microsoft.Data.SqlClient
             // Determine Metadata
             //
             ParameterPeekAheadValue peekAhead;
-            MSS.SmiParameterMetaData metaData = param.MetaDataForSmi(out peekAhead);
+            SmiParameterMetaData metaData = param.MetaDataForSmi(out peekAhead);
 
             if (!_isKatmai)
             {
@@ -9118,7 +9117,7 @@ namespace Microsoft.Data.SqlClient
             //  Determine value to send
             //
             object value;
-            MSS.ExtendedClrTypeCode typeCode;
+            ExtendedClrTypeCode typeCode;
 
             // if we have an output or default param, set the value to null so we do not send it across to the server
             if (sendDefault)
@@ -9126,14 +9125,14 @@ namespace Microsoft.Data.SqlClient
                 // Value for TVP default is empty list, not NULL
                 if (SqlDbType.Structured == metaData.SqlDbType && metaData.IsMultiValued)
                 {
-                    value = Array.Empty<MSS.SqlDataRecord>();
-                    typeCode = MSS.ExtendedClrTypeCode.IEnumerableOfSqlDataRecord;
+                    value = Array.Empty<SqlDataRecord>();
+                    typeCode = ExtendedClrTypeCode.IEnumerableOfSqlDataRecord;
                 }
                 else
                 {
                     // Need to send null value for default
                     value = null;
-                    typeCode = MSS.ExtendedClrTypeCode.DBNull;
+                    typeCode = ExtendedClrTypeCode.DBNull;
                 }
             }
             else if (param.Direction == ParameterDirection.Output)
@@ -9141,13 +9140,13 @@ namespace Microsoft.Data.SqlClient
                 bool isCLRType = param.ParameterIsSqlType;  // We have to forward the TYPE info, we need to know what type we are returning.  Once we null the parameter we will no longer be able to distinguish what type were seeing.
                 param.Value = null;
                 value = null;
-                typeCode = MSS.ExtendedClrTypeCode.DBNull;
+                typeCode = ExtendedClrTypeCode.DBNull;
                 param.ParameterIsSqlType = isCLRType;
             }
             else
             {
                 value = param.GetCoercedValue();
-                typeCode = MSS.MetaDataUtilsSmi.DetermineExtendedTypeCodeForUseWithSqlDbType(metaData.SqlDbType, metaData.IsMultiValued, value, null);
+                typeCode = MetaDataUtilsSmi.DetermineExtendedTypeCodeForUseWithSqlDbType(metaData.SqlDbType, metaData.IsMultiValued, value, null);
             }
 
 
@@ -9160,8 +9159,8 @@ namespace Microsoft.Data.SqlClient
             // Now write the value
             //
             TdsParameterSetter paramSetter = new TdsParameterSetter(stateObj, metaData);
-            MSS.ValueUtilsSmi.SetCompatibleValueV200(
-                                        new MSS.SmiEventSink_Default(),  // TDS Errors/events dealt with at lower level for now, just need an object for processing
+            ValueUtilsSmi.SetCompatibleValueV200(
+                                        new SmiEventSink_Default(),  // TDS Errors/events dealt with at lower level for now, just need an object for processing
                                         paramSetter,
                                         0,          // ordinal.  TdsParameterSetter only handles one parameter at a time
                                         metaData,
@@ -9173,7 +9172,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Writes metadata portion of parameter stream from an SmiParameterMetaData object.
-        private void WriteSmiParameterMetaData(MSS.SmiParameterMetaData metaData, bool sendDefault, TdsParserStateObject stateObj)
+        private void WriteSmiParameterMetaData(SmiParameterMetaData metaData, bool sendDefault, TdsParserStateObject stateObj)
         {
             // Determine status
             byte status = 0;
@@ -9195,7 +9194,7 @@ namespace Microsoft.Data.SqlClient
 
         // Write a TypeInfo stream
         // Devnote: we remap the legacy types (text, ntext, and image) to SQLBIGVARCHAR,  SQLNVARCHAR, and SQLBIGVARBINARY
-        private void WriteSmiTypeInfo(MSS.SmiExtendedMetaData metaData, TdsParserStateObject stateObj)
+        private void WriteSmiTypeInfo(SmiExtendedMetaData metaData, TdsParserStateObject stateObj)
         {
             switch (metaData.SqlDbType)
             {
@@ -9233,7 +9232,7 @@ namespace Microsoft.Data.SqlClient
                     break;
                 case SqlDbType.Image:
                     stateObj.WriteByte(TdsEnums.SQLBIGVARBINARY);
-                    WriteUnsignedShort(unchecked((ushort)MSS.SmiMetaData.UnlimitedMaxLengthIndicator), stateObj);
+                    WriteUnsignedShort(unchecked((ushort)SmiMetaData.UnlimitedMaxLengthIndicator), stateObj);
                     break;
                 case SqlDbType.Int:
                     stateObj.WriteByte(TdsEnums.SQLINTN);
@@ -9251,15 +9250,15 @@ namespace Microsoft.Data.SqlClient
                     break;
                 case SqlDbType.NText:
                     stateObj.WriteByte(TdsEnums.SQLNVARCHAR);
-                    WriteUnsignedShort(unchecked((ushort)MSS.SmiMetaData.UnlimitedMaxLengthIndicator), stateObj);
+                    WriteUnsignedShort(unchecked((ushort)SmiMetaData.UnlimitedMaxLengthIndicator), stateObj);
                     WriteUnsignedInt(_defaultCollation.info, stateObj);
                     stateObj.WriteByte(_defaultCollation.sortId);
                     break;
                 case SqlDbType.NVarChar:
                     stateObj.WriteByte(TdsEnums.SQLNVARCHAR);
-                    if (MSS.SmiMetaData.UnlimitedMaxLengthIndicator == metaData.MaxLength)
+                    if (SmiMetaData.UnlimitedMaxLengthIndicator == metaData.MaxLength)
                     {
-                        WriteUnsignedShort(unchecked((ushort)MSS.SmiMetaData.UnlimitedMaxLengthIndicator), stateObj);
+                        WriteUnsignedShort(unchecked((ushort)SmiMetaData.UnlimitedMaxLengthIndicator), stateObj);
                     }
                     else
                     {
@@ -9290,7 +9289,7 @@ namespace Microsoft.Data.SqlClient
                     break;
                 case SqlDbType.Text:
                     stateObj.WriteByte(TdsEnums.SQLBIGVARCHAR);
-                    WriteUnsignedShort(unchecked((ushort)MSS.SmiMetaData.UnlimitedMaxLengthIndicator), stateObj);
+                    WriteUnsignedShort(unchecked((ushort)SmiMetaData.UnlimitedMaxLengthIndicator), stateObj);
                     WriteUnsignedInt(_defaultCollation.info, stateObj);
                     stateObj.WriteByte(_defaultCollation.sortId);
                     break;
@@ -9369,7 +9368,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private void WriteTvpTypeInfo(MSS.SmiExtendedMetaData metaData, TdsParserStateObject stateObj)
+        private void WriteTvpTypeInfo(SmiExtendedMetaData metaData, TdsParserStateObject stateObj)
         {
             Debug.Assert(SqlDbType.Structured == metaData.SqlDbType && metaData.IsMultiValued,
                         "Invalid metadata for TVPs. Type=" + metaData.SqlDbType);
@@ -9392,7 +9391,7 @@ namespace Microsoft.Data.SqlClient
                 WriteUnsignedShort(checked((ushort)metaData.FieldMetaData.Count), stateObj);
 
                 // TvpColumnMetaData for each column (look for defaults in this loop
-                MSS.SmiDefaultFieldsProperty defaults = (MSS.SmiDefaultFieldsProperty)metaData.ExtendedProperties[MSS.SmiPropertySelector.DefaultFields];
+                SmiDefaultFieldsProperty defaults = (SmiDefaultFieldsProperty)metaData.ExtendedProperties[SmiPropertySelector.DefaultFields];
                 for (int i = 0; i < metaData.FieldMetaData.Count; i++)
                 {
                     WriteTvpColumnMetaData(metaData.FieldMetaData[i], defaults[i], stateObj);
@@ -9407,7 +9406,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Write a single TvpColumnMetaData stream to the server
-        private void WriteTvpColumnMetaData(MSS.SmiExtendedMetaData md, bool isDefault, TdsParserStateObject stateObj)
+        private void WriteTvpColumnMetaData(SmiExtendedMetaData md, bool isDefault, TdsParserStateObject stateObj)
         {
             // User Type
             if (SqlDbType.Timestamp == md.SqlDbType)
@@ -9449,14 +9448,14 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private void WriteTvpOrderUnique(MSS.SmiExtendedMetaData metaData, TdsParserStateObject stateObj)
+        private void WriteTvpOrderUnique(SmiExtendedMetaData metaData, TdsParserStateObject stateObj)
         {
             // TVP_ORDER_UNIQUE token (uniqueness and sort order)
 
             // Merge order and unique keys into a single token stream
 
-            MSS.SmiOrderProperty orderProperty = (MSS.SmiOrderProperty)metaData.ExtendedProperties[MSS.SmiPropertySelector.SortOrder];
-            MSS.SmiUniqueKeyProperty uniqueKeyProperty = (MSS.SmiUniqueKeyProperty)metaData.ExtendedProperties[MSS.SmiPropertySelector.UniqueKey];
+            SmiOrderProperty orderProperty = (SmiOrderProperty)metaData.ExtendedProperties[SmiPropertySelector.SortOrder];
+            SmiUniqueKeyProperty uniqueKeyProperty = (SmiUniqueKeyProperty)metaData.ExtendedProperties[SmiPropertySelector.UniqueKey];
 
             // Build list from
             List<TdsOrderUnique> columnList = new List<TdsOrderUnique>(metaData.FieldMetaData.Count);
@@ -9464,7 +9463,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // Add appropriate SortOrder flag
                 byte flags = 0;
-                MSS.SmiOrderProperty.SmiColumnOrder columnOrder = orderProperty[i];
+                SmiOrderProperty.SmiColumnOrder columnOrder = orderProperty[i];
                 if (SortOrder.Ascending == columnOrder.Order)
                 {
                     flags = TdsEnums.TVP_ORDERASC_FLAG;

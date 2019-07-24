@@ -6,12 +6,12 @@
 // <owner current="true" primary="false">stevesta</owner>
 //------------------------------------------------------------------------------
 
-namespace Microsoft.Data.SqlClient.Server {
+using System;
+using System.Security.Principal;
+using System.Data.SqlTypes;
+using System.Data;
 
-    using System;
-    using System.Security.Principal;
-    using System.Data.SqlTypes;
-    using System.Data;
+namespace Microsoft.Data.SqlClient.Server {
 
     // NOTE: connection, transaction and context pipe operations could be 
     //       encapsulated in their own classes, and should if they get complex 

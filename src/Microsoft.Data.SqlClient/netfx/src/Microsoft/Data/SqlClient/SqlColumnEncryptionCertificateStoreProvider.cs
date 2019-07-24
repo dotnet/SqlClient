@@ -5,14 +5,14 @@
 // <owner current="true" primary="true">balnee</owner>
 // <owner current="true" primary="false">krishnib</owner>
 //------------------------------------------------------------------------------
+using System;
+using System.Text;
+using System.Diagnostics;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+
 namespace Microsoft.Data.SqlClient
 {
-    using System;
-    using System.Text;
-    using System.Diagnostics;
-    using System.Security.Cryptography;
-    using System.Security.Cryptography.X509Certificates;
-
     /// <summary>
     /// Certificate Key Store Provider class
     /// </summary>

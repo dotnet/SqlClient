@@ -6,23 +6,22 @@
 // <owner current="true" primary="false">stevesta</owner>
 //------------------------------------------------------------------------------
 
+
+using System;
+using System.Collections.Generic;
+using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlTypes;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
+using System.Reflection;
+using System.Xml;
+using System.Data.SqlTypes;
+using System.Data;
+using System.Data.Common;
+
 namespace Microsoft.Data.SqlClient.Server {
-
-    using System;
-    using System.Collections.Generic;
-    using Microsoft.Data.Common;
-    using Microsoft.Data.SqlClient;
-    using Microsoft.Data.SqlTypes;
-    using System.Diagnostics;
-    using System.Globalization;
-    using System.IO;
-    using System.Reflection;
-    using System.Xml;
-    using System.Data.SqlTypes;
-    using System.Data;
-    using System.Data.Common;
-
-
     // Utilities for manipulating values with the Smi interface.
     //
     //  THIS CLASS IS BUILT ON TOP OF THE SMI INTERFACE -- SMI SHOULD NOT DEPEND ON IT!

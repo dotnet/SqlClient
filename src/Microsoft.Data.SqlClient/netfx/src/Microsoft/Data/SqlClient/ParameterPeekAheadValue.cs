@@ -6,13 +6,10 @@
 // <owner current="true" primary="false">billin</owner>
 //------------------------------------------------------------------------------
 
-
+using System.Collections.Generic;
+using Microsoft.Data.SqlClient.Server;
 
 namespace Microsoft.Data.SqlClient {
-
-    using System.Collections.Generic;
-    using Microsoft.Data.SqlClient.Server;
-
 
     // simple storage to contain objects that must be generated prior to sending data, but
     //  that we cannot re-generate at the time of sending the data.  The entire purpose is

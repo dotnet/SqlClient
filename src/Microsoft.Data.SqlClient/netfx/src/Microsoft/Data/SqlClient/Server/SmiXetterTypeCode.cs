@@ -8,7 +8,6 @@
 
 namespace Microsoft.Data.SqlClient.Server {
 
-
     // Types should match Getter/Setter names
     internal enum SmiXetterTypeCode {
         XetBoolean,

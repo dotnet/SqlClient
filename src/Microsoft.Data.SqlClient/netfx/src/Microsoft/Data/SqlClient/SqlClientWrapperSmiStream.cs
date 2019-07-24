@@ -6,11 +6,11 @@
 // <owner current="true" primary="false">stevesta</owner>
 //------------------------------------------------------------------------------
 
+
+using System.Diagnostics;
+using System.IO;
+
 namespace Microsoft.Data.SqlClient.Server {
-
-    using System.Diagnostics;
-    using System.IO;
-
     // Simple wrapper over SmiStream that handles server events on the SqlClient side of Smi
     internal class SqlClientWrapperSmiStream : Stream {
 

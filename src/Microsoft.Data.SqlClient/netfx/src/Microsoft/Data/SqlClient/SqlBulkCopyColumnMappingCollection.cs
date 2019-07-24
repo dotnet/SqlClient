@@ -6,15 +6,15 @@
 // <owner current="true" primary="false">blained</owner>
 //------------------------------------------------------------------------------
 
+using Microsoft.Data.Common;
+using System.Collections;
+using System.Diagnostics;
+
 // todo: rename the file
 // Caution! ndp\fx\src\data\netmodule\sources needs to follow this name change
 
 namespace Microsoft.Data.SqlClient
 {
-    using Microsoft.Data.Common;
-    using System.Collections;
-    using System.Diagnostics;
-
     public sealed class SqlBulkCopyColumnMappingCollection : CollectionBase  {
 
         private enum MappingSchema {

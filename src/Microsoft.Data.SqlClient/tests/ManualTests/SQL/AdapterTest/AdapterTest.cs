@@ -24,6 +24,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private const string _createTableQuery = "select * into {0} from Employees where EmployeeID < 3 union all (select * from Employees where 1 = 0)";
         private string _tempTable;
         private string _tempKey;
+        private string _randomGuid;
 
         // data type
         private decimal _c_numeric_val;
@@ -52,10 +53,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public AdapterTest()
         {
             // create random name for temp tables
-            _tempTable = Environment.MachineName + "_" + Guid.NewGuid().ToString();
+            _randomGuid = Guid.NewGuid().ToString();
+            _tempTable = Environment.MachineName + "_" + _randomGuid;
             _tempTable = _tempTable.Replace('-', '_');
 
-            _tempKey = "employee_id_key_" + Environment.TickCount.ToString() + Guid.NewGuid().ToString();
+            _tempKey = "employee_id_key_" + Environment.TickCount.ToString() + _randomGuid;
             _tempKey = _tempKey.Replace('-', '_');
 
             InitDataValues();
@@ -171,9 +173,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [CheckConnStrSetupFact]
         public void SqlVariantTest()
         {
+            string tableName = DataTestUtility.GenerateObjectName();
             try
             {
-                ExecuteNonQueryCommand("CREATE TABLE shiloh_types (c0_bigint bigint, c1_variant sql_variant)");
+                ExecuteNonQueryCommand("CREATE TABLE " + tableName + " (c0_bigint bigint, c1_variant sql_variant)");
 
                 // good test for null values and unicode strings
                 using (SqlCommand cmd = new SqlCommand(null, new SqlConnection(DataTestUtility.TcpConnStr)))
@@ -182,14 +185,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     cmd.Connection.Open();
 
                     // the ORDER BY clause tests that we correctly ignore the ORDER token
-                    cmd.CommandText = "select * from shiloh_types";
+                    cmd.CommandText = "select * from " + tableName;
                     sqlAdapter.SelectCommand = cmd;
-                    sqlAdapter.TableMappings.Add("Shiloh_Types", "rowset");
+                    sqlAdapter.TableMappings.Add(tableName, "rowset");
 
                     // insert
                     sqlAdapter.InsertCommand = new SqlCommand()
                     {
-                        CommandText = "INSERT INTO Shiloh_Types(c0_bigint, c1_variant) " +
+                        CommandText = "INSERT INTO " + tableName + "(c0_bigint, c1_variant) " +
                         "VALUES (@bigint, @variant)"
                     };
                     SqlParameter p = sqlAdapter.InsertCommand.Parameters.Add(new SqlParameter("@bigint", SqlDbType.BigInt));
@@ -199,7 +202,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     sqlAdapter.InsertCommand.Connection = cmd.Connection;
 
                     DataSet dataSet = new DataSet();
-                    sqlAdapter.FillSchema(dataSet, SchemaType.Mapped, "Shiloh_Types");
+                    sqlAdapter.FillSchema(dataSet, SchemaType.Mapped, tableName);
 
                     DataRow datarow = null;
                     for (int i = 0; i < _values.Length; i++)
@@ -210,11 +213,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         datarow.Table.Rows.Add(datarow);
                     }
 
-                    sqlAdapter.Update(dataSet, "Shiloh_Types");
+                    sqlAdapter.Update(dataSet, tableName);
 
                     // now reload and make sure we got the values we wrote out
                     dataSet.Reset();
-                    sqlAdapter.Fill(dataSet, "Shiloh_Types");
+                    sqlAdapter.Fill(dataSet, tableName);
 
                     DataColumnCollection cols = dataSet.Tables[0].Columns;
                     DataRowCollection rows = dataSet.Tables[0].Rows;
@@ -257,15 +260,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                ExecuteNonQueryCommand("DROP TABLE shiloh_types");
+                ExecuteNonQueryCommand("DROP TABLE " + tableName);
             }
         }
 
         [CheckConnStrSetupFact]
         public void ParameterTest_AllTypes()
         {
+            string procName = DataTestUtility.GenerateObjectName();
             string spCreateAllTypes =
-                "CREATE PROCEDURE sp_alltypes " +
+                "CREATE PROCEDURE " + procName + " " +
                 "@Cnumeric numeric(10,2) OUTPUT, " +
                 "@Cunique uniqueidentifier OUTPUT, " +
                 "@Cnvarchar nvarchar(10) OUTPUT, " +
@@ -305,7 +309,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 "@Cvarchar=@Cvarchar " +
                 "RETURN(42)";
 
-            string spDropAllTypes = "DROP PROCEDURE sp_alltypes";
+            string spDropAllTypes = "DROP PROCEDURE " + procName;
             bool dropSP = false;
 
             try
@@ -314,7 +318,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 dropSP = true;
 
                 using (SqlConnection conn = new SqlConnection(DataTestUtility.TcpConnStr))
-                using (SqlCommand cmd = new SqlCommand("sp_allTypes", conn))
+                using (SqlCommand cmd = new SqlCommand(procName, conn))
                 using (SqlDataAdapter sqlAdapter = new SqlDataAdapter())
                 {
                     conn.Open();
@@ -431,29 +435,29 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         switch (param.SqlDbType)
                         {
                             case SqlDbType.Binary:
-                                Assert.True(ByteArraysEqual(_c_binary_val, (byte[])param.Value), "FAILED: sp_alltypes, Binary parameter");
+                                Assert.True(ByteArraysEqual(_c_binary_val, (byte[])param.Value), "FAILED: " + procName + ", Binary parameter");
                                 break;
                             case SqlDbType.VarBinary:
-                                Assert.True(ByteArraysEqual(_c_varbinary_val, (byte[])param.Value), "FAILED: sp_alltypes, VarBinary parameter");
+                                Assert.True(ByteArraysEqual(_c_varbinary_val, (byte[])param.Value), "FAILED: " + procName + ", VarBinary parameter");
                                 break;
                             case SqlDbType.UniqueIdentifier:
-                                DataTestUtility.AssertEqualsWithDescription(_c_guid_val, (Guid)param.Value, "FAILED: sp_alltypes, UniqueIdentifier parameter");
+                                DataTestUtility.AssertEqualsWithDescription(_c_guid_val, (Guid)param.Value, "FAILED: " + procName + ", UniqueIdentifier parameter");
                                 break;
                             case SqlDbType.DateTime:
-                                Assert.True(0 == DateTime.Compare((DateTime)param.Value, _c_datetime_val), "FAILED: sp_alltypes, DateTime parameter");
+                                Assert.True(0 == DateTime.Compare((DateTime)param.Value, _c_datetime_val), "FAILED: " + procName + ", DateTime parameter");
                                 break;
                             case SqlDbType.SmallDateTime:
-                                Assert.True(0 == DateTime.Compare((DateTime)param.Value, _c_smalldatetime_val), "FAILED: sp_alltypes, SmallDateTime parameter");
+                                Assert.True(0 == DateTime.Compare((DateTime)param.Value, _c_smalldatetime_val), "FAILED: " + procName + ", SmallDateTime parameter");
                                 break;
                             case SqlDbType.Money:
                                 Assert.True(
                                     0 == decimal.Compare((decimal)param.Value, _c_money_val),
-                                    string.Format("FAILED: sp_alltypes, Money parameter. Expected: {0}. Actual: {1}.", _c_money_val, (decimal)param.Value));
+                                    string.Format("FAILED: " + procName + ", Money parameter. Expected: {0}. Actual: {1}.", _c_money_val, (decimal)param.Value));
                                 break;
                             case SqlDbType.SmallMoney:
                                 Assert.True(
                                     0 == decimal.Compare((decimal)param.Value, _c_smallmoney_val),
-                                    string.Format("FAILED: sp_alltypes, SmallMoney parameter. Expected: {0}. Actual: {1}.", _c_smallmoney_val, (decimal)param.Value));
+                                    string.Format("FAILED: " + procName + ", SmallMoney parameter. Expected: {0}. Actual: {1}.", _c_smallmoney_val, (decimal)param.Value));
                                 break;
                             default:
                                 string actualValue = param.ParameterName + " : " + DBConvertToString(cmd.Parameters[i].Value);
@@ -475,14 +479,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [CheckConnStrSetupFact]
         public void ParameterTest_InOut()
         {
+            string procName = DataTestUtility.GetUniqueName("P");
             // input, output
             string spCreateInOut =
-                "CREATE PROCEDURE sp_test @in int, @inout int OUTPUT, @out nvarchar(8) OUTPUT " +
+                "CREATE PROCEDURE " + procName + " @in int, @inout int OUTPUT, @out nvarchar(8) OUTPUT " +
                 "AS SELECT @inout = (@in + @inout), @out = 'Success!' " +
                 "SELECT * From shippers where ShipperID = @in " +
                 "RETURN(42)";
 
-            string spDropInOut = "DROP PROCEDURE sp_test";
+            string spDropInOut = "DROP PROCEDURE " + procName;
             bool dropSP = false;
 
             try
@@ -491,7 +496,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 dropSP = true;
 
                 using (SqlConnection conn = new SqlConnection(DataTestUtility.TcpConnStr))
-                using (SqlCommand cmd = new SqlCommand("sp_test", conn))
+                using (SqlCommand cmd = new SqlCommand(procName, conn))
                 using (SqlDataAdapter sqlAdapter = new SqlDataAdapter())
                 {
                     conn.Open();
@@ -753,7 +758,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void UpdateRefreshTest()
         {
             string createIdentTable =
-                "CREATE TABLE ident(id int IDENTITY," +
+                "CREATE TABLE ID_" + _tempTable + "(id int IDENTITY," +
                 "LastName nvarchar(50) NULL," +
                 "Firstname nvarchar(50) NULL)";
 
@@ -770,7 +775,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (SqlDataAdapter adapter = new SqlDataAdapter())
             using (SqlConnection conn = new SqlConnection(DataTestUtility.TcpConnStr))
             using (SqlCommand cmd = new SqlCommand(null, conn))
-            using (SqlCommand temp = new SqlCommand("SELECT id, LastName, FirstName into " + _tempTable + " from ident", conn))
+            using (SqlCommand temp = new SqlCommand("SELECT id, LastName, FirstName into " + _tempTable + " from ID_" + _tempTable, conn))
             using (SqlCommand tableClean = new SqlCommand("", conn))
             {
                 ExecuteNonQueryCommand(createIdentTable);
@@ -837,8 +842,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         ExecuteNonQueryCommand(spDropInsert);
                         ExecuteNonQueryCommand("DROP TABLE " + _tempTable);
+                        ExecuteNonQueryCommand("DROP TABLE ID_" + _tempTable);
                     }
-                    ExecuteNonQueryCommand("DROP TABLE ident");
                 }
             }
         }
@@ -846,11 +851,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [CheckConnStrSetupFact]
         public void UpdateNullTest()
         {
-            string createTable = "CREATE TABLE varbin(cvarbin VARBINARY(7000), cimage IMAGE)";
+            string tableName = DataTestUtility.GenerateObjectName();
+            string procName = DataTestUtility.GenerateObjectName();
+            string createTable = "CREATE TABLE " + tableName + "(cvarbin VARBINARY(7000), cimage IMAGE)";
 
             string createSP =
-                "CREATE PROCEDURE sp_insertvarbin (@val_cvarbin VARBINARY(7000), @val_cimage IMAGE)" +
-                "AS INSERT INTO varbin (cvarbin, cimage)" +
+                "CREATE PROCEDURE " + procName + " (@val_cvarbin VARBINARY(7000), @val_cimage IMAGE)" +
+                "AS INSERT INTO " + tableName + " (cvarbin, cimage)" +
                 "VALUES (@val_cvarbin, @val_cimage)";
             bool dropSP = false;
 
@@ -861,9 +868,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 dropSP = true;
 
                 using (SqlConnection conn = new SqlConnection(DataTestUtility.TcpConnStr))
-                using (SqlCommand cmdInsert = new SqlCommand("sp_insertvarbin", conn))
-                using (SqlCommand cmdSelect = new SqlCommand("select * from varbin", conn))
-                using (SqlCommand tableClean = new SqlCommand("delete varbin", conn))
+                using (SqlCommand cmdInsert = new SqlCommand(procName, conn))
+                using (SqlCommand cmdSelect = new SqlCommand("select * from " + tableName, conn))
+                using (SqlCommand tableClean = new SqlCommand("delete " + tableName, conn))
                 using (SqlDataAdapter adapter = new SqlDataAdapter())
                 {
                     conn.Open();
@@ -891,20 +898,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 if (dropSP)
                 {
-                    ExecuteNonQueryCommand("DROP PROCEDURE sp_insertvarbin");
+                    ExecuteNonQueryCommand("DROP PROCEDURE " + procName);
+                    ExecuteNonQueryCommand("DROP TABLE " + tableName);
                 }
-                ExecuteNonQueryCommand("DROP TABLE varbin");
             }
         }
 
         [CheckConnStrSetupFact]
         public void UpdateOffsetTest()
         {
-            string createTable = "CREATE TABLE varbin(cvarbin VARBINARY(7000), cimage IMAGE)";
+            string tableName = DataTestUtility.GenerateObjectName();
+            string procName = DataTestUtility.GenerateObjectName();
+            string createTable = "CREATE TABLE " + tableName + "(cvarbin VARBINARY(7000), cimage IMAGE)";
 
             string createSP =
-                "CREATE PROCEDURE sp_insertvarbin (@val_cvarbin VARBINARY(7000), @val_cimage IMAGE)" +
-                "AS INSERT INTO varbin (cvarbin, cimage)" +
+                "CREATE PROCEDURE " + procName + " (@val_cvarbin VARBINARY(7000), @val_cimage IMAGE)" +
+                "AS INSERT INTO " + tableName + " (cvarbin, cimage)" +
                 "VALUES (@val_cvarbin, @val_cimage)";
             bool dropSP = false;
 
@@ -915,9 +924,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 dropSP = true;
 
                 using (SqlConnection conn = new SqlConnection(DataTestUtility.TcpConnStr))
-                using (SqlCommand cmdInsert = new SqlCommand("sp_insertvarbin", conn))
-                using (SqlCommand cmdSelect = new SqlCommand("select * from varbin", conn))
-                using (SqlCommand tableClean = new SqlCommand("delete varbin", conn))
+                using (SqlCommand cmdInsert = new SqlCommand(procName, conn))
+                using (SqlCommand cmdSelect = new SqlCommand("select * from " + tableName, conn))
+                using (SqlCommand tableClean = new SqlCommand("delete " + tableName, conn))
                 using (SqlDataAdapter adapter = new SqlDataAdapter())
                 {
                     conn.Open();
@@ -961,9 +970,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 if (dropSP)
                 {
-                    ExecuteNonQueryCommand("DROP PROCEDURE sp_insertvarbin");
+                    ExecuteNonQueryCommand("DROP PROCEDURE " + procName);
+                    ExecuteNonQueryCommand("DROP TABLE " + tableName);
                 }
-                ExecuteNonQueryCommand("DROP TABLE varbin");
             }
         }
 
@@ -1055,14 +1064,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void AutoGenErrorTest()
         {
             string createIdentTable =
-                "CREATE TABLE ident(id int IDENTITY," +
+                "CREATE TABLE ID_" + _tempTable + "(id int IDENTITY," +
                 "LastName nvarchar(50) NULL," +
                 "Firstname nvarchar(50) NULL)";
 
             try
             {
                 using (SqlConnection conn = new SqlConnection(DataTestUtility.TcpConnStr))
-                using (SqlCommand cmd = new SqlCommand("SELECT * into " + _tempTable + " from ident", conn))
+                using (SqlCommand cmd = new SqlCommand("SELECT * into " + _tempTable + " from ID_" + _tempTable, conn))
                 using (SqlDataAdapter adapter = new SqlDataAdapter())
                 {
                     ExecuteNonQueryCommand(createIdentTable);
@@ -1089,7 +1098,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                ExecuteNonQueryCommand("DROP TABLE ident");
+                ExecuteNonQueryCommand("DROP TABLE " + _tempTable);
+                ExecuteNonQueryCommand("DROP TABLE ID_" + _tempTable);
             }
         }
 
@@ -1187,15 +1197,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [CheckConnStrSetupFact]
         public void TestDeriveParameters()
         {
+            string procName = "Test_EmployeeSalesByCountry_" + _randomGuid + "";
             string spEmployeeSales =
-            "create procedure [dbo].[Test_EmployeeSalesByCountry] " +
+            "create procedure [dbo].[" + procName + "] " +
             "@Beginning_Date DateTime, @Ending_Date DateTime AS " +
             "SELECT Employees.Country, Employees.LastName, Employees.FirstName, Orders.ShippedDate, Orders.OrderID, \"Order Subtotals\".Subtotal AS SaleAmount " +
             "FROM Employees INNER JOIN " +
                 "(Orders INNER JOIN \"Order Subtotals\" ON Orders.OrderID = \"Order Subtotals\".OrderID) " +
                 "ON Employees.EmployeeID = Orders.EmployeeID " +
             "WHERE Orders.ShippedDate Between @Beginning_Date And @Ending_Date";
-            string dropSpEmployeeSales = "drop procedure [dbo].[Test_EmployeeSalesByCountry]";
+            string dropSpEmployeeSales = "drop procedure [dbo].[" + procName + "]";
 
             string expectedParamResults =
                 "\"@RETURN_VALUE\" AS Int32 OF Int FOR Current \"\" " +
@@ -1208,9 +1219,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             try
             {
                 ExecuteNonQueryCommand(spEmployeeSales);
-
                 using (SqlConnection connection = new SqlConnection(DataTestUtility.TcpConnStr))
-                using (SqlCommand cmd = new SqlCommand("Test_EmployeeSalesByCountry", connection))
+                using (SqlCommand cmd = new SqlCommand(procName, connection))
                 {
                     string errorMessage = string.Format(SystemDataResourceManager.Instance.ADP_DeriveParametersNotSupported, "SqlCommand", cmd.CommandType);
                     DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(
@@ -1234,7 +1244,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         () => SqlCommandBuilder.DeriveParameters(cmd),
                         errorMessage);
 
-                    cmd.CommandText = "Test_EmployeeSalesByCountry";
+                    cmd.CommandText = procName;
                     SqlCommandBuilder.DeriveParameters(cmd);
                     CheckParameters(cmd, expectedParamResults);
                 }
@@ -1764,5 +1774,3 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         #endregion
     }
 }
-
-

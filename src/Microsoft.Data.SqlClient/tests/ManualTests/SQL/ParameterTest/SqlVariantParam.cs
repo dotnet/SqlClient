@@ -5,7 +5,6 @@
 using System;
 using System.Text;
 using System.Data;
-using System.Data.SqlClient;
 using System.Data.SqlTypes;
 using System.IO;
 using Microsoft.Data.SqlClient.Server;

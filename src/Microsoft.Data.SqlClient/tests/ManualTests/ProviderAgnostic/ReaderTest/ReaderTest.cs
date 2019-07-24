@@ -16,8 +16,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string connectionString = DataTestUtility.TcpConnStr;
 
-            string tempTable = DataTestUtility.GetUniqueName("T", "[", "]");
-            string tempKey = DataTestUtility.GetUniqueName("K", "[", "]");
+            string tempTable = DataTestUtility.GetUniqueNameForSqlServer("table");
 
             DbProviderFactory provider = SqlClientFactory.Instance;
             try

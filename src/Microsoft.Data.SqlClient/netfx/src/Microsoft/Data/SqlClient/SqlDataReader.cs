@@ -6,29 +6,28 @@
 // <owner current="true" primary="false">sukanyas</owner>
 //------------------------------------------------------------------------------
 
+using System;
+using System.Collections;
+using System.ComponentModel;
+using Microsoft.Data.SqlTypes;
+using Microsoft.Data.Common;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Xml;
+using Microsoft.Data.SqlClient.Server;
+using System.Threading.Tasks;
+using Microsoft.Data.ProviderBase;
+using System.Data.Common;
+using System.Data;
+using System.Data.SqlTypes;
+using Microsoft.Data.SqlClient.DataClassification;
+
 namespace Microsoft.Data.SqlClient
 {
-    using System;
-    using System.Collections;
-    using System.ComponentModel;
-    using Microsoft.Data.SqlTypes;
-    using Microsoft.Data.Common;
-    using System.Diagnostics;
-    using System.Globalization;
-    using System.IO;
-    using System.Reflection;
-    using System.Runtime.CompilerServices;
-    using System.Threading;
-    using System.Xml;
-
-    using Microsoft.Data.SqlClient.Server;
-    using System.Threading.Tasks;
-    using Microsoft.Data.ProviderBase;
-    using System.Data.Common;
-    using System.Data;
-    using System.Data.SqlTypes;
-    using Microsoft.Data.SqlClient.DataClassification;
-
     public class SqlDataReader : DbDataReader, IDataReader {
 
         private enum ALTROWSTATUS {

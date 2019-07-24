@@ -6,6 +6,7 @@
 // <owner current="true" primary="false">laled</owner>
 // <owner current="true" primary="false">mithomas</owner>
 //------------------------------------------------------------------------------
+
 using Microsoft.Data.SqlTypes;
 using System.Diagnostics;
 using System;

@@ -6,15 +6,15 @@
 // <owner current="true" primary="false">laled</owner>
 //------------------------------------------------------------------------------
 
+
+using Microsoft.Data.Common;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using System;
+using System.Data;
+using System.Data.Common;
+
 namespace Microsoft.Data.SqlClient {
-
-    using Microsoft.Data.Common;
-    using System.Diagnostics;
-    using System.Runtime.CompilerServices;
-    using System;
-    using System.Data;
-    using System.Data.Common;
-
     public sealed class SqlTransaction : DbTransaction {
         private  static   int            _objectTypeCount; // Bid counter
         internal readonly int            _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);

@@ -334,7 +334,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.SqlClient.SNI">
-      <Version>1.0.19164.3-Preview</Version>
+      <Version>1.0.19178.1-Preview</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

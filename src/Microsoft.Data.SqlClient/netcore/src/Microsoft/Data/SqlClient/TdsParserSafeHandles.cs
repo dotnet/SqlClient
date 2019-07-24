@@ -8,7 +8,6 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
 
-
 namespace Microsoft.Data.SqlClient
 {
     internal sealed partial class SNILoadHandle : SafeHandle

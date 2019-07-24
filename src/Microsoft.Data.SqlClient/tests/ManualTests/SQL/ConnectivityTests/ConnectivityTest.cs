@@ -12,10 +12,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class ConnectivityParametersTest
     {
+        private const string COL_SPID = "SPID";
         private const string COL_PROGRAM_NAME = "ProgramName";
         private const string COL_HOSTNAME = "HostName";
         private static readonly string s_databaseName = "d_" + Guid.NewGuid().ToString().Replace('-', '_');
-        private static readonly string s_tableName = "Person";
+        private static readonly string s_tableName = DataTestUtility.GenerateObjectName();
         private static readonly string s_connectionString = DataTestUtility.TcpConnStr;
         private static readonly string s_dbConnectionString = new SqlConnectionStringBuilder(s_connectionString) { InitialCatalog = s_databaseName }.ConnectionString;
         private static readonly string s_createDatabaseCmd = $"CREATE DATABASE {s_databaseName}";
@@ -34,25 +35,35 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (SqlConnection sqlConnection = new SqlConnection(builder.ConnectionString))
             {
                 sqlConnection.Open();
-                using (SqlCommand command = new SqlCommand("sp_who2", sqlConnection))
+                int sessionSpid;
+
+                using (SqlCommand cmd = new SqlCommand("SELECT @@SPID", sqlConnection))
+                using (SqlDataReader reader = cmd.ExecuteReader())
                 {
-                    using (SqlDataReader reader = command.ExecuteReader())
+                    reader.Read();
+                    sessionSpid = reader.GetInt16(0);
+                }
+
+                using (SqlCommand command = new SqlCommand("sp_who2", sqlConnection))
+                using (SqlDataReader reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
                     {
-                        while (reader.Read())
+                        int programNameOrdinal = reader.GetOrdinal(COL_PROGRAM_NAME);
+                        string programName = reader.GetString(programNameOrdinal);
+
+                        int spidOrdinal = reader.GetOrdinal(COL_SPID);
+                        string spid = reader.GetString(spidOrdinal);
+
+                        if (programName != null && programName.Trim().Equals(builder.ApplicationName) && Int16.Parse(spid) == sessionSpid)
                         {
-                            int programNameOrdinal = reader.GetOrdinal(COL_PROGRAM_NAME);
-                            string programName = reader.GetString(programNameOrdinal);
-                            
-                            if (programName != null && programName.Trim().Equals(builder.ApplicationName))
-                            {
-                                // Get the hostname
-                                int hostnameOrdinal = reader.GetOrdinal(COL_HOSTNAME);
-                                string hostnameFromServer = reader.GetString(hostnameOrdinal);
-                                string expectedMachineName = Environment.MachineName.ToUpper();
-                                string hostNameFromServer = hostnameFromServer.Trim().ToUpper();
-                                Assert.Matches(expectedMachineName, hostNameFromServer);
-                                return;
-                            }
+                            // Get the hostname
+                            int hostnameOrdinal = reader.GetOrdinal(COL_HOSTNAME);
+                            string hostnameFromServer = reader.GetString(hostnameOrdinal);
+                            string expectedMachineName = Environment.MachineName.ToUpper();
+                            string hostNameFromServer = hostnameFromServer.Trim().ToUpper();
+                            Assert.Matches(expectedMachineName, hostNameFromServer);
+                            return;
                         }
                     }
                 }
@@ -109,11 +120,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     using (SqlDataReader reader = command.ExecuteReader())
                     {
+                        bool processIdFound = false;
                         while (reader.Read())
                         {
                             Assert.Equal(sqlProviderName,reader.GetString(0).Trim());
-                            Assert.Equal(sqlProviderProcessID, reader.GetString(1).Trim());
+                            if(sqlProviderProcessID == reader.GetString(1).Trim())
+                            {
+                                processIdFound = true;
+                            }
                         }
+                        Assert.True(processIdFound);
                     }
                 }
             }

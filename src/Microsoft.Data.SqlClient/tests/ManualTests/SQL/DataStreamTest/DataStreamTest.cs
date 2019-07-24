@@ -414,7 +414,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void TimestampRead(string connectionString)
         {
-            string tempTable = "##" + Environment.GetEnvironmentVariable("ComputerName") + Environment.TickCount.ToString();
+            string tempTable = DataTestUtility.GetUniqueNameForSqlServer("##Temp");
             tempTable = tempTable.Replace('-', '_');
 
             using (SqlConnection conn = new SqlConnection(connectionString))
@@ -909,40 +909,47 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void NumericRead(string connectionString)
         {
-            string tempTable = "##" + Environment.GetEnvironmentVariable("ComputerName") + Environment.TickCount.ToString();
+            string tempTable = DataTestUtility.GetUniqueNameForSqlServer("##Temp");
             tempTable = tempTable.Replace('-', '_');
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 conn.Open();
-                using (SqlCommand cmd = new SqlCommand("", conn))
+                using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "create table " + tempTable + "(c1 sql_variant, c2 numeric(38,23))";
-                    cmd.ExecuteNonQuery();
-
-                    cmd.CommandText = "insert into " + tempTable + " values (convert(numeric(38,23), -123456789012345.67890123456789012345678), convert(numeric(38,23), -123456789012345.67890123456789012345678))";
-                    cmd.ExecuteNonQuery();
-
-                    cmd.CommandText = "select * from " + tempTable;
-                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    try
                     {
-                        reader.Read();
+                        cmd.CommandText = "create table " + tempTable + "(c1 sql_variant, c2 numeric(38,23))";
+                        cmd.ExecuteNonQuery();
 
-                        object o = reader.GetSqlValue(0);
-                        SqlDecimal n = reader.GetSqlDecimal(1);
+                        cmd.CommandText = "insert into " + tempTable + " values (convert(numeric(38,23), -123456789012345.67890123456789012345678), convert(numeric(38,23), -123456789012345.67890123456789012345678))";
+                        cmd.ExecuteNonQuery();
 
-                        Assert.True(o is SqlDecimal, "FAILED: Query result was not a SqlDecimal value");
-                        DataTestUtility.AssertEqualsWithDescription("-123456789012345.67890123456789012345678", ((SqlDecimal)o).ToString(), "FAILED: SqlDecimal did not have expected value");
-                        DataTestUtility.AssertEqualsWithDescription("-123456789012345.67890123456789012345678", n.ToString(), "FAILED: SqlDecimal did not have expected value");
+                        cmd.CommandText = "select * from " + tempTable;
+                        using (SqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            reader.Read();
 
-                        // com+ type coercion should fail
-                        // Em
-                        object value;
-                        string errorMessage = SystemDataResourceManager.Instance.SqlMisc_ConversionOverflowMessage;
-                        DataTestUtility.AssertThrowsWrapper<OverflowException>(() => value = reader[0], errorMessage);
-                        DataTestUtility.AssertThrowsWrapper<OverflowException>(() => value = reader[1], errorMessage);
-                        DataTestUtility.AssertThrowsWrapper<OverflowException>(() => value = reader.GetDecimal(0), errorMessage);
-                        DataTestUtility.AssertThrowsWrapper<OverflowException>(() => value = reader.GetDecimal(1), errorMessage);
+                            object o = reader.GetSqlValue(0);
+                            SqlDecimal n = reader.GetSqlDecimal(1);
+
+                            Assert.True(o is SqlDecimal, "FAILED: Query result was not a SqlDecimal value");
+                            DataTestUtility.AssertEqualsWithDescription("-123456789012345.67890123456789012345678", ((SqlDecimal)o).ToString(), "FAILED: SqlDecimal did not have expected value");
+                            DataTestUtility.AssertEqualsWithDescription("-123456789012345.67890123456789012345678", n.ToString(), "FAILED: SqlDecimal did not have expected value");
+
+                            // com+ type coercion should fail
+                            // Em
+                            object value;
+                            string errorMessage = SystemDataResourceManager.Instance.SqlMisc_ConversionOverflowMessage;
+                            DataTestUtility.AssertThrowsWrapper<OverflowException>(() => value = reader[0], errorMessage);
+                            DataTestUtility.AssertThrowsWrapper<OverflowException>(() => value = reader[1], errorMessage);
+                            DataTestUtility.AssertThrowsWrapper<OverflowException>(() => value = reader.GetDecimal(0), errorMessage);
+                            DataTestUtility.AssertThrowsWrapper<OverflowException>(() => value = reader.GetDecimal(1), errorMessage);
+                        }
+                    } finally
+                    {
+                        cmd.CommandText = "DROP TABLE " + tempTable;
+                        cmd.ExecuteNonQuery();
                     }
                 }
             }
@@ -1725,37 +1732,50 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void VariantCollationsTest(string connectionString)
         {
+            string dbName = DataTestUtility.GetUniqueName("JPN");
+            string tableName = DataTestUtility.GetUniqueName("T");
+
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 connection.Open();
                 using (SqlCommand cmd = new SqlCommand())
                 {
-                    cmd.Connection = connection;
+                    try
+                    {
+                        cmd.Connection = connection;
 
-                    // Setup japanese database
-                    cmd.CommandText = "USE master; IF EXISTS (SELECT * FROM sys.databases WHERE name='japaneseCollationTest') DROP DATABASE japaneseCollationTest; CREATE DATABASE japaneseCollationTest COLLATE Japanese_90_BIN;";
-                    cmd.ExecuteNonQuery();
-                    cmd.CommandText = "USE japaneseCollationTest; CREATE TABLE japaneseCollationTest.dbo.tVar (c1 SQL_VARIANT);INSERT INTO japaneseCollationTest.dbo.tVar VALUES (CAST(0xA6 AS VARCHAR(2)) COLLATE Japanese_90_bin);";
-                    cmd.ExecuteNonQuery();
+                        // Setup japanese database
+                        cmd.CommandText = "USE master; CREATE DATABASE " + dbName + " COLLATE Japanese_90_BIN;";
+                        cmd.ExecuteNonQuery();
 
-                    // Select the same string - once using japaneseCollationTest context and the second time using master context
-                    cmd.CommandText = "SELECT c1 FROM japaneseCollationTest.dbo.tVar;";
-                    connection.ChangeDatabase("japaneseCollationTest");
-                    string fromJapaneseDb = (string)cmd.ExecuteScalar();
-                    connection.ChangeDatabase("master");
-                    string fromMasterDb = (string)cmd.ExecuteScalar();
+                        cmd.CommandText = $"USE {dbName}; CREATE TABLE {dbName}.dbo.{tableName} (c1 SQL_VARIANT);" +
+                            $"INSERT INTO {dbName}.dbo.{tableName} VALUES (CAST(0xA6 AS VARCHAR(2)) COLLATE Japanese_90_bin);";
+                        cmd.ExecuteNonQuery();
 
-                    Assert.True(fromJapaneseDb == fromMasterDb, "FAILED: Variant collations strings do not match");
+                        // Select the same string - once using japaneseCollationTest context and the second time using master context
+                        cmd.CommandText = $"SELECT c1 FROM {dbName}.dbo.{tableName};";
+                        connection.ChangeDatabase(dbName);
 
-                    // drop japanese database
-                    cmd.CommandText = "USE master; DROP DATABASE japaneseCollationTest;";
+                        string fromJapaneseDb = (string)cmd.ExecuteScalar();
+                        connection.ChangeDatabase("master");
+                        string fromMasterDb = (string)cmd.ExecuteScalar();
+
+                        Assert.True(fromJapaneseDb == fromMasterDb, "FAILED: Variant collations strings do not match");
+                    }
+                    finally
+                    {
+                        // drop japanese database
+                        cmd.CommandText = $"USE master; DROP DATABASE {dbName};";
+                        cmd.ExecuteNonQuery();
+                    }
                 }
             }
         }
 
         private static void TestXEventsStreaming(string connectionString)
-        {   
-            string sessionName = "xeventStreamTest";
+        {
+            string sessionName = DataTestUtility.GenerateRandomCharacters("Session");
+
 			try
 			{
 				//Create XEvent
@@ -1805,8 +1825,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         private static void SetupXevent(string connectionString, string sessionName)
-        {            
-            string xEventCreateAndStartCommandText = @"CREATE EVENT SESSION [" + sessionName + @"] ON SERVER 
+        {
+            string xEventCreateAndStartCommandText = @"CREATE EVENT SESSION [" + sessionName + @"] ON SERVER
                         ADD EVENT sqlserver.user_event(ACTION(package0.event_sequence))
                         ADD TARGET package0.ring_buffer
                         WITH (
@@ -1832,7 +1852,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void DeleteXevent(string connectionString, string sessionName)
         { 
-            string deleteXeventSessionCommand = @"IF EXISTS (select * from sys.server_event_sessions where name ='" + sessionName + "') DROP  EVENT SESSION [" + sessionName + "] ON SERVER";
+            string deleteXeventSessionCommand = $"IF EXISTS (select * from sys.server_event_sessions where name ='{sessionName}')" +
+                    $" DROP EVENT SESSION [{sessionName}] ON SERVER";
 
             using (SqlConnection connection = new SqlConnection(connectionString))
             {

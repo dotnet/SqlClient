@@ -6,14 +6,14 @@
 // <owner current="true" primary="false">balnee</owner>
 //------------------------------------------------------------------------------
 
-namespace Microsoft.Data.SqlClient {
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Linq;
-    using System.Runtime.Caching;
-    using System.Text;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Runtime.Caching;
+using System.Text;
 
+namespace Microsoft.Data.SqlClient {
     /// <summary>
     /// <para> Implements a cache of Symmetric Keys (once they are decrypted).Useful for rapidly decrypting multiple data values.</para>
     /// </summary>

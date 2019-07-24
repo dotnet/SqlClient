@@ -7,10 +7,10 @@
 // <owner current="false" primary="true">ramp</owner>
 //------------------------------------------------------------------------------
 
-namespace Microsoft.Data.SqlClient {
-    using System;
+using System;
 
- public class SqlNotificationEventArgs : EventArgs {
+namespace Microsoft.Data.SqlClient {
+    public class SqlNotificationEventArgs : EventArgs {
         private SqlNotificationType _type;
         private SqlNotificationInfo _info;
         private SqlNotificationSource _source;

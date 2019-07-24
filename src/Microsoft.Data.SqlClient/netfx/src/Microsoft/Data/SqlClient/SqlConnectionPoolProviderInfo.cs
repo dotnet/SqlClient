@@ -5,10 +5,10 @@
 // <owner current="true" primary="true">blained</owner>
 //------------------------------------------------------------------------------
 
+
+using Microsoft.Data.ProviderBase;
+
 namespace Microsoft.Data.SqlClient {
-
-    using Microsoft.Data.ProviderBase;
-
     internal sealed class SqlConnectionPoolProviderInfo : DbConnectionPoolProviderInfo {
         private string _instanceName;
 

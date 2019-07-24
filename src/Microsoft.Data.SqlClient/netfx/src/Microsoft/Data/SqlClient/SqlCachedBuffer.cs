@@ -6,17 +6,17 @@
 // <owner current="true" primary="false">sukanyas</owner>
 //------------------------------------------------------------------------------
 
+
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Xml;
+using System.IO;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Data.SqlTypes;
+
 namespace Microsoft.Data.SqlClient {
-
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Xml;
-    using System.IO;
-    using System.Reflection;
-    using System.Runtime.CompilerServices;
-    using System.Data.SqlTypes;
-
     // Caches the bytes returned from partial length prefixed datatypes, like XML
     sealed internal class SqlCachedBuffer : System.Data.SqlTypes.INullable{
         public static readonly SqlCachedBuffer Null = new SqlCachedBuffer();

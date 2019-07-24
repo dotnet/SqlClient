@@ -6,43 +6,41 @@
 // <owner current="true" primary="false">sukanyas</owner>
 //------------------------------------------------------------------------------
 
-using Microsoft.Data;
+using System;
+using System.Collections;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Configuration;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Runtime.ConstrainedExecution;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Security;
+using System.Security.Permissions;
+using System.Reflection;
+using System.Runtime.Versioning;
+using Microsoft.Data.SqlClient.Server;
+using System.Security.Principal;
+using System.Diagnostics.CodeAnalysis;
+using System.Data;
+using System.Data.Common;
+using Microsoft.Data.ProviderBase;
+
+using SafeNativeMethods = Microsoft.Data.Common.SafeNativeMethods;
 
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("System.Data.DataSetExtensions, PublicKey="+Microsoft.Data.SqlClient.AssemblyRef.EcmaPublicKeyFull)] // DevDiv Bugs 92166
 
 namespace Microsoft.Data.SqlClient
 {
-    using System;
-    using System.Collections;
-    using System.Collections.Concurrent;
-    using System.Collections.Generic;
-    using System.Collections.ObjectModel;
-    using System.Configuration;
-    using System.ComponentModel;
-    using Microsoft.Data;
     using Microsoft.Data.Common;
-    using Microsoft.Data.ProviderBase;
-    using System.Diagnostics;
-    using System.Globalization;
-    using System.IO;
-    using System.Linq;
-    using System.Runtime.CompilerServices;
-    using System.Runtime.ConstrainedExecution;
-    using System.Runtime.InteropServices;
-    using System.Text;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using System.Security;
-    using System.Security.Permissions;
-    using System.Reflection;
-    using System.Runtime.Versioning;
-    
-    using Microsoft.Data.SqlClient.Server;
-    using System.Security.Principal;
-    using System.Diagnostics.CodeAnalysis;
-    using System.Data;
-    using System.Data.Common;
-    using SafeNativeMethods = Common.SafeNativeMethods;
 
     [DefaultEvent("InfoMessage")]
     public sealed partial class SqlConnection: DbConnection, ICloneable {

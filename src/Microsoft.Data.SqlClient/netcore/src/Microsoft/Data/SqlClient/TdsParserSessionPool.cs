@@ -4,7 +4,6 @@
 
 using Microsoft.Data.Common;
 using System.Collections.Generic;
-using System.Data.Common;
 using System.Diagnostics;
 
 namespace Microsoft.Data.SqlClient

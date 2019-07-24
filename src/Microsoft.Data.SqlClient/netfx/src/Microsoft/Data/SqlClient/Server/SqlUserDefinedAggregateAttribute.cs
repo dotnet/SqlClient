@@ -13,10 +13,9 @@
 // <owner current="false" primary="false">venkar</owner>
 // <owner current="false" primary="false">Microsoft</owner>
 //------------------------------------------------------------------------------
+
 using Microsoft.Data.Common;
 using System;
-using System.Data;
-using System.Data.Common;
 
 namespace Microsoft.Data.SqlClient.Server
 {

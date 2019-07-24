@@ -7,15 +7,16 @@
 // <owner current="true" primary="false">laled</owner>
 //------------------------------------------------------------------------------
 
-namespace Microsoft.Data.SqlClient.Server {
 
-    using System;
-    using Microsoft.Data.Common;
-    using System.Diagnostics;
-    using System.Runtime.InteropServices;
-    using System.Data.SqlTypes;
-    using System.Data;
+using System;
+using Microsoft.Data.Common;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Data.SqlTypes;
+using System.Data;
 
+namespace Microsoft.Data.SqlClient.Server
+{
     internal sealed class SqlRecordBuffer {
 
         internal enum StorageType {

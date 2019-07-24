@@ -11,7 +11,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class MARSSessionPoolingTest
     {
-        private const string COMMAND_STATUS = "select count(*) as ConnectionCount from sys.dm_exec_connections where session_id=@@spid and net_transport='Session'; select count(*) as ActiveRequestCount from sys.dm_exec_requests where session_id=@@spid and status='running' or session_id=@@spid and status='suspended'";
+        private const string COMMAND_STATUS = "select count(*) as ConnectionCount, @@spid as spid from sys.dm_exec_connections where session_id=@@spid and net_transport='Session'; " +
+            "select count(*) as ActiveRequestCount, @@spid as spid from sys.dm_exec_requests where session_id=@@spid and status='running' or session_id=@@spid and status='suspended'";
         private const string COMMAND_SPID = "select @@spid";
         private const int CONCURRENT_COMMANDS = 5;
 
@@ -68,6 +69,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             TestMARSSessionPooling("Case: Text, ExecuteReader, GC-NoWait", _testConnString, CommandType.Text, ExecuteType.ExecuteReader, ReaderTestType.ReaderGC, GCType.NoWait);
         }
 
+        [ActiveIssue(8959)]
         [CheckConnStrSetupFact]
         public static void MarsExecuteReader_StoredProcedure_WithGC()
         {
@@ -182,66 +184,71 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         con.Open(); // Close and open, to re-assure collection!
                     }
 
-                    SqlCommand verificationCmd = con.CreateCommand();
+                    using (SqlCommand verificationCmd = con.CreateCommand()) {
 
-                    verificationCmd.CommandText = COMMAND_STATUS;
-                    using (SqlDataReader rdr = verificationCmd.ExecuteReader())
-                    {
-                        rdr.Read();
-                        int connections = (int)rdr.GetValue(0);
-                        rdr.NextResult();
-                        rdr.Read();
-                        int requests = (int)rdr.GetValue(0);
-
-                        switch (executeType)
+                        verificationCmd.CommandText = COMMAND_STATUS;
+                        using (SqlDataReader rdr = verificationCmd.ExecuteReader())
                         {
-                            case ExecuteType.ExecuteScalar:
-                            case ExecuteType.ExecuteNonQuery:
-                                // 1 for connection, 1 for command
-                                Assert.True(connections == 2, "Failure - incorrect number of connections for ExecuteScalar! #connections: " + connections);
+                            rdr.Read();
+                            int connections = (int)rdr.GetValue(0);
+                            int spid1 = (Int16)rdr.GetValue(1);
+                            rdr.NextResult();
+                            rdr.Read();
+                            int requests = (int)rdr.GetValue(0);
+                            int spid2 = (Int16)rdr.GetValue(1);
 
-                                // only 1 executing
-                                Assert.True(requests == 1, "Failure - incorrect number of requests for ExecuteScalar! #requests: " + requests);
-                                break;
-                            case ExecuteType.ExecuteReader:
-                                switch (readerTestType)
-                                {
-                                    case ReaderTestType.ReaderClose:
-                                    case ReaderTestType.ReaderDispose:
-                                    case ReaderTestType.ConnectionClose:
-                                        // 1 for connection, 1 for command
-                                        Assert.True(connections == 2, "Failure - Incorrect number of connections for ReaderClose / ReaderDispose / ConnectionClose! #connections: " + connections);
+                            switch (executeType)
+                            {
+                                case ExecuteType.ExecuteScalar:
+                                case ExecuteType.ExecuteNonQuery:
+                                    // 1 for connection, 1 for command
+                                    Assert.True(connections == 2, "Failure - incorrect number of connections for ExecuteScalar! #connections: " + connections);
 
-                                        // only 1 executing
-                                        Assert.True(requests == 1, "Failure - incorrect number of requests for ReaderClose/ReaderDispose/ConnectionClose! #requests: " + requests);
-                                        break;
-                                    case ReaderTestType.ReaderGC:
-                                        switch (gcType)
-                                        {
-                                            case GCType.Wait:
-                                                // 1 for connection, 1 for open reader
-                                                Assert.True(connections == 2, "Failure - incorrect number of connections for ReaderGCWait! #connections: " + connections);
-                                                // only 1 executing
-                                                Assert.True(requests == 1, "Failure - incorrect number of requests for ReaderGCWait! #requests: " + requests);
-                                                break;
-                                            case GCType.NoWait:
-                                                // 1 for connection, 1 for open reader
-                                                Assert.True(connections == 2, "Failure - incorrect number of connections for ReaderGCNoWait! #connections: " + connections);
+                                    // only 1 executing
+                                    Assert.True(requests == 1, "Failure - incorrect number of requests for ExecuteScalar! #requests: " + requests);
+                                    break;
+                                case ExecuteType.ExecuteReader:
+                                    switch (readerTestType)
+                                    {
+                                        case ReaderTestType.ReaderClose:
+                                        case ReaderTestType.ReaderDispose:
+                                        case ReaderTestType.ConnectionClose:
+                                            // 1 for connection, 1 for command
+                                            Assert.True(connections == 2, "Failure - Incorrect number of connections for ReaderClose / ReaderDispose / ConnectionClose! #connections: " + connections);
 
-                                                // only 1 executing
-                                                Assert.True(requests == 1, "Failure - incorrect number of requests for ReaderGCNoWait! #requests: " + requests);
-                                                break;
-                                        }
-                                        break;
-                                    case ReaderTestType.NoCloses:
-                                        // 1 for connection, 1 for current command, 1 for 0 based array offset, plus i for open readers
-                                        Assert.True(connections == (3 + i), "Failure - incorrect number of connections for NoCloses: " + connections);
+                                            // only 1 executing
+                                            Assert.True(requests == 1, "Failure - incorrect number of requests for ReaderClose/ReaderDispose/ConnectionClose! #requests: " + requests);
+                                            break;
+                                        case ReaderTestType.ReaderGC:
+                                            switch (gcType)
+                                            {
+                                                case GCType.Wait:
+                                                    // 1 for connection, 1 for open reader
+                                                    Assert.True(connections == 2, "Failure - incorrect number of connections for ReaderGCWait! #connections: " + connections);
+                                                    // only 1 executing
+                                                    Assert.True(requests == 1, "Failure - incorrect number of requests for ReaderGCWait! #requests: " + requests);
+                                                    break;
+                                                case GCType.NoWait:
+                                                    // 1 for connection, 1 for open reader
+                                                    Assert.True(connections == 2, "Failure - incorrect number of connections for ReaderGCNoWait! #connections: " + connections);
 
-                                        // 1 for current command, 1 for 0 based array offset, plus i open readers
-                                        Assert.True(requests == (2 + i), "Failure - incorrect number of requests for NoCloses: " + requests);
-                                        break;
-                                }
-                                break;
+                                                    // only 1 executing
+                                                    Assert.True(requests == 1, "Failure - incorrect number of requests for ReaderGCNoWait! #requests: " + requests);
+                                                    break;
+                                            }
+                                            break;
+                                        case ReaderTestType.NoCloses:
+                                            // 1 for connection, 1 for current command, 1 for 0 based array offset, plus i for open readers
+                                            Assert.True(connections == (3 + i), "Failure - incorrect number of connections for NoCloses: " + connections +
+                                                "\ni: " + i + " :::: requests: " + requests + " :::: spid1: " + spid1 + " ::::: spid2: " + spid2);
+
+                                            // 1 for current command, 1 for 0 based array offset, plus i open readers
+                                            Assert.True(requests == (2 + i), "Failure - incorrect number of requests for NoCloses: " + requests + 
+                                                "\ni: " + i + " :::: connections: " + connections + " :::: spid1: " + spid1 + " ::::: spid2: " + spid2 );
+                                            break;
+                                    }
+                                    break;
+                            }
                         }
                     }
                 }

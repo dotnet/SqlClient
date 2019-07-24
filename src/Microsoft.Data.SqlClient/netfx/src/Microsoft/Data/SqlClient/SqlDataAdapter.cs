@@ -6,15 +6,15 @@
 // <owner current="true" primary="false">blained</owner>
 //------------------------------------------------------------------------------
 
+
+using System;
+using System.ComponentModel;
+using Microsoft.Data.Common;
+using System.Diagnostics;
+using System.Data.Common;
+using System.Data;
+
 namespace Microsoft.Data.SqlClient {
-
-    using System;
-    using System.ComponentModel;
-    using Microsoft.Data.Common;
-    using System.Diagnostics;
-    using System.Data.Common;
-    using System.Data;
-
     [
     DefaultEvent("RowUpdated"),
     ToolboxItem("Microsoft.VSDesigner.Data.VS.SqlDataAdapterToolboxItem, " + AssemblyRef.MicrosoftVSDesigner),

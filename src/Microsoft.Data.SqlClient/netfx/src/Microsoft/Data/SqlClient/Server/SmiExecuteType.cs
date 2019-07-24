@@ -8,7 +8,6 @@
 
 namespace Microsoft.Data.SqlClient.Server {
 
-
     // enum representing the type of execution requested
     internal enum SmiExecuteType {
         NonQuery = 0,

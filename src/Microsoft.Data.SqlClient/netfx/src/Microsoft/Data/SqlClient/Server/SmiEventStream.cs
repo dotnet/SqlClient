@@ -6,10 +6,9 @@
 // <owner current="true" primary="false">stevesta</owner>
 //------------------------------------------------------------------------------
 
+using System;
+
 namespace Microsoft.Data.SqlClient.Server {
-
-    using System;
-
     internal abstract class SmiEventStream : IDisposable {
 
         internal abstract bool HasEvents { get; }

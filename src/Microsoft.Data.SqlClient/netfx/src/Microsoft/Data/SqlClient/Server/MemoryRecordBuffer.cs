@@ -7,11 +7,11 @@
 // <owner current="true" primary="false">laled</owner>
 //------------------------------------------------------------------------------
 
-namespace Microsoft.Data.SqlClient.Server {
+using System;
+using System.Diagnostics;
+using System.Data.SqlTypes;
 
-    using System;
-    using System.Diagnostics;
-    using System.Data.SqlTypes;
+namespace Microsoft.Data.SqlClient.Server {
 
     // Class for implementing a record object used in out-of-proc scenarios.
     internal sealed class MemoryRecordBuffer : SmiRecordBuffer {

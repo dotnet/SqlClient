@@ -9,11 +9,10 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Xml;
 using System.IO;
-
-using MSS = Microsoft.Data.SqlClient.Server;
 using System.Data;
 using System;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Server;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -787,7 +786,7 @@ namespace Microsoft.Data.SqlClient
             (255, 255, -1, false, false, false, TdsEnums.SQLTABLE, TdsEnums.SQLTABLE, MetaTypeName.TABLE, typeof(IEnumerable<DbDataRecord>), typeof(IEnumerable<DbDataRecord>), SqlDbType.Structured, DbType.Object, 0);
 
         private static readonly MetaType s_metaSUDT = new MetaType
-            (255, 255, -1, false, false, false, TdsEnums.SQLVOID, TdsEnums.SQLVOID, "", typeof(MSS.SqlDataRecord), typeof(MSS.SqlDataRecord), SqlDbType.Structured, DbType.Object, 0);
+            (255, 255, -1, false, false, false, TdsEnums.SQLVOID, TdsEnums.SQLVOID, "", typeof(SqlDataRecord), typeof(SqlDataRecord), SqlDbType.Structured, DbType.Object, 0);
 
         private static readonly MetaType s_metaDate = new MetaType
             (255, 255, 3, true, false, false, TdsEnums.SQLDATE, TdsEnums.SQLDATE, MetaTypeName.DATE, typeof(System.DateTime), typeof(System.DateTime), SqlDbType.Date, DbType.Date, 0);

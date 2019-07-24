@@ -5,11 +5,11 @@
 // <owner current="true" primary="true">tomtal</owner>
 //------------------------------------------------------------------------------
 
-namespace Microsoft.Data.SqlClient {
 
-    using System;
-    using System.Net;
-    
+using System;
+using System.Net;
+
+namespace Microsoft.Data.SqlClient {
     /// <summary>
     /// Class to pass original client information.
     /// </summary>

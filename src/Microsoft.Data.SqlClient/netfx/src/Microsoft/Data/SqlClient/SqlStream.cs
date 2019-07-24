@@ -5,17 +5,17 @@
 // <owner current="true" primary="true">nissimn</owner>
 // <owner current="true" primary="false">sukanyas</owner>
 //------------------------------------------------------------------------------
+
+using System;
+using System.Collections.Generic;
+using Microsoft.Data.Common;
+using System.Diagnostics;
+using System.IO;
+using System.Text;
+using System.Xml;
+using Microsoft.Data.SqlTypes;
+
 namespace Microsoft.Data.SqlClient {
-
-    using System;
-    using System.Collections.Generic;
-    using Microsoft.Data.Common;
-    using System.Diagnostics;
-    using System.IO;
-    using System.Text;
-    using System.Xml;
-    using Microsoft.Data.SqlTypes;
-
     sealed internal class SqlStream : Stream {
         private SqlDataReader _reader; // reader we will stream off
         private int           _columnOrdinal;

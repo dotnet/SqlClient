@@ -6,12 +6,12 @@
 // <owner current="true" primary="false">laled</owner>
 //------------------------------------------------------------------------------
 
+
+using System;
+using System.Collections;
+using System.ComponentModel;
+
 namespace Microsoft.Data.SqlClient {
-
-    using System;
-    using System.Collections;
-    using System.ComponentModel;
-
     [Serializable, ListBindable(false)]
     public sealed class SqlErrorCollection : ICollection {
 

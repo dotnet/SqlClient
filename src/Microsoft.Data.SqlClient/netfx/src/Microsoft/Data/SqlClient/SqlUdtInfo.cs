@@ -7,13 +7,13 @@
 // <owner current="true" primary="false">alazela</owner>
 //------------------------------------------------------------------------------
 
+
+using System;
+using System.Collections.Generic;
+using System.Reflection;
+using Microsoft.Data.SqlClient.Server;
+
 namespace Microsoft.Data.SqlClient {
-
-    using System;
-    using System.Collections.Generic;
-    using System.Reflection;
-    using Microsoft.Data.SqlClient.Server;
-
     internal class SqlUdtInfo {
         internal readonly Format SerializationFormat;
         internal readonly bool IsByteOrdered;

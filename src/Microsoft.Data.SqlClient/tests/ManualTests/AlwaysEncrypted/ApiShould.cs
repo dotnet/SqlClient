@@ -116,8 +116,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             const string firstColumnName = @"firstColumn";
             const string secondColumnName = @"secondColumn";
             const string thirdColumnName = @"thirdColumn";
-            const string inputProcedureName = @"inputProc";
-            const string outputProcedureName = @"outputProc";
+            string inputProcedureName = DataTestUtility.GetUniqueName("InputProc").ToString();
+            string outputProcedureName = DataTestUtility.GetUniqueName("OutputProc").ToString();
             const int charColumnSize = 100;
             const int decimalColumnPrecision = 10;
             const int decimalColumnScale = 4;
@@ -125,189 +125,193 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TcpConnStr))
             {
-                sqlConnection.Open();
+                try {
+                    sqlConnection.Open();
 
-                DropHelperProcedures(new string[] { inputProcedureName, outputProcedureName });
-
-                // Create a procedure that gets input parameters that have smaller data types than the actual columns types.
-                // Decimal precision and scale need to match exactly.
-                int charInputParamSize = charColumnSize - 20;
-                int decimalInputParamPrecision = decimalColumnPrecision;
-                int decimalInputParamScale = decimalColumnScale;
-                int timeInputParamScale = timeColumnScale - 1;
-
-                using (SqlCommand sqlCmd = new SqlCommand(string.Format(
-                    @"CREATE PROCEDURE {0} (@p1 nvarchar({5}), @p2 decimal ({6}, {7}), @p3 time ({8})) AS
-                        SELECT * FROM [{1}] WHERE {2} = @p1 AND {3} = @p2 AND {4} = @p3",
-                    inputProcedureName, tableName, firstColumnName, secondColumnName, thirdColumnName, charInputParamSize, decimalInputParamPrecision, decimalInputParamScale, timeInputParamScale), sqlConnection))
-                {
-                    sqlCmd.ExecuteNonQuery();
-                }
-
-                // Create a procedure that returns output parameters that have larger data type than the actual column types.
-                // Decimal precision and scale need to match exactly.
-                int charOutputParamSize = charColumnSize + 20;
-                int decimalOutputParamPrecision = decimalColumnPrecision;
-                int decimalOutputParamScale = decimalColumnScale;
-                int timeOutputParamScale = timeColumnScale + 1;
-
-                using (SqlCommand sqlCmd = new SqlCommand(string.Format(
-                    @"CREATE PROCEDURE {0} (@p1 nvarchar({5}) OUTPUT, @p2 decimal ({6}, {7}) OUTPUT, @p3 time ({8}) OUTPUT) AS
-                        SELECT @p1={2}, @p2={3}, @p3={4} FROM [{1}]",
-                    outputProcedureName, tableName, firstColumnName, secondColumnName, thirdColumnName, charOutputParamSize, decimalOutputParamPrecision, decimalOutputParamScale, timeOutputParamScale), sqlConnection))
-                {
-                    sqlCmd.ExecuteNonQuery();
-                }
-
-                // Insert a row.
-                using (SqlCommand sqlCmd = new SqlCommand(
-                    cmdText: $"INSERT INTO [{tableName}] VALUES (@p1, @p2, @p3)",
-                    connection: sqlConnection, 
-                    transaction: null, 
-                    columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
-                {
-                    SqlParameter param1 = new SqlParameter("@p1", SqlDbType.NVarChar)
-                    {
-                        Size = charColumnSize,
-                        Value = "ColumnValue"
-                    };
-                    sqlCmd.Parameters.Add(param1);
-
-                    SqlParameter param2 = new SqlParameter("@p2", SqlDbType.Decimal)
-                    {
-                        Precision = decimalColumnPrecision,
-                        Scale = decimalColumnScale,
-                        Value = 400.21
-                    };
-                    sqlCmd.Parameters.Add(param2);
-
-                    SqlParameter param3 = new SqlParameter("@p3", SqlDbType.Time)
-                    {
-                        Scale = timeColumnScale,
-                        Value = TimeSpan.Parse("1:01:01.001")
-                    };
-                    sqlCmd.Parameters.Add(param3);
-
-                    sqlCmd.ExecuteNonQuery();
-                }
-
-                // Now execute the procedure with input params and make sure the parameter properties stays as set.
-                using (SqlCommand sqlCmd = new SqlCommand(inputProcedureName, sqlConnection, null, SqlCommandColumnEncryptionSetting.Enabled))
-                {
-                    sqlCmd.CommandType = CommandType.StoredProcedure;
-
-                    // Set the actual parameter size to even smaller than the proc size. This is allowed since we assign from these values into the params.
+                    // Create a procedure that gets input parameters that have smaller data types than the actual columns types.
                     // Decimal precision and scale need to match exactly.
-                    int charParamSize = charInputParamSize - 20;
-                    int decimalParamPrecision = decimalInputParamPrecision;
-                    int decimalParamScale = decimalInputParamScale;
-                    int timeParamScale = timeInputParamScale - 1;
+                    int charInputParamSize = charColumnSize - 20;
+                    int decimalInputParamPrecision = decimalColumnPrecision;
+                    int decimalInputParamScale = decimalColumnScale;
+                    int timeInputParamScale = timeColumnScale - 1;
 
-                    SqlParameter param1 = new SqlParameter("@p1", SqlDbType.NVarChar)
+                    using (SqlCommand sqlCmd = new SqlCommand(string.Format(
+                        @"CREATE PROCEDURE {0} (@p1 nvarchar({5}), @p2 decimal ({6}, {7}), @p3 time ({8})) AS
+                            SELECT * FROM [{1}] WHERE {2} = @p1 AND {3} = @p2 AND {4} = @p3",
+                        inputProcedureName, tableName, firstColumnName, secondColumnName, thirdColumnName, charInputParamSize, decimalInputParamPrecision, decimalInputParamScale, timeInputParamScale), sqlConnection))
                     {
-                        Size = charParamSize,
-                        Value = "ColumnValue"
-                    };
-                    sqlCmd.Parameters.Add(param1);
-
-                    SqlParameter param2 = new SqlParameter("@p2", SqlDbType.Decimal)
-                    {
-                        Precision = (byte)decimalParamPrecision,
-                        Scale = (byte)decimalParamScale,
-                        Value = 400.21
-                    };
-                    sqlCmd.Parameters.Add(param2);
-
-                    SqlParameter param3 = new SqlParameter("@p3", SqlDbType.Time)
-                    {
-                        Scale = (byte)timeParamScale,
-                        Value = TimeSpan.Parse("1:01:01.001")
-                    };
-                    sqlCmd.Parameters.Add(param3);
-
-                    using (SqlDataReader reader = sqlCmd.ExecuteReader())
-                    {
-                        Assert.True(reader.Read(), "We should have found one row.");
-                        Assert.False(reader.Read(), "We shouldn't have found a second row.");
+                        sqlCmd.ExecuteNonQuery();
                     }
 
-                    // Validate that all properties have stayed the same for all parameters.
-                    Assert.Equal(SqlDbType.NVarChar, param1.SqlDbType);
-                    Assert.Equal(DbType.String, param1.DbType);
-                    Assert.Equal(0, param1.Scale);
-                    Assert.Equal(0, param1.Precision);
-                    Assert.Equal(charParamSize, param1.Size);
+                    // Create a procedure that returns output parameters that have larger data type than the actual column types.
+                    // Decimal precision and scale need to match exactly.
+                    int charOutputParamSize = charColumnSize + 20;
+                    int decimalOutputParamPrecision = decimalColumnPrecision;
+                    int decimalOutputParamScale = decimalColumnScale;
+                    int timeOutputParamScale = timeColumnScale + 1;
 
-                    Assert.Equal(SqlDbType.Decimal, param2.SqlDbType);
-                    Assert.Equal(DbType.Decimal, param2.DbType);
-                    Assert.Equal(decimalParamScale, param2.Scale);
-                    Assert.Equal(decimalParamPrecision, param2.Precision);
-                    Assert.Equal(0, param2.Size);
+                    using (SqlCommand sqlCmd = new SqlCommand(string.Format(
+                        @"CREATE PROCEDURE {0} (@p1 nvarchar({5}) OUTPUT, @p2 decimal ({6}, {7}) OUTPUT, @p3 time ({8}) OUTPUT) AS
+                            SELECT @p1={2}, @p2={3}, @p3={4} FROM [{1}]",
+                        outputProcedureName, tableName, firstColumnName, secondColumnName, thirdColumnName, charOutputParamSize, decimalOutputParamPrecision, decimalOutputParamScale, timeOutputParamScale), sqlConnection))
+                    {
+                        sqlCmd.ExecuteNonQuery();
+                    }
 
-                    Assert.Equal(SqlDbType.Time, param3.SqlDbType);
-                    Assert.Equal(DbType.Time, param3.DbType);
-                    Assert.Equal(timeParamScale, param3.Scale);
-                    Assert.Equal(0, param3.Precision);
-                    Assert.Equal(0, param3.Size);
-                }
+                    // Insert a row.
+                    using (SqlCommand sqlCmd = new SqlCommand(
+                        cmdText: $"INSERT INTO [{tableName}] VALUES (@p1, @p2, @p3)",
+                        connection: sqlConnection, 
+                        transaction: null, 
+                        columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
+                    {
+                        SqlParameter param1 = new SqlParameter("@p1", SqlDbType.NVarChar)
+                        {
+                            Size = charColumnSize,
+                            Value = "ColumnValue"
+                        };
+                        sqlCmd.Parameters.Add(param1);
 
-                // Now execute the procedure with output params and make sure the parameter properties stays as set.
-                using (SqlCommand sqlCmd = new SqlCommand(outputProcedureName, sqlConnection, null, SqlCommandColumnEncryptionSetting.Enabled))
+                        SqlParameter param2 = new SqlParameter("@p2", SqlDbType.Decimal)
+                        {
+                            Precision = decimalColumnPrecision,
+                            Scale = decimalColumnScale,
+                            Value = 400.21
+                        };
+                        sqlCmd.Parameters.Add(param2);
+
+                        SqlParameter param3 = new SqlParameter("@p3", SqlDbType.Time)
+                        {
+                            Scale = timeColumnScale,
+                            Value = TimeSpan.Parse("1:01:01.001")
+                        };
+                        sqlCmd.Parameters.Add(param3);
+
+                        sqlCmd.ExecuteNonQuery();
+                    }
+
+                    // Now execute the procedure with input params and make sure the parameter properties stays as set.
+                    using (SqlCommand sqlCmd = new SqlCommand(inputProcedureName, sqlConnection, null, SqlCommandColumnEncryptionSetting.Enabled))
+                    {
+                        sqlCmd.CommandType = CommandType.StoredProcedure;
+
+                        // Set the actual parameter size to even smaller than the proc size. This is allowed since we assign from these values into the params.
+                        // Decimal precision and scale need to match exactly.
+                        int charParamSize = charInputParamSize - 20;
+                        int decimalParamPrecision = decimalInputParamPrecision;
+                        int decimalParamScale = decimalInputParamScale;
+                        int timeParamScale = timeInputParamScale - 1;
+
+                        SqlParameter param1 = new SqlParameter("@p1", SqlDbType.NVarChar)
+                        {
+                            Size = charParamSize,
+                            Value = "ColumnValue"
+                        };
+                        sqlCmd.Parameters.Add(param1);
+
+                        SqlParameter param2 = new SqlParameter("@p2", SqlDbType.Decimal)
+                        {
+                            Precision = (byte)decimalParamPrecision,
+                            Scale = (byte)decimalParamScale,
+                            Value = 400.21
+                        };
+                        sqlCmd.Parameters.Add(param2);
+
+                        SqlParameter param3 = new SqlParameter("@p3", SqlDbType.Time)
+                        {
+                            Scale = (byte)timeParamScale,
+                            Value = TimeSpan.Parse("1:01:01.001")
+                        };
+                        sqlCmd.Parameters.Add(param3);
+
+                        using (SqlDataReader reader = sqlCmd.ExecuteReader())
+                        {
+                            Assert.True(reader.Read(), "We should have found one row.");
+                            Assert.False(reader.Read(), "We shouldn't have found a second row.");
+                        }
+
+                        // Validate that all properties have stayed the same for all parameters.
+                        Assert.Equal(SqlDbType.NVarChar, param1.SqlDbType);
+                        Assert.Equal(DbType.String, param1.DbType);
+                        Assert.Equal(0, param1.Scale);
+                        Assert.Equal(0, param1.Precision);
+                        Assert.Equal(charParamSize, param1.Size);
+
+                        Assert.Equal(SqlDbType.Decimal, param2.SqlDbType);
+                        Assert.Equal(DbType.Decimal, param2.DbType);
+                        Assert.Equal(decimalParamScale, param2.Scale);
+                        Assert.Equal(decimalParamPrecision, param2.Precision);
+                        Assert.Equal(0, param2.Size);
+
+                        Assert.Equal(SqlDbType.Time, param3.SqlDbType);
+                        Assert.Equal(DbType.Time, param3.DbType);
+                        Assert.Equal(timeParamScale, param3.Scale);
+                        Assert.Equal(0, param3.Precision);
+                        Assert.Equal(0, param3.Size);
+                    }
+
+                    // Now execute the procedure with output params and make sure the parameter properties stays as set.
+                    using (SqlCommand sqlCmd = new SqlCommand(outputProcedureName, sqlConnection, null, SqlCommandColumnEncryptionSetting.Enabled))
+                    {
+                        sqlCmd.CommandType = CommandType.StoredProcedure;
+
+                        // For output params the type needs to be identical with the actual procedure parameter since we will assign in both directions.
+                        int charParamSize = charOutputParamSize;
+                        int decimalParamPrecision = decimalOutputParamPrecision;
+                        int decimalParamScale = decimalOutputParamScale;
+                        int timeParamScale = timeOutputParamScale;
+
+                        SqlParameter param1 = new SqlParameter("@p1", SqlDbType.NVarChar)
+                        {
+                            Direction = ParameterDirection.Output,
+                            Size = charParamSize,
+                            Value = "DifferentColumnValue"
+                        };
+                        sqlCmd.Parameters.Add(param1);
+
+                        SqlParameter param2 = new SqlParameter("@p2", SqlDbType.Decimal)
+                        {
+                            Direction = ParameterDirection.Output,
+                            Precision = (byte)decimalParamPrecision,
+                            Scale = (byte)decimalParamScale,
+                            Value = 4000.21
+                        };
+                        sqlCmd.Parameters.Add(param2);
+
+                        SqlParameter param3 = new SqlParameter("@p3", SqlDbType.Time)
+                        {
+                            Direction = ParameterDirection.Output,
+                            Scale = (byte)timeParamScale,
+                            Value = TimeSpan.Parse("1:01:01.01")
+                        };
+                        sqlCmd.Parameters.Add(param3);
+
+                        sqlCmd.ExecuteNonQuery();
+
+                        // Validate that all properties have stayed the same for all parameters.
+                        Assert.Equal(SqlDbType.NVarChar, param1.SqlDbType);
+                        Assert.Equal(DbType.String, param1.DbType);
+                        Assert.Equal(0, param1.Scale);
+                        Assert.Equal(0, param1.Precision);
+                        Assert.Equal(charParamSize, param1.Size);
+
+                        Assert.Equal(SqlDbType.Decimal, param2.SqlDbType);
+                        Assert.Equal(DbType.Decimal, param2.DbType);
+                        Assert.Equal(decimalParamScale, param2.Scale);
+                        Assert.Equal(decimalParamPrecision, param2.Precision);
+                        Assert.Equal(0, param2.Size);
+
+                        Assert.Equal(SqlDbType.Time, param3.SqlDbType);
+                        Assert.Equal(DbType.Time, param3.DbType);
+                        Assert.Equal(timeParamScale, param3.Scale);
+                        Assert.Equal(0, param3.Precision);
+                        Assert.Equal(0, param3.Size);
+                    }
+                } finally
                 {
-                    sqlCmd.CommandType = CommandType.StoredProcedure;
-
-                    // For output params the type needs to be identical with the actual procedure parameter since we will assign in both directions.
-                    int charParamSize = charOutputParamSize;
-                    int decimalParamPrecision = decimalOutputParamPrecision;
-                    int decimalParamScale = decimalOutputParamScale;
-                    int timeParamScale = timeOutputParamScale;
-
-                    SqlParameter param1 = new SqlParameter("@p1", SqlDbType.NVarChar)
-                    {
-                        Direction = ParameterDirection.Output,
-                        Size = charParamSize,
-                        Value = "DifferentColumnValue"
-                    };
-                    sqlCmd.Parameters.Add(param1);
-
-                    SqlParameter param2 = new SqlParameter("@p2", SqlDbType.Decimal)
-                    {
-                        Direction = ParameterDirection.Output,
-                        Precision = (byte)decimalParamPrecision,
-                        Scale = (byte)decimalParamScale,
-                        Value = 4000.21
-                    };
-                    sqlCmd.Parameters.Add(param2);
-
-                    SqlParameter param3 = new SqlParameter("@p3", SqlDbType.Time)
-                    {
-                        Direction = ParameterDirection.Output,
-                        Scale = (byte)timeParamScale,
-                        Value = TimeSpan.Parse("1:01:01.01")
-                    };
-                    sqlCmd.Parameters.Add(param3);
-
-                    sqlCmd.ExecuteNonQuery();
-
-                    // Validate that all properties have stayed the same for all parameters.
-                    Assert.Equal(SqlDbType.NVarChar, param1.SqlDbType);
-                    Assert.Equal(DbType.String, param1.DbType);
-                    Assert.Equal(0, param1.Scale);
-                    Assert.Equal(0, param1.Precision);
-                    Assert.Equal(charParamSize, param1.Size);
-
-                    Assert.Equal(SqlDbType.Decimal, param2.SqlDbType);
-                    Assert.Equal(DbType.Decimal, param2.DbType);
-                    Assert.Equal(decimalParamScale, param2.Scale);
-                    Assert.Equal(decimalParamPrecision, param2.Precision);
-                    Assert.Equal(0, param2.Size);
-
-                    Assert.Equal(SqlDbType.Time, param3.SqlDbType);
-                    Assert.Equal(DbType.Time, param3.DbType);
-                    Assert.Equal(timeParamScale, param3.Scale);
-                    Assert.Equal(0, param3.Precision);
-                    Assert.Equal(0, param3.Size);
+                    DropHelperProcedures(new string[] { inputProcedureName, outputProcedureName });
                 }
+
             }
         }
 

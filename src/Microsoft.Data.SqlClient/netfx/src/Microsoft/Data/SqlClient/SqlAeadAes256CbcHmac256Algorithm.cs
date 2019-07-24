@@ -5,14 +5,15 @@
 // <owner current="true" primary="true">balnee</owner>
 // <owner current="true" primary="false">krishnib</owner>
 //------------------------------------------------------------------------------
+
+using System;
+using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.IO;
+using System.Security.Cryptography;
+
 namespace Microsoft.Data.SqlClient
 {
-    using System;
-    using System.Collections.Concurrent;
-    using System.Diagnostics;
-    using System.IO;
-    using System.Security.Cryptography;
-
     /// <summary>
     /// This class implements authenticated encryption algorithm with associated data as described in 
     /// http://tools.ietf.org/html/draft-mcgrew-aead-aes-cbc-hmac-sha2-05. More specifically this implements

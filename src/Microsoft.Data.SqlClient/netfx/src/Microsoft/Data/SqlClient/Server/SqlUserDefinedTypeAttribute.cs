@@ -14,11 +14,11 @@
 // <owner current="false" primary="false">ramp</owner>
 //------------------------------------------------------------------------------
 
-namespace Microsoft.Data.SqlClient.Server {
-    using Microsoft.Data.Common;
-    using System; 
-    using System.Data.Common;
+using Microsoft.Data.Common;
+using System;
 
+namespace Microsoft.Data.SqlClient.Server
+{
     public enum Format { //: byte
         Unknown                    = 0,
         Native                     = 1,

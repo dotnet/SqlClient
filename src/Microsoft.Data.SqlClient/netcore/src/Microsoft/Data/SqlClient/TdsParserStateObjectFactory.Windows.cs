@@ -22,7 +22,7 @@ namespace Microsoft.Data.SqlClient
 
 #if DEBUG
         private static Lazy<bool> useManagedSNIOnWindows = new Lazy<bool>(
-            () => bool.TrueString.Equals(Environment.GetEnvironmentVariable("System.Data.SqlClient.UseManagedSNIOnWindows"), StringComparison.InvariantCultureIgnoreCase)
+            () => bool.TrueString.Equals(Environment.GetEnvironmentVariable("Microsoft.Data.SqlClient.UseManagedSNIOnWindows"), StringComparison.InvariantCultureIgnoreCase)
         );
         public static bool UseManagedSNI => useManagedSNIOnWindows.Value;
 #else

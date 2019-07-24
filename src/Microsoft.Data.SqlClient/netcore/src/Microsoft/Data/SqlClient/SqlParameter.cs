@@ -11,7 +11,6 @@ using System.IO;
 using System.Globalization;
 using System.Reflection;
 using System.Xml;
-using MSS = Microsoft.Data.SqlClient.Server;
 using Microsoft.Data.SqlClient.Server;
 using System.ComponentModel.Design.Serialization;
 using System.Data;
@@ -372,7 +371,7 @@ namespace Microsoft.Data.SqlClient
 
         // IMPORTANT DEVNOTE: This method is being used for parameter encryption functionality, to get the type_info TDS object from SqlParameter.
         // Please consider impact to that when changing this method. Refer to the callers of SqlParameter.GetMetadataForTypeInfo().
-        internal MSS.SmiParameterMetaData MetaDataForSmi(out ParameterPeekAheadValue peekAhead)
+        internal SmiParameterMetaData MetaDataForSmi(out ParameterPeekAheadValue peekAhead)
         {
             peekAhead = null;
             MetaType mt = ValidateTypeLengths();
@@ -399,20 +398,20 @@ namespace Microsoft.Data.SqlClient
             {
                 if (SqlDbType.Binary == mt.SqlDbType || SqlDbType.VarBinary == mt.SqlDbType)
                 {
-                    maxLen = MSS.SmiMetaData.MaxBinaryLength;
+                    maxLen = SmiMetaData.MaxBinaryLength;
                 }
                 else if (SqlDbType.Char == mt.SqlDbType || SqlDbType.VarChar == mt.SqlDbType)
                 {
-                    maxLen = MSS.SmiMetaData.MaxANSICharacters;
+                    maxLen = SmiMetaData.MaxANSICharacters;
                 }
                 else if (SqlDbType.NChar == mt.SqlDbType || SqlDbType.NVarChar == mt.SqlDbType)
                 {
-                    maxLen = MSS.SmiMetaData.MaxUnicodeCharacters;
+                    maxLen = SmiMetaData.MaxUnicodeCharacters;
                 }
             }
-            else if ((maxLen > MSS.SmiMetaData.MaxBinaryLength && (SqlDbType.Binary == mt.SqlDbType || SqlDbType.VarBinary == mt.SqlDbType))
-                  || (maxLen > MSS.SmiMetaData.MaxANSICharacters && (SqlDbType.Char == mt.SqlDbType || SqlDbType.VarChar == mt.SqlDbType))
-                  || (maxLen > MSS.SmiMetaData.MaxUnicodeCharacters && (SqlDbType.NChar == mt.SqlDbType || SqlDbType.NVarChar == mt.SqlDbType)))
+            else if ((maxLen > SmiMetaData.MaxBinaryLength && (SqlDbType.Binary == mt.SqlDbType || SqlDbType.VarBinary == mt.SqlDbType))
+                  || (maxLen > SmiMetaData.MaxANSICharacters && (SqlDbType.Char == mt.SqlDbType || SqlDbType.VarChar == mt.SqlDbType))
+                  || (maxLen > SmiMetaData.MaxUnicodeCharacters && (SqlDbType.NChar == mt.SqlDbType || SqlDbType.NVarChar == mt.SqlDbType)))
             {
                 maxLen = -1;
             }
@@ -442,7 +441,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    compareOpts = MSS.SmiMetaData.GetDefaultForType(mt.SqlDbType).CompareOptions;
+                    compareOpts = SmiMetaData.GetDefaultForType(mt.SqlDbType).CompareOptions;
                 }
             }
 
@@ -512,13 +511,13 @@ namespace Microsoft.Data.SqlClient
 
             // Sub-field determination
             List<SmiExtendedMetaData> fields = null;
-            MSS.SmiMetaDataPropertyCollection extendedProperties = null;
+            SmiMetaDataPropertyCollection extendedProperties = null;
             if (SqlDbType.Structured == mt.SqlDbType)
             {
                 GetActualFieldsAndProperties(out fields, out extendedProperties, out peekAhead);
             }
 
-            return new MSS.SmiParameterMetaData(mt.SqlDbType,
+            return new SmiParameterMetaData(mt.SqlDbType,
                                             maxLen,
                                             precision,
                                             scale,
@@ -1221,7 +1220,7 @@ namespace Microsoft.Data.SqlClient
             return ShouldSerializeSize() ? Size : ValueSize(CoercedValue);
         }
 
-        private void GetActualFieldsAndProperties(out List<MSS.SmiExtendedMetaData> fields, out SmiMetaDataPropertyCollection props, out ParameterPeekAheadValue peekAhead)
+        private void GetActualFieldsAndProperties(out List<SmiExtendedMetaData> fields, out SmiMetaDataPropertyCollection props, out ParameterPeekAheadValue peekAhead)
         {
             fields = null;
             props = null;
@@ -1234,7 +1233,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw SQL.NotEnoughColumnsInStructuredType();
                 }
-                fields = new List<MSS.SmiExtendedMetaData>(dt.Columns.Count);
+                fields = new List<SmiExtendedMetaData>(dt.Columns.Count);
                 bool[] keyCols = new bool[dt.Columns.Count];
                 bool hasKey = false;
 
@@ -1251,7 +1250,7 @@ namespace Microsoft.Data.SqlClient
 
                 for (int i = 0; i < dt.Columns.Count; i++)
                 {
-                    fields.Add(MSS.MetaDataUtilsSmi.SmiMetaDataFromDataColumn(dt.Columns[i], dt));
+                    fields.Add(MetaDataUtilsSmi.SmiMetaDataFromDataColumn(dt.Columns[i], dt));
 
                     // DataColumn uniqueness is only for a single column, so don't add
                     //  more than one.  (keyCols.Count first for assumed minimal perf benefit)
@@ -1266,12 +1265,12 @@ namespace Microsoft.Data.SqlClient
                 if (hasKey)
                 {
                     props = new SmiMetaDataPropertyCollection();
-                    props[MSS.SmiPropertySelector.UniqueKey] = new MSS.SmiUniqueKeyProperty(new List<bool>(keyCols));
+                    props[SmiPropertySelector.UniqueKey] = new SmiUniqueKeyProperty(new List<bool>(keyCols));
                 }
             }
             else if (value is SqlDataReader)
             {
-                fields = new List<MSS.SmiExtendedMetaData>(((SqlDataReader)value).GetInternalSmiMetaData());
+                fields = new List<SmiExtendedMetaData>(((SqlDataReader)value).GetInternalSmiMetaData());
                 if (fields.Count <= 0)
                 {
                     throw SQL.NotEnoughColumnsInStructuredType();
@@ -1281,7 +1280,7 @@ namespace Microsoft.Data.SqlClient
                 bool hasKey = false;
                 for (int i = 0; i < fields.Count; i++)
                 {
-                    MSS.SmiQueryMetaData qmd = fields[i] as MSS.SmiQueryMetaData;
+                    SmiQueryMetaData qmd = fields[i] as SmiQueryMetaData;
                     if (null != qmd && !qmd.IsKey.IsNull && qmd.IsKey.Value)
                     {
                         keyCols[i] = true;
@@ -1293,14 +1292,14 @@ namespace Microsoft.Data.SqlClient
                 if (hasKey)
                 {
                     props = new SmiMetaDataPropertyCollection();
-                    props[MSS.SmiPropertySelector.UniqueKey] = new MSS.SmiUniqueKeyProperty(new List<bool>(keyCols));
+                    props[SmiPropertySelector.UniqueKey] = new SmiUniqueKeyProperty(new List<bool>(keyCols));
                 }
             }
             else if (value is IEnumerable<SqlDataRecord>)
             {
                 // must grab the first record of the enumerator to get the metadata
-                IEnumerator<MSS.SqlDataRecord> enumerator = ((IEnumerable<MSS.SqlDataRecord>)value).GetEnumerator();
-                MSS.SqlDataRecord firstRecord = null;
+                IEnumerator<SqlDataRecord> enumerator = ((IEnumerable<SqlDataRecord>)value).GetEnumerator();
+                SqlDataRecord firstRecord = null;
                 try
                 {
                     // no need for fields if there's no rows or no columns -- we'll be sending a null instance anyway.
@@ -1319,11 +1318,11 @@ namespace Microsoft.Data.SqlClient
                             bool hasDefault = false;
                             int sortCount = 0;
                             SmiOrderProperty.SmiColumnOrder[] sort = new SmiOrderProperty.SmiColumnOrder[fieldCount];
-                            fields = new List<MSS.SmiExtendedMetaData>(fieldCount);
+                            fields = new List<SmiExtendedMetaData>(fieldCount);
                             for (int i = 0; i < fieldCount; i++)
                             {
                                 SqlMetaData colMeta = firstRecord.GetSqlMetaData(i);
-                                fields.Add(MSS.MetaDataUtilsSmi.SqlMetaDataToSmiExtendedMetaData(colMeta));
+                                fields.Add(MetaDataUtilsSmi.SqlMetaDataToSmiExtendedMetaData(colMeta));
                                 if (colMeta.IsUniqueKey)
                                 {
                                     keyCols[i] = true;
@@ -1366,7 +1365,7 @@ namespace Microsoft.Data.SqlClient
                             if (hasKey)
                             {
                                 props = new SmiMetaDataPropertyCollection();
-                                props[MSS.SmiPropertySelector.UniqueKey] = new MSS.SmiUniqueKeyProperty(new List<bool>(keyCols));
+                                props[SmiPropertySelector.UniqueKey] = new SmiUniqueKeyProperty(new List<bool>(keyCols));
                             }
 
                             if (hasDefault)
@@ -1377,7 +1376,7 @@ namespace Microsoft.Data.SqlClient
                                     props = new SmiMetaDataPropertyCollection();
                                 }
 
-                                props[MSS.SmiPropertySelector.DefaultFields] = new MSS.SmiDefaultFieldsProperty(new List<bool>(defaultFields));
+                                props[SmiPropertySelector.DefaultFields] = new SmiDefaultFieldsProperty(new List<bool>(defaultFields));
                             }
 
                             if (0 < sortCount)
@@ -1406,7 +1405,7 @@ namespace Microsoft.Data.SqlClient
                                     props = new SmiMetaDataPropertyCollection();
                                 }
 
-                                props[MSS.SmiPropertySelector.SortOrder] = new MSS.SmiOrderProperty(
+                                props[SmiPropertySelector.SortOrder] = new SmiOrderProperty(
                                         new List<SmiOrderProperty.SmiColumnOrder>(sort));
                             }
 
@@ -1447,7 +1446,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 int fieldCount = schema.Rows.Count;
-                fields = new List<MSS.SmiExtendedMetaData>(fieldCount);
+                fields = new List<SmiExtendedMetaData>(fieldCount);
                 bool[] keyCols = new bool[fieldCount];
                 bool hasKey = false;
                 int ordinalForIsKey = schema.Columns[SchemaTableColumn.IsKey].Ordinal;
@@ -1456,7 +1455,7 @@ namespace Microsoft.Data.SqlClient
                 for (int rowOrdinal = 0; rowOrdinal < fieldCount; rowOrdinal++)
                 {
                     DataRow row = schema.Rows[rowOrdinal];
-                    MSS.SmiExtendedMetaData candidateMd = MSS.MetaDataUtilsSmi.SmiMetaDataFromSchemaTableRow(row);
+                    SmiExtendedMetaData candidateMd = MetaDataUtilsSmi.SmiMetaDataFromSchemaTableRow(row);
 
                     // Determine destination ordinal.  Allow for ordinal not specified by assuming rowOrdinal *is* columnOrdinal
                     // in that case, but don't worry about mix-and-match of the two techniques
@@ -1513,7 +1512,7 @@ namespace Microsoft.Data.SqlClient
                 //      2) no ordinals outside continuous range from 0 to fieldcount - 1 are allowed
                 //      3) no duplicate ordinals are allowed
                 // But assert no holes to be sure.
-                foreach (MSS.SmiExtendedMetaData md in fields)
+                foreach (SmiExtendedMetaData md in fields)
                 {
                     Debug.Assert(null != md, "Shouldn't be able to have holes, since original loop algorithm prevents such.");
                 }
@@ -1522,8 +1521,8 @@ namespace Microsoft.Data.SqlClient
                 // Add unique key property, if any defined.
                 if (hasKey)
                 {
-                    props = new MSS.SmiMetaDataPropertyCollection();
-                    props[MSS.SmiPropertySelector.UniqueKey] = new SmiUniqueKeyProperty(new List<bool>(keyCols));
+                    props = new SmiMetaDataPropertyCollection();
+                    props[SmiPropertySelector.UniqueKey] = new SmiUniqueKeyProperty(new List<bool>(keyCols));
                 }
             }
         }

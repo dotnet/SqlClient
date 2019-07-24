@@ -6,10 +6,10 @@
 // <owner current="true" primary="false">stevesta</owner>
 //------------------------------------------------------------------------------
 
-namespace Microsoft.Data.SqlClient.Server {
+using System;
+using System.Data;
 
-    using System;
-    using System.Data;
+namespace Microsoft.Data.SqlClient.Server {
 
     internal abstract class SmiConnection : IDisposable {
 

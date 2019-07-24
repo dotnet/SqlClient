@@ -6,23 +6,21 @@
 // <owner current="true" primary="false">laled</owner>
 //------------------------------------------------------------------------------
 
+
+using System;
+using System.Collections.Generic;
+using Microsoft.Data.Common;
+using System.Diagnostics;
+using System.Globalization;
+using System.Xml;
+using System.IO;
+using Microsoft.Data.SqlClient.Server;
+using System.Data;
+using System.Data.Common;
+using System.Data.SqlTypes;
+using System.Data.OleDb;
+
 namespace Microsoft.Data.SqlClient {
-
-
-    using System;
-    using System.Collections.Generic;
-    using Microsoft.Data.Common;
-    using System.Diagnostics;
-    using System.Globalization;
-    using System.Xml;
-    using System.IO;
-
-    using MSS= Microsoft.Data.SqlClient.Server;
-    using System.Data;
-    using System.Data.Common;
-    using System.Data.SqlTypes;
-    using System.Data.OleDb;
-
     internal sealed class MetaType {
         internal readonly Type      ClassType;   // com+ type
         internal readonly Type      SqlType;
@@ -817,7 +815,7 @@ namespace Microsoft.Data.SqlClient {
         // TODO: MetaSUDT is required for parameter.Add("", SqlDbType.Structured) to work.  We'll need to update it
         //    with real values when implementing structured UDTs.
         private static readonly MetaType MetaSUDT = new MetaType 
-            (255, 255, -1, false, false, false, TdsEnums.SQLVOID, TdsEnums.SQLVOID, "", typeof(MSS.SqlDataRecord), typeof(MSS.SqlDataRecord), SqlDbType.Structured, DbType.Object, 0);
+            (255, 255, -1, false, false, false, TdsEnums.SQLVOID, TdsEnums.SQLVOID, "", typeof(SqlDataRecord), typeof(SqlDataRecord), SqlDbType.Structured, DbType.Object, 0);
 
         private static readonly MetaType MetaDate = new MetaType
             (255, 255, 3, true, false, false, TdsEnums.SQLDATE, TdsEnums.SQLDATE, MetaTypeName.DATE, typeof(System.DateTime), typeof(System.DateTime), SqlDbType.Date, DbType.Date, 0);

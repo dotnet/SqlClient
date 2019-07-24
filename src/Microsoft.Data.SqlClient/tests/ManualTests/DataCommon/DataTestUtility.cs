@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
+using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
 using Xunit;
@@ -18,7 +19,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string TcpConnStr = null;
         public const string UdtTestDbName = "UdtTestDb";
         private static readonly Assembly s_systemDotData = typeof(Microsoft.Data.SqlClient.SqlConnection).GetTypeInfo().Assembly;
-        private static readonly Type s_tdsParserStateObjectFactory = s_systemDotData?.GetType("System.Data.SqlClient.TdsParserStateObjectFactory");
+        private static readonly Type s_tdsParserStateObjectFactory = s_systemDotData?.GetType("Microsoft.Data.SqlClient.TdsParserStateObjectFactory");
         private static readonly PropertyInfo s_useManagedSNI = s_tdsParserStateObjectFactory?.GetProperty("UseManagedSNI", BindingFlags.Static | BindingFlags.Public);
 
         private static readonly string[] s_azureSqlServerEndpoints = {".database.windows.net",
@@ -67,8 +68,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // the name length will be no more then (16 + prefix.Length + escapeLeft.Length + escapeRight.Length)
         // some providers does not support names (Oracle supports up to 30)
-        public static string GetUniqueName(string prefix, string escapeLeft, string escapeRight)
+        public static string GetUniqueName(string prefix)
         {
+            string escapeLeft = "[";
+            string escapeRight = "]";
             string uniqueName = string.Format("{0}{1}_{2}_{3}{4}",
                 escapeLeft,
                 prefix,
@@ -87,7 +90,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Environment.UserName,
                 Environment.MachineName,
                 DateTime.Now.ToString("yyyy_MM_dd", CultureInfo.InvariantCulture));
-            string name = GetUniqueName(extendedPrefix, "[", "]");
+            string name = GetUniqueName(extendedPrefix);
             if (name.Length > 128)
             {
                 throw new ArgumentOutOfRangeException("the name is too long - SQL Server names are limited to 128");
@@ -287,9 +290,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ExpectFailure<AggregateException, TException, TInnerException>(() => actionThatFails().Wait(), null, exceptionMessage, innerExceptionMessage, innerInnerExceptionMustBeNull);
         }
 
-        public static string GenerateTableName()
+        public static string GenerateObjectName()
         {
             return string.Format("TEST_{0}{1}{2}", Environment.GetEnvironmentVariable("ComputerName"), Environment.TickCount, Guid.NewGuid()).Replace('-', '_');
+        }
+
+        // Returns randomly generated characters of length 11.
+        public static string GenerateRandomCharacters(string prefix)
+        {
+            string path = Path.GetRandomFileName();
+            path = path.Replace(".", ""); // Remove period.
+            return prefix + path;
         }
 
         public static void RunNonQuery(string connectionString, string sql)

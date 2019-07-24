@@ -173,7 +173,8 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
         public void Dispose()
         {
-            RemoveKeyFromCsp(containerName);
+            // Do Not remove Key for concurrency.
+            // RemoveKeyFromCsp(containerName);
         }
 
         public static void AddKeyToCsp(string containerName)

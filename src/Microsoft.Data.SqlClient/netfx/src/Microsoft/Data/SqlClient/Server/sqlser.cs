@@ -21,7 +21,8 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
-namespace Microsoft.Data.SqlClient.Server {
+namespace Microsoft.Data.SqlClient.Server
+{
 
     internal class SerializationHelperSql9 {
         // Don't let anyone create an instance of this class.

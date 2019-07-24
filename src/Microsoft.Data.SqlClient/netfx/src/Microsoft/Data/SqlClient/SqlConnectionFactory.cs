@@ -6,20 +6,19 @@
 // <owner current="true" primary="false">sukanyas</owner>
 //------------------------------------------------------------------------------
 
+using System;
+using Microsoft.Data.ProviderBase;
+using System.Collections.Specialized;
+using System.Configuration;
+using System.Diagnostics;
+using System.IO;
+using System.Runtime.Versioning;
+using Microsoft.Data.SqlClient.Server;
+using System.Data.Common;
+using Microsoft.Data.Common;
+
 namespace Microsoft.Data.SqlClient
 {
-    using System;
-    using Microsoft.Data.ProviderBase;
-    using System.Collections.Specialized;
-    using System.Configuration;
-    using System.Diagnostics;
-    using System.IO;
-    using System.Runtime.Versioning;
-
-    using Microsoft.Data.SqlClient.Server;
-    using System.Data.Common;
-    using Microsoft.Data.Common;
-
     sealed internal class SqlConnectionFactory : DbConnectionFactory {
         private SqlConnectionFactory() : base(SqlPerformanceCounters.SingletonInstance) {
         }

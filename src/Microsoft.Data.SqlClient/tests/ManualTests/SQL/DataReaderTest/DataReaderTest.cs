@@ -71,7 +71,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void CheckSparseColumnBit()
         {
             const int sparseColumns = 4095;
-            string tempTableName = "SparseColumnTable";
+            string tempTableName = DataTestUtility.GenerateObjectName();
 
             // TSQL for "CREATE TABLE" with sparse columns
             // table name will be provided as an argument
@@ -103,24 +103,28 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             // add a row with nulls only
             using (SqlConnection con = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlCommand cmd = con.CreateCommand())
             {
-                con.Open();
+                try
+                {
+                    con.Open();
 
-                SqlCommand cmd = con.CreateCommand();
-                cmd.CommandType = CommandType.Text;
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = string.Format(createStatementFormat, tempTableName);
+                    cmd.ExecuteNonQuery();
 
-                cmd.CommandText = string.Format(createStatementFormat, tempTableName);
-                cmd.ExecuteNonQuery();
+                    cmd.CommandText = string.Format("INSERT INTO {0} ([ID]) VALUES (0)", tempTableName);// insert row with values set to their defaults (DBNULL)
+                    cmd.ExecuteNonQuery();
 
-                cmd.CommandText = string.Format("INSERT INTO {0} ([ID]) VALUES (0)", tempTableName);// insert row with values set to their defaults (DBNULL)
-                cmd.ExecuteNonQuery();
-
-                // run the test cases
-                Assert.True(IsColumnBitSet(con, string.Format("SELECT [ID], [CSET], [C1] FROM {0}", tempTableName), indexOfColumnSet: 1));
-
-                // drop the temp table to release its resources
-                cmd.CommandText = "DROP TABLE " + tempTableName;
-                cmd.ExecuteNonQuery();
+                    // run the test cases
+                    Assert.True(IsColumnBitSet(con, string.Format("SELECT [ID], [CSET], [C1] FROM {0}", tempTableName), indexOfColumnSet: 1));
+                }
+                finally
+                {
+                    // drop the temp table to release its resources
+                    cmd.CommandText = "DROP TABLE " + tempTableName;
+                    cmd.ExecuteNonQuery();
+                }
             }
         }
 
@@ -128,20 +132,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             bool columnSetPresent = false;
             {
-                SqlCommand cmd = con.CreateCommand();
-                cmd.CommandText = selectQuery;
-
-                using (SqlDataReader reader = cmd.ExecuteReader())
+                using (SqlCommand cmd = con.CreateCommand())
                 {
-                    DataTable schemaTable = reader.GetSchemaTable();
-
-                    for (int i = 0; i < schemaTable.Rows.Count; i++)
+                    cmd.CommandText = selectQuery;
+                    using (SqlDataReader reader = cmd.ExecuteReader())
                     {
-                        bool isColumnSet = (bool)schemaTable.Rows[i]["IsColumnSet"];
+                        DataTable schemaTable = reader.GetSchemaTable();
 
-                        if (indexOfColumnSet == i)
+                        for (int i = 0; i < schemaTable.Rows.Count; i++)
                         {
-                            columnSetPresent = true;
+                            bool isColumnSet = (bool)schemaTable.Rows[i]["IsColumnSet"];
+
+                            if (indexOfColumnSet == i)
+                            {
+                                columnSetPresent = true;
+                            }
                         }
                     }
                 }

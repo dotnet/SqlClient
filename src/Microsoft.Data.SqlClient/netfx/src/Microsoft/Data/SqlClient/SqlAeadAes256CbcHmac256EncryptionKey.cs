@@ -5,10 +5,11 @@
 // <owner current="true" primary="true">balnee</owner>
 // <owner current="true" primary="false">krishnib</owner>
 //------------------------------------------------------------------------------
+
+using System.Text;
+
 namespace Microsoft.Data.SqlClient 
 {
-    using System.Text;
-
     /// <summary>
     /// Encryption key class containing 4 keys. This class is used by SqlAeadAes256CbcHmac256Algorithm and SqlAes256CbcAlgorithm
     /// 1) root key - Main key that is used to derive the keys used in the encryption algorithm

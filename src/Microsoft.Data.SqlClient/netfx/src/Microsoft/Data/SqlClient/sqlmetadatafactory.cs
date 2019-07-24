@@ -8,16 +8,16 @@
 //
 //------------------------------------------------------------------------------
 
+
+using System;
+using System.IO;
+using Microsoft.Data.ProviderBase;
+using Microsoft.Data.Common;
+using System.Text;
+using System.Data;
+using System.Data.Common;
+
 namespace Microsoft.Data.SqlClient{
-
-    using System;
-    using System.IO;      
-    using Microsoft.Data.ProviderBase;
-    using Microsoft.Data.Common;
-    using System.Text;
-    using System.Data;
-    using System.Data.Common;
-
     internal sealed class SqlMetaDataFactory : DbMetaDataFactory{ // V1.2.3300
 
         private const string _serverVersionNormalized90 = "09.00.0000";

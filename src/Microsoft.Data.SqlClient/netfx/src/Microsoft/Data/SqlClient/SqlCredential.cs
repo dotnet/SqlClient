@@ -6,11 +6,11 @@
 // <owner current="true" primary="false">younggk</owner>
 //------------------------------------------------------------------------------
 
+using System.Security;
+using Microsoft.Data.Common;
+
 namespace Microsoft.Data.SqlClient
 {
-    using System.Security;
-    using Microsoft.Data.Common;
-
     // Represent a pair of user id and password which to be used for SQL Authentication
     // SqlCredential takes password as SecureString which is better way to store security sensitive information
     // This class is immutable

@@ -87,7 +87,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             object sessionHandle = TdsParserStateObjectHelper.GetSessionHandle(stateObject);
 
             Assembly systemDotData = Assembly.Load(new AssemblyName(typeof(SqlConnection).GetTypeInfo().Assembly.FullName));
-            Type sniHandleType = systemDotData.GetType("System.Data.SqlClient.SNI.SNIHandle");
+            Type sniHandleType = systemDotData.GetType("Microsoft.Data.SqlClient.SNI.SNIHandle");
             MethodInfo killConn = sniHandleType.GetMethod("KillConnection");
 
             if (killConn != null)

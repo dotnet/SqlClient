@@ -6,13 +6,12 @@
 // <owner current="true" primary="false">billin</owner>
 //------------------------------------------------------------------------------
 
+using System;
+using System.Data;
+using System.Data.SqlTypes;
+using System.Transactions;
+
 namespace Microsoft.Data.SqlClient.Server {
-
-    using System;
-    using System.Data;
-    using System.Data.SqlTypes;
-    using System.Transactions;
-
 
     internal abstract class SmiRequestExecutor : SmiTypedGetterSetter, ITypedSettersV3, ITypedSetters, ITypedGetters, IDisposable {
 

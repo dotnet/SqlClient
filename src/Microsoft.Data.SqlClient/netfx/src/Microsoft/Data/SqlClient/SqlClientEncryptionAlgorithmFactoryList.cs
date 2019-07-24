@@ -6,12 +6,12 @@
 // <owner current="true" primary="false">balnee</owner>
 //------------------------------------------------------------------------------
 
-namespace Microsoft.Data.SqlClient {
-    using System;
-    using System.Diagnostics;
-    using System.Collections.Concurrent;
-    using System.Text;
+using System;
+using System.Diagnostics;
+using System.Collections.Concurrent;
+using System.Text;
 
+namespace Microsoft.Data.SqlClient {
     /// <summary>
     /// <para> Implements a global directory of all the encryption algorithms registered with client.</para>
     /// </summary>

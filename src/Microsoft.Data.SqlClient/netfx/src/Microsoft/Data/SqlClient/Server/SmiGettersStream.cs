@@ -6,10 +6,10 @@
 // <owner current="true" primary="false">stevesta</owner>
 //------------------------------------------------------------------------------
 
+using System.IO;
+using System.Diagnostics;
+
 namespace Microsoft.Data.SqlClient.Server {
-    using Microsoft.Data.SqlClient;
-    using System.IO;
-    using System.Diagnostics;
 
     internal class SmiGettersStream : Stream {
 

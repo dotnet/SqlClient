@@ -85,16 +85,12 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System.Runtime" />
-    <Reference Include="System.IO.FileSystem" />
     <Reference Include="System.Linq" />
     <Reference Include="System.Xml.XDocument" />
     <Reference Include="System.Xml.ReaderWriter" />
-    <Reference Include="System.Threading.Thread" />
     <Reference Include="System.Threading.Tasks" />
     <Reference Include="System.Runtime.Extensions" />
     <Reference Include="System.Diagnostics.Debug" />
-    <Reference Include="System.Diagnostics.Process" />
-    <Reference Include="System.ComponentModel.Primitives" />
     <Reference Include="System.Runtime.InteropServices" />
     <ReferenceFromRuntime Include="xunit.core" />
     <ReferenceFromRuntime Include="Xunit.NetCore.Extensions" />

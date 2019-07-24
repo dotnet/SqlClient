@@ -14,12 +14,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [CheckConnStrSetupFact]
         public void SqlAdapterTest()
         {
-            string tableName = "BatchDemoTable";
+            string tableName = DataTestUtility.GetUniqueNameForSqlServer("Adapter");
+            string tableNameNoBrackets = tableName.Substring(1, tableName.Length - 2);
             try
             {
-                var createTableQuery = "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='BatchDemoTable' AND xtype='U')" +
-                    " CREATE TABLE [dbo].[" + tableName + "]([TransactionNumber][int] IDENTITY(1, 1) NOT NULL,[Level] [nvarchar] (50) NOT NULL," +
-                    "[Message] [nvarchar] (500) NOT NULL,[EventTime] [datetime]NOT NULL,CONSTRAINT[PK_BatchDemoTable] " +
+                var createTableQuery = "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='" + tableNameNoBrackets + "' AND xtype='U')" +
+                    " CREATE TABLE [dbo]." + tableName + "([TransactionNumber][int] IDENTITY(1, 1) NOT NULL,[Level] [nvarchar] (50) NOT NULL," +
+                    "[Message] [nvarchar] (500) NOT NULL,[EventTime] [datetime]NOT NULL,CONSTRAINT[" + "pk" + tableNameNoBrackets + "] " +
                     "PRIMARY KEY CLUSTERED([TransactionNumber] ASC)WITH(PAD_INDEX = OFF,STATISTICS_NORECOMPUTE = OFF, " +
                     "IGNORE_DUP_KEY = OFF,ALLOW_ROW_LOCKS = ON,ALLOW_PAGE_LOCKS = ON,FILLFACTOR = 90) ON[PRIMARY]) ON[PRIMARY]";
 
@@ -29,12 +30,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     connection.Open();
                     cmd.ExecuteNonQuery();
                 }
-                ExecuteNonQueries();
+                ExecuteNonQueries(tableName);
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
-                Console.WriteLine(ex.StackTrace);
+                Console.Error.WriteLine(ex.Message);
+                Console.Error.WriteLine(ex.StackTrace);
             }
             finally
             {
@@ -61,7 +62,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        private static void ExecuteNonQueries()
+        private static void ExecuteNonQueries(string tableName)
         {
             List<EventInfo> entities = new List<EventInfo>
             {
@@ -71,7 +72,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 new EventInfo {Level = "L4", Message = "Message 4"},
             };
 
-            var sql = "INSERT INTO BatchDemoTable(Level, Message, EventTime)  VALUES(@Level, @Message, @EventTime)";
+            var sql = "INSERT INTO " + tableName + "(Level, Message, EventTime)  VALUES(@Level, @Message, @EventTime)";
             using (var connection = new SqlConnection(DataTestUtility.TcpConnStr))
             using (var adapter = new SqlDataAdapter())
             using (var cmd = new SqlCommand(sql, connection))

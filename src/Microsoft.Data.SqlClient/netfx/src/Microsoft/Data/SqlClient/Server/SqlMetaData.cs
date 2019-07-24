@@ -6,19 +6,17 @@
 // <owner current="true" primary="false">Microsoft</owner>
 // <owner current="true" primary="false">Microsoft</owner>
 //------------------------------------------------------------------------------
- 
+
+
+using System;
+using System.Data;
+using System.Globalization;
+using System.Data.SqlTypes;
+using Microsoft.Data.SqlClient;
+using Microsoft.Data.Common;
+
 namespace Microsoft.Data.SqlClient.Server
 {
-
-    using System;
-    using System.Data;
-    using System.Data.Common;
-    using System.Diagnostics;
-    using System.Globalization;
-    using System.Data.SqlTypes;
-    using Microsoft.Data.SqlClient;
-    using Microsoft.Data.Common;
-
     // class SqlMetaData
     //   Simple immutable implementation of the a metadata-holding class.  Only
     //    complexities are:

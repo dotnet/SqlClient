@@ -5,13 +5,14 @@
 // <owner current="true" primary="true">balnee</owner>
 // <owner current="true" primary="false">krishnib</owner>
 //------------------------------------------------------------------------------
+
+using System;
+using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Text;
+
 namespace Microsoft.Data.SqlClient
 {
-    using System;
-    using System.Collections.Concurrent;
-    using System.Diagnostics;
-    using System.Text;
-
     /// <summary>
     /// This is a factory class for AES_256_CBC.
     /// </summary>

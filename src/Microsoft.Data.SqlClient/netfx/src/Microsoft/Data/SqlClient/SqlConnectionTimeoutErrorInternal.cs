@@ -5,13 +5,12 @@
 // <owner current="true" primary="false">sukanyas</owner>
 //------------------------------------------------------------------------------
 
+using System;
+using System.Diagnostics;
+using System.Text;
+
 namespace Microsoft.Data.SqlClient
 {
-
-    using System;
-    using System.Diagnostics;
-    using System.Text;
-
     // VSTFDevDiv# 643319 - Improve timeout error message reported when SqlConnection.Open fails
     internal enum SqlConnectionTimeoutErrorPhase
     {

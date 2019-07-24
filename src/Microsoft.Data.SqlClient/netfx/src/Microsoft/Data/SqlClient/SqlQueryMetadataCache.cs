@@ -6,15 +6,15 @@
 // <owner current="true" primary="false">skaushi</owner>
 //------------------------------------------------------------------------------
 
-namespace Microsoft.Data.SqlClient {
-    using System;
-    using System.Collections.Generic;
-    using System.Data;
-    using System.Diagnostics;
-    using System.Runtime.Caching;
-    using System.Text;
-    using System.Threading;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Diagnostics;
+using System.Runtime.Caching;
+using System.Text;
+using System.Threading;
 
+namespace Microsoft.Data.SqlClient {
     /// <summary>
     /// <para> Implements a cache of query paramater metadata that is used to avoid the extra roundtrip to the server for every execution of the same query.</para>
     /// </summary>

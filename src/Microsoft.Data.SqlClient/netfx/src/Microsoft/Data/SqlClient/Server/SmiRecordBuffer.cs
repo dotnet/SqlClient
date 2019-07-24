@@ -6,11 +6,11 @@
 // <owner current="true" primary="false">billin</owner>
 //------------------------------------------------------------------------------
 
-namespace Microsoft.Data.SqlClient.Server {
+using System;
+using System.Data.SqlTypes;
+using System.Data;
 
-    using System;
-    using System.Data.SqlTypes;
-    using System.Data;
+namespace Microsoft.Data.SqlClient.Server {
 
     // Class for implementing a record object that could take advantage of the
     // environment available to a particular protocol level (such as storing data 

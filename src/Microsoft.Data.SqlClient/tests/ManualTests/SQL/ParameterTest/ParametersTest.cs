@@ -104,43 +104,48 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             using (var conn = new SqlConnection(s_connString))
             {
-                const string cTableName = "#tmpTest";
+                string cTableName = DataTestUtility.GetUniqueNameForSqlServer("#tmp");
+                try
+                {
+                    // Create tmp table
+                    var sCreateTable = "IF NOT EXISTS(";
+                    sCreateTable += $"SELECT * FROM sysobjects WHERE name= '{ cTableName }' and xtype = 'U')";
+                    sCreateTable += $"CREATE TABLE { cTableName }( BinValue binary(16)  null)";
 
-                // Create tmp table
-                var sCreateTable = "IF NOT EXISTS(";
-                sCreateTable += $"SELECT * FROM sysobjects WHERE name= '{ cTableName }' and xtype = 'U')";
-                sCreateTable += $"CREATE TABLE { cTableName }( BinValue binary(16)  null)";
+                    conn.Open();
+                    var cmd = new SqlCommand(sCreateTable, conn);
+                    cmd.ExecuteNonQuery();
 
-                conn.Open();
-                var cmd = new SqlCommand(sCreateTable, conn);
-                cmd.ExecuteNonQuery();
+                    var dt = new DataTable("SourceDataTable");
+                    dt.Columns.Add("SourceBinValue", typeof(byte[]));
 
-                var dt = new DataTable("SourceDataTable");
-                dt.Columns.Add("SourceBinValue", typeof(byte[]));
+                    dt.Rows.Add(Guid.NewGuid().ToByteArray());
+                    dt.Rows.Add(DBNull.Value);
 
-                dt.Rows.Add(Guid.NewGuid().ToByteArray());
-                dt.Rows.Add(DBNull.Value);
+                    var cmdInsert = new SqlCommand();
+                    cmdInsert.UpdatedRowSource = UpdateRowSource.None;
+                    cmdInsert.Connection = conn;
 
-                var cmdInsert = new SqlCommand();
-                cmdInsert.UpdatedRowSource = UpdateRowSource.None;
-                cmdInsert.Connection = conn;
+                    cmdInsert.CommandText = $"INSERT { cTableName } (BinValue) ";
+                    cmdInsert.CommandText += "Values(@BinValue)";
+                    cmdInsert.Parameters.Add("@BinValue", SqlDbType.Binary, 16, "SourceBinValue");
 
-                cmdInsert.CommandText = $"INSERT { cTableName } (BinValue) ";
-                cmdInsert.CommandText += "Values(@BinValue)";
-                cmdInsert.Parameters.Add("@BinValue", SqlDbType.Binary, 16, "SourceBinValue");
+                    var da = new SqlDataAdapter();
 
-                var da = new SqlDataAdapter();
-
-                da.InsertCommand = cmdInsert;
-
-                da.UpdateBatchSize = 2;
-                da.AcceptChangesDuringUpdate = false;
-                da.Update(dt);
-
-                // End of test, cleanup tmp table;
-                var sDropTable = $"DROP TABLE IF EXISTS {cTableName}";
-                cmd = new SqlCommand(sDropTable, conn);
-                cmd.ExecuteNonQuery();
+                    da.InsertCommand = cmdInsert;
+                    da.UpdateBatchSize = 2;
+                    da.AcceptChangesDuringUpdate = false;
+                    da.Update(dt);
+                }
+                finally
+                {
+                    // End of test, cleanup tmp table;
+                    var sDropTable = $"DROP TABLE IF EXISTS {cTableName}";
+                    using (SqlCommand cmd = new SqlCommand(sDropTable, conn))
+                    {
+                        cmd.ExecuteNonQuery();
+                    }
+                }
             }
         }
 
@@ -248,51 +253,60 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             using (SqlConnection connection = new SqlConnection(builder.ConnectionString))
             {
-                connection.Open();
-
-                ExecuteSqlIgnoreExceptions(connection, "drop proc dbo.UpdatePoint");
-                ExecuteSqlIgnoreExceptions(connection, "drop table dbo.PointTable");
-                ExecuteSqlIgnoreExceptions(connection, "drop type dbo.PointTableType");
-                ExecuteSqlIgnoreExceptions(connection, "CREATE TYPE dbo.PointTableType AS TABLE (x INT, y INT)");
-                ExecuteSqlIgnoreExceptions(connection, "CREATE TABLE dbo.PointTable (x INT, y INT)");
-                ExecuteSqlIgnoreExceptions(connection, "CREATE PROCEDURE dbo.UpdatePoint @TVP dbo.PointTableType READONLY AS SET NOCOUNT ON INSERT INTO dbo.PointTable(x, y) SELECT * FROM  @TVP");
-
-                using (SqlCommand cmd = connection.CreateCommand())
-                {
-                    // Update Data Using TVPs
-                    cmd.CommandText = "dbo.UpdatePoint";
-                    cmd.CommandType = CommandType.StoredProcedure;
-
-                    SqlParameter parameter = cmd.Parameters.AddWithValue("@TVP", table);
-                    parameter.TypeName = "dbo.PointTableType";
-
-                    cmd.ExecuteNonQuery();
-
-                    // Verify if the data was updated 
-                    cmd.CommandText = "select * from dbo.PointTable";
-                    cmd.CommandType = CommandType.Text;
-                    using (SqlDataReader reader = cmd.ExecuteReader())
-                    {
-                        DataTable dbData = new DataTable();
-                        dbData.Load(reader);
-                        Assert.Equal(1, dbData.Rows.Count);
-                        Assert.Equal(x, dbData.Rows[0][0]);
-                        Assert.Equal(y, dbData.Rows[0][1]);
-                    }
-                }
-            }
-        }
-
-        private static void ExecuteSqlIgnoreExceptions(DbConnection connection, string query)
-        {
-            using (DbCommand cmd = connection.CreateCommand())
-            {
+                string tableName = DataTestUtility.GetUniqueNameForSqlServer("Table");
+                string procName = DataTestUtility.GetUniqueNameForSqlServer("Proc");
+                string typeName = DataTestUtility.GetUniqueName("Type");
                 try
                 {
-                    cmd.CommandText = query;
-                    cmd.ExecuteNonQuery();
+                    connection.Open();
+                    using (SqlCommand cmd = connection.CreateCommand())
+                    {
+                        cmd.CommandText = $"CREATE TYPE {typeName} AS TABLE (x INT, y INT)";
+                        cmd.ExecuteNonQuery();
+
+                        cmd.CommandText = $"CREATE TABLE {tableName} (x INT, y INT)";
+                        cmd.ExecuteNonQuery();
+
+                        cmd.CommandText = $"CREATE PROCEDURE {procName} @TVP {typeName} READONLY AS " +
+                            $"SET NOCOUNT ON INSERT INTO {tableName}(x, y) SELECT * FROM  @TVP";
+                        cmd.ExecuteNonQuery();
+
+                    }
+                    using (SqlCommand cmd = connection.CreateCommand())
+                    {
+                        // Update Data Using TVPs
+                        cmd.CommandText = procName;
+                        cmd.CommandType = CommandType.StoredProcedure;
+
+                        SqlParameter parameter = cmd.Parameters.AddWithValue("@TVP", table);
+                        parameter.TypeName = typeName;
+
+                        cmd.ExecuteNonQuery();
+
+                        // Verify if the data was updated 
+                        cmd.CommandText = "select * from " + tableName;
+                        cmd.CommandType = CommandType.Text;
+                        using (SqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            DataTable dbData = new DataTable();
+                            dbData.Load(reader);
+                            Assert.Equal(1, dbData.Rows.Count);
+                            Assert.Equal(x, dbData.Rows[0][0]);
+                            Assert.Equal(y, dbData.Rows[0][1]);
+                        }
+                    }
+                } finally
+                {
+                    using (SqlCommand cmd = connection.CreateCommand())
+                    {
+                        cmd.CommandText = "DROP PROCEDURE " + procName;
+                        cmd.ExecuteNonQuery();
+                        cmd.CommandText = "DROP TABLE " + tableName;
+                        cmd.ExecuteNonQuery();
+                        cmd.CommandText = "DROP TYPE " + typeName;
+                        cmd.ExecuteNonQuery();
+                    }
                 }
-                catch { /* Ignore exception if the command execution fails*/ }
             }
         }
 
@@ -301,6 +315,5 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             A = 1,
             B = 2
         }
-
     }
 }

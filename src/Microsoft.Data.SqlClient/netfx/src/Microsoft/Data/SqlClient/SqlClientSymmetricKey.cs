@@ -7,10 +7,6 @@
 //------------------------------------------------------------------------------
 namespace Microsoft.Data.SqlClient
 {
-    using System;
-    using Microsoft.Data.SqlClient;
-    using System.Security.Cryptography;
-
     /// <summary>
     /// Base class containing raw key bytes for symmetric key algorithms. Some encryption algorithms can use the key directly while others derive sub keys from this.
     /// If an algorithm needs to derive more keys, have a derived class from this and use it in the corresponding encryption algorithm.

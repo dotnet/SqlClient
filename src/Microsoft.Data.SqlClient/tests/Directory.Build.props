@@ -13,8 +13,8 @@
     <!-- Set Target Framework when TestTargetOS is not empty. (Command Line) -->
     <When Condition="'$(TestTargetOS)' != ''">
         <PropertyGroup>
-          <TargetFramework Condition="'$(TestTargetOS)' == 'WindowsNetCore' OR '$(TestTargetOS)' == 'UnixNetCore'">netcoreapp2.1</TargetFramework>
-          <TargetFramework Condition="'$(TestTargetOS)' == 'WindowsNetFx'">net46</TargetFramework>
+          <TargetFramework Condition="'$(TestTargetOS)' == 'Windowsnetcoreapp' OR '$(TestTargetOS)' == 'Unixnetcoreapp'">netcoreapp2.1</TargetFramework>
+          <TargetFramework Condition="'$(TestTargetOS)' == 'Windowsnetfx'">net46</TargetFramework>
       </PropertyGroup>
     </When>
     <!-- Set Target Framework when TestTargetOS is empty and Configuration is neither Debug nor Release. (Visual Studio) -->

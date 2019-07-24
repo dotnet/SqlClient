@@ -10,8 +10,6 @@ using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Text;
 
-using MSS = Microsoft.Data.SqlClient.Server;
-
 namespace Microsoft.Data.SqlClient
 {
     // TdsValueSetter handles writing a single value out to a TDS stream
@@ -664,7 +662,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // VSTFDevDiv #885208 - DateTimeOffset throws ArgumentException for when passing DateTimeOffset value to a sql_variant TVP 
                 //                      using a SqlDataRecord or SqlDataReader
-                MSS.SmiMetaData dateTimeOffsetMetaData = MSS.SmiMetaData.DefaultDateTimeOffset;
+                SmiMetaData dateTimeOffsetMetaData = SmiMetaData.DefaultDateTimeOffset;
                 scale = MetaType.MetaDateTimeOffset.Scale;
                 length = (byte)dateTimeOffsetMetaData.MaxLength;
                 _stateObj.Parser.WriteSqlVariantHeader(13, TdsEnums.SQLDATETIMEOFFSET, 1, _stateObj);

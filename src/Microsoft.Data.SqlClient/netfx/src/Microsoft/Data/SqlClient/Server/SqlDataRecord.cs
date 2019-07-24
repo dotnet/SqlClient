@@ -8,20 +8,16 @@
 // <owner current="false" primary="false">stevesta</owner>
 //------------------------------------------------------------------------------
 
+
+using System;
+using System.Data;
+using System.Data.SqlTypes;
+using System.Diagnostics;
+using Microsoft.Data.ProviderBase;
+using Microsoft.Data.Common;
+
 namespace Microsoft.Data.SqlClient.Server
 {
-
-    using System;
-    using System.Data;
-    using System.Data.Common;
-    using System.Data.ProviderBase;
-    using System.Data.Sql;
-    using System.Data.SqlTypes;
-    using Microsoft.Data.SqlClient;
-    using System.Diagnostics;
-    using Microsoft.Data.ProviderBase;
-    using Microsoft.Data.Common;
-
     public class SqlDataRecord : IDataRecord
     {
         SmiRecordBuffer _recordBuffer;

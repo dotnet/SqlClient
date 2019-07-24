@@ -16,7 +16,6 @@ using System.Threading;
 
 namespace Microsoft.Data.SqlClient
 {
-
     internal static class SNINativeMethodWrapper
     {
         private const string SNI = "SNI.dll";

@@ -6,22 +6,22 @@
 // <owner current="true" primary="false">sukanyas</owner>
 //------------------------------------------------------------------------------
 
-namespace Microsoft.Data.SqlClient {
-    using System;
-    using Microsoft.Data.SqlTypes;
-    using System.IO;
-    using System.Threading;
-    using System.Diagnostics;        // for Conditional compilation
-    using System.Diagnostics.CodeAnalysis;
-    using System.Xml;
-    using Microsoft.Data.SqlClient.Server;
-    using Microsoft.Data.ProviderBase;
-    using Microsoft.Data.Common;
-    using System.Threading.Tasks;
-    using System.Data;
-    using System.Data.SqlTypes;
-    using System.Data.Common;
+using System;
+using Microsoft.Data.SqlTypes;
+using System.IO;
+using System.Threading;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Xml;
+using Microsoft.Data.SqlClient.Server;
+using Microsoft.Data.ProviderBase;
+using Microsoft.Data.Common;
+using System.Threading.Tasks;
+using System.Data;
+using System.Data.SqlTypes;
+using System.Data.Common;
 
+namespace Microsoft.Data.SqlClient {
     // SqlServer provider's implementation of ISqlReader.
     //    Supports ISqlReader and ISqlResultSet objects.
     //

@@ -6,11 +6,11 @@
 // <owner current="true" primary="false">alazela</owner>
 //------------------------------------------------------------------------------
 
-namespace Microsoft.Data.SqlClient.Server {
+using System;
+using Microsoft.Data.SqlClient;
+using System.Diagnostics;
 
-    using System;
-    using Microsoft.Data.SqlClient;
-    using System.Diagnostics;
+namespace Microsoft.Data.SqlClient.Server {
     
     sealed internal class SmiContextFactory  {
         public static readonly SmiContextFactory Instance = new SmiContextFactory();

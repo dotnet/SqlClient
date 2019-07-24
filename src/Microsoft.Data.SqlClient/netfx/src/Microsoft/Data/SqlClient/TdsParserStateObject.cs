@@ -6,24 +6,22 @@
 // <owner current="true" primary="false">sukanyas</owner>
 //------------------------------------------------------------------------------
 
-namespace Microsoft.Data.SqlClient {
-    using System;
-    using System.Collections.Generic;    
-    using Microsoft.Data.Common;
-    using Microsoft.Data.ProviderBase;
-    using System.Data.Sql;
-    using Microsoft.Data.SqlTypes;
-    using System.Diagnostics;
-    using System.Globalization;
-    using System.Linq;
-    using System.Runtime.CompilerServices;
-    using System.Runtime.InteropServices;
-    using System.Runtime.ConstrainedExecution;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using System.Security;
-    using System.Text;
+using System;
+using System.Collections.Generic;
+using Microsoft.Data.Common;
+using System.Diagnostics;
+using System.Globalization;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Runtime.ConstrainedExecution;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Security;
+using System.Text;
 
+namespace Microsoft.Data.SqlClient
+{
     sealed internal class LastIOTimer {
         internal long _value;
     }

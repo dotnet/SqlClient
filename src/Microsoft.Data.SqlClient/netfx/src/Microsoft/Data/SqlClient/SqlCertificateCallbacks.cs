@@ -5,10 +5,10 @@
 // <owner current="true" primary="true">tomtal</owner>
 //------------------------------------------------------------------------------
 
-namespace Microsoft.Data.SqlClient {
 
-    using System.Security.Cryptography.X509Certificates;
-    
+using System.Security.Cryptography.X509Certificates;
+
+namespace Microsoft.Data.SqlClient {
     /// <summary>
     /// A callback to validate server certificate.
     /// </summary>

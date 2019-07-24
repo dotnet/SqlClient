@@ -6,6 +6,20 @@
 // <owner current="true" primary="false">sukanyas</owner>
 //------------------------------------------------------------------------------
 
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using Microsoft.Data.Common;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Xml;
+using System.Data;
+using System.Data.Common;
+using System.Data.SqlTypes;
+
 // todo list:
 // * An ID column need to be ignored - even if there is an association
 // * Spec: ID columns will be ignored - even if there is an association
@@ -13,21 +27,6 @@
 //
 
 namespace Microsoft.Data.SqlClient {
-    using System;
-    using System.Collections;
-    using System.Collections.Generic;
-    using Microsoft.Data;
-    using Microsoft.Data.Common;
-    using System.Diagnostics;
-    using System.Runtime.CompilerServices;
-    using System.Text;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using System.Xml;
-    using System.Data;
-    using System.Data.Common;
-    using System.Data.SqlTypes;
-
     // -------------------------------------------------------------------------------------------------
     // this internal class helps us to associate the metadata (from the target)
     // with columnordinals (from the source)

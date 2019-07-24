@@ -269,8 +269,9 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
         public void Dispose()
         {
-            RemoveCertificate(certificate1, StoreLocation.CurrentUser);
-            RemoveCertificate(certificate2, StoreLocation.CurrentUser);
+            // Do Not remove Certificates to provide concurrency support
+            // RemoveCertificate(certificate1, StoreLocation.CurrentUser);
+            // RemoveCertificate(certificate2, StoreLocation.CurrentUser);
         }
 
         public static void AddCertificateToStore(X509Certificate2 certificate, StoreLocation certificateStoreLocation)
@@ -280,7 +281,10 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             {
                 certStore = new X509Store(StoreName.My, certificateStoreLocation);
                 certStore.Open(OpenFlags.ReadWrite);
-                certStore.Add(certificate);
+                if (!certStore.Certificates.Contains(certificate))
+                {
+                    certStore.Add(certificate);
+                }
 
             }
             finally

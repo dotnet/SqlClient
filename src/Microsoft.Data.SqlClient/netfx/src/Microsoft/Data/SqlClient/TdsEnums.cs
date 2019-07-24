@@ -6,11 +6,10 @@
 // <owner current="true" primary="false">laled</owner>
 //------------------------------------------------------------------------------
 
+using System;
+using System.Data;
+
 namespace Microsoft.Data.SqlClient {
-    using System;
-    using System.Data;
-
-
     /// <devdoc> Class of variables for the Tds connection.
     /// </devdoc>
     internal static class TdsEnums {

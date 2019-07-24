@@ -5,16 +5,17 @@
 // <owner current="true" primary="true">balnee</owner>
 // <owner current="true" primary="false">krishnib</owner>
 //------------------------------------------------------------------------------
+
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Reflection;
+using System.Security.Cryptography;
+using System.Text;
+
 namespace Microsoft.Data.SqlClient
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Linq;
-    using System.Reflection;
-    using System.Security.Cryptography;
-    using System.Text;
-
     internal static class SqlSecurityUtility {
 
         static readonly ColumnMasterKeyMetadataSignatureVerificationCache ColumnMasterKeyMetadataSignatureVerificationCache = ColumnMasterKeyMetadataSignatureVerificationCache.Instance;

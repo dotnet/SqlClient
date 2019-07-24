@@ -23,7 +23,7 @@
     <DefineConstants>$(DefineConstants);netcoreapp</DefineConstants>
   </PropertyGroup>
   <ItemGroup Condition="'$(TargetGroup)' == 'netstandard' OR '$(TargetGroup)' == 'netcoreapp' OR '$(IsUAPAssembly)' == 'true' ">
-    <Compile Include="System.Data.SqlClient.TypeForwards.cs" />
+    <Compile Include="Microsoft.Data.SqlClient.TypeForwards.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(IsPartialFacadeAssembly)' != 'true' AND '$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netstandard'">
     <Compile Include="Microsoft\Data\SqlClient\EnclaveDelegate.NetStandard.cs" />

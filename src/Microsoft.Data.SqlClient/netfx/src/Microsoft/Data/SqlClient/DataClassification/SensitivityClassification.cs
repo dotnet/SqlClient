@@ -5,9 +5,10 @@
 // <owner current="true" primary="true">dabrookl</owner>
 //------------------------------------------------------------------------------
 
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+
 namespace Microsoft.Data.SqlClient.DataClassification {
-    using System.Collections.Generic;
-    using System.Collections.ObjectModel;
 
     public class Label {
         public string Name { get; private set; }

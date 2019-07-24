@@ -7,16 +7,14 @@
 //------------------------------------------------------------------------------
 
 
+
+using Microsoft.Data.SqlClient.Server;
+using System;
+using System.Diagnostics;
+using System.Data.SqlTypes;
+using System.Data;
+
 namespace Microsoft.Data.SqlClient {
-
-    using Microsoft.Data.SqlClient.Server;
-    using System;
-    using System.Diagnostics;
-    using System.Data.SqlTypes;
-    using System.Data;
-
-
-
     // TdsRecordBufferSetter handles writing a structured value out to a TDS stream
     internal class TdsRecordBufferSetter : SmiRecordBuffer {
         #region Fields (private)

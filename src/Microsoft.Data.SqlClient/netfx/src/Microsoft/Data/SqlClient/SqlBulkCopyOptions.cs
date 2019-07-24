@@ -5,6 +5,7 @@
 // <owner current="true" primary="true">mithomas</owner>
 // <owner current="true" primary="false">blained</owner>
 //------------------------------------------------------------------------------
+
 using System;
 
 namespace Microsoft.Data.SqlClient {

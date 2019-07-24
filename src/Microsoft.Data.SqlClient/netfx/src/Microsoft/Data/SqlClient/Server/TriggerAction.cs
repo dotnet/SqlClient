@@ -13,7 +13,6 @@
 
 namespace Microsoft.Data.SqlClient.Server
 {
-
     internal enum EMDEventType
     {
         x_eet_Invalid = 0,    // Not actually a valid type: not persisted.

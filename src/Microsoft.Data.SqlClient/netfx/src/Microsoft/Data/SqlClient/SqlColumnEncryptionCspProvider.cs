@@ -5,14 +5,14 @@
 // <owner current="true" primary="true">balnee</owner>
 // <owner current="true" primary="false">krishnib</owner>
 //------------------------------------------------------------------------------
+using System;
+using System.Text;
+using System.Diagnostics;
+using System.Security.Cryptography;
+using Microsoft.Win32;
+
 namespace Microsoft.Data.SqlClient
 {
-    using System;
-    using System.Text;
-    using System.Diagnostics;
-    using System.Security.Cryptography;
-    using Microsoft.Win32;
-
     /// <summary>
     /// Provides implementation similar to certificate store provider.
     /// A CEK encrypted with certificate store provider should be decryptable by this provider and vice versa.

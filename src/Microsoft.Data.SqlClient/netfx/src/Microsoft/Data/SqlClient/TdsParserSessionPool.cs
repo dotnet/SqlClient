@@ -6,18 +6,13 @@
 // <owner current="true" primary="false">sukanyas</owner>
 //------------------------------------------------------------------------------
 
+
+using System;
+using System.Collections.Generic;
+using Microsoft.Data.Common;
+using System.Diagnostics;
+
 namespace Microsoft.Data.SqlClient {
-
-    using System;
-    using System.Collections.Generic;
-    using Microsoft.Data.Common;
-    using Microsoft.Data.ProviderBase;
-    using System.Diagnostics;
-    using System.Runtime.CompilerServices;
-    using System.Runtime.InteropServices;
-    using System.Threading;
-    using System.Collections.Concurrent;
-
     internal class TdsParserSessionPool {
         // NOTE: This is a very simplistic, lightweight pooler.  It wasn't
         //       intended to handle huge number of items, just to keep track

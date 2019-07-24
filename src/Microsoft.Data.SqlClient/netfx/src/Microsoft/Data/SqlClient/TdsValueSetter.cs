@@ -7,18 +7,16 @@
 //------------------------------------------------------------------------------
 
 
+
+using Microsoft.Data.SqlClient.Server;
+using System;
+using Microsoft.Data.Common;
+using System.Diagnostics;
+using System.Text;
+using System.Data.SqlTypes;
+using System.Data;
+
 namespace Microsoft.Data.SqlClient {
-
-    using Microsoft.Data.SqlClient.Server;
-    using System;
-    using Microsoft.Data.Common;
-    using System.Diagnostics;
-    using System.Text;
-
-    using MSS = Microsoft.Data.SqlClient.Server;
-    using System.Data.SqlTypes;
-    using System.Data;
-
     // TdsValueSetter handles writing a single value out to a TDS stream
     //   This class can easily be extended to handle multiple versions of TDS by sub-classing and virtualizing
     //   methods that have different formats or are not supported in one or the other version.
@@ -570,7 +568,7 @@ namespace Microsoft.Data.SqlClient {
             if (SqlDbType.Variant == _metaData.SqlDbType) {
                 // VSTFDevDiv #885208 - DateTimeOffset throws ArgumentException for when passing DateTimeOffset value to a sql_variant TVP 
                 //                      using a SqlDataRecord or SqlDataReader
-                MSS.SmiMetaData dateTimeOffsetMetaData = MSS.SmiMetaData.DefaultDateTimeOffset;
+                SmiMetaData dateTimeOffsetMetaData = SmiMetaData.DefaultDateTimeOffset;
                 scale = MetaType.MetaDateTimeOffset.Scale;
                 length = (byte)dateTimeOffsetMetaData.MaxLength;
                 _stateObj.Parser.WriteSqlVariantHeader(13, TdsEnums.SQLDATETIMEOFFSET, 1, _stateObj);

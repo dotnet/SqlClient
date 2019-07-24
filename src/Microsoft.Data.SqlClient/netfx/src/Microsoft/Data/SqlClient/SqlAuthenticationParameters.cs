@@ -4,11 +4,13 @@
 // </copyright>                                                                
 // <owner current="true" primary="true">lxeu</owner>
 //------------------------------------------------------------------------------
+
 using System;
 using System.Runtime.InteropServices;
 using System.Security;
 
-namespace Microsoft.Data.SqlClient {
+namespace Microsoft.Data.SqlClient
+{
 
     /// <summary>
     /// AD Authentication parameters passed by driver to auth providers.

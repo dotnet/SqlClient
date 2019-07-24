@@ -6,21 +6,19 @@
 // <owner current="true" primary="false">sukanyas</owner>
 //------------------------------------------------------------------------------
 
+using System;
+using System.Collections.Generic;
+using System.Data;
+using Microsoft.Data.Common;
+using System.Data.SqlTypes;
+using System.Diagnostics;
+using System.Text;
+using System.Security;
+using System.Globalization;
+using Microsoft.Data.SqlClient.Server;
+using Microsoft.Data.SqlTypes;
+
 namespace Microsoft.Data.SqlClient {
-    using System;
-    using System.Collections.Generic;
-    using System.Data;
-    using Microsoft.Data.Common;
-    using System.Data.SqlTypes;
-    using System.Diagnostics;
-    using System.Reflection;
-    using System.Text;
-    using System.Security;
-    using System.Globalization;
-
-    using Microsoft.Data.SqlClient.Server; // for SMI metadata
-    using Microsoft.Data.SqlTypes;
-
     internal enum CallbackType {
         Read  = 0,
         Write = 1

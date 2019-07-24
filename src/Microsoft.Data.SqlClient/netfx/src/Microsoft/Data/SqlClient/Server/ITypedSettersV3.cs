@@ -6,10 +6,10 @@
 // <owner current="true" primary="false">stevesta</owner>
 //------------------------------------------------------------------------------
 
-namespace Microsoft.Data.SqlClient.Server {
+using System;
+using System.Data.SqlTypes;
 
-    using System;
-    using System.Data.SqlTypes;
+namespace Microsoft.Data.SqlClient.Server {
 
     // interface for strongly-typed value setters
     internal interface ITypedSettersV3 {

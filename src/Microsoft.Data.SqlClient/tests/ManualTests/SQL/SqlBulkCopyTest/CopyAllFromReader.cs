@@ -5,7 +5,6 @@ using System;
 using System.Collections;
 using System.Data;
 using System.Data.Common;
-using System.Data.SqlClient;
 using System.Diagnostics;
 using Xunit;
 

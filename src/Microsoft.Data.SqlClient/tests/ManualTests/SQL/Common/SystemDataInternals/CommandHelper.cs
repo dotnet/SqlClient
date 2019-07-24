@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Data.SqlClient;
 using System.Reflection;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals

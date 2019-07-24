@@ -8,7 +8,6 @@
 
 namespace Microsoft.Data.SqlClient.Server {
 
-
     // This class exists purely to defer processing of messages until a later time.
     //  It is designed to allow calling common code that interacts with the SMI layers
     //  without throwing or otherwise processing messages in the sink until later on.

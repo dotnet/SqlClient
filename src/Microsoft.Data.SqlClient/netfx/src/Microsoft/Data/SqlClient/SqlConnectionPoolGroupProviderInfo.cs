@@ -6,11 +6,11 @@
 // <owner current="true" primary="false">stevesta</owner>
 //------------------------------------------------------------------------------
 
+using Microsoft.Data.Common;
+using Microsoft.Data.ProviderBase;
+
 namespace Microsoft.Data.SqlClient
 {
-    using Microsoft.Data.Common;
-    using Microsoft.Data.ProviderBase;
-
     sealed internal class SqlConnectionPoolGroupProviderInfo : DbConnectionPoolGroupProviderInfo {
         private string _alias;
         private System.Security.PermissionSet _failoverPermissionSet;

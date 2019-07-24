@@ -6,18 +6,18 @@
 // <owner current="true" primary="false">sukanyas</owner>
 //------------------------------------------------------------------------------
 
+using System;
+using Microsoft.Data.Common;
+using Microsoft.Data.ProviderBase;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using System.Runtime.ConstrainedExecution;
+using SysTx = System.Transactions;
+using System.Data;
+using System.Data.Common;
+
 namespace Microsoft.Data.SqlClient
 {
-    using System;
-    using Microsoft.Data.Common;
-    using Microsoft.Data.ProviderBase;
-    using System.Diagnostics;
-    using System.Runtime.CompilerServices;
-    using System.Runtime.ConstrainedExecution;
-    using SysTx = System.Transactions;
-    using System.Data;
-    using System.Data.Common;
-
     abstract internal class SqlInternalConnection : DbConnectionInternal {
         private readonly SqlConnectionString _connectionOptions;
         private bool                         _isEnlistedInTransaction; // is the server-side connection enlisted? true while we're enlisted, reset only after we send a null...

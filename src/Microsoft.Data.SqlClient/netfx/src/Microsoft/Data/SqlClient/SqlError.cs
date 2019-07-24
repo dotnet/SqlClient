@@ -6,10 +6,10 @@
 // <owner current="true" primary="false">laled</owner>
 //------------------------------------------------------------------------------
 
+
+using System;
+
 namespace Microsoft.Data.SqlClient {
-
-    using System;
-
     [Serializable]
     public sealed class SqlError {
 

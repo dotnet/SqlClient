@@ -17,19 +17,15 @@
 //devnote: perf optimization: consider changing the calls to Array.Reverse to inline unsafe code
 
 using System;
-using System.Collections;
 using System.Diagnostics;
-using Microsoft.Data;
 using System.IO;
-using System.Globalization;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Security.Permissions;
-using System.Text;
 using System.Runtime.CompilerServices;
 
-namespace Microsoft.Data.SqlClient.Server {
-    
+namespace Microsoft.Data.SqlClient.Server
+{
+
     // The class that holds the offset, field, and normalizer for
     // a particular field.
     internal sealed class FieldInfoEx: IComparable {

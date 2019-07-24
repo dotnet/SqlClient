@@ -74,7 +74,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         public void Dispose()
         {
-            CertificateUtility.RemoveCertificate(certificate);
             databaseObjects.Reverse();
             using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TcpConnStr))
             {

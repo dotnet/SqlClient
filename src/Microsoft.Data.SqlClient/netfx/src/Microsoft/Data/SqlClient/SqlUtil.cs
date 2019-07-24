@@ -6,24 +6,24 @@
 // <owner current="true" primary="false">sukanyas</owner>
 //------------------------------------------------------------------------------
 
-namespace Microsoft.Data.SqlClient {
-    using System;
-    using System.Collections.Generic;
-    using System.Data;
-    using Microsoft.Data.Common;
-    using System.Diagnostics;
-    using System.Globalization;
-    using System.Linq;
-    using System.Reflection;
-    using System.Threading;
-    using System.Text;
-    using SysTx = System.Transactions;
-    using System.Runtime.Versioning;    
-    using System.Threading.Tasks;
-    using System.Runtime.CompilerServices;
-    using System.Runtime.ExceptionServices;
-    using System.Data.SqlClient;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Diagnostics;
+using System.Globalization;
+using System.Linq;
+using System.Reflection;
+using System.Threading;
+using System.Text;
+using SysTx = System.Transactions;
+using System.Runtime.Versioning;
+using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 
+namespace Microsoft.Data.SqlClient
+{
+    using Microsoft.Data.Common;
     static internal class AsyncHelper {
         internal static Task CreateContinuationTask(Task task, Action onSuccess, SqlInternalConnectionTds connectionToDoom = null, Action<Exception> onFailure = null) {
             if (task == null) {

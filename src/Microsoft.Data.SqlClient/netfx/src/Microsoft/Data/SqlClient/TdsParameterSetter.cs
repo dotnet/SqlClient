@@ -7,11 +7,11 @@
 // <owner current="true" primary="false">alazela</owner>
 //------------------------------------------------------------------------------
 
+
+using System.Diagnostics;
+using Microsoft.Data.SqlClient.Server;
+
 namespace Microsoft.Data.SqlClient {
-
-    using System.Diagnostics;
-    using Microsoft.Data.SqlClient.Server;
-
     // Simple Getter/Setter for structured parameters to allow using common ValueUtilsSmi code.
     //  This is a stand-in to having a true SmiRequestExecutor class for TDS.
     internal class TdsParameterSetter : SmiTypedGetterSetter {

@@ -6,17 +6,17 @@
 // <owner current="true" primary="false">laled</owner>
 //------------------------------------------------------------------------------
 
+
+using System;
+using System.Collections;
+using System.ComponentModel;
+using Microsoft.Data.Common;
+using System.Diagnostics;
+using System.Globalization;
+using System.Runtime.Serialization;
+using System.Text;
+
 namespace Microsoft.Data.SqlClient {
-
-    using System;
-    using System.Collections;
-    using System.ComponentModel;
-    using Microsoft.Data.Common;
-    using System.Diagnostics;
-    using System.Globalization;
-    using System.Runtime.Serialization;
-    using System.Text; // StringBuilder
-
     [Serializable]
     public sealed class SqlException : System.Data.Common.DbException {
         private const string OriginalClientConnectionIdKey = "OriginalClientConnectionId";

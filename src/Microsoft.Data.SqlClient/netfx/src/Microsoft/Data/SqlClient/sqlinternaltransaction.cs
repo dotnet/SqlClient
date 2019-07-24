@@ -6,14 +6,14 @@
 // <owner current="true" primary="false">sukanyas</owner>
 //------------------------------------------------------------------------------
 
+
+using Microsoft.Data.Common;
+using System;
+using System.Diagnostics;
+using System.Threading;
+using System.Data;
+
 namespace Microsoft.Data.SqlClient {
-
-    using Microsoft.Data.Common;
-    using System;
-    using System.Diagnostics;
-    using System.Threading;
-    using System.Data;
-
     internal enum TransactionState {
         Pending = 0,
         Active = 1,

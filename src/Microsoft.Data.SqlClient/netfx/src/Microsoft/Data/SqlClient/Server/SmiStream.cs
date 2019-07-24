@@ -7,9 +7,10 @@
 //------------------------------------------------------------------------------
 
 // Stream-like object that uses SmiEventSink for server-side errors.
-namespace Microsoft.Data.SqlClient.Server {
-    using System.IO;
 
+using System.IO;
+
+namespace Microsoft.Data.SqlClient.Server {
     internal abstract class SmiStream {
         public abstract bool CanRead {
             get;

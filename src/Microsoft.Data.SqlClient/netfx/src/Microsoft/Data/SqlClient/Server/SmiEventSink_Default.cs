@@ -6,10 +6,10 @@
 // <owner current="true" primary="false">alazela</owner>
 //------------------------------------------------------------------------------
 
-namespace Microsoft.Data.SqlClient.Server {
+using Microsoft.Data.SqlClient;
+using System.Diagnostics;
 
-    using Microsoft.Data.SqlClient;
-    using System.Diagnostics;
+namespace Microsoft.Data.SqlClient.Server {
  
     internal class SmiEventSink_Default : SmiEventSink {
 

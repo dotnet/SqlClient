@@ -6,13 +6,13 @@
 //------------------------------------------------------------------------------
 
 
+using System;
+using System.Runtime.Caching;
+using System.Text;
+using System.Threading;
+
 namespace Microsoft.Data.SqlClient
 {
-    using System;
-    using System.Runtime.Caching;
-    using System.Text;
-    using System.Threading; 
-
     /// <summary>
     /// Cache for storing result of signature verfication of CMK Metadata
     /// </summary>

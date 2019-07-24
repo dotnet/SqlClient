@@ -6,17 +6,17 @@
 // <owner current="true" primary="false">blained</owner>
 //------------------------------------------------------------------------------
 
+
+using System;
+using System.Collections.Generic;
+using Microsoft.Data.Common;
+using System.Diagnostics;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Data;
+using System.Data.Common;
+
 namespace Microsoft.Data.SqlClient {
-
-    using System;
-    using System.Collections.Generic;
-    using Microsoft.Data.Common;
-    using System.Diagnostics;
-    using System.Text;
-    using System.Text.RegularExpressions;
-    using System.Data;
-    using System.Data.Common;
-
     internal sealed class SqlCommandSet {
 
         private const string SqlIdentifierPattern = "^@[\\p{Lo}\\p{Lu}\\p{Ll}\\p{Lm}_@#][\\p{Lo}\\p{Lu}\\p{Ll}\\p{Lm}\\p{Nd}\uff3f_@#\\$]*$";

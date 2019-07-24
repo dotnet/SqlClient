@@ -4,6 +4,7 @@
 // </copyright>                                                                
 // <owner current="true" primary="true">lxeu</owner>
 //------------------------------------------------------------------------------
+
 using System.Security.Cryptography;
 using System.ComponentModel;
 using System.Text;

@@ -6,14 +6,14 @@
 // <owner current="true" primary="false">billin</owner>
 //------------------------------------------------------------------------------
 
-namespace Microsoft.Data.SqlClient.Server {
+using System;
+using System.Collections.Generic;
+using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient;
+using System.Diagnostics;
+using System.Globalization;
 
-    using System;
-    using System.Collections.Generic;
-    using Microsoft.Data.Common;
-    using Microsoft.Data.SqlClient;
-    using System.Diagnostics;
-    using System.Globalization;
+namespace Microsoft.Data.SqlClient.Server {
 
     // SmiMetaDataProperty defines an extended, optional property to be used on the SmiMetaData class
     //  This approach to adding properties is added combat the growing number of sparsely-used properties 

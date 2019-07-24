@@ -6,15 +6,14 @@
 // <owner current="true" primary="false">billin</owner>
 //------------------------------------------------------------------------------
 
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Data;
+using System.Data.SqlTypes;
+using System.Globalization;
+
 namespace Microsoft.Data.SqlClient.Server {
-
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Data;
-    using System.Data.SqlTypes;
-    using System.Globalization;
-
 
     // DESIGN NOTES
     //

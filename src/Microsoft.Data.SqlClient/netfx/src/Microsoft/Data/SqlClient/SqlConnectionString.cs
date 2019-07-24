@@ -6,16 +6,16 @@
 // <owner current="true" primary="false">sukanyas</owner>
 //------------------------------------------------------------------------------
 
+
+using System;
+using System.Collections;
+using Microsoft.Data;
+using Microsoft.Data.Common;
+using System.Diagnostics;
+using System.Globalization;
+using System.Runtime.Versioning;
+
 namespace Microsoft.Data.SqlClient {
-
-    using System;
-    using System.Collections;
-    using Microsoft.Data;
-    using Microsoft.Data.Common;
-    using System.Diagnostics;
-    using System.Globalization;
-    using System.Runtime.Versioning;
-
     internal sealed class SqlConnectionString : DbConnectionOptions {
         // instances of this class are intended to be immutable, i.e readonly
         // used by pooling classes so it is much easier to verify correctness

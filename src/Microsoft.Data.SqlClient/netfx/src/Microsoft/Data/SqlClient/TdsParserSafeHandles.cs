@@ -6,16 +6,16 @@
 // <owner current="true" primary="false">stevesta</owner>
 //------------------------------------------------------------------------------
 
+
+using System;
+using System.Collections.Generic;
+using Microsoft.Data.Common;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Threading;
+
 namespace Microsoft.Data.SqlClient {
-
-    using System;
-    using System.Collections.Generic;
-    using Microsoft.Data.Common;
-    using System.Diagnostics;
-    using System.Runtime.CompilerServices;
-    using System.Runtime.InteropServices;
-    using System.Threading;
-
     internal sealed class SNILoadHandle : SafeHandle {
         internal static readonly SNILoadHandle SingletonInstance = new SNILoadHandle();
 

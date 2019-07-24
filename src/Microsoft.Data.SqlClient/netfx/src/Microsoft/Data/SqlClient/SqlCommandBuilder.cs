@@ -6,17 +6,17 @@
 // <owner current="true" primary="false">blained</owner>
 //------------------------------------------------------------------------------
 
+
+using System;
+using System.ComponentModel;
+using Microsoft.Data.Common;
+using Microsoft.Data.Sql;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using System.Data.Common;
+using System.Data;
+
 namespace Microsoft.Data.SqlClient {
-
-    using System;
-    using System.ComponentModel;
-    using Microsoft.Data.Common;
-    using Microsoft.Data.Sql;
-    using System.Diagnostics;
-    using System.Runtime.CompilerServices;
-    using System.Data.Common;
-    using System.Data;
-
     public sealed class SqlCommandBuilder : DbCommandBuilder {
 
         public SqlCommandBuilder() : base() {

@@ -6,11 +6,10 @@
 // <owner current="true" primary="false">billin</owner>
 //------------------------------------------------------------------------------
 
+using System;
+using System.Data.SqlTypes;
 
 namespace Microsoft.Data.SqlClient.Server {
-
-    using System;
-    using System.Data.SqlTypes;
 
     // Central interface for getting/setting data values from/to a set of values indexed by ordinal 
     //  (record, row, array, etc)

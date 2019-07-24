@@ -6,13 +6,13 @@
 // <owner current="true" primary="false">blained</owner>
 //------------------------------------------------------------------------------
 
+using Microsoft.Data.Common;
+
 // Todo: rename the file
 // Caution! ndp\fx\src\data\netmodule\sources needs to follow this change
 
 namespace Microsoft.Data.SqlClient
 {
-    using Microsoft.Data.Common;
-
     // -------------------------------------------------------------------------------------------------
     // this class helps allows the user to create association between source- and targetcolumns
     //

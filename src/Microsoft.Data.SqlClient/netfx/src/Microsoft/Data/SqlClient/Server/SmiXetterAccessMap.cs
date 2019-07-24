@@ -6,8 +6,9 @@
 // <owner current="true" primary="false">billin</owner>
 //------------------------------------------------------------------------------
 
+using System.Diagnostics;
+
 namespace Microsoft.Data.SqlClient.Server {
-    using System.Diagnostics;
 
     // Formal encoding of SMI's metadata-to-ITypedSetter/-from-ITypedGetter validity rules
     internal class SmiXetterAccessMap {

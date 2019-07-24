@@ -3,8 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-    using System.Data.SqlClient;
-    using System.Text;
+using System.Text;
 
 namespace Microsoft.Data.SqlClient
 {

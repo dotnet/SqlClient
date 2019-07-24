@@ -6,10 +6,10 @@
 // <owner current="true" primary="false">laled</owner>
 //------------------------------------------------------------------------------
 
-namespace Microsoft.Data.SqlClient {
-    using System.Data;
-    using System.Data.Common;
+using System.Data;
+using System.Data.Common;
 
+namespace Microsoft.Data.SqlClient {
     public sealed class SqlRowUpdatingEventArgs : RowUpdatingEventArgs {
 
         public SqlRowUpdatingEventArgs(DataRow row, IDbCommand command, StatementType statementType, DataTableMapping tableMapping) 

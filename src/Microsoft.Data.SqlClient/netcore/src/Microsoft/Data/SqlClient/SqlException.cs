@@ -8,7 +8,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.Serialization;
-using System.Text; // StringBuilder
+using System.Text;
 
 namespace Microsoft.Data.SqlClient
 {

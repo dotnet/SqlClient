@@ -6,21 +6,14 @@
 // <owner current="true" primary="false">sukanyas</owner>
 //------------------------------------------------------------------------------
 
-namespace Microsoft.Data.SqlClient {
-    using System;
+using System;
+using System.Globalization;
+using System.Security.Permissions;
+using System.Runtime.Versioning;
+
+namespace Microsoft.Data.SqlClient
+{
     using Microsoft.Data.Common;
-    using Microsoft.Data.ProviderBase;
-    using System.Data.Sql;
-    using Microsoft.Data.SqlTypes;
-    using System.Diagnostics;
-    using System.Globalization;
-    using System.Runtime.CompilerServices;
-    using System.Runtime.InteropServices;
-    using System.Security;
-    using System.Security.Permissions;
-    using System.Text;
-    using System.Threading;
-    using System.Runtime.Versioning;
 
     internal sealed class TdsParserStaticMethods {
 
