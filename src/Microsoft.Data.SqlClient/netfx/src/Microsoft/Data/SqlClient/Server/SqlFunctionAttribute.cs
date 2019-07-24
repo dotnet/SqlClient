@@ -1,16 +1,6 @@
-﻿//------------------------------------------------------------------------------
-//  <copyright file="SqlFunctionAttribute.cs" company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation. All Rights Reserved.
-//     Information Contained Herein is Proprietary and Confidential.
-//  </copyright>
-// <owner current="true" primary="true">Microsoft</owner>
-// <owner current="true" primary="true">Microsoft</owner>
-// <owner current="true" primary="true">daltudov</owner>
-// <owner current="true" primary="true">Microsoft</owner>
-// <owner current="true" primary="false">beysims</owner>
-// <owner current="true" primary="false">Microsoft</owner>
-// <owner current="true" primary="false">vadimt</owner>
-//------------------------------------------------------------------------------
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 

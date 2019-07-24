@@ -1,9 +1,7 @@
-// ==++==
-// 
-//   Copyright (c) Microsoft Corporation.  All rights reserved.
-// 
-// ==--==
- 
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
 // There are cases where we have multiple assemblies that are going to import this file and 
 // if they are going to also have InternalsVisibleTo between them, there will be a compiler warning
 // that the type is found both in the source and in a referenced assembly. The compiler will prefer 
@@ -11,7 +9,7 @@
 //
 // In order to disable the warning for this type we are disabling this warning for this entire file.
 #pragma warning disable 436
- 
+
 // NOTE: This file should not be included in mscorlib. This should only be included in FX libraries that need to provide switches
 using System;
 using System.Collections.Generic;

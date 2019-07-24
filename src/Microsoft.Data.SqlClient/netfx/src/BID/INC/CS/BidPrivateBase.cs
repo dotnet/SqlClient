@@ -1,11 +1,6 @@
-//-----------------------------------------------------------------------------------------------
-// <copyright file="BidPrivateBase.cs" company="Microsoft">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-// <owner current="true" primary="true">alazela</owner>
-// <owner current="true" primary="false">markash</owner>
-// Last Modified: 6-November-2008
-//-----------------------------------------------------------------------------------------------
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 //
 //  Define the symbol below to enable automatic generation of strongly typed
@@ -1682,12 +1677,6 @@ internal sealed class SignatureGenerator
         internal struct Headers
         {
             internal const string File =
-            "//-----------------------------------------------------------------------------------\r\n" +
-            "// <copyright file=\"^MODNAME^\" company=\"Microsoft\">\r\n" +
-            "//     Copyright (c) Microsoft Corporation.  All rights reserved.\r\n" +
-            "// </copyright>\r\n" +
-            "//-----------------------------------------------------------------------------------\r\n" +
-            "\r\n" +
             "using System;\r\n" +
             "using System.Text;\r\n" +
             "using System.Security;\r\n" +

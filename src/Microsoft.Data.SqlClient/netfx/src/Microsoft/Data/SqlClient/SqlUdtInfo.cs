@@ -1,11 +1,6 @@
-//------------------------------------------------------------------------------
-//  <copyright file="SqlUdtInfo.cs" company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation. All Rights Reserved.
-//     Information Contained Herein is Proprietary and Confidential.
-//  </copyright>
-// <owner current="true" primary="true">stevesta</owner>
-// <owner current="true" primary="false">alazela</owner>
-//------------------------------------------------------------------------------
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 
 using System;

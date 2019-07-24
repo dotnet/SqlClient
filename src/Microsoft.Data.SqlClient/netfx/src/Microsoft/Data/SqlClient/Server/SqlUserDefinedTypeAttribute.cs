@@ -1,18 +1,6 @@
-//------------------------------------------------------------------------------
-// <copyright file="SqlUserDefinedTypeAttribute.cs" company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation. All Rights Reserved.
-//     Information Contained Herein is Proprietary and Confidential.
-//  </copyright>
-// <owner current="true" primary="true">alazela</owner>
-// <owner current="true" primary="true">blained</owner>
-// <owner current="true" primary="true">daltudov</owner>
-// <owner current="true" primary="true">stevesta</owner>
-// <owner current="true" primary="false">beysims</owner>
-// <owner current="true" primary="false">laled</owner>
-// <owner current="true" primary="false">vadimt</owner>
-// <owner current="false" primary="false">venkar</owner>
-// <owner current="false" primary="false">ramp</owner>
-//------------------------------------------------------------------------------
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Microsoft.Data.Common;
 using System;
