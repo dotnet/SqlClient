@@ -2075,7 +2075,7 @@ namespace Microsoft.Data.SqlClient
                                 }
                                 SqlEnvChange head = env;
                                 env = env.Next;
-                                SqlEnvChangePool.Release(head);
+                                head.Clear();
                                 head = null;
                             }
                             break;
@@ -2358,7 +2358,7 @@ namespace Microsoft.Data.SqlClient
 
             while (tokenLength > processedLength)
             {
-                SqlEnvChange env = SqlEnvChangePool.Allocate();
+                var env = new SqlEnvChange();
 
                 if (!stateObj.TryReadByte(out env.type))
                 {
