@@ -52,7 +52,8 @@ namespace Microsoft.Data.SqlClient
                         OperationId = operationId,
                         Operation = operation,
                         ConnectionId = sqlCommand.Connection?.ClientConnectionId,
-                        Command = sqlCommand
+                        Command = sqlCommand,
+                        Timestamp = Stopwatch.GetTimestamp()
                     });
 
                 return operationId;
