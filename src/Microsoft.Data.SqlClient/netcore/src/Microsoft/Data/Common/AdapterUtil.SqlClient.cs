@@ -119,7 +119,7 @@ namespace Microsoft.Data.Common
                 case CommandType.Text:
                 case CommandType.StoredProcedure:
                 case CommandType.TableDirect:
-                    Debug.Assert(false, "valid CommandType " + value.ToString());
+                    Debug.Fail("valid CommandType " + value.ToString());
                     break;
             }
 #endif
@@ -157,7 +157,7 @@ namespace Microsoft.Data.Common
                 case ParameterDirection.Output:
                 case ParameterDirection.InputOutput:
                 case ParameterDirection.ReturnValue:
-                    Debug.Assert(false, "valid ParameterDirection " + value.ToString());
+                    Debug.Fail("valid ParameterDirection " + value.ToString());
                     break;
             }
 #endif
@@ -180,7 +180,7 @@ namespace Microsoft.Data.Common
                 case UpdateRowSource.OutputParameters:
                 case UpdateRowSource.FirstReturnedRecord:
                 case UpdateRowSource.Both:
-                    Debug.Assert(false, "valid UpdateRowSource " + value.ToString());
+                    Debug.Fail("valid UpdateRowSource " + value.ToString());
                     break;
             }
 #endif

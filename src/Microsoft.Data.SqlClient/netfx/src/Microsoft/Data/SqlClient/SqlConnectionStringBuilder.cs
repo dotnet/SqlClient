@@ -317,7 +317,7 @@ namespace Microsoft.Data.SqlClient {
                     case Keywords.ConnectRetryInterval:				ConnectRetryInterval = ConvertToInt32(value); break;
 
                     default:
-                        Debug.Assert(false, "unexpected keyword");
+                        Debug.Fail("unexpected keyword");
                         throw ADP.KeywordNotSupported(keyword);
                     }
                 }
@@ -1017,7 +1017,7 @@ namespace Microsoft.Data.SqlClient {
             case Keywords.Certificate:              return Certificate;
 #endif
             default:
-                Debug.Assert(false, "unexpected keyword");
+                Debug.Fail("unexpected keyword");
                 throw ADP.KeywordNotSupported(_validKeywords[(int)index]);
             }
         }
@@ -1195,7 +1195,7 @@ namespace Microsoft.Data.SqlClient {
                 _enclaveAttestationUrl = DbConnectionStringDefaults.EnclaveAttestationUrl;
                 break;
             default:
-                Debug.Assert(false, "unexpected keyword");
+                Debug.Fail("unexpected keyword");
                 throw ADP.KeywordNotSupported(_validKeywords[(int)index]);
             }
         }

@@ -937,7 +937,7 @@ namespace Microsoft.Data.SqlClient
                             _actualSize = 5 + (isSqlVariant ? 5 : MetaType.GetTimeSizeFromScale(GetActualScale()));
                             break;
                         default:
-                            Debug.Assert(false, "Unknown variable length type!");
+                            Debug.Fail("Unknown variable length type!");
                             break;
                     }
 

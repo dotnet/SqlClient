@@ -741,6 +741,7 @@ namespace Microsoft.Data.SqlClient
                     }
 
                     Debug.Assert(TdsParser.IsValidTdsToken(token), string.Format("Invalid token after performing CleanPartialRead: {0,-2:X2}", token));
+                    
                 }
 #endif
             _sharedState._dataReady = false;
@@ -923,7 +924,7 @@ namespace Microsoft.Data.SqlClient
                                     return false;
                                 }
 
-                                Debug.Assert(TdsParser.IsValidTdsToken(token), string.Format("DataReady is false, but next token is invalid: {0,-2:X2}", token));
+                                Debug.Assert(TdsParser.IsValidTdsToken(token), $"DataReady is false, but next token is invalid: {token,-2:X2}");
                             }
 #endif
 
@@ -3287,7 +3288,7 @@ namespace Microsoft.Data.SqlClient
                             return false;
                         }
 
-                        Debug.Assert(TdsParser.IsValidTdsToken(token), string.Format("DataReady is false, but next token is invalid: {0,-2:X2}", token));
+                        Debug.Assert(TdsParser.IsValidTdsToken(token), $"DataReady is false, but next token is invalid: {token,-2:X2}");
                     }
 #endif
 

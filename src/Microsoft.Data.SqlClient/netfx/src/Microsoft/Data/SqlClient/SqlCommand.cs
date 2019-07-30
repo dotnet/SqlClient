@@ -5117,7 +5117,7 @@ namespace Microsoft.Data.SqlClient {
                     parameters = _parameterCollectionList[_currentlyExecutingBatch];
                 }
                 else {
-                    Debug.Assert(false, "OnReturnStatus: SqlCommand got too many DONEPROC events");
+                    Debug.Fail("OnReturnStatus: SqlCommand got too many DONEPROC events");
                     parameters = null;
                 }
             }
@@ -5335,7 +5335,7 @@ namespace Microsoft.Data.SqlClient {
                     return _parameterCollectionList[_currentlyExecutingBatch];
                 }
                 else {
-                    Debug.Assert(false, "OnReturnValue: SqlCommand got too many DONEPROC events");
+                    Debug.Fail("OnReturnValue: SqlCommand got too many DONEPROC events");
                     return null;
                 }
             }
@@ -5535,7 +5535,7 @@ namespace Microsoft.Data.SqlClient {
                 // InputOutput/Output parameters are aways sent
                 return true;
             default:
-                Debug.Assert(false, "Invalid ParameterDirection!");
+                Debug.Fail("Invalid ParameterDirection!");
                 return false;
             }
         }

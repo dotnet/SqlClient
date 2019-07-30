@@ -459,7 +459,7 @@ namespace Microsoft.Data.SqlClient
             string CatalogName = parts[MultipartIdentifier.CatalogIndex];
             if (isTempTable && string.IsNullOrEmpty(CatalogName))
             {
-                TDSCommand += string.Format((IFormatProvider)null, "exec tempdb..{0} N'{1}.{2}'",
+                TDSCommand += string.Format("exec tempdb..{0} N'{1}.{2}'",
                     TableCollationsStoredProc,
                     SchemaName,
                     TableName
@@ -472,7 +472,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     CatalogName = SqlServerEscapeHelper.EscapeIdentifier(CatalogName);
                 }
-                TDSCommand += string.Format((IFormatProvider)null, "exec {0}..{1} N'{2}.{3}'",
+                TDSCommand += string.Format("exec {0}..{1} N'{2}.{3}'",
                     CatalogName,
                     TableCollationsStoredProc,
                     SchemaName,
@@ -873,7 +873,7 @@ namespace Microsoft.Data.SqlClient
                                     Debug.Assert(_SqlDataReaderRowSource != null, "Should not be reading row as an XmlReader if bulk copy source is not a SqlDataReader");
                                     return new XmlDataFeed(_SqlDataReaderRowSource.GetXmlReader(sourceOrdinal));
                                 default:
-                                    Debug.Fail(string.Format("Current column is marked as being a DataFeed, but no DataFeed compatible method was provided. Method: {0}", _currentRowMetadata[destRowIndex].Method));
+                                    Debug.Fail($"Current column is marked as being a DataFeed, but no DataFeed compatible method was provided. Method: {_currentRowMetadata[destRowIndex].Method}");
                                     isDataFeed = false;
                                     object columnValue = _DbDataReaderRowSource.GetValue(sourceOrdinal);
                                     ADP.IsNullOrSqlType(columnValue, out isNull, out isSqlType);
@@ -901,7 +901,7 @@ namespace Microsoft.Data.SqlClient
                                     value = new SqlDecimal(_SqlDataReaderRowSource.GetSqlSingle(sourceOrdinal).Value);
                                     break;
                                 default:
-                                    Debug.Fail(string.Format("Current column is marked as being a SqlType, but no SqlType compatible method was provided. Method: {0}", _currentRowMetadata[destRowIndex].Method));
+                                    Debug.Fail($"Current column is marked as being a SqlType, but no SqlType compatible method was provided. Method: {_currentRowMetadata[destRowIndex].Method}");
                                     value = (INullable)_SqlDataReaderRowSource.GetSqlValue(sourceOrdinal);
                                     break;
                             }
@@ -1013,7 +1013,7 @@ namespace Microsoft.Data.SqlClient
                                     }
                                 default:
                                     {
-                                        Debug.Fail(string.Format("Current column is marked as being a SqlType, but no SqlType compatible method was provided. Method: {0}", _currentRowMetadata[destRowIndex].Method));
+                                        Debug.Fail($"Current column is marked as being a SqlType, but no SqlType compatible method was provided. Method: {_currentRowMetadata[destRowIndex].Method}");
                                         break;
                                     }
                             }
@@ -1129,7 +1129,7 @@ namespace Microsoft.Data.SqlClient
                         break;
                     default:
                         t = null;
-                        Debug.Fail(string.Format("Unknown value source: {0}", _rowSourceType));
+                        Debug.Fail($"Unknown value source: {_rowSourceType}");
                         break;
                 }
 

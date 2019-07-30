@@ -640,7 +640,7 @@ namespace Microsoft.Data.SqlClient
 
         override public string ServerVersion {
             get {
-                return(String.Format((IFormatProvider)null, "{0:00}.{1:00}.{2:0000}", _loginAck.majorVersion,
+                return (string.Format("{0:00}.{1:00}.{2:0000}", _loginAck.majorVersion,
                        (short) _loginAck.minorVersion, _loginAck.buildNum));
             }
         }
@@ -1028,7 +1028,7 @@ namespace Microsoft.Data.SqlClient
                     sqlBatch.Append(transactionName);
                     break;
                 default:
-                    Debug.Assert(false, "Unknown transaction type");
+                    Debug.Fail("Unknown transaction type");
                     break;
             }
 
@@ -1114,7 +1114,7 @@ namespace Microsoft.Data.SqlClient
                         requestType = TdsEnums.TransactionManagerRequestType.Save;
                         break;
                     default:
-                        Debug.Assert(false, "Unknown transaction type");
+                        Debug.Fail("Unknown transaction type");
                         break;
                 }
 
@@ -1236,7 +1236,7 @@ namespace Microsoft.Data.SqlClient
                 _recoverySessionData = null;
             }
 
-            Debug.Assert(SniContext.Snix_Login == Parser._physicalStateObj.SniContext, String.Format((IFormatProvider)null, "SniContext should be Snix_Login; actual Value: {0}", Parser._physicalStateObj.SniContext));
+            Debug.Assert(SniContext.Snix_Login == Parser._physicalStateObj.SniContext, $"SniContext should be Snix_Login; actual Value: {Parser._physicalStateObj.SniContext}");
             _parser._physicalStateObj.SniContext = SniContext.Snix_EnableMars;
             _parser.EnableMars();
 
@@ -1832,7 +1832,7 @@ namespace Microsoft.Data.SqlClient
                         _parser.Disconnect();
 
                     _parser = new TdsParser(ConnectionOptions.MARS, ConnectionOptions.Asynchronous);
-                    Debug.Assert(SniContext.Undefined == Parser._physicalStateObj.SniContext, String.Format((IFormatProvider)null, "SniContext should be Undefined; actual Value: {0}", Parser._physicalStateObj.SniContext));
+                    Debug.Assert(SniContext.Undefined == Parser._physicalStateObj.SniContext, $"SniContext should be Undefined; actual Value: {Parser._physicalStateObj.SniContext}");
 
                     currentServerInfo = new ServerInfo(ConnectionOptions, _routingInfo, currentServerInfo.ResolvedServerName);
                     timeoutErrorInternal.SetInternalSourceType(SqlConnectionInternalSourceType.RoutingDestination);
@@ -2184,7 +2184,7 @@ namespace Microsoft.Data.SqlClient
                     break;
 
                 default:
-                    Debug.Assert(false, "Missed token in EnvChange!");
+                    Debug.Fail("Missed token in EnvChange!");
                     break;
             }
         }
@@ -2558,7 +2558,7 @@ namespace Microsoft.Data.SqlClient
                                 break;
 
                             default:
-                                Debug.Assert(false, "Unknown _fedAuthLibrary type");
+                                Debug.Fail("Unknown _fedAuthLibrary type");
                                 Bid.Trace("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> %d#, Attempting to use unknown federated authentication library\n", ObjectID);
                                 throw SQL.ParsingErrorLibraryType(ParsingErrorState.FedAuthFeatureAckUnknownLibraryType, (int)_fedAuthFeatureExtensionData.Value.libraryType);
                         }

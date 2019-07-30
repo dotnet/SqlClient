@@ -103,7 +103,7 @@ namespace Microsoft.Data
             if (sniError != 0)
             {
                 string sniErrorMessage = SQL.GetSNIErrorMessage(sniError);
-                errorMessage = string.Format((IFormatProvider)null, "{0} (error: {1} - {2})",
+                errorMessage = string.Format("{0} (error: {1} - {2})",
                          errorMessage, sniError, sniErrorMessage);
             }
 

@@ -60,7 +60,7 @@ Build driver for all Operating Systems
 `msbuild /t:BuildAllOSes` - When run on Windows, it Builds 'NetFx' driver for windows and .Net Core driver for Windows and Unix. 
 
 ## Build Tests:
-`msbuild /t:BuildTestsCore`
+`msbuild /t:BuildTestsNetCore`
 `msbuild /t:BuildTestsNetFx`
 
 ### Run Functional Tests:  

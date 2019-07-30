@@ -337,7 +337,7 @@ namespace Microsoft.Data.SqlClient
                 OnStateChange(DbConnectionInternal.StateChangeClosed);
             }
             else {
-                Debug.Assert(false, "unexpected state switch");
+                Debug.Fail("unexpected state switch");
                 if (originalState != currentState) {
                     OnStateChange(new StateChangeEventArgs(originalState, currentState));
                 }

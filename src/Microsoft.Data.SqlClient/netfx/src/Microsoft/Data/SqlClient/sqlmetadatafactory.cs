@@ -143,7 +143,7 @@ namespace Microsoft.Data.SqlClient{
                             StringBuilder resultString = new StringBuilder();
                             Byte[] byteArrayValue = (Byte[])values[publicKeyIndex];
                             foreach (byte b in byteArrayValue) {
-                                resultString.Append(String.Format((IFormatProvider)null, "{0,-2:x2}", b));
+                                resultString.Append(string.Format("{0,-2:x2}", b));
                             }
                             nameString.Append(resultString.ToString());
                         }

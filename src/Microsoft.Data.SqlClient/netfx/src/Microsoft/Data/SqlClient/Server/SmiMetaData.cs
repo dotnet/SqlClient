@@ -384,7 +384,7 @@ namespace Microsoft.Data.SqlClient.Server {
                     // Assert modified for VSFTDEVDIV479492 - for SqlParameter both userDefinedType and udtAssemblyQualifiedName
                     // can be NULL, we are checking only maxLength if it will be used (i.e. userDefinedType is NULL)
                     Debug.Assert((null != userDefinedType) || (0 <= maxLength || UnlimitedMaxLengthIndicator == maxLength),
-                            String.Format((IFormatProvider)null, "SmiMetaData.ctor: Udt name={0}, maxLength={1}", udtAssemblyQualifiedName, maxLength));
+                            $"SmiMetaData.ctor: Udt name={udtAssemblyQualifiedName}, maxLength={maxLength}");
                     // Type not validated until matched to a server.  Could be null if extended metadata supplies three-part name!
                     _clrType = userDefinedType;
                     if (null != userDefinedType) {

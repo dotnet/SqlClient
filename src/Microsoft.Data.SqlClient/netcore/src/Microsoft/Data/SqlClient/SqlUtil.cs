@@ -360,12 +360,12 @@ namespace Microsoft.Data.SqlClient
             {
                 case CommandType.Text:
                 case CommandType.StoredProcedure:
-                    Debug.Assert(false, "valid CommandType " + value.ToString());
+                    Debug.Fail("valid CommandType " + value.ToString());
                     break;
                 case CommandType.TableDirect:
                     break;
                 default:
-                    Debug.Assert(false, "invalid CommandType " + value.ToString());
+                    Debug.Fail("invalid CommandType " + value.ToString());
                     break;
             }
 #endif
@@ -382,12 +382,12 @@ namespace Microsoft.Data.SqlClient
                 case System.Data.IsolationLevel.RepeatableRead:
                 case System.Data.IsolationLevel.Serializable:
                 case System.Data.IsolationLevel.Snapshot:
-                    Debug.Assert(false, "valid IsolationLevel " + value.ToString());
+                    Debug.Fail("valid IsolationLevel " + value.ToString());
                     break;
                 case System.Data.IsolationLevel.Chaos:
                     break;
                 default:
-                    Debug.Assert(false, "invalid IsolationLevel " + value.ToString());
+                    Debug.Fail("invalid IsolationLevel " + value.ToString());
                     break;
             }
 #endif
@@ -1637,7 +1637,7 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(sniError > 0 && sniError <= (int)SNINativeMethodWrapper.SniSpecialErrors.MaxErrorValue, "SNI error is out of range");
 
-            string errorMessageId = string.Format((IFormatProvider)null, "SNI_ERROR_{0}", sniError);
+            string errorMessageId = string.Format("SNI_ERROR_{0}", sniError);
             return System.SRHelper.GetResourceString(errorMessageId);
         }
 

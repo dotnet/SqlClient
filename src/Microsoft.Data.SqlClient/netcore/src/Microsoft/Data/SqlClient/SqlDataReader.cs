@@ -800,7 +800,7 @@ namespace Microsoft.Data.SqlClient
                     return false;
                 }
 
-                Debug.Assert(TdsParser.IsValidTdsToken(token), string.Format("Invalid token after performing CleanPartialRead: {0,-2:X2}", token));
+                Debug.Assert(TdsParser.IsValidTdsToken(token), $"Invalid token after performing CleanPartialRead: {token,-2:X2}");
             }
 #endif            
             _sharedState._dataReady = false;
@@ -932,7 +932,7 @@ namespace Microsoft.Data.SqlClient
                         // if user called read but didn't fetch any values, skip the row
                         // same applies after NextResult on ALTROW because NextResult starts rowconsumption in that case ...
 
-                        Debug.Assert(SniContext.Snix_Read == stateObj.SniContext, string.Format((IFormatProvider)null, "The SniContext should be Snix_Read but it actually is {0}", stateObj.SniContext));
+                        Debug.Assert(SniContext.Snix_Read == stateObj.SniContext, $"The SniContext should be Snix_Read but it actually is {stateObj.SniContext}");
 
                         if (_altRowStatus == ALTROWSTATUS.AltRow)
                         {
@@ -960,7 +960,7 @@ namespace Microsoft.Data.SqlClient
                                 return false;
                             }
 
-                            Debug.Assert(TdsParser.IsValidTdsToken(token), string.Format("DataReady is false, but next token is invalid: {0,-2:X2}", token));
+                            Debug.Assert(TdsParser.IsValidTdsToken(token), $"DataReady is false, but next token is invalid: {token,-2:X2}");
                         }
 #endif
 
@@ -3416,7 +3416,7 @@ namespace Microsoft.Data.SqlClient
                         return false;
                     }
 
-                    Debug.Assert(TdsParser.IsValidTdsToken(token), string.Format("DataReady is false, but next token is invalid: {0,-2:X2}", token));
+                    Debug.Assert(TdsParser.IsValidTdsToken(token), $"DataReady is false, but next token is invalid: {token,-2:X2}");
                 }
 #endif
 

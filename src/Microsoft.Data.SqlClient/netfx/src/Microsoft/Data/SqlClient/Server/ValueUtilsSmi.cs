@@ -2028,7 +2028,7 @@ namespace Microsoft.Data.SqlClient.Server {
                             // new member to SqlDbType without adding a case in this 
                             // switch, hence the assert - it must be bug in our code 
                             // not invalid user parameters.
-                            Debug.Assert(false, "unsupported DbType:" + metaData[i].SqlDbType.ToString());
+                            Debug.Fail("unsupported DbType:" + metaData[i].SqlDbType.ToString());
                             throw ADP.NotSupported();
 
                     }
@@ -2310,7 +2310,7 @@ namespace Microsoft.Data.SqlClient.Server {
                             break;
 
                         default:
-                            Debug.Assert(false, "unsupported DbType:" + metaData[i].SqlDbType.ToString());
+                            Debug.Fail("unsupported DbType:" + metaData[i].SqlDbType.ToString());
                             throw ADP.NotSupported();
                     }
                 }
@@ -3031,12 +3031,12 @@ namespace Microsoft.Data.SqlClient.Server {
 
         internal static int GetBytes_Unchecked( SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, long fieldOffset, byte[] buffer, int bufferOffset, int length ) {
             Debug.Assert( !IsDBNull_Unchecked( sink, getters, ordinal ) );
-            Debug.Assert(ordinal >= 0, string.Format("Invalid ordinal: {0}", ordinal));
+            Debug.Assert(ordinal >= 0, $"Invalid ordinal: {ordinal}");
             Debug.Assert(sink != null, "Null SmiEventSink");
             Debug.Assert(getters != null, "Null getters");
-            Debug.Assert(fieldOffset >= 0, string.Format("Invalid field offset: {0}", fieldOffset));
+            Debug.Assert(fieldOffset >= 0, $"Invalid field offset: {fieldOffset}");
             Debug.Assert(buffer != null, "Null buffer");
-            Debug.Assert(bufferOffset >= 0 && length >= 0 && bufferOffset + length <= buffer.Length, string.Format("Bad offset or length. bufferOffset: {0}, length: {1}, buffer.Length{2}", bufferOffset, length, buffer.Length));
+            Debug.Assert(bufferOffset >= 0 && length >= 0 && bufferOffset + length <= buffer.Length, $"Bad offset or length. bufferOffset: {bufferOffset}, length: {length}, buffer.Length{buffer.Length}");
 
             int result = getters.GetBytes( sink, ordinal, fieldOffset, buffer, bufferOffset, length );
             sink.ProcessMessagesAndThrow();
@@ -3067,12 +3067,12 @@ namespace Microsoft.Data.SqlClient.Server {
 
         internal static int GetChars_Unchecked( SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, long fieldOffset, char[] buffer, int bufferOffset, int length ) {
             Debug.Assert( !IsDBNull_Unchecked( sink, getters, ordinal ) );
-            Debug.Assert(ordinal >= 0, string.Format("Invalid ordinal: {0}", ordinal));
+            Debug.Assert(ordinal >= 0, $"Invalid ordinal: {ordinal}");
             Debug.Assert(sink != null, "Null SmiEventSink");
             Debug.Assert(getters != null, "Null getters");
-            Debug.Assert(fieldOffset >= 0, string.Format("Invalid field offset: {0}", fieldOffset));
+            Debug.Assert(fieldOffset >= 0, $"Invalid field offset: {fieldOffset}");
             Debug.Assert(buffer != null, "Null buffer");
-            Debug.Assert(bufferOffset >= 0 && length >= 0 && bufferOffset + length <= buffer.Length, string.Format("Bad offset or length. bufferOffset: {0}, length: {1}, buffer.Length{2}", bufferOffset, length, buffer.Length));
+            Debug.Assert(bufferOffset >= 0 && length >= 0 && bufferOffset + length <= buffer.Length, $"Bad offset or length. bufferOffset: {bufferOffset}, length: {length}, buffer.Length{buffer.Length}");
 
             int result = getters.GetChars( sink, ordinal, fieldOffset, buffer, bufferOffset, length );
             sink.ProcessMessagesAndThrow();

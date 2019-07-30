@@ -678,7 +678,7 @@ namespace Microsoft.Data.SqlClient {
                     return altMetaDataSet;
                 }
             }
-            Debug.Assert (false, "Can't match up altMetaDataSet with given id");
+            Debug.Fail("Can't match up altMetaDataSet with given id");
             return null;
         }
 

@@ -463,7 +463,7 @@ namespace Microsoft.Data.SqlClient {
 
                 string CatalogName = parts[MultipartIdentifier.CatalogIndex];
                 if (isTempTable && ADP.IsEmpty(CatalogName)) {
-                    TDSCommand += String.Format((IFormatProvider)null, "exec tempdb..{0} N'{1}.{2}'",
+                    TDSCommand += string.Format("exec tempdb..{0} N'{1}.{2}'",
                         TableCollationsStoredProc,
                         SchemaName,
                         TableName
@@ -474,7 +474,7 @@ namespace Microsoft.Data.SqlClient {
                     if (!ADP.IsEmpty(CatalogName)) {
                         CatalogName = SqlServerEscapeHelper.EscapeIdentifier(CatalogName);
                     }
-                    TDSCommand += String.Format((IFormatProvider)null, "exec {0}..{1} N'{2}.{3}'",
+                    TDSCommand += string.Format("exec {0}..{1} N'{2}.{3}'",
                         CatalogName,
                         TableCollationsStoredProc,
                         SchemaName,
