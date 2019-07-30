@@ -59,7 +59,7 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
 
     <!--  NetFx Files  -->
     <file src="..\..\bin\Windows_NT\$Configuration$\Microsoft.Data.SqlClient\ref\net46\Microsoft.Data.SqlClient.dll" target="ref\net46\" exclude="" />
-    <file src="..\..\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.dll" target="lib\net46\" exclude="" />
+    <file src="..\..\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\" target="lib\net46\" exclude="**\SNI.dll;**\*.xml;**\*.pdb" />
 
     <!--  NetCore Files  -->
     <file src="..\..\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\netcoreapp2.1\Microsoft.Data.SqlClient.dll" target="ref\netcoreapp2.1\" exclude="" />

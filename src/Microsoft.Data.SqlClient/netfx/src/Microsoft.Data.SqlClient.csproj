@@ -313,6 +313,7 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>$(ResxFileName).Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <EmbeddedResource Include="Resources\$(ResxFileName).*.resx" />
     <EmbeddedResource Include="Resources\Microsoft.Data.SqlClient.SqlMetaData.xml">
       <LogicalName>Microsoft.Data.SqlClient.SqlMetaData.xml</LogicalName>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
