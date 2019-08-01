@@ -226,7 +226,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
         private void AsynchronouslyQueryServiceBrokerQueue()
         {
             AsyncCallback callback = new AsyncCallback(AsyncResultCallback);
-            _com.BeginExecuteReader(callback, null); // NO LOCK NEEDED
+            _com.BeginExecuteReader(callback, null, CommandBehavior.Default); // NO LOCK NEEDED
         }
 
         private void AsyncResultCallback(IAsyncResult asyncResult)

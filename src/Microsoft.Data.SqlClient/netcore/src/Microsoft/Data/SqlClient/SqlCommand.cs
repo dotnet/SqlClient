@@ -2176,7 +2176,7 @@ namespace Microsoft.Data.SqlClient
             {
                 RegisterForConnectionCloseNotification(ref returnedTask);
 
-                Task<SqlDataReader>.Factory.FromAsync(BeginExecuteReader, EndExecuteReader, behavior).ContinueWith((t) =>
+                Task<SqlDataReader>.Factory.FromAsync((commandBehavior, callback, stateObject) => BeginExecuteReader(callback, stateObject, commandBehavior), EndExecuteReader, behavior, null).ContinueWith((t) =>
                 {
                     registration.Dispose();
                     if (t.IsFaulted)
