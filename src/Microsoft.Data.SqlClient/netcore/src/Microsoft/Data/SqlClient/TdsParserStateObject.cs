@@ -2810,8 +2810,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-#pragma warning disable 0420 // a reference to a volatile field will not be treated as volatile
-
         public void WriteAsyncCallback(PacketHandle packet, uint sniError) =>
             WriteAsyncCallback(IntPtr.Zero, packet, sniError);
 
@@ -2896,13 +2894,10 @@ namespace Microsoft.Data.SqlClient
                 completionSource.TrySetResult(null);
             }
         }
-
-#pragma warning restore 0420
-
+        
         /////////////////////////////////////////
         // Network/Packet Writing & Processing //
         /////////////////////////////////////////
-
         internal void WriteSecureString(SecureString secureString)
         {
             Debug.Assert(_securePasswords[0] == null || _securePasswords[1] == null, "There are more than two secure passwords");
@@ -2935,7 +2930,6 @@ namespace Microsoft.Data.SqlClient
         internal Task WaitForAccumulatedWrites()
         {
             // Checked for stored exceptions
-#pragma warning disable 420 // A reference to a volatile field will not be treated as volatile - Disabling since the Interlocked APIs are volatile aware
             var delayedException = Interlocked.Exchange(ref _delayedWriteAsyncCallbackException, null);
             if (delayedException != null)
             {
@@ -2961,13 +2955,11 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Check for stored exceptions
-#pragma warning disable 420 // A reference to a volatile field will not be treated as volatile - Disabling since the Interlocked APIs are volatile aware
             delayedException = Interlocked.Exchange(ref _delayedWriteAsyncCallbackException, null);
             if (delayedException != null)
             {
                 throw delayedException;
             }
-#pragma warning restore 420
 
             // If there are no outstanding writes, see if we can shortcut and return null
             if ((_asyncWriteCount == 0) && ((!task.IsCompleted) || (task.Exception == null)))
@@ -3362,8 +3354,6 @@ namespace Microsoft.Data.SqlClient
         internal abstract bool IsValidPacket(PacketHandle packetPointer);
 
         internal abstract uint WritePacket(PacketHandle packet, bool sync);
-
-#pragma warning restore 0420
 
         // Sends an attention signal - executing thread will consume attn.
         internal void SendAttention(bool mustTakeWriteLock = false)

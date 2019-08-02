@@ -32,7 +32,6 @@
     <ManualTests     Include="**/ManualTests/SQL/UdtTest/UDTs/Shapes/Shapes.csproj" />
     <ManualTests     Include="**/ManualTests/SQL/UdtTest/UDTs/Utf8String/Utf8String.csproj" />
     <ManualTests     Include="**/tools/CoreFx.Private.TestUtilities/CoreFx.Private.TestUtilities.csproj" />
-    <ManualTests     Include="**/tools/AzureKeyVaultProvider/Microsoft.SqlServer.Management.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
     <ManualTests     Include="**/ManualTests/Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" />
 
     <NugetPackageSources Include="https://api.nuget.org/v3/index.json" />

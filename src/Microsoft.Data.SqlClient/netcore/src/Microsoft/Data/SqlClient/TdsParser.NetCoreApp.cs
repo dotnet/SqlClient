@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Diagnostics;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -13,5 +14,11 @@ namespace Microsoft.Data.SqlClient
         internal static void FillDoubleBytes(double value, Span<byte> buffer) => BitConverter.TryWriteBytes(buffer, value);
 
         internal static void FillFloatBytes(float v, Span<byte> buffer) => BitConverter.TryWriteBytes(buffer, v);
+        
+        internal static Guid ConstructGuid(ReadOnlySpan<byte> bytes)
+        {
+            Debug.Assert(bytes.Length >= 16, "not enough bytes to set guid");
+            return new Guid(bytes);
+        }
     }
 }
