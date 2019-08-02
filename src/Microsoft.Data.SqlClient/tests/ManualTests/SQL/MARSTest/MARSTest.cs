@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
 #if DEBUG
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility),nameof(DataTestUtility.AreConnStringsSetup), /* [ActiveIssue(108)] */ nameof(DataTestUtility.IsUsingNativeSNI))]
         public static void MARSAsyncTimeoutTest()
         {
             using (SqlConnection connection = new SqlConnection(_connStr))
@@ -75,7 +75,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility),nameof(DataTestUtility.AreConnStringsSetup), /* [ActiveIssue(108)] */ nameof(DataTestUtility.IsUsingNativeSNI))]
         public static void MARSSyncTimeoutTest()
         {
             using (SqlConnection connection = new SqlConnection(_connStr))

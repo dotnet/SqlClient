@@ -17,7 +17,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public static class SqlCredentialTest
     {
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), /* [ActiveIssue(108)] */nameof(DataTestUtility.IsUsingNativeSNI))]
         public static void CreateSqlConnectionWithCredential()
         {
             var user = "u" + Guid.NewGuid().ToString().Replace("-", "");
@@ -50,7 +50,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ActiveIssue("9196")]
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), /* [ActiveIssue(108)] */nameof(DataTestUtility.IsUsingNativeSNI))]
         public static void SqlConnectionChangePasswordPlaintext()
         {
             var user = "u" + Guid.NewGuid().ToString().Replace("-", "");
@@ -84,7 +84,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ActiveIssue("9196")]
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), /* [ActiveIssue(108)] */ nameof(DataTestUtility.IsUsingNativeSNI))]
         public static void SqlConnectionChangePasswordSecureString()
         {
             var user = "u" + Guid.NewGuid().ToString().Replace("-", "");
@@ -124,7 +124,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), /* [ActiveIssue(108)] */nameof(DataTestUtility.IsUsingNativeSNI))]
         public static void OldCredentialsShouldFail()
         {
             String user = "u" + Guid.NewGuid().ToString().Replace("-", "");
