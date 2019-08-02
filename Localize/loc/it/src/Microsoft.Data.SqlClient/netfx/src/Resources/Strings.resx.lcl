@@ -5951,7 +5951,7 @@
         <Str Cat="Text">
           <Val><![CDATA[When used by DataAdapter.Update, the parameter value is changed from DBNull.Value into (Int32)1 or (Int32)0 if non-null.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Se utilizzato da un DataAdapter.Update, il valore del parametro viene modificato da  DBNull.Value in (Int32)1 o (Int32)0 se diverso da null.]]></Val>
+            <Val><![CDATA[Se utilizzato da un DataAdapter.Update, il valore del parametro viene modificato da DBNull.Value in (Int32)1 o (Int32)0 se diverso da null.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -10550,7 +10550,7 @@
         <Str Cat="Text">
           <Val><![CDATA[SqlDependency.Start has been called for the server the command is executing against more than once, but there is no matching server/user/database Start() call for current command.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[È stato chiamato più di una volta SqlDependency.Start  per il server contro cui il comando sta eseguendo, ma non c'è nessuna chiamata Start() server/utente/data per il comando corrente.]]></Val>
+            <Val><![CDATA[È stato chiamato più di una volta SqlDependency.Start per il server contro cui il comando sta eseguendo, ma non c'è nessuna chiamata Start() server/utente/data per il comando corrente.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />

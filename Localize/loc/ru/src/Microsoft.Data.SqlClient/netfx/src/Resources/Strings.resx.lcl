@@ -2531,7 +2531,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Cannot set Column '{0}' property DataType to {1}. The Column is SimpleContent.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Невозможно присвоить свойству DataType столбца Column  "{0}" значение {1}. Он является столбцом SimpleContent.]]></Val>
+            <Val><![CDATA[Невозможно присвоить свойству DataType столбца Column "{0}" значение {1}. Он является столбцом SimpleContent.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -3206,7 +3206,7 @@
         <Str Cat="Text">
           <Val><![CDATA[The DataSet parameter is invalid. It cannot be null.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Недопустимый параметр DataSet. Он не может  иметь значение null.]]></Val>
+            <Val><![CDATA[Недопустимый параметр DataSet. Он не может иметь значение null.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />

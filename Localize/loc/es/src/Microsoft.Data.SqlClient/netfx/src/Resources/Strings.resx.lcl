@@ -1508,7 +1508,7 @@
         <Str Cat="Text">
           <Val><![CDATA[When batching, the command's UpdatedRowSource property value of UpdateRowSource.FirstReturnedRecord or UpdateRowSource.Both is invalid.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Durante el procesamiento por lotes, se ha detectado que el valor de propiedad de UpdatedRowSource de  UpdateRowSource.FirstReturnedRecord o UpdateRowSource.Both del comando no es válido.]]></Val>
+            <Val><![CDATA[Durante el procesamiento por lotes, se ha detectado que el valor de propiedad de UpdatedRowSource de UpdateRowSource.FirstReturnedRecord o UpdateRowSource.Both del comando no es válido.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -2185,12 +2185,18 @@
       <Item ItemId=";DataCategory_StateChange" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[StateChange]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[StateChange]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";DataCategory_StatementCompleted" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[StatementCompleted]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[StatementCompleted]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -2329,6 +2335,9 @@
       <Item ItemId=";DataColumnMapping_DataSetColumn" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[DataColumn.ColumnName]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[DataColumn.ColumnName]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -4414,6 +4423,9 @@
       <Item ItemId=";DataTableMapping_DataSetTable" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[DataTable.TableName]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[DataTable.TableName]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -5407,6 +5419,9 @@
       <Item ItemId=";DbConnectionString_Certificate" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Specified client certificate for authenticating with SQL Server.  ]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Certificado de cliente especificado para la autenticación con SQL Server.  ]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -6053,7 +6068,7 @@
         <Str Cat="Text">
           <Val><![CDATA[{0}() argument is out of range.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[El argumento {0}()  está fuera del intervalo.]]></Val>
+            <Val><![CDATA[El argumento {0}() está fuera del intervalo.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -6851,7 +6866,7 @@
         <Str Cat="Text">
           <Val><![CDATA[OleDbCommandBuilder.DeriveParameters failed because the OleDbCommandBuilder.CommandText property value is an invalid multipart name]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Fallo en OleDbCommandBuilder.DeriveParameters porque el valor de propiedad  OleDbCommandBuilder.CommandText es un nombre de varias partes no válido]]></Val>
+            <Val><![CDATA[Fallo en OleDbCommandBuilder.DeriveParameters porque el valor de propiedad OleDbCommandBuilder.CommandText es un nombre de varias partes no válido]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -7424,7 +7439,7 @@
         <Str Cat="Text">
           <Val><![CDATA[OleDbDataAdapter internal error: [get]5D; Unknown OLE DB data type: 0x{0} ({1}).]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Error interno de OleDbDataAdapter: tipo de datos de OLE DB [get]5D; desconocido:  0x{0} ({1}).]]></Val>
+            <Val><![CDATA[Error interno de OleDbDataAdapter: tipo de datos de OLE DB [get]5D; desconocido: 0x{0} ({1}).]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -8305,6 +8320,9 @@
       <Item ItemId=";SNI_PN3" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Sign Provider]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Proveedor de signo]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -8335,12 +8353,18 @@
       <Item ItemId=";SNI_PN8" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[VIA Provider]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Proveedor de VIA]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";SNI_PN9" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[CTAIP Provider]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Proveedor de CTAIP]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -8875,6 +8899,9 @@
       <Item ItemId=";SQL_Certificate" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Incorrect authentication parameters specified with certificate authentication.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Se especificaron parámetros de autenticación incorrectos con la autenticación de certificado.]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -9071,7 +9098,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Metadata for field '{0}' of record '{1}' did not match the original record's metadata.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Los metadatos del campo '{0}' del  registro '{1}'  no coincidían con los metadatos del registro original.]]></Val>
+            <Val><![CDATA[Los metadatos del campo '{0}' del registro '{1}' no coincidían con los metadatos del registro original.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -9265,6 +9292,9 @@
       <Item ItemId=";SQL_InvalidServerCertificate" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[The server certificate failed application validation.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Error de validación de aplicación en el certificado de servidor.]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -9647,7 +9677,7 @@
         <Str Cat="Text">
           <Val><![CDATA[SqlCommand.DeriveParameters failed because the SqlCommand.CommandText property value is an invalid multipart name]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Fallo en SqlCommand.DeriveParameters, el valor de la propiedad  SqlCommand.CommandText es un nombre de varias partes no válido.]]></Val>
+            <Val><![CDATA[Fallo en SqlCommand.DeriveParameters, el valor de la propiedad SqlCommand.CommandText es un nombre de varias partes no válido.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -10942,18 +10972,27 @@
       <Item ItemId=";SqlParameter_XmlSchemaCollectionDatabase" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[XmlSchemaCollectionDatabase]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[XmlSchemaCollectionDatabase]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";SqlParameter_XmlSchemaCollectionName" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[XmlSchemaCollectionName]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[XmlSchemaCollectionName]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";SqlParameter_XmlSchemaCollectionOwningSchema" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[XmlSchemaCollectionOwningSchema]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[XmlSchemaCollectionOwningSchema]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -12743,7 +12782,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Circular reference in self-nested table '{0}'.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Referencia  circular en la tabla '{0}' anidada en sí misma.]]></Val>
+            <Val><![CDATA[Referencia circular en la tabla '{0}' anidada en sí misma.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />

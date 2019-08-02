@@ -3440,7 +3440,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Mismatch columns in the PrimaryKey : <target>.{0} versus <source>.{1}.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[PrimaryKey의 열이 일치하지 않습니다 :  <target>.{0} 및 <source>.{1}.]]></Val>
+            <Val><![CDATA[PrimaryKey의 열이 일치하지 않습니다 : <target>.{0} 및 <source>.{1}.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -4907,7 +4907,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Indicates whether the view is open.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[뷰가 열려 있는지 여부를 나타냅니다.  ]]></Val>
+            <Val><![CDATA[뷰가 열려 있는지 여부를 나타냅니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />

@@ -149,7 +149,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Missing the DataColumn '{0}' for the SourceColumn '{2}'.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[SourceColumn '{2}' の DataColumn  '{0}' が見つかりません。]]></Val>
+            <Val><![CDATA[SourceColumn '{2}' の DataColumn '{0}' が見つかりません。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />

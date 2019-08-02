@@ -2182,12 +2182,18 @@
       <Item ItemId=";DataCategory_StateChange" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[StateChange]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[StateChange]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";DataCategory_StatementCompleted" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[StatementCompleted]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[StatementCompleted]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -7556,7 +7562,7 @@
         <Str Cat="Text">
           <Val><![CDATA[The {0} OleDbSchemaGuid is not a supported schema by the '{1}' provider.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Le schéma OleDbSchemaGuid {0}  n'est pas pris en charge par le fournisseur '{1}'.]]></Val>
+            <Val><![CDATA[Le schéma OleDbSchemaGuid {0} n'est pas pris en charge par le fournisseur '{1}'.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -10939,18 +10945,27 @@
       <Item ItemId=";SqlParameter_XmlSchemaCollectionDatabase" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[XmlSchemaCollectionDatabase]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[XmlSchemaCollectionDatabase]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";SqlParameter_XmlSchemaCollectionName" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[XmlSchemaCollectionName]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[XmlSchemaCollectionName]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";SqlParameter_XmlSchemaCollectionOwningSchema" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[XmlSchemaCollectionOwningSchema]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[XmlSchemaCollectionOwningSchema]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
