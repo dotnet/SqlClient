@@ -319,6 +319,7 @@ namespace Microsoft.Data.SqlClient
     [System.FlagsAttribute]
     public enum SqlBulkCopyOptions
     {
+        AllowEncryptedValueModifications = 64,
         CheckConstraints = 2,
         Default = 0,
         FireTriggers = 16,

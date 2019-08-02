@@ -716,7 +716,8 @@ namespace Microsoft.Data.SqlClient
                     SqlBulkCopyOptions.KeepNulls
                     | SqlBulkCopyOptions.TableLock
                     | SqlBulkCopyOptions.CheckConstraints
-                    | SqlBulkCopyOptions.FireTriggers)) != SqlBulkCopyOptions.Default)
+                    | SqlBulkCopyOptions.FireTriggers
+                    | SqlBulkCopyOptions.AllowEncryptedValueModifications)) != SqlBulkCopyOptions.Default)
             {
                 bool addSeparator = false; // Insert a comma character if multiple options in list
                 updateBulkCommandText.Append(" with (");
@@ -738,6 +739,11 @@ namespace Microsoft.Data.SqlClient
                 if (IsCopyOption(SqlBulkCopyOptions.FireTriggers))
                 {
                     updateBulkCommandText.Append((addSeparator ? ", " : "") + "FIRE_TRIGGERS");
+                    addSeparator = true;
+                }
+                if (IsCopyOption(SqlBulkCopyOptions.AllowEncryptedValueModifications))
+                {
+                    updateBulkCommandText.Append((addSeparator ? ", " : "") + "ALLOW_ENCRYPTED_VALUE_MODIFICATIONS");
                     addSeparator = true;
                 }
                 updateBulkCommandText.Append(")");
@@ -1400,23 +1406,23 @@ namespace Microsoft.Data.SqlClient
             MetaType type = metadata.metaType;
             bool typeChanged = false;
 
-			// If the column is encrypted then we are going to transparently encrypt this column
-			// (based on connection string setting)- Use the metaType for the underlying
-			// value (unencrypted value) for conversion/casting purposes (below).
-			// Note - this flag is set if connection string options has TCE turned on
-			byte scale = metadata.scale;
-			byte precision = metadata.precision;
-			int length = metadata.length;
-			if (metadata.isEncrypted)
-			{
-				Debug.Assert(_parser.ShouldEncryptValuesForBulkCopy());
-				type = metadata.baseTI.metaType;
-				scale = metadata.baseTI.scale;
-				precision = metadata.baseTI.precision;
-				length = metadata.baseTI.length;
-			}
+            // If the column is encrypted then we are going to transparently encrypt this column
+            // (based on connection string setting)- Use the metaType for the underlying
+            // value (unencrypted value) for conversion/casting purposes (below).
+            // Note - this flag is set if connection string options has TCE turned on
+            byte scale = metadata.scale;
+            byte precision = metadata.precision;
+            int length = metadata.length;
+            if (metadata.isEncrypted)
+            {
+                Debug.Assert(_parser.ShouldEncryptValuesForBulkCopy());
+                type = metadata.baseTI.metaType;
+                scale = metadata.baseTI.scale;
+                precision = metadata.baseTI.precision;
+                length = metadata.baseTI.length;
+            }
 
-			try
+            try
             {
                 MetaType mt;
                 switch (type.NullableType)
@@ -2085,15 +2091,15 @@ namespace Microsoft.Data.SqlClient
             {
                 value = ConvertValue(value, metadata, isNull, ref isSqlType, out isDataFeed);
 
-				// If column encryption is requested via connection string option, perform encryption here
-				if (!isNull && // if value is not NULL
-					metadata.isEncrypted)
-				{ // If we are transparently encrypting
-					Debug.Assert(_parser.ShouldEncryptValuesForBulkCopy());
-					value = _parser.EncryptColumnValue(value, metadata, metadata.column, _stateObj, isDataFeed, isSqlType);
-					isSqlType = false; // Its not a sql type anymore
-				}
-			}
+                // If column encryption is requested via connection string option, perform encryption here
+                if (!isNull && // if value is not NULL
+                    metadata.isEncrypted)
+                { // If we are transparently encrypting
+                    Debug.Assert(_parser.ShouldEncryptValuesForBulkCopy());
+                    value = _parser.EncryptColumnValue(value, metadata, metadata.column, _stateObj, isDataFeed, isSqlType);
+                    isSqlType = false; // Its not a sql type anymore
+                }
+            }
 
             //write part
             Task writeTask = null;
@@ -2104,6 +2110,8 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
+                // Target type shouldn't be encrypted
+                Debug.Assert(!metadata.isEncrypted, "Can't encrypt SQL Variant type");
                 SqlBuffer.StorageType variantInternalType = SqlBuffer.StorageType.Empty;
                 if ((_SqlDataReaderRowSource != null) && (_connection.IsKatmaiOrNewer))
                 {
@@ -2470,6 +2478,12 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 WriteMetaData(internalResults);
+
+                // Load encryption keys now (if needed)
+                _parser.LoadColumnEncryptionKeys(
+                    internalResults[MetaDataResultId].MetaData,
+                    _connection.DataSource);
+
                 Task task = CopyRowsAsync(0, _savedBatchSize, cts); // This is copying 1 batch of rows and setting _hasMoreRowToCopy = true/false.
 
                 // post->after every batch
