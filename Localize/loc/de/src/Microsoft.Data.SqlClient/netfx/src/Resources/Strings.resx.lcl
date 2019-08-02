@@ -1864,24 +1864,36 @@
       <Item ItemId=";ConfigProviderInvalid" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[The requested .NET Framework Data Provider's implementation does not have an Instance field of a System.Data.Common.DbProviderFactory derived type.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Die angeforderte Implementierung des .NET Framework-Datenanbieters umfasst kein Instanzenfeld eines abgeleiteten System.Data.Common.DbProviderFactory-Typs.]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";ConfigProviderMissing" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[The missing .NET Framework Data Provider's assembly qualified name is required.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Der fehlende Name mit Assemblyqualifikation des .NET Framework-Datenanbieters ist erforderlich.]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";ConfigProviderNotFound" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Unable to find the requested .NET Framework Data Provider.  It may not be installed.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Der angeforderte .NET Framework-Datenanbieter wurde nicht gefunden. Möglicherweise ist er nicht installiert.]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";ConfigProviderNotInstalled" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Failed to find or load the registered .NET Framework Data Provider.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Der registrierte .NET Framework-Datenanbieter wurde nicht gefunden oder kann nicht geladen werden.]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -2203,6 +2215,9 @@
       <Item ItemId=";DataCategory_Udt" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[UDT]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[UDT]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -2335,6 +2350,9 @@
       <Item ItemId=";DataColumnMapping_DataSetColumn" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[DataColumn.ColumnName]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[DataColumn.ColumnName]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -4420,6 +4438,9 @@
       <Item ItemId=";DataTableMapping_DataSetTable" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[DataTable.TableName]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[DataTable.TableName]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -5389,6 +5410,9 @@
       <Item ItemId=";DbConnectionString_AsynchronousProcessing" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[When true, enables usage of the Asynchronous functionality in the .NET Framework Data Provider.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Bei Festlegung auf TRUE wird die Verwendung der asynchronen Funktionalität im .NET Framework-Datenanbieter aktiviert.]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -5413,6 +5437,9 @@
       <Item ItemId=";DbConnectionString_Certificate" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Specified client certificate for authenticating with SQL Server.  ]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Das angegebene Clientzertifikat für die Authentifizierung bei SQL Server.  ]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -6526,12 +6553,18 @@
       <Item ItemId=";GT_Disabled" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Global Transactions are not enabled for this Azure SQL Database. Please contact Azure SQL Database support for assistance.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Globale Transaktionen sind für diese Azure SQL-Datenbank-Instanz nicht aktiviert. Wenden Sie sich an den Azure SQL-Datenbank-Support, um Unterstützung zu erhalten.]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";GT_UnsupportedSysTxVersion" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[The currently loaded System.Transactions.dll does not support Global Transactions. Please upgrade to .NET Framework 4.6.1 or later.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Die aktuell geladene Datei "System.Transactions.dll" unterstützt keine globalen Transaktionen. Führen Sie ein Upgrade auf .NET Framework 4.6.1 oder höher durch.]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -6835,6 +6868,9 @@
       <Item ItemId=";ODBC_NotSupportedEnumerationValue" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[The {0} enumeration value, {1}, is not supported by the .NET Framework Odbc Data Provider.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Der Enumerationswert für {0} ({1}) wird vom .NET Framework-ODBC-Datenanbieter nicht unterstützt.]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -6850,6 +6886,9 @@
       <Item ItemId=";OLEDB_NotSupportedEnumerationValue" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[The {0} enumeration value, {1}, is not supported by the .NET Framework OleDb Data Provider.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Der Enumerationswert für {0} ({1}) wird vom .NET Framework-OLEDB-Datenanbieter nicht unterstützt.]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -7036,6 +7075,9 @@
       <Item ItemId=";Odbc_MDACWrongVersion" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[The .NET Framework Odbc Data Provider requires Microsoft Data Access Components(MDAC) version 2.6 or later.  Version {0} was found currently installed.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Der .NET Framework-ODBC-Datenanbieter benötigt Microsoft Data Access Components (MDAC) 2.6 oder höher. Aktuell ist Version {0} installiert.]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -7213,6 +7255,9 @@
       <Item ItemId=";OleDb_AsynchronousNotSupported" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA['Asynchronous Processing' is not a supported feature of the .NET Framework Data OLE DB Provider(Microsoft.Data.OleDb).]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Die asynchrone Verarbeitung ist kein unterstütztes Feature des .NET Framework-OLE DB-Datenanbieters (Microsoft.Data.OleDb).]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -7237,6 +7282,9 @@
       <Item ItemId=";OleDb_BadStatus_ParamAcc" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Microsoft.Data.OleDb.OleDbDataAdapter internal error: invalid parameter accessor: {0} {1}.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Interner Microsoft.Data.OleDb.OleDbDataAdapter-Fehler: ungültiger Parameteraccessor: {0} {1}.]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -7369,6 +7417,9 @@
       <Item ItemId=";OleDb_DBBindingGetVector" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[DBTYPE_VECTOR data is not supported by the .NET Framework Data OLE DB Provider(Microsoft.Data.OleDb).]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[DBTYPE_VECTOR-Daten werden vom .NET Framework-OLE DB-Datenanbieter (Microsoft.Data.OleDb) nicht unterstützt.]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -7492,18 +7543,27 @@
       <Item ItemId=";OleDb_MDACNotAvailable" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[The .NET Framework Data Providers require Microsoft Data Access Components(MDAC).  Please install Microsoft Data Access Components(MDAC) version 2.6 or later.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Der .NET Framework-Datenanbieter benötigt Microsoft Data Access Components (MDAC). Installieren Sie MDAC 2.6 oder höher.]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";OleDb_MDACWrongVersion" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[The .NET Framework OleDb Data Provider requires Microsoft Data Access Components(MDAC) version 2.6 or later.  Version {0} was found currently installed.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Der .NET Framework-OLEDB-Datenanbieter benötigt Microsoft Data Access Components (MDAC) 2.6 oder höher. Aktuell ist Version {0} installiert.]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";OleDb_MSDASQLNotSupported" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[The .NET Framework Data Provider for OLEDB (Microsoft.Data.OleDb) does not support the Microsoft OLE DB Provider for ODBC Drivers (MSDASQL). Use the .NET Framework Data Provider for ODBC (System.Data.Odbc).]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Der .NET Framework-Datenanbieter für OLEDB (Microsoft.Data.OleDb) bietet keine Unterstützung für den Microsoft OLE DB-Anbieter für ODBC-Treiber (MSDASQL). Verwenden Sie den .NET Framework-Datenanbieter für ODBC (System.Data.Odbc).]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -7573,6 +7633,9 @@
       <Item ItemId=";OleDb_PossiblePromptNotUserInteractive" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[The .NET Framework Data Provider for OLEDB will not allow the OLE DB Provider to prompt the user in a non-interactive environment.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Der .NET Framework-Datenanbieter für OLEDB lässt eine Benutzeraufforderung durch den OLE DB-Anbieter in einer nicht interaktiven Umgebung nicht zu.]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -7624,6 +7687,9 @@
       <Item ItemId=";OleDb_PropertyNotAvailable" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[(Reserved).]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[(Reserviert)]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -8281,12 +8347,18 @@
       <Item ItemId=";SNI_PN0" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[HTTP Provider]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[HTTP-Anbieter]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";SNI_PN1" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Named Pipes Provider]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Named Pipes-Anbieter]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -8299,48 +8371,72 @@
       <Item ItemId=";SNI_PN11" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[SQL Network Interfaces]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[SQL-Netzwerkschnittstellen]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";SNI_PN2" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Session Provider]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Sitzungsanbieter]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";SNI_PN3" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Sign Provider]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Signaturanbieter]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";SNI_PN4" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Shared Memory Provider]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Shared Memory-Anbieter]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";SNI_PN5" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[SMux Provider]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[SMux-Anbieter]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";SNI_PN6" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[SSL Provider]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[SSL-Anbieter]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";SNI_PN7" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[TCP Provider]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[TCP-Anbieter]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";SNI_PN8" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[VIA Provider]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[VIA-Anbieter]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -8815,6 +8911,9 @@
       <Item ItemId=";SQL_CTAIPNotSupportedByServer" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[The instance of SQL Server you attempted to connect to does not support CTAIP.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Die Instanz von SQL Server, mit der Sie eine Verbindung herstellen möchten, unterstützt CTAIP nicht.]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -9262,6 +9361,9 @@
       <Item ItemId=";SQL_InvalidSQLServerVersionUnknown" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Unsupported SQL Server version.  The .NET Framework SqlClient Data Provider can only be used with SQL Server versions 7.0 and later.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Nicht unterstützte SQL Server-Version. Der .NET Framework-SqlClient-Datenanbieter kann nur mit SQL Server-Version 7.0 und höher verwendet werden.]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -9277,6 +9379,9 @@
       <Item ItemId=";SQL_InvalidServerCertificate" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[The server certificate failed application validation.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Fehler bei der Anwendungsüberprüfung für das Serverzertifikat.]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -9391,6 +9496,9 @@
       <Item ItemId=";SQL_NotSupportedEnumerationValue" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[The {0} enumeration value, {1}, is not supported by the .NET Framework SqlClient Data Provider.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Der Enumerationswert für {0} ({1}) wird vom .NET Framework-SqlClient-Datenanbieter nicht unterstützt.]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
