@@ -8659,33 +8659,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Failed to authenticate the user {0} in Active Directory (Authentication={1})..
-        /// </summary>
-        internal static string SQL_ADALFailure {
-            get {
-                return ResourceManager.GetString("SQL_ADALFailure", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Unable to load adalsql.dll (Authentication={0}). Error code: 0x{1}. For more information, see http://go.microsoft.com/fwlink/?LinkID=513072.
-        /// </summary>
-        internal static string SQL_ADALInitializeError {
-            get {
-                return ResourceManager.GetString("SQL_ADALInitializeError", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Error code 0x{0}; state {1}.
-        /// </summary>
-        internal static string SQL_ADALInnerException {
-            get {
-                return ResourceManager.GetString("SQL_ADALInnerException", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The length of &apos;{0}&apos; must match the length of &apos;{1}&apos;..
         /// </summary>
         internal static string SQL_ArgumentLengthMismatch {
@@ -9447,6 +9420,24 @@ namespace System {
         internal static string SQL_MoneyOverflow {
             get {
                 return ResourceManager.GetString("SQL_MoneyOverflow", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to authenticate the user {0} in Active Directory (Authentication={1})..
+        /// </summary>
+        internal static string SQL_MSALFailure {
+            get {
+                return ResourceManager.GetString("SQL_MSALFailure", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Error code 0x{0}; state {1}.
+        /// </summary>
+        internal static string SQL_MSALInnerException {
+            get {
+                return ResourceManager.GetString("SQL_MSALInnerException", resourceCulture);
             }
         }
         

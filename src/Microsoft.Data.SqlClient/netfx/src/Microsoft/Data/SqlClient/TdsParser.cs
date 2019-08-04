@@ -212,10 +212,7 @@ namespace Microsoft.Data.SqlClient {
         private static bool s_fSSPILoaded = false; // bool to indicate whether library has been loaded
 
         private volatile static UInt32 s_maxSSPILength = 0;     // variable to hold max SSPI data size, keep for token from server
-
-        // ADAL variables
-        private static bool s_fADALLoaded = false; // bool to indicate whether ADAL library has been loaded
-
+        
         // textptr sequence
         private static readonly byte[] s_longDataHeader = { 0x10, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 
@@ -576,17 +573,6 @@ namespace Microsoft.Data.SqlClient {
             }
             else {
                 _fMARS = false;
-            }
-
-            if (authType == SqlAuthenticationMethod.ActiveDirectoryPassword || (authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated && _connHandler._fedAuthRequired)) {
-                Debug.Assert(!integratedSecurity, "The legacy Integrated Security connection string option cannot be true when using Active Directory Authentication Library for SQL Server Based workflows.");
-                var authProvider = sqlAuthProviderManager.GetProvider(authType);
-                if (authProvider != null && authProvider.GetType() == typeof(ActiveDirectoryNativeAuthenticationProvider)) {
-                    LoadADALLibrary();
-                    if (Bid.AdvancedOn) {
-                        Bid.Trace("<sc.TdsParser.Connect|SEC> Active directory authentication.Loaded Active Directory Authentication Library for SQL Server\n");
-                    }
-                }
             }
 
             return;
@@ -1361,7 +1347,7 @@ namespace Microsoft.Data.SqlClient {
                     serverVersion = _connHandler.ServerVersion;
                 }
                 exception = SqlException.CreateException(temp, serverVersion, _connHandler);
-                if (exception.Procedure == TdsEnums.INIT_ADAL_PACKAGE || exception.Procedure == TdsEnums.INIT_SSPI_PACKAGE) {
+                if (exception.Procedure == TdsEnums.INIT_SSPI_PACKAGE) {
                     exception._doNotReconnect = true;
                 }
             }
@@ -7211,15 +7197,15 @@ namespace Microsoft.Data.SqlClient {
 
         internal int WriteFedAuthFeatureRequest(FederatedAuthenticationFeatureExtensionData fedAuthFeatureData,
                                                 bool write /* if false just calculates the length */) {
-            Debug.Assert(fedAuthFeatureData.libraryType == TdsEnums.FedAuthLibrary.ADAL || fedAuthFeatureData.libraryType == TdsEnums.FedAuthLibrary.SecurityToken,
-                "only fed auth library type ADAL and Security Token are supported in writing feature request");
+            Debug.Assert(fedAuthFeatureData.libraryType == TdsEnums.FedAuthLibrary.MSAL || fedAuthFeatureData.libraryType == TdsEnums.FedAuthLibrary.SecurityToken,
+                "only fed auth library type MSAL and Security Token are supported in writing feature request");
 
             int dataLen = 0;
             int totalLen = 0;
 
             // set dataLen and totalLen
             switch (fedAuthFeatureData.libraryType) {
-                case TdsEnums.FedAuthLibrary.ADAL:
+                case TdsEnums.FedAuthLibrary.MSAL:
                     dataLen = 2;  // length of feature data = 1 byte for library and echo + 1 byte for workflow
                     break;
                 case TdsEnums.FedAuthLibrary.SecurityToken:
@@ -7242,9 +7228,9 @@ namespace Microsoft.Data.SqlClient {
 
                 // set upper 7 bits of options to indicate fed auth library type
                 switch (fedAuthFeatureData.libraryType) {
-                    case TdsEnums.FedAuthLibrary.ADAL:
+                    case TdsEnums.FedAuthLibrary.MSAL:
                         Debug.Assert(_connHandler._federatedAuthenticationInfoRequested == true, "_federatedAuthenticationInfoRequested field should be true");
-                        options |= TdsEnums.FEDAUTHLIB_ADAL << 1;
+                        options |= TdsEnums.FEDAUTHLIB_MSAL << 1;
                         break;
                     case TdsEnums.FedAuthLibrary.SecurityToken:
                         Debug.Assert(_connHandler._federatedAuthenticationRequested == true, "_federatedAuthenticationRequested field should be true");
@@ -7261,23 +7247,23 @@ namespace Microsoft.Data.SqlClient {
                 WriteInt(dataLen, _physicalStateObj);
                 _physicalStateObj.WriteByte(options);
 
-                // write workflow for FedAuthLibrary.ADAL
+                // write workflow for FedAuthLibrary.MSAL
                 // write accessToken for FedAuthLibrary.SecurityToken
                 switch (fedAuthFeatureData.libraryType) {
-                    case TdsEnums.FedAuthLibrary.ADAL:
+                    case TdsEnums.FedAuthLibrary.MSAL:
                         byte workflow = 0x00;
                         switch (fedAuthFeatureData.authentication) {
                             case SqlAuthenticationMethod.ActiveDirectoryPassword:
-                                workflow = TdsEnums.ADALWORKFLOW_ACTIVEDIRECTORYPASSWORD;
+                                workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYPASSWORD;
                                 break;
                             case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
-                                workflow = TdsEnums.ADALWORKFLOW_ACTIVEDIRECTORYINTEGRATED;
+                                workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYINTEGRATED;
                                 break;
                             case SqlAuthenticationMethod.ActiveDirectoryInteractive:
-                                workflow = TdsEnums.ADALWORKFLOW_ACTIVEDIRECTORYINTERACTIVE;
+                                workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYINTERACTIVE;
                                 break;
                             default:
-                                Debug.Assert(false, "Unrecognized Authentication type for fedauth ADAL request");
+                                Debug.Assert(false, "Unrecognized Authentication type for fedauth MSAL request");
                                 break;
                         }
 
@@ -7622,7 +7608,7 @@ namespace Microsoft.Data.SqlClient {
                 WriteShort(rec.hostName.Length, _physicalStateObj);
                 offset += rec.hostName.Length * 2;
 
-                // Only send user/password over if not fSSPI or fed auth ADAL...  If both user/password and SSPI are in login
+                // Only send user/password over if not fSSPI or fed auth MSAL...  If both user/password and SSPI are in login
                 // rec, only SSPI is used.  Confirmed same bahavior as in luxor.
                 if (!rec.useSSPI && !(_connHandler._federatedAuthenticationInfoRequested || _connHandler._federatedAuthenticationRequested)) {
                     WriteShort(offset, _physicalStateObj);  // userName offset
@@ -7699,7 +7685,7 @@ namespace Microsoft.Data.SqlClient {
                 // write variable length portion
                 WriteString(rec.hostName, _physicalStateObj);
 
-                // if we are using SSPI or fed auth ADAL, do not send over username/password, since we will use SSPI instead
+                // if we are using SSPI or fed auth MSAL, do not send over username/password, since we will use SSPI instead
                 // same behavior as Luxor
                 if (!rec.useSSPI && !(_connHandler._federatedAuthenticationInfoRequested || _connHandler._federatedAuthenticationRequested)) {
                     WriteString(userName, _physicalStateObj);
@@ -7913,39 +7899,6 @@ namespace Microsoft.Data.SqlClient {
 
             if (s_maxSSPILength > Int32.MaxValue) {
                 throw SQL.InvalidSSPIPacketSize();   // SqlBu 332503
-            }
-        }
-
-        private void LoadADALLibrary() {
-            // Outer check so we don't acquire lock once once it's loaded.
-            if (!s_fADALLoaded) {
-                lock (s_tdsParserLock) {
-                    // re-check inside lock
-                    if (!s_fADALLoaded) {
-                        int result = ADALNativeWrapper.ADALInitialize();
-
-                        if (0 == result) {
-                            s_fADALLoaded = true;
-                        }
-                        else {
-                            s_fADALLoaded = false;
-
-                            SqlAuthenticationMethod authentication = SqlAuthenticationMethod.NotSpecified;
-
-                            if (_connHandler.ConnectionOptions != null)
-                            {
-                                authentication = _connHandler.ConnectionOptions.Authentication;
-
-                                // Only the below connection string options should have ended up calling this function.
-                                Debug.Assert(authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated || authentication == SqlAuthenticationMethod.ActiveDirectoryPassword);
-                            }
-
-                            _physicalStateObj.AddError(new SqlError(0, (byte)0x00, (byte)TdsEnums.MIN_ERROR_CLASS, _server, StringsHelper.GetString(Strings.SQL_ADALInitializeError, authentication.ToString("G"), result.ToString("X")), TdsEnums.INIT_ADAL_PACKAGE, 0));
-
-                            ThrowExceptionAndWarning(_physicalStateObj);
-                        }
-                    }
-                }
             }
         }
 

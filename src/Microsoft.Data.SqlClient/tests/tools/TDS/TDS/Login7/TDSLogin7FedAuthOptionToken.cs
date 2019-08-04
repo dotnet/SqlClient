@@ -18,11 +18,11 @@ namespace Microsoft.SqlServer.TDS.Login7
     {
         IDCRL = 0x00,
         SECURITY_TOKEN = 0x01,
-        ADAL = 0x02,
+        MSAL = 0x02,
         UNSUPPORTED = 0x03,
     }
 
-    public enum TDSFedAuthADALWorkflow : byte
+    public enum TDSFedAuthMSALWorkflow : byte
     {
         USERNAME_PASSWORD = 0X01,
     }
@@ -60,7 +60,7 @@ namespace Microsoft.SqlServer.TDS.Login7
                     + (Nonce == null ? 0 : s_nonceDataLength) // Nonce Length
                     + (ChannelBingingToken == null ? 0 : ChannelBingingToken.Length) // Channel binding token
                     + (Signature == null ? 0 : s_signatureDataLength) // signature
-                    + (Library == TDSFedAuthLibraryType.ADAL ? 1 : 0)); // Workflow
+                    + (Library == TDSFedAuthLibraryType.MSAL ? 1 : 0)); // Workflow
             }
         }
 
@@ -99,7 +99,7 @@ namespace Microsoft.SqlServer.TDS.Login7
         /// </summary>
         public byte[] Signature { get; private set; }
 
-        public TDSFedAuthADALWorkflow Workflow { get; private set; }
+        public TDSFedAuthMSALWorkflow Workflow { get; private set; }
 
         /// <summary>
         /// Default constructor
@@ -118,7 +118,7 @@ namespace Microsoft.SqlServer.TDS.Login7
                                             byte[] channelBindingToken,
                                             bool fIncludeSignature,
                                             bool fRequestingFurtherInfo,
-                                            TDSFedAuthADALWorkflow workflow = TDSFedAuthADALWorkflow.USERNAME_PASSWORD)
+                                            TDSFedAuthMSALWorkflow workflow = TDSFedAuthMSALWorkflow.USERNAME_PASSWORD)
             : this()
         {
             Echo = echo;
@@ -176,7 +176,7 @@ namespace Microsoft.SqlServer.TDS.Login7
             Library = (TDSFedAuthLibraryType)(temp >> 1);
 
             // When using the ADAL library, a FedAuthToken is never included, nor is its length included
-            if (Library != TDSFedAuthLibraryType.ADAL)
+            if (Library != TDSFedAuthLibraryType.MSAL)
             {
                 // Length of the FedAuthToken
                 uint fedauthTokenLen = TDSUtilities.ReadUInt(source);
@@ -200,7 +200,7 @@ namespace Microsoft.SqlServer.TDS.Login7
             else
             {
                 // Instead the workflow is included
-                Workflow = (TDSFedAuthADALWorkflow)source.ReadByte();
+                Workflow = (TDSFedAuthMSALWorkflow)source.ReadByte();
             }
 
             switch (Library)
@@ -213,7 +213,7 @@ namespace Microsoft.SqlServer.TDS.Login7
                     IsRequestingAuthenticationInfo = false;
                     return ReadSecurityTokenLogin(source, optionDataLength);
 
-                case TDSFedAuthLibraryType.ADAL:
+                case TDSFedAuthLibraryType.MSAL:
                     IsRequestingAuthenticationInfo = true;
                     return true;
 
@@ -238,7 +238,7 @@ namespace Microsoft.SqlServer.TDS.Login7
                                     + (Nonce == null ? 0 : s_nonceDataLength) // Nonce
                                     + (ChannelBingingToken == null ? 0 : (uint)ChannelBingingToken.Length) // Channel binding
                                     + (Signature == null ? 0 : s_signatureDataLength) // Signature
-                                    + (Library == TDSFedAuthLibraryType.ADAL ? 1 : 0)); // Workflow
+                                    + (Library == TDSFedAuthLibraryType.MSAL ? 1 : 0)); // Workflow
 
             // Write the cache length into the destination
             TDSUtilities.WriteUInt(destination, optionDataLength);
@@ -280,7 +280,7 @@ namespace Microsoft.SqlServer.TDS.Login7
                 destination.Write(Signature, 0, (int)s_signatureDataLength);
             }
 
-            if (Library == TDSFedAuthLibraryType.ADAL)
+            if (Library == TDSFedAuthLibraryType.MSAL)
             {
                 // Write Workflow
                 destination.WriteByte((byte)Workflow);

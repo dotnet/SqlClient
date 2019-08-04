@@ -30,7 +30,7 @@ namespace Microsoft.SqlServer.TDS.EndPoint.FederatedAuthentication
                 case TDSFedAuthLibraryType.SECURITY_TOKEN:
                     return JwtTicket.DecryptTicket(encryptedTicket);
 
-                case TDSFedAuthLibraryType.ADAL:
+                case TDSFedAuthLibraryType.MSAL:
                     // For now, fake fed auth tokens are sent for ADAL, so just return null
                     return null;
 

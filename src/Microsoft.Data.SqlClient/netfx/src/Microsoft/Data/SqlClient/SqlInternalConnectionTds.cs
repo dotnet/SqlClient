@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Identity.Client;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -17,6 +18,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using System.Data;
 using System.Data.Common;
+using System.Net.Http.Headers;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -144,16 +146,16 @@ namespace Microsoft.Data.SqlClient
         private DbConnectionPoolAuthenticationContextKey _dbConnectionPoolAuthenticationContextKey;
 
 #if DEBUG
-        // This is a test hook to enable testing of the retry paths for ADAL get access token.
+        // This is a test hook to enable testing of the retry paths for MSAL get access token.
         // Sample code to enable:
         //
         //    Type type = typeof(SqlConnection).Assembly.GetType("Microsoft.Data.SqlClient.SQLInternalConnectionTds");
-        //    System.Reflection.FieldInfo field = type.GetField("_forceAdalRetry", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        //    System.Reflection.FieldInfo field = type.GetField("_forceMsalRetry", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
         //    if (field != null) {
         //        field.SetValue(null, true);
         //    }
         //
-        internal static bool _forceAdalRetry = false;
+        internal static bool _forceMsalRetry = false;
 
         // This is a test hook to simulate a token expiring within the next 45 minutes.
         private static bool _forceExpiryLocked = false;
@@ -1331,7 +1333,7 @@ namespace Microsoft.Data.SqlClient
                 _federatedAuthenticationInfoRequested = true;
                 _fedAuthFeatureExtensionData =
                     new FederatedAuthenticationFeatureExtensionData {
-                        libraryType = TdsEnums.FedAuthLibrary.ADAL,
+                        libraryType = TdsEnums.FedAuthLibrary.MSAL,
                         authentication = ConnectionOptions.Authentication,
                         fedAuthRequiredPreLoginResponse = _fedAuthRequired
                     };
@@ -2211,7 +2213,7 @@ namespace Microsoft.Data.SqlClient
                          || _credential != null
                          || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
                          || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && _fedAuthRequired),
-                         "Credentials aren't provided for calling ADAL");
+                         "Credentials aren't provided for calling MSAL");
             Debug.Assert(fedAuthInfo != null, "info should not be null.");
             Debug.Assert(_dbConnectionPoolAuthenticationContextKey == null, "_dbConnectionPoolAuthenticationContextKey should be null.");
 
@@ -2385,9 +2387,12 @@ namespace Microsoft.Data.SqlClient
             var authProvider = _sqlAuthenticationProviderManager.GetProvider(ConnectionOptions.Authentication);
             if (authProvider == null) throw SQL.CannotFindAuthProvider(ConnectionOptions.Authentication.ToString());
 
-            while (true) {
+            // retry getting access token once if MsalException.error_code is unknown_error.
+            // extra logic to deal with HTTP 429 (Retry after).
+            while (numberOfAttempts <= 1 && sleepInterval <= _timeout.MillisecondsRemaining) {
                 numberOfAttempts++;
-                try {
+                try
+                {
                     var authParamsBuilder = new SqlAuthenticationParameters.Builder(
                         authenticationMethod: ConnectionOptions.Authentication,
                         resource: fedAuthInfo.spn,
@@ -2436,37 +2441,63 @@ namespace Microsoft.Data.SqlClient
 
                     Debug.Assert(fedAuthToken.accessToken != null, "AccessToken should not be null.");
 #if DEBUG
-                    if (_forceAdalRetry) {
+                    if (_forceMsalRetry)
+                    {
                         // 3399614468 is 0xCAA20004L just for testing.
-                        throw new AdalException("Force retry in GetFedAuthToken", ActiveDirectoryAuthentication.GetAccessTokenTansisentError, 3399614468, 6);
+                        throw new MsalServiceException(MsalError.UnknownError, "Force retry in GetFedAuthToken");
                     }
 #endif
                     // Break out of the retry loop in successful case.
                     break;
                 }
-                catch (AdalException adalException) {
+                // Deal with Msal service exceptions first, retry if 429 received.
+                catch (MsalServiceException serviceException)
+                {
+                    if (429 == serviceException.StatusCode)
+                    {
+                        RetryConditionHeaderValue retryAfter = serviceException.Headers.RetryAfter;
+                        if (retryAfter.Delta.HasValue)
+                        {
+                            sleepInterval = retryAfter.Delta.Value.Milliseconds;
+                        }
+                        else if (retryAfter.Date.HasValue)
+                        {
+                            sleepInterval = Convert.ToInt32(retryAfter.Date.Value.Offset.TotalMilliseconds);
+                        }
 
-                    uint errorCategory = adalException.GetCategory();
-
-                    if (ActiveDirectoryAuthentication.GetAccessTokenTansisentError != errorCategory
+                        // if there's enough time to retry before timeout, then retry, otherwise break out the retry loop.
+                        if (sleepInterval < _timeout.MillisecondsRemaining)
+                        {
+                            Thread.Sleep(sleepInterval);
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                }
+                // Deal with normal MsalExceptions.
+                catch (MsalException msalException)
+                {
+                    if (MsalError.UnknownError != msalException.ErrorCode
                         || _timeout.IsExpired
-                        || _timeout.MillisecondsRemaining <= sleepInterval) {
+                        || _timeout.MillisecondsRemaining <= sleepInterval)
+                    {
 
-                        string errorStatus = adalException.GetStatus().ToString("X");
-
-                        Bid.Trace("<sc.SqlInternalConnectionTds.GetFedAuthToken.ADALException category:> %d#  <error:> %s#\n", (int)errorCategory, errorStatus);
+                        Bid.Trace("<sc.SqlInternalConnectionTds.GetFedAuthToken.MSALException error:> %s#\n", msalException.ErrorCode);
 
                         // Error[0]
                         SqlErrorCollection sqlErs = new SqlErrorCollection();
-                        sqlErs.Add(new SqlError(0, (byte)0x00, (byte)TdsEnums.MIN_ERROR_CLASS, ConnectionOptions.DataSource, StringsHelper.GetString(Strings.SQL_ADALFailure, username, ConnectionOptions.Authentication.ToString("G")), ActiveDirectoryAuthentication.AdalGetAccessTokenFunctionName, 0));
+                        sqlErs.Add(new SqlError(0, (byte)0x00, (byte)TdsEnums.MIN_ERROR_CLASS, ConnectionOptions.DataSource, StringsHelper.GetString(Strings.SQL_MSALFailure, username, ConnectionOptions.Authentication.ToString("G")), ActiveDirectoryAuthentication.MSALGetAccessTokenFunctionName, 0));
 
                         // Error[1]
-                        string errorMessage1 = StringsHelper.GetString(Strings.SQL_ADALInnerException, errorStatus, adalException.GetState());
-                        sqlErs.Add(new SqlError(0, (byte)0x00, (byte)TdsEnums.MIN_ERROR_CLASS, ConnectionOptions.DataSource, errorMessage1, ActiveDirectoryAuthentication.AdalGetAccessTokenFunctionName, 0));
+                        string errorMessage1 = StringsHelper.GetString(Strings.SQL_MSALInnerException, msalException.ErrorCode);
+                        sqlErs.Add(new SqlError(0, (byte)0x00, (byte)TdsEnums.MIN_ERROR_CLASS, ConnectionOptions.DataSource, errorMessage1, ActiveDirectoryAuthentication.MSALGetAccessTokenFunctionName, 0));
 
                         // Error[2]
-                        if (!string.IsNullOrEmpty(adalException.Message)) {
-                            sqlErs.Add(new SqlError(0, (byte)0x00, (byte)TdsEnums.MIN_ERROR_CLASS, ConnectionOptions.DataSource, adalException.Message, ActiveDirectoryAuthentication.AdalGetAccessTokenFunctionName, 0));
+                        if (!string.IsNullOrEmpty(msalException.Message))
+                        {
+                            sqlErs.Add(new SqlError(0, (byte)0x00, (byte)TdsEnums.MIN_ERROR_CLASS, ConnectionOptions.DataSource, msalException.Message, ActiveDirectoryAuthentication.MSALGetAccessTokenFunctionName, 0));
                         }
                         SqlException exc = SqlException.CreateException(sqlErs, "", this);
                         throw exc;
@@ -2548,11 +2579,11 @@ namespace Microsoft.Data.SqlClient
                         Debug.Assert(_fedAuthFeatureExtensionData != null, "_fedAuthFeatureExtensionData must not be null when _federatedAuthenticatonRequested == true");
 
                         switch (_fedAuthFeatureExtensionData.Value.libraryType) {
-                            case TdsEnums.FedAuthLibrary.ADAL:
+                            case TdsEnums.FedAuthLibrary.MSAL:
                             case TdsEnums.FedAuthLibrary.SecurityToken:
                                 // The server shouldn't have sent any additional data with the ack (like a nonce)
                                 if (data.Length != 0) {
-                                    Bid.Trace("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> %d#, Federated authentication feature extension ack for ADAL and Security Token includes extra data\n", ObjectID);
+                                    Bid.Trace("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> %d#, Federated authentication feature extension ack for MSAL and Security Token includes extra data\n", ObjectID);
                                     throw SQL.ParsingError(ParsingErrorState.FedAuthFeatureAckContainsExtraData);
                                 }
                                 break;

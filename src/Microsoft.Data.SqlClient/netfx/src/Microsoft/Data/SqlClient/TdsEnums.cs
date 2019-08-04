@@ -53,7 +53,6 @@ namespace Microsoft.Data.SqlClient {
 
         // network function string contants
         public const string INIT_SSPI_PACKAGE       = "InitSSPIPackage";
-        public const string INIT_ADAL_PACKAGE       = "InitADALPackage";
         public const string INIT_SESSION            = "InitSession";
         public const string CONNECTION_GET_SVR_USER = "ConnectionGetSvrUser";
         public const string GEN_CLIENT_CONTEXT      = "GenClientContext";
@@ -222,24 +221,24 @@ namespace Microsoft.Data.SqlClient {
 
         public const byte FEDAUTHLIB_LIVEID        = 0X00;
         public const byte FEDAUTHLIB_SECURITYTOKEN = 0x01;
-        public const byte FEDAUTHLIB_ADAL          = 0x02;
+        public const byte FEDAUTHLIB_MSAL          = 0x02;
         public const byte FEDAUTHLIB_RESERVED      = 0X7F;
 
         public enum FedAuthLibrary:byte {
             LiveId=FEDAUTHLIB_LIVEID,
             SecurityToken=FEDAUTHLIB_SECURITYTOKEN,
-            ADAL=FEDAUTHLIB_ADAL,
+            MSAL=FEDAUTHLIB_MSAL,
             Default=FEDAUTHLIB_RESERVED
         }
 
-        public const byte ADALWORKFLOW_ACTIVEDIRECTORYPASSWORD = 0x01;
-        public const byte ADALWORKFLOW_ACTIVEDIRECTORYINTEGRATED = 0x02;
-        public const byte ADALWORKFLOW_ACTIVEDIRECTORYINTERACTIVE = 0x03;
+        public const byte MSALWORKFLOW_ACTIVEDIRECTORYPASSWORD = 0x01;
+        public const byte MSALWORKFLOW_ACTIVEDIRECTORYINTEGRATED = 0x02;
+        public const byte MSALWORKFLOW_ACTIVEDIRECTORYINTERACTIVE = 0x03;
 
         public enum ActiveDirectoryWorkflow : byte {
-            Password=ADALWORKFLOW_ACTIVEDIRECTORYPASSWORD,
-            Integrated=ADALWORKFLOW_ACTIVEDIRECTORYINTEGRATED,
-            Interactive=ADALWORKFLOW_ACTIVEDIRECTORYINTERACTIVE,
+            Password=MSALWORKFLOW_ACTIVEDIRECTORYPASSWORD,
+            Integrated=MSALWORKFLOW_ACTIVEDIRECTORYINTEGRATED,
+            Interactive=MSALWORKFLOW_ACTIVEDIRECTORYINTERACTIVE,
         }
 
         // The string used for username in the error message when Authentication = Active Directory Integrated with FedAuth is used, if authentication fails.
@@ -1060,11 +1059,7 @@ namespace Microsoft.Data.SqlClient {
     internal class ActiveDirectoryAuthentication
     {
         internal const string AdoClientId = "4d079b4c-cab7-4b7c-a115-8fd51b6f8239";
-        internal const string AdalGetAccessTokenFunctionName = "ADALGetAccessToken";
-        internal const int GetAccessTokenSuccess = 0;
-        internal const int GetAccessTokenInvalidGrant = 1;
-        internal const int GetAccessTokenTansisentError = 2;
-        internal const int GetAccessTokenOtherError = 3;
+        internal const string MSALGetAccessTokenFunctionName = "AcquireToken";
     }
 
     // Fields in the first resultset of "sp_describe_parameter_encryption".

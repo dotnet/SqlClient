@@ -607,7 +607,7 @@ namespace Microsoft.SqlServer.TDS.Servers
 
             // Create federated authentication extension option
             TDSFeatureExtAckFederatedAuthenticationOption federatedAuthenticationOption;
-            if ((session as GenericTDSServerSession).FederatedAuthenticationLibrary == TDSFedAuthLibraryType.ADAL)
+            if ((session as GenericTDSServerSession).FederatedAuthenticationLibrary == TDSFedAuthLibraryType.MSAL)
             {
                 // For the time being, fake fedauth tokens are used for ADAL, so decryptedTicket is null.
                 federatedAuthenticationOption =
