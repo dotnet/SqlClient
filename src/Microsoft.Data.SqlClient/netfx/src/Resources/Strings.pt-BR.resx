@@ -2556,11 +2556,11 @@
   <data name="SQL_MarsUnsupportedOnConnection" xml:space="preserve">
     <value>A conexão não dá suporte para MultipleActiveResultSets.</value>
   </data>
-  <data name="SQL_ADALFailure" xml:space="preserve">
-    <value>Falha ao autenticar o usuário {0} no Active Directory (Authentication={1}).</value>
+  <data name="SQL_MSALFailure" xml:space="preserve">
+    <value>Failed to authenticate the user {0} in Active Directory (Authentication={1}).</value>
   </data>
-  <data name="SQL_ADALInnerException" xml:space="preserve">
-    <value>Código do erro 0x{0}; estado {1}</value>
+  <data name="SQL_MSALInnerException" xml:space="preserve">
+    <value>Error code 0x{0}; state {1}</value>
   </data>
   <data name="SQL_ChangePasswordRequiresYukon" xml:space="preserve">
     <value>ChangePassword requer SQL Server 9.0 ou posterior.</value>
@@ -2630,9 +2630,6 @@
   </data>
   <data name="SQL_ParameterTypeNameRequired" xml:space="preserve">
     <value>O tipo de parâmetro {0} '{1}' deve ter um nome de tipo válido.</value>
-  </data>
-  <data name="SQL_ADALInitializeError" xml:space="preserve">
-    <value>Não é possível carregar adalsql.dll (Authentication={0}). Código do erro: 0x{1}. Para obter mais informações, consulte http://go.microsoft.com/fwlink/?LinkID=513072</value>
   </data>
   <data name="SQL_InvalidInternalPacketSize" xml:space="preserve">
     <value>Tamanho do pacote interno inválido:</value>

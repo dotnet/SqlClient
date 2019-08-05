@@ -1072,7 +1072,7 @@
     <value>Невозможно задать свойство MaxLength столбца Column "{0}". Он является столбцом Column SimpleContent.</value>
   </data>
   <data name="DataColumn_CannotSimpleContentType" xml:space="preserve">
-    <value>Невозможно присвоить свойству DataType столбца Column  "{0}" значение {1}. Он является столбцом SimpleContent.</value>
+    <value>Невозможно присвоить свойству DataType столбца Column "{0}" значение {1}. Он является столбцом SimpleContent.</value>
   </data>
   <data name="DataColumn_CannotSimpleContent" xml:space="preserve">
     <value>Невозможно присвоить свойству MappingType столбца Column "{0}" значение SimpleContent. DataType столбца равен {1}.</value>
@@ -1681,7 +1681,7 @@
     <value>Невозможно добавить, удалить или изменить вложенное отношение в DataSet, когда соответствующий DataSet сопоставлен загруженному документу XML.</value>
   </data>
   <data name="DataDom_DataSetNull" xml:space="preserve">
-    <value>Недопустимый параметр DataSet. Он не может  иметь значение null.</value>
+    <value>Недопустимый параметр DataSet. Он не может иметь значение null.</value>
   </data>
   <data name="DataDom_DataSetNameChange" xml:space="preserve">
     <value>Невозможно изменить имя DataSet, когда соответствующий DataSet сопоставлен загруженному документу XML.</value>
@@ -2556,11 +2556,11 @@
   <data name="SQL_MarsUnsupportedOnConnection" xml:space="preserve">
     <value>Подключение не поддерживает MultipleActiveResultSets.</value>
   </data>
-  <data name="SQL_ADALFailure" xml:space="preserve">
-    <value>Не удалось проверить подлинность пользователя {0} в Active Directory (Authentication={1}).</value>
+  <data name="SQL_MSALFailure" xml:space="preserve">
+    <value>Failed to authenticate the user {0} in Active Directory (Authentication={1}).</value>
   </data>
-  <data name="SQL_ADALInnerException" xml:space="preserve">
-    <value>Код ошибки 0x{0}; состояние {1}</value>
+  <data name="SQL_MSALInnerException" xml:space="preserve">
+    <value>Error code 0x{0}; state {1}</value>
   </data>
   <data name="SQL_ChangePasswordRequiresYukon" xml:space="preserve">
     <value>Для ChangePassword требуется SQL Server 9.0 или более поздней версии.</value>
@@ -2630,9 +2630,6 @@
   </data>
   <data name="SQL_ParameterTypeNameRequired" xml:space="preserve">
     <value>Параметр "{1}" типа {0} должен иметь допустимое имя типа.</value>
-  </data>
-  <data name="SQL_ADALInitializeError" xml:space="preserve">
-    <value>Не удалось загрузить adalsql.dll (Authentication={0}). Код ошибки: 0x{1}. Дополнительные сведения см. в http://go.microsoft.com/fwlink/?LinkID=513072</value>
   </data>
   <data name="SQL_InvalidInternalPacketSize" xml:space="preserve">
     <value>Недопустимый размер внутреннего пакета:</value>

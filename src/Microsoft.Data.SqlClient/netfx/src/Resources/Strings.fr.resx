@@ -1726,16 +1726,16 @@
     <value>La propriété '{0}' requiert Microsoft WindowsNT ou un système d'exploitation WindowsNT.</value>
   </data>
   <data name="ConfigProviderNotFound" xml:space="preserve">
-    <value>Unable to find the requested .NET Framework Data Provider.  It may not be installed.</value>
+    <value>Le fournisseur de données .NET Framework demandé est introuvable. Il n'est peut-être pas installé.</value>
   </data>
   <data name="ConfigProviderInvalid" xml:space="preserve">
-    <value>The requested .NET Framework Data Provider's implementation does not have an Instance field of a System.Data.Common.DbProviderFactory derived type.</value>
+    <value>L'implémentation du fournisseur de données .NET Framework demandée ne comporte pas de champ d'instance d'un type dérivé de System.Data.Common.DbProviderFactory.</value>
   </data>
   <data name="ConfigProviderNotInstalled" xml:space="preserve">
-    <value>Failed to find or load the registered .NET Framework Data Provider.</value>
+    <value>La recherche ou le chargement du fournisseur de données .NET Framework inscrit a échoué.</value>
   </data>
   <data name="ConfigProviderMissing" xml:space="preserve">
-    <value>The missing .NET Framework Data Provider's assembly qualified name is required.</value>
+    <value>Le nom qualifié d'assembly du fournisseur de données .NET Framework est obligatoire.</value>
   </data>
   <data name="ConfigBaseElementsOnly" xml:space="preserve">
     <value>Seuls éléments autorisés.</value>
@@ -1807,7 +1807,7 @@
     <value>La propriété DataAdapter.SelectCommand.Connection doit être initialisée ;</value>
   </data>
   <data name="ADP_InvalidMultipartName" xml:space="preserve">
-    <value>{0} "{1}".</value>
+    <value>{0} « {1} ».</value>
   </data>
   <data name="ADP_InvalidMultipartNameQuoteUsage" xml:space="preserve">
     <value>{0} "{1}", utilisation incorrecte de guillemets.</value>
@@ -1861,13 +1861,13 @@
     <value>La valeur d'énumération {0}, {1}, n'est pas prise en charge par la méthode {2}.</value>
   </data>
   <data name="ODBC_NotSupportedEnumerationValue" xml:space="preserve">
-    <value>The {0} enumeration value, {1}, is not supported by the .NET Framework Odbc Data Provider.</value>
+    <value>La valeur d'énumération {0}, {1}, n'est pas prise en charge par le fournisseur de données .NET Framework ODBC.</value>
   </data>
   <data name="OLEDB_NotSupportedEnumerationValue" xml:space="preserve">
-    <value>The {0} enumeration value, {1}, is not supported by the .NET Framework OleDb Data Provider.</value>
+    <value>La valeur d'énumération {0}, {1}, n'est pas prise en charge par le fournisseur de données .NET Framework OLEDB.</value>
   </data>
   <data name="SQL_NotSupportedEnumerationValue" xml:space="preserve">
-    <value>The {0} enumeration value, {1}, is not supported by the .NET Framework SqlClient Data Provider.</value>
+    <value>La valeur d'énumération {0}, {1}, n'est pas prise en charge par le fournisseur de données .NET Framework SqlClient.</value>
   </data>
   <data name="ADP_ComputerNameEx" xml:space="preserve">
     <value>Impossible d'extraire le nom complet ComputerNameDnsFullyQualified, {0}.</value>
@@ -2275,10 +2275,10 @@
     <value>Une connexion interne n'a pas un propriétaire.</value>
   </data>
   <data name="Odbc_MDACWrongVersion" xml:space="preserve">
-    <value>The .NET Framework Odbc Data Provider requires Microsoft Data Access Components(MDAC) version 2.6 or later.  Version {0} was found currently installed.</value>
+    <value>Le fournisseur de données .NET Framework ODBC nécessite MDAC (Microsoft Data Access Components) version 2.6 ou ultérieure. La version {0} est actuellement installée.</value>
   </data>
   <data name="OleDb_MDACWrongVersion" xml:space="preserve">
-    <value>The .NET Framework OleDb Data Provider requires Microsoft Data Access Components(MDAC) version 2.6 or later.  Version {0} was found currently installed.</value>
+    <value>Le fournisseur de données .NET Framework OLEDB nécessite MDAC (Microsoft Data Access Components) version 2.6 ou ultérieure. La version {0} est actuellement installée.</value>
   </data>
   <data name="OleDb_SchemaRowsetsNotSupported" xml:space="preserve">
     <value>L'interface '{0}' n'est pas prise en charge par le fournisseur '{1}'. GetOleDbSchemaTable n'est pas disponible avec le fournisseur actuel.</value>
@@ -2290,13 +2290,13 @@
     <value>Aucune message d'erreur disponible, code de résultat : {0}.</value>
   </data>
   <data name="OleDb_MDACNotAvailable" xml:space="preserve">
-    <value>The .NET Framework Data Providers require Microsoft Data Access Components(MDAC).  Please install Microsoft Data Access Components(MDAC) version 2.6 or later.</value>
+    <value>Les fournisseurs de données .NET Framework nécessitent MDAC (Microsoft Data Access Components). Installez MDAC version 2.6 ou ultérieure.</value>
   </data>
   <data name="OleDb_MSDASQLNotSupported" xml:space="preserve">
-    <value>The .NET Framework Data Provider for OLEDB (Microsoft.Data.OleDb) does not support the Microsoft OLE DB Provider for ODBC Drivers (MSDASQL). Use the .NET Framework Data Provider for ODBC (System.Data.Odbc).</value>
+    <value>Le fournisseur de données .NET Framework pour OLEDB (Microsoft.Data.OleDb) ne prend pas en charge le fournisseur Microsoft OLE DB pour les pilotes ODBC (MSDASQL). Utilisez le fournisseur de données .NET Framework pour ODBC (System.Data.Odbc).</value>
   </data>
   <data name="OleDb_PossiblePromptNotUserInteractive" xml:space="preserve">
-    <value>The .NET Framework Data Provider for OLEDB will not allow the OLE DB Provider to prompt the user in a non-interactive environment.</value>
+    <value>Le fournisseur de données .NET Framework pour OLEDB n'autorisera pas le fournisseur OLE DB à afficher des invites utilisateur dans un environnement non interactif.</value>
   </data>
   <data name="OleDb_ProviderUnavailable" xml:space="preserve">
     <value>Le fournisseur '{0}' n'est pas inscrit sur l'ordinateur local.</value>
@@ -2311,7 +2311,7 @@
     <value>Le format de la chaîne d'initialisation n'est pas conforme à la spécification OLE DB. La chaîne de connexion commence aux alentours du caractère char[{0}].</value>
   </data>
   <data name="OleDb_AsynchronousNotSupported" xml:space="preserve">
-    <value>'Asynchronous Processing' is not a supported feature of the .NET Framework Data OLE DB Provider(Microsoft.Data.OleDb).</value>
+    <value>La fonctionnalité de traitement asynchrone n'est pas prise en charge par le fournisseur de données .NET Framework OLE DB (Microsoft.Data.OleDb).</value>
   </data>
   <data name="OleDb_NoProviderSpecified" xml:space="preserve">
     <value>Un fournisseur OLE DB n'était pas spécifié dans ConnectionString. Par exemple, 'Provider=SQLOLEDB;'.</value>
@@ -2329,7 +2329,7 @@
     <value>Aucune restriction n'est attendue pour le guid de schéma OleDbSchemaGuid.</value>
   </data>
   <data name="OleDb_NotSupportedSchemaTable" xml:space="preserve">
-    <value>Le schéma OleDbSchemaGuid {0}  n'est pas pris en charge par le fournisseur '{1}'.</value>
+    <value>Le schéma OleDbSchemaGuid {0} n'est pas pris en charge par le fournisseur '{1}'.</value>
   </data>
   <data name="OleDb_ConfigWrongNumberOfValues" xml:space="preserve">
     <value>Le paramètre de configuration '{0}' possède un nombre de valeurs incorrect.</value>
@@ -2359,7 +2359,7 @@
     <value>Une erreur s'est produite avec le paramètre de commande [{0}] : {1}.</value>
   </data>
   <data name="OleDb_BadStatus_ParamAcc" xml:space="preserve">
-    <value>Microsoft.Data.OleDb.OleDbDataAdapter internal error: invalid parameter accessor: {0} {1}.</value>
+    <value>Erreur interne Microsoft.Data.OleDb.OleDbDataAdapter : accesseur de paramètre non valide : {0} {1}.</value>
   </data>
   <data name="OleDb_UninitializedParameters" xml:space="preserve">
     <value>Parameter [{0}] : la propriété OleDbType n'est pas initialisée : OleDbType.{1}.</value>
@@ -2416,7 +2416,7 @@
     <value>La valeur de la propriété '{0}' n'est pas définie pour ne pas entrer en conflit avec une propriété existante.</value>
   </data>
   <data name="OleDb_PropertyNotAvailable" xml:space="preserve">
-    <value>(Reserved).</value>
+    <value>(Réservé).</value>
   </data>
   <data name="OleDb_PropertyStatusUnknown" xml:space="preserve">
     <value>Le fournisseur a retourné une valeur DBPROPSTATUS_ '{0}' inconnue.</value>
@@ -2464,7 +2464,7 @@
     <value>Échec de IErrorInfo.GetSource avec {0}.</value>
   </data>
   <data name="OleDb_DBBindingGetVector" xml:space="preserve">
-    <value>DBTYPE_VECTOR data is not supported by the .NET Framework Data OLE DB Provider(Microsoft.Data.OleDb).</value>
+    <value>Les données DBTYPE_VECTOR ne sont pas prises en charge par le fournisseur de données .NET Framework OLE DB (Microsoft.Data.OleDb).</value>
   </data>
   <data name="ADP_InvalidMinMaxPoolSizeValues" xml:space="preserve">
     <value>Valeurs de taille de pool min et max non valides, la taille min ne peut pas être supérieure à la taille max.</value>
@@ -2509,7 +2509,7 @@
     <value>Impossible de définir la propriété Credential si 'Authentication=Active Directory Integrated' a été spécifié dans la chaîne de connexion.</value>
   </data>
   <data name="SQL_Certificate" xml:space="preserve">
-    <value>Incorrect authentication parameters specified with certificate authentication.</value>
+    <value>Des paramètres d'authentification incorrects ont été spécifiés avec l'authentification par certificat.</value>
   </data>
   <data name="SQL_EncryptionNotSupportedByClient" xml:space="preserve">
     <value>L'instance de SQL Server à laquelle vous avez tenté de vous connecter doit être cryptée, mais cet ordinateur ne prend pas en charge le cryptage.</value>
@@ -2518,10 +2518,10 @@
     <value>L'instance de SQL Server à laquelle vous avez tenté de vous connecter ne prend pas en charge le cryptage.</value>
   </data>
   <data name="SQL_CTAIPNotSupportedByServer" xml:space="preserve">
-    <value>The instance of SQL Server you attempted to connect to does not support CTAIP.</value>
+    <value>L'instance de SQL Server à laquelle vous avez tenté de vous connecter ne prend pas en charge CTAIP.</value>
   </data>
   <data name="SQL_InvalidSQLServerVersionUnknown" xml:space="preserve">
-    <value>Unsupported SQL Server version.  The .NET Framework SqlClient Data Provider can only be used with SQL Server versions 7.0 and later.</value>
+    <value>Version de SQL Server non prise en charge. Le fournisseur de données .NET Framework SqlClient peut être utilisé avec SQL Server version 7.0 ou ultérieure uniquement.</value>
   </data>
   <data name="SQL_CannotModifyPropertyAsyncOperationInProgress" xml:space="preserve">
     <value>{0} ne peut pas être modifié tant qu'une opération asynchrone est en cours.</value>
@@ -2556,11 +2556,11 @@
   <data name="SQL_MarsUnsupportedOnConnection" xml:space="preserve">
     <value>La connexion ne prend pas en charge MultipleActiveResultSets.</value>
   </data>
-  <data name="SQL_ADALFailure" xml:space="preserve">
-    <value>Échec de l'authentification de l'utilisateur {0} dans Active Directory (Authentication={1}).</value>
+  <data name="SQL_MSALFailure" xml:space="preserve">
+    <value>Failed to authenticate the user {0} in Active Directory (Authentication={1}).</value>
   </data>
-  <data name="SQL_ADALInnerException" xml:space="preserve">
-    <value>Code d'erreur 0x{0} ; état {1}</value>
+  <data name="SQL_MSALInnerException" xml:space="preserve">
+    <value>Error code 0x{0}; state {1}</value>
   </data>
   <data name="SQL_ChangePasswordRequiresYukon" xml:space="preserve">
     <value>ChangePassword requiert SQL Server 9.0 ou version ultérieure.</value>
@@ -2630,9 +2630,6 @@
   </data>
   <data name="SQL_ParameterTypeNameRequired" xml:space="preserve">
     <value>Le paramètre '{1}' du type {0} doit avoir un nom de type valide.</value>
-  </data>
-  <data name="SQL_ADALInitializeError" xml:space="preserve">
-    <value>Impossible de charger adalsql.dll (Authentication={0}). Code d'erreur : 0x{1}. Pour plus d'informations, consultez http://go.microsoft.com/fwlink/?LinkID=513072</value>
   </data>
   <data name="SQL_InvalidInternalPacketSize" xml:space="preserve">
     <value>Taille de paquet interne non valide :</value>
@@ -2752,7 +2749,7 @@
     <value>Une instance d'utilisateur a été demandée dans la chaîne de connexion, mais le serveur spécifié ne prend pas en charge cette option.</value>
   </data>
   <data name="SQL_InvalidServerCertificate" xml:space="preserve">
-    <value>The server certificate failed application validation.</value>
+    <value>La validation de l'application du certificat de serveur a échoué.</value>
   </data>
   <data name="SQL_ExceedsMaxDataLength" xml:space="preserve">
     <value>La longueur de données spécifiée, {0}, est supérieure à la longueur maximale autorisée, {1}.</value>
@@ -2866,10 +2863,10 @@
     <value>Dépassé du nombre de résultats ouvert.</value>
   </data>
   <data name="GT_Disabled" xml:space="preserve">
-    <value>Global Transactions are not enabled for this Azure SQL Database. Please contact Azure SQL Database support for assistance.</value>
+    <value>Les transactions globales ne sont pas activées pour cette base de données Azure SQL. Contactez le support d'Azure SQL Database pour obtenir de l'aide.</value>
   </data>
   <data name="GT_UnsupportedSysTxVersion" xml:space="preserve">
-    <value>The currently loaded System.Transactions.dll does not support Global Transactions. Please upgrade to .NET Framework 4.6.1 or later.</value>
+    <value>Le fichier System.Transactions.dll actuellement chargé ne prend pas en charge les transactions globales. Effectuez une mise à niveau vers .NET Framework 4.6.1 ou ultérieur.</value>
   </data>
   <data name="SQL_BatchedUpdatesNotAvailableOnContextConnection" xml:space="preserve">
     <value>Le traitement par lots des mises à jour n'est pas pris en charge sur la connexion du contexte.</value>
@@ -3199,7 +3196,7 @@
     <value>Le nom de l'application.</value>
   </data>
   <data name="DbConnectionString_AsynchronousProcessing" xml:space="preserve">
-    <value>When true, enables usage of the Asynchronous functionality in the .NET Framework Data Provider.</value>
+    <value>Quand la valeur est true, active l'utilisation de la fonctionnalité asynchrone du fournisseur de données .NET Framework.</value>
   </data>
   <data name="DbConnectionString_AttachDBFilename" xml:space="preserve">
     <value>Nom du fichier principal, comprenant le nom du chemin complet, d'une base de données pouvant être attachée.</value>
@@ -3301,7 +3298,7 @@
     <value>Spécifie la méthode d'authentification avec SQL Server.</value>
   </data>
   <data name="DbConnectionString_Certificate" xml:space="preserve">
-    <value>Specified client certificate for authenticating with SQL Server.  </value>
+    <value>Certificat client spécifié pour l'authentification auprès de SQL Server.  </value>
   </data>
   <data name="OdbcConnection_ConnectionString" xml:space="preserve">
     <value>Les informations utilisées pour connecter une source de données.</value>
@@ -3733,40 +3730,40 @@
     <value>La série de résultats n'a pas été initialisée. Appelez SendResultSetStart avant d'appeler {0}.</value>
   </data>
   <data name="SNI_PN0" xml:space="preserve">
-    <value>HTTP Provider</value>
+    <value>Fournisseur HTTP</value>
   </data>
   <data name="SNI_PN1" xml:space="preserve">
-    <value>Named Pipes Provider</value>
+    <value>Fournisseur de canaux nommés</value>
   </data>
   <data name="SNI_PN2" xml:space="preserve">
-    <value>Session Provider</value>
+    <value>Fournisseur de session</value>
   </data>
   <data name="SNI_PN3" xml:space="preserve">
-    <value>Sign Provider</value>
+    <value>Fournisseur de signe</value>
   </data>
   <data name="SNI_PN4" xml:space="preserve">
-    <value>Shared Memory Provider</value>
+    <value>Fournisseur de mémoire partagée</value>
   </data>
   <data name="SNI_PN5" xml:space="preserve">
-    <value>SMux Provider</value>
+    <value>Fournisseur SMux</value>
   </data>
   <data name="SNI_PN6" xml:space="preserve">
-    <value>SSL Provider</value>
+    <value>Fournisseur SSL</value>
   </data>
   <data name="SNI_PN7" xml:space="preserve">
-    <value>TCP Provider</value>
+    <value>Fournisseur TCP</value>
   </data>
   <data name="SNI_PN8" xml:space="preserve">
-    <value>VIA Provider</value>
+    <value>Fournisseur VIA</value>
   </data>
   <data name="SNI_PN9" xml:space="preserve">
-    <value>CTAIP Provider</value>
+    <value>Fournisseur CTAIP</value>
   </data>
   <data name="SNI_PN10" xml:space="preserve">
     <value />
   </data>
   <data name="SNI_PN11" xml:space="preserve">
-    <value>SQL Network Interfaces</value>
+    <value>Interfaces réseau SQL</value>
   </data>
   <data name="SNI_ERROR_1" xml:space="preserve">
     <value>Erreur d'E/S détectée dans l'opération de lecture/écriture</value>

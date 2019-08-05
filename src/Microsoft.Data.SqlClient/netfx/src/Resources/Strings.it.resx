@@ -298,7 +298,7 @@
     <value>Se utilizzato da DataAdapter.Update (solo UpdateCommand), indica la versione del valore DataRow utilizzato per aggiornare l'origine dati.</value>
   </data>
   <data name="DbParameter_SourceColumnNullMapping" xml:space="preserve">
-    <value>Se utilizzato da un DataAdapter.Update, il valore del parametro viene modificato da  DBNull.Value in (Int32)1 o (Int32)0 se diverso da null.</value>
+    <value>Se utilizzato da un DataAdapter.Update, il valore del parametro viene modificato da DBNull.Value in (Int32)1 o (Int32)0 se diverso da null.</value>
   </data>
   <data name="DbParameter_Value" xml:space="preserve">
     <value>Valore del parametro.</value>
@@ -2556,11 +2556,11 @@
   <data name="SQL_MarsUnsupportedOnConnection" xml:space="preserve">
     <value>La connessione non supporta MultipleActiveResultSets.</value>
   </data>
-  <data name="SQL_ADALFailure" xml:space="preserve">
-    <value>Non è possibile autenticare l'utente {0} in Active Directory (Authentication={1}).</value>
+  <data name="SQL_MSALFailure" xml:space="preserve">
+    <value>Failed to authenticate the user {0} in Active Directory (Authentication={1}).</value>
   </data>
-  <data name="SQL_ADALInnerException" xml:space="preserve">
-    <value>Codice errore: 0x{0}. Stato: {1}</value>
+  <data name="SQL_MSALInnerException" xml:space="preserve">
+    <value>Error code 0x{0}; state {1}</value>
   </data>
   <data name="SQL_ChangePasswordRequiresYukon" xml:space="preserve">
     <value>ChangePassword richiede SQL Server 9.0 o versione successiva.</value>
@@ -2630,9 +2630,6 @@
   </data>
   <data name="SQL_ParameterTypeNameRequired" xml:space="preserve">
     <value>Il parametro '{1}' del tipo {0} deve avere un nome di tipo valido.</value>
-  </data>
-  <data name="SQL_ADALInitializeError" xml:space="preserve">
-    <value>Non è possibile caricare adalsql.dll (Authentication={0}). Codice errore: 0x{1}. Per altre informazioni, vedere http://go.microsoft.com/fwlink/?LinkID=513072</value>
   </data>
   <data name="SQL_InvalidInternalPacketSize" xml:space="preserve">
     <value>Dimensioni del pacchetto interno non valide:</value>
@@ -3676,7 +3673,7 @@
     <value>Quando si utilizza SqlDependency senza fornire un valore per le opzioni, è necessario chiamare SqlDependency.Start() per ogni server contro il quale si sta eseguendo.</value>
   </data>
   <data name="SqlDependency_NoMatchingServerDatabaseStart" xml:space="preserve">
-    <value>È stato chiamato più di una volta SqlDependency.Start  per il server contro cui il comando sta eseguendo, ma non c'è nessuna chiamata Start() server/utente/data per il comando corrente.</value>
+    <value>È stato chiamato più di una volta SqlDependency.Start per il server contro cui il comando sta eseguendo, ma non c'è nessuna chiamata Start() server/utente/data per il comando corrente.</value>
   </data>
   <data name="SqlDependency_InvalidTimeout" xml:space="preserve">
     <value>Timeout specificato non valido. Il timeout non può essere &lt; 0.</value>
