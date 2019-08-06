@@ -8683,33 +8683,6 @@
         </Str>
         <Disp Icon="Str" />
       </Item>
-      <Item ItemId=";SQL_ADALFailure" ItemType="0;.resx" PsrId="211" Leaf="true">
-        <Str Cat="Text">
-          <Val><![CDATA[Failed to authenticate the user {0} in Active Directory (Authentication={1}).]]></Val>
-          <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[ユーザー {0} を Active Directory (Authentication={1}) で認証できませんでした。]]></Val>
-          </Tgt>
-        </Str>
-        <Disp Icon="Str" />
-      </Item>
-      <Item ItemId=";SQL_ADALInitializeError" ItemType="0;.resx" PsrId="211" Leaf="true">
-        <Str Cat="Text">
-          <Val><![CDATA[Unable to load adalsql.dll (Authentication={0}). Error code: 0x{1}. For more information, see http://go.microsoft.com/fwlink/?LinkID=513072]]></Val>
-          <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[adalsql.dll (Authentication={0}) をロードできません。エラー コード: 0x{1}。詳細については、http://go.microsoft.com/fwlink/?LinkID=513072 を参照してください。]]></Val>
-          </Tgt>
-        </Str>
-        <Disp Icon="Str" />
-      </Item>
-      <Item ItemId=";SQL_ADALInnerException" ItemType="0;.resx" PsrId="211" Leaf="true">
-        <Str Cat="Text">
-          <Val><![CDATA[Error code 0x{0}; state {1}]]></Val>
-          <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[エラー コード 0x{0}、状態 {1}]]></Val>
-          </Tgt>
-        </Str>
-        <Disp Icon="Str" />
-      </Item>
       <Item ItemId=";SQL_ArgumentLengthMismatch" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[The length of '{0}' must match the length of '{1}'.]]></Val>
@@ -9417,6 +9390,24 @@
           <Val><![CDATA[Invalid 3 part name format for UdtTypeName.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
             <Val><![CDATA[UdtTypeName では 3 パート名のフォーマットは無効です。]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";SQL_MSALFailure" ItemType="0;.resx" PsrId="211" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Failed to authenticate the user {0} in Active Directory (Authentication={1}).]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[ユーザー {0} を Active Directory (Authentication={1}) で認証できませんでした。]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";SQL_MSALInnerException" ItemType="0;.resx" PsrId="211" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Error code 0x{0}; state {1}]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[エラー コード 0x{0}、状態 {1}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />

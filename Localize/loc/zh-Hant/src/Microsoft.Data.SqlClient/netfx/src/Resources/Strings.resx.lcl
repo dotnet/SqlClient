@@ -8683,33 +8683,6 @@
         </Str>
         <Disp Icon="Str" />
       </Item>
-      <Item ItemId=";SQL_ADALFailure" ItemType="0;.resx" PsrId="211" Leaf="true">
-        <Str Cat="Text">
-          <Val><![CDATA[Failed to authenticate the user {0} in Active Directory (Authentication={1}).]]></Val>
-          <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[無法在 Active Directory (Authentication={1}) 中驗證使用者 {0}。]]></Val>
-          </Tgt>
-        </Str>
-        <Disp Icon="Str" />
-      </Item>
-      <Item ItemId=";SQL_ADALInitializeError" ItemType="0;.resx" PsrId="211" Leaf="true">
-        <Str Cat="Text">
-          <Val><![CDATA[Unable to load adalsql.dll (Authentication={0}). Error code: 0x{1}. For more information, see http://go.microsoft.com/fwlink/?LinkID=513072]]></Val>
-          <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[無法載入 adalsql.dll (Authentication={0})。錯誤碼: 0x {1}。如需詳細資訊，請參閱 http://go.microsoft.com/fwlink/?LinkID=513072。]]></Val>
-          </Tgt>
-        </Str>
-        <Disp Icon="Str" />
-      </Item>
-      <Item ItemId=";SQL_ADALInnerException" ItemType="0;.resx" PsrId="211" Leaf="true">
-        <Str Cat="Text">
-          <Val><![CDATA[Error code 0x{0}; state {1}]]></Val>
-          <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[錯誤碼 0x {0}; 狀態 {1}]]></Val>
-          </Tgt>
-        </Str>
-        <Disp Icon="Str" />
-      </Item>
       <Item ItemId=";SQL_ArgumentLengthMismatch" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[The length of '{0}' must match the length of '{1}'.]]></Val>
@@ -9417,6 +9390,24 @@
           <Val><![CDATA[Invalid 3 part name format for UdtTypeName.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
             <Val><![CDATA[UdtTypeName 的 3 個名稱組成格式無效。]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";SQL_MSALFailure" ItemType="0;.resx" PsrId="211" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Failed to authenticate the user {0} in Active Directory (Authentication={1}).]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[無法在 Active Directory (Authentication={1}) 中驗證使用者 {0}。]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";SQL_MSALInnerException" ItemType="0;.resx" PsrId="211" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Error code 0x{0}; state {1}]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[錯誤碼 0x {0}; 狀態 {1}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
