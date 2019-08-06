@@ -2557,10 +2557,10 @@
     <value>此连接不支持 MultipleActiveResultSets。</value>
   </data>
   <data name="SQL_MSALFailure" xml:space="preserve">
-    <value>Failed to authenticate the user {0} in Active Directory (Authentication={1}).</value>
+    <value>未能对 Active Directory 中的用户 {0} 进行身份验证(Authentication={1})。</value>
   </data>
   <data name="SQL_MSALInnerException" xml:space="preserve">
-    <value>Error code 0x{0}; state {1}</value>
+    <value>错误代码 0x{0}；状态 {1}</value>
   </data>
   <data name="SQL_ChangePasswordRequiresYukon" xml:space="preserve">
     <value>ChangePassword 要求 SQL Server 9.0 或更高版本。</value>

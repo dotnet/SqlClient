@@ -2557,10 +2557,10 @@
     <value>Подключение не поддерживает MultipleActiveResultSets.</value>
   </data>
   <data name="SQL_MSALFailure" xml:space="preserve">
-    <value>Failed to authenticate the user {0} in Active Directory (Authentication={1}).</value>
+    <value>Не удалось проверить подлинность пользователя {0} в Active Directory (Authentication={1}).</value>
   </data>
   <data name="SQL_MSALInnerException" xml:space="preserve">
-    <value>Error code 0x{0}; state {1}</value>
+    <value>Код ошибки 0x{0}; состояние {1}</value>
   </data>
   <data name="SQL_ChangePasswordRequiresYukon" xml:space="preserve">
     <value>Для ChangePassword требуется SQL Server 9.0 или более поздней версии.</value>

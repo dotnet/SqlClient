@@ -2557,10 +2557,10 @@
     <value>A conexão não dá suporte para MultipleActiveResultSets.</value>
   </data>
   <data name="SQL_MSALFailure" xml:space="preserve">
-    <value>Failed to authenticate the user {0} in Active Directory (Authentication={1}).</value>
+    <value>Falha ao autenticar o usuário {0} no Active Directory (Authentication={1}).</value>
   </data>
   <data name="SQL_MSALInnerException" xml:space="preserve">
-    <value>Error code 0x{0}; state {1}</value>
+    <value>Código do erro 0x{0}; estado {1}</value>
   </data>
   <data name="SQL_ChangePasswordRequiresYukon" xml:space="preserve">
     <value>ChangePassword requer SQL Server 9.0 ou posterior.</value>

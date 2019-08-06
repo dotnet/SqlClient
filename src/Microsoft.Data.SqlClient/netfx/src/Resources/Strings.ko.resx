@@ -2557,10 +2557,10 @@
     <value>연결이 MultipleActiveResultSets를 지원하지 않습니다.</value>
   </data>
   <data name="SQL_MSALFailure" xml:space="preserve">
-    <value>Failed to authenticate the user {0} in Active Directory (Authentication={1}).</value>
+    <value>Active Directory의 {0} 사용자를 인증하지 못했습니다(Authentication={1}).</value>
   </data>
   <data name="SQL_MSALInnerException" xml:space="preserve">
-    <value>Error code 0x{0}; state {1}</value>
+    <value>오류 코드 0x{0}, 상태 {1}</value>
   </data>
   <data name="SQL_ChangePasswordRequiresYukon" xml:space="preserve">
     <value>ChangePassword를 사용하려면 SQL Server 9.0 이상이 필요합니다.</value>
