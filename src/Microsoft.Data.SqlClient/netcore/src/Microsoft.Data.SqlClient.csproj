@@ -22,6 +22,10 @@
   <PropertyGroup Condition="'$(TargetGroup)'=='netcoreapp'">
     <DefineConstants>$(DefineConstants);netcoreapp</DefineConstants>
   </PropertyGroup>
+  <PropertyGroup>
+    <DebugType>portable</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
   <ItemGroup Condition="'$(TargetGroup)' == 'netstandard' OR '$(TargetGroup)' == 'netcoreapp' OR '$(IsUAPAssembly)' == 'true' ">
     <Compile Include="Microsoft.Data.SqlClient.TypeForwards.cs" />
   </ItemGroup>
