@@ -925,6 +925,12 @@ namespace Microsoft.Data.Common
         {
             return ADP.InvalidOperation(System.SRHelper.GetString(SR.ADP_InvalidMixedUsageOfAccessTokenAndUserIDPassword));
         }
+
+        static internal InvalidOperationException InvalidMixedUsageOfAccessTokenAndAuthentication()
+        {
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.ADP_InvalidMixedUsageOfAccessTokenAndAuthentication));
+        }
+
         static internal Exception InvalidMixedUsageOfCredentialAndAccessToken()
         {
             return ADP.InvalidOperation(System.SRHelper.GetString(SR.ADP_InvalidMixedUsageOfCredentialAndAccessToken));

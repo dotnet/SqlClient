@@ -127,6 +127,14 @@
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolOptions.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolProviderInfo.cs" />
+    <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContext.cs" />
+    <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContextKey.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationTimeoutRetryHelper.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\ActiveDirectoryNativeAuthenticationProvider.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationParameters.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProvider.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationToken.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\IBinarySerialize.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\InvalidUdtException.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SqlFunctionAttribute.cs" />
@@ -583,6 +591,7 @@
     <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="4.5.0" />
     <PackageReference Include="System.Threading.Tasks" Version="4.3.0" />
     <PackageReference Include="System.Memory" Version="4.5.1" />
+    <PackageReference Include="Microsoft.Identity.Client" Version="3.0.8" />
     <PackageReference Include="System.Globalization" Version="4.3.0" />
     <PackageReference Include="System.IO" Version="4.3.0" />
     <PackageReference Include="System.Xml.ReaderWriter" Version="4.3.1" />

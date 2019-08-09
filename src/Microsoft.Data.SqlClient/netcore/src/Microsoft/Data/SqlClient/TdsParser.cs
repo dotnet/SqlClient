@@ -312,7 +312,17 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal void Connect(ServerInfo serverInfo, SqlInternalConnectionTds connHandler, bool ignoreSniOpenTimeout, long timerExpire, bool encrypt, bool trustServerCert, bool integratedSecurity, bool withFailover)
+        internal void Connect(
+            ServerInfo serverInfo, 
+            SqlInternalConnectionTds connHandler, 
+            bool ignoreSniOpenTimeout, 
+            long timerExpire, 
+            bool encrypt, 
+            bool trustServerCert, 
+            bool integratedSecurity, 
+            bool withFailover,
+            SqlAuthenticationMethod authType,
+            SqlAuthenticationProviderManager sqlAuthProviderManager)
         {
             if (_state != TdsParserState.Closed)
             {
@@ -1695,7 +1705,8 @@ namespace Microsoft.Data.SqlClient
                 token == TdsEnums.SQLOFFSET ||
                 token == TdsEnums.SQLSSPI ||
                 token == TdsEnums.SQLFEATUREEXTACK ||
-                token == TdsEnums.SQLSESSIONSTATE);
+                token == TdsEnums.SQLSESSIONSTATE ||
+                token == TdsEnums.SQLFEDAUTHINFO);
         }
 
         // Main parse loop for the top-level tds tokens, calls back into the I*Handler interfaces
@@ -2097,6 +2108,18 @@ namespace Microsoft.Data.SqlClient
                             {
                                 return false;
                             }
+                            break;
+                        }
+                    case TdsEnums.SQLFEDAUTHINFO:
+                        {
+                            _connHandler._federatedAuthenticationInfoReceived = true;
+                            SqlFedAuthInfo info;
+                            
+                            if (!TryProcessFedAuthInfo(stateObj, tokenLength, out info))
+                            {
+                                return false;
+                            }
+                            _connHandler.OnFedAuthInfo(info);
                             break;
                         }
                     case TdsEnums.SQLSESSIONSTATE:
@@ -3350,6 +3373,113 @@ namespace Microsoft.Data.SqlClient
             }
 
             sqlLoginAck = a;
+            return true;
+        }
+
+        private bool TryProcessFedAuthInfo(TdsParserStateObject stateObj, int tokenLen, out SqlFedAuthInfo sqlFedAuthInfo)
+        {
+            sqlFedAuthInfo = null;
+            SqlFedAuthInfo tempFedAuthInfo = new SqlFedAuthInfo();
+
+            // Skip reading token length, since it has already been read in caller
+            if (tokenLen < sizeof(uint))
+            {
+                // the token must at least contain a DWORD indicating the number of info IDs
+                throw SQL.ParsingErrorLength(ParsingErrorState.FedAuthInfoLengthTooShortForCountOfInfoIds, tokenLen);
+            }
+
+            // read how many FedAuthInfo options there are
+            uint optionsCount;
+            if (!stateObj.TryReadUInt32(out optionsCount))
+            {
+                throw SQL.ParsingError(ParsingErrorState.FedAuthInfoFailedToReadCountOfInfoIds);
+            }
+            tokenLen -= sizeof(uint); // remaining length is shortened since we read optCount
+
+            if (tokenLen > 0)
+            {
+                // read the rest of the token
+                byte[] tokenData = new byte[tokenLen];
+                int totalRead = 0;
+                bool successfulRead = stateObj.TryReadByteArray(tokenData, tokenLen, out totalRead);
+
+                if (!successfulRead || totalRead != tokenLen)
+                {
+                    throw SQL.ParsingError(ParsingErrorState.FedAuthInfoFailedToReadTokenStream);
+                }
+
+                // each FedAuthInfoOpt is 9 bytes:
+                //    1 byte for FedAuthInfoID
+                //    4 bytes for FedAuthInfoDataLen
+                //    4 bytes for FedAuthInfoDataOffset
+                // So this is the index in tokenData for the i-th option
+                const uint optionSize = 9;
+
+                // the total number of bytes for all FedAuthInfoOpts together
+                uint totalOptionsSize = checked(optionsCount * optionSize);
+
+                for (uint i = 0; i < optionsCount; i++)
+                {
+                    uint currentOptionOffset = checked(i * optionSize);
+
+                    byte id = tokenData[currentOptionOffset];
+                    uint dataLen = BitConverter.ToUInt32(tokenData, checked((int)(currentOptionOffset + 1)));
+                    uint dataOffset = BitConverter.ToUInt32(tokenData, checked((int)(currentOptionOffset + 5)));
+
+                    // offset is measured from optCount, so subtract to make offset measured
+                    // from the beginning of tokenData
+                    checked
+                    {
+                        dataOffset -= sizeof(uint);
+                    }
+
+                    // if dataOffset points to a region within FedAuthInfoOpt or after the end of the token, throw
+                    if (dataOffset < totalOptionsSize || dataOffset >= tokenLen)
+                    {
+                        throw SQL.ParsingErrorOffset(ParsingErrorState.FedAuthInfoInvalidOffset, unchecked((int)dataOffset));
+                    }
+
+                    // try to read data and throw if the arguments are bad, meaning the server sent us a bad token
+                    string data;
+                    try
+                    {
+                        data = System.Text.Encoding.Unicode.GetString(tokenData, checked((int)dataOffset), checked((int)dataLen));
+                    }
+                    catch (ArgumentOutOfRangeException e)
+                    {
+                        throw SQL.ParsingError(ParsingErrorState.FedAuthInfoFailedToReadData, e);
+                    }
+                    catch (ArgumentException e)
+                    {
+                        throw SQL.ParsingError(ParsingErrorState.FedAuthInfoDataNotUnicode, e);
+                    }
+
+                    // store data in tempFedAuthInfo
+                    switch ((TdsEnums.FedAuthInfoId)id)
+                    {
+                        case TdsEnums.FedAuthInfoId.Spn:
+                            tempFedAuthInfo.spn = data;
+                            break;
+                        case TdsEnums.FedAuthInfoId.Stsurl:
+                            tempFedAuthInfo.stsurl = data;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+            else
+            {
+                throw SQL.ParsingErrorLength(ParsingErrorState.FedAuthInfoLengthTooShortForData, tokenLen);
+            }
+
+            if (String.IsNullOrWhiteSpace(tempFedAuthInfo.stsurl) || String.IsNullOrWhiteSpace(tempFedAuthInfo.spn))
+            {
+                // We should be receiving both stsurl and spn
+                throw SQL.ParsingError(ParsingErrorState.FedAuthInfoDoesNotContainStsurlAndSpn);
+            }
+
+            sqlFedAuthInfo = tempFedAuthInfo;
             return true;
         }
 
@@ -7000,6 +7130,8 @@ namespace Microsoft.Data.SqlClient
                     return true;
                 case TdsEnums.SQLSESSIONSTATE:
                     return stateObj.TryReadInt32(out tokenLength);
+                case TdsEnums.SQLFEDAUTHINFO:
+                    return stateObj.TryReadInt32(out tokenLength);
             }
 
             {
@@ -7234,8 +7366,8 @@ namespace Microsoft.Data.SqlClient
         internal int WriteFedAuthFeatureRequest(FederatedAuthenticationFeatureExtensionData fedAuthFeatureData,
                                                 bool write /* if false just calculates the length */)
         {
-            Debug.Assert(fedAuthFeatureData.libraryType == TdsEnums.FedAuthLibrary.SecurityToken,
-                "only Security Token are supported in writing feature request");
+            Debug.Assert(fedAuthFeatureData.libraryType == TdsEnums.FedAuthLibrary.MSAL || fedAuthFeatureData.libraryType == TdsEnums.FedAuthLibrary.SecurityToken,
+                "only fed auth library type MSAL and Security Token are supported in writing feature request");
 
             int dataLen = 0;
             int totalLen = 0;
@@ -7243,6 +7375,9 @@ namespace Microsoft.Data.SqlClient
             // set dataLen and totalLen
             switch (fedAuthFeatureData.libraryType)
             {
+                case TdsEnums.FedAuthLibrary.MSAL:
+                    dataLen = 2;  // length of feature data = 1 byte for library and echo + 1 byte for workflow
+                    break;
                 case TdsEnums.FedAuthLibrary.SecurityToken:
                     Debug.Assert(fedAuthFeatureData.accessToken != null, "AccessToken should not be null.");
                     dataLen = 1 + sizeof(int) + fedAuthFeatureData.accessToken.Length; // length of feature data = 1 byte for library and echo, security token length and sizeof(int) for token lengh itself
@@ -7265,6 +7400,10 @@ namespace Microsoft.Data.SqlClient
                 // set upper 7 bits of options to indicate fed auth library type
                 switch (fedAuthFeatureData.libraryType)
                 {
+                    case TdsEnums.FedAuthLibrary.MSAL:
+                        Debug.Assert(_connHandler._federatedAuthenticationInfoRequested == true, "_federatedAuthenticationInfoRequested field should be true");
+                        options |= TdsEnums.FEDAUTHLIB_MSAL << 1;
+                        break;
                     case TdsEnums.FedAuthLibrary.SecurityToken:
                         Debug.Assert(_connHandler._federatedAuthenticationRequested == true, "_federatedAuthenticationRequested field should be true");
                         options |= TdsEnums.FEDAUTHLIB_SECURITYTOKEN << 1;
@@ -7283,6 +7422,26 @@ namespace Microsoft.Data.SqlClient
                 // write accessToken for FedAuthLibrary.SecurityToken
                 switch (fedAuthFeatureData.libraryType)
                 {
+                    case TdsEnums.FedAuthLibrary.MSAL:
+                        byte workflow = 0x00;
+                        switch (fedAuthFeatureData.authentication)
+                        {
+                            case SqlAuthenticationMethod.ActiveDirectoryPassword:
+                                workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYPASSWORD;
+                                break;
+                            case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
+                                workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYINTEGRATED;
+                                break;
+                            case SqlAuthenticationMethod.ActiveDirectoryInteractive:
+                                workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYINTERACTIVE;
+                                break;
+                            default:
+                                Debug.Assert(false, "Unrecognized Authentication type for fedauth MSAL request");
+                                break;
+                        }
+
+                        _physicalStateObj.WriteByte(workflow);
+                        break;
                     case TdsEnums.FedAuthLibrary.SecurityToken:
                         WriteInt(fedAuthFeatureData.accessToken.Length, _physicalStateObj);
                         _physicalStateObj.WriteByteArray(fedAuthFeatureData.accessToken, fedAuthFeatureData.accessToken.Length, 0);
@@ -7441,7 +7600,7 @@ namespace Microsoft.Data.SqlClient
             uint outSSPILength = 0;
 
             // only add lengths of password and username if not using SSPI or requesting federated authentication info
-            if (!rec.useSSPI && !_connHandler._federatedAuthenticationRequested)
+            if (!rec.useSSPI && !(_connHandler._federatedAuthenticationInfoRequested || _connHandler._federatedAuthenticationRequested))
             {
                 checked
                 {
@@ -7611,7 +7770,7 @@ namespace Microsoft.Data.SqlClient
 
                 // Only send user/password over if not fSSPI...  If both user/password and SSPI are in login
                 // rec, only SSPI is used.  Confirmed same behavior as in luxor.
-                if (rec.useSSPI == false)
+                if (!rec.useSSPI && !(_connHandler._federatedAuthenticationInfoRequested || _connHandler._federatedAuthenticationRequested))
                 {
                     WriteShort(offset, _physicalStateObj);  // userName offset
                     WriteShort(userName.Length, _physicalStateObj);
@@ -7692,7 +7851,7 @@ namespace Microsoft.Data.SqlClient
 
                 // if we are using SSPI, do not send over username/password, since we will use SSPI instead
                 // same behavior as Luxor
-                if (!rec.useSSPI)
+                if (!rec.useSSPI && !(_connHandler._federatedAuthenticationInfoRequested || _connHandler._federatedAuthenticationRequested))
                 {
                     WriteString(userName, _physicalStateObj);
 
@@ -7724,7 +7883,7 @@ namespace Microsoft.Data.SqlClient
                     _physicalStateObj.WriteByteArray(outSSPIBuff, (int)outSSPILength, 0);
 
                 WriteString(rec.attachDBFilename, _physicalStateObj);
-                if (!rec.useSSPI)
+                if (!rec.useSSPI && !(_connHandler._federatedAuthenticationInfoRequested || _connHandler._federatedAuthenticationRequested))
                 {
                     if (rec.newSecurePassword != null)
                     {
@@ -7789,6 +7948,36 @@ namespace Microsoft.Data.SqlClient
             _physicalStateObj._pendingData = true;
             _physicalStateObj._messageStatus = 0;
         }// tdsLogin
+
+        /// <summary>
+        /// Send the access token to the server.
+        /// </summary>
+        /// <param name="fedAuthToken">Type encapuslating a Federated Authentication access token.</param>
+        internal void SendFedAuthToken(SqlFedAuthToken fedAuthToken)
+        {
+            Debug.Assert(fedAuthToken != null, "fedAuthToken cannot be null");
+            Debug.Assert(fedAuthToken.accessToken != null, "fedAuthToken.accessToken cannot be null");
+            
+            _physicalStateObj._outputMessageType = TdsEnums.MT_FEDAUTH;
+
+            byte[] accessToken = fedAuthToken.accessToken;
+
+            // Send total length (length of token plus 4 bytes for the token length field)
+            // If we were sending a nonce, this would include that length as well
+            WriteUnsignedInt((uint)accessToken.Length + sizeof(uint), _physicalStateObj);
+
+            // Send length of token
+            WriteUnsignedInt((uint)accessToken.Length, _physicalStateObj);
+
+            // Send federated authentication access token
+            _physicalStateObj.WriteByteArray(accessToken, accessToken.Length, 0);
+
+            _physicalStateObj.WritePacket(TdsEnums.HARDFLUSH);
+            _physicalStateObj._pendingData = true;
+            _physicalStateObj._messageStatus = 0;
+
+            _connHandler._federatedAuthenticationRequested = true;
+        }
 
         private void SSPIData(byte[] receivedBuff, uint receivedLength, ref byte[] sendBuff, ref uint sendLength)
         {

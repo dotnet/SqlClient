@@ -350,6 +350,11 @@ namespace Microsoft.Data.ProviderBase
         private readonly DbConnectionPoolGroupOptions _connectionPoolGroupOptions;
         private DbConnectionPoolProviderInfo _connectionPoolProviderInfo;
 
+        /// <summary>
+        /// The private member which carries the set of authenticationcontexts for this pool (based on the user's identity).
+        /// </summary>
+        private readonly ConcurrentDictionary<DbConnectionPoolAuthenticationContextKey, DbConnectionPoolAuthenticationContext> _pooledDbAuthenticationContexts;
+
         private State _state;
 
         private readonly ConcurrentStack<DbConnectionInternal> _stackOld = new ConcurrentStack<DbConnectionInternal>();
@@ -410,6 +415,9 @@ namespace Microsoft.Data.ProviderBase
             _errorTimer = null;  // No error yet.
 
             _objectList = new List<DbConnectionInternal>(MaxPoolSize);
+
+            _pooledDbAuthenticationContexts = new ConcurrentDictionary<DbConnectionPoolAuthenticationContextKey, DbConnectionPoolAuthenticationContext>(concurrencyLevel: 4 * Environment.ProcessorCount /* default value in ConcurrentDictionary*/,
+                                                                                                                                                        capacity: 2);
 
             _transactedConnectionPool = new TransactedConnectionPool(this); // initialize irrespective of platform
 
@@ -506,6 +514,17 @@ namespace Microsoft.Data.ProviderBase
         internal DbConnectionPoolProviderInfo ProviderInfo
         {
             get { return _connectionPoolProviderInfo; }
+        }
+
+        /// <summary>
+        /// Return the pooled authentication contexts.
+        /// </summary>
+        internal ConcurrentDictionary<DbConnectionPoolAuthenticationContextKey, DbConnectionPoolAuthenticationContext> AuthenticationContexts
+        {
+            get
+            {
+                return _pooledDbAuthenticationContexts;
+            }
         }
 
         internal bool UseLoadBalancing

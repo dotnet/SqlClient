@@ -394,6 +394,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot set the AccessToken property if &apos;Authentication&apos; has been specified in the connection string..
+        /// </summary>
+        internal static string ADP_InvalidMixedUsageOfAccessTokenAndAuthentication {
+            get {
+                return ResourceManager.GetString("ADP_InvalidMixedUsageOfAccessTokenAndAuthentication", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot set the AccessToken property if the &apos;Integrated Security&apos; connection string keyword has been set to &apos;true&apos; or &apos;SSPI&apos;..
         /// </summary>
         internal static string ADP_InvalidMixedUsageOfAccessTokenAndIntegratedSecurity {
@@ -1951,6 +1960,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot use &apos;Authentication&apos; with &apos;Integrated Security&apos;..
+        /// </summary>
+        internal static string SQL_AuthenticationAndIntegratedSecurity {
+            get {
+                return ResourceManager.GetString("SQL_AuthenticationAndIntegratedSecurity", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Batching updates is not supported on the context connection..
         /// </summary>
         internal static string SQL_BatchedUpdatesNotAvailableOnContextConnection {
@@ -2122,6 +2140,24 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Failed to instantiate a SqlAuthenticationInitializer with type &apos;{0}&apos;..
+        /// </summary>
+        internal static string SQL_CannotCreateAuthInitializer {
+            get {
+                return ResourceManager.GetString("SQL_CannotCreateAuthInitializer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to instantiate an authentication provider with type &apos;{1}&apos; for &apos;{0}&apos;..
+        /// </summary>
+        internal static string SQL_CannotCreateAuthProvider {
+            get {
+                return ResourceManager.GetString("SQL_CannotCreateAuthProvider", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot create normalizer for &apos;{0}&apos;..
         /// </summary>
         internal static string SQL_CannotCreateNormalizer {
@@ -2131,11 +2167,38 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot find an authentication provider for &apos;{0}&apos;..
+        /// </summary>
+        internal static string SQL_CannotFindAuthProvider {
+            get {
+                return ResourceManager.GetString("SQL_CannotFindAuthProvider", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to read the config section for authentication providers..
+        /// </summary>
+        internal static string SQL_CannotGetAuthProviderConfig {
+            get {
+                return ResourceManager.GetString("SQL_CannotGetAuthProviderConfig", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Unable to get the address of the distributed transaction coordinator for the server, from the server.  Is DTC enabled on the server?.
         /// </summary>
         internal static string SQL_CannotGetDTCAddress {
             get {
                 return ResourceManager.GetString("SQL_CannotGetDTCAddress", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The provider &apos;{0}&apos; threw an exception while initializing..
+        /// </summary>
+        internal static string SQL_CannotInitializeAuthProvider {
+            get {
+                return ResourceManager.GetString("SQL_CannotInitializeAuthProvider", resourceCulture);
             }
         }
         
@@ -2199,6 +2262,15 @@ namespace System {
         internal static string SQL_ConnectionLockedForBcpEvent {
             get {
                 return ResourceManager.GetString("SQL_ConnectionLockedForBcpEvent", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Either Credential or both &apos;User ID&apos; and &apos;Password&apos; (or &apos;UID&apos; and &apos;PWD&apos;) connection string keywords must be specified, if &apos;Authentication={0}&apos;..
+        /// </summary>
+        internal static string SQL_CredentialsNotProvided {
+            get {
+                return ResourceManager.GetString("SQL_CredentialsNotProvided", resourceCulture);
             }
         }
         
@@ -2343,6 +2415,33 @@ namespace System {
         internal static string SQL_InstanceFailure {
             get {
                 return ResourceManager.GetString("SQL_InstanceFailure", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Integrated&apos; with &apos;User ID&apos;, &apos;UID&apos;, &apos;Password&apos; or &apos;PWD&apos; connection string keywords..
+        /// </summary>
+        internal static string SQL_IntegratedWithUserIDAndPassword {
+            get {
+                return ResourceManager.GetString("SQL_IntegratedWithUserIDAndPassword", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Interactive&apos; without &apos;User ID&apos; or &apos;UID&apos; connection string keywords..
+        /// </summary>
+        internal static string SQL_InteractiveWithoutUserID {
+            get {
+                return ResourceManager.GetString("SQL_InteractiveWithoutUserID", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Interactive&apos; with &apos;PWD&apos; connection string keywords..
+        /// </summary>
+        internal static string SQL_InteractiveWithPassword {
+            get {
+                return ResourceManager.GetString("SQL_InteractiveWithPassword", resourceCulture);
             }
         }
         
@@ -2500,6 +2599,24 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Failed to authenticate the user {0} in Active Directory (Authentication={1})..
+        /// </summary>
+        internal static string SQL_MSALFailure {
+            get {
+                return ResourceManager.GetString("SQL_MSALFailure", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Error code 0x{0}; state {1}.
+        /// </summary>
+        internal static string SQL_MSALInnerException {
+            get {
+                return ResourceManager.GetString("SQL_MSALInnerException", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The keyword &apos;Network Library&apos; is not supported on this platform, prefix the &apos;Data Source&apos; with the protocol desired instead (&apos;tcp:&apos; for a TCP connection, or &apos;np:&apos; for a Named Pipe connection)..
         /// </summary>
         internal static string SQL_NetworkLibraryNotSupported {
@@ -2581,6 +2698,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Parameter &apos;{0}&apos; cannot be null or empty..
+        /// </summary>
+        internal static string SQL_ParameterCannotBeEmpty {
+            get {
+                return ResourceManager.GetString("SQL_ParameterCannotBeEmpty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Parameter &apos;{0}&apos; exceeds the size limit for the sql_variant datatype..
         /// </summary>
         internal static string SQL_ParameterInvalidVariant {
@@ -2622,6 +2748,42 @@ namespace System {
         internal static string SQL_ParsingErrorFeatureId {
             get {
                 return ResourceManager.GetString("SQL_ParsingErrorFeatureId", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Internal connection fatal error. Error state: {0}, Length: {1}.
+        /// </summary>
+        internal static string SQL_ParsingErrorLength {
+            get {
+                return ResourceManager.GetString("SQL_ParsingErrorLength", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Internal connection fatal error. Error state: {0}, Offset: {1}.
+        /// </summary>
+        internal static string SQL_ParsingErrorOffset {
+            get {
+                return ResourceManager.GetString("SQL_ParsingErrorOffset", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Internal connection fatal error. Error state: {0}, Status: {1}.
+        /// </summary>
+        internal static string SQL_ParsingErrorStatus {
+            get {
+                return ResourceManager.GetString("SQL_ParsingErrorStatus", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Internal connection fatal error. Error state: {0}, Token : {1}.
+        /// </summary>
+        internal static string SQL_ParsingErrorToken {
+            get {
+                return ResourceManager.GetString("SQL_ParsingErrorToken", resourceCulture);
             }
         }
         
@@ -2932,6 +3094,24 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The authentication &apos;{0}&apos; is not supported..
+        /// </summary>
+        internal static string SQL_UnsupportedAuthentication {
+            get {
+                return ResourceManager.GetString("SQL_UnsupportedAuthentication", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The provider &apos;{0}&apos; does not support authentication &apos;{1}&apos;..
+        /// </summary>
+        internal static string SQL_UnsupportedAuthenticationByProvider {
+            get {
+                return ResourceManager.GetString("SQL_UnsupportedAuthenticationByProvider", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The server is attempting to use a feature that is not supported on this platform..
         /// </summary>
         internal static string SQL_UnsupportedFeature {
@@ -2946,6 +3126,15 @@ namespace System {
         internal static string SQL_UnsupportedKeyword {
             get {
                 return ResourceManager.GetString("SQL_UnsupportedKeyword", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SQL authentication method &apos;{0}&apos; is not supported..
+        /// </summary>
+        internal static string SQL_UnsupportedSqlAuthenticationMethod {
+            get {
+                return ResourceManager.GetString("SQL_UnsupportedSqlAuthenticationMethod", resourceCulture);
             }
         }
         

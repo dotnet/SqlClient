@@ -381,6 +381,16 @@ namespace Microsoft.Data.SqlClient
             set => _AsyncCommandInProgress = value;
         }
 
+        private bool UsesActiveDirectoryIntegrated(SqlConnectionString opt)
+        {
+            return opt != null ? opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated : false;
+        }
+
+        private bool UsesAuthentication(SqlConnectionString opt)
+        {
+            return opt != null ? opt.Authentication != SqlAuthenticationMethod.NotSpecified : false;
+        }
+
         // Does this connection use Integrated Security?
         private bool UsesIntegratedSecurity(SqlConnectionString opt)
         {
@@ -682,6 +692,11 @@ namespace Microsoft.Data.SqlClient
             if (UsesIntegratedSecurity(connectionOptions))
             {
                 throw ADP.InvalidMixedUsageOfAccessTokenAndIntegratedSecurity();
+            }
+            
+            if (UsesAuthentication(connectionOptions))
+            {
+                throw ADP.InvalidMixedUsageOfAccessTokenAndAuthentication();
             }
 
             // Check if the usage of AccessToken has the conflict with credential
@@ -1380,6 +1395,14 @@ namespace Microsoft.Data.SqlClient
             SqlConnectionString connectionOptions = (SqlConnectionString)ConnectionOptions;
 
             _applyTransientFaultHandling = (retry == null && connectionOptions != null && connectionOptions.ConnectRetryCount > 0);
+
+            if (connectionOptions != null &&
+                (connectionOptions.Authentication == SqlAuthenticationMethod.SqlPassword || connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword) &&
+                (!connectionOptions.HasUserIdKeyword || !connectionOptions.HasPasswordKeyword) &&
+                _credential == null)
+            {
+                throw SQL.CredentialsNotProvided(connectionOptions.Authentication);
+            }
 
             if (ForceNewConnection)
             {

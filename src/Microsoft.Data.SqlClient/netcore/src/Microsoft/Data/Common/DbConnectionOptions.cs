@@ -21,10 +21,10 @@ namespace Microsoft.Data.Common
             _usersConnectionString = ((null != connectionString) ? connectionString : "");
 
             // first pass on parsing, initial syntax check
-            if (0 < _usersConnectionString.Length)
-            {
+            if (0 < _usersConnectionString.Length) {
                 _keyChain = ParseInternal(_parsetable, _usersConnectionString, true, synonyms, false);
-                _hasPasswordKeyword = (_parsetable.ContainsKey(KEY.Password) || _parsetable.ContainsKey(SYNONYM.Pwd));
+                HasPasswordKeyword = (_parsetable.ContainsKey(KEY.Password) || _parsetable.ContainsKey(SYNONYM.Pwd));
+                HasUserIdKeyword = (_parsetable.ContainsKey(KEY.User_ID) || _parsetable.ContainsKey(SYNONYM.UID));
             }
         }
 
@@ -34,6 +34,8 @@ namespace Microsoft.Data.Common
             _hasPasswordKeyword = connectionOptions._hasPasswordKeyword;
             _parsetable = connectionOptions._parsetable;
             _keyChain = connectionOptions._keyChain;
+            HasPasswordKeyword = connectionOptions.HasPasswordKeyword;
+            HasUserIdKeyword = connectionOptions.HasUserIdKeyword;
         }
 
         public bool IsEmpty => _keyChain == null;

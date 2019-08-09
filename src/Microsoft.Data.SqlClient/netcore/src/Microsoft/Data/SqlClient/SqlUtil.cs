@@ -264,6 +264,22 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Argument(System.SRHelper.GetString(SR.SQL_InvalidSSPIPacketSize));
         }
+        internal static Exception AuthenticationAndIntegratedSecurity()
+        {
+            return ADP.Argument(System.SRHelper.GetString(SR.SQL_AuthenticationAndIntegratedSecurity));
+        }
+        internal static Exception IntegratedWithUserIDAndPassword()
+        {
+            return ADP.Argument(System.SRHelper.GetString(SR.SQL_IntegratedWithUserIDAndPassword));
+        }
+        internal static Exception InteractiveWithoutUserID()
+        {
+            return ADP.Argument(System.SRHelper.GetString(SR.SQL_InteractiveWithoutUserID));
+        }
+        internal static Exception InteractiveWithPassword()
+        {
+            return ADP.Argument(System.SRHelper.GetString(SR.SQL_InteractiveWithPassword));
+        }
         internal static Exception NullEmptyTransactionName()
         {
             return ADP.Argument(System.SRHelper.GetString(SR.SQL_NullEmptyTransactionName));
@@ -271,6 +287,10 @@ namespace Microsoft.Data.SqlClient
         internal static Exception UserInstanceFailoverNotCompatible()
         {
             return ADP.Argument(System.SRHelper.GetString(SR.SQL_UserInstanceFailoverNotCompatible));
+        }
+        internal static Exception CredentialsNotProvided(SqlAuthenticationMethod auth)
+        {
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_CredentialsNotProvided, DbConnectionStringBuilderUtil.AuthenticationTypeToString(auth)));
         }
         internal static Exception ParsingErrorLibraryType(ParsingErrorState state, int libraryType)
         {
@@ -344,6 +364,54 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.NotSupported(System.SRHelper.GetString(SR.SQL_NonLocalSSEInstance));
         }
+
+        // SQL.ActiveDirectoryAuth
+        //
+        internal static Exception UnsupportedAuthentication(string authentication)
+        {
+            return ADP.NotSupported(System.SRHelper.GetString(SR.SQL_UnsupportedAuthentication, authentication));
+        }
+
+        internal static Exception UnsupportedSqlAuthenticationMethod(SqlAuthenticationMethod authentication)
+        {
+            return ADP.NotSupported(System.SRHelper.GetString(SR.SQL_UnsupportedSqlAuthenticationMethod, authentication));
+        }
+
+        internal static Exception CannotCreateAuthProvider(string authentication, string type, Exception e)
+        {
+            return ADP.Argument(System.SRHelper.GetString(SR.SQL_CannotCreateAuthProvider, authentication, type), e);
+        }
+
+        internal static Exception CannotCreateSqlAuthInitializer(string type, Exception e)
+        {
+            return ADP.Argument(System.SRHelper.GetString(SR.SQL_CannotCreateAuthInitializer, type), e);
+        }
+
+        internal static Exception CannotInitializeAuthProvider(string type, Exception e)
+        {
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_CannotInitializeAuthProvider, type), e);
+        }
+
+        internal static Exception UnsupportedAuthenticationByProvider(string authentication, string type)
+        {
+            return ADP.NotSupported(System.SRHelper.GetString(SR.SQL_UnsupportedAuthenticationByProvider, type, authentication));
+        }
+
+        internal static Exception CannotFindAuthProvider(string authentication)
+        {
+            return ADP.Argument(System.SRHelper.GetString(SR.SQL_CannotFindAuthProvider, authentication));
+        }
+
+        internal static Exception CannotGetAuthProviderConfig(Exception e)
+        {
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_CannotGetAuthProviderConfig), e);
+        }
+
+        internal static Exception ParameterCannotBeEmpty(string paramName)
+        {
+            return ADP.ArgumentNull(System.SRHelper.GetString(SR.SQL_ParameterCannotBeEmpty, paramName));
+        }
+
         //
         // SQL.DataCommand
         //
@@ -504,6 +572,10 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_ParsingErrorWithState, ((int)state).ToString(CultureInfo.InvariantCulture)));
         }
+        internal static Exception ParsingError(ParsingErrorState state, Exception innerException)
+        {
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_ParsingErrorWithState, ((int)state).ToString(CultureInfo.InvariantCulture)), innerException);
+        }
         internal static Exception ParsingErrorValue(ParsingErrorState state, int value)
         {
             return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_ParsingErrorValue, ((int)state).ToString(CultureInfo.InvariantCulture), value));
@@ -511,6 +583,22 @@ namespace Microsoft.Data.SqlClient
         internal static Exception ParsingErrorFeatureId(ParsingErrorState state, int featureId)
         {
             return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_ParsingErrorFeatureId, ((int)state).ToString(CultureInfo.InvariantCulture), featureId));
+        }
+        internal static Exception ParsingErrorToken(ParsingErrorState state, int token)
+        {
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_ParsingErrorToken, ((int)state).ToString(CultureInfo.InvariantCulture), token));
+        }
+        internal static Exception ParsingErrorLength(ParsingErrorState state, int length)
+        {
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_ParsingErrorLength, ((int)state).ToString(CultureInfo.InvariantCulture), length));
+        }
+        internal static Exception ParsingErrorStatus(ParsingErrorState state, int status)
+        {
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_ParsingErrorStatus, ((int)state).ToString(CultureInfo.InvariantCulture), status));
+        }
+        internal static Exception ParsingErrorOffset(ParsingErrorState state, int offset)
+        {
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_ParsingErrorOffset, ((int)state).ToString(CultureInfo.InvariantCulture), offset));
         }
         internal static Exception MoneyOverflow(string moneyValue)
         {
@@ -1278,22 +1366,22 @@ namespace Microsoft.Data.SqlClient
         #endregion Always Encrypted - Cryptographic Algorithms Error messages
 
         #region Always Encrypted - Errors from sp_describe_parameter_encryption
-        static internal Exception UnexpectedDescribeParamFormatParameterMetadata()
+        internal static Exception UnexpectedDescribeParamFormatParameterMetadata()
         {
             return ADP.Argument(System.SRHelper.GetString(SR.TCE_UnexpectedDescribeParamFormatParameterMetadata, "sp_describe_parameter_encryption"));
         }
 
-        static internal Exception UnexpectedDescribeParamFormatAttestationInfo(string enclaveType)
+        internal static Exception UnexpectedDescribeParamFormatAttestationInfo(string enclaveType)
         {
             return ADP.Argument(System.SRHelper.GetString(SR.TCE_UnexpectedDescribeParamFormatAttestationInfo, "sp_describe_parameter_encryption", enclaveType));
         }
 
-        static internal Exception InvalidEncryptionKeyOrdinalEnclaveMetadata(int ordinal, int maxOrdinal)
+        internal static Exception InvalidEncryptionKeyOrdinalEnclaveMetadata(int ordinal, int maxOrdinal)
         {
             return ADP.InvalidOperation(System.SRHelper.GetString(SR.TCE_InvalidEncryptionKeyOrdinalEnclaveMetadata, ordinal, maxOrdinal));
         }
 
-        static internal Exception InvalidEncryptionKeyOrdinalParameterMetadata(int ordinal, int maxOrdinal)
+        internal static Exception InvalidEncryptionKeyOrdinalParameterMetadata(int ordinal, int maxOrdinal)
         {
             return ADP.InvalidOperation(System.SRHelper.GetString(SR.TCE_InvalidEncryptionKeyOrdinalParameterMetadata, ordinal, maxOrdinal));
         }
@@ -1303,12 +1391,12 @@ namespace Microsoft.Data.SqlClient
             return ADP.InvalidOperation(System.SRHelper.GetString(SR.TCE_MultipleRowsReturnedForAttestationInfo, "sp_describe_parameter_encryption"));
         }
 
-        static internal Exception ParamEncryptionMetadataMissing(string paramName, string procedureName)
+        internal static Exception ParamEncryptionMetadataMissing(string paramName, string procedureName)
         {
             return ADP.Argument(System.SRHelper.GetString(SR.TCE_ParamEncryptionMetaDataMissing, "sp_describe_parameter_encryption", paramName, procedureName));
         }
 
-        static internal Exception ProcEncryptionMetadataMissing(string procedureName)
+        internal static Exception ProcEncryptionMetadataMissing(string procedureName)
         {
             return ADP.Argument(System.SRHelper.GetString(SR.TCE_ProcEncryptionMetaDataMissing, "sp_describe_parameter_encryption", procedureName));
         }
@@ -1392,7 +1480,7 @@ namespace Microsoft.Data.SqlClient
         #endregion Always Encrypted - Errors from secure channel Communication
 
         #region Always Encrypted - Errors when performing attestation
-        static internal Exception AttestationInfoNotReturnedFromSqlServer(string enclaveType, string enclaveAttestationUrl)
+        internal static Exception AttestationInfoNotReturnedFromSqlServer(string enclaveType, string enclaveAttestationUrl)
         {
             return ADP.Argument(System.SRHelper.GetString(SR.TCE_AttestationInfoNotReturnedFromSQLServer, enclaveType, enclaveAttestationUrl));
         }
@@ -1437,17 +1525,17 @@ namespace Microsoft.Data.SqlClient
             return ADP.InvalidOperation(System.SRHelper.GetString(SR.TCE_SqlColumnEncryptionEnclaveProviderNameCannotBeEmpty));
         }
 
-        static internal Exception NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe(string enclaveType)
+        internal static Exception NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe(string enclaveType)
         {
             return ADP.InvalidOperation(System.SRHelper.GetString(SR.TCE_NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe, "sp_describe_parameter_encryption", enclaveType));
         }
 
-        static internal Exception NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage(string enclaveType)
+        internal static Exception NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage(string enclaveType)
         {
             return ADP.InvalidOperation(System.SRHelper.GetString(SR.TCE_NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage, enclaveType));
         }
 
-        static internal Exception EnclaveTypeNullForEnclaveBasedQuery()
+        internal static Exception EnclaveTypeNullForEnclaveBasedQuery()
         {
             return ADP.InvalidOperation(System.SRHelper.GetString(SR.TCE_EnclaveTypeNullForEnclaveBasedQuery));
         }
@@ -1505,7 +1593,7 @@ namespace Microsoft.Data.SqlClient
             return GetExceptionArray(serverName, System.SRHelper.GetString(SR.TCE_ParamEncryptionFailed, paramName), e);
         }
 
-        static internal Exception ParamDecryptionFailed(string paramName, string serverName, Exception e)
+        internal static Exception ParamDecryptionFailed(string paramName, string serverName, Exception e)
         {
             return GetExceptionArray(serverName, System.SRHelper.GetString(SR.TCE_ParamDecryptionFailed, paramName), e);
         }
@@ -1536,7 +1624,7 @@ namespace Microsoft.Data.SqlClient
             return ADP.Argument(System.SRHelper.GetString(SR.TCE_UnrecognizedKeyStoreProviderName, providerName, systemProviderStr, customProviderStr));
         }
 
-        static internal Exception InvalidDataTypeForEncryptedParameter(string parameterName, int actualDataType, int expectedDataType)
+        internal static Exception InvalidDataTypeForEncryptedParameter(string parameterName, int actualDataType, int expectedDataType)
         {
             return ADP.Argument(System.SRHelper.GetString(SR.TCE_NullProviderValue, parameterName, actualDataType, expectedDataType));
         }
@@ -1574,7 +1662,7 @@ namespace Microsoft.Data.SqlClient
             return ADP.Argument(System.SRHelper.GetString(SR.TCE_NullEnclaveSessionDuringQueryExecution, enclaveType, enclaveAttestationUrl));
         }
 
-        static internal Exception NullEnclavePackageForEnclaveBasedQuery(string enclaveType, string enclaveAttestationUrl)
+        internal static Exception NullEnclavePackageForEnclaveBasedQuery(string enclaveType, string enclaveAttestationUrl)
         {
             return ADP.Argument(System.SRHelper.GetString(SR.TCE_NullEnclavePackageForEnclaveBasedQuery, enclaveType, enclaveAttestationUrl));
         }

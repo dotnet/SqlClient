@@ -11,6 +11,7 @@ using System.Data.Common;
 using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Security;
+using System.Globalization;
 using System.Text;
 using System.Threading;
 using Microsoft.Data.Common;
@@ -75,6 +76,7 @@ namespace Microsoft.Data.SqlClient
     {
         internal TdsEnums.FedAuthLibrary libraryType;
         internal bool fedAuthRequiredPreLoginResponse;
+        internal SqlAuthenticationMethod authentication;
         internal byte[] accessToken;
     }
 
@@ -301,6 +303,7 @@ namespace Microsoft.Data.SqlClient
 
     internal sealed class SqlLogin
     {
+        internal SqlAuthenticationMethod authentication = SqlAuthenticationMethod.NotSpecified;  // Authentication type
         internal int timeout;                                                       // login timeout
         internal bool userInstance = false;                                   // user instance
         internal string hostName = "";                                      // client machine name
@@ -326,6 +329,23 @@ namespace Microsoft.Data.SqlClient
         internal byte minorVersion;
         internal short buildNum;
         internal uint tdsVersion;
+    }
+
+    internal sealed class SqlFedAuthInfo
+    {
+        internal string spn;
+        internal string stsurl;
+        public override string ToString()
+        {
+            return String.Format(CultureInfo.InvariantCulture, "STSURL: {0}, SPN: {1}", stsurl ?? String.Empty, spn ?? String.Empty);
+        }
+    }
+
+    internal sealed class SqlFedAuthToken
+    {
+        internal UInt32 dataLen;
+        internal byte[] accessToken;
+        internal long expirationFileTime;
     }
 
     internal sealed class _SqlMetaData : SqlMetaDataPriv

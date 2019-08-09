@@ -46,6 +46,7 @@ namespace Microsoft.Data.SqlClient
             LoadBalanceTimeout,
             PacketSize,
             TypeSystemVersion,
+            Authentication,
 
             ApplicationName,
             CurrentLanguage,
@@ -108,6 +109,7 @@ namespace Microsoft.Data.SqlClient
         private bool _pooling = DbConnectionStringDefaults.Pooling;
         private bool _replication = DbConnectionStringDefaults.Replication;
         private bool _userInstance = DbConnectionStringDefaults.UserInstance;
+        private SqlAuthenticationMethod _authentication = DbConnectionStringDefaults.Authentication;
         private SqlConnectionColumnEncryptionSetting _columnEncryptionSetting = DbConnectionStringDefaults.ColumnEncryptionSetting;
         private string _enclaveAttestationUrl = DbConnectionStringDefaults.EnclaveAttestationUrl;
 
@@ -147,6 +149,7 @@ namespace Microsoft.Data.SqlClient
             validKeywords[(int)Keywords.WorkstationID] = DbConnectionStringKeywords.WorkstationID;
             validKeywords[(int)Keywords.ConnectRetryCount] = DbConnectionStringKeywords.ConnectRetryCount;
             validKeywords[(int)Keywords.ConnectRetryInterval] = DbConnectionStringKeywords.ConnectRetryInterval;
+            validKeywords[(int)Keywords.Authentication] = DbConnectionStringKeywords.Authentication;
             validKeywords[(int)Keywords.ColumnEncryptionSetting] = DbConnectionStringKeywords.ColumnEncryptionSetting;
             validKeywords[(int)Keywords.EnclaveAttestationUrl] = DbConnectionStringKeywords.EnclaveAttestationUrl;
             return validKeywords;
@@ -188,6 +191,7 @@ namespace Microsoft.Data.SqlClient
             hash.Add(DbConnectionStringKeywords.WorkstationID, Keywords.WorkstationID);
             hash.Add(DbConnectionStringKeywords.ConnectRetryCount, Keywords.ConnectRetryCount);
             hash.Add(DbConnectionStringKeywords.ConnectRetryInterval, Keywords.ConnectRetryInterval);
+            hash.Add(DbConnectionStringKeywords.Authentication, Keywords.Authentication);
             hash.Add(DbConnectionStringKeywords.ColumnEncryptionSetting, Keywords.ColumnEncryptionSetting);
             hash.Add(DbConnectionStringKeywords.EnclaveAttestationUrl, Keywords.EnclaveAttestationUrl);
 
@@ -260,6 +264,7 @@ namespace Microsoft.Data.SqlClient
                         case Keywords.PacketSize: PacketSize = ConvertToInt32(value); break;
 
                         case Keywords.IntegratedSecurity: IntegratedSecurity = ConvertToIntegratedSecurity(value); break;
+                        case Keywords.Authentication: Authentication = ConvertToAuthenticationType(keyword, value); break;
                         case Keywords.ColumnEncryptionSetting: ColumnEncryptionSetting = ConvertToColumnEncryptionSetting(keyword, value); break;
                         case Keywords.EnclaveAttestationUrl: EnclaveAttestationUrl = ConvertToString(value); break;
 #if netcoreapp
@@ -443,6 +448,21 @@ namespace Microsoft.Data.SqlClient
             {
                 SetValue(DbConnectionStringKeywords.IntegratedSecurity, value);
                 _integratedSecurity = value;
+            }
+        }
+
+        public SqlAuthenticationMethod Authentication
+        {
+            get { return _authentication; }
+            set
+            {
+                if (!DbConnectionStringBuilderUtil.IsValidAuthenticationTypeValue(value))
+                {
+                    throw ADP.InvalidEnumerationValue(typeof(SqlAuthenticationMethod), (int)value);
+                }
+
+                SetAuthenticationValue(value);
+                _authentication = value;
             }
         }
 
@@ -707,6 +727,10 @@ namespace Microsoft.Data.SqlClient
         {
             return DbConnectionStringBuilderUtil.ConvertToIntegratedSecurity(value);
         }
+        private static SqlAuthenticationMethod ConvertToAuthenticationType(string keyword, object value)
+        {
+            return DbConnectionStringBuilderUtil.ConvertToAuthenticationType(keyword, value);
+        }
         private static string ConvertToString(object value)
         {
             return DbConnectionStringBuilderUtil.ConvertToString(value);
@@ -763,6 +787,7 @@ namespace Microsoft.Data.SqlClient
                 case Keywords.WorkstationID: return WorkstationID;
                 case Keywords.ConnectRetryCount: return ConnectRetryCount;
                 case Keywords.ConnectRetryInterval: return ConnectRetryInterval;
+                case Keywords.Authentication: return Authentication;
                 case Keywords.ColumnEncryptionSetting: return ColumnEncryptionSetting;
                 case Keywords.EnclaveAttestationUrl: return EnclaveAttestationUrl;
 
@@ -811,6 +836,9 @@ namespace Microsoft.Data.SqlClient
                     break;
                 case Keywords.AttachDBFilename:
                     _attachDBFilename = DbConnectionStringDefaults.AttachDBFilename;
+                    break;
+                case Keywords.Authentication:
+                    _authentication = DbConnectionStringDefaults.Authentication;
                     break;
 #if netcoreapp
                 case Keywords.PoolBlockingPeriod:
@@ -932,6 +960,12 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(DbConnectionStringBuilderUtil.IsValidColumnEncryptionSetting(value), "Invalid value for SqlConnectionColumnEncryptionSetting");
             base[DbConnectionStringKeywords.ColumnEncryptionSetting] = DbConnectionStringBuilderUtil.ColumnEncryptionSettingToString(value);
+        }
+
+        private void SetAuthenticationValue(SqlAuthenticationMethod value)
+        {
+            Debug.Assert(DbConnectionStringBuilderUtil.IsValidAuthenticationTypeValue(value), "Invalid value for AuthenticationType");
+            base[DbConnectionStringKeywords.Authentication] = DbConnectionStringBuilderUtil.AuthenticationTypeToString(value);
         }
 
         public override bool ShouldSerialize(string keyword)

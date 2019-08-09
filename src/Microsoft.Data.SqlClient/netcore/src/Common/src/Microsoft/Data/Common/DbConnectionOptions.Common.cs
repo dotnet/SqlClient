@@ -95,10 +95,18 @@ namespace Microsoft.Data.Common
             internal const string UID = "uid";
         }
 
+        internal readonly bool HasPasswordKeyword;
+        internal readonly bool HasUserIdKeyword;
+
         private readonly string _usersConnectionString;
         private readonly Dictionary<string, string> _parsetable;
         internal readonly NameValuePair _keyChain;
         internal readonly bool _hasPasswordKeyword;
+
+        internal Dictionary<string, string> Parsetable
+        {
+            get { return _parsetable; }
+        }
 
         public string UsersConnectionString(bool hidePassword) =>
             UsersConnectionString(hidePassword, false);

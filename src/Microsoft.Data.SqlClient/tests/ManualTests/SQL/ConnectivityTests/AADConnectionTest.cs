@@ -68,9 +68,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static bool IsAccessTokenSetup() => DataTestUtility.IsAccessTokenSetup();
         private static bool IsAADConnStringsSetup() => DataTestUtility.IsAADPasswordConnStrSetup();
-        private static bool IsAzureServer() => DataTestUtility.IsAzureSqlServer(new SqlConnectionStringBuilder(DataTestUtility.AADPasswordConnStr).DataSource);
 
-        [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAADConnStringsSetup), nameof(IsAzureServer))]
+        [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAADConnStringsSetup))]
         public static void AccessTokenTest()
         {
             using (SqlConnection connection = new SqlConnection(DataTestUtility.TcpConnStr))
@@ -80,7 +79,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAADConnStringsSetup), nameof(IsAzureServer))]
+        [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAADConnStringsSetup))]
         public static void InvalidAccessTokenTest()
         {
             // Remove cred info and add invalid token
@@ -97,7 +96,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAADConnStringsSetup), nameof(IsAzureServer))]
+        [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAADConnStringsSetup))]
         public static void AccessTokenWithAuthType()
         {
             // Remove cred info and add invalid token
@@ -114,7 +113,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAADConnStringsSetup), nameof(IsAzureServer))]
+        [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAADConnStringsSetup))]
         public static void AccessTokenWithCred()
         {
             // Remove cred info and add invalid token
@@ -131,7 +130,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAADConnStringsSetup), nameof(IsAzureServer))]
+        [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAADConnStringsSetup))]
         public static void AccessTokenTestWithEmptyToken()
         {
             // Remove cred info and add invalid token
@@ -148,7 +147,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAADConnStringsSetup), nameof(IsAzureServer))]
+        [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAADConnStringsSetup))]
         public static void AccessTokenTestWithIntegratedSecurityTrue()
         {
             // Remove cred info and add invalid token
@@ -164,7 +163,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAADConnStringsSetup), nameof(IsAzureServer))]
+        [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAADConnStringsSetup))]
         public static void InvalidAuthTypeTest()
         {
             // Remove cred info and add invalid token
@@ -177,7 +176,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Contains(expectedMessage, e.Message);
         }
 
-        [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAADConnStringsSetup), nameof(IsAzureServer))]
+        [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAADConnStringsSetup))]
         public static void AADPasswordWithIntegratedSecurityTrue()
         {
              string connStr = DataTestUtility.AADPasswordConnStr + "Integrated Security=True;";
@@ -188,7 +187,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Contains(expectedMessage, e.Message);
         }
 
-        [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAADConnStringsSetup), nameof(IsAzureServer))]
+        [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAADConnStringsSetup))]
         public static void AADPasswordWithWrongPassword()
         {
             string[] credKeys = { "Password" };
@@ -201,7 +200,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
 
-        [ConditionalFact(nameof(IsAADConnStringsSetup), nameof(IsAzureServer))]
+        [ConditionalFact(nameof(IsAADConnStringsSetup))]
         public static void GetAccessTokenByPasswordTest()
         {
             using (SqlConnection connection = new SqlConnection(DataTestUtility.AADPasswordConnStr))
@@ -210,7 +209,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(nameof(IsAADConnStringsSetup), nameof(IsAzureServer))]
+        [ConditionalFact(nameof(IsAADConnStringsSetup))]
         public static void testADPasswordAuthentication()
         {
             // Connect to Azure DB with password and retrieve user name.
@@ -236,7 +235,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(nameof(IsAADConnStringsSetup), nameof(IsAzureServer))]
+        [ConditionalFact(nameof(IsAADConnStringsSetup))]
         public static void ActiveDirectoryPasswordWithNoAuthType()
         {
             // connection fails with expected error message.
@@ -248,7 +247,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Contains(expectedMessage, e.Message);
         }
 
-        [ConditionalFact(nameof(IsAADConnStringsSetup), nameof(IsAzureServer))]
+        [ConditionalFact(nameof(IsAADConnStringsSetup))]
         public static void IntegratedAuthWithCred()
         {
             // connection fails with expected error message.
@@ -260,7 +259,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Contains(expectedMessage, e.Message);
         }
 
-        [ConditionalFact(nameof(IsAADConnStringsSetup), nameof(IsAzureServer))]
+        [ConditionalFact(nameof(IsAADConnStringsSetup))]
         public static void MFAAuthWithCred()
         {
             // connection fails with expected error message.
@@ -272,7 +271,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Contains(expectedMessage, e.Message);
         }
 
-        [ConditionalFact(nameof(IsAADConnStringsSetup), nameof(IsAzureServer))]
+        [ConditionalFact(nameof(IsAADConnStringsSetup))]
         public static void EmptyPasswordInConnStrAADPassword()
         {
             // connection fails with expected error message.
@@ -284,19 +283,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Contains(expectedMessage, e.InnerException.InnerException.InnerException.Message);
         }
 
-        [ConditionalFact(nameof(IsAADConnStringsSetup), nameof(IsAzureServer))]
+        [ConditionalFact(nameof(IsAADConnStringsSetup))]
+        [ActiveIssue(9417)]
         public static void EmptyCredInConnStrAADPassword()
         {
             // connection fails with expected error message.
-                string[] removeKeys = { "User ID", "Password" };
-                string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnStr, removeKeys) + "User ID=; Password=;";
-                AggregateException e = Assert.Throws<AggregateException>(() => ConnectAndDisconnect(connStr));
+            string[] removeKeys = { "User ID", "Password" };
+            string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnStr, removeKeys) + "User ID=; Password=;";
+            AggregateException e = Assert.Throws<AggregateException>(() => ConnectAndDisconnect(connStr));
 
-                string expectedMessage = "Unsupported User Type 'Unknown'";
-                Assert.Contains(expectedMessage, e.InnerException.InnerException.InnerException.Message);
+            string expectedMessage = "Unsupported User Type 'Unknown'";
+            Assert.Contains(expectedMessage, e.InnerException.InnerException.InnerException.Message);
         }
 
-        [ConditionalFact(nameof(IsAADConnStringsSetup), nameof(IsAzureServer))]
+        [ConditionalFact(nameof(IsAADConnStringsSetup))]
         public static void AADPasswordWithInvalidUser()
         {
             // connection fails with expected error message.
@@ -308,7 +308,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Contains(expectedMessage, e.InnerException.InnerException.InnerException.Message);
         }
 
-        [ConditionalFact(nameof(IsAADConnStringsSetup), nameof(IsAzureServer))]
+        [ConditionalFact(nameof(IsAADConnStringsSetup))]
         public static void NoCredentialsActiveDirectoryPassword()
         {
             // test Passes with correct connection string.

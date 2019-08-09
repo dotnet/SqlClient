@@ -396,6 +396,18 @@
   <data name="SQL_UserInstanceFailoverNotCompatible" xml:space="preserve">
     <value>User Instance and Failover are not compatible options.  Please choose only one of the two in the connection string.</value>
   </data>
+  <data name="SQL_AuthenticationAndIntegratedSecurity" xml:space="preserve">
+    <value>Cannot use 'Authentication' with 'Integrated Security'.</value>
+  </data>
+  <data name="SQL_IntegratedWithUserIDAndPassword" xml:space="preserve">
+    <value>Cannot use 'Authentication=Active Directory Integrated' with 'User ID', 'UID', 'Password' or 'PWD' connection string keywords.</value>
+  </data>
+  <data name="SQL_InteractiveWithPassword" xml:space="preserve">
+    <value>Cannot use 'Authentication=Active Directory Interactive' with 'PWD' connection string keywords.</value>
+  </data>
+  <data name="SQL_InteractiveWithoutUserID" xml:space="preserve">
+    <value>Cannot use 'Authentication=Active Directory Interactive' without 'User ID' or 'UID' connection string keywords.</value>
+  </data>
   <data name="SQL_EncryptionNotSupportedByClient" xml:space="preserve">
     <value>The instance of SQL Server you attempted to connect to requires encryption but this machine does not support it.</value>
   </data>
@@ -422,6 +434,33 @@
   </data>
   <data name="SQL_NonLocalSSEInstance" xml:space="preserve">
     <value>SSE Instance re-direction is not supported for non-local user instances.</value>
+  </data>
+  <data name="SQL_UnsupportedAuthentication" xml:space="preserve">
+    <value>The authentication '{0}' is not supported.</value>
+  </data>
+  <data name="SQL_UnsupportedSqlAuthenticationMethod" xml:space="preserve">
+    <value>SQL authentication method '{0}' is not supported.</value>
+  </data>
+  <data name="SQL_CannotCreateAuthProvider" xml:space="preserve">
+    <value>Failed to instantiate an authentication provider with type '{1}' for '{0}'.</value>
+  </data>
+  <data name="SQL_CannotCreateAuthInitializer" xml:space="preserve">
+    <value>Failed to instantiate a SqlAuthenticationInitializer with type '{0}'.</value>
+  </data>
+  <data name="SQL_CannotInitializeAuthProvider" xml:space="preserve">
+    <value>The provider '{0}' threw an exception while initializing.</value>
+  </data>
+  <data name="SQL_UnsupportedAuthenticationByProvider" xml:space="preserve">
+    <value>The provider '{0}' does not support authentication '{1}'.</value>
+  </data>
+  <data name="SQL_CannotFindAuthProvider" xml:space="preserve">
+    <value>Cannot find an authentication provider for '{0}'.</value>
+  </data>
+  <data name="SQL_CannotGetAuthProviderConfig" xml:space="preserve">
+    <value>Failed to read the config section for authentication providers.</value>
+  </data>
+  <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
+    <value>Parameter '{0}' cannot be null or empty.</value>
   </data>
   <data name="SQL_PendingBeginXXXExists" xml:space="preserve">
     <value>The command execution cannot proceed due to a pending asynchronous operation already in progress.</value>
@@ -1284,6 +1323,9 @@
   <data name="ADP_InvalidMixedUsageOfSecureCredentialAndIntegratedSecurity" xml:space="preserve">
     <value>Cannot use Credential with Integrated Security connection string keyword.</value>
   </data>
+  <data name="SQL_CredentialsNotProvided" xml:space="preserve">
+    <value>Either Credential or both 'User ID' and 'Password' (or 'UID' and 'PWD') connection string keywords must be specified, if 'Authentication={0}'.</value>
+  </data>
   <data name="SQL_ChangePasswordArgumentMissing" xml:space="preserve">
     <value>The '{0}' argument must not be null or empty.</value>
   </data>
@@ -1296,11 +1338,29 @@
   <data name="SQL_ChangePasswordUseOfUnallowedKey" xml:space="preserve">
     <value>The keyword '{0}' must not be specified in the connectionString argument to ChangePassword.</value>
   </data>
+  <data name="SQL_MSALFailure" xml:space="preserve">
+    <value>Failed to authenticate the user {0} in Active Directory (Authentication={1}).</value>
+  </data>
+  <data name="SQL_MSALInnerException" xml:space="preserve">
+    <value>Error code 0x{0}; state {1}</value>
+  </data>
   <data name="SQL_ParsingErrorWithState" xml:space="preserve">
     <value>Internal connection fatal error. Error state: {0}.</value>
   </data>
   <data name="SQL_ParsingErrorValue" xml:space="preserve">
     <value>Internal connection fatal error. Error state: {0}, Value: {1}.</value>
+  </data>
+  <data name="SQL_ParsingErrorOffset" xml:space="preserve">
+    <value>Internal connection fatal error. Error state: {0}, Offset: {1}</value>
+  </data>
+  <data name="SQL_ParsingErrorToken" xml:space="preserve">
+    <value>Internal connection fatal error. Error state: {0}, Token : {1}</value>
+  </data>
+  <data name="SQL_ParsingErrorLength" xml:space="preserve">
+    <value>Internal connection fatal error. Error state: {0}, Length: {1}</value>
+  </data>
+  <data name="SQL_ParsingErrorStatus" xml:space="preserve">
+    <value>Internal connection fatal error. Error state: {0}, Status: {1}</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndIntegratedSecurity" xml:space="preserve">
     <value>Cannot set the AccessToken property if the 'Integrated Security' connection string keyword has been set to 'true' or 'SSPI'.</value>
@@ -1310,6 +1370,9 @@
   </data>
   <data name="ADP_InvalidMixedUsageOfCredentialAndAccessToken" xml:space="preserve">
     <value>Cannot set the Credential property if the AccessToken property is already set.</value>
+  </data>
+  <data name="ADP_InvalidMixedUsageOfAccessTokenAndAuthentication" xml:space="preserve">
+    <value>Cannot set the AccessToken property if 'Authentication' has been specified in the connection string.</value>
   </data>
   <data name="SQL_ParsingErrorFeatureId" xml:space="preserve">
     <value>Internal connection fatal error. Error state: {0}, Feature Id: {1}.</value>

@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Reflection;
 using System;
 using Microsoft.Data.SqlClient;
+using System.Globalization;
 using Microsoft.Data.Common;
 
 namespace Microsoft.Data.Common
@@ -98,6 +99,47 @@ namespace Microsoft.Data.Common
 
         private const string ApplicationIntentReadWriteString = "ReadWrite";
         private const string ApplicationIntentReadOnlyString = "ReadOnly";
+        const string SqlPasswordString = "Sql Password";
+        const string ActiveDirectoryPasswordString = "Active Directory Password";
+        const string ActiveDirectoryIntegratedString = "Active Directory Integrated";
+        const string ActiveDirectoryInteractiveString = "Active Directory Interactive";
+
+        internal static bool TryConvertToAuthenticationType(string value, out SqlAuthenticationMethod result)
+        {
+            Debug.Assert(Enum.GetNames(typeof(SqlAuthenticationMethod)).Length == 5, "SqlAuthenticationMethod enum has changed, update needed");
+
+            bool isSuccess = false;
+
+            if (StringComparer.InvariantCultureIgnoreCase.Equals(value, SqlPasswordString)
+                || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.SqlPassword, CultureInfo.InvariantCulture)))
+            {
+                result = SqlAuthenticationMethod.SqlPassword;
+                isSuccess = true;
+            }
+            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, ActiveDirectoryPasswordString)
+                || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.ActiveDirectoryPassword, CultureInfo.InvariantCulture)))
+            {
+                result = SqlAuthenticationMethod.ActiveDirectoryPassword;
+                isSuccess = true;
+            }
+            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, ActiveDirectoryIntegratedString)
+                || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.ActiveDirectoryIntegrated, CultureInfo.InvariantCulture)))
+            {
+                result = SqlAuthenticationMethod.ActiveDirectoryIntegrated;
+                isSuccess = true;
+            }
+            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, ActiveDirectoryInteractiveString)
+                || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.ActiveDirectoryInteractive, CultureInfo.InvariantCulture)))
+            {
+                result = SqlAuthenticationMethod.ActiveDirectoryInteractive;
+                isSuccess = true;
+            }
+            else
+            {
+                result = DbConnectionStringDefaults.Authentication;
+            }
+            return isSuccess;
+        }
 
         internal static bool TryConvertToApplicationIntent(string value, out ApplicationIntent result)
         {
@@ -287,6 +329,105 @@ namespace Microsoft.Data.Common
             }
         }
 
+        internal static bool IsValidAuthenticationTypeValue(SqlAuthenticationMethod value)
+        {
+            Debug.Assert(Enum.GetNames(typeof(SqlAuthenticationMethod)).Length == 5, "SqlAuthenticationMethod enum has changed, update needed");
+            return value == SqlAuthenticationMethod.SqlPassword
+                || value == SqlAuthenticationMethod.ActiveDirectoryPassword
+                || value == SqlAuthenticationMethod.ActiveDirectoryIntegrated
+                || value == SqlAuthenticationMethod.ActiveDirectoryInteractive   
+                || value == SqlAuthenticationMethod.NotSpecified;
+        }
+
+        internal static string AuthenticationTypeToString(SqlAuthenticationMethod value)
+        {
+            Debug.Assert(IsValidAuthenticationTypeValue(value));
+
+            switch (value)
+            {
+                case SqlAuthenticationMethod.SqlPassword:
+                    return SqlPasswordString;
+                case SqlAuthenticationMethod.ActiveDirectoryPassword:
+                    return ActiveDirectoryPasswordString;
+                case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
+                    return ActiveDirectoryIntegratedString;
+                case SqlAuthenticationMethod.ActiveDirectoryInteractive:
+                    return ActiveDirectoryInteractiveString;
+                default:
+                    return null;
+            }
+        }
+
+        internal static SqlAuthenticationMethod ConvertToAuthenticationType(string keyword, object value)
+        {
+            if (null == value)
+            {
+                return DbConnectionStringDefaults.Authentication;
+            }
+
+            string sValue = (value as string);
+            SqlAuthenticationMethod result;
+            if (null != sValue)
+            {
+                if (TryConvertToAuthenticationType(sValue, out result))
+                {
+                    return result;
+                }
+
+                // try again after remove leading & trailing whitespaces.
+                sValue = sValue.Trim();
+                if (TryConvertToAuthenticationType(sValue, out result))
+                {
+                    return result;
+                }
+
+                // string values must be valid
+                throw ADP.InvalidConnectionOptionValue(keyword);
+            }
+            else
+            {
+                // the value is not string, try other options
+                SqlAuthenticationMethod eValue;
+
+                if (value is SqlAuthenticationMethod)
+                {
+                    // quick path for the most common case
+                    eValue = (SqlAuthenticationMethod)value;
+                }
+                else if (value.GetType().IsEnum)
+                {
+                    // explicitly block scenarios in which user tries to use wrong enum types, like:
+                    // builder["ApplicationIntent"] = EnvironmentVariableTarget.Process;
+                    // workaround: explicitly cast non-ApplicationIntent enums to int
+                    throw ADP.ConvertFailed(value.GetType(), typeof(SqlAuthenticationMethod), null);
+                }
+                else
+                {
+                    try
+                    {
+                        // Enum.ToObject allows only integral and enum values (enums are blocked above), rasing ArgumentException for the rest
+                        eValue = (SqlAuthenticationMethod)Enum.ToObject(typeof(SqlAuthenticationMethod), value);
+                    }
+                    catch (ArgumentException e)
+                    {
+                        // to be consistent with the messages we send in case of wrong type usage, replace 
+                        // the error with our exception, and keep the original one as inner one for troubleshooting
+                        throw ADP.ConvertFailed(value.GetType(), typeof(SqlAuthenticationMethod), e);
+                    }
+                }
+
+                // ensure value is in valid range
+                if (IsValidAuthenticationTypeValue(eValue))
+                {
+                    return eValue;
+                }
+                else
+                {
+                    throw ADP.InvalidEnumerationValue(typeof(SqlAuthenticationMethod), (int)eValue);
+                }
+            }
+        }
+
         /// <summary>
         /// Convert the provided value to a SqlConnectionColumnEncryptionSetting.
         /// </summary>
@@ -399,6 +540,7 @@ namespace Microsoft.Data.Common
         internal const string TransactionBinding = "Implicit Unbind";
         internal const int ConnectRetryCount = 1;
         internal const int ConnectRetryInterval = 10;
+        internal static readonly SqlAuthenticationMethod Authentication = SqlAuthenticationMethod.NotSpecified;
         internal const SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Disabled;
         internal const string EnclaveAttestationUrl = "";
     }
@@ -433,6 +575,7 @@ namespace Microsoft.Data.Common
         internal const string WorkstationID = "Workstation ID";
         internal const string ConnectRetryCount = "ConnectRetryCount";
         internal const string ConnectRetryInterval = "ConnectRetryInterval";
+        internal const string Authentication = "Authentication";
         internal const string ColumnEncryptionSetting = "Column Encryption Setting";
         internal const string EnclaveAttestationUrl = "Enclave Attestation Url";
 

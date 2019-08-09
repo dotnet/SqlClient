@@ -46,6 +46,7 @@ namespace Microsoft.Data.SqlClient
             internal const bool Replication = false;
             internal const int Connect_Retry_Count = 1;
             internal const int Connect_Retry_Interval = 10;
+            internal static readonly SqlAuthenticationMethod Authentication = SqlAuthenticationMethod.NotSpecified;
             internal const SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Disabled;
             internal const string EnclaveAttestationUrl = "";
         }
@@ -92,6 +93,7 @@ namespace Microsoft.Data.SqlClient
             internal const string Replication = "replication";
             internal const string Connect_Retry_Count = "connectretrycount";
             internal const string Connect_Retry_Interval = "connectretryinterval";
+            internal const string Authentication = "authentication";
         }
 
         // Constant for the number of duplicate options in the connection string
@@ -182,6 +184,7 @@ namespace Microsoft.Data.SqlClient
         private readonly bool _replication;
         private readonly bool _userInstance;
         private readonly bool _multiSubnetFailover;
+        private readonly SqlAuthenticationMethod _authType;
         private readonly SqlConnectionColumnEncryptionSetting _columnEncryptionSetting;
         private readonly string _enclaveAttestationUrl;
 
@@ -256,6 +259,7 @@ namespace Microsoft.Data.SqlClient
             _initialCatalog = ConvertValueToString(KEY.Initial_Catalog, DEFAULT.Initial_Catalog);
             _password = ConvertValueToString(KEY.Password, DEFAULT.Password);
             _trustServerCertificate = ConvertValueToBoolean(KEY.TrustServerCertificate, DEFAULT.TrustServerCertificate);
+            _authType = ConvertValueToAuthenticationType();
             _columnEncryptionSetting = ConvertValueToColumnEncryptionSetting();
             _enclaveAttestationUrl = ConvertValueToString(KEY.EnclaveAttestationUrl, DEFAULT.EnclaveAttestationUrl);
 
@@ -402,6 +406,26 @@ namespace Microsoft.Data.SqlClient
             {
                 throw ADP.InvalidConnectRetryIntervalValue();
             }
+
+            if (Authentication != SqlAuthenticationMethod.NotSpecified && _integratedSecurity == true)
+            {
+                throw SQL.AuthenticationAndIntegratedSecurity();
+            }
+
+            if (Authentication == SqlClient.SqlAuthenticationMethod.ActiveDirectoryIntegrated && (HasUserIdKeyword || HasPasswordKeyword))
+            {
+                throw SQL.IntegratedWithUserIDAndPassword();
+            }
+
+            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive && !HasUserIdKeyword)
+            {
+                throw SQL.InteractiveWithoutUserID();
+            }
+
+            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive && HasPasswordKeyword)
+            {
+                throw SQL.InteractiveWithPassword();
+            }
         }
 
         // This c-tor is used to create SSE and user instance connection strings when user instance is set to true
@@ -449,6 +473,7 @@ namespace Microsoft.Data.SqlClient
             _applicationIntent = connectionOptions._applicationIntent;
             _connectRetryCount = connectionOptions._connectRetryCount;
             _connectRetryInterval = connectionOptions._connectRetryInterval;
+            _authType = connectionOptions._authType;
             _columnEncryptionSetting = connectionOptions._columnEncryptionSetting;
             _enclaveAttestationUrl = connectionOptions._enclaveAttestationUrl;
 
@@ -468,6 +493,7 @@ namespace Microsoft.Data.SqlClient
         internal bool Enlist { get { return _enlist; } }
         internal bool MARS { get { return _mars; } }
         internal bool MultiSubnetFailover { get { return _multiSubnetFailover; } }
+        internal SqlAuthenticationMethod Authentication { get { return _authType; } }
         internal SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting { get { return _columnEncryptionSetting; } }
         internal string EnclaveAttestationUrl { get { return _enclaveAttestationUrl; } }
         internal bool PersistSecurityInfo { get { return _persistSecurityInfo; } }
@@ -548,6 +574,7 @@ namespace Microsoft.Data.SqlClient
                     { KEY.Workstation_Id, KEY.Workstation_Id },
                     { KEY.Connect_Retry_Count, KEY.Connect_Retry_Count },
                     { KEY.Connect_Retry_Interval, KEY.Connect_Retry_Interval },
+                    { KEY.Authentication, KEY.Authentication },
 
                     { SYNONYM.APP, KEY.Application_Name },
                     { SYNONYM.Async, KEY.AsynchronousProcessing },
@@ -634,6 +661,27 @@ namespace Microsoft.Data.SqlClient
             if (ContainsKey(keyword))
             {
                 throw SQL.UnsupportedKeyword(keyword);
+            }
+        }
+
+        internal SqlAuthenticationMethod ConvertValueToAuthenticationType()
+        {
+            if (!TryGetParsetableValue(KEY.Authentication, out string value))
+            {
+                return DEFAULT.Authentication;
+            }
+
+            try
+            {
+                return DbConnectionStringBuilderUtil.ConvertToAuthenticationType(KEY.Authentication, value);
+            }
+            catch (FormatException e)
+            {
+                throw ADP.InvalidConnectionOptionValue(KEY.Authentication, e);
+            }
+            catch (OverflowException e)
+            {
+                throw ADP.InvalidConnectionOptionValue(KEY.Authentication, e);
             }
         }
 

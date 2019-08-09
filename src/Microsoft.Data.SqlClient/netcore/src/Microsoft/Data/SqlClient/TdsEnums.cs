@@ -88,7 +88,7 @@ namespace Microsoft.Data.SqlClient
         public const byte MT_BINARY = 5;    // Unformatted binary response data (UNUSED)
         public const byte MT_ATTN = 6;    // Attention (break) signal
         public const byte MT_BULK = 7;    // Bulk load data
-        public const byte MT_OPEN = 8;    // Set up subchannel   (UNUSED)
+        public const byte MT_FEDAUTH = 8;    // Authentication token for federated authentication
         public const byte MT_CLOSE = 9;    // Close subchannel   (UNUSED)
         public const byte MT_ERROR = 10;   // Protocol error detected
         public const byte MT_ACK = 11;   // Protocol acknowledgement   (UNUSED)
@@ -140,7 +140,7 @@ namespace Microsoft.Data.SqlClient
         public const byte SQLCOLMETADATA = 0x81;    // Column metadata including name
         public const byte SQLALTMETADATA = 0x88;    // Alt column metadata including name
         public const byte SQLSSPI = 0xed;    // SSPI data
-
+        public const byte SQLFEDAUTHINFO = 0xee;    // Info for client to generate fed auth token
         public const byte SQLRESCOLSRCS = 0xa2;
         public const byte SQLDATACLASSIFICATION = 0xa3;
 
@@ -232,17 +232,31 @@ namespace Microsoft.Data.SqlClient
 
         public const byte FEDAUTHLIB_LIVEID = 0X00;
         public const byte FEDAUTHLIB_SECURITYTOKEN = 0x01;
-        public const byte FEDAUTHLIB_ADAL = 0x02;
+        public const byte FEDAUTHLIB_MSAL = 0x02;
         public const byte FEDAUTHLIB_RESERVED = 0X7F;
 
         public enum FedAuthLibrary : byte
         {
             LiveId = FEDAUTHLIB_LIVEID,
             SecurityToken = FEDAUTHLIB_SECURITYTOKEN,
-            ADAL = FEDAUTHLIB_ADAL, // For later support
+            MSAL = FEDAUTHLIB_MSAL, // For later support
             Default = FEDAUTHLIB_RESERVED
         }
 
+        public const byte MSALWORKFLOW_ACTIVEDIRECTORYPASSWORD = 0x01;
+        public const byte MSALWORKFLOW_ACTIVEDIRECTORYINTEGRATED = 0x02;
+        public const byte MSALWORKFLOW_ACTIVEDIRECTORYINTERACTIVE = 0x03;
+
+        public enum ActiveDirectoryWorkflow : byte
+        {
+            Password = MSALWORKFLOW_ACTIVEDIRECTORYPASSWORD,
+            Integrated = MSALWORKFLOW_ACTIVEDIRECTORYINTEGRATED,
+            Interactive = MSALWORKFLOW_ACTIVEDIRECTORYINTERACTIVE,
+        }
+
+        // The string used for username in the error message when Authentication = Active Directory Integrated with FedAuth is used, if authentication fails.
+        public const string NTAUTHORITYANONYMOUSLOGON = @"NT Authority\Anonymous Logon";
+        
         //    Loginrec defines
         public const byte MAX_LOG_NAME = 30;              // TDS 4.2 login rec max name length
         public const byte MAX_PROG_NAME = 10;              // max length of loginrec program name
@@ -907,6 +921,12 @@ namespace Microsoft.Data.SqlClient
         internal static readonly int[] WHIDBEY_DATETIME2_LENGTH = { 19, 21, 22, 23, 24, 25, 26, 27 };
         internal static readonly int[] WHIDBEY_DATETIMEOFFSET_LENGTH = { 26, 28, 29, 30, 31, 32, 33, 34 };
 
+        internal enum FedAuthInfoId : byte
+        {
+            Stsurl = 0x01, // FedAuthInfoData is token endpoint URL from which to acquire fed auth token
+            Spn = 0x02, // FedAuthInfoData is the SPN to use for acquiring fed auth token
+        }
+
         // Data Classification constants
         internal const byte DATA_CLASSIFICATION_NOT_ENABLED = 0x00;
         internal const byte MAX_SUPPORTED_DATA_CLASSIFICATION_VERSION = 0x01;
@@ -1066,6 +1086,29 @@ namespace Microsoft.Data.SqlClient
         /// Disables TCE for the command.Overrides the connection level setting for this command.
         /// </summary>
         Disabled,
+    }
+
+    public enum SqlAuthenticationMethod
+    {
+        NotSpecified = 0,
+        SqlPassword,
+        ActiveDirectoryPassword,
+        ActiveDirectoryIntegrated,
+        ActiveDirectoryInteractive 
+    }
+    // This enum indicates the state of TransparentNetworkIPResolution
+    // The first attempt when TNIR is on should be sequential. If the first attempt failes next attempts should be parallel.
+    internal enum TransparentNetworkResolutionState
+    {
+        DisabledMode = 0,
+        SequentialMode,
+        ParallelMode
+    };
+
+    internal class ActiveDirectoryAuthentication
+    {
+        internal const string AdoClientId = "4d079b4c-cab7-4b7c-a115-8fd51b6f8239";
+        internal const string MSALGetAccessTokenFunctionName = "AcquireToken";
     }
 
     // Fields in the first resultset of "sp_describe_parameter_encryption".
