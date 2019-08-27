@@ -1,6 +1,6 @@
 # Microsoft.Data.SqlClient 1.0 Releases
 
-The following Microsoft.Data.SqlClient 1.0 Stable releases have been shipped:
+The following Microsoft.Data.SqlClient 1.0 stable releases have been shipped:
 
 | Release Date | Description | Notes |
 | :-- | :-- | :--: |
