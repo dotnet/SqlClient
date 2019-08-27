@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Circle</RootNamespace>
+    <AssemblyName>Circle</AssemblyName>
+    <ProjectGuid>{6C88F00F-9597-43AD-9E5F-9B344DA3B16F}</ProjectGuid>
+    <TargetGroup Condition="'$(TargetFramework)'=='netcoreapp2.1'">netcoreapp</TargetGroup>
+    <TargetGroup Condition="'$(TargetFramework)'=='net46'">netfx</TargetGroup>
+    <Platforms>AnyCPU;x86;x64</Platforms>
+    <Configurations>Debug;Release;net46-Release;net46-Debug;netcoreapp2.1-Debug;netcoreapp2.1-Release</Configurations>
+    <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)\$(AssemblyName)</IntermediateOutputPath>  
+    <OutputPath>$(BinFolder)$(Configuration).$(Platform)\$(AssemblyName)</OutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
+    <ProjectReference Condition="'$(TargetGroup)'=='netfx'" Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
+  </ItemGroup>
+</Project>

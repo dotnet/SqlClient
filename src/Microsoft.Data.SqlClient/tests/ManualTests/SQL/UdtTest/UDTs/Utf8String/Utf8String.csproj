@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Utf8String</RootNamespace>
+    <AssemblyName>Utf8String</AssemblyName>
+    <ProjectGuid>{E0A6BB21-574B-43D9-890D-6E1144F2EE9E}</ProjectGuid>
+    <TargetGroup Condition="'$(TargetFramework)'=='netcoreapp2.1'">netcoreapp</TargetGroup>
+    <TargetGroup Condition="'$(TargetFramework)'=='net46'">netfx</TargetGroup>
+    <Configurations>Debug;Release;net46-Release;net46-Debug;netcoreapp2.1-Debug;netcoreapp2.1-Release</Configurations>
+    <Platforms>AnyCPU;x86;x64</Platforms>
+    <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)\$(AssemblyName)</IntermediateOutputPath>  
+    <OutputPath>$(BinFolder)$(Configuration).$(Platform)\$(AssemblyName)</OutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
+    <ProjectReference Condition="'$(TargetGroup)'=='netfx'" Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
+  </ItemGroup>
+</Project>

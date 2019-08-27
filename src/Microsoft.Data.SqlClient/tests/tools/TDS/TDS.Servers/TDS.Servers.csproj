@@ -1,0 +1,40 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Microsoft.SqlServer.TDS.Servers</RootNamespace>
+    <AssemblyName>Microsoft.SqlServer.TDS.Servers</AssemblyName>
+    <ProjectGuid>{978063D3-FBB5-4E10-8C45-67C90BE1B931}</ProjectGuid>
+    <ClsCompliant>false</ClsCompliant>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <Configurations>Debug;Release;net46-Release;net46-Debug;netcoreapp2.1-Debug;netcoreapp2.1-Release</Configurations>
+    <Platforms>AnyCPU;x86;x64</Platforms>
+    <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)\$(AssemblyName)</IntermediateOutputPath>  
+    <OutputPath>$(BinFolder)$(Configuration).$(Platform)\$(AssemblyName)</OutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="ApplicationIntentFilterType.cs" />
+    <Compile Include="AuthenticatingTDSServer.cs" />
+    <Compile Include="AuthenticatingTDSServerArguments.cs" />
+    <Compile Include="DateFormatString.cs" />
+    <Compile Include="FederatedAuthenticationNegativeTDSServer.cs" />
+    <Compile Include="FederatedAuthenticationNegativeTDSServerArguments.cs" />
+    <Compile Include="FederatedAuthenticationNegativeTDSScenarioType.cs" />
+    <Compile Include="GenericTDSServer.cs" />
+    <Compile Include="GenericTDSServerSession.cs" />
+    <Compile Include="QueryEngine.cs" />
+    <Compile Include="RoutingTDSServer.cs" />
+    <Compile Include="RoutingTDSServerArguments.cs" />
+    <Compile Include="ServerNameFilterType.cs" />
+    <Compile Include="TDSServerArguments.cs" />
+    <None Include="TdsServerCertificate.pfx">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(TestsPath)tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj">
+      <Name>TDS.EndPoint</Name>
+    </ProjectReference>
+    <ProjectReference Include="$(TestsPath)tools\TDS\TDS\TDS.csproj">
+      <Name>TDS</Name>
+    </ProjectReference>
+  </ItemGroup>
+</Project>

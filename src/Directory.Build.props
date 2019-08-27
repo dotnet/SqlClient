@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  
+  <PropertyGroup>
+    <TargetsWindows Condition="'$(OS)' == 'Windows_NT' AND '$(OSGroup)' == ''">true</TargetsWindows>
+    <TargetsWindows Condition="'$(OS)' != 'Windows_NT' AND '$(OSGroup)' == ''">false</TargetsWindows>
+    <TargetsWindows Condition="'$(OSGroup)' == 'Windows_NT'">true</TargetsWindows>
+    <TargetsUnix Condition="'$(OS)' == 'Unix' AND '$(OSGroup)' == ''">true</TargetsUnix>
+    <TargetsUnix Condition="'$(OS)' != 'Unix' AND '$(OSGroup)' == ''">false</TargetsUnix>
+    <TargetsUnix Condition="'$(OSGroup)' == 'Unix'">true</TargetsUnix>
+    <TargetsAnyOS Condition="'$(OSGroup)' == 'AnyOS'">true</TargetsAnyOS>
+    <IsSourceProject Condition="$([System.Text.RegularExpressions.Regex]::IsMatch($(MSBuildProjectDirectory), 'src%24'))">true</IsSourceProject>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <ProjectDir>$(MSBuildThisFileDirectory)</ProjectDir>
+    <RepoRoot>$(ProjectDir)..\</RepoRoot>
+    <ManagedSourceCode>$(ProjectDir)Microsoft.Data.SqlClient\</ManagedSourceCode>
+    <NetCoreSource>$(ManagedSourceCode)netcore\</NetCoreSource>
+    <NetFxSource>$(ManagedSourceCode)netfx\</NetFxSource>
+    <NetFxResources>$(ManagedSourceCode)netfx\src\Resources\</NetFxResources>
+    <ObjFolder>$(RepoRoot)obj\</ObjFolder>
+    <CommonPath>$(NetCoreSource)src\Common\src</CommonPath>
+    <CommonTestPath>$(NetCoreSource)src\Common\tests</CommonTestPath>
+    <TestsPath>$(ProjectDir)Microsoft.Data.SqlClient\tests\</TestsPath>
+    <BinFolder Condition="'$(TargetsWindows)' == 'true'">$(RepoRoot)bin\Windows_NT\</BinFolder>
+    <BinFolder Condition="'$(TargetsAnyOS)' == 'true'">$(RepoRoot)bin\AnyOS\</BinFolder>
+    <BinFolder Condition="'$(TargetsUnix)' == 'true'">$(RepoRoot)bin\Unix\</BinFolder>
+    <ToolsDir Condition="'$(ToolsDir)'==''">$(RepoRoot)tools\</ToolsDir>
+    <PackagesDir Condition="'$(PackagesDir)'==''">$(RepoRoot)packages\</PackagesDir>
+    <NuGetRoot Condition="'$(NuGetRoot)' == ''">$(RepoRoot).nuget\</NuGetRoot>
+    <NuGetCmd>$(NuGetRoot)nuget.exe</NuGetCmd>
+    <!-- Respect environment variable for the .NET install directory if set; otherwise, use the current default location -->
+    <DotNetRoot Condition="'$(DotNetRoot)' == ''">$(DOTNET_INSTALL_DIR)</DotNetRoot>
+    <DotNetRoot Condition="'$(DotNetRoot)' == ''">$(RepoRoot).dotnet\</DotNetRoot>
+    <DotNetRoot Condition="!HasTrailingSlash('$(DotNetRoot)')">$(DotNetRoot)\</DotNetRoot>
+    <DotNetCmd>$(DotNetRoot)dotnet</DotNetCmd>
+    <DotNetCmd Condition="'$(OS)' == 'Windows_NT'">$(DotNetCmd).exe</DotNetCmd>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <!-- Provides Version properties -->
+  <Import Project="$(ToolsDir)props\Versions.props" />
+  <!-- Provides Tool properties -->
+  <Import Project="$(ToolsDir)props\Tools.props" />
+  <!-- Provides Build properties -->
+  <Import Project="$(ToolsDir)props\AssemblyInfo.props" /> 
+  <Import Project="$(ToolsDir)props\AssemblyRef.props" />  
+</Project>
