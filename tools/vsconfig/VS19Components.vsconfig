@@ -1,0 +1,30 @@
+{
+	"version": "1.0",
+	"components": [
+		"Microsoft.VisualStudio.Workload.Azure",
+		"Microsoft.VisualStudio.Workload.NetWeb",
+		"Microsoft.VisualStudio.Workload.NativeDesktop",
+		"Microsoft.VisualStudio.Workload.NetCoreTools",
+		"Microsoft.VisualStudio.Workload.ManagedDesktop",
+		"microsoft.component.azure.datalake.tools",
+		"Microsoft.NetCore.ComponentGroup.Web.2.1",
+		"microsoft.net.componentgroup.targetingpacks.common",
+		"Microsoft.VisualStudio.Component.Git",
+		"Component.GitHub.VisualStudio",
+		"microsoft.visualstudio.componentgroup.azure.resourcemanager.tools",
+		"microsoft.visualstudio.componentgroup.azure.cloudservices",
+		"microsoft.visualstudio.component.debugger.justintime",
+		"Microsoft.VisualStudio.Component.LiveUnitTesting",
+		"microsoft.visualstudio.component.vc.tools.x86.x64",
+		"microsoft.visualstudio.component.windows10sdk.17763",
+		"microsoft.visualstudio.component.vc.140",
+		"microsoft.visualstudio.component.appinsights.tools",
+		"microsoft.visualstudio.component.debugger.snapshot",
+		"microsoft.visualstudio.component.aspnet45",
+		"microsoft.visualstudio.component.webdeploy",
+		"microsoft.visualstudio.component.azure.servicefabric.tools",
+		"microsoft.visualstudio.component.typescript.3.4",
+		"Microsoft.VisualStudio.Component.TestTools.CodedUITest",
+		"microsoft.visualstudio.component.testtools.webloadtest"
+	]
+}
