@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup Condition="'$(GeneratePlatformNotSupportedAssembly)' == 'true' OR '$(GeneratePlatformNotSupportedAssemblyMessage)' != ''">
+    <!-- Tell ResolveMatchingContract to run and resolve contract to project reference -->
+    <ResolveMatchingContract>true</ResolveMatchingContract>
+    <NotSupportedSourceFile>$(IntermediateOutputPath)$(AssemblyName).notsupported.cs</NotSupportedSourceFile>
+    <CoreCompileDependsOn>$(CoreCompileDependsOn);GenerateNotSupportedSource</CoreCompileDependsOn>
+    <!-- Not supported sources are created from the ref assembly, we currently don't produce finalizers in dummmy assemblies, so we disable ApiCompat to not fail. -->
+    <RunApiCompat>false</RunApiCompat>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(GeneratePlatformNotSupportedAssembly)' == 'true' OR '$(GeneratePlatformNotSupportedAssemblyMessage)' != ''">
+    <AssemblyMetadata Include="NotSupported">
+      <Value>True</Value>
+    </AssemblyMetadata>
+  </ItemGroup>
+
+  <!-- GenerateNotSupportedSource
+       Inputs:
+         * A contract assembly
+         * Reference assemblies
+
+       Generates source for the contract that throws PlatformNotSupportedException
+  -->
+    <Target Name="GenerateNotSupportedSource" 
+      AfterTargets="ResolveCodeAnalysisRuleSet"
+      DependsOnTargets="ResolveMatchingContract"
+      Inputs="@(ReferencePath);@(ResolvedMatchingContract)"
+      Outputs="$(NotSupportedSourceFile)">
+    <ItemGroup>
+      <!-- build out a list of directories where dependencies are located -->
+      <_referencePathDirectoriesWithDuplicates Include="@(ReferencePath->'%(RootDir)%(Directory)'->TrimEnd('\'))" />
+      <!-- strip metadata, removing duplicates -->
+      <_referencePathDirectories Include="%(_referencePathDirectoriesWithDuplicates.Identity)" />
+    </ItemGroup>
+
+    <Error Text="No single matching contract found." Condition="'@(ResolvedMatchingContract->Count())' != '1'" />
+
+    <PropertyGroup>
+      <GenAPIArgs>-assembly:"%(ResolvedMatchingContract.Identity)"</GenAPIArgs>
+      <GenAPIArgs>$(GenAPIArgs) -libPath:"@(_referencePathDirectories)"</GenAPIArgs>
+      <GenAPIArgs>$(GenAPIArgs) -out:"$(NotSupportedSourceFile)"</GenAPIArgs>
+      <GenAPIArgs Condition="'$(GeneratePlatformNotSupportedAssembly)' == 'true' OR '$(GeneratePlatformNotSupportedAssemblyMessage)' != ''">$(GenAPIArgs) -throw:"$(GeneratePlatformNotSupportedAssemblyMessage)"</GenAPIArgs>
+      <GenAPIArgs Condition="'$(GeneratePlatformNotSupportedAssemblyWithGlobalPrefix)' == 'true'">$(GenAPIArgs) -global</GenAPIArgs>
+      <GenAPIPath Condition="'$(MSBuildRuntimeType)' == 'core'"> "$(DotNetCmd) $(NuGetPackageRoot)microsoft.dotnet.genapi\$(MicrosoftDotNetGenApiPackageVersion)\tools\netcoreapp2.1\Microsoft.DotNet.GenAPI.dll"</GenAPIPath>
+      <GenAPIPath Condition="'$(MSBuildRuntimeType)' != 'core'"> "$(NuGetPackageRoot)microsoft.dotnet.genapi\$(MicrosoftDotNetGenApiPackageVersion)\tools\net472\Microsoft.DotNet.GenAPI.exe"</GenAPIPath>
+    </PropertyGroup>
+
+    <Exec Command="$(GenAPIPath) $(GenAPIArgs)" WorkingDirectory="$(ToolRuntimePath)" />
+
+    <ItemGroup>
+      <FileWrites Include="$(NotSupportedSourceFile)" />
+      <Compile Include="$(NotSupportedSourceFile)" />
+    </ItemGroup>
+  </Target>
+
+</Project>

@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="BuildAll" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="src/Directory.Build.props" />
+  <Import Project="$(ToolsDir)targets\GenerateNugetPackage.targets" />
+
+  <PropertyGroup>
+    <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
+    <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
+    <!-- Flag to control if NetFx driver should be built or not -->
+    <IsEnabledNetFx Condition="'$(IsEnabledNetFx)' == '' AND '$(TargetsWindows)' == 'true'">true</IsEnabledNetFx>
+    <IsEnabledNetFx Condition="'$(TargetsUnix)' == 'true'">false</IsEnabledNetFx>
+    <TestOS Condition="'$(TestTargetOS)' == '' AND '$(TargetsWindows)' == 'true'">Windows</TestOS>
+    <TestOS Condition="'$(TestTargetOS)' == '' AND '$(TargetsUnix)' == 'true'">Unix</TestOS>
+    <GenerateNuget Condition="'$(GenerateNuget)' == ''">true</GenerateNuget>
+    <ProjectProperties>Configuration=$(Configuration);AssemblyFileVersion=$(AssemblyFileVersion);TargetsWindows=$(TargetsWindows);TargetsUnix=$(TargetsUnix);</ProjectProperties>
+    <TestProjectProperties>BuildProjectReferences=false;$(ProjectProperties);</TestProjectProperties>
+  </PropertyGroup>
+
+  <!-- Populate all managed projects -->
+  <ItemGroup>
+    <NetFxDriver     Include="**/netfx/**/Microsoft.Data.SqlClient*.csproj" Condition="'$(IsEnabledNetFx)' == 'true'"/>
+    <NetCoreDriver   Include="**/netcore/**/Microsoft.Data.SqlClient*.csproj"/>
+    <FunctionalTests Include="**/tools/TDS/TDS/TDS.csproj" />
+    <FunctionalTests Include="**/tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
+    <FunctionalTests Include="**/tools/TDS/TDS.Servers/TDS.Servers.csproj" />
+    <FunctionalTests Include="**/tools/CoreFx.Private.TestUtilities/CoreFx.Private.TestUtilities.csproj" />
+    <FunctionalTests Include="**/ManualTests/SQL/UdtTest/UDTs/Address/Address.csproj" />
+    <FunctionalTests Include="**/Microsoft.Data.SqlClient.Tests.csproj" />
+
+    <ManualTests     Include="**/ManualTests/SQL/UdtTest/UDTs/Address/Address.csproj" />
+    <ManualTests     Include="**/ManualTests/SQL/UdtTest/UDTs/Circle/Circle.csproj" />
+    <ManualTests     Include="**/ManualTests/SQL/UdtTest/UDTs/Shapes/Shapes.csproj" />
+    <ManualTests     Include="**/ManualTests/SQL/UdtTest/UDTs/Utf8String/Utf8String.csproj" />
+    <ManualTests     Include="**/tools/CoreFx.Private.TestUtilities/CoreFx.Private.TestUtilities.csproj" />
+    <ManualTests     Include="**/ManualTests/Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" />
+
+    <NugetPackageSources Include="https://api.nuget.org/v3/index.json" />
+    <NugetPackageSources Include="https://dotnetfeed.blob.core.windows.net/dotnet-core/index.json" />
+    <NugetPackageSources Include="https://dotnet.myget.org/F/dotnet-core/api/v3/index.json" />
+  </ItemGroup>
+
+  <!-- Top Level Build targets -->
+  <Target Name="Restore"                   DependsOnTargets="RestoreNetCore;RestoreNetFx" />
+  <Target Name="BuildAll"                  DependsOnTargets="BuildNetFx;BuildNetCore" />
+  <Target Name="BuildAllConfigurations"    DependsOnTargets="BuildNetFx;BuildNetCoreAllOS;GenerateNugetPackage" />
+  <Target Name="BuildTestsNetCore"         DependsOnTargets="BuildFunctionalTestsNetCore;BuildManualTestsNetCore" />
+  <Target Name="BuildTestsNetFx"           DependsOnTargets="BuildFunctionalTestsNetFx;BuildManualTestsNetFx" />
+
+  <Target Name="RestoreNetCore">
+    <PropertyGroup>
+      <NugetPackageSourcesProperty>@(NugetPackageSources)</NugetPackageSourcesProperty>
+    </PropertyGroup>
+    <MSBuild Projects="@(NetCoreDriver)" Targets="restore" Properties="RestoreSources=$(NugetPackageSourcesProperty);TestTargetOS=$(TestOS)netcoreapp" />
+    <MSBuild Projects="@(ManualTests)" Targets="restore" Properties="RestoreSources=$(NugetPackageSourcesProperty);TestTargetOS=$(TestOS)netcoreapp" />
+    <MSBuild Projects="@(FunctionalTests)" Targets="restore" Properties="RestoreSources=$(NugetPackageSourcesProperty);TestTargetOS=$(TestOS)netcoreapp" />
+  </Target>
+
+  <Target Name="RestoreNetFx" Condition="'$(IsEnabledNetFx)' == 'true'">
+    <PropertyGroup>
+      <NugetPackageSourcesProperty>@(NugetPackageSources)</NugetPackageSourcesProperty>
+    </PropertyGroup>
+    <MSBuild Projects="@(NetFxDriver)" Targets="restore" Properties="RestoreSources=$(NugetPackageSourcesProperty);TestTargetOS=$(TestOS)netfx" />
+    <MSBuild Projects="@(ManualTests)" Targets="restore" Properties="RestoreSources=$(NugetPackageSourcesProperty);TestTargetOS=$(TestOS)netfx" />
+    <MSBuild Projects="@(FunctionalTests)" Targets="restore" Properties="RestoreSources=$(NugetPackageSourcesProperty);TestTargetOS=$(TestOS)netfx" />
+  </Target>
+
+  <Target Name="BuildNetFx" DependsOnTargets="RestoreNetFx" Condition="'$(IsEnabledNetFx)' == 'true'">
+    <MSBuild Projects="@(NetFxDriver)"   Properties="Platform=AnyCPU;$(ProjectProperties)" />
+  </Target>
+
+  <Target Name="BuildNetCore" DependsOnTargets="RestoreNetCore">
+    <MSBuild Projects="@(NetCoreDriver)"   Properties="Platform=AnyCPU;$(ProjectProperties)" />
+  </Target>
+
+  <Target Name="BuildNetCoreAllOS" DependsOnTargets="RestoreNetCore">
+    <MSBuild Projects="@(NetCoreDriver)"  Properties="$(ProjectProperties);Platform=AnyCPU;OSGroup=Unix;"  RemoveProperties="TargetsWindows;TargetsUnix;" />
+    <MSBuild Projects="@(NetCoreDriver)"  Properties="$(ProjectProperties);Platform=AnyCPU;OSGroup=Windows_NT;"  RemoveProperties="TargetsWindows;TargetsUnix;" />
+    <MSBuild Projects="@(NetCoreDriver)"  Properties="$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;"  RemoveProperties="TargetsWindows;TargetsUnix;" />
+  </Target>
+
+  <Target Name="BuildFunctionalTestsNetCore" DependsOnTargets="RestoreNetCore">
+    <MSBuild Projects="@(FunctionalTests)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;" />
+  </Target>
+
+  <Target Name="BuildManualTestsNetCore" DependsOnTargets="RestoreNetCore">
+    <MSBuild Projects="@(ManualTests)"   Properties="TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;" />
+  </Target>
+
+  <Target Name="BuildFunctionalTestsNetFx" DependsOnTargets="RestoreNetFx" Condition="'$(IsEnabledNetFx)' == 'true'">
+    <!-- Only build platform specific tests on Windows for .Net Framework -->
+    <MSBuild Projects="@(FunctionalTests)"   Properties="TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=$(Platform);" />
+  </Target>
+
+  <Target Name="BuildManualTestsNetFx" DependsOnTargets="RestoreNetFx" Condition="'$(IsEnabledNetFx)' == 'true'">
+    <MSBuild Projects="@(ManualTests)"   Properties="TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=$(Platform);" />
+  </Target>
+
+  <Target Name="Clean">
+    <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".","bin", SearchOption.AllDirectories))' />
+    <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".","obj", SearchOption.AllDirectories))' />
+    <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".","packages", SearchOption.AllDirectories))' />
+    <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".",".nuget", SearchOption.AllDirectories))' />
+  </Target>
+
+</Project>
