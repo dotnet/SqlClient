@@ -1,0 +1,31 @@
+{
+	"version": "1.0",
+	"components": [
+		"Microsoft.VisualStudio.Workload.ManagedDesktop",
+		"Microsoft.VisualStudio.Workload.NativeDesktop",
+		"Microsoft.VisualStudio.Workload.Azure",
+		"Microsoft.VisualStudio.Workload.NetCoreTools",
+		"microsoft.net.componentgroup.targetingpacks.common",
+		"microsoft.visualstudio.component.debugger.justintime",
+		"microsoft.visualstudio.component.liveunittesting",
+		"microsoft.visualstudio.component.vc.tools.x86.x64",
+		"microsoft.visualstudio.component.windows10sdk.17763",
+		"microsoft.visualstudio.componentgroup.nativedesktop.win81",
+		"microsoft.visualstudio.component.vc.140",
+		"microsoft.visualstudio.component.appinsights.tools",
+		"microsoft.visualstudio.component.debugger.snapshot",
+		"microsoft.visualstudio.component.aspnet45",
+		"microsoft.visualstudio.component.webdeploy",
+		"microsoft.netcore.componentgroup.web",
+		"microsoft.visualstudio.component.testtools.webloadtest",
+		"microsoft.component.azure.datalake.tools",
+		"microsoft.visualstudio.componentgroup.azure.resourcemanager.tools",
+		"microsoft.visualstudio.componentgroup.azure.cloudservices",
+		"microsoft.visualstudio.component.azure.mobileappssdk",
+		"microsoft.visualstudio.component.azure.servicefabric.tools",
+		"microsoft.visualstudio.component.testtools.core",
+		"microsoft.visualstudio.component.typescript.2.3",
+		"microsoft.visualstudio.component.testtools.microsofttestmanager",
+		"microsoft.visualstudio.component.typescript.3.0"
+	]
+}
