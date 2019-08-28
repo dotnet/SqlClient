@@ -97,6 +97,24 @@ Unix (`netcoreapp2.1`):
 
 ## Run Manual Tests
 
+### Pre-Requisites for running Manual tests:
+Manual Tests require below setup to run:
+* SQL Server with enabled Shared Memory, TCP and Named Pipes Protocols and access to Client OS.
+* Databases "NORTHWIND" and "UdtTestDb" present in SQL Server, created using SQL scripts [createNorthwindDb.sql](tools\testsql\createNorthwindDb.sql) and [createUdtTestDb.sql](tools\testsql\createUdtTestDb.sql).
+* Environment variables configured in Client OS as under:
+
+|Env Variable|Description|Value|
+|------|--------|-------------------|
+|TEST_NP_CONN_STR | Connection String for Named Pipes enabled SQL Server instance.| `Server=\\{servername}\pipe\sql\query;Database={Database_Name};Trusted_Connection=True;` <br/> OR <br/> `Data Source=np:{servername};Initial Catalog={Database_Name};Integrated Security=True;`|
+|TEST_TCP_CONN_STR | Connection String for TCP enabled SQL Server instance. | `Server={servername};Database={Database_Name};Trusted_Connection=True;` <br/> OR `Data Source={servername};Initial Catalog={Database_Name};Integrated Security=True;`|
+|AAD_PASSWORD_CONN_STR | (Optional) Connection String for testing Azure Active Directory Password Authentication. | `Data Source={server.database.windows.net}; Initial Catalog={Azure_DB_Name};Authentication=Active Directory Password; User ID={AAD_User}; Password={AAD_User_Password};`|
+|TEST_ACCESSTOKEN_SETUP| (Optional) Contains Access Token to be used for tests.| _<OAuth 2.0 Access Token>_ |
+|TEST_LOCALDB_INSTALLED| (Optional) Whether or not LocalDb instance of SQL Server is installed on the machine running the tests. |`1` OR `0`|
+|TEST_INTEGRATEDSECURITY_SETUP| (Optional) Whether or not USER running tests has integrated security access to target SQL Server.| `1` OR `0`|
+|TEST_FILESTREAM_SETUP| (Optional) Whether or not FileStream is enabled on SQL Server| `1` OR `0`|
+
+Commands to run tests are as under:
+
 Windows (`netcoreapp2.1`):  
 ```bash
 > dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" /p:Platform="AnyCPU" /p:Configuration="Release" /p:TestTargetOS="Windowsnetcoreapp" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonwindowstests"
