@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -1650,14 +1649,12 @@ namespace Microsoft.Data.SqlClient
             int cBytes = length << 1;
             byte[] buf;
             int offset = 0;
-            bool rentedBuffer = false;
 
             if (((_inBytesUsed + cBytes) > _inBytesRead) || (_inBytesPacket < cBytes))
             {
                 if (_bTmp == null || _bTmp.Length < cBytes)
                 {
-                    _bTmp = ArrayPool<byte>.Shared.Rent(cBytes);
-                    rentedBuffer = true;
+                    _bTmp = new byte[cBytes];
                 }
 
                 if (!TryReadByteArray(_bTmp, cBytes))
@@ -1683,10 +1680,6 @@ namespace Microsoft.Data.SqlClient
             }
 
             value = System.Text.Encoding.Unicode.GetString(buf, offset, cBytes);
-            if (rentedBuffer)
-            {
-                ArrayPool<byte>.Shared.Return(_bTmp, clearArray: true);
-            }
             return true;
         }
 
@@ -1719,7 +1712,6 @@ namespace Microsoft.Data.SqlClient
             }
             byte[] buf = null;
             int offset = 0;
-            bool rentedBuffer = false;
 
             if (isPlp)
             {
@@ -1737,8 +1729,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (_bTmp == null || _bTmp.Length < length)
                     {
-                        _bTmp = ArrayPool<byte>.Shared.Rent(length);
-                        rentedBuffer = true;
+                        _bTmp = new byte[length];
                     }
 
                     if (!TryReadByteArray(_bTmp, length))
@@ -1766,10 +1757,6 @@ namespace Microsoft.Data.SqlClient
 
             // BCL optimizes to not use char[] underneath
             value = encoding.GetString(buf, offset, length);
-            if (rentedBuffer)
-            {
-                ArrayPool<byte>.Shared.Return(_bTmp, clearArray: true);
-            }
             return true;
         }
 
