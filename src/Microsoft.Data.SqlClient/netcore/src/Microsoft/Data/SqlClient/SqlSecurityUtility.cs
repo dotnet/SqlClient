@@ -262,7 +262,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// <para> Decrypts the symmetric key and saves it in metadata.
+        /// Decrypts the symmetric key and saves it in metadata.
         /// </summary>
         internal static void DecryptSymmetricKey(SqlTceCipherInfoEntry? sqlTceCipherInfoEntry, string serverName, out SqlClientSymmetricKey sqlClientSymmetricKey, out SqlEncryptionKeyInfo? encryptionkeyInfoChosen)
         {
@@ -315,7 +315,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// <para> Verifies Column Master Key Signature.
+        /// Verifies Column Master Key Signature.
         /// </summary>
         internal static void VerifyColumnMasterKeySignature(string keyStoreName, string keyPath, string serverName, bool isEnclaveEnabled, byte[] CMKSignature)
         {
