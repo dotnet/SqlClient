@@ -235,16 +235,15 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error status</returns>
         public uint WritePacket(SNIHandle handle, SNIPacket packet, bool sync)
         {
-            SNIPacket clonedPacket = packet.Clone();
             uint result;
             if (sync)
             {
-                result = handle.Send(clonedPacket);
-                clonedPacket.Dispose();
+                result = handle.Send(packet);
+                packet.Release();
             }
             else
             {
-                result = handle.SendAsync(clonedPacket, true);
+                result = handle.SendAsync(packet, true);
             }
 
             return result;
@@ -454,7 +453,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="length">Length</param>
         public void PacketSetData(SNIPacket packet, byte[] data, int length)
         {
-            packet.SetData(data, length);
+            packet.AppendData(data, length);
         }
 
         /// <summary>

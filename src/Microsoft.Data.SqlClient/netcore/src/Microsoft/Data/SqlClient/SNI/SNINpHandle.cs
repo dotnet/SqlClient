@@ -15,7 +15,7 @@ namespace Microsoft.Data.SqlClient.SNI
     /// <summary>
     /// Named Pipe connection handle
     /// </summary>
-    internal class SNINpHandle : SNIHandle
+    internal sealed class SNINpHandle : SNIHandle
     {
         internal const string DefaultPipePath = @"sql\query"; // e.g. \\HOSTNAME\pipe\sql\query
         private const int MAX_PIPE_INSTANCES = 255;
@@ -26,6 +26,7 @@ namespace Microsoft.Data.SqlClient.SNI
         private Stream _stream;
         private NamedPipeClientStream _pipeStream;
         private SslOverTdsStream _sslOverTdsStream;
+
         private SslStream _sslStream;
         private SNIAsyncCallback _receiveCallback;
         private SNIAsyncCallback _sendCallback;
@@ -61,13 +62,13 @@ namespace Microsoft.Data.SqlClient.SNI
                     _pipeStream.Connect((int)ts.TotalMilliseconds);
                 }
             }
-            catch(TimeoutException te)
+            catch (TimeoutException te)
             {
                 SNICommon.ReportSNIError(SNIProviders.NP_PROV, SNICommon.ConnOpenFailedError, te);
                 _status = TdsEnums.SNI_ERROR;
                 return;
             }
-            catch(IOException ioe)
+            catch (IOException ioe)
             {
                 SNICommon.ReportSNIError(SNIProviders.NP_PROV, SNICommon.ConnOpenFailedError, ioe);
                 _status = TdsEnums.SNI_ERROR;
@@ -150,7 +151,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 packet = null;
                 try
                 {
-                    packet = new SNIPacket(_bufferSize);
+                    packet = new SNIPacket(headerSize: 0, dataSize: _bufferSize);
                     packet.ReadFromStream(_stream);
 
                     if (packet.Length == 0)
@@ -174,7 +175,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
         public override uint ReceiveAsync(ref SNIPacket packet)
         {
-            packet = new SNIPacket(_bufferSize);
+            packet = new SNIPacket(headerSize: 0, dataSize: _bufferSize);
             
             try
             {
