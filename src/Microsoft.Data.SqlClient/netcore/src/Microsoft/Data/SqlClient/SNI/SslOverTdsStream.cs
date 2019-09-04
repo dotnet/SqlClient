@@ -167,6 +167,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
                     // We can only send 4088 bytes in one packet. Header[1] is set to 1 if this is a 
                     // partial packet (whether or not count != 0).
+                    combinedBuffer[7] = 0; // touch this first for the jit bounds check
                     combinedBuffer[0] = PRELOGIN_PACKET_TYPE;
                     combinedBuffer[1] = (byte)(count > 0 ? 0 : 1);
                     combinedBuffer[2] = (byte)((currentCount + TdsEnums.HEADER_LEN) / 0x100);
@@ -174,7 +175,6 @@ namespace Microsoft.Data.SqlClient.SNI
                     combinedBuffer[4] = 0;
                     combinedBuffer[5] = 0;
                     combinedBuffer[6] = 0;
-                    combinedBuffer[7] = 0; // touch this first for the jit bounds check
 
                     Array.Copy(buffer, currentOffset, combinedBuffer, TdsEnums.HEADER_LEN, (combinedLength - TdsEnums.HEADER_LEN));
 
