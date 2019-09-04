@@ -71,6 +71,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         [InlineData(64)]
         [InlineData(128)]
         [PlatformSpecific(TestPlatforms.Windows)]
+        [ActiveIssue(9814)]
         public void EncryptKeyAndThenDecryptItSuccessfully(int dataSize)
         {
             var provider = new SqlColumnEncryptionCngProvider();
