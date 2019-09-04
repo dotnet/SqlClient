@@ -91,22 +91,17 @@ namespace Microsoft.Data.SqlClient.SNI
         private async Task<int> ReadInternal(byte[] buffer, int offset, int count, CancellationToken token, bool async)
         {
             int readBytes = 0;
-            byte[] packetData = null;
-            byte[] readTarget = buffer;
-            int readOffset = offset;
+            byte[] packetData = new byte[count < TdsEnums.HEADER_LEN ? TdsEnums.HEADER_LEN : count];
             if (_encapsulate)
             {
-                packetData = ArrayPool<byte>.Shared.Rent(count < TdsEnums.HEADER_LEN ? TdsEnums.HEADER_LEN : count);
-                readTarget = packetData;
-                readOffset = 0;
                 if (_packetBytes == 0)
                 {
                     // Account for split packets
                     while (readBytes < TdsEnums.HEADER_LEN)
                     {
-                        readBytes += async ? 
-                            await _stream.ReadAsync(readTarget, readOffset, count, token).ConfigureAwait(false) :
-                            _stream.Read(readTarget, readOffset, count);
+                        readBytes += async ?
+                            await _stream.ReadAsync(packetData, readBytes, TdsEnums.HEADER_LEN - readBytes, token).ConfigureAwait(false) :
+                            _stream.Read(packetData, readBytes, TdsEnums.HEADER_LEN - readBytes);
                     }
 
                     _packetBytes = (packetData[TdsEnums.HEADER_LEN_FIELD_OFFSET] << 8) | packetData[TdsEnums.HEADER_LEN_FIELD_OFFSET + 1];
@@ -128,11 +123,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 _packetBytes -= readBytes;
             }
 
-            if (packetData != null)
-            {
-                Buffer.BlockCopy(packetData, 0, buffer, offset, readBytes);
-                ArrayPool<byte>.Shared.Return(packetData, clearArray: true);
-            }
+            Buffer.BlockCopy(packetData, 0, buffer, offset, readBytes);
 
             return readBytes;
         }
@@ -169,7 +160,6 @@ namespace Microsoft.Data.SqlClient.SNI
 
                     // We can only send 4088 bytes in one packet. Header[1] is set to 1 if this is a 
                     // partial packet (whether or not count != 0).
-                    combinedBuffer[7] = 0; // touch this first for the jit bounds check
                     combinedBuffer[0] = PRELOGIN_PACKET_TYPE;
                     combinedBuffer[1] = (byte)(count > 0 ? 0 : 1);
                     combinedBuffer[2] = (byte)((currentCount + TdsEnums.HEADER_LEN) / 0x100);
@@ -177,16 +167,20 @@ namespace Microsoft.Data.SqlClient.SNI
                     combinedBuffer[4] = 0;
                     combinedBuffer[5] = 0;
                     combinedBuffer[6] = 0;
+                    combinedBuffer[7] = 0;
 
-                    Array.Copy(buffer, currentOffset, combinedBuffer, TdsEnums.HEADER_LEN, (combinedLength - TdsEnums.HEADER_LEN));
+                    for (int i = TdsEnums.HEADER_LEN; i < combinedBuffer.Length; i++)
+                    {
+                        combinedBuffer[i] = buffer[currentOffset + (i - TdsEnums.HEADER_LEN)];
+                    }
 
                     if (async)
                     {
-                        await _stream.WriteAsync(combinedBuffer, 0, combinedLength, token).ConfigureAwait(false);
+                        await _stream.WriteAsync(combinedBuffer, 0, combinedBuffer.Length, token).ConfigureAwait(false);
                     }
                     else
                     {
-                        _stream.Write(combinedBuffer, 0, combinedLength);
+                        _stream.Write(combinedBuffer, 0, combinedBuffer.Length);
                     }
 
                     Array.Clear(combinedBuffer, 0, combinedLength);
