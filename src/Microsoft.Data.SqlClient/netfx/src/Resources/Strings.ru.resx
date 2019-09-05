@@ -2497,7 +2497,7 @@
     <value>Нельзя использовать 'Authentication=Active Directory Integrated' с ключевыми словами строки подключения 'User ID', 'UID', 'Password' или 'PWD'.</value>
   </data>
   <data name="SQL_InteractiveWithUserIDAndPassword" xml:space="preserve">
-    <value>Нельзя использовать 'Authentication=Active Directory Interactive' с ключевыми словами строки подключения 'User ID', 'UID', 'Password' или 'PWD'.</value>
+    <value>Невозможно использовать "Authentication=Active Directory Interactive" с ключевыми словами строки подключения "User ID", "UID", "Password" или "PWD".</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
     <value>Не удается использовать 'Authentication=Active Directory Integrated', если задано свойство «Credential».</value>

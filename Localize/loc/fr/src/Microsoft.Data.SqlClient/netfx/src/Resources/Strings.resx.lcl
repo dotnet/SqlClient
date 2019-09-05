@@ -9232,20 +9232,11 @@
         </Str>
         <Disp Icon="Str" />
       </Item>
-      <Item ItemId=";SQL_InteractiveWithPassword" ItemType="0;.resx" PsrId="211" Leaf="true">
+      <Item ItemId=";SQL_InteractiveWithUserIDAndPassword" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
-          <Val><![CDATA[Cannot use 'Authentication=Active Directory Interactive' with 'PWD' connection string keywords.]]></Val>
+          <Val><![CDATA[Cannot use 'Authentication=Active Directory Interactive' with 'User ID', 'UID', 'Password' or 'PWD' connection string keywords.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Impossible d'utiliser 'Authentication=Active Directory Interactive' avec les mots clés de chaîne de connexion 'PWD'.]]></Val>
-          </Tgt>
-        </Str>
-        <Disp Icon="Str" />
-      </Item>
-      <Item ItemId=";SQL_InteractiveWithoutUserID" ItemType="0;.resx" PsrId="211" Leaf="true">
-        <Str Cat="Text">
-          <Val><![CDATA[Cannot use 'Authentication=Active Directory Interactive' without 'User ID' or 'UID' connection string keywords.]]></Val>
-          <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Impossible d'utiliser 'Authentication=Active Directory Interactive' sans les mots clés de chaîne de connexion 'User ID' ou 'UID'.]]></Val>
+            <Val><![CDATA[Impossible d'utiliser 'Authentication=Active Directory Interactive' avec les mots clés de chaîne de connexion 'User ID', 'UID', 'Password' et 'PWD'.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
