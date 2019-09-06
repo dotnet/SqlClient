@@ -10,8 +10,9 @@ namespace Microsoft.Data.SqlClient {
     /// The public base class for auth providers.
     /// Implementations of this class must provide a default constructor if they are intended to be instantiated from app.config.
     /// </summary>
-    public abstract class SqlAuthenticationProvider {
-
+    public abstract class SqlAuthenticationProvider
+    {
+        /// <summary>
         /// Get an authentication provider by method.
         /// </summary>
         /// <param name="authenticationMethod">Authentication method.</param>

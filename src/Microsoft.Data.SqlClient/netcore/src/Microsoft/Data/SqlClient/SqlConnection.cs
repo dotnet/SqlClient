@@ -241,7 +241,7 @@ namespace Microsoft.Data.SqlClient
         /// 
         /// Example:
         /// 
-        /// Dictionary<string, SqlColumnEncryptionKeyStoreProvider> customKeyStoreProviders = new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>();
+        /// Dictionary&lt;string, SqlColumnEncryptionKeyStoreProvider&gt; customKeyStoreProviders = new Dictionary&lt;string, SqlColumnEncryptionKeyStoreProvider&gt;();
         /// MySqlClientHSMProvider myProvider = new MySqlClientHSMProvider();
         /// customKeyStoreProviders.Add(@"HSM Provider", myProvider);
         /// SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customKeyStoreProviders);

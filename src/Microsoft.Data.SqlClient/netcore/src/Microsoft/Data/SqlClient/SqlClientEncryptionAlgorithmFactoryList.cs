@@ -32,9 +32,9 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Get the registered list of algorithms as a comma seperated list with algorithm names
+        /// Get the registered list of algorithms as a comma separated list with algorithm names
         /// wrapped in single quotes.
-        /// <summary>
+        /// </summary>
         internal string GetRegisteredCipherAlgorithmNames()
         {
             StringBuilder builder = new StringBuilder();
