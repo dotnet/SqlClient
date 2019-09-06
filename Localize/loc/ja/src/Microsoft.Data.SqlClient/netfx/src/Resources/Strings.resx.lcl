@@ -9232,20 +9232,11 @@
         </Str>
         <Disp Icon="Str" />
       </Item>
-      <Item ItemId=";SQL_InteractiveWithPassword" ItemType="0;.resx" PsrId="211" Leaf="true">
+      <Item ItemId=";SQL_InteractiveWithUserIDAndPassword" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
-          <Val><![CDATA[Cannot use 'Authentication=Active Directory Interactive' with 'PWD' connection string keywords.]]></Val>
+          <Val><![CDATA[Cannot use 'Authentication=Active Directory Interactive' with 'User ID', 'UID', 'Password' or 'PWD' connection string keywords.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA['Authentication=Active Directory Interactive' を 'PWD' 接続文字列キーワードと一緒に使用することはできません。]]></Val>
-          </Tgt>
-        </Str>
-        <Disp Icon="Str" />
-      </Item>
-      <Item ItemId=";SQL_InteractiveWithoutUserID" ItemType="0;.resx" PsrId="211" Leaf="true">
-        <Str Cat="Text">
-          <Val><![CDATA[Cannot use 'Authentication=Active Directory Interactive' without 'User ID' or 'UID' connection string keywords.]]></Val>
-          <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA['User ID' や 'UID' の接続文字列キーワードを指定しないで 'Authentication=Active Directory Interactive' を使用することはできません。]]></Val>
+            <Val><![CDATA['Authentication=Active Directory Interactive' と接続文字列キーワード 'User ID'、'UID'、'Password'、'PWD' を一緒に使用することはできません。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
