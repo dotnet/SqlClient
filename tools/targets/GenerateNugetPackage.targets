@@ -2,7 +2,7 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Target Name="GenerateNugetPackage" Condition="'$(GenerateNuget)' == 'true'">
       <PropertyGroup>
-        <NugetPackageVersion Condition="'$(Configuration)' == 'Debug'">$(NugetPackageVersion)-dev</NugetPackageVersion>
+        <NugetPackageVersion Condition="'$(Configuration)' == 'Debug'">$(NugetPackageVersion)-debug</NugetPackageVersion>
       </PropertyGroup>
       <Message Text="Setting NugetPackageVersion to $(NugetPackageVersion)" />
       <Exec Command="powershell.exe -NonInteractive -executionpolicy Unrestricted ^
