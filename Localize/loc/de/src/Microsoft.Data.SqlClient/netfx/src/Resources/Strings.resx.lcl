@@ -9227,7 +9227,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Cannot use 'Authentication=Active Directory Integrated' with 'User ID', 'UID', 'Password' or 'PWD' connection string keywords.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA["Authentication=Active Directory Integrated" kann nicht mit Schlüsselwörtern "User ID", "UID", "Password" oder "PWD" für die Verbindungszeichenfolge verwendet werden.]]></Val>
+            <Val><![CDATA["Authentication=Active Directory Integrated" kann nicht mit den Schlüsselwörtern "User ID", "UID", "Password" oder "PWD" für die Verbindungszeichenfolge verwendet werden.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />

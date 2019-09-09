@@ -9236,7 +9236,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Cannot use 'Authentication=Active Directory Interactive' with 'User ID', 'UID', 'Password' or 'PWD' connection string keywords.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA['Authentication=Active Directory Integrated'를 'User ID', 'UID', 'Password' 또는 'PWD' 연결 문자열 키워드와 함께 사용할 수 없습니다.]]></Val>
+            <Val><![CDATA['Authentication=Active Directory Interactive'를 'User ID', 'UID', 'Password' 또는 'PWD' 연결 문자열 키워드와 함께 사용할 수 없습니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
