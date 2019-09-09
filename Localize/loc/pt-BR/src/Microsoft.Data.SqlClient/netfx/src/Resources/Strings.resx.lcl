@@ -9227,7 +9227,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Cannot use 'Authentication=Active Directory Integrated' with 'User ID', 'UID', 'Password' or 'PWD' connection string keywords.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Não é possível usar "Authentication=Active Directory Integrated" com as palavras-chave da cadeia de conexão "User ID", "UID", "Password" ou "PWD".]]></Val>
+            <Val><![CDATA[Não é possível usar 'Authentication=Active Directory Integrated' com as palavras-chave de cadeia de conexão 'User ID', 'UID', 'Password' ou 'PWD'.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -9236,7 +9236,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Cannot use 'Authentication=Active Directory Interactive' with 'User ID', 'UID', 'Password' or 'PWD' connection string keywords.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Não é possível usar 'Autenticação = Integrada ao Active Directory' com as palavras-chave da cadeia de conexão 'ID de Usuário', 'UID', 'Senha' ou 'PWD'.]]></Val>
+            <Val><![CDATA[Não é possível usar 'Authentication=Active Directory Interactive' com as palavras-chave de cadeia de conexão 'User ID', 'UID', 'Password' or 'PWD'.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -9704,7 +9704,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Cannot set the Credential property if 'Authentication=Active Directory Integrated' has been specified in the connection string.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Não é possível definir a propriedade Credential se "Authentication=Active Directory Integrated" for especificado na cadeia de conexão.]]></Val>
+            <Val><![CDATA[Não é possível definir a propriedade Credential quando 'Authentication=Active Directory Integrated' está especificado na cadeia de conexão.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -9713,7 +9713,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Cannot use 'Authentication=Active Directory Integrated', if the Credential property has been set.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Não é possível usar "Authentication=Active Directory Integrated", se a propriedade Credential tiver sido definida.]]></Val>
+            <Val><![CDATA[Não é possível usar 'Authentication=Active Directory Integrated' quando a propriedade Credential está definida.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />

@@ -9227,7 +9227,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Cannot use 'Authentication=Active Directory Integrated' with 'User ID', 'UID', 'Password' or 'PWD' connection string keywords.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Нельзя использовать 'Authentication=Active Directory Integrated' с ключевыми словами строки подключения 'User ID', 'UID', 'Password' или 'PWD'.]]></Val>
+            <Val><![CDATA[Невозможно использовать "Authentication=Active Directory Integrated" с ключевыми словами строки подключения "User ID", "UID", "Password" или "PWD".]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -9704,7 +9704,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Cannot set the Credential property if 'Authentication=Active Directory Integrated' has been specified in the connection string.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Не удается задать свойство Credential, если в строке подключения указано Authentication=Active Directory Integrated'.]]></Val>
+            <Val><![CDATA[Не удается задать свойство "Credential", если в строке подключения указано "Authentication=Active Directory Integrated".]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -9713,7 +9713,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Cannot use 'Authentication=Active Directory Integrated', if the Credential property has been set.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Не удается использовать 'Authentication=Active Directory Integrated', если задано свойство «Credential».]]></Val>
+            <Val><![CDATA[Не удается использовать "Authentication=Active Directory Integrated", если задано свойство "Credential".]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
