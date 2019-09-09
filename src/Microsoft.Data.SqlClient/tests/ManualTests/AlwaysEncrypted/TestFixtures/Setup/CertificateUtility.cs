@@ -2,6 +2,9 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
+using System.Diagnostics;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
@@ -11,6 +14,72 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     {
         private CertificateUtility()
         {
+        }
+
+        /// <summary>
+		/// System.Data assembly.
+		/// </summary>
+		public static Assembly systemData = Assembly.GetAssembly(typeof(SqlConnection));
+        public static Type sqlClientSymmetricKey = systemData.GetType("Microsoft.Data.SqlClient.SqlClientSymmetricKey");
+        public static ConstructorInfo sqlColumnEncryptionKeyConstructor = sqlClientSymmetricKey.GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new Type[] { typeof(byte[]) }, null);
+        public static Type sqlAeadAes256CbcHmac256Factory = systemData.GetType("Microsoft.Data.SqlClient.SqlAeadAes256CbcHmac256Factory");
+        public static MethodInfo sqlAeadAes256CbcHmac256FactoryCreate = sqlAeadAes256CbcHmac256Factory.GetMethod("Create", BindingFlags.Instance | BindingFlags.NonPublic);
+        public static Type sqlClientEncryptionAlgorithm = systemData.GetType("Microsoft.Data.SqlClient.SqlClientEncryptionAlgorithm");
+        public static MethodInfo sqlClientEncryptionAlgorithmEncryptData = sqlClientEncryptionAlgorithm.GetMethod("EncryptData", BindingFlags.Instance | BindingFlags.NonPublic);
+        public static Type SqlColumnEncryptionCertificateStoreProvider = systemData.GetType("Microsoft.Data.SqlClient.SqlColumnEncryptionCertificateStoreProvider");
+        public static MethodInfo SqlColumnEncryptionCertificateStoreProviderRSADecrypt = SqlColumnEncryptionCertificateStoreProvider.GetMethod("RSADecrypt", BindingFlags.Instance | BindingFlags.NonPublic);
+        public static MethodInfo SqlColumnEncryptionCertificateStoreProviderRSAVerifySignature = SqlColumnEncryptionCertificateStoreProvider.GetMethod("RSAVerifySignature", BindingFlags.Instance | BindingFlags.NonPublic);
+        public static MethodInfo sqlClientEncryptionAlgorithmDecryptData = sqlClientEncryptionAlgorithm.GetMethod("DecryptData", BindingFlags.Instance | BindingFlags.NonPublic);
+
+        /// <summary>
+        /// ECEK Corruption types (useful for testing)
+        /// </summary>
+        internal enum ECEKCorruption
+        {
+            ALGORITHM_VERSION,
+            CEK_LENGTH,
+            SIGNATURE,
+            SIGNATURE_LENGTH
+        }
+
+        /// <summary>
+        /// Encryption Type as per the test code. Different than product code's enumeration.
+        /// </summary>
+        internal enum CColumnEncryptionType
+        {
+            PlainText = 0,
+            Deterministic,
+            Randomized
+        }
+
+        /// <summary>
+        /// Encrypt Data using AED
+        /// </summary>
+        /// <param name="plainTextData"></param>
+        /// <returns></returns>
+        internal static byte[] EncryptDataUsingAED(byte[] plainTextData, byte[] key, CColumnEncryptionType encryptionType)
+        {
+            Debug.Assert(plainTextData != null);
+            Debug.Assert(key != null && key.Length > 0);
+            byte[] encryptedData = null;
+
+            Object columnEncryptionKey = sqlColumnEncryptionKeyConstructor.Invoke(new object[] { key });
+            Debug.Assert(columnEncryptionKey != null);
+
+            Object aesFactory = Activator.CreateInstance(sqlAeadAes256CbcHmac256Factory);
+            Debug.Assert(aesFactory != null);
+
+            object[] parameters = new object[] { columnEncryptionKey, encryptionType, SQLSetupStrategy.ColumnEncryptionAlgorithmName };
+            Object authenticatedAES = sqlAeadAes256CbcHmac256FactoryCreate.Invoke(aesFactory, parameters);
+            Debug.Assert(authenticatedAES != null);
+
+            parameters = new object[] { plainTextData };
+            Object finalCellBlob = sqlClientEncryptionAlgorithmEncryptData.Invoke(authenticatedAES, parameters);
+            Debug.Assert(finalCellBlob != null);
+
+            encryptedData = (byte[])finalCellBlob;
+
+            return encryptedData;
         }
 
         /// <summary>
@@ -61,6 +130,64 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     certStore.Close();
                 }
             }
+        }
+
+        internal static byte[] DecryptRsaDirectly(byte[] rsaPfx, byte[] ciphertextCek, string masterKeyPath)
+        {
+            Debug.Assert(rsaPfx != null && rsaPfx.Length > 0);
+            // The rest of the parameters may be invalid for exception handling test cases
+
+            X509Certificate2 x509 = new X509Certificate2(rsaPfx, @"P@zzw0rD!SqlvN3x+");
+
+            Debug.Assert(x509.HasPrivateKey);
+
+            SqlColumnEncryptionCertificateStoreProvider rsaProvider = new SqlColumnEncryptionCertificateStoreProvider();
+            Object RsaDecryptionResult = SqlColumnEncryptionCertificateStoreProviderRSADecrypt.Invoke(rsaProvider, new object[] { ciphertextCek, x509 });
+
+            return (byte[])RsaDecryptionResult;
+        }
+
+        internal static bool VerifyRsaSignatureDirectly(byte[] hashedCek, byte[] signedCek, byte[] rsaPfx)
+        {
+            Debug.Assert(rsaPfx != null && rsaPfx.Length > 0);
+
+            X509Certificate2 x509 = new X509Certificate2(rsaPfx, @"P@zzw0rD!SqlvN3x+");
+            Debug.Assert(x509.HasPrivateKey);
+
+            SqlColumnEncryptionCertificateStoreProvider rsaProvider = new SqlColumnEncryptionCertificateStoreProvider();
+            Object RsaVerifySignatureResult = SqlColumnEncryptionCertificateStoreProviderRSAVerifySignature.Invoke(rsaProvider, new object[] { hashedCek, signedCek, x509 });
+
+            return (bool)RsaVerifySignatureResult;
+
+        }
+
+        /// <summary>
+        /// Decrypt Data using AEAD
+        /// </summary>
+        internal static byte[] DecryptDataUsingAED(byte[] encryptedCellBlob, byte[] key, CColumnEncryptionType encryptionType)
+        {
+            Debug.Assert(encryptedCellBlob != null && encryptedCellBlob.Length > 0);
+            Debug.Assert(key != null && key.Length > 0);
+
+            byte[] decryptedData = null;
+
+            Object columnEncryptionKey = sqlColumnEncryptionKeyConstructor.Invoke(new object[] { key });
+            Debug.Assert(columnEncryptionKey != null);
+
+            Object aesFactory = Activator.CreateInstance(sqlAeadAes256CbcHmac256Factory);
+            Debug.Assert(aesFactory != null);
+
+            object[] parameters = new object[] { columnEncryptionKey, encryptionType, SQLSetupStrategy.ColumnEncryptionAlgorithmName };
+            Object authenticatedAES = sqlAeadAes256CbcHmac256FactoryCreate.Invoke(aesFactory, parameters);
+            Debug.Assert(authenticatedAES != null);
+
+            parameters = new object[] { encryptedCellBlob };
+            Object decryptedValue = sqlClientEncryptionAlgorithmDecryptData.Invoke(authenticatedAES, parameters);
+            Debug.Assert(decryptedValue != null);
+
+            decryptedData = (byte[])decryptedValue;
+
+            return decryptedData;
         }
     }
 }

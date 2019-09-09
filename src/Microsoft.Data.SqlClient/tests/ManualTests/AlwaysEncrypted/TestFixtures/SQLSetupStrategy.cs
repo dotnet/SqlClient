@@ -11,6 +11,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     public class SQLSetupStrategy : IDisposable
     {
+        internal const string ColumnEncryptionAlgorithmName = @"AEAD_AES_256_CBC_HMAC_SHA256";
+
         private readonly X509Certificate2 certificate;
         public string keyPath { get; private set; }
         public Table ApiTestTable { get; private set; }
