@@ -12,6 +12,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     public class CoreCryptoTests : IClassFixture<SQLSetupStrategy>
     {
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [PlatformSpecific(TestPlatforms.Windows)]
         public void TestAeadCryptoWithNativeBaseline()
         {
             // Initialize the reader for resource text file which has the native code generated baseline.
@@ -45,6 +46,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [PlatformSpecific(TestPlatforms.Windows)]
         public void TestRsaCryptoWithNativeBaseline()
         {
             // Initialize the reader for resource text file which has the native code generated baseline.
