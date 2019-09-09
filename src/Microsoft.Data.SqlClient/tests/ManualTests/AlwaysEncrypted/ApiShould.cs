@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -242,11 +242,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         Assert.Equal(0, param1.Scale);
                         Assert.Equal(0, param1.Precision);
                         Assert.Equal(charParamSize, param1.Size);
+
                         Assert.Equal(SqlDbType.Decimal, param2.SqlDbType);
                         Assert.Equal(DbType.Decimal, param2.DbType);
                         Assert.Equal(decimalParamScale, param2.Scale);
                         Assert.Equal(decimalParamPrecision, param2.Precision);
                         Assert.Equal(0, param2.Size);
+
                         Assert.Equal(SqlDbType.Time, param3.SqlDbType);
                         Assert.Equal(DbType.Time, param3.DbType);
                         Assert.Equal(timeParamScale, param3.Scale);
@@ -271,6 +273,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                             Size = charParamSize,
                             Value = "DifferentColumnValue"
                         };
+
                         sqlCmd.Parameters.Add(param1);
 
                         SqlParameter param2 = new SqlParameter("@p2", SqlDbType.Decimal)
@@ -290,17 +293,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         };
                         sqlCmd.Parameters.Add(param3);
                         sqlCmd.ExecuteNonQuery();
+
                         // Validate that all properties have stayed the same for all parameters.
                         Assert.Equal(SqlDbType.NVarChar, param1.SqlDbType);
                         Assert.Equal(DbType.String, param1.DbType);
                         Assert.Equal(0, param1.Scale);
                         Assert.Equal(0, param1.Precision);
                         Assert.Equal(charParamSize, param1.Size);
+
                         Assert.Equal(SqlDbType.Decimal, param2.SqlDbType);
                         Assert.Equal(DbType.Decimal, param2.DbType);
                         Assert.Equal(decimalParamScale, param2.Scale);
                         Assert.Equal(decimalParamPrecision, param2.Precision);
                         Assert.Equal(0, param2.Size);
+
                         Assert.Equal(SqlDbType.Time, param3.SqlDbType);
                         Assert.Equal(DbType.Time, param3.DbType);
                         Assert.Equal(timeParamScale, param3.Scale);
@@ -353,6 +359,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         Assert.True(string.Equals(sqlDataReader.GetDataTypeName(0), @"int", StringComparison.OrdinalIgnoreCase), "unexpected data type");
                         Assert.True(string.Equals(sqlDataReader.GetDataTypeName(1), @"nvarchar", StringComparison.InvariantCultureIgnoreCase), "unexpected data type");
                         Assert.True(string.Equals(sqlDataReader.GetDataTypeName(2), @"nvarchar", StringComparison.InvariantCultureIgnoreCase), "unexpected data type");
+
                         Assert.Equal(customer.Id, sqlDataReader.GetInt32(0));
                         Assert.Equal(customer.FirstName, sqlDataReader.GetString(1));
                         Assert.Equal(customer.LastName, sqlDataReader.GetString(2));
@@ -401,6 +408,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     {
                         Value = "a"
                     };
+
                     cmd.Parameters.Add(dummyParam);
                     cmd.Parameters.AddWithValue(@"CustomerId", values[0]);
 
@@ -454,6 +462,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 DataTable dataTable = new DataTable();
                 DataTable dataTable2 = adapter.FillSchema(dataTable, schemaType);
                 DataColumnCollection dataColumns = dataTable2.Columns;
+
                 ValidateSchema(dataTable2.Columns);
                 ValidateSchema(dataTable.Columns);
 
@@ -461,6 +470,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 DataSet dataSet = new DataSet();
                 DataTable[] dataSet2 = adapter.FillSchema(dataSet, schemaType);
                 Assert.Single(dataSet2);
+
                 ValidateSchema(dataSet2[0].Columns);
                 ValidateSchema(dataSet.Tables[0].Columns);
             }
@@ -595,17 +605,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     int lastRowId = dataTable.Rows.Count;
                     lastRowId++;
                     dataTable.Rows.RemoveAt(1);
+
                     DataRow row = dataTable.NewRow();
                     row["CustomerId"] = 45 + lastRowId;
                     row["FirstName"] = string.Format(@"Microsoft{0}", lastRowId);
                     row["LastName"] = string.Format(@"Corporation{0}", lastRowId);
                     dataTable.Rows.Add(row);
                     lastRowId++;
+
                     row = dataTable.NewRow();
                     row["CustomerId"] = 45 + lastRowId;
                     row["FirstName"] = string.Format(@"Microsoft{0}", lastRowId);
                     row["LastName"] = string.Format(@"Corporation{0}", lastRowId);
                     dataTable.Rows.Add(row);
+
                     rowsAffected = adapter.Update(dataTable);
                 }
             }
@@ -693,8 +706,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     {
                         sqlCommand.Parameters.AddWithValue(@"FirstName", values[1]);
                         sqlCommand.Parameters.AddWithValue(@"CustomerId", values[0]);
+
                         IAsyncResult asyncResult = sqlCommand.BeginExecuteReader(commandBehavior);
+
                         Assert.False(asyncResult == null, "asyncResult should not be null.");
+
                         rowsAffected = 0;
 
                         using (SqlDataReader sqlDataReader = sqlCommand.EndExecuteReader(asyncResult))
@@ -742,6 +758,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                             Assert.True(3 == sqlDataReader.FieldCount, "value returned by sqlDataReader.FieldCount is unexpected.");
                         }
                     }
+
                     // Based on the command behavior, verify the appropriate outcome.
                     switch (commandBehavior)
                     {
@@ -749,12 +766,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                             Assert.True(sqlConnection.State.Equals(ConnectionState.Closed),
                                     "CommandBehavior.CloseConnection did not close the connection after command execution.");
                             break;
+
                         case CommandBehavior.SingleResult:
                         case CommandBehavior.SequentialAccess:
                             //Assert.True(rowsAffected == 1, "rowsAffected did not match the expected number of rows.");
                             Assert.True(sqlConnection.State.Equals(ConnectionState.Open),
                                 "CommandBehavior.SingleResult or SequentialAccess closed the connection after command execution.");
                             break;
+
                         case CommandBehavior.SingleRow:
                             // Assert.True(rowsAffected == 1, "rowsAffected did not match the expected number of rows.");
                             Assert.True(sqlConnection.State == ConnectionState.Open,
@@ -780,9 +799,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public void TestPrepareWithExecuteNonQuery()
         {
             IList<object> values = GetValues(dataHint: 52);
+
             Assert.True(values != null && values.Count >= 3, @"values should not be null and count should be >= 3.");
 
             int numberOfRows = 10;
+
             // Insert a bunch of rows in to the table.
             int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values);
 
@@ -800,15 +821,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     sqlCommand.Parameters.Add(@"CustomerId", SqlDbType.Int);
                     sqlCommand.Parameters.Add(@"FirstName", SqlDbType.NVarChar, ((string)values[1]).Length);
                     sqlCommand.Parameters.Add(@"LastName", SqlDbType.NVarChar, ((string)values[2]).Length);
+
                     sqlCommand.Parameters[0].Value = values[0];
                     sqlCommand.Parameters[1].Value = values[1];
                     sqlCommand.Parameters[2].Value = values[2];
+
                     sqlCommand.Prepare();
+
                     rowsAffected = -1;
                     rowsAffected = sqlCommand.ExecuteNonQuery();
+
                     sqlCommand.Parameters[0].Value = (int)values[0] + 1;
                     sqlCommand.Parameters[1].Value = values[1];
                     sqlCommand.Parameters[2].Value = values[2];
+
                     rowsAffected = -1;
                     rowsAffected = sqlCommand.ExecuteNonQuery();
                 }
@@ -837,16 +863,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     sqlCommand.Parameters.Add(@"CustomerId", SqlDbType.Int);
                     sqlCommand.Parameters.Add(@"FirstName", SqlDbType.NVarChar, ((string)values[1]).Length);
                     sqlCommand.Parameters.Add(@"LastName", SqlDbType.NVarChar, ((string)values[2]).Length);
+
                     sqlCommand.Parameters[0].Value = values[0];
                     sqlCommand.Parameters[1].Value = values[1];
                     sqlCommand.Parameters[2].Value = values[2];
+
                     sqlCommand.Prepare();
 
                     rowsAffected = -1;
+
                     CommandHelper.s_debugForceAsyncWriteDelay?.SetValue(null, 10000);
+
                     Task<int> executeTask = VerifyExecuteNonQueryAsync(sqlCommand);
                     rowsAffected = executeTask.Result;
+
                     Assert.True(rowsAffected == 10, "Unexpected number of rows affected as returned by ExecuteNonQueryAsync.");
+
                     sqlCommand.Parameters[0].Value = (int)values[0] + 1;
                     sqlCommand.Parameters[1].Value = values[1];
                     sqlCommand.Parameters[2].Value = values[2];
@@ -864,7 +896,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public void TestAsyncWriteDelayWithExecuteReaderAsync()
         {
             IList<object> values = GetValues(dataHint: 53);
+
             Assert.True(values != null && values.Count >= 3, @"values should not be null and count should be >= 3.");
+
             int numberOfRows = 10;
 
             // Insert a bunch of rows in to the table.
@@ -884,12 +918,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     sqlCommand.Parameters.Add(@"CustomerId", SqlDbType.Int);
                     sqlCommand.Parameters.Add(@"FirstName", SqlDbType.NVarChar, ((string)values[1]).Length);
                     sqlCommand.Parameters.Add(@"LastName", SqlDbType.NVarChar, ((string)values[2]).Length);
+
                     sqlCommand.Parameters[0].Value = values[0];
                     sqlCommand.Parameters[1].Value = values[1];
                     sqlCommand.Parameters[2].Value = values[2];
+
                     sqlCommand.Prepare();
                     rowsAffected = -1;
+
                     CommandHelper.s_debugForceAsyncWriteDelay?.SetValue(null, 10000);
+
                     Task<int> executeTask = VerifyExecuteNonQueryAsync(sqlCommand);
                     rowsAffected = executeTask.Result;
 
@@ -898,6 +936,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     sqlCommand.Parameters[0].Value = values[0];
                     sqlCommand.Parameters[1].Value = values[1];
                     sqlCommand.Parameters[2].Value = values[2];
+
                     rowsAffected = 0;
                     Task<SqlDataReader> executeReaderTask = sqlCommand.ExecuteReaderAsync();
 
@@ -921,7 +960,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public void TestPrepareWithExecuteNonQueryAsync()
         {
             IList<object> values = GetValues(dataHint: 53);
+
             Assert.True(values != null && values.Count >= 3, @"values should not be null and count should be >= 3.");
+
             int numberOfRows = 10;
 
             // Insert a bunch of rows in to the table.
@@ -941,15 +982,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     sqlCommand.Parameters.Add(@"CustomerId", SqlDbType.Int);
                     sqlCommand.Parameters.Add(@"FirstName", SqlDbType.NVarChar, ((string)values[1]).Length);
                     sqlCommand.Parameters.Add(@"LastName", SqlDbType.NVarChar, ((string)values[2]).Length);
+
                     sqlCommand.Parameters[0].Value = values[0];
                     sqlCommand.Parameters[1].Value = values[1];
                     sqlCommand.Parameters[2].Value = values[2];
+
                     sqlCommand.Prepare();
 
                     rowsAffected = -1;
                     Task<int> executeTask = VerifyExecuteNonQueryAsync(sqlCommand);
                     rowsAffected = executeTask.Result;
+
                     Assert.True(rowsAffected == 10, "Unexpected number of rows affected as returned by ExecuteNonQueryAsync.");
+
                     sqlCommand.Parameters[0].Value = (int)values[0] + 1;
                     sqlCommand.Parameters[1].Value = values[1];
                     sqlCommand.Parameters[2].Value = values[2];
@@ -957,6 +1002,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     rowsAffected = -1;
                     executeTask = VerifyExecuteNonQueryAsync(sqlCommand);
                     rowsAffected = executeTask.Result;
+
                     Assert.True(rowsAffected == 0, "Unexpected number of rows affected as returned by ExecuteNonQueryAsync.");
                 }
             }
@@ -987,9 +1033,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 {
                     sqlCommand.Parameters.Add(@"CustomerId", SqlDbType.Int);
                     sqlCommand.Parameters.Add(@"FirstName", SqlDbType.NVarChar, ((string)values[1]).Length);
+
                     sqlCommand.Parameters[0].Value = values[0];
                     sqlCommand.Parameters[1].Value = values[1];
+
                     sqlCommand.Prepare();
+
                     rowsAffected = 0;
                     IAsyncResult asyncResult = sqlCommand.BeginExecuteReader(commandBehavior);
 
@@ -998,6 +1047,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         while (sqlDataReader.Read())
                         {
                             rowsAffected++;
+
                             Assert.True(values != null && values.Count >= 3, @"values should not be null and should be with atleast 3 elements.");
                             Assert.True(sqlDataReader.GetInt32(0) == (int)values[0], "CustomerId value read from the table was incorrect.");
                             Assert.True(sqlDataReader.GetString(1) == (string)values[1], "FirstName value read from the table was incorrect.");
@@ -1008,9 +1058,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                     sqlCommand.Parameters[0].Value = (int)values[0] + 1;
                     sqlCommand.Parameters[1].Value = values[1];
+
                     Task<int> executeTask = VerifyExecuteNonQueryAsync(sqlCommand);
+
                     rowsAffected = -1;
                     rowsAffected = executeTask.Result;
+
                     Assert.True(rowsAffected == -1, "Unexpected number of rows affected as returned by ExecuteNonQueryAsync.");
                 }
             }
@@ -1047,6 +1100,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     {
                         sqlCommand.Parameters.Add(@"CustomerId", SqlDbType.Int);
                         sqlCommand.Parameters.Add(@"FirstName", SqlDbType.NVarChar, ((string)values[1]).Length);
+
                         sqlCommand.Parameters[0].Value = values[0];
                         sqlCommand.Parameters[1].Value = values[1];
                     }
@@ -1059,9 +1113,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         Assert.True(sqlDataReader.GetName(0) == @"CustomerId", "CustomerId value read from the table was incorrect.");
                         Assert.True(sqlDataReader.GetName(1) == @"FirstName", "FirstName value read from the table was incorrect.");
                         Assert.True(sqlDataReader.GetName(2) == @"LastName", "LastName value read from the table was incorrect.");
+
                         Assert.True(sqlDataReader.GetOrdinal(@"CustomerId") == 0, "CustomerId value read from the table was incorrect.");
                         Assert.True(sqlDataReader.GetOrdinal(@"FirstName") == 1, "FirstName value read from the table was incorrect.");
                         Assert.True(sqlDataReader.GetOrdinal(@"LastName") == 2, "LastName value read from the table was incorrect.");
+
                         VerifyDataTypes(sqlDataReader, value);
 
                         while (sqlDataReader.Read())
@@ -1076,6 +1132,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                             textValue = new char[((string)values[2]).Length];
                             sqlDataReader.GetChars(2, 0, textValue, 0, textValue.Length);
+
                             Assert.True(new string(textValue) == (string)values[2], @"Value returned by GetChars is unexpected.");
 
                             // GetFieldValue<T>
@@ -1110,6 +1167,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                             // GetSqlValues
                             readValues = new object[values.Count];
                             numberofValuesRead = sqlDataReader.GetSqlValues(readValues);
+
                             Assert.True(numberofValuesRead == (int)values.Count, "the number of values returned by GetSqlValues is unexpected.");
                             Assert.True(((System.Data.SqlTypes.SqlInt32)readValues[0]).Value == (int)values[0],
                                                  @"Value returned by GetSqlValues is unexpected.");
@@ -1125,9 +1183,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                             // IsDBNullAsync
                             Task<bool> isDbNullTask = sqlDataReader.IsDBNullAsync(0);
+
                             Assert.True(isDbNullTask.Result == false, @"IsDBNullAsync unexpectedly returned false.");
+
                             isDbNullTask = sqlDataReader.IsDBNullAsync(1);
                             Assert.True(isDbNullTask.Result == false, @"IsDBNullAsync unexpectedly returned false.");
+
                             isDbNullTask = sqlDataReader.IsDBNullAsync(2);
                             Assert.True(isDbNullTask.Result == false, @"IsDBNullAsync unexpectedly returned false.");
                         }
@@ -1136,6 +1197,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         Assert.True(3 == sqlDataReader.FieldCount, "value returned by sqlDataReader.FieldCount is unexpected.");
                     }
                 }
+
                 using (SqlCommand sqlCommand = new SqlCommand($"INSERT INTO [{tableName}] VALUES (@CustomerId, @FirstName, @LastName /*, @BinaryColumn, @NvarcharMaxColumn*/)",
                     sqlConnection,
                     transaction: null,
@@ -1143,10 +1205,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 {
                     sqlCommand.Parameters.AddWithValue(@"CustomerId", 60);
                     SqlParameter firstNameParameter = new SqlParameter(@"FirstName", System.Data.SqlDbType.NVarChar, 50);
+
                     firstNameParameter.Direction = System.Data.ParameterDirection.Input;
                     firstNameParameter.Value = DBNull.Value;
+
                     sqlCommand.Parameters.Add(firstNameParameter);
                     sqlCommand.Parameters.AddWithValue(@"LastName", @"Corporation60");
+
                     sqlCommand.ExecuteNonQuery();
                 }
 
@@ -1180,6 +1245,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         }
                     }
                 }
+
                 using (SqlCommand sqlCommand =
                            new SqlCommand($"UPDATE [{tableName}] SET FirstName = @FirstName WHERE CustomerId = @CustomerId",
                            sqlConnection, 
@@ -1196,71 +1262,112 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 }
             }
         }
+
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [InlineData(CommandBehavior.SequentialAccess)]
         public void TestSqlDataReaderAPIsWithSequentialAccess(object value)
         {
             char[] textValue = null;
             CommandBehavior commandBehavior = (CommandBehavior)value;
+
             IList<object> values = GetValues(dataHint: 56);
+
             Assert.True(values != null && values.Count >= 3, @"values should not be null and count should be >= 3.");
+
             int numberOfRows = 10;
+
             // Insert a bunch of rows in to the table.
             int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values);
+
             Assert.Equal(rowsAffected, numberOfRows);
+
             using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TcpConnStr))
             {
                 sqlConnection.Open();
-                using (SqlCommand sqlCommand = new SqlCommand($"SELECT CustomerId, FirstName, LastName /* , BinaryColumn, NvarcharMaxColumn */ FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
+                using (SqlCommand sqlCommand = new SqlCommand($"SELECT CustomerId, FirstName, LastName  FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
                     sqlConnection,
                     transaction: null,
                     columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
                 {
                     sqlCommand.Parameters.Add(@"CustomerId", SqlDbType.Int);
                     sqlCommand.Parameters.Add(@"FirstName", SqlDbType.NVarChar, ((string)values[1]).Length);
+
                     sqlCommand.Parameters[0].Value = values[0];
                     sqlCommand.Parameters[1].Value = values[1];
+
                     sqlCommand.Prepare();
                     rowsAffected = 0;
+
                     IAsyncResult asyncResult = sqlCommand.BeginExecuteReader(commandBehavior);
                     using (SqlDataReader sqlDataReader = sqlCommand.EndExecuteReader(asyncResult))
                     {
                         Assert.True(sqlDataReader.GetName(0) == @"CustomerId", "CustomerId value read from the table was incorrect.");
                         Assert.True(sqlDataReader.GetName(1) == @"FirstName", "FirstName value read from the table was incorrect.");
                         Assert.True(sqlDataReader.GetName(2) == @"LastName", "LastName value read from the table was incorrect.");
+
                         Assert.True(sqlDataReader.GetOrdinal(@"CustomerId") == 0, "CustomerId value read from the table was incorrect.");
                         Assert.True(sqlDataReader.GetOrdinal(@"FirstName") == 1, "FirstName value read from the table was incorrect.");
                         Assert.True(sqlDataReader.GetOrdinal(@"LastName") == 2, "LastName value read from the table was incorrect.");
+
                         Assert.True(sqlDataReader.GetFieldType(0) == typeof(System.Int32), "CustomerId value read from the table was incorrect.");
                         Assert.True(sqlDataReader.GetFieldType(1) == typeof(System.String), "FirstName value read from the table was incorrect.");
                         Assert.True(sqlDataReader.GetFieldType(2) == typeof(System.String), "LastName value read from the table was incorrect.");
+
                         Assert.True(sqlDataReader.GetProviderSpecificFieldType(0) == typeof(System.Data.SqlTypes.SqlInt32), "CustomerId value read from the table was incorrect.");
                         Assert.True(sqlDataReader.GetProviderSpecificFieldType(1) == typeof(System.Data.SqlTypes.SqlString), "FirstName value read from the table was incorrect.");
                         Assert.True(sqlDataReader.GetProviderSpecificFieldType(2) == typeof(System.Data.SqlTypes.SqlString), "LastName value read from the table was incorrect.");
+
                         Assert.True(sqlDataReader.GetDataTypeName(0) == @"int", "CustomerId value read from the table was incorrect.");
                         Assert.True(sqlDataReader.GetDataTypeName(1) == @"nvarchar", "FirstName value read from the table was incorrect.");
                         Assert.True(sqlDataReader.GetDataTypeName(2) == @"nvarchar", "LastName value read from the table was incorrect.");
+
                         while (sqlDataReader.Read())
                         {
                             textValue = new char[((string)values[1]).Length];
                             sqlDataReader.GetChars(1, 0, textValue, 0, textValue.Length);
                             Assert.True(new string(textValue) == (string)values[1], @"Value returned by GetChars is unexpected.");
+
                             textValue = new char[((string)values[2]).Length];
                             sqlDataReader.GetChars(2, 0, textValue, 0, textValue.Length);
                             Assert.True(new string(textValue) == (string)values[2], @"Value returned by GetChars is unexpected.");
                         }
                     }
                 }
+
                 // We use different commands for every API test, since SequentialAccess does not let you access a column more than once.
-                using (SqlCommand sqlCommand = new SqlCommand($"SELECT CustomerId, FirstName, LastName /*, BinaryColumn, NvarcharMaxColumn */ FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
+                using (SqlCommand sqlCommand = new SqlCommand($@"SELECT CustomerId, FirstName, LastName FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
+                    sqlConnection,
+                    transaction:null,
+                    columnEncryptionSetting:SqlCommandColumnEncryptionSetting.Enabled))
+                {
+                    sqlCommand.Parameters.Add(@"CustomerId", SqlDbType.Int);
+                    sqlCommand.Parameters.Add(@"FirstName", SqlDbType.NVarChar, ((string)values[1]).Length);
+
+                    sqlCommand.Parameters[0].Value = values[0];
+                    sqlCommand.Parameters[1].Value = values[1];
+
+                    using(SqlDataReader sqlDataReader = sqlCommand.ExecuteReader(commandBehavior))
+                    {
+                        while (sqlDataReader.Read())
+                        {
+                           Exception ex = Assert.Throws<InvalidOperationException>(() => sqlDataReader.GetTextReader(1));
+                           Assert.Equal("Retrieving encrypted column 'FirstName' with CommandBehavior=SequentialAccess is not supported.", ex.Message);
+                        }
+                    }
+                }
+
+                // We use different commands for every API test, since SequentialAccess does not let you access a column more than once.
+                using (SqlCommand sqlCommand = new SqlCommand($"SELECT CustomerId, FirstName, LastName  FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
                     sqlConnection,
                     transaction: null,
                     columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
                 {
                     sqlCommand.Parameters.Add(@"CustomerId", SqlDbType.Int);
                     sqlCommand.Parameters.Add(@"FirstName", SqlDbType.NVarChar, ((string)values[1]).Length);
+
                     sqlCommand.Parameters[0].Value = values[0];
                     sqlCommand.Parameters[1].Value = values[1];
+
                     using (SqlDataReader sqlDataReader = sqlCommand.ExecuteReader(commandBehavior))
                     {
                         while (sqlDataReader.Read())
@@ -1272,15 +1379,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         }
                     }
                 }
+
                 // We use different commands for every API test, since SequentialAccess does not let you access a column more than once.
                 using (SqlCommand sqlCommand =
-                   new SqlCommand($"SELECT CustomerId, FirstName, LastName /*, BinaryColumn, NvarcharMaxColumn */ FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
+                   new SqlCommand($"SELECT CustomerId, FirstName, LastName  FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
                    sqlConnection, transaction: null, columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
                 {
                     sqlCommand.Parameters.Add(@"CustomerId", SqlDbType.Int);
                     sqlCommand.Parameters.Add(@"FirstName", SqlDbType.NVarChar, ((string)values[1]).Length);
+
                     sqlCommand.Parameters[0].Value = values[0];
                     sqlCommand.Parameters[1].Value = values[1];
+
                     using (SqlDataReader sqlDataReader = sqlCommand.ExecuteReader(commandBehavior))
                     {
                         while (sqlDataReader.Read())
@@ -1295,14 +1405,59 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         }
                     }
                 }
-                using (SqlCommand sqlCommand =
-                new SqlCommand($"SELECT CustomerId, FirstName, LastName /*, BinaryColumn, NvarcharMaxColumn */ FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
-                sqlConnection, transaction: null, columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
+
+                // We use different commands for every API test, since SequentialAccess does not let you access a column more than once.
+                using (SqlCommand sqlCommand = new SqlCommand($@"SELECT CustomerId, FirstName, LastName FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
+                    sqlConnection,
+                    transaction:null,
+                    columnEncryptionSetting:SqlCommandColumnEncryptionSetting.Enabled))
                 {
                     sqlCommand.Parameters.Add(@"CustomerId", SqlDbType.Int);
                     sqlCommand.Parameters.Add(@"FirstName", SqlDbType.NVarChar, ((string)values[1]).Length);
+
                     sqlCommand.Parameters[0].Value = values[0];
                     sqlCommand.Parameters[1].Value = values[1];
+
+                    using (SqlDataReader sqlDataReader = sqlCommand.ExecuteReader(commandBehavior))
+                    {
+                        while (sqlDataReader.Read())
+                        {
+                            object[] readValues = new object[values.Count];
+                            int numberofValuesRead = sqlDataReader.GetValues(readValues);
+
+                            Assert.True(numberofValuesRead == values.Count, "the number of values returned by GetValues is unexpected.");
+
+                            for(int i = 0; i < numberofValuesRead; i++)
+                            {
+                                
+                                if (i != 3)
+                                { 
+                                    Assert.True(readValues[i].ToString()==values[i].ToString(), @"the values returned by GetValues is unexpected.");
+                                }
+                                else
+                                {
+                                    Assert.True(((byte[])values[i]).SequenceEqual<byte>((byte[])readValues[i]),
+                                            @"Value returned by GetValues is unexpected.");
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // We use different commands for every API test, since SequentialAccess does not let you access a column more than once.
+                using (SqlCommand sqlCommand =
+                new SqlCommand(
+                    $"SELECT CustomerId, FirstName, LastName  FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
+                    sqlConnection,
+                    transaction: null,
+                    columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
+                {
+                    sqlCommand.Parameters.Add(@"CustomerId", SqlDbType.Int);
+                    sqlCommand.Parameters.Add(@"FirstName", SqlDbType.NVarChar, ((string)values[1]).Length);
+
+                    sqlCommand.Parameters[0].Value = values[0];
+                    sqlCommand.Parameters[1].Value = values[1];
+
                     using (SqlDataReader sqlDataReader = sqlCommand.ExecuteReader(commandBehavior))
                     {
                         while (sqlDataReader.Read())
@@ -1310,6 +1465,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                             // GetSqlValues
                             object[] readValues = new object[values.Count];
                             int numberofValuesRead = sqlDataReader.GetSqlValues(readValues);
+
                             Assert.True(numberofValuesRead == values.Count, "the number of values returned by GetSqlValues is unexpected.");
                             Assert.True(((System.Data.SqlTypes.SqlInt32)readValues[0]).Value == (int)values[0],
                                                 @"Value returned by GetSqlValues is unexpected.");
@@ -1320,40 +1476,80 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         }
                     }
                 }
+
+                // We use different commands for every API test, since SequentialAccess does not let you access a column more than once.
+                using(SqlCommand sqlCommand = new SqlCommand($@"SELECT CustomerId, FirstName, LastName FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
+                    sqlConnection,
+                    transaction:null,
+                    columnEncryptionSetting:SqlCommandColumnEncryptionSetting.Enabled))
+                {
+                    sqlCommand.Parameters.Add(@"CustomerId", SqlDbType.Int);
+                    sqlCommand.Parameters.Add(@"FirstName", SqlDbType.NVarChar, ((string)values[1]).Length);
+
+                    sqlCommand.Parameters[0].Value = values[0];
+                    sqlCommand.Parameters[1].Value = values[1];
+
+                    using(SqlDataReader sqlDataReader = sqlCommand.ExecuteReader(commandBehavior))
+                    {
+                        while (sqlDataReader.Read())
+                        {
+                            // GetSqlValues
+                            object[] readValues = new object[values.Count];
+                            int numberofValuesRead = sqlDataReader.GetSqlValues(readValues);
+
+                            Assert.True(numberofValuesRead==values.Count, "the number of values returned by GetSqlValues is unexpected.");
+                            Assert.True(((System.Data.SqlTypes.SqlInt32)readValues[0]).Value==(int)values[0],
+                                                @"Value returned by GetSqlValues is unexpected.");
+                            Assert.True(((System.Data.SqlTypes.SqlString)readValues[1]).Value==(string)values[1],
+                                                @"Value returned by GetSqlValues is unexpected.");
+                            Assert.True(((System.Data.SqlTypes.SqlString)readValues[2]).Value==(string)values[2], 
+                                @"Value returned by GetSqlValues is unexpected.");
+                        }
+                    }
+                }
+
                 // We use different commands for every API test, since SequentialAccess does not let you access a column more than once.
                 using (SqlCommand sqlCommand =
-                    new SqlCommand($"SELECT CustomerId, FirstName, LastName /*, BinaryColumn, NvarcharMaxColumn */ FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
+                    new SqlCommand($"SELECT CustomerId, FirstName, LastName  FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
                     sqlConnection, transaction: null,
                     columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
                 {
                     sqlCommand.Parameters.Add(@"CustomerId", SqlDbType.Int);
                     sqlCommand.Parameters.Add(@"FirstName", SqlDbType.NVarChar, ((string)values[1]).Length);
+
                     sqlCommand.Parameters[0].Value = values[0];
                     sqlCommand.Parameters[1].Value = values[1];
+
                     using (SqlDataReader sqlDataReader = sqlCommand.ExecuteReader(commandBehavior))
                     {
                         while (sqlDataReader.Read())
                         {
                             // IsDBNullAsync
                             Task<bool> isDbNullTask = sqlDataReader.IsDBNullAsync(0);
+
                             Assert.True(isDbNullTask.Result == false, @"IsDBNullAsync unexpectedly returned false.");
+
                             isDbNullTask = sqlDataReader.IsDBNullAsync(1);
                             Assert.True(isDbNullTask.Result == false, @"IsDBNullAsync unexpectedly returned false.");
+
                             isDbNullTask = sqlDataReader.IsDBNullAsync(2);
                             Assert.True(isDbNullTask.Result == false, @"IsDBNullAsync unexpectedly returned false.");
                         }
                     }
                 }
+
                 // We use different commands for every API test, since SequentialAccess does not let you access a column more than once.
                 using (SqlCommand sqlCommand =
-                    new SqlCommand($"SELECT CustomerId, FirstName, LastName /*, BinaryColumn, NvarcharMaxColumn */ FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
+                    new SqlCommand($"SELECT CustomerId, FirstName, LastName  FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
                     sqlConnection, transaction: null,
                     columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
                 {
                     sqlCommand.Parameters.Add(@"CustomerId", SqlDbType.Int);
                     sqlCommand.Parameters.Add(@"FirstName", SqlDbType.NVarChar, ((string)values[1]).Length);
+
                     sqlCommand.Parameters[0].Value = values[0];
                     sqlCommand.Parameters[1].Value = values[1];
+
                     using (SqlDataReader sqlDataReader = sqlCommand.ExecuteReader(commandBehavior))
                     {
                         while (sqlDataReader.Read())
@@ -1361,23 +1557,28 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                             // GetFieldValueAsync<T>
                             Task<int> getCustomerIdTask = sqlDataReader.GetFieldValueAsync<int>(0);
                             Assert.True(getCustomerIdTask.Result == (int)values[0], @"Value returned by GetFieldValueAsync is unexpected.");
+
                             Task<string> getFirstNameTask = sqlDataReader.GetFieldValueAsync<string>(1);
                             Assert.True(getFirstNameTask.Result == (string)values[1], @"Value returned by GetFieldValueAsync is unexpected.");
+
                             Task<string> getLastNameTask = sqlDataReader.GetFieldValueAsync<string>(2);
                             Assert.True(getLastNameTask.Result == (string)values[2], @"Value returned by GetFieldValueAsync is unexpected.");
                         }
                     }
                 }
+
                 // We use different commands for every API test, since SequentialAccess does not let you access a column more than once.
                 using (SqlCommand sqlCommand =
-                    new SqlCommand($"SELECT CustomerId, FirstName, LastName /*, BinaryColumn, NvarcharMaxColumn */ FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
+                    new SqlCommand($"SELECT CustomerId, FirstName, LastName  FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
                     sqlConnection, transaction: null,
                     columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
                 {
                     sqlCommand.Parameters.Add(@"CustomerId", SqlDbType.Int);
                     sqlCommand.Parameters.Add(@"FirstName", SqlDbType.NVarChar, ((string)values[1]).Length);
+
                     sqlCommand.Parameters[0].Value = values[0];
                     sqlCommand.Parameters[1].Value = values[1];
+
                     using (SqlDataReader sqlDataReader = sqlCommand.ExecuteReader(commandBehavior))
                     {
                         while (sqlDataReader.Read())
@@ -1389,6 +1590,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         }
                     }
                 }
+
                 // We use different commands for every API test, since SequentialAccess does not let you access a column more than once.
                 using (SqlCommand sqlCommand =
                         new SqlCommand($"SELECT * FROM [{tableName}] WHERE LastName = @LastName AND CustomerId = @CustomerId",
@@ -1397,9 +1599,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 {
                     sqlCommand.Parameters.Add(@"CustomerId", SqlDbType.Int).Value = values[0];
                     sqlCommand.Parameters.Add(@"LastName", SqlDbType.NVarChar).Value = values[2];
+
                     Task readAsyncTask = ReadAsync(sqlCommand, values, commandBehavior);
                     readAsyncTask.Wait();
                 }
+
                 // We use different commands for every API test, since SequentialAccess does not let you access a column more than once.
                 using (SqlCommand sqlCommand =
                         new SqlCommand($"UPDATE [{tableName}] SET FirstName = @FirstName WHERE CustomerId = @CustomerId",
@@ -1409,24 +1613,29 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 {
                     sqlCommand.Parameters.AddWithValue(@"FirstName", values[1]);
                     sqlCommand.Parameters.AddWithValue(@"CustomerId", values[0]);
+
                     using (SqlDataReader sqlDataReader = sqlCommand.ExecuteReader(commandBehavior))
                     {
                         Assert.True(sqlDataReader.RecordsAffected == numberOfRows, @"number of rows returned by sqlDataReader.RecordsAffected is incorrect.");
                     }
                 }
+
                 // We use different commands for every API test, since SequentialAccess does not let you access a column more than once.
-                using (SqlCommand sqlCommand = new SqlCommand($"INSERT INTO [{tableName}] VALUES (@CustomerId, @FirstName, @LastName /*, @BinaryColumn, @NvarcharMaxColumn*/)",
+                using (SqlCommand sqlCommand = new SqlCommand($"INSERT INTO [{tableName}] VALUES (@CustomerId, @FirstName, @LastName )",
                     sqlConnection, transaction: null,
                     columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
                 {
                     sqlCommand.Parameters.AddWithValue(@"CustomerId", 60);
                     SqlParameter firstNameParameter = new SqlParameter(@"FirstName", System.Data.SqlDbType.NVarChar, 50);
+
                     firstNameParameter.Direction = System.Data.ParameterDirection.Input;
                     firstNameParameter.Value = DBNull.Value;
+
                     sqlCommand.Parameters.Add(firstNameParameter);
                     sqlCommand.Parameters.AddWithValue(@"LastName", @"Corporation60");
                     sqlCommand.ExecuteNonQuery();
                 }
+
                 // We use different commands for every API test, since SequentialAccess does not let you access a column more than once.
                 using (SqlCommand sqlCommand =
                         new SqlCommand($"SELECT * FROM [{tableName}] WHERE LastName = @LastName AND CustomerId = @CustomerId",
@@ -1436,6 +1645,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 {
                     sqlCommand.Parameters.Add(@"CustomerId", SqlDbType.Int).Value = 60;
                     sqlCommand.Parameters.Add(@"LastName", SqlDbType.NVarChar).Value = @"Corporation60";
+
                     using (SqlDataReader sqlDataReader = sqlCommand.ExecuteReader(commandBehavior))
                     {
                         while (sqlDataReader.Read())
@@ -1447,6 +1657,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         }
                     }
                 }
+
                 // We use different commands for every API test, since SequentialAccess does not let you access a column more than once.
                 using (SqlCommand sqlCommand =
                         new SqlCommand($"SELECT * FROM [{tableName}] WHERE LastName = @LastName AND CustomerId = @CustomerId",
@@ -1456,15 +1667,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 {
                     sqlCommand.Parameters.Add(@"CustomerId", SqlDbType.Int).Value = 60;
                     sqlCommand.Parameters.Add(@"LastName", SqlDbType.NVarChar).Value = @"Corporation60";
+
                     using (SqlDataReader sqlDataReader = sqlCommand.ExecuteReader(commandBehavior))
                     {
                         while (sqlDataReader.Read())
                         {
                             // IsDBNullAsync
                             Task<bool> isDbNullTask = sqlDataReader.IsDBNullAsync(0);
+
                             Assert.True(isDbNullTask.Result == false, @"IsDBNullAsync unexpectedly returned false.");
+
                             isDbNullTask = sqlDataReader.IsDBNullAsync(1);
                             Assert.True(isDbNullTask.Result == true, @"IsDBNullAsync unexpectedly returned true.");
+
                             isDbNullTask = sqlDataReader.IsDBNullAsync(2);
                             Assert.True(isDbNullTask.Result == false, @"IsDBNullAsync unexpectedly returned false.");
                         }
@@ -1472,6 +1687,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 }
             }
         }
+
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [InlineData(CommandBehavior.Default)]
         [InlineData(CommandBehavior.SequentialAccess)]
@@ -1479,11 +1695,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             CommandBehavior commandBehavior = (CommandBehavior)value;
             IList<object> values = GetValues(dataHint: 57);
+
             Assert.True(values != null && values.Count >= 3, @"values should not be null and count should be >= 3.");
+
             int numberOfRows = 300;
+
             //Insert a bunch of rows in to the table.
             int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values);
+
             Assert.True(rowsAffected == numberOfRows, "number of rows affected is unexpected.");
+
             using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TcpConnStr))
             {
                 sqlConnection.Open();
@@ -1495,6 +1716,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 {
                     sqlCommand.Parameters.AddWithValue(@"CustomerId", values[0]);
                     sqlCommand.Parameters.AddWithValue(@"FirstName", values[1]);
+
                     using (SqlDataReader sqlDataReader = sqlCommand.ExecuteReader())
                     {
                         Assert.True(sqlDataReader.VisibleFieldCount == values.Count, @"sqlDataReader.VisibleFieldCount returned unexpected result.");
@@ -1502,6 +1724,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 }
             }
         }
+
         private SqlDataAdapter CreateSqlDataAdapter(SqlConnection sqlConnection)
         {
             // Create a SqlDataAdapter.
@@ -1540,6 +1763,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             );
             adapter.InsertCommand.Parameters.Add("@FirstName", SqlDbType.NVarChar, 50, "FirstName");
             adapter.InsertCommand.Parameters.Add("@LastName", SqlDbType.NVarChar, 50, "LastName");
+
             adapter.InsertCommand.UpdatedRowSource = UpdateRowSource.None;
 
             // Set the DELETE command and parameter.
@@ -1607,6 +1831,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 row["CustomerId"] = 45 + i + 1;
                 row["FirstName"] = string.Format(@"Microsoft{0}", i);
                 row["LastName"] = string.Format(@"Corporation{0}", i);
+
                 table.Rows.Add(row);
             }
 
@@ -1667,7 +1892,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             Assert.True(sqlCommand != null, @"sqlCommand should not be null.");
             Assert.True(values != null && values.Count >= 3, @"values should not be null and values.count should be >= 3.");
+
             string xmlResult = null;
+
             using (SqlDataReader sqlDataReader = await sqlCommand.ExecuteReaderAsync(commandBehavior))
             {
                 while (await sqlDataReader.ReadAsync())
@@ -1688,6 +1915,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         private async Task<int> VerifyExecuteNonQueryAsync(SqlCommand sqlCommand)
         {
             int rowsAffected = await sqlCommand.ExecuteNonQueryAsync();
+
             return rowsAffected;
         }
 
@@ -1699,6 +1927,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         private async Task<object> VerifyExecuteScalarAsync(SqlCommand sqlCommand)
         {
             object result = await sqlCommand.ExecuteScalarAsync();
+
             return result;
         }
 
@@ -1715,6 +1944,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 string.Format("Microsoft{0}", dataHint),
                 string.Format("Corporation{0}", dataHint)
             };
+
             return values;
         }
 
@@ -1733,9 +1963,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 Assert.True(sqlDataReader.GetFieldType(0) == typeof(System.Int32), "CustomerId value read from the table was incorrect.");
                 Assert.True(sqlDataReader.GetFieldType(1) == typeof(System.String), "FirstName value read from the table was incorrect.");
                 Assert.True(sqlDataReader.GetFieldType(2) == typeof(System.String), "LastName value read from the table was incorrect.");
+
                 Assert.True(sqlDataReader.GetProviderSpecificFieldType(0) == typeof(System.Data.SqlTypes.SqlInt32), "CustomerId value read from the table was incorrect.");
                 Assert.True(sqlDataReader.GetProviderSpecificFieldType(1) == typeof(System.Data.SqlTypes.SqlString), "FirstName value read from the table was incorrect.");
                 Assert.True(sqlDataReader.GetProviderSpecificFieldType(2) == typeof(System.Data.SqlTypes.SqlString), "LastName value read from the table was incorrect.");
+
                 Assert.True(sqlDataReader.GetDataTypeName(0) == @"int", "CustomerId value read from the table was incorrect.");
                 Assert.True(sqlDataReader.GetDataTypeName(1) == @"nvarchar", "FirstName value read from the table was incorrect.");
                 Assert.True(sqlDataReader.GetDataTypeName(2) == @"nvarchar", "LastName value read from the table was incorrect.");
@@ -1745,9 +1977,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 Assert.True(sqlDataReader.GetFieldType(0) == typeof(System.Byte[]), "CustomerId value read from the table was incorrect.");
                 Assert.True(sqlDataReader.GetFieldType(1) == typeof(System.Byte[]), "FirstName value read from the table was incorrect.");
                 Assert.True(sqlDataReader.GetFieldType(2) == typeof(System.Byte[]), "LastName value read from the table was incorrect.");
+
                 Assert.True(sqlDataReader.GetProviderSpecificFieldType(0) == typeof(System.Data.SqlTypes.SqlBinary), "CustomerId value read from the table was incorrect.");
                 Assert.True(sqlDataReader.GetProviderSpecificFieldType(1) == typeof(System.Data.SqlTypes.SqlBinary), "FirstName value read from the table was incorrect.");
                 Assert.True(sqlDataReader.GetProviderSpecificFieldType(2) == typeof(System.Data.SqlTypes.SqlBinary), "LastName value read from the table was incorrect.");
+
                 Assert.True(sqlDataReader.GetDataTypeName(0) == @"varbinary", "CustomerId value read from the table was incorrect.");
                 Assert.True(sqlDataReader.GetDataTypeName(1) == @"varbinary", "FirstName value read from the table was incorrect.");
                 Assert.True(sqlDataReader.GetDataTypeName(2) == @"varbinary", "LastName value read from the table was incorrect.");
@@ -1768,15 +2002,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 Assert.Equal(values[2], row.ItemArray[2]);
             }
         }
+
         public void Dispose()
         {
             using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TcpConnStr))
             {
                 sqlConnection.Open();
+
                 Table.DeleteData(fixture.ApiTestTable.Name, sqlConnection);
             }
         }
     }
+
     struct Customer
     {
         public Customer(int id, string firstName, string lastName)
@@ -1785,8 +2022,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             FirstName = firstName;
             LastName = lastName;
         }
+
         public int Id { get; set; }
+
         public string FirstName { get; set; }
+
         public string LastName { get; set; }
     }
 }
