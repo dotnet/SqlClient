@@ -4,14 +4,27 @@
 
 using System;
 
-namespace Microsoft.Data.SqlClient {
+namespace Microsoft.Data.SqlClient
+{
 
-    /// <summary>
-    /// represents the application workload type when connecting to a server
-    /// </summary>
+    ///<summary>
+    ///Specifies a value for <see cref="SqlConnectionStringBuilder.ApplicationIntent" />. Possible values are  <see langword="ReadWrite" /> and <see langword="ReadOnly"/>.
+    ///</summary>
+    ///<remarks>To be added.</remarks>
     [Serializable]
-    public enum ApplicationIntent {
-        ReadWrite      = 0,
-        ReadOnly       = 1,
+    public enum ApplicationIntent
+    {
+
+        ///<summary>
+        ///The application workload type when connecting to a server is read write.
+        ///</summary>
+        ///<value>0</value>
+        ReadWrite = 0,
+
+        /// <summary>
+        /// The application workload type when connecting to a server is read only.
+        /// </summary>
+        /// <value>1</value>
+        ReadOnly = 1,
     }
 }

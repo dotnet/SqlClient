@@ -10401,12 +10401,21 @@ namespace Microsoft.Data.SqlClient {
             TdsParserStateObject _stateObj;
             byte[] _preambleToStrip;
 
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="parser"></param>
+            /// <param name="stateObj"></param>
+            /// <param name="preambleToStrip"></param>
             public TdsOutputStream(TdsParser parser, TdsParserStateObject stateObj, byte[] preambleToStrip) {
                 _parser = parser;
                 _stateObj = stateObj;
                 _preambleToStrip = preambleToStrip;
             }
 
+            /// <summary>
+            /// 
+            /// </summary>
             public override bool CanRead {
                 get { return false; }
             }
@@ -10436,14 +10445,31 @@ namespace Microsoft.Data.SqlClient {
                 }
             }
 
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="buffer"></param>
+            /// <param name="offset"></param>
+            /// <param name="count"></param>
+            /// <returns></returns>
             public override int Read(byte[] buffer, int offset, int count) {
                 throw new NotSupportedException();
             }
 
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="offset"></param>
+            /// <param name="origin"></param>
+            /// <returns></returns>
             public override long Seek(long offset, SeekOrigin origin) {
                 throw new NotSupportedException();
             }
 
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="value"></param>
             public override void SetLength(long value) {
                 throw new NotSupportedException();
             }
@@ -10464,6 +10490,12 @@ namespace Microsoft.Data.SqlClient {
                 _preambleToStrip = null;
             }
 
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="buffer"></param>
+            /// <param name="offset"></param>
+            /// <param name="count"></param>
             public override void Write(byte[] buffer, int offset, int count) {
                 Debug.Assert(!_parser._asyncWrite);
                 ValidateWriteParameters(buffer, offset, count);
@@ -10476,6 +10508,14 @@ namespace Microsoft.Data.SqlClient {
                 }
             }
 
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="buffer"></param>
+            /// <param name="offset"></param>
+            /// <param name="count"></param>
+            /// <param name="cancellationToken"></param>
+            /// <returns></returns>
             public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken) {
                 Debug.Assert(_parser._asyncWrite);
                 ValidateWriteParameters(buffer, offset, count);

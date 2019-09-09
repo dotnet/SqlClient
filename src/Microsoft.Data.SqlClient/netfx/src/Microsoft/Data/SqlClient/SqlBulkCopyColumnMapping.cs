@@ -13,7 +13,9 @@ namespace Microsoft.Data.SqlClient
     // this class helps allows the user to create association between source- and targetcolumns
     //
     //
-
+    /// <summary>
+    /// 
+    /// </summary>
     public sealed class SqlBulkCopyColumnMapping {
         internal string         _destinationColumnName;
         internal int            _destinationColumnOrdinal;
@@ -38,6 +40,9 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public int DestinationOrdinal {
             get {
                     return _destinationColumnOrdinal;
@@ -53,6 +58,9 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public string SourceColumn {
             get {
                 if (_sourceColumnName != null) {
@@ -66,6 +74,9 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public int SourceOrdinal {
             get {
                     return _sourceColumnOrdinal;
@@ -81,25 +92,48 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public SqlBulkCopyColumnMapping () {
             _internalSourceColumnOrdinal = -1;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sourceColumn"></param>
+        /// <param name="destinationColumn"></param>
         public SqlBulkCopyColumnMapping (string sourceColumn, string destinationColumn) {
             SourceColumn = sourceColumn;
             DestinationColumn = destinationColumn;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sourceColumnOrdinal"></param>
+        /// <param name="destinationColumn"></param>
         public SqlBulkCopyColumnMapping (int sourceColumnOrdinal, string destinationColumn) {
             SourceOrdinal = sourceColumnOrdinal;
             DestinationColumn = destinationColumn;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sourceColumn"></param>
+        /// <param name="destinationOrdinal"></param>
         public SqlBulkCopyColumnMapping (string sourceColumn, int destinationOrdinal) {
             SourceColumn = sourceColumn;
             DestinationOrdinal = destinationOrdinal;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sourceColumnOrdinal"></param>
+        /// <param name="destinationOrdinal"></param>
         public SqlBulkCopyColumnMapping (int sourceColumnOrdinal, int destinationOrdinal) {
             SourceOrdinal = sourceColumnOrdinal;
             DestinationOrdinal = destinationOrdinal;

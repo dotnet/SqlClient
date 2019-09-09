@@ -4,32 +4,41 @@
 
 using System;
 
-namespace Microsoft.Data.SqlClient {
-    public class SqlNotificationEventArgs : EventArgs {
+namespace Microsoft.Data.SqlClient
+{
+    public class SqlNotificationEventArgs : EventArgs
+    {
         private SqlNotificationType _type;
         private SqlNotificationInfo _info;
         private SqlNotificationSource _source;
 
-        public SqlNotificationEventArgs(SqlNotificationType type, SqlNotificationInfo info, SqlNotificationSource source) {
+        public SqlNotificationEventArgs(SqlNotificationType type, SqlNotificationInfo info, SqlNotificationSource source)
+        {
             _info = info;
             _source = source;
             _type = type;
         }
 
-        public SqlNotificationType Type {
-            get {
+        public SqlNotificationType Type
+        {
+            get
+            {
                 return _type;
             }
         }
 
-        public SqlNotificationInfo Info {
-            get {
+        public SqlNotificationInfo Info
+        {
+            get
+            {
                 return _info;
             }
         }
 
-        public SqlNotificationSource Source {
-            get {
+        public SqlNotificationSource Source
+        {
+            get
+            {
                 return _source;
             }
         }

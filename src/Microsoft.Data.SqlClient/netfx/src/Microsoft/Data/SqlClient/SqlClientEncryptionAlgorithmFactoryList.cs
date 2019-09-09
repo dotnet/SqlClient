@@ -28,9 +28,9 @@ namespace Microsoft.Data.SqlClient {
         }
 
         /// <summary>
-        /// Get the registered list of algorithms as a comma seperated list with algorithm names
-        /// wrapped in single quotes.
-        /// <summary>
+        ///  Get the registered list of algorithms as a comma seperated list with algorithm names.
+        /// </summary>
+        /// <returns></returns>
         internal string GetRegisteredCipherAlgorithmNames () {
             StringBuilder builder = new StringBuilder();
             bool firstElem = true;
@@ -48,9 +48,8 @@ namespace Microsoft.Data.SqlClient {
 
             return builder.ToString();
         }
-
         /// <summary>
-        /// Gets the algorithm handle instance for a given algorithm and instantiates it using the provided key and the encryption type.
+        ///  Gets the algorithm handle instance for a given algorithm and instantiates it using the provided key and the encryption type.
         /// </summary>
         /// <param name="key"></param>
         /// <param name="type"></param>

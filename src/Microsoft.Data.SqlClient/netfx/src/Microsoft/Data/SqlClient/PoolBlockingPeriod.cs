@@ -12,8 +12,22 @@ namespace Microsoft.Data.SqlClient
     [Serializable]
     public enum PoolBlockingPeriod
     {
+        /// <summary>
+        /// Specifies a value for the <see cref="Microsoft.Data.SqlClient.SqlConnectionStringBuilder.PoolBlockingPeriod" /> property. 
+        /// </summary>
+        /// <Value>Auto is set to 0.</Value>
         Auto = 0,
+
+        /// <summary>
+        /// Blocking period ON for all SQL servers including Azure SQL servers.
+        /// </summary>
+        /// <value>AlwaysBlock is set to 1.</value>
         AlwaysBlock = 1,
+
+        /// <summary>
+        /// Blocking period OFF for all SQL servers including Azure SQL servers.
+        /// </summary>
+        /// <value>NeverBlock is set to 2.</value>
         NeverBlock = 2,
     }
 }

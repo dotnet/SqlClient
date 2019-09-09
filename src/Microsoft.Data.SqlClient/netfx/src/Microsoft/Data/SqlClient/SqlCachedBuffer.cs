@@ -135,6 +135,10 @@ namespace Microsoft.Data.SqlClient {
             return xr;
         }
 
+        /// <summary>
+        /// Checks if the the value is null.
+        /// </summary>
+        /// <returns>If cached bytes are undefined returns true otherwise null.</returns>
         public bool IsNull {
             get {
                 return (_cachedBytes == null) ? true : false ;

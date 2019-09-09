@@ -128,7 +128,7 @@ namespace Microsoft.Data.SqlClient
         {
             StringBuilder errorBuilder;
             string durationString;
-            switch(currentPhase)
+            switch (currentPhase)
             {
                 case SqlConnectionTimeoutErrorPhase.PreLoginBegin:
                     errorBuilder = new StringBuilder(SQLMessage.Timeout_PreLogin_Begin());
@@ -191,7 +191,7 @@ namespace Microsoft.Data.SqlClient
                     durationString = null;
                     break;
             }
-            
+
             // This message is to be added only when within the various stages of a connection. 
             // In all other cases, it will default to the original error message.
             if ((currentPhase != SqlConnectionTimeoutErrorPhase.Undefined) && (currentPhase != SqlConnectionTimeoutErrorPhase.Complete))
@@ -202,7 +202,8 @@ namespace Microsoft.Data.SqlClient
                     errorBuilder.Append("  ");
                     errorBuilder.AppendFormat((IFormatProvider)null, SQLMessage.Timeout_FailoverInfo(), currentSourceType);
                 }
-                else if (currentSourceType == SqlConnectionInternalSourceType.RoutingDestination) {
+                else if (currentSourceType == SqlConnectionInternalSourceType.RoutingDestination)
+                {
                     errorBuilder.Append("  ");
                     errorBuilder.AppendFormat((IFormatProvider)null, SQLMessage.Timeout_RoutingDestination(),
                         originalPhaseDurations[(int)SqlConnectionTimeoutErrorPhase.PreLoginBegin].GetMilliSecondDuration() +

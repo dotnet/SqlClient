@@ -22,18 +22,27 @@ namespace Microsoft.Data.SqlClient.Server {
             _stream = stream;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public override bool IsNull {
             get {
                 return null == _stream;
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public override bool CanRead {
             get {
                 return _stream.CanRead;
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         // If CanSeek is false, Position, Seek, Length, and SetLength should throw.
         public override bool CanSeek {
             get {
@@ -41,12 +50,18 @@ namespace Microsoft.Data.SqlClient.Server {
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public override bool CanWrite {
             get {
                 return _stream.CanWrite;
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public override long Length {
             get {
                 long length = _stream.GetLength( _sink );
@@ -58,6 +73,9 @@ namespace Microsoft.Data.SqlClient.Server {
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public override long Position {
             get {
                 long position = _stream.GetPosition( _sink ) / sizeof( char );
@@ -73,17 +91,30 @@ namespace Microsoft.Data.SqlClient.Server {
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public override void Flush() {
             _stream.Flush( _sink );
             _sink.ProcessMessagesAndThrow();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="offset"></param>
+        /// <param name="origin"></param>
+        /// <returns></returns>
         public override long Seek(long offset, SeekOrigin origin) {
             long result = _stream.Seek( _sink, offset * sizeof( char ), origin );
             _sink.ProcessMessagesAndThrow();
             return result;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
         public override void SetLength(long value) {
             if ( value < 0 ) {
                 throw ADP.ArgumentOutOfRange("value");
@@ -92,17 +123,37 @@ namespace Microsoft.Data.SqlClient.Server {
             _sink.ProcessMessagesAndThrow();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="buffer"></param>
+        /// <param name="offset"></param>
+        /// <param name="count"></param>
+        /// <returns></returns>
         public override int Read(char[] buffer, int offset, int count) {
             int bytesRead = _stream.Read( _sink, buffer, offset * sizeof( char ), count );
             _sink.ProcessMessagesAndThrow();
             return bytesRead;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="buffer"></param>
+        /// <param name="offset"></param>
+        /// <param name="count"></param>
         public override void Write(char[] buffer, int offset, int count) {
             _stream.Write( _sink, buffer, offset, count );
             _sink.ProcessMessagesAndThrow();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="buffer"></param>
+        /// <param name="offset"></param>
+        /// <param name="count"></param>
+        /// <returns></returns>
         // Convenience methods to allow simple pulling/pushing of raw bytes
         internal int Read(byte[] buffer, int offset, int count) {
             int bytesRead = _stream.Read( _sink, buffer, offset, count );
@@ -110,6 +161,12 @@ namespace Microsoft.Data.SqlClient.Server {
             return bytesRead;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="buffer"></param>
+        /// <param name="offset"></param>
+        /// <param name="count"></param>
         internal void Write(byte[] buffer, int offset, int count) {
             _stream.Write( _sink, buffer, offset, count );
             _sink.ProcessMessagesAndThrow();

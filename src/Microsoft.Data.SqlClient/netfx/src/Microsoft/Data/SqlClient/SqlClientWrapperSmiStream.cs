@@ -20,6 +20,9 @@ namespace Microsoft.Data.SqlClient.Server {
             _stream = stream;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public override bool CanRead {
             get {
                 return _stream.CanRead;
@@ -33,12 +36,18 @@ namespace Microsoft.Data.SqlClient.Server {
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public override bool CanWrite {
             get {
                 return _stream.CanWrite;
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public override long Length {
             get {
                 long length = _stream.GetLength( _sink );
@@ -47,6 +56,9 @@ namespace Microsoft.Data.SqlClient.Server {
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public override long Position {
             get {
                 long position = _stream.GetPosition( _sink );
@@ -59,28 +71,54 @@ namespace Microsoft.Data.SqlClient.Server {
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public override void Flush() {
             _stream.Flush( _sink );
             _sink.ProcessMessagesAndThrow();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="offset"></param>
+        /// <param name="origin"></param>
+        /// <returns></returns>
         public override long Seek(long offset, SeekOrigin origin) {
             long result = _stream.Seek( _sink, offset, origin );
             _sink.ProcessMessagesAndThrow();
             return result;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
         public override void SetLength(long value) {
             _stream.SetLength( _sink, value );
             _sink.ProcessMessagesAndThrow();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="buffer"></param>
+        /// <param name="offset"></param>
+        /// <param name="count"></param>
+        /// <returns></returns>
         public override int Read(byte[] buffer, int offset, int count) {
             int bytesRead = _stream.Read( _sink, buffer, offset, count );
             _sink.ProcessMessagesAndThrow();
             return bytesRead;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="buffer"></param>
+        /// <param name="offset"></param>
+        /// <param name="count"></param>
         public override void Write(byte[] buffer, int offset, int count) {
             _stream.Write( _sink, buffer, offset, count );
             _sink.ProcessMessagesAndThrow();

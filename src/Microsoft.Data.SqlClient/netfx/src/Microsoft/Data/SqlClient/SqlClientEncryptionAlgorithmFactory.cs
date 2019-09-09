@@ -14,10 +14,10 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Creates an encrytion algorithm with a given key.
         /// </summary>
-        /// <param name="rootKey">encryption key that should be passed to the encryption algorithm to be created</param>
-        /// <param name="encryptionType">Encryption Type, some algorithms will need this</param>
-        /// <param name="encryptionAlgorithm">Encryption algorithm name. Needed for extracting version bits</param>
-        /// <returns>Return a newly created SqlClientEncryptionAlgorithm instance</returns>
+        /// <param name="encryptionKey"></param>
+        /// <param name="encryptionType"></param>
+        /// <param name="encryptionAlgorithm"></param>
+        /// <returns></returns>
         internal abstract SqlClientEncryptionAlgorithm Create(SqlClientSymmetricKey encryptionKey, SqlClientEncryptionType encryptionType, string encryptionAlgorithm);
     }
 }

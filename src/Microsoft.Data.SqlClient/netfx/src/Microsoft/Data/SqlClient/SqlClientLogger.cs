@@ -16,6 +16,9 @@ namespace Microsoft.Data.SqlClient {
         /// <summary>
         /// Log info.
         /// </summary>
+        /// <param name="type"></param>
+        /// <param name="method"></param>
+        /// <param name="message"></param>
         public void LogInfo(string type, string method, string message) {
             Bid.Trace($"<sc|{type}|{method}|{LogLevel.Info}>{message}\n");
         }
@@ -23,6 +26,9 @@ namespace Microsoft.Data.SqlClient {
         /// <summary>
         /// Log error.
         /// </summary>
+        /// <param name="type"></param>
+        /// <param name="method"></param>
+        /// <param name="message"></param>
         public void LogError(string type, string method, string message) {
             Bid.Trace($"<sc|{type}|{method}|{LogLevel.Error}>{message}\n");
         }
@@ -30,6 +36,11 @@ namespace Microsoft.Data.SqlClient {
         /// <summary>
         /// Log message if value is not true.
         /// </summary>
+        /// <param name="value"></param>
+        /// <param name="type"></param>
+        /// <param name="method"></param>
+        /// <param name="message"></param>
+        /// <returns></returns>
         public bool LogAssert(bool value, string type, string method, string message) {
             if (!value) LogError(type, method, message);
             return value;

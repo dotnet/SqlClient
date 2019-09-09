@@ -20,6 +20,8 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Get token.
         /// </summary>
+        /// <param name="parameters"></param>
+        /// <returns>SqlAuthenticationToken(result.AccessToken, result.ExpiresOn)</returns>
         public override Task<SqlAuthenticationToken> AcquireTokenAsync(SqlAuthenticationParameters parameters) => Task.Run(async () =>
         {
             IPublicClientApplication app = PublicClientApplicationBuilder.Create(ActiveDirectoryAuthentication.AdoClientId)
@@ -57,9 +59,10 @@ namespace Microsoft.Data.SqlClient
         });
 
         /// <summary>
-        /// Checks support for authentication type in lower case.
-        /// Interactive authenticatin added.
+        ///  Checks support for authentication type in lower case.
         /// </summary>
+        /// <param name="authentication"></param>
+        /// <returns></returns>
         public override bool IsSupported(SqlAuthenticationMethod authentication)
         {
             return authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated
@@ -67,6 +70,10 @@ namespace Microsoft.Data.SqlClient
                 || authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="authentication"></param>
         public override void BeforeLoad(SqlAuthenticationMethod authentication)
         {
             _logger.LogInfo(_type, "BeforeLoad", $"being loaded into SqlAuthProviders for {authentication}.");

@@ -65,7 +65,7 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
     <file src="..\..\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.pdb" target="lib\net46\" exclude="" />
     <file src="..\..\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.dll" target="runtimes\win\lib\net46\" exclude="" />
     <file src="..\..\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.pdb" target="runtimes\win\lib\net46\" exclude="" />
-    
+    <file src="..\..\src\Microsoft.Data.SqlClient\netfx\docs\Microsoft.Data.SqlClient.xml" target="lib\net46\"/>
     <!-- Localized Resource Files for NetFx -->
     <file src="..\..\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\de\Microsoft.Data.SqlClient.resources.dll" target="lib\net46\de\" exclude="" />
     <file src="..\..\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\es\Microsoft.Data.SqlClient.resources.dll" target="lib\net46\es\" exclude="" />

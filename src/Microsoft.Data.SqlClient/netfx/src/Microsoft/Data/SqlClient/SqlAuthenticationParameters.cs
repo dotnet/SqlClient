@@ -13,6 +13,7 @@ namespace Microsoft.Data.SqlClient
     /// AD Authentication parameters passed by driver to auth providers.
     /// </summary>
     public class SqlAuthenticationParameters {
+
         /// <summary>
         /// Authentication method.
         /// </summary>
@@ -53,6 +54,18 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         public string DatabaseName { get; }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Microsoft.Data.SqlClient.SqlAuthenticationParameters" /> class using the specified authentication method, server name, database name, resource URI, authority URI, user login name/ID, user password and connection ID.
+        /// </summary>
+        /// <param name="authenticationMethod"></param>
+        /// <param name="serverName"></param>
+        /// <param name="databaseName"></param>
+        /// <param name="scopes"></param>
+        /// <param name="authority"></param>
+        /// <param name="userId"></param>
+        /// <param name="password"></param>
+        /// <param name="connectionId"></param>
+        /// <remarks>To be added.</remarks>
         protected SqlAuthenticationParameters(
             SqlAuthenticationMethod authenticationMethod,
             string serverName,

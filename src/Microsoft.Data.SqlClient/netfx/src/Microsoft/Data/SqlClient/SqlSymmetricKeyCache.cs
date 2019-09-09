@@ -29,6 +29,10 @@ namespace Microsoft.Data.SqlClient {
         /// <summary>
         /// <para> Retrieves Symmetric Key (in plaintext) given the encryption material.</para>
         /// </summary>
+        /// <param name="keyInfo"></param>
+        /// <param name="serverName"></param>
+        /// <param name="encryptionKey"></param>
+        /// <returns></returns>
         internal bool GetKey (SqlEncryptionKeyInfo keyInfo, string serverName, out SqlClientSymmetricKey encryptionKey) {
             Debug.Assert(serverName != null, @"serverName should not be null.");
 

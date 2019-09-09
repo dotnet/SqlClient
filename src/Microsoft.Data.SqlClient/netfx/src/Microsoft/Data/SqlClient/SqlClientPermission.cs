@@ -19,13 +19,25 @@ namespace Microsoft.Data.SqlClient {
     public sealed class SqlClientPermission : System.Data.Common.DBDataPermission
     {
 
+        /// <summary>
+        /// 
+        /// </summary>
         [ Obsolete("SqlClientPermission() has been deprecated.  Use the SqlClientPermission(PermissionState.None) constructor.  http://go.microsoft.com/fwlink/?linkid=14202", true) ] // MDAC 86034
         public SqlClientPermission() : this(PermissionState.None) {
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="state"></param>
         public SqlClientPermission(PermissionState state) : base(state) {
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="state"></param>
+        /// <param name="allowBlankPassword"></param>
         [ Obsolete("SqlClientPermission(PermissionState state, Boolean allowBlankPassword) has been deprecated.  Use the SqlClientPermission(PermissionState.None) constructor.  http://go.microsoft.com/fwlink/?linkid=14202", true) ] // MDAC 86034
         public SqlClientPermission(PermissionState state, bool allowBlankPassword) : this(state) {
             AllowBlankPassword = allowBlankPassword;
@@ -50,11 +62,21 @@ namespace Microsoft.Data.SqlClient {
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="connectionString"></param>
+        /// <param name="restrictions"></param>
+        /// <param name="behavior"></param>
         public override void Add(string connectionString, string restrictions, KeyRestrictionBehavior behavior) {
             DBConnectionString constr = new DBConnectionString(connectionString, restrictions, behavior, SqlConnectionString.GetParseSynonyms(), false);
             AddPermissionEntry(constr);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         override public IPermission Copy () {
             return new SqlClientPermission(this);
         }
@@ -111,6 +133,11 @@ namespace Microsoft.Data.SqlClient {
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="target"></param>
+        /// <returns></returns>
         override public IPermission Intersect(IPermission target)
         { // used during Deny actions
             if (null == target)
@@ -163,6 +190,11 @@ namespace Microsoft.Data.SqlClient {
             return flag;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="target"></param>
+        /// <returns></returns>
         override public bool IsSubsetOf(IPermission target)
         {
             if (null == target)
@@ -201,6 +233,11 @@ namespace Microsoft.Data.SqlClient {
             return subset;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="target"></param>
+        /// <returns></returns>
         override public IPermission Union(IPermission target)
         {
             if (null == target)
@@ -263,6 +300,10 @@ namespace Microsoft.Data.SqlClient {
         // <IPermission class="...Permission" version="1" AllowBlankPassword=false>
         //     <add ConnectionString="provider=x;data source=y;" KeyRestrictions="address=;server=" KeyRestrictionBehavior=PreventUsage/>
         // </IPermission>
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="securityElement"></param>
         override public void FromXml(SecurityElement securityElement)
         {
             // code derived from CodeAccessPermission.ValidateElement
@@ -325,6 +366,10 @@ namespace Microsoft.Data.SqlClient {
         //     <add ConnectionString="provider=x;data source=y;" KeyRestrictions="user id=;password=;" KeyRestrictionBehavior=AllowOnly/>
         //     <add ConnectionString="provider=x;data source=y;" KeyRestrictions="address=;server=" KeyRestrictionBehavior=PreventUsage/>
         // </IPermission>
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         override public SecurityElement ToXml()
         {
             Type type = this.GetType();

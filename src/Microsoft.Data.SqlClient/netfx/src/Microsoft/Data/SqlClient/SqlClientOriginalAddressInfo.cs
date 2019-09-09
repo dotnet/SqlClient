@@ -19,6 +19,11 @@ namespace Microsoft.Data.SqlClient {
 #endif
     sealed class SqlClientOriginalNetworkAddressInfo
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="address"></param>
+        /// <param name="isFromDataSecurityProxy"></param>
         public SqlClientOriginalNetworkAddressInfo(IPAddress address, bool isFromDataSecurityProxy = false)
         {
             if (address == null)
@@ -30,11 +35,20 @@ namespace Microsoft.Data.SqlClient {
             _isFromDataSecurityProxy = isFromDataSecurityProxy;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public override int GetHashCode()  
         {
             return _address != null ? _address.GetHashCode() : 0;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="other"></param>
+        /// <returns></returns>
         public override bool Equals(object other) 
         {
             SqlClientOriginalNetworkAddressInfo otherAddress = other as SqlClientOriginalNetworkAddressInfo;
@@ -57,11 +71,17 @@ namespace Microsoft.Data.SqlClient {
             return true;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public IPAddress Address
         {
             get { return _address; }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public bool IsFromDataSecurityProxy 
         {
             get { return _isFromDataSecurityProxy; }

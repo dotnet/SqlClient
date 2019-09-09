@@ -4,5 +4,10 @@
 
 namespace Microsoft.Data.SqlClient {
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="e">Type of SqlRowUpdatingEventArgs</param>
     public delegate void SqlRowUpdatingEventHandler(object sender, SqlRowUpdatingEventArgs e);
 }

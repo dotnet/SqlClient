@@ -44,6 +44,9 @@ namespace Microsoft.Data.SqlClient {
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public override bool IsInvalid {
             get {
                 return (IntPtr.Zero == base.handle);
@@ -62,12 +65,18 @@ namespace Microsoft.Data.SqlClient {
             return true;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public UInt32 SNIStatus {
             get {
                 return _sniStatus;
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public EncryptionOptions Options {
             get {
                 return _encryptionOption;
@@ -156,6 +165,9 @@ namespace Microsoft.Data.SqlClient {
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public override bool IsInvalid {
             get {
                 return (IntPtr.Zero == base.handle);
@@ -190,6 +202,9 @@ namespace Microsoft.Data.SqlClient {
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public override bool IsInvalid {
             get {
                 return (IntPtr.Zero == base.handle);

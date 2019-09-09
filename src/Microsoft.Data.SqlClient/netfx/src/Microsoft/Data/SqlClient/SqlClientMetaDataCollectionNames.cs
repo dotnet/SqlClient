@@ -6,6 +6,7 @@ namespace Microsoft.Data.SqlClient{
 
     public static class SqlClientMetaDataCollectionNames {
         
+        
         public static readonly string Columns               = "Columns";
         public static readonly string Databases             = "Databases";
         public static readonly string ForeignKeys           = "ForeignKeys";

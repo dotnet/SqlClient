@@ -9,23 +9,33 @@ namespace Microsoft.Data.SqlClient
 {
 
     /// <summary>
-    /// AD authentication token.
+    /// Represents an AD authentication token.
     /// </summary>
-    public class SqlAuthenticationToken {
+    public class SqlAuthenticationToken
+    {
+
         /// <summary>
-        /// Token expiration time.
+        /// Gets the token expiration time.
         /// </summary>
+        /// <value>The token expiration time.</value>
+        /// <remarks>Tobe added.</remarks>
         public DateTimeOffset ExpiresOn { get; }
 
         /// <summary>
-        /// Token string.
+        /// Gets the token string.
         /// </summary>
+        /// <remarks>To be added.</remarks>
         public string AccessToken { get; }
 
         /// <summary>
-        /// Constructor.
+        /// Initializes a new instance of the <see cref="Microsoft.Data.SqlClient.SqlAuthenticationToken" /> class.
         /// </summary>
-        public SqlAuthenticationToken(string accessToken, DateTimeOffset expiresOn) {
+        /// <param name="accessToken"></param>
+        /// <param name="expiresOn"></param>
+        /// <remarks>To be added.</remarks>
+        /// <exception cref="System.ArgumentNullException"></exception>The <paramref name="accessToken" /> parameter is <see langword="null" /> or empty.
+        public SqlAuthenticationToken(string accessToken, DateTimeOffset expiresOn)
+        {
             if (string.IsNullOrEmpty(accessToken)) throw SQL.ParameterCannotBeEmpty("AccessToken");
 
             AccessToken = accessToken;
@@ -33,17 +43,21 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Constructor.
+        /// 
         /// </summary>
+        /// <param name="accessToken"></param>
+        /// <param name="expiresOn"></param>
         internal SqlAuthenticationToken(byte[] accessToken, DateTimeOffset expiresOn)
             : this(AccessTokenStringFromBytes(accessToken), expiresOn) { }
 
         /// <summary>
         /// Convert to driver's internal token class.
         /// </summary>
-        internal SqlFedAuthToken ToSqlFedAuthToken() {
+        internal SqlFedAuthToken ToSqlFedAuthToken()
+        {
             var tokenBytes = AccessTokenBytesFromString(AccessToken);
-            return new SqlFedAuthToken {
+            return new SqlFedAuthToken
+            {
                 accessToken = tokenBytes,
                 dataLen = (uint)tokenBytes.Length,
                 expirationFileTime = ExpiresOn.ToFileTime()
@@ -51,16 +65,22 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Convert token bytes to string.
+        /// 
         /// </summary>
-        internal static string AccessTokenStringFromBytes(byte[] bytes) {
+        /// <param name="bytes"></param>
+        /// <returns></returns>
+        internal static string AccessTokenStringFromBytes(byte[] bytes)
+        {
             return Encoding.Unicode.GetString(bytes);
         }
 
         /// <summary>
-        /// Convert token string to bytes.
+        /// 
         /// </summary>
-        internal static byte[] AccessTokenBytesFromString(string token) {
+        /// <param name="token"></param>
+        /// <returns></returns>
+        internal static byte[] AccessTokenBytesFromString(string token)
+        {
             return Encoding.Unicode.GetBytes(token);
         }
     }

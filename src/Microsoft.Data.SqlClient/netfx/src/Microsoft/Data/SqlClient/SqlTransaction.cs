@@ -42,6 +42,9 @@ namespace Microsoft.Data.SqlClient {
         // PROPERTIES
         ////////////////////////////////////////////////////////////////////////////////////////
 
+            /// <summary>
+            /// 
+            /// </summary>
         new public SqlConnection Connection { // MDAC 66655
             get {
                 if (IsZombied) {
@@ -105,6 +108,9 @@ namespace Microsoft.Data.SqlClient {
         // PUBLIC METHODS
         ////////////////////////////////////////////////////////////////////////////////////////
 
+        /// <summary>
+        /// 
+        /// </summary>
         override public void Commit() {
             SqlConnection.ExecutePermission.Demand(); // MDAC 81476
 
@@ -204,6 +210,9 @@ namespace Microsoft.Data.SqlClient {
             base.Dispose(disposing);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         override public void Rollback() {
             if (IsYukonPartialZombie) {
                 // Put something in the trace in case a customer has an issue
@@ -267,6 +276,10 @@ namespace Microsoft.Data.SqlClient {
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="transactionName"></param>
         public void Rollback(string transactionName) {
             SqlConnection.ExecutePermission.Demand(); // MDAC 81476
 
@@ -322,6 +335,10 @@ namespace Microsoft.Data.SqlClient {
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="savePointName"></param>
         public void Save(string savePointName) {
             SqlConnection.ExecutePermission.Demand(); // MDAC 81476
 

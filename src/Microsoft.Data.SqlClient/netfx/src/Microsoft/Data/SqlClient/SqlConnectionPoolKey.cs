@@ -20,9 +20,9 @@ namespace Microsoft.Data.SqlClient
         private ClientCertificateRetrievalCallback _clientCertificateRetrievalCallback;
         private SqlClientOriginalNetworkAddressInfo _originalNetworkAddressInfo;
 
-        internal SqlConnectionPoolKey(string connectionString, 
-                                            SqlCredential credential, 
-                                            string accessToken, 
+        internal SqlConnectionPoolKey(string connectionString,
+                                            SqlCredential credential,
+                                            string accessToken,
                                             ServerCertificateValidationCallback serverCertificateValidationCallback,
                                             ClientCertificateRetrievalCallback clientCertificateRetrievalCallback,
                                             SqlClientOriginalNetworkAddressInfo originalNetworkAddressInfo) : base(connectionString)
@@ -36,13 +36,13 @@ namespace Microsoft.Data.SqlClient
             CalculateHashCode();
         }
 
-        private SqlConnectionPoolKey(SqlConnectionPoolKey key) : base (key)
+        private SqlConnectionPoolKey(SqlConnectionPoolKey key) : base(key)
         {
-             _credential = key.Credential;
-             _accessToken = key.AccessToken;
-             _serverCertificateValidationCallback = key._serverCertificateValidationCallback;
-             _clientCertificateRetrievalCallback = key._clientCertificateRetrievalCallback;
-             CalculateHashCode();
+            _credential = key.Credential;
+            _accessToken = key.AccessToken;
+            _serverCertificateValidationCallback = key._serverCertificateValidationCallback;
+            _clientCertificateRetrievalCallback = key._clientCertificateRetrievalCallback;
+            CalculateHashCode();
         }
 
         object ICloneable.Clone()
@@ -108,9 +108,9 @@ namespace Microsoft.Data.SqlClient
         {
             SqlConnectionPoolKey key = obj as SqlConnectionPoolKey;
 
-            return (key != null && 
-                    _credential == key._credential && 
-                    ConnectionString == key.ConnectionString && 
+            return (key != null &&
+                    _credential == key._credential &&
+                    ConnectionString == key.ConnectionString &&
                     Object.ReferenceEquals(_accessToken, key._accessToken) &&
                     _serverCertificateValidationCallback == key._serverCertificateValidationCallback &&
                     _clientCertificateRetrievalCallback == key._clientCertificateRetrievalCallback &&

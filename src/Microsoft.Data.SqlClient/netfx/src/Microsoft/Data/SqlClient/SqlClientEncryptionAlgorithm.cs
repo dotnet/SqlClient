@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Encrypts the plainText with a column encryption key
         /// </summary>
-        /// <param name="plainText">Plain text value to be encrypted</param>
+        /// <param name="plainText"></param>
         /// <returns></returns>
         internal abstract byte[] EncryptData(byte[] plainText);
 

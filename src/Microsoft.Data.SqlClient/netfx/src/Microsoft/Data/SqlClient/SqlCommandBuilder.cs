@@ -13,8 +13,15 @@ using System.Data.Common;
 using System.Data;
 
 namespace Microsoft.Data.SqlClient {
+
+    /// <summary>
+    /// 
+    /// </summary>
     public sealed class SqlCommandBuilder : DbCommandBuilder {
 
+        /// <summary>
+        /// 
+        /// </summary>
         public SqlCommandBuilder() : base() {
             GC.SuppressFinalize(this);
             base.QuotePrefix = "["; // initialize base with defaults
@@ -24,7 +31,7 @@ namespace Microsoft.Data.SqlClient {
         public SqlCommandBuilder(SqlDataAdapter adapter) : this() {
             DataAdapter = adapter;
         }
-
+      
         /// <devnote>SqlServer only supports CatalogLocation.Start</devnote>
         [
         Browsable(false),

@@ -11,31 +11,56 @@ using System.Data.Sql;
 
 namespace Microsoft.Data.SqlClient {
 
+    /// <summary>
+    /// 
+    /// </summary>
     public sealed class SqlClientFactory : DbProviderFactory, IServiceProvider {
 
+        /// <summary>
+        /// 
+        /// </summary>
         public static readonly SqlClientFactory Instance = new SqlClientFactory();
 
         private SqlClientFactory() {
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public override bool CanCreateDataSourceEnumerator {
             get { 
                 return true;
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public override DbCommand CreateCommand() {
             return new SqlCommand();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public override DbCommandBuilder CreateCommandBuilder() {
             return new SqlCommandBuilder();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public override DbConnection CreateConnection() {
             return new SqlConnection();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public override DbConnectionStringBuilder CreateConnectionStringBuilder() { 
             return new SqlConnectionStringBuilder();
         }
@@ -44,14 +69,27 @@ namespace Microsoft.Data.SqlClient {
             return new SqlDataAdapter();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public override DbParameter CreateParameter() {
             return new SqlParameter();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="state"></param>
+        /// <returns></returns>
         public override CodeAccessPermission CreatePermission(PermissionState state) {
             return new SqlClientPermission(state);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public override DbDataSourceEnumerator CreateDataSourceEnumerator() {
             return SqlDataSourceEnumerator.Instance;
         }
@@ -60,7 +98,8 @@ namespace Microsoft.Data.SqlClient {
         /// Extension mechanism for additional services; currently the only service
         /// supported is the DbProviderServices
         /// </summary>
-        /// <returns>requested service provider or null.</returns>
+        /// <param name="serviceType"></param>
+        /// <returns>requested service provider or null</returns>
         object IServiceProvider.GetService(Type serviceType)
         {
             object result = null;

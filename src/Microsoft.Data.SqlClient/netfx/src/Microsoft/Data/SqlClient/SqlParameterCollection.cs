@@ -7,112 +7,196 @@ using System.ComponentModel;
 using System.Data.Common;
 using System.Data;
 
-namespace Microsoft.Data.SqlClient {
-
-
-    [
-    Editor("Microsoft.VSDesigner.Data.Design.DBParametersEditor, " + AssemblyRef.MicrosoftVSDesigner, "System.Drawing.Design.UITypeEditor, " + AssemblyRef.SystemDrawing),
-    ListBindable(false)
-    ]
-    public sealed partial class SqlParameterCollection : DbParameterCollection {
+namespace Microsoft.Data.SqlClient
+{
+    /// <summary>
+    /// 
+    /// </summary>
+    [Editor("Microsoft.VSDesigner.Data.Design.DBParametersEditor, " + AssemblyRef.MicrosoftVSDesigner, "System.Drawing.Design.UITypeEditor, " + AssemblyRef.SystemDrawing),
+    ListBindable(false)]
+    public sealed partial class SqlParameterCollection : DbParameterCollection
+    {
         private bool _isDirty;
         private static Type ItemType = typeof(SqlParameter);
 
-        internal SqlParameterCollection() : base() {
+        internal SqlParameterCollection() : base()
+        {
         }
 
-        internal bool IsDirty {
-            get {
+        internal bool IsDirty
+        {
+            get
+            {
                 return _isDirty;
             }
-            set {
+            set
+            {
                 _isDirty = value;
             }
         }
 
-        [
-        Browsable(false),
-        DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)
-        ]
-        new public SqlParameter this[int index] {
-            get {
+        [Browsable(false),DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        new public SqlParameter this[int index]
+        {
+            get
+            {
                 return (SqlParameter)GetParameter(index);
             }
-            set {
+            set
+            {
                 SetParameter(index, value);
             }
         }
 
-        [
-        Browsable(false),
-        DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)
-        ]
-        new public SqlParameter this[string parameterName] {
-            get {
-                 return (SqlParameter)GetParameter(parameterName);
+        [Browsable(false),DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        new public SqlParameter this[string parameterName]
+        {
+            get
+            {
+                return (SqlParameter)GetParameter(parameterName);
             }
-            set {
-                 SetParameter(parameterName, value);
+            set
+            {
+                SetParameter(parameterName, value);
             }
         }
 
-        public SqlParameter Add(SqlParameter value) {
+        public SqlParameter Add(SqlParameter value)
+        {
             Add((object)value);
             return value;
         }
 
-        [ EditorBrowsableAttribute(EditorBrowsableState.Never) ] 
-        [ ObsoleteAttribute("Add(String parameterName, Object value) has been deprecated.  Use AddWithValue(String parameterName, Object value).  http://go.microsoft.com/fwlink/?linkid=14202", false) ] // 79027
-        public SqlParameter Add(string parameterName, object value) {
-            return Add(new SqlParameter(parameterName, value));
-        }
-        public SqlParameter AddWithValue(string parameterName, object value) { // 79027
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="parameterName"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        [EditorBrowsableAttribute(EditorBrowsableState.Never)]
+        [ObsoleteAttribute("Add(String parameterName, Object value) has been deprecated.  Use AddWithValue(String parameterName, Object value).  http://go.microsoft.com/fwlink/?linkid=14202", false)] // 79027
+        public SqlParameter Add(string parameterName, object value)
+        {
             return Add(new SqlParameter(parameterName, value));
         }
 
-        public SqlParameter Add(string parameterName, SqlDbType sqlDbType) {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="parameterName"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public SqlParameter AddWithValue(string parameterName, object value)
+        { // 79027
+            return Add(new SqlParameter(parameterName, value));
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="parameterName"></param>
+        /// <param name="sqlDbType"></param>
+        /// <returns></returns>
+        public SqlParameter Add(string parameterName, SqlDbType sqlDbType)
+        {
             return Add(new SqlParameter(parameterName, sqlDbType));
         }
 
-        public SqlParameter Add(string parameterName, SqlDbType sqlDbType, int size) {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="parameterName"></param>
+        /// <param name="sqlDbType"></param>
+        /// <param name="size"></param>
+        /// <returns></returns>
+        public SqlParameter Add(string parameterName, SqlDbType sqlDbType, int size)
+        {
             return Add(new SqlParameter(parameterName, sqlDbType, size));
         }
 
-        public SqlParameter Add(string parameterName, SqlDbType sqlDbType, int size, string sourceColumn) {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="parameterName"></param>
+        /// <param name="sqlDbType"></param>
+        /// <param name="size"></param>
+        /// <param name="sourceColumn"></param>
+        /// <returns></returns>
+        public SqlParameter Add(string parameterName, SqlDbType sqlDbType, int size, string sourceColumn)
+        {
             return Add(new SqlParameter(parameterName, sqlDbType, size, sourceColumn));
         }
 
-        public void AddRange(SqlParameter[] values) {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="values"></param>
+        public void AddRange(SqlParameter[] values)
+        {
             AddRange((Array)values);
         }
 
-        override public bool Contains(string value) { // WebData 97349
+        override public bool Contains(string value)
+        { // WebData 97349
             return (-1 != IndexOf(value));
         }
 
-        public bool Contains(SqlParameter value) {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public bool Contains(SqlParameter value)
+        {
             return (-1 != IndexOf(value));
         }
 
-        public void CopyTo(SqlParameter[] array, int index) {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="array"></param>
+        /// <param name="index"></param>
+        public void CopyTo(SqlParameter[] array, int index)
+        {
             CopyTo((Array)array, index);
         }
-        
-        public int IndexOf(SqlParameter value) {
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public int IndexOf(SqlParameter value)
+        {
             return IndexOf((object)value);
         }
-    
-        public void Insert(int index, SqlParameter value) {
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="index"></param>
+        /// <param name="value"></param>
+        public void Insert(int index, SqlParameter value)
+        {
             Insert(index, (object)value);
         }
 
-        private void OnChange() {
+        /// <summary>
+        /// 
+        /// </summary>
+        private void OnChange()
+        {
             IsDirty = true;
         }
 
-        public void Remove(SqlParameter value) {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        public void Remove(SqlParameter value)
+        {
             Remove((object)value);
-        }    
+        }
 
     }
 }

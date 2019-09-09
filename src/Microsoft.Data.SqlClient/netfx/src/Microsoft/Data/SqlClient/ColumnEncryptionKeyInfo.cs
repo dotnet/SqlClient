@@ -7,7 +7,7 @@ using System;
 namespace Microsoft.Data.SqlClient {
 
     /// <summary>
-    /// Class encapsulating Column encryption key info
+    /// Class encapsulating Column encryption key info.
     /// </summary>
     internal class ColumnEncryptionKeyInfo {
         internal readonly int KeyId;
@@ -25,12 +25,12 @@ namespace Microsoft.Data.SqlClient {
         private static readonly string _startOffsetName="StartOffset";
 
         /// <summary>
-        /// Constructor
+        /// Constructor.
         /// </summary>
-        /// <param name="decryptedKey">Decrypted key bytes</param>
-        /// <param name="databaseId">database id for this column encryption key</param>
-        /// <param name="keyMetadataVersion">key metadata version for this column encryption key</param>
-        /// <param name="keyid">key id for this column encryption key</param>
+        /// <param name="decryptedKey"></param>
+        /// <param name="databaseId"></param>
+        /// <param name="keyMetadataVersion"></param>
+        /// <param name="keyid"></param>
         internal ColumnEncryptionKeyInfo(byte[] decryptedKey, int databaseId, byte[] keyMetadataVersion, int keyid) {
 
             if (null == decryptedKey) { throw SQL.NullArgumentInConstructorInternal(_decryptedKeyName, _className); }
@@ -67,7 +67,7 @@ namespace Microsoft.Data.SqlClient {
         }
 
         /// <summary>
-        /// Calculates number of bytes required to serialize this object
+        /// 
         /// </summary>
         /// <returns>Number of bytes required for serialization</returns>
         internal int GetLengthForSerialization() {

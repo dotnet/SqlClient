@@ -8,10 +8,20 @@ using System.Data.Common;
 namespace Microsoft.Data.SqlClient {
     public sealed class SqlRowUpdatingEventArgs : RowUpdatingEventArgs {
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="row"></param>
+        /// <param name="command"></param>
+        /// <param name="statementType"></param>
+        /// <param name="tableMapping"></param>
         public SqlRowUpdatingEventArgs(DataRow row, IDbCommand command, StatementType statementType, DataTableMapping tableMapping) 
         : base(row, command, statementType, tableMapping) {
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         new public SqlCommand Command {
             get { return (base.Command as SqlCommand); }
             set { base.Command = value; }
