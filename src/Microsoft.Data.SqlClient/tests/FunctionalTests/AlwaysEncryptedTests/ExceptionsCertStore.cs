@@ -42,7 +42,6 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
 #if NET46
         [Fact]
-        [ActiveIssue(9657)]
         [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp)]
         public void CertificateWithNoPrivateKey()
         {
