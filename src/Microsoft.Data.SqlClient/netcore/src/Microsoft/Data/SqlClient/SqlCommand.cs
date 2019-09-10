@@ -603,7 +603,9 @@ namespace Microsoft.Data.SqlClient
                 return Parameters;
             }
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
         override public UpdateRowSource UpdatedRowSource
         {
             get
@@ -2985,9 +2987,12 @@ namespace Microsoft.Data.SqlClient
         /// <param name="returnStream"></param>
         /// <param name="isAsync"></param>
         /// <param name="timeout"></param>
-        /// <param name="task"></param>
+        /// <param name="completion"></param>
+        /// <param name="returnTask"></param>
         /// <param name="asyncWrite"></param>
-        /// <returns></returns>
+        /// <param name="usedCache"></param>
+        /// <param name="inRetry"></param>
+       
         private void PrepareForTransparentEncryption(CommandBehavior cmdBehavior, bool returnStream, bool isAsync, int timeout, TaskCompletionSource<object> completion, out Task returnTask, bool asyncWrite, out bool usedCache, bool inRetry)
         {
             // Fetch reader with input params

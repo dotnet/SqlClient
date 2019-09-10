@@ -123,7 +123,7 @@ namespace Microsoft.Data.SqlClient
             return row.DataFields;
         }
     }
-
+    
     public sealed class SqlBulkCopy : IDisposable
     {
         private enum ValueSourceType
