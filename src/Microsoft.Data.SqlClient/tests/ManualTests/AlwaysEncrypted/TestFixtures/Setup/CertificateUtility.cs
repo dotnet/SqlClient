@@ -17,9 +17,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         /// <summary>
-		/// System.Data assembly.
-		/// </summary>
-		public static Assembly systemData = Assembly.GetAssembly(typeof(SqlConnection));
+        /// System.Data assembly.
+        /// </summary>
+        public static Assembly systemData = Assembly.GetAssembly(typeof(SqlConnection));
         public static Type sqlClientSymmetricKey = systemData.GetType("Microsoft.Data.SqlClient.SqlClientSymmetricKey");
         public static ConstructorInfo sqlColumnEncryptionKeyConstructor = sqlClientSymmetricKey.GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new Type[] { typeof(byte[]) }, null);
         public static Type sqlAeadAes256CbcHmac256Factory = systemData.GetType("Microsoft.Data.SqlClient.SqlAeadAes256CbcHmac256Factory");
@@ -158,7 +158,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Object RsaVerifySignatureResult = SqlColumnEncryptionCertificateStoreProviderRSAVerifySignature.Invoke(rsaProvider, new object[] { hashedCek, signedCek, x509 });
 
             return (bool)RsaVerifySignatureResult;
-
         }
 
         /// <summary>
