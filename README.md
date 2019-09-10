@@ -28,8 +28,8 @@ For the .NET Core driver on Windows, a package reference to [runtime.native.Syst
 
 ## Helpful Links
 
-| | |
-| ----- | -------------- |
+| Topic | Link to File |
+| :---- | :------------- |
 | Coding Style | [coding-style.md](coding-style.md) |
 | Guidelines for building the driver | [BUILDGUIDE.md](BUILDGUIDE.md) |
 | Guidelines for Contributors | [CONTRIBUTING.md](CONTRIBUTING.md) |
