@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="Current">
+  <PropertyGroup>
+    <ProjectGuid>{E7EAE3B0-A675-46A6-9C88-A333800B8CA0}</ProjectGuid>
+    <TargetGroup Condition="'$(TargetFramework)'=='netcoreapp2.1'">netcoreapp</TargetGroup>
+    <TargetGroup Condition="'$(TargetFramework)'=='net46'">netfx</TargetGroup>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <Configurations>Debug;Release;net46-Release;net46-Debug;netcoreapp2.1-Debug;netcoreapp2.1-Release</Configurations>
+    <Platforms>AnyCPU;x86;x64</Platforms>
+    <IntermediateOutputPath>$(ObjFolder)$(Configuration).Samples</IntermediateOutputPath>
+    <OutputPath>$(BinFolder)$(Configuration).Samples</OutputPath>
+    <OutputType>Exe</OutputType>
+    <StartupObject>Microsoft.Data.SqlClient.Samples.Runner</StartupObject>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Runner.cs" />
+    <Compile Include="TransactionIsolationLevels.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
+    <ProjectReference Condition="'$(TargetGroup)'=='netfx'" Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
+  </ItemGroup>
+</Project>

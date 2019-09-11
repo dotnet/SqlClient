@@ -34,6 +34,8 @@
     <ManualTests     Include="**/tools/CoreFx.Private.TestUtilities/CoreFx.Private.TestUtilities.csproj" />
     <ManualTests     Include="**/ManualTests/Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" />
 
+    <Samples         Include="**/docs/**/Microsoft.Data.SqlClient.Samples.csproj"/>
+
     <NugetPackageSources Include="https://api.nuget.org/v3/index.json" />
     <NugetPackageSources Include="https://dotnetfeed.blob.core.windows.net/dotnet-core/index.json" />
     <NugetPackageSources Include="https://dotnet.myget.org/F/dotnet-core/api/v3/index.json" />
@@ -92,7 +94,17 @@
   </Target>
 
   <Target Name="BuildManualTestsNetFx" DependsOnTargets="RestoreNetFx" Condition="'$(IsEnabledNetFx)' == 'true'">
-    <MSBuild Projects="@(ManualTests)"   Properties="TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=$(Platform);" />
+    <MSBuild Projects="@(ManualTests)"   Properties="TestTargetOS=$(TestOS)netfx;Platform=$(Platform);" />
+  </Target>
+
+  <Target Name="BuildSamplesNetCore">
+    <MSBuild Projects="@(Samples)" Targets="restore" Properties="RestoreSources=$(NugetPackageSourcesProperty);TestTargetOS=$(TestOS)netcoreapp" />
+    <MSBuild Projects="@(Samples)"   Properties="TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;" />
+  </Target>
+
+  <Target Name="BuildSamplesNetFx" Condition="'$(IsEnabledNetFx)' == 'true'">
+    <MSBuild Projects="@(Samples)" Targets="restore" Properties="RestoreSources=$(NugetPackageSourcesProperty);TestTargetOS=$(TestOS)netfx" />
+    <MSBuild Projects="@(Samples)"   Properties="TestTargetOS=$(TestOS)netfx;Platform=$(Platform);" />
   </Target>
 
   <Target Name="Clean">

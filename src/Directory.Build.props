@@ -23,6 +23,7 @@
     <CommonPath>$(NetCoreSource)src\Common\src</CommonPath>
     <CommonTestPath>$(NetCoreSource)src\Common\tests</CommonTestPath>
     <TestsPath>$(ProjectDir)Microsoft.Data.SqlClient\tests\</TestsPath>
+    <SamplesPath>$(RepoRoot)docs\samples\</SamplesPath>
     <BinFolder Condition="'$(TargetsWindows)' == 'true'">$(RepoRoot)bin\Windows_NT\</BinFolder>
     <BinFolder Condition="'$(TargetsAnyOS)' == 'true'">$(RepoRoot)bin\AnyOS\</BinFolder>
     <BinFolder Condition="'$(TargetsUnix)' == 'true'">$(RepoRoot)bin\Unix\</BinFolder>
