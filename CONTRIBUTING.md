@@ -27,7 +27,7 @@ Please do:
 - **DO** give priority to the current style of the project or file you're changing even if it diverges from the general guidelines.
 - **DO** consider cross-platform compatibility and supportability for all supported SQL and Azure Servers and client configurations.
 - **DO** include tests when adding new features. When fixing bugs, start with adding a test that highlights how the current behavior is broken.
-- **DO** consider concurrency when writing tests. Out pipelines run builds and tests in parallel using the same client and server configurations (in an isolated mode). E.g. Consider using dynamic table/database object names instead of hardcoded values (Use existing tests for reference).
+- **DO** consider concurrency when writing tests. Our pipelines run builds and tests in parallel using the same client and server configurations (in an isolated mode). E.g. Consider using dynamic table/database object names instead of hardcoded values (Use existing tests for reference).
 - **DO** keep the discussions focused. When a new or related topic comes up it's often better to create new issue than to side track the discussion.
 - **DO** blog and tweet (or whatever) about your contributions, frequently!
 
@@ -37,7 +37,7 @@ Please do not:
 - **DON'T** leave any artifacts on server in tests or leave open resources. Cleaning up all objects is highly appreciated to maintain test server health.
 - **DON'T** skip tests or run them conditionally unless necessary. If conditions are not met, test coverage will not be 100%. Use only pre-defined conditions that are already being run in pipelines.
 - **DON'T** surprise us with big pull requests. Instead, file an issue and start a discussion so we can agree on a direction before you invest a large amount of time.
-- **DON'T** commit code that you didn't write. If you find code that you think is a good fit to add to .NET Core, file an issue and start a discussion before proceeding.
+- **DON'T** commit code that you didn't write. If you find code that you think is a good fit to add, file an issue and start a discussion before proceeding.
 - **DON'T** submit PRs that alter licensing related files or headers. If you believe there's a problem with them, file an issue and we'll be happy to discuss it.
 
 ## Using Labels
