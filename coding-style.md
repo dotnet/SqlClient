@@ -1,6 +1,6 @@
 # C# Coding Style
 
-We follow similar coding style as [dotnet/corefx](https://github.com/dotnet/corefx).
+We follow a similar coding style as [dotnet/corefx](https://github.com/dotnet/corefx).
 
 For non code files (xml, etc), our current best guidance is consistency. When editing files, keep new code and changes consistent with the style in the files. For new files, it should conform to the style for that component. If there is a completely new component, anything that is reasonably broadly accepted is fine.
 
