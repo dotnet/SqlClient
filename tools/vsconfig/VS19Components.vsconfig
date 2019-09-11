@@ -23,7 +23,7 @@
 		"microsoft.visualstudio.component.aspnet45",
 		"microsoft.visualstudio.component.webdeploy",
 		"microsoft.visualstudio.component.azure.servicefabric.tools",
-		"microsoft.visualstudio.component.typescript.3.4",
+		"microsoft.visualstudio.component.typescript.3.5",
 		"Microsoft.VisualStudio.Component.TestTools.CodedUITest",
 		"microsoft.visualstudio.component.testtools.webloadtest"
 	]
