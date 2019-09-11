@@ -46,8 +46,8 @@ We encourage adding appropriate labels to issues and pull requests to allow filt
 
 | Label | Description |
 | ----- | ----------- |
-| [Public API](https://github.com/dotnet/SqlClient/labels/Public%20API) | Use this variable if new Public API is added to the Pull Request.
-| [Breaking Change](https://github.com/dotnet/SqlClient/labels/Breaking%20Change) | Use this variable if the Pull Requests breaks an existing API. |
+| [Public API](https://github.com/dotnet/SqlClient/labels/Public%20API) | Use this variable if a new Public API is added to the Pull Request.
+| [Breaking Change](https://github.com/dotnet/SqlClient/labels/Breaking%20Change) | Use this variable if the Pull Request breaks an existing API. |
 | [Backport to CoreFx](https://github.com/dotnet/SqlClient/labels/Backport%20to%20CoreFx) | Use this variable if the Issue/Pull Request needs to be backported to System.Data.SqlClient in [dotnet/corefx](https://github.com/dotnet/corefx) |
 | [Managed SNI](https://github.com/dotnet/SqlClient/labels/Managed%20SNI) | Use this label if the issue/PR relates to issues in Managed SNI |
 | [Tests](https://github.com/dotnet/SqlClient/labels/Tests) | Use this label for pull requests that add only tests to the repository. |
