@@ -58,7 +58,7 @@ Security issues and bugs should be reported privately, via email, to the Microso
 
 ## File Headers
 
-The following file header is the used for Microsoft.Data.SqlClient. Please use it for new files.
+The following file header is used for Microsoft.Data.SqlClient. Please use it for new files.
 
 ```csharp
 // Licensed to the .NET Foundation under one or more agreements.
@@ -76,6 +76,5 @@ You don't have to do this up-front. You can simply clone, fork, and submit your 
 
 ## Code Of Conduct
 
-This project has adopted the code of conduct defined by the Contributor Covenant
-to clarify expected behavior in our community.
+This project has adopted the code of conduct defined by the Contributor Covenant to clarify expected behavior in our community.
 For more information, see the [.NET Foundation Code of Conduct](https://dotnetfoundation.org/code-of-conduct).
