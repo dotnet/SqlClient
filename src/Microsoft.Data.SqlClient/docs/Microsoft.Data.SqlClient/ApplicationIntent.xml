@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<doc>
+    <members name="ApplicationIntent">
+        <ApplicationIntent>
+            <summary>
+            Represents the application workload type when connecting to a server
+            </summary>
+            <example>
+                <code>
+                    <format type="text/markdown"><![CDATA[  
+                    [!code-csharp[ApplicationIntent#1](../../samples/ApplicationIntent.cs#1)]
+                    ]]></format>
+                </code>
+            </example>
+        </ApplicationIntent>
+    </members>
+</doc>
