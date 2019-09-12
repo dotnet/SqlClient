@@ -4,19 +4,22 @@
 
 using System.Threading.Tasks;
 
-namespace Microsoft.Data.SqlClient {
+namespace Microsoft.Data.SqlClient
+{
 
     /// <summary>
     /// The public base class for auth providers.
     /// Implementations of this class must provide a default constructor if they are intended to be instantiated from app.config.
     /// </summary>
-    public abstract class SqlAuthenticationProvider {
+    public abstract class SqlAuthenticationProvider
+    {
 
         /// Get an authentication provider by method.
         /// </summary>
         /// <param name="authenticationMethod">Authentication method.</param>
         /// <returns>Authentication provider or null if not found.</returns>
-        public static SqlAuthenticationProvider GetProvider(SqlAuthenticationMethod authenticationMethod) {
+        public static SqlAuthenticationProvider GetProvider(SqlAuthenticationMethod authenticationMethod)
+        {
             return SqlAuthenticationProviderManager.Instance.GetProvider(authenticationMethod);
         }
 
@@ -26,7 +29,8 @@ namespace Microsoft.Data.SqlClient {
         /// <param name="authenticationMethod">Authentication method.</param>
         /// <param name="provider">Authentication provider.</param>
         /// <returns>True if succeeded, false otherwise, e.g., the existing provider disallows overriding.</returns>
-        public static bool SetProvider(SqlAuthenticationMethod authenticationMethod, SqlAuthenticationProvider provider) {
+        public static bool SetProvider(SqlAuthenticationMethod authenticationMethod, SqlAuthenticationProvider provider)
+        {
             return SqlAuthenticationProviderManager.Instance.SetProvider(authenticationMethod, provider);
         }
 

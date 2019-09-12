@@ -9,7 +9,8 @@ namespace Microsoft.Data.SqlClient
     /// <summary>
     /// The base class that defines the interface for enclave providers for Always Encrypted. An enclave is a protected region of memory inside SQL Server, used for computations on encrypted columns. An enclave provider encapsulates the client-side implementation details of the enclave attestation protocol as well as the logic for creating and caching enclave sessions.
     /// </summary>
-    public abstract class SqlColumnEncryptionEnclaveProvider {
+    public abstract class SqlColumnEncryptionEnclaveProvider
+    {
 
         /// <summary>
         /// Looks up an existing enclave session information in the enclave session cache. If the enclave provider does not implement enclave session caching, this method is expected to return null.
@@ -33,7 +34,7 @@ namespace Microsoft.Data.SqlClient
         /// <param name="servername">The name of the SQL Server instance containing the enclave.</param>
         /// <param name="sqlEnclaveSession">The requested enclave session or null if the provider does not implement session caching.</param>
         /// <param name="counter">A counter that the enclave provider is expected to increment each time SqlClient retrieves the session from the cache. The purpose of this field is to prevent replay attacks.</param>
-        public abstract void CreateEnclaveSession(byte[] enclaveAttestationInfo, ECDiffieHellmanCng clientDiffieHellmanKey, string attestationUrl, string servername, out SqlEnclaveSession sqlEnclaveSession,  out long counter);
+        public abstract void CreateEnclaveSession(byte[] enclaveAttestationInfo, ECDiffieHellmanCng clientDiffieHellmanKey, string attestationUrl, string servername, out SqlEnclaveSession sqlEnclaveSession, out long counter);
 
         /// <summary>
         /// Looks up and evicts an enclave session from the enclave session cache, if the provider implements session caching.

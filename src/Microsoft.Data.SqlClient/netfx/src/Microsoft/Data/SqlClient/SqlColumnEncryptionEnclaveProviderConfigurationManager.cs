@@ -3,43 +3,47 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Configuration;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClient
 {
     /// <summary>
     /// The configuration section definition for reading app.config.
     /// </summary>
-    internal class SqlColumnEncryptionEnclaveProviderConfigurationSection : ConfigurationSection {
+    internal class SqlColumnEncryptionEnclaveProviderConfigurationSection : ConfigurationSection
+    {
         /// <summary>
         /// User-defined SqlColumnEncryptionEnclaveProviders.
         /// </summary>
         [ConfigurationProperty("providers")]
-        public ProviderSettingsCollection Providers => (ProviderSettingsCollection) base["providers"];
+        public ProviderSettingsCollection Providers => (ProviderSettingsCollection)base["providers"];
 
     }
 
-    internal class SqlColumnEncryptionEnclaveProviderConfigurationManager {
+    internal class SqlColumnEncryptionEnclaveProviderConfigurationManager
+    {
         private readonly Dictionary<string, SqlColumnEncryptionEnclaveProvider> _enclaveProviders = new Dictionary<string, SqlColumnEncryptionEnclaveProvider>();
 
         /// <summary>
         /// Constructor.
         /// </summary>
-        public SqlColumnEncryptionEnclaveProviderConfigurationManager(SqlColumnEncryptionEnclaveProviderConfigurationSection configSection) {
-            if (configSection!= null && configSection.Providers != null && configSection.Providers.Count > 0) {
-                foreach (ProviderSettings providerSettings in configSection.Providers) {
+        public SqlColumnEncryptionEnclaveProviderConfigurationManager(SqlColumnEncryptionEnclaveProviderConfigurationSection configSection)
+        {
+            if (configSection != null && configSection.Providers != null && configSection.Providers.Count > 0)
+            {
+                foreach (ProviderSettings providerSettings in configSection.Providers)
+                {
                     var providerName = providerSettings.Name.ToLowerInvariant();
                     SqlColumnEncryptionEnclaveProvider provider;
 
-                    try {
+                    try
+                    {
                         var providerType = Type.GetType(providerSettings.Type, true);
                         provider = (SqlColumnEncryptionEnclaveProvider)Activator.CreateInstance(providerType);
-                    } catch (Exception e) {
+                    }
+                    catch (Exception e)
+                    {
                         throw SQL.CannotCreateSqlColumnEncryptionEnclaveProvider(providerName, providerSettings.Type, e);
                     }
 
@@ -53,8 +57,10 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="SqlColumnEncryptionEnclaveProviderName"></param>
         /// <returns>SqlColumnEncryptionEnclaveProvider for a give sqlColumnEncryptionEnclaveProviderName if found, else returns null</returns>
-        public SqlColumnEncryptionEnclaveProvider GetSqlColumnEncryptionEnclaveProvider(string SqlColumnEncryptionEnclaveProviderName) {
-            if (string.IsNullOrEmpty(SqlColumnEncryptionEnclaveProviderName)) throw SQL.SqlColumnEncryptionEnclaveProviderNameCannotBeEmpty();
+        public SqlColumnEncryptionEnclaveProvider GetSqlColumnEncryptionEnclaveProvider(string SqlColumnEncryptionEnclaveProviderName)
+        {
+            if (string.IsNullOrEmpty(SqlColumnEncryptionEnclaveProviderName))
+                throw SQL.SqlColumnEncryptionEnclaveProviderNameCannotBeEmpty();
             SqlColumnEncryptionEnclaveProviderName = SqlColumnEncryptionEnclaveProviderName.ToLowerInvariant();
 
             SqlColumnEncryptionEnclaveProvider sqlColumnEncryptionEnclaveProvider = null;

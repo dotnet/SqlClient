@@ -4,12 +4,14 @@
 
 using System;
 
-namespace Microsoft.Data.SqlClient {
+namespace Microsoft.Data.SqlClient
+{
 
     /// <summary>
     /// Class encapsulating Column encryption key info
     /// </summary>
-    internal class ColumnEncryptionKeyInfo {
+    internal class ColumnEncryptionKeyInfo
+    {
         internal readonly int KeyId;
         internal readonly int DatabaseId;
         internal readonly byte[] DecryptedKeyBytes;
@@ -22,7 +24,7 @@ namespace Microsoft.Data.SqlClient {
         private static readonly string _className = "ColumnEncryptionKeyInfo";
         private static readonly string _bytePackageName = "BytePackage";
         private static readonly string _serializeToBufferMethodName = "SerializeToBuffer";
-        private static readonly string _startOffsetName="StartOffset";
+        private static readonly string _startOffsetName = "StartOffset";
 
         /// <summary>
         /// Constructor
@@ -31,12 +33,17 @@ namespace Microsoft.Data.SqlClient {
         /// <param name="databaseId">database id for this column encryption key</param>
         /// <param name="keyMetadataVersion">key metadata version for this column encryption key</param>
         /// <param name="keyid">key id for this column encryption key</param>
-        internal ColumnEncryptionKeyInfo(byte[] decryptedKey, int databaseId, byte[] keyMetadataVersion, int keyid) {
+        internal ColumnEncryptionKeyInfo(byte[] decryptedKey, int databaseId, byte[] keyMetadataVersion, int keyid)
+        {
 
-            if (null == decryptedKey) { throw SQL.NullArgumentInConstructorInternal(_decryptedKeyName, _className); }
-            if (0 == decryptedKey.Length) { throw SQL.EmptyArgumentInConstructorInternal(_decryptedKeyName, _className); }
-            if (null == keyMetadataVersion) { throw SQL.NullArgumentInConstructorInternal(_keyMetadataVersionName, _className); }
-            if (0 == keyMetadataVersion.Length) { throw SQL.EmptyArgumentInConstructorInternal(_keyMetadataVersionName, _className); }
+            if (null == decryptedKey)
+                throw SQL.NullArgumentInConstructorInternal(_decryptedKeyName, _className);
+            if (0 == decryptedKey.Length)
+                throw SQL.EmptyArgumentInConstructorInternal(_decryptedKeyName, _className);
+            if (null == keyMetadataVersion)
+                throw SQL.NullArgumentInConstructorInternal(_keyMetadataVersionName, _className);
+            if (0 == keyMetadataVersion.Length)
+                throw SQL.EmptyArgumentInConstructorInternal(_keyMetadataVersionName, _className);
 
             KeyId = keyid;
             DatabaseId = databaseId;
@@ -46,9 +53,12 @@ namespace Microsoft.Data.SqlClient {
             //Covert keyId to Bytes
             ushort keyIdUShort;
 
-            try {
+            try
+            {
                 keyIdUShort = (ushort)keyid;
-            } catch (Exception e) {
+            }
+            catch (Exception e)
+            {
                 throw SQL.InvalidKeyIdUnableToCastToUnsignedShort(keyid, e);
             }
 
@@ -57,9 +67,12 @@ namespace Microsoft.Data.SqlClient {
             //Covert databaseId to Bytes
             uint databaseIdUInt;
 
-            try {
+            try
+            {
                 databaseIdUInt = (uint)databaseId;
-            } catch (Exception e) {
+            }
+            catch (Exception e)
+            {
                 throw SQL.InvalidDatabaseIdUnableToCastToUnsignedInt(databaseId, e);
             }
 
@@ -70,7 +83,8 @@ namespace Microsoft.Data.SqlClient {
         /// Calculates number of bytes required to serialize this object
         /// </summary>
         /// <returns>Number of bytes required for serialization</returns>
-        internal int GetLengthForSerialization() {
+        internal int GetLengthForSerialization()
+        {
             int lengthForSerialization = 0;
             lengthForSerialization += DecryptedKeyBytes.Length;
             lengthForSerialization += KeyIdBytes.Length;
@@ -85,12 +99,17 @@ namespace Microsoft.Data.SqlClient {
         /// <param name="bytePackage">byte array for serialization</param>
         /// <param name="startOffset">start offset in byte array</param>
         /// <returns>next available offset</returns>
-        internal int SerializeToBuffer(byte[] bytePackage, int startOffset) {
+        internal int SerializeToBuffer(byte[] bytePackage, int startOffset)
+        {
 
-            if(null == bytePackage) { throw SQL.NullArgumentInternal(_bytePackageName, _className, _serializeToBufferMethodName); }
-            if(0==bytePackage.Length) { throw SQL.EmptyArgumentInternal(_bytePackageName, _className, _serializeToBufferMethodName); }
-            if (!(startOffset < bytePackage.Length)) { throw SQL.OffsetOutOfBounds(_startOffsetName, _className, _serializeToBufferMethodName); }
-            if ( (bytePackage.Length - startOffset) < GetLengthForSerialization() ) { throw SQL.InsufficientBuffer(_bytePackageName, _className, _serializeToBufferMethodName); }
+            if (null == bytePackage)
+                throw SQL.NullArgumentInternal(_bytePackageName, _className, _serializeToBufferMethodName);
+            if (0 == bytePackage.Length)
+                throw SQL.EmptyArgumentInternal(_bytePackageName, _className, _serializeToBufferMethodName);
+            if (!(startOffset < bytePackage.Length))
+                throw SQL.OffsetOutOfBounds(_startOffsetName, _className, _serializeToBufferMethodName);
+            if ((bytePackage.Length - startOffset) < GetLengthForSerialization())
+                throw SQL.InsufficientBuffer(_bytePackageName, _className, _serializeToBufferMethodName);
 
             Buffer.BlockCopy(DatabaseIdBytes, 0, bytePackage, startOffset, DatabaseIdBytes.Length);
             startOffset += DatabaseIdBytes.Length;

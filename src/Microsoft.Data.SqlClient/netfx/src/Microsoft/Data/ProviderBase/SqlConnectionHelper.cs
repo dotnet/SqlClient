@@ -5,38 +5,41 @@
 namespace Microsoft.Data.SqlClient
 {
     using System;
-    using Microsoft.Data.Common;
-    using Microsoft.Data.ProviderBase;
+    using System.Data;
+    using System.Data.Common;
     using System.Diagnostics;
     using System.Runtime.ConstrainedExecution;
     using System.Threading;
+    using Microsoft.Data.Common;
+    using Microsoft.Data.ProviderBase;
     using SysTx = System.Transactions;
-    using System.Data;
-    using System.Data.Common;
 
-    public sealed partial class SqlConnection : DbConnection {
-        private static readonly DbConnectionFactory     _connectionFactory = SqlConnectionFactory.SingletonInstance;
+    public sealed partial class SqlConnection : DbConnection
+    {
+        private static readonly DbConnectionFactory _connectionFactory = SqlConnectionFactory.SingletonInstance;
         internal static readonly System.Security.CodeAccessPermission ExecutePermission = SqlConnection.CreateExecutePermission();
 
-        private DbConnectionOptions     _userConnectionOptions;
-        private DbConnectionPoolGroup   _poolGroup;
-        private DbConnectionInternal    _innerConnection;
-        private int                     _closeCount;          // used to distinguish between different uses of this object, so we don't have to maintain a list of it's children
+        private DbConnectionOptions _userConnectionOptions;
+        private DbConnectionPoolGroup _poolGroup;
+        private DbConnectionInternal _innerConnection;
+        private int _closeCount;          // used to distinguish between different uses of this object, so we don't have to maintain a list of it's children
 
         private static int _objectTypeCount; // Bid counter
         internal readonly int ObjectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
 
-        public SqlConnection() : base() {
+        public SqlConnection() : base()
+        {
             GC.SuppressFinalize(this);
             _innerConnection = DbConnectionClosedNeverOpened.SingletonInstance;
         }
 
         // Copy Constructor
-        private void CopyFrom(SqlConnection connection) { // V1.2.3300
+        private void CopyFrom(SqlConnection connection)
+        { // V1.2.3300
             ADP.CheckArgumentNull(connection, "connection");
             _userConnectionOptions = connection.UserConnectionOptions;
             _poolGroup = connection.PoolGroup;
-            
+
             // SQLBU 432115
             //  Match the original connection's behavior for whether the connection was never opened,
             //  but ensure Clone is in the closed state.
@@ -55,54 +58,65 @@ namespace Microsoft.Data.SqlClient
         ///  would be affected by a close, we simply increment the _closeCount
         ///  and have each of our children check to see if they're "orphaned"
         ///  </devdoc>
-        internal int CloseCount {
-            get {
+        internal int CloseCount
+        {
+            get
+            {
                 return _closeCount;
             }
         }
 
-        internal DbConnectionFactory ConnectionFactory {
-            get {
+        internal DbConnectionFactory ConnectionFactory
+        {
+            get
+            {
                 return _connectionFactory;
             }
         }
 
-        internal DbConnectionOptions ConnectionOptions {
-            get {
+        internal DbConnectionOptions ConnectionOptions
+        {
+            get
+            {
                 Microsoft.Data.ProviderBase.DbConnectionPoolGroup poolGroup = PoolGroup;
                 return ((null != poolGroup) ? poolGroup.ConnectionOptions : null);
             }
         }
 
-        private string ConnectionString_Get() {
-            Bid.Trace( "<prov.DbConnectionHelper.ConnectionString_Get|API> %d#\n", ObjectID);
+        private string ConnectionString_Get()
+        {
+            Bid.Trace("<prov.DbConnectionHelper.ConnectionString_Get|API> %d#\n", ObjectID);
             bool hidePassword = InnerConnection.ShouldHidePassword;
             DbConnectionOptions connectionOptions = UserConnectionOptions;
             return ((null != connectionOptions) ? connectionOptions.UsersConnectionString(hidePassword) : "");
         }
 
-        private void ConnectionString_Set(string value) {
+        private void ConnectionString_Set(string value)
+        {
             DbConnectionPoolKey key = new DbConnectionPoolKey(value);
 
             ConnectionString_Set(key);
         }
 
-        private void ConnectionString_Set(DbConnectionPoolKey key) {
+        private void ConnectionString_Set(DbConnectionPoolKey key)
+        {
             DbConnectionOptions connectionOptions = null;
             Microsoft.Data.ProviderBase.DbConnectionPoolGroup poolGroup = ConnectionFactory.GetConnectionPoolGroup(key, null, ref connectionOptions);
             DbConnectionInternal connectionInternal = InnerConnection;
             bool flag = connectionInternal.AllowSetConnectionString;
-            if (flag) {
+            if (flag)
+            {
                 //try {
-                    // NOTE: There's a race condition with multiple threads changing
-                    //       ConnectionString and any thread throws an exception
-                    // Closed->Busy: prevent Open during set_ConnectionString
-                    flag = SetInnerConnectionFrom(DbConnectionClosedBusy.SingletonInstance, connectionInternal);
-                    if (flag) {
-                        _userConnectionOptions = connectionOptions;
-                        _poolGroup = poolGroup;
-                        _innerConnection = DbConnectionClosedNeverOpened.SingletonInstance;
-                    }
+                // NOTE: There's a race condition with multiple threads changing
+                //       ConnectionString and any thread throws an exception
+                // Closed->Busy: prevent Open during set_ConnectionString
+                flag = SetInnerConnectionFrom(DbConnectionClosedBusy.SingletonInstance, connectionInternal);
+                if (flag)
+                {
+                    _userConnectionOptions = connectionOptions;
+                    _poolGroup = poolGroup;
+                    _innerConnection = DbConnectionClosedNeverOpened.SingletonInstance;
+                }
                 //}
                 //catch {
                 //    // recover from exceptions to avoid sticking in busy state
@@ -110,44 +124,55 @@ namespace Microsoft.Data.SqlClient
                 //    throw;
                 //}
             }
-            if (!flag) {
+            if (!flag)
+            {
                 throw ADP.OpenConnectionPropertySet(ADP.ConnectionString, connectionInternal.State);
             }
-            if (Bid.TraceOn) {
+            if (Bid.TraceOn)
+            {
                 string cstr = ((null != connectionOptions) ? connectionOptions.UsersConnectionStringForTrace() : "");
                 Bid.Trace("<prov.DbConnectionHelper.ConnectionString_Set|API> %d#, '%ls'\n", ObjectID, cstr);
             }
         }
 
-        internal DbConnectionInternal InnerConnection {
-            get {
+        internal DbConnectionInternal InnerConnection
+        {
+            get
+            {
                 return _innerConnection;
             }
         }
 
-        internal Microsoft.Data.ProviderBase.DbConnectionPoolGroup PoolGroup {
-            get {
+        internal Microsoft.Data.ProviderBase.DbConnectionPoolGroup PoolGroup
+        {
+            get
+            {
                 return _poolGroup;
             }
-            set {
+            set
+            {
                 // when a poolgroup expires and the connection eventually activates, the pool entry will be replaced
                 Debug.Assert(null != value, "null poolGroup");
                 _poolGroup = value;
             }
         }
 
-       
-        internal DbConnectionOptions UserConnectionOptions {
-            get {
+
+        internal DbConnectionOptions UserConnectionOptions
+        {
+            get
+            {
                 return _userConnectionOptions;
             }
         }
 
         // Open->ClosedPreviouslyOpened, and doom the internal connection too...
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
-        internal void Abort(Exception e) {
+        internal void Abort(Exception e)
+        {
             DbConnectionInternal innerConnection = _innerConnection;  // Should not cause memory allocation...
-            if (ConnectionState.Open == innerConnection.State) {
+            if (ConnectionState.Open == innerConnection.State)
+            {
                 Interlocked.CompareExchange(ref _innerConnection, DbConnectionClosedPreviouslyOpened.SingletonInstance, innerConnection);
                 innerConnection.DoomThisConnection();
             }
@@ -155,44 +180,53 @@ namespace Microsoft.Data.SqlClient
             // NOTE: we put the tracing last, because the ToString() calls (and
             // the Bid.Trace, for that matter) have no reliability contract and
             // will end the reliable try...
-            if (e is OutOfMemoryException) {
+            if (e is OutOfMemoryException)
+            {
                 Bid.Trace("<prov.DbConnectionHelper.Abort|RES|INFO|CPOOL> %d#, Aborting operation due to asynchronous exception: %ls\n", ObjectID, "OutOfMemory");
             }
-            else {
+            else
+            {
                 Bid.Trace("<prov.DbConnectionHelper.Abort|RES|INFO|CPOOL> %d#, Aborting operation due to asynchronous exception: %ls\n", ObjectID, e.ToString());
             }
         }
 
-        internal void AddWeakReference(object value, int tag) {
+        internal void AddWeakReference(object value, int tag)
+        {
             InnerConnection.AddWeakReference(value, tag);
         }
 
 
-        override protected DbCommand CreateDbCommand() {
+        override protected DbCommand CreateDbCommand()
+        {
             DbCommand command = null;
             IntPtr hscp;
             Bid.ScopeEnter(out hscp, "<prov.DbConnectionHelper.CreateDbCommand|API> %d#\n", ObjectID);
-            try {
+            try
+            {
                 DbProviderFactory providerFactory = ConnectionFactory.ProviderFactory;
                 command = providerFactory.CreateCommand();
                 command.Connection = this;
             }
-            finally {
+            finally
+            {
                 Bid.ScopeLeave(ref hscp);
             }
             return command;
         }
 
-        private static System.Security.CodeAccessPermission CreateExecutePermission() {
+        private static System.Security.CodeAccessPermission CreateExecutePermission()
+        {
             DBDataPermission p = (DBDataPermission)SqlConnectionFactory.SingletonInstance.ProviderFactory.CreatePermission(System.Security.Permissions.PermissionState.None);
             p.Add(String.Empty, String.Empty, KeyRestrictionBehavior.AllowOnly);
             return p;
         }
 
-        override protected void Dispose(bool disposing) {
-            if (disposing) {
+        override protected void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
                 _userConnectionOptions = null;
-                _poolGroup= null;
+                _poolGroup = null;
                 Close();
             }
             DisposeMe(disposing);
@@ -204,16 +238,18 @@ namespace Microsoft.Data.SqlClient
         // NOTE: This is just a private helper because OracleClient V1.1 shipped
         // with a different argument name and it's a breaking change to not use
         // the same argument names in V2.0 (VB Named Parameter Binding--Ick)
-        private void EnlistDistributedTransactionHelper(System.EnterpriseServices.ITransaction transaction) {
+        private void EnlistDistributedTransactionHelper(System.EnterpriseServices.ITransaction transaction)
+        {
             System.Security.PermissionSet permissionSet = new System.Security.PermissionSet(System.Security.Permissions.PermissionState.None);
             permissionSet.AddPermission(SqlConnection.ExecutePermission); // MDAC 81476
             permissionSet.AddPermission(new System.Security.Permissions.SecurityPermission(System.Security.Permissions.SecurityPermissionFlag.UnmanagedCode));
             permissionSet.Demand();
 
-            Bid.Trace( "<prov.DbConnectionHelper.EnlistDistributedTransactionHelper|RES|TRAN> %d#, Connection enlisting in a transaction.\n", ObjectID);
+            Bid.Trace("<prov.DbConnectionHelper.EnlistDistributedTransactionHelper|RES|TRAN> %d#, Connection enlisting in a transaction.\n", ObjectID);
             SysTx.Transaction indigoTransaction = null;
 
-            if (null != transaction) {
+            if (null != transaction)
+            {
                 indigoTransaction = SysTx.TransactionInterop.GetTransactionFromDtcTransaction((SysTx.IDtcTransaction)transaction);
             }
 
@@ -230,10 +266,11 @@ namespace Microsoft.Data.SqlClient
             GC.KeepAlive(this);
         }
 
-        override public void EnlistTransaction(SysTx.Transaction transaction) {
+        override public void EnlistTransaction(SysTx.Transaction transaction)
+        {
             SqlConnection.ExecutePermission.Demand();
 
-            Bid.Trace( "<prov.DbConnectionHelper.EnlistTransaction|RES|TRAN> %d#, Connection enlisting in a transaction.\n", ObjectID);
+            Bid.Trace("<prov.DbConnectionHelper.EnlistTransaction|RES|TRAN> %d#, Connection enlisting in a transaction.\n", ObjectID);
 
             // If we're currently enlisted in a transaction and we were called
             // on the EnlistTransaction method (Whidbey) we're not allowed to
@@ -245,9 +282,11 @@ namespace Microsoft.Data.SqlClient
             // server, we don't want to lock here, we'll handle the race conditions
             // elsewhere.
             SysTx.Transaction enlistedTransaction = innerConnection.EnlistedTransaction;
-            if (enlistedTransaction != null) {
+            if (enlistedTransaction != null)
+            {
                 // Allow calling enlist if already enlisted (no-op)
-                if (enlistedTransaction.Equals(transaction)) {
+                if (enlistedTransaction.Equals(transaction))
+                {
                     return;
                 }
 
@@ -267,39 +306,47 @@ namespace Microsoft.Data.SqlClient
             GC.KeepAlive(this);
         }
 
-        private DbMetaDataFactory GetMetaDataFactory(DbConnectionInternal internalConnection) {
+        private DbMetaDataFactory GetMetaDataFactory(DbConnectionInternal internalConnection)
+        {
             return ConnectionFactory.GetMetaDataFactory(_poolGroup, internalConnection);
         }
 
-        internal DbMetaDataFactory GetMetaDataFactoryInternal(DbConnectionInternal internalConnection) {
+        internal DbMetaDataFactory GetMetaDataFactoryInternal(DbConnectionInternal internalConnection)
+        {
             return GetMetaDataFactory(internalConnection);
         }
 
-        override public  DataTable GetSchema() {
+        override public DataTable GetSchema()
+        {
             return this.GetSchema(DbMetaDataCollectionNames.MetaDataCollections, null);
         }
 
-        override public DataTable GetSchema(string collectionName) {
+        override public DataTable GetSchema(string collectionName)
+        {
             return this.GetSchema(collectionName, null);
         }
 
-        override public DataTable GetSchema(string collectionName, string[] restrictionValues) {
+        override public DataTable GetSchema(string collectionName, string[] restrictionValues)
+        {
             // NOTE: This is virtual because not all providers may choose to support
             //       returning schema data
             SqlConnection.ExecutePermission.Demand();
             return InnerConnection.GetSchema(ConnectionFactory, PoolGroup, this, collectionName, restrictionValues);
         }
 
-        internal void NotifyWeakReference(int message) {
+        internal void NotifyWeakReference(int message)
+        {
             InnerConnection.NotifyWeakReference(message);
         }
 
-        internal void PermissionDemand() {
+        internal void PermissionDemand()
+        {
             Debug.Assert(DbConnectionClosedConnecting.SingletonInstance == _innerConnection, "not connecting");
 
             Microsoft.Data.ProviderBase.DbConnectionPoolGroup poolGroup = PoolGroup;
             DbConnectionOptions connectionOptions = ((null != poolGroup) ? poolGroup.ConnectionOptions : null);
-            if ((null == connectionOptions) || connectionOptions.IsEmpty) {
+            if ((null == connectionOptions) || connectionOptions.IsEmpty)
+            {
                 throw ADP.NoConnectionString();
             }
 
@@ -309,13 +356,15 @@ namespace Microsoft.Data.SqlClient
             userConnectionOptions.DemandPermission();
         }
 
-        internal void RemoveWeakReference(object value) {
+        internal void RemoveWeakReference(object value)
+        {
             InnerConnection.RemoveWeakReference(value);
         }
 
         // OpenBusy->Closed (previously opened)
         // Connecting->Open
-        internal void SetInnerConnectionEvent(DbConnectionInternal to) {
+        internal void SetInnerConnectionEvent(DbConnectionInternal to)
+        {
             // Set's the internal connection without verifying that it's a specific value
             Debug.Assert(null != _innerConnection, "null InnerConnection");
             Debug.Assert(null != to, "to null InnerConnection");
@@ -323,22 +372,28 @@ namespace Microsoft.Data.SqlClient
             ConnectionState originalState = _innerConnection.State & ConnectionState.Open;
             ConnectionState currentState = to.State & ConnectionState.Open;
 
-            if ((originalState != currentState) && (ConnectionState.Closed == currentState)) {
+            if ((originalState != currentState) && (ConnectionState.Closed == currentState))
+            {
                 // Increment the close count whenever we switch to Closed
-                unchecked { _closeCount++; }
+                unchecked
+                { _closeCount++; }
             }
 
             _innerConnection = to;
 
-            if (ConnectionState.Closed == originalState && ConnectionState.Open == currentState) {
+            if (ConnectionState.Closed == originalState && ConnectionState.Open == currentState)
+            {
                 OnStateChange(DbConnectionInternal.StateChangeOpen);
             }
-            else if (ConnectionState.Open == originalState && ConnectionState.Closed == currentState) {
+            else if (ConnectionState.Open == originalState && ConnectionState.Closed == currentState)
+            {
                 OnStateChange(DbConnectionInternal.StateChangeClosed);
             }
-            else {
+            else
+            {
                 Debug.Fail("unexpected state switch");
-                if (originalState != currentState) {
+                if (originalState != currentState)
+                {
                     OnStateChange(new StateChangeEventArgs(originalState, currentState));
                 }
             }
@@ -350,7 +405,8 @@ namespace Microsoft.Data.SqlClient
         // Closed->Connecting: prevent set_ConnectionString during Open
         // Open->OpenBusy: guarantee internal connection is returned to correct pool
         // Closed->ClosedBusy: prevent Open during set_ConnectionString
-        internal bool SetInnerConnectionFrom(DbConnectionInternal to, DbConnectionInternal from) {
+        internal bool SetInnerConnectionFrom(DbConnectionInternal to, DbConnectionInternal from)
+        {
             // Set's the internal connection, verifying that it's a specific value before doing so.
             Debug.Assert(null != _innerConnection, "null InnerConnection");
             Debug.Assert(null != from, "from null InnerConnection");
@@ -362,7 +418,8 @@ namespace Microsoft.Data.SqlClient
 
         // ClosedBusy->Closed (never opened)
         // Connecting->Closed (exception during open, return to previous closed state)
-        internal void SetInnerConnectionTo(DbConnectionInternal to) {
+        internal void SetInnerConnectionTo(DbConnectionInternal to)
+        {
             // Set's the internal connection without verifying that it's a specific value
             Debug.Assert(null != _innerConnection, "null InnerConnection");
             Debug.Assert(null != to, "to null InnerConnection");
@@ -370,12 +427,15 @@ namespace Microsoft.Data.SqlClient
         }
 
         [ConditionalAttribute("DEBUG")]
-        internal static void VerifyExecutePermission() {
-            try {
+        internal static void VerifyExecutePermission()
+        {
+            try
+            {
                 // use this to help validate this code path is only used after the following permission has been previously demanded in the current codepath
                 SqlConnection.ExecutePermission.Demand();
             }
-            catch(System.Security.SecurityException) {
+            catch (System.Security.SecurityException)
+            {
                 System.Diagnostics.Debug.Assert(false, "unexpected SecurityException for current codepath");
                 throw;
             }

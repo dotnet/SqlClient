@@ -4,56 +4,57 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data.Common;
 using System.Diagnostics;
 using System.Globalization;
 using Microsoft.Data.SqlClient;
 
-namespace Microsoft.Data.Common {
+namespace Microsoft.Data.Common
+{
 
-/*
-    internal sealed class NamedConnectionStringConverter : StringConverter {
+    /*
+        internal sealed class NamedConnectionStringConverter : StringConverter {
 
-        public NamedConnectionStringConverter() {
-        }
-
-        public override bool GetStandardValuesSupported(ITypeDescriptorContext context) {
-            return true;
-        }
-
-        public override bool GetStandardValuesExclusive(ITypeDescriptorContext context) {
-            // Although theoretically this could be true, some people may want to just type in a name
-            return false;
-        }
-
-        public override StandardValuesCollection GetStandardValues(ITypeDescriptorContext context) {
-            StandardValuesCollection standardValues = null;
-            if (null != context) {
-                DbConnectionStringBuilder instance = (context.Instance as DbConnectionStringBuilder);
-                if (null != instance) {
-                    string myProviderName = instance.GetType().Namespace;
-
-                    List<string> myConnectionNames = new List<string>();
-                    foreach(System.Configuration.ConnectionStringSetting setting in System.Configuration.ConfigurationManager.ConnectionStrings) {
-                        if (myProviderName.EndsWith(setting.ProviderName)) {
-                            myConnectionNames.Add(setting.ConnectionName);
-                        }
-                    }
-                    standardValues = new StandardValuesCollection(myConnectionNames);
-                }
+            public NamedConnectionStringConverter() {
             }
-            return standardValues;
-        }
-    }
-*/
 
-    
+            public override bool GetStandardValuesSupported(ITypeDescriptorContext context) {
+                return true;
+            }
+
+            public override bool GetStandardValuesExclusive(ITypeDescriptorContext context) {
+                // Although theoretically this could be true, some people may want to just type in a name
+                return false;
+            }
+
+            public override StandardValuesCollection GetStandardValues(ITypeDescriptorContext context) {
+                StandardValuesCollection standardValues = null;
+                if (null != context) {
+                    DbConnectionStringBuilder instance = (context.Instance as DbConnectionStringBuilder);
+                    if (null != instance) {
+                        string myProviderName = instance.GetType().Namespace;
+
+                        List<string> myConnectionNames = new List<string>();
+                        foreach(System.Configuration.ConnectionStringSetting setting in System.Configuration.ConfigurationManager.ConnectionStrings) {
+                            if (myProviderName.EndsWith(setting.ProviderName)) {
+                                myConnectionNames.Add(setting.ConnectionName);
+                            }
+                        }
+                        standardValues = new StandardValuesCollection(myConnectionNames);
+                    }
+                }
+                return standardValues;
+            }
+        }
+    */
+
+
     [Serializable()]
-    internal sealed class ReadOnlyCollection<T> : System.Collections.ICollection, ICollection<T> {
+    internal sealed class ReadOnlyCollection<T> : System.Collections.ICollection, ICollection<T>
+    {
         private T[] _items;
 
-        internal ReadOnlyCollection(T[] items) {
+        internal ReadOnlyCollection(T[] items)
+        {
             _items = items;
 #if DEBUG
             for(int i = 0; i < items.Length; ++i) {
@@ -62,85 +63,106 @@ namespace Microsoft.Data.Common {
 #endif
         }
 
-        public void CopyTo(T[] array, int arrayIndex) {
+        public void CopyTo(T[] array, int arrayIndex)
+        {
             Array.Copy(_items, 0, array, arrayIndex, _items.Length);
         }
 
-        void System.Collections.ICollection.CopyTo(Array array, int arrayIndex) {
+        void System.Collections.ICollection.CopyTo(Array array, int arrayIndex)
+        {
             Array.Copy(_items, 0, array, arrayIndex, _items.Length);
         }
 
 
-        IEnumerator<T> IEnumerable<T>.GetEnumerator() {
+        IEnumerator<T> IEnumerable<T>.GetEnumerator()
+        {
             return new Enumerator<T>(_items);
         }
 
-        public System.Collections.IEnumerator GetEnumerator() {
+        public System.Collections.IEnumerator GetEnumerator()
+        {
             return new Enumerator<T>(_items);
         }
 
-        bool System.Collections.ICollection.IsSynchronized {
+        bool System.Collections.ICollection.IsSynchronized
+        {
             get { return false; }
         }
 
-        Object System.Collections.ICollection.SyncRoot {
+        Object System.Collections.ICollection.SyncRoot
+        {
             get { return _items; }
         }
 
-        bool ICollection<T>.IsReadOnly {
-            get { return true;}
+        bool ICollection<T>.IsReadOnly
+        {
+            get { return true; }
         }
 
-        void ICollection<T>.Add(T value) {
+        void ICollection<T>.Add(T value)
+        {
             throw new NotSupportedException();
         }
 
-        void ICollection<T>.Clear() {
+        void ICollection<T>.Clear()
+        {
             throw new NotSupportedException();
         }
 
-        bool ICollection<T>.Contains(T value) {
+        bool ICollection<T>.Contains(T value)
+        {
             return Array.IndexOf(_items, value) >= 0;
         }
 
-        bool ICollection<T>.Remove(T value) {
+        bool ICollection<T>.Remove(T value)
+        {
             throw new NotSupportedException();
         }
 
-        public int Count {
+        public int Count
+        {
             get { return _items.Length; }
         }
 
         [Serializable()]
-        internal struct Enumerator<K> : IEnumerator<K>, System.Collections.IEnumerator { // based on List<T>.Enumerator
+        internal struct Enumerator<K> : IEnumerator<K>, System.Collections.IEnumerator
+        { // based on List<T>.Enumerator
             private K[] _items;
             private int _index;
 
-            internal Enumerator(K[] items) {
+            internal Enumerator(K[] items)
+            {
                 _items = items;
                 _index = -1;
             }
 
-            public void Dispose() {
+            public void Dispose()
+            {
             }
 
-            public bool MoveNext() {
+            public bool MoveNext()
+            {
                 return (++_index < _items.Length);
             }
 
-            public K Current {
-                get {
+            public K Current
+            {
+                get
+                {
                     return _items[_index];
                 }
             }
 
-            Object System.Collections.IEnumerator.Current {
-                get {
+            Object System.Collections.IEnumerator.Current
+            {
+                get
+                {
                     return _items[_index];
                 }
             }
 
-            void System.Collections.IEnumerator.Reset() {
+            void System.Collections.IEnumerator.Reset()
+            {
                 _index = -1;
             }
         }
@@ -274,7 +296,7 @@ namespace Microsoft.Data.Common {
         internal static string PoolBlockingPeriodToString(PoolBlockingPeriod value)
         {
             Debug.Assert(IsValidPoolBlockingPeriodValue(value));
-            
+
             if (value == PoolBlockingPeriod.AlwaysBlock)
             {
                 return PoolBlockingPeriodAlwaysBlockString;
@@ -506,7 +528,7 @@ namespace Microsoft.Data.Common {
 
             bool isSuccess = false;
 
-            if (StringComparer.InvariantCultureIgnoreCase.Equals(value, SqlPasswordString) 
+            if (StringComparer.InvariantCultureIgnoreCase.Equals(value, SqlPasswordString)
                 || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.SqlPassword, CultureInfo.InvariantCulture)))
             {
                 result = SqlAuthenticationMethod.SqlPassword;
@@ -556,18 +578,22 @@ namespace Microsoft.Data.Common {
         /// <param name="value"></param>
         /// <param name="result"></param>
         /// <returns></returns>
-        internal static bool TryConvertToColumnEncryptionSetting(string value, out SqlConnectionColumnEncryptionSetting result) {
+        internal static bool TryConvertToColumnEncryptionSetting(string value, out SqlConnectionColumnEncryptionSetting result)
+        {
             bool isSuccess = false;
 
-            if (StringComparer.InvariantCultureIgnoreCase.Equals(value, ColumnEncryptionSettingEnabledString)) {
+            if (StringComparer.InvariantCultureIgnoreCase.Equals(value, ColumnEncryptionSettingEnabledString))
+            {
                 result = SqlConnectionColumnEncryptionSetting.Enabled;
                 isSuccess = true;
             }
-            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, ColumnEncryptionSettingDisabledString)) {
+            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, ColumnEncryptionSettingDisabledString))
+            {
                 result = SqlConnectionColumnEncryptionSetting.Disabled;
                 isSuccess = true;
             }
-            else {
+            else
+            {
                 result = DbConnectionStringDefaults.ColumnEncryptionSetting;
             }
 
@@ -579,7 +605,8 @@ namespace Microsoft.Data.Common {
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        internal static bool IsValidColumnEncryptionSetting(SqlConnectionColumnEncryptionSetting value) {
+        internal static bool IsValidColumnEncryptionSetting(SqlConnectionColumnEncryptionSetting value)
+        {
             Debug.Assert(Enum.GetNames(typeof(SqlConnectionColumnEncryptionSetting)).Length == 2, "SqlConnectionColumnEncryptionSetting enum has changed, update needed");
             return value == SqlConnectionColumnEncryptionSetting.Enabled || value == SqlConnectionColumnEncryptionSetting.Disabled;
         }
@@ -589,10 +616,12 @@ namespace Microsoft.Data.Common {
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        internal static string ColumnEncryptionSettingToString(SqlConnectionColumnEncryptionSetting value) {
+        internal static string ColumnEncryptionSettingToString(SqlConnectionColumnEncryptionSetting value)
+        {
             Debug.Assert(IsValidColumnEncryptionSetting(value), "value is not a valid connection level column encryption setting.");
 
-            switch (value) {
+            switch (value)
+            {
                 case SqlConnectionColumnEncryptionSetting.Enabled:
                     return ColumnEncryptionSettingEnabledString;
                 case SqlConnectionColumnEncryptionSetting.Disabled:
@@ -603,7 +632,8 @@ namespace Microsoft.Data.Common {
             }
         }
 
-        internal static bool IsValidAuthenticationTypeValue(SqlAuthenticationMethod value) {
+        internal static bool IsValidAuthenticationTypeValue(SqlAuthenticationMethod value)
+        {
             Debug.Assert(Enum.GetNames(typeof(SqlAuthenticationMethod)).Length == 5, "SqlAuthenticationMethod enum has changed, update needed");
             return value == SqlAuthenticationMethod.SqlPassword
                 || value == SqlAuthenticationMethod.ActiveDirectoryPassword
@@ -629,11 +659,11 @@ namespace Microsoft.Data.Common {
                     return ActiveDirectoryIntegratedString;
                 case SqlAuthenticationMethod.ActiveDirectoryInteractive:
                     return ActiveDirectoryInteractiveString;
-#if ADONET_CERT_AUTH                
+#if ADONET_CERT_AUTH
                 case SqlAuthenticationMethod.SqlCertificate:
                     return SqlCertificateString;
-#endif                    
-                    
+#endif
+
                 default:
                     return null;
             }
@@ -715,47 +745,58 @@ namespace Microsoft.Data.Common {
         /// <param name="keyword"></param>
         /// <param name="value"></param>
         /// <returns></returns>
-        internal static SqlConnectionColumnEncryptionSetting ConvertToColumnEncryptionSetting(string keyword, object value) {
-            if (null == value) {
+        internal static SqlConnectionColumnEncryptionSetting ConvertToColumnEncryptionSetting(string keyword, object value)
+        {
+            if (null == value)
+            {
                 return DbConnectionStringDefaults.ColumnEncryptionSetting;
             }
 
             string sValue = (value as string);
             SqlConnectionColumnEncryptionSetting result;
-            if (null != sValue) {
-                if (TryConvertToColumnEncryptionSetting(sValue, out result)) {
+            if (null != sValue)
+            {
+                if (TryConvertToColumnEncryptionSetting(sValue, out result))
+                {
                     return result;
                 }
 
                 // try again after remove leading & trailing whitespaces.
                 sValue = sValue.Trim();
-                if (TryConvertToColumnEncryptionSetting(sValue, out result)) {
+                if (TryConvertToColumnEncryptionSetting(sValue, out result))
+                {
                     return result;
                 }
 
                 // string values must be valid
                 throw ADP.InvalidConnectionOptionValue(keyword);
             }
-            else {
+            else
+            {
                 // the value is not string, try other options
                 SqlConnectionColumnEncryptionSetting eValue;
 
-                if (value is SqlConnectionColumnEncryptionSetting) {
+                if (value is SqlConnectionColumnEncryptionSetting)
+                {
                     // quick path for the most common case
                     eValue = (SqlConnectionColumnEncryptionSetting)value;
                 }
-                else if (value.GetType().IsEnum) {
+                else if (value.GetType().IsEnum)
+                {
                     // explicitly block scenarios in which user tries to use wrong enum types, like:
                     // builder["SqlConnectionColumnEncryptionSetting"] = EnvironmentVariableTarget.Process;
                     // workaround: explicitly cast non-SqlConnectionColumnEncryptionSetting enums to int
                     throw ADP.ConvertFailed(value.GetType(), typeof(SqlConnectionColumnEncryptionSetting), null);
                 }
-                else {
-                    try {
+                else
+                {
+                    try
+                    {
                         // Enum.ToObject allows only integral and enum values (enums are blocked above), rasing ArgumentException for the rest
                         eValue = (SqlConnectionColumnEncryptionSetting)Enum.ToObject(typeof(SqlConnectionColumnEncryptionSetting), value);
                     }
-                    catch (ArgumentException e) {
+                    catch (ArgumentException e)
+                    {
                         // to be consistent with the messages we send in case of wrong type usage, replace 
                         // the error with our exception, and keep the original one as inner one for troubleshooting
                         throw ADP.ConvertFailed(value.GetType(), typeof(SqlConnectionColumnEncryptionSetting), e);
@@ -763,216 +804,223 @@ namespace Microsoft.Data.Common {
                 }
 
                 // ensure value is in valid range
-                if (IsValidColumnEncryptionSetting(eValue)) {
+                if (IsValidColumnEncryptionSetting(eValue))
+                {
                     return eValue;
                 }
-                else {
+                else
+                {
                     throw ADP.InvalidEnumerationValue(typeof(SqlConnectionColumnEncryptionSetting), (int)eValue);
                 }
             }
         }
 
-        internal static bool IsValidCertificateValue(string value) {
+        internal static bool IsValidCertificateValue(string value)
+        {
             return string.IsNullOrEmpty(value)
                 || value.StartsWith("subject:", StringComparison.OrdinalIgnoreCase)
                 || value.StartsWith("sha1:", StringComparison.OrdinalIgnoreCase);
         }
     }
 
-    internal static class DbConnectionStringDefaults {
+    internal static class DbConnectionStringDefaults
+    {
         // all
-//        internal const string NamedConnection           = "";
+        //        internal const string NamedConnection           = "";
 
         // Odbc
-        internal const string Driver                    = "";
-        internal const string Dsn                       = "";
+        internal const string Driver = "";
+        internal const string Dsn = "";
 
         // OleDb
-        internal const bool   AdoNetPooler              = false;
-        internal const string FileName                  = "";
-        internal const int    OleDbServices             = ~(/*DBPROPVAL_OS_AGR_AFTERSESSION*/0x00000008 | /*DBPROPVAL_OS_CLIENTCURSOR*/0x00000004); // -13
-        internal const string Provider                  = "";
+        internal const bool AdoNetPooler = false;
+        internal const string FileName = "";
+        internal const int OleDbServices = ~(/*DBPROPVAL_OS_AGR_AFTERSESSION*/0x00000008 | /*DBPROPVAL_OS_CLIENTCURSOR*/0x00000004); // -13
+        internal const string Provider = "";
 
         // OracleClient
-        internal const bool   Unicode                   = false;
-        internal const bool   OmitOracleConnectionName  = false;
+        internal const bool Unicode = false;
+        internal const bool OmitOracleConnectionName = false;
 
         // SqlClient
-        internal const ApplicationIntent ApplicationIntent   = Microsoft.Data.SqlClient.ApplicationIntent.ReadWrite;
-        internal const string ApplicationName                = "Framework Microsoft SqlClient Data Provider";
-        internal const bool   AsynchronousProcessing         = false;
-        internal const string AttachDBFilename               = "";
-        internal const int    ConnectTimeout                 = 15;
-        internal const bool   ConnectionReset                = true;
-        internal const bool   ContextConnection              = false;
-        internal const string CurrentLanguage                = "";
-        internal const string DataSource                     = "";
-        internal const bool   Encrypt                        = false;
-        internal const bool   Enlist                         = true;
-        internal const string FailoverPartner                = "";
-        internal const string InitialCatalog                 = "";
-        internal const bool   IntegratedSecurity             = false;
-        internal const int    LoadBalanceTimeout             = 0; // default of 0 means don't use
-        internal const bool   MultipleActiveResultSets       = false;
-        internal const bool   MultiSubnetFailover            = false;
+        internal const ApplicationIntent ApplicationIntent = Microsoft.Data.SqlClient.ApplicationIntent.ReadWrite;
+        internal const string ApplicationName = "Framework Microsoft SqlClient Data Provider";
+        internal const bool AsynchronousProcessing = false;
+        internal const string AttachDBFilename = "";
+        internal const int ConnectTimeout = 15;
+        internal const bool ConnectionReset = true;
+        internal const bool ContextConnection = false;
+        internal const string CurrentLanguage = "";
+        internal const string DataSource = "";
+        internal const bool Encrypt = false;
+        internal const bool Enlist = true;
+        internal const string FailoverPartner = "";
+        internal const string InitialCatalog = "";
+        internal const bool IntegratedSecurity = false;
+        internal const int LoadBalanceTimeout = 0; // default of 0 means don't use
+        internal const bool MultipleActiveResultSets = false;
+        internal const bool MultiSubnetFailover = false;
         internal static readonly bool TransparentNetworkIPResolution = LocalAppContextSwitches.DisableTNIRByDefault ? false : true;
-        internal const int    MaxPoolSize                    = 100;
-        internal const int    MinPoolSize                    = 0;
-        internal const string NetworkLibrary                 = "";
-        internal const int    PacketSize                     = 8000;
-        internal const string Password                       =  "";
-        internal const bool   PersistSecurityInfo            = false;
-        internal const bool   Pooling                        = true;
-        internal const bool   TrustServerCertificate         = false;
-        internal const string TypeSystemVersion              = "Latest";
-        internal const string UserID                         = "";
-        internal const bool   UserInstance                   = false;
-        internal const bool   Replication                    = false;
-        internal const string WorkstationID                  = "";
-        internal const string TransactionBinding             = "Implicit Unbind";
-        internal const int    ConnectRetryCount              = 1;
-        internal const int    ConnectRetryInterval           = 10;
+        internal const int MaxPoolSize = 100;
+        internal const int MinPoolSize = 0;
+        internal const string NetworkLibrary = "";
+        internal const int PacketSize = 8000;
+        internal const string Password = "";
+        internal const bool PersistSecurityInfo = false;
+        internal const bool Pooling = true;
+        internal const bool TrustServerCertificate = false;
+        internal const string TypeSystemVersion = "Latest";
+        internal const string UserID = "";
+        internal const bool UserInstance = false;
+        internal const bool Replication = false;
+        internal const string WorkstationID = "";
+        internal const string TransactionBinding = "Implicit Unbind";
+        internal const int ConnectRetryCount = 1;
+        internal const int ConnectRetryInterval = 10;
         internal static readonly SqlAuthenticationMethod Authentication = SqlAuthenticationMethod.NotSpecified;
         internal static readonly SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Disabled;
         internal const string EnclaveAttestationUrl = "";
-        internal const string Certificate                = "";
+        internal const string Certificate = "";
         internal const PoolBlockingPeriod PoolBlockingPeriod = SqlClient.PoolBlockingPeriod.Auto;
     }
 
-    internal static class DbConnectionOptionKeywords {
+    internal static class DbConnectionOptionKeywords
+    {
         // Odbc
-        internal const string Driver                    = "driver";
-        internal const string Pwd                       = "pwd";
-        internal const string UID                       = "uid";
+        internal const string Driver = "driver";
+        internal const string Pwd = "pwd";
+        internal const string UID = "uid";
 
         // OleDb
-        internal const string DataProvider              = "data provider";
-        internal const string ExtendedProperties        = "extended properties";
-        internal const string FileName                  = "file name";
-        internal const string Provider                  = "provider";
-        internal const string RemoteProvider            = "remote provider";
+        internal const string DataProvider = "data provider";
+        internal const string ExtendedProperties = "extended properties";
+        internal const string FileName = "file name";
+        internal const string Provider = "provider";
+        internal const string RemoteProvider = "remote provider";
 
         // common keywords (OleDb, OracleClient, SqlClient)
-        internal const string Password                  = "password";
-        internal const string UserID                    = "user id";
+        internal const string Password = "password";
+        internal const string UserID = "user id";
     }
 
-    internal static class DbConnectionStringKeywords {
+    internal static class DbConnectionStringKeywords
+    {
         // all
-//        internal const string NamedConnection           = "Named Connection";
+        //        internal const string NamedConnection           = "Named Connection";
 
         // Odbc
-        internal const string Driver                    = "Driver";
-        internal const string Dsn                       = "Dsn";
-        internal const string FileDsn                   = "FileDsn";
-        internal const string SaveFile                  = "SaveFile";
+        internal const string Driver = "Driver";
+        internal const string Dsn = "Dsn";
+        internal const string FileDsn = "FileDsn";
+        internal const string SaveFile = "SaveFile";
 
         // OleDb
-        internal const string FileName                  = "File Name";
-        internal const string OleDbServices             = "OLE DB Services";
-        internal const string Provider                  = "Provider";
+        internal const string FileName = "File Name";
+        internal const string OleDbServices = "OLE DB Services";
+        internal const string Provider = "Provider";
 
         // OracleClient
-        internal const string Unicode                   = "Unicode";
-        internal const string OmitOracleConnectionName  = "Omit Oracle Connection Name";
+        internal const string Unicode = "Unicode";
+        internal const string OmitOracleConnectionName = "Omit Oracle Connection Name";
 
         // SqlClient
-        internal const string ApplicationIntent              = "ApplicationIntent";
-        internal const string ApplicationName                = "Application Name";
-        internal const string AsynchronousProcessing         = "Asynchronous Processing";
-        internal const string AttachDBFilename               = "AttachDbFilename";
-        internal const string ConnectTimeout                 = "Connect Timeout";
-        internal const string ConnectionReset                = "Connection Reset";
-        internal const string ContextConnection              = "Context Connection";
-        internal const string CurrentLanguage                = "Current Language";
-        internal const string Encrypt                        = "Encrypt";
-        internal const string FailoverPartner                = "Failover Partner";
-        internal const string InitialCatalog                 = "Initial Catalog";
-        internal const string MultipleActiveResultSets       = "MultipleActiveResultSets";
-        internal const string MultiSubnetFailover            = "MultiSubnetFailover";
+        internal const string ApplicationIntent = "ApplicationIntent";
+        internal const string ApplicationName = "Application Name";
+        internal const string AsynchronousProcessing = "Asynchronous Processing";
+        internal const string AttachDBFilename = "AttachDbFilename";
+        internal const string ConnectTimeout = "Connect Timeout";
+        internal const string ConnectionReset = "Connection Reset";
+        internal const string ContextConnection = "Context Connection";
+        internal const string CurrentLanguage = "Current Language";
+        internal const string Encrypt = "Encrypt";
+        internal const string FailoverPartner = "Failover Partner";
+        internal const string InitialCatalog = "Initial Catalog";
+        internal const string MultipleActiveResultSets = "MultipleActiveResultSets";
+        internal const string MultiSubnetFailover = "MultiSubnetFailover";
         internal const string TransparentNetworkIPResolution = "TransparentNetworkIPResolution";
-        internal const string NetworkLibrary                 = "Network Library";
-        internal const string PacketSize                     = "Packet Size";
-        internal const string Replication                    = "Replication";
-        internal const string TransactionBinding             = "Transaction Binding";
-        internal const string TrustServerCertificate         = "TrustServerCertificate";
-        internal const string TypeSystemVersion              = "Type System Version";
-        internal const string UserInstance                   = "User Instance";
-        internal const string WorkstationID                  = "Workstation ID";
-        internal const string ConnectRetryCount              = "ConnectRetryCount";
-        internal const string ConnectRetryInterval           = "ConnectRetryInterval";
-        internal const string Authentication                 = "Authentication";
-        internal const string Certificate                    = "Certificate";
-        internal const string ColumnEncryptionSetting        = "Column Encryption Setting";
-        internal const string EnclaveAttestationUrl          = "Enclave Attestation Url";
-        internal const string PoolBlockingPeriod             = "PoolBlockingPeriod";
+        internal const string NetworkLibrary = "Network Library";
+        internal const string PacketSize = "Packet Size";
+        internal const string Replication = "Replication";
+        internal const string TransactionBinding = "Transaction Binding";
+        internal const string TrustServerCertificate = "TrustServerCertificate";
+        internal const string TypeSystemVersion = "Type System Version";
+        internal const string UserInstance = "User Instance";
+        internal const string WorkstationID = "Workstation ID";
+        internal const string ConnectRetryCount = "ConnectRetryCount";
+        internal const string ConnectRetryInterval = "ConnectRetryInterval";
+        internal const string Authentication = "Authentication";
+        internal const string Certificate = "Certificate";
+        internal const string ColumnEncryptionSetting = "Column Encryption Setting";
+        internal const string EnclaveAttestationUrl = "Enclave Attestation Url";
+        internal const string PoolBlockingPeriod = "PoolBlockingPeriod";
 
         // common keywords (OleDb, OracleClient, SqlClient)
-        internal const string DataSource                = "Data Source";
-        internal const string IntegratedSecurity        = "Integrated Security";
-        internal const string Password                  = "Password";
-        internal const string PersistSecurityInfo       = "Persist Security Info";
-        internal const string UserID                    = "User ID";
+        internal const string DataSource = "Data Source";
+        internal const string IntegratedSecurity = "Integrated Security";
+        internal const string Password = "Password";
+        internal const string PersistSecurityInfo = "Persist Security Info";
+        internal const string UserID = "User ID";
 
         // managed pooling (OracleClient, SqlClient)
-        internal const string Enlist                    = "Enlist";
-        internal const string LoadBalanceTimeout        = "Load Balance Timeout";
-        internal const string MaxPoolSize               = "Max Pool Size";
-        internal const string Pooling                   = "Pooling";
-        internal const string MinPoolSize               = "Min Pool Size";
+        internal const string Enlist = "Enlist";
+        internal const string LoadBalanceTimeout = "Load Balance Timeout";
+        internal const string MaxPoolSize = "Max Pool Size";
+        internal const string Pooling = "Pooling";
+        internal const string MinPoolSize = "Min Pool Size";
     }
 
-    internal static class DbConnectionStringSynonyms {
+    internal static class DbConnectionStringSynonyms
+    {
         //internal const string AsynchronousProcessing = Async;
-        internal const string Async                  = "async";
+        internal const string Async = "async";
 
         //internal const string ApplicationName        = APP;
-        internal const string APP                    = "app";
+        internal const string APP = "app";
 
         //internal const string AttachDBFilename       = EXTENDEDPROPERTIES+","+INITIALFILENAME;
-        internal const string EXTENDEDPROPERTIES     = "extended properties";
-        internal const string INITIALFILENAME        = "initial file name";
+        internal const string EXTENDEDPROPERTIES = "extended properties";
+        internal const string INITIALFILENAME = "initial file name";
 
         //internal const string ConnectTimeout         = CONNECTIONTIMEOUT+","+TIMEOUT;
-        internal const string CONNECTIONTIMEOUT      = "connection timeout";
-        internal const string TIMEOUT                = "timeout";
+        internal const string CONNECTIONTIMEOUT = "connection timeout";
+        internal const string TIMEOUT = "timeout";
 
         //internal const string CurrentLanguage        = LANGUAGE;
-        internal const string LANGUAGE               = "language";
+        internal const string LANGUAGE = "language";
 
         //internal const string OraDataSource          = SERVER;
         //internal const string SqlDataSource          = ADDR+","+ADDRESS+","+SERVER+","+NETWORKADDRESS;
-        internal const string ADDR                   = "addr";
-        internal const string ADDRESS                = "address";
-        internal const string SERVER                 = "server";
-        internal const string NETWORKADDRESS         = "network address";
+        internal const string ADDR = "addr";
+        internal const string ADDRESS = "address";
+        internal const string SERVER = "server";
+        internal const string NETWORKADDRESS = "network address";
 
         //internal const string InitialCatalog         = DATABASE;
-        internal const string DATABASE               = "database";
+        internal const string DATABASE = "database";
 
         //internal const string IntegratedSecurity     = TRUSTEDCONNECTION;
-        internal const string TRUSTEDCONNECTION      = "trusted_connection"; // underscore introduced in everett
+        internal const string TRUSTEDCONNECTION = "trusted_connection"; // underscore introduced in everett
 
         //internal const string LoadBalanceTimeout     = ConnectionLifetime;
-        internal const string ConnectionLifetime     = "connection lifetime";
+        internal const string ConnectionLifetime = "connection lifetime";
 
         //internal const string NetworkLibrary         = NET+","+NETWORK;
-        internal const string NET                    = "net";
-        internal const string NETWORK                = "network";
+        internal const string NET = "net";
+        internal const string NETWORK = "network";
 
         internal const string WorkaroundOracleBug914652 = "Workaround Oracle Bug 914652";
 
         //internal const string Password               = Pwd;
-        internal const string Pwd                    = "pwd";
+        internal const string Pwd = "pwd";
 
         //internal const string PersistSecurityInfo    = PERSISTSECURITYINFO;
-        internal const string PERSISTSECURITYINFO    = "persistsecurityinfo";
+        internal const string PERSISTSECURITYINFO = "persistsecurityinfo";
 
         //internal const string UserID                 = UID+","+User;
-        internal const string UID                    = "uid";
-        internal const string User                   = "user";
+        internal const string UID = "uid";
+        internal const string User = "user";
 
         //internal const string WorkstationID          = WSID;
-        internal const string WSID                   = "wsid";
+        internal const string WSID = "wsid";
     }
 }

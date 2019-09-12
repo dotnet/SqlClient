@@ -83,7 +83,7 @@ namespace System.Diagnostics
             options.CheckExitCode = false;
 
             return RemoteInvoke(GetMethodInfo(method), new[] { arg1, arg2, arg3 }, options);
-        }   
+        }
 
         /// <summary>Invokes the method from this assembly in another process using the specified arguments.</summary>
         /// <param name="method">The method to invoke.</param>
@@ -329,7 +329,8 @@ namespace System.Diagnostics
                         }
 
                         // Cleanup
-                        try { Process.Kill(); }
+                        try
+                        { Process.Kill(); }
                         catch { } // ignore all cleanup errors
 
                         Process.Dispose();
@@ -362,7 +363,7 @@ namespace System.Diagnostics
         public bool EnableProfiling { get; set; } = true;
         public bool CheckExitCode { get; set; } = true;
 
-        public int TimeOut {get; set; } = RemoteExecutorTestBase.FailWaitTimeoutMilliseconds;
+        public int TimeOut { get; set; } = RemoteExecutorTestBase.FailWaitTimeoutMilliseconds;
         public int ExpectedExitCode { get; set; } = RemoteExecutorTestBase.SuccessExitCode;
         public string ExceptionFile { get; } = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
 

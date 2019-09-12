@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using Microsoft.Data.Common;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -14,6 +13,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
+using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -1342,7 +1342,8 @@ namespace Microsoft.Data.SqlClient
 
         private string UnquotedName(string name)
         {
-            if (string.IsNullOrEmpty(name)) return null;
+            if (string.IsNullOrEmpty(name))
+                return null;
             if (name[0] == '[')
             {
                 int l = name.Length;
@@ -2161,7 +2162,8 @@ namespace Microsoft.Data.SqlClient
                 for (i = col; i < _sortedColumnMappings.Count; i++)
                 {
                     task = ReadWriteColumnValueAsync(i); //First reads and then writes one cell value. Task 'task' is completed when reading task and writing task both are complete.
-                    if (task != null) break; //task != null means we have a pending read/write Task.
+                    if (task != null)
+                        break; //task != null means we have a pending read/write Task.
                 }
                 if (task != null)
                 {

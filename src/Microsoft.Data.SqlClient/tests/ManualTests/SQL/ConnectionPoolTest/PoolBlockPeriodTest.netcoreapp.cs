@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Threading;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests

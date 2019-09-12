@@ -2,14 +2,14 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Concurrent;
 using System.Transactions;
-using System;
 using Microsoft.Data.Common;
 
 namespace Microsoft.Data.ProviderBase
@@ -128,7 +128,7 @@ namespace Microsoft.Data.ProviderBase
                         }
                     }
                 }
-                
+
                 return transactedObject;
             }
 
@@ -622,7 +622,7 @@ namespace Microsoft.Data.ProviderBase
             // new stack to old stack.
             if (_waitHandles.PoolSemaphore.WaitOne(0))
             {
-                for (; ;)
+                for (; ; )
                 {
                     DbConnectionInternal obj;
 
@@ -750,7 +750,8 @@ namespace Microsoft.Data.ProviderBase
                 Timer t = new Timer(new TimerCallback(this.ErrorCallback), null, Timeout.Infinite, Timeout.Infinite);
 
                 bool timerIsNotDisposed;
-                try { }
+                try
+                { }
                 finally
                 {
                     _waitHandles.ErrorEvent.Set();
@@ -969,7 +970,8 @@ namespace Microsoft.Data.ProviderBase
 
                 try
                 {
-                    try { }
+                    try
+                    { }
                     finally
                     {
                         started = Interlocked.CompareExchange(ref _pendingOpensWaiting, 1, 0) == 0;
@@ -1383,7 +1385,8 @@ namespace Microsoft.Data.ProviderBase
                         int waitResult = BOGUS_HANDLE;
                         try
                         {
-                            try { }
+                            try
+                            { }
                             finally
                             {
                                 waitResult = WaitHandle.WaitAny(_waitHandles.GetHandles(withCreate: true), CreationTimeout);

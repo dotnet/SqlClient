@@ -3,9 +3,9 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Text;
 using System.Diagnostics;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace Microsoft.Data.SqlClient
 {

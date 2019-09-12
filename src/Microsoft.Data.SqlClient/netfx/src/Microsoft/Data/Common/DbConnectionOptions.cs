@@ -2,20 +2,19 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-namespace Microsoft.Data.Common {
+namespace Microsoft.Data.Common
+{
 
     using System;
     using System.Collections;
-    using System.Data.Common;
     using System.Diagnostics;
     using System.Globalization;
-    using System.Runtime.Serialization;
-    using System.Security.Permissions;
+    using System.Runtime.Versioning;
     using System.Text;
     using System.Text.RegularExpressions;
-    using System.Runtime.Versioning;
 
-    internal class DbConnectionOptions {
+    internal class DbConnectionOptions
+    {
         // instances of this class are intended to be immutable, i.e readonly
         // used by pooling classes so it is much easier to verify correctness
         // when not worried about the class being modified during execution
@@ -75,7 +74,7 @@ namespace Microsoft.Data.Common {
         private static readonly Regex ConnectionStringRegex = new Regex(ConnectionStringPattern, RegexOptions.ExplicitCapture | RegexOptions.Compiled);
         private static readonly Regex ConnectionStringRegexOdbc = new Regex(ConnectionStringPatternOdbc, RegexOptions.ExplicitCapture | RegexOptions.Compiled);
 #endif
-        private const string ConnectionStringValidKeyPattern   = "^(?![;\\s])[^\\p{Cc}]+(?<!\\s)$"; // key not allowed to start with semi-colon or space or contain non-visible characters or end with space
+        private const string ConnectionStringValidKeyPattern = "^(?![;\\s])[^\\p{Cc}]+(?<!\\s)$"; // key not allowed to start with semi-colon or space or contain non-visible characters or end with space
         private const string ConnectionStringValidValuePattern = "^[^\u0000]*$";                    // value not allowed to contain embedded null
         private const string ConnectionStringQuoteValuePattern = "^[^\"'=;\\s\\p{Cc}]*$";           // generally do not quote the value if it matches the pattern
         private const string ConnectionStringQuoteOdbcValuePattern = "^\\{([^\\}\u0000]|\\}\\})*\\}$"; // do not quote odbc value if it matches this pattern
@@ -88,21 +87,23 @@ namespace Microsoft.Data.Common {
         private static readonly Regex ConnectionStringQuoteOdbcValueRegex = new Regex(ConnectionStringQuoteOdbcValuePattern, RegexOptions.ExplicitCapture | RegexOptions.Compiled);
 
         // connection string common keywords
-        private static class KEY {
-            internal const string Integrated_Security      = "integrated security";
-            internal const string Password                 = "password";
-            internal const string Persist_Security_Info    = "persist security info";
-            internal const string User_ID                  = "user id";
+        private static class KEY
+        {
+            internal const string Integrated_Security = "integrated security";
+            internal const string Password = "password";
+            internal const string Persist_Security_Info = "persist security info";
+            internal const string User_ID = "user id";
         };
 
         // known connection string common synonyms
-        private static class SYNONYM {
+        private static class SYNONYM
+        {
             internal const string Pwd = "pwd";
             internal const string UID = "uid";
         };
 
-        private readonly string        _usersConnectionString;
-        private readonly Hashtable     _parsetable;
+        private readonly string _usersConnectionString;
+        private readonly Hashtable _parsetable;
         internal readonly NameValuePair KeyChain;
         internal readonly bool HasPasswordKeyword;
         internal readonly bool HasUserIdKeyword;
@@ -127,25 +128,29 @@ namespace Microsoft.Data.Common {
 
         // called by derived classes that may cache based on connectionString
         public DbConnectionOptions(string connectionString)
-            : this(connectionString, null, false) {
+            : this(connectionString, null, false)
+        {
         }
 
         // synonyms hashtable is meant to be read-only translation of parsed string
         // keywords/synonyms to a known keyword string
-        public DbConnectionOptions(string connectionString, Hashtable synonyms, bool useOdbcRules) {
+        public DbConnectionOptions(string connectionString, Hashtable synonyms, bool useOdbcRules)
+        {
             UseOdbcRules = useOdbcRules;
             _parsetable = new Hashtable();
             _usersConnectionString = ((null != connectionString) ? connectionString : "");
 
             // first pass on parsing, initial syntax check
-            if (0 < _usersConnectionString.Length) {
+            if (0 < _usersConnectionString.Length)
+            {
                 KeyChain = ParseInternal(_parsetable, _usersConnectionString, true, synonyms, UseOdbcRules);
                 HasPasswordKeyword = (_parsetable.ContainsKey(KEY.Password) || _parsetable.ContainsKey(SYNONYM.Pwd));
                 HasUserIdKeyword = (_parsetable.ContainsKey(KEY.User_ID) || _parsetable.ContainsKey(SYNONYM.UID));
             }
         }
 
-        protected DbConnectionOptions(DbConnectionOptions connectionOptions) { // Clone used by SqlConnectionString
+        protected DbConnectionOptions(DbConnectionOptions connectionOptions)
+        { // Clone used by SqlConnectionString
             _usersConnectionString = connectionOptions._usersConnectionString;
             HasPasswordKeyword = connectionOptions.HasPasswordKeyword;
             HasUserIdKeyword = connectionOptions.HasUserIdKeyword;
@@ -155,31 +160,43 @@ namespace Microsoft.Data.Common {
         }
 
 
-        public string UsersConnectionString(bool hidePassword) {
+        public string UsersConnectionString(bool hidePassword)
+        {
             return UsersConnectionString(hidePassword, false);
         }
 
-        private string UsersConnectionString(bool hidePassword, bool forceHidePassword) {
+        private string UsersConnectionString(bool hidePassword, bool forceHidePassword)
+        {
             string connectionString = _usersConnectionString;
-            if (HasPasswordKeyword && (forceHidePassword || (hidePassword && !HasPersistablePassword))) {
+            if (HasPasswordKeyword && (forceHidePassword || (hidePassword && !HasPersistablePassword)))
+            {
                 ReplacePasswordPwd(out connectionString, false);
             }
             return ((null != connectionString) ? connectionString : "");
         }
 
-        internal string UsersConnectionStringForTrace() {
+        internal string UsersConnectionStringForTrace()
+        {
             return UsersConnectionString(true, true);
         }
 
-        internal bool HasBlankPassword {
-            get {
-                if (!ConvertValueToIntegratedSecurity()) {
-                    if (_parsetable.ContainsKey(KEY.Password)) {
+        internal bool HasBlankPassword
+        {
+            get
+            {
+                if (!ConvertValueToIntegratedSecurity())
+                {
+                    if (_parsetable.ContainsKey(KEY.Password))
+                    {
                         return ADP.IsEmpty((string)_parsetable[KEY.Password]);
-                    } else
-                    if (_parsetable.ContainsKey(SYNONYM.Pwd)) {
+                    }
+                    else
+                    if (_parsetable.ContainsKey(SYNONYM.Pwd))
+                    {
                         return ADP.IsEmpty((string)_parsetable[SYNONYM.Pwd]); // MDAC 83097
-                    } else {
+                    }
+                    else
+                    {
                         return ((_parsetable.ContainsKey(KEY.User_ID) && !ADP.IsEmpty((string)_parsetable[KEY.User_ID])) || (_parsetable.ContainsKey(SYNONYM.UID) && !ADP.IsEmpty((string)_parsetable[SYNONYM.UID])));
                     }
                 }
@@ -187,56 +204,71 @@ namespace Microsoft.Data.Common {
             }
         }
 
-        internal bool HasPersistablePassword {
-            get {
-                if (HasPasswordKeyword) {
+        internal bool HasPersistablePassword
+        {
+            get
+            {
+                if (HasPasswordKeyword)
+                {
                     return ConvertValueToBoolean(KEY.Persist_Security_Info, false);
                 }
                 return true; // no password means persistable password so we don't have to munge
             }
         }
 
-        public bool IsEmpty {
+        public bool IsEmpty
+        {
             get { return (null == KeyChain); }
         }
 
-        internal Hashtable Parsetable {
+        internal Hashtable Parsetable
+        {
             get { return _parsetable; }
         }
 
-        public ICollection Keys {
+        public ICollection Keys
+        {
             get { return _parsetable.Keys; }
         }
 
-        public string this[string keyword] {
+        public string this[string keyword]
+        {
             get { return (string)_parsetable[keyword]; }
         }
 
-        internal static void AppendKeyValuePairBuilder(StringBuilder builder, string keyName, string keyValue, bool useOdbcRules) {
+        internal static void AppendKeyValuePairBuilder(StringBuilder builder, string keyName, string keyValue, bool useOdbcRules)
+        {
             ADP.CheckArgumentNull(builder, "builder");
             ADP.CheckArgumentLength(keyName, "keyName");
 
-            if ((null == keyName) || !ConnectionStringValidKeyRegex.IsMatch(keyName)) {
+            if ((null == keyName) || !ConnectionStringValidKeyRegex.IsMatch(keyName))
+            {
                 throw ADP.InvalidKeyname(keyName);
             }
-            if ((null != keyValue) && !IsValueValidInternal(keyValue)) {
+            if ((null != keyValue) && !IsValueValidInternal(keyValue))
+            {
                 throw ADP.InvalidValue(keyName);
             }
 
-            if ((0 < builder.Length) && (';' != builder[builder.Length-1])) {
+            if ((0 < builder.Length) && (';' != builder[builder.Length - 1]))
+            {
                 builder.Append(";");
             }
 
-            if (useOdbcRules) {
+            if (useOdbcRules)
+            {
                 builder.Append(keyName);
             }
-            else {
+            else
+            {
                 builder.Append(keyName.Replace("=", "=="));
             }
             builder.Append("=");
 
-            if (null != keyValue) { // else <keyword>=;
-                if (useOdbcRules) {
+            if (null != keyValue)
+            { // else <keyword>=;
+                if (useOdbcRules)
+                {
                     if ((0 < keyValue.Length) &&
                         (('{' == keyValue[0]) || (0 <= keyValue.IndexOf(';')) || (0 == String.Compare(DbConnectionStringKeywords.Driver, keyName, StringComparison.OrdinalIgnoreCase))) &&
                         !ConnectionStringQuoteOdbcValueRegex.IsMatch(keyValue))
@@ -245,21 +277,25 @@ namespace Microsoft.Data.Common {
                         // always quote values that contain a ';'
                         builder.Append('{').Append(keyValue.Replace("}", "}}")).Append('}');
                     }
-                    else {
+                    else
+                    {
                         builder.Append(keyValue);
                     }
                 }
-                else if (ConnectionStringQuoteValueRegex.IsMatch(keyValue)) {
+                else if (ConnectionStringQuoteValueRegex.IsMatch(keyValue))
+                {
                     // <value> -> <value>
                     builder.Append(keyValue);
                 }
-                else if ((-1 != keyValue.IndexOf('\"')) && (-1 == keyValue.IndexOf('\''))) {
+                else if ((-1 != keyValue.IndexOf('\"')) && (-1 == keyValue.IndexOf('\'')))
+                {
                     // <val"ue> -> <'val"ue'>
                     builder.Append('\'');
                     builder.Append(keyValue);
                     builder.Append('\'');
                 }
-                else {
+                else
+                {
                     // <val'ue> -> <"val'ue">
                     // <=value> -> <"=value">
                     // <;value> -> <";value">
@@ -273,102 +309,125 @@ namespace Microsoft.Data.Common {
             }
         }
 
-        public bool ConvertValueToBoolean(string keyName, bool defaultValue) {
+        public bool ConvertValueToBoolean(string keyName, bool defaultValue)
+        {
             object value = _parsetable[keyName];
-            if (null == value) {
+            if (null == value)
+            {
                 return defaultValue;
             }
-            return ConvertValueToBooleanInternal(keyName, (string) value);
+            return ConvertValueToBooleanInternal(keyName, (string)value);
         }
 
-        internal static bool ConvertValueToBooleanInternal(string keyName, string stringValue) {
+        internal static bool ConvertValueToBooleanInternal(string keyName, string stringValue)
+        {
             if (CompareInsensitiveInvariant(stringValue, "true") || CompareInsensitiveInvariant(stringValue, "yes"))
                 return true;
             else if (CompareInsensitiveInvariant(stringValue, "false") || CompareInsensitiveInvariant(stringValue, "no"))
                 return false;
-            else {
+            else
+            {
                 string tmp = stringValue.Trim();  // Remove leading & trailing white space.
                 if (CompareInsensitiveInvariant(tmp, "true") || CompareInsensitiveInvariant(tmp, "yes"))
                     return true;
                 else if (CompareInsensitiveInvariant(tmp, "false") || CompareInsensitiveInvariant(tmp, "no"))
                     return false;
-                else {
+                else
+                {
                     throw ADP.InvalidConnectionOptionValue(keyName);
                 }
             }
         }
 
         // same as Boolean, but with SSPI thrown in as valid yes
-        public bool ConvertValueToIntegratedSecurity() {
+        public bool ConvertValueToIntegratedSecurity()
+        {
             object value = _parsetable[KEY.Integrated_Security];
-            if (null == value) {
+            if (null == value)
+            {
                 return false;
             }
-            return ConvertValueToIntegratedSecurityInternal((string) value);
+            return ConvertValueToIntegratedSecurityInternal((string)value);
         }
 
-        internal bool ConvertValueToIntegratedSecurityInternal(string stringValue) {
+        internal bool ConvertValueToIntegratedSecurityInternal(string stringValue)
+        {
             if (CompareInsensitiveInvariant(stringValue, "sspi") || CompareInsensitiveInvariant(stringValue, "true") || CompareInsensitiveInvariant(stringValue, "yes"))
                 return true;
             else if (CompareInsensitiveInvariant(stringValue, "false") || CompareInsensitiveInvariant(stringValue, "no"))
                 return false;
-            else {
+            else
+            {
                 string tmp = stringValue.Trim();  // Remove leading & trailing white space.
                 if (CompareInsensitiveInvariant(tmp, "sspi") || CompareInsensitiveInvariant(tmp, "true") || CompareInsensitiveInvariant(tmp, "yes"))
                     return true;
                 else if (CompareInsensitiveInvariant(tmp, "false") || CompareInsensitiveInvariant(tmp, "no"))
                     return false;
-                else {
+                else
+                {
                     throw ADP.InvalidConnectionOptionValue(KEY.Integrated_Security);
                 }
             }
         }
 
-        public int ConvertValueToInt32(string keyName, int defaultValue) {
+        public int ConvertValueToInt32(string keyName, int defaultValue)
+        {
             object value = _parsetable[keyName];
-            if (null == value) {
+            if (null == value)
+            {
                 return defaultValue;
             }
-            return ConvertToInt32Internal(keyName, (string) value);
+            return ConvertToInt32Internal(keyName, (string)value);
         }
 
-        internal static int ConvertToInt32Internal(string keyname, string stringValue) {
-            try {
+        internal static int ConvertToInt32Internal(string keyname, string stringValue)
+        {
+            try
+            {
                 return System.Int32.Parse(stringValue, System.Globalization.NumberStyles.Integer, CultureInfo.InvariantCulture);
             }
-            catch (FormatException e) {
+            catch (FormatException e)
+            {
                 throw ADP.InvalidConnectionOptionValue(keyname, e);
             }
-            catch (OverflowException e) {
+            catch (OverflowException e)
+            {
                 throw ADP.InvalidConnectionOptionValue(keyname, e);
             }
         }
 
-        public string ConvertValueToString(string keyName, string defaultValue) {
+        public string ConvertValueToString(string keyName, string defaultValue)
+        {
             string value = (string)_parsetable[keyName];
             return ((null != value) ? value : defaultValue);
         }
 
-        static private bool CompareInsensitiveInvariant(string strvalue, string strconst) {
+        static private bool CompareInsensitiveInvariant(string strvalue, string strconst)
+        {
             return (0 == StringComparer.OrdinalIgnoreCase.Compare(strvalue, strconst));
         }
 
-        public bool ContainsKey(string keyword) {
+        public bool ContainsKey(string keyword)
+        {
             return _parsetable.ContainsKey(keyword);
         }
 
-        protected internal virtual System.Security.PermissionSet CreatePermissionSet() {
+        protected internal virtual System.Security.PermissionSet CreatePermissionSet()
+        {
             return null;
         }
 
-        internal void DemandPermission() {
-            if (null == _permissionset) {
+        internal void DemandPermission()
+        {
+            if (null == _permissionset)
+            {
                 _permissionset = CreatePermissionSet();
             }
             _permissionset.Demand();
         }
 
-        protected internal virtual string Expand() {
+        protected internal virtual string Expand()
+        {
             return _usersConnectionString;
         }
 
@@ -378,22 +437,28 @@ namespace Microsoft.Data.Common {
         // * This method uses GetFullPath to validate that root path is valid, the result is not exposed out.
         [ResourceExposure(ResourceScope.None)]
         [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
-        internal static string ExpandDataDirectory(string keyword, string value, ref string datadir) {
+        internal static string ExpandDataDirectory(string keyword, string value, ref string datadir)
+        {
             string fullPath = null;
-            if ((null != value) && value.StartsWith(DataDirectory, StringComparison.OrdinalIgnoreCase)) {
+            if ((null != value) && value.StartsWith(DataDirectory, StringComparison.OrdinalIgnoreCase))
+            {
 
                 string rootFolderPath = datadir;
-                if (null == rootFolderPath) {
+                if (null == rootFolderPath)
+                {
                     // find the replacement path
                     object rootFolderObject = AppDomain.CurrentDomain.GetData("DataDirectory");
                     rootFolderPath = (rootFolderObject as string);
-                    if ((null != rootFolderObject) && (null == rootFolderPath)) {
+                    if ((null != rootFolderObject) && (null == rootFolderPath))
+                    {
                         throw ADP.InvalidDataDirectory();
                     }
-                    else if (ADP.IsEmpty(rootFolderPath)) {
+                    else if (ADP.IsEmpty(rootFolderPath))
+                    {
                         rootFolderPath = AppDomain.CurrentDomain.BaseDirectory;
                     }
-                    if (null == rootFolderPath) {
+                    if (null == rootFolderPath)
+                    {
                         rootFolderPath = "";
                     }
                     // cache the |DataDir| for ExpandDataDirectories
@@ -402,32 +467,37 @@ namespace Microsoft.Data.Common {
 
                 // We don't know if rootFolderpath ends with '\', and we don't know if the given name starts with onw
                 int fileNamePosition = DataDirectory.Length;    // filename starts right after the '|datadirectory|' keyword
-                bool rootFolderEndsWith = (0 < rootFolderPath.Length) && rootFolderPath[rootFolderPath.Length-1] == '\\';
+                bool rootFolderEndsWith = (0 < rootFolderPath.Length) && rootFolderPath[rootFolderPath.Length - 1] == '\\';
                 bool fileNameStartsWith = (fileNamePosition < value.Length) && value[fileNamePosition] == '\\';
 
                 // replace |datadirectory| with root folder path
-                if (!rootFolderEndsWith && !fileNameStartsWith) {
+                if (!rootFolderEndsWith && !fileNameStartsWith)
+                {
                     // need to insert '\'
                     fullPath = rootFolderPath + '\\' + value.Substring(fileNamePosition);
                 }
-                else if (rootFolderEndsWith && fileNameStartsWith) {
+                else if (rootFolderEndsWith && fileNameStartsWith)
+                {
                     // need to strip one out
-                    fullPath = rootFolderPath + value.Substring(fileNamePosition+1);
+                    fullPath = rootFolderPath + value.Substring(fileNamePosition + 1);
                 }
-                else {
+                else
+                {
                     // simply concatenate the strings
                     fullPath = rootFolderPath + value.Substring(fileNamePosition);
                 }
 
                 // verify root folder path is a real path without unexpected "..\"
-                if (!ADP.GetFullPath(fullPath).StartsWith(rootFolderPath, StringComparison.Ordinal)) {
+                if (!ADP.GetFullPath(fullPath).StartsWith(rootFolderPath, StringComparison.Ordinal))
+                {
                     throw ADP.InvalidConnectionOptionValue(keyword);
                 }
             }
             return fullPath;
         }
 
-        internal string ExpandDataDirectories(ref string filename, ref int position) {
+        internal string ExpandDataDirectories(ref string filename, ref int position)
+        {
             string value = null;
             StringBuilder builder = new StringBuilder(_usersConnectionString.Length);
             string datadir = null;
@@ -435,7 +505,8 @@ namespace Microsoft.Data.Common {
             int copyPosition = 0;
             bool expanded = false;
 
-            for(NameValuePair current = KeyChain; null != current; current = current.Next) {
+            for (NameValuePair current = KeyChain; null != current; current = current.Next)
+            {
                 value = current.Value;
 
                 // remove duplicate keyswords from connectionstring
@@ -446,47 +517,56 @@ namespace Microsoft.Data.Common {
                 //}
 
                 // There is a set of keywords we explictly do NOT want to expand |DataDirectory| on
-                if (UseOdbcRules) {
-                    switch(current.Name) {
-                    case DbConnectionOptionKeywords.Driver:
-                    case DbConnectionOptionKeywords.Pwd:
-                    case DbConnectionOptionKeywords.UID:
-                        break;
-                    default:
-                        value = ExpandDataDirectory(current.Name, value, ref datadir);
-                        break;
+                if (UseOdbcRules)
+                {
+                    switch (current.Name)
+                    {
+                        case DbConnectionOptionKeywords.Driver:
+                        case DbConnectionOptionKeywords.Pwd:
+                        case DbConnectionOptionKeywords.UID:
+                            break;
+                        default:
+                            value = ExpandDataDirectory(current.Name, value, ref datadir);
+                            break;
                     }
                 }
-                else {
-                    switch(current.Name) {
-                    case DbConnectionOptionKeywords.Provider:
-                    case DbConnectionOptionKeywords.DataProvider:
-                    case DbConnectionOptionKeywords.RemoteProvider:
-                    case DbConnectionOptionKeywords.ExtendedProperties:
-                    case DbConnectionOptionKeywords.UserID:
-                    case DbConnectionOptionKeywords.Password:
-                    case DbConnectionOptionKeywords.UID:
-                    case DbConnectionOptionKeywords.Pwd:
-                        break;
-                    default:
-                        value = ExpandDataDirectory(current.Name, value, ref datadir);
-                        break;
+                else
+                {
+                    switch (current.Name)
+                    {
+                        case DbConnectionOptionKeywords.Provider:
+                        case DbConnectionOptionKeywords.DataProvider:
+                        case DbConnectionOptionKeywords.RemoteProvider:
+                        case DbConnectionOptionKeywords.ExtendedProperties:
+                        case DbConnectionOptionKeywords.UserID:
+                        case DbConnectionOptionKeywords.Password:
+                        case DbConnectionOptionKeywords.UID:
+                        case DbConnectionOptionKeywords.Pwd:
+                            break;
+                        default:
+                            value = ExpandDataDirectory(current.Name, value, ref datadir);
+                            break;
                     }
                 }
-                if (null == value) {
+                if (null == value)
+                {
                     value = current.Value;
                 }
-                if (UseOdbcRules || (DbConnectionOptionKeywords.FileName != current.Name)) {
-                    if (value != current.Value) {
+                if (UseOdbcRules || (DbConnectionOptionKeywords.FileName != current.Name))
+                {
+                    if (value != current.Value)
+                    {
                         expanded = true;
                         AppendKeyValuePairBuilder(builder, current.Name, value, UseOdbcRules);
                         builder.Append(';');
                     }
-                    else {
+                    else
+                    {
                         builder.Append(_usersConnectionString, copyPosition, current.Length);
                     }
                 }
-                else {
+                else
+                {
                     // strip out 'File Name=myconnection.udl' for OleDb
                     // remembering is value for which UDL file to open
                     // and where to insert the strnig
@@ -497,37 +577,44 @@ namespace Microsoft.Data.Common {
                 copyPosition += current.Length;
             }
 
-            if (expanded) {
+            if (expanded)
+            {
                 value = builder.ToString();
             }
-            else {
+            else
+            {
                 value = null;
             }
             return value;
         }
 
-        internal string ExpandKeyword(string keyword, string replacementValue) {
+        internal string ExpandKeyword(string keyword, string replacementValue)
+        {
             // preserve duplicates, updated keyword value with replacement value
             // if keyword not specified, append to end of the string
             bool expanded = false;
             int copyPosition = 0;
 
             StringBuilder builder = new StringBuilder(_usersConnectionString.Length);
-            for(NameValuePair current = KeyChain; null != current; current = current.Next) {
-                if ((current.Name == keyword) && (current.Value == this[keyword])) {
+            for (NameValuePair current = KeyChain; null != current; current = current.Next)
+            {
+                if ((current.Name == keyword) && (current.Value == this[keyword]))
+                {
                     // only replace the parse end-result value instead of all values
                     // so that when duplicate-keywords occur other original values remain in place
                     AppendKeyValuePairBuilder(builder, current.Name, replacementValue, UseOdbcRules);
                     builder.Append(';');
                     expanded = true;
                 }
-                else {
+                else
+                {
                     builder.Append(_usersConnectionString, copyPosition, current.Length);
                 }
                 copyPosition += current.Length;
             }
 
-            if (!expanded) {
+            if (!expanded)
+            {
                 // TODO: technically for ODBC  it should be prepended but not using the method from ODBC
                 Debug.Assert(!UseOdbcRules, "ExpandKeyword not ready for Odbc");
                 AppendKeyValuePairBuilder(builder, keyword, replacementValue, UseOdbcRules);
@@ -554,22 +641,28 @@ namespace Microsoft.Data.Common {
         }
 #endif
 
-        static private string GetKeyName(StringBuilder buffer) {
+        static private string GetKeyName(StringBuilder buffer)
+        {
             int count = buffer.Length;
-            while ((0 < count) && Char.IsWhiteSpace(buffer[count-1])) {
+            while ((0 < count) && Char.IsWhiteSpace(buffer[count - 1]))
+            {
                 count--; // trailing whitespace
             }
             return buffer.ToString(0, count).ToLower(CultureInfo.InvariantCulture);
         }
 
-        static private string GetKeyValue(StringBuilder buffer, bool trimWhitespace) {
+        static private string GetKeyValue(StringBuilder buffer, bool trimWhitespace)
+        {
             int count = buffer.Length;
             int index = 0;
-            if (trimWhitespace) {
-                while ((index < count) && Char.IsWhiteSpace(buffer[index])) {
+            if (trimWhitespace)
+            {
+                while ((index < count) && Char.IsWhiteSpace(buffer[index]))
+                {
                     index++; // leading whitespace
                 }
-                while ((0 < count) && Char.IsWhiteSpace(buffer[count-1])) {
+                while ((0 < count) && Char.IsWhiteSpace(buffer[count - 1]))
+                {
                     count--; // trailing whitespace
                 }
             }
@@ -577,8 +670,9 @@ namespace Microsoft.Data.Common {
         }
 
         // transistion states used for parsing
-        private enum ParserState {
-            NothingYet=1,   //start point
+        private enum ParserState
+        {
+            NothingYet = 1,   //start point
             Key,
             KeyEqual,
             KeyEnd,
@@ -593,7 +687,8 @@ namespace Microsoft.Data.Common {
             NullTermination,
         };
 
-        static internal int GetKeyValuePair(string connectionString, int currentPosition, StringBuilder buffer, bool useOdbcRules, out string keyname, out string keyvalue) {
+        static internal int GetKeyValuePair(string connectionString, int currentPosition, StringBuilder buffer, bool useOdbcRules, out string keyname, out string keyvalue)
+        {
             int startposition = currentPosition;
 
             buffer.Length = 0;
@@ -604,158 +699,200 @@ namespace Microsoft.Data.Common {
 
             ParserState parserState = ParserState.NothingYet;
             int length = connectionString.Length;
-            for (; currentPosition < length; ++currentPosition) {
+            for (; currentPosition < length; ++currentPosition)
+            {
                 currentChar = connectionString[currentPosition];
 
-                switch(parserState) {
-                case ParserState.NothingYet: // [\\s;]*
-                    if ((';' == currentChar) || Char.IsWhiteSpace(currentChar)) {
-                        continue;
-                    }
-                    if ('\0' == currentChar)            { parserState = ParserState.NullTermination; continue; } // MDAC 83540
-                    if (Char.IsControl(currentChar))    { throw ADP.ConnectionStringSyntax(startposition); }
-                    startposition = currentPosition;
-                    if ('=' != currentChar) { // MDAC 86902
-                        parserState = ParserState.Key;
+                switch (parserState)
+                {
+                    case ParserState.NothingYet: // [\\s;]*
+                        if ((';' == currentChar) || Char.IsWhiteSpace(currentChar))
+                        {
+                            continue;
+                        }
+                        if ('\0' == currentChar)
+                        { parserState = ParserState.NullTermination; continue; } // MDAC 83540
+                        if (Char.IsControl(currentChar))
+                        { throw ADP.ConnectionStringSyntax(startposition); }
+                        startposition = currentPosition;
+                        if ('=' != currentChar)
+                        { // MDAC 86902
+                            parserState = ParserState.Key;
+                            break;
+                        }
+                        else
+                        {
+                            parserState = ParserState.KeyEqual;
+                            continue;
+                        }
+
+                    case ParserState.Key: // (?<key>([^=\\s\\p{Cc}]|\\s+[^=\\s\\p{Cc}]|\\s+==|==)+)
+                        if ('=' == currentChar)
+                        { parserState = ParserState.KeyEqual; continue; }
+                        if (Char.IsWhiteSpace(currentChar))
+                        { break; }
+                        if (Char.IsControl(currentChar))
+                        { throw ADP.ConnectionStringSyntax(startposition); }
                         break;
-                    }
-                    else {
-                        parserState = ParserState.KeyEqual;
-                        continue;
-                    }
 
-                case ParserState.Key: // (?<key>([^=\\s\\p{Cc}]|\\s+[^=\\s\\p{Cc}]|\\s+==|==)+)
-                    if ('=' == currentChar)             { parserState = ParserState.KeyEqual;       continue; }
-                    if (Char.IsWhiteSpace(currentChar)) { break; }
-                    if (Char.IsControl(currentChar))    { throw ADP.ConnectionStringSyntax(startposition); }
-                    break;
+                    case ParserState.KeyEqual: // \\s*=(?!=)\\s*
+                        if (!useOdbcRules && '=' == currentChar)
+                        { parserState = ParserState.Key; break; }
+                        keyname = GetKeyName(buffer);
+                        if (ADP.IsEmpty(keyname))
+                        { throw ADP.ConnectionStringSyntax(startposition); }
+                        buffer.Length = 0;
+                        parserState = ParserState.KeyEnd;
+                        goto case ParserState.KeyEnd;
 
-                case ParserState.KeyEqual: // \\s*=(?!=)\\s*
-                    if (!useOdbcRules && '=' == currentChar) { parserState = ParserState.Key;            break; }
-                    keyname = GetKeyName(buffer);
-                    if (ADP.IsEmpty(keyname))           { throw ADP.ConnectionStringSyntax(startposition); }
-                    buffer.Length = 0;
-                    parserState = ParserState.KeyEnd;
-                    goto case ParserState.KeyEnd;
+                    case ParserState.KeyEnd:
+                        if (Char.IsWhiteSpace(currentChar))
+                        { continue; }
+                        if (useOdbcRules)
+                        {
+                            if ('{' == currentChar)
+                            { parserState = ParserState.BraceQuoteValue; break; }
+                        }
+                        else
+                        {
+                            if ('\'' == currentChar)
+                            { parserState = ParserState.SingleQuoteValue; continue; }
+                            if ('"' == currentChar)
+                            { parserState = ParserState.DoubleQuoteValue; continue; }
+                        }
+                        if (';' == currentChar)
+                        { goto ParserExit; }
+                        if ('\0' == currentChar)
+                        { goto ParserExit; }
+                        if (Char.IsControl(currentChar))
+                        { throw ADP.ConnectionStringSyntax(startposition); }
+                        parserState = ParserState.UnquotedValue;
+                        break;
 
-                case ParserState.KeyEnd:
-                    if (Char.IsWhiteSpace(currentChar)) { continue; }
-                    if (useOdbcRules) {
-                        if ('{' == currentChar)             { parserState = ParserState.BraceQuoteValue; break; }
-                    }
-                    else {
-                        if ('\'' == currentChar)            { parserState = ParserState.SingleQuoteValue; continue; }
-                        if ('"' == currentChar)             { parserState = ParserState.DoubleQuoteValue; continue; }
-                    }
-                    if (';' == currentChar)             { goto ParserExit; }
-                    if ('\0' == currentChar)            { goto ParserExit; }
-                    if (Char.IsControl(currentChar))    { throw ADP.ConnectionStringSyntax(startposition); }
-                    parserState = ParserState.UnquotedValue;
-                    break;
+                    case ParserState.UnquotedValue: // "((?![\"'\\s])" + "([^;\\s\\p{Cc}]|\\s+[^;\\s\\p{Cc}])*" + "(?<![\"']))"
+                        if (Char.IsWhiteSpace(currentChar))
+                        { break; }
+                        if (Char.IsControl(currentChar) || ';' == currentChar)
+                        { goto ParserExit; }
+                        break;
 
-                case ParserState.UnquotedValue: // "((?![\"'\\s])" + "([^;\\s\\p{Cc}]|\\s+[^;\\s\\p{Cc}])*" + "(?<![\"']))"
-                    if (Char.IsWhiteSpace(currentChar)) { break; }
-                    if (Char.IsControl(currentChar) || ';' == currentChar) { goto ParserExit; }
-                    break;
+                    case ParserState.DoubleQuoteValue: // "(\"([^\"\u0000]|\"\")*\")"
+                        if ('"' == currentChar)
+                        { parserState = ParserState.DoubleQuoteValueQuote; continue; }
+                        if ('\0' == currentChar)
+                        { throw ADP.ConnectionStringSyntax(startposition); }
+                        break;
 
-                case ParserState.DoubleQuoteValue: // "(\"([^\"\u0000]|\"\")*\")"
-                    if ('"' == currentChar)             { parserState = ParserState.DoubleQuoteValueQuote;   continue; }
-                    if ('\0' == currentChar)            { throw ADP.ConnectionStringSyntax(startposition); }
-                    break;
+                    case ParserState.DoubleQuoteValueQuote:
+                        if ('"' == currentChar)
+                        { parserState = ParserState.DoubleQuoteValue; break; }
+                        keyvalue = GetKeyValue(buffer, false);
+                        parserState = ParserState.QuotedValueEnd;
+                        goto case ParserState.QuotedValueEnd;
 
-                case ParserState.DoubleQuoteValueQuote:
-                    if ('"' == currentChar)             { parserState = ParserState.DoubleQuoteValue;      break; }
-                    keyvalue = GetKeyValue(buffer, false);
-                    parserState = ParserState.QuotedValueEnd;
-                    goto case ParserState.QuotedValueEnd;
+                    case ParserState.SingleQuoteValue: // "('([^'\u0000]|'')*')"
+                        if ('\'' == currentChar)
+                        { parserState = ParserState.SingleQuoteValueQuote; continue; }
+                        if ('\0' == currentChar)
+                        { throw ADP.ConnectionStringSyntax(startposition); }
+                        break;
 
-                case ParserState.SingleQuoteValue: // "('([^'\u0000]|'')*')"
-                    if ('\'' == currentChar)             { parserState = ParserState.SingleQuoteValueQuote;   continue; }
-                    if ('\0' == currentChar)             { throw ADP.ConnectionStringSyntax(startposition); }
-                    break;
+                    case ParserState.SingleQuoteValueQuote:
+                        if ('\'' == currentChar)
+                        { parserState = ParserState.SingleQuoteValue; break; }
+                        keyvalue = GetKeyValue(buffer, false);
+                        parserState = ParserState.QuotedValueEnd;
+                        goto case ParserState.QuotedValueEnd;
 
-                case ParserState.SingleQuoteValueQuote:
-                    if ('\'' == currentChar)             { parserState = ParserState.SingleQuoteValue;      break; }
-                    keyvalue = GetKeyValue(buffer, false);
-                    parserState = ParserState.QuotedValueEnd;
-                    goto case ParserState.QuotedValueEnd;
+                    case ParserState.BraceQuoteValue: // "(\\{([^\\}\u0000]|\\}\\})*\\})"
+                        if ('}' == currentChar)
+                        { parserState = ParserState.BraceQuoteValueQuote; break; }
+                        if ('\0' == currentChar)
+                        { throw ADP.ConnectionStringSyntax(startposition); }
+                        break;
 
-                case ParserState.BraceQuoteValue: // "(\\{([^\\}\u0000]|\\}\\})*\\})"
-                    if ('}' == currentChar)             { parserState = ParserState.BraceQuoteValueQuote;   break; }
-                    if ('\0' == currentChar)            { throw ADP.ConnectionStringSyntax(startposition); }
-                    break;
+                    case ParserState.BraceQuoteValueQuote:
+                        if ('}' == currentChar)
+                        { parserState = ParserState.BraceQuoteValue; break; }
+                        keyvalue = GetKeyValue(buffer, false);
+                        parserState = ParserState.QuotedValueEnd;
+                        goto case ParserState.QuotedValueEnd;
 
-                case ParserState.BraceQuoteValueQuote:
-                    if ('}' == currentChar)             { parserState = ParserState.BraceQuoteValue;      break; }
-                    keyvalue = GetKeyValue(buffer, false);
-                    parserState = ParserState.QuotedValueEnd;
-                    goto case ParserState.QuotedValueEnd;
+                    case ParserState.QuotedValueEnd:
+                        if (Char.IsWhiteSpace(currentChar))
+                        { continue; }
+                        if (';' == currentChar)
+                        { goto ParserExit; }
+                        if ('\0' == currentChar)
+                        { parserState = ParserState.NullTermination; continue; } // MDAC 83540
+                        throw ADP.ConnectionStringSyntax(startposition);  // unbalanced single quote
 
-                case ParserState.QuotedValueEnd:
-                    if (Char.IsWhiteSpace(currentChar)) { continue; }
-                    if (';' == currentChar)             { goto ParserExit; }
-                    if ('\0' == currentChar)            { parserState = ParserState.NullTermination; continue; } // MDAC 83540
-                    throw ADP.ConnectionStringSyntax(startposition);  // unbalanced single quote
+                    case ParserState.NullTermination: // [\\s;\u0000]*
+                        if ('\0' == currentChar)
+                        { continue; }
+                        if (Char.IsWhiteSpace(currentChar))
+                        { continue; } // MDAC 83540
+                        throw ADP.ConnectionStringSyntax(currentPosition);
 
-                case ParserState.NullTermination: // [\\s;\u0000]*
-                    if ('\0' == currentChar) { continue; }
-                    if (Char.IsWhiteSpace(currentChar)) { continue; } // MDAC 83540
-                    throw ADP.ConnectionStringSyntax(currentPosition);
-
-                default:
-                    throw ADP.InternalError(ADP.InternalErrorCode.InvalidParserState1);
+                    default:
+                        throw ADP.InternalError(ADP.InternalErrorCode.InvalidParserState1);
                 }
                 buffer.Append(currentChar);
             }
         ParserExit:
-            switch (parserState) {
-            case ParserState.Key:
-            case ParserState.DoubleQuoteValue:
-            case ParserState.SingleQuoteValue:
-            case ParserState.BraceQuoteValue:
-                // keyword not found/unbalanced double/single quote
-                throw ADP.ConnectionStringSyntax(startposition);
+            switch (parserState)
+            {
+                case ParserState.Key:
+                case ParserState.DoubleQuoteValue:
+                case ParserState.SingleQuoteValue:
+                case ParserState.BraceQuoteValue:
+                    // keyword not found/unbalanced double/single quote
+                    throw ADP.ConnectionStringSyntax(startposition);
 
-            case ParserState.KeyEqual:
-                // equal sign at end of line
-                keyname = GetKeyName(buffer);
-                if (ADP.IsEmpty(keyname))           { throw ADP.ConnectionStringSyntax(startposition); }
-                break;
+                case ParserState.KeyEqual:
+                    // equal sign at end of line
+                    keyname = GetKeyName(buffer);
+                    if (ADP.IsEmpty(keyname))
+                    { throw ADP.ConnectionStringSyntax(startposition); }
+                    break;
 
-            case ParserState.UnquotedValue:
-                // unquoted value at end of line
-                keyvalue = GetKeyValue(buffer, true);
+                case ParserState.UnquotedValue:
+                    // unquoted value at end of line
+                    keyvalue = GetKeyValue(buffer, true);
 
-                char tmpChar = keyvalue[keyvalue.Length - 1];
-                if (!useOdbcRules && (('\'' == tmpChar) || ('"' == tmpChar))) {
-                    throw ADP.ConnectionStringSyntax(startposition);    // unquoted value must not end in quote, except for odbc
-                }
-                break;
+                    char tmpChar = keyvalue[keyvalue.Length - 1];
+                    if (!useOdbcRules && (('\'' == tmpChar) || ('"' == tmpChar)))
+                    {
+                        throw ADP.ConnectionStringSyntax(startposition);    // unquoted value must not end in quote, except for odbc
+                    }
+                    break;
 
-            case ParserState.DoubleQuoteValueQuote:
-            case ParserState.SingleQuoteValueQuote:
-            case ParserState.BraceQuoteValueQuote:
-            case ParserState.QuotedValueEnd:
-                // quoted value at end of line
-                keyvalue = GetKeyValue(buffer, false);
-                break;
+                case ParserState.DoubleQuoteValueQuote:
+                case ParserState.SingleQuoteValueQuote:
+                case ParserState.BraceQuoteValueQuote:
+                case ParserState.QuotedValueEnd:
+                    // quoted value at end of line
+                    keyvalue = GetKeyValue(buffer, false);
+                    break;
 
-            case ParserState.NothingYet:
-            case ParserState.KeyEnd:
-            case ParserState.NullTermination:
-                // do nothing
-                break;
+                case ParserState.NothingYet:
+                case ParserState.KeyEnd:
+                case ParserState.NullTermination:
+                    // do nothing
+                    break;
 
-            default:
-                throw ADP.InternalError(ADP.InternalErrorCode.InvalidParserState2);
+                default:
+                    throw ADP.InternalError(ADP.InternalErrorCode.InvalidParserState2);
             }
-            if ((';' == currentChar) && (currentPosition < connectionString.Length)) {
+            if ((';' == currentChar) && (currentPosition < connectionString.Length))
+            {
                 currentPosition++;
             }
             return currentPosition;
         }
 
-        static private bool IsValueValidInternal(string keyvalue) {
+        static private bool IsValueValidInternal(string keyvalue)
+        {
             if (null != keyvalue)
             {
 #if DEBUG
@@ -767,8 +904,10 @@ namespace Microsoft.Data.Common {
             return true;
         }
 
-        static private bool IsKeyNameValid(string keyname) {
-            if (null != keyname) {
+        static private bool IsKeyNameValid(string keyname)
+        {
+            if (null != keyname)
+            {
 #if DEBUG
                 bool compValue = ConnectionStringValidKeyRegex.IsMatch(keyname);
                 Debug.Assert(((0 < keyname.Length) && (';' != keyname[0]) && !Char.IsWhiteSpace(keyname[0]) && (-1 == keyname.IndexOf('\u0000'))) == compValue, "IsValueValid mismatch with regex");
@@ -870,45 +1009,52 @@ namespace Microsoft.Data.Common {
             }
         }
 #endif
-        private static NameValuePair ParseInternal(Hashtable parsetable, string connectionString, bool buildChain, Hashtable synonyms, bool firstKey) {
+        private static NameValuePair ParseInternal(Hashtable parsetable, string connectionString, bool buildChain, Hashtable synonyms, bool firstKey)
+        {
             Debug.Assert(null != connectionString, "null connectionstring");
             StringBuilder buffer = new StringBuilder();
             NameValuePair localKeychain = null, keychain = null;
 #if DEBUG
             try {
 #endif
-                int nextStartPosition = 0;
-                int endPosition = connectionString.Length;
-                while (nextStartPosition < endPosition) {
-                    int startPosition = nextStartPosition;
+            int nextStartPosition = 0;
+            int endPosition = connectionString.Length;
+            while (nextStartPosition < endPosition)
+            {
+                int startPosition = nextStartPosition;
 
-                    string keyname, keyvalue;
-                    nextStartPosition = GetKeyValuePair(connectionString, startPosition, buffer, firstKey, out keyname, out keyvalue);
-                    if (ADP.IsEmpty(keyname)) {
-                        // if (nextStartPosition != endPosition) { throw; }
-                        break;
-                    }
+                string keyname, keyvalue;
+                nextStartPosition = GetKeyValuePair(connectionString, startPosition, buffer, firstKey, out keyname, out keyvalue);
+                if (ADP.IsEmpty(keyname))
+                {
+                    // if (nextStartPosition != endPosition) { throw; }
+                    break;
+                }
 #if DEBUG
                     DebugTraceKeyValuePair(keyname, keyvalue, synonyms);
 
                     Debug.Assert(IsKeyNameValid(keyname), "ParseFailure, invalid keyname");
                     Debug.Assert(IsValueValidInternal(keyvalue), "parse failure, invalid keyvalue");
 #endif
-                    string realkeyname = ((null != synonyms) ? (string)synonyms[keyname] : keyname);
-                    if (!IsKeyNameValid(realkeyname)) {
-                        throw ADP.KeywordNotSupported(keyname);
-                    }
-                    if (!firstKey || !parsetable.Contains(realkeyname)) {
-                        parsetable[realkeyname] = keyvalue; // last key-value pair wins (or first)
-                    }
-
-                    if(null != localKeychain) {
-                        localKeychain = localKeychain.Next = new NameValuePair(realkeyname, keyvalue, nextStartPosition - startPosition);
-                    }
-                    else if (buildChain) { // first time only - don't contain modified chain from UDL file
-                        keychain = localKeychain = new NameValuePair(realkeyname, keyvalue, nextStartPosition - startPosition);
-                    }
+                string realkeyname = ((null != synonyms) ? (string)synonyms[keyname] : keyname);
+                if (!IsKeyNameValid(realkeyname))
+                {
+                    throw ADP.KeywordNotSupported(keyname);
                 }
+                if (!firstKey || !parsetable.Contains(realkeyname))
+                {
+                    parsetable[realkeyname] = keyvalue; // last key-value pair wins (or first)
+                }
+
+                if (null != localKeychain)
+                {
+                    localKeychain = localKeychain.Next = new NameValuePair(realkeyname, keyvalue, nextStartPosition - startPosition);
+                }
+                else if (buildChain)
+                { // first time only - don't contain modified chain from UDL file
+                    keychain = localKeychain = new NameValuePair(realkeyname, keyvalue, nextStartPosition - startPosition);
+                }
+            }
 #if DEBUG
             }
             catch(ArgumentException e) {
@@ -920,33 +1066,42 @@ namespace Microsoft.Data.Common {
             return keychain;
         }
 
-        internal NameValuePair ReplacePasswordPwd(out string constr, bool fakePassword) {
+        internal NameValuePair ReplacePasswordPwd(out string constr, bool fakePassword)
+        {
             bool expanded = false;
             int copyPosition = 0;
             NameValuePair head = null, tail = null, next = null;
             StringBuilder builder = new StringBuilder(_usersConnectionString.Length);
-            for(NameValuePair current = KeyChain; null != current; current = current.Next) {
-                if ((KEY.Password != current.Name) && (SYNONYM.Pwd != current.Name)) {
+            for (NameValuePair current = KeyChain; null != current; current = current.Next)
+            {
+                if ((KEY.Password != current.Name) && (SYNONYM.Pwd != current.Name))
+                {
                     builder.Append(_usersConnectionString, copyPosition, current.Length);
-                    if (fakePassword) {
+                    if (fakePassword)
+                    {
                         next = new NameValuePair(current.Name, current.Value, current.Length);
                     }
                 }
-                else if (fakePassword) { // replace user password/pwd value with *
+                else if (fakePassword)
+                { // replace user password/pwd value with *
                     const string equalstar = "=*;";
                     builder.Append(current.Name).Append(equalstar);
                     next = new NameValuePair(current.Name, "*", current.Name.Length + equalstar.Length);
                     expanded = true;
                 }
-                else { // drop the password/pwd completely in returning for user
+                else
+                { // drop the password/pwd completely in returning for user
                     expanded = true;
                 }
 
-                if (fakePassword) {
-                    if (null != tail) {
+                if (fakePassword)
+                {
+                    if (null != tail)
+                    {
                         tail = tail.Next = next;
                     }
-                    else {
+                    else
+                    {
                         tail = head = next;
                     }
                 }
@@ -957,11 +1112,14 @@ namespace Microsoft.Data.Common {
             return head;
         }
 
-        internal static void ValidateKeyValuePair(string keyword, string value) {
-            if ((null == keyword) || !ConnectionStringValidKeyRegex.IsMatch(keyword)) {
+        internal static void ValidateKeyValuePair(string keyword, string value)
+        {
+            if ((null == keyword) || !ConnectionStringValidKeyRegex.IsMatch(keyword))
+            {
                 throw ADP.InvalidKeyname(keyword);
             }
-            if ((null != value) && !ConnectionStringValidValueRegex.IsMatch(value)) {
+            if ((null != value) && !ConnectionStringValidValueRegex.IsMatch(value))
+            {
                 throw ADP.InvalidValue(keyword);
             }
         }

@@ -1,16 +1,19 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
+
 using System;
 using System.Collections.Generic;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 {
-    public class ExceptionRegisterKeyStoreProvider {
+    public class ExceptionRegisterKeyStoreProvider
+    {
 
         [Fact]
-        public void TestNullDictionary() {
+        public void TestNullDictionary()
+        {
             // Verify that we are unable to set null dictionary.
             ArgumentNullException e = Assert.Throws<ArgumentNullException>(() => SqlConnection.RegisterColumnEncryptionKeyStoreProviders(null));
             string expectedMessage = "Column encryption key store provider dictionary cannot be null. Expecting a non-null value.";

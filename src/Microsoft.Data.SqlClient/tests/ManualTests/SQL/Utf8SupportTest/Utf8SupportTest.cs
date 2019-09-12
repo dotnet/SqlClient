@@ -2,13 +2,12 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class Utf8SupportTest
-    {        
+    {
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsUTF8Supported))]
         public static void CheckSupportUtf8ConnectionProperty()
         {

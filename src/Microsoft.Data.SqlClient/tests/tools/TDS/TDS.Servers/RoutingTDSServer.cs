@@ -3,14 +3,13 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Linq;
-
 using Microsoft.SqlServer.TDS.Done;
 using Microsoft.SqlServer.TDS.EndPoint;
 using Microsoft.SqlServer.TDS.EnvChange;
 using Microsoft.SqlServer.TDS.Error;
-using Microsoft.SqlServer.TDS.PreLogin;
-using Microsoft.SqlServer.TDS.Login7;
 using Microsoft.SqlServer.TDS.FeatureExtAck;
+using Microsoft.SqlServer.TDS.Login7;
+using Microsoft.SqlServer.TDS.PreLogin;
 
 namespace Microsoft.SqlServer.TDS.Servers
 {

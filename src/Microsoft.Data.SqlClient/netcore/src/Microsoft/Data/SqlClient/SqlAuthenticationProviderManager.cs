@@ -3,28 +3,33 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections.Generic;
 using System.Collections.Concurrent;
-using System.Linq;
+using System.Collections.Generic;
 using System.Configuration;
+using System.Linq;
 
-namespace Microsoft.Data.SqlClient {
-
+namespace Microsoft.Data.SqlClient
+{
 
     /// <summary>
     /// Authentication provider manager.
     /// </summary>
-    internal class SqlAuthenticationProviderManager {
+    internal class SqlAuthenticationProviderManager
+    {
         private const string ActiveDirectoryPassword = "active directory password";
         private const string ActiveDirectoryIntegrated = "active directory integrated";
         private const string ActiveDirectoryInteractive = "active directory interactive";
 
-        static SqlAuthenticationProviderManager() {
+        static SqlAuthenticationProviderManager()
+        {
             var activeDirectoryAuthNativeProvider = new ActiveDirectoryNativeAuthenticationProvider();
             SqlAuthenticationProviderConfigurationSection configurationSection;
-            try {
+            try
+            {
                 configurationSection = (SqlAuthenticationProviderConfigurationSection)ConfigurationManager.GetSection(SqlAuthenticationProviderConfigurationSection.Name);
-            } catch (ConfigurationErrorsException e) {
+            }
+            catch (ConfigurationErrorsException e)
+            {
                 throw SQL.CannotGetAuthProviderConfig(e);
             }
             Instance = new SqlAuthenticationProviderManager(configurationSection);
@@ -40,41 +45,53 @@ namespace Microsoft.Data.SqlClient {
         /// <summary>
         /// Constructor.
         /// </summary>
-        public SqlAuthenticationProviderManager(SqlAuthenticationProviderConfigurationSection configSection) {
+        public SqlAuthenticationProviderManager(SqlAuthenticationProviderConfigurationSection configSection)
+        {
             _typeName = GetType().Name;
             _providers = new ConcurrentDictionary<SqlAuthenticationMethod, SqlAuthenticationProvider>();
             var authenticationsWithAppSpecifiedProvider = new HashSet<SqlAuthenticationMethod>();
             _authenticationsWithAppSpecifiedProvider = authenticationsWithAppSpecifiedProvider;
 
-            if (configSection == null) {
+            if (configSection == null)
+            {
                 return;
             }
 
             // Create user-defined auth initializer, if any.
             //
-            if (!string.IsNullOrEmpty(configSection.InitializerType)) {
-                try {
+            if (!string.IsNullOrEmpty(configSection.InitializerType))
+            {
+                try
+                {
                     var initializerType = Type.GetType(configSection.InitializerType, true);
                     _initializer = (SqlAuthenticationInitializer)Activator.CreateInstance(initializerType);
                     _initializer.Initialize();
-                } catch (Exception e) {
+                }
+                catch (Exception e)
+                {
                     throw SQL.CannotCreateSqlAuthInitializer(configSection.InitializerType, e);
                 }
             }
 
             // add user-defined providers, if any.
             //
-            if (configSection.Providers != null && configSection.Providers.Count > 0) {
-                foreach (ProviderSettings providerSettings in configSection.Providers) {
+            if (configSection.Providers != null && configSection.Providers.Count > 0)
+            {
+                foreach (ProviderSettings providerSettings in configSection.Providers)
+                {
                     SqlAuthenticationMethod authentication = AuthenticationEnumFromString(providerSettings.Name);
                     SqlAuthenticationProvider provider;
-                    try {
+                    try
+                    {
                         var providerType = Type.GetType(providerSettings.Type, true);
                         provider = (SqlAuthenticationProvider)Activator.CreateInstance(providerType);
-                    } catch (Exception e) {
+                    }
+                    catch (Exception e)
+                    {
                         throw SQL.CannotCreateAuthProvider(authentication.ToString(), providerSettings.Type, e);
                     }
-                    if (!provider.IsSupported(authentication)) throw SQL.UnsupportedAuthenticationByProvider(authentication.ToString(), providerSettings.Type);
+                    if (!provider.IsSupported(authentication))
+                        throw SQL.UnsupportedAuthenticationByProvider(authentication.ToString(), providerSettings.Type);
 
                     _providers[authentication] = provider;
                     authenticationsWithAppSpecifiedProvider.Add(authentication);
@@ -87,7 +104,8 @@ namespace Microsoft.Data.SqlClient {
         /// </summary>
         /// <param name="authenticationMethod">Authentication method.</param>
         /// <returns>Authentication provider or null if not found.</returns>
-        public SqlAuthenticationProvider GetProvider(SqlAuthenticationMethod authenticationMethod) {
+        public SqlAuthenticationProvider GetProvider(SqlAuthenticationMethod authenticationMethod)
+        {
             SqlAuthenticationProvider value;
             return _providers.TryGetValue(authenticationMethod, out value) ? value : null;
         }
@@ -98,16 +116,22 @@ namespace Microsoft.Data.SqlClient {
         /// <param name="authenticationMethod">Authentication method.</param>
         /// <param name="provider">Authentication provider.</param>
         /// <returns>True if succeeded, false otherwise, e.g., the existing provider disallows overriding.</returns>
-        public bool SetProvider(SqlAuthenticationMethod authenticationMethod, SqlAuthenticationProvider provider) {
-            if (!provider.IsSupported(authenticationMethod)) throw SQL.UnsupportedAuthenticationByProvider(authenticationMethod.ToString(), provider.GetType().Name);
+        public bool SetProvider(SqlAuthenticationMethod authenticationMethod, SqlAuthenticationProvider provider)
+        {
+            if (!provider.IsSupported(authenticationMethod))
+                throw SQL.UnsupportedAuthenticationByProvider(authenticationMethod.ToString(), provider.GetType().Name);
 
-            if (_authenticationsWithAppSpecifiedProvider.Contains(authenticationMethod)) {
+            if (_authenticationsWithAppSpecifiedProvider.Contains(authenticationMethod))
+            {
             }
-            _providers.AddOrUpdate(authenticationMethod, provider, (key, oldProvider) => {
-                if (oldProvider != null) {
+            _providers.AddOrUpdate(authenticationMethod, provider, (key, oldProvider) =>
+            {
+                if (oldProvider != null)
+                {
                     oldProvider.BeforeUnload(authenticationMethod);
                 }
-                if (provider != null) {
+                if (provider != null)
+                {
                     provider.BeforeLoad(authenticationMethod);
                 }
                 return provider;
@@ -115,16 +139,21 @@ namespace Microsoft.Data.SqlClient {
             return true;
         }
 
-        private static SqlAuthenticationMethod AuthenticationEnumFromString(string authentication) {
-            switch (authentication.ToLowerInvariant()) {
-                case ActiveDirectoryPassword: return SqlAuthenticationMethod.ActiveDirectoryPassword;
+        private static SqlAuthenticationMethod AuthenticationEnumFromString(string authentication)
+        {
+            switch (authentication.ToLowerInvariant())
+            {
+                case ActiveDirectoryPassword:
+                    return SqlAuthenticationMethod.ActiveDirectoryPassword;
                 default:
                     throw SQL.UnsupportedAuthentication(authentication);
             }
         }
 
-        private static string GetProviderType(SqlAuthenticationProvider provider) {
-            if (provider == null) return "null";
+        private static string GetProviderType(SqlAuthenticationProvider provider)
+        {
+            if (provider == null)
+                return "null";
             return provider.GetType().FullName;
         }
     }
@@ -132,7 +161,8 @@ namespace Microsoft.Data.SqlClient {
     /// <summary>
     /// The configuration section definition for reading app.config.
     /// </summary>
-    internal class SqlAuthenticationProviderConfigurationSection : ConfigurationSection {
+    internal class SqlAuthenticationProviderConfigurationSection : ConfigurationSection
+    {
         public const string Name = "SqlAuthenticationProviders";
 
         /// <summary>
@@ -151,7 +181,8 @@ namespace Microsoft.Data.SqlClient {
     /// <summary>
     /// The abstract initializer class that users can implement to initialize their component before SqlAuthenticationProviderManager starts.
     /// </summary>
-    public abstract class SqlAuthenticationInitializer {
+    public abstract class SqlAuthenticationInitializer
+    {
         /// <summary>
         /// The initialize callback from SqlAuthenticationProviderManager. This is called before SqlAuthenticationProviderManager loads providers.
         /// </summary>

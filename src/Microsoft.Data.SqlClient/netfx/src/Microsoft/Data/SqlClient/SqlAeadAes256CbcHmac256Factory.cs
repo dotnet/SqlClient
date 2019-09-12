@@ -12,7 +12,8 @@ namespace Microsoft.Data.SqlClient
     /// <summary>
     /// This is a factory class for AEAD_AES_256_CBC_HMAC_SHA256
     /// </summary>
-    internal class SqlAeadAes256CbcHmac256Factory : SqlClientEncryptionAlgorithmFactory {
+    internal class SqlAeadAes256CbcHmac256Factory : SqlClientEncryptionAlgorithmFactory
+    {
         /// <summary>
         /// Factory classes caches the SqlAeadAes256CbcHmac256EncryptionKey objects to avoid computation of the derived keys
         /// </summary>
@@ -26,13 +27,15 @@ namespace Microsoft.Data.SqlClient
         /// <param name="encryptionType">Encryption Type. Expected values are either Determinitic or Randomized.</param>
         /// <param name="encryptionAlgorithm">Encryption Algorithm.</param>
         /// <returns></returns>
-        internal override SqlClientEncryptionAlgorithm Create(SqlClientSymmetricKey encryptionKey, SqlClientEncryptionType encryptionType, string encryptionAlgorithm) {
+        internal override SqlClientEncryptionAlgorithm Create(SqlClientSymmetricKey encryptionKey, SqlClientEncryptionType encryptionType, string encryptionAlgorithm)
+        {
             // Callers should have validated the encryption algorithm and the encryption key
             Debug.Assert(encryptionKey != null);
             Debug.Assert(string.Equals(encryptionAlgorithm, SqlAeadAes256CbcHmac256Algorithm.AlgorithmName, StringComparison.OrdinalIgnoreCase) == true);
 
             // Validate encryption type
-            if (!((encryptionType == SqlClientEncryptionType.Deterministic) || (encryptionType == SqlClientEncryptionType.Randomized))) {
+            if (!((encryptionType == SqlClientEncryptionType.Deterministic) || (encryptionType == SqlClientEncryptionType.Randomized)))
+            {
                 throw SQL.InvalidEncryptionType(SqlAeadAes256CbcHmac256Algorithm.AlgorithmName,
                                                 encryptionType,
                                                 SqlClientEncryptionType.Deterministic,
@@ -62,7 +65,8 @@ namespace Microsoft.Data.SqlClient
 #endif //DEBUG
 
             SqlAeadAes256CbcHmac256Algorithm aesAlgorithm;
-            if (!_encryptionAlgorithms.TryGetValue(algorithmKey, out aesAlgorithm)) {
+            if (!_encryptionAlgorithms.TryGetValue(algorithmKey, out aesAlgorithm))
+            {
                 SqlAeadAes256CbcHmac256EncryptionKey encryptedKey = new SqlAeadAes256CbcHmac256EncryptionKey(encryptionKey.RootKey, SqlAeadAes256CbcHmac256Algorithm.AlgorithmName);
                 aesAlgorithm = new SqlAeadAes256CbcHmac256Algorithm(encryptedKey, encryptionType, algorithmVersion);
 

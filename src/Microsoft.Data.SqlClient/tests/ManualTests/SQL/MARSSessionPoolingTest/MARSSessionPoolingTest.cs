@@ -17,7 +17,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private const int CONCURRENT_COMMANDS = 5;
 
         private const string _COMMAND_RPC = "sp_who";
-        private const string _COMMAND_SQL = 
+        private const string _COMMAND_SQL =
             "select * from sys.databases; select * from sys.databases; select * from sys.databases; select * from sys.databases; select * from sys.databases; " +
             "select * from sys.databases; select * from sys.databases; select * from sys.databases; select * from sys.databases; select * from sys.databases; " +
             "select * from sys.databases; select * from sys.databases; select * from sys.databases; select * from sys.databases; select * from sys.databases; " +
@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             "select * from sys.databases; print 'THIS IS THE END!'";
 
         private static readonly string _testConnString =
-            (new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr) 
+            (new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr)
             {
                 PacketSize = 512,
                 MaxPoolSize = 1,
@@ -184,7 +184,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         con.Open(); // Close and open, to re-assure collection!
                     }
 
-                    using (SqlCommand verificationCmd = con.CreateCommand()) {
+                    using (SqlCommand verificationCmd = con.CreateCommand())
+                    {
 
                         verificationCmd.CommandText = COMMAND_STATUS;
                         using (SqlDataReader rdr = verificationCmd.ExecuteReader())
@@ -243,8 +244,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                                 "\ni: " + i + " :::: requests: " + requests + " :::: spid1: " + spid1 + " ::::: spid2: " + spid2);
 
                                             // 1 for current command, 1 for 0 based array offset, plus i open readers
-                                            Assert.True(requests == (2 + i), "Failure - incorrect number of requests for NoCloses: " + requests + 
-                                                "\ni: " + i + " :::: connections: " + connections + " :::: spid1: " + spid1 + " ::::: spid2: " + spid2 );
+                                            Assert.True(requests == (2 + i), "Failure - incorrect number of requests for NoCloses: " + requests +
+                                                "\ni: " + i + " :::: connections: " + connections + " :::: spid1: " + spid1 + " ::::: spid2: " + spid2);
                                             break;
                                     }
                                     break;

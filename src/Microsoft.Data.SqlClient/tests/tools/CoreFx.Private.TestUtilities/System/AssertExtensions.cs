@@ -2,11 +2,11 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Sdk;
-using System.Linq;
 
 namespace System
 {
@@ -197,7 +197,7 @@ namespace System
             else
                 return $"{message} {userMessage}";
         }
-        
+
         /// <summary>
         /// Tests whether the specified string contains the specified substring
         /// and throws an exception if the substring does not occur within the

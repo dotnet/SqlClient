@@ -4,8 +4,8 @@
 
 using System;
 using System.IO;
-using System.Net.Sockets;
 using System.IO.Pipes;
+using System.Net.Sockets;
 using System.Security.Principal;
 
 namespace Microsoft.SqlServer.TDS.EndPoint

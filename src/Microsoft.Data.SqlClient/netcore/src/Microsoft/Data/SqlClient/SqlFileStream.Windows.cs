@@ -3,14 +3,14 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.IO;
+using System.Buffers;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Security.Permissions;
-using Microsoft.Win32.SafeHandles;
-using System.Buffers;
 using Microsoft.Data.Common;
+using Microsoft.Win32.SafeHandles;
 
 namespace Microsoft.Data.SqlTypes
 {

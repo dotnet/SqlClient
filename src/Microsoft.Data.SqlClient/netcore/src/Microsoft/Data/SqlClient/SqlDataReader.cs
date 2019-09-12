@@ -2,27 +2,25 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using Microsoft.Data.Common;
-using Microsoft.Data.ProviderBase;
-using Microsoft.Data.SqlClient.DataClassification;
-using Microsoft.Data.SqlClient.Server;
-using Microsoft.Data.SqlTypes;
 using System;
 using System.Collections;
 using System.Collections.ObjectModel;
 using System.Data;
 using System.Data.Common;
-
 using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
+using Microsoft.Data.Common;
+using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.DataClassification;
+using Microsoft.Data.SqlClient.Server;
+using Microsoft.Data.SqlTypes;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -1598,7 +1596,10 @@ namespace Microsoft.Data.SqlClient
             long value;
             Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
             bool result = TryGetBytesInternal(i, dataIndex, buffer, bufferIndex, length, out value);
-            if (!result) { throw SQL.SynchronousCallMayNotPend(); }
+            if (!result)
+            {
+                throw SQL.SynchronousCallMayNotPend();
+            }
             return value;
         }
 
@@ -1825,10 +1826,16 @@ namespace Microsoft.Data.SqlClient
                 SetTimeout(timeoutMilliseconds ?? _defaultTimeoutMilliseconds);
 
                 bool result = TryReadColumnHeader(i);
-                if (!result) { throw SQL.SynchronousCallMayNotPend(); }
+                if (!result)
+                {
+                    throw SQL.SynchronousCallMayNotPend();
+                }
 
                 result = TryGetBytesInternalSequential(i, buffer, index, length, out value);
-                if (!result) { throw SQL.SynchronousCallMayNotPend(); }
+                if (!result)
+                {
+                    throw SQL.SynchronousCallMayNotPend();
+                }
             }
             finally
             {
@@ -2480,7 +2487,10 @@ namespace Microsoft.Data.SqlClient
 
             Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
             bool result = TryReadColumn(i, setTimeout: false);
-            if (!result) { throw SQL.SynchronousCallMayNotPend(); }
+            if (!result)
+            {
+                throw SQL.SynchronousCallMayNotPend();
+            }
 
             return GetSqlValueFromSqlBufferInternal(_data[i], _metaData[i]);
         }
@@ -2661,7 +2671,10 @@ namespace Microsoft.Data.SqlClient
 
             Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
             bool result = TryReadColumn(i, setTimeout: false);
-            if (!result) { throw SQL.SynchronousCallMayNotPend(); }
+            if (!result)
+            {
+                throw SQL.SynchronousCallMayNotPend();
+            }
 
             return GetValueFromSqlBufferInternal(_data[i], _metaData[i]);
         }
@@ -2725,7 +2738,10 @@ namespace Microsoft.Data.SqlClient
 
             Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
             bool result = TryReadColumn(i, setTimeout: false);
-            if (!result) { throw SQL.SynchronousCallMayNotPend(); }
+            if (!result)
+            {
+                throw SQL.SynchronousCallMayNotPend();
+            }
 
             return GetFieldValueFromSqlBufferInternal<T>(_data[i], _metaData[i]);
         }
@@ -2892,7 +2908,10 @@ namespace Microsoft.Data.SqlClient
 
                 // Read in all of the columns in one TryReadColumn call
                 bool result = TryReadColumn(maximumColumn, setTimeout: false);
-                if (!result) { throw SQL.SynchronousCallMayNotPend(); }
+                if (!result)
+                {
+                    throw SQL.SynchronousCallMayNotPend();
+                }
 
                 for (int i = 0; i < copyLen; i++)
                 {
@@ -3160,7 +3179,10 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
             result = TryNextResult(out more);
 
-            if (!result) { throw SQL.SynchronousCallMayNotPend(); }
+            if (!result)
+            {
+                throw SQL.SynchronousCallMayNotPend();
+            }
             return more;
         }
 
@@ -3315,7 +3337,10 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
             result = TryReadInternal(true, out more);
 
-            if (!result) { throw SQL.SynchronousCallMayNotPend(); }
+            if (!result)
+            {
+                throw SQL.SynchronousCallMayNotPend();
+            }
             return more;
         }
 
@@ -3487,7 +3512,10 @@ namespace Microsoft.Data.SqlClient
 
             Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
             bool result = TryReadColumn(i, setTimeout, allowPartiallyReadColumn);
-            if (!result) { throw SQL.SynchronousCallMayNotPend(); }
+            if (!result)
+            {
+                throw SQL.SynchronousCallMayNotPend();
+            }
         }
 
         private bool TryReadColumn(int i, bool setTimeout, bool allowPartiallyReadColumn = false)
@@ -3536,7 +3564,10 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
             bool result = TryReadColumnHeader(i);
-            if (!result) { throw SQL.SynchronousCallMayNotPend(); }
+            if (!result)
+            {
+                throw SQL.SynchronousCallMayNotPend();
+            }
         }
 
         private bool TryReadColumnHeader(int i)

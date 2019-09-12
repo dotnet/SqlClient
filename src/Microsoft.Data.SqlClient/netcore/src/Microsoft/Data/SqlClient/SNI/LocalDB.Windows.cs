@@ -2,11 +2,11 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using Microsoft.Win32;
-using Microsoft.Win32.SafeHandles;
 using System;
 using System.Runtime.InteropServices;
 using System.Text;
+using Microsoft.Win32;
+using Microsoft.Win32.SafeHandles;
 
 namespace Microsoft.Data.SqlClient.SNI
 {
@@ -91,7 +91,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
             lock (this)
             {
-                if(_sqlUserInstanceLibraryHandle !=null)
+                if (_sqlUserInstanceLibraryHandle != null)
                 {
                     return true;
                 }
@@ -137,7 +137,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
                 // Set the delegate the invoke.
                 localDBStartInstanceFunc = (LocalDBStartInstance)Marshal.GetDelegateForFunctionPointer(_startInstanceHandle, typeof(LocalDBStartInstance));
-                
+
                 if (localDBStartInstanceFunc == null)
                 {
                     SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.LocalDBBadRuntime, string.Empty);
@@ -214,9 +214,9 @@ namespace Microsoft.Data.SqlClient.SNI
                         errorState = LocalDBErrorState.INVALID_SQLUSERINSTANCEDLL_PATH;
                         return null;
                     }
-                    
+
                     dllPath = (string)instanceAPIPathRegistryObject;
-                    
+
                     errorState = LocalDBErrorState.NONE;
                     return dllPath;
                 }

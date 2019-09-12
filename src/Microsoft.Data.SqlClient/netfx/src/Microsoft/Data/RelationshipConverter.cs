@@ -2,15 +2,18 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-namespace Microsoft.Data {
+namespace Microsoft.Data
+{
     using System;
     using System.ComponentModel;
     using System.ComponentModel.Design.Serialization;
 
-    sealed internal class RelationshipConverter : ExpandableObjectConverter {
+    sealed internal class RelationshipConverter : ExpandableObjectConverter
+    {
 
         // converter classes should have public ctor
-        public RelationshipConverter() {
+        public RelationshipConverter()
+        {
         }
 
 
@@ -18,8 +21,10 @@ namespace Microsoft.Data {
         ///    <para>Gets a value indicating whether this converter can
         ///       convert an object to the given destination type using the context.</para>
         /// </devdoc>
-        public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType) {
-            if (destinationType == typeof(InstanceDescriptor)) {
+        public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
+        {
+            if (destinationType == typeof(InstanceDescriptor))
+            {
                 return true;
             }
             return base.CanConvertTo(context, destinationType);
@@ -48,7 +53,7 @@ namespace Microsoft.Data {
         //        if (Microsoft.Data.Common.ADP.IsEmpty(parentTable.Namespace) && Microsoft.Data.Common.ADP.IsEmpty(childTable.Namespace)) {
         //            ctor = typeof(DataRelation).GetConstructor(new Type[] { typeof(string) /*relationName*/, typeof(string) /*parentTableName*/, typeof(string) /*childTableName */, 
         //                typeof(string[]) /*parentColumnNames */, typeof(string[])  /*childColumnNames*/, typeof(bool) /*nested*/ } );
-                    
+
         //            values = new object[] { rel.RelationName, rel.ParentKey.Table.TableName, rel.ChildKey.Table.TableName,rel.ParentColumnNames, rel.ChildColumnNames, rel.Nested };
         //        }
         //        else {
@@ -59,10 +64,10 @@ namespace Microsoft.Data {
         //            values = new object[] { rel.RelationName, rel.ParentKey.Table.TableName, rel.ParentKey.Table.Namespace, rel.ChildKey.Table.TableName, 
         //                rel.ChildKey.Table.Namespace, rel.ParentColumnNames, rel.ChildColumnNames, rel.Nested };
         //        }
-             
+
         //        return new InstanceDescriptor(ctor, values);
         //    }
-            
+
         //    return base.ConvertTo(context, culture, value, destinationType);
         //}
     }
