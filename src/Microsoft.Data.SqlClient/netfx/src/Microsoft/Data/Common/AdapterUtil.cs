@@ -2,32 +2,33 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using Microsoft.Win32;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
+using System.Data.Common;
 using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Security;
 using System.Security.Permissions;
-using Microsoft.Data.SqlClient;
-using Microsoft.Data.SqlClient.Server;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
-using SysTx = System.Transactions;
+using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient.Server;
+using Microsoft.Win32;
 using SysES = System.EnterpriseServices;
-using System.Runtime.Versioning;
-using System.Data.Common;
+using SysTx = System.Transactions;
 
-namespace Microsoft.Data.Common {
+namespace Microsoft.Data.Common
+{
 
     internal static class ADP {
         

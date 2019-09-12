@@ -11,7 +11,9 @@
     <TargetsAnyOS Condition="'$(OSGroup)' == 'AnyOS'">true</TargetsAnyOS>
     <IsSourceProject Condition="$([System.Text.RegularExpressions.Regex]::IsMatch($(MSBuildProjectDirectory), 'src%24'))">true</IsSourceProject>
   </PropertyGroup>
-
+  <PropertyGroup Condition="$(Configuration.Contains('Debug'))">
+    <DefineConstants>$(DefineConstants);DEBUG</DefineConstants>
+  </PropertyGroup>
   <PropertyGroup>
     <ProjectDir>$(MSBuildThisFileDirectory)</ProjectDir>
     <RepoRoot>$(ProjectDir)..\</RepoRoot>

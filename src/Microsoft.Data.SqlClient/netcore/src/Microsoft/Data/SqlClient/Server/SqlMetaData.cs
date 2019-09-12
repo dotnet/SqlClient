@@ -1130,23 +1130,51 @@ namespace Microsoft.Data.SqlClient.Server
             Type dataType = value.GetType();
             switch (Type.GetTypeCode(dataType))
             {
-                case TypeCode.Boolean: value = this.Adjust((bool)value); break;
-                case TypeCode.Byte: value = this.Adjust((byte)value); break;
-                case TypeCode.Char: value = this.Adjust((char)value); break;
-                case TypeCode.DateTime: value = this.Adjust((DateTime)value); break;
-                case TypeCode.DBNull:    /* DBNull passes through as is for all types */   break;
-                case TypeCode.Decimal: value = this.Adjust((decimal)value); break;
-                case TypeCode.Double: value = this.Adjust((double)value); break;
-                case TypeCode.Empty: throw ADP.InvalidDataType(TypeCode.Empty);
-                case TypeCode.Int16: value = this.Adjust((short)value); break;
-                case TypeCode.Int32: value = this.Adjust((int)value); break;
-                case TypeCode.Int64: value = this.Adjust((long)value); break;
-                case TypeCode.SByte: throw ADP.InvalidDataType(TypeCode.SByte);
-                case TypeCode.Single: value = this.Adjust((float)value); break;
-                case TypeCode.String: value = this.Adjust((string)value); break;
-                case TypeCode.UInt16: throw ADP.InvalidDataType(TypeCode.UInt16);
-                case TypeCode.UInt32: throw ADP.InvalidDataType(TypeCode.UInt32);
-                case TypeCode.UInt64: throw ADP.InvalidDataType(TypeCode.UInt64);
+                case TypeCode.Boolean:
+                    value = this.Adjust((bool)value);
+                    break;
+                case TypeCode.Byte:
+                    value = this.Adjust((byte)value);
+                    break;
+                case TypeCode.Char:
+                    value = this.Adjust((char)value);
+                    break;
+                case TypeCode.DateTime:
+                    value = this.Adjust((DateTime)value);
+                    break;
+                case TypeCode.DBNull:    /* DBNull passes through as is for all types */
+                    break;
+                case TypeCode.Decimal:
+                    value = this.Adjust((decimal)value);
+                    break;
+                case TypeCode.Double:
+                    value = this.Adjust((double)value);
+                    break;
+                case TypeCode.Empty:
+                    throw ADP.InvalidDataType(TypeCode.Empty);
+                case TypeCode.Int16:
+                    value = this.Adjust((short)value);
+                    break;
+                case TypeCode.Int32:
+                    value = this.Adjust((int)value);
+                    break;
+                case TypeCode.Int64:
+                    value = this.Adjust((long)value);
+                    break;
+                case TypeCode.SByte:
+                    throw ADP.InvalidDataType(TypeCode.SByte);
+                case TypeCode.Single:
+                    value = this.Adjust((float)value);
+                    break;
+                case TypeCode.String:
+                    value = this.Adjust((string)value);
+                    break;
+                case TypeCode.UInt16:
+                    throw ADP.InvalidDataType(TypeCode.UInt16);
+                case TypeCode.UInt32:
+                    throw ADP.InvalidDataType(TypeCode.UInt32);
+                case TypeCode.UInt64:
+                    throw ADP.InvalidDataType(TypeCode.UInt64);
                 case TypeCode.Object:
                     if (dataType == typeof(byte[]))
                         value = this.Adjust((byte[])value);
@@ -1202,7 +1230,8 @@ namespace Microsoft.Data.SqlClient.Server
                     break;
 
 
-                default: throw ADP.UnknownDataTypeCode(dataType, Type.GetTypeCode(dataType));
+                default:
+                    throw ADP.UnknownDataTypeCode(dataType, Type.GetTypeCode(dataType));
             }
 
             return value;
@@ -1216,11 +1245,20 @@ namespace Microsoft.Data.SqlClient.Server
             Type dataType = value.GetType();
             switch (Type.GetTypeCode(dataType))
             {
-                case TypeCode.Boolean: smd = new SqlMetaData(name, SqlDbType.Bit); break;
-                case TypeCode.Byte: smd = new SqlMetaData(name, SqlDbType.TinyInt); break;
-                case TypeCode.Char: smd = new SqlMetaData(name, SqlDbType.NVarChar, 1); break;
-                case TypeCode.DateTime: smd = new SqlMetaData(name, SqlDbType.DateTime); break;
-                case TypeCode.DBNull: throw ADP.InvalidDataType(TypeCode.DBNull);
+                case TypeCode.Boolean:
+                    smd = new SqlMetaData(name, SqlDbType.Bit);
+                    break;
+                case TypeCode.Byte:
+                    smd = new SqlMetaData(name, SqlDbType.TinyInt);
+                    break;
+                case TypeCode.Char:
+                    smd = new SqlMetaData(name, SqlDbType.NVarChar, 1);
+                    break;
+                case TypeCode.DateTime:
+                    smd = new SqlMetaData(name, SqlDbType.DateTime);
+                    break;
+                case TypeCode.DBNull:
+                    throw ADP.InvalidDataType(TypeCode.DBNull);
                 case TypeCode.Decimal:
                     {  // Add brackets in order to contain scope declare local variable "sd"
                        // use logic inside SqlDecimal to infer precision and scale.
@@ -1228,17 +1266,30 @@ namespace Microsoft.Data.SqlClient.Server
                         smd = new SqlMetaData(name, SqlDbType.Decimal, sd.Precision, sd.Scale);
                     }
                     break;
-                case TypeCode.Double: smd = new SqlMetaData(name, SqlDbType.Float); break;
-                case TypeCode.Empty: throw ADP.InvalidDataType(TypeCode.Empty);
-                case TypeCode.Int16: smd = new SqlMetaData(name, SqlDbType.SmallInt); break;
-                case TypeCode.Int32: smd = new SqlMetaData(name, SqlDbType.Int); break;
-                case TypeCode.Int64: smd = new SqlMetaData(name, SqlDbType.BigInt); break;
-                case TypeCode.SByte: throw ADP.InvalidDataType(TypeCode.SByte);
-                case TypeCode.Single: smd = new SqlMetaData(name, SqlDbType.Real); break;
+                case TypeCode.Double:
+                    smd = new SqlMetaData(name, SqlDbType.Float);
+                    break;
+                case TypeCode.Empty:
+                    throw ADP.InvalidDataType(TypeCode.Empty);
+                case TypeCode.Int16:
+                    smd = new SqlMetaData(name, SqlDbType.SmallInt);
+                    break;
+                case TypeCode.Int32:
+                    smd = new SqlMetaData(name, SqlDbType.Int);
+                    break;
+                case TypeCode.Int64:
+                    smd = new SqlMetaData(name, SqlDbType.BigInt);
+                    break;
+                case TypeCode.SByte:
+                    throw ADP.InvalidDataType(TypeCode.SByte);
+                case TypeCode.Single:
+                    smd = new SqlMetaData(name, SqlDbType.Real);
+                    break;
                 case TypeCode.String:
                     {
                         long maxLen = ((String)value).Length;
-                        if (maxLen < 1) maxLen = 1;
+                        if (maxLen < 1)
+                            maxLen = 1;
 
                         if (x_lServerMaxUnicode < maxLen)
                             maxLen = Max;
@@ -1246,14 +1297,18 @@ namespace Microsoft.Data.SqlClient.Server
                         smd = new SqlMetaData(name, SqlDbType.NVarChar, maxLen);
                     }
                     break;
-                case TypeCode.UInt16: throw ADP.InvalidDataType(TypeCode.UInt16);
-                case TypeCode.UInt32: throw ADP.InvalidDataType(TypeCode.UInt32);
-                case TypeCode.UInt64: throw ADP.InvalidDataType(TypeCode.UInt64);
+                case TypeCode.UInt16:
+                    throw ADP.InvalidDataType(TypeCode.UInt16);
+                case TypeCode.UInt32:
+                    throw ADP.InvalidDataType(TypeCode.UInt32);
+                case TypeCode.UInt64:
+                    throw ADP.InvalidDataType(TypeCode.UInt64);
                 case TypeCode.Object:
                     if (dataType == typeof(byte[]))
                     {
                         long maxLen = ((System.Byte[])value).Length;
-                        if (maxLen < 1) maxLen = 1;
+                        if (maxLen < 1)
+                            maxLen = 1;
 
                         if (x_lServerMaxBinary < maxLen)
                             maxLen = Max;
@@ -1263,7 +1318,8 @@ namespace Microsoft.Data.SqlClient.Server
                     else if (dataType == typeof(char[]))
                     {
                         long maxLen = ((System.Char[])value).Length;
-                        if (maxLen < 1) maxLen = 1;
+                        if (maxLen < 1)
+                            maxLen = 1;
 
                         if (x_lServerMaxUnicode < maxLen)
                             maxLen = Max;
@@ -1281,7 +1337,8 @@ namespace Microsoft.Data.SqlClient.Server
                         if (!sb.IsNull)
                         {
                             maxLen = sb.Length;
-                            if (maxLen < 1) maxLen = 1;
+                            if (maxLen < 1)
+                                maxLen = 1;
 
                             if (x_lServerMaxBinary < maxLen)
                                 maxLen = Max;
@@ -1334,7 +1391,8 @@ namespace Microsoft.Data.SqlClient.Server
                         if (!ss.IsNull)
                         {
                             long maxLen = ss.Value.Length;
-                            if (maxLen < 1) maxLen = 1;
+                            if (maxLen < 1)
+                                maxLen = 1;
 
                             if (maxLen > x_lServerMaxUnicode)
                                 maxLen = Max;
@@ -1353,7 +1411,8 @@ namespace Microsoft.Data.SqlClient.Server
                         if (!sch.IsNull)
                         {
                             maxLen = sch.Length;
-                            if (maxLen < 1) maxLen = 1;
+                            if (maxLen < 1)
+                                maxLen = 1;
 
                             if (maxLen > x_lServerMaxUnicode)
                                 maxLen = Max;
@@ -1370,8 +1429,10 @@ namespace Microsoft.Data.SqlClient.Server
                         if (!sb.IsNull)
                         {
                             maxLen = sb.Length;
-                            if (maxLen < 1) maxLen = 1;
-                            else if (x_lServerMaxBinary < maxLen) maxLen = Max;
+                            if (maxLen < 1)
+                                maxLen = 1;
+                            else if (x_lServerMaxBinary < maxLen)
+                                maxLen = Max;
                         }
                         else
                             maxLen = sxm_rgDefaults[(int)SqlDbType.VarBinary].MaxLength;
@@ -1388,8 +1449,8 @@ namespace Microsoft.Data.SqlClient.Server
                         throw ADP.UnknownDataType(dataType);
                     break;
 
-
-                default: throw ADP.UnknownDataTypeCode(dataType, Type.GetTypeCode(dataType));
+                default:
+                    throw ADP.UnknownDataTypeCode(dataType, Type.GetTypeCode(dataType));
             }
 
             return smd;

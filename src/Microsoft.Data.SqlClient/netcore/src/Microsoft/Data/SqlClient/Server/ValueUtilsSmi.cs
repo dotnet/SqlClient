@@ -2,8 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using Microsoft.Data.Common;
-using Microsoft.Data.SqlTypes;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -14,6 +12,8 @@ using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Xml;
+using Microsoft.Data.Common;
+using Microsoft.Data.SqlTypes;
 
 namespace Microsoft.Data.SqlClient.Server
 {
@@ -1503,9 +1503,14 @@ namespace Microsoft.Data.SqlClient.Server
 
             switch (typeCode)
             {
-                case ExtendedClrTypeCode.Invalid: throw ADP.UnknownDataType(value.GetType());
-                case ExtendedClrTypeCode.Boolean: SetBoolean_Unchecked(sink, setters, ordinal, (bool)value); break;
-                case ExtendedClrTypeCode.Byte: SetByte_Unchecked(sink, setters, ordinal, (byte)value); break;
+                case ExtendedClrTypeCode.Invalid:
+                    throw ADP.UnknownDataType(value.GetType());
+                case ExtendedClrTypeCode.Boolean:
+                    SetBoolean_Unchecked(sink, setters, ordinal, (bool)value);
+                    break;
+                case ExtendedClrTypeCode.Byte:
+                    SetByte_Unchecked(sink, setters, ordinal, (byte)value);
+                    break;
                 case ExtendedClrTypeCode.Char:
                     {
                         char[] charsValue = new char[] { (char)value };
@@ -1513,43 +1518,113 @@ namespace Microsoft.Data.SqlClient.Server
                         SetCompatibleValue(sink, setters, ordinal, metaData, charsValue, ExtendedClrTypeCode.CharArray, 0);
                         break;
                     }
-                case ExtendedClrTypeCode.DateTime: SetDateTime_Checked(sink, setters, ordinal, metaData, (DateTime)value); break;
-                case ExtendedClrTypeCode.DBNull: SetDBNull_Unchecked(sink, setters, ordinal); break;
-                case ExtendedClrTypeCode.Decimal: SetDecimal_PossiblyMoney(sink, setters, ordinal, metaData, (decimal)value); break;
-                case ExtendedClrTypeCode.Double: SetDouble_Unchecked(sink, setters, ordinal, (double)value); break;
-                case ExtendedClrTypeCode.Empty: SetDBNull_Unchecked(sink, setters, ordinal); break;
-                case ExtendedClrTypeCode.Int16: SetInt16_Unchecked(sink, setters, ordinal, (short)value); break;
-                case ExtendedClrTypeCode.Int32: SetInt32_Unchecked(sink, setters, ordinal, (int)value); break;
-                case ExtendedClrTypeCode.Int64: SetInt64_Unchecked(sink, setters, ordinal, (long)value); break;
-                case ExtendedClrTypeCode.SByte: throw ADP.InvalidCast();
-                case ExtendedClrTypeCode.Single: SetSingle_Unchecked(sink, setters, ordinal, (float)value); break;
-                case ExtendedClrTypeCode.String: SetString_LengthChecked(sink, setters, ordinal, metaData, (string)value, offset); break;
-                case ExtendedClrTypeCode.UInt16: throw ADP.InvalidCast();
-                case ExtendedClrTypeCode.UInt32: throw ADP.InvalidCast();
-                case ExtendedClrTypeCode.UInt64: throw ADP.InvalidCast();
-                case ExtendedClrTypeCode.Object: SetUdt_LengthChecked(sink, setters, ordinal, metaData, value); break;
-                case ExtendedClrTypeCode.ByteArray: SetByteArray_LengthChecked(sink, setters, ordinal, metaData, (byte[])value, offset); break;
-                case ExtendedClrTypeCode.CharArray: SetCharArray_LengthChecked(sink, setters, ordinal, metaData, (char[])value, offset); break;
-                case ExtendedClrTypeCode.Guid: SetGuid_Unchecked(sink, setters, ordinal, (Guid)value); break;
-                case ExtendedClrTypeCode.SqlBinary: SetSqlBinary_LengthChecked(sink, setters, ordinal, metaData, (SqlBinary)value, offset); break;
-                case ExtendedClrTypeCode.SqlBoolean: SetSqlBoolean_Unchecked(sink, setters, ordinal, (SqlBoolean)value); break;
-                case ExtendedClrTypeCode.SqlByte: SetSqlByte_Unchecked(sink, setters, ordinal, (SqlByte)value); break;
-                case ExtendedClrTypeCode.SqlDateTime: SetSqlDateTime_Checked(sink, setters, ordinal, metaData, (SqlDateTime)value); break;
-                case ExtendedClrTypeCode.SqlDouble: SetSqlDouble_Unchecked(sink, setters, ordinal, (SqlDouble)value); break;
-                case ExtendedClrTypeCode.SqlGuid: SetSqlGuid_Unchecked(sink, setters, ordinal, (SqlGuid)value); break;
-                case ExtendedClrTypeCode.SqlInt16: SetSqlInt16_Unchecked(sink, setters, ordinal, (SqlInt16)value); break;
-                case ExtendedClrTypeCode.SqlInt32: SetSqlInt32_Unchecked(sink, setters, ordinal, (SqlInt32)value); break;
-                case ExtendedClrTypeCode.SqlInt64: SetSqlInt64_Unchecked(sink, setters, ordinal, (SqlInt64)value); break;
-                case ExtendedClrTypeCode.SqlMoney: SetSqlMoney_Checked(sink, setters, ordinal, metaData, (SqlMoney)value); break;
-                case ExtendedClrTypeCode.SqlDecimal: SetSqlDecimal_Unchecked(sink, setters, ordinal, (SqlDecimal)value); break;
-                case ExtendedClrTypeCode.SqlSingle: SetSqlSingle_Unchecked(sink, setters, ordinal, (SqlSingle)value); break;
-                case ExtendedClrTypeCode.SqlString: SetSqlString_LengthChecked(sink, setters, ordinal, metaData, (SqlString)value, offset); break;
-                case ExtendedClrTypeCode.SqlChars: SetSqlChars_LengthChecked(sink, setters, ordinal, metaData, (SqlChars)value, offset); break;
-                case ExtendedClrTypeCode.SqlBytes: SetSqlBytes_LengthChecked(sink, setters, ordinal, metaData, (SqlBytes)value, offset); break;
-                case ExtendedClrTypeCode.SqlXml: SetSqlXml_Unchecked(sink, setters, ordinal, (SqlXml)value); break;
-                case ExtendedClrTypeCode.Stream: SetStream_Unchecked(sink, setters, ordinal, metaData, (StreamDataFeed)value); break;
-                case ExtendedClrTypeCode.TextReader: SetTextReader_Unchecked(sink, setters, ordinal, metaData, (TextDataFeed)value); break;
-                case ExtendedClrTypeCode.XmlReader: SetXmlReader_Unchecked(sink, setters, ordinal, ((XmlDataFeed)value)._source); break;
+                case ExtendedClrTypeCode.DateTime:
+                    SetDateTime_Checked(sink, setters, ordinal, metaData, (DateTime)value);
+                    break;
+                case ExtendedClrTypeCode.DBNull:
+                    SetDBNull_Unchecked(sink, setters, ordinal);
+                    break;
+                case ExtendedClrTypeCode.Decimal:
+                    SetDecimal_PossiblyMoney(sink, setters, ordinal, metaData, (decimal)value);
+                    break;
+                case ExtendedClrTypeCode.Double:
+                    SetDouble_Unchecked(sink, setters, ordinal, (double)value);
+                    break;
+                case ExtendedClrTypeCode.Empty:
+                    SetDBNull_Unchecked(sink, setters, ordinal);
+                    break;
+                case ExtendedClrTypeCode.Int16:
+                    SetInt16_Unchecked(sink, setters, ordinal, (short)value);
+                    break;
+                case ExtendedClrTypeCode.Int32:
+                    SetInt32_Unchecked(sink, setters, ordinal, (int)value);
+                    break;
+                case ExtendedClrTypeCode.Int64:
+                    SetInt64_Unchecked(sink, setters, ordinal, (long)value);
+                    break;
+                case ExtendedClrTypeCode.SByte:
+                    throw ADP.InvalidCast();
+                case ExtendedClrTypeCode.Single:
+                    SetSingle_Unchecked(sink, setters, ordinal, (float)value);
+                    break;
+                case ExtendedClrTypeCode.String:
+                    SetString_LengthChecked(sink, setters, ordinal, metaData, (string)value, offset);
+                    break;
+                case ExtendedClrTypeCode.UInt16:
+                    throw ADP.InvalidCast();
+                case ExtendedClrTypeCode.UInt32:
+                    throw ADP.InvalidCast();
+                case ExtendedClrTypeCode.UInt64:
+                    throw ADP.InvalidCast();
+                case ExtendedClrTypeCode.Object:
+                    SetUdt_LengthChecked(sink, setters, ordinal, metaData, value);
+                    break;
+                case ExtendedClrTypeCode.ByteArray:
+                    SetByteArray_LengthChecked(sink, setters, ordinal, metaData, (byte[])value, offset);
+                    break;
+                case ExtendedClrTypeCode.CharArray:
+                    SetCharArray_LengthChecked(sink, setters, ordinal, metaData, (char[])value, offset);
+                    break;
+                case ExtendedClrTypeCode.Guid:
+                    SetGuid_Unchecked(sink, setters, ordinal, (Guid)value);
+                    break;
+                case ExtendedClrTypeCode.SqlBinary:
+                    SetSqlBinary_LengthChecked(sink, setters, ordinal, metaData, (SqlBinary)value, offset);
+                    break;
+                case ExtendedClrTypeCode.SqlBoolean:
+                    SetSqlBoolean_Unchecked(sink, setters, ordinal, (SqlBoolean)value);
+                    break;
+                case ExtendedClrTypeCode.SqlByte:
+                    SetSqlByte_Unchecked(sink, setters, ordinal, (SqlByte)value);
+                    break;
+                case ExtendedClrTypeCode.SqlDateTime:
+                    SetSqlDateTime_Checked(sink, setters, ordinal, metaData, (SqlDateTime)value);
+                    break;
+                case ExtendedClrTypeCode.SqlDouble:
+                    SetSqlDouble_Unchecked(sink, setters, ordinal, (SqlDouble)value);
+                    break;
+                case ExtendedClrTypeCode.SqlGuid:
+                    SetSqlGuid_Unchecked(sink, setters, ordinal, (SqlGuid)value);
+                    break;
+                case ExtendedClrTypeCode.SqlInt16:
+                    SetSqlInt16_Unchecked(sink, setters, ordinal, (SqlInt16)value);
+                    break;
+                case ExtendedClrTypeCode.SqlInt32:
+                    SetSqlInt32_Unchecked(sink, setters, ordinal, (SqlInt32)value);
+                    break;
+                case ExtendedClrTypeCode.SqlInt64:
+                    SetSqlInt64_Unchecked(sink, setters, ordinal, (SqlInt64)value);
+                    break;
+                case ExtendedClrTypeCode.SqlMoney:
+                    SetSqlMoney_Checked(sink, setters, ordinal, metaData, (SqlMoney)value);
+                    break;
+                case ExtendedClrTypeCode.SqlDecimal:
+                    SetSqlDecimal_Unchecked(sink, setters, ordinal, (SqlDecimal)value);
+                    break;
+                case ExtendedClrTypeCode.SqlSingle:
+                    SetSqlSingle_Unchecked(sink, setters, ordinal, (SqlSingle)value);
+                    break;
+                case ExtendedClrTypeCode.SqlString:
+                    SetSqlString_LengthChecked(sink, setters, ordinal, metaData, (SqlString)value, offset);
+                    break;
+                case ExtendedClrTypeCode.SqlChars:
+                    SetSqlChars_LengthChecked(sink, setters, ordinal, metaData, (SqlChars)value, offset);
+                    break;
+                case ExtendedClrTypeCode.SqlBytes:
+                    SetSqlBytes_LengthChecked(sink, setters, ordinal, metaData, (SqlBytes)value, offset);
+                    break;
+                case ExtendedClrTypeCode.SqlXml:
+                    SetSqlXml_Unchecked(sink, setters, ordinal, (SqlXml)value);
+                    break;
+                case ExtendedClrTypeCode.Stream:
+                    SetStream_Unchecked(sink, setters, ordinal, metaData, (StreamDataFeed)value);
+                    break;
+                case ExtendedClrTypeCode.TextReader:
+                    SetTextReader_Unchecked(sink, setters, ordinal, metaData, (TextDataFeed)value);
+                    break;
+                case ExtendedClrTypeCode.XmlReader:
+                    SetXmlReader_Unchecked(sink, setters, ordinal, ((XmlDataFeed)value)._source);
+                    break;
                 default:
                     Debug.Fail("Unvalidated extendedtypecode: " + typeCode);
                     break;
@@ -2393,8 +2468,14 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 bytesWritten = setters.SetBytes(sink, ordinal, currentOffset, buffer, 0, checked((int)bytesRead));
                 sink.ProcessMessagesAndThrow();
-                checked { currentOffset += bytesWritten; }
-                checked { lengthWritten += bytesWritten; }
+                checked
+                {
+                    currentOffset += bytesWritten;
+                }
+                checked
+                {
+                    lengthWritten += bytesWritten;
+                }
             }
 
             // Make sure to trim any left-over data
@@ -2425,8 +2506,14 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 bytesWritten = setters.SetBytes(sink, ordinal, currentOffset, buffer, 0, checked((int)bytesRead));
                 sink.ProcessMessagesAndThrow();
-                checked { currentOffset += bytesWritten; }
-                checked { lengthWritten += bytesWritten; }
+                checked
+                {
+                    currentOffset += bytesWritten;
+                }
+                checked
+                {
+                    lengthWritten += bytesWritten;
+                }
             }
 
             // Make sure to trim any left-over data (remember to trim at end of offset, not just the amount written
@@ -2493,8 +2580,14 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 charsWritten = setters.SetChars(sink, ordinal, currentOffset, buffer, 0, checked((int)charsRead));
                 sink.ProcessMessagesAndThrow();
-                checked { currentOffset += charsWritten; }
-                checked { lengthWritten += charsWritten; }
+                checked
+                {
+                    currentOffset += charsWritten;
+                }
+                checked
+                {
+                    lengthWritten += charsWritten;
+                }
             }
 
             // Make sure to trim any left-over data
@@ -2559,8 +2652,14 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 charsWritten = setters.SetChars(sink, ordinal, currentOffset, buffer, 0, checked((int)charsRead));
                 sink.ProcessMessagesAndThrow();
-                checked { currentOffset += charsWritten; }
-                checked { lengthWritten += charsWritten; }
+                checked
+                {
+                    currentOffset += charsWritten;
+                }
+                checked
+                {
+                    lengthWritten += charsWritten;
+                }
             }
 
             // Make sure to trim any left-over data (remember to trim at end of offset, not just the amount written
@@ -3507,8 +3606,14 @@ namespace Microsoft.Data.SqlClient.Server
                 {
                     bytesWritten = setters.SetBytes(sink, ordinal, currentOffset, buffer, 0, checked((int)bytesRead));
                     sink.ProcessMessagesAndThrow();
-                    checked { currentOffset += bytesWritten; }
-                    checked { lengthWritten += bytesWritten; }
+                    checked
+                    {
+                        currentOffset += bytesWritten;
+                    }
+                    checked
+                    {
+                        lengthWritten += bytesWritten;
+                    }
                 }
 
                 // Make sure to trim any left-over data
@@ -3548,8 +3653,14 @@ namespace Microsoft.Data.SqlClient.Server
                 {
                     charsWritten = setters.SetChars(sink, ordinal, currentOffset, buffer, 0, checked((int)charsRead));
                     sink.ProcessMessagesAndThrow();
-                    checked { currentOffset += charsWritten; }
-                    checked { lengthWritten += charsWritten; }
+                    checked
+                    {
+                        currentOffset += charsWritten;
+                    }
+                    checked
+                    {
+                        lengthWritten += charsWritten;
+                    }
                 }
 
                 // Make sure to trim any left-over data

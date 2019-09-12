@@ -256,7 +256,7 @@ namespace Microsoft.Data.SqlClient
 
         // The string used for username in the error message when Authentication = Active Directory Integrated with FedAuth is used, if authentication fails.
         public const string NTAUTHORITYANONYMOUSLOGON = @"NT Authority\Anonymous Logon";
-        
+
         //    Loginrec defines
         public const byte MAX_LOG_NAME = 30;              // TDS 4.2 login rec max name length
         public const byte MAX_PROG_NAME = 10;              // max length of loginrec program name
@@ -1094,7 +1094,7 @@ namespace Microsoft.Data.SqlClient
         SqlPassword,
         ActiveDirectoryPassword,
         ActiveDirectoryIntegrated,
-        ActiveDirectoryInteractive 
+        ActiveDirectoryInteractive
     }
     // This enum indicates the state of TransparentNetworkIPResolution
     // The first attempt when TNIR is on should be sequential. If the first attempt failes next attempts should be parallel.

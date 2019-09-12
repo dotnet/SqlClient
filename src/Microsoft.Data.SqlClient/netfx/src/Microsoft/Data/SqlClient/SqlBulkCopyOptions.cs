@@ -4,16 +4,18 @@
 
 using System;
 
-namespace Microsoft.Data.SqlClient {
+namespace Microsoft.Data.SqlClient
+{
 
     [Flags]
-    public enum SqlBulkCopyOptions {
-        Default             = 0,
-        KeepIdentity        = 1 << 0,
-        CheckConstraints    = 1 << 1,
-        TableLock           = 1 << 2,
-        KeepNulls           = 1 << 3,
-        FireTriggers        = 1 << 4,
+    public enum SqlBulkCopyOptions
+    {
+        Default = 0,
+        KeepIdentity = 1 << 0,
+        CheckConstraints = 1 << 1,
+        TableLock = 1 << 2,
+        KeepNulls = 1 << 3,
+        FireTriggers = 1 << 4,
         UseInternalTransaction = 1 << 5,
         AllowEncryptedValueModifications = 1 << 6,
     }

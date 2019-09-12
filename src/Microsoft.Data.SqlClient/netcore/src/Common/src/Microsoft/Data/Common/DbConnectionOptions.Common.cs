@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using Microsoft.Data.Common;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -58,7 +57,7 @@ namespace Microsoft.Data.Common
                 + "([^;\\s\\p{Cc}]|\\s+[^;\\s\\p{Cc}])*"                  // control characters must be quoted
 
                 + ")" // although the spec does not allow {}
-                // embedded within a value, the retail code does.
+                      // embedded within a value, the retail code does.
                 + ")(\\s*)(;|[\u0000\\s]*$)"                               // whitespace after value up to semicolon or end-of-line
                 + ")*"                                                      // repeat the key-value pair
                 + "[\\s;]*[\u0000\\s]*"                                     // traling whitespace/semicolons (DataSourceLocator), embedded nulls are allowed only in the end
@@ -357,7 +356,7 @@ namespace Microsoft.Data.Common
                 }
                 buffer.Append(currentChar);
             }
-            ParserExit:
+        ParserExit:
             switch (parserState)
             {
                 case ParserState.Key:
@@ -483,7 +482,7 @@ namespace Microsoft.Data.Common
                     string synonym;
                     string realkeyname = null != synonyms ?
                         (synonyms.TryGetValue(keyname, out synonym) ? synonym : null) : keyname;
- 
+
                     if (!IsKeyNameValid(realkeyname))
                     {
                         throw ADP.KeywordNotSupported(keyname);
@@ -558,47 +557,47 @@ namespace Microsoft.Data.Common
             try
             {
 #endif
-            int nextStartPosition = 0;
-            int endPosition = connectionString.Length;
-            while (nextStartPosition < endPosition)
-            {
-                int startPosition = nextStartPosition;
-
-                string keyname, keyvalue;
-                nextStartPosition = GetKeyValuePair(connectionString, startPosition, buffer, firstKey, out keyname, out keyvalue);
-                if (string.IsNullOrEmpty(keyname))
+                int nextStartPosition = 0;
+                int endPosition = connectionString.Length;
+                while (nextStartPosition < endPosition)
                 {
-                    // if (nextStartPosition != endPosition) { throw; }
-                    break;
-                }
+                    int startPosition = nextStartPosition;
+
+                    string keyname, keyvalue;
+                    nextStartPosition = GetKeyValuePair(connectionString, startPosition, buffer, firstKey, out keyname, out keyvalue);
+                    if (string.IsNullOrEmpty(keyname))
+                    {
+                        // if (nextStartPosition != endPosition) { throw; }
+                        break;
+                    }
 #if DEBUG
                     DebugTraceKeyValuePair(keyname, keyvalue, synonyms);
 
                     Debug.Assert(IsKeyNameValid(keyname), "ParseFailure, invalid keyname");
                     Debug.Assert(IsValueValidInternal(keyvalue), "parse failure, invalid keyvalue");
 #endif
-                string synonym;
-                string realkeyname = null != synonyms ?
-                    (synonyms.TryGetValue(keyname, out synonym) ? synonym : null) :
-                    keyname;
-                if (!IsKeyNameValid(realkeyname))
-                {
-                    throw ADP.KeywordNotSupported(keyname);
-                }
-                if (!firstKey || !parsetable.ContainsKey(realkeyname))
-                {
-                    parsetable[realkeyname] = keyvalue; // last key-value pair wins (or first)
-                }
+                    string synonym;
+                    string realkeyname = null != synonyms ?
+                        (synonyms.TryGetValue(keyname, out synonym) ? synonym : null) :
+                        keyname;
+                    if (!IsKeyNameValid(realkeyname))
+                    {
+                        throw ADP.KeywordNotSupported(keyname);
+                    }
+                    if (!firstKey || !parsetable.ContainsKey(realkeyname))
+                    {
+                        parsetable[realkeyname] = keyvalue; // last key-value pair wins (or first)
+                    }
 
-                if (null != localKeychain)
-                {
-                    localKeychain = localKeychain.Next = new NameValuePair(realkeyname, keyvalue, nextStartPosition - startPosition);
+                    if (null != localKeychain)
+                    {
+                        localKeychain = localKeychain.Next = new NameValuePair(realkeyname, keyvalue, nextStartPosition - startPosition);
+                    }
+                    else if (buildChain)
+                    { // first time only - don't contain modified chain from UDL file
+                        keychain = localKeychain = new NameValuePair(realkeyname, keyvalue, nextStartPosition - startPosition);
+                    }
                 }
-                else if (buildChain)
-                { // first time only - don't contain modified chain from UDL file
-                    keychain = localKeychain = new NameValuePair(realkeyname, keyvalue, nextStartPosition - startPosition);
-                }
-            }
 #if DEBUG
             }
             catch (ArgumentException e)

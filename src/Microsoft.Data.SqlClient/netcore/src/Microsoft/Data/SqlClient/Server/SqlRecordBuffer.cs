@@ -1,14 +1,13 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
-//------------------------------------------------------------------------------
 
-using Microsoft.Data.Common;
 using System;
 using System.Data;
 using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient.Server
 {
@@ -429,21 +428,36 @@ namespace Microsoft.Data.SqlClient.Server
 
                 switch (_type)
                 {
-                    case StorageType.Boolean: return SmiMetaData.DefaultBit;
-                    case StorageType.Byte: return SmiMetaData.DefaultTinyInt;
-                    case StorageType.ByteArray: return SmiMetaData.DefaultVarBinary;
-                    case StorageType.CharArray: return SmiMetaData.DefaultNVarChar;
-                    case StorageType.DateTime: return _metadata ?? SmiMetaData.DefaultDateTime;
-                    case StorageType.DateTimeOffset: return SmiMetaData.DefaultDateTimeOffset;
-                    case StorageType.Double: return SmiMetaData.DefaultFloat;
-                    case StorageType.Guid: return SmiMetaData.DefaultUniqueIdentifier;
-                    case StorageType.Int16: return SmiMetaData.DefaultSmallInt;
-                    case StorageType.Int32: return SmiMetaData.DefaultInt;
-                    case StorageType.Int64: return _metadata ?? SmiMetaData.DefaultBigInt;
-                    case StorageType.Single: return SmiMetaData.DefaultReal;
-                    case StorageType.String: return _metadata ?? SmiMetaData.DefaultNVarChar;
-                    case StorageType.SqlDecimal: return new SmiMetaData(SqlDbType.Decimal, 17, ((SqlDecimal)_object).Precision, ((SqlDecimal)_object).Scale, 0, SqlCompareOptions.None, null);
-                    case StorageType.TimeSpan: return SmiMetaData.DefaultTime;
+                    case StorageType.Boolean:
+                        return SmiMetaData.DefaultBit;
+                    case StorageType.Byte:
+                        return SmiMetaData.DefaultTinyInt;
+                    case StorageType.ByteArray:
+                        return SmiMetaData.DefaultVarBinary;
+                    case StorageType.CharArray:
+                        return SmiMetaData.DefaultNVarChar;
+                    case StorageType.DateTime:
+                        return _metadata ?? SmiMetaData.DefaultDateTime;
+                    case StorageType.DateTimeOffset:
+                        return SmiMetaData.DefaultDateTimeOffset;
+                    case StorageType.Double:
+                        return SmiMetaData.DefaultFloat;
+                    case StorageType.Guid:
+                        return SmiMetaData.DefaultUniqueIdentifier;
+                    case StorageType.Int16:
+                        return SmiMetaData.DefaultSmallInt;
+                    case StorageType.Int32:
+                        return SmiMetaData.DefaultInt;
+                    case StorageType.Int64:
+                        return _metadata ?? SmiMetaData.DefaultBigInt;
+                    case StorageType.Single:
+                        return SmiMetaData.DefaultReal;
+                    case StorageType.String:
+                        return _metadata ?? SmiMetaData.DefaultNVarChar;
+                    case StorageType.SqlDecimal:
+                        return new SmiMetaData(SqlDbType.Decimal, 17, ((SqlDecimal)_object).Precision, ((SqlDecimal)_object).Scale, 0, SqlCompareOptions.None, null);
+                    case StorageType.TimeSpan:
+                        return SmiMetaData.DefaultTime;
                 }
                 return null;
             }

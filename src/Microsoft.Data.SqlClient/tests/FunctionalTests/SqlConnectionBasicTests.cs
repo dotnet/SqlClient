@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using Microsoft.Data.SqlClient;
 using System;
 using System.Data.Common;
 using System.Reflection;
@@ -25,7 +24,7 @@ namespace Microsoft.Data.SqlClient.Tests
             }
         }
 
-        [ConditionalFact(typeof(PlatformDetection), nameof(PlatformDetection.IsNotWindowsNanoServer), nameof(PlatformDetection.IsNotArmProcess))] 
+        [ConditionalFact(typeof(PlatformDetection), nameof(PlatformDetection.IsNotWindowsNanoServer), nameof(PlatformDetection.IsNotArmProcess))]
         [ActiveIssue(4830, TestPlatforms.AnyUnix)]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void IntegratedAuthConnectionTest()
@@ -99,7 +98,7 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             string connectionString = $"Workstation Id={workstation}";
             SqlConnection conn = new SqlConnection(connectionString);
-            if(withDispose)
+            if (withDispose)
             {
                 conn.Dispose();
             }

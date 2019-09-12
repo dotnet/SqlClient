@@ -3,9 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System.IO;
-
 using Microsoft.SqlServer.TDS.SessionState;
-using Microsoft.SqlServer.TDS.PreLogin;
 
 namespace Microsoft.SqlServer.TDS.Login7
 {

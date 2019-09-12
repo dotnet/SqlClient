@@ -2,12 +2,11 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-
-using Microsoft.SqlServer.TDS.EndPoint;
-using Microsoft.SqlServer.TDS.Servers;
 using System;
 using System.Net;
 using System.Runtime.CompilerServices;
+using Microsoft.SqlServer.TDS.EndPoint;
+using Microsoft.SqlServer.TDS.Servers;
 
 namespace Microsoft.Data.SqlClient.Tests
 {

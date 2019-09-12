@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Microsoft.SqlServer.TDS.FeatureExtAck;
 
 namespace Microsoft.SqlServer.TDS.Login7
 {

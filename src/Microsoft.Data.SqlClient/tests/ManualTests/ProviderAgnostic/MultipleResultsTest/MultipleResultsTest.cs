@@ -238,7 +238,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             var startIndex = findDiffLength - 1;
-            if (startIndex < 0) startIndex = 0;
+            if (startIndex < 0)
+                startIndex = 0;
 
             if (findDiffLength < expectedLength)
             {

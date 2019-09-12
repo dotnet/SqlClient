@@ -4,13 +4,13 @@
 
 using System;
 using System.Linq;
-using System.Threading;
 using System.Security.Cryptography;
-
+using System.Threading;
+using Microsoft.SqlServer.TDS.Authentication;
 using Microsoft.SqlServer.TDS.Done;
 using Microsoft.SqlServer.TDS.EndPoint;
-using Microsoft.SqlServer.TDS.EndPoint.SSPI;
 using Microsoft.SqlServer.TDS.EndPoint.FederatedAuthentication;
+using Microsoft.SqlServer.TDS.EndPoint.SSPI;
 using Microsoft.SqlServer.TDS.EnvChange;
 using Microsoft.SqlServer.TDS.Error;
 using Microsoft.SqlServer.TDS.FeatureExtAck;
@@ -19,7 +19,6 @@ using Microsoft.SqlServer.TDS.Login7;
 using Microsoft.SqlServer.TDS.LoginAck;
 using Microsoft.SqlServer.TDS.PreLogin;
 using Microsoft.SqlServer.TDS.SSPI;
-using Microsoft.SqlServer.TDS.Authentication;
 
 namespace Microsoft.SqlServer.TDS.Servers
 {

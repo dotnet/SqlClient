@@ -2,12 +2,12 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 using Xunit;
-using System;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -237,7 +237,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             TaskScheduler.UnobservedTaskException += handler;
 
-            using(var connection = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (var connection = new SqlConnection(DataTestUtility.TcpConnStr))
             {
                 await connection.OpenAsync();
                 using (var command = new SqlCommand("select null; select * from dbo.NonexistentTable;", connection))

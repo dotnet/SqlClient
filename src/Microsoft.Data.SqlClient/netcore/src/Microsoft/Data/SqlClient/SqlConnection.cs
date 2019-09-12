@@ -2,26 +2,26 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System.Collections;
-using System.Data.Common;
-using Microsoft.Data.ProviderBase;
-using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Diagnostics.CodeAnalysis;
-using Microsoft.Data.SqlClient.Server;
-using System.Reflection;
-using System.IO;
-using System.Globalization;
-using System.Security;
 using System;
-using Microsoft.Data.Common;
-using System.Data;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Configuration;
+using System.Data;
+using System.Data.Common;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Security;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Data.Common;
+using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Server;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -302,7 +302,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Get enclave attestation url to be used with enclave based Always Encrypted
         /// </summary>
-        internal string EnclaveAttestationUrl => ((SqlConnectionString) ConnectionOptions).EnclaveAttestationUrl;
+        internal string EnclaveAttestationUrl => ((SqlConnectionString)ConnectionOptions).EnclaveAttestationUrl;
 
         // This method will be called once connection string is set or changed. 
         private void CacheConnectionStringProperties()
@@ -693,7 +693,7 @@ namespace Microsoft.Data.SqlClient
             {
                 throw ADP.InvalidMixedUsageOfAccessTokenAndIntegratedSecurity();
             }
-            
+
             if (UsesAuthentication(connectionOptions))
             {
                 throw ADP.InvalidMixedUsageOfAccessTokenAndAuthentication();
@@ -866,7 +866,7 @@ namespace Microsoft.Data.SqlClient
             // problem except for logging, as we'll get duplicate Before/After/Error
             // log entries
             if (previousState != ConnectionState.Closed)
-            { 
+            {
                 operationId = s_diagnosticListener.WriteConnectionCloseBefore(this);
                 // we want to cache the ClientConnectionId for After/Error logging, as when the connection 
                 // is closed then we will lose this identifier
@@ -917,7 +917,7 @@ namespace Microsoft.Data.SqlClient
                 // we only want to log this if the previous state of the 
                 // connection is open, as that's the valid use-case
                 if (previousState != ConnectionState.Closed)
-                { 
+                {
                     if (e != null)
                     {
                         s_diagnosticListener.WriteConnectionCloseError(operationId, clientConnectionId, this, e);
@@ -990,7 +990,7 @@ namespace Microsoft.Data.SqlClient
                     s_diagnosticListener.WriteConnectionOpenError(operationId, this, e);
                 }
                 else
-                { 
+                {
                     s_diagnosticListener.WriteConnectionOpenAfter(operationId, this);
                 }
             }
@@ -1209,7 +1209,7 @@ namespace Microsoft.Data.SqlClient
             Guid operationId = s_diagnosticListener.WriteConnectionOpenBefore(this);
 
             PrepareStatisticsForNewConnection();
-            
+
             SqlStatistics statistics = null;
             try
             {
@@ -1221,7 +1221,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlAfterOpenConnection) ||
                     s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlErrorOpenConnection))
-                { 
+                {
                     result.Task.ContinueWith((t) =>
                     {
                         if (t.Exception != null)
@@ -1229,7 +1229,7 @@ namespace Microsoft.Data.SqlClient
                             s_diagnosticListener.WriteConnectionOpenError(operationId, this, t.Exception);
                         }
                         else
-                        { 
+                        {
                             s_diagnosticListener.WriteConnectionOpenAfter(operationId, this);
                         }
                     }, TaskScheduler.Default);
@@ -1811,7 +1811,7 @@ namespace Microsoft.Data.SqlClient
             ADP.CheckArgumentNull(connection, nameof(connection));
             _userConnectionOptions = connection.UserConnectionOptions;
             _poolGroup = connection.PoolGroup;
-            
+
             if (DbConnectionClosedNeverOpened.SingletonInstance == connection._innerConnection)
             {
                 _innerConnection = DbConnectionClosedNeverOpened.SingletonInstance;

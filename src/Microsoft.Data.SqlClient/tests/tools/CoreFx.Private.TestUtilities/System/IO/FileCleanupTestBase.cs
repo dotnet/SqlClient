@@ -66,7 +66,8 @@ namespace System.IO
         {
             // No managed resources to clean up, so disposing is ignored.
 
-            try { Directory.Delete(TestDirectory, recursive: true); }
+            try
+            { Directory.Delete(TestDirectory, recursive: true); }
             catch { } // avoid exceptions escaping Dispose
         }
 

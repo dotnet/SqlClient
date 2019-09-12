@@ -23,7 +23,7 @@
     <Message Text="HasMatchingContract = $(HasMatchingContract)" />
     <Message Text="ContractAssemblyPath = $(ContractAssemblyPath)" />
     <Message Text="ResolvedMatchingContract.Identity = %(ResolvedMatchingContract.Identity)" />
-    
+
     <Error Condition="'$(HasMatchingContract)' == 'true' and !Exists('%(ResolvedMatchingContract.Identity)')" Text="ResolveMatchingContract could not find a matching contract '%(ResolvedMatchingContract.Identity)' not found." />
   </Target>
 </Project>

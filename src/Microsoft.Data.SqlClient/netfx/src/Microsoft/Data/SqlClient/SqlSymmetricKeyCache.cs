@@ -9,27 +9,32 @@ using System.Linq;
 using System.Runtime.Caching;
 using System.Text;
 
-namespace Microsoft.Data.SqlClient {
+namespace Microsoft.Data.SqlClient
+{
     /// <summary>
     /// <para> Implements a cache of Symmetric Keys (once they are decrypted).Useful for rapidly decrypting multiple data values.</para>
     /// </summary>
-    sealed internal class SqlSymmetricKeyCache {
+    sealed internal class SqlSymmetricKeyCache
+    {
         private readonly MemoryCache _cache;
         private static readonly SqlSymmetricKeyCache _singletonInstance = new SqlSymmetricKeyCache();
 
 
-        private SqlSymmetricKeyCache () {
+        private SqlSymmetricKeyCache()
+        {
             _cache = new MemoryCache("ColumnEncryptionKeyCache");
         }
 
-        internal static SqlSymmetricKeyCache GetInstance () {
+        internal static SqlSymmetricKeyCache GetInstance()
+        {
             return _singletonInstance;
         }
 
         /// <summary>
         /// <para> Retrieves Symmetric Key (in plaintext) given the encryption material.</para>
         /// </summary>
-        internal bool GetKey (SqlEncryptionKeyInfo keyInfo, string serverName, out SqlClientSymmetricKey encryptionKey) {
+        internal bool GetKey(SqlEncryptionKeyInfo keyInfo, string serverName, out SqlClientSymmetricKey encryptionKey)
+        {
             Debug.Assert(serverName != null, @"serverName should not be null.");
 
             StringBuilder cacheLookupKeyBuilder = new StringBuilder(serverName, capacity: serverName.Length + SqlSecurityUtility.GetBase64LengthFromByteLength(keyInfo.encryptedKey.Length) + keyInfo.keyStoreName.Length + 2/*separators*/);
@@ -51,19 +56,22 @@ namespace Microsoft.Data.SqlClient {
 
             // Lookup the key in cache
             encryptionKey = _cache.Get(cacheLookupKey) as SqlClientSymmetricKey;
-            
-            if (encryptionKey == null) {
+
+            if (encryptionKey == null)
+            {
                 Debug.Assert(SqlConnection.ColumnEncryptionTrustedMasterKeyPaths != null, @"SqlConnection.ColumnEncryptionTrustedMasterKeyPaths should not be null");
 
                 // Check against the trusted key paths
                 //
                 // Get the List corresponding to the connected server
                 IList<string> trustedKeyPaths;
-                if (SqlConnection.ColumnEncryptionTrustedMasterKeyPaths.TryGetValue(serverName, out trustedKeyPaths)) {
+                if (SqlConnection.ColumnEncryptionTrustedMasterKeyPaths.TryGetValue(serverName, out trustedKeyPaths))
+                {
                     // If the list is null or is empty or if the keyPath doesn't exist in the trusted key paths, then throw an exception.
                     if ((trustedKeyPaths == null) || (trustedKeyPaths.Count() == 0) ||
                         // (trustedKeyPaths.Where(s => s.Equals(keyInfo.keyPath, StringComparison.InvariantCultureIgnoreCase)).Count() == 0)) {
-                        (trustedKeyPaths.Any(s => s.Equals(keyInfo.keyPath, StringComparison.InvariantCultureIgnoreCase)) == false)) {
+                        (trustedKeyPaths.Any(s => s.Equals(keyInfo.keyPath, StringComparison.InvariantCultureIgnoreCase)) == false))
+                    {
                         // throw an exception since the key path is not in the trusted key paths list for this server
                         throw SQL.UntrustedKeyPath(keyInfo.keyPath, serverName);
                     }
@@ -71,8 +79,9 @@ namespace Microsoft.Data.SqlClient {
 
                 // Key Not found, attempt to look up the provider and decrypt CEK
                 SqlColumnEncryptionKeyStoreProvider provider;
-                if (!SqlConnection.TryGetColumnEncryptionKeyStoreProvider(keyInfo.keyStoreName, out provider)) {
-                    throw SQL.UnrecognizedKeyStoreProviderName(keyInfo.keyStoreName, 
+                if (!SqlConnection.TryGetColumnEncryptionKeyStoreProvider(keyInfo.keyStoreName, out provider))
+                {
+                    throw SQL.UnrecognizedKeyStoreProviderName(keyInfo.keyStoreName,
                             SqlConnection.GetColumnEncryptionSystemKeyStoreProviders(),
                             SqlConnection.GetColumnEncryptionCustomKeyStoreProviders());
                 }
@@ -80,19 +89,22 @@ namespace Microsoft.Data.SqlClient {
                 // Decrypt the CEK
                 // We will simply bubble up the exception from the DecryptColumnEncryptionKey function.
                 byte[] plaintextKey;
-                try {
+                try
+                {
                     plaintextKey = provider.DecryptColumnEncryptionKey(keyInfo.keyPath, keyInfo.algorithmName, keyInfo.encryptedKey);
                 }
-                catch (Exception e) {
+                catch (Exception e)
+                {
                     // Generate a new exception and throw.
-                    string keyHex = SqlSecurityUtility.GetBytesAsString(keyInfo.encryptedKey, fLast:true, countOfBytes:10);
-                    throw SQL.KeyDecryptionFailed (keyInfo.keyStoreName, keyHex, e);
+                    string keyHex = SqlSecurityUtility.GetBytesAsString(keyInfo.encryptedKey, fLast: true, countOfBytes: 10);
+                    throw SQL.KeyDecryptionFailed(keyInfo.keyStoreName, keyHex, e);
                 }
 
-                encryptionKey = new SqlClientSymmetricKey (plaintextKey);
+                encryptionKey = new SqlClientSymmetricKey(plaintextKey);
 
                 // If the cache TTL is zero, don't even bother inserting to the cache.
-                if (SqlConnection.ColumnEncryptionKeyCacheTtl != TimeSpan.Zero) {
+                if (SqlConnection.ColumnEncryptionKeyCacheTtl != TimeSpan.Zero)
+                {
                     // In case multiple threads reach here at the same time, the first one wins.
                     // The allocated memory will be reclaimed by Garbage Collector.
                     DateTimeOffset expirationTime = DateTimeOffset.UtcNow.Add(SqlConnection.ColumnEncryptionKeyCacheTtl);

@@ -2,9 +2,9 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System.Threading;
-using System.Runtime.Serialization;
 using System;
+using System.Runtime.Serialization;
+using System.Threading;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -311,7 +311,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 ii = (21 * i) % 55;
                 _seedArray[ii] = mk;
                 mk = mj - mk;
-                if (mk < 0) mk += MBIG;
+                if (mk < 0)
+                    mk += MBIG;
                 mj = _seedArray[ii];
             }
             for (int k = 1; k < 5; k++)
@@ -319,7 +320,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 for (int i = 1; i < 56; i++)
                 {
                     _seedArray[i] -= _seedArray[1 + (i + 30) % 55];
-                    if (_seedArray[i] < 0) _seedArray[i] += MBIG;
+                    if (_seedArray[i] < 0)
+                        _seedArray[i] += MBIG;
                 }
             }
             _inext = 0;
@@ -350,13 +352,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             int locINext = _inext;
             int locINextp = _inextp;
 
-            if (++locINext >= 56) locINext = 1;
-            if (++locINextp >= 56) locINextp = 1;
+            if (++locINext >= 56)
+                locINext = 1;
+            if (++locINextp >= 56)
+                locINextp = 1;
 
             retVal = _seedArray[locINext] - _seedArray[locINextp];
 
-            if (retVal == MBIG) retVal--;
-            if (retVal < 0) retVal += MBIG;
+            if (retVal == MBIG)
+                retVal--;
+            if (retVal < 0)
+                retVal += MBIG;
 
             _seedArray[locINext] = retVal;
 
@@ -461,7 +467,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         ==============================================================================*/
         public virtual void NextBytes(byte[] buffer)
         {
-            if (buffer == null) throw new ArgumentNullException(nameof(buffer));
+            if (buffer == null)
+                throw new ArgumentNullException(nameof(buffer));
             for (int i = 0; i < buffer.Length; i++)
             {
                 buffer[i] = (byte)(InternalSample() % (byte.MaxValue + 1));

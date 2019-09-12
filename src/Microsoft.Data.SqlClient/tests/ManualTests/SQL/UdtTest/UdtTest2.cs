@@ -5,7 +5,6 @@
 using System;
 using System.Data;
 using System.Data.SqlTypes;
-using System.Reflection;
 using System.Text;
 using Microsoft.Data.SqlClient.Server;
 using Xunit;

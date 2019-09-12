@@ -3,10 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml;
 using Xunit;
 
@@ -49,7 +45,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 //Try to execute a synchronous query on same command
                 IAsyncResult result = command.BeginExecuteXmlReader();
 
-                Assert.Throws<InvalidOperationException>( delegate { command.ExecuteXmlReader(); });
+                Assert.Throws<InvalidOperationException>(delegate
+                { command.ExecuteXmlReader(); });
 
                 while (!result.IsCompleted)
                 {

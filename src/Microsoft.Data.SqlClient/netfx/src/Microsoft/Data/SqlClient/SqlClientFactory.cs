@@ -2,57 +2,70 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
+using System.Data.Common;
+using System.Data.Sql;
 using System.Security;
 using System.Security.Permissions;
-using System.Data.Common;
-using System;
 using Microsoft.Data.Common;
-using System.Data.Sql;
 
-namespace Microsoft.Data.SqlClient {
+namespace Microsoft.Data.SqlClient
+{
 
-    public sealed class SqlClientFactory : DbProviderFactory, IServiceProvider {
+    public sealed class SqlClientFactory : DbProviderFactory, IServiceProvider
+    {
 
         public static readonly SqlClientFactory Instance = new SqlClientFactory();
 
-        private SqlClientFactory() {
+        private SqlClientFactory()
+        {
         }
 
-        public override bool CanCreateDataSourceEnumerator {
-            get { 
+        public override bool CanCreateDataSourceEnumerator
+        {
+            get
+            {
                 return true;
             }
         }
 
-        public override DbCommand CreateCommand() {
+        public override DbCommand CreateCommand()
+        {
             return new SqlCommand();
         }
 
-        public override DbCommandBuilder CreateCommandBuilder() {
+        public override DbCommandBuilder CreateCommandBuilder()
+        {
             return new SqlCommandBuilder();
         }
 
-        public override DbConnection CreateConnection() {
+        public override DbConnection CreateConnection()
+        {
             return new SqlConnection();
         }
 
-        public override DbConnectionStringBuilder CreateConnectionStringBuilder() { 
+        public override DbConnectionStringBuilder CreateConnectionStringBuilder()
+        {
             return new SqlConnectionStringBuilder();
         }
 
-        public override DbDataAdapter CreateDataAdapter() {
+        public override DbDataAdapter CreateDataAdapter()
+        {
             return new SqlDataAdapter();
         }
 
-        public override DbParameter CreateParameter() {
+        public override DbParameter CreateParameter()
+        {
             return new SqlParameter();
         }
 
-        public override CodeAccessPermission CreatePermission(PermissionState state) {
+        public override CodeAccessPermission CreatePermission(PermissionState state)
+        {
             return new SqlClientPermission(state);
         }
 
-        public override DbDataSourceEnumerator CreateDataSourceEnumerator() {
+        public override DbDataSourceEnumerator CreateDataSourceEnumerator()
+        {
             return SqlDataSourceEnumerator.Instance;
         }
 

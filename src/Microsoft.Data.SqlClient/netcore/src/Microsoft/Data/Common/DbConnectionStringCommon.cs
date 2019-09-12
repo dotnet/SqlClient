@@ -2,12 +2,11 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System.Diagnostics;
-using System.Reflection;
 using System;
-using Microsoft.Data.SqlClient;
+using System.Diagnostics;
 using System.Globalization;
-using Microsoft.Data.Common;
+using System.Reflection;
+using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data.Common
 {
@@ -321,7 +320,7 @@ namespace Microsoft.Data.Common
             return value == SqlAuthenticationMethod.SqlPassword
                 || value == SqlAuthenticationMethod.ActiveDirectoryPassword
                 || value == SqlAuthenticationMethod.ActiveDirectoryIntegrated
-                || value == SqlAuthenticationMethod.ActiveDirectoryInteractive   
+                || value == SqlAuthenticationMethod.ActiveDirectoryInteractive
                 || value == SqlAuthenticationMethod.NotSpecified;
         }
 

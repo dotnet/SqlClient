@@ -2,20 +2,24 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-
 using Microsoft.Data.ProviderBase;
 
-namespace Microsoft.Data.SqlClient {
-    internal sealed class SqlConnectionPoolProviderInfo : DbConnectionPoolProviderInfo {
+namespace Microsoft.Data.SqlClient
+{
+    internal sealed class SqlConnectionPoolProviderInfo : DbConnectionPoolProviderInfo
+    {
         private string _instanceName;
 
-        internal string InstanceName {
-            get {
+        internal string InstanceName
+        {
+            get
+            {
                 return _instanceName;
             }
-            set {
+            set
+            {
                 _instanceName = value;
             }
-        }        
+        }
     }
 }

@@ -4,7 +4,6 @@
 
 using System;
 using System.Security.Cryptography.X509Certificates;
-
 using Microsoft.SqlServer.TDS.EndPoint.SSPI;
 
 namespace Microsoft.SqlServer.TDS.EndPoint

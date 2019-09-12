@@ -4,13 +4,12 @@
 
 using System;
 using System.IO;
-
 using Microsoft.SqlServer.TDS.ColMetadata;
 using Microsoft.SqlServer.TDS.Done;
 using Microsoft.SqlServer.TDS.EndPoint;
+using Microsoft.SqlServer.TDS.Info;
 using Microsoft.SqlServer.TDS.Row;
 using Microsoft.SqlServer.TDS.SQLBatch;
-using Microsoft.SqlServer.TDS.Info;
 
 namespace Microsoft.SqlServer.TDS.Servers
 {

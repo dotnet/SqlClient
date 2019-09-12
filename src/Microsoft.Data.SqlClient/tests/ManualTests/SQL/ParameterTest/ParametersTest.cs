@@ -5,7 +5,6 @@
 using System;
 using System.Collections;
 using System.Data;
-using System.Data.Common;
 using System.Data.SqlTypes;
 using Xunit;
 
@@ -295,7 +294,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             Assert.Equal(y, dbData.Rows[0][1]);
                         }
                     }
-                } finally
+                }
+                finally
                 {
                     using (SqlCommand cmd = connection.CreateCommand())
                     {

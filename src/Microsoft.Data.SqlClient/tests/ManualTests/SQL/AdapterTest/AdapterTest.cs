@@ -2,15 +2,15 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System.Data.SqlTypes;
-using System.Globalization;
-using System.Text;
-using System.Reflection;
-using System.Collections;
-using System.Diagnostics;
-using Xunit;
 using System;
+using System.Collections;
 using System.Data;
+using System.Data.SqlTypes;
+using System.Diagnostics;
+using System.Globalization;
+using System.Reflection;
+using System.Text;
+using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {

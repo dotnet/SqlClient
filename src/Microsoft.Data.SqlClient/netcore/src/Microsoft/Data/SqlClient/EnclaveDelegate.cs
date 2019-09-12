@@ -79,7 +79,8 @@ namespace Microsoft.Data.SqlClient
 
             if (throwIfNull)
             {
-                if (sqlEnclaveSession == null) throw SQL.NullEnclaveSessionDuringQueryExecution(enclaveType, enclaveAttestationUrl);
+                if (sqlEnclaveSession == null)
+                    throw SQL.NullEnclaveSessionDuringQueryExecution(enclaveType, enclaveAttestationUrl);
             }
         }
 
@@ -113,7 +114,8 @@ namespace Microsoft.Data.SqlClient
                 SqlConnection.sqlColumnEncryptionEnclaveProviderConfigurationManager.GetSqlColumnEncryptionEnclaveProvider(
                     enclaveType);
 
-            if (sqlColumnEncryptionEnclaveProvider == null) throw SQL.EnclaveProviderNotFound(enclaveType);
+            if (sqlColumnEncryptionEnclaveProvider == null)
+                throw SQL.EnclaveProviderNotFound(enclaveType);
             return sqlColumnEncryptionEnclaveProvider;
         }
 
@@ -134,9 +136,12 @@ namespace Microsoft.Data.SqlClient
                 SqlSecurityUtility.DecryptSymmetricKey(cipherInfo, serverName, out sqlClientSymmetricKey,
                     out encryptionkeyInfoChosen);
 
-                if (sqlClientSymmetricKey == null) throw SQL.NullArgumentInternal("sqlClientSymmetricKey", ClassName, GetDecryptedKeysToBeSentToEnclaveName);
-                if (cipherInfo.ColumnEncryptionKeyValues == null) throw SQL.NullArgumentInternal("ColumnEncryptionKeyValues", ClassName, GetDecryptedKeysToBeSentToEnclaveName);
-                if (!(cipherInfo.ColumnEncryptionKeyValues.Count > 0)) throw SQL.ColumnEncryptionKeysNotFound();
+                if (sqlClientSymmetricKey == null)
+                    throw SQL.NullArgumentInternal("sqlClientSymmetricKey", ClassName, GetDecryptedKeysToBeSentToEnclaveName);
+                if (cipherInfo.ColumnEncryptionKeyValues == null)
+                    throw SQL.NullArgumentInternal("ColumnEncryptionKeyValues", ClassName, GetDecryptedKeysToBeSentToEnclaveName);
+                if (!(cipherInfo.ColumnEncryptionKeyValues.Count > 0))
+                    throw SQL.ColumnEncryptionKeysNotFound();
 
                 //cipherInfo.CekId is always 0, hence used cipherInfo.ColumnEncryptionKeyValues[0].cekId. Even when cek has multiple ColumnEncryptionKeyValues
                 //the cekid and the plaintext value will remain the same, what varies is the encrypted cek value, since the cek can be encrypted by 
@@ -200,8 +205,10 @@ namespace Microsoft.Data.SqlClient
         /// <returns></returns>
         private byte[] EncryptBytePackage(byte[] bytePackage, byte[] sessionKey, string serverName)
         {
-            if (sessionKey == null) throw SQL.NullArgumentInternal("sessionKey", ClassName, "EncryptBytePackage");
-            if (sessionKey.Length == 0) throw SQL.EmptyArgumentInternal("sessionKey", ClassName, "EncryptBytePackage");
+            if (sessionKey == null)
+                throw SQL.NullArgumentInternal("sessionKey", ClassName, "EncryptBytePackage");
+            if (sessionKey.Length == 0)
+                throw SQL.EmptyArgumentInternal("sessionKey", ClassName, "EncryptBytePackage");
             //bytePackage is created internally in this class and is guaranteed to be non null and non empty
 
             try

@@ -70,7 +70,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 if (DataTestUtility.IsUsingNativeSNI()) /* [ActiveIssue(108)] */
                 {
-                   TimeoutDuringReadAsyncWithClosedReaderTest(connectionString);
+                    TimeoutDuringReadAsyncWithClosedReaderTest(connectionString);
                 }
                 NonFatalTimeoutDuringRead(connectionString);
             }
@@ -175,20 +175,34 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     int i;
 
                     // read data out of buffer
-                    v = rdr.GetValue(0); i = (int)v;
-                    v = rdr.GetValue(1); s = v is DBNull ? null : (string)v;
-                    v = rdr.GetValue(2); i = (int)v;
-                    v = rdr.GetValue(3); d = (DateTime)v;
-                    v = rdr.GetValue(4); d = (DateTime)v;
-                    v = rdr.GetValue(5); d = (DateTime)v;
-                    v = rdr.GetValue(6); i = (int)v;
-                    v = rdr.GetValue(7); m = (decimal)v;
-                    v = rdr.GetValue(8); s = v is DBNull ? null : (string)v;
-                    v = rdr.GetValue(9); s = v is DBNull ? null : (string)v;
-                    v = rdr.GetValue(10); s = v is DBNull ? null : (string)v;
-                    v = rdr.GetValue(11); s = v is DBNull ? null : (string)v;
-                    v = rdr.GetValue(12); s = v is DBNull ? null : (string)v;
-                    v = rdr.GetValue(13); s = v is DBNull ? null : (string)v;
+                    v = rdr.GetValue(0);
+                    i = (int)v;
+                    v = rdr.GetValue(1);
+                    s = v is DBNull ? null : (string)v;
+                    v = rdr.GetValue(2);
+                    i = (int)v;
+                    v = rdr.GetValue(3);
+                    d = (DateTime)v;
+                    v = rdr.GetValue(4);
+                    d = (DateTime)v;
+                    v = rdr.GetValue(5);
+                    d = (DateTime)v;
+                    v = rdr.GetValue(6);
+                    i = (int)v;
+                    v = rdr.GetValue(7);
+                    m = (decimal)v;
+                    v = rdr.GetValue(8);
+                    s = v is DBNull ? null : (string)v;
+                    v = rdr.GetValue(9);
+                    s = v is DBNull ? null : (string)v;
+                    v = rdr.GetValue(10);
+                    s = v is DBNull ? null : (string)v;
+                    v = rdr.GetValue(11);
+                    s = v is DBNull ? null : (string)v;
+                    v = rdr.GetValue(12);
+                    s = v is DBNull ? null : (string)v;
+                    v = rdr.GetValue(13);
+                    s = v is DBNull ? null : (string)v;
 
                     DataTestUtility.AssertEqualsWithDescription("France", s.ToString(), "FAILED: Received incorrect last value.");
                 }
@@ -949,7 +963,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             DataTestUtility.AssertThrowsWrapper<OverflowException>(() => value = reader.GetDecimal(0), errorMessage);
                             DataTestUtility.AssertThrowsWrapper<OverflowException>(() => value = reader.GetDecimal(1), errorMessage);
                         }
-                    } finally
+                    }
+                    finally
                     {
                         cmd.CommandText = "DROP TABLE " + tempTable;
                         cmd.ExecuteNonQuery();
@@ -1779,52 +1794,53 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string sessionName = DataTestUtility.GenerateRandomCharacters("Session");
 
-			try
-			{
-				//Create XEvent
-				SetupXevent(connectionString, sessionName);
-				Task.Factory.StartNew(() =>
-				{
-					// Read XEvents
-					int streamXeventCount = 3;
-					using (SqlConnection xEventsReadConnection = new SqlConnection(connectionString))
-					{
-						xEventsReadConnection.Open();
-						string xEventDataStreamCommand = "USE master; " + @"select [type], [data] from sys.fn_MSxe_read_event_stream ('" + sessionName + "',0)";
-						using (SqlCommand cmd = new SqlCommand(xEventDataStreamCommand, xEventsReadConnection))
-						{
-							SqlDataReader reader = cmd.ExecuteReader(System.Data.CommandBehavior.SequentialAccess);
-							for (int i = 0; i < streamXeventCount && reader.Read(); i++)
-							{
-								Int32 colType = reader.GetInt32(0);
-								int cb = (int)reader.GetBytes(1, 0, null, 0, 0);
+            try
+            {
+                //Create XEvent
+                SetupXevent(connectionString, sessionName);
+                Task.Factory.StartNew(() =>
+                {
+                    // Read XEvents
+                    int streamXeventCount = 3;
+                    using (SqlConnection xEventsReadConnection = new SqlConnection(connectionString))
+                    {
+                        xEventsReadConnection.Open();
+                        string xEventDataStreamCommand = "USE master; " + @"select [type], [data] from sys.fn_MSxe_read_event_stream ('" + sessionName + "',0)";
+                        using (SqlCommand cmd = new SqlCommand(xEventDataStreamCommand, xEventsReadConnection))
+                        {
+                            SqlDataReader reader = cmd.ExecuteReader(System.Data.CommandBehavior.SequentialAccess);
+                            for (int i = 0; i < streamXeventCount && reader.Read(); i++)
+                            {
+                                Int32 colType = reader.GetInt32(0);
+                                int cb = (int)reader.GetBytes(1, 0, null, 0, 0);
 
-								byte[] bytes = new byte[cb];
-								long read = reader.GetBytes(1, 0, bytes, 0, cb);
+                                byte[] bytes = new byte[cb];
+                                long read = reader.GetBytes(1, 0, bytes, 0, cb);
 
-								// Don't send data on the first read because there is already data in the buffer. 
-								// Don't send data on the last iteration. We will not be reading that data.
-								if (i == 0 || i == streamXeventCount - 1) continue;
+                                // Don't send data on the first read because there is already data in the buffer. 
+                                // Don't send data on the last iteration. We will not be reading that data.
+                                if (i == 0 || i == streamXeventCount - 1)
+                                    continue;
 
-								using (SqlConnection xEventWriteConnection = new SqlConnection(connectionString))
-								{
-									xEventWriteConnection.Open();
-									string xEventWriteCommandText = @"exec sp_trace_generateevent 90, N'Test2'";
-									using (SqlCommand xEventWriteCommand = new SqlCommand(xEventWriteCommandText, xEventWriteConnection))
-									{
-										xEventWriteCommand.ExecuteNonQuery();
-									}
-								}
-							}
-						}
-					}
-				}).Wait(10000);
-			}
-			finally
-			{
-				//Delete XEvent 
-				DeleteXevent(connectionString, sessionName);
-			}
+                                using (SqlConnection xEventWriteConnection = new SqlConnection(connectionString))
+                                {
+                                    xEventWriteConnection.Open();
+                                    string xEventWriteCommandText = @"exec sp_trace_generateevent 90, N'Test2'";
+                                    using (SqlCommand xEventWriteCommand = new SqlCommand(xEventWriteCommandText, xEventWriteConnection))
+                                    {
+                                        xEventWriteCommand.ExecuteNonQuery();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }).Wait(10000);
+            }
+            finally
+            {
+                //Delete XEvent 
+                DeleteXevent(connectionString, sessionName);
+            }
         }
 
         private static void SetupXevent(string connectionString, string sessionName)
@@ -1848,13 +1864,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 connection.Open();
                 using (SqlCommand createXeventSession = new SqlCommand(xEventCreateAndStartCommandText, connection))
                 {
-                    createXeventSession.ExecuteNonQuery();                    
+                    createXeventSession.ExecuteNonQuery();
                 }
             }
         }
 
         private static void DeleteXevent(string connectionString, string sessionName)
-        { 
+        {
             string deleteXeventSessionCommand = $"IF EXISTS (select * from sys.server_event_sessions where name ='{sessionName}')" +
                     $" DROP EVENT SESSION [{sessionName}] ON SERVER";
 
@@ -1866,7 +1882,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     deleteXeventSession.ExecuteNonQuery();
                 }
             }
-         }
+        }
 
         private static void TimeoutDuringReadAsyncWithClosedReaderTest(string connectionString)
         {

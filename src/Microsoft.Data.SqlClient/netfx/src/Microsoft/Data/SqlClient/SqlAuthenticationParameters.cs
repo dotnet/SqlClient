@@ -12,7 +12,8 @@ namespace Microsoft.Data.SqlClient
     /// <summary>
     /// AD Authentication parameters passed by driver to auth providers.
     /// </summary>
-    public class SqlAuthenticationParameters {
+    public class SqlAuthenticationParameters
+    {
         /// <summary>
         /// Authentication method.
         /// </summary>
@@ -61,7 +62,8 @@ namespace Microsoft.Data.SqlClient
             string authority,
             string userId,
             string password,
-            Guid connectionId) {
+            Guid connectionId)
+        {
             AuthenticationMethod = authenticationMethod;
             ServerName = serverName;
             DatabaseName = databaseName;
@@ -75,7 +77,8 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// AD authentication parameter builder.
         /// </summary>
-        internal class Builder {
+        internal class Builder
+        {
             private readonly SqlAuthenticationMethod _authenticationMethod;
             private readonly string _serverName;
             private readonly string _databaseName;
@@ -104,7 +107,8 @@ namespace Microsoft.Data.SqlClient
             /// <summary>
             /// Set user id.
             /// </summary>
-            public Builder WithUserId(string userId) {
+            public Builder WithUserId(string userId)
+            {
                 _userId = userId;
                 return this;
             }
@@ -112,7 +116,8 @@ namespace Microsoft.Data.SqlClient
             /// <summary>
             /// Set password.
             /// </summary>
-            public Builder WithPassword(string password) {
+            public Builder WithPassword(string password)
+            {
                 _password = password;
                 return this;
             }
@@ -120,12 +125,16 @@ namespace Microsoft.Data.SqlClient
             /// <summary>
             /// Set password.
             /// </summary>
-            public Builder WithPassword(SecureString password) {
+            public Builder WithPassword(SecureString password)
+            {
                 IntPtr valuePtr = IntPtr.Zero;
-                try {
+                try
+                {
                     valuePtr = Marshal.SecureStringToGlobalAllocUnicode(password);
                     _password = Marshal.PtrToStringUni(valuePtr);
-                } finally {
+                }
+                finally
+                {
                     Marshal.ZeroFreeGlobalAllocUnicode(valuePtr);
                 }
                 return this;
@@ -134,12 +143,14 @@ namespace Microsoft.Data.SqlClient
             /// <summary>
             /// Set a specific connection id instead of using a random one.
             /// </summary>
-            public Builder WithConnectionId(Guid connectionId) {
+            public Builder WithConnectionId(Guid connectionId)
+            {
                 _connectionId = connectionId;
                 return this;
             }
 
-            internal Builder(SqlAuthenticationMethod authenticationMethod, string resource, string authority, string serverName, string databaseName) {
+            internal Builder(SqlAuthenticationMethod authenticationMethod, string resource, string authority, string serverName, string databaseName)
+            {
                 _authenticationMethod = authenticationMethod;
                 _serverName = serverName;
                 _databaseName = databaseName;

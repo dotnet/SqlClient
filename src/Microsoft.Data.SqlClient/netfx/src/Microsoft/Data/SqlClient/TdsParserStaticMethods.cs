@@ -4,14 +4,15 @@
 
 using System;
 using System.Globalization;
-using System.Security.Permissions;
 using System.Runtime.Versioning;
+using System.Security.Permissions;
 
 namespace Microsoft.Data.SqlClient
 {
     using Microsoft.Data.Common;
 
-    internal sealed class TdsParserStaticMethods {
+    internal sealed class TdsParserStaticMethods
+    {
 
         private TdsParserStaticMethods() { /* prevent utility class from being insantiated*/ }
         //
@@ -21,12 +22,15 @@ namespace Microsoft.Data.SqlClient
         // SxS: this method accesses registry to resolve the alias.
         [ResourceExposure(ResourceScope.None)]
         [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
-        static internal void AliasRegistryLookup(ref string host, ref string protocol) {
-            if (!ADP.IsEmpty(host)) {
+        static internal void AliasRegistryLookup(ref string host, ref string protocol)
+        {
+            if (!ADP.IsEmpty(host))
+            {
                 const String folder = "SOFTWARE\\Microsoft\\MSSQLServer\\Client\\ConnectTo";
                 // Put a try...catch... around this so we don't abort ANY connection if we can't read the registry.
-                string aliasLookup = (string) ADP.LocalMachineRegistryValue(folder, host);
-                if (!ADP.IsEmpty(aliasLookup)) {
+                string aliasLookup = (string)ADP.LocalMachineRegistryValue(folder, host);
+                if (!ADP.IsEmpty(aliasLookup))
+                {
                     /* Result will be in the form of: "DBNMPNTW,\\server\pipe\sql\query". or
                          Result will be in the form of: "DBNETLIB, via:\\server\pipe\sql\query".
 
@@ -48,28 +52,35 @@ namespace Microsoft.Data.SqlClient
                     int index = aliasLookup.IndexOf(',');
 
                     // If we found the key, but there was no "," in the string, it is a bad Alias so return.
-                    if (-1 != index) {
+                    if (-1 != index)
+                    {
                         string parsedProtocol = aliasLookup.Substring(0, index).ToLower(CultureInfo.InvariantCulture);
 
                         // If index+1 >= length, Alias consisted of "FOO," which is a bad alias so return.
-                        if (index+1 < aliasLookup.Length) {
-                            string parsedAliasName = aliasLookup.Substring(index+1);
+                        if (index + 1 < aliasLookup.Length)
+                        {
+                            string parsedAliasName = aliasLookup.Substring(index + 1);
 
                             // Fix bug 298286
-                            if ("dbnetlib" == parsedProtocol) {
-                                    index = parsedAliasName.IndexOf(':');
-                                    if (-1 != index && index + 1 < parsedAliasName.Length) {
-                                        parsedProtocol = parsedAliasName.Substring (0, index);
-                                        if (SqlConnectionString.ValidProtocal (parsedProtocol)) {
-                                            protocol = parsedProtocol;
-                                            host = parsedAliasName.Substring(index + 1);
-                                        }
+                            if ("dbnetlib" == parsedProtocol)
+                            {
+                                index = parsedAliasName.IndexOf(':');
+                                if (-1 != index && index + 1 < parsedAliasName.Length)
+                                {
+                                    parsedProtocol = parsedAliasName.Substring(0, index);
+                                    if (SqlConnectionString.ValidProtocal(parsedProtocol))
+                                    {
+                                        protocol = parsedProtocol;
+                                        host = parsedAliasName.Substring(index + 1);
                                     }
                                 }
-                            else {
-                                    protocol = (string)SqlConnectionString.NetlibMapping()[parsedProtocol];
-                                    if (null != protocol) {
-                                        host = parsedAliasName;
+                            }
+                            else
+                            {
+                                protocol = (string)SqlConnectionString.NetlibMapping()[parsedProtocol];
+                                if (null != protocol)
+                                {
+                                    host = parsedAliasName;
                                 }
                             }
                         }
@@ -81,25 +92,28 @@ namespace Microsoft.Data.SqlClient
         // Encrypt password to be sent to SQL Server
         // Note: The same logic is used in SNIPacketSetData (SniManagedWrapper) to encrypt passwords stored in SecureString
         //       If this logic changed, SNIPacketSetData needs to be changed as well
-        static internal Byte[] EncryptPassword(string password) {
+        static internal Byte[] EncryptPassword(string password)
+        {
             Byte[] bEnc = new Byte[password.Length << 1];
             int s;
             byte bLo;
             byte bHi;
 
-            for (int i = 0; i < password.Length; i ++) {
-                s = (int) password[i];
-                bLo = (byte) (s & 0xff);
-                bHi = (byte) ((s >> 8) & 0xff);
-                bEnc[i<<1] = (Byte) ( (((bLo & 0x0f) << 4) | (bLo >> 4)) ^  0xa5 );
-                bEnc[(i<<1)+1] = (Byte) ( (((bHi & 0x0f) << 4) | (bHi >> 4)) ^  0xa5);
+            for (int i = 0; i < password.Length; i++)
+            {
+                s = (int)password[i];
+                bLo = (byte)(s & 0xff);
+                bHi = (byte)((s >> 8) & 0xff);
+                bEnc[i << 1] = (Byte)((((bLo & 0x0f) << 4) | (bLo >> 4)) ^ 0xa5);
+                bEnc[(i << 1) + 1] = (Byte)((((bHi & 0x0f) << 4) | (bHi >> 4)) ^ 0xa5);
             }
             return bEnc;
         }
 
         [ResourceExposure(ResourceScope.None)] // SxS: we use this method for TDS login only
         [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
-        static internal int GetCurrentProcessIdForTdsLoginOnly() {
+        static internal int GetCurrentProcessIdForTdsLoginOnly()
+        {
             return SafeNativeMethods.GetCurrentProcessId();
         }
 
@@ -107,7 +121,8 @@ namespace Microsoft.Data.SqlClient
         [SecurityPermission(SecurityAction.Assert, Flags = SecurityPermissionFlag.UnmanagedCode)]
         [ResourceExposure(ResourceScope.None)] // SxS: we use this method for TDS login only
         [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
-        static internal Int32 GetCurrentThreadIdForTdsLoginOnly() {
+        static internal Int32 GetCurrentThreadIdForTdsLoginOnly()
+        {
 #pragma warning disable 618
             return AppDomain.GetCurrentThreadId(); // don't need this to be support fibres;
 #pragma warning restore 618
@@ -116,7 +131,8 @@ namespace Microsoft.Data.SqlClient
 
         [ResourceExposure(ResourceScope.None)] // SxS: we use MAC address for TDS login only
         [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
-        static internal byte[] GetNetworkPhysicalAddressForTdsLoginOnly() {
+        static internal byte[] GetNetworkPhysicalAddressForTdsLoginOnly()
+        {
             // NIC address is stored in NetworkAddress key.  However, if NetworkAddressLocal key
             // has a value that is not zero, then we cannot use the NetworkAddress key and must
             // instead generate a random one.  I do not fully understand why, this is simply what
@@ -125,26 +141,30 @@ namespace Microsoft.Data.SqlClient
             // values on the server.  It is not ideal, but native does not have the same value for
             // different processes either.
 
-            const string key        = "NetworkAddress";
-            const string localKey   = "NetworkAddressLocal";
-            const string folder     = "SOFTWARE\\Description\\Microsoft\\Rpc\\UuidTemporaryData";
+            const string key = "NetworkAddress";
+            const string localKey = "NetworkAddressLocal";
+            const string folder = "SOFTWARE\\Description\\Microsoft\\Rpc\\UuidTemporaryData";
 
             int result = 0;
             byte[] nicAddress = null;
 
             object temp = ADP.LocalMachineRegistryValue(folder, localKey);
-            if (temp is int) {
-                result = (int) temp;
+            if (temp is int)
+            {
+                result = (int)temp;
             }
 
-            if (result <= 0) {
+            if (result <= 0)
+            {
                 temp = ADP.LocalMachineRegistryValue(folder, key);
-                if (temp is byte[]) {
-                    nicAddress = (byte[]) temp;
+                if (temp is byte[])
+                {
+                    nicAddress = (byte[])temp;
                 }
             }
 
-            if (null == nicAddress) {
+            if (null == nicAddress)
+            {
                 nicAddress = new byte[TdsEnums.MAX_NIC_SIZE];
                 Random random = new Random();
                 random.NextBytes(nicAddress);
@@ -153,38 +173,46 @@ namespace Microsoft.Data.SqlClient
             return nicAddress;
         }
         // translates remaining time in stateObj (from user specified timeout) to timeout value for SNI
-        static internal Int32 GetTimeoutMilliseconds(long timeoutTime) {
+        static internal Int32 GetTimeoutMilliseconds(long timeoutTime)
+        {
             // User provided timeout t | timeout value for SNI | meaning
             // ------------------------+-----------------------+------------------------------
             //      t == long.MaxValue |                    -1 | infinite timeout (no timeout)
             //   t>0 && t<int.MaxValue |                     t |
             //          t>int.MaxValue |          int.MaxValue | must not exceed int.MaxValue
 
-            if (Int64.MaxValue == timeoutTime) {
+            if (Int64.MaxValue == timeoutTime)
+            {
                 return -1;  // infinite timeout
             }
 
             long msecRemaining = ADP.TimerRemainingMilliseconds(timeoutTime);
 
-            if (msecRemaining < 0) {
+            if (msecRemaining < 0)
+            {
                 return 0;
             }
-            if (msecRemaining > (long)Int32.MaxValue) {
+            if (msecRemaining > (long)Int32.MaxValue)
+            {
                 return Int32.MaxValue;
             }
             return (Int32)msecRemaining;
         }
 
-        static internal long GetTimeoutSeconds(int timeout) {
+        static internal long GetTimeoutSeconds(int timeout)
+        {
             return GetTimeout((long)timeout * 1000L);
         }
 
-        static internal long GetTimeout(long timeoutMilliseconds) {
+        static internal long GetTimeout(long timeoutMilliseconds)
+        {
             long result;
-            if (timeoutMilliseconds <= 0) {
+            if (timeoutMilliseconds <= 0)
+            {
                 result = Int64.MaxValue; // no timeout...
             }
-            else {
+            else
+            {
                 try
                 {
                     result = checked(ADP.TimerCurrent() + ADP.TimerFromMilliseconds(timeoutMilliseconds));
@@ -198,33 +226,42 @@ namespace Microsoft.Data.SqlClient
             return result;
         }
 
-        static internal bool TimeoutHasExpired(long timeoutTime) {
+        static internal bool TimeoutHasExpired(long timeoutTime)
+        {
             bool result = false;
 
-            if (0 != timeoutTime && Int64.MaxValue != timeoutTime) {
+            if (0 != timeoutTime && Int64.MaxValue != timeoutTime)
+            {
                 result = ADP.TimerHasExpired(timeoutTime);
             }
             return result;
         }
 
-        static internal int NullAwareStringLength(string str) {
-            if (str == null) {
+        static internal int NullAwareStringLength(string str)
+        {
+            if (str == null)
+            {
                 return 0;
             }
-            else {
+            else
+            {
                 return str.Length;
             }
         }
 
-        static internal int GetRemainingTimeout(int timeout, long start) {
-            if (timeout <= 0) {
+        static internal int GetRemainingTimeout(int timeout, long start)
+        {
+            if (timeout <= 0)
+            {
                 return timeout;
             }
             long remaining = ADP.TimerRemainingSeconds(start + ADP.TimerFromSeconds(timeout));
-            if (remaining <= 0) {
+            if (remaining <= 0)
+            {
                 return 1;
             }
-            else {
+            else
+            {
                 return checked((int)remaining);
             }
         }
