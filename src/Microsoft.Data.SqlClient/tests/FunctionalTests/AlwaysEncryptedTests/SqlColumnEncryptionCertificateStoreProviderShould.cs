@@ -324,6 +324,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         }
 
         [Fact]
+        [PlatformSpecific(TestPlatforms.Windows)]
         public void TestCustomKeyProviderListSetter()
         {
             // SqlConnection.RegisterColumnEncryptionKeyStoreProviders can be called only once in a process.
@@ -378,6 +379,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         }
 
         [Theory]
+        [PlatformSpecific(TestPlatforms.Windows)]
         [InlineData(new object[2] { LocalMachineMyPathPrefix, StoreLocation.LocalMachine })]
         [InlineData(new object[2] { CurrentUserMyPathPrefix, StoreLocation.CurrentUser })]
         [InlineData(new object[2] { MyPathPrefix, null })]
@@ -424,6 +426,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         }
 
         [Theory]
+        [PlatformSpecific(TestPlatforms.Windows)]
         [InlineData(new object[3] { @"iv", Utility.CColumnEncryptionType.Randomized, "Specified ciphertext has an invalid authentication tag.\r\nParameter name: cipherText" })]
         [InlineData(new object[3] { @"tag", Utility.CColumnEncryptionType.Randomized, "Specified ciphertext has an invalid authentication tag.\r\nParameter name: cipherText" })]
         [InlineData(new object[3] { @"cipher", Utility.CColumnEncryptionType.Randomized, "Specified ciphertext has an invalid authentication tag.\r\nParameter name: cipherText" })]
