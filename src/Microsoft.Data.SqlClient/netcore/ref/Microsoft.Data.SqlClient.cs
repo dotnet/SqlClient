@@ -26,8 +26,8 @@ namespace Microsoft.Data.SqlClient
     {
         ReadOnly = 1,
         ReadWrite = 0
-	}
-	public delegate void OnChangeEventHandler(object sender, Microsoft.Data.SqlClient.SqlNotificationEventArgs e);
+    }
+    public delegate void OnChangeEventHandler(object sender, Microsoft.Data.SqlClient.SqlNotificationEventArgs e);
     public enum SortOrder
     {
         Ascending = 0,
@@ -209,15 +209,15 @@ namespace Microsoft.Data.SqlClient
         [System.ComponentModel.DefaultValueAttribute(3)]
         public override System.Data.UpdateRowSource UpdatedRowSource { get { throw null; } set { } }
         public event System.Data.StatementCompletedEventHandler StatementCompleted { add { } remove { } }
-		public System.IAsyncResult BeginExecuteNonQuery() { throw null; }
-		public System.IAsyncResult BeginExecuteNonQuery(System.AsyncCallback callback, object stateObject) { throw null; }
-		public System.IAsyncResult BeginExecuteReader() { throw null; }
-		public System.IAsyncResult BeginExecuteReader(System.AsyncCallback callback, object stateObject) { throw null; }
-		public System.IAsyncResult BeginExecuteReader(System.AsyncCallback callback, object stateObject, System.Data.CommandBehavior behavior) { throw null; }
-		public System.IAsyncResult BeginExecuteReader(System.Data.CommandBehavior behavior) { throw null; }
-		public System.IAsyncResult BeginExecuteXmlReader() { throw null; }
-		public System.IAsyncResult BeginExecuteXmlReader(System.AsyncCallback callback, object stateObject) { throw null; }
-		public override void Cancel() { }
+        public System.IAsyncResult BeginExecuteNonQuery() { throw null; }
+        public System.IAsyncResult BeginExecuteNonQuery(System.AsyncCallback callback, object stateObject) { throw null; }
+        public System.IAsyncResult BeginExecuteReader() { throw null; }
+        public System.IAsyncResult BeginExecuteReader(System.AsyncCallback callback, object stateObject) { throw null; }
+        public System.IAsyncResult BeginExecuteReader(System.AsyncCallback callback, object stateObject, System.Data.CommandBehavior behavior) { throw null; }
+        public System.IAsyncResult BeginExecuteReader(System.Data.CommandBehavior behavior) { throw null; }
+        public System.IAsyncResult BeginExecuteXmlReader() { throw null; }
+        public System.IAsyncResult BeginExecuteXmlReader(System.AsyncCallback callback, object stateObject) { throw null; }
+        public override void Cancel() { }
         object System.ICloneable.Clone() { throw null; }
         public Microsoft.Data.SqlClient.SqlCommand Clone() { throw null; }
         protected override System.Data.Common.DbParameter CreateDbParameter() { throw null; }
@@ -572,7 +572,7 @@ namespace Microsoft.Data.SqlClient
         [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Never)]
         System.Data.IDataReader System.Data.IDataRecord.GetData(int i) { throw null; }
     }
-	public sealed partial class SqlDependency
+    public sealed partial class SqlDependency
     {
         public SqlDependency() { }
         public SqlDependency(Microsoft.Data.SqlClient.SqlCommand command) { }
@@ -586,7 +586,6 @@ namespace Microsoft.Data.SqlClient
         public static bool Stop(string connectionString) { throw null; }
         public static bool Stop(string connectionString, string queue) { throw null; }
     }
-	
     public sealed partial class SqlError
     {
         internal SqlError() { }
@@ -646,23 +645,23 @@ namespace Microsoft.Data.SqlClient
         public Microsoft.Data.SqlClient.SqlNotificationType Type { get { throw null; } }
     }
     public enum SqlNotificationInfo
-    {        
-		AlreadyChanged = -2,
-		Alter = 5,
-		Delete = 3,
+    {
+        AlreadyChanged = -2,
+        Alter = 5,
+        Delete = 3,
         Drop = 4,
-		Error = 7,
-		Expired = 12,
+        Error = 7,
+        Expired = 12,
         Insert = 1,
         Invalid = 9,
         Isolation = 11,
         Merge = 16,
         Options = 10,
-		PreviousFire = 14,		
+        PreviousFire = 14,
         Query = 8,
         Resource = 13,
         Restart = 6,
-        TemplateLimit = 15,																
+        TemplateLimit = 15,
         Truncate = 0,
         Unknown = -1,
         Update = 2
@@ -802,7 +801,7 @@ namespace Microsoft.Data.SqlClient
     public delegate void SqlRowUpdatedEventHandler(object sender, Microsoft.Data.SqlClient.SqlRowUpdatedEventArgs e);
     public sealed partial class SqlRowUpdatingEventArgs : System.Data.Common.RowUpdatingEventArgs
     {
-        public SqlRowUpdatingEventArgs(System.Data.DataRow row, System.Data.IDbCommand command, System.Data.StatementType statementType, System.Data.Common.DataTableMapping tableMapping) 
+        public SqlRowUpdatingEventArgs(System.Data.DataRow row, System.Data.IDbCommand command, System.Data.StatementType statementType, System.Data.Common.DataTableMapping tableMapping)
             : base(row, command, statementType, tableMapping) { }
         protected override System.Data.IDbCommand BaseCommand { get { throw null; } set { } }
         public new Microsoft.Data.SqlClient.SqlCommand Command { get { throw null; } set { } }
@@ -827,14 +826,14 @@ namespace Microsoft.Data.SqlClient.Server
     {
         None = 0,
         Read = 1
-    }    
-	public enum Format
+    }
+    public enum Format
     {
         Unknown = 0,
         Native = 1,
         UserDefined = 2
     }
-	public interface IBinarySerialize
+    public interface IBinarySerialize
     {
         void Read(System.IO.BinaryReader r);
         void Write(System.IO.BinaryWriter w);
@@ -971,7 +970,7 @@ namespace Microsoft.Data.SqlClient.Server
         public Microsoft.Data.SqlClient.SortOrder SortOrder { get { throw null; } }
         public int SortOrdinal { get { throw null; } }
         public System.Data.SqlDbType SqlDbType { get { throw null; } }
-		public System.Type Type { get { throw null; } }
+        public System.Type Type { get { throw null; } }
         public string TypeName { get { throw null; } }
         public bool UseServerDefault { get { throw null; } }
         public string XmlSchemaCollectionDatabase { get { throw null; } }
@@ -1044,12 +1043,11 @@ namespace Microsoft.Data.SqlClient.Server
         public string ValidationMethodName { get { throw null; } set { } }
         public string Name { get { throw null; } set { } }
     }
-	public enum SystemDataAccessKind
+    public enum SystemDataAccessKind
     {
         None = 0,
         Read = 1
     }
-
 }
 namespace Microsoft.Data.SqlClient.DataClassification
 {
