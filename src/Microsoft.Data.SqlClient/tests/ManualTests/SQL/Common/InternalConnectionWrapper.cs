@@ -2,12 +2,11 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System.Collections.Generic;
-using Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals;
-using System.Threading;
-using System.Runtime.InteropServices;
-using System.Reflection;
 using System;
+using System.Collections.Generic;
+using System.Reflection;
+using System.Threading;
+using Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {

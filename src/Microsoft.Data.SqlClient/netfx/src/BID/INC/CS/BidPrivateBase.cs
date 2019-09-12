@@ -68,25 +68,25 @@ internal static partial class Bid
     //
     internal enum ApiGroup : uint
     {
-        Off         = 0x00000000,
+        Off = 0x00000000,
 
-        Default     = 0x00000001,   // Bid.TraceEx (Always ON)
-        Trace       = 0x00000002,   // Bid.Trace, Bid.PutStr
-        Scope       = 0x00000004,   // Bid.Scope{Enter|Leave|Auto}
-        Perf        = 0x00000008,   // TBD..
-        Resource    = 0x00000010,   // TBD..
-        Memory      = 0x00000020,   // TBD..
-        StatusOk    = 0x00000040,   // S_OK, STATUS_SUCCESS, etc.
-        Advanced    = 0x00000080,   // Bid.TraceEx
+        Default = 0x00000001,   // Bid.TraceEx (Always ON)
+        Trace = 0x00000002,   // Bid.Trace, Bid.PutStr
+        Scope = 0x00000004,   // Bid.Scope{Enter|Leave|Auto}
+        Perf = 0x00000008,   // TBD..
+        Resource = 0x00000010,   // TBD..
+        Memory = 0x00000020,   // TBD..
+        StatusOk = 0x00000040,   // S_OK, STATUS_SUCCESS, etc.
+        Advanced = 0x00000080,   // Bid.TraceEx
 
-        Pooling     = 0x00001000,
-        Dependency  = 0x00002000,
-        StateDump   = 0x00004000,
+        Pooling = 0x00001000,
+        Dependency = 0x00002000,
+        StateDump = 0x00004000,
         Correlation = 0x00040000,
 
-        MaskBid     = 0x00000FFF,
-        MaskUser    = 0xFFFFF000,
-        MaskAll     = 0xFFFFFFFF
+        MaskBid = 0x00000FFF,
+        MaskUser = 0xFFFFF000,
+        MaskAll = 0xFFFFFFFF
     }
 
     //
@@ -98,11 +98,13 @@ internal static partial class Bid
         get { return (modFlags & ApiGroup.Default) != 0; }
     }
 #endif
-    internal static bool TraceOn {
+    internal static bool TraceOn
+    {
         [BidMethod(Enabled = false)] // Ignore this method in FXCopBid rule
         get { return (modFlags & ApiGroup.Trace) != 0; }
     }
-    internal static bool ScopeOn {
+    internal static bool ScopeOn
+    {
         get { return (modFlags & ApiGroup.Scope) != 0; }
     }
 #if BID_USE_ALL_APIGROUP
@@ -119,11 +121,13 @@ internal static partial class Bid
         get { return (modFlags & ApiGroup.StatusOk) != 0; }
     }
 #endif
-    internal static bool AdvancedOn {
+    internal static bool AdvancedOn
+    {
         get { return (modFlags & ApiGroup.Advanced) != 0; }
     }
 
-    internal static bool IsOn(ApiGroup flag) {
+    internal static bool IsOn(ApiGroup flag)
+    {
         return (modFlags & flag) != 0;
     }
 
@@ -136,15 +140,18 @@ internal static partial class Bid
 
     private static IntPtr __noData;
 
-    internal static IntPtr NoData {
+    internal static IntPtr NoData
+    {
         get { return __noData; }
     }
 
-    internal static IntPtr ID {
+    internal static IntPtr ID
+    {
         get { return modID; }
     }
 
-    internal static bool IsInitialized {
+    internal static bool IsInitialized
+    {
         get { return modID != NoData; }
     }
 
@@ -155,15 +162,15 @@ internal static partial class Bid
     internal struct ModeFlags
     {
         internal const uint
-            Default     = 0x00,
-            SmartNewLine= 0x01,
-            NewLine     = 0x02,
+            Default = 0x00,
+            SmartNewLine = 0x01,
+            NewLine = 0x02,
 
-            Enabled     = 0x04,
-          /*DemandSrc   = 0x08,*/
+            Enabled = 0x04,
+            /*DemandSrc   = 0x08,*/
 
-            Blob        = 0x10,
-            BlobCopy    = 0x12,
+            Blob = 0x10,
+            BlobCopy = 0x12,
             BlobBinMode = 0x14;
     }
 
@@ -171,8 +178,9 @@ internal static partial class Bid
     //
     //  PLAIN STRING OUTPUT
     //
-    internal static void PutStr (string str) {
-        if ((modFlags & ApiGroup.Trace) != 0  &&  modID != NoData)
+    internal static void PutStr(string str)
+    {
+        if ((modFlags & ApiGroup.Trace) != 0 && modID != NoData)
             NativeMethods.PutStr(modID, UIntPtr.Zero, (UIntPtr)ModeFlags.Default, str);
     }
 
@@ -212,35 +220,39 @@ internal static partial class Bid
     //
     //  Main Tracing Facility (More overloads to be provided in assembly-specific file)
     //
-   #if BID_AUTOSIG
+#if BID_AUTOSIG
     internal static void Trace(string fmtPrintfW, params object[] args) {
         SignatureGenerator.Trace (fmtPrintfW, args);
     }
     internal static void TraceEx(uint flags, string fmtPrintfW, params object[] args) {
         SignatureGenerator.TraceEx (flags, fmtPrintfW, args);
     }
-   #endif
+#endif
 
     [BidMethod]
-    internal static void Trace(string strConst) {
-        if ((modFlags & ApiGroup.Trace) != 0  &&  modID != NoData)
+    internal static void Trace(string strConst)
+    {
+        if ((modFlags & ApiGroup.Trace) != 0 && modID != NoData)
             NativeMethods.Trace(modID, UIntPtr.Zero, UIntPtr.Zero, strConst);
     }
 
     [BidMethod]
-    internal static void TraceEx(uint flags, string strConst) {
+    internal static void TraceEx(uint flags, string strConst)
+    {
         if (modID != NoData)
             NativeMethods.Trace(modID, UIntPtr.Zero, (UIntPtr)flags, strConst);
     }
 
     [BidMethod]
-    internal static void Trace(string fmtPrintfW, string a1) {
-        if ((modFlags & ApiGroup.Trace) != 0  &&  modID != NoData)
+    internal static void Trace(string fmtPrintfW, string a1)
+    {
+        if ((modFlags & ApiGroup.Trace) != 0 && modID != NoData)
             NativeMethods.Trace(modID, UIntPtr.Zero, UIntPtr.Zero, fmtPrintfW, a1);
     }
 
     [BidMethod]
-    internal static void TraceEx(uint flags, string fmtPrintfW, string a1) {
+    internal static void TraceEx(uint flags, string fmtPrintfW, string a1)
+    {
         if (modID != NoData)
             NativeMethods.Trace(modID, UIntPtr.Zero, (UIntPtr)flags, fmtPrintfW, a1);
     }
@@ -249,10 +261,15 @@ internal static partial class Bid
     //
     //  Scope Tracking
     //
-    internal static void ScopeLeave(ref IntPtr hScp) {
-        if ((modFlags & ApiGroup.Scope) != 0  && modID != NoData) {
-            if (hScp != NoData) NativeMethods.ScopeLeave(modID, UIntPtr.Zero, UIntPtr.Zero, ref hScp);
-        } else {
+    internal static void ScopeLeave(ref IntPtr hScp)
+    {
+        if ((modFlags & ApiGroup.Scope) != 0 && modID != NoData)
+        {
+            if (hScp != NoData)
+                NativeMethods.ScopeLeave(modID, UIntPtr.Zero, UIntPtr.Zero, ref hScp);
+        }
+        else
+        {
             hScp = NoData;  // NOTE: This assignment is necessary, even it may look useless
         }
     }
@@ -260,41 +277,53 @@ internal static partial class Bid
     //
     //  (More overloads to be provided in assembly-specific file)
     //
-   #if BID_AUTOSIG
+#if BID_AUTOSIG
     [BidMethod]
     internal static void ScopeEnter(out IntPtr hScp, string fmtPrintfW, params object[] args) {
         SignatureGenerator.ScopeEnter (out hScp, fmtPrintfW, args);
     }
 #endif
-    
+
     [BidMethod]
-    internal static void ScopeEnter(out IntPtr hScp, string strConst) {
-        if ((modFlags & ApiGroup.Scope) != 0  &&  modID != NoData) {
+    internal static void ScopeEnter(out IntPtr hScp, string strConst)
+    {
+        if ((modFlags & ApiGroup.Scope) != 0 && modID != NoData)
+        {
             NativeMethods.ScopeEnter(modID, UIntPtr.Zero, UIntPtr.Zero, out hScp, strConst);
-        } else {
+        }
+        else
+        {
             hScp = NoData;
         }
     }
 
     [BidMethod]
-    internal static void ScopeEnter(out IntPtr hScp, string fmtPrintfW, int a1) {
-        if ((modFlags & ApiGroup.Scope) != 0  &&  modID != NoData) {
+    internal static void ScopeEnter(out IntPtr hScp, string fmtPrintfW, int a1)
+    {
+        if ((modFlags & ApiGroup.Scope) != 0 && modID != NoData)
+        {
             NativeMethods.ScopeEnter(modID, UIntPtr.Zero, UIntPtr.Zero, out hScp, fmtPrintfW, a1);
-        } else {
+        }
+        else
+        {
             hScp = NoData;
         }
     }
 
     [BidMethod]
-    internal static void ScopeEnter(out IntPtr hScp, string fmtPrintfW, int a1, int a2) {
-        if ((modFlags & ApiGroup.Scope) != 0  &&  modID != NoData) {
+    internal static void ScopeEnter(out IntPtr hScp, string fmtPrintfW, int a1, int a2)
+    {
+        if ((modFlags & ApiGroup.Scope) != 0 && modID != NoData)
+        {
             NativeMethods.ScopeEnter(modID, UIntPtr.Zero, UIntPtr.Zero, out hScp, fmtPrintfW, a1, a2);
-        } else {
+        }
+        else
+        {
             hScp = NoData;
         }
     }
 
-   #if BID_USE_SCOPEAUTO
+#if BID_USE_SCOPEAUTO
     //+//////////////////////////////////////////////////////////////////////////////////////////
     //
     //  Automatic Scope Tracking
@@ -412,34 +441,41 @@ internal static partial class Bid
 
     // FXCopBid does not support validation of buffer versus length at this stage, disable testing
     // of this method by this rule
-    [BidMethod(Enabled = false)] 
-    internal static void TraceBin(string constStrHeader, byte[] buff, UInt16 length) {
-        if (modID != NoData) {
-            if (constStrHeader != null && constStrHeader.Length > 0) {
+    [BidMethod(Enabled = false)]
+    internal static void TraceBin(string constStrHeader, byte[] buff, UInt16 length)
+    {
+        if (modID != NoData)
+        {
+            if (constStrHeader != null && constStrHeader.Length > 0)
+            {
                 NativeMethods.PutStr(modID, UIntPtr.Zero, (UIntPtr)ModeFlags.SmartNewLine, constStrHeader);
             }
-            if( (UInt16)buff.Length < length ){
+            if ((UInt16)buff.Length < length)
+            {
                 length = (UInt16)buff.Length;
             }
-            NativeMethods.TraceBin( modID, UIntPtr.Zero, (UIntPtr)Bid.ModeFlags.Blob,
-                                    "<Trace|BLOB> %p %u\n", buff, length );
+            NativeMethods.TraceBin(modID, UIntPtr.Zero, (UIntPtr)Bid.ModeFlags.Blob,
+                                    "<Trace|BLOB> %p %u\n", buff, length);
         }
     }
 
     // FXCopBid does not support validation of buffer versus length at this stage, disable testing
     // of this method by this rule
     [BidMethod(Enabled = false)] // do not validate calls to this method in FXCopBid
-    internal static void TraceBinEx(byte[] buff, UInt16 length) {
-        if (modID != NoData) {
-            if( (UInt16)buff.Length < length ){
+    internal static void TraceBinEx(byte[] buff, UInt16 length)
+    {
+        if (modID != NoData)
+        {
+            if ((UInt16)buff.Length < length)
+            {
                 length = (UInt16)buff.Length;
             }
-            NativeMethods.TraceBin( modID, UIntPtr.Zero, (UIntPtr)Bid.ModeFlags.Blob,
-                                    "<Trace|BLOB> %p %u\n", buff, length );
+            NativeMethods.TraceBin(modID, UIntPtr.Zero, (UIntPtr)Bid.ModeFlags.Blob,
+                                    "<Trace|BLOB> %p %u\n", buff, length);
         }
     }
 
-   #if BID_USE_EXTENSIONS
+#if BID_USE_EXTENSIONS
     //+//////////////////////////////////////////////////////////////////////////////////////////
     //
     //  STRUCTURED EXTENSION
@@ -484,11 +520,11 @@ internal static partial class Bid
     //  WriteEx to be used in BidExtensions
     //  (More overloads to be provided in assembly-specific file)
     //
-   #if BID_AUTOSIG
+#if BID_AUTOSIG
     internal static void WriteEx(IntPtr hCtx, uint flags, string fmtPrintfW, params object[] args) {
         SignatureGenerator.WriteEx (hCtx, flags, fmtPrintfW, args);
     }
-   #endif
+#endif
 
     internal static void WriteEx(IntPtr hCtx, uint flags, string strConst) {
         NativeMethods.Trace(hCtx, UIntPtr.Zero, (UIntPtr)flags, strConst);
@@ -543,7 +579,7 @@ internal static partial class Bid
     }
 
 
-   #endif // BID_USE_EXTENSIONS
+#endif // BID_USE_EXTENSIONS
     //+//////////////////////////////////////////////////////////////////////////////////////////
     //
     //  SERVICES
@@ -559,10 +595,13 @@ internal static partial class Bid
     }
 #endif
 
-    internal static ApiGroup SetApiGroupBits (ApiGroup mask, ApiGroup bits) {
-        lock (_setBitsLock) {
+    internal static ApiGroup SetApiGroupBits(ApiGroup mask, ApiGroup bits)
+    {
+        lock (_setBitsLock)
+        {
             ApiGroup tmp = modFlags;
-            if( mask != ApiGroup.Off ){
+            if (mask != ApiGroup.Off)
+            {
                 modFlags ^= (bits ^ tmp) & mask;
             }
             return tmp;
@@ -638,8 +677,10 @@ internal static partial class Bid
     //
     //  BID-specific Text Metadata
     //
-    internal static bool AddMetaText(string metaStr) {
-        if( modID != NoData ){
+    internal static bool AddMetaText(string metaStr)
+    {
+        if (modID != NoData)
+        {
             NativeMethods.AddMetaText(modID, DefaultCmdSpace, CtlCmd.AddMetaText, IntPtr.Zero, metaStr, IntPtr.Zero);
         }
         return true;
@@ -663,33 +704,39 @@ internal static partial class Bid
     //  DEBUG-ONLY SERVICES
     //
     [System.Diagnostics.Conditional("DEBUG")]
-    internal static void DTRACE(string strConst) {
-        if ((modFlags & ApiGroup.Trace) != 0  &&  modID != NoData) {
+    internal static void DTRACE(string strConst)
+    {
+        if ((modFlags & ApiGroup.Trace) != 0 && modID != NoData)
+        {
             NativeMethods.PutStr(modID, UIntPtr.Zero, (UIntPtr)ModeFlags.SmartNewLine, strConst);
         }
     }
 
     [System.Diagnostics.Conditional("DEBUG")]
-    internal static void DTRACE(string clrFormatString, params object[] args) {
-        if ((modFlags & ApiGroup.Trace) != 0  &&  modID != NoData) {
+    internal static void DTRACE(string clrFormatString, params object[] args)
+    {
+        if ((modFlags & ApiGroup.Trace) != 0 && modID != NoData)
+        {
             NativeMethods.PutStr(modID, UIntPtr.Zero, (UIntPtr)ModeFlags.SmartNewLine,
                                 String.Format(CultureInfo.CurrentCulture, clrFormatString, args));
         }
     }
 
     [System.Diagnostics.Conditional("DEBUG")]
-    internal static void DASSERT(bool condition) {
-        if (!condition) {
-           #if false
+    internal static void DASSERT(bool condition)
+    {
+        if (!condition)
+        {
+#if false
             if (0 == nativeAssert(sourceFileLineNumber)) {
                 if (!Debugger.IsAttached) {
                     Debugger.Launch();
                 }
                 Debugger.Break();
             }
-           #else
+#else
             System.Diagnostics.Trace.Assert(false);
-           #endif
+#endif
         }
     }
 
@@ -704,15 +751,15 @@ internal static partial class Bid
     //  modID should be unique within the process (generated by DllBidEntryPoint), however modID may be recycled and reused
     //
     private
-    static  IntPtr modID = internalInitialize();
+    static IntPtr modID = internalInitialize();
 
     private
-    static  ApiGroup modFlags;
+    static ApiGroup modFlags;
 
-    private static   string     modIdentity;
+    private static string modIdentity;
 
-    private delegate ApiGroup   CtrlCB( ApiGroup mask, ApiGroup bits );
-    private static   CtrlCB     ctrlCallback;
+    private delegate ApiGroup CtrlCB(ApiGroup mask, ApiGroup bits);
+    private static CtrlCB ctrlCallback;
 
     //
     //  Binding Cookie
@@ -721,26 +768,26 @@ internal static partial class Bid
     private class BindingCookie
     {
         internal IntPtr _data;
-        internal BindingCookie()    { _data = (IntPtr)(-1); }
+        internal BindingCookie() { _data = (IntPtr)(-1); }
 
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
-        internal void Invalidate()  { _data = (IntPtr)(-1); }
+        internal void Invalidate() { _data = (IntPtr)(-1); }
     };
 
     private static BindingCookie cookieObject;
-    private static GCHandle      hCookie;
+    private static GCHandle hCookie;
 
     private static void deterministicStaticInit()
     {
-        __noData          = (IntPtr)(-1);
+        __noData = (IntPtr)(-1);
         __defaultCmdSpace = (IntPtr)(-1);
 
-        modFlags     = ApiGroup.Off;
-        modIdentity  = string.Empty;
+        modFlags = ApiGroup.Off;
+        modIdentity = string.Empty;
         ctrlCallback = new CtrlCB(SetApiGroupBits);
 
         cookieObject = new BindingCookie();
-        hCookie      = GCHandle.Alloc(cookieObject, GCHandleType.Pinned);
+        hCookie = GCHandle.Alloc(cookieObject, GCHandleType.Pinned);
     }
 
     //
@@ -749,7 +796,8 @@ internal static partial class Bid
 
     private static IntPtr __defaultCmdSpace;
 
-    internal static IntPtr DefaultCmdSpace {
+    internal static IntPtr DefaultCmdSpace
+    {
         get { return __defaultCmdSpace; }
     }
 
@@ -767,27 +815,27 @@ internal static partial class Bid
         //  'Dcs' stands for 'Default Command Space'
         //
         DcsBase = 268435456 * 4,    // 0x10000000 * 4
-        DcsMax  = 402653183 * 4,    // 0x17FFFFFF * 4
+        DcsMax = 402653183 * 4,    // 0x17FFFFFF * 4
 
         //
         //  Control Panel commands are in range [CtlCmd.CplBase .. CtlCmd.CplMax]
         //
         CplBase = 402653184 * 4,    // 0x18000000 * 4
-        CplMax =  536870911 * 4,    // 0x1FFFFFFF * 4
+        CplMax = 536870911 * 4,    // 0x1FFFFFFF * 4
 
         //
         //  Predefined commands (have wrapper functions)
         //
-        CmdSpaceCount   =  0 * 4 + DcsBase,
-        CmdSpaceEnum    =  1 * 4 + DcsBase,
-        CmdSpaceQuery   =  2 * 4 + DcsBase,
+        CmdSpaceCount = 0 * 4 + DcsBase,
+        CmdSpaceEnum = 1 * 4 + DcsBase,
+        CmdSpaceQuery = 2 * 4 + DcsBase,
 
-        GetEventID      =  5 * 4 + DcsBase + Unicode,
-        ParseString     =  6 * 4 + DcsBase + Unicode,
-        AddExtension    =  7 * 4 + DcsBase + Unicode,
-        AddMetaText     =  8 * 4 + DcsBase + Unicode,
-        AddResHandle    =  9 * 4 + DcsBase + Unicode,
-        Shutdown        = 10 * 4 + DcsBase + Unicode,
+        GetEventID = 5 * 4 + DcsBase + Unicode,
+        ParseString = 6 * 4 + DcsBase + Unicode,
+        AddExtension = 7 * 4 + DcsBase + Unicode,
+        AddMetaText = 8 * 4 + DcsBase + Unicode,
+        AddResHandle = 9 * 4 + DcsBase + Unicode,
+        Shutdown = 10 * 4 + DcsBase + Unicode,
 
         LastItem
 
@@ -810,23 +858,23 @@ internal static partial class Bid
     [StructLayout(LayoutKind.Sequential)]
     private struct BIDEXTINFO
     {
-        IntPtr  hModule;
+        IntPtr hModule;
         [MarshalAs(UnmanagedType.LPWStr)]
-        string  DomainName;
-        int     Reserved2;
-        int     Reserved;
+        string DomainName;
+        int Reserved2;
+        int Reserved;
         [MarshalAs(UnmanagedType.LPWStr)]
-        string  ModulePath;
-        IntPtr  ModulePathA;
-        IntPtr  pBindCookie;
+        string ModulePath;
+        IntPtr ModulePathA;
+        IntPtr pBindCookie;
 
         internal BIDEXTINFO(IntPtr hMod, string modPath, string friendlyName, IntPtr cookiePtr)
         {
-            hModule     = hMod;
-            DomainName  = friendlyName;
-            Reserved2   = 0;
-            Reserved    = 0;
-            ModulePath  = modPath;
+            hModule = hMod;
+            DomainName = friendlyName;
+            Reserved2 = 0;
+            Reserved = 0;
+            ModulePath = modPath;
             ModulePathA = IntPtr.Zero;
             pBindCookie = cookiePtr;
         }
@@ -836,9 +884,12 @@ internal static partial class Bid
     {
         string idStr;
         object[] attrColl = mod.GetCustomAttributes(typeof(BidIdentityAttribute), true);
-        if( attrColl.Length == 0 ){
+        if (attrColl.Length == 0)
+        {
             idStr = mod.Name;
-        } else {
+        }
+        else
+        {
             idStr = ((BidIdentityAttribute)attrColl[0]).IdentityString;
         }
         //Debug.Assert( attrColl.Length == 1 );
@@ -848,7 +899,8 @@ internal static partial class Bid
     private static string getAppDomainFriendlyName()
     {
         string name = AppDomain.CurrentDomain.FriendlyName;
-        if( name == null || name.Length <= 0 ) {
+        if (name == null || name.Length <= 0)
+        {
             name = "AppDomain.H" + AppDomain.CurrentDomain.GetHashCode();
         }
 
@@ -860,7 +912,8 @@ internal static partial class Bid
     [ResourceExposure(ResourceScope.Machine)]
     [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)] // Module.FullyQualifiedName
     [FileIOPermission(SecurityAction.Assert, Unrestricted = true)]
-    private static string getModulePath(Module mod) {
+    private static string getModulePath(Module mod)
+    {
         return mod.FullyQualifiedName;
     }
 
@@ -876,7 +929,7 @@ internal static partial class Bid
         //  instead of actual module, which is Ok because it is the only module
         //  in the single-file assembly.
         //
-        Module mod  = Assembly.GetExecutingAssembly().ManifestModule;
+        Module mod = Assembly.GetExecutingAssembly().ManifestModule;
         modIdentity = getIdentity(mod);
         modID = NoData;
 
@@ -886,17 +939,18 @@ internal static partial class Bid
                                             friendlyName,
                                             hCookie.AddrOfPinnedObject());
 
-        NativeMethods.DllBidEntryPoint( ref modID, BidVer, modIdentity,
+        NativeMethods.DllBidEntryPoint(ref modID, BidVer, modIdentity,
                                         configFlags, ref modFlags, ctrlCallback,
-                                        ref extInfo, IntPtr.Zero, IntPtr.Zero );
+                                        ref extInfo, IntPtr.Zero, IntPtr.Zero);
 
-        if( modID != NoData )
+        if (modID != NoData)
         {
             object[] attrColl = mod.GetCustomAttributes(typeof(BidMetaTextAttribute), true);
-            foreach (object obj in attrColl) {
-                AddMetaText( ((BidMetaTextAttribute)obj).MetaText );
+            foreach (object obj in attrColl)
+            {
+                AddMetaText(((BidMetaTextAttribute)obj).MetaText);
             }
-            
+
             Bid.Trace("<ds.Bid|Info> VersionSafeName='%ls'\n", friendlyName);
         }
     } // initEntryPoint
@@ -906,18 +960,21 @@ internal static partial class Bid
     [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
     private static void doneEntryPoint()
     {
-        if (modID == NoData) {
+        if (modID == NoData)
+        {
             modFlags = ApiGroup.Off;
             return;
         }
 
-        try {
-            NativeMethods.DllBidEntryPoint( ref modID, 0, IntPtr.Zero,
+        try
+        {
+            NativeMethods.DllBidEntryPoint(ref modID, 0, IntPtr.Zero,
                                             configFlags, ref modFlags,
-                                            IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero );
+                                            IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
             NativeMethods.DllBidFinalize();
         }
-        catch {
+        catch
+        {
             //
             //  We do intentionally catch everything because no matter what happens
             //  we don't want any exception to escape when we're in context of a finalizer.
@@ -926,7 +983,8 @@ internal static partial class Bid
             //
             modFlags = ApiGroup.Off;    // This is 'NoOp', just to not have empty catch block.
         }
-        finally {
+        finally
+        {
             cookieObject.Invalidate();
             modID = NoData;
             modFlags = ApiGroup.Off;
@@ -940,16 +998,19 @@ internal static partial class Bid
 
     private sealed class AutoInit : SafeHandle
     {
-        internal AutoInit() : base(IntPtr.Zero, true) {
+        internal AutoInit() : base(IntPtr.Zero, true)
+        {
             initEntryPoint();
             _bInitialized = true;
         }
-        override protected bool ReleaseHandle() {
+        override protected bool ReleaseHandle()
+        {
             _bInitialized = false;
             doneEntryPoint();
             return true;
         }
-        public override bool IsInvalid {
+        public override bool IsInvalid
+        {
             get { return !_bInitialized; }
         }
         private bool _bInitialized;
@@ -976,45 +1037,52 @@ internal static partial class Bid
         //  Plain text
         //
         [ResourceExposure(ResourceScope.None)]
-        [DllImport(dllName, CharSet=CharSet.Unicode, CallingConvention=CallingConvention.StdCall,
-        EntryPoint="DllBidPutStrW")] extern
+        [DllImport(dllName, CharSet = CharSet.Unicode, CallingConvention = CallingConvention.StdCall,
+        EntryPoint = "DllBidPutStrW")]
+        extern
         internal static void PutStr(IntPtr hID, UIntPtr src, UIntPtr info, string str);
 
         //
         //  Trace
         //
         [ResourceExposure(ResourceScope.None)]
-        [DllImport(dllName, CharSet=CharSet.Unicode, CallingConvention=CallingConvention.Cdecl,
-        EntryPoint="DllBidTraceCW")] extern
+        [DllImport(dllName, CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl,
+        EntryPoint = "DllBidTraceCW")]
+        extern
         internal static void Trace(IntPtr hID, UIntPtr src, UIntPtr info, string strConst);
 
         [ResourceExposure(ResourceScope.None)]
-        [DllImport(dllName, CharSet=CharSet.Unicode, CallingConvention=CallingConvention.Cdecl,
-        EntryPoint="DllBidTraceCW")] extern
+        [DllImport(dllName, CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl,
+        EntryPoint = "DllBidTraceCW")]
+        extern
         internal static void Trace(IntPtr hID, UIntPtr src, UIntPtr info, string fmtPrintfW, string a1);
 
         //
         //  Scope
         //
         [ResourceExposure(ResourceScope.None)]
-        [DllImport(dllName, EntryPoint="DllBidScopeLeave")] extern
+        [DllImport(dllName, EntryPoint = "DllBidScopeLeave")]
+        extern
         internal static void ScopeLeave(IntPtr hID, UIntPtr src, UIntPtr info, ref IntPtr hScp);
 
         [ResourceExposure(ResourceScope.None)]
-        [DllImport(dllName, CharSet=CharSet.Unicode, CallingConvention=CallingConvention.Cdecl,
-        EntryPoint="DllBidScopeEnterCW")] extern
+        [DllImport(dllName, CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl,
+        EntryPoint = "DllBidScopeEnterCW")]
+        extern
         internal static void ScopeEnter(IntPtr hID, UIntPtr src, UIntPtr info, out IntPtr hScp, string strConst);
 
         [ResourceExposure(ResourceScope.None)]
-        [DllImport(dllName, CharSet=CharSet.Unicode, CallingConvention=CallingConvention.Cdecl,
-        EntryPoint="DllBidScopeEnterCW")] extern
-        internal static void ScopeEnter( IntPtr hID, UIntPtr src, UIntPtr info, out IntPtr hScp,
+        [DllImport(dllName, CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl,
+        EntryPoint = "DllBidScopeEnterCW")]
+        extern
+        internal static void ScopeEnter(IntPtr hID, UIntPtr src, UIntPtr info, out IntPtr hScp,
                                          string fmtPrintfW, int a1);
 
         [ResourceExposure(ResourceScope.None)]
-        [DllImport(dllName, CharSet=CharSet.Unicode, CallingConvention=CallingConvention.Cdecl,
-        EntryPoint="DllBidScopeEnterCW")] extern
-        internal static void ScopeEnter( IntPtr hID, UIntPtr src, UIntPtr info, out IntPtr hScp,
+        [DllImport(dllName, CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl,
+        EntryPoint = "DllBidScopeEnterCW")]
+        extern
+        internal static void ScopeEnter(IntPtr hID, UIntPtr src, UIntPtr info, out IntPtr hScp,
                                          string fmtPrintfW, int a1, int a2);
 
 
@@ -1034,8 +1102,9 @@ internal static partial class Bid
 #endif
 
         [ResourceExposure(ResourceScope.None)]
-        [DllImport(dllName, CharSet=CharSet.Unicode, CallingConvention=CallingConvention.Cdecl,
-        EntryPoint="DllBidTraceCW")] extern
+        [DllImport(dllName, CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl,
+        EntryPoint = "DllBidTraceCW")]
+        extern
         internal static void TraceBin(IntPtr hID, UIntPtr src, UIntPtr info, string fmtPrintfW, byte[] buff, UInt32 len);
 
 #if BID_USE_INSTANCE_TRACKING
@@ -1066,16 +1135,17 @@ internal static partial class Bid
 #endif
 
         [ResourceExposure(ResourceScope.None)]
-        [DllImport(dllName, CharSet=CharSet.Unicode, EntryPoint="DllBidCtlProc")] extern
-        internal static void AddMetaText( IntPtr hID, IntPtr cmdSpace, CtlCmd cmd, IntPtr nop1,
+        [DllImport(dllName, CharSet = CharSet.Unicode, EntryPoint = "DllBidCtlProc")]
+        extern
+        internal static void AddMetaText(IntPtr hID, IntPtr cmdSpace, CtlCmd cmd, IntPtr nop1,
                                           string txtID, IntPtr nop2);
 
-       #if BID_USE_EXTENSIONS
+#if BID_USE_EXTENSIONS
         [ResourceExposure(ResourceScope.None)]
         [DllImport(dllName, CharSet=CharSet.Unicode, EntryPoint="DllBidCtlProc")] extern
         internal static void AddExtension( IntPtr hID, IntPtr cmdSpaceID, CtlCmd cmd,
                                            IntPtr data, string txtID, ExtDelegate proc);
-       #endif
+#endif
 
 #if BID_USE_CONTROL
         [ResourceExposure(ResourceScope.None)]
@@ -1088,25 +1158,29 @@ internal static partial class Bid
         //  Initialization / finalization
         //
         [ResourceExposure(ResourceScope.Machine)]
-        [DllImport(dllName, CharSet=CharSet.Ansi, BestFitMapping=false)] extern
+        [DllImport(dllName, CharSet = CharSet.Ansi, BestFitMapping = false)]
+        extern
         internal static void DllBidEntryPoint(ref IntPtr hID, int bInitAndVer, string sIdentity,
                                             uint propBits, ref ApiGroup pGblFlags, CtrlCB fAddr,
                                             ref BIDEXTINFO pExtInfo, IntPtr pHooks, IntPtr pHdr);
 
         [ResourceExposure(ResourceScope.Machine)]
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
-        [DllImport(dllName)] extern
+        [DllImport(dllName)]
+        extern
         internal static void DllBidEntryPoint(ref IntPtr hID, int bInitAndVer, IntPtr unused1,
                                             uint propBits, ref ApiGroup pGblFlags, IntPtr unused2,
                                             IntPtr unused3, IntPtr unused4, IntPtr unused5);
 
         [ResourceExposure(ResourceScope.None)]
-        [DllImport(dllName)] extern
+        [DllImport(dllName)]
+        extern
         internal static void DllBidInitialize();
 
         [ResourceExposure(ResourceScope.None)]
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
-        [DllImport(dllName)] extern
+        [DllImport(dllName)]
+        extern
         internal static void DllBidFinalize();
 
     } // NativeMethods
@@ -1121,16 +1195,18 @@ internal static partial class Bid
 //
 //  [module: BidIdentity("ModuleIdentityString")]
 //
-[AttributeUsage(AttributeTargets.Module, AllowMultiple=false)]
+[AttributeUsage(AttributeTargets.Module, AllowMultiple = false)]
 internal sealed class BidIdentityAttribute : Attribute
 {
-    internal BidIdentityAttribute( string idStr ){
+    internal BidIdentityAttribute(string idStr)
+    {
         _identity = idStr;
     }
-    internal string IdentityString {
+    internal string IdentityString
+    {
         get { return _identity; }
     }
-    string  _identity;
+    string _identity;
 }
 
 //
@@ -1138,16 +1214,18 @@ internal sealed class BidIdentityAttribute : Attribute
 //  [module: BidMetaText("<ApiGroup> ...")]
 //  ...etc...
 //
-[AttributeUsage(AttributeTargets.Module, AllowMultiple=true)]
+[AttributeUsage(AttributeTargets.Module, AllowMultiple = true)]
 internal sealed class BidMetaTextAttribute : Attribute
 {
-    internal BidMetaTextAttribute( string str ){
+    internal BidMetaTextAttribute(string str)
+    {
         _metaText = str;
     }
-    internal string MetaText {
+    internal string MetaText
+    {
         get { return _metaText; }
     }
-    string  _metaText;
+    string _metaText;
 }
 
 
@@ -1176,7 +1254,8 @@ internal sealed class BidMethodAttribute : Attribute
     /// if Enabled is true, FxCopBid rule will validate all calls to this method and require that it will have string argument;
     /// otherwise, this method is ignored.
     /// </summary>
-    public bool Enabled {
+    public bool Enabled
+    {
         get
         {
             return m_enabled;
@@ -1199,7 +1278,7 @@ internal sealed class BidMethodAttribute : Attribute
 /// If you need to rename/remove the attribute or change its properties, make sure to update the FxCopBid rule!
 /// </summary>
 [System.Diagnostics.ConditionalAttribute("CODE_ANALYSIS")]
-[System.AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Method, AllowMultiple=true)]
+[System.AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Method, AllowMultiple = true)]
 internal sealed class BidArgumentTypeAttribute : Attribute
 {
     // this overload can be used on the argument itself
@@ -1468,7 +1547,7 @@ internal sealed class SignatureGenerator
         Buckets.Native.ScopeEnter.Consider(args);
     }
 
-   #if BID_USE_EXTENSIONS
+#if BID_USE_EXTENSIONS
     internal static void WriteEx(IntPtr hCtx, uint flags, string fmtPrintfW, params object[] args)
     {
         //
@@ -1482,7 +1561,7 @@ internal sealed class SignatureGenerator
         Buckets.WriteEx.Consider(args);
         Buckets.Native.Trace.Consider(args);
     }
-   #endif
+#endif
 
 
     //

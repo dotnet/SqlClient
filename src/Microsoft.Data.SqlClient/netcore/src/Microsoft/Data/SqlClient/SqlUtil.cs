@@ -2,21 +2,20 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System.Data.Common;
+using System;
+using System.Collections.Generic;
+using System.Data;
 using System.Diagnostics;
 using System.Globalization;
+using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Reflection;
 using System.Transactions;
-using System;
 using Microsoft.Data.Common;
-using System.Data;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -34,7 +33,8 @@ namespace Microsoft.Data.SqlClient
                 TaskCompletionSource<object> completion = new TaskCompletionSource<object>();
                 ContinueTaskWithState(task, completion,
                     state: Tuple.Create(onSuccess, onFailure, completion),
-                    onSuccess: (state) => {
+                    onSuccess: (state) =>
+                    {
                         var parameters = (Tuple<Action, Action<Exception>, TaskCompletionSource<object>>)state;
                         Action success = parameters.Item1;
                         TaskCompletionSource<object> taskCompletionSource = parameters.Item3;
@@ -63,7 +63,8 @@ namespace Microsoft.Data.SqlClient
             {
                 var completion = new TaskCompletionSource<object>();
                 ContinueTaskWithState(task, completion, state,
-                    onSuccess: (continueState) => {
+                    onSuccess: (continueState) =>
+                    {
                         onSuccess(continueState);
                         completion.SetResult(null);
                     },
@@ -295,7 +296,7 @@ namespace Microsoft.Data.SqlClient
         internal static Exception ParsingErrorLibraryType(ParsingErrorState state, int libraryType)
         {
             return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_ParsingErrorAuthLibraryType, ((int)state).ToString(CultureInfo.InvariantCulture), libraryType));
-        }       
+        }
         internal static Exception InvalidSQLServerVersionUnknown()
         {
             return ADP.DataAdapter(System.SRHelper.GetString(SR.SQL_InvalidSQLServerVersionUnknown));
@@ -1670,11 +1671,11 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Argument(System.SRHelper.GetString(SR.TCE_NullEnclavePackageForEnclaveBasedQuery, enclaveType, enclaveAttestationUrl));
         }
-        
+
         #endregion Always Encrypted - Client side query processing errors
 
         #region Always Encrypted - SQL connection related error messages
-        
+
         internal static Exception TceNotSupported()
         {
             return ADP.InvalidOperation(System.SRHelper.GetString(SR.TCE_NotSupportedByServer, "SQL Server"));
@@ -1692,7 +1693,6 @@ namespace Microsoft.Data.SqlClient
         #endregion Always Encrypted - SQL connection related error messages
 
         #region Always Encrypted - Extensibility related error messages
-        
 
         internal static Exception CanOnlyCallOnce()
         {

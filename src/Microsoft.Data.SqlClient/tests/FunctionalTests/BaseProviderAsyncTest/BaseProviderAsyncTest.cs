@@ -138,7 +138,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             Task<bool> result;
 
-            result = reader.ReadAsync(); result.Wait();
+            result = reader.ReadAsync();
+            result.Wait();
             AssertEqualsWithDescription("Read", reader.LastCommand, "Last command was not as expected");
             Assert.True(result.Result, "Should have received a Result from the ReadAsync");
             Assert.False(reader.CancellationToken.CanBeCanceled, "Default cancellation token should not be cancellable");
@@ -147,7 +148,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.False(reader.CancellationToken.CanBeCanceled, "Default cancellation token should not be cancellable");
             GetFieldValueAsync(reader, source.Token, 1, "1");
 
-            result = reader.ReadAsync(source.Token); result.Wait();
+            result = reader.ReadAsync(source.Token);
+            result.Wait();
             AssertEqualsWithDescription("Read", reader.LastCommand, "Last command was not as expected");
             Assert.True(result.Result, "Should have received a Result from the ReadAsync");
 
@@ -158,7 +160,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             reader.GetFieldValueAsync<bool>(2).ContinueWith((t) => { }, TaskContinuationOptions.OnlyOnFaulted).Wait();
             AssertEqualsWithDescription("GetValue", reader.LastCommand, "Last command was not as expected");
 
-            result = reader.ReadAsync(); result.Wait();
+            result = reader.ReadAsync();
+            result.Wait();
             AssertEqualsWithDescription("Read", reader.LastCommand, "Last command was not as expected");
             Assert.False(result.Result, "Should NOT have received a Result from the ReadAsync");
 

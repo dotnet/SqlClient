@@ -2,52 +2,63 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-namespace Microsoft.Data.ProviderBase {
+namespace Microsoft.Data.ProviderBase
+{
 
     using System;
-    using System.Collections;
-    using System.Collections.Generic;
     using System.Diagnostics;
     using System.Threading;
 
-    internal abstract class DbReferenceCollection {
+    internal abstract class DbReferenceCollection
+    {
 
-        private struct CollectionEntry {
+        private struct CollectionEntry
+        {
             private int _tag;              // information about the reference
             private WeakReference _weak;   // the reference itself.
 
-            public void NewTarget(int tag, object target) {
+            public void NewTarget(int tag, object target)
+            {
                 Debug.Assert(!HasTarget, "Entry already has a valid target");
                 Debug.Assert(tag != 0, "Bad tag");
                 Debug.Assert(target != null, "Invalid target");
 
-                if (_weak == null) {
+                if (_weak == null)
+                {
                     _weak = new WeakReference(target, false);
                 }
-                else {
+                else
+                {
                     _weak.Target = target;
                 }
                 _tag = tag;
             }
 
-            public void RemoveTarget() {
+            public void RemoveTarget()
+            {
                 _tag = 0;
             }
 
-            public bool HasTarget {
-                get {
+            public bool HasTarget
+            {
+                get
+                {
                     return ((_tag != 0) && (_weak.IsAlive));
                 }
             }
-            
-            public int Tag {
-                get {
-                     return _tag;
+
+            public int Tag
+            {
+                get
+                {
+                    return _tag;
                 }
             }
 
-            public object Target {
-                get {
+            public object Target
+            {
+                get
+                {
                     return (_tag == 0 ? null : _weak.Target);
                 }
             }
@@ -61,7 +72,8 @@ namespace Microsoft.Data.ProviderBase {
         private int _lastItemIndex;             // Location of the last item in _items
         private volatile bool _isNotifying;     // Indicates that the collection is currently being notified (and, therefore, about to be cleared)
 
-        protected DbReferenceCollection() {
+        protected DbReferenceCollection()
+        {
             _items = new CollectionEntry[DefaultCollectionSize];
             _itemLock = new object();
             _optimisticCount = 0;
@@ -70,14 +82,18 @@ namespace Microsoft.Data.ProviderBase {
 
         abstract public void Add(object value, int tag);
 
-        protected void AddItem(object value, int tag) {
+        protected void AddItem(object value, int tag)
+        {
             Debug.Assert(null != value && 0 != tag, "AddItem with null value or 0 tag");
             bool itemAdded = false;
 
-            lock (_itemLock) {
+            lock (_itemLock)
+            {
                 // Try to find a free spot
-                for (int i = 0; i <= _lastItemIndex; ++i) {
-                    if (_items[i].Tag == 0) {
+                for (int i = 0; i <= _lastItemIndex; ++i)
+                {
+                    if (_items[i].Tag == 0)
+                    {
                         _items[i].NewTarget(tag, value);
                         Debug.Assert(_items[i].HasTarget, "missing expected target");
                         itemAdded = true;
@@ -86,16 +102,20 @@ namespace Microsoft.Data.ProviderBase {
                 }
 
                 // No free spots, can we just add on to the end?
-                if ((!itemAdded) && (_lastItemIndex + 1 < _items.Length)) {
+                if ((!itemAdded) && (_lastItemIndex + 1 < _items.Length))
+                {
                     _lastItemIndex++;
                     _items[_lastItemIndex].NewTarget(tag, value);
                     itemAdded = true;
                 }
 
                 // If no free spots and no space at the end, try to find a dead item
-                if (!itemAdded) {
-                    for (int i = 0; i <= _lastItemIndex; ++i) {
-                        if (!_items[i].HasTarget) {
+                if (!itemAdded)
+                {
+                    for (int i = 0; i <= _lastItemIndex; ++i)
+                    {
+                        if (!_items[i].HasTarget)
+                        {
                             _items[i].NewTarget(tag, value);
                             Debug.Assert(_items[i].HasTarget, "missing expected target");
                             itemAdded = true;
@@ -105,7 +125,8 @@ namespace Microsoft.Data.ProviderBase {
                 }
 
                 // If nothing was free, then resize and add to the end
-                if (!itemAdded) {
+                if (!itemAdded)
+                {
                     Array.Resize<CollectionEntry>(ref _items, _items.Length * 2);
                     _lastItemIndex++;
                     _items[_lastItemIndex].NewTarget(tag, value);
@@ -115,23 +136,31 @@ namespace Microsoft.Data.ProviderBase {
             }
         }
 
-        internal T FindItem<T>(int tag, Func<T, bool> filterMethod) where T : class {
+        internal T FindItem<T>(int tag, Func<T, bool> filterMethod) where T : class
+        {
             bool lockObtained = false;
-            try {
+            try
+            {
                 TryEnterItemLock(ref lockObtained);
-                if (lockObtained) {
-                    if (_optimisticCount > 0) {
+                if (lockObtained)
+                {
+                    if (_optimisticCount > 0)
+                    {
                         // Loop through the items
-                        for (int counter = 0; counter <= _lastItemIndex; counter++) {
+                        for (int counter = 0; counter <= _lastItemIndex; counter++)
+                        {
                             // Check tag (should be easiest and quickest)
-                            if (_items[counter].Tag == tag) {
+                            if (_items[counter].Tag == tag)
+                            {
                                 // NOTE: Check if the returned value is null twice may seem wasteful, but this if for performance
                                 // Since checking for null twice is cheaper than calling both HasTarget and Target OR always attempting to typecast
                                 object value = _items[counter].Target;
-                                if (value != null) {
+                                if (value != null)
+                                {
                                     // Make sure the item has the correct type and passes the filtering
                                     T tempItem = value as T;
-                                    if ((tempItem != null) && (filterMethod(tempItem))) {
+                                    if ((tempItem != null) && (filterMethod(tempItem)))
+                                    {
                                         return tempItem;
                                     }
                                 }
@@ -140,7 +169,8 @@ namespace Microsoft.Data.ProviderBase {
                     }
                 }
             }
-            finally {
+            finally
+            {
                 ExitItemLockIfNeeded(lockObtained);
             }
 
@@ -148,19 +178,26 @@ namespace Microsoft.Data.ProviderBase {
             return null;
         }
 
-        public void Notify(int message) {
+        public void Notify(int message)
+        {
             bool lockObtained = false;
-            try {
+            try
+            {
                 TryEnterItemLock(ref lockObtained);
-                if (lockObtained) {
-                    try {
+                if (lockObtained)
+                {
+                    try
+                    {
                         _isNotifying = true;
 
                         // Loop through each live item and notify it
-                        if (_optimisticCount > 0) {
-                            for (int index = 0; index <= _lastItemIndex; ++index) {
+                        if (_optimisticCount > 0)
+                        {
+                            for (int index = 0; index <= _lastItemIndex; ++index)
+                            {
                                 object value = _items[index].Target; // checks tag & gets target
-                                if (null != value) {
+                                if (null != value)
+                                {
                                     NotifyItem(message, _items[index].Tag, value);
                                     _items[index].RemoveTarget();
                                 }
@@ -168,19 +205,22 @@ namespace Microsoft.Data.ProviderBase {
                             }
                             _optimisticCount = 0;
                         }
-                
+
                         // Shrink collection (if needed)
-                        if (_items.Length > 100) {
+                        if (_items.Length > 100)
+                        {
                             _lastItemIndex = 0;
                             _items = new CollectionEntry[DefaultCollectionSize];
                         }
                     }
-                    finally {
+                    finally
+                    {
                         _isNotifying = false;
                     }
                 }
             }
-            finally {
+            finally
+            {
                 ExitItemLockIfNeeded(lockObtained);
             }
         }
@@ -189,18 +229,24 @@ namespace Microsoft.Data.ProviderBase {
 
         abstract public void Remove(object value);
 
-        protected void RemoveItem(object value) {
+        protected void RemoveItem(object value)
+        {
             Debug.Assert(null != value, "RemoveItem with null");
 
             bool lockObtained = false;
-            try {
+            try
+            {
                 TryEnterItemLock(ref lockObtained);
 
-                if (lockObtained) {
+                if (lockObtained)
+                {
                     // Find the value, and then remove the target from our collection
-                    if (_optimisticCount > 0) {
-                        for (int index = 0; index <= _lastItemIndex; ++index) {
-                            if (value == _items[index].Target) { // checks tag & gets target
+                    if (_optimisticCount > 0)
+                    {
+                        for (int index = 0; index <= _lastItemIndex; ++index)
+                        {
+                            if (value == _items[index].Target)
+                            { // checks tag & gets target
                                 _items[index].RemoveTarget();
                                 _optimisticCount--;
                                 break;
@@ -209,23 +255,28 @@ namespace Microsoft.Data.ProviderBase {
                     }
                 }
             }
-            finally {
+            finally
+            {
                 ExitItemLockIfNeeded(lockObtained);
             }
         }
 
         // This is polling lock that will abandon getting the lock if _isNotifying is set to true
-        private void TryEnterItemLock(ref bool lockObtained) {
+        private void TryEnterItemLock(ref bool lockObtained)
+        {
             // Assume that we couldn't take the lock
             lockObtained = false;
             // Keep trying to take the lock until either we've taken it, or the collection is being notified
-            while ((!_isNotifying) && (!lockObtained)) {
+            while ((!_isNotifying) && (!lockObtained))
+            {
                 Monitor.TryEnter(_itemLock, LockPollTime, ref lockObtained);
             }
         }
 
-        private void ExitItemLockIfNeeded(bool lockObtained) {
-            if (lockObtained) {
+        private void ExitItemLockIfNeeded(bool lockObtained)
+        {
+            if (lockObtained)
+            {
                 Monitor.Exit(_itemLock);
             }
         }

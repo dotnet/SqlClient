@@ -3,24 +3,28 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Collections;
-using Microsoft.Data.Common;
 using System.Diagnostics;
-
+using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal sealed class SqlStatistics {
+    internal sealed class SqlStatistics
+    {
 
-        static internal SqlStatistics StartTimer(SqlStatistics statistics) {
-            if ((null != statistics) && !statistics.RequestExecutionTimer()) {
+        static internal SqlStatistics StartTimer(SqlStatistics statistics)
+        {
+            if ((null != statistics) && !statistics.RequestExecutionTimer())
+            {
                 // we're re-entrant -- don't bother.
                 statistics = null;
             }
             return statistics;
         }
 
-        static internal void StopTimer(SqlStatistics statistics) {
-            if (null != statistics) {
+        static internal void StopTimer(SqlStatistics statistics)
+        {
+            if (null != statistics)
+            {
                 statistics.ReleaseAndUpdateExecutionTimer();
             }
         }
@@ -57,32 +61,40 @@ namespace Microsoft.Data.SqlClient
         private bool _waitForReply;
 
 
-        internal bool WaitForDoneAfterRow {
-            get {
+        internal bool WaitForDoneAfterRow
+        {
+            get
+            {
                 return _waitForDoneAfterRow;
             }
-            set {
+            set
+            {
                 _waitForDoneAfterRow = value;
             }
         }
 
-        internal bool WaitForReply {
-            get {
+        internal bool WaitForReply
+        {
+            get
+            {
                 return _waitForReply;
             }
         }
 
-        internal SqlStatistics () {
+        internal SqlStatistics()
+        {
         }
 
-        internal void ContinueOnNewConnection() {
+        internal void ContinueOnNewConnection()
+        {
             _startExecutionTimestamp = 0;
             _startFetchTimestamp = 0;
             _waitForDoneAfterRow = false;
             _waitForReply = false;
         }
 
-        internal IDictionary GetHashtable() {
+        internal IDictionary GetHashtable()
+        {
             Hashtable ht = new Hashtable();
 
             ht.Add("BuffersReceived", _buffersReceived);
@@ -101,45 +113,54 @@ namespace Microsoft.Data.SqlClient
             ht.Add("Transactions", _transactions);
             ht.Add("UnpreparedExecs", _unpreparedExecs);
 
-            ht.Add ("ConnectionTime", ADP.TimerToMilliseconds(_connectionTime));
-            ht.Add ("ExecutionTime", ADP.TimerToMilliseconds(_executionTime));
-            ht.Add ("NetworkServerTime", ADP.TimerToMilliseconds(_networkServerTime));
+            ht.Add("ConnectionTime", ADP.TimerToMilliseconds(_connectionTime));
+            ht.Add("ExecutionTime", ADP.TimerToMilliseconds(_executionTime));
+            ht.Add("NetworkServerTime", ADP.TimerToMilliseconds(_networkServerTime));
 
             return ht;
         }
 
-        internal bool RequestExecutionTimer () {
-            if (_startExecutionTimestamp == 0) {
+        internal bool RequestExecutionTimer()
+        {
+            if (_startExecutionTimestamp == 0)
+            {
                 ADP.TimerCurrent(out _startExecutionTimestamp);
                 return true;
             }
             return false;
         }
 
-        internal void RequestNetworkServerTimer () {
-            Debug.Assert(_startExecutionTimestamp!=0, "No network time expected outside execution period");
-            if (_startNetworkServerTimestamp == 0) {
+        internal void RequestNetworkServerTimer()
+        {
+            Debug.Assert(_startExecutionTimestamp != 0, "No network time expected outside execution period");
+            if (_startNetworkServerTimestamp == 0)
+            {
                 ADP.TimerCurrent(out _startNetworkServerTimestamp);
             }
             _waitForReply = true;
         }
 
-        internal void ReleaseAndUpdateExecutionTimer () {
-            if (_startExecutionTimestamp > 0) {
+        internal void ReleaseAndUpdateExecutionTimer()
+        {
+            if (_startExecutionTimestamp > 0)
+            {
                 _executionTime += (ADP.TimerCurrent() - _startExecutionTimestamp);
                 _startExecutionTimestamp = 0;
             }
         }
 
-        internal void ReleaseAndUpdateNetworkServerTimer () {
-            if (_waitForReply && _startNetworkServerTimestamp > 0) {
+        internal void ReleaseAndUpdateNetworkServerTimer()
+        {
+            if (_waitForReply && _startNetworkServerTimestamp > 0)
+            {
                 _networkServerTime += (ADP.TimerCurrent() - _startNetworkServerTimestamp);
                 _startNetworkServerTimestamp = 0;
             }
             _waitForReply = false;
         }
 
-        internal void Reset() {
+        internal void Reset()
+        {
             _buffersReceived = 0;
             _buffersSent = 0;
             _bytesReceived = 0;
@@ -164,26 +185,34 @@ namespace Microsoft.Data.SqlClient
             _startNetworkServerTimestamp = 0;
         }
 
-        internal void SafeAdd (ref long value, long summand) {
-            if (long.MaxValue - value > summand) {
+        internal void SafeAdd(ref long value, long summand)
+        {
+            if (long.MaxValue - value > summand)
+            {
                 value += summand;
             }
-            else {
+            else
+            {
                 value = long.MaxValue;
             }
         }
 
-        internal long SafeIncrement(ref long value) {
-            if (value < long.MaxValue) value++;
+        internal long SafeIncrement(ref long value)
+        {
+            if (value < long.MaxValue)
+                value++;
             return value;
         }
 
-        internal void UpdateStatistics() {
+        internal void UpdateStatistics()
+        {
             // update connection time
-            if (_closeTimestamp >= _openTimestamp) {
+            if (_closeTimestamp >= _openTimestamp)
+            {
                 SafeAdd(ref _connectionTime, _closeTimestamp - _openTimestamp);
             }
-            else {
+            else
+            {
                 _connectionTime = long.MaxValue;
             }
         }

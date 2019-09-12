@@ -3,12 +3,11 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Xml;
 using System.Data.SqlTypes;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
-using System.Data.Common;
+using System.Xml;
 using Microsoft.Data.SqlTypes;
 
 namespace Microsoft.Data.SqlClient

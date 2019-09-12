@@ -65,7 +65,7 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
     <file src="..\..\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.pdb" target="lib\net46\" exclude="" />
     <file src="..\..\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.dll" target="runtimes\win\lib\net46\" exclude="" />
     <file src="..\..\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.pdb" target="runtimes\win\lib\net46\" exclude="" />
-    
+
     <!-- Localized Resource Files for NetFx -->
     <file src="..\..\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\de\Microsoft.Data.SqlClient.resources.dll" target="lib\net46\de\" exclude="" />
     <file src="..\..\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\es\Microsoft.Data.SqlClient.resources.dll" target="lib\net46\es\" exclude="" />
@@ -77,7 +77,7 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
     <file src="..\..\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\ru\Microsoft.Data.SqlClient.resources.dll" target="lib\net46\ru\" exclude="" />
     <file src="..\..\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\zh-Hans\Microsoft.Data.SqlClient.resources.dll" target="lib\net46\zh-Hans\" exclude="" />
     <file src="..\..\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\zh-Hant\Microsoft.Data.SqlClient.resources.dll" target="lib\net46\zh-Hant\" exclude="" />
-    
+
     <!--  NetCore Files  -->
     <file src="..\..\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\netcoreapp2.1\Microsoft.Data.SqlClient.dll" target="ref\netcoreapp2.1\" exclude="" />
     <file src="..\..\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\netstandard2.0\Microsoft.Data.SqlClient.dll" target="ref\netstandard2.0\" exclude="" />
@@ -87,7 +87,7 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
     <file src="..\..\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\netstandard2.0\Microsoft.Data.SqlClient.dll" target="runtimes\win\lib\netstandard2.0\" exclude="" />
     <file src="..\..\bin\Unix\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\netcoreapp2.1\Microsoft.Data.SqlClient.dll" target="runtimes\unix\lib\netcoreapp2.1\" exclude="" />
     <file src="..\..\bin\Unix\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\netstandard2.0\Microsoft.Data.SqlClient.dll" target="runtimes\unix\lib\netstandard2.0\" exclude="" />
-    
+
     <file src="..\..\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\netcoreapp2.1\Microsoft.Data.SqlClient.pdb" target="ref\netcoreapp2.1\" exclude="" />
     <file src="..\..\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\netstandard2.0\Microsoft.Data.SqlClient.pdb" target="ref\netstandard2.0\" exclude="" />
     <file src="..\..\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\netcoreapp2.1\Microsoft.Data.SqlClient.pdb" target="lib\netcoreapp2.1\" exclude="" />

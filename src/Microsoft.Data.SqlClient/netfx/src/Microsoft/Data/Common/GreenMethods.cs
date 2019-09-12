@@ -6,7 +6,8 @@ using System;
 using System.Reflection;
 using Microsoft.Data.SqlClient;
 
-namespace Microsoft.Data.Common {
+namespace Microsoft.Data.Common
+{
     internal static class GreenMethods {
 
         private const string ExtensionAssemblyRef = "System.Data.Entity, Version=4.0.0.0, Culture=neutral, PublicKeyToken=" + AssemblyRef.EcmaPublicKey;

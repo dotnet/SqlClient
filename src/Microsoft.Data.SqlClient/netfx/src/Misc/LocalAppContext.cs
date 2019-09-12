@@ -11,12 +11,10 @@
 #pragma warning disable 436
 
 // NOTE: This file should not be included in mscorlib. This should only be included in FX libraries that need to provide switches
-using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Threading;
- 
+
 namespace System
 {
     internal static partial class LocalAppContext

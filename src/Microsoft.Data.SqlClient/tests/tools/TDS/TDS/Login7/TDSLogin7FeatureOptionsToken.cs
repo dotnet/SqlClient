@@ -2,11 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System.IO;
 using System.Collections.Generic;
-
-using Microsoft.SqlServer.TDS.FeatureExtAck;
-using Microsoft.SqlServer.TDS.SessionState;
+using System.IO;
 
 namespace Microsoft.SqlServer.TDS.Login7
 {

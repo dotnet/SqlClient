@@ -2,13 +2,12 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-
-using Microsoft.Data.Common;
-using Microsoft.Data.ProviderBase;
 using System;
 using System.Data.Common;
 using System.Diagnostics;
 using System.IO;
+using Microsoft.Data.Common;
+using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -273,10 +272,10 @@ namespace Microsoft.Data.SqlClient
         protected override DbMetaDataFactory CreateMetaDataFactory(DbConnectionInternal internalConnection, out bool cacheMetaDataFactory)
         {
             Debug.Assert(internalConnection != null, "internalConnection may not be null.");
-            
+
             Stream xmlStream = System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("Microsoft.Data.SqlClient.SqlMetaData.xml");
             cacheMetaDataFactory = true;
-            
+
             Debug.Assert(xmlStream != null, nameof(xmlStream) + " may not be null.");
 
             return new SqlMetaDataFactory(xmlStream,

@@ -231,24 +231,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // that doesn't include them.
             s_allTypesExceptUdts = new List<SteSimpleTypeBoundaries>(list).AsReadOnly();
 
-           //type = new SteSimplePermutationGenerator();
-           //type.Add(SteAttributeKey.SqlDbType, SqlDbType.Udt);
-           //type.Add(SteAttributeKey.TypeName, "dbo.WeakAddress");
-           //type.Add(SteAttributeKey.Type, typeof(WeakAddress));
-           //type.Add(SteAttributeKey.Value, new WeakAddress("", ""));
-           //type.Add(SteAttributeKey.Value, new WeakAddress(CreateString(22), ""));
-           //type.Add(SteAttributeKey.Value, new WeakAddress(ModerateSizeString, ""));
-           //type.Add(SteAttributeKey.Value, null);
-           //type.Add(SteAttributeKey.Value, DBNull.Value);
-           //
-           //SteSimpleTypeBoundaries udt = new SteSimpleTypeBoundaries(type);
-           //list.Add(udt);
-           //
-           //AllTypes = list.AsReadOnly();
-           //
-           //list = new List<SteSimpleTypeBoundaries>();
-           //list.Add(udt);
-           //UdtsOnly = list.AsReadOnly();
+            //type = new SteSimplePermutationGenerator();
+            //type.Add(SteAttributeKey.SqlDbType, SqlDbType.Udt);
+            //type.Add(SteAttributeKey.TypeName, "dbo.WeakAddress");
+            //type.Add(SteAttributeKey.Type, typeof(WeakAddress));
+            //type.Add(SteAttributeKey.Value, new WeakAddress("", ""));
+            //type.Add(SteAttributeKey.Value, new WeakAddress(CreateString(22), ""));
+            //type.Add(SteAttributeKey.Value, new WeakAddress(ModerateSizeString, ""));
+            //type.Add(SteAttributeKey.Value, null);
+            //type.Add(SteAttributeKey.Value, DBNull.Value);
+            //
+            //SteSimpleTypeBoundaries udt = new SteSimpleTypeBoundaries(type);
+            //list.Add(udt);
+            //
+            //AllTypes = list.AsReadOnly();
+            //
+            //list = new List<SteSimpleTypeBoundaries>();
+            //list.Add(udt);
+            //UdtsOnly = list.AsReadOnly();
         }
 
         private SteSimplePermutationGenerator _generator;

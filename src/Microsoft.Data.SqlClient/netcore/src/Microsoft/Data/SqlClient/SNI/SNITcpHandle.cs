@@ -26,7 +26,7 @@ namespace Microsoft.Data.SqlClient.SNI
         private readonly object _callbackObject;
         private readonly Socket _socket;
         private NetworkStream _tcpStream;
-        
+
         private Stream _stream;
         private SslStream _sslStream;
         private SslOverTdsStream _sslOverTdsStream;
@@ -145,7 +145,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 {
                     _socket = Connect(serverName, port, ts);
                 }
-                
+
                 if (_socket == null || !_socket.Connected)
                 {
                     if (_socket != null)

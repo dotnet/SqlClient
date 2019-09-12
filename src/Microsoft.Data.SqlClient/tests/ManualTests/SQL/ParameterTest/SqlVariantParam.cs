@@ -3,10 +3,8 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Text;
 using System.Data;
 using System.Data.SqlTypes;
-using System.IO;
 using Microsoft.Data.SqlClient.Server;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests

@@ -2,13 +2,12 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-
-using Microsoft.Data.SqlClient;
 using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
+using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data
 {
@@ -47,7 +46,7 @@ namespace Microsoft.Data
                 return s_localDBFormatMessage;
             }
         }
-        
+
         //This is copy of handle that SNI maintains, so we are responsible for freeing it - therefore there we are not using SafeHandle
         private static IntPtr s_userInstanceDLLHandle = IntPtr.Zero;
 

@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-
 namespace Microsoft.Data.SqlClient
 {
     /// <summary>
@@ -55,8 +54,14 @@ namespace Microsoft.Data.SqlClient
         /// <param name="counter">The counter that helps prevent replay attacks and is incremented each time the session is retrieved from the cache.</param>
         public SqlEnclaveSession(byte[] sessionKey, long sessionId/*, long counter*/)
         {
-            if (null == sessionKey) { throw SQL.NullArgumentInConstructorInternal(_sessionKeyName, _className); }
-            if (0 == sessionKey.Length) { throw SQL.EmptyArgumentInConstructorInternal(_sessionKeyName, _className); }
+            if (null == sessionKey)
+            {
+                throw SQL.NullArgumentInConstructorInternal(_sessionKeyName, _className);
+            }
+            if (0 == sessionKey.Length)
+            {
+                throw SQL.EmptyArgumentInConstructorInternal(_sessionKeyName, _className);
+            }
 
             _sessionKey = sessionKey;
             SessionId = sessionId;

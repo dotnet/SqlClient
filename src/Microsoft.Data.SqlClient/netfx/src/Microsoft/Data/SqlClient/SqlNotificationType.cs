@@ -2,13 +2,14 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-namespace Microsoft.Data.SqlClient {
-    public enum SqlNotificationType {
-        Change      = 0,
-        Subscribe   = 1,
+namespace Microsoft.Data.SqlClient
+{
+    public enum SqlNotificationType
+    {
+        Change = 0,
+        Subscribe = 1,
 
         // use negative values for client-only-generated values
-        Unknown     = -1
+        Unknown = -1
     }
 }
-

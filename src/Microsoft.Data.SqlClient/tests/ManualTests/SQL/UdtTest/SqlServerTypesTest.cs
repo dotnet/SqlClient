@@ -58,7 +58,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
             }
         }
-        
+
         [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp)]
         [CheckConnStrSetupFact]
         public static void GetValueTest()
@@ -303,11 +303,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SqlBytes geometrySqlBytes = null;
             string actualtPointValue = null;
 
-             using (SqlConnection connection = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection connection = new SqlConnection(DataTestUtility.TcpConnStr))
             {
                 connection.Open();
 
-                 using (var command = connection.CreateCommand())
+                using (var command = connection.CreateCommand())
                 {
                     command.CommandText = $"SELECT geometry::Parse('{ExpectedPointValue}')";
                     using (var reader = command.ExecuteReader())
@@ -317,7 +317,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }
 
-                 using (var command = connection.CreateCommand())
+                using (var command = connection.CreateCommand())
                 {
                     command.CommandText = "SELECT @geometry.STAsText()";
                     var parameter = command.Parameters.AddWithValue("@geometry", geometrySqlBytes);
@@ -326,7 +326,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     actualtPointValue = System.Convert.ToString(command.ExecuteScalar());
                 }
 
-                 Assert.Equal(ExpectedPointValue, actualtPointValue);
+                Assert.Equal(ExpectedPointValue, actualtPointValue);
             }
         }
 
@@ -337,11 +337,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             byte[] geometryBytes = null;
             string actualtPointValue = null;
 
-             using (SqlConnection connection = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection connection = new SqlConnection(DataTestUtility.TcpConnStr))
             {
                 connection.Open();
 
-                 using (var command = connection.CreateCommand())
+                using (var command = connection.CreateCommand())
                 {
                     command.CommandText = $"SELECT geometry::Parse('{ExpectedPointValue}')";
                     using (var reader = command.ExecuteReader())
@@ -351,7 +351,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }
 
-                 using (var command = connection.CreateCommand())
+                using (var command = connection.CreateCommand())
                 {
                     command.CommandText = "SELECT @geometry.STAsText()";
                     var parameter = command.Parameters.AddWithValue("@geometry", geometryBytes);
@@ -360,7 +360,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     actualtPointValue = System.Convert.ToString(command.ExecuteScalar());
                 }
 
-                 Assert.Equal(ExpectedPointValue, actualtPointValue);
+                Assert.Equal(ExpectedPointValue, actualtPointValue);
             }
         }
         private static void AssertSqlUdtAssemblyQualifiedName(string assemblyQualifiedName, string expectedType)

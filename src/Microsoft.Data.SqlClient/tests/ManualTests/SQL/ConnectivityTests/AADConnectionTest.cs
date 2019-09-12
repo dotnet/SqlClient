@@ -100,12 +100,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void AccessTokenWithAuthType()
         {
             // Remove cred info and add invalid token
-            string[] credKeys = { "User ID", "Password"};
+            string[] credKeys = { "User ID", "Password" };
             string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnStr, credKeys);
 
             using (SqlConnection connection = new SqlConnection(connStr))
             {
-                InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => 
+                InvalidOperationException e = Assert.Throws<InvalidOperationException>(() =>
                     connection.AccessToken = DataTestUtility.getAccessToken());
 
                 string expectedMessage = "Cannot set the AccessToken property if 'Authentication' has been specified in the connection string.";
@@ -119,7 +119,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // Remove cred info and add invalid token
             string[] credKeys = { "Authentication" };
             string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnStr, credKeys);
-            
+
             using (SqlConnection connection = new SqlConnection(connStr))
             {
                 InvalidOperationException e = Assert.Throws<InvalidOperationException>(() =>
@@ -136,7 +136,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // Remove cred info and add invalid token
             string[] credKeys = { "User ID", "Password", "Authentication" };
             string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnStr, credKeys);
-            
+
             using (SqlConnection connection = new SqlConnection(connStr))
             {
                 connection.AccessToken = "";
@@ -179,7 +179,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAADConnStringsSetup))]
         public static void AADPasswordWithIntegratedSecurityTrue()
         {
-             string connStr = DataTestUtility.AADPasswordConnStr + "Integrated Security=True;";
+            string connStr = DataTestUtility.AADPasswordConnStr + "Integrated Security=True;";
 
             ArgumentException e = Assert.Throws<ArgumentException>(() => ConnectAndDisconnect(connStr));
 

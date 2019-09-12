@@ -2,95 +2,117 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using Microsoft.Data.SqlClient.Server;
-using Microsoft.Data.Common;
-using System.Diagnostics;
-using SysTx = System.Transactions;
 using System;
 using System.Data;
 using System.Data.Common;
+using System.Diagnostics;
+using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Server;
+using SysTx = System.Transactions;
 
-namespace Microsoft.Data.SqlClient {
+namespace Microsoft.Data.SqlClient
+{
 
-    sealed internal class SqlInternalConnectionSmi : SqlInternalConnection {
+    sealed internal class SqlInternalConnectionSmi : SqlInternalConnection
+    {
 
-        private SmiContext             _smiContext;
-        private SmiConnection          _smiConnection;
-        private SmiEventSink_Default   _smiEventSink;
-        private int                    _isInUse;            // 1 = Connected to open outer connection, 0 = not connected
+        private SmiContext _smiContext;
+        private SmiConnection _smiConnection;
+        private SmiEventSink_Default _smiEventSink;
+        private int _isInUse;            // 1 = Connected to open outer connection, 0 = not connected
 
         private SqlInternalTransaction _pendingTransaction; // transaction awaiting event signalling that it is active
         private SqlInternalTransaction _currentTransaction; // currently active non-context transaction.
 
-        sealed private class EventSink : SmiEventSink_Default {
+        sealed private class EventSink : SmiEventSink_Default
+        {
 
             SqlInternalConnectionSmi _connection;
 
-            override internal string ServerVersion {
-                get {
+            override internal string ServerVersion
+            {
+                get
+                {
                     return SmiContextFactory.Instance.ServerVersion;
                 }
             }
 
-            override protected void DispatchMessages(bool ignoreNonFatalMessages) {
+            override protected void DispatchMessages(bool ignoreNonFatalMessages)
+            {
                 // Override this on the Connection event sink, since we can deal
                 // with info messages here.
                 SqlException exception = ProcessMessages(false, ignoreNonFatalMessages);
 
-                if (null != exception) {
+                if (null != exception)
+                {
                     // SQLBUVSTS 225982, query for connection once to avoid race condition between GC (that may collect the connection) and the user thread
                     SqlConnection connection = _connection.Connection;
-                    if (null != connection && connection.FireInfoMessageEventOnUserErrors) {
+                    if (null != connection && connection.FireInfoMessageEventOnUserErrors)
+                    {
                         connection.OnInfoMessage(new SqlInfoMessageEventArgs(exception));
                     }
-                    else {
+                    else
+                    {
                         _connection.OnError(exception, false);    // we can't really ever break the direct connection, can we?
                     }
                 }
             }
 
-            internal EventSink(SqlInternalConnectionSmi connection) {
+            internal EventSink(SqlInternalConnectionSmi connection)
+            {
                 Debug.Assert(null != connection, "null connection?");
                 _connection = connection;
             }
 
-            internal override void DefaultDatabaseChanged( string databaseName ) {
-                if (Bid.AdvancedOn) {
+            internal override void DefaultDatabaseChanged(string databaseName)
+            {
+                if (Bid.AdvancedOn)
+                {
                     Bid.Trace("<sc.SqlInternalConnectionSmi.EventSink.DefaultDatabaseChanged|ADV> %d#, databaseName='%ls'.\n", _connection.ObjectID, databaseName);
                 }
                 _connection.CurrentDatabase = databaseName;
             }
 
-            internal override void TransactionCommitted( long transactionId ) {
-                if (Bid.AdvancedOn) {
+            internal override void TransactionCommitted(long transactionId)
+            {
+                if (Bid.AdvancedOn)
+                {
                     Bid.Trace("<sc.SqlInternalConnectionSmi.EventSink.TransactionCommitted|ADV> %d#, transactionId=0x%I64x.\n", _connection.ObjectID, transactionId);
                 }
                 _connection.TransactionEnded(transactionId, TransactionState.Committed);
             }
 
-            internal override void TransactionDefected( long transactionId ) {
-                if (Bid.AdvancedOn) {
+            internal override void TransactionDefected(long transactionId)
+            {
+                if (Bid.AdvancedOn)
+                {
                     Bid.Trace("<sc.SqlInternalConnectionSmi.EventSink.TransactionDefected|ADV> %d#, transactionId=0x%I64x.\n", _connection.ObjectID, transactionId);
                 }
                 _connection.TransactionEnded(transactionId, TransactionState.Unknown);
             }
 
-            internal override void TransactionEnlisted( long transactionId ) {
-                if (Bid.AdvancedOn) {
+            internal override void TransactionEnlisted(long transactionId)
+            {
+                if (Bid.AdvancedOn)
+                {
                     Bid.Trace("<sc.SqlInternalConnectionSmi.EventSink.TransactionEnlisted|ADV> %d#, transactionId=0x%I64x.\n", _connection.ObjectID, transactionId);
                 }
                 _connection.TransactionStarted(transactionId, true); // distributed;
             }
 
-            internal override void TransactionEnded( long transactionId ) {
-                if (Bid.AdvancedOn) {
+            internal override void TransactionEnded(long transactionId)
+            {
+                if (Bid.AdvancedOn)
+                {
                     Bid.Trace("<sc.SqlInternalConnectionSmi.EventSink.TransactionEnded|ADV> %d#, transactionId=0x%I64x.\n", _connection.ObjectID, transactionId);
                 }
                 _connection.TransactionEndedByServer(transactionId, TransactionState.Unknown);
             }
 
-            internal override void TransactionRolledBack( long transactionId ) {
-                if (Bid.AdvancedOn) {
+            internal override void TransactionRolledBack(long transactionId)
+            {
+                if (Bid.AdvancedOn)
+                {
                     Bid.Trace("<sc.SqlInternalConnectionSmi.EventSink.TransactionRolledBack|ADV> %d#, transactionId=0x%I64x.\n", _connection.ObjectID, transactionId);
                 }
 
@@ -98,15 +120,18 @@ namespace Microsoft.Data.SqlClient {
                 _connection.TransactionEndedByServer(transactionId, TransactionState.Aborted);
             }
 
-            internal override void TransactionStarted( long transactionId ) {
-                if (Bid.AdvancedOn) {
+            internal override void TransactionStarted(long transactionId)
+            {
+                if (Bid.AdvancedOn)
+                {
                     Bid.Trace("<sc.SqlInternalConnectionSmi.EventSink.TransactionStarted|ADV> %d#, transactionId=0x%I64x.\n", _connection.ObjectID, transactionId);
                 }
                 _connection.TransactionStarted(transactionId, false); // not distributed;
             }
         }
 
-        internal SqlInternalConnectionSmi(SqlConnectionString connectionOptions, SmiContext smiContext) : base(connectionOptions) {
+        internal SqlInternalConnectionSmi(SqlConnectionString connectionOptions, SmiContext smiContext) : base(connectionOptions)
+        {
             Debug.Assert(null != smiContext, "null smiContext?");
 
             _smiContext = smiContext;
@@ -117,67 +142,88 @@ namespace Microsoft.Data.SqlClient {
 
             _smiEventSink = new EventSink(this);
 
-            if (Bid.AdvancedOn) {
+            if (Bid.AdvancedOn)
+            {
                 Bid.Trace("<sc.SqlInternalConnectionSmi.ctor|ADV> %d#, constructed new SMI internal connection\n", ObjectID);
             }
         }
 
-        internal SmiContext InternalContext {
-            get {
+        internal SmiContext InternalContext
+        {
+            get
+            {
                 return _smiContext;
             }
         }
 
-        internal SmiConnection SmiConnection {
-            get {
+        internal SmiConnection SmiConnection
+        {
+            get
+            {
                 return _smiConnection;
             }
         }
 
-        internal SmiEventSink CurrentEventSink {
-            get {
+        internal SmiEventSink CurrentEventSink
+        {
+            get
+            {
                 return _smiEventSink;
             }
         }
 
-        override internal SqlInternalTransaction CurrentTransaction {
-            get {
+        override internal SqlInternalTransaction CurrentTransaction
+        {
+            get
+            {
                 return _currentTransaction;
             }
         }
 
-        override internal bool IsLockedForBulkCopy {
-            get {
+        override internal bool IsLockedForBulkCopy
+        {
+            get
+            {
                 return false;   // no bulk copy in the Direct connection case.
             }
         }
 
-        override internal bool IsShiloh {
-            get {
+        override internal bool IsShiloh
+        {
+            get
+            {
                 return false;   // Can't be direct connecting to Shiloh.
             }
         }
 
-        override internal bool IsYukonOrNewer {
-            get {
+        override internal bool IsYukonOrNewer
+        {
+            get
+            {
                 return true;    // Must be direct connecting to Yukon or newer.
             }
         }
 
-        override internal bool IsKatmaiOrNewer {
-            get {
+        override internal bool IsKatmaiOrNewer
+        {
+            get
+            {
                 return SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.KatmaiVersion;
             }
         }
 
-        override internal SqlInternalTransaction PendingTransaction {
-            get {
+        override internal SqlInternalTransaction PendingTransaction
+        {
+            get
+            {
                 return CurrentTransaction; // there are no differences between pending and current in proc.
             }
         }
 
-        override public string ServerVersion {
-            get {
+        override public string ServerVersion
+        {
+            get
+            {
                 return SmiContextFactory.Instance.ServerVersion;
             }
         }
@@ -231,76 +277,94 @@ namespace Microsoft.Data.SqlClient {
             Debug.Assert(false, "Activating an internal SMI connection?"); // we should never be activating, because that would indicate we're being pooled.
         }
 
-        internal void Activate() {
+        internal void Activate()
+        {
             int wasInUse = System.Threading.Interlocked.Exchange(ref _isInUse, 1);
-            if (0 != wasInUse) {
+            if (0 != wasInUse)
+            {
                 throw SQL.ContextConnectionIsInUse();
             }
 
             CurrentDatabase = _smiConnection.GetCurrentDatabase(_smiEventSink);
-            
+
             _smiEventSink.ProcessMessagesAndThrow();
         }
-        
-        internal void AutomaticEnlistment() {
-            SysTx.Transaction currentSystemTransaction = ADP.GetCurrentTransaction();      // NOTE: Must be first to ensure _smiContext.ContextTransaction is set!
-            SysTx.Transaction contextTransaction       = _smiContext.ContextTransaction; // returns the transaction that was handed to SysTx that wraps the ContextTransactionId.
-            long              contextTransactionId     = _smiContext.ContextTransactionId;
 
-            if (Bid.AdvancedOn) {
-                Bid.Trace("<sc.SqlInternalConnectionSmi.AutomaticEnlistment|ADV> %d#, contextTransactionId=0x%I64x, contextTransaction=%d#, currentSystemTransaction=%d#.\n", 
-                                base.ObjectID, 
-                                contextTransactionId, 
-                                (null != contextTransaction) ? contextTransaction.GetHashCode() : 0, 
+        internal void AutomaticEnlistment()
+        {
+            SysTx.Transaction currentSystemTransaction = ADP.GetCurrentTransaction();      // NOTE: Must be first to ensure _smiContext.ContextTransaction is set!
+            SysTx.Transaction contextTransaction = _smiContext.ContextTransaction; // returns the transaction that was handed to SysTx that wraps the ContextTransactionId.
+            long contextTransactionId = _smiContext.ContextTransactionId;
+
+            if (Bid.AdvancedOn)
+            {
+                Bid.Trace("<sc.SqlInternalConnectionSmi.AutomaticEnlistment|ADV> %d#, contextTransactionId=0x%I64x, contextTransaction=%d#, currentSystemTransaction=%d#.\n",
+                                base.ObjectID,
+                                contextTransactionId,
+                                (null != contextTransaction) ? contextTransaction.GetHashCode() : 0,
                                 (null != currentSystemTransaction) ? currentSystemTransaction.GetHashCode() : 0);
             }
 
-            if (SqlInternalTransaction.NullTransactionId != contextTransactionId) {
-                if (null != currentSystemTransaction && contextTransaction != currentSystemTransaction) {
+            if (SqlInternalTransaction.NullTransactionId != contextTransactionId)
+            {
+                if (null != currentSystemTransaction && contextTransaction != currentSystemTransaction)
+                {
                     throw SQL.NestedTransactionScopesNotSupported();    // can't use TransactionScope(RequiresNew) inside a Sql Transaction.
                 }
-                if (Bid.AdvancedOn) {
+                if (Bid.AdvancedOn)
+                {
                     Bid.Trace("<sc.SqlInternalConnectionSmi.AutomaticEnlistment|ADV> %d#, using context transaction with transactionId=0x%I64x\n", base.ObjectID, contextTransactionId);
                 }
                 _currentTransaction = new SqlInternalTransaction(this, TransactionType.Context, null, contextTransactionId);
                 ContextTransaction = contextTransaction;
             }
-            else if (null == currentSystemTransaction) {
+            else if (null == currentSystemTransaction)
+            {
                 _currentTransaction = null;  // there really isn't a transaction.
 
-                if (Bid.AdvancedOn) {
+                if (Bid.AdvancedOn)
+                {
                     Bid.Trace("<sc.SqlInternalConnectionSmi.AutomaticEnlistment|ADV> %d#, no transaction.\n", base.ObjectID);
                 }
             }
-            else {
-                if (Bid.AdvancedOn) {
+            else
+            {
+                if (Bid.AdvancedOn)
+                {
                     Bid.Trace("<sc.SqlInternalConnectionSmi.AutomaticEnlistment|ADV> %d#, using current System.Transaction.\n", base.ObjectID);
                 }
                 base.Enlist(currentSystemTransaction);
             }
         }
 
-        override protected void ChangeDatabaseInternal(string database) {
+        override protected void ChangeDatabaseInternal(string database)
+        {
             _smiConnection.SetCurrentDatabase(database, _smiEventSink);
             _smiEventSink.ProcessMessagesAndThrow();
         }
 
-        override protected void InternalDeactivate() {
-            if (Bid.AdvancedOn) {
+        override protected void InternalDeactivate()
+        {
+            if (Bid.AdvancedOn)
+            {
                 Bid.Trace("<sc.SqlInternalConnectionSmi.Deactivate|ADV> %d#, Deactivating.\n", base.ObjectID);
             }
 
             // When we put this to bed, we should not hold on to the transaction
             // or any activity (commit/rollback) may cause it to stop responding.
-            if (!IsNonPoolableTransactionRoot) {
+            if (!IsNonPoolableTransactionRoot)
+            {
                 base.Enlist(null);
             }
 
-            if (null != _currentTransaction) {
-                if (_currentTransaction.IsContext) {
+            if (null != _currentTransaction)
+            {
+                if (_currentTransaction.IsContext)
+                {
                     _currentTransaction = null;
                 }
-                else if (_currentTransaction.IsLocal) {
+                else if (_currentTransaction.IsLocal)
+                {
                     _currentTransaction.CloseFromConnection();
                 }
             }
@@ -309,68 +373,79 @@ namespace Microsoft.Data.SqlClient {
 
             _isInUse = 0;  // don't need compare-exchange.
         }
-        
-        override internal void DelegatedTransactionEnded() {
+
+        override internal void DelegatedTransactionEnded()
+        {
             base.DelegatedTransactionEnded();
-            
-            if (Bid.AdvancedOn) {
+
+            if (Bid.AdvancedOn)
+            {
                 Bid.Trace("<sc.SqlInternalConnectionSmi.DelegatedTransactionEnded|ADV> %d#, cleaning up after Delegated Transaction Completion\n", base.ObjectID);
             }
 
             _currentTransaction = null;           // clean up our current transaction too
         }
 
-        override internal void DisconnectTransaction(SqlInternalTransaction internalTransaction) {
-            if (Bid.AdvancedOn) {
+        override internal void DisconnectTransaction(SqlInternalTransaction internalTransaction)
+        {
+            if (Bid.AdvancedOn)
+            {
                 Bid.Trace("<sc.SqlInternalConnectionSmi.DisconnectTransaction|ADV> %d#, Disconnecting Transaction %d#.\n", base.ObjectID, internalTransaction.ObjectID);
             }
 
             // VSTS 215465/15029: allow _currentTransaction to be null - it can be cleared before by server's callback
             Debug.Assert(_currentTransaction == null || _currentTransaction == internalTransaction, "disconnecting different transaction");
 
-            if (_currentTransaction != null && _currentTransaction == internalTransaction) {
+            if (_currentTransaction != null && _currentTransaction == internalTransaction)
+            {
                 _currentTransaction = null;
             }
         }
 
-        override public void Dispose() {
+        override public void Dispose()
+        {
             _smiContext.OutOfScope -= new EventHandler(OnOutOfScope);
             base.Dispose();
         }
 
         override internal void ExecuteTransaction(
-                    TransactionRequest      transactionRequest, 
-                    string                  transactionName, 
-                    IsolationLevel          iso, 
-                    SqlInternalTransaction  internalTransaction, 
-                    bool                    isDelegateControlRequest) {
-            if (Bid.AdvancedOn) {
-                Bid.Trace("<sc.SqlInternalConnectionSmi.ExecuteTransaction|ADV> %d#, transactionRequest=%ls, transactionName='%ls', isolationLevel=%ls, internalTransaction=#%d transactionId=0x%I64x.\n", 
-                                                        base.ObjectID, 
-                                                        transactionRequest.ToString(), 
-                                                        (null != transactionName) ? transactionName : "null", 
-                                                        iso.ToString(), 
+                    TransactionRequest transactionRequest,
+                    string transactionName,
+                    IsolationLevel iso,
+                    SqlInternalTransaction internalTransaction,
+                    bool isDelegateControlRequest)
+        {
+            if (Bid.AdvancedOn)
+            {
+                Bid.Trace("<sc.SqlInternalConnectionSmi.ExecuteTransaction|ADV> %d#, transactionRequest=%ls, transactionName='%ls', isolationLevel=%ls, internalTransaction=#%d transactionId=0x%I64x.\n",
+                                                        base.ObjectID,
+                                                        transactionRequest.ToString(),
+                                                        (null != transactionName) ? transactionName : "null",
+                                                        iso.ToString(),
                                                         (null != internalTransaction) ? internalTransaction.ObjectID : 0,
                                                         (null != internalTransaction) ? internalTransaction.TransactionId : SqlInternalTransaction.NullTransactionId
                                                         );
             }
-            switch (transactionRequest) {
+            switch (transactionRequest)
+            {
                 case TransactionRequest.Begin:
-                    try {
+                    try
+                    {
                         _pendingTransaction = internalTransaction; // store this for the time being.
 
                         _smiConnection.BeginTransaction(transactionName, iso, _smiEventSink);
                     }
-                    finally {
+                    finally
+                    {
                         _pendingTransaction = null;
                     }
-                    
+
                     Debug.Assert(_smiEventSink.HasMessages || null != _currentTransaction, "begin transaction without TransactionStarted event?");
                     break;
 
                 case TransactionRequest.Commit:
                     Debug.Assert(null != _currentTransaction, "commit transaction without TransactionStarted event?");
-                    
+
                     _smiConnection.CommitTransaction(_currentTransaction.TransactionId, _smiEventSink);
                     break;
 
@@ -391,63 +466,75 @@ namespace Microsoft.Data.SqlClient {
                     break;
 
                 default:
-                    Debug.Assert (false, "unhandled case for TransactionRequest");
+                    Debug.Assert(false, "unhandled case for TransactionRequest");
                     break;
             }
 
             _smiEventSink.ProcessMessagesAndThrow();
         }
 
-        override protected byte[] GetDTCAddress() {
+        override protected byte[] GetDTCAddress()
+        {
             byte[] whereAbouts = _smiConnection.GetDTCAddress(_smiEventSink);     // might want to store this on the SmiLink because it doesn't change, but we want to be compatible with TDS which doesn't have a link yet.
 
             _smiEventSink.ProcessMessagesAndThrow();
 
-            if (Bid.AdvancedOn) {
-                if (null != whereAbouts) {
+            if (Bid.AdvancedOn)
+            {
+                if (null != whereAbouts)
+                {
                     Bid.TraceBin("<sc.SqlInternalConnectionSmi.GetDTCAddress|ADV> whereAbouts", whereAbouts, (UInt16)whereAbouts.Length);
                 }
-                else {
+                else
+                {
                     Bid.Trace("<sc.SqlInternalConnectionSmi.GetDTCAddress|ADV> whereAbouts=null\n");
                 }
             }
             return whereAbouts;
         }
 
-        internal void GetCurrentTransactionPair(out long transactionId, out SysTx.Transaction transaction) {
+        internal void GetCurrentTransactionPair(out long transactionId, out SysTx.Transaction transaction)
+        {
             // SQLBU 214740: Transaction state could change between obtaining tranid and transaction
             //  due to background SqlDelegatedTransaction processing. Lock the connection to prevent that.
-            lock (this) {
+            lock (this)
+            {
                 transactionId = (null != CurrentTransaction) ? CurrentTransaction.TransactionId : 0;
                 transaction = null;
-                if (0 != transactionId) {
+                if (0 != transactionId)
+                {
                     transaction = InternalEnlistedTransaction;
                 }
             }
         }
 
-        private void OnOutOfScope(object s, EventArgs e) {
+        private void OnOutOfScope(object s, EventArgs e)
+        {
             // Called whenever the context goes out of scope, we need to make
             // sure that we close the connection, or the next person that uses
             // the context may appear to have the connection in use.
-            if (Bid.AdvancedOn) {
+            if (Bid.AdvancedOn)
+            {
                 Bid.Trace("<sc.SqlInternalConnectionSmi.OutOfScope|ADV> %d# context is out of scope\n", base.ObjectID);
             }
 
             // TODO: This is suspect to me -- if I go out of scope, who will commit the transaction?
             DelegatedTransaction = null;     // we don't want to hold this over to the next usage; it will automatically be reused as the context transaction...
-            
+
             DbConnection owningObject = (DbConnection)Owner;
 
-            try {
-                if (null != owningObject && 1 == _isInUse) {
-                        // SQLBU 369953
-                        //  for various reasons, the owning object may no longer be connection to this
-                        //  so call close on the owner, rather than trying to bypass to use internal close logic.
-                        owningObject.Close();
-                    }
+            try
+            {
+                if (null != owningObject && 1 == _isInUse)
+                {
+                    // SQLBU 369953
+                    //  for various reasons, the owning object may no longer be connection to this
+                    //  so call close on the owner, rather than trying to bypass to use internal close logic.
+                    owningObject.Close();
+                }
             }
-            finally {
+            finally
+            {
                 // Now make sure this object is not left in an in-use state
                 // this is safe, because no user code should be accessing the connection by this time
                 ContextTransaction = null;
@@ -455,12 +542,16 @@ namespace Microsoft.Data.SqlClient {
             }
         }
 
-        override protected void PropagateTransactionCookie(byte[] transactionCookie) {
-            if (Bid.AdvancedOn) {
-                if (null != transactionCookie) {
+        override protected void PropagateTransactionCookie(byte[] transactionCookie)
+        {
+            if (Bid.AdvancedOn)
+            {
+                if (null != transactionCookie)
+                {
                     Bid.TraceBin("<sc.SqlInternalConnectionSmi.PropagateTransactionCookie|ADV> transactionCookie", transactionCookie, (UInt16)transactionCookie.Length);
                 }
-                else {
+                else
+                {
                     Bid.Trace("<sc.SqlInternalConnectionSmi.PropagateTransactionCookie|ADV> null\n");
                 }
             }
@@ -470,13 +561,15 @@ namespace Microsoft.Data.SqlClient {
             _smiEventSink.ProcessMessagesAndThrow();
         }
 
-        private void TransactionEndedByServer(long transactionId, TransactionState transactionState) {
+        private void TransactionEndedByServer(long transactionId, TransactionState transactionState)
+        {
             // Some extra steps required when the server initiates the ending of a transaction unilaterally
             //  as opposed to the client initiating it.
             //  Basically, we have to make the delegated transaction (if there is one) aware of the situation.
 
             SqlDelegatedTransaction delegatedTransaction = DelegatedTransaction;
-            if (null != delegatedTransaction) {
+            if (null != delegatedTransaction)
+            {
                 delegatedTransaction.Transaction.Rollback();    // just to make sure...
                 DelegatedTransaction = null;   // He's dead, Jim.
             }
@@ -485,11 +578,13 @@ namespace Microsoft.Data.SqlClient {
             TransactionEnded(transactionId, transactionState);
         }
 
-        private void TransactionEnded(long transactionId, TransactionState transactionState) {
+        private void TransactionEnded(long transactionId, TransactionState transactionState)
+        {
             // When we get notification of a completed transaction
             // we null out the current transaction.
 
-            if (null != _currentTransaction) {
+            if (null != _currentTransaction)
+            {
 #if DEBUG
                 // Check null for case where Begin and Rollback obtained in the same message.
                 if (0 != _currentTransaction.TransactionId) {
@@ -501,7 +596,8 @@ namespace Microsoft.Data.SqlClient {
             }
         }
 
-        private void TransactionStarted(long transactionId, bool isDistributed) {
+        private void TransactionStarted(long transactionId, bool isDistributed)
+        {
             // When we get notification from the server of a new
             // transaction, we move any pending transaction over to
             // the current transaction, then we store the token in it.
@@ -511,19 +607,23 @@ namespace Microsoft.Data.SqlClient {
             _currentTransaction = _pendingTransaction;
             _pendingTransaction = null;
 
-            if (null != _currentTransaction) {
+            if (null != _currentTransaction)
+            {
                 _currentTransaction.TransactionId = transactionId;   // this is defined as a ULongLong in the server and in the TDS Spec.
             }
-            else {
+            else
+            {
                 TransactionType transactionType = (isDistributed) ? TransactionType.Distributed : TransactionType.LocalFromTSQL;
                 _currentTransaction = new SqlInternalTransaction(this, transactionType, null, transactionId);
             }
             _currentTransaction.Activate(); // SQLBUDT #376531 -- ensure this is activated to prevent asserts later.
         }
 
-        override internal void ValidateConnectionForExecute(SqlCommand command) {
+        override internal void ValidateConnectionForExecute(SqlCommand command)
+        {
             SqlDataReader reader = FindLiveReader(null);
-            if (null != reader) {
+            if (null != reader)
+            {
                 // if MARS is on, then a datareader associated with the command exists
                 // or if MARS is off, then a datareader exists
                 throw ADP.OpenReaderExists(); // MDAC 66411

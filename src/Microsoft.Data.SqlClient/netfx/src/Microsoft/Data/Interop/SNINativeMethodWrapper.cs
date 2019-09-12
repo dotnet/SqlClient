@@ -2,8 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using Microsoft.Data.Common;
-using Microsoft.Data.SqlClient;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -13,6 +11,8 @@ using System.Runtime.Versioning;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
+using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -136,7 +136,8 @@ namespace Microsoft.Data.SqlClient
             {
                 bool success = false;
 
-                while (0 != Interlocked.CompareExchange(ref thelock, 1, 0)) { // Spin until we have the lock.
+                while (0 != Interlocked.CompareExchange(ref thelock, 1, 0))
+                { // Spin until we have the lock.
                     Thread.Sleep(50); // Sleep with short-timeout to prevent starvation.
                 }
                 Trace.Assert(1 == thelock); // Now that we have the lock, lock should be equal to 1.
@@ -501,54 +502,54 @@ namespace Microsoft.Data.SqlClient
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
         private static extern uint SNIWriteSyncOverAsync(SNIHandle pConn, [In] SNIPacket pPacket);
-        
+
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr SNIClientCertificateFallbackWrapper(IntPtr pCallbackContext);
         #endregion
 
         internal static uint SNISecGetServerCertificate(SNIHandle pConnectionObject, ref X509Certificate2 certificate)
         {
-           System.UInt32 ret;
-           CredHandle pSecHandle;
-           X509Certificate pCertContext = null;
+            System.UInt32 ret;
+            CredHandle pSecHandle;
+            X509Certificate pCertContext = null;
 
-           // provides a guaranteed finally block – without this it isn’t guaranteed – non interruptable by fatal exceptions
-           bool mustRelease = false;
-           RuntimeHelpers.PrepareConstrainedRegions();
-           try
-           {
-               pConnectionObject.DangerousAddRef(ref mustRelease);
-               Debug.Assert(mustRelease, "AddRef Failed!");
+            // provides a guaranteed finally block – without this it isn’t guaranteed – non interruptable by fatal exceptions
+            bool mustRelease = false;
+            RuntimeHelpers.PrepareConstrainedRegions();
+            try
+            {
+                pConnectionObject.DangerousAddRef(ref mustRelease);
+                Debug.Assert(mustRelease, "AddRef Failed!");
 
-               IntPtr secHandlePtr = Marshal.AllocHGlobal(Marshal.SizeOf<CredHandle>());
+                IntPtr secHandlePtr = Marshal.AllocHGlobal(Marshal.SizeOf<CredHandle>());
 
-               ret = SNIGetInfoWrapper(pConnectionObject, QTypes.SNI_QUERY_CONN_SSL_SECCTXTHANDLE, ref secHandlePtr);
-               //ERROR_SUCCESS
-               if (0 == ret)
-               {
+                ret = SNIGetInfoWrapper(pConnectionObject, QTypes.SNI_QUERY_CONN_SSL_SECCTXTHANDLE, ref secHandlePtr);
+                //ERROR_SUCCESS
+                if (0 == ret)
+                {
                     // Cast an unmanaged block to pSecHandle;
                     pSecHandle = Marshal.PtrToStructure<CredHandle>(secHandlePtr);
 
                     // SEC_E_OK
                     if (0 == (ret = QueryContextAttributes(ref pSecHandle, ContextAttribute.SECPKG_ATTR_REMOTE_CERT_CONTEXT, pCertContext.Handle)))
                     {
-                       certificate = new X509Certificate2(pCertContext.Handle);
-                   }
-               }
-               Marshal.FreeHGlobal(secHandlePtr);
-           }
-           finally
-           {
-               if (pCertContext != null)
-               {
-                   pCertContext.Dispose();
-               }
-               if (mustRelease)
-               {
-                   pConnectionObject.DangerousRelease();
-               }
-           }
-           return ret;
+                        certificate = new X509Certificate2(pCertContext.Handle);
+                    }
+                }
+                Marshal.FreeHGlobal(secHandlePtr);
+            }
+            finally
+            {
+                if (pCertContext != null)
+                {
+                    pCertContext.Dispose();
+                }
+                if (mustRelease)
+                {
+                    pConnectionObject.DangerousRelease();
+                }
+            }
+            return ret;
         }
 
         internal static uint SniGetConnectionId(SNIHandle pConn, ref Guid connId)
@@ -624,7 +625,7 @@ namespace Microsoft.Data.SqlClient
 
         [ResourceExposure(ResourceScope.None)]
         [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
-        internal static uint SNIAddProvider(SNIHandle  pConn,
+        internal static uint SNIAddProvider(SNIHandle pConn,
                                             ProviderEnum providerEnum,
                                             AuthProviderInfo authInfo)
         {
@@ -667,9 +668,9 @@ namespace Microsoft.Data.SqlClient
             SNICTAIPProviderInfo ctaipInfo = new SNICTAIPProviderInfo();
 
             ctaipInfo.prgbAddress = authInfo.originalNetworkAddress[0];
-            ctaipInfo.cbAddress = (byte) authInfo.originalNetworkAddress.Length;
+            ctaipInfo.cbAddress = (byte)authInfo.originalNetworkAddress.Length;
             ctaipInfo.fFromDataSecurityProxy = authInfo.fromDataSecurityProxy;
-            
+
             ret = SNIAddProviderWrapper(pConn, providerEnum, ref ctaipInfo);
 
             if (ret == ERROR_SUCCESS)
@@ -712,7 +713,7 @@ namespace Microsoft.Data.SqlClient
         //    to loose encryption algorithm is changed it should be done in both in this method as well as TdsParserStaticMethods.EncryptPassword.
         //  Up to current release, it is also guaranteed that both password and new change password will fit into a single login packet whose size is fixed to 4096
         //        So, there is no splitting logic is needed.
-        internal static void SNIPacketSetData (SNIPacket packet,
+        internal static void SNIPacketSetData(SNIPacket packet,
                                       Byte[] data,
                                       Int32 length,
                                       SecureString[] passwords,            // pointer to the passwords which need to be written out to SNI Packet
@@ -727,12 +728,13 @@ namespace Microsoft.Data.SqlClient
 
             // provides a guaranteed finally block – without this it isn’t guaranteed – non interruptable by fatal exceptions
             RuntimeHelpers.PrepareConstrainedRegions();
-                try
-                {
+            try
+            {
                 unsafe
                 {
 
-                    fixed (byte* pin_data = &data[0]) { }
+                    fixed (byte* pin_data = &data[0])
+                    { }
                     if (passwords != null)
                     {
                         // Process SecureString

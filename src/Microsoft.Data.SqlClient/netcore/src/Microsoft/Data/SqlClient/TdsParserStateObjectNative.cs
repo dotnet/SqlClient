@@ -2,12 +2,12 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using Microsoft.Data.Common;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -150,7 +150,7 @@ namespace Microsoft.Data.SqlClient
             {
                 packetHandle?.Dispose();
                 asyncAttnPacket?.Dispose();
-                    
+
                 if (sessionHandle != null)
                 {
                     sessionHandle.Dispose();
@@ -288,13 +288,13 @@ namespace Microsoft.Data.SqlClient
             SNINativeMethodWrapper.SNIPacketSetData(packet.NativePacket, buffer, bytesUsed);
         }
 
-        internal override uint SniGetConnectionId(ref Guid clientConnectionId) 
+        internal override uint SniGetConnectionId(ref Guid clientConnectionId)
             => SNINativeMethodWrapper.SniGetConnectionId(Handle, ref clientConnectionId);
 
-        internal override uint DisabeSsl() 
+        internal override uint DisabeSsl()
             => SNINativeMethodWrapper.SNIRemoveProvider(Handle, SNINativeMethodWrapper.ProviderEnum.SSL_PROV);
 
-        internal override uint EnableMars(ref uint info) 
+        internal override uint EnableMars(ref uint info)
             => SNINativeMethodWrapper.SNIAddProvider(Handle, SNINativeMethodWrapper.ProviderEnum.SMUX_PROV, ref info);
 
         internal override uint EnableSsl(ref uint info)
@@ -303,14 +303,13 @@ namespace Microsoft.Data.SqlClient
             return SNINativeMethodWrapper.SNIAddProvider(Handle, SNINativeMethodWrapper.ProviderEnum.SSL_PROV, ref info);
         }
 
-        internal override uint SetConnectionBufferSize(ref uint unsignedPacketSize) 
+        internal override uint SetConnectionBufferSize(ref uint unsignedPacketSize)
             => SNINativeMethodWrapper.SNISetInfo(Handle, SNINativeMethodWrapper.QTypes.SNI_QUERY_CONN_BUFSIZE, ref unsignedPacketSize);
 
-        internal override uint GenerateSspiClientContext(byte[] receivedBuff, uint receivedLength, ref byte[] sendBuff, ref uint sendLength, byte[] _sniSpnBuffer) 
+        internal override uint GenerateSspiClientContext(byte[] receivedBuff, uint receivedLength, ref byte[] sendBuff, ref uint sendLength, byte[] _sniSpnBuffer)
             => SNINativeMethodWrapper.SNISecGenClientContext(Handle, receivedBuff, receivedLength, sendBuff, ref sendLength, _sniSpnBuffer);
-        
 
-        internal override uint WaitForSSLHandShakeToComplete() 
+        internal override uint WaitForSSLHandShakeToComplete()
             => SNINativeMethodWrapper.SNIWaitForSSLHandshakeToComplete(Handle, GetTimeoutRemaining());
 
         internal override void DisposePacketCache()
@@ -321,7 +320,7 @@ namespace Microsoft.Data.SqlClient
                 // Do not set _writePacketCache to null, just in case a WriteAsyncCallback completes after this point
             }
         }
-        
+
         internal sealed class WritePacketCache : IDisposable
         {
             private bool _disposed;

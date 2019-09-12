@@ -31,7 +31,7 @@ namespace Microsoft.Data.ProviderBase
 
         private bool _connectionIsDoomed;       // true when the connection should no longer be used.
         private bool _cannotBePooled;           // true when the connection should no longer be pooled.
-        
+
         private DateTime _createTime;               // when the connection was created.
 
 #if DEBUG

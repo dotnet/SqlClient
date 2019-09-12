@@ -2,12 +2,10 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using Microsoft.Win32;
-using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Security;
-using System.Text;
+using Microsoft.Win32;
 using Xunit;
 
 namespace System
@@ -43,17 +41,17 @@ namespace System
         public static bool IsRedHatFamily7 => false;
         public static bool IsNotRedHatFamily6 => true;
 
-        public static bool IsWindows10Version1607OrGreater => 
+        public static bool IsWindows10Version1607OrGreater =>
             GetWindowsVersion() == 10 && GetWindowsMinorVersion() == 0 && GetWindowsBuildNumber() >= 14393;
-        public static bool IsWindows10Version1703OrGreater => 
+        public static bool IsWindows10Version1703OrGreater =>
             GetWindowsVersion() == 10 && GetWindowsMinorVersion() == 0 && GetWindowsBuildNumber() >= 15063;
-        public static bool IsWindows10Version1709OrGreater => 
+        public static bool IsWindows10Version1709OrGreater =>
             GetWindowsVersion() == 10 && GetWindowsMinorVersion() == 0 && GetWindowsBuildNumber() >= 16299;
         public static bool IsWindows10Version1803OrGreater =>
             GetWindowsVersion() == 10 && GetWindowsMinorVersion() == 0 && GetWindowsBuildNumber() >= 17134;
 
         // Windows OneCoreUAP SKU doesn't have httpapi.dll
-        public static bool IsNotOneCoreUAP =>  
+        public static bool IsNotOneCoreUAP =>
             File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "System32", "httpapi.dll"));
 
         public static bool IsWindowsIoTCore
@@ -260,7 +258,7 @@ namespace System
 
         [DllImport("kernel32.dll", ExactSpelling = true)]
         private static extern int GetCurrentApplicationUserModelId(ref uint applicationUserModelIdLength, byte[] applicationUserModelId);
-            
+
         [DllImport("kernel32.dll", SetLastError = true, ExactSpelling = true)]
         private static extern bool CloseHandle(IntPtr handle);
 
@@ -270,5 +268,5 @@ namespace System
         // The process handle does NOT need closing
         [DllImport("kernel32.dll", ExactSpelling = true)]
         private static extern IntPtr GetCurrentProcess();
- }
+    }
 }
