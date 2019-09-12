@@ -200,7 +200,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
             return certificate;
         }
-        
+
         /// <summary>
         /// Gets the certificate.
         /// </summary>

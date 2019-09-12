@@ -218,7 +218,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
                 provider.DecryptColumnEncryptionKey(MASTER_KEY_PATH, ENCRYPTION_ALGORITHM, ciphertext);
             Assert.Equal(input, output);
         }
-        
+
         [Theory]
         [InlineData(StoreLocation.CurrentUser, CurrentUserMyPathPrefix)]
         [InlineData(StoreLocation.LocalMachine, LocalMachineMyPathPrefix)]
@@ -228,7 +228,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             Assert.True(!string.IsNullOrWhiteSpace(certificateStoreNameAndLocation));
 
             string certificateName = @"TestCertificate12";
-            
+
             // Fetch the newly created cert.
             X509Certificate2 masterKeyCertificate = Utility.GetCertificate(certificateName,
                                                                             certificateStoreLocation);
@@ -402,13 +402,13 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             }
 
             string certificateName = @"TestCertificate12";
-            
+
             // Fetch the newly created cert.
             X509Certificate2 masterKeyCertificate = Utility.GetCertificate(certificateName,
                                                                             certificateStoreLocation);
 
             Assert.True(masterKeyCertificate != null);
-                
+
             string masterKeyThumbprint = masterKeyCertificate.Thumbprint;
             Assert.True(!string.IsNullOrWhiteSpace(masterKeyThumbprint));
 
