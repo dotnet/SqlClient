@@ -4,23 +4,25 @@
 
 using System.Security.Cryptography;
 
-namespace Microsoft.Data.SqlClient {
+namespace Microsoft.Data.SqlClient
+{
 
     /// <summary>
     /// Encapsulates the information SqlClient sends to SQL Server to initiate the process of attesting and creating a secure session with the enclave, SQL Server uses for computations on columns protected using Always Encrypted.
     /// </summary>
-    public class SqlEnclaveAttestationParameters {
+    public class SqlEnclaveAttestationParameters
+    {
 
         private static readonly string _clientDiffieHellmanKeyName = "ClientDiffieHellmanKey";
         private static readonly string _inputName = "input";
         private static readonly string _className = "EnclaveAttestationParameters";
 
         private readonly byte[] _input;
-        
+
         /// <summary>
         /// Identifies an enclave attestation protocol.  
         /// </summary>
-        public int Protocol { get;}
+        public int Protocol { get; }
 
 
         /// <summary>
@@ -31,7 +33,8 @@ namespace Microsoft.Data.SqlClient {
         /// <summary>
         /// The information used to initiate the process of attesting the enclave. The format and the content of this information is specific to the attestation protocol. 
         /// </summary>
-        public byte[] GetInput() {
+        public byte[] GetInput()
+        {
             return Clone(_input);
         }
 
@@ -40,15 +43,18 @@ namespace Microsoft.Data.SqlClient {
         /// </summary>
         /// <param name="arrayToClone"></param>
         /// <returns></returns>
-        private byte[] Clone(byte[] arrayToClone) {
+        private byte[] Clone(byte[] arrayToClone)
+        {
 
-            if (null == arrayToClone) {
+            if (null == arrayToClone)
+            {
                 return null;
             }
 
             byte[] returnValue = new byte[arrayToClone.Length];
 
-            for (int i = 0; i < arrayToClone.Length; i++) {
+            for (int i = 0; i < arrayToClone.Length; i++)
+            {
                 returnValue[i] = arrayToClone[i];
             }
 
@@ -61,11 +67,13 @@ namespace Microsoft.Data.SqlClient {
         /// <param name="protocol">Identifies an enclave attestation protocol.</param>
         /// <param name="input">The input of the enclave attestation protocol.</param>
         /// <param name="clientDiffieHellmanKey">A Diffie-Hellman algorithm encapsulating a client-side key pair.</param>
-        public SqlEnclaveAttestationParameters (int protocol, byte[] input, ECDiffieHellmanCng clientDiffieHellmanKey)
+        public SqlEnclaveAttestationParameters(int protocol, byte[] input, ECDiffieHellmanCng clientDiffieHellmanKey)
         {
-            if (null == clientDiffieHellmanKey) { throw SQL.NullArgumentInConstructorInternal(_clientDiffieHellmanKeyName, _className); }
-            if (null == input) { throw SQL.NullArgumentInConstructorInternal(_inputName, _className); }
-            
+            if (null == clientDiffieHellmanKey)
+            { throw SQL.NullArgumentInConstructorInternal(_clientDiffieHellmanKeyName, _className); }
+            if (null == input)
+            { throw SQL.NullArgumentInConstructorInternal(_inputName, _className); }
+
             _input = input;
             Protocol = protocol;
             ClientDiffieHellmanKey = clientDiffieHellmanKey;

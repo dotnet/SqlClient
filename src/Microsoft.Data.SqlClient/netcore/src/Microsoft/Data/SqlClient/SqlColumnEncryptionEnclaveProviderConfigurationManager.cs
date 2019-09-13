@@ -59,7 +59,8 @@ namespace Microsoft.Data.SqlClient
         /// <returns>SqlColumnEncryptionEnclaveProvider for a give sqlColumnEncryptionEnclaveProviderName if found, else returns null</returns>
         public SqlColumnEncryptionEnclaveProvider GetSqlColumnEncryptionEnclaveProvider(string SqlColumnEncryptionEnclaveProviderName)
         {
-            if (string.IsNullOrEmpty(SqlColumnEncryptionEnclaveProviderName)) throw SQL.SqlColumnEncryptionEnclaveProviderNameCannotBeEmpty();
+            if (string.IsNullOrEmpty(SqlColumnEncryptionEnclaveProviderName))
+                throw SQL.SqlColumnEncryptionEnclaveProviderNameCannotBeEmpty();
             SqlColumnEncryptionEnclaveProviderName = SqlColumnEncryptionEnclaveProviderName.ToLowerInvariant();
 
             SqlColumnEncryptionEnclaveProvider sqlColumnEncryptionEnclaveProvider = null;

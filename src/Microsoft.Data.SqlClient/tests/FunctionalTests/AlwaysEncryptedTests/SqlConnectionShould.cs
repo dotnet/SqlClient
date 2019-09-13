@@ -3,9 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections.Generic;
 using System.Reflection;
-using System.Text;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
@@ -82,38 +80,38 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         #endregion NegativeColumnEncryptionSettingFromConnectionString
 
         [Theory]
-        [InlineData( SqlConnectionColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.Enabled )]
-        [InlineData( SqlConnectionColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.Disabled )]
-        [InlineData( SqlConnectionColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.ResultSetOnly )]
-        [InlineData( SqlConnectionColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.UseConnectionSetting )]
-        [InlineData( SqlConnectionColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.ResultSetOnly, SqlCommandColumnEncryptionSetting.Enabled )]
-        [InlineData( SqlConnectionColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.ResultSetOnly, SqlCommandColumnEncryptionSetting.Disabled )]
-        [InlineData( SqlConnectionColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.ResultSetOnly, SqlCommandColumnEncryptionSetting.ResultSetOnly )]
-        [InlineData( SqlConnectionColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.ResultSetOnly, SqlCommandColumnEncryptionSetting.UseConnectionSetting )]
-        [InlineData( SqlConnectionColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.Enabled )]
-        [InlineData( SqlConnectionColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.Disabled )]
-        [InlineData( SqlConnectionColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.ResultSetOnly )]
-        [InlineData( SqlConnectionColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.UseConnectionSetting )]
-        [InlineData( SqlConnectionColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.UseConnectionSetting, SqlCommandColumnEncryptionSetting.Enabled )]
-        [InlineData( SqlConnectionColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.UseConnectionSetting, SqlCommandColumnEncryptionSetting.Disabled )]
-        [InlineData( SqlConnectionColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.UseConnectionSetting, SqlCommandColumnEncryptionSetting.ResultSetOnly )]
-        [InlineData( SqlConnectionColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.UseConnectionSetting, SqlCommandColumnEncryptionSetting.UseConnectionSetting )]
-        [InlineData( SqlConnectionColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.Enabled )]
-        [InlineData( SqlConnectionColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.Disabled )]
-        [InlineData( SqlConnectionColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.ResultSetOnly )]
-        [InlineData( SqlConnectionColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.UseConnectionSetting )]
-        [InlineData( SqlConnectionColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.ResultSetOnly, SqlCommandColumnEncryptionSetting.Enabled )]
-        [InlineData( SqlConnectionColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.ResultSetOnly, SqlCommandColumnEncryptionSetting.Disabled )]
-        [InlineData( SqlConnectionColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.ResultSetOnly, SqlCommandColumnEncryptionSetting.ResultSetOnly )]
-        [InlineData( SqlConnectionColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.ResultSetOnly, SqlCommandColumnEncryptionSetting.UseConnectionSetting )]
-        [InlineData( SqlConnectionColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.Enabled )]
-        [InlineData( SqlConnectionColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.Disabled )]
-        [InlineData( SqlConnectionColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.ResultSetOnly )]
-        [InlineData( SqlConnectionColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.UseConnectionSetting )]
-        [InlineData( SqlConnectionColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.UseConnectionSetting, SqlCommandColumnEncryptionSetting.Enabled )]
-        [InlineData( SqlConnectionColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.UseConnectionSetting, SqlCommandColumnEncryptionSetting.Disabled )]
-        [InlineData( SqlConnectionColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.UseConnectionSetting, SqlCommandColumnEncryptionSetting.ResultSetOnly )]
-        [InlineData( SqlConnectionColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.UseConnectionSetting, SqlCommandColumnEncryptionSetting.UseConnectionSetting )]
+        [InlineData(SqlConnectionColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.Enabled)]
+        [InlineData(SqlConnectionColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.Disabled)]
+        [InlineData(SqlConnectionColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.ResultSetOnly)]
+        [InlineData(SqlConnectionColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.UseConnectionSetting)]
+        [InlineData(SqlConnectionColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.ResultSetOnly, SqlCommandColumnEncryptionSetting.Enabled)]
+        [InlineData(SqlConnectionColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.ResultSetOnly, SqlCommandColumnEncryptionSetting.Disabled)]
+        [InlineData(SqlConnectionColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.ResultSetOnly, SqlCommandColumnEncryptionSetting.ResultSetOnly)]
+        [InlineData(SqlConnectionColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.ResultSetOnly, SqlCommandColumnEncryptionSetting.UseConnectionSetting)]
+        [InlineData(SqlConnectionColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.Enabled)]
+        [InlineData(SqlConnectionColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.Disabled)]
+        [InlineData(SqlConnectionColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.ResultSetOnly)]
+        [InlineData(SqlConnectionColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.UseConnectionSetting)]
+        [InlineData(SqlConnectionColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.UseConnectionSetting, SqlCommandColumnEncryptionSetting.Enabled)]
+        [InlineData(SqlConnectionColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.UseConnectionSetting, SqlCommandColumnEncryptionSetting.Disabled)]
+        [InlineData(SqlConnectionColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.UseConnectionSetting, SqlCommandColumnEncryptionSetting.ResultSetOnly)]
+        [InlineData(SqlConnectionColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.UseConnectionSetting, SqlCommandColumnEncryptionSetting.UseConnectionSetting)]
+        [InlineData(SqlConnectionColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.Enabled)]
+        [InlineData(SqlConnectionColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.Disabled)]
+        [InlineData(SqlConnectionColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.ResultSetOnly)]
+        [InlineData(SqlConnectionColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.Enabled, SqlCommandColumnEncryptionSetting.UseConnectionSetting)]
+        [InlineData(SqlConnectionColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.ResultSetOnly, SqlCommandColumnEncryptionSetting.Enabled)]
+        [InlineData(SqlConnectionColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.ResultSetOnly, SqlCommandColumnEncryptionSetting.Disabled)]
+        [InlineData(SqlConnectionColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.ResultSetOnly, SqlCommandColumnEncryptionSetting.ResultSetOnly)]
+        [InlineData(SqlConnectionColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.ResultSetOnly, SqlCommandColumnEncryptionSetting.UseConnectionSetting)]
+        [InlineData(SqlConnectionColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.Enabled)]
+        [InlineData(SqlConnectionColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.Disabled)]
+        [InlineData(SqlConnectionColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.ResultSetOnly)]
+        [InlineData(SqlConnectionColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.UseConnectionSetting)]
+        [InlineData(SqlConnectionColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.UseConnectionSetting, SqlCommandColumnEncryptionSetting.Enabled)]
+        [InlineData(SqlConnectionColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.UseConnectionSetting, SqlCommandColumnEncryptionSetting.Disabled)]
+        [InlineData(SqlConnectionColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.UseConnectionSetting, SqlCommandColumnEncryptionSetting.ResultSetOnly)]
+        [InlineData(SqlConnectionColumnEncryptionSetting.Disabled, SqlCommandColumnEncryptionSetting.UseConnectionSetting, SqlCommandColumnEncryptionSetting.UseConnectionSetting)]
         public void TestSqlCommandSetColumnEncryptionSetting(
             SqlConnectionColumnEncryptionSetting sqlConnectionColumnEncryptionSetting,
             SqlCommandColumnEncryptionSetting sqlCommandColumnEncryptionSetting_1,

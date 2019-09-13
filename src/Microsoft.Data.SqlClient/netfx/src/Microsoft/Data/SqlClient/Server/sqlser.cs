@@ -4,17 +4,18 @@
 
 using System;
 using System.Collections;
-using Microsoft.Data.Common;
 using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient.Server
 {
 
-    internal class SerializationHelperSql9 {
+    internal class SerializationHelperSql9
+    {
         // Don't let anyone create an instance of this class.
-        private SerializationHelperSql9() {}
+        private SerializationHelperSql9() { }
 
         // Get the m_size of the serialized stream for this type, in bytes.
         // This method creates an instance of the type using the public
@@ -22,29 +23,34 @@ namespace Microsoft.Data.SqlClient.Server
         // in bytes.
         // Prevent inlining so that reflection calls are not moved to caller that may be in a different assembly that may have a different grant set.
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static int SizeInBytes(Type t) {
+        internal static int SizeInBytes(Type t)
+        {
             return SizeInBytes(Activator.CreateInstance(t));
         }
 
         // Get the m_size of the serialized stream for this type, in bytes.
-        internal static int SizeInBytes(object instance) {
+        internal static int SizeInBytes(object instance)
+        {
             Type t = instance.GetType();
             Format k = GetFormat(t);
             DummyStream stream = new DummyStream();
             Serializer ser = GetSerializer(instance.GetType());
             ser.Serialize(stream, instance);
-            return (int) stream.Length;
+            return (int)stream.Length;
         }
 
-        internal static void Serialize(Stream s, object instance) {
+        internal static void Serialize(Stream s, object instance)
+        {
             GetSerializer(instance.GetType()).Serialize(s, instance);
         }
 
-        internal static object Deserialize(Stream s, Type resultType) {
+        internal static object Deserialize(Stream s, Type resultType)
+        {
             return GetSerializer(resultType).Deserialize(s);
         }
 
-        private static Format GetFormat(Type t) {
+        private static Format GetFormat(Type t)
+        {
             return GetUdtAttribute(t).Format;
         }
 
@@ -57,33 +63,39 @@ namespace Microsoft.Data.SqlClient.Server
         [ThreadStatic]
         private static Hashtable m_types2Serializers;
 
-        private static Serializer GetSerializer(Type t) {
+        private static Serializer GetSerializer(Type t)
+        {
             if (m_types2Serializers == null)
                 m_types2Serializers = new Hashtable();
 
-            Serializer s = (Serializer) m_types2Serializers[t];
-            if (s == null) {
-                s = (Serializer) GetNewSerializer(t);
+            Serializer s = (Serializer)m_types2Serializers[t];
+            if (s == null)
+            {
+                s = (Serializer)GetNewSerializer(t);
                 m_types2Serializers[t] = s;
             }
             return s;
         }
 
-        internal static int GetUdtMaxLength(Type t) {
+        internal static int GetUdtMaxLength(Type t)
+        {
             SqlUdtInfo udtInfo = SqlUdtInfo.GetFromType(t);
-            
-            if (Format.Native == udtInfo.SerializationFormat) {
+
+            if (Format.Native == udtInfo.SerializationFormat)
+            {
                 //In the native format, the user does not specify the
                 //max byte size, it is computed from the type definition
                 return SerializationHelperSql9.SizeInBytes(t);
             }
-            else {
+            else
+            {
                 //In all other formats, the user specifies the maximum size in bytes.
                 return udtInfo.MaxByteSize;
             }
         }
 
-        private static object[] GetCustomAttributes(Type t) {
+        private static object[] GetCustomAttributes(Type t)
+        {
             object[] attrs = t.GetCustomAttributes(typeof(SqlUserDefinedTypeAttribute), false);
 
             // If we don't find a Microsoft.Data.SqlClient.Server.SqlUserDefinedTypeAttribute,
@@ -133,14 +145,17 @@ namespace Microsoft.Data.SqlClient.Server
             return attrs;
         }
 
-        internal static SqlUserDefinedTypeAttribute GetUdtAttribute(Type t) {
+        internal static SqlUserDefinedTypeAttribute GetUdtAttribute(Type t)
+        {
             SqlUserDefinedTypeAttribute udtAttr = null;
             object[] attr = GetCustomAttributes(t);
 
-            if (attr != null && attr.Length == 1) {
-                udtAttr = (SqlUserDefinedTypeAttribute) attr[0];
+            if (attr != null && attr.Length == 1)
+            {
+                udtAttr = (SqlUserDefinedTypeAttribute)attr[0];
             }
-            else {
+            else
+            {
                 Type InvalidUdtExceptionType = typeof(InvalidUdtException);
                 var arguments = new Type[] { typeof(Type), typeof(String) };
                 MethodInfo Create = InvalidUdtExceptionType.GetMethod("Create", arguments);
@@ -150,10 +165,12 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         // Create a new serializer for the given type.
-        private static Serializer GetNewSerializer(Type t) {
+        private static Serializer GetNewSerializer(Type t)
+        {
             SqlUserDefinedTypeAttribute udtAttr = GetUdtAttribute(t);
 
-            switch (udtAttr.Format) {
+            switch (udtAttr.Format)
+            {
                 case Format.Native:
                     return new NormalizedSerializer(t);
                 case Format.UserDefined:
@@ -166,43 +183,52 @@ namespace Microsoft.Data.SqlClient.Server
     }
 
     // The base serializer class.
-    internal abstract class Serializer {
+    internal abstract class Serializer
+    {
         public abstract object Deserialize(Stream s);
         public abstract void Serialize(Stream s, object o);
         protected Type m_type;
 
-        protected Serializer(Type t) {
+        protected Serializer(Type t)
+        {
             this.m_type = t;
         }
     }
 
-    internal sealed class NormalizedSerializer: Serializer {
+    internal sealed class NormalizedSerializer : Serializer
+    {
         BinaryOrderedUdtNormalizer m_normalizer;
         bool m_isFixedSize;
         int m_maxSize;
 
-        internal NormalizedSerializer(Type t): base(t) {
+        internal NormalizedSerializer(Type t) : base(t)
+        {
             SqlUserDefinedTypeAttribute udtAttr = SerializationHelperSql9.GetUdtAttribute(t);
             this.m_normalizer = new BinaryOrderedUdtNormalizer(t, true);
             this.m_isFixedSize = udtAttr.IsFixedLength;
             this.m_maxSize = this.m_normalizer.Size;
         }
 
-        public override void Serialize(Stream s, object o) {
+        public override void Serialize(Stream s, object o)
+        {
             m_normalizer.NormalizeTopObject(o, s);
         }
 
-        public override object Deserialize(Stream s) {
+        public override object Deserialize(Stream s)
+        {
             object result = m_normalizer.DeNormalizeTopObject(this.m_type, s);
             return result;
         }
     }
 
-    internal sealed class BinarySerializeSerializer: Serializer {
-        internal BinarySerializeSerializer(Type t): base(t) {
+    internal sealed class BinarySerializeSerializer : Serializer
+    {
+        internal BinarySerializeSerializer(Type t) : base(t)
+        {
         }
 
-        public override void Serialize(Stream s, object o) {
+        public override void Serialize(Stream s, object o)
+        {
             BinaryWriter w = new BinaryWriter(s);
             if (o is Microsoft.SqlServer.Server.IBinarySerialize)
             {
@@ -216,13 +242,16 @@ namespace Microsoft.Data.SqlClient.Server
 
         // Prevent inlining so that reflection calls are not moved to caller that may be in a different assembly that may have a different grant set.
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public override object Deserialize(Stream s) {
+        public override object Deserialize(Stream s)
+        {
             object instance = Activator.CreateInstance(m_type);
             BinaryReader r = new BinaryReader(s);
-            if (instance is Microsoft.SqlServer.Server.IBinarySerialize) {
+            if (instance is Microsoft.SqlServer.Server.IBinarySerialize)
+            {
                 ((Microsoft.SqlServer.Server.IBinarySerialize)instance).Read(r);
             }
-            else {
+            else
+            {
                 ((IBinarySerialize)instance).Read(r);
             }
             return instance;
@@ -231,67 +260,86 @@ namespace Microsoft.Data.SqlClient.Server
 
     // A dummy stream class, used to get the number of bytes written
     // to the stream.
-    internal sealed class DummyStream: Stream {
+    internal sealed class DummyStream : Stream
+    {
         private long m_size;
 
-        public DummyStream() {
+        public DummyStream()
+        {
         }
 
-        private void DontDoIt() {
+        private void DontDoIt()
+        {
             throw new Exception(StringsHelper.GetString(Strings.Sql_InternalError));
         }
 
-        public override bool CanRead {
-            get {
+        public override bool CanRead
+        {
+            get
+            {
                 return false;
             }
         }
 
-        public override bool CanWrite {
-            get {
+        public override bool CanWrite
+        {
+            get
+            {
                 return true;
             }
         }
 
-        public override bool CanSeek {
-            get {
+        public override bool CanSeek
+        {
+            get
+            {
                 return false;
             }
         }
 
-        public override long Position {
-            get {
+        public override long Position
+        {
+            get
+            {
                 return this.m_size;
             }
-            set {
+            set
+            {
                 this.m_size = value;
             }
         }
 
-        public override long Length {
-            get {
+        public override long Length
+        {
+            get
+            {
                 return this.m_size;
             }
         }
 
-        public override void SetLength(long value) {
+        public override void SetLength(long value)
+        {
             this.m_size = value;
         }
 
-        public override long Seek(long value, SeekOrigin loc) {
+        public override long Seek(long value, SeekOrigin loc)
+        {
             DontDoIt();
             return -1;
         }
 
-        public override void Flush() {
+        public override void Flush()
+        {
         }
 
-        public override int Read(byte[] buffer, int offset, int count) {
+        public override int Read(byte[] buffer, int offset, int count)
+        {
             DontDoIt();
             return -1;
         }
 
-        public override void Write(byte[] buffer, int offset, int count) {
+        public override void Write(byte[] buffer, int offset, int count)
+        {
             this.m_size += count;
         }
     }

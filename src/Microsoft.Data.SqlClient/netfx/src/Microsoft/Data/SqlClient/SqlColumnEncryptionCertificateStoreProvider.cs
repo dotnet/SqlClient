@@ -3,10 +3,10 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Text;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -106,7 +106,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Get key path length
-            int currentIndex = _version.Length; 
+            int currentIndex = _version.Length;
             Int16 keyPathLength = BitConverter.ToInt16(encryptedColumnEncryptionKey, currentIndex);
             currentIndex += sizeof(Int16);
 
@@ -355,7 +355,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private string[] GetValidCertificateLocations()
         {
-            return new string[2] {_certLocationLocalMachine, _certLocationCurrentUser};
+            return new string[2] { _certLocationLocalMachine, _certLocationCurrentUser };
         }
 
         /// <summary>
@@ -474,7 +474,7 @@ namespace Microsoft.Data.SqlClient
 
                 X509Certificate2 certificate = matchingCertificates[0];
                 if (!certificate.HasPrivateKey)
-                { 
+                {
                     // ensure the certificate has private key
                     throw SQL.CertificateWithNoPrivateKey(masterKeyPath, isSystemOp);
                 }

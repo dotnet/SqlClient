@@ -41,7 +41,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             RunTestSet(TestCase_ManualEnlistment_Enlist_TxScopeComplete);
         }
 
-        
+
 
 
         private static void TestCase_AutoEnlistment_TxScopeComplete()

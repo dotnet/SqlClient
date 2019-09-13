@@ -7,7 +7,6 @@ using Microsoft.SqlServer.TDS.EndPoint;
 using Microsoft.SqlServer.TDS.Error;
 using Microsoft.SqlServer.TDS.Login7;
 
-
 namespace Microsoft.SqlServer.TDS.Servers
 {
     /// <summary>

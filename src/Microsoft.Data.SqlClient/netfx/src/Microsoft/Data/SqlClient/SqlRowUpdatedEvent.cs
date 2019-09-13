@@ -7,14 +7,18 @@ using System.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
-    public sealed class SqlRowUpdatedEventArgs : RowUpdatedEventArgs {
+    public sealed class SqlRowUpdatedEventArgs : RowUpdatedEventArgs
+    {
         public SqlRowUpdatedEventArgs(DataRow row, IDbCommand command, StatementType statementType, DataTableMapping tableMapping)
-        : base(row, command, statementType, tableMapping) {
+        : base(row, command, statementType, tableMapping)
+        {
         }
 
-        new public SqlCommand Command {
-            get {
-                return(SqlCommand) base.Command;
+        new public SqlCommand Command
+        {
+            get
+            {
+                return (SqlCommand)base.Command;
             }
         }
     }

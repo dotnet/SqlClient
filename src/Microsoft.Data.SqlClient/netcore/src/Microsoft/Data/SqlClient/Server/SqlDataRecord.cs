@@ -4,10 +4,10 @@
 
 using System;
 using System.Data;
-using Microsoft.Data.ProviderBase;
 using System.Data.SqlTypes;
 using System.Diagnostics;
 using Microsoft.Data.Common;
+using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient.Server
 {

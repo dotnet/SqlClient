@@ -33,5 +33,3 @@ namespace Microsoft.Data.SqlTypes
         public override void Write(byte[] buffer, int offset, int count) { throw new PlatformNotSupportedException(SR.SqlFileStream_NotSupported); }
     }
 }
-
-

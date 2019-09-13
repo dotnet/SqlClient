@@ -3,26 +3,27 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using Microsoft.Data.Common;
-using Microsoft.Data.ProviderBase;
+using System.Data;
+using System.Data.Common;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.ConstrainedExecution;
+using Microsoft.Data.Common;
+using Microsoft.Data.ProviderBase;
 using SysTx = System.Transactions;
-using System.Data;
-using System.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
-    abstract internal class SqlInternalConnection : DbConnectionInternal {
+    abstract internal class SqlInternalConnection : DbConnectionInternal
+    {
         private readonly SqlConnectionString _connectionOptions;
-        private bool                         _isEnlistedInTransaction; // is the server-side connection enlisted? true while we're enlisted, reset only after we send a null...
-        private byte[]                       _promotedDTCToken;        // token returned by the server when we promote transaction
-        private byte[]                       _whereAbouts;             // cache the whereabouts (DTC Address) for exporting
-        
-        private bool                         _isGlobalTransaction = false; // Whether this is a Global Transaction (Non-MSDTC, Azure SQL DB Transaction)
-        private bool                         _isGlobalTransactionEnabledForServer = false; // Whether Global Transactions are enabled for this Azure SQL DB Server
-        private static readonly Guid         _globalTransactionTMID = new Guid("1c742caf-6680-40ea-9c26-6b6846079764"); // ID of the Non-MSDTC, Azure SQL DB Transaction Manager
+        private bool _isEnlistedInTransaction; // is the server-side connection enlisted? true while we're enlisted, reset only after we send a null...
+        private byte[] _promotedDTCToken;        // token returned by the server when we promote transaction
+        private byte[] _whereAbouts;             // cache the whereabouts (DTC Address) for exporting
+
+        private bool _isGlobalTransaction = false; // Whether this is a Global Transaction (Non-MSDTC, Azure SQL DB Transaction)
+        private bool _isGlobalTransactionEnabledForServer = false; // Whether Global Transactions are enabled for this Azure SQL DB Server
+        private static readonly Guid _globalTransactionTMID = new Guid("1c742caf-6680-40ea-9c26-6b6846079764"); // ID of the Non-MSDTC, Azure SQL DB Transaction Manager
 
         private bool _isAzureSQLConnection = false; // If connected to Azure SQL
 
@@ -39,7 +40,8 @@ namespace Microsoft.Data.SqlClient
         // the delegated (or promoted) transaction we're responsible for.
         internal SqlDelegatedTransaction DelegatedTransaction { get; set; }
 
-        internal enum TransactionRequest {
+        internal enum TransactionRequest
+        {
             Begin,
             Promote,
             Commit,
@@ -48,24 +50,30 @@ namespace Microsoft.Data.SqlClient
             Save
         };
 
-        internal SqlInternalConnection(SqlConnectionString connectionOptions) : base() {
+        internal SqlInternalConnection(SqlConnectionString connectionOptions) : base()
+        {
             Debug.Assert(null != connectionOptions, "null connectionOptions?");
             _connectionOptions = connectionOptions;
         }
 
-        internal SqlConnection Connection {
-            get {
+        internal SqlConnection Connection
+        {
+            get
+            {
                 return (SqlConnection)Owner;
             }
         }
 
-        internal SqlConnectionString ConnectionOptions {
-            get {
+        internal SqlConnectionString ConnectionOptions
+        {
+            get
+            {
                 return _connectionOptions;
             }
         }
 
-        abstract internal SqlInternalTransaction CurrentTransaction {
+        abstract internal SqlInternalTransaction CurrentTransaction
+        {
             get;
         }
 
@@ -73,90 +81,116 @@ namespace Microsoft.Data.SqlClient
         //  Get the internal transaction that should be hooked to a new outer transaction
         //  during a BeginTransaction API call.  In some cases (i.e. connection is going to 
         //  be reset), CurrentTransaction should not be hooked up this way.
-        virtual internal SqlInternalTransaction AvailableInternalTransaction {
-            get {
+        virtual internal SqlInternalTransaction AvailableInternalTransaction
+        {
+            get
+            {
                 return CurrentTransaction;
             }
         }
 
-        abstract internal SqlInternalTransaction PendingTransaction {
+        abstract internal SqlInternalTransaction PendingTransaction
+        {
             get;
         }
 
-        override protected internal bool IsNonPoolableTransactionRoot {
-            get {
+        override protected internal bool IsNonPoolableTransactionRoot
+        {
+            get
+            {
                 return IsTransactionRoot;  // default behavior is that root transactions are NOT poolable.  Subclasses may override.
             }
         }
 
-        override internal bool IsTransactionRoot {
-            get {
+        override internal bool IsTransactionRoot
+        {
+            get
+            {
                 var delegatedTransaction = DelegatedTransaction;
                 return ((null != delegatedTransaction) && (delegatedTransaction.IsActive));
             }
         }
 
-        internal bool HasLocalTransaction {
-            get {
+        internal bool HasLocalTransaction
+        {
+            get
+            {
                 SqlInternalTransaction currentTransaction = CurrentTransaction;
                 bool result = (null != currentTransaction && currentTransaction.IsLocal);
                 return result;
             }
         }
 
-        internal bool HasLocalTransactionFromAPI {
-            get {
+        internal bool HasLocalTransactionFromAPI
+        {
+            get
+            {
                 SqlInternalTransaction currentTransaction = CurrentTransaction;
                 bool result = (null != currentTransaction && currentTransaction.HasParentTransaction);
                 return result;
             }
         }
 
-        internal bool IsEnlistedInTransaction {
-            get {
+        internal bool IsEnlistedInTransaction
+        {
+            get
+            {
                 return _isEnlistedInTransaction;
             }
         }
 
-        abstract internal bool IsLockedForBulkCopy {
-            get;            
-        }
-
-        abstract internal bool IsShiloh {
+        abstract internal bool IsLockedForBulkCopy
+        {
             get;
         }
 
-        abstract internal bool IsYukonOrNewer {
+        abstract internal bool IsShiloh
+        {
             get;
         }
 
-        abstract internal bool IsKatmaiOrNewer {
+        abstract internal bool IsYukonOrNewer
+        {
             get;
         }
 
-        internal byte[] PromotedDTCToken {
-            get {
+        abstract internal bool IsKatmaiOrNewer
+        {
+            get;
+        }
+
+        internal byte[] PromotedDTCToken
+        {
+            get
+            {
                 return _promotedDTCToken;
             }
-            set {
+            set
+            {
                 _promotedDTCToken = value;
             }
         }
 
-        internal bool IsGlobalTransaction {
-            get {
+        internal bool IsGlobalTransaction
+        {
+            get
+            {
                 return _isGlobalTransaction;
             }
-            set {
+            set
+            {
                 _isGlobalTransaction = value;
             }
         }
 
-        internal bool IsGlobalTransactionsEnabledForServer {
-            get {
+        internal bool IsGlobalTransactionsEnabledForServer
+        {
+            get
+            {
                 return _isGlobalTransactionEnabledForServer;
             }
-            set {
+            set
+            {
                 _isGlobalTransactionEnabledForServer = value;
             }
         }
@@ -173,15 +207,18 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        override public DbTransaction BeginTransaction(IsolationLevel iso) {
+        override public DbTransaction BeginTransaction(IsolationLevel iso)
+        {
             return BeginSqlTransaction(iso, null, false);
         }
 
-        virtual internal SqlTransaction BeginSqlTransaction(IsolationLevel iso, string transactionName, bool shouldReconnect) {
+        virtual internal SqlTransaction BeginSqlTransaction(IsolationLevel iso, string transactionName, bool shouldReconnect)
+        {
             SqlStatistics statistics = null;
             TdsParser bestEffortCleanupTarget = null;
             RuntimeHelpers.PrepareConstrainedRegions();
-            try {
+            try
+            {
 #if DEBUG
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
@@ -201,7 +238,8 @@ namespace Microsoft.Data.SqlClient
                     if (HasLocalTransactionFromAPI)
                         throw ADP.ParallelTransactionsNotSupported(Connection);
 
-                    if (iso == IsolationLevel.Unspecified) {
+                    if (iso == IsolationLevel.Unspecified)
+                    {
                         iso = IsolationLevel.ReadCommitted; // Default to ReadCommitted if unspecified.
                     }
 
@@ -217,28 +255,34 @@ namespace Microsoft.Data.SqlClient
                 }
 #endif //DEBUG
             }
-            catch (System.OutOfMemoryException e) {
+            catch (System.OutOfMemoryException e)
+            {
                 Connection.Abort(e);
                 throw;
             }
-            catch (System.StackOverflowException e) {
+            catch (System.StackOverflowException e)
+            {
                 Connection.Abort(e);
                 throw;
             }
-            catch (System.Threading.ThreadAbortException e) {
+            catch (System.Threading.ThreadAbortException e)
+            {
                 Connection.Abort(e);
                 SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
                 throw;
             }
-            finally {
+            finally
+            {
                 SqlStatistics.StopTimer(statistics);
             }
         }
 
-        override public void ChangeDatabase(string database) {
+        override public void ChangeDatabase(string database)
+        {
             SqlConnection.ExecutePermission.Demand(); // MDAC 80961
 
-            if (ADP.IsEmpty(database)) {
+            if (ADP.IsEmpty(database))
+            {
                 throw ADP.EmptyDatabaseName();
             }
 
@@ -248,27 +292,33 @@ namespace Microsoft.Data.SqlClient
         }
 
         abstract protected void ChangeDatabaseInternal(string database);
-        
-        override protected void CleanupTransactionOnCompletion(SysTx.Transaction transaction) {
+
+        override protected void CleanupTransactionOnCompletion(SysTx.Transaction transaction)
+        {
             // Note: unlocked, potentially multi-threaded code, so pull delegate to local to 
             //  ensure it doesn't change between test and call.
             SqlDelegatedTransaction delegatedTransaction = DelegatedTransaction;
-            if (null != delegatedTransaction) {
+            if (null != delegatedTransaction)
+            {
                 delegatedTransaction.TransactionEnded(transaction);
             }
         }
 
-        override protected DbReferenceCollection CreateReferenceCollection() {
+        override protected DbReferenceCollection CreateReferenceCollection()
+        {
             return new SqlReferenceCollection();
         }
 
-        override protected void Deactivate() {
-            if (Bid.AdvancedOn) {
+        override protected void Deactivate()
+        {
+            if (Bid.AdvancedOn)
+            {
                 Bid.Trace("<sc.SqlInternalConnection.Deactivate|ADV> %d# deactivating\n", base.ObjectID);
             }
             TdsParser bestEffortCleanupTarget = null;
             RuntimeHelpers.PrepareConstrainedRegions();
-            try {
+            try
+            {
 
 #if DEBUG
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
@@ -281,7 +331,8 @@ namespace Microsoft.Data.SqlClient
 #endif //DEBUG
                     bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(Connection);
                     SqlReferenceCollection referenceCollection = (SqlReferenceCollection)ReferenceCollection;
-                    if (null != referenceCollection) {
+                    if (null != referenceCollection)
+                    {
                         referenceCollection.Deactivate();
                     }
 
@@ -294,22 +345,27 @@ namespace Microsoft.Data.SqlClient
                 }
 #endif //DEBUG
             }
-            catch (System.OutOfMemoryException) {
+            catch (System.OutOfMemoryException)
+            {
                 DoomThisConnection();
                 throw;
             }
-            catch (System.StackOverflowException) {
+            catch (System.StackOverflowException)
+            {
                 DoomThisConnection();
                 throw;
             }
-            catch (System.Threading.ThreadAbortException) {
+            catch (System.Threading.ThreadAbortException)
+            {
                 DoomThisConnection();
                 SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
                 throw;
             }
-            catch (Exception e) {
+            catch (Exception e)
+            {
                 // UNDONE - should not be catching all exceptions!!!
-                if (!ADP.IsCatchableExceptionType(e)) {
+                if (!ADP.IsCatchableExceptionType(e))
+                {
                     throw;
                 }
 
@@ -321,15 +377,17 @@ namespace Microsoft.Data.SqlClient
                 ADP.TraceExceptionWithoutRethrow(e);
             }
         }
-       
+
         abstract internal void DisconnectTransaction(SqlInternalTransaction internalTransaction);
 
-        override public void Dispose() {
+        override public void Dispose()
+        {
             _whereAbouts = null;
             base.Dispose();
         }
 
-        protected void Enlist(SysTx.Transaction tx) {
+        protected void Enlist(SysTx.Transaction tx)
+        {
             // This method should not be called while the connection has a 
             // reference to an active delegated transaction.
             // Manual enlistment via SqlConnection.EnlistTransaction
@@ -337,14 +395,15 @@ namespace Microsoft.Data.SqlClient
             //
             // Automatic enlistment isn't possible because 
             // Sys.Tx keeps the connection alive until the transaction is completed.
-            Debug.Assert (!IsNonPoolableTransactionRoot, "cannot defect an active delegated transaction!");  // potential race condition, but it's an assert
+            Debug.Assert(!IsNonPoolableTransactionRoot, "cannot defect an active delegated transaction!");  // potential race condition, but it's an assert
 
-            if (null == tx) {
+            if (null == tx)
+            {
                 if (IsEnlistedInTransaction)
                 {
                     EnlistNull();
                 }
-                else 
+                else
                 {
                     // When IsEnlistedInTransaction is false, it means we are in one of two states:
                     // 1. EnlistTransaction is null, so the connection is truly not enlisted in a transaction, or
@@ -366,30 +425,36 @@ namespace Microsoft.Data.SqlClient
                 }
             }
             // Only enlist if it's different...
-            else if (!tx.Equals(EnlistedTransaction)) { // WebData 20000024 - Must use Equals, not !=
+            else if (!tx.Equals(EnlistedTransaction))
+            { // WebData 20000024 - Must use Equals, not !=
                 EnlistNonNull(tx);
             }
         }
 
-        private void EnlistNonNull(SysTx.Transaction tx) {
+        private void EnlistNonNull(SysTx.Transaction tx)
+        {
             Debug.Assert(null != tx, "null transaction?");
 
-            if (Bid.AdvancedOn) {
+            if (Bid.AdvancedOn)
+            {
                 Bid.Trace("<sc.SqlInternalConnection.EnlistNonNull|ADV> %d#, transaction %d#.\n", base.ObjectID, tx.GetHashCode());
             }
-            
+
             bool hasDelegatedTransaction = false;
 
-            if (IsYukonOrNewer) {
-                if (Bid.AdvancedOn) {
+            if (IsYukonOrNewer)
+            {
+                if (Bid.AdvancedOn)
+                {
                     Bid.Trace("<sc.SqlInternalConnection.EnlistNonNull|ADV> %d#, attempting to delegate\n", base.ObjectID);
                 }
 
                 // Promotable transactions are only supported on Yukon
                 // servers or newer.
                 SqlDelegatedTransaction delegatedTransaction = new SqlDelegatedTransaction(this, tx);
-                
-                try {
+
+                try
+                {
                     // NOTE: System.Transactions claims to resolve all
                     // potential race conditions between multiple delegate
                     // requests of the same transaction to different
@@ -428,28 +493,35 @@ namespace Microsoft.Data.SqlClient
                     // right Sys.Tx.dll is loaded and that Global Transactions
                     // are actually allowed for this Azure SQL DB.
 
-                    if (_isGlobalTransaction) {
-                        if (SysTxForGlobalTransactions.EnlistPromotableSinglePhase == null) {
+                    if (_isGlobalTransaction)
+                    {
+                        if (SysTxForGlobalTransactions.EnlistPromotableSinglePhase == null)
+                        {
                             // This could be a local Azure SQL DB transaction. 
                             hasDelegatedTransaction = tx.EnlistPromotableSinglePhase(delegatedTransaction);
                         }
-                        else {
+                        else
+                        {
                             hasDelegatedTransaction = (bool)SysTxForGlobalTransactions.EnlistPromotableSinglePhase.Invoke(tx, new object[] { delegatedTransaction, _globalTransactionTMID });
                         }
                     }
-                    else {
+                    else
+                    {
                         // This is an MS-DTC distributed transaction
                         hasDelegatedTransaction = tx.EnlistPromotableSinglePhase(delegatedTransaction);
                     }
 
-                    if (hasDelegatedTransaction) {
+                    if (hasDelegatedTransaction)
+                    {
 
                         this.DelegatedTransaction = delegatedTransaction;
 
-                        if (Bid.AdvancedOn) {
+                        if (Bid.AdvancedOn)
+                        {
                             long transactionId = SqlInternalTransaction.NullTransactionId;
-                            int transactionObjectID = 0; 
-                            if (null != CurrentTransaction) {
+                            int transactionObjectID = 0;
+                            if (null != CurrentTransaction)
+                            {
                                 transactionId = CurrentTransaction.TransactionId;
                                 transactionObjectID = CurrentTransaction.ObjectID;
                             }
@@ -457,9 +529,11 @@ namespace Microsoft.Data.SqlClient
                         }
                     }
                 }
-                catch (SqlException e) {
+                catch (SqlException e)
+                {
                     // we do not want to eat the error if it is a fatal one
-                    if (e.Class >= TdsEnums.FATAL_ERROR_CLASS) {
+                    if (e.Class >= TdsEnums.FATAL_ERROR_CLASS)
+                    {
                         throw;
                     }
 
@@ -482,26 +556,33 @@ namespace Microsoft.Data.SqlClient
                     // for the failure.
                 }
             }
-            
-            if (!hasDelegatedTransaction) {
-                if (Bid.AdvancedOn) {
+
+            if (!hasDelegatedTransaction)
+            {
+                if (Bid.AdvancedOn)
+                {
                     Bid.Trace("<sc.SqlInternalConnection.EnlistNonNull|ADV> %d#, delegation not possible, enlisting.\n", base.ObjectID);
                 }
 
                 byte[] cookie = null;
 
-                if (_isGlobalTransaction) {
-                    if (SysTxForGlobalTransactions.GetPromotedToken == null) {
+                if (_isGlobalTransaction)
+                {
+                    if (SysTxForGlobalTransactions.GetPromotedToken == null)
+                    {
                         throw SQL.UnsupportedSysTxForGlobalTransactions();
                     }
 
                     cookie = (byte[])SysTxForGlobalTransactions.GetPromotedToken.Invoke(tx, null);
                 }
-                else {
-                    if (null == _whereAbouts) {
+                else
+                {
+                    if (null == _whereAbouts)
+                    {
                         byte[] dtcAddress = GetDTCAddress();
 
-                        if (null == dtcAddress) {
+                        if (null == dtcAddress)
+                        {
                             throw SQL.CannotGetDTCAddress();
                         }
                         _whereAbouts = dtcAddress;
@@ -511,13 +592,15 @@ namespace Microsoft.Data.SqlClient
 
                 // send cookie to server to finish enlistment
                 PropagateTransactionCookie(cookie);
-                
+
                 _isEnlistedInTransaction = true;
 
-                if (Bid.AdvancedOn) {
+                if (Bid.AdvancedOn)
+                {
                     long transactionId = SqlInternalTransaction.NullTransactionId;
-                    int transactionObjectID = 0; 
-                    if (null != CurrentTransaction) {
+                    int transactionObjectID = 0;
+                    if (null != CurrentTransaction)
+                    {
                         transactionId = CurrentTransaction.TransactionId;
                         transactionObjectID = CurrentTransaction.ObjectID;
                     }
@@ -544,8 +627,10 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(!IsYukonOrNewer || null != CurrentTransaction, "delegated/enlisted transaction with null current transaction?");
         }
 
-        internal void EnlistNull() {
-            if (Bid.AdvancedOn) {
+        internal void EnlistNull()
+        {
+            if (Bid.AdvancedOn)
+            {
                 Bid.Trace("<sc.SqlInternalConnection.EnlistNull|ADV> %d#, unenlisting.\n", base.ObjectID);
             }
 
@@ -566,7 +651,8 @@ namespace Microsoft.Data.SqlClient
             _isEnlistedInTransaction = false;
             EnlistedTransaction = null; // Tell the base class about our enlistment
 
-            if (Bid.AdvancedOn) {
+            if (Bid.AdvancedOn)
+            {
                 Bid.Trace("<sc.SqlInternalConnection.EnlistNull|ADV> %d#, unenlisted.\n", base.ObjectID);
             }
 
@@ -579,8 +665,9 @@ namespace Microsoft.Data.SqlClient
 
             Debug.Assert(!IsYukonOrNewer || null == CurrentTransaction, "unenlisted transaction with non-null current transaction?");   // verify it!
         }
-        
-        override public void EnlistTransaction(SysTx.Transaction transaction) {
+
+        override public void EnlistTransaction(SysTx.Transaction transaction)
+        {
             SqlConnection.VerifyExecutePermission();
 
             ValidateConnectionForExecute(null);
@@ -589,11 +676,13 @@ namespace Microsoft.Data.SqlClient
             // to enlist in a DTC transaction, SQL Server will rollback the
             // local transaction and then do the enlist (7.0 and 2000).  So, if
             // the user tries to do this, throw.
-            if (HasLocalTransaction) {
+            if (HasLocalTransaction)
+            {
                 throw ADP.LocalTransactionPresent();
             }
 
-            if (null != transaction && transaction.Equals(EnlistedTransaction)) {
+            if (null != transaction && transaction.Equals(EnlistedTransaction))
+            {
                 // No-op if this is the current transaction
                 return;
             }
@@ -609,7 +698,8 @@ namespace Microsoft.Data.SqlClient
 
             TdsParser bestEffortCleanupTarget = null;
             RuntimeHelpers.PrepareConstrainedRegions();
-            try {
+            try
+            {
 #if DEBUG
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
@@ -628,15 +718,18 @@ namespace Microsoft.Data.SqlClient
                 }
 #endif //DEBUG
             }
-            catch (System.OutOfMemoryException e) {
+            catch (System.OutOfMemoryException e)
+            {
                 Connection.Abort(e);
                 throw;
             }
-            catch (System.StackOverflowException e) {
+            catch (System.StackOverflowException e)
+            {
                 Connection.Abort(e);
                 throw;
             }
-            catch (System.Threading.ThreadAbortException e) {
+            catch (System.Threading.ThreadAbortException e)
+            {
                 Connection.Abort(e);
                 SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
                 throw;
@@ -645,28 +738,35 @@ namespace Microsoft.Data.SqlClient
 
         abstract internal void ExecuteTransaction(TransactionRequest transactionRequest, string name, IsolationLevel iso, SqlInternalTransaction internalTransaction, bool isDelegateControlRequest);
 
-        internal SqlDataReader FindLiveReader(SqlCommand command) {
+        internal SqlDataReader FindLiveReader(SqlCommand command)
+        {
             SqlDataReader reader = null;
             SqlReferenceCollection referenceCollection = (SqlReferenceCollection)ReferenceCollection;
-            if (null != referenceCollection) {
-                reader =  referenceCollection.FindLiveReader(command);
+            if (null != referenceCollection)
+            {
+                reader = referenceCollection.FindLiveReader(command);
             }
             return reader;
         }
 
-        internal SqlCommand FindLiveCommand(TdsParserStateObject stateObj) {
+        internal SqlCommand FindLiveCommand(TdsParserStateObject stateObj)
+        {
             SqlCommand command = null;
             SqlReferenceCollection referenceCollection = (SqlReferenceCollection)ReferenceCollection;
-            if (null != referenceCollection) {
-                command =  referenceCollection.FindLiveCommand(stateObj);
+            if (null != referenceCollection)
+            {
+                command = referenceCollection.FindLiveCommand(stateObj);
             }
             return command;
         }
 
-        static internal TdsParser GetBestEffortCleanupTarget(SqlConnection connection) {
-            if (null != connection) {
+        static internal TdsParser GetBestEffortCleanupTarget(SqlConnection connection)
+        {
+            if (null != connection)
+            {
                 SqlInternalConnectionTds innerConnection = (connection.InnerConnection as SqlInternalConnectionTds);
-                if (null != innerConnection) {
+                if (null != innerConnection)
+                {
                     return innerConnection.Parser;
                 }
             }
@@ -675,37 +775,46 @@ namespace Microsoft.Data.SqlClient
         }
 
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
-        static internal void BestEffortCleanup(TdsParser target) {
-            if (null != target) {
+        static internal void BestEffortCleanup(TdsParser target)
+        {
+            if (null != target)
+            {
                 target.BestEffortCleanup();
             }
         }
 
         abstract protected byte[] GetDTCAddress();
 
-        static private byte[] GetTransactionCookie(SysTx.Transaction transaction, byte[] whereAbouts) {
+        static private byte[] GetTransactionCookie(SysTx.Transaction transaction, byte[] whereAbouts)
+        {
             byte[] transactionCookie = null;
-            if (null != transaction) {
+            if (null != transaction)
+            {
                 transactionCookie = SysTx.TransactionInterop.GetExportCookie(transaction, whereAbouts);
             }
             return transactionCookie;
         }
 
-        virtual protected void InternalDeactivate() {
+        virtual protected void InternalDeactivate()
+        {
         }
 
         // If wrapCloseInAction is defined, then the action it defines will be run with the connection close action passed in as a parameter
         // The close action also supports being run asynchronously
-        internal void OnError(SqlException exception, bool breakConnection, Action<Action> wrapCloseInAction = null) {
-            if (breakConnection) {
+        internal void OnError(SqlException exception, bool breakConnection, Action<Action> wrapCloseInAction = null)
+        {
+            if (breakConnection)
+            {
                 DoomThisConnection();
             }
 
             var connection = Connection;
-            if (null != connection) {
+            if (null != connection)
+            {
                 connection.OnError(exception, breakConnection, wrapCloseInAction);
             }
-            else if (exception.Class >= TdsEnums.MIN_ERROR_CLASS) {
+            else if (exception.Class >= TdsEnums.MIN_ERROR_CLASS)
+            {
                 // It is an error, and should be thrown.  Class of TdsEnums.MIN_ERROR_CLASS
                 // or above is an error, below TdsEnums.MIN_ERROR_CLASS denotes an info message.
                 throw exception;
@@ -713,7 +822,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         abstract protected void PropagateTransactionCookie(byte[] transactionCookie);
-        
+
         abstract internal void ValidateConnectionForExecute(SqlCommand command);
     }
 }

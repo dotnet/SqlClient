@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using Microsoft.Data.Common;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -12,6 +11,7 @@ using System.Data.Common;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -243,44 +243,108 @@ namespace Microsoft.Data.SqlClient
                     Keywords index = GetIndex(keyword);
                     switch (index)
                     {
-                        case Keywords.ApplicationIntent: this.ApplicationIntent = ConvertToApplicationIntent(keyword, value); break;
-                        case Keywords.ApplicationName: ApplicationName = ConvertToString(value); break;
-                        case Keywords.AttachDBFilename: AttachDBFilename = ConvertToString(value); break;
-                        case Keywords.CurrentLanguage: CurrentLanguage = ConvertToString(value); break;
-                        case Keywords.DataSource: DataSource = ConvertToString(value); break;
-                        case Keywords.FailoverPartner: FailoverPartner = ConvertToString(value); break;
-                        case Keywords.InitialCatalog: InitialCatalog = ConvertToString(value); break;
+                        case Keywords.ApplicationIntent:
+                            this.ApplicationIntent = ConvertToApplicationIntent(keyword, value);
+                            break;
+                        case Keywords.ApplicationName:
+                            ApplicationName = ConvertToString(value);
+                            break;
+                        case Keywords.AttachDBFilename:
+                            AttachDBFilename = ConvertToString(value);
+                            break;
+                        case Keywords.CurrentLanguage:
+                            CurrentLanguage = ConvertToString(value);
+                            break;
+                        case Keywords.DataSource:
+                            DataSource = ConvertToString(value);
+                            break;
+                        case Keywords.FailoverPartner:
+                            FailoverPartner = ConvertToString(value);
+                            break;
+                        case Keywords.InitialCatalog:
+                            InitialCatalog = ConvertToString(value);
+                            break;
                         //                  case Keywords.NamedConnection:          NamedConnection = ConvertToString(value); break;
-                        case Keywords.Password: Password = ConvertToString(value); break;
-                        case Keywords.UserID: UserID = ConvertToString(value); break;
-                        case Keywords.TransactionBinding: TransactionBinding = ConvertToString(value); break;
-                        case Keywords.TypeSystemVersion: TypeSystemVersion = ConvertToString(value); break;
-                        case Keywords.WorkstationID: WorkstationID = ConvertToString(value); break;
+                        case Keywords.Password:
+                            Password = ConvertToString(value);
+                            break;
+                        case Keywords.UserID:
+                            UserID = ConvertToString(value);
+                            break;
+                        case Keywords.TransactionBinding:
+                            TransactionBinding = ConvertToString(value);
+                            break;
+                        case Keywords.TypeSystemVersion:
+                            TypeSystemVersion = ConvertToString(value);
+                            break;
+                        case Keywords.WorkstationID:
+                            WorkstationID = ConvertToString(value);
+                            break;
 
-                        case Keywords.ConnectTimeout: ConnectTimeout = ConvertToInt32(value); break;
-                        case Keywords.LoadBalanceTimeout: LoadBalanceTimeout = ConvertToInt32(value); break;
-                        case Keywords.MaxPoolSize: MaxPoolSize = ConvertToInt32(value); break;
-                        case Keywords.MinPoolSize: MinPoolSize = ConvertToInt32(value); break;
-                        case Keywords.PacketSize: PacketSize = ConvertToInt32(value); break;
+                        case Keywords.ConnectTimeout:
+                            ConnectTimeout = ConvertToInt32(value);
+                            break;
+                        case Keywords.LoadBalanceTimeout:
+                            LoadBalanceTimeout = ConvertToInt32(value);
+                            break;
+                        case Keywords.MaxPoolSize:
+                            MaxPoolSize = ConvertToInt32(value);
+                            break;
+                        case Keywords.MinPoolSize:
+                            MinPoolSize = ConvertToInt32(value);
+                            break;
+                        case Keywords.PacketSize:
+                            PacketSize = ConvertToInt32(value);
+                            break;
 
-                        case Keywords.IntegratedSecurity: IntegratedSecurity = ConvertToIntegratedSecurity(value); break;
-                        case Keywords.Authentication: Authentication = ConvertToAuthenticationType(keyword, value); break;
-                        case Keywords.ColumnEncryptionSetting: ColumnEncryptionSetting = ConvertToColumnEncryptionSetting(keyword, value); break;
-                        case Keywords.EnclaveAttestationUrl: EnclaveAttestationUrl = ConvertToString(value); break;
+                        case Keywords.IntegratedSecurity:
+                            IntegratedSecurity = ConvertToIntegratedSecurity(value);
+                            break;
+                        case Keywords.Authentication:
+                            Authentication = ConvertToAuthenticationType(keyword, value);
+                            break;
+                        case Keywords.ColumnEncryptionSetting:
+                            ColumnEncryptionSetting = ConvertToColumnEncryptionSetting(keyword, value);
+                            break;
+                        case Keywords.EnclaveAttestationUrl:
+                            EnclaveAttestationUrl = ConvertToString(value);
+                            break;
 #if netcoreapp
                         case Keywords.PoolBlockingPeriod: PoolBlockingPeriod = ConvertToPoolBlockingPeriod(keyword, value); break;
 #endif
-                        case Keywords.Encrypt: Encrypt = ConvertToBoolean(value); break;
-                        case Keywords.TrustServerCertificate: TrustServerCertificate = ConvertToBoolean(value); break;
-                        case Keywords.Enlist: Enlist = ConvertToBoolean(value); break;
-                        case Keywords.MultipleActiveResultSets: MultipleActiveResultSets = ConvertToBoolean(value); break;
-                        case Keywords.MultiSubnetFailover: MultiSubnetFailover = ConvertToBoolean(value); break;
-                        case Keywords.PersistSecurityInfo: PersistSecurityInfo = ConvertToBoolean(value); break;
-                        case Keywords.Pooling: Pooling = ConvertToBoolean(value); break;
-                        case Keywords.Replication: Replication = ConvertToBoolean(value); break;
-                        case Keywords.UserInstance: UserInstance = ConvertToBoolean(value); break;
-                        case Keywords.ConnectRetryCount: ConnectRetryCount = ConvertToInt32(value); break;
-                        case Keywords.ConnectRetryInterval: ConnectRetryInterval = ConvertToInt32(value); break;
+                        case Keywords.Encrypt:
+                            Encrypt = ConvertToBoolean(value);
+                            break;
+                        case Keywords.TrustServerCertificate:
+                            TrustServerCertificate = ConvertToBoolean(value);
+                            break;
+                        case Keywords.Enlist:
+                            Enlist = ConvertToBoolean(value);
+                            break;
+                        case Keywords.MultipleActiveResultSets:
+                            MultipleActiveResultSets = ConvertToBoolean(value);
+                            break;
+                        case Keywords.MultiSubnetFailover:
+                            MultiSubnetFailover = ConvertToBoolean(value);
+                            break;
+                        case Keywords.PersistSecurityInfo:
+                            PersistSecurityInfo = ConvertToBoolean(value);
+                            break;
+                        case Keywords.Pooling:
+                            Pooling = ConvertToBoolean(value);
+                            break;
+                        case Keywords.Replication:
+                            Replication = ConvertToBoolean(value);
+                            break;
+                        case Keywords.UserInstance:
+                            UserInstance = ConvertToBoolean(value);
+                            break;
+                        case Keywords.ConnectRetryCount:
+                            ConnectRetryCount = ConvertToInt32(value);
+                            break;
+                        case Keywords.ConnectRetryInterval:
+                            ConnectRetryInterval = ConvertToInt32(value);
+                            break;
 
                         default:
                             Debug.Fail("unexpected keyword");
@@ -373,7 +437,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        
+
         public SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting
         {
             get { return _columnEncryptionSetting; }
@@ -389,7 +453,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        
+
         public string EnclaveAttestationUrl
         {
             get { return _enclaveAttestationUrl; }
@@ -754,42 +818,74 @@ namespace Microsoft.Data.SqlClient
         {
             switch (index)
             {
-                case Keywords.ApplicationIntent: return this.ApplicationIntent;
-                case Keywords.ApplicationName: return ApplicationName;
-                case Keywords.AttachDBFilename: return AttachDBFilename;
+                case Keywords.ApplicationIntent:
+                    return this.ApplicationIntent;
+                case Keywords.ApplicationName:
+                    return ApplicationName;
+                case Keywords.AttachDBFilename:
+                    return AttachDBFilename;
 #if netcoreapp
                 case Keywords.PoolBlockingPeriod: return PoolBlockingPeriod;
 #endif
-                case Keywords.ConnectTimeout: return ConnectTimeout;
-                case Keywords.CurrentLanguage: return CurrentLanguage;
-                case Keywords.DataSource: return DataSource;
-                case Keywords.Encrypt: return Encrypt;
-                case Keywords.Enlist: return Enlist;
-                case Keywords.FailoverPartner: return FailoverPartner;
-                case Keywords.InitialCatalog: return InitialCatalog;
-                case Keywords.IntegratedSecurity: return IntegratedSecurity;
-                case Keywords.LoadBalanceTimeout: return LoadBalanceTimeout;
-                case Keywords.MultipleActiveResultSets: return MultipleActiveResultSets;
-                case Keywords.MaxPoolSize: return MaxPoolSize;
-                case Keywords.MinPoolSize: return MinPoolSize;
-                case Keywords.MultiSubnetFailover: return MultiSubnetFailover;
+                case Keywords.ConnectTimeout:
+                    return ConnectTimeout;
+                case Keywords.CurrentLanguage:
+                    return CurrentLanguage;
+                case Keywords.DataSource:
+                    return DataSource;
+                case Keywords.Encrypt:
+                    return Encrypt;
+                case Keywords.Enlist:
+                    return Enlist;
+                case Keywords.FailoverPartner:
+                    return FailoverPartner;
+                case Keywords.InitialCatalog:
+                    return InitialCatalog;
+                case Keywords.IntegratedSecurity:
+                    return IntegratedSecurity;
+                case Keywords.LoadBalanceTimeout:
+                    return LoadBalanceTimeout;
+                case Keywords.MultipleActiveResultSets:
+                    return MultipleActiveResultSets;
+                case Keywords.MaxPoolSize:
+                    return MaxPoolSize;
+                case Keywords.MinPoolSize:
+                    return MinPoolSize;
+                case Keywords.MultiSubnetFailover:
+                    return MultiSubnetFailover;
                 //          case Keywords.NamedConnection:          return NamedConnection;
-                case Keywords.PacketSize: return PacketSize;
-                case Keywords.Password: return Password;
-                case Keywords.PersistSecurityInfo: return PersistSecurityInfo;
-                case Keywords.Pooling: return Pooling;
-                case Keywords.Replication: return Replication;
-                case Keywords.TransactionBinding: return TransactionBinding;
-                case Keywords.TrustServerCertificate: return TrustServerCertificate;
-                case Keywords.TypeSystemVersion: return TypeSystemVersion;
-                case Keywords.UserID: return UserID;
-                case Keywords.UserInstance: return UserInstance;
-                case Keywords.WorkstationID: return WorkstationID;
-                case Keywords.ConnectRetryCount: return ConnectRetryCount;
-                case Keywords.ConnectRetryInterval: return ConnectRetryInterval;
-                case Keywords.Authentication: return Authentication;
-                case Keywords.ColumnEncryptionSetting: return ColumnEncryptionSetting;
-                case Keywords.EnclaveAttestationUrl: return EnclaveAttestationUrl;
+                case Keywords.PacketSize:
+                    return PacketSize;
+                case Keywords.Password:
+                    return Password;
+                case Keywords.PersistSecurityInfo:
+                    return PersistSecurityInfo;
+                case Keywords.Pooling:
+                    return Pooling;
+                case Keywords.Replication:
+                    return Replication;
+                case Keywords.TransactionBinding:
+                    return TransactionBinding;
+                case Keywords.TrustServerCertificate:
+                    return TrustServerCertificate;
+                case Keywords.TypeSystemVersion:
+                    return TypeSystemVersion;
+                case Keywords.UserID:
+                    return UserID;
+                case Keywords.UserInstance:
+                    return UserInstance;
+                case Keywords.WorkstationID:
+                    return WorkstationID;
+                case Keywords.ConnectRetryCount:
+                    return ConnectRetryCount;
+                case Keywords.ConnectRetryInterval:
+                    return ConnectRetryInterval;
+                case Keywords.Authentication:
+                    return Authentication;
+                case Keywords.ColumnEncryptionSetting:
+                    return ColumnEncryptionSetting;
+                case Keywords.EnclaveAttestationUrl:
+                    return EnclaveAttestationUrl;
 
                 default:
                     Debug.Fail("unexpected keyword");

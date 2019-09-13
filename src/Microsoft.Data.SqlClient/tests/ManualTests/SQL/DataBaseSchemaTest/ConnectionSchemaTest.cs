@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [CheckConnStrSetupFact]
         public static void GetAllTablesFromSchema()
         {
-            VerifySchemaTable(SqlClientMetaDataCollectionNames.Tables, new string[] {"TABLE_CATALOG", "TABLE_SCHEMA", "TABLE_NAME", "TABLE_TYPE" });
+            VerifySchemaTable(SqlClientMetaDataCollectionNames.Tables, new string[] { "TABLE_CATALOG", "TABLE_SCHEMA", "TABLE_NAME", "TABLE_TYPE" });
         }
 
         [CheckConnStrSetupFact]
@@ -41,7 +41,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 // Get all table columns 
                 HashSet<string> columnNames = new HashSet<string>();
-                
+
                 foreach (DataColumn column in table.Columns)
                 {
                     columnNames.Add(column.ColumnName);

@@ -1,6 +1,7 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
+
 using System;
 using System.Transactions;
 using Xunit;
@@ -11,16 +12,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         private static readonly string s_connectionString = DataTestUtility.TcpConnStr;
         private static readonly string s_tableName = DataTestUtility.GetUniqueNameForSqlServer("Azure");
-        private static readonly string s_createTableCmd   = $"CREATE TABLE {s_tableName} (NAME NVARCHAR(40), AGE INT)";
-        private static readonly string s_sqlBulkCopyCmd   = "SELECT * FROM(VALUES ('Fuller', 33), ('Davon', 49)) AS q (FirstName, Age)";
-        private static readonly int    s_commandTimeout   = 30;
+        private static readonly string s_createTableCmd = $"CREATE TABLE {s_tableName} (NAME NVARCHAR(40), AGE INT)";
+        private static readonly string s_sqlBulkCopyCmd = "SELECT * FROM(VALUES ('Fuller', 33), ('Davon', 49)) AS q (FirstName, Age)";
+        private static readonly int s_commandTimeout = 30;
 
         public static void Test()
         {
             try
             {
 #if DEBUG
-               Console.WriteLine($"Creating Table {s_tableName}");
+                Console.WriteLine($"Creating Table {s_tableName}");
 #endif
                 // Setup Azure Table
                 Helpers.ExecuteNonQueryAzure(s_connectionString, s_createTableCmd, s_commandTimeout);

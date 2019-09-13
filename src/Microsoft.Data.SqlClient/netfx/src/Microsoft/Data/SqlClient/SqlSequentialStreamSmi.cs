@@ -53,7 +53,7 @@ namespace Microsoft.Data.SqlClient
             get { throw ADP.NotSupported(); }
             set { throw ADP.NotSupported(); }
         }
-        
+
         internal int ColumnIndex
         {
             get { return _columnIndex; }
@@ -86,7 +86,7 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.ErrorReadingFromStream(ex);
             }
         }
-        
+
         public override long Seek(long offset, System.IO.SeekOrigin origin)
         {
             throw ADP.NotSupported();

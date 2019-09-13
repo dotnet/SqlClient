@@ -5,7 +5,6 @@
 using System;
 using System.IO;
 using System.Security.Cryptography.X509Certificates;
-
 using Microsoft.SqlServer.TDS.PreLogin;
 
 namespace Microsoft.SqlServer.TDS.Servers

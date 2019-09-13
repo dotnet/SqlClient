@@ -3,35 +3,35 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Runtime.CompilerServices;
+using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Security;
-using System.Security.Permissions;
 using System.Text;
 using System.Threading;
-using System.Runtime.ConstrainedExecution;
-using System.Runtime.Versioning;
 
-namespace Microsoft.Data.Common {
+namespace Microsoft.Data.Common
+{
 
     [SuppressUnmanagedCodeSecurityAttribute()]
-    internal static class SafeNativeMethods {
-    
-        [DllImport(ExternDll.Ole32, SetLastError=false)]
+    internal static class SafeNativeMethods
+    {
+
+        [DllImport(ExternDll.Ole32, SetLastError = false)]
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
         [ResourceExposure(ResourceScope.None)]
         static internal extern IntPtr CoTaskMemAlloc(IntPtr cb);
 
-        [DllImport(ExternDll.Ole32, SetLastError=false)]
+        [DllImport(ExternDll.Ole32, SetLastError = false)]
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
         [ResourceExposure(ResourceScope.None)]
         static internal extern void CoTaskMemFree(IntPtr handle);
 
-        [DllImport(ExternDll.Kernel32, CharSet=CharSet.Unicode, PreserveSig=true)]
+        [DllImport(ExternDll.Kernel32, CharSet = CharSet.Unicode, PreserveSig = true)]
         [ResourceExposure(ResourceScope.None)]
         static internal extern int GetUserDefaultLCID();
 
-        [DllImport(ExternDll.Kernel32, PreserveSig=true)]
+        [DllImport(ExternDll.Kernel32, PreserveSig = true)]
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
         [ResourceExposure(ResourceScope.None)]
         static internal extern void ZeroMemory(IntPtr dest, IntPtr length);
@@ -50,12 +50,13 @@ namespace Microsoft.Data.Common {
                 IntPtr lpAddress,
                 IntPtr lpValue)
         {
-            IntPtr  previousPtr;
-            IntPtr  actualPtr = *(IntPtr *)lpAddress.ToPointer();
+            IntPtr previousPtr;
+            IntPtr actualPtr = *(IntPtr*)lpAddress.ToPointer();
 
-            do {
+            do
+            {
                 previousPtr = actualPtr;
-                actualPtr   = Interlocked.CompareExchange(ref *(IntPtr *)lpAddress.ToPointer(), lpValue, previousPtr);
+                actualPtr = Interlocked.CompareExchange(ref *(IntPtr*)lpAddress.ToPointer(), lpValue, previousPtr);
             }
             while (actualPtr != previousPtr);
 
@@ -63,36 +64,36 @@ namespace Microsoft.Data.Common {
         }
 
         // http://msdn.microsoft.com/library/default.asp?url=/library/en-us/sysinfo/base/getcomputernameex.asp
-        [DllImport(ExternDll.Kernel32, CharSet = CharSet.Unicode, EntryPoint="GetComputerNameExW", SetLastError=true)]
+        [DllImport(ExternDll.Kernel32, CharSet = CharSet.Unicode, EntryPoint = "GetComputerNameExW", SetLastError = true)]
         [ResourceExposure(ResourceScope.None)]
         static internal extern int GetComputerNameEx(int nameType, StringBuilder nameBuffer, ref int bufferSize);
 
-        [DllImport(ExternDll.Kernel32, CharSet=System.Runtime.InteropServices.CharSet.Auto)]
+        [DllImport(ExternDll.Kernel32, CharSet = System.Runtime.InteropServices.CharSet.Auto)]
         [ResourceExposure(ResourceScope.Process)]
         static internal extern int GetCurrentProcessId();
 
-        [DllImport(ExternDll.Kernel32, CharSet=CharSet.Auto, BestFitMapping=false, ThrowOnUnmappableChar=true)]
-//        [DllImport(ExternDll.Kernel32, CharSet=CharSet.Auto)]
+        [DllImport(ExternDll.Kernel32, CharSet = CharSet.Auto, BestFitMapping = false, ThrowOnUnmappableChar = true)]
+        //        [DllImport(ExternDll.Kernel32, CharSet=CharSet.Auto)]
         [ResourceExposure(ResourceScope.Process)]
         static internal extern IntPtr GetModuleHandle([MarshalAs(UnmanagedType.LPTStr), In] string moduleName/*lpctstr*/);
 
         [DllImport(ExternDll.Kernel32, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true, SetLastError = true)]
-//        [DllImport(ExternDll.Kernel32, CharSet=CharSet.Ansi)]
+        //        [DllImport(ExternDll.Kernel32, CharSet=CharSet.Ansi)]
         [ResourceExposure(ResourceScope.None)]
         static internal extern IntPtr GetProcAddress(IntPtr HModule, [MarshalAs(UnmanagedType.LPStr), In] string funcName/*lpcstr*/);
 
-        [DllImport(ExternDll.Kernel32, SetLastError=true)]
+        [DllImport(ExternDll.Kernel32, SetLastError = true)]
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
         [ResourceExposure(ResourceScope.None)]
         static internal extern IntPtr LocalAlloc(int flags, IntPtr countOfBytes);
 
-        [DllImport(ExternDll.Kernel32, SetLastError=true)]
+        [DllImport(ExternDll.Kernel32, SetLastError = true)]
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
         [ResourceExposure(ResourceScope.None)]
         static internal extern IntPtr LocalFree(IntPtr handle);
 
-        [DllImport(ExternDll.Oleaut32, CharSet=CharSet.Unicode)]
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]            
+        [DllImport(ExternDll.Oleaut32, CharSet = CharSet.Unicode)]
+        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
         [ResourceExposure(ResourceScope.None)]
         internal static extern IntPtr SysAllocStringLen(String src, int len);  // BSTR
 
@@ -102,17 +103,17 @@ namespace Microsoft.Data.Common {
         internal static extern void SysFreeString(IntPtr bstr);
 
         // only using this to clear existing error info with null
-        [DllImport(ExternDll.Oleaut32, CharSet=CharSet.Unicode, PreserveSig=false)]
+        [DllImport(ExternDll.Oleaut32, CharSet = CharSet.Unicode, PreserveSig = false)]
         // TLS values are preserved between threads, need to check that we use this API to clear the error state only.
         [ResourceExposure(ResourceScope.Process)]
         static private extern void SetErrorInfo(Int32 dwReserved, IntPtr pIErrorInfo);
 
-        [DllImport(ExternDll.Kernel32, SetLastError=true)]
+        [DllImport(ExternDll.Kernel32, SetLastError = true)]
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
         [ResourceExposure(ResourceScope.Machine)]
         static internal extern int ReleaseSemaphore(IntPtr handle, int releaseCount, IntPtr previousCount);
 
-        [DllImport(ExternDll.Kernel32, SetLastError=true)]
+        [DllImport(ExternDll.Kernel32, SetLastError = true)]
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
         [ResourceExposure(ResourceScope.None)]
         static internal extern int WaitForMultipleObjectsEx(uint nCount, IntPtr lpHandles, bool bWaitAll, uint dwMilliseconds, bool bAlertable);
@@ -122,24 +123,26 @@ namespace Microsoft.Data.Common {
         [ResourceExposure(ResourceScope.None)]
         static internal extern int WaitForSingleObjectEx(IntPtr lpHandles, uint dwMilliseconds, bool bAlertable);
 
-        [DllImport(ExternDll.Ole32, PreserveSig=false)]
+        [DllImport(ExternDll.Ole32, PreserveSig = false)]
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
         [ResourceExposure(ResourceScope.None)]
         static internal extern void PropVariantClear(IntPtr pObject);
 
-        [DllImport(ExternDll.Oleaut32, PreserveSig=false)]
+        [DllImport(ExternDll.Oleaut32, PreserveSig = false)]
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
         [ResourceExposure(ResourceScope.None)]
         static internal extern void VariantClear(IntPtr pObject);
 
-        sealed internal class Wrapper {
+        sealed internal class Wrapper
+        {
 
             private Wrapper() { }
 
             // SxS: clearing error information is considered safe
             [ResourceExposure(ResourceScope.None)]
             [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
-            static internal void ClearErrorInfo() { // MDAC 68199
+            static internal void ClearErrorInfo()
+            { // MDAC 68199
                 SafeNativeMethods.SetErrorInfo(0, ADP.PtrZero);
             }
         }

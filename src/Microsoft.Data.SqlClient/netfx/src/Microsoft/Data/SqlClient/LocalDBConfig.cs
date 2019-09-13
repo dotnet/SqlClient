@@ -4,9 +4,9 @@
 
 namespace Microsoft.Data
 {
-    using System.Configuration;
-    using System.Collections;
     using System;
+    using System.Collections;
+    using System.Configuration;
 
     internal sealed class LocalDBInstanceElement : ConfigurationElement
     {
@@ -44,7 +44,7 @@ namespace Microsoft.Data
                 if (yStr != null)
                     y = yStr.Trim();
 
-                return StringComparer.OrdinalIgnoreCase.Compare(x,y);
+                return StringComparer.OrdinalIgnoreCase.Compare(x, y);
             }
         }
 
@@ -64,7 +64,7 @@ namespace Microsoft.Data
         {
             return ((LocalDBInstanceElement)element).Name;
         }
-        
+
     }
 
     internal sealed class LocalDBConfigurationSection : ConfigurationSection

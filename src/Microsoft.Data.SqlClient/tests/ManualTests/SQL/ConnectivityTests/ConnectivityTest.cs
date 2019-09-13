@@ -123,8 +123,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         bool processIdFound = false;
                         while (reader.Read())
                         {
-                            Assert.Equal(sqlProviderName,reader.GetString(0).Trim());
-                            if(sqlProviderProcessID == reader.GetString(1).Trim())
+                            Assert.Equal(sqlProviderName, reader.GetString(0).Trim());
+                            if (sqlProviderProcessID == reader.GetString(1).Trim())
                             {
                                 processIdFound = true;
                             }

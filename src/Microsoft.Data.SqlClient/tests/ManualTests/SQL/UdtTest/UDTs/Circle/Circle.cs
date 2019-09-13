@@ -3,9 +3,9 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Text;
 using System.Data.SqlTypes;
 using System.IO;
+using System.Text;
 using Microsoft.Data.SqlClient.Server;
 
 [Serializable]

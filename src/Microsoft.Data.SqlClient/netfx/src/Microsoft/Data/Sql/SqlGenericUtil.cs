@@ -2,13 +2,14 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-namespace Microsoft.Data.Sql {
+namespace Microsoft.Data.Sql
+{
     using System;
     using Microsoft.Data;
     using Microsoft.Data.Common;
-    using System.Diagnostics;
 
-    sealed internal class SqlGenericUtil {
+    sealed internal class SqlGenericUtil
+    {
 
         private SqlGenericUtil() { /* prevent utility class from being insantiated*/ }
 
@@ -20,13 +21,15 @@ namespace Microsoft.Data.Sql {
         // Sql.Definition
         //
 
-        static internal Exception NullCommandText() {
+        static internal Exception NullCommandText()
+        {
             return ADP.Argument(StringsHelper.GetString(Strings.Sql_NullCommandText));
         }
-        static internal Exception MismatchedMetaDataDirectionArrayLengths() {
+        static internal Exception MismatchedMetaDataDirectionArrayLengths()
+        {
             return ADP.Argument(StringsHelper.GetString(Strings.Sql_MismatchedMetaDataDirectionArrayLengths));
         }
     }
 
- }//namespace
+}//namespace
 

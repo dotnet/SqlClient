@@ -22,7 +22,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
         private readonly string _targetServer;
         private readonly object _callbackObject;
-        
+
         private Stream _stream;
         private NamedPipeClientStream _pipeStream;
         private SslOverTdsStream _sslOverTdsStream;

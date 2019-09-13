@@ -4,9 +4,6 @@
 
 using System;
 using System.IO;
-using System.Collections.Generic;
-
-using Microsoft.SqlServer.TDS.SessionState;
 
 namespace Microsoft.SqlServer.TDS.FeatureExtAck
 {

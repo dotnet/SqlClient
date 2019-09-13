@@ -3,19 +3,22 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Diagnostics;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Text;
 
-namespace Microsoft.Data.SqlClient {
+namespace Microsoft.Data.SqlClient
+{
     /// <summary>
     /// <para> Implements a global directory of all the encryption algorithms registered with client.</para>
     /// </summary>
-    sealed internal class SqlClientEncryptionAlgorithmFactoryList {
+    sealed internal class SqlClientEncryptionAlgorithmFactoryList
+    {
         private readonly ConcurrentDictionary<string, SqlClientEncryptionAlgorithmFactory> _encryptionAlgoFactoryList;
         private static readonly SqlClientEncryptionAlgorithmFactoryList _singletonInstance = new SqlClientEncryptionAlgorithmFactoryList();
 
-        private SqlClientEncryptionAlgorithmFactoryList () {
+        private SqlClientEncryptionAlgorithmFactoryList()
+        {
             _encryptionAlgoFactoryList = new ConcurrentDictionary<string, SqlClientEncryptionAlgorithmFactory>(concurrencyLevel: 4 * Environment.ProcessorCount /* default value in ConcurrentDictionary*/, capacity: 2);
 
             // Add wellknown algorithms
@@ -23,7 +26,8 @@ namespace Microsoft.Data.SqlClient {
             _encryptionAlgoFactoryList.TryAdd(SqlAes256CbcAlgorithm.AlgorithmName, new SqlAes256CbcFactory());
         }
 
-        internal static SqlClientEncryptionAlgorithmFactoryList GetInstance () {
+        internal static SqlClientEncryptionAlgorithmFactoryList GetInstance()
+        {
             return _singletonInstance;
         }
 
@@ -31,19 +35,23 @@ namespace Microsoft.Data.SqlClient {
         /// Get the registered list of algorithms as a comma seperated list with algorithm names
         /// wrapped in single quotes.
         /// <summary>
-        internal string GetRegisteredCipherAlgorithmNames () {
+        internal string GetRegisteredCipherAlgorithmNames()
+        {
             StringBuilder builder = new StringBuilder();
             bool firstElem = true;
-            foreach (string key in _encryptionAlgoFactoryList.Keys) {
-                if (firstElem) {
+            foreach (string key in _encryptionAlgoFactoryList.Keys)
+            {
+                if (firstElem)
+                {
                     builder.Append("'");
                     firstElem = false;
                 }
-                else {
+                else
+                {
                     builder.Append(", '");
                 }
-                builder.Append (key);
-                builder.Append ("'");
+                builder.Append(key);
+                builder.Append("'");
             }
 
             return builder.ToString();
@@ -56,16 +64,18 @@ namespace Microsoft.Data.SqlClient {
         /// <param name="type"></param>
         /// <param name="algorithmName"></param>
         /// <param name="encryptionAlgorithm"></param>
-        internal void GetAlgorithm(SqlClientSymmetricKey key, byte type, string algorithmName, out SqlClientEncryptionAlgorithm encryptionAlgorithm) {
+        internal void GetAlgorithm(SqlClientSymmetricKey key, byte type, string algorithmName, out SqlClientEncryptionAlgorithm encryptionAlgorithm)
+        {
             encryptionAlgorithm = null;
 
             SqlClientEncryptionAlgorithmFactory factory = null;
-            if (!_encryptionAlgoFactoryList.TryGetValue (algorithmName, out factory)) {
-                throw SQL.UnknownColumnEncryptionAlgorithm(algorithmName, 
+            if (!_encryptionAlgoFactoryList.TryGetValue(algorithmName, out factory))
+            {
+                throw SQL.UnknownColumnEncryptionAlgorithm(algorithmName,
                         SqlClientEncryptionAlgorithmFactoryList.GetInstance().GetRegisteredCipherAlgorithmNames());
             }
 
-            Debug.Assert (null != factory, "Null Algorithm Factory class detected");
+            Debug.Assert(null != factory, "Null Algorithm Factory class detected");
 
             // If the factory exists, following method will Create an algorithm object. If this fails,
             // it will raise an exception.
