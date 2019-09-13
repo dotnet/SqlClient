@@ -4,10 +4,12 @@
 
 using System.Diagnostics;
 
-namespace Microsoft.Data.SqlClient.Server {
+namespace Microsoft.Data.SqlClient.Server
+{
 
     // Formal encoding of SMI's metadata-to-ITypedSetter/-from-ITypedGetter validity rules
-    internal class SmiXetterAccessMap {
+    internal class SmiXetterAccessMap
+    {
 
         // A couple of private constants to make the getter/setter access tables more readable
         private const bool X = true;
@@ -97,19 +99,21 @@ namespace Microsoft.Data.SqlClient.Server {
 /*DTOffset*/{ _  ,  _  ,  _   ,  _   ,   _  ,   _  ,  _   ,  _   ,  _   ,  _   ,  _    ,  _  ,   _  ,  _   ,  _  ,  _  ,  X  , },
         };
 
-        internal static bool IsGetterAccessValid( SmiMetaData metaData, SmiXetterTypeCode xetterType ) {
+        internal static bool IsGetterAccessValid(SmiMetaData metaData, SmiXetterTypeCode xetterType)
+        {
             // Make sure no-one adds a new xetter type without updating this file!
-            Debug.Assert( SmiXetterTypeCode.XetBoolean <= xetterType && SmiXetterTypeCode.XetDateTimeOffset >= xetterType );
+            Debug.Assert(SmiXetterTypeCode.XetBoolean <= xetterType && SmiXetterTypeCode.XetDateTimeOffset >= xetterType);
 
-            return __isGetterAccessValid[(int) metaData.SqlDbType, (int) xetterType];
+            return __isGetterAccessValid[(int)metaData.SqlDbType, (int)xetterType];
         }
 
-        internal static bool IsSetterAccessValid( SmiMetaData metaData, SmiXetterTypeCode xetterType ) {
+        internal static bool IsSetterAccessValid(SmiMetaData metaData, SmiXetterTypeCode xetterType)
+        {
             // Make sure no-one adds a new xetter type without updating this file!
             Debug.Assert(SmiXetterTypeCode.XetBoolean <= xetterType && SmiXetterTypeCode.XetDateTimeOffset >= xetterType &&
                     SmiXetterTypeCode.GetVariantMetaData != xetterType);
 
-            return __isSetterAccessValid[(int) metaData.SqlDbType, (int) xetterType];
+            return __isSetterAccessValid[(int)metaData.SqlDbType, (int)xetterType];
         }
     }
 }

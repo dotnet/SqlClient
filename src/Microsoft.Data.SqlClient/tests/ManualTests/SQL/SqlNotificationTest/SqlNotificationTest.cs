@@ -14,8 +14,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private const int CALLBACK_TIMEOUT = 5000; // milliseconds
 
         // Database schema
-        private readonly string _tableName   = $"dbo.[SQLDEP_{Guid.NewGuid().ToString()}]";
-        private readonly string _queueName   = $"SQLDEP_{Guid.NewGuid().ToString()}";
+        private readonly string _tableName = $"dbo.[SQLDEP_{Guid.NewGuid().ToString()}]";
+        private readonly string _queueName = $"SQLDEP_{Guid.NewGuid().ToString()}";
         private readonly string _serviceName = $"SQLDEP_{Guid.NewGuid().ToString()}";
         private readonly string _schemaQueue;
 

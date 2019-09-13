@@ -5,11 +5,11 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Microsoft.SqlServer.TDS.Authentication;
 using Microsoft.SqlServer.TDS.Login7;
 using Microsoft.SqlServer.TDS.PreLogin;
 using Microsoft.SqlServer.TDS.SQLBatch;
 using Microsoft.SqlServer.TDS.SSPI;
-using Microsoft.SqlServer.TDS.Authentication;
 
 namespace Microsoft.SqlServer.TDS
 {

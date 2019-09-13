@@ -3,13 +3,12 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Security.Cryptography.X509Certificates;
 using System.Collections.Generic;
-
+using System.Security.Cryptography.X509Certificates;
 using Microsoft.SqlServer.TDS.EndPoint;
 using Microsoft.SqlServer.TDS.EndPoint.SSPI;
-using Microsoft.SqlServer.TDS.PreLogin;
 using Microsoft.SqlServer.TDS.Login7;
+using Microsoft.SqlServer.TDS.PreLogin;
 using Microsoft.SqlServer.TDS.SessionState;
 
 namespace Microsoft.SqlServer.TDS.Servers

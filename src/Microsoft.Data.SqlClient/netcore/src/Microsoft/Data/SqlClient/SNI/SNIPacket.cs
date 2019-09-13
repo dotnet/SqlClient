@@ -5,8 +5,6 @@
 using System;
 using System.Buffers;
 using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClient.SNI
 {
@@ -225,7 +223,7 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             if (_data != null)
             {
-                if(_isBufferFromArrayPool)
+                if (_isBufferFromArrayPool)
                 {
                     ArrayPool<byte>.Shared.Return(_data);
                 }

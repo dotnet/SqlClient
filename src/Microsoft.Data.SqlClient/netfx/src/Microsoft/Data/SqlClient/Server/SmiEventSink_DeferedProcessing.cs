@@ -2,7 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-namespace Microsoft.Data.SqlClient.Server {
+namespace Microsoft.Data.SqlClient.Server
+{
 
     // This class exists purely to defer processing of messages until a later time.
     //  It is designed to allow calling common code that interacts with the SMI layers
@@ -22,11 +23,14 @@ namespace Microsoft.Data.SqlClient.Server {
     //
     //  IMPORTANT: Code that uses the DeferedProccess event sink is responsible for ensuring that
     //  these messages ARE processed at some point.
-    internal class SmiEventSink_DeferedProcessing : SmiEventSink_Default {
-        internal SmiEventSink_DeferedProcessing ( SmiEventSink parent ) : base(parent) {
+    internal class SmiEventSink_DeferedProcessing : SmiEventSink_Default
+    {
+        internal SmiEventSink_DeferedProcessing(SmiEventSink parent) : base(parent)
+        {
         }
 
-        protected override void DispatchMessages(bool ignoreNonFatalMessages) {
+        protected override void DispatchMessages(bool ignoreNonFatalMessages)
+        {
             // Skip processing messages.  Since messages are sent to parent and calling code will call 
             //  ProcessMessages against parent, messages ARE NOT LOST!
         }

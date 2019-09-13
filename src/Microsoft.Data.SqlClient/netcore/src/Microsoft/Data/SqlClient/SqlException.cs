@@ -30,12 +30,12 @@ namespace Microsoft.Data.SqlClient
             _clientConnectionId = conId;
         }
 
-        private SqlException(SerializationInfo si, StreamingContext sc) : base(si, sc) 
+        private SqlException(SerializationInfo si, StreamingContext sc) : base(si, sc)
         {
             HResult = SqlExceptionHResult;
             foreach (SerializationEntry siEntry in si)
             {
-                if ("ClientConnectionId" == siEntry.Name) 
+                if ("ClientConnectionId" == siEntry.Name)
                 {
                     _clientConnectionId = (Guid)siEntry.Value;
                     break;

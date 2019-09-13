@@ -4,6 +4,7 @@
   <Import Project="$(ToolsDir)targets\GenerateNugetPackage.targets" />
 
   <PropertyGroup>
+    <RestoreConfigFile>src\NuGet.config</RestoreConfigFile>
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
     <!-- Flag to control if NetFx driver should be built or not -->
@@ -35,10 +36,6 @@
     <ManualTests     Include="**/ManualTests/Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" />
 
     <Samples         Include="**/docs/**/Microsoft.Data.SqlClient.Samples.csproj"/>
-
-    <NugetPackageSources Include="https://api.nuget.org/v3/index.json" />
-    <NugetPackageSources Include="https://dotnetfeed.blob.core.windows.net/dotnet-core/index.json" />
-    <NugetPackageSources Include="https://dotnet.myget.org/F/dotnet-core/api/v3/index.json" />
   </ItemGroup>
 
   <!-- Top Level Build targets -->

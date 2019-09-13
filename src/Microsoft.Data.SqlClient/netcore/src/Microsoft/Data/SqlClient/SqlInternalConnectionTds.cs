@@ -2,22 +2,22 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Diagnostics;
-using System.Globalization;
-using System.Runtime.CompilerServices;
-using System.Threading;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
+using System.Net.Http.Headers;
+using System.Runtime.CompilerServices;
+using System.Security;
+using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
-using System.Security;
-using System;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Identity.Client;
-using System.Text;
-using System.Net.Http.Headers;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -464,7 +464,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        
         // Returns true if the Sql error is a transient.
         private bool IsTransientError(SqlException exc)
         {
@@ -1176,7 +1175,7 @@ namespace Microsoft.Data.SqlClient
             login.language = _currentLanguage;
             if (!login.userInstance)
             { // Do not send attachdbfilename or database to SSE primary instance
-                login.database = CurrentDatabase; ;
+                login.database = CurrentDatabase;
                 login.attachDBFilename = ConnectionOptions.AttachDBFilename;
             }
 
@@ -1968,7 +1967,7 @@ namespace Microsoft.Data.SqlClient
                          "Credentials aren't provided for calling MSAL");
             Debug.Assert(fedAuthInfo != null, "info should not be null.");
             Debug.Assert(_dbConnectionPoolAuthenticationContextKey == null, "_dbConnectionPoolAuthenticationContextKey should be null.");
-            
+
             DbConnectionPoolAuthenticationContext dbConnectionPoolAuthenticationContext = null;
 
             // We want to refresh the token without taking a lock on the context, allowed when the access token is expiring within the next 10 mins.
@@ -2004,10 +2003,12 @@ namespace Microsoft.Data.SqlClient
 
 #if DEBUG
                     // Checking if any failpoints are enabled.
-                    else if (_forceExpiryUnLocked) {
+                    else if (_forceExpiryUnLocked)
+                    {
                         attemptRefreshTokenUnLocked = true;
                     }
-                    else if (_forceExpiryLocked) {
+                    else if (_forceExpiryLocked)
+                    {
                         attemptRefreshTokenLocked = TryGetFedAuthTokenLocked(fedAuthInfo, dbConnectionPoolAuthenticationContext, out fedAuthToken);
                     }
 #endif
@@ -2024,7 +2025,6 @@ namespace Microsoft.Data.SqlClient
                         // If there was an exception in retrieving the new token, TryGetFedAuthTokenLocked should have thrown, so we won't be here.
                         Debug.Assert(!attemptRefreshTokenLocked || fedAuthToken != null, "Either Lock should not have been obtained or fedAuthToken should not be null.");
                         Debug.Assert(!attemptRefreshTokenLocked || _newDbConnectionPoolAuthenticationContext != null, "Either Lock should not have been obtained or _newDbConnectionPoolAuthenticationContext should not be null.");
-                        
                     }
                 }
             }
@@ -2130,7 +2130,8 @@ namespace Microsoft.Data.SqlClient
             string username = null;
 
             var authProvider = _sqlAuthenticationProviderManager.GetProvider(ConnectionOptions.Authentication);
-            if (authProvider == null) throw SQL.CannotFindAuthProvider(ConnectionOptions.Authentication.ToString());
+            if (authProvider == null)
+                throw SQL.CannotFindAuthProvider(ConnectionOptions.Authentication.ToString());
 
             // retry getting access token once if MsalException.error_code is unknown_error.
             // extra logic to deal with HTTP 429 (Retry after).
@@ -2258,7 +2259,7 @@ namespace Microsoft.Data.SqlClient
                         SqlException exc = SqlException.CreateException(sqlErs, "", this);
                         throw exc;
                     }
-                    
+
                     Thread.Sleep(sleepInterval);
                     sleepInterval *= 2;
                 }
@@ -2273,7 +2274,7 @@ namespace Microsoft.Data.SqlClient
                 DateTime expirationTime = DateTime.FromFileTimeUtc(fedAuthToken.expirationFileTime);
                 _newDbConnectionPoolAuthenticationContext = new DbConnectionPoolAuthenticationContext(fedAuthToken.accessToken, expirationTime);
             }
-            
+
             return fedAuthToken;
         }
 
@@ -2305,19 +2306,23 @@ namespace Microsoft.Data.SqlClient
                         int i = 0;
                         while (i < data.Length)
                         {
-                            byte stateId = data[i]; i++;
+                            byte stateId = data[i];
+                            i++;
                             int len;
-                            byte bLen = data[i]; i++;
+                            byte bLen = data[i];
+                            i++;
                             if (bLen == 0xFF)
                             {
-                                len = BitConverter.ToInt32(data, i); i += 4;
+                                len = BitConverter.ToInt32(data, i);
+                                i += 4;
                             }
                             else
                             {
                                 len = bLen;
                             }
                             byte[] stateData = new byte[len];
-                            Buffer.BlockCopy(data, i, stateData, 0, len); i += len;
+                            Buffer.BlockCopy(data, i, stateData, 0, len);
+                            i += len;
                             if (_recoverySessionData == null)
                             {
                                 _currentSessionData._initialState[stateId] = stateData;
@@ -2373,31 +2378,31 @@ namespace Microsoft.Data.SqlClient
                         break;
                     }
                 case TdsEnums.FEATUREEXT_TCE:
-                {
-                    if (data.Length < 1)
                     {
-                        throw SQL.ParsingError(ParsingErrorState.TceUnknownVersion);
+                        if (data.Length < 1)
+                        {
+                            throw SQL.ParsingError(ParsingErrorState.TceUnknownVersion);
+                        }
+
+                        byte supportedTceVersion = data[0];
+                        if (0 == supportedTceVersion || supportedTceVersion > TdsEnums.MAX_SUPPORTED_TCE_VERSION)
+                        {
+                            throw SQL.ParsingErrorValue(ParsingErrorState.TceInvalidVersion, supportedTceVersion);
+                        }
+
+                        _tceVersionSupported = supportedTceVersion;
+                        Debug.Assert(_tceVersionSupported <= TdsEnums.MAX_SUPPORTED_TCE_VERSION, "Client support TCE version 2");
+                        _parser.IsColumnEncryptionSupported = true;
+                        _parser.TceVersionSupported = _tceVersionSupported;
+
+                        if (data.Length > 1)
+                        {
+                            // Extract the type of enclave being used by the server.
+                            _parser.EnclaveType = Encoding.Unicode.GetString(data, 2, (data.Length - 2));
+                        }
+
+                        break;
                     }
-
-                    byte supportedTceVersion = data[0];
-                    if (0 == supportedTceVersion || supportedTceVersion > TdsEnums.MAX_SUPPORTED_TCE_VERSION)
-                    {
-                        throw SQL.ParsingErrorValue(ParsingErrorState.TceInvalidVersion, supportedTceVersion);
-                    }
-
-                    _tceVersionSupported = supportedTceVersion;
-                    Debug.Assert(_tceVersionSupported <= TdsEnums.MAX_SUPPORTED_TCE_VERSION, "Client support TCE version 2");
-                    _parser.IsColumnEncryptionSupported = true;
-                    _parser.TceVersionSupported = _tceVersionSupported;
-
-                    if (data.Length > 1)
-                    {
-                        // Extract the type of enclave being used by the server.
-                        _parser.EnclaveType = Encoding.Unicode.GetString(data, 2, (data.Length - 2));
-                    }
-
-                    break;
-                }
 
                 case TdsEnums.FEATUREEXT_UTF8SUPPORT:
                     {

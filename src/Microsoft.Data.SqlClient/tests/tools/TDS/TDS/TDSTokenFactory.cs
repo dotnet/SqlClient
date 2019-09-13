@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-
 using Microsoft.SqlServer.TDS.Authentication;
 using Microsoft.SqlServer.TDS.ColInfo;
 using Microsoft.SqlServer.TDS.ColMetadata;
@@ -16,11 +15,11 @@ using Microsoft.SqlServer.TDS.Error;
 using Microsoft.SqlServer.TDS.FeatureExtAck;
 using Microsoft.SqlServer.TDS.Info;
 using Microsoft.SqlServer.TDS.LoginAck;
-using Microsoft.SqlServer.TDS.Row;
-using Microsoft.SqlServer.TDS.SSPI;
-using Microsoft.SqlServer.TDS.SessionState;
-using Microsoft.SqlServer.TDS.ReturnStatus;
 using Microsoft.SqlServer.TDS.Order;
+using Microsoft.SqlServer.TDS.ReturnStatus;
+using Microsoft.SqlServer.TDS.Row;
+using Microsoft.SqlServer.TDS.SessionState;
+using Microsoft.SqlServer.TDS.SSPI;
 
 namespace Microsoft.SqlServer.TDS
 {

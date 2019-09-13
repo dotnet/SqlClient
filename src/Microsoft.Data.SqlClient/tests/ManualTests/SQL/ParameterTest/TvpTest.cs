@@ -5,17 +5,14 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Data;
 using System.Data.Common;
 using System.Data.SqlTypes;
 using System.Diagnostics;
-using System.Globalization;
+using System.IO;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
-
 using Microsoft.Data.SqlClient.Server;
 using Xunit;
 
@@ -251,7 +248,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-#region Main test methods
+        #region Main test methods
         private void ColumnBoundariesTest()
         {
             IEnumerator<StePermutation> boundsMD = SteStructuredTypeBoundaries.AllColumnTypesExceptUdts.GetEnumerator(
@@ -1432,7 +1429,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
 
-#endregion
+        #endregion
     }
 
     internal class TvpRestartableReader : DbDataReader

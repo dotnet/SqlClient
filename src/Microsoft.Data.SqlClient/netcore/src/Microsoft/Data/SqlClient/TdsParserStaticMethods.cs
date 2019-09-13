@@ -2,8 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using Microsoft.Data.Common;
 using System;
+using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {

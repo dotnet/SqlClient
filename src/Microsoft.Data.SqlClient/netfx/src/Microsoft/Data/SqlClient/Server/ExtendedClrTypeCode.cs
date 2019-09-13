@@ -2,9 +2,11 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-namespace Microsoft.Data.SqlClient.Server {
+namespace Microsoft.Data.SqlClient.Server
+{
 
-    internal enum ExtendedClrTypeCode {
+    internal enum ExtendedClrTypeCode
+    {
         Invalid = -1,
         Boolean,                    // System.Boolean
         Byte,                       // System.Byte

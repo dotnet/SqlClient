@@ -2,10 +2,12 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-namespace Microsoft.Data.SqlClient.Server {
+namespace Microsoft.Data.SqlClient.Server
+{
 
     // Types should match Getter/Setter names
-    internal enum SmiXetterTypeCode {
+    internal enum SmiXetterTypeCode
+    {
         XetBoolean,
         XetByte,
         XetBytes,

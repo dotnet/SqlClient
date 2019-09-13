@@ -3,11 +3,11 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using Microsoft.Data.Common;
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -177,13 +177,15 @@ namespace Microsoft.Data.SqlClient
                         {
                             int bytesRead;
                             var reader = _reader;
-                            if (reader != null) 
+                            if (reader != null)
                             {
                                 Task<int> getBytesTask = reader.GetBytesAsync(_columnIndex, byteBuffer, byteBufferUsed, byteBuffer.Length - byteBufferUsed, Timeout.Infinite, _disposalTokenSource.Token, out bytesRead);
-                                if (getBytesTask == null) {
+                                if (getBytesTask == null)
+                                {
                                     byteBufferUsed += bytesRead;
                                 }
-                                else {
+                                else
+                                {
                                     // We need more data - setup the callback, and mark this as not completed sync
                                     completedSynchronously = false;
                                     getBytesTask.ContinueWith((t) =>
@@ -229,7 +231,7 @@ namespace Microsoft.Data.SqlClient
                                         }
                                     }, TaskScheduler.Default);
                                 }
-                            
+
 
                                 if ((completedSynchronously) && (byteBufferUsed > 0))
                                 {
@@ -243,7 +245,7 @@ namespace Microsoft.Data.SqlClient
                                 completion.SetException(ADP.ExceptionWithStackTrace(ADP.ObjectDisposed(this)));
                             }
                         }
-                    
+
 
                         if (completedSynchronously)
                         {
@@ -294,7 +296,7 @@ namespace Microsoft.Data.SqlClient
 
             // Wait for pending task
             var currentTask = _currentTask;
-            if (currentTask != null) 
+            if (currentTask != null)
             {
                 ((IAsyncResult)currentTask).AsyncWaitHandle.WaitOne();
             }
@@ -320,10 +322,12 @@ namespace Microsoft.Data.SqlClient
                 byte[] byteBuffer = PrepareByteBuffer(count, out byteBufferUsed);
                 byteBufferUsed += _reader.GetBytesInternalSequential(_columnIndex, byteBuffer, byteBufferUsed, byteBuffer.Length - byteBufferUsed);
 
-                if (byteBufferUsed > 0) {
+                if (byteBufferUsed > 0)
+                {
                     return DecodeBytesToChars(byteBuffer, byteBufferUsed, buffer, index, count);
                 }
-                else {
+                else
+                {
                     // Nothing to read, or nothing read
                     return 0;
                 }
@@ -352,7 +356,7 @@ namespace Microsoft.Data.SqlClient
                 byteBuffer = new byte[0];
                 byteBufferUsed = 0;
             }
-            else 
+            else
             {
                 int byteBufferSize = _encoding.GetMaxByteCount(numberOfChars);
 
@@ -402,7 +406,7 @@ namespace Microsoft.Data.SqlClient
             int bytesUsed;
             bool completed;
             _decoder.Convert(inBuffer, 0, inBufferCount, outBuffer, outBufferOffset, outBufferCount, false, out bytesUsed, out charsRead, out completed);
-            
+
             // completed may be false and there is no spare bytes if the Decoder has stored bytes to use later
             if ((!completed) && (bytesUsed < inBufferCount))
             {
@@ -427,7 +431,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private bool IsClosed
         {
-            get { return (_reader == null); } 
+            get { return (_reader == null); }
         }
 
         /// <summary>
@@ -453,17 +457,17 @@ namespace Microsoft.Data.SqlClient
         /// <param name="buffer"></param>
         /// <param name="index"></param>
         /// <param name="count"></param>
-        internal static void ValidateReadParameters(char[] buffer, int index, int count) 
+        internal static void ValidateReadParameters(char[] buffer, int index, int count)
         {
             if (buffer == null)
             {
                 throw ADP.ArgumentNull(ADP.ParameterBuffer);
             }
-			if (index < 0)
+            if (index < 0)
             {
                 throw ADP.ArgumentOutOfRange(ADP.ParameterIndex);
             }
-			if (count < 0)
+            if (count < 0)
             {
                 throw ADP.ArgumentOutOfRange(ADP.ParameterCount);
             }
@@ -487,7 +491,7 @@ namespace Microsoft.Data.SqlClient
         private static SqlUnicodeEncoding _singletonEncoding = new SqlUnicodeEncoding();
 
         private SqlUnicodeEncoding() : base(bigEndian: false, byteOrderMark: false, throwOnInvalidBytes: false)
-        {}
+        { }
 
         public override Decoder GetDecoder()
         {
@@ -534,5 +538,5 @@ namespace Microsoft.Data.SqlClient
                 Buffer.BlockCopy(bytes, byteIndex, chars, charIndex * 2, bytesUsed);
             }
         }
-    }    
+    }
 }

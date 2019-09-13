@@ -13,7 +13,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             int suffix = (new Random()).Next(5000);
 
-            string commandText = 
+            string commandText =
                 $"CREATE TABLE #Shippers{suffix}(" +
                     $"[ShipperID][int] NULL," +
                     $"[CompanyName] [nvarchar] (40) NOT NULL," +

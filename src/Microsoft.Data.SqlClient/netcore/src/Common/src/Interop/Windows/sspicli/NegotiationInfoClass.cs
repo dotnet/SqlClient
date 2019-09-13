@@ -16,12 +16,14 @@ namespace System.Net
         {
             if (safeHandle.IsInvalid)
             {
-                if (NetEventSource.IsEnabled) NetEventSource.Info(this, $"Invalid handle:{safeHandle}");
+                if (NetEventSource.IsEnabled)
+                    NetEventSource.Info(this, $"Invalid handle:{safeHandle}");
                 return;
             }
 
             IntPtr packageInfo = safeHandle.DangerousGetHandle();
-            if (NetEventSource.IsEnabled) NetEventSource.Info(this, $"packageInfo:{packageInfo} negotiationState:{negotiationState:x}");
+            if (NetEventSource.IsEnabled)
+                NetEventSource.Info(this, $"packageInfo:{packageInfo} negotiationState:{negotiationState:x}");
 
             if (negotiationState == Interop.SspiCli.SECPKG_NEGOTIATION_COMPLETE
                 || negotiationState == Interop.SspiCli.SECPKG_NEGOTIATION_OPTIMISTIC)
@@ -30,14 +32,15 @@ namespace System.Net
 
                 unsafe
                 {
-                    IntPtr unmanagedString = ((SecurityPackageInfo *)packageInfo)->Name;
+                    IntPtr unmanagedString = ((SecurityPackageInfo*)packageInfo)->Name;
                     if (unmanagedString != IntPtr.Zero)
                     {
                         name = Marshal.PtrToStringUni(unmanagedString);
                     }
                 }
 
-                if (NetEventSource.IsEnabled) NetEventSource.Info(this, $"packageInfo:{packageInfo} negotiationState:{negotiationState:x} name:{name}");
+                if (NetEventSource.IsEnabled)
+                    NetEventSource.Info(this, $"packageInfo:{packageInfo} negotiationState:{negotiationState:x} name:{name}");
 
                 // An optimization for future string comparisons.
                 if (string.Equals(name, Kerberos, StringComparison.OrdinalIgnoreCase))

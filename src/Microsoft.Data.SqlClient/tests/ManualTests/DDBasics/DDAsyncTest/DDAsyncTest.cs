@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             var asyncConnectionString = DataTestUtility.TcpConnStr + ";async=true";
             Assert.Throws<NotSupportedException>(() => { new SqlConnection(asyncConnectionString); });
         }
-        
+
         [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp)]
         [CheckConnStrSetupFact]
         public static void OpenConnection_WithAsyncTrue()

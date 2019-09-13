@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Target Name="GenerateNugetPackage" Condition="'$(GenerateNuget)' == 'true'">
-      <PropertyGroup>
-        <NugetPackageVersion Condition="'$(Configuration)' == 'Debug'">$(NugetPackageVersion)-debug</NugetPackageVersion>
-      </PropertyGroup>
-      <Message Text="Setting NugetPackageVersion to $(NugetPackageVersion)" />
-      <Exec Command="powershell.exe -NonInteractive -executionpolicy Unrestricted ^
+    <PropertyGroup>
+      <NugetPackageVersion Condition="'$(Configuration)' == 'Debug'">$(NugetPackageVersion)-debug</NugetPackageVersion>
+    </PropertyGroup>
+    <Message Text="Setting NugetPackageVersion to $(NugetPackageVersion)" />
+    <Exec Command="powershell.exe -NonInteractive -executionpolicy Unrestricted ^
       -command &quot;&amp;$(ToolsDir)scripts\downloadLatestNuget.ps1 -nugetDestPath '$(NuGetRoot)'&quot;" />
-      <Exec Command="$(NuGetCmd) pack $(ToolsDir)specs\Microsoft.Data.SqlClient.nuspec -Version $(NugetPackageVersion) -OutputDirectory $(PackagesDir) -properties Configuration=$(Configuration)" />
+    <Exec Command="$(NuGetCmd) pack $(ToolsDir)specs\Microsoft.Data.SqlClient.nuspec -Version $(NugetPackageVersion) -OutputDirectory $(PackagesDir) -properties Configuration=$(Configuration)" />
   </Target>
 </Project>

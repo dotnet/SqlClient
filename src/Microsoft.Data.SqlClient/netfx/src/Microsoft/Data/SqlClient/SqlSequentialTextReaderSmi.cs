@@ -3,8 +3,8 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using Microsoft.Data.Common;
 using System.Diagnostics;
+using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Server;
 
 namespace Microsoft.Data.SqlClient
@@ -106,7 +106,7 @@ namespace Microsoft.Data.SqlClient
 
             return charsRead;
         }
-        
+
         /// <summary>
         /// Forces the TextReader to act as if it was closed
         /// This does not actually close the stream, read off the rest of the data or dispose this
@@ -123,7 +123,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private bool IsClosed
         {
-            get { return ((_sink == null) || (_getters == null)); } 
+            get { return ((_sink == null) || (_getters == null)); }
         }
 
         /// <summary>

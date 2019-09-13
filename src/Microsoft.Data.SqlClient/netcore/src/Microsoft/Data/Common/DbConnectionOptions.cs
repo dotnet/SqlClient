@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 
-
 namespace Microsoft.Data.Common
 {
     internal partial class DbConnectionOptions
@@ -21,7 +20,8 @@ namespace Microsoft.Data.Common
             _usersConnectionString = ((null != connectionString) ? connectionString : "");
 
             // first pass on parsing, initial syntax check
-            if (0 < _usersConnectionString.Length) {
+            if (0 < _usersConnectionString.Length)
+            {
                 _keyChain = ParseInternal(_parsetable, _usersConnectionString, true, synonyms, false);
                 HasPasswordKeyword = (_parsetable.ContainsKey(KEY.Password) || _parsetable.ContainsKey(SYNONYM.Pwd));
                 HasUserIdKeyword = (_parsetable.ContainsKey(KEY.User_ID) || _parsetable.ContainsKey(SYNONYM.UID));

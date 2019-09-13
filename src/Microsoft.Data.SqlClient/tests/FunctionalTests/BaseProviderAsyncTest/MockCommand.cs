@@ -119,7 +119,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         protected override DbDataReader ExecuteDbDataReader(System.Data.CommandBehavior behavior)
         {
             CheckCancel();
-            if (Fail) { throw new InvalidOperationException("Failure requested"); }
+            if (Fail)
+            { throw new InvalidOperationException("Failure requested"); }
             LastCommand = "ExecuteReader";
             return new MockDataReader() { Results = Results.GetEnumerator() };
         }
@@ -127,7 +128,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public override int ExecuteNonQuery()
         {
             CheckCancel();
-            if (Fail) { throw new InvalidOperationException("Failure requested"); }
+            if (Fail)
+            { throw new InvalidOperationException("Failure requested"); }
             LastCommand = "ExecuteNonQuery";
             return (int)ScalarResult;
         }
@@ -135,7 +137,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public override object ExecuteScalar()
         {
             CheckCancel();
-            if (Fail) { throw new InvalidOperationException("Failure requested"); }
+            if (Fail)
+            { throw new InvalidOperationException("Failure requested"); }
             LastCommand = "ExecuteScalar";
             return ScalarResult;
         }

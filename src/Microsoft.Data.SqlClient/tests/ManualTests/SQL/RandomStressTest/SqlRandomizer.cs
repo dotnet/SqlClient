@@ -155,7 +155,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 int nextIndex = NextIntInclusive(i, maxValueInclusive: count - 1);
                 // swap
-                T temp = values[i]; values[i] = values[nextIndex]; values[nextIndex] = temp;
+                T temp = values[i];
+                values[i] = values[nextIndex];
+                values[nextIndex] = temp;
             }
         }
 

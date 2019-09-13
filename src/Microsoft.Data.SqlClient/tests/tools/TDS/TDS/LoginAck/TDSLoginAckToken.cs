@@ -5,7 +5,6 @@
 using System;
 using System.IO;
 using System.Text;
-
 using Microsoft.SqlServer.TDS.Login7;
 
 namespace Microsoft.SqlServer.TDS.LoginAck

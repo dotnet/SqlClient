@@ -125,7 +125,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public override object GetValue(int ordinal)
         {
-            if (Fail) { throw new InvalidOperationException("Fail requested"); }
+            if (Fail)
+            { throw new InvalidOperationException("Fail requested"); }
             LastCommand = "GetValue";
             Ordinal = ordinal;
             return Results.Current[ordinal];
@@ -153,14 +154,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public override bool NextResult()
         {
-            if (Fail) { throw new InvalidOperationException("Fail requested"); }
+            if (Fail)
+            { throw new InvalidOperationException("Fail requested"); }
             LastCommand = "NextResult";
             return false;
         }
 
         public override bool Read()
         {
-            if (Fail) { throw new InvalidOperationException("Fail requested"); }
+            if (Fail)
+            { throw new InvalidOperationException("Fail requested"); }
             LastCommand = "Read";
             return Results.MoveNext();
         }

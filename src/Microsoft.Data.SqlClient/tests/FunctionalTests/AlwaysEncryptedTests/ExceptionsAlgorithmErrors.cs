@@ -1,13 +1,14 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
+
 using System;
-using System.Text;
-using System.Security.Cryptography.X509Certificates;
-using Xunit;
-using System.Reflection;
-using static Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests.Utility;
 using System.Collections.Generic;
+using System.Reflection;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
+using Xunit;
+using static Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests.Utility;
 
 namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 {

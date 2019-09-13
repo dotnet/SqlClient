@@ -2,22 +2,22 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System.ComponentModel;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.ComponentModel.Design.Serialization;
+using System.Data;
 using System.Data.Common;
 using System.Data.SqlTypes;
 using System.Diagnostics;
-using System.IO;
 using System.Globalization;
+using System.IO;
 using System.Reflection;
-using System.Xml;
-using Microsoft.Data.SqlClient.Server;
-using System.ComponentModel.Design.Serialization;
-using System.Data;
-using System;
-using Microsoft.Data.Common;
 using System.Text;
 using System.Threading;
+using System.Xml;
+using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Server;
 
 namespace Microsoft.Data.SqlClient
 {

@@ -2,13 +2,11 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-
-using Microsoft.Data.Common;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Data.Common;
 using System.Diagnostics;
+using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -204,7 +202,8 @@ namespace Microsoft.Data.SqlClient
 
         internal long SafeIncrement(ref long value)
         {
-            if (value < long.MaxValue) value++;
+            if (value < long.MaxValue)
+                value++;
             return value;
         }
 

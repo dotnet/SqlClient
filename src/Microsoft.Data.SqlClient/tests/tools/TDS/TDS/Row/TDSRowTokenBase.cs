@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-
 using Microsoft.SqlServer.TDS.ColMetadata;
 
 namespace Microsoft.SqlServer.TDS.Row

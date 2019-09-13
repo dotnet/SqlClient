@@ -87,7 +87,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     command.CommandText = "SELECT CONNECTIONPROPERTY('SUPPORT_UTF8')";
                     connection.Open();
 
-                     using (SqlDataReader reader = command.ExecuteReader())
+                    using (SqlDataReader reader = command.ExecuteReader())
                     {
                         while (reader.Read())
                         {
@@ -143,7 +143,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         public static bool IsAccessTokenSetup() => string.IsNullOrEmpty(getAccessToken()) ? false : true;
-        
+
         public static bool IsFileStreamSetup() => int.TryParse(Environment.GetEnvironmentVariable("TEST_FILESTREAM_SETUP"), out int result) ? result == 1 : false;
 
         // This method assumes dataSource parameter is in TCP connection string format.

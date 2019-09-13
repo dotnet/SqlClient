@@ -2,16 +2,15 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.Linq;
+using System.Runtime.InteropServices;
+using System.Security;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Text;
-using System.Security;
-using System.Runtime.InteropServices;
-using System;
 using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
@@ -77,7 +76,7 @@ namespace Microsoft.Data.SqlClient
         internal bool _bulkCopyWriteTimeout = false;                // Set to trun when _bulkCopyOpeperationInProgress is trun and write timeout happens
 
         // SNI variables                                                     // multiple resultsets in one batch.
-        
+
         protected readonly object _writePacketLockObject = new object();        // Used to synchronize access to _writePacketCache and _pendingWritePackets
 
         // Async variables
@@ -852,7 +851,7 @@ namespace Microsoft.Data.SqlClient
             }
             _hasOpenResult = false;
         }
-        
+
         internal int DecrementPendingCallbacks(bool release)
         {
             int remaining = Interlocked.Decrement(ref _pendingCallbacks);
@@ -1765,7 +1764,10 @@ namespace Microsoft.Data.SqlClient
             ulong value;
             Debug.Assert(_syncOverAsync, "Should not attempt pends in a synchronous call");
             bool result = TryReadPlpLength(returnPlpNullIfNull, out value);
-            if (!result) { throw SQL.SynchronousCallMayNotPend(); }
+            if (!result)
+            {
+                throw SQL.SynchronousCallMayNotPend();
+            }
             return value;
         }
 
@@ -1842,7 +1844,10 @@ namespace Microsoft.Data.SqlClient
             int bytesToRead = (int)Math.Min(_longlenleft, (ulong)len);
             bool result = TryReadByteArray(buff.AsSpan(offset), bytesToRead, out value);
             _longlenleft -= (ulong)bytesToRead;
-            if (!result) { throw SQL.SynchronousCallMayNotPend(); }
+            if (!result)
+            {
+                throw SQL.SynchronousCallMayNotPend();
+            }
             return value;
         }
 
@@ -2112,7 +2117,7 @@ namespace Microsoft.Data.SqlClient
                 { // Failure!
 
                     Debug.Assert(!IsValidPacket(readPacket), "unexpected readPacket without corresponding SNIPacketRelease");
-                    
+
                     ReadSniError(this, error);
                 }
             }
@@ -2881,7 +2886,7 @@ namespace Microsoft.Data.SqlClient
                 completionSource.TrySetResult(null);
             }
         }
-        
+
         /////////////////////////////////////////
         // Network/Packet Writing & Processing //
         /////////////////////////////////////////

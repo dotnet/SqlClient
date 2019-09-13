@@ -10,9 +10,6 @@
 // In order to disable the warning for this type we are disabling this warning for this entire file.
 #pragma warning disable 436
 
-using System;
-using System.Collections.Generic;
- 
 namespace System
 {
     internal static partial class AppContextDefaultValues
@@ -21,13 +18,13 @@ namespace System
         {
             string platformIdentifier, profile;
             int version;
- 
+
             ParseTargetFrameworkName(out platformIdentifier, out profile, out version);
- 
+
             // Call into each library to populate their default switches
             PopulateDefaultValuesPartial(platformIdentifier, profile, version);
         }
- 
+
         /// <summary>
         /// We have this separate method for getting the parsed elements out of the TargetFrameworkName so we can
         /// more easily support this on other platforms.
@@ -35,7 +32,7 @@ namespace System
         private static void ParseTargetFrameworkName(out string identifier, out string profile, out int version)
         {
             string targetFrameworkMoniker = AppDomain.CurrentDomain.SetupInformation.TargetFrameworkName;
- 
+
             // If we don't have a TFM then we should default to the 4.0 behavior where all quirks are turned on.
             if (!TryParseFrameworkName(targetFrameworkMoniker, out identifier, out version, out profile))
             {
@@ -58,7 +55,7 @@ namespace System
                 }
             }
         }
- 
+
         // This code was a constructor copied from the FrameworkName class, which is located in System.dll.
         // Parses strings in the following format: "<identifier>, Version=[v|V]<version>, Profile=<profile>"
         //  - The identifier and version is required, profile is optional
@@ -72,37 +69,37 @@ namespace System
             const char c_versionValuePrefix = 'v';
             const String c_versionKey = "Version";
             const String c_profileKey = "Profile";
- 
+
             identifier = profile = string.Empty;
             version = 0;
- 
+
             if (frameworkName == null || frameworkName.Length == 0)
             {
                 return false;
             }
- 
+
             String[] components = frameworkName.Split(c_componentSeparator);
             version = 0;
- 
+
             // Identifer and Version are required, Profile is optional.
             if (components.Length < 2 || components.Length > 3)
             {
                 return false;
             }
- 
+
             //
             // 1) Parse the "Identifier", which must come first. Trim any whitespace
             //
             identifier = components[0].Trim();
- 
+
             if (identifier.Length == 0)
             {
                 return false;
             }
- 
+
             bool versionFound = false;
             profile = null;
- 
+
             // 
             // The required "Version" and optional "Profile" component can be in any order
             //
@@ -110,23 +107,23 @@ namespace System
             {
                 // Get the key/value pair separated by '='
                 string[] keyValuePair = components[i].Split(c_keyValueSeparator);
- 
+
                 if (keyValuePair.Length != 2)
                 {
                     return false;
                 }
- 
+
                 // Get the key and value, trimming any whitespace
                 string key = keyValuePair[0].Trim();
                 string value = keyValuePair[1].Trim();
- 
+
                 //
                 // 2) Parse the required "Version" key value
                 //
                 if (key.Equals(c_versionKey, StringComparison.OrdinalIgnoreCase))
                 {
                     versionFound = true;
- 
+
                     // Allow the version to include a 'v' or 'V' prefix...
                     if (value.Length > 0 && (value[0] == c_versionValuePrefix || value[0] == 'V'))
                     {
@@ -155,24 +152,24 @@ namespace System
                     return false;
                 }
             }
- 
+
             if (!versionFound)
             {
                 return false;
             }
- 
+
             return true;
         }
- 
+
         // This is a partial method. Platforms (such as Desktop) can provide an implementation of it that will read override value
         // from whatever mechanism is available on that platform. If no implementation is provided, the compiler is going to remove the calls
         // to it from the code
         static partial void TryGetSwitchOverridePartial(string switchName, ref bool overrideFound, ref bool overrideValue);
- 
+
         /// This is a partial method. This method is responsible for populating the default values based on a TFM.
         /// It is partial because each library should define this method in their code to contain their defaults.
         static partial void PopulateDefaultValuesPartial(string platformIdentifier, string profile, int version);
     }
 }
- 
+
 #pragma warning restore 436

@@ -3,8 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using Microsoft.Data.Common;
-using System.Data.Common;
-
 
 namespace Microsoft.Data.SqlClient
 {

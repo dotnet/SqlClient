@@ -4,7 +4,7 @@
 
 using System.Text;
 
-namespace Microsoft.Data.SqlClient 
+namespace Microsoft.Data.SqlClient
 {
     /// <summary>
     /// Encryption key class containing 4 keys. This class is used by SqlAeadAes256CbcHmac256Algorithm and SqlAes256CbcAlgorithm

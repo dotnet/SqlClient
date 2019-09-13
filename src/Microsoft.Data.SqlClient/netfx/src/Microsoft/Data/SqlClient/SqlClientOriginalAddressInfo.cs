@@ -2,11 +2,11 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-
 using System;
 using System.Net;
 
-namespace Microsoft.Data.SqlClient {
+namespace Microsoft.Data.SqlClient
+{
     /// <summary>
     /// Class to pass original client information.
     /// </summary>
@@ -25,17 +25,17 @@ namespace Microsoft.Data.SqlClient {
             {
                 throw new ArgumentNullException("address");
             }
-        
+
             _address = address;
             _isFromDataSecurityProxy = isFromDataSecurityProxy;
         }
 
-        public override int GetHashCode()  
+        public override int GetHashCode()
         {
             return _address != null ? _address.GetHashCode() : 0;
         }
 
-        public override bool Equals(object other) 
+        public override bool Equals(object other)
         {
             SqlClientOriginalNetworkAddressInfo otherAddress = other as SqlClientOriginalNetworkAddressInfo;
 
@@ -62,7 +62,7 @@ namespace Microsoft.Data.SqlClient {
             get { return _address; }
         }
 
-        public bool IsFromDataSecurityProxy 
+        public bool IsFromDataSecurityProxy
         {
             get { return _isFromDataSecurityProxy; }
         }
