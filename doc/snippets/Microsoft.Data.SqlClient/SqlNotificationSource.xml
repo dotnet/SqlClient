@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<docs>
+    <members name="SqlNotificationSource">
+        <SqlNotificationSource>
+            <summary>Indicates the source of the notification received by the dependency event handler.</summary>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+ The `SqlNotificationSource` enumeration is referenced by an instance of the <xref:Microsoft.Data.SqlClient.SqlNotificationEventArgs> class.  
+  
+ Query notifications are supported only for SELECT statements that meet a list of specific requirements. For more information, see [SQL Server Service Broker](/sql/database-engine/configure-windows/sql-server-service-broker) and [Working with Query Notifications](/sql/connect/oledb/features/working-with-query-notifications).
+  
+ ]]></format>
+            </remarks>
+        </SqlNotificationSource>
+        <Client>
+            <summary>A client-initiated notification occurred, such as a client-side time-out or as a result of attempting to add a command to a dependency that has already fired.</summary>
+        </Client>
+        <Data>
+            <summary>Data has changed; for example, an insert, update, delete, or truncate operation occurred.</summary>
+        </Data>
+        <Database>
+            <summary>The database state changed; for example, the database related to the query was dropped or detached.</summary>
+        </Database>
+        <Environment>
+            <summary>The run-time environment was not compatible with notifications; for example, the isolation level was set to snapshot, or one or more SET options are not compatible.</summary>
+        </Environment>
+        <Execution>
+            <summary>A run-time error occurred during execution.</summary>
+        </Execution>
+        <Object>
+            <summary>A database object changed; for example, an underlying object related to the query was dropped or modified.</summary>
+        </Object>
+        <Owner>
+            <summary>Internal only; not intended to be used in your code.</summary>
+        </Owner>
+        <Statement>
+            <summary>The Transact-SQL statement is not valid for notifications; for example, a SELECT statement that could not be notified or a non-SELECT statement was executed.</summary>
+        </Statement>
+        <System>
+            <summary>A system-related event occurred. For example, there was an internal error, the server was restarted, or resource pressure caused the invalidation.</summary>
+        </System>
+        <Timeout>
+            <summary>The subscription time-out expired.</summary>
+        </Timeout>
+        <Unknown>
+            <summary>Used when the source option sent by the server was not recognized by the client.</summary>
+        </Unknown>
+    </members>
+</docs>

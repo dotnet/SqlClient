@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<docs>
+    <members name="SqlRowsCopiedEventHandler">
+        <SqlRowsCopiedEventHandler>
+            <param name="sender">The source of the event.</param>
+            <param name="e">A <see cref="T:Microsoft.Data.SqlClient.SqlRowsCopiedEventArgs" /> object that contains the event data.</param>
+            <summary>Represents the method that handles the <see cref="E:Microsoft.Data.SqlClient.SqlBulkCopy.SqlRowsCopied" /> event of a <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" />.</summary>
+            <remarks>To be added.</remarks>
+        </SqlRowsCopiedEventHandler>
+    </members>
+</docs>

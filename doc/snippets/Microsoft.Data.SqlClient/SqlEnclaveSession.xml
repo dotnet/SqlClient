@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<docs>
+    <members name="SqlEnclaveSession">
+        <SqlEnclaveSession>
+            <summary>Encapsulates the state of a secure session between SqlClient and an enclave inside SQL Server, which can be used for computations on encrypted columns protected with Always Encrypted.</summary>
+            <remarks>To be added.</remarks>
+        </SqlEnclaveSession>
+        <ctor>
+            <param name="sessionKey">The symmetric key used to encrypt all the information sent using the session.</param>
+            <param name="sessionId">The session ID.</param>
+            <summary>Instantiates a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlEnclaveSession" /> class.</summary>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentNullException">
+            <paramref name="sessionKey" /> is <see langword="null" />.</exception>
+            <exception cref="T:System.ArgumentException">
+            <paramref name="sessionKey" /> has zero length.</exception>
+        </ctor>
+        <GetSessionKey>
+            <summary>Gets the symmetric key that SqlClient uses to encrypt all the information it sends to the enclave using the session.</summary>
+            <returns>The symmetric key.</returns>
+            <remarks>To be added.</remarks>
+        </GetSessionKey>
+        <SessionId>
+            <summary>Gets the session ID.</summary>
+            <value>The session ID.</value>
+            <remarks>To be added.</remarks>
+        </SessionId>
+    </members>
+</docs>

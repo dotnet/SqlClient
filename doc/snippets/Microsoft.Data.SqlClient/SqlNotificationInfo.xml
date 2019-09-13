@@ -1,0 +1,73 @@
+<?xml version="1.0"?>
+<docs>
+    <members name="SqlNotificationInfo">
+        <SqlNotificationInfo>
+            <summary>This enumeration provides additional information about the different notifications that can be received by the dependency event handler.</summary>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
+    
+## Remarks  
+ The <xref:Microsoft.Data.SqlClient.SqlNotificationInfo> enumeration is referenced by an instance of the <xref:Microsoft.Data.SqlClient.SqlNotificationEventArgs> class.  
+  
+ ]]></format>
+            </remarks>
+        </SqlNotificationInfo>
+        <AlreadyChanged>
+            <summary>The <see langword="SqlDependency" /> object already fired, and new commands cannot be added to it.</summary>
+        </AlreadyChanged>
+        <Alter>
+            <summary>An underlying server object related to the query was modified.</summary>
+        </Alter>
+        <Delete>
+            <summary>Data was changed by a DELETE statement.</summary>
+        </Delete>
+        <Drop>
+            <summary>An underlying object related to the query was dropped.</summary>
+        </Drop>
+        <Error>
+            <summary>An internal server error occurred.</summary>
+        </Error>
+        <Expired>
+            <summary>The <see langword="SqlDependency" /> object has expired.</summary>
+        </Expired>
+        <Insert>
+            <summary>Data was changed by an INSERT statement.</summary>
+        </Insert>
+        <Invalid>
+            <summary>A statement was provided that cannot be notified (for example, an UPDATE statement).</summary>
+        </Invalid>
+        <Isolation>
+            <summary>The statement was executed under an isolation mode that was not valid (for example, Snapshot).</summary>
+        </Isolation>
+        <Merge>
+            <summary>Used to distinguish the server-side cause for a query notification firing.</summary>
+        </Merge>
+        <Options>
+            <summary>The SET options were not set appropriately at subscription time.</summary>
+        </Options>
+        <PreviousFire>
+            <summary>A previous statement has caused query notifications to fire under the current transaction.</summary>
+        </PreviousFire>
+        <Query>
+            <summary>A SELECT statement that cannot be notified or was provided.</summary>
+        </Query>
+        <Resource>
+            <summary>Fires as a result of server resource pressure.</summary>
+        </Resource>
+        <Restart>
+            <summary>The server was restarted (notifications are sent during restart.).</summary>
+        </Restart>
+        <TemplateLimit>
+            <summary>The subscribing query causes the number of templates on one of the target tables to exceed the maximum allowable limit.</summary>
+        </TemplateLimit>
+        <Truncate>
+            <summary>One or more tables were truncated.</summary>
+        </Truncate>
+        <Unknown>
+            <summary>Used when the info option sent by the server was not recognized by the client.</summary>
+        </Unknown>
+        <Update>
+            <summary>Data was changed by an UPDATE statement.</summary>
+        </Update>
+    </members>
+</docs>
