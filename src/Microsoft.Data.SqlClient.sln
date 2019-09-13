@@ -46,7 +46,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{A893313D-A5F5-42AB-912A-E27ACD148F53}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Data.SqlClient.Samples", "..\docs\samples\Microsoft.Data.SqlClient.Samples\Microsoft.Data.SqlClient.Samples.csproj", "{E7EAE3B0-A675-46A6-9C88-A333800B8CA0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Data.SqlClient.Samples", "..\docs\samples\Microsoft.Data.SqlClient.Samples.csproj", "{E7EAE3B0-A675-46A6-9C88-A333800B8CA0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

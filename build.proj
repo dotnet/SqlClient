@@ -35,15 +35,17 @@
     <ManualTests     Include="**/tools/CoreFx.Private.TestUtilities/CoreFx.Private.TestUtilities.csproj" />
     <ManualTests     Include="**/ManualTests/Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" />
 
-    <Samples         Include="**/docs/**/Microsoft.Data.SqlClient.Samples.csproj"/>
+    <Samples         Include="**/doc/**/Microsoft.Data.SqlClient.Samples.csproj"/>
   </ItemGroup>
 
   <!-- Top Level Build targets -->
   <Target Name="Restore"                   DependsOnTargets="RestoreNetCore;RestoreNetFx" />
   <Target Name="BuildAll"                  DependsOnTargets="BuildNetFx;BuildNetCore" />
-  <Target Name="BuildAllConfigurations"    DependsOnTargets="BuildNetFx;BuildNetCoreAllOS;GenerateNugetPackage" />
+  <Target Name="BuildAllConfigurations"    DependsOnTargets="BuildNetFx;BuildNetCoreAllOS;GenerateNugetPackage;" />
   <Target Name="BuildTestsNetCore"         DependsOnTargets="BuildFunctionalTestsNetCore;BuildManualTestsNetCore" />
   <Target Name="BuildTestsNetFx"           DependsOnTargets="BuildFunctionalTestsNetFx;BuildManualTestsNetFx" />
+  <Target Name="BuildAllNetCore"           DependsOnTargets="BuildNetCoreAllOS;BuildTestsNetCore;BuildSamplesNetCore" />
+  <Target Name="BuildAllNetFx"             DependsOnTargets="BuildNetFx;BuildTestsNetFx;BuildSamplesNetFx" />
 
   <Target Name="RestoreNetCore">
     <PropertyGroup>
