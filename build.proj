@@ -35,7 +35,7 @@
     <ManualTests     Include="**/tools/CoreFx.Private.TestUtilities/CoreFx.Private.TestUtilities.csproj" />
     <ManualTests     Include="**/ManualTests/Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" />
 
-    <Samples         Include="**/doc/**/Microsoft.Data.SqlClient.Samples.csproj"/>
+    <Samples         Include="doc/samples/Microsoft.Data.SqlClient.Samples.csproj"/>
   </ItemGroup>
 
   <!-- Top Level Build targets -->

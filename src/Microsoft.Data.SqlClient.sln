@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27004.2010
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29215.179
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Data.SqlClient", "Microsoft.Data.SqlClient\netfx\src\Microsoft.Data.SqlClient.csproj", "{407890AC-9876-4FEF-A6F1-F36A876BAADE}"
 EndProject
@@ -44,9 +44,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ref", "ref", "{771F3F1E-7A6
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient", "Microsoft.Data.SqlClient\netfx\ref\Microsoft.Data.SqlClient.csproj", "{412BCCC8-19F6-489A-B594-E9A506816155}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{A893313D-A5F5-42AB-912A-E27ACD148F53}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{3629CDAB-1CCE-4E33-8FD1-D9210FB2002E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Data.SqlClient.Samples", "..\docs\samples\Microsoft.Data.SqlClient.Samples.csproj", "{E7EAE3B0-A675-46A6-9C88-A333800B8CA0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Data.SqlClient.Samples", "..\doc\samples\Microsoft.Data.SqlClient.Samples.csproj", "{E7EAE3B0-A675-46A6-9C88-A333800B8CA0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -576,6 +576,7 @@ Global
 		{1C9FC4B8-54BC-4B6C-BB3A-F5CD59D80A9B} = {A2E7E470-5EFF-4828-B55E-FCBA3650F51C}
 		{771F3F1E-7A68-4A9D-ADA8-A24F1D5BE71D} = {3FDD425C-FE01-4B56-863E-1FCDD0677CF5}
 		{412BCCC8-19F6-489A-B594-E9A506816155} = {771F3F1E-7A68-4A9D-ADA8-A24F1D5BE71D}
+		{E7EAE3B0-A675-46A6-9C88-A333800B8CA0} = {3629CDAB-1CCE-4E33-8FD1-D9210FB2002E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {01D48116-37A2-4D33-B9EC-94793C702431}
