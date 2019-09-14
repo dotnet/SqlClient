@@ -87,6 +87,7 @@ namespace Microsoft.Data.SqlClient
 
         private Task _currentTask;
         private Snapshot _snapshot;
+        private Snapshot _cachedSnapshot;
         private CancellationTokenSource _cancelAsyncOnCloseTokenSource;
         private CancellationToken _cancelAsyncOnCloseToken;
 
@@ -3770,6 +3771,10 @@ namespace Microsoft.Data.SqlClient
                 {
                     // reset snapshot to save memory use.  We can safely do that here because all SqlDataReader values are stable.
                     // The retry logic can use the current values to get back to the right state.
+                    if (_cachedSnapshot is null)
+                    {
+                        _cachedSnapshot = _snapshot;
+                    }
                     _snapshot = null;
                     PrepareAsyncInvocation(useSnapshot: true);
                 }
@@ -4659,6 +4664,10 @@ namespace Microsoft.Data.SqlClient
                         if (!rowTokenRead)
                         {
                             rowTokenRead = true;
+                            if (_cachedSnapshot is null)
+                            {
+                                _cachedSnapshot = _snapshot;
+                            }
                             _snapshot = null;
                             PrepareAsyncInvocation(useSnapshot: true);
                         }
@@ -5112,28 +5121,27 @@ namespace Microsoft.Data.SqlClient
 
                 if (_snapshot == null)
                 {
-                    _snapshot = new Snapshot
-                    {
-                        _dataReady = _sharedState._dataReady,
-                        _haltRead = _haltRead,
-                        _metaDataConsumed = _metaDataConsumed,
-                        _browseModeInfoConsumed = _browseModeInfoConsumed,
-                        _hasRows = _hasRows,
-                        _altRowStatus = _altRowStatus,
-                        _nextColumnDataToRead = _sharedState._nextColumnDataToRead,
-                        _nextColumnHeaderToRead = _sharedState._nextColumnHeaderToRead,
-                        _columnDataBytesRead = _columnDataBytesRead,
-                        _columnDataBytesRemaining = _sharedState._columnDataBytesRemaining,
+                    _snapshot = Interlocked.Exchange(ref _cachedSnapshot, null) ?? new Snapshot();
 
-                        // _metadata and _altaMetaDataSetCollection must be Cloned
-                        // before they are updated
-                        _metadata = _metaData,
-                        _altMetaDataSetCollection = _altMetaDataSetCollection,
-                        _tableNames = _tableNames,
+                    _snapshot._dataReady = _sharedState._dataReady;
+                    _snapshot._haltRead = _haltRead;
+                    _snapshot._metaDataConsumed = _metaDataConsumed;
+                    _snapshot._browseModeInfoConsumed = _browseModeInfoConsumed;
+                    _snapshot._hasRows = _hasRows;
+                    _snapshot._altRowStatus = _altRowStatus;
+                    _snapshot._nextColumnDataToRead = _sharedState._nextColumnDataToRead;
+                    _snapshot._nextColumnHeaderToRead = _sharedState._nextColumnHeaderToRead;
+                    _snapshot._columnDataBytesRead = _columnDataBytesRead;
+                    _snapshot._columnDataBytesRemaining = _sharedState._columnDataBytesRemaining;
 
-                        _currentStream = _currentStream,
-                        _currentTextReader = _currentTextReader,
-                    };
+                    // _metadata and _altaMetaDataSetCollection must be Cloned
+                    // before they are updated
+                    _snapshot._metadata = _metaData;
+                    _snapshot._altMetaDataSetCollection = _altMetaDataSetCollection;
+                    _snapshot._tableNames = _tableNames;
+
+                    _snapshot._currentStream = _currentStream;
+                    _snapshot._currentTextReader = _currentTextReader;
 
                     _stateObj.SetSnapshot();
                 }
@@ -5186,6 +5194,10 @@ namespace Microsoft.Data.SqlClient
             stateObj._permitReplayStackTraceToDiffer = false;
 #endif
 
+            if (_cachedSnapshot is null)
+            {
+                _cachedSnapshot = _snapshot;
+            }
             // We are setting this to null inside the if-statement because stateObj==null means that the reader hasn't been initialized or has been closed (either way _snapshot should already be null)
             _snapshot = null;
         }
@@ -5224,6 +5236,10 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(_snapshot != null, "Should currently have a snapshot");
             Debug.Assert(_stateObj != null && !_stateObj._asyncReadWithoutSnapshot, "Already in async without snapshot");
 
+            if (_cachedSnapshot is null)
+            {
+                _cachedSnapshot = _snapshot;
+            }
             _snapshot = null;
             _stateObj.ResetSnapshot();
             _stateObj._asyncReadWithoutSnapshot = true;
