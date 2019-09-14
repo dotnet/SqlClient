@@ -34,8 +34,6 @@
     <ManualTests     Include="**/ManualTests/SQL/UdtTest/UDTs/Utf8String/Utf8String.csproj" />
     <ManualTests     Include="**/tools/CoreFx.Private.TestUtilities/CoreFx.Private.TestUtilities.csproj" />
     <ManualTests     Include="**/ManualTests/Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" />
-
-    <Samples         Include="doc/samples/Microsoft.Data.SqlClient.Samples.csproj"/>
   </ItemGroup>
 
   <!-- Top Level Build targets -->
@@ -94,16 +92,6 @@
 
   <Target Name="BuildManualTestsNetFx" DependsOnTargets="RestoreNetFx" Condition="'$(IsEnabledNetFx)' == 'true'">
     <MSBuild Projects="@(ManualTests)"   Properties="TestTargetOS=$(TestOS)netfx;Platform=$(Platform);" />
-  </Target>
-
-  <Target Name="BuildSamplesNetCore">
-    <MSBuild Projects="@(Samples)" Targets="restore" Properties="RestoreSources=$(NugetPackageSourcesProperty);TestTargetOS=$(TestOS)netcoreapp" />
-    <MSBuild Projects="@(Samples)"   Properties="TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;" />
-  </Target>
-
-  <Target Name="BuildSamplesNetFx" Condition="'$(IsEnabledNetFx)' == 'true'">
-    <MSBuild Projects="@(Samples)" Targets="restore" Properties="RestoreSources=$(NugetPackageSourcesProperty);TestTargetOS=$(TestOS)netfx" />
-    <MSBuild Projects="@(Samples)"   Properties="TestTargetOS=$(TestOS)netfx;Platform=$(Platform);" />
   </Target>
 
   <Target Name="Clean">
