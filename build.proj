@@ -42,8 +42,6 @@
   <Target Name="BuildAllConfigurations"    DependsOnTargets="BuildNetFx;BuildNetCoreAllOS;GenerateNugetPackage;" />
   <Target Name="BuildTestsNetCore"         DependsOnTargets="BuildFunctionalTestsNetCore;BuildManualTestsNetCore" />
   <Target Name="BuildTestsNetFx"           DependsOnTargets="BuildFunctionalTestsNetFx;BuildManualTestsNetFx" />
-  <Target Name="BuildAllNetCore"           DependsOnTargets="BuildNetCoreAllOS;BuildTestsNetCore;BuildSamplesNetCore" />
-  <Target Name="BuildAllNetFx"             DependsOnTargets="BuildNetFx;BuildTestsNetFx;BuildSamplesNetFx" />
 
   <Target Name="RestoreNetCore">
     <PropertyGroup>
