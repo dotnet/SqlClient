@@ -16,7 +16,7 @@ class Program
     {
         string queryString = "EXECUTE NonExistantStoredProcedure";
         StringBuilder errorMessages = new StringBuilder();
-        
+
         using (SqlConnection connection = new SqlConnection(connectionString))
         {
             SqlCommand command = new SqlCommand(queryString, connection);

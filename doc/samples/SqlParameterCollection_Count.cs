@@ -1,6 +1,7 @@
 using System;
 using System.Data;
 using Microsoft.Data.SqlClient;
+
 class Program
 {
     static void Main()
@@ -65,7 +66,7 @@ class Program
     // </Snippet1>
     static private string GetConnectionString()
     {
-        // To avoid storing the connectionection string in your code, 
+        // To avoid storing the connection string in your code, 
         // you can retrieve it from a configuration file, using the 
         // System.Configuration.ConfigurationSettings.AppSettings property
         return "Data Source=(local);Initial Catalog=AdventureWorks;" +

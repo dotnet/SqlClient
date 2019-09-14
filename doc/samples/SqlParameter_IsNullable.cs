@@ -8,7 +8,7 @@ class Program
     {
     }
     // <Snippet1>
-    private static void AddSqlParameter(SqlCommand command, 
+    private static void AddSqlParameter(SqlCommand command,
         string paramValue)
     {
         SqlParameter parameter = new SqlParameter(
@@ -18,17 +18,17 @@ class Program
         command.Parameters.Add(parameter);
     }
 
-private static void SetParameterToNull(IDataParameter parameter)
-{
-    if (parameter.IsNullable)
+    private static void SetParameterToNull(IDataParameter parameter)
     {
-        parameter.Value = DBNull.Value;
+        if (parameter.IsNullable)
+        {
+            parameter.Value = DBNull.Value;
+        }
+        else
+        {
+            throw new ArgumentException("Parameter provided is not nullable", "parameter");
+        }
     }
-    else
-    {
-        throw new ArgumentException("Parameter provided is not nullable", "parameter");
-    }
-}
 
     // </Snippet1>
 }

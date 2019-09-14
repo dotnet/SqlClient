@@ -5,7 +5,7 @@ using Microsoft.Data.SqlClient;
 using System.Data.Common;
 using System.Windows.Forms;
 
-public class Form1: Form
+public class Form1 : Form
 {
     protected DataSet DataSet1;
     protected DataGrid dataGrid1;
@@ -13,7 +13,7 @@ public class Form1: Form
     protected SqlParameter param;
 
     // <Snippet1>
-    public void SearchSqlParams() 
+    public void SearchSqlParams()
     {
         // ...
         // create SqlCommand command and SqlParameter param
@@ -22,5 +22,4 @@ public class Form1: Form
             command.Parameters.Remove(param);
     }
     // </Snippet1>
-
 }

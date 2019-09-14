@@ -2,7 +2,6 @@ using System;
 using System.Data;
 using Microsoft.Data.SqlClient;
 
-
 class Program
 {
     static void Main()
@@ -80,5 +79,4 @@ class Program
         parameter.Value = "garden hose";
     }
     // </Snippet8>
-
 }

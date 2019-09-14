@@ -15,7 +15,7 @@ class Program
     public static void ShowSqlException(string connectionString)
     {
         string queryString = "EXECUTE NonExistantStoredProcedure";
-        
+
         using (SqlConnection connection = new SqlConnection(connectionString))
         {
             SqlCommand command = new SqlCommand(queryString, connection);
