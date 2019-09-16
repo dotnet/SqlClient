@@ -324,7 +324,7 @@
             <exception cref="T:System.IndexOutOfRangeException">Trying to read a column that does not exist.</exception>
             <exception cref="T:System.Data.SqlTypes.SqlNullValueException">The value of the column was null (<see cref="M:Microsoft.Data.SqlClient.SqlDataReader.IsDBNull(System.Int32)" /> == <see langword="true" />), retrieving a non-SQL type.</exception>
             <exception cref="T:System.InvalidCastException">
-            <paramref name="T" /> doesn't match the type returned by SQL Server or cannot be cast.</exception>
+            <typeparamref name="T" /> doesn't match the type returned by SQL Server or cannot be cast.</exception>
         </GetFieldValue>
         <GetFieldValueAsync>
             <typeparam name="T">The type of the value to be returned.</typeparam>
@@ -366,7 +366,7 @@
             <exception cref="T:System.IndexOutOfRangeException">Trying to read a column that does not exist.</exception>
             <exception cref="T:System.Data.SqlTypes.SqlNullValueException">The value of the column was null (<see cref="M:Microsoft.Data.SqlClient.SqlDataReader.IsDBNull(System.Int32)" /> == <see langword="true" />), retrieving a non-SQL type.</exception>
             <exception cref="T:System.InvalidCastException">
-            <paramref name="T" /> doesn't match the type returned by SQL Server or cannot be cast.</exception>
+            <typeparamref name="T" /> doesn't match the type returned by SQL Server or cannot be cast.</exception>
         </GetFieldValueAsync>
         <GetFloat>
             <param name="i">The zero-based column ordinal.</param>
@@ -1193,8 +1193,8 @@
             </remarks>
         </System.Data.IDataRecord.GetData>
         <System.IDisposable.Dispose>
-        <summary>Releases all resources that are used by the data reader.</summary>
-        <remarks>To be added.</remarks>
+            <summary>Releases all resources that are used by the data reader.</summary>
+            <remarks>To be added.</remarks>
         </System.IDisposable.Dispose>
         <VisibleFieldCount>
             <summary>Gets the number of fields in the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> that are not hidden.</summary>
