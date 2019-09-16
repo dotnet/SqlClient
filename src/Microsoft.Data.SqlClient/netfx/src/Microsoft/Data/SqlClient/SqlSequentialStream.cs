@@ -3,10 +3,10 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using Microsoft.Data.Common;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -76,8 +76,8 @@ namespace Microsoft.Data.SqlClient
         public override int ReadTimeout
         {
             get { return _readTimeout; }
-            set 
-            { 
+            set
+            {
                 if ((value > 0) || (value == Timeout.Infinite))
                 {
                     _readTimeout = value;
@@ -176,7 +176,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         // Set up a combined cancellation token for both the user's and our disposal tokens
                         CancellationTokenSource combinedTokenSource;
-                        if (!cancellationToken.CanBeCanceled) 
+                        if (!cancellationToken.CanBeCanceled)
                         {
                             // Users token is not cancellable - just use ours
                             combinedTokenSource = _disposalTokenSource;
@@ -195,7 +195,7 @@ namespace Microsoft.Data.SqlClient
                             getBytesTask = reader.GetBytesAsync(_columnIndex, buffer, offset, count, _readTimeout, combinedTokenSource.Token, out bytesRead);
                         }
 
-                        if (getBytesTask == null) 
+                        if (getBytesTask == null)
                         {
                             _currentTask = null;
                             if (cancellationToken.IsCancellationRequested)
@@ -211,12 +211,12 @@ namespace Microsoft.Data.SqlClient
                                 completion.SetResult(bytesRead);
                             }
 
-                            if (combinedTokenSource != _disposalTokenSource) 
+                            if (combinedTokenSource != _disposalTokenSource)
                             {
                                 combinedTokenSource.Dispose();
                             }
                         }
-                        else 
+                        else
                         {
                             getBytesTask.ContinueWith((t) =>
                             {
@@ -246,8 +246,8 @@ namespace Microsoft.Data.SqlClient
                                 {
                                     completion.SetCanceled();
                                 }
-                            
-                                if (combinedTokenSource != _disposalTokenSource) 
+
+                                if (combinedTokenSource != _disposalTokenSource)
                                 {
                                     combinedTokenSource.Dispose();
                                 }
@@ -293,7 +293,7 @@ namespace Microsoft.Data.SqlClient
 
             // Wait for pending task
             var currentTask = _currentTask;
-            if (currentTask != null) 
+            if (currentTask != null)
             {
                 ((IAsyncResult)currentTask).AsyncWaitHandle.WaitOne();
             }
@@ -302,7 +302,7 @@ namespace Microsoft.Data.SqlClient
         protected override void Dispose(bool disposing)
         {
             if (disposing)
-            { 
+            {
                 // Set the stream as closed
                 SetClosed();
             }
@@ -316,17 +316,17 @@ namespace Microsoft.Data.SqlClient
         /// <param name="buffer"></param>
         /// <param name="index"></param>
         /// <param name="count"></param>
-        internal static void ValidateReadParameters(byte[] buffer, int offset, int count) 
+        internal static void ValidateReadParameters(byte[] buffer, int offset, int count)
         {
             if (buffer == null)
             {
                 throw ADP.ArgumentNull(ADP.ParameterBuffer);
             }
-			if (offset < 0)
+            if (offset < 0)
             {
                 throw ADP.ArgumentOutOfRange(ADP.ParameterOffset);
             }
-			if (count < 0)
+            if (count < 0)
             {
                 throw ADP.ArgumentOutOfRange(ADP.ParameterCount);
             }

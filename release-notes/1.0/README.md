@@ -4,7 +4,8 @@ The following Microsoft.Data.SqlClient 1.0 stable releases have been shipped:
 
 | Release Date | Description | Notes |
 | :-- | :-- | :--: |
-| 2019/08/23 | 1.0.19239.1  | [release notes](1.0.19239.1.md) |
+| 2019/09/06 | 1.0.19249.1  | [release notes](1.0.19249.1.md) |
+| 2019/08/27 | 1.0.19239.1  | [release notes](1.0.19239.1.md) |
 
 The following Microsoft.Data.SqlClient 1.0 preview releases have been shipped:
 

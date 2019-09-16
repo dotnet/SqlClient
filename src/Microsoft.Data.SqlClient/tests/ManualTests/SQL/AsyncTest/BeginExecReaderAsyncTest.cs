@@ -29,7 +29,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 $"WAITFOR DELAY '0:0:3'; " +
                 $"select s.ShipperID, s.CompanyName, s.Phone " +
                 $"from #Shippers{suffix} s; ";
-            
+
             return commandText;
         }
 
@@ -74,7 +74,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     Assert.True(reader.HasRows, $"FAILED: Reader has no rows");
                     Assert.Equal(state, asyncArgs.Item1);
                 }, stateAndCommand);
-                
+
                 System.Threading.Thread.Sleep(TimeSpan.FromSeconds(10));
 
                 Assert.True(callbackExecutedFlag, $"FAILED: Callback did not executed");

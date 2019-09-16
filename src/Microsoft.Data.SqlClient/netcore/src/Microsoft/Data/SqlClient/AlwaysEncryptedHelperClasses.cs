@@ -2,10 +2,10 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using Microsoft.Data.SqlClient.Server;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Microsoft.Data.SqlClient.Server;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -239,7 +239,7 @@ namespace Microsoft.Data.SqlClient
             _metaDataArray = new _SqlMetaData[count];
             for (int i = 0; i < _metaDataArray.Length; ++i)
             {
-               _metaDataArray[i] = new _SqlMetaData(i);
+                _metaDataArray[i] = new _SqlMetaData(i);
             }
         }
     }

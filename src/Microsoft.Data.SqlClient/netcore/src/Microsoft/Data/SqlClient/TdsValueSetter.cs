@@ -2,13 +2,13 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using Microsoft.Data.Common;
-using Microsoft.Data.SqlClient.Server;
 using System;
 using System.Data;
 using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Text;
+using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Server;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -700,7 +700,7 @@ namespace Microsoft.Data.SqlClient
             _variantType = value;
         }
 
-#endregion
+        #endregion
 
         #region private methods
         [Conditional("DEBUG")]
@@ -710,6 +710,6 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(offset == _currentOffset, "Invalid offset passed. Should be: " + _currentOffset + ", but was: " + offset);
 #endif
         }
-#endregion
+        #endregion
     }
 }

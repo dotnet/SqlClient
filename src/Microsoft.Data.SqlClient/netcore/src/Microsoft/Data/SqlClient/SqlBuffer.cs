@@ -2,12 +2,11 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-
-using System.Diagnostics;
+using System;
 using System.Data.SqlTypes;
+using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
-using System;
 using Microsoft.Data.SqlTypes;
 
 namespace Microsoft.Data.SqlClient
@@ -804,19 +803,32 @@ namespace Microsoft.Data.SqlClient
             {
                 switch (_type)
                 {
-                    case StorageType.Empty: return DBNull.Value;
-                    case StorageType.Boolean: return SqlBoolean;
-                    case StorageType.Byte: return SqlByte;
-                    case StorageType.DateTime: return SqlDateTime;
-                    case StorageType.Decimal: return SqlDecimal;
-                    case StorageType.Double: return SqlDouble;
-                    case StorageType.Int16: return SqlInt16;
-                    case StorageType.Int32: return SqlInt32;
-                    case StorageType.Int64: return SqlInt64;
-                    case StorageType.Guid: return SqlGuid;
-                    case StorageType.Money: return SqlMoney;
-                    case StorageType.Single: return SqlSingle;
-                    case StorageType.String: return SqlString;
+                    case StorageType.Empty:
+                        return DBNull.Value;
+                    case StorageType.Boolean:
+                        return SqlBoolean;
+                    case StorageType.Byte:
+                        return SqlByte;
+                    case StorageType.DateTime:
+                        return SqlDateTime;
+                    case StorageType.Decimal:
+                        return SqlDecimal;
+                    case StorageType.Double:
+                        return SqlDouble;
+                    case StorageType.Int16:
+                        return SqlInt16;
+                    case StorageType.Int32:
+                        return SqlInt32;
+                    case StorageType.Int64:
+                        return SqlInt64;
+                    case StorageType.Guid:
+                        return SqlGuid;
+                    case StorageType.Money:
+                        return SqlMoney;
+                    case StorageType.Single:
+                        return SqlSingle;
+                    case StorageType.String:
+                        return SqlString;
 
                     case StorageType.SqlCachedBuffer:
                         {
@@ -879,20 +891,34 @@ namespace Microsoft.Data.SqlClient
                 }
                 switch (_type)
                 {
-                    case StorageType.Empty: return DBNull.Value;
-                    case StorageType.Boolean: return Boolean ? s_cachedTrueObject : s_cachedFalseObject;
-                    case StorageType.Byte: return Byte;
-                    case StorageType.DateTime: return DateTime;
-                    case StorageType.Decimal: return Decimal;
-                    case StorageType.Double: return Double;
-                    case StorageType.Int16: return Int16;
-                    case StorageType.Int32: return Int32;
-                    case StorageType.Int64: return Int64;
-                    case StorageType.Guid: return Guid;
-                    case StorageType.Money: return Decimal;
-                    case StorageType.Single: return Single;
-                    case StorageType.String: return String;
-                    case StorageType.SqlBinary: return ByteArray;
+                    case StorageType.Empty:
+                        return DBNull.Value;
+                    case StorageType.Boolean:
+                        return Boolean ? s_cachedTrueObject : s_cachedFalseObject;
+                    case StorageType.Byte:
+                        return Byte;
+                    case StorageType.DateTime:
+                        return DateTime;
+                    case StorageType.Decimal:
+                        return Decimal;
+                    case StorageType.Double:
+                        return Double;
+                    case StorageType.Int16:
+                        return Int16;
+                    case StorageType.Int32:
+                        return Int32;
+                    case StorageType.Int64:
+                        return Int64;
+                    case StorageType.Guid:
+                        return Guid;
+                    case StorageType.Money:
+                        return Decimal;
+                    case StorageType.Single:
+                        return Single;
+                    case StorageType.String:
+                        return String;
+                    case StorageType.SqlBinary:
+                        return ByteArray;
                     case StorageType.SqlCachedBuffer:
                         {
                             // If we have a CachedBuffer, it's because it's an XMLTYPE column
@@ -900,7 +926,8 @@ namespace Microsoft.Data.SqlClient
                             // value of the column.
                             return ((SqlCachedBuffer)(_object)).ToString();
                         }
-                    case StorageType.SqlGuid: return Guid;
+                    case StorageType.SqlGuid:
+                        return Guid;
                     case StorageType.SqlXml:
                         {
                             // XMLTYPE columns must be returned as string when asking for the CLS value
@@ -908,10 +935,14 @@ namespace Microsoft.Data.SqlClient
                             string s = data.Value;
                             return s;
                         }
-                    case StorageType.Date: return DateTime;
-                    case StorageType.DateTime2: return DateTime;
-                    case StorageType.DateTimeOffset: return DateTimeOffset;
-                    case StorageType.Time: return Time;
+                    case StorageType.Date:
+                        return DateTime;
+                    case StorageType.DateTime2:
+                        return DateTime;
+                    case StorageType.DateTimeOffset:
+                        return DateTimeOffset;
+                    case StorageType.Time:
+                        return Time;
                 }
                 return null; // need to return the value as an object of some CLS type
             }
@@ -923,50 +954,87 @@ namespace Microsoft.Data.SqlClient
             {
                 switch (_type)
                 {
-                    case StorageType.Empty: return null;
-                    case StorageType.Boolean: return typeof(SqlBoolean);
-                    case StorageType.Byte: return typeof(SqlByte);
-                    case StorageType.DateTime: return typeof(SqlDateTime);
-                    case StorageType.Decimal: return typeof(SqlDecimal);
-                    case StorageType.Double: return typeof(SqlDouble);
-                    case StorageType.Int16: return typeof(SqlInt16);
-                    case StorageType.Int32: return typeof(SqlInt32);
-                    case StorageType.Int64: return typeof(SqlInt64);
-                    case StorageType.Guid: return typeof(SqlGuid);
-                    case StorageType.Money: return typeof(SqlMoney);
-                    case StorageType.Single: return typeof(SqlSingle);
-                    case StorageType.String: return typeof(SqlString);
-                    case StorageType.SqlCachedBuffer: return typeof(SqlString);
-                    case StorageType.SqlBinary: return typeof(object);
-                    case StorageType.SqlGuid: return typeof(SqlGuid);
-                    case StorageType.SqlXml: return typeof(SqlXml);
-                    // Date DateTime2 and DateTimeOffset have no direct Sql type to contain them
+                    case StorageType.Empty:
+                        return null;
+                    case StorageType.Boolean:
+                        return typeof(SqlBoolean);
+                    case StorageType.Byte:
+                        return typeof(SqlByte);
+                    case StorageType.DateTime:
+                        return typeof(SqlDateTime);
+                    case StorageType.Decimal:
+                        return typeof(SqlDecimal);
+                    case StorageType.Double:
+                        return typeof(SqlDouble);
+                    case StorageType.Int16:
+                        return typeof(SqlInt16);
+                    case StorageType.Int32:
+                        return typeof(SqlInt32);
+                    case StorageType.Int64:
+                        return typeof(SqlInt64);
+                    case StorageType.Guid:
+                        return typeof(SqlGuid);
+                    case StorageType.Money:
+                        return typeof(SqlMoney);
+                    case StorageType.Single:
+                        return typeof(SqlSingle);
+                    case StorageType.String:
+                        return typeof(SqlString);
+                    case StorageType.SqlCachedBuffer:
+                        return typeof(SqlString);
+                    case StorageType.SqlBinary:
+                        return typeof(object);
+                    case StorageType.SqlGuid:
+                        return typeof(SqlGuid);
+                    case StorageType.SqlXml:
+                        return typeof(SqlXml);
+                        // Date DateTime2 and DateTimeOffset have no direct Sql type to contain them
                 }
             }
             else
             { //Is CLR Type
                 switch (_type)
                 {
-                    case StorageType.Empty: return null;
-                    case StorageType.Boolean: return typeof(bool);
-                    case StorageType.Byte: return typeof(byte);
-                    case StorageType.DateTime: return typeof(DateTime);
-                    case StorageType.Decimal: return typeof(decimal);
-                    case StorageType.Double: return typeof(double);
-                    case StorageType.Int16: return typeof(short);
-                    case StorageType.Int32: return typeof(int);
-                    case StorageType.Int64: return typeof(long);
-                    case StorageType.Guid: return typeof(Guid);
-                    case StorageType.Money: return typeof(decimal);
-                    case StorageType.Single: return typeof(float);
-                    case StorageType.String: return typeof(string);
-                    case StorageType.SqlBinary: return typeof(byte[]);
-                    case StorageType.SqlCachedBuffer: return typeof(string);
-                    case StorageType.SqlGuid: return typeof(Guid);
-                    case StorageType.SqlXml: return typeof(string);
-                    case StorageType.Date: return typeof(DateTime);
-                    case StorageType.DateTime2: return typeof(DateTime);
-                    case StorageType.DateTimeOffset: return typeof(DateTimeOffset);
+                    case StorageType.Empty:
+                        return null;
+                    case StorageType.Boolean:
+                        return typeof(bool);
+                    case StorageType.Byte:
+                        return typeof(byte);
+                    case StorageType.DateTime:
+                        return typeof(DateTime);
+                    case StorageType.Decimal:
+                        return typeof(decimal);
+                    case StorageType.Double:
+                        return typeof(double);
+                    case StorageType.Int16:
+                        return typeof(short);
+                    case StorageType.Int32:
+                        return typeof(int);
+                    case StorageType.Int64:
+                        return typeof(long);
+                    case StorageType.Guid:
+                        return typeof(Guid);
+                    case StorageType.Money:
+                        return typeof(decimal);
+                    case StorageType.Single:
+                        return typeof(float);
+                    case StorageType.String:
+                        return typeof(string);
+                    case StorageType.SqlBinary:
+                        return typeof(byte[]);
+                    case StorageType.SqlCachedBuffer:
+                        return typeof(string);
+                    case StorageType.SqlGuid:
+                        return typeof(Guid);
+                    case StorageType.SqlXml:
+                        return typeof(string);
+                    case StorageType.Date:
+                        return typeof(DateTime);
+                    case StorageType.DateTime2:
+                        return typeof(DateTime);
+                    case StorageType.DateTimeOffset:
+                        return typeof(DateTimeOffset);
                 }
             }
 

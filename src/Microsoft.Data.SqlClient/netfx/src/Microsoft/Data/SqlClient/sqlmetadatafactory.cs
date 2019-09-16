@@ -2,35 +2,38 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-
 using System;
-using System.IO;
-using Microsoft.Data.ProviderBase;
-using Microsoft.Data.Common;
-using System.Text;
 using System.Data;
 using System.Data.Common;
+using System.IO;
+using System.Text;
+using Microsoft.Data.Common;
+using Microsoft.Data.ProviderBase;
 
-namespace Microsoft.Data.SqlClient{
-    internal sealed class SqlMetaDataFactory : DbMetaDataFactory{ // V1.2.3300
+namespace Microsoft.Data.SqlClient
+{
+    internal sealed class SqlMetaDataFactory : DbMetaDataFactory
+    { // V1.2.3300
 
         private const string _serverVersionNormalized90 = "09.00.0000";
         private const string _serverVersionNormalized90782 = "09.00.0782";
         private const string _serverVersionNormalized10 = "10.00.0000";
 
 
-        public SqlMetaDataFactory(Stream XMLStream, 
-                                    string serverVersion, 
-                                    string serverVersionNormalized): 
-                base(XMLStream, serverVersion, serverVersionNormalized) {
-  
-           
+        public SqlMetaDataFactory(Stream XMLStream,
+                                    string serverVersion,
+                                    string serverVersionNormalized) :
+                base(XMLStream, serverVersion, serverVersionNormalized)
+        {
+
+
         }
 
-        private void addUDTsToDataTypesTable(DataTable dataTypesTable, SqlConnection connection , String  ServerVersion) {
+        private void addUDTsToDataTypesTable(DataTable dataTypesTable, SqlConnection connection, String ServerVersion)
+        {
 
-            const string sqlCommand = 
-                "select " + 
+            const string sqlCommand =
+                "select " +
                     "assemblies.name, " +
                     "types.assembly_class, " +
                     "ASSEMBLYPROPERTY(assemblies.name, 'VersionMajor') as version_major, " +
@@ -46,11 +49,12 @@ namespace Microsoft.Data.SqlClient{
                 "on assemblies.assembly_id = types.assembly_id ";
 
             // pre 9.0/Yukon servers do not have UDTs
-            if (0 > string.Compare(ServerVersion,  _serverVersionNormalized90, StringComparison.OrdinalIgnoreCase)){
+            if (0 > string.Compare(ServerVersion, _serverVersionNormalized90, StringComparison.OrdinalIgnoreCase))
+            {
                 return;
             }
-                     
-            
+
+
             // Execute the SELECT statement
             SqlCommand command = connection.CreateCommand();
             command.CommandText = sqlCommand;
@@ -64,15 +68,16 @@ namespace Microsoft.Data.SqlClient{
             DataColumn isNullable = dataTypesTable.Columns[DbMetaDataColumnNames.IsNullable];
 
             if ((providerDbtype == null) ||
-                (columnSize == null) || 
+                (columnSize == null) ||
                 (isFixedLength == null) ||
-                (isSearchable == null) || 
-                (isLiteralSupported == null) || 
-                (typeName == null) || 
-                (isNullable == null)) {
+                (isSearchable == null) ||
+                (isLiteralSupported == null) ||
+                (typeName == null) ||
+                (isNullable == null))
+            {
                 throw ADP.InvalidXml();
             }
-                    
+
             const int columnSizeIndex = 10;
             const int isFixedLengthIndex = 9;
             const int isNullableIndex = 8;
@@ -84,39 +89,45 @@ namespace Microsoft.Data.SqlClient{
             const int versionRevisionIndex = 5;
             const int cultureInfoIndex = 6;
             const int publicKeyIndex = 7;
-                    
-                    
-            using (IDataReader reader = command.ExecuteReader()) {
-                
+
+
+            using (IDataReader reader = command.ExecuteReader())
+            {
+
                 object[] values = new object[11];
-                while (reader.Read()) {
-                    
+                while (reader.Read())
+                {
+
                     reader.GetValues(values);
                     newRow = dataTypesTable.NewRow();
 
                     newRow[providerDbtype] = SqlDbType.Udt;
 
-                    if (values[columnSizeIndex] != DBNull.Value) {
+                    if (values[columnSizeIndex] != DBNull.Value)
+                    {
                         newRow[columnSize] = values[columnSizeIndex];
                     }
 
-                    if (values[isFixedLengthIndex] != DBNull.Value) {
+                    if (values[isFixedLengthIndex] != DBNull.Value)
+                    {
                         newRow[isFixedLength] = values[isFixedLengthIndex];
                     }
 
                     newRow[isSearchable] = true;
                     newRow[isLiteralSupported] = false;
-                    if (values[isNullableIndex] != DBNull.Value) {
+                    if (values[isNullableIndex] != DBNull.Value)
+                    {
                         newRow[isNullable] = values[isNullableIndex];
                     }
-                           
+
                     if ((values[assemblyNameIndex] != DBNull.Value) &&
                         (values[assemblyClassIndex] != DBNull.Value) &&
                         (values[versionMajorIndex] != DBNull.Value) &&
                         (values[versionMinorIndex] != DBNull.Value) &&
                         (values[versionBuildIndex] != DBNull.Value) &&
-                        (values[versionRevisionIndex] != DBNull.Value)) {
-                        
+                        (values[versionRevisionIndex] != DBNull.Value))
+                    {
+
                         StringBuilder nameString = new StringBuilder();
                         nameString.Append(values[assemblyClassIndex].ToString());
                         nameString.Append(", ");
@@ -131,36 +142,40 @@ namespace Microsoft.Data.SqlClient{
                         nameString.Append(".");
                         nameString.Append(values[versionRevisionIndex].ToString());
 
-                        if (values[cultureInfoIndex] != DBNull.Value) {
+                        if (values[cultureInfoIndex] != DBNull.Value)
+                        {
                             nameString.Append(", Culture=");
                             nameString.Append(values[cultureInfoIndex].ToString());
                         }
 
-                        if (values[publicKeyIndex] != DBNull.Value) {
-                        
+                        if (values[publicKeyIndex] != DBNull.Value)
+                        {
+
                             nameString.Append(", PublicKeyToken=");
-                        
+
                             StringBuilder resultString = new StringBuilder();
                             Byte[] byteArrayValue = (Byte[])values[publicKeyIndex];
-                            foreach (byte b in byteArrayValue) {
+                            foreach (byte b in byteArrayValue)
+                            {
                                 resultString.Append(string.Format("{0,-2:x2}", b));
                             }
                             nameString.Append(resultString.ToString());
                         }
-                                               
+
                         newRow[typeName] = nameString.ToString();
                         dataTypesTable.Rows.Add(newRow);
                         newRow.AcceptChanges();
                     } // if assembly name
-                     
+
                 }//end while
             } // end using
         }
 
-        private void AddTVPsToDataTypesTable(DataTable dataTypesTable, SqlConnection connection , String  ServerVersion) {
+        private void AddTVPsToDataTypesTable(DataTable dataTypesTable, SqlConnection connection, String ServerVersion)
+        {
 
-            const string sqlCommand = 
-                "select " + 
+            const string sqlCommand =
+                "select " +
                     "name, " +
                     "is_nullable, " +
                     "max_length " +
@@ -169,11 +184,12 @@ namespace Microsoft.Data.SqlClient{
 
             // TODO: update this check once the server upgrades major version number!!!
             // pre 9.0/Yukon servers do not have Table types
-            if (0 > string.Compare(ServerVersion,  _serverVersionNormalized10, StringComparison.OrdinalIgnoreCase)){
+            if (0 > string.Compare(ServerVersion, _serverVersionNormalized10, StringComparison.OrdinalIgnoreCase))
+            {
                 return;
             }
-                     
-            
+
+
             // Execute the SELECT statement
             SqlCommand command = connection.CreateCommand();
             command.CommandText = sqlCommand;
@@ -186,39 +202,45 @@ namespace Microsoft.Data.SqlClient{
             DataColumn isNullable = dataTypesTable.Columns[DbMetaDataColumnNames.IsNullable];
 
             if ((providerDbtype == null) ||
-                (columnSize == null) || 
-                (isSearchable == null) || 
-                (isLiteralSupported == null) || 
-                (typeName == null) || 
-                (isNullable == null)) {
+                (columnSize == null) ||
+                (isSearchable == null) ||
+                (isLiteralSupported == null) ||
+                (typeName == null) ||
+                (isNullable == null))
+            {
                 throw ADP.InvalidXml();
             }
-                    
+
             const int columnSizeIndex = 2;
             const int isNullableIndex = 1;
             const int typeNameIndex = 0;
-                    
-            using (IDataReader reader = command.ExecuteReader()) {
-                
+
+            using (IDataReader reader = command.ExecuteReader())
+            {
+
                 object[] values = new object[11];
-                while (reader.Read()) {
-                    
+                while (reader.Read())
+                {
+
                     reader.GetValues(values);
                     newRow = dataTypesTable.NewRow();
 
                     newRow[providerDbtype] = SqlDbType.Structured;
 
-                    if (values[columnSizeIndex] != DBNull.Value) {
+                    if (values[columnSizeIndex] != DBNull.Value)
+                    {
                         newRow[columnSize] = values[columnSizeIndex];
                     }
 
                     newRow[isSearchable] = false;
                     newRow[isLiteralSupported] = false;
-                    if (values[isNullableIndex] != DBNull.Value) {
+                    if (values[isNullableIndex] != DBNull.Value)
+                    {
                         newRow[isNullable] = values[isNullableIndex];
                     }
-                           
-                    if (values[typeNameIndex] != DBNull.Value) {
+
+                    if (values[typeNameIndex] != DBNull.Value)
+                    {
                         newRow[typeName] = values[typeNameIndex];
                         dataTypesTable.Rows.Add(newRow);
                         newRow.AcceptChanges();
@@ -227,50 +249,56 @@ namespace Microsoft.Data.SqlClient{
             } // end using
         }
 
-        private DataTable GetDataTypesTable(SqlConnection connection){
-        
-                                 
+        private DataTable GetDataTypesTable(SqlConnection connection)
+        {
+
+
             // verify the existance of the table in the data set
-            DataTable dataTypesTable = CollectionDataSet.Tables[DbMetaDataCollectionNames.DataTypes]; 
-            if (dataTypesTable == null){
+            DataTable dataTypesTable = CollectionDataSet.Tables[DbMetaDataCollectionNames.DataTypes];
+            if (dataTypesTable == null)
+            {
                 throw ADP.UnableToBuildCollection(DbMetaDataCollectionNames.DataTypes);
             }
-        
-             // copy the table filtering out any rows that don't apply to tho current version of the prrovider
+
+            // copy the table filtering out any rows that don't apply to tho current version of the prrovider
             dataTypesTable = CloneAndFilterCollection(DbMetaDataCollectionNames.DataTypes, null);
-        
+
             addUDTsToDataTypesTable(dataTypesTable, connection, ServerVersionNormalized);
             AddTVPsToDataTypesTable(dataTypesTable, connection, ServerVersionNormalized);
-                                    
+
             dataTypesTable.AcceptChanges();
-            return  dataTypesTable;
-                        
+            return dataTypesTable;
+
         }
 
-        protected override DataTable PrepareCollection(String collectionName, String[] restrictions, DbConnection connection){
+        protected override DataTable PrepareCollection(String collectionName, String[] restrictions, DbConnection connection)
+        {
 
-            SqlConnection sqlConnection = (SqlConnection) connection;
+            SqlConnection sqlConnection = (SqlConnection)connection;
             DataTable resultTable = null;
 
-            if (collectionName == DbMetaDataCollectionNames.DataTypes){
-                if (ADP.IsEmptyArray(restrictions) == false) {
+            if (collectionName == DbMetaDataCollectionNames.DataTypes)
+            {
+                if (ADP.IsEmptyArray(restrictions) == false)
+                {
                     throw ADP.TooManyRestrictions(DbMetaDataCollectionNames.DataTypes);
                 }
                 resultTable = GetDataTypesTable(sqlConnection);
             }
 
-            if (resultTable == null){
-               throw ADP.UnableToBuildCollection(collectionName);
+            if (resultTable == null)
+            {
+                throw ADP.UnableToBuildCollection(collectionName);
             }
 
             return resultTable;
-            
+
         }
 
-       
-        
+
+
     }
 }
 
 
-    
+

@@ -4,9 +4,6 @@
 
 using System.IO;
 
-using Microsoft.SqlServer.TDS.FeatureExtAck;
-using Microsoft.SqlServer.TDS.PreLogin;
-
 namespace Microsoft.SqlServer.TDS.Login7
 {
     /// <summary>

@@ -3,17 +3,12 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections;
-using System.Diagnostics;
-using System.Data;
-using System.IO;
-using System.Globalization;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Security.Permissions;
-using System.Text;
-using System.Runtime.CompilerServices;
 using System.Data.SqlTypes;
+using System.Diagnostics;
+using System.IO;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Microsoft.Data.SqlClient.Server
 {

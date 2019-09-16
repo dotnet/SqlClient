@@ -3409,7 +3409,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <summary>
         /// Constructs the sp_describe_parameter_encryption request with the values from the original RPC call.
-        /// Prototype for <sp_describe_parameter_encryption> is 
+        /// Prototype for sp_describe_parameter_encryption is 
         /// exec sp_describe_parameter_encryption @tsql=N'[SQL Statement]', @params=N'@p1 varbinary(256)'
         /// </summary>
         /// <param name="originalRpcRequest">Original RPC request</param>

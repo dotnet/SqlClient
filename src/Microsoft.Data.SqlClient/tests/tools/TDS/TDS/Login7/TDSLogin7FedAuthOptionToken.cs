@@ -4,10 +4,7 @@
 
 using System.IO;
 using System.Security.Cryptography;
-
-using Microsoft.SqlServer.TDS.FeatureExtAck;
 using Microsoft.SqlServer.TDS.PreLogin;
-
 
 namespace Microsoft.SqlServer.TDS.Login7
 {

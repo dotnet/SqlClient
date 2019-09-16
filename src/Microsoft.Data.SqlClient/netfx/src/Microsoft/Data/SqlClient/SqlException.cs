@@ -2,19 +2,20 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-
 using System;
 using System.Collections;
 using System.ComponentModel;
-using Microsoft.Data.Common;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.Serialization;
 using System.Text;
+using Microsoft.Data.Common;
 
-namespace Microsoft.Data.SqlClient {
+namespace Microsoft.Data.SqlClient
+{
     [Serializable]
-    public sealed class SqlException : System.Data.Common.DbException {
+    public sealed class SqlException : System.Data.Common.DbException
+    {
         private const string OriginalClientConnectionIdKey = "OriginalClientConnectionId";
         private const string RoutingDestinationKey = "RoutingDestination";
 
@@ -22,27 +23,33 @@ namespace Microsoft.Data.SqlClient {
         [System.Runtime.Serialization.OptionalFieldAttribute(VersionAdded = 4)]
         private Guid _clientConnectionId = Guid.Empty;
 
-        private SqlException(string message, SqlErrorCollection errorCollection, Exception innerException, Guid conId) : base(message, innerException) {
+        private SqlException(string message, SqlErrorCollection errorCollection, Exception innerException, Guid conId) : base(message, innerException)
+        {
             HResult = HResults.SqlException;
             _errors = errorCollection;
             _clientConnectionId = conId;
         }
 
         // runtime will call even if private...
-        private SqlException(SerializationInfo si, StreamingContext sc) : base(si, sc) {
-            _errors = (SqlErrorCollection) si.GetValue("Errors", typeof(SqlErrorCollection));
+        private SqlException(SerializationInfo si, StreamingContext sc) : base(si, sc)
+        {
+            _errors = (SqlErrorCollection)si.GetValue("Errors", typeof(SqlErrorCollection));
             HResult = HResults.SqlException;
-            foreach (SerializationEntry siEntry in si) {
-                if ("ClientConnectionId" == siEntry.Name) {
+            foreach (SerializationEntry siEntry in si)
+            {
+                if ("ClientConnectionId" == siEntry.Name)
+                {
                     _clientConnectionId = (Guid)siEntry.Value;
                     break;
                 }
             }
-                
+
         }
 
-        override public void GetObjectData(SerializationInfo si, StreamingContext context) {
-            if (null == si) {
+        override public void GetObjectData(SerializationInfo si, StreamingContext context)
+        {
+            if (null == si)
+            {
                 throw new ArgumentNullException("si");
             }
             si.AddValue("Errors", _errors, typeof(SqlErrorCollection));
@@ -53,72 +60,90 @@ namespace Microsoft.Data.SqlClient {
         [
         DesignerSerializationVisibility(DesignerSerializationVisibility.Content)
         ]
-        public SqlErrorCollection Errors {
-            get {
-                if (_errors == null) {
+        public SqlErrorCollection Errors
+        {
+            get
+            {
+                if (_errors == null)
+                {
                     _errors = new SqlErrorCollection();
                 }
                 return _errors;
             }
         }
 
-        public Guid ClientConnectionId {
-            get {
+        public Guid ClientConnectionId
+        {
+            get
+            {
                 return this._clientConnectionId;
             }
         }
 
-        /*virtual protected*/private bool ShouldSerializeErrors() { // MDAC 65548
+        /*virtual protected*/
+        private bool ShouldSerializeErrors()
+        { // MDAC 65548
             return ((null != _errors) && (0 < _errors.Count));
         }
 
-        public byte Class {
-            get { return this.Errors[0].Class;}
+        public byte Class
+        {
+            get { return this.Errors[0].Class; }
         }
 
-        public int LineNumber {
-            get { return this.Errors[0].LineNumber;}
+        public int LineNumber
+        {
+            get { return this.Errors[0].LineNumber; }
         }
 
-        public int Number {
-            get { return this.Errors[0].Number;}
+        public int Number
+        {
+            get { return this.Errors[0].Number; }
         }
 
-        public string Procedure {
-            get { return this.Errors[0].Procedure;}
+        public string Procedure
+        {
+            get { return this.Errors[0].Procedure; }
         }
 
-        public string Server {
-            get { return this.Errors[0].Server;}
+        public string Server
+        {
+            get { return this.Errors[0].Server; }
         }
 
-        public byte State {
-            get { return this.Errors[0].State;}
+        public byte State
+        {
+            get { return this.Errors[0].State; }
         }
 
-        override public string Source {
-            get { return this.Errors[0].Source;}
+        override public string Source
+        {
+            get { return this.Errors[0].Source; }
         }
 
-        public override string ToString() {
+        public override string ToString()
+        {
             StringBuilder sb = new StringBuilder(base.ToString());
             sb.AppendLine();
             sb.AppendFormat(SQLMessage.ExClientConnectionId(), _clientConnectionId);
 
             // Append the error number, state and class if the server provided it
-            if (Number != 0) {
+            if (Number != 0)
+            {
                 sb.AppendLine();
                 sb.AppendFormat(SQLMessage.ExErrorNumberStateClass(), Number, State, Class);
             }
 
             // If routed, include the original client connection id
-            if (Data.Contains(OriginalClientConnectionIdKey)) {
+            if (Data.Contains(OriginalClientConnectionIdKey))
+            {
                 sb.AppendLine();
                 sb.AppendFormat(SQLMessage.ExOriginalClientConnectionId(), Data[OriginalClientConnectionIdKey]);
             }
 
             // If routed, provide the routing destination
-            if (Data.Contains(RoutingDestinationKey)) {
+            if (Data.Contains(RoutingDestinationKey))
+            {
                 sb.AppendLine();
                 sb.AppendFormat(SQLMessage.ExRoutingDestination(), Data[RoutingDestinationKey]);
             }
@@ -126,20 +151,25 @@ namespace Microsoft.Data.SqlClient {
             return sb.ToString();
         }
 
-        static internal SqlException CreateException(SqlErrorCollection errorCollection, string serverVersion) {
+        static internal SqlException CreateException(SqlErrorCollection errorCollection, string serverVersion)
+        {
             return CreateException(errorCollection, serverVersion, Guid.Empty);
         }
 
-        static internal SqlException CreateException(SqlErrorCollection errorCollection, string serverVersion, SqlInternalConnectionTds internalConnection, Exception innerException = null) {
+        static internal SqlException CreateException(SqlErrorCollection errorCollection, string serverVersion, SqlInternalConnectionTds internalConnection, Exception innerException = null)
+        {
             Guid connectionId = (internalConnection == null) ? Guid.Empty : internalConnection._clientConnectionId;
             var exception = CreateException(errorCollection, serverVersion, connectionId, innerException);
 
-            if (internalConnection != null) { 
-                if ((internalConnection.OriginalClientConnectionId != Guid.Empty) && (internalConnection.OriginalClientConnectionId != internalConnection.ClientConnectionId)) {
+            if (internalConnection != null)
+            {
+                if ((internalConnection.OriginalClientConnectionId != Guid.Empty) && (internalConnection.OriginalClientConnectionId != internalConnection.ClientConnectionId))
+                {
                     exception.Data.Add(OriginalClientConnectionIdKey, internalConnection.OriginalClientConnectionId);
                 }
 
-                if (!string.IsNullOrEmpty(internalConnection.RoutingDestination)) {
+                if (!string.IsNullOrEmpty(internalConnection.RoutingDestination))
+                {
                     exception.Data.Add(RoutingDestinationKey, internalConnection.RoutingDestination);
                 }
             }
@@ -147,38 +177,44 @@ namespace Microsoft.Data.SqlClient {
             return exception;
         }
 
-        static internal SqlException CreateException(SqlErrorCollection errorCollection, string serverVersion, Guid conId, Exception innerException = null) {
+        static internal SqlException CreateException(SqlErrorCollection errorCollection, string serverVersion, Guid conId, Exception innerException = null)
+        {
             Debug.Assert(null != errorCollection && errorCollection.Count > 0, "no errorCollection?");
-            
+
             // concat all messages together MDAC 65533
             StringBuilder message = new StringBuilder();
-            for (int i = 0; i < errorCollection.Count; i++) {
-                if (i > 0) {
+            for (int i = 0; i < errorCollection.Count; i++)
+            {
+                if (i > 0)
+                {
                     message.Append(Environment.NewLine);
                 }
                 message.Append(errorCollection[i].Message);
             }
 
-            if (innerException == null && errorCollection[0].Win32ErrorCode != 0 && errorCollection[0].Win32ErrorCode != -1) {
+            if (innerException == null && errorCollection[0].Win32ErrorCode != 0 && errorCollection[0].Win32ErrorCode != -1)
+            {
                 innerException = new Win32Exception(errorCollection[0].Win32ErrorCode);
             }
 
             SqlException exception = new SqlException(message.ToString(), errorCollection, innerException, conId);
 
-            exception.Data.Add("HelpLink.ProdName",    "Microsoft SQL Server");
+            exception.Data.Add("HelpLink.ProdName", "Microsoft SQL Server");
 
-            if (!ADP.IsEmpty(serverVersion)) {
+            if (!ADP.IsEmpty(serverVersion))
+            {
                 exception.Data.Add("HelpLink.ProdVer", serverVersion);
             }
-            exception.Data.Add("HelpLink.EvtSrc",      "MSSQLServer");
-            exception.Data.Add("HelpLink.EvtID",       errorCollection[0].Number.ToString(CultureInfo.InvariantCulture));
+            exception.Data.Add("HelpLink.EvtSrc", "MSSQLServer");
+            exception.Data.Add("HelpLink.EvtID", errorCollection[0].Number.ToString(CultureInfo.InvariantCulture));
             exception.Data.Add("HelpLink.BaseHelpUrl", "http://go.microsoft.com/fwlink");
-            exception.Data.Add("HelpLink.LinkId",      "20476");
+            exception.Data.Add("HelpLink.LinkId", "20476");
 
             return exception;
         }
 
-        internal SqlException InternalClone() {
+        internal SqlException InternalClone()
+        {
             SqlException exception = new SqlException(Message, _errors, InnerException, _clientConnectionId);
             if (this.Data != null)
                 foreach (DictionaryEntry entry in this.Data)
@@ -188,6 +224,6 @@ namespace Microsoft.Data.SqlClient {
         }
 
         // Do not serialize this field! It is used to indicate that no reconnection attempts are required
-        internal bool _doNotReconnect = false;        
+        internal bool _doNotReconnect = false;
     }
 }

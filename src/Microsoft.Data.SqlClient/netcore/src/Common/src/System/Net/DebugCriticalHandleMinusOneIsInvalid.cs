@@ -23,7 +23,8 @@ namespace System.Net
         private void Trace()
         {
             _trace = "WARNING! GC-ed  >>" + this.GetType().FullName + "<< (should be explicitly closed) \r\n";
-            if (NetEventSource.IsEnabled) NetEventSource.Info(this, "Creating SafeHandle");
+            if (NetEventSource.IsEnabled)
+                NetEventSource.Info(this, "Creating SafeHandle");
 #if TRACE_VERBOSE
             string stacktrace = Environment.StackTrace;
             _trace += stacktrace;
@@ -33,7 +34,8 @@ namespace System.Net
         ~DebugCriticalHandleMinusOneIsInvalid()
         {
             DebugThreadTracking.SetThreadSource(ThreadKinds.Finalization);
-            if (NetEventSource.IsEnabled) NetEventSource.Info(this, _trace);
+            if (NetEventSource.IsEnabled)
+                NetEventSource.Info(this, _trace);
         }
     }
 #endif // DEBUG

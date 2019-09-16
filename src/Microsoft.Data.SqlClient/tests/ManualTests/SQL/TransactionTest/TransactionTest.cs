@@ -125,7 +125,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     using (SqlDataReader reader = command.ExecuteReader())
                     {
                         int count = 0;
-                        while (reader.Read()) { count++; }
+                        while (reader.Read())
+                        { count++; }
                         Assert.True(count == 1, "Error: incorrect number of rows in table after update.");
                         Assert.Equal(1, count);
                     }
@@ -162,7 +163,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         Assert.False(reader.HasRows, "Error Rollback Test : incorrect number of rows in table after rollback.");
                         int count = 0;
-                        while (reader.Read()) count++;
+                        while (reader.Read())
+                            count++;
                         Assert.Equal(0, count);
                     }
 
@@ -211,7 +213,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         Assert.True(reader.HasRows, "Error Scoped Transaction Test : incorrect number of rows in table after rollback to save state one.");
                         int count = 0;
-                        while (reader.Read()) count++;
+                        while (reader.Read())
+                            count++;
                         Assert.Equal(1, count);
                     }
 
@@ -308,7 +311,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         using (SqlDataReader reader = command2.ExecuteReader())
                         {
                             int count = 0;
-                            while (reader.Read()) count++;
+                            while (reader.Read())
+                                count++;
                             Assert.True(count == 1, "Should Expected 1 row because Isolation Level is read uncommitted which should return uncommitted data.");
                         }
 

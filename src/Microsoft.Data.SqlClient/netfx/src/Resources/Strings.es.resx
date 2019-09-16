@@ -2497,7 +2497,7 @@
     <value>No se puede usar 'Authentication=Active Directory Integrated' con las palabras clave de cadena de conexión 'User ID', 'UID', 'Password' o 'PWD'.</value>
   </data>
   <data name="SQL_InteractiveWithUserIDAndPassword" xml:space="preserve">
-    <value>No se puede usar 'Authentication=Active Directory Interactive' con las palabras clave de cadena de conexión 'User ID', 'UID', 'Password' o 'PWD'.</value>
+    <value>No se puede usar "Authentication=Active Directory Interactive" con las palabras clave de cadena de conexión "User ID", "UID", "Password" ni "PWD".</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
     <value>No se puede usar 'Authentication=Active Directory Integrated' si se ha establecido la propiedad Credential.</value>

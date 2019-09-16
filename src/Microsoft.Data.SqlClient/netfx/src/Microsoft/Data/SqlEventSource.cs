@@ -4,7 +4,6 @@
 
 namespace Microsoft.Data
 {
-    using System;
     using System.Diagnostics.Tracing;
 
     [EventSource(Name = SqlEventSource.EventSourceName)]
@@ -44,7 +43,7 @@ namespace Microsoft.Data
             public const EventTask ExecuteCommand = (EventTask)1;
         }
 
-        private SqlEventSource() 
+        private SqlEventSource()
         {
         }
 

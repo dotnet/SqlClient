@@ -45,7 +45,7 @@ namespace System.Net
     //   method that takes an object and optionally provides a string representation of it, in case a particular library wants to customize further.
 
     /// <summary>Provides logging facilities for System.Net libraries.</summary>
-#if NET46    
+#if NET46
     [SecuritySafeCritical]
 #endif
     internal sealed partial class NetEventSource : EventSource
@@ -101,7 +101,8 @@ namespace System.Net
         {
             DebugValidateArg(thisOrContextObject);
             DebugValidateArg(formattableString);
-            if (IsEnabled) Log.Enter(IdOf(thisOrContextObject), memberName, formattableString != null ? Format(formattableString) : NoParameters);
+            if (IsEnabled)
+                Log.Enter(IdOf(thisOrContextObject), memberName, formattableString != null ? Format(formattableString) : NoParameters);
         }
 
         /// <summary>Logs entrance to a method.</summary>
@@ -113,7 +114,8 @@ namespace System.Net
         {
             DebugValidateArg(thisOrContextObject);
             DebugValidateArg(arg0);
-            if (IsEnabled) Log.Enter(IdOf(thisOrContextObject), memberName, $"({Format(arg0)})");
+            if (IsEnabled)
+                Log.Enter(IdOf(thisOrContextObject), memberName, $"({Format(arg0)})");
         }
 
         /// <summary>Logs entrance to a method.</summary>
@@ -127,7 +129,8 @@ namespace System.Net
             DebugValidateArg(thisOrContextObject);
             DebugValidateArg(arg0);
             DebugValidateArg(arg1);
-            if (IsEnabled) Log.Enter(IdOf(thisOrContextObject), memberName, $"({Format(arg0)}, {Format(arg1)})");
+            if (IsEnabled)
+                Log.Enter(IdOf(thisOrContextObject), memberName, $"({Format(arg0)}, {Format(arg1)})");
         }
 
         /// <summary>Logs entrance to a method.</summary>
@@ -143,7 +146,8 @@ namespace System.Net
             DebugValidateArg(arg0);
             DebugValidateArg(arg1);
             DebugValidateArg(arg2);
-            if (IsEnabled) Log.Enter(IdOf(thisOrContextObject), memberName, $"({Format(arg0)}, {Format(arg1)}, {Format(arg2)})");
+            if (IsEnabled)
+                Log.Enter(IdOf(thisOrContextObject), memberName, $"({Format(arg0)}, {Format(arg1)}, {Format(arg2)})");
         }
 
         [Event(EnterEventId, Level = EventLevel.Informational, Keywords = Keywords.EnterExit)]
@@ -161,7 +165,8 @@ namespace System.Net
         {
             DebugValidateArg(thisOrContextObject);
             DebugValidateArg(formattableString);
-            if (IsEnabled) Log.Exit(IdOf(thisOrContextObject), memberName, formattableString != null ? Format(formattableString) : NoParameters);
+            if (IsEnabled)
+                Log.Exit(IdOf(thisOrContextObject), memberName, formattableString != null ? Format(formattableString) : NoParameters);
         }
 
         /// <summary>Logs exit from a method.</summary>
@@ -173,7 +178,8 @@ namespace System.Net
         {
             DebugValidateArg(thisOrContextObject);
             DebugValidateArg(arg0);
-            if (IsEnabled) Log.Exit(IdOf(thisOrContextObject), memberName, Format(arg0).ToString());
+            if (IsEnabled)
+                Log.Exit(IdOf(thisOrContextObject), memberName, Format(arg0).ToString());
         }
 
         /// <summary>Logs exit from a method.</summary>
@@ -187,7 +193,8 @@ namespace System.Net
             DebugValidateArg(thisOrContextObject);
             DebugValidateArg(arg0);
             DebugValidateArg(arg1);
-            if (IsEnabled) Log.Exit(IdOf(thisOrContextObject), memberName, $"{Format(arg0)}, {Format(arg1)}");
+            if (IsEnabled)
+                Log.Exit(IdOf(thisOrContextObject), memberName, $"{Format(arg0)}, {Format(arg1)}");
         }
 
         [Event(ExitEventId, Level = EventLevel.Informational, Keywords = Keywords.EnterExit)]
@@ -205,7 +212,8 @@ namespace System.Net
         {
             DebugValidateArg(thisOrContextObject);
             DebugValidateArg(formattableString);
-            if (IsEnabled) Log.Info(IdOf(thisOrContextObject), memberName, formattableString != null ? Format(formattableString) : NoParameters);
+            if (IsEnabled)
+                Log.Info(IdOf(thisOrContextObject), memberName, formattableString != null ? Format(formattableString) : NoParameters);
         }
 
         /// <summary>Logs an information message.</summary>
@@ -217,7 +225,8 @@ namespace System.Net
         {
             DebugValidateArg(thisOrContextObject);
             DebugValidateArg(message);
-            if (IsEnabled) Log.Info(IdOf(thisOrContextObject), memberName, Format(message).ToString());
+            if (IsEnabled)
+                Log.Info(IdOf(thisOrContextObject), memberName, Format(message).ToString());
         }
 
         [Event(InfoEventId, Level = EventLevel.Informational, Keywords = Keywords.Default)]
@@ -235,7 +244,8 @@ namespace System.Net
         {
             DebugValidateArg(thisOrContextObject);
             DebugValidateArg(formattableString);
-            if (IsEnabled) Log.ErrorMessage(IdOf(thisOrContextObject), memberName, Format(formattableString));
+            if (IsEnabled)
+                Log.ErrorMessage(IdOf(thisOrContextObject), memberName, Format(formattableString));
         }
 
         /// <summary>Logs an error message.</summary>
@@ -247,7 +257,8 @@ namespace System.Net
         {
             DebugValidateArg(thisOrContextObject);
             DebugValidateArg(message);
-            if (IsEnabled) Log.ErrorMessage(IdOf(thisOrContextObject), memberName, Format(message).ToString());
+            if (IsEnabled)
+                Log.ErrorMessage(IdOf(thisOrContextObject), memberName, Format(message).ToString());
         }
 
         [Event(ErrorEventId, Level = EventLevel.Warning, Keywords = Keywords.Default)]
@@ -266,7 +277,8 @@ namespace System.Net
             // Don't call DebugValidateArg on args, as we expect Fail to be used in assert/failure situations
             // that should never happen in production, and thus we don't care about extra costs.
 
-            if (IsEnabled) Log.CriticalFailure(IdOf(thisOrContextObject), memberName, Format(formattableString));
+            if (IsEnabled)
+                Log.CriticalFailure(IdOf(thisOrContextObject), memberName, Format(formattableString));
             Debug.Fail(Format(formattableString), $"{IdOf(thisOrContextObject)}.{memberName}");
         }
 
@@ -280,7 +292,8 @@ namespace System.Net
             // Don't call DebugValidateArg on args, as we expect Fail to be used in assert/failure situations
             // that should never happen in production, and thus we don't care about extra costs.
 
-            if (IsEnabled) Log.CriticalFailure(IdOf(thisOrContextObject), memberName, Format(message).ToString());
+            if (IsEnabled)
+                Log.CriticalFailure(IdOf(thisOrContextObject), memberName, Format(message).ToString());
             Debug.Fail(Format(message).ToString(), $"{IdOf(thisOrContextObject)}.{memberName}");
         }
 
@@ -299,7 +312,7 @@ namespace System.Net
         {
             DumpBuffer(thisOrContextObject, buffer, 0, buffer.Length, memberName);
         }
-                
+
         /// <summary>Logs the contents of a buffer.</summary>
         /// <param name="thisOrContextObject">`this`, or another object that serves to provide context for the operation.</param>
         /// <param name="buffer">The buffer to be logged.</param>
@@ -367,7 +380,8 @@ namespace System.Net
         {
             DebugValidateArg(first);
             DebugValidateArg(second);
-            if (IsEnabled) Log.Associate(IdOf(first), memberName, IdOf(first), IdOf(second));
+            if (IsEnabled)
+                Log.Associate(IdOf(first), memberName, IdOf(first), IdOf(second));
         }
 
         /// <summary>Logs a relationship between two objects.</summary>
@@ -381,7 +395,8 @@ namespace System.Net
             DebugValidateArg(thisOrContextObject);
             DebugValidateArg(first);
             DebugValidateArg(second);
-            if (IsEnabled) Log.Associate(IdOf(thisOrContextObject), memberName, IdOf(first), IdOf(second));
+            if (IsEnabled)
+                Log.Associate(IdOf(thisOrContextObject), memberName, IdOf(first), IdOf(second));
         }
 
         [Event(AssociateEventId, Level = EventLevel.Informational, Keywords = Keywords.Default, Message = "[{2}]<-->[{3}]")]
@@ -409,7 +424,7 @@ namespace System.Net
 
         public static new bool IsEnabled =>
             Log.IsEnabled();
-            //true; // uncomment for debugging only
+        //true; // uncomment for debugging only
 
         [NonEvent]
         public static string IdOf(object value) => value != null ? value.GetType().Name + "#" + GetHashCode(value) : NullInstance;
@@ -478,10 +493,14 @@ namespace System.Net
         {
             switch (s.ArgumentCount)
             {
-                case 0: return s.Format;
-                case 1: return string.Format(s.Format, Format(s.GetArgument(0)));
-                case 2: return string.Format(s.Format, Format(s.GetArgument(0)), Format(s.GetArgument(1)));
-                case 3: return string.Format(s.Format, Format(s.GetArgument(0)), Format(s.GetArgument(1)), Format(s.GetArgument(2)));
+                case 0:
+                    return s.Format;
+                case 1:
+                    return string.Format(s.Format, Format(s.GetArgument(0)));
+                case 2:
+                    return string.Format(s.Format, Format(s.GetArgument(0)), Format(s.GetArgument(1)));
+                case 3:
+                    return string.Format(s.Format, Format(s.GetArgument(0)), Format(s.GetArgument(1)), Format(s.GetArgument(2)));
                 default:
                     object[] args = s.GetArguments();
                     object[] formattedArgs = new object[args.Length];
@@ -503,10 +522,14 @@ namespace System.Net
         {
             if (IsEnabled())
             {
-                if (arg1 == null) arg1 = "";
-                if (arg2 == null) arg2 = "";
-                if (arg3 == null) arg3 = "";
-                if (arg4 == null) arg4 = "";
+                if (arg1 == null)
+                    arg1 = "";
+                if (arg2 == null)
+                    arg2 = "";
+                if (arg3 == null)
+                    arg3 = "";
+                if (arg4 == null)
+                    arg4 = "";
 
                 fixed (char* string1Bytes = arg1)
                 fixed (char* string2Bytes = arg2)
@@ -547,9 +570,12 @@ namespace System.Net
         {
             if (IsEnabled())
             {
-                if (arg1 == null) arg1 = "";
-                if (arg2 == null) arg2 = "";
-                if (arg3 == null) arg3 = Array.Empty<byte>();
+                if (arg1 == null)
+                    arg1 = "";
+                if (arg2 == null)
+                    arg2 = "";
+                if (arg3 == null)
+                    arg3 = Array.Empty<byte>();
 
                 fixed (char* arg1Ptr = arg1)
                 fixed (char* arg2Ptr = arg2)
@@ -590,7 +616,8 @@ namespace System.Net
         {
             if (IsEnabled())
             {
-                if (arg1 == null) arg1 = "";
+                if (arg1 == null)
+                    arg1 = "";
 
                 fixed (char* arg1Ptr = arg1)
                 {
@@ -628,8 +655,10 @@ namespace System.Net
         {
             if (IsEnabled())
             {
-                if (arg1 == null) arg1 = "";
-                if (arg3 == null) arg3 = "";
+                if (arg1 == null)
+                    arg1 = "";
+                if (arg3 == null)
+                    arg3 = "";
 
                 fixed (char* arg1Ptr = arg1)
                 fixed (char* arg3Ptr = arg3)
@@ -663,8 +692,10 @@ namespace System.Net
         {
             if (IsEnabled())
             {
-                if (arg1 == null) arg1 = "";
-                if (arg2 == null) arg2 = "";
+                if (arg1 == null)
+                    arg1 = "";
+                if (arg2 == null)
+                    arg2 = "";
 
                 fixed (char* arg1Ptr = arg1)
                 fixed (char* arg2Ptr = arg2)
@@ -698,9 +729,12 @@ namespace System.Net
         {
             if (IsEnabled())
             {
-                if (arg1 == null) arg1 = "";
-                if (arg2 == null) arg2 = "";
-                if (arg3 == null) arg3 = "";
+                if (arg1 == null)
+                    arg1 = "";
+                if (arg2 == null)
+                    arg2 = "";
+                if (arg3 == null)
+                    arg3 = "";
 
                 fixed (char* arg1Ptr = arg1)
                 fixed (char* arg2Ptr = arg2)

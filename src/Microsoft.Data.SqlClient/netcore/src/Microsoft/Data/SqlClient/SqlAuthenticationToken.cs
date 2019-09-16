@@ -11,7 +11,8 @@ namespace Microsoft.Data.SqlClient
     /// <summary>
     /// AD authentication token.
     /// </summary>
-    public class SqlAuthenticationToken {
+    public class SqlAuthenticationToken
+    {
         /// <summary>
         /// Token expiration time.
         /// </summary>
@@ -25,8 +26,10 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Constructor.
         /// </summary>
-        public SqlAuthenticationToken(string accessToken, DateTimeOffset expiresOn) {
-            if (string.IsNullOrEmpty(accessToken)) throw SQL.ParameterCannotBeEmpty("AccessToken");
+        public SqlAuthenticationToken(string accessToken, DateTimeOffset expiresOn)
+        {
+            if (string.IsNullOrEmpty(accessToken))
+                throw SQL.ParameterCannotBeEmpty("AccessToken");
 
             AccessToken = accessToken;
             ExpiresOn = expiresOn;
@@ -41,9 +44,11 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Convert to driver's internal token class.
         /// </summary>
-        internal SqlFedAuthToken ToSqlFedAuthToken() {
+        internal SqlFedAuthToken ToSqlFedAuthToken()
+        {
             var tokenBytes = AccessTokenBytesFromString(AccessToken);
-            return new SqlFedAuthToken {
+            return new SqlFedAuthToken
+            {
                 accessToken = tokenBytes,
                 dataLen = (uint)tokenBytes.Length,
                 expirationFileTime = ExpiresOn.ToFileTime()
@@ -53,14 +58,16 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Convert token bytes to string.
         /// </summary>
-        internal static string AccessTokenStringFromBytes(byte[] bytes) {
+        internal static string AccessTokenStringFromBytes(byte[] bytes)
+        {
             return Encoding.Unicode.GetString(bytes);
         }
 
         /// <summary>
         /// Convert token string to bytes.
         /// </summary>
-        internal static byte[] AccessTokenBytesFromString(string token) {
+        internal static byte[] AccessTokenBytesFromString(string token)
+        {
             return Encoding.Unicode.GetBytes(token);
         }
     }

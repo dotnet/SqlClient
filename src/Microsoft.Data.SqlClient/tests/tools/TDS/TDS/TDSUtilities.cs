@@ -5,10 +5,7 @@
 using System;
 using System.IO;
 using System.Reflection;
-using System.Security.Cryptography;
 using System.Text;
-
-using Microsoft.SqlServer.TDS.Login7;
 using Microsoft.SqlServer.TDS.PreLogin;
 
 namespace Microsoft.SqlServer.TDS

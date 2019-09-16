@@ -23,11 +23,11 @@
 
        Generates source for the contract that throws PlatformNotSupportedException
   -->
-    <Target Name="GenerateNotSupportedSource" 
-      AfterTargets="ResolveCodeAnalysisRuleSet"
-      DependsOnTargets="ResolveMatchingContract"
-      Inputs="@(ReferencePath);@(ResolvedMatchingContract)"
-      Outputs="$(NotSupportedSourceFile)">
+  <Target Name="GenerateNotSupportedSource"
+    AfterTargets="ResolveCodeAnalysisRuleSet"
+    DependsOnTargets="ResolveMatchingContract"
+    Inputs="@(ReferencePath);@(ResolvedMatchingContract)"
+    Outputs="$(NotSupportedSourceFile)">
     <ItemGroup>
       <!-- build out a list of directories where dependencies are located -->
       <_referencePathDirectoriesWithDuplicates Include="@(ReferencePath->'%(RootDir)%(Directory)'->TrimEnd('\'))" />

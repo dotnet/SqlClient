@@ -36,10 +36,14 @@ namespace Microsoft.Data.SqlClient
         internal ColumnEncryptionKeyInfo(byte[] decryptedKey, int databaseId, byte[] keyMetadataVersion, int keyid)
         {
 
-            if (null == decryptedKey) { throw SQL.NullArgumentInConstructorInternal(_decryptedKeyName, _className); }
-            if (0 == decryptedKey.Length) { throw SQL.EmptyArgumentInConstructorInternal(_decryptedKeyName, _className); }
-            if (null == keyMetadataVersion) { throw SQL.NullArgumentInConstructorInternal(_keyMetadataVersionName, _className); }
-            if (0 == keyMetadataVersion.Length) { throw SQL.EmptyArgumentInConstructorInternal(_keyMetadataVersionName, _className); }
+            if (null == decryptedKey)
+                throw SQL.NullArgumentInConstructorInternal(_decryptedKeyName, _className);
+            if (0 == decryptedKey.Length)
+                throw SQL.EmptyArgumentInConstructorInternal(_decryptedKeyName, _className);
+            if (null == keyMetadataVersion)
+                throw SQL.NullArgumentInConstructorInternal(_keyMetadataVersionName, _className);
+            if (0 == keyMetadataVersion.Length)
+                throw SQL.EmptyArgumentInConstructorInternal(_keyMetadataVersionName, _className);
 
             KeyId = keyid;
             DatabaseId = databaseId;
@@ -98,10 +102,14 @@ namespace Microsoft.Data.SqlClient
         internal int SerializeToBuffer(byte[] bytePackage, int startOffset)
         {
 
-            if (null == bytePackage) { throw SQL.NullArgumentInternal(_bytePackageName, _className, _serializeToBufferMethodName); }
-            if (0 == bytePackage.Length) { throw SQL.EmptyArgumentInternal(_bytePackageName, _className, _serializeToBufferMethodName); }
-            if (!(startOffset < bytePackage.Length)) { throw SQL.OffsetOutOfBounds(_startOffsetName, _className, _serializeToBufferMethodName); }
-            if ((bytePackage.Length - startOffset) < GetLengthForSerialization()) { throw SQL.InsufficientBuffer(_bytePackageName, _className, _serializeToBufferMethodName); }
+            if (null == bytePackage)
+                throw SQL.NullArgumentInternal(_bytePackageName, _className, _serializeToBufferMethodName);
+            if (0 == bytePackage.Length)
+                throw SQL.EmptyArgumentInternal(_bytePackageName, _className, _serializeToBufferMethodName);
+            if (!(startOffset < bytePackage.Length))
+                throw SQL.OffsetOutOfBounds(_startOffsetName, _className, _serializeToBufferMethodName);
+            if ((bytePackage.Length - startOffset) < GetLengthForSerialization())
+                throw SQL.InsufficientBuffer(_bytePackageName, _className, _serializeToBufferMethodName);
 
             Buffer.BlockCopy(DatabaseIdBytes, 0, bytePackage, startOffset, DatabaseIdBytes.Length);
             startOffset += DatabaseIdBytes.Length;

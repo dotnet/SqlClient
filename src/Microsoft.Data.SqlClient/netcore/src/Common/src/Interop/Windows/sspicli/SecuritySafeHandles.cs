@@ -209,7 +209,8 @@ namespace System.Net.Security
             Interop.SspiCli.CredentialUse intent,
             out SafeFreeCredentials outCredential)
         {
-            if (NetEventSource.IsEnabled) NetEventSource.Enter(null, package, intent);
+            if (NetEventSource.IsEnabled)
+                NetEventSource.Enter(null, package, intent);
 
             int errorCode = -1;
             long timeStamp;
@@ -274,7 +275,8 @@ namespace System.Net.Security
             ref Interop.SspiCli.SCHANNEL_CRED authdata,
             out SafeFreeCredentials outCredential)
         {
-            if (NetEventSource.IsEnabled) NetEventSource.Enter(null, package, intent, authdata);
+            if (NetEventSource.IsEnabled)
+                NetEventSource.Enter(null, package, intent, authdata);
 
             int errorCode = -1;
             long timeStamp;
@@ -513,7 +515,7 @@ namespace System.Net.Security
                     }
 
                     Interop.SspiCli.SecBuffer outUnmanagedBuffer = default;
-                    
+
                     // Fix Descriptor pointer that points to unmanaged SecurityBuffers.
                     outSecurityBufferDescriptor.pBuffers = &outUnmanagedBuffer;
                     outUnmanagedBuffer.cbBuffer = outSecBuffer.size;
@@ -558,7 +560,8 @@ namespace System.Net.Security
                                         outFreeContextBuffer);
                     }
 
-                    if (NetEventSource.IsEnabled) NetEventSource.Info(null, "Marshalling OUT buffer");
+                    if (NetEventSource.IsEnabled)
+                        NetEventSource.Info(null, "Marshalling OUT buffer");
 
                     // Get unmanaged buffer with index 0 as the only one passed into PInvoke.
                     outSecBuffer.size = outUnmanagedBuffer.cbBuffer;
@@ -597,7 +600,8 @@ namespace System.Net.Security
                 }
             }
 
-            if (NetEventSource.IsEnabled) NetEventSource.Exit(null, $"errorCode:0x{errorCode:x8}, refContext:{refContext}");
+            if (NetEventSource.IsEnabled)
+                NetEventSource.Exit(null, $"errorCode:0x{errorCode:x8}, refContext:{refContext}");
             return errorCode;
         }
 
@@ -841,7 +845,8 @@ namespace System.Net.Security
                                         ref outFlags,
                                         outFreeContextBuffer);
 
-                        if (NetEventSource.IsEnabled) NetEventSource.Info(null, "Marshaling OUT buffer");
+                        if (NetEventSource.IsEnabled)
+                            NetEventSource.Info(null, "Marshaling OUT buffer");
 
                         // Get unmanaged buffer with index 0 as the only one passed into PInvoke.
                         outSecBuffer.size = outUnmanagedBuffer[0].cbBuffer;
@@ -882,7 +887,8 @@ namespace System.Net.Security
                 }
             }
 
-            if (NetEventSource.IsEnabled) NetEventSource.Exit(null, $"errorCode:0x{errorCode:x8}, refContext:{refContext}");
+            if (NetEventSource.IsEnabled)
+                NetEventSource.Exit(null, $"errorCode:0x{errorCode:x8}, refContext:{refContext}");
             return errorCode;
         }
 
@@ -1065,7 +1071,8 @@ namespace System.Net.Security
                 }
             }
 
-            if (NetEventSource.IsEnabled) NetEventSource.Exit(null, $"unmanaged CompleteAuthToken() errorCode:0x{errorCode:x8} refContext:{refContext}");
+            if (NetEventSource.IsEnabled)
+                NetEventSource.Exit(null, $"unmanaged CompleteAuthToken() errorCode:0x{errorCode:x8} refContext:{refContext}");
             return errorCode;
         }
 
@@ -1168,7 +1175,8 @@ namespace System.Net.Security
                 }
             }
 
-            if (NetEventSource.IsEnabled) NetEventSource.Exit(null, $"unmanaged ApplyControlToken() errorCode:0x{errorCode:x8} refContext: {refContext}");
+            if (NetEventSource.IsEnabled)
+                NetEventSource.Exit(null, $"unmanaged ApplyControlToken() errorCode:0x{errorCode:x8} refContext: {refContext}");
             return errorCode;
         }
     }

@@ -3,15 +3,9 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections.Generic;
-using System.Data.SqlClient;
-using System.Diagnostics;
-using System.Linq;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using System.Threading.Tasks;
-using Xunit;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
+using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
@@ -30,9 +24,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         // tests
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [InlineData(@"select CustomerId, FirstName, LastName from  [{0}] ", 3, new string[] {@"int", @"string", @"string"})]
-        [InlineData(@"select CustomerId, FirstName from  [{0}] ", 2, new string[] {@"int", @"string"})]
-        [InlineData(@"select LastName from  [{0}] ", 1, new string[] {@"string"})]
+        [InlineData(@"select CustomerId, FirstName, LastName from  [{0}] ", 3, new string[] { @"int", @"string", @"string" })]
+        [InlineData(@"select CustomerId, FirstName from  [{0}] ", 2, new string[] { @"int", @"string" })]
+        [InlineData(@"select LastName from  [{0}] ", 1, new string[] { @"string" })]
         public void TestSelectOnEncryptedNonEncryptedColumns(string selectQuery, int totalColumnsInSelect, string[] types)
         {
             Assert.False(string.IsNullOrWhiteSpace(selectQuery), "FAILED: select query should not be null or empty.");
@@ -49,17 +43,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                 DatabaseHelper.InsertCustomerData(sqlConn, tableName, customer);
 
-                using(SqlCommand sqlCommand = new SqlCommand(string.Format(selectQuery, tableName), 
+                using (SqlCommand sqlCommand = new SqlCommand(string.Format(selectQuery, tableName),
                                                             sqlConn, null, SqlCommandColumnEncryptionSetting.Enabled))
                 {
-                    using(SqlDataReader sqlDataReader = sqlCommand.ExecuteReader())
+                    using (SqlDataReader sqlDataReader = sqlCommand.ExecuteReader())
                     {
                         Assert.True(sqlDataReader.HasRows, "FAILED: Select statement did not return any rows.");
 
                         while (sqlDataReader.Read())
                         {
                             CompareResults(sqlDataReader, types, totalColumnsInSelect);
-                        } 
+                        }
                     }
                 }
             }
@@ -176,11 +170,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                                    @"FirstName", /*input parameter name*/
                                    @"string", /*input parameter data type*/
                                    @"Microsoft" /*input parameter value*/})]
-        public void TestSelectOnEncryptedNonEncryptedColumnsWithEncryptedParameters(bool sync, 
-                                                                                    string selectQuery, 
-                                                                                    int totalColumnsInSelect, 
-                                                                                    string[] types, 
-                                                                                    int numberofParameters, 
+        public void TestSelectOnEncryptedNonEncryptedColumnsWithEncryptedParameters(bool sync,
+                                                                                    string selectQuery,
+                                                                                    int totalColumnsInSelect,
+                                                                                    string[] types,
+                                                                                    int numberofParameters,
                                                                                     object[] values)
         {
             Assert.False(string.IsNullOrWhiteSpace(selectQuery), "FAILED: select query should not be null or empty.");
@@ -197,20 +191,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                 DatabaseHelper.InsertCustomerData(sqlConn, tableName, customer);
 
-                using(SqlCommand sqlCommand = new SqlCommand(string.Format(selectQuery, tableName), 
+                using (SqlCommand sqlCommand = new SqlCommand(string.Format(selectQuery, tableName),
                                                             sqlConn, null, SqlCommandColumnEncryptionSetting.Enabled))
                 {
                     Assert.True(numberofParameters <= 3, "FAILED: No:of parameters should be <= 3.");
 
                     int parameterIndex = 0;
 
-                    while(parameterIndex < numberofParameters * 3)
+                    while (parameterIndex < numberofParameters * 3)
                     {
                         object value = null;
                         string parameterName = (string)values[parameterIndex];
                         Assert.False(string.IsNullOrWhiteSpace(parameterName), "FAILED: parameterName should not be null or empty.");
 
-                        switch((string)values[parameterIndex + 1])
+                        switch ((string)values[parameterIndex + 1])
                         {
                             case "string":
                                 value = (string)values[parameterIndex + 2];
@@ -219,7 +213,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                             case "int":
                                 value = (int)values[parameterIndex + 2];
                                 break;
-                            
+
                             default:
                                 Assert.True(false, "FAILED: No other data type is supported.");
                                 break;
@@ -290,7 +284,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             int columnsRead = 0;
 
-            while(columnsRead < totalColumnsInSelect)
+            while (columnsRead < totalColumnsInSelect)
             {
                 switch (parameterTypes[columnsRead])
                 {

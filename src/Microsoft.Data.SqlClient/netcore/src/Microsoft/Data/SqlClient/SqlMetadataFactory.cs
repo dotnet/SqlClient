@@ -4,11 +4,11 @@
 
 using System;
 using System.Data;
-using System.IO;
 using System.Data.Common;
+using System.IO;
 using System.Text;
-using Microsoft.Data.ProviderBase;
 using Microsoft.Data.Common;
+using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient
 {

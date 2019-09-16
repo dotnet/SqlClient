@@ -10,10 +10,9 @@ using System.Data;
 using System.Data.Common;
 using System.Data.SqlTypes;
 using System.Diagnostics;
-using System.Security;
 using System.Globalization;
+using System.Security;
 using System.Text;
-using System.Threading;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlTypes;
 
@@ -102,51 +101,95 @@ namespace Microsoft.Data.SqlClient
             // NOTE: switch-case works ~3 times faster in this case than search with Dictionary
             switch (lcid)
             {
-                case 1044: return 2; // Norwegian_100_BIN
-                case 1047: return 2; // Romansh_100_BIN
-                case 1056: return 2; // Urdu_100_BIN
-                case 1065: return 2; // Persian_100_BIN
-                case 1068: return 2; // Azeri_Latin_100_BIN
-                case 1070: return 2; // Upper_Sorbian_100_BIN
-                case 1071: return 1; // Macedonian_FYROM_90_BIN
-                case 1081: return 1; // Indic_General_90_BIN
-                case 1082: return 2; // Maltese_100_BIN
-                case 1083: return 2; // Sami_Norway_100_BIN
-                case 1087: return 1; // Kazakh_90_BIN
-                case 1090: return 2; // Turkmen_100_BIN
-                case 1091: return 1; // Uzbek_Latin_90_BIN
-                case 1092: return 1; // Tatar_90_BIN
-                case 1093: return 2; // Bengali_100_BIN
-                case 1101: return 2; // Assamese_100_BIN
-                case 1105: return 2; // Tibetan_100_BIN
-                case 1106: return 2; // Welsh_100_BIN
-                case 1107: return 2; // Khmer_100_BIN
-                case 1108: return 2; // Lao_100_BIN
-                case 1114: return 1; // Syriac_90_BIN
-                case 1121: return 2; // Nepali_100_BIN
-                case 1122: return 2; // Frisian_100_BIN
-                case 1123: return 2; // Pashto_100_BIN
-                case 1125: return 1; // Divehi_90_BIN
-                case 1133: return 2; // Bashkir_100_BIN
-                case 1146: return 2; // Mapudungan_100_BIN
-                case 1148: return 2; // Mohawk_100_BIN
-                case 1150: return 2; // Breton_100_BIN
-                case 1152: return 2; // Uighur_100_BIN
-                case 1153: return 2; // Maori_100_BIN
-                case 1155: return 2; // Corsican_100_BIN
-                case 1157: return 2; // Yakut_100_BIN
-                case 1164: return 2; // Dari_100_BIN
-                case 2074: return 2; // Serbian_Latin_100_BIN
-                case 2092: return 2; // Azeri_Cyrillic_100_BIN
-                case 2107: return 2; // Sami_Sweden_Finland_100_BIN
-                case 2143: return 2; // Tamazight_100_BIN
-                case 3076: return 1; // Chinese_Hong_Kong_Stroke_90_BIN
-                case 3098: return 2; // Serbian_Cyrillic_100_BIN
-                case 5124: return 2; // Chinese_Traditional_Pinyin_100_BIN
-                case 5146: return 2; // Bosnian_Latin_100_BIN
-                case 8218: return 2; // Bosnian_Cyrillic_100_BIN
+                case 1044:
+                    return 2; // Norwegian_100_BIN
+                case 1047:
+                    return 2; // Romansh_100_BIN
+                case 1056:
+                    return 2; // Urdu_100_BIN
+                case 1065:
+                    return 2; // Persian_100_BIN
+                case 1068:
+                    return 2; // Azeri_Latin_100_BIN
+                case 1070:
+                    return 2; // Upper_Sorbian_100_BIN
+                case 1071:
+                    return 1; // Macedonian_FYROM_90_BIN
+                case 1081:
+                    return 1; // Indic_General_90_BIN
+                case 1082:
+                    return 2; // Maltese_100_BIN
+                case 1083:
+                    return 2; // Sami_Norway_100_BIN
+                case 1087:
+                    return 1; // Kazakh_90_BIN
+                case 1090:
+                    return 2; // Turkmen_100_BIN
+                case 1091:
+                    return 1; // Uzbek_Latin_90_BIN
+                case 1092:
+                    return 1; // Tatar_90_BIN
+                case 1093:
+                    return 2; // Bengali_100_BIN
+                case 1101:
+                    return 2; // Assamese_100_BIN
+                case 1105:
+                    return 2; // Tibetan_100_BIN
+                case 1106:
+                    return 2; // Welsh_100_BIN
+                case 1107:
+                    return 2; // Khmer_100_BIN
+                case 1108:
+                    return 2; // Lao_100_BIN
+                case 1114:
+                    return 1; // Syriac_90_BIN
+                case 1121:
+                    return 2; // Nepali_100_BIN
+                case 1122:
+                    return 2; // Frisian_100_BIN
+                case 1123:
+                    return 2; // Pashto_100_BIN
+                case 1125:
+                    return 1; // Divehi_90_BIN
+                case 1133:
+                    return 2; // Bashkir_100_BIN
+                case 1146:
+                    return 2; // Mapudungan_100_BIN
+                case 1148:
+                    return 2; // Mohawk_100_BIN
+                case 1150:
+                    return 2; // Breton_100_BIN
+                case 1152:
+                    return 2; // Uighur_100_BIN
+                case 1153:
+                    return 2; // Maori_100_BIN
+                case 1155:
+                    return 2; // Corsican_100_BIN
+                case 1157:
+                    return 2; // Yakut_100_BIN
+                case 1164:
+                    return 2; // Dari_100_BIN
+                case 2074:
+                    return 2; // Serbian_Latin_100_BIN
+                case 2092:
+                    return 2; // Azeri_Cyrillic_100_BIN
+                case 2107:
+                    return 2; // Sami_Sweden_Finland_100_BIN
+                case 2143:
+                    return 2; // Tamazight_100_BIN
+                case 3076:
+                    return 1; // Chinese_Hong_Kong_Stroke_90_BIN
+                case 3098:
+                    return 2; // Serbian_Cyrillic_100_BIN
+                case 5124:
+                    return 2; // Chinese_Traditional_Pinyin_100_BIN
+                case 5146:
+                    return 2; // Bosnian_Latin_100_BIN
+                case 8218:
+                    return 2; // Bosnian_Cyrillic_100_BIN
 
-                default: return 0;   // other LCIDs have collation with version 0
+                default:
+                    return 0;   // other LCIDs have collation with version 0
             }
         }
 
@@ -298,8 +341,6 @@ namespace Microsoft.Data.SqlClient
             Next = null;
         }
     }
-
-   
 
     internal sealed class SqlLogin
     {

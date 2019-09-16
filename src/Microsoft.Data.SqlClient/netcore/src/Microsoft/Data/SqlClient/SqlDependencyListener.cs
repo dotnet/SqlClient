@@ -7,12 +7,12 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlTypes;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Xml;
-using System.Diagnostics.CodeAnalysis;
-using Microsoft.Data.SqlClient;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient;
 
 // This class is the process wide dependency dispatcher.  It contains all connection listeners for the entire process and 
 // receives notifications on those connections to dispatch to the corresponding AppDomain dispatcher to notify the
@@ -1436,12 +1436,12 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
             string appDomainKey,
         out bool appDomainStop)
     {
-         Debug.Assert(this == s_staticInstance, "Instance method called on non _staticInstance instance!");
-         server = null;  // Reset out param.
-         identity = null;
-         user = null;
-         database = null;
-         appDomainStop = false;
+        Debug.Assert(this == s_staticInstance, "Instance method called on non _staticInstance instance!");
+        server = null;  // Reset out param.
+        identity = null;
+        user = null;
+        database = null;
+        appDomainStop = false;
 
         SqlConnectionContainerHashHelper hashHelper = GetHashHelper(connectionString,
                                                           out SqlConnectionStringBuilder connectionStringBuilder,
@@ -1451,23 +1451,23 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
 
         bool stopped = false;
 
-         lock (_connectionContainers)
-         {
-             if (_connectionContainers.ContainsKey(hashHelper))
-             {
-                 SqlConnectionContainer container = _connectionContainers[hashHelper];
-                 server = container.Server;   // Return server, database, and queue info for use by calling SqlDependency.
-                 database = container.Database;
-                 queueService = container.Queue;
+        lock (_connectionContainers)
+        {
+            if (_connectionContainers.ContainsKey(hashHelper))
+            {
+                SqlConnectionContainer container = _connectionContainers[hashHelper];
+                server = container.Server;   // Return server, database, and queue info for use by calling SqlDependency.
+                database = container.Database;
+                queueService = container.Queue;
 
-                 if (container.Stop(appDomainKey, out appDomainStop))
-                 { // Stop can be blocking if refCount == 0 on container.
-                     stopped = true;
-                     _connectionContainers.Remove(hashHelper); // Remove from collection.
-                 }
-             }
-         }
+                if (container.Stop(appDomainKey, out appDomainStop))
+                { // Stop can be blocking if refCount == 0 on container.
+                    stopped = true;
+                    _connectionContainers.Remove(hashHelper); // Remove from collection.
+                }
+            }
+        }
 
-         return stopped;
+        return stopped;
     }
 }

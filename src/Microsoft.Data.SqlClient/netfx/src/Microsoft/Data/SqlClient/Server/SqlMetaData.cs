@@ -4,9 +4,8 @@
 
 using System;
 using System.Data;
-using System.Globalization;
 using System.Data.SqlTypes;
-using Microsoft.Data.SqlClient;
+using System.Globalization;
 using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient.Server
