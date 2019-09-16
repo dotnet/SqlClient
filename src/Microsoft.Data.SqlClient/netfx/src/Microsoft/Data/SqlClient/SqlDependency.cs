@@ -21,7 +21,7 @@ using Microsoft.Data.Sql;
 
 namespace Microsoft.Data.SqlClient
 {
-
+    /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDependency.xml' path='docs/members[@name="SqlDependency"]/SqlDependency/*' />
     public sealed class SqlDependency
     {
 
@@ -298,20 +298,22 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDependency.xml' path='docs/members[@name="SqlDependency"]/ctor2/*' />
         // ------------
         // Constructors
         // ------------ 
-
         [System.Security.Permissions.HostProtectionAttribute(ExternalThreading = true)]
         public SqlDependency() : this(null, null, SQL.SqlDependencyTimeoutDefault)
         {
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDependency.xml' path='docs/members[@name="SqlDependency"]/ctorCommand/*' />
         [System.Security.Permissions.HostProtectionAttribute(ExternalThreading = true)]
         public SqlDependency(SqlCommand command) : this(command, null, SQL.SqlDependencyTimeoutDefault)
         {
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDependency.xml' path='docs/members[@name="SqlDependency"]/ctorCommandOptionsTimeout/*' />
         [System.Security.Permissions.HostProtectionAttribute(ExternalThreading = true)]
         public SqlDependency(SqlCommand command, string options, int timeout)
         {
@@ -346,7 +348,7 @@ namespace Microsoft.Data.SqlClient
         // -----------------
         // Public Properties
         // -----------------
-
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDependency.xml' path='docs/members[@name="SqlDependency"]/HasChanges/*' />
         [
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
         ResDescriptionAttribute(StringsHelper.ResourceNames.SqlDependency_HasChanges)
@@ -359,6 +361,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDependency.xml' path='docs/members[@name="SqlDependency"]/Id/*' />
         [
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
         ResDescriptionAttribute(StringsHelper.ResourceNames.SqlDependency_Id)
@@ -425,7 +428,7 @@ namespace Microsoft.Data.SqlClient
         // ------
         // Events
         // ------
-
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDependency.xml' path='docs/members[@name="SqlDependency"]/OnChange/*' />
         [
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
         ResDescriptionAttribute(StringsHelper.ResourceNames.SqlDependency_OnChange)
@@ -505,7 +508,7 @@ namespace Microsoft.Data.SqlClient
         // --------------
         // Public Methods
         // --------------
-
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDependency.xml' path='docs/members[@name="SqlDependency"]/AddCommandDependency/*' />
         [
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
         ResDescriptionAttribute(StringsHelper.ResourceNames.SqlDependency_AddCommandDependency)
@@ -636,13 +639,14 @@ namespace Microsoft.Data.SqlClient
         // -------------------------
         // Static Start/Stop methods
         // -------------------------
-
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDependency.xml' path='docs/members[@name="SqlDependency"]/StartConnectionString/*' />
         [System.Security.Permissions.HostProtectionAttribute(ExternalThreading = true)]
         public static bool Start(string connectionString)
         {
             return Start(connectionString, null, true);
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDependency.xml' path='docs/members[@name="SqlDependency"]/StartConnectionStringQueue/*' />
         [System.Security.Permissions.HostProtectionAttribute(ExternalThreading = true)]
         public static bool Start(string connectionString, string queue)
         {
@@ -787,12 +791,14 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDependency.xml' path='docs/members[@name="SqlDependency"]/StopConnectionString/*' />
         [System.Security.Permissions.HostProtectionAttribute(ExternalThreading = true)]
         public static bool Stop(string connectionString)
         {
             return Stop(connectionString, null, true, false);
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDependency.xml' path='docs/members[@name="SqlDependency"]/StopConnectionStringQueue/*' />
         [System.Security.Permissions.HostProtectionAttribute(ExternalThreading = true)]
         public static bool Stop(string connectionString, string queue)
         {
