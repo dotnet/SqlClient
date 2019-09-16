@@ -1009,19 +1009,13 @@ namespace Microsoft.Data.SqlClient
         Snix_SendRows,
     }
 
-    /// <summary>
-    /// Column Encryption Setting to be used for the SqlConnection.
-    /// </summary>
+    /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionColumnEncryptionSetting.xml' path='docs/members[@name="SqlConnectionColumnEncryptionSetting"]/SqlConnectionColumnEncryptionSetting/*' />
     public enum SqlConnectionColumnEncryptionSetting
     {
-        /// <summary>
-        /// Disables column encryption by default on all commands on this connection.
-        /// </summary>
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionColumnEncryptionSetting.xml' path='docs/members[@name="SqlConnectionColumnEncryptionSetting"]/Disabled/*' />
         Disabled = 0,
 
-        /// <summary>
-        /// Enables column encryption by default on all commands on this connection.
-        /// </summary>
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionColumnEncryptionSetting.xml' path='docs/members[@name="SqlConnectionColumnEncryptionSetting"]/Enabled/*' />
         Enabled,
     }
 
