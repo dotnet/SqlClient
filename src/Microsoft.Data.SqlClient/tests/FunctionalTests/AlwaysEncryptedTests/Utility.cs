@@ -209,14 +209,14 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         /// <returns></returns>
         internal static X509Certificate2 GetCertificate(string certificateName, StoreLocation certificateStoreLocation)
         {
-            Debug.Assert(!string.IsNullOrWhiteSpace(certificateName));
+            Assert.True(!string.IsNullOrWhiteSpace(certificateName));
             X509Store certStore = null;
             try
             {
                 certStore = new X509Store(StoreName.My, certificateStoreLocation);
                 certStore.Open(OpenFlags.ReadOnly);
                 X509Certificate2Collection certCollection = certStore.Certificates.Find(X509FindType.FindBySubjectName, certificateName, validOnly: false);
-                Debug.Assert(certCollection != null && certCollection.Count > 0);
+                Assert.True(certCollection != null && certCollection.Count > 0);
 
                 return certCollection[0];
             }
@@ -384,7 +384,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         /// </summary>
         internal static string GetHexString(byte[] input, bool addLeadingZeroX = false)
         {
-            Debug.Assert(input != null);
+            Assert.True(input != null);
 
             StringBuilder str = new StringBuilder();
             if (addLeadingZeroX)
@@ -446,7 +446,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         /// <returns></returns>
         internal static byte[] StringToByteArray(string hex)
         {
-            Debug.Assert(!string.IsNullOrWhiteSpace(hex));
+            Assert.True(!string.IsNullOrWhiteSpace(hex));
             return Enumerable.Range(0, hex.Length)
                              .Where(x => x % 2 == 0)
                              .Select(x => Convert.ToByte(hex.Substring(x, 2), 16))
