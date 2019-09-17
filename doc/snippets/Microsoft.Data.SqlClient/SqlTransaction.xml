@@ -53,7 +53,7 @@
  -or-  
   
  The connection is broken.</exception>
-            </Commit>
+        </Commit>
         <Connection>
             <summary>Gets the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object associated with the transaction, or <see langword="null" /> if the transaction is no longer valid.</summary>
             <value>The <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object associated with the transaction.</value>
@@ -71,15 +71,15 @@
             <value>To be added.</value>
             <remarks>To be added.</remarks>
         </DbConnection>
-        <Dispose1>
+        <Dispose>
             <summary>Releases the resources that are held by the object.</summary>
             <remarks>To be added.</remarks>
-        </Dispose1>
-        <Dispose2>
+        </Dispose>
+        <DisposeDisposing>
             <param name="disposing">To be added.</param>
             <summary>To be added.</summary>
             <remarks>To be added.</remarks>
-        </Dispose2>
+        </DisposeDisposing>
         <IsolationLevel>
             <summary>Specifies the <see cref="T:System.Data.IsolationLevel" /> for this transaction.</summary>
             <value>The <see cref="T:System.Data.IsolationLevel" /> for this transaction. The default is <see langword="ReadCommitted" />.</value>
