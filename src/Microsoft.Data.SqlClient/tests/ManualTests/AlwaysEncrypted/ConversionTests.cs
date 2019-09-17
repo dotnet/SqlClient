@@ -71,7 +71,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [InlineData(SqlDbType.SmallMoney, SqlDbType.Money)]  // raw data OK begin
+        [InlineData(SqlDbType.SmallMoney, SqlDbType.Money)]
         [InlineData(SqlDbType.Bit, SqlDbType.TinyInt)]
         [InlineData(SqlDbType.Bit, SqlDbType.SmallInt)]
         [InlineData(SqlDbType.Bit, SqlDbType.Int)]
@@ -86,19 +86,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [InlineData(SqlDbType.Binary, SqlDbType.VarBinary)]
         [InlineData(SqlDbType.VarBinary, SqlDbType.Binary)]
         [InlineData(SqlDbType.VarBinary, SqlDbType.VarBinary)]
-        [InlineData(SqlDbType.Char, SqlDbType.Char)]  // raw data OK end
+        [InlineData(SqlDbType.Char, SqlDbType.Char)]
         [InlineData(SqlDbType.Char, SqlDbType.VarChar)]  // padding whitespace issue, trimEnd for now
-        [InlineData(SqlDbType.VarChar, SqlDbType.Char)]  // raw data OK begin
+        [InlineData(SqlDbType.VarChar, SqlDbType.Char)]
         [InlineData(SqlDbType.VarChar, SqlDbType.VarChar)]
         [InlineData(SqlDbType.NChar, SqlDbType.NChar)]
         [InlineData(SqlDbType.NChar, SqlDbType.NVarChar)]
         [InlineData(SqlDbType.NVarChar, SqlDbType.NChar)]
-        [InlineData(SqlDbType.NVarChar, SqlDbType.NVarChar)] // raw data OK end
-        [InlineData(SqlDbType.Time, SqlDbType.Time)]  // raw data OK
-        [InlineData(SqlDbType.DateTime2, SqlDbType.DateTime2)]  // raw data issue 
-        [InlineData(SqlDbType.DateTimeOffset, SqlDbType.DateTimeOffset)] // raw data issue 
-        [InlineData(SqlDbType.Float, SqlDbType.Float)] // raw data OK
-        [InlineData(SqlDbType.Real, SqlDbType.Real)] // raw data OK
+        [InlineData(SqlDbType.NVarChar, SqlDbType.NVarChar)]
+        [InlineData(SqlDbType.Time, SqlDbType.Time)]
+        [InlineData(SqlDbType.DateTime2, SqlDbType.DateTime2)]
+        [InlineData(SqlDbType.DateTimeOffset, SqlDbType.DateTimeOffset)]
+        [InlineData(SqlDbType.Float, SqlDbType.Float)]
+        [InlineData(SqlDbType.Real, SqlDbType.Real)]
         public void ConversionSmallerToLargerInsertAndSelect(SqlDbType smallDbType, SqlDbType largeDbType)
         {
             ColumnMetaData largeColumnInfo = new ColumnMetaData(largeDbType, 0, 1, 1, false);
@@ -263,7 +263,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         // Use the retrieved values for DateTime2 and DateTimeOffset due to fractional insertion adjustment
                         if (smallColumnInfo.ColumnType is SqlDbType.DateTime2 ||
                             smallColumnInfo.ColumnType is SqlDbType.DateTimeOffset ||
-                            smallColumnInfo.ColumnType is SqlDbType.Char)
+                            smallColumnInfo.ColumnType is SqlDbType.Char ||
+                            smallColumnInfo.ColumnType is SqlDbType.NChar)
                         {
                             value = valuesToSelect[i];
                         }
@@ -1018,7 +1019,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     {
                         Assert.True(((byte[])encryptedValue).SequenceEqual((byte[])unencryptedValue), string.Format("The values read for row '{0}' column '{1}' are not identical", rowId, sqlDataReaderEncrypted.GetName(i)));
                     }
-                    else if (sqlDataReaderEncrypted.GetDataTypeName(i) == "char" || sqlDataReaderEncrypted.GetDataTypeName(i) == "varchar")
+                    else if (sqlDataReaderEncrypted.GetDataTypeName(i) == "char" || sqlDataReaderEncrypted.GetDataTypeName(i) == "varchar" ||
+                             sqlDataReaderEncrypted.GetDataTypeName(i) == "nchar" || sqlDataReaderEncrypted.GetDataTypeName(i) == "nvarchar" )
                     {
                         Assert.True(((string)encryptedValue).TrimEnd().Equals(((string)unencryptedValue).TrimEnd()), string.Format("The values read for row '{0}' column '{1}' are not identical", rowId, sqlDataReaderEncrypted.GetName(i)));
                     }
