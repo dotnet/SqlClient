@@ -662,8 +662,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e.Message);
-
                     Type exceptionType = e.GetType();
                     if (!IsExpectedException(e))
                     {
