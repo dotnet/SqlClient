@@ -16,6 +16,7 @@ using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
+    [PlatformSpecific(TestPlatforms.Windows)]
     public class ConversionTests : IDisposable
     {
 
