@@ -392,8 +392,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values);
 
-            //using (SqlConnection sqlConnection = new SqlConnection(string.Concat(DataTestUtility.TcpConnStr, " Column Encryption Setting = Enabled;")))
-            using (SqlConnection sqlConnection = new SqlConnection(string.Concat(DataTestUtility.s_tcpConnString, " Column Encryption Setting = Enabled;")))
+            using (SqlConnection sqlConnection = new SqlConnection(string.Concat(DataTestUtility.s_tcpConnString, "; Column Encryption Setting = Enabled;")))
             {
                 sqlConnection.Open();
 

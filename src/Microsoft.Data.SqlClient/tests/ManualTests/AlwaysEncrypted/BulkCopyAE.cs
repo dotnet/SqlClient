@@ -38,7 +38,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             dataTable.Rows.Add(dataRow);
             dataTable.AcceptChanges();
 
-            using (var connection = new SqlConnection(string.Concat(DataTestUtility.s_tcpConnString, " Column Encryption Setting = Enabled;")))
+            using (var connection = new SqlConnection(string.Concat(DataTestUtility.s_tcpConnString, "; Column Encryption Setting = Enabled;")))
             using (var bulkCopy = new SqlBulkCopy(connection)
             {
                 EnableStreaming = true,
