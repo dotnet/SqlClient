@@ -163,7 +163,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             Assert.Throws<PlatformNotSupportedException>(() => provider.VerifyColumnMasterKeyMetadata("", false, new byte[] { }));
         }
     }
-    
+
     public class CngFixture : IDisposable
     {
         private const string providerName = "Microsoft Software Key Storage Provider";
@@ -182,7 +182,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         public static void AddKeyToCng(string providerName, string containerName)
         {
             CngKeyCreationParameters keyParams = new CngKeyCreationParameters();
-            
+
             keyParams.Provider = new CngProvider(providerName);
             keyParams.KeyCreationOptions = CngKeyCreationOptions.OverwriteExistingKey;
 

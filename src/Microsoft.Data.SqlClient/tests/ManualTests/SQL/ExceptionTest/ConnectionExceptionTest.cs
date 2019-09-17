@@ -5,9 +5,9 @@
 using System;
 using Xunit;
 
-namespace Microsoft.Data.SqlClient.Tests
+namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
-    public class ExceptionTest
+    public class ConnectionExceptionTest
     {
         // test connection string
         private string connectionString = "server=tcp:server,1432;database=test;uid=admin;pwd=SQLDB;connect timeout=60;";
@@ -98,7 +98,7 @@ namespace Microsoft.Data.SqlClient.Tests
             }
         }
 
-        public static bool IsUsingManagedSNI() => ManualTesting.Tests.DataTestUtility.IsUsingManagedSNI();
+        public static bool IsUsingManagedSNI() => DataTestUtility.IsUsingManagedSNI();
 
         [ConditionalFact(nameof(IsUsingManagedSNI))]
         public void NamedPipeInvalidConnStringTest_ManagedSNI()

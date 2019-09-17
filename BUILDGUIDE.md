@@ -65,32 +65,32 @@ Once the environment is setup properly, execute the desired set of commands belo
 
 ```bash
 > msbuild /t:BuildTestsNetCore
-# Build tests for the .Net Core driver.
+# Build the tests for the .Net Core driver.
 ```
 
 ```bash
 > msbuild /t:BuildTestsNetFx
-# Build tests for the .Net Framework (NetFx) driver.
+# Build the tests for the .Net Framework (NetFx) driver.
 ```
 
 ## Run Functional Tests
 
-Windows (`netcoreapp2.1`):  
-```bash
-> dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" /p:Platform="AnyCPU" /p:Configuration="Release" /p:TestTargetOS="Windowsnetcoreapp" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonwindowstests"
-```
- 
-Windows (`net46 x86`):  
+Windows (`netfx x86`):  
 ```bash
 > dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" /p:Platform="Win32" /p:Configuration="Release" /p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests"
  ```
 
-Windows (`net46 x64`):  
+Windows (`netfx x64`):  
 ```bash
 > dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" /p:Platform="x64" /p:Configuration="Release" /p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests"
 ```
 
-Unix (`netcoreapp2.1`):  
+Windows (`netcoreapp`):  
+```bash
+> dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" /p:Platform="AnyCPU" /p:Configuration="Release" /p:TestTargetOS="Windowsnetcoreapp" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonwindowstests"
+```
+
+Unix (`netcoreapp`):  
 ```bash
 > dotnet test "src/Microsoft.Data.SqlClient/tests/FunctionalTests/Microsoft.Data.SqlClient.Tests.csproj" /p:Platform="AnyCPU" /p:Configuration="Release" /p:TestTargetOS="Unixnetcoreapp" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonlinuxtests&category!=nonuaptests"
 ```
@@ -106,7 +106,7 @@ Manual Tests require the below setup to run:
 |Env Variable|Description|Value|
 |------|--------|-------------------|
 |TEST_NP_CONN_STR | Connection String for Named Pipes enabled SQL Server instance.| `Server=\\{servername}\pipe\sql\query;Database={Database_Name};Trusted_Connection=True;` <br/> OR <br/> `Data Source=np:{servername};Initial Catalog={Database_Name};Integrated Security=True;`|
-|TEST_TCP_CONN_STR | Connection String for TCP enabled SQL Server instance. | `Server={servername};Database={Database_Name};Trusted_Connection=True;` <br/> OR `Data Source={servername};Initial Catalog={Database_Name};Integrated Security=True;`|
+|TEST_TCP_CONN_STR | Connection String for TCP enabled SQL Server instance. | `Server={servername};Database={Database_Name};Trusted_Connection=True;` <br/> OR `Data Source=tcp:{servername};Initial Catalog={Database_Name};Integrated Security=True;`|
 |AAD_PASSWORD_CONN_STR | (Optional) Connection String for testing Azure Active Directory Password Authentication. | `Data Source={server.database.windows.net}; Initial Catalog={Azure_DB_Name};Authentication=Active Directory Password; User ID={AAD_User}; Password={AAD_User_Password};`|
 |TEST_ACCESSTOKEN_SETUP| (Optional) Contains the Access Token to be used for tests.| _<OAuth 2.0 Access Token>_ |
 |TEST_LOCALDB_INSTALLED| (Optional) Whether or not a LocalDb instance of SQL Server is installed on the machine running the tests. |`1` OR `0`|
@@ -115,22 +115,50 @@ Manual Tests require the below setup to run:
 
 Commands to run tests:
 
-Windows (`netcoreapp2.1`):  
-```bash
-> dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" /p:Platform="AnyCPU" /p:Configuration="Release" /p:TestTargetOS="Windowsnetcoreapp" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonwindowstests"
-```
-
-Windows (`net46 x86`):  
+Windows (`netfx x86`):  
 ```bash
 > dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" /p:Platform="Win32" /p:Configuration="Release" /p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests"
 ```
 
-Windows (`net46 x64`):  
+Windows (`netfx x64`):  
 ```bash
 > dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" /p:Platform="x64" /p:Configuration="Release" /p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests"
 ```
 
-Unix (`netcoreapp2.1`):  
+Windows (`netcoreapp`):  
+```bash
+> dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" /p:Platform="AnyCPU" /p:Configuration="Release" /p:TestTargetOS="Windowsnetcoreapp" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonwindowstests"
+```
+
+Unix (`netcoreapp`):  
 ```bash
 > dotnet test "src/Microsoft.Data.SqlClient/tests/ManualTests/Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" /p:Platform="AnyCPU" /p:Configuration="Release" /p:TestTargetOS="Unixnetcoreapp" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonlinuxtests&category!=nonuaptests"
+```
+
+## Testing with Custom TargetFramework
+Tests can be built and run with custom Target Frameworks as under:
+
+### Building Tests:
+
+```bash
+> msbuild /t:BuildTestsNetFx /p:TargetNetFxVersion=net461
+# Build the tests for custom TargetFramework (.NET Framework)
+# Applicable values: net46 (Default) | net461 | net462 | net47 | net471  net472 | net48
+```
+
+```bash
+> msbuild /t:BuildTestsNetCore /p:TargetNetCoreVersion=netcoreapp3.0
+# Build the tests for custom TargetFramework (.NET Core)
+# Applicable values: netcoreapp2.1 | netcoreapp2.2 | netcoreapp3.0
+```
+### Running Tests:
+
+```bash
+> dotnet test /p:TargetNetFxVersion=net461 ...
+# Use above property to run Functional Tests with custom TargetFramework (.NET Framework)
+# Applicable values: net46 (Default) | net461 | net462 | net47 | net471  net472 | net48
+
+> dotnet test /p:TargetNetCoreVersion=netcoreapp3.0 ...
+# Use above property to run Functional Tests with custom TargetFramework (.NET Core)
+# Applicable values: netcoreapp2.1 | netcoreapp2.2 | netcoreapp3.0
 ```

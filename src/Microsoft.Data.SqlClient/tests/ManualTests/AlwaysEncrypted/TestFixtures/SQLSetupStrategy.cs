@@ -42,7 +42,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             List<Table> tables = CreateTables(columnEncryptionKeys);
             databaseObjects.AddRange(tables);
 
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.s_tcpConnString))
             {
                 sqlConnection.Open();
                 databaseObjects.ForEach(o => o.Create(sqlConnection));
@@ -86,7 +86,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public void Dispose()
         {
             databaseObjects.Reverse();
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.s_tcpConnString))
             {
                 sqlConnection.Open();
                 databaseObjects.ForEach(o => o.Drop(sqlConnection));

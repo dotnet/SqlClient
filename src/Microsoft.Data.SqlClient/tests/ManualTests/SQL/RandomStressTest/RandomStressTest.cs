@@ -45,7 +45,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // pure random
             _randPool = new RandomizerPool();
 
-            SqlConnectionStringBuilder regularConnectionString = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr);
+            SqlConnectionStringBuilder regularConnectionString = new SqlConnectionStringBuilder(DataTestUtility.s_tcpConnString);
 
             regularConnectionString.MultipleActiveResultSets = false;
 

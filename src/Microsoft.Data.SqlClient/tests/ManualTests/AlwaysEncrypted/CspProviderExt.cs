@@ -24,7 +24,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             const string providersRegistryKeyPath = @"SOFTWARE\Microsoft\Cryptography\Defaults\Provider";
             Microsoft.Win32.RegistryKey defaultCryptoProvidersRegistryKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(providersRegistryKeyPath);
-        
+
             foreach (string subKeyName in defaultCryptoProvidersRegistryKey.GetSubKeyNames())
             {
                 // NOTE: RSACryptoServiceProvider.SignData() fails for other providers when testing locally
@@ -61,7 +61,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                     try
                     {
-                        using (SqlConnection sqlConn = new SqlConnection(DataTestUtility.TcpConnStr))
+                        using (SqlConnection sqlConn = new SqlConnection(DataTestUtility.s_tcpConnString))
                         {
                             sqlConn.Open();
 
@@ -127,7 +127,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             CertificateUtilityWin.RemoveCertificate(certificateName, StoreLocation.CurrentUser);
         }
-        
+
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void TestEncryptDecryptWithCSP()
         {
@@ -144,7 +144,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                 try
                 {
-                    using (SqlConnection sqlConn = new SqlConnection(DataTestUtility.TcpConnStr))
+                    using (SqlConnection sqlConn = new SqlConnection(DataTestUtility.s_tcpConnString))
                     {
                         sqlConn.Open();
 

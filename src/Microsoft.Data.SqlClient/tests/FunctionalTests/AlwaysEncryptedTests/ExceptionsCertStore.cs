@@ -11,7 +11,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
     public class ExceptionsCertStore : IClassFixture<ExceptionCertFixture>
     {
         private readonly string masterKeyEncAlgo = "RSA_OAEP";
-        
+
         [Fact]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void EmptyCertificateThumbprint()
@@ -21,7 +21,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
             ArgumentException e = Assert.Throws<ArgumentException>(() => ExceptionCertFixture.certStoreProvider.EncryptColumnEncryptionKey(dummyPath, masterKeyEncAlgo, ExceptionCertFixture.encryptedCek));
             Assert.Contains(expectedMessage, e.Message);
-            
+
             expectedMessage = string.Format("Internal error. Empty certificate thumbprint specified in certificate path '{0}'.\r\nParameter name: masterKeyPath", dummyPath);
             e = Assert.Throws<ArgumentException>(() => ExceptionCertFixture.certStoreProvider.DecryptColumnEncryptionKey(dummyPath, masterKeyEncAlgo, ExceptionCertFixture.encryptedCek));
             Assert.Contains(expectedMessage, e.Message);

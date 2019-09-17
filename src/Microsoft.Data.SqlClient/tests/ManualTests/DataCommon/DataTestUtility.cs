@@ -9,16 +9,23 @@ using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class DataTestUtility
     {
-        public static readonly string NpConnStr = null;
-        public static readonly string TcpConnStr = null;
-        public static readonly string AADPasswordConnStr = null;
+        public static readonly string s_npConnString = null;
+        public static readonly string s_tcpConnString = null;
+        public static readonly string s_aadAccessToken = null;
+        public static readonly string s_aadPassConnString = null;
+        public static readonly bool s_supportsIntegratedSecurity = false;
+        public static readonly bool s_supportsLocalDb = false;
+        public static readonly bool s_supportsFileStream = false;
+
         public const string UdtTestDbName = "UdtTestDb";
+
         private static readonly Assembly s_systemDotData = typeof(Microsoft.Data.SqlClient.SqlConnection).GetTypeInfo().Assembly;
         private static readonly Type s_tdsParserStateObjectFactory = s_systemDotData?.GetType("Microsoft.Data.SqlClient.TdsParserStateObjectFactory");
         private static readonly PropertyInfo s_useManagedSNI = s_tdsParserStateObjectFactory?.GetProperty("UseManagedSNI", BindingFlags.Static | BindingFlags.Public);
@@ -30,11 +37,34 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static Dictionary<string, bool> databasesAvailable;
 
+        private class Config
+        {
+            public string TCPConnectionString = null;
+            public string NPConnectionString = null;
+            public string AADAccessToken = null;
+            public string AADPasswordConnectionString = null;
+
+            public bool SupportsLocalDb = false;
+            public bool SupportsIntegratedSecurity = false;
+            public bool SupportsFilesStream = false;
+        }
+
         static DataTestUtility()
         {
-            NpConnStr = Environment.GetEnvironmentVariable("TEST_NP_CONN_STR");
-            TcpConnStr = Environment.GetEnvironmentVariable("TEST_TCP_CONN_STR");
-            AADPasswordConnStr = Environment.GetEnvironmentVariable("AAD_PASSWORD_CONN_STR");
+            using (StreamReader r = new StreamReader("config.json"))
+            {
+                string json = r.ReadToEnd();
+                List<Config> configs = JsonConvert.DeserializeObject<List<Config>>(json);
+                Config c = configs[0];
+
+                s_npConnString = c.NPConnectionString;
+                s_tcpConnString = c.TCPConnectionString;
+                s_aadAccessToken = c.AADAccessToken;
+                s_aadPassConnString = c.AADPasswordConnectionString;
+                s_supportsLocalDb = c.SupportsLocalDb;
+                s_supportsIntegratedSecurity = c.SupportsIntegratedSecurity;
+                s_supportsFileStream = c.SupportsFilesStream;
+            }
         }
 
         public static bool IsDatabasePresent(string name)
@@ -43,7 +73,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             bool present = false;
             if (AreConnStringsSetup() && !string.IsNullOrEmpty(name) && !databasesAvailable.TryGetValue(name, out present))
             {
-                var builder = new SqlConnectionStringBuilder(TcpConnStr);
+                var builder = new SqlConnectionStringBuilder(s_tcpConnString);
                 builder.ConnectTimeout = 2;
                 using (var connection = new SqlConnection(builder.ToString()))
                 using (var command = new SqlCommand("SELECT COUNT(*) FROM sys.databases WHERE name=@name", connection))
@@ -61,15 +91,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool AreConnStringsSetup()
         {
-            return !string.IsNullOrEmpty(NpConnStr) && !string.IsNullOrEmpty(TcpConnStr);
+            return !string.IsNullOrEmpty(s_npConnString) && !string.IsNullOrEmpty(s_tcpConnString);
         }
 
         public static bool IsAADPasswordConnStrSetup()
         {
-            return !string.IsNullOrEmpty(AADPasswordConnStr);
+            return !string.IsNullOrEmpty(s_aadPassConnString);
         }
 
-        public static bool IsNotAzureServer() => !DataTestUtility.IsAzureSqlServer(new SqlConnectionStringBuilder((DataTestUtility.TcpConnStr)).DataSource);
+        public static bool IsNotAzureServer() => !DataTestUtility.IsAzureSqlServer(new SqlConnectionStringBuilder((DataTestUtility.s_tcpConnString)).DataSource);
 
         public static bool IsUsingManagedSNI() => (bool)(s_useManagedSNI?.GetValue(null) ?? false);
 
@@ -80,7 +110,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             bool retval = false;
             if (AreConnStringsSetup())
             {
-                using (SqlConnection connection = new SqlConnection(DataTestUtility.TcpConnStr))
+                using (SqlConnection connection = new SqlConnection(DataTestUtility.s_tcpConnString))
                 using (SqlCommand command = new SqlCommand())
                 {
                     command.Connection = connection;
@@ -133,18 +163,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return name;
         }
 
-        public static bool IsLocalDBInstalled() => int.TryParse(Environment.GetEnvironmentVariable("TEST_LOCALDB_INSTALLED"), out int result) ? result == 1 : false;
+        public static bool IsLocalDBInstalled() => s_supportsLocalDb;
 
-        public static bool IsIntegratedSecuritySetup() => int.TryParse(Environment.GetEnvironmentVariable("TEST_INTEGRATEDSECURITY_SETUP"), out int result) ? result == 1 : false;
+        public static bool IsIntegratedSecuritySetup() => s_supportsIntegratedSecurity;
 
         public static string getAccessToken()
         {
-            return Environment.GetEnvironmentVariable("TEST_ACCESSTOKEN_SETUP");
+            return s_aadAccessToken;
         }
 
         public static bool IsAccessTokenSetup() => string.IsNullOrEmpty(getAccessToken()) ? false : true;
 
-        public static bool IsFileStreamSetup() => int.TryParse(Environment.GetEnvironmentVariable("TEST_FILESTREAM_SETUP"), out int result) ? result == 1 : false;
+        public static bool IsFileStreamSetup() => s_supportsFileStream;
 
         // This method assumes dataSource parameter is in TCP connection string format.
         public static bool IsAzureSqlServer(string dataSource)

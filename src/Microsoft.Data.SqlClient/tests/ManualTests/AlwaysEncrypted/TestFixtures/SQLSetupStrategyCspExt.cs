@@ -10,8 +10,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     public class SQLSetupStrategyCspExt : SQLSetupStrategy
     {
         //public string keyPath {get; private set;}
-        public Table CspProviderTable {get; private set;}
-        public SqlColumnEncryptionCspProvider keyStoreProvider {get;}
+        public Table CspProviderTable { get; private set; }
+        public SqlColumnEncryptionCspProvider keyStoreProvider { get; }
 
         public SQLSetupStrategyCspExt(string cspKeyPath) : base(cspKeyPath)
         {
@@ -30,7 +30,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Table table = CreateTable(columnEncryptionKeys);
             databaseObjects.Add(table);
 
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.s_tcpConnString))
             {
                 sqlConnection.Open();
                 databaseObjects.ForEach(o => o.Create(sqlConnection));
@@ -46,7 +46,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         public void DropTable()
         {
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.s_tcpConnString))
             {
                 sqlConnection.Open();
                 CspProviderTable.Drop(sqlConnection);

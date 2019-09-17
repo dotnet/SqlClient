@@ -174,7 +174,7 @@ namespace Microsoft.Data.SqlClient
 
         public SqlParameter(
             string parameterName,
-            SqlDbType dbType, 
+            SqlDbType dbType,
             int size,
             ParameterDirection direction,
             byte precision,

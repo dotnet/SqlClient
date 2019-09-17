@@ -82,7 +82,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public TvpTest()
         {
-            _connStr = DataTestUtility.TcpConnStr;
+            _connStr = DataTestUtility.s_tcpConnString;
         }
 
         private void RunTest()
@@ -584,7 +584,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static async Task RunPacketNumberWraparound(WraparoundRowEnumerator enumerator)
         {
-            using (var connection = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (var connection = new SqlConnection(DataTestUtility.s_tcpConnString))
             using (var cmd = new SqlCommand("unimportant")
             {
                 CommandType = System.Data.CommandType.StoredProcedure,

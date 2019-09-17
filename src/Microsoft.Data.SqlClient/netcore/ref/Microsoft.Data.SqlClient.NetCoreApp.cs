@@ -7,7 +7,7 @@
 
 namespace Microsoft.Data.SqlClient.Server
 {
-    [System.AttributeUsageAttribute(System.AttributeTargets.Field | System.AttributeTargets.Property | System.AttributeTargets.ReturnValue | System.AttributeTargets.Parameter, AllowMultiple=false, Inherited=false)]
+    [System.AttributeUsageAttribute(System.AttributeTargets.Field | System.AttributeTargets.Property | System.AttributeTargets.ReturnValue | System.AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
     public partial class SqlFacetAttribute : System.Attribute
     {
         public SqlFacetAttribute() { }
@@ -31,7 +31,7 @@ namespace Microsoft.Data.SqlClient
         AlwaysBlock = 1,
         NeverBlock = 2,
     }
-    
+
     public sealed partial class SqlConnectionStringBuilder : System.Data.Common.DbConnectionStringBuilder
     {
         public PoolBlockingPeriod PoolBlockingPeriod { get { throw null; } set { } }

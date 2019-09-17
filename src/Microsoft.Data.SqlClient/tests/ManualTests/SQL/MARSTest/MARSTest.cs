@@ -13,13 +13,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class MARSTest
     {
-        private static readonly string _connStr = (new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr) { MultipleActiveResultSets = true }).ConnectionString;
+        private static readonly string _connStr = (new SqlConnectionStringBuilder(DataTestUtility.s_tcpConnString) { MultipleActiveResultSets = true }).ConnectionString;
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public static void NamedPipesMARSTest()
         {
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.NpConnStr);
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.s_npConnString);
             builder.MultipleActiveResultSets = true;
             builder.ConnectTimeout = 5;
 
