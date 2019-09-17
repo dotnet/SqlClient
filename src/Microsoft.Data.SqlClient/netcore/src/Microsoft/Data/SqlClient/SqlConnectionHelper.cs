@@ -23,7 +23,7 @@ namespace Microsoft.Data.SqlClient
         private DbConnectionInternal _innerConnection;
         private int _closeCount;
 
-
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctor2/*' />
         public SqlConnection() : base()
         {
             GC.SuppressFinalize(this);
@@ -130,6 +130,7 @@ namespace Microsoft.Data.SqlClient
             InnerConnection.AddWeakReference(value, tag);
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CreateDbCommand/*' />
         override protected DbCommand CreateDbCommand()
         {
             DbCommand command = null;
@@ -139,7 +140,7 @@ namespace Microsoft.Data.SqlClient
             return command;
         }
 
-
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Dispose/*' />
         override protected void Dispose(bool disposing)
         {
             if (disposing)
@@ -154,6 +155,7 @@ namespace Microsoft.Data.SqlClient
 
         partial void RepairInnerConnection();
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/EnlistTransaction/*' />
         public override void EnlistTransaction(Transaction transaction)
         {
             // If we're currently enlisted in a transaction and we were called
