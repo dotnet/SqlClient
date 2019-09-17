@@ -39,6 +39,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Direction/*' />
         override public ParameterDirection Direction
         {
             get
@@ -66,6 +67,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/IsNullable/*' />
         override public bool IsNullable
         {
             get
@@ -78,7 +80,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Offset/*' />
         public int Offset
         {
             get
@@ -95,6 +97,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Size/*' />
         override public int Size
         {
             get
@@ -126,6 +129,7 @@ namespace Microsoft.Data.SqlClient
             return (0 != _size);
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceColumn/*' />
         override public string SourceColumn
         {
             get
@@ -139,6 +143,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceColumnNullMapping/*' />
         public override bool SourceColumnNullMapping
         {
             get
@@ -167,6 +172,7 @@ namespace Microsoft.Data.SqlClient
             _parent = null;
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ToString/*' />
         override public string ToString()
         {
             return ParameterName;

@@ -1,5 +1,6 @@
 using System;
 using System.Data;
+// <Snippet1>
 using Microsoft.Data.SqlClient;
 
 class Program
@@ -7,7 +8,6 @@ class Program
     static void Main()
     {
     }
-    // <Snippet1>
     private static void AddSqlParameter(SqlCommand command)
     {
         SqlParameter parameter = new SqlParameter();
@@ -18,5 +18,5 @@ class Program
 
         command.Parameters.Add(parameter);
     }
-    // </Snippet1>
 }
+// </Snippet1>

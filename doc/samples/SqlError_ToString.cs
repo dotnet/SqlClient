@@ -1,5 +1,6 @@
 using System;
 using System.Data;
+// <Snippet1>
 using Microsoft.Data.SqlClient;
 using System.Text;
 
@@ -11,7 +12,6 @@ class Program
         ShowSqlException(s);
         Console.ReadLine();
     }
-    // <Snippet1>
     public static void ShowSqlException(string connectionString)
     {
         string queryString = "EXECUTE NonExistantStoredProcedure";
@@ -40,8 +40,6 @@ class Program
         }
         Console.ReadLine();
     }
-    // </Snippet1>
-
 
     static private string GetConnectionString()
     {
@@ -51,3 +49,4 @@ class Program
             + "Integrated Security=SSPI";
     }
 }
+// </Snippet1>

@@ -1,8 +1,8 @@
 using System;
-using System;
+// <Snippet1>
+using Microsoft.Data.SqlClient;
 using System.Collections.Generic;
 using System.Text;
-using Microsoft.Data.SqlClient;
 
 namespace Classic_WebData_SqlError.StateCS
 {
@@ -13,7 +13,6 @@ namespace Classic_WebData_SqlError.StateCS
             //DisplaySqlErrors();
         }
 
-        // <Snippet1>
         public void DisplaySqlErrors(SqlException exception)
         {
             for (int i = 0; i < exception.Errors.Count; i++)
@@ -30,6 +29,6 @@ namespace Classic_WebData_SqlError.StateCS
             }
             Console.ReadLine();
         }
-        // </Snippet1>
     }
 }
+// </Snippet1>

@@ -1,5 +1,6 @@
 using System;
 using System.Data;
+// <Snippet1>
 using Microsoft.Data.SqlClient;
 
 class Program
@@ -7,7 +8,6 @@ class Program
     static void Main()
     {
     }
-    // <Snippet1>
     private static void AddSqlParameter(SqlCommand command,
         string paramValue)
     {
@@ -29,6 +29,5 @@ class Program
             throw new ArgumentException("Parameter provided is not nullable", "parameter");
         }
     }
-
-    // </Snippet1>
 }
+// </Snippet1>

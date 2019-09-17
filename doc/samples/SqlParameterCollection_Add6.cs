@@ -1,7 +1,8 @@
 using System;
-using System.Xml;
 using System.Data;
+// <Snippet1>
 using Microsoft.Data.SqlClient;
+using System.Xml;
 using System.Data.Common;
 using System.Windows.Forms;
 
@@ -11,7 +12,7 @@ public class Form1 : Form
     protected DataGrid dataGrid1;
     protected SqlDataAdapter categoriesAdapter;
 
-    // <Snippet1>
+
     public void AddSqlParameters()
     {
         // ...
@@ -25,5 +26,5 @@ public class Form1 : Form
         categoriesAdapter.Fill(categoriesDataSet);
 
     }
-    // </Snippet1>
 }
+// </Snippet1>

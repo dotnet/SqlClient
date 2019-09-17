@@ -1,5 +1,6 @@
 using System;
 using System.Data;
+// <Snippet1>
 using Microsoft.Data.SqlClient;
 
 class Program
@@ -10,7 +11,6 @@ class Program
             + "Integrated Security=SSPI";
         ReadOrderData(str);
     }
-    // <Snippet1>
     private static void ReadOrderData(string connectionString)
     {
         string queryString =
@@ -39,5 +39,5 @@ class Program
             }
         }
     }
-    // </Snippet1>
 }
+// </Snippet1>

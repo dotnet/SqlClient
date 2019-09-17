@@ -8,6 +8,7 @@ class Program
     {
     }
     // <Snippet1>
+    // using Microsoft.Data.SqlClient;
     private static void TestGetValues(DataTableReader reader)
     {
         // Given a DataTableReader, use the GetValues
@@ -40,6 +41,7 @@ class Program
     // </Snippet1>
 
     // <Snippet2>
+    // using Microsoft.Data.SqlClient;
     private static void TestGetValues(SqlDataReader reader)
     {
         // Given a SqlDataReader, use the GetValues

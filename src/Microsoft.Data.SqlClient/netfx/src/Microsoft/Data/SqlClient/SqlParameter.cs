@@ -54,6 +54,7 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
+    /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SqlParameter/*' />
     [
     System.ComponentModel.TypeConverterAttribute(typeof(Microsoft.Data.SqlClient.SqlParameter.SqlParameterConverter))
     ]
@@ -130,10 +131,12 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctor2/*' />
         public SqlParameter() : base()
         {
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameDbTypeSizeDirectionIsNullablePrecisionScaleSourceColumnSourceVersionValue/*' />
         [EditorBrowsableAttribute(EditorBrowsableState.Advanced)] // MDAC 69508
         public SqlParameter(string parameterName,
                             SqlDbType dbType, int size,
@@ -153,6 +156,7 @@ namespace Microsoft.Data.SqlClient
             this.SourceVersion = sourceVersion;
             this.Value = value;
         }
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameDbTypeSizeDirectionPrecisionScaleSourceColumnSourceVersionSourceColumnNullMappingValue/*' />
         public SqlParameter(string parameterName,
                                SqlDbType dbType, int size,
                                ParameterDirection direction,
@@ -177,12 +181,14 @@ namespace Microsoft.Data.SqlClient
             this._xmlSchemaCollectionOwningSchema = xmlSchemaCollectionOwningSchema;
             this._xmlSchemaCollectionName = xmlSchemaCollectionName;
         }
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameDbType/*' />
         public SqlParameter(string parameterName, SqlDbType dbType) : this()
         {
             this.ParameterName = parameterName;
             this.SqlDbType = dbType;
         }
-
+        
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameValue/*' />
         public SqlParameter(string parameterName, object value) : this()
         {
             Debug.Assert(!(value is SqlDbType), "use SqlParameter(string, SqlDbType)");
@@ -190,7 +196,8 @@ namespace Microsoft.Data.SqlClient
             this.ParameterName = parameterName;
             this.Value = value;
         }
-
+        
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameDbTypeSize/*' />
         public SqlParameter(string parameterName, SqlDbType dbType, int size) : this()
         {
             this.ParameterName = parameterName;
@@ -198,6 +205,7 @@ namespace Microsoft.Data.SqlClient
             this.Size = size;
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameDbTypeSizeSourceColumn/*' />
         public SqlParameter(string parameterName, SqlDbType dbType, int size, string sourceColumn) : this()
         {
             this.ParameterName = parameterName;
@@ -221,6 +229,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/CompareInfo/*' />
         [
         Browsable(false),
         ]
@@ -259,6 +268,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/XmlSchemaCollectionDatabase/*' />
         [
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Xml),
         ResDescriptionAttribute(StringsHelper.ResourceNames.SqlParameter_XmlSchemaCollectionDatabase),
@@ -276,6 +286,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/XmlSchemaCollectionOwningSchema/*' />
         [
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Xml),
         ResDescriptionAttribute(StringsHelper.ResourceNames.SqlParameter_XmlSchemaCollectionOwningSchema),
@@ -293,6 +304,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/XmlSchemaCollectionName/*' />
         [
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Xml),
         ResDescriptionAttribute(StringsHelper.ResourceNames.SqlParameter_XmlSchemaCollectionName),
@@ -310,6 +322,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ForceColumnEncryption/*' />
         [
         DefaultValue(false),
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
@@ -320,6 +333,7 @@ namespace Microsoft.Data.SqlClient
             get;
             set;
         }
+
 
         override public DbType DbType
         {
@@ -342,6 +356,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ResetDbType/*' />
         public override void ResetDbType()
         {
             ResetSqlDbType();
@@ -357,6 +372,7 @@ namespace Microsoft.Data.SqlClient
             set { _internalMetaType = value; }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/LocaleId/*' />
         [
         Browsable(false),
         ]
@@ -618,6 +634,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ParameterName/*' />
         [
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
         ResDescriptionAttribute(StringsHelper.ResourceNames.SqlParameter_ParameterName),
@@ -661,6 +678,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Precision/*' />
         [DefaultValue((Byte)0)] // MDAC 65862
         [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
         [ResDescriptionAttribute(StringsHelper.ResourceNames.DbDataParameter_Precision)]
@@ -708,6 +726,7 @@ namespace Microsoft.Data.SqlClient
             return (0 != _precision);
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Scale/*' />
         [DefaultValue((Byte)0)] // MDAC 65862
         [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
         [ResDescriptionAttribute(StringsHelper.ResourceNames.DbDataParameter_Scale)]
@@ -751,6 +770,7 @@ namespace Microsoft.Data.SqlClient
             return (0 != _scale); // V1.0 compat, ignore _hasScale
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SqlDbType/*' />
         [
         RefreshProperties(RefreshProperties.All),
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
@@ -790,6 +810,7 @@ namespace Microsoft.Data.SqlClient
             return (null != _metaType);
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ResetSqlDbType/*' />
         public void ResetSqlDbType()
         {
             if (null != _metaType)
@@ -799,6 +820,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SqlValue/*' />
         [
         Browsable(false),
         DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
@@ -849,6 +871,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/UdtTypeName/*' />
         [
         Browsable(false),
         EditorBrowsableAttribute(EditorBrowsableState.Advanced)
@@ -866,6 +889,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/TypeName/*' />
         [
         Browsable(false),
         EditorBrowsableAttribute(EditorBrowsableState.Advanced)
@@ -883,6 +907,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Value/*' />
         [
         RefreshProperties(RefreshProperties.All),
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
@@ -1060,6 +1085,7 @@ namespace Microsoft.Data.SqlClient
             return _actualSize;
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/System.ICloneable.Clone/*' />
         object ICloneable.Clone()
         {
             return new SqlParameter(this);

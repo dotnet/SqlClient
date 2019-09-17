@@ -11,6 +11,7 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
+    /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/SqlDataAdapter/*' />
     [
     DefaultEvent("RowUpdated"),
     ToolboxItem("Microsoft.VSDesigner.Data.VS.SqlDataAdapterToolboxItem, " + AssemblyRef.MicrosoftVSDesigner),
@@ -37,22 +38,26 @@ namespace Microsoft.Data.SqlClient
                 return _objectID;
             }
         }
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/ctor2/*' />
         public SqlDataAdapter() : base()
         {
             GC.SuppressFinalize(this);
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/ctorSelectCommand/*' />
         public SqlDataAdapter(SqlCommand selectCommand) : this()
         {
             SelectCommand = selectCommand;
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/ctorSelectCommandTextSelectConnectionString/*' />
         public SqlDataAdapter(string selectCommandText, string selectConnectionString) : this()
         {
             SqlConnection connection = new SqlConnection(selectConnectionString);
             SelectCommand = new SqlCommand(selectCommandText, connection);
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/ctorSelectCommandTextSelectConnection/*' />
         public SqlDataAdapter(string selectCommandText, SqlConnection selectConnection) : this()
         {
             SelectCommand = new SqlCommand(selectCommandText, selectConnection);
@@ -63,6 +68,7 @@ namespace Microsoft.Data.SqlClient
             GC.SuppressFinalize(this);
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/DeleteCommand/*' />
         [
         DefaultValue(null),
         Editor("Microsoft.VSDesigner.Data.Design.DBCommandEditor, " + AssemblyRef.MicrosoftVSDesigner, "System.Drawing.Design.UITypeEditor, " + AssemblyRef.SystemDrawing),
@@ -75,12 +81,14 @@ namespace Microsoft.Data.SqlClient
             set { _deleteCommand = value; }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/System.Data.IDbDataAdapter.DeleteCommand/*' />
         IDbCommand IDbDataAdapter.DeleteCommand
         {
             get { return _deleteCommand; }
             set { _deleteCommand = (SqlCommand)value; }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/InsertCommand/*' />
         [
         DefaultValue(null),
         Editor("Microsoft.VSDesigner.Data.Design.DBCommandEditor, " + AssemblyRef.MicrosoftVSDesigner, "System.Drawing.Design.UITypeEditor, " + AssemblyRef.SystemDrawing),
@@ -93,12 +101,14 @@ namespace Microsoft.Data.SqlClient
             set { _insertCommand = value; }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/System.Data.IDbDataAdapter.InsertCommand/*' />
         IDbCommand IDbDataAdapter.InsertCommand
         {
             get { return _insertCommand; }
             set { _insertCommand = (SqlCommand)value; }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/SelectCommand/*' />
         [
         DefaultValue(null),
         Editor("Microsoft.VSDesigner.Data.Design.DBCommandEditor, " + AssemblyRef.MicrosoftVSDesigner, "System.Drawing.Design.UITypeEditor, " + AssemblyRef.SystemDrawing),
@@ -111,13 +121,14 @@ namespace Microsoft.Data.SqlClient
             set { _selectCommand = value; }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/System.Data.IDbDataAdapter.SelectCommand/*' />
         IDbCommand IDbDataAdapter.SelectCommand
         {
             get { return _selectCommand; }
             set { _selectCommand = (SqlCommand)value; }
         }
 
-
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/UpdateBatchSize/*' />
         override public int UpdateBatchSize
         {
             get
@@ -135,6 +146,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/UpdateCommand/*' />
         [
         DefaultValue(null),
         Editor("Microsoft.VSDesigner.Data.Design.DBCommandEditor, " + AssemblyRef.MicrosoftVSDesigner, "System.Drawing.Design.UITypeEditor, " + AssemblyRef.SystemDrawing),
@@ -147,12 +159,14 @@ namespace Microsoft.Data.SqlClient
             set { _updateCommand = value; }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/System.Data.IDbDataAdapter.UpdateCommand/*' />
         IDbCommand IDbDataAdapter.UpdateCommand
         {
             get { return _updateCommand; }
             set { _updateCommand = (SqlCommand)value; }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/RowUpdated/*' />
         [
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Update),
         ResDescriptionAttribute(StringsHelper.ResourceNames.DbDataAdapter_RowUpdated),
@@ -169,6 +183,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/RowUpdating/*' />
         [
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Update),
         ResDescriptionAttribute(StringsHelper.ResourceNames.DbDataAdapter_RowUpdating),
@@ -198,6 +213,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/AddToBatch/*' />
         override protected int AddToBatch(IDbCommand command)
         {
             int commandIdentifier = _commandSet.CommandCount;
@@ -205,26 +221,31 @@ namespace Microsoft.Data.SqlClient
             return commandIdentifier;
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/ClearBatch/*' />
         override protected void ClearBatch()
         {
             _commandSet.Clear();
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/System.ICloneable.Clone/*' />
         object ICloneable.Clone()
         {
             return new SqlDataAdapter(this);
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/CreateRowUpdatedEvent/*' />
         override protected RowUpdatedEventArgs CreateRowUpdatedEvent(DataRow dataRow, IDbCommand command, StatementType statementType, DataTableMapping tableMapping)
         {
             return new SqlRowUpdatedEventArgs(dataRow, command, statementType, tableMapping);
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/CreateRowUpdatingEvent/*' />
         override protected RowUpdatingEventArgs CreateRowUpdatingEvent(DataRow dataRow, IDbCommand command, StatementType statementType, DataTableMapping tableMapping)
         {
             return new SqlRowUpdatingEventArgs(dataRow, command, statementType, tableMapping);
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/ExecuteBatch/*' />
         override protected int ExecuteBatch()
         {
             Debug.Assert(null != _commandSet && (0 < _commandSet.CommandCount), "no commands");
@@ -232,6 +253,7 @@ namespace Microsoft.Data.SqlClient
             return _commandSet.ExecuteNonQuery();
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/GetBatchedParameter/*' />
         override protected IDataParameter GetBatchedParameter(int commandIdentifier, int parameterIndex)
         {
             Debug.Assert(commandIdentifier < _commandSet.CommandCount, "commandIdentifier out of range");
@@ -240,12 +262,14 @@ namespace Microsoft.Data.SqlClient
             return parameter;
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/GetBatchedRecordsAffected/*' />
         override protected bool GetBatchedRecordsAffected(int commandIdentifier, out int recordsAffected, out Exception error)
         {
             Debug.Assert(commandIdentifier < _commandSet.CommandCount, "commandIdentifier out of range");
             return _commandSet.GetBatchedAffected(commandIdentifier, out recordsAffected, out error);
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/InitializeBatching/*' />
         override protected void InitializeBatching()
         {
             Bid.Trace("<sc.SqlDataAdapter.InitializeBatching|API> %d#\n", ObjectID);
@@ -271,6 +295,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/OnRowUpdated/*' />
         override protected void OnRowUpdated(RowUpdatedEventArgs value)
         {
             SqlRowUpdatedEventHandler handler = (SqlRowUpdatedEventHandler)Events[EventRowUpdated];
@@ -281,6 +306,7 @@ namespace Microsoft.Data.SqlClient
             base.OnRowUpdated(value);
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/OnRowUpdating/*' />
         override protected void OnRowUpdating(RowUpdatingEventArgs value)
         {
             SqlRowUpdatingEventHandler handler = (SqlRowUpdatingEventHandler)Events[EventRowUpdating];
@@ -291,6 +317,7 @@ namespace Microsoft.Data.SqlClient
             base.OnRowUpdating(value);
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/TerminateBatching/*' />
         override protected void TerminateBatching()
         {
             if (null != _commandSet)

@@ -1,5 +1,6 @@
 using System;
 using System.Data;
+//<Snippet1>
 using Microsoft.Data.SqlClient;
 
 class Program
@@ -7,7 +8,6 @@ class Program
     static void Main()
     {
     }
-    //<Snippet1>
     public static SqlDataAdapter CreateSqlDataAdapter(string commandText,
         string connectionString)
     {
@@ -46,5 +46,5 @@ class Program
 
         return adapter;
     }
-    //</Snippet1>
 }
+//</Snippet1>

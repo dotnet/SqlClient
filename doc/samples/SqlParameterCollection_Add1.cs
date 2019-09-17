@@ -1,10 +1,10 @@
 using System;
 using System.Data;
+// <Snippet1>
 using Microsoft.Data.SqlClient;
 
 public class Sample
 {
-    // <Snippet1>
     public void AddSqlParameter(SqlCommand command)
     {
         SqlParameter param = new SqlParameter(
@@ -12,5 +12,5 @@ public class Sample
         param.Value = "Beverages";
         command.Parameters.Add(param);
     }
-    // </Snippet1>
 }
+// </Snippet1>

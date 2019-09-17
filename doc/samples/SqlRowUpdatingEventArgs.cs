@@ -1,7 +1,8 @@
 using System;
-using System.Xml;
 using System.Data;
+// <Snippet1>
 using Microsoft.Data.SqlClient;
+using System.Xml;
 using System.Data.Common;
 using System.Windows.Forms;
 
@@ -11,7 +12,6 @@ public class Form1 : Form
     private DataGrid dataGrid1;
 
 
-    // <Snippet1>
     // handler for RowUpdating event
     private static void OnRowUpdating(object sender, SqlRowUpdatingEventArgs e)
     {
@@ -71,5 +71,5 @@ public class Form1 : Form
             " recordsAffected=" + args.RecordsAffected +
             " status=" + args.Status + ")");
     }
-    // </Snippet1>
 }
+// </Snippet1>

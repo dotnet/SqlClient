@@ -6,6 +6,7 @@ using System;
 
 namespace Microsoft.Data.SqlClient
 {
+    /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlError.xml' path='docs/members[@name="SqlError"]/SqlError/*' />
     [Serializable]
     public sealed class SqlError
     {
@@ -47,6 +48,7 @@ namespace Microsoft.Data.SqlClient
             this.win32ErrorCode = 0;
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlError.xml' path='docs/members[@name="SqlError"]/ToString/*' />
         // bug fix - MDAC #49280 - SqlError does not implement ToString();
         // I did not include an exception stack because the correct exception stack is only available 
         // on SqlException, and to obtain that the SqlError would have to have backpointers all the
@@ -57,42 +59,50 @@ namespace Microsoft.Data.SqlClient
             return typeof(SqlError).ToString() + ": " + this.message; // since this is sealed so we can change GetType to typeof
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlError.xml' path='docs/members[@name="SqlError"]/Source/*' />
         // bug fix - MDAC #48965 - missing source of exception
         public string Source
         {
             get { return this.source; }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlError.xml' path='docs/members[@name="SqlError"]/Number/*' />
         public int Number
         {
             get { return this.number; }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlError.xml' path='docs/members[@name="SqlError"]/State/*' />
         public byte State
         {
             get { return this.state; }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlError.xml' path='docs/members[@name="SqlError"]/Class/*' />
         public byte Class
         {
             get { return this.errorClass; }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlError.xml' path='docs/members[@name="SqlError"]/Server/*' />
         public string Server
         {
             get { return this.server; }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlError.xml' path='docs/members[@name="SqlError"]/Message/*' />
         public string Message
         {
             get { return this.message; }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlError.xml' path='docs/members[@name="SqlError"]/Procedure/*' />
         public string Procedure
         {
             get { return this.procedure; }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlError.xml' path='docs/members[@name="SqlError"]/LineNumber/*' />
         public int LineNumber
         {
             get { return this.lineNumber; }

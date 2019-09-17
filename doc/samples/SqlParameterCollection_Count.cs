@@ -1,5 +1,6 @@
 using System;
 using System.Data;
+// <Snippet1>
 using Microsoft.Data.SqlClient;
 
 class Program
@@ -11,7 +12,6 @@ class Program
         string summaryString = CreateSqlParameters(7);
         Console.ReadLine();
     }
-    // <Snippet1>
     static private string CreateSqlParameters(int documentID)
     {
         // Assumes GetConnectionString returns a valid connection string to the
@@ -63,7 +63,6 @@ class Program
             }
         }
     }
-    // </Snippet1>
     static private string GetConnectionString()
     {
         // To avoid storing the connection string in your code, 
@@ -73,3 +72,4 @@ class Program
             "Integrated Security=SSPI";
     }
 }
+// </Snippet1>

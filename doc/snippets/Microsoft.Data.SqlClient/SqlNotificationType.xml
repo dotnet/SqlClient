@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<docs>
+    <members name="SqlNotificationType">
+        <SqlNotificationType>
+            <summary>Describes the different notification types that can be received by an <see cref="T:Microsoft.Data.SqlClient.OnChangeEventHandler" /> event handler through the <see cref="T:Microsoft.Data.SqlClient.SqlNotificationEventArgs" /> parameter.</summary>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+ The <xref:Microsoft.Data.SqlClient.SqlNotificationType> enumeration is referenced by an instance of the <xref:Microsoft.Data.SqlClient.SqlNotificationEventArgs> class. This information is provided when a notification event is fired with the <xref:Microsoft.Data.SqlClient.SqlDependency> class.  
+  
+ ]]></format>
+            </remarks>
+        </SqlNotificationType>
+        <Change>
+            <summary>Data on the server being monitored changed. Use the <see cref="T:Microsoft.Data.SqlClient.SqlNotificationInfo" /> item to determine the details of the change.</summary>
+        </Change>
+        <Subscribe>
+            <summary>There was a failure to create a notification subscription. Use the <see cref="T:Microsoft.Data.SqlClient.SqlNotificationEventArgs" /> object's <see cref="T:Microsoft.Data.SqlClient.SqlNotificationInfo" /> item to determine the cause of the failure.</summary>
+        </Subscribe>
+        <Unknown>
+            <summary>Used when the type option sent by the server was not recognized by the client.</summary>
+        </Unknown>
+    </members>
+</docs>

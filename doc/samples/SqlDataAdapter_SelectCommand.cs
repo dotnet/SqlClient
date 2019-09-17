@@ -1,7 +1,8 @@
 using System;
-using System.Xml;
 using System.Data;
+// <Snippet1>
 using Microsoft.Data.SqlClient;
+using System.Xml;
 using System.Data.Common;
 using System.Windows.Forms;
 
@@ -10,7 +11,6 @@ public class Form1 : Form
     protected DataSet DataSet1;
     protected DataGrid dataGrid1;
 
-    // <Snippet1>
     private static DataSet SelectRows(DataSet dataset,
         string connectionString, string queryString)
     {
@@ -24,5 +24,5 @@ public class Form1 : Form
             return dataset;
         }
     }
-    // </Snippet1>
 }
+// </Snippet1>

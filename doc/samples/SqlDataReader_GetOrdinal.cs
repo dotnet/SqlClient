@@ -1,5 +1,6 @@
 using System;
 using System.Data;
+// <Snippet1>
 using Microsoft.Data.SqlClient;
 
 class Program
@@ -11,7 +12,6 @@ class Program
         ReadGetOrdinal(str);
     }
 
-    // <Snippet1>
     private static void ReadGetOrdinal(string connectionString)
     {
         string queryString = "SELECT DISTINCT CustomerID FROM dbo.Orders;";
@@ -37,5 +37,5 @@ class Program
             reader.Close();
         }
     }
-    // </Snippet1>
 }
+// </Snippet1>
