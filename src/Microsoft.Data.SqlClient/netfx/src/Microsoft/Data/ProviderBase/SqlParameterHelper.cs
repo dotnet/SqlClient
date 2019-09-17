@@ -54,6 +54,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Direction/*' />
         [
         RefreshProperties(RefreshProperties.All),
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
@@ -86,6 +87,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/IsNullable/*' />
         override public bool IsNullable
         { // V1.2.3300, XXXParameter V1.0.3300
             get
@@ -99,6 +101,7 @@ namespace Microsoft.Data.SqlClient
         }
 
 #if USEOFFSET
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Offset/*' />
         [
         Browsable(false),
         EditorBrowsableAttribute(EditorBrowsableState.Advanced), // MDAC 69508
@@ -128,6 +131,7 @@ namespace Microsoft.Data.SqlClient
         }
 #endif
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Size/*' />
         [
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
         ResDescriptionAttribute(StringsHelper.ResourceNames.DbParameter_Size),
@@ -171,6 +175,7 @@ namespace Microsoft.Data.SqlClient
             return (0 != _size);
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceColumn/*' />
         [
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Update),
         ResDescriptionAttribute(StringsHelper.ResourceNames.DbParameter_SourceColumn),
@@ -188,6 +193,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceColumnNullMapping/*' />
         public override bool SourceColumnNullMapping
         {
             get
@@ -200,6 +206,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceVersion/*' />
         [
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Update),
         ResDescriptionAttribute(StringsHelper.ResourceNames.DbParameter_SourceVersion),
@@ -267,6 +274,7 @@ namespace Microsoft.Data.SqlClient
             _parent = null;
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ToString/*' />
         override public string ToString()
         { // V1.2.3300, XXXParameter V1.0.3300
             return ParameterName;

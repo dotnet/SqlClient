@@ -46,7 +46,7 @@
             <returns>The index of the new <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> object.</returns>
             <remarks>To be added.</remarks>
         </AddValue2>
-        <AddParameterNameSqlDbType1>
+        <AddParameterNameSqlDbType>
             <param name="parameterName">The name of the parameter.</param>
             <param name="sqlDbType">One of the <see cref="T:System.Data.SqlDbType" /> values.</param>
             <summary>Adds a <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> to the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> given the parameter name and the data type.</summary>
@@ -59,7 +59,7 @@
   
  ]]></format>
             </remarks>
-        </AddParameterNameSqlDbType1>
+        </AddParameterNameSqlDbType>
         <AddParameterNameValue>
             <param name="parameterName">The name of the <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> to add to the collection.</param>
             <param name="value">A <see cref="T:System.Object" />.</param>
@@ -84,7 +84,7 @@ parameters.Add("@pname", Convert.ToInt32(0));
             <exception cref="T:System.ArgumentException">The <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> specified in the <paramref name="value" /> parameter is already added to this or another <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" />.</exception>
             <exception cref="T:System.ArgumentNullException">The <paramref name="value" /> parameter is null.</exception>
         </AddParameterNameValue>
-        <AddParameterNameSqlDbType2>
+        <AddParameterNameSqlDbTypeSize>
             <param name="parameterName">The name of the parameter.</param>
             <param name="sqlDbType">The <see cref="T:System.Data.SqlDbType" /> of the <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> to add to the collection.</param>
             <param name="size">The size as an <see cref="T:System.Int32" />.</param>
@@ -103,12 +103,12 @@ parameters.Add("@pname", Convert.ToInt32(0));
   
  ]]></format>
             </remarks>
-        </AddParameterNameSqlDbType2>
-        <AddParameterNameSqlDbType3>
+        </AddParameterNameSqlDbTypeSize>
+        <AddParameterNameSqlDbTypeSizeSourceColumn>
             <param name="parameterName">The name of the parameter.</param>
             <param name="sqlDbType">One of the <see cref="T:System.Data.SqlDbType" /> values.</param>
             <param name="size">The column length.</param>
-            <param name="sourceColumn">The name of the source column (<see cref="P:Microsoft.Data.SqlClient.SqlParameter.SourceColumn" />) if this <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> is used in a call to <see cref="Overload:System.Data.Common.DbDataAdapter.Update" />.</param>
+            <param name="sourceColumn">The name of the source column (<see cref="P:Microsoft.Data.SqlClient.SqlParameter.SourceColumn" />) if this <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> is used in a call to <see cref="o:System.Data.Common.DbDataAdapter.Update" />.</param>
             <summary>Adds a <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> to the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> with the parameter name, the data type, and the column length.</summary>
             <returns>A new <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> object.</returns>
             <remarks>
@@ -119,7 +119,7 @@ parameters.Add("@pname", Convert.ToInt32(0));
   
  ]]></format>
             </remarks>
-        </AddParameterNameSqlDbType3>
+        </AddParameterNameSqlDbTypeSizeSourceColumn>
         <AddRange>
             <summary>Adds elements to the end of the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" />.</summary>
         </AddRange>
@@ -345,12 +345,12 @@ parameters.Add("@pname", Convert.ToInt32(0));
             <summary>Removes the <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> from the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> at the specified parameter name.</summary>
             <remarks>To be added.</remarks>
         </RemoveAtParameterName>
-        <SetParameter>
+        <SetParameterIndexValue>
             <param name="index">To be added.</param>
             <param name="value">To be added.</param>
             <summary>To be added.</summary>
             <remarks>To be added.</remarks>
-        </SetParameter>
+        </SetParameterIndexValue>
         <SetParameterParameterNameValue>
             <param name="parameterName">To be added.</param>
             <param name="value">To be added.</param>
