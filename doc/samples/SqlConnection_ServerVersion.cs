@@ -1,6 +1,7 @@
 using System;
 using System.Data;
-using System.Data.SqlClient;
+// <Snippet1>
+using Microsoft.Data.SqlClient;
 
 namespace SqlConnection1CS
 {
@@ -13,7 +14,6 @@ namespace SqlConnection1CS
             CreateSqlConnection(connectionString);
             Console.ReadLine();
         }
-        // <Snippet1>
         private static void CreateSqlConnection(string connectionString)
         {
             using (SqlConnection connection = new SqlConnection(connectionString))
@@ -23,6 +23,6 @@ namespace SqlConnection1CS
                 Console.WriteLine("State: {0}", connection.State );
             }
         }
-        // </Snippet1>
     }
 }
+// </Snippet1>

@@ -1,6 +1,7 @@
 using System;
 using System.Data;
-using System.Data.SqlClient;
+// <Snippet1>
+using Microsoft.Data.SqlClient;
 
 class Program
 {
@@ -11,7 +12,6 @@ class Program
         ExecuteSqlTransaction(connectionString);
         Console.ReadLine();
     }
-    // <Snippet1>
     private static void ExecuteSqlTransaction(string connectionString)
     {
         using (SqlConnection connection = new SqlConnection(connectionString))
@@ -61,5 +61,5 @@ class Program
             }
         }
     }
-    // </Snippet1>
 }
+// </Snippet1>

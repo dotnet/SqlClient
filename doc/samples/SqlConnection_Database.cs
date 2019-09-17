@@ -1,6 +1,7 @@
 using System;
 using System.Data;
-using System.Data.SqlClient;
+// <Snippet1>
+using Microsoft.Data.SqlClient;
 
 class Program1
 {
@@ -12,7 +13,6 @@ class Program1
         Console.ReadLine();
     }
 
-    // <Snippet1>
     private static void ChangeSqlDatabase(string connectionString)
     {
         // Assumes connectionString represents a valid connection string
@@ -27,7 +27,6 @@ class Program1
             Console.WriteLine("Database: {0}", connection.Database);
         }
     }
-    // </Snippet1>
 
     static private string GetConnectionString()
     {
@@ -37,5 +36,5 @@ class Program1
         return "Data Source=(local);Initial Catalog=AdventureWorks;"
             + "Integrated Security=SSPI;";
     }
-
 }
+// </Snippet1>

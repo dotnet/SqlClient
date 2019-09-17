@@ -1,6 +1,7 @@
 using System;
 using System.Data;
-using System.Data.SqlClient;
+// <Snippet1>
+using Microsoft.Data.SqlClient;
 
 class Program
 {
@@ -10,7 +11,6 @@ class Program
         Console.ReadLine();
     }
 
-    // <Snippet1>
     private static void OpenSqlConnection()
     {
         string connectionString = GetConnectionString();
@@ -30,6 +30,5 @@ class Program
         return "Data Source=(local);Initial Catalog=AdventureWorks;"
             + "Integrated Security=SSPI;Packet Size=512";
     }
-    // </Snippet1>
-
 }
+// </Snippet1>
