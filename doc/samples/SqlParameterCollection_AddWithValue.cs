@@ -1,5 +1,6 @@
 using System;
 using System.Data;
+// <Snippet1>
 using Microsoft.Data.SqlClient;
 
 class Program
@@ -12,7 +13,6 @@ class Program
         UpdateDemographics(id, demo, connectionString);
         Console.ReadLine();
     }
-    // <Snippet1>
     private static void UpdateDemographics(Int32 customerID,
         string demoXml, string connectionString)
     {
@@ -52,3 +52,4 @@ class Program
             + "Integrated Security=SSPI";
     }
 }
+// </Snippet1>

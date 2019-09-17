@@ -1,8 +1,8 @@
 using System;
 using System.Data;
+// <Snippet1>
 using Microsoft.Data.SqlClient;
 
-// <Snippet1>
 class Program
 {
     static void Main()

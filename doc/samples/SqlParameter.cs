@@ -9,6 +9,7 @@ class Program
     }
 
     // <Snippet1>
+    // using Microsoft.Data.SqlClient;
     static void CreateSqlParameterOutput()
     {
         SqlParameter parameter = new SqlParameter("Description", SqlDbType.VarChar, 88);
@@ -17,6 +18,7 @@ class Program
     // </Snippet1>
 
     // <Snippet2>
+    // using Microsoft.Data.SqlClient;
     static void CreateSqlParameterNullable()
     {
         SqlParameter parameter = new SqlParameter("Description", SqlDbType.VarChar, 88);
@@ -26,6 +28,7 @@ class Program
     // </Snippet2>
 
     // <Snippet3>
+    // using Microsoft.Data.SqlClient;
     static void CreateSqlParameterOffset()
     {
         SqlParameter parameter = new SqlParameter("pDName", SqlDbType.VarChar);
@@ -35,6 +38,7 @@ class Program
     // </Snippet3>
 
     // <Snippet4>
+    // using Microsoft.Data.SqlClient;
     static void CreateSqlParameterPrecisionScale()
     {
         SqlParameter parameter = new SqlParameter("Price", SqlDbType.Decimal);
@@ -45,6 +49,7 @@ class Program
     // </Snippet4>
 
     // <Snippet5>
+    // using Microsoft.Data.SqlClient;
     static void CreateSqlParameterSize()
     {
         string description = "12 foot scarf - multiple colors, one previous owner";
@@ -56,6 +61,7 @@ class Program
     // </Snippet5>
 
     // <Snippet6>
+    // using Microsoft.Data.SqlClient;
     static void CreateSqlParameterSourceColumn()
     {
         SqlParameter parameter = new SqlParameter("Description", SqlDbType.VarChar, 88);
@@ -64,6 +70,7 @@ class Program
     // </Snippet6>
 
     // <Snippet7>
+    // using Microsoft.Data.SqlClient;
     static void CreateSqlParameterSourceVersion()
     {
         SqlParameter parameter = new SqlParameter("Description", SqlDbType.VarChar, 88);
@@ -73,6 +80,7 @@ class Program
     // </Snippet7>
 
     // <Snippet8>
+    // using Microsoft.Data.SqlClient;
     static void CreateSqlParameterVersion()
     {
         SqlParameter parameter = new SqlParameter("Description", SqlDbType.VarChar, 88);

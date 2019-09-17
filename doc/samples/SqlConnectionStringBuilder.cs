@@ -1,6 +1,6 @@
 using System;
-// <Snippet1>
 using System.Data;
+// <Snippet1>
 using Microsoft.Data.SqlClient;
 
 class Program

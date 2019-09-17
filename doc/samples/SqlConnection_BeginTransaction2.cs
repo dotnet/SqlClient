@@ -1,5 +1,6 @@
 using System;
 using System.Data;
+// <Snippet1>
 using Microsoft.Data.SqlClient;
 
 namespace Transaction1CS
@@ -13,7 +14,6 @@ namespace Transaction1CS
             ExecuteSqlTransaction(connectionString);
             Console.ReadLine();
         }
-        // <Snippet1>
         private static void ExecuteSqlTransaction(string connectionString)
         {
             using (SqlConnection connection = new SqlConnection(connectionString))
@@ -65,6 +65,6 @@ namespace Transaction1CS
                 }
             }
         }
-        // </Snippet1>
     }
 }
+// </Snippet1>

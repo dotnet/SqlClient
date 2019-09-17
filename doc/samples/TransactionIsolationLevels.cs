@@ -1,7 +1,7 @@
-﻿// <Snippet1>
-using System;
-using Microsoft.Data.SqlClient;
+﻿using System;
 using System.Data;
+// <Snippet1>
+using Microsoft.Data.SqlClient;
 using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClient.Samples
