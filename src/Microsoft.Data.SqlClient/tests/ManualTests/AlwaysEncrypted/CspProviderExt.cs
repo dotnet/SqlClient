@@ -115,7 +115,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             SqlColumnEncryptionCertificateStoreProvider certProvider = new SqlColumnEncryptionCertificateStoreProvider();
             SqlColumnEncryptionCspProvider cspProvider = new SqlColumnEncryptionCspProvider();
-            byte[] columnEncryptionKey = CertificateUtilityWin.GenerateRandomBytes(32);
+            byte[] columnEncryptionKey = DatabaseHelper.GenerateRandomBytes(32);
 
             byte[] encryptedColumnEncryptionKeyUsingCert = certProvider.EncryptColumnEncryptionKey(certificatePath, @"RSA_OAEP", columnEncryptionKey);
             byte[] columnEncryptionKeyReturnedCert2CSP = cspProvider.DecryptColumnEncryptionKey(cspPath, @"RSA_OAEP", encryptedColumnEncryptionKeyUsingCert);
