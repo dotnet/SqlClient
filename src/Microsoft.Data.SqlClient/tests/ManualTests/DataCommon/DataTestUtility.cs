@@ -46,7 +46,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             public bool SupportsLocalDb = false;
             public bool SupportsIntegratedSecurity = false;
-            public bool SupportsFilesStream = false;
+            public bool SupportsFileStream = false;
         }
 
         static DataTestUtility()
@@ -63,7 +63,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 s_aadPassConnString = c.AADPasswordConnectionString;
                 s_supportsLocalDb = c.SupportsLocalDb;
                 s_supportsIntegratedSecurity = c.SupportsIntegratedSecurity;
-                s_supportsFileStream = c.SupportsFilesStream;
+                s_supportsFileStream = c.SupportsFileStream;
             }
         }
 
