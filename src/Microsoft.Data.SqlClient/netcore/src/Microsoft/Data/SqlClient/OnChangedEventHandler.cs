@@ -4,5 +4,6 @@
 
 namespace Microsoft.Data.SqlClient
 {
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/OnChangeEventHandler.xml' path='docs/members[@name="OnChangeEventHandler"]/*'/>
     public delegate void OnChangeEventHandler(object sender, SqlNotificationEventArgs e);
 }

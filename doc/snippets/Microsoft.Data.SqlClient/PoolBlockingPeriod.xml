@@ -1,0 +1,20 @@
+<docs>
+    <members name="PoolBlockingPeriod">
+        <PoolBlockingPeriod>
+           <summary>Specifies a value for the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.PoolBlockingPeriod" /> property. </summary>
+            <remarks>To be added.</remarks>
+        </PoolBlockingPeriod>
+        <Auto>
+            <summary>Blocking period OFF for Azure SQL servers, but ON for all other SQL servers.</summary>
+            <value>0</value>
+        </Auto>
+        <AlwaysBlock>
+            <summary>Blocking period ON for all SQL servers including Azure SQL servers.</summary>
+            <value>1</value>
+        </AlwaysBlock>
+        <NeverBlock>
+            <summary>Blocking period OFF for Azure SQL servers, but ON for all other SQL servers.</summary>
+            <value>2</value>
+        </NeverBlock>
+    </members>
+</docs>

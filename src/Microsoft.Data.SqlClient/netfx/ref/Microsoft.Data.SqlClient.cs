@@ -27,6 +27,7 @@ namespace Microsoft.Data.SqlClient
         ReadOnly = 1,
         ReadWrite = 0
     }
+    
     public delegate void OnChangeEventHandler(object sender, Microsoft.Data.SqlClient.SqlNotificationEventArgs e);
     public enum PoolBlockingPeriod
     {

@@ -1,0 +1,25 @@
+<docs>
+    <members name="SortOrder">
+        <SortOrder>
+            <summary>
+                Specifies how rows of data are sorted.            
+            </summary>
+            <remarks>To be added.</remarks>
+        </SortOrder>
+        <Unspecified>
+            <summary>The default. No sort order is specified.</summary>
+            <value>-1</value>
+            <returns>-1</returns>
+        </Unspecified>
+        <Ascending>
+            <summary>Rows are sorted in ascending order.</summary>
+            <value>0</value>
+            <returns>0</returns>
+        </Ascending>
+        <Descending>
+            <summary>Rows are sorted in descending order.</summary>
+            <value>1</value>
+            <returns>1</returns>
+        </Descending>
+    </members>
+</docs>
