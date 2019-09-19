@@ -471,7 +471,7 @@ static void CreateSqlParameterLocaleId(){
 ## Remarks  
  <xref:Microsoft.Data.SqlClient.SqlParameter.SourceColumnNullMapping%2A> is used by the <xref:Microsoft.Data.SqlClient.SqlCommandBuilder> to correctly generate update commands when dealing with nullable columns. Generally, use of <xref:Microsoft.Data.SqlClient.SqlParameter.SourceColumnNullMapping%2A> is limited to developers inheriting from <xref:Microsoft.Data.SqlClient.SqlCommandBuilder>.  
   
- <xref:System.Data.Common.DbCommandBuilder> uses this property to determine whether the source column is nullable, and sets this property to `true` if it is nullable, and `false` if it is not. When <xref:Microsoft.Data.SqlClient.SqlCommandBuilder> is generating its Update statement, it examines the <xref:Microsoft.Data.SqlClient.SqlParameter.SourceColumnNullMapping%2A> for each parameter. If the property is `true`, <xref:Microsoft.Data.SqlClient.SqlCommandBuilder> generates a WHERE clauses like the following (in this query expression, "FieldName" represents the name of the field):  
+ <xref:Microsoft.Data.Common.DbCommandBuilder> uses this property to determine whether the source column is nullable, and sets this property to `true` if it is nullable, and `false` if it is not. When <xref:Microsoft.Data.SqlClient.SqlCommandBuilder> is generating its Update statement, it examines the <xref:Microsoft.Data.SqlClient.SqlParameter.SourceColumnNullMapping%2A> for each parameter. If the property is `true`, <xref:Microsoft.Data.SqlClient.SqlCommandBuilder> generates a WHERE clauses like the following (in this query expression, "FieldName" represents the name of the field):  
   
 ```  
 ((@IsNull_FieldName = 1 AND FieldName IS NULL) OR   

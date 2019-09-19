@@ -4399,7 +4399,14 @@ namespace Microsoft.Data.SqlClient
             return sqlParam;
         }
 
-       
+        /// <summary>
+        /// Constructs the sp_describe_parameter_encryption request with the values from the original RPC call.	
+        /// Prototype for <sp_describe_parameter_encryption> is 	
+        /// exec sp_describe_parameter_encryption @tsql=N'[SQL Statement]', @params=N'@p1 varbinary(256)'
+        /// </summary>
+        /// <param name="originalRpcRequest"></param>
+        /// <param name="describeParameterEncryptionRequest"></param>
+        /// <param name="attestationParameters"></param>
         private void PrepareDescribeParameterEncryptionRequest(_SqlRPC originalRpcRequest, ref _SqlRPC describeParameterEncryptionRequest, byte[] attestationParameters = null)
         {
             Debug.Assert(originalRpcRequest != null);

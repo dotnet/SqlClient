@@ -45,13 +45,13 @@
             </remarks>
         </CreateCommand>
         <CreateCommandBuilder>
-            <summary>Returns a strongly typed <see cref="T:System.Data.Common.DbCommandBuilder" /> instance.</summary>
-            <returns>A new strongly typed instance of <see cref="T:System.Data.Common.DbCommandBuilder" />.</returns>
+            <summary>Returns a strongly typed <see cref="T:Microsoft.Data.Common.DbCommandBuilder" /> instance.</summary>
+            <returns>A new strongly typed instance of <see cref="T:Microsoft.Data.Common.DbCommandBuilder" />.</returns>
             <remarks>
                 <format type="text/markdown"><![CDATA[  
   
                     ## Examples  
-                    The following code fragment returns a strongly typed <xref:System.Data.Common.DbCommandBuilder> instance:  
+                    The following code fragment returns a strongly typed <xref:Microsoft.Data.Common.DbCommandBuilder> instance:  
   
   
                     ```csharp  

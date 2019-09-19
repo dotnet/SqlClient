@@ -14,7 +14,7 @@
             </remarks>
         </SqlColumnEncryptionCngProvider>
         <ctor>
-            <summary>Initializes a new instance of the <see cref="T:System.Data.SqlClient.SqlColumnEncryptionCngProvider" /> class.</summary>
+            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlColumnEncryptionCngProvider" /> class.</summary>
             <remarks>To be added.</remarks>
         </ctor>
         <DecryptColumnEncryptionKey>
@@ -48,8 +48,8 @@
                 <format type="text/markdown"><![CDATA[  
   
                 ## Remarks  
-                The <xref:System.Data.SqlClient.SqlColumnEncryptionCngProvider.SignColumnMasterKeyMetadata%2A> method must be implemented by the corresponding key store providers. 
-                <xref:System.Data.SqlClient.SqlColumnEncryptionCngProvider.SignColumnMasterKeyMetadata%2A> should use an asymmetric key identified by a key path and sign the masterkey metadata consisting 
+                The <xref:Microsoft.Data.SqlClient.SqlColumnEncryptionCngProvider.SignColumnMasterKeyMetadata%2A> method must be implemented by the corresponding key store providers. 
+                <xref:Microsoft.Data.SqlClient.SqlColumnEncryptionCngProvider.SignColumnMasterKeyMetadata%2A> should use an asymmetric key identified by a key path and sign the masterkey metadata consisting 
                 of `masterKeyPath`, `allowEnclaveComputations`, and providerName.  
   
                 ]]></format>

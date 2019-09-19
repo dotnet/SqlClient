@@ -1,13 +1,13 @@
 <docs>
     <members name="SqlBulkCopyOptions">
         <SqlBulkCopyOptions>
-            <summary>Bitwise flag that specifies one or more options to use with an instance of <see cref="T:System.Data.SqlClient.SqlBulkCopy" />.</summary>
+            <summary>Bitwise flag that specifies one or more options to use with an instance of <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" />.</summary>
             <remarks>
                 <format type="text/markdown"><![CDATA[  
   
                     ## Remarks  
-                    You can use the <xref:System.Data.SqlClient.SqlBulkCopyOptions> enumeration when you construct a <xref:System.Data.SqlClient.SqlBulkCopy> instance to change how the 
-                    <xref:System.Data.SqlClient.SqlBulkCopy.WriteToServer%2A> methods for that instance behave.  
+                    You can use the <xref:Microsoft.Data.SqlClient.SqlBulkCopyOptions> enumeration when you construct a <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instance to change how the 
+                    <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer%2A> methods for that instance behave.  
   
    
   
@@ -58,7 +58,7 @@
             <summary>Obtain a bulk update lock for the duration of the bulk copy operation. When not specified, row locks are used.</summary>
         </TableLock>
         <UseInternalTransaction>
-            <summary>When specified, each batch of the bulk-copy operation will occur within a transaction. If you indicate this option and also provide a <see cref="T:System.Data.SqlClient.SqlTransaction" /> 
+            <summary>When specified, each batch of the bulk-copy operation will occur within a transaction. If you indicate this option and also provide a <see cref="T:Microsoft.Data.SqlClient.SqlTransaction" /> 
                     object to the constructor, an <see cref="T:System.ArgumentException" /> occurs.
             </summary>
         </UseInternalTransaction>
