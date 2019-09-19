@@ -306,7 +306,7 @@
 |SqlBoolean|SqlByte|SqlDateTime|SqlDecimal|  
 |SqlDouble|SqlGuid|SqlInt16|SqlInt32|  
 |SqlInt64|SqlMoney|SqlSingle|SqlString|  
-|String|UDT, which can be any CLR type marked with <xref:Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute>.|||  
+|String|UDT, which can be any CLR type marked with <xref:Microsoft.Data.SqlClient.Server.SqlUserDefinedTypeAttribute>.|||  
   
  For more information, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).  
   
@@ -346,7 +346,7 @@
 |SqlBoolean|SqlByte|SqlDateTime|SqlDecimal|  
 |SqlDouble|SqlGuid|SqlInt16|SqlInt32|  
 |SqlInt64|SqlMoney|SqlSingle|SqlString|  
-|String|UDT, which can be any CLR type marked with <xref:Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute>.|||  
+|String|UDT, which can be any CLR type marked with <xref:Microsoft.Data.SqlClient.Server.SqlUserDefinedTypeAttribute>.|||  
   
  For more information, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).  
   
