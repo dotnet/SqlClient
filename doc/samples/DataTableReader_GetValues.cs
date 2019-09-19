@@ -1,3 +1,4 @@
+// <Snippet1>
 using System;
 using System.Data;
 using Microsoft.Data.SqlClient;
@@ -7,7 +8,6 @@ class Program
     static void Main()
     {
     }
-    // <Snippet1>
     // using Microsoft.Data.SqlClient;
     private static void TestGetValues(DataTableReader reader)
     {

@@ -1226,11 +1226,11 @@ class Program {
             <returns>An object that represents the new transaction.</returns>
             <remarks>
             <format type="text/markdown"><![CDATA[
-## Remarks  
-Once the transaction has completed, you must explicitly commit or roll back the transaction by using the <xref:System.Data.IDbTransaction.Commit> or <xref:System.Data.IDbTransaction.Rollback> method.
-]]></format>
+            ## Remarks  
+            Once the transaction has completed, you must explicitly commit or roll back the transaction by using the <xref:System.Data.IDbTransaction.Commit> or <xref:System.Data.IDbTransaction.Rollback> method.
+            ]]></format>
             </remarks>
-        </System.Data.IDbConnection.BeginTransactionIso>
+        </System.Data.IDbConnection.BeginTransaction>
         <System.Data.IDbConnection.BeginTransactionIso>
             <param name="iso">One of the <see cref="T:System.Data.IsolationLevel" /> values.</param>
             <summary>Begins a database transaction with the specified <see cref="T:System.Data.IsolationLevel" /> value.</summary>
@@ -1241,7 +1241,7 @@ Once the transaction has completed, you must explicitly commit or roll back the 
 Once the transaction has completed, you must explicitly commit or roll back the transaction by using the <xref:System.Data.IDbTransaction.Commit> or <xref:System.Data.IDbTransaction.Rollback> method.
 ]]></format>
             </remarks>
-        </System.Data.IDbConnection.BeginTransaction>
+        </System.Data.IDbConnection.BeginTransactionIso>
         <System.Data.IDbConnection.CreateCommand>
             <summary>Creates and returns a Command object that is associated with the connection.</summary>
             <returns>A Command object that is associated with the connection.</returns>

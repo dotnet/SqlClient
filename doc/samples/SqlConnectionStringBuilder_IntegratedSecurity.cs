@@ -13,7 +13,7 @@ class Program
                 "Data Source=(local);User ID=ab;Password=MyPassword;" +
                 "Initial Catalog=AdventureWorks";
 
-            SqlConnectionStringBuilder builder = 
+            SqlConnectionStringBuilder builder =
                 new SqlConnectionStringBuilder(connectString);
             Console.WriteLine("Original: " + builder.ConnectionString);
 
@@ -31,7 +31,7 @@ class Program
 
             Console.WriteLine("Modified: " + builder.ConnectionString);
 
-            using (SqlConnection connection = 
+            using (SqlConnection connection =
                        new SqlConnection(builder.ConnectionString))
             {
                 connection.Open();

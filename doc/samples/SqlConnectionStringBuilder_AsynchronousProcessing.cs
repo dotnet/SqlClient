@@ -38,7 +38,7 @@ class Program
             "Initial Catalog=AdventureWorks";
     }
 
-    private static void RunCommandAsynchronously(string commandText, 
+    private static void RunCommandAsynchronously(string commandText,
         string connectionString)
     {
         // Given command text and connection string, asynchronously execute
@@ -69,7 +69,7 @@ class Program
             catch (SqlException ex)
             {
                 Console.WriteLine(
-                    "Error {0}: Microsoft.Data.SqlClient.SqlConnectionStringBuilder", 
+                    "Error {0}: Microsoft.Data.SqlClient.SqlConnectionStringBuilder",
                     ex.Number, ex.Message);
             }
             catch (InvalidOperationException ex)

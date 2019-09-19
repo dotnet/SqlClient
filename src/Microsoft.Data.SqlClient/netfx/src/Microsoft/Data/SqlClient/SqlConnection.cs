@@ -2475,7 +2475,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ChangePasswordConnectionStringCredentialNewPassworNewSecurePassword/*' />
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='/docs/members[@name="SqlConnection"]/ChangePasswordConnectionStringCredentialNewPassworNewSecurePassword/*' />
         public static void ChangePassword(string connectionString, SqlCredential credential, SecureString newSecurePassword)
         {
             IntPtr hscp;
@@ -2758,6 +2758,7 @@ namespace Microsoft.Data.SqlClient
     // You must not change the guid for this coclass
     // or the iid for the ISQLDebug interface
     //
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDebugging.xml' path='docs/members[@name="SQLDebugging"]/SQLDebugging/*'/>
     [
     ComVisible(true),
     ClassInterface(ClassInterfaceType.None),

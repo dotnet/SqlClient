@@ -1,6 +1,6 @@
+// <Snippet1>
 using System;
 using System.Data;
-// <Snippet1>
 using Microsoft.Data.SqlClient;
 
 namespace SqlCommandCS

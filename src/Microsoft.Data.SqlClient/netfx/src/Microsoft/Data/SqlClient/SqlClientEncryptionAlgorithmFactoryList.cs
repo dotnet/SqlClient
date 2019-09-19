@@ -10,7 +10,7 @@ using System.Text;
 namespace Microsoft.Data.SqlClient
 {
     /// <summary>
-    /// <para> Implements a global directory of all the encryption algorithms registered with client.</para>
+    ///  Implements a global directory of all the encryption algorithms registered with client.
     /// </summary>
     sealed internal class SqlClientEncryptionAlgorithmFactoryList
     {
@@ -32,9 +32,9 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Get the registered list of algorithms as a comma seperated list with algorithm names
-        /// wrapped in single quotes.
-        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         internal string GetRegisteredCipherAlgorithmNames()
         {
             StringBuilder builder = new StringBuilder();

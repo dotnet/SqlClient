@@ -1,0 +1,10 @@
+<docs>
+    <members name="SQLDebugging">
+        <SQLDebugging>
+            <summary>
+                Included to support debugging applications. Not intended for direct use.
+            </summary>
+            <remarks>To be added.</remarks>
+        </SQLDebugging>
+    </members>
+</docs>

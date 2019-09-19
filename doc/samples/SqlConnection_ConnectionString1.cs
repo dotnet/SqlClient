@@ -50,7 +50,7 @@ class Program
                     {
                         // You must reset the password. 
                         connectionString =
-                            ModifyConnectionString(connectionString, 
+                            ModifyConnectionString(connectionString,
                             GetNewPassword());
 
                     }

@@ -1,5 +1,6 @@
 using System;
 using System.Data;
+// <Snippet1>
 using Microsoft.Data.SqlClient;
 
 class Program
@@ -8,7 +9,7 @@ class Program
     {
     }
 
-    // <Snippet1>
+
     // using Microsoft.Data.SqlClient;
     static void CreateSqlParameterOutput()
     {

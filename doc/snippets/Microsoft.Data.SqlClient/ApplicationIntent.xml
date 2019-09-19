@@ -1,17 +1,20 @@
-<?xml version="1.0"?>
-<doc>
+<docs>
     <members name="ApplicationIntent">
         <ApplicationIntent>
             <summary>
-            Represents the application workload type when connecting to a server
+                Specifies a value for <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ApplicationIntent" />. Possible values are <see langword="ReadWrite" /> and <see langword="ReadOnly" />.
             </summary>
-            <example>
-                <code>
-                    <format type="text/markdown"><![CDATA[  
-                    [!code-csharp[ApplicationIntent#1](../../samples/ApplicationIntent.cs#1)]
-                    ]]></format>
-                </code>
-            </example>
+            <remarks>To be added.</remarks>
         </ApplicationIntent>
+        <ReadWrite>
+            <summary>The application workload type when connecting to a server is read write.</summary>
+            <returns>0</returns>
+            <value>0</value>
+        </ReadWrite>
+        <ReadOnly>
+            <summary>The application workload type when connecting to a server is read only.</summary>
+            <returns>1</returns>
+            <value>1</value>
+        </ReadOnly>
     </members>
-</doc>
+</docs>

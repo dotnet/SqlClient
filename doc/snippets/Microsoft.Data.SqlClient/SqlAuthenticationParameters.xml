@@ -1,0 +1,60 @@
+<docs>
+    <members name="SqlAuthenticationParameters">
+        <SqlAuthenticationParameters>
+            <summary>Represents AD authentication parameters passed by a driver to authentication providers.</summary>
+            <remarks>To be added.</remarks>
+        </SqlAuthenticationParameters>
+        <ctor>
+            <summary>Constructor</summary>
+            <param name="authenticationMethod"></param>
+            <param name="serverName"></param>
+            <param name="databaseName"></param>
+            <param name="scopes"></param>
+            <param name="authority"></param>
+            <param name="userId"></param>
+            <param name="password"></param>
+            <param name="connectionId"></param>
+            <remarks>To be added.</remarks>
+        </ctor>
+        <AuthenticationMethod>
+            <summary>Gets the authentication method.</summary>
+            <value>The authentication method.</value>
+            <remarks>To be added.</remarks>
+        </AuthenticationMethod>
+        <Scopes>
+            <summary>Resource URI.</summary>
+            <value>The resource URI.</value>
+            <remarks>To be added.</remarks>
+        </Scopes>
+        <Authority>
+            <summary>Gets the connection ID.</summary>
+            <value>The connection ID.</value>
+            <remarks>To be added.</remarks>
+        </Authority>
+        <UserId>
+            <summary>Gets the user login name/ID.</summary>
+            <value>The user login name/ID.</value>
+            <remarks>To be added.</remarks>
+        </UserId>
+        <Password>
+            <summary>Gets the resource URI.</summary>
+            <value>The resource URI.</value>
+            <remarks>To be added.</remarks>
+        </Password>
+        <ConnectionId>
+            <summary>Gets the connection ID.</summary>
+            <value>The connection ID.</value>
+            <remarks>To be added.</remarks>
+        </ConnectionId>
+        <ServerName>
+            <summary>Gets the database name.</summary>
+            <value>The database name.</value>
+            <remarks>To be added.</remarks>
+        </ServerName>
+        <DatabaseName>
+            <summary>Gets the database name.</summary>
+            <value>The database name.</value>
+            <remarks>To be added.</remarks>
+        </DatabaseName>
+    </members>
+</docs>
