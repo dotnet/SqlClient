@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<docs>
+    <members name="DataAccessKind">
+        <DataAccessKind>
+            <summary>Describes the type of access to user data for a user-defined method or function.</summary>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+ Describes the type of access to user data for a user-defined method or function.  
+  
+ This enumeration is used in <xref:Microsoft.Data.SqlClient.Server.SqlMethodAttribute> and <xref:Microsoft.Data.SqlClient.Server.SqlFunctionAttribute> to indicate whether the method or function uses ADO.NET to connect back to the database using the "context connection."  
+  
+ Note that methods and functions are not allowed to make changes to the database, so the options for this enumeration are `None` (meaning no data-access performed by the method or function) and `Read` (meaning that the method or function perform read-only data-access operations, such as executing SELECT statements).  
+  
+ ]]></format>
+            </remarks>
+        </DataAccessKind>
+        <None>
+            <summary>The method or function does not access user data.</summary>
+        </None>
+        <Read>
+            <summary>The method or function reads user data.</summary>
+        </Read>
+    </members>
+</docs>

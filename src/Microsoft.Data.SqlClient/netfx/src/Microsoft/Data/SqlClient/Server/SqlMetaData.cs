@@ -10,13 +10,13 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient.Server
 {
+    /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/SqlMetaData/*' />
     // class SqlMetaData
     //   Simple immutable implementation of the a metadata-holding class.  Only
     //    complexities are:
     //        1) enforcing immutability.
     //        2) Inferring type from a value.
     //        3) Adjusting a value to match the metadata.
-
     public sealed class SqlMetaData
     {
         private string m_strName;
@@ -50,6 +50,7 @@ namespace Microsoft.Data.SqlClient.Server
         private const SqlCompareOptions x_eDefaultStringCompareOptions = SqlCompareOptions.IgnoreCase
                                         | SqlCompareOptions.IgnoreKanaType | SqlCompareOptions.IgnoreWidth;
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbType/*' />
         // scalar types constructor without tvp extended properties
         public SqlMetaData(String name, SqlDbType dbType)
         {
@@ -57,6 +58,7 @@ namespace Microsoft.Data.SqlClient.Server
                     x_defaultIsUniqueKey, x_defaultColumnSortOrder, x_defaultSortOrdinal);
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal/*' />
         // scalar types constructor
         public SqlMetaData(String name, SqlDbType dbType, bool useServerDefault,
                     bool isUniqueKey, SortOrder columnSortOrder, int sortOrdinal)
@@ -65,6 +67,7 @@ namespace Microsoft.Data.SqlClient.Server
                     isUniqueKey, columnSortOrder, sortOrdinal);
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeMaxLength/*' />
         // binary or string constructor with only max length
         // (for string types, locale and compare options will be picked up from the thread.
         public SqlMetaData(String name, SqlDbType dbType, long maxLength)
@@ -73,6 +76,7 @@ namespace Microsoft.Data.SqlClient.Server
                     x_defaultIsUniqueKey, x_defaultColumnSortOrder, x_defaultSortOrdinal);
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeMaxLengthUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal/*' />
         // binary or string constructor with only max length and tvp extended properties
         // (for string types, locale and compare options will be picked up from the thread.
         public SqlMetaData(String name, SqlDbType dbType, long maxLength, bool useServerDefault,
@@ -82,6 +86,7 @@ namespace Microsoft.Data.SqlClient.Server
                     isUniqueKey, columnSortOrder, sortOrdinal);
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeUserDefinedType/*' />
         // udt ctor without tvp extended properties
         public SqlMetaData(String name, SqlDbType dbType, Type userDefinedType)
         {
@@ -89,6 +94,7 @@ namespace Microsoft.Data.SqlClient.Server
                     x_defaultIsUniqueKey, x_defaultColumnSortOrder, x_defaultSortOrdinal);
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeUserDefinedTypeServerTypeName/*' />
         // udt ctor without tvp extended properties
         public SqlMetaData(String name, SqlDbType dbType, Type userDefinedType, string serverTypeName)
         {
@@ -96,6 +102,7 @@ namespace Microsoft.Data.SqlClient.Server
                     x_defaultIsUniqueKey, x_defaultColumnSortOrder, x_defaultSortOrdinal);
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeUserDefinedTypeServerTypeNameUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal/*' />
         // udt ctor
         public SqlMetaData(String name, SqlDbType dbType, Type userDefinedType, string serverTypeName,
                     bool useServerDefault, bool isUniqueKey, SortOrder columnSortOrder, int sortOrdinal)
@@ -104,6 +111,7 @@ namespace Microsoft.Data.SqlClient.Server
                     isUniqueKey, columnSortOrder, sortOrdinal);
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypePrecisionScale/*' />
         // decimal ctor without tvp extended properties
         public SqlMetaData(String name, SqlDbType dbType, byte precision, byte scale)
         {
@@ -111,6 +119,7 @@ namespace Microsoft.Data.SqlClient.Server
                     x_defaultIsUniqueKey, x_defaultColumnSortOrder, x_defaultSortOrdinal);
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypePrecisionScaleUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal/*' />
         // decimal ctor
         public SqlMetaData(string name, SqlDbType dbType, byte precision, byte scale, bool useServerDefault,
                     bool isUniqueKey, SortOrder columnSortOrder, int sortOrdinal)
@@ -119,6 +128,7 @@ namespace Microsoft.Data.SqlClient.Server
                     isUniqueKey, columnSortOrder, sortOrdinal);
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeMaxLengthLocaleCompareOptions/*' />
         // string type constructor with locale and compare options, no tvp extended properties
         public SqlMetaData(String name, SqlDbType dbType, long maxLength, long locale,
                            SqlCompareOptions compareOptions)
@@ -127,6 +137,7 @@ namespace Microsoft.Data.SqlClient.Server
                     x_defaultIsUniqueKey, x_defaultColumnSortOrder, x_defaultSortOrdinal);
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeMaxLengthLocaleCompareOptionsUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal/*' />
         // string type constructor with locale and compare options
         public SqlMetaData(String name, SqlDbType dbType, long maxLength, long locale,
                            SqlCompareOptions compareOptions, bool useServerDefault,
@@ -136,6 +147,7 @@ namespace Microsoft.Data.SqlClient.Server
                     isUniqueKey, columnSortOrder, sortOrdinal);
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeDatabaseOwningSchemaObjectNameUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal/*' />
         // typed xml ctor
         public SqlMetaData(String name, SqlDbType dbType, string database, string owningSchema,
                            string objectName, bool useServerDefault, bool isUniqueKey,
@@ -145,6 +157,7 @@ namespace Microsoft.Data.SqlClient.Server
                         isUniqueKey, columnSortOrder, sortOrdinal);
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeMaxLengthPrecisionScaleLocaleCompareOptionsUserDefinedType/*' />
         // everything except xml schema and tvp properties ctor
         public SqlMetaData(String name, SqlDbType dbType, long maxLength, byte precision,
                            byte scale, long locale, SqlCompareOptions compareOptions,
@@ -155,6 +168,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeMaxLengthPrecisionScaleLocaleCompareOptionsUserDefinedTypeUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal/*' />
         // everything except xml schema ctor
         public SqlMetaData(String name, SqlDbType dbType, long maxLength, byte precision,
                            byte scale, long localeId, SqlCompareOptions compareOptions,
@@ -214,6 +228,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeDatabaseOwningSchemaObjectName/*' />
         public SqlMetaData(String name, SqlDbType dbType, string database, string owningSchema, string objectName)
         {
             Construct(name, dbType, database, owningSchema, objectName, x_defaultUseServerDefault, x_defaultIsUniqueKey,
@@ -276,6 +291,7 @@ namespace Microsoft.Data.SqlClient.Server
             m_udttype = null;
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/CompareOptions/*' />
         public SqlCompareOptions CompareOptions
         {
             get
@@ -284,6 +300,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/DbType/*' />
         public DbType DbType
         {
             get
@@ -292,6 +309,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/IsUniqueKey/*' />
         public bool IsUniqueKey
         {
             get
@@ -300,6 +318,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/LocaleId/*' />
         public long LocaleId
         {
             get
@@ -308,6 +327,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/Max/*' />
         public static long Max
         {
             get
@@ -316,6 +336,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/MaxLength/*' />
         public long MaxLength
         {
             get
@@ -324,6 +345,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/Name/*' />
         public string Name
         {
             get
@@ -332,6 +354,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/Precision/*' />
         public byte Precision
         {
             get
@@ -340,6 +363,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/Scale/*' />
         public byte Scale
         {
             get
@@ -348,6 +372,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/SortOrder/*' />
         public SortOrder SortOrder
         {
             get
@@ -356,6 +381,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/SortOrdinal/*' />
         public int SortOrdinal
         {
             get
@@ -364,6 +390,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/SqlDbType/*' />
         public SqlDbType SqlDbType
         {
             get
@@ -372,6 +399,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/Type/*' />
         public Type Type
         {
             get
@@ -380,6 +408,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/TypeName/*' />
         public string TypeName
         {
             get
@@ -407,6 +436,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/UseServerDefault/*' />
         public bool UseServerDefault
         {
             get
@@ -415,6 +445,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/XmlSchemaCollectionDatabase/*' />
         public string XmlSchemaCollectionDatabase
         {
             get
@@ -423,6 +454,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/XmlSchemaCollectionName/*' />
         public string XmlSchemaCollectionName
         {
             get
@@ -431,6 +463,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/XmlSchemaCollectionOwningSchema/*' />
         public string XmlSchemaCollectionOwningSchema
         {
             get
@@ -791,7 +824,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
-
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue27/*' />
         public Int16 Adjust(Int16 value)
         {
             if (SqlDbType.SmallInt != SqlDbType)
@@ -799,6 +832,7 @@ namespace Microsoft.Data.SqlClient.Server
             return value;
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue28/*' />
         public Int32 Adjust(Int32 value)
         {
             if (SqlDbType.Int != SqlDbType)
@@ -806,6 +840,7 @@ namespace Microsoft.Data.SqlClient.Server
             return value;
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue29/*' />
         public Int64 Adjust(Int64 value)
         {
             if (SqlDbType.BigInt != SqlDbType)
@@ -813,6 +848,7 @@ namespace Microsoft.Data.SqlClient.Server
             return value;
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue31/*' />
         public float Adjust(float value)
         {
             if (SqlDbType.Real != SqlDbType)
@@ -820,6 +856,7 @@ namespace Microsoft.Data.SqlClient.Server
             return value;
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue25/*' />
         public double Adjust(double value)
         {
             if (SqlDbType.Float != SqlDbType)
@@ -827,6 +864,7 @@ namespace Microsoft.Data.SqlClient.Server
             return value;
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue32/*' />
         public string Adjust(string value)
         {
             if (SqlDbType.Char == SqlDbType || SqlDbType.NChar == SqlDbType)
@@ -860,6 +898,7 @@ namespace Microsoft.Data.SqlClient.Server
             return value;
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue24/*' />
         public decimal Adjust(decimal value)
         {
             if (SqlDbType.Decimal != SqlDbType &&
@@ -881,6 +920,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue22/*' />
         public DateTime Adjust(DateTime value)
         {
             if (SqlDbType.DateTime == SqlDbType || SqlDbType.SmallDateTime == SqlDbType)
@@ -902,6 +942,7 @@ namespace Microsoft.Data.SqlClient.Server
             return value;
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue26/*' />
         public Guid Adjust(Guid value)
         {
             if (SqlDbType.UniqueIdentifier != SqlDbType)
@@ -909,6 +950,7 @@ namespace Microsoft.Data.SqlClient.Server
             return value;
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue7/*' />
         public SqlBoolean Adjust(SqlBoolean value)
         {
             if (SqlDbType.Bit != SqlDbType)
@@ -916,6 +958,7 @@ namespace Microsoft.Data.SqlClient.Server
             return value;
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue8/*' />
         public SqlByte Adjust(SqlByte value)
         {
             if (SqlDbType.TinyInt != SqlDbType)
@@ -923,6 +966,7 @@ namespace Microsoft.Data.SqlClient.Server
             return value;
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue15/*' />
         public SqlInt16 Adjust(SqlInt16 value)
         {
             if (SqlDbType.SmallInt != SqlDbType)
@@ -930,6 +974,7 @@ namespace Microsoft.Data.SqlClient.Server
             return value;
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue16/*' />
         public SqlInt32 Adjust(SqlInt32 value)
         {
             if (SqlDbType.Int != SqlDbType)
@@ -937,6 +982,7 @@ namespace Microsoft.Data.SqlClient.Server
             return value;
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue17/*' />
         public SqlInt64 Adjust(SqlInt64 value)
         {
             if (SqlDbType.BigInt != SqlDbType)
@@ -944,6 +990,7 @@ namespace Microsoft.Data.SqlClient.Server
             return value;
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue19/*' />
         public SqlSingle Adjust(SqlSingle value)
         {
             if (SqlDbType.Real != SqlDbType)
@@ -951,6 +998,7 @@ namespace Microsoft.Data.SqlClient.Server
             return value;
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue13/*' />
         public SqlDouble Adjust(SqlDouble value)
         {
             if (SqlDbType.Float != SqlDbType)
@@ -958,6 +1006,7 @@ namespace Microsoft.Data.SqlClient.Server
             return value;
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue18/*' />
         public SqlMoney Adjust(SqlMoney value)
         {
             if (SqlDbType.Money != SqlDbType &&
@@ -970,6 +1019,7 @@ namespace Microsoft.Data.SqlClient.Server
             return value;
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue11/*' />
         public SqlDateTime Adjust(SqlDateTime value)
         {
             if (SqlDbType.DateTime != SqlDbType &&
@@ -982,6 +1032,7 @@ namespace Microsoft.Data.SqlClient.Server
             return value;
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue12/*' />
         public SqlDecimal Adjust(SqlDecimal value)
         {
             if (SqlDbType.Decimal != SqlDbType)
@@ -989,6 +1040,7 @@ namespace Microsoft.Data.SqlClient.Server
             return InternalAdjustSqlDecimal(value);
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue20/*' />
         public SqlString Adjust(SqlString value)
         {
             if (SqlDbType.Char == SqlDbType || SqlDbType.NChar == SqlDbType)
@@ -1019,6 +1071,7 @@ namespace Microsoft.Data.SqlClient.Server
             return value;
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue6/*' />
         public SqlBinary Adjust(SqlBinary value)
         {
             if (SqlDbType.Binary == SqlDbType ||
@@ -1059,6 +1112,7 @@ namespace Microsoft.Data.SqlClient.Server
             return value;
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue14/*' />
         public SqlGuid Adjust(SqlGuid value)
         {
             if (SqlDbType.UniqueIdentifier != SqlDbType)
@@ -1066,6 +1120,7 @@ namespace Microsoft.Data.SqlClient.Server
             return value;
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue10/*' />
         public SqlChars Adjust(SqlChars value)
         {
             if (SqlDbType.Char == SqlDbType || SqlDbType.NChar == SqlDbType)
@@ -1113,6 +1168,7 @@ namespace Microsoft.Data.SqlClient.Server
             return value;
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue9/*' />
         public SqlBytes Adjust(SqlBytes value)
         {
             if (SqlDbType.Binary == SqlDbType || SqlDbType.Timestamp == SqlDbType)
@@ -1158,6 +1214,7 @@ namespace Microsoft.Data.SqlClient.Server
             return value;
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue21/*' />
         public SqlXml Adjust(SqlXml value)
         {
             if (SqlDbType.Xml != SqlDbType)
@@ -1165,6 +1222,7 @@ namespace Microsoft.Data.SqlClient.Server
             return value;
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue33/*' />
         public TimeSpan Adjust(TimeSpan value)
         {
             if (SqlDbType.Time != SqlDbType)
@@ -1173,6 +1231,7 @@ namespace Microsoft.Data.SqlClient.Server
             return new TimeSpan(InternalAdjustTimeTicks(value.Ticks));
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue23/*' />
         public DateTimeOffset Adjust(DateTimeOffset value)
         {
             if (SqlDbType.DateTimeOffset != SqlDbType)
@@ -1180,6 +1239,7 @@ namespace Microsoft.Data.SqlClient.Server
             return new DateTimeOffset(InternalAdjustTimeTicks(value.Ticks), value.Offset);
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue30/*' />
         public object Adjust(object value)
         {
             // Pass null references through
@@ -1268,6 +1328,7 @@ namespace Microsoft.Data.SqlClient.Server
             return value;
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/InferFromValue/*' />
         public static SqlMetaData InferFromValue(object value, String name)
         {
             if (value == null)
@@ -1455,6 +1516,7 @@ namespace Microsoft.Data.SqlClient.Server
             return smd;
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue1/*' />
         public bool Adjust(bool value)
         {
             if (SqlDbType.Bit != SqlDbType)
@@ -1462,6 +1524,7 @@ namespace Microsoft.Data.SqlClient.Server
             return value;
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue2/*' />
         public byte Adjust(byte value)
         {
             if (SqlDbType.TinyInt != SqlDbType)
@@ -1469,6 +1532,7 @@ namespace Microsoft.Data.SqlClient.Server
             return value;
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue3/*' />
         public byte[] Adjust(byte[] value)
         {
             if (SqlDbType.Binary == SqlDbType || SqlDbType.Timestamp == SqlDbType)
@@ -1508,6 +1572,7 @@ namespace Microsoft.Data.SqlClient.Server
             return value;
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue4/*' />
         public char Adjust(char value)
         {
             if (SqlDbType.Char == SqlDbType || SqlDbType.NChar == SqlDbType)
@@ -1524,6 +1589,7 @@ namespace Microsoft.Data.SqlClient.Server
             return value;
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue5/*' />
         public char[] Adjust(char[] value)
         {
             if (SqlDbType.Char == SqlDbType || SqlDbType.NChar == SqlDbType)

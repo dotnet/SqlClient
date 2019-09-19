@@ -106,84 +106,161 @@ namespace Microsoft.Data.SqlClient.Server
         // WHEN ADDING, PLEASE CHECK WITH FILE-OWNER FOR WHICH NUMBERS TO USE.  THANKS!
     };
 
+    /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/TriggerAction/*' />
     public enum TriggerAction
     {
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/Invalid/*' />
         Invalid = EMDEventType.x_eet_Invalid,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/Insert/*' />
         Insert = EMDEventType.x_eet_Insert,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/Update/*' />
         Update = EMDEventType.x_eet_Update,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/Delete/*' />
         Delete = EMDEventType.x_eet_Delete,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/CreateTable/*' />
         CreateTable = EMDEventType.x_eet_Create_Table,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/AlterTable/*' />
         AlterTable = EMDEventType.x_eet_Alter_Table,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/DropTable/*' />
         DropTable = EMDEventType.x_eet_Drop_Table,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/CreateIndex/*' />
         CreateIndex = EMDEventType.x_eet_Create_Index,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/AlterIndex/*' />
         AlterIndex = EMDEventType.x_eet_Alter_Index,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/DropIndex/*' />
         DropIndex = EMDEventType.x_eet_Drop_Index,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/CreateSynonym/*' />
         CreateSynonym = EMDEventType.x_eet_Create_Synonym,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/DropSynonym/*' />
         DropSynonym = EMDEventType.x_eet_Drop_Synonym,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/CreateSecurityExpression/*' />
         CreateSecurityExpression = EMDEventType.x_eet_Create_Secexpr,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/DropSecurityExpression/*' />
         DropSecurityExpression = EMDEventType.x_eet_Drop_Secexpr,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/CreateView/*' />
         CreateView = EMDEventType.x_eet_Create_View,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/AlterView/*' />
         AlterView = EMDEventType.x_eet_Alter_View,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/DropView/*' />
         DropView = EMDEventType.x_eet_Drop_View,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/CreateProcedure/*' />
         CreateProcedure = EMDEventType.x_eet_Create_Procedure,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/AlterProcedure/*' />
         AlterProcedure = EMDEventType.x_eet_Alter_Procedure,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/DropProcedure/*' />
         DropProcedure = EMDEventType.x_eet_Drop_Procedure,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/CreateFunction/*' />
         CreateFunction = EMDEventType.x_eet_Create_Function,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/AlterFunction/*' />
         AlterFunction = EMDEventType.x_eet_Alter_Function,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/DropFunction/*' />
         DropFunction = EMDEventType.x_eet_Drop_Function,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/CreateTrigger/*' />
         CreateTrigger = EMDEventType.x_eet_Create_Trigger,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/AlterTrigger/*' />
         AlterTrigger = EMDEventType.x_eet_Alter_Trigger,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/DropTrigger/*' />
         DropTrigger = EMDEventType.x_eet_Drop_Trigger,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/CreateEventNotification/*' />
         CreateEventNotification = EMDEventType.x_eet_Create_Event_Notification,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/DropEventNotification/*' />
         DropEventNotification = EMDEventType.x_eet_Drop_Event_Notification,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/CreateType/*' />
         CreateType = EMDEventType.x_eet_Create_Type,
         //	Alter_Type = EMDEventType.x_eet_Alter_Type,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/DropType/*' />
         DropType = EMDEventType.x_eet_Drop_Type,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/CreateAssembly/*' />
         CreateAssembly = EMDEventType.x_eet_Create_Assembly,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/AlterAssembly/*' />
         AlterAssembly = EMDEventType.x_eet_Alter_Assembly,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/DropAssembly/*' />
         DropAssembly = EMDEventType.x_eet_Drop_Assembly,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/CreateUser/*' />
         CreateUser = EMDEventType.x_eet_Create_User,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/AlterUser/*' />
         AlterUser = EMDEventType.x_eet_Alter_User,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/DropUser/*' />
         DropUser = EMDEventType.x_eet_Drop_User,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/CreateRole/*' />
         CreateRole = EMDEventType.x_eet_Create_Role,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/AlterRole/*' />
         AlterRole = EMDEventType.x_eet_Alter_Role,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/DropRole/*' />
         DropRole = EMDEventType.x_eet_Drop_Role,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/CreateAppRole/*' />
         CreateAppRole = EMDEventType.x_eet_Create_AppRole,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/AlterAppRole/*' />
         AlterAppRole = EMDEventType.x_eet_Alter_AppRole,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/DropAppRole/*' />
         DropAppRole = EMDEventType.x_eet_Drop_AppRole,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/CreateSchema/*' />
         CreateSchema = EMDEventType.x_eet_Create_Schema,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/AlterSchema/*' />
         AlterSchema = EMDEventType.x_eet_Alter_Schema,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/DropSchema/*' />
         DropSchema = EMDEventType.x_eet_Drop_Schema,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/CreateLogin/*' />
         CreateLogin = EMDEventType.x_eet_Create_Login,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/AlterLogin/*' />
         AlterLogin = EMDEventType.x_eet_Alter_Login,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/DropLogin/*' />
         DropLogin = EMDEventType.x_eet_Drop_Login,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/CreateMsgType/*' />
         CreateMsgType = EMDEventType.x_eet_Create_MsgType,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/DropMsgType/*' />
         DropMsgType = EMDEventType.x_eet_Drop_MsgType,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/CreateContract/*' />
         CreateContract = EMDEventType.x_eet_Create_Contract,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/DropContract/*' />
         DropContract = EMDEventType.x_eet_Drop_Contract,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/CreateQueue/*' />
         CreateQueue = EMDEventType.x_eet_Create_Queue,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/AlterQueue/*' />
         AlterQueue = EMDEventType.x_eet_Alter_Queue,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/DropQueue/*' />
         DropQueue = EMDEventType.x_eet_Drop_Queue,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/CreateService/*' />
         CreateService = EMDEventType.x_eet_Create_Service,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/AlterService/*' />
         AlterService = EMDEventType.x_eet_Alter_Service,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/DropService/*' />
         DropService = EMDEventType.x_eet_Drop_Service,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/CreateRoute/*' />
         CreateRoute = EMDEventType.x_eet_Create_Route,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/AlterRoute/*' />
         AlterRoute = EMDEventType.x_eet_Alter_Route,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/DropRoute/*' />
         DropRoute = EMDEventType.x_eet_Drop_Route,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/GrantStatement/*' />
         GrantStatement = EMDEventType.x_eet_Grant_Statement,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/DenyStatement/*' />
         DenyStatement = EMDEventType.x_eet_Deny_Statement,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/RevokeStatement/*' />
         RevokeStatement = EMDEventType.x_eet_Revoke_Statement,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/GrantObject/*' />
         GrantObject = EMDEventType.x_eet_Grant_Object,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/DenyObject/*' />
         DenyObject = EMDEventType.x_eet_Deny_Object,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/RevokeObject/*' />
         RevokeObject = EMDEventType.x_eet_Revoke_Object,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/CreateBinding/*' />
         CreateBinding = EMDEventType.x_eet_Create_Binding,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/AlterBinding/*' />
         AlterBinding = EMDEventType.x_eet_Alter_Binding,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/DropBinding/*' />
         DropBinding = EMDEventType.x_eet_Drop_Binding,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/CreatePartitionFunction/*' />
         CreatePartitionFunction = EMDEventType.x_eet_Create_Partition_Function,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/AlterPartitionFunction/*' />
         AlterPartitionFunction = EMDEventType.x_eet_Alter_Partition_Function,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/DropPartitionFunction/*' />
         DropPartitionFunction = EMDEventType.x_eet_Drop_Partition_Function,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/CreatePartitionScheme/*' />
         CreatePartitionScheme = EMDEventType.x_eet_Create_Partition_Scheme,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/AlterPartitionScheme/*' />
         AlterPartitionScheme = EMDEventType.x_eet_Alter_Partition_Scheme,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml' path='docs/members[@name="TriggerAction"]/DropPartitionScheme/*' />
         DropPartitionScheme = EMDEventType.x_eet_Drop_Partition_Scheme,
     }
 }
