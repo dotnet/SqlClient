@@ -187,21 +187,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         /// <summary>
-        /// Generates cryptographically random bytes
-        /// </summary>
-        /// <param name="length">No of cryptographically random bytes to be generated</param>
-        /// <returns>A byte array containing cryptographically generated random bytes</returns>
-        internal static byte[] GenerateRandomBytes(int length)
-        {
-            // Generate random bytes cryptographically.
-            byte[] randomBytes = new byte[length];
-            RNGCryptoServiceProvider rngCsp = new RNGCryptoServiceProvider();
-            rngCsp.GetBytes(randomBytes);
-
-            return randomBytes;
-        }
-
-        /// <summary>
         /// Removes a certificate from the store. Cleanup purposes.
         /// </summary>
         /// <param name="certificateName"></param>
