@@ -69,7 +69,7 @@ namespace Microsoft.AdoDotNet.CodeSamples
             DisplayStatus("Ready");
         }
 
-        private void Form1_FormClosing(object sender, 
+        private void Form1_FormClosing(object sender,
             System.Windows.Forms.FormClosingEventArgs e)
         {
             if (isExecuting)
@@ -84,7 +84,7 @@ namespace Microsoft.AdoDotNet.CodeSamples
         {
             if (isExecuting)
             {
-                MessageBox.Show(this, 
+                MessageBox.Show(this,
                     "Already executing. Please wait until the current query " +
                     "has completed.");
             }

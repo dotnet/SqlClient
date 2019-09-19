@@ -77,13 +77,13 @@ class Program
                     "[SalesOrderID] = [Sales].[SalesOrderHeader].[SalesOrderID] " +
                     "WHERE [AccountNumber] = @accountNumber;", connection2);
 
-                    SqlParameter accountDetail = new SqlParameter();
-                    accountDetail.ParameterName = "@accountNumber";
-                    accountDetail.SqlDbType = SqlDbType.NVarChar;
-                    accountDetail.Direction = ParameterDirection.Input;
-                    accountDetail.Value = "10-4020-000034";
-                    sourceDetailData.Parameters.Add(accountDetail);
-                    SqlDataReader readerDetail = sourceDetailData.ExecuteReader();
+                SqlParameter accountDetail = new SqlParameter();
+                accountDetail.ParameterName = "@accountNumber";
+                accountDetail.SqlDbType = SqlDbType.NVarChar;
+                accountDetail.Direction = ParameterDirection.Input;
+                accountDetail.Value = "10-4020-000034";
+                sourceDetailData.Parameters.Add(accountDetail);
+                SqlDataReader readerDetail = sourceDetailData.ExecuteReader();
 
                 // Create the SqlBulkCopy object. 
                 using (SqlBulkCopy bulkCopy =
@@ -113,7 +113,7 @@ class Program
                     }
 
                     // Set up the order details destination. 
-                    bulkCopy.DestinationTableName ="dbo.BulkCopyDemoOrderDetail";
+                    bulkCopy.DestinationTableName = "dbo.BulkCopyDemoOrderDetail";
 
                     // Rather than clearing mappings that are not necessary
                     // for the next bulk copyo peration, the unneeded mappings
@@ -160,8 +160,8 @@ class Program
     }
 
     private static string GetConnectionString()
-        // To avoid storing the connection string in your code, 
-        // you can retrieve it from a configuration file. 
+    // To avoid storing the connection string in your code, 
+    // you can retrieve it from a configuration file. 
     {
         return "Data Source=(local); " +
             " Integrated Security=true;" +

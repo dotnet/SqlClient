@@ -1,4 +1,4 @@
-       // <Snippet1>
+// <Snippet1>
 using System;
 using System.Data;
 using Microsoft.Data.SqlClient;

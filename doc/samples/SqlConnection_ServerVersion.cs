@@ -20,7 +20,7 @@ namespace SqlConnection1CS
             {
                 connection.Open();
                 Console.WriteLine("ServerVersion: {0}", connection.ServerVersion);
-                Console.WriteLine("State: {0}", connection.State );
+                Console.WriteLine("State: {0}", connection.State);
             }
         }
     }

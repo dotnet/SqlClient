@@ -7,7 +7,7 @@ class Program
 {
     static void Main()
     {
-        SqlConnectionStringBuilder builder = 
+        SqlConnectionStringBuilder builder =
             new SqlConnectionStringBuilder(GetConnectionString());
 
         // Loop through each of the values, displaying the contents.
