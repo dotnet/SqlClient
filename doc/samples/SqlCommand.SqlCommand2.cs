@@ -37,4 +37,3 @@ namespace SqlCommandCS
         // </Snippet1>
     }
 }
-
