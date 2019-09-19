@@ -1,4 +1,3 @@
-<xml version="1.0">
 <docs>
     <members name="SqlClientMetaDataCollectionNames">
         <SqlClientMetaDataCollectionNames>
@@ -33,6 +32,21 @@
             <summary>A constant for use with the **GetSchema** method that represents the **ProcedureColumns** collection.</summary>
             <remarks>To be added.</remarks>
         </ProcedureColumns>
+        <UserDefinedTypes>
+            <summary>To be added.</summary>
+            <remarks>To be added.</remarks>
+        </UserDefinedTypes>
+        <Users>
+            <summary>To be added.</summary>
+            <remarks>To be added.</remarks>
+        </Users>
+        <ViewColumns>
+            <summary>To be added.</summary>
+            <remarks>To be added.</remarks>
+        </ViewColumns>
+        <Views>
+            <summary>To be added.</summary>
+            <remarks>To be added.</remarks>
+        </Views>
     </members>
 </docs>
-</xml>

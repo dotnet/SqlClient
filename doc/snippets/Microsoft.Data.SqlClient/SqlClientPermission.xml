@@ -1,4 +1,3 @@
-<xml version="1.0">
 <docs>
     <members name="SqlClientPermission">
         <SqlClientPermission>
@@ -21,7 +20,7 @@
                     ]]></format>
                 </remarks>
         </SqlClientPermission>
-        <ctor>
+        <ctor name="default">
             <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlClientPermission" /> class.</summary>
             <remarks>To be added.</remarks>
         </ctor>
@@ -85,4 +84,3 @@
         </Copy>
     </members>
 </docs>
-</xml>

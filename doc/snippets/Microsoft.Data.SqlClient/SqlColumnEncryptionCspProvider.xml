@@ -1,9 +1,9 @@
-<xml version="1.0">
 <docs>
     <members name="SqlColumnEncryptionCspProvider">
         <SqlColumnEncryptionCspProvider>
             <summary>The CMK Store provider implementation for using  Microsoft CAPI based Cryptographic Service Providers (CSP) with 
-            <see href="https://docs.microsoft.com/sql/relational-databases/security/encryption/always-encrypted-database-engine">Always Encrypted</see>.</summary>
+                <see href="https://docs.microsoft.com/sql/relational-databases/security/encryption/always-encrypted-database-engine">Always Encrypted</see>.
+            </summary>
             <remarks>
                 <format type="text/markdown"><![CDATA[  
   
@@ -66,4 +66,3 @@
         </VerifyColumnMasterKeyMetadata>
     </members>
 </docs>
-</xml>

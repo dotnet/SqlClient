@@ -1,3 +1,4 @@
+    // <Snippet1>
 using System;
 using System.Data;
 using Microsoft.Data.SqlClient;
@@ -13,7 +14,7 @@ class Program
         string qs = "SELECT OrderID, CustomerID FROM dbo.Orders;";
         CreateCommand(qs, str);
     }
-    // <Snippet1>
+
     private static void CreateCommand(string queryString,
         string connectionString)
     {

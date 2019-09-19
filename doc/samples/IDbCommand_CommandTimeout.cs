@@ -1,3 +1,4 @@
+// <Snippet1>
 using System;
 using System.Xml;
 using System.Data;
@@ -11,7 +12,6 @@ public class Form1: Form
   protected DataGrid dataGrid1;
 
 
-// <Snippet1>
  public void CreateSqlCommand() 
  {
     SqlCommand command = new SqlCommand();

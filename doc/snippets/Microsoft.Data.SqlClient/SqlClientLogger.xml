@@ -1,4 +1,3 @@
-<xml version="1.0">
 <docs>
     <members name="SqlClientLogger">
         <SqlClientLogger>
@@ -40,4 +39,3 @@
         </LogInfo>
     </members>
 </docs>
-</xml>

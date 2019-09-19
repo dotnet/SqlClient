@@ -1,4 +1,3 @@
-<xml version="1.0">
 <docs>
     <members name="SqlColumnEncryptionCngProvider">
         <SqlColumnEncryptionCngProvider>
@@ -66,4 +65,3 @@
         </VerifyColumnMasterKeyMetadata>
     </members>
 </docs>
-</xml>

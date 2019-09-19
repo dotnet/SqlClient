@@ -1,4 +1,3 @@
-<xml version="1.0">
 <docs>
     <members name="SqlCommand">
         <SqlCommand>
@@ -359,7 +358,7 @@
             </remarks>
         </SqlCommand>
         
-        <ctor>
+        <ctor name="default">
             <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> class.</summary>
             <remarks>
                 <format type="text/markdown"><![CDATA[  
@@ -474,7 +473,7 @@
             <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> class with specified command text, connection, transaction, and encryption setting.</summary>
             <remarks>To be added.</remarks>
         </ctor>
-        <BeginExecuteNonQuery>
+        <BeginExecuteNonQuery name="default">
             <summary>Initiates the asynchronous execution of the Transact-SQL statement or stored procedure that is described by this <see cref="T:Microsoft.Data.SqlClient.SqlCommand" />.</summary>
             <returns>An <see cref="T:System.IAsyncResult" /> that can be used to poll or wait for results, or both; this value is also needed when invoking <see cref="M:Microsoft.Data.SqlClient.SqlCommand.EndExecuteNonQuery(System.IAsyncResult)" />, which returns the number of affected rows.</returns>
             <remarks>
@@ -570,7 +569,7 @@
 
                 The <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).</exception>
         </BeginExecuteNonQuery>
-        <BeginExecuteReader>
+        <BeginExecuteReader name="default">
             <summary>Initiates the asynchronous execution of the Transact-SQL statement or stored procedure that is described by this <see cref="T:Microsoft.Data.SqlClient.SqlCommand" />, and retrieves one or more result sets from the server.</summary>
             <returns>An <see cref="T:System.IAsyncResult" /> that can be used to poll or wait for results, or both; this value is also needed when invoking <see cref="M:Microsoft.Data.SqlClient.SqlCommand.EndExecuteReader(System.IAsyncResult)" />, which returns a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> instance that can be used to retrieve the returned rows.</returns>
             <remarks>
@@ -790,7 +789,7 @@
             <exception cref="T:System.IO.IOException">An error occurred in a <see cref="T:System.IO.Stream" />, <see cref="T:System.Xml.XmlReader" /> or <see cref="T:System.IO.TextReader" /> object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).</exception>
             <exception cref="T:System.ObjectDisposedException">The <see cref="T:System.IO.Stream" />, <see cref="T:System.Xml.XmlReader" /> or <see cref="T:System.IO.TextReader" /> object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).</exception>
         </BeginExecuteReader>
-        <BeginExecuteXmlReader>
+        <BeginExecuteXmlReader name="default">
             <summary>Initiates the asynchronous execution of the Transact-SQL statement or stored procedure that is described by this <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> and returns results as an <see cref="T:System.Xml.XmlReader" /> object.</summary>
             <returns>An <see cref="T:System.IAsyncResult" /> that can be used to poll or wait for results, or both; this value is also needed when invoking <see langword="EndExecuteXmlReader" />, which returns a single XML value.</returns>
             <remarks>
@@ -1074,9 +1073,7 @@
                 ]]></format>
             </remarks>
             <exception cref="T:System.InvalidOperationException">The <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Connection" /> property was changed while the command was enlisted in a transaction.</exception>
-            <altmember cref="P:Microsoft.Data.SqlClient.SqlCommand.CommandText" />
-            <altmember cref="P:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout" />
-            <altmember cref="P:Microsoft.Data.SqlClient.SqlCommand.CommandType" />
+            
         </Connection>
         <CreateDbParameter>
             <summary>To be added.</summary>
@@ -1128,12 +1125,12 @@
                     <format type="text/markdown"><![CDATA[  
   
                         ## Remarks  
-                        When you call <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery%2A> to execute a [!INCLUDE[tsql](~/includes/tsql-md.md)] statement, you must call <xref:Microsoft.Data.SqlClient.SqlCommand.EndExecuteNonQuery%2A> in order to complete the operation. If the process of executing the command has not yet finished, this method blocks until the operation is complete. Users can verify that the command has completed its operation by using the <xref:System.IAsyncResult> instance returned by the <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery%2A> method. If a callback procedure was specified in the call to <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery%2A>, this method must be called.  
+                        When you call <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery> to execute a [!INCLUDE[tsql](~/includes/tsql-md.md)] statement, you must call <xref:Microsoft.Data.SqlClient.SqlCommand.EndExecuteNonQuery> in order to complete the operation. If the process of executing the command has not yet finished, this method blocks until the operation is complete. Users can verify that the command has completed its operation by using the <xref:System.IAsyncResult> instance returned by the <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery> method. If a callback procedure was specified in the call to <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery>, this method must be called.  
   
    
   
                         ## Examples  
-                        For examples demonstrating the use of the <xref:Microsoft.Data.SqlClient.SqlCommand.EndExecuteNonQuery%2A> method, see <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery%2A>.  
+                        For examples demonstrating the use of the <xref:Microsoft.Data.SqlClient.SqlCommand.EndExecuteNonQuery%2A> method, see <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery>.  
   
                     ]]></format>
             </remarks>
@@ -1141,13 +1138,17 @@
             <exception cref="T:System.InvalidOperationException">
                 <see cref="M:Microsoft.Data.SqlClient.SqlCommand.EndExecuteNonQuery(System.IAsyncResult)" /> was called more than once for a single command execution, or the method was mismatched against its execution method (for example, the code called <see cref="M:Microsoft.Data.SqlClient.SqlCommand.EndExecuteNonQuery(System.IAsyncResult)" /> to complete execution of a call to <see cref="M:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteXmlReader" />.
             </exception>
-            <exception cref="T:Microsoft.Data.SqlClient.SqlException">The amount of time specified in <see cref="P:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout" /> elapsed and the asynchronous operation specified with <see cref="Overload:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery" /> is not complete.  
+            <exception cref="T:Microsoft.Data.SqlClient.SqlException">The amount of time specified in <see cref="P:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout" /> elapsed and the asynchronous operation specified with <see cref="M:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery" /> is not complete.  
  
                 -or-
 
-                In some situations, <see cref="T:System.IAsyncResult" /> can be set to <see langword="IsCompleted" /> incorrectly. If this occurs and <see cref="M:Microsoft.Data.SqlClient.SqlCommand.EndExecuteNonQuery(System.IAsyncResult)" /> is called, EndExecuteNonQuery could raise a SqlException error if the amount of time specified in <see cref="P:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout" /> elapsed and the asynchronous operation specified with <see cref="Overload:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery" /> is not complete. To correct this situation, you should either increase the value of CommandTimeout or reduce the work being done by the asynchronous operation.
+                In some situations, <see cref="T:System.IAsyncResult" /> can be set to <see langword="IsCompleted" /> incorrectly. If this occurs and <see cref="M:Microsoft.Data.SqlClient.SqlCommand.EndExecuteNonQuery(System.IAsyncResult)" /> is called, EndExecuteNonQuery could raise a SqlException error if the amount of time specified in <see cref="P:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout" /> elapsed and the asynchronous operation specified with <see cref="M:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery" /> is not complete. To correct this situation, you should either increase the value of CommandTimeout or reduce the work being done by the asynchronous operation.
             </exception>
         </EndExecuteNonQuery>
+        <EndExecuteNonQueryAsync name="IAsyncResult">
+            <summary>To be added.</summary>
+            <remarks>To be added.</remarks>
+        </EndExecuteNonQueryAsync>
         <EndExecuteReader name="IAsyncResult2">
             <param name="asyncResult">The <see cref="T:System.IAsyncResult" /> returned by the call to <see cref="M:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteReader" />.</param>
             <summary>Finishes asynchronous execution of a Transact-SQL statement, returning the requested <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />.</summary>
@@ -1200,13 +1201,13 @@
             <remarks>To be added.</remarks>
         </ExecuteDbDataReader>
         <ExecuteDbDataReaderAsync>
-        <param name="behavior">To be added.</param>
-        <param name="cancellationToken">To be added.</param>
+            <param name="behavior">To be added.</param>
+            <param name="cancellationToken">To be added.</param>
             <summary>To be added.</summary>
             <returns>To be added.</returns>
             <remarks>To be added.</remarks>
         </ExecuteDbDataReaderAsync>
-        <ExecuteNonQuery>
+        <ExecuteNonQuery name="default">
             <summary>Executes a Transact-SQL statement against the connection and returns the number of rows affected.</summary>
             <returns>The number of rows affected.</returns>
             <remarks>
@@ -1288,7 +1289,7 @@
             <exception cref="T:System.IO.IOException">An error occurred in a <see cref="T:System.IO.Stream" />, <see cref="T:System.Xml.XmlReader" /> or <see cref="T:System.IO.TextReader" /> object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).</exception>
             <exception cref="T:System.ObjectDisposedException">The <see cref="T:System.IO.Stream" />, <see cref="T:System.Xml.XmlReader" /> or <see cref="T:System.IO.TextReader" /> object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).</exception>
         </ExecuteNonQueryAsync>
-        <ExecuteReader>
+        <ExecuteReader name="default">
             <summary>Sends the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.CommandText" /> to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Connection" /> and builds a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />.</summary>
             <returns>A <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> object.</returns>
             <remarks>
@@ -1378,7 +1379,7 @@
             <exception cref="T:System.InvalidOperationException">The <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).</exception>
             <exception cref="T:System.ObjectDisposedException">The <see cref="T:System.IO.Stream" />, <see cref="T:System.Xml.XmlReader" /> or <see cref="T:System.IO.TextReader" /> object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).</exception>
         </ExecuteReader>
-        <ExecuteReaderAsync>
+        <ExecuteReaderAsync name="default">
             <summary>An asynchronous version of <see cref="M:Microsoft.Data.SqlClient.SqlCommand.ExecuteReader" />, which sends the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.CommandText" /> to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Connection" /> and builds a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />. Exceptions will be reported via the returned Task object.</summary>
             <returns>A task representing the asynchronous operation.</returns>
             <remarks>
@@ -1634,7 +1635,7 @@
             <exception cref="T:System.IO.IOException">An error occurred in a <see cref="T:System.IO.Stream" />, <see cref="T:System.Xml.XmlReader" /> or <see cref="T:System.IO.TextReader" /> object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).</exception>
             <exception cref="T:System.ObjectDisposedException">The <see cref="T:System.IO.Stream" />, <see cref="T:System.Xml.XmlReader" /> or <see cref="T:System.IO.TextReader" /> object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).</exception>
         </ExecuteScalarAsync>
-        <ExecuteXmlReader>
+        <ExecuteXmlReader name="default">
             <summary>Sends the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.CommandText" /> to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Connection" /> and builds an <see cref="T:System.Xml.XmlReader" /> object.</summary>
             <returns>An <see cref="T:System.Xml.XmlReader" /> object.</returns>
             <remarks>
@@ -1897,4 +1898,3 @@
         </UpdatedRowSource>
     </members>
 </docs>
-</xml>

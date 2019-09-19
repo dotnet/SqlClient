@@ -1,4 +1,3 @@
-<xml version="1.0">
 <docs>
     <members name="SqlColumnEncryptionEnclaveProvider">
         <SqlColumnEncryptionEnclaveProvider>
@@ -53,4 +52,3 @@
         </InvalidateEnclaveSession>
     </members>
 </docs>
-</xml>
