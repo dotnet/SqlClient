@@ -7,13 +7,18 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient.Server
 {
+    /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\Format.xml' path='docs/members[@name="Format"]/Format/*' />
     public enum Format
     { //: byte
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\Format.xml' path='docs/members[@name="Format"]/Unknown/*' />
         Unknown = 0,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\Format.xml' path='docs/members[@name="Format"]/Native/*' />
         Native = 1,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\Format.xml' path='docs/members[@name="Format"]/UserDefined/*' />
         UserDefined = 2,
     }
 
+    /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlUserDefinedTypeAttribute.xml' path='docs/members[@name="SqlUserDefinedTypeAttribute"]/SqlUserDefinedTypeAttribute/*' />
     // This custom attribute indicates that the given type is
     // a SqlServer udt. The properties on the attribute reflect the
     // physical attributes that will be used when the type is registered
@@ -31,7 +36,7 @@ namespace Microsoft.Data.SqlClient.Server
         internal const int YukonMaxByteSizeValue = 8000;
         private String m_ValidationMethodName = null;
 
-
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlUserDefinedTypeAttribute.xml' path='docs/members[@name="SqlUserDefinedTypeAttribute"]/ctor/*' />
         // A required attribute on all udts, used to indicate that the
         // given type is a udt, and its storage format.
         public SqlUserDefinedTypeAttribute(Format format)
@@ -49,6 +54,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlUserDefinedTypeAttribute.xml' path='docs/members[@name="SqlUserDefinedTypeAttribute"]/MaxByteSize/*' />
         // The maximum size of this instance, in bytes. Does not have to be
         // specified for Native serialization. The maximum value
         // for this property is specified by MaxByteSizeValue.
@@ -68,6 +74,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlUserDefinedTypeAttribute.xml' path='docs/members[@name="SqlUserDefinedTypeAttribute"]/IsFixedLength/*' />
         // Are all instances of this udt the same size on disk?
         public bool IsFixedLength
         {
@@ -81,6 +88,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlUserDefinedTypeAttribute.xml' path='docs/members[@name="SqlUserDefinedTypeAttribute"]/IsByteOrdered/*' />
         // Is this type byte ordered, i.e. is the on disk representation
         // consistent with the ordering semantics for this type?
         // If true, the binary representation of the type will be used
@@ -98,6 +106,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlUserDefinedTypeAttribute.xml' path='docs/members[@name="SqlUserDefinedTypeAttribute"]/Format/*' />
         // The on-disk format for this type.
         public Format Format
         {
@@ -107,6 +116,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlUserDefinedTypeAttribute.xml' path='docs/members[@name="SqlUserDefinedTypeAttribute"]/ValidationMethodName/*' />
         // An Optional method used to validate this UDT
         // Signature: bool &lt;ValidationMethodName&gt;();
         public String ValidationMethodName
@@ -121,6 +131,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlUserDefinedTypeAttribute.xml' path='docs/members[@name="SqlUserDefinedTypeAttribute"]/Name/*' />
         public string Name
         {
             get

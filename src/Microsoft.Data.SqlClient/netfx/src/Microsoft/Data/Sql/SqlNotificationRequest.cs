@@ -8,6 +8,7 @@ namespace Microsoft.Data.Sql
     using System;
     using Microsoft.Data.Common;
 
+    /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.Sql\SqlNotificationRequest.xml' path='docs/members[@name="SqlNotificationRequest"]/SqlNotificationRequest/*' />
     //[System.ComponentModel.TypeConverterAttribute(typeof(Microsoft.Data.Sql.SqlNotificationRequest.SqlNotificationRequestConverter))]
     public sealed class SqlNotificationRequest
     {
@@ -15,9 +16,11 @@ namespace Microsoft.Data.Sql
         private string _options;
         private int _timeout;
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.Sql\SqlNotificationRequest.xml' path='docs/members[@name="SqlNotificationRequest"]/ctor1/*' />
         public SqlNotificationRequest()
                 : this(null, null, SqlClient.SQL.SqlDependencyTimeoutDefault) { }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.Sql\SqlNotificationRequest.xml' path='docs/members[@name="SqlNotificationRequest"]/ctor2/*' />
         public SqlNotificationRequest(string userData, string options, int timeout)
         {
             UserData = userData;
@@ -25,6 +28,7 @@ namespace Microsoft.Data.Sql
             Options = options;
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.Sql\SqlNotificationRequest.xml' path='docs/members[@name="SqlNotificationRequest"]/Options/*' />
         public string Options
         {
             get
@@ -41,6 +45,7 @@ namespace Microsoft.Data.Sql
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.Sql\SqlNotificationRequest.xml' path='docs/members[@name="SqlNotificationRequest"]/Timeout/*' />
         public int Timeout
         {
             get
@@ -57,6 +62,7 @@ namespace Microsoft.Data.Sql
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.Sql\SqlNotificationRequest.xml' path='docs/members[@name="SqlNotificationRequest"]/UserData/*' />
         public string UserData
         {
             get
@@ -74,4 +80,3 @@ namespace Microsoft.Data.Sql
         }
     }
 }
-

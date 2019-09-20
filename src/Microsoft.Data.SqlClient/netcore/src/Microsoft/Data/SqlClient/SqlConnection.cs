@@ -123,7 +123,7 @@ namespace Microsoft.Data.SqlClient
             CacheConnectionStringProperties();
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctorConnectionStringCredentialCred/*' />
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctorConnectionStringCredential/*' />
         public SqlConnection(string connectionString, SqlCredential credential) : this()
         {
             ConnectionString = connectionString;
@@ -708,7 +708,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/DbProviderFactory/*' />
         protected override DbProviderFactory DbProviderFactory
         {
-            get => SqlClientFactory.Instance;
+            get => SqlClientFactory.s_instance;
         }
 
         // SqlCredential: Pair User Id and password in SecureString which are to be used for SQL authentication
@@ -1694,7 +1694,7 @@ namespace Microsoft.Data.SqlClient
             ChangePassword(connectionString, connectionOptions, null, newPassword, null);
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ChangePasswordConnectionStringCredentialNewPassworNewSecurePassword/*' />
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ChangePasswordConnectionStringCredentialNewSecurePassword/*' />
         public static void ChangePassword(string connectionString, SqlCredential credential, SecureString newSecurePassword)
         {
             if (string.IsNullOrEmpty(connectionString))

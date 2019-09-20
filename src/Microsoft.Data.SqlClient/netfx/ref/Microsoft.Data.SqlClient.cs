@@ -27,7 +27,7 @@ namespace Microsoft.Data.SqlClient
         ReadOnly = 1,
         ReadWrite = 0
     }
-    
+
     public delegate void OnChangeEventHandler(object sender, Microsoft.Data.SqlClient.SqlNotificationEventArgs e);
     public enum PoolBlockingPeriod
     {
@@ -1265,5 +1265,34 @@ namespace Microsoft.Data.SqlClient.DataClassification
         public SensitivityProperty(Microsoft.Data.SqlClient.DataClassification.Label label, Microsoft.Data.SqlClient.DataClassification.InformationType informationType) { }
         public Microsoft.Data.SqlClient.DataClassification.InformationType InformationType { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
         public Microsoft.Data.SqlClient.DataClassification.Label Label { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
+    }
+}
+namespace Microsoft.Data.SqlTypes
+{
+    public sealed partial class SqlFileStream : System.IO.Stream
+    {
+        public SqlFileStream(string path, byte[] transactionContext, System.IO.FileAccess access) { }
+        public SqlFileStream(string path, byte[] transactionContext, System.IO.FileAccess access, System.IO.FileOptions options, System.Int64 allocationSize) { }
+        public string Name { get { throw null; } }
+        public byte[] TransactionContext { get { throw null; } }
+        public override bool CanRead { get { throw null; } }
+        public override bool CanSeek { get { throw null; } }
+        public override bool CanTimeout { get { throw null; } }
+        public override bool CanWrite { get { throw null; } }
+        public override long Length { get { throw null; } }
+        public override long Position { get { throw null; } set { throw null; } }
+        public override int ReadTimeout { get { throw null; } }
+        public override int WriteTimeout { get { throw null; } }
+        public override void Flush() { }
+        public override System.IAsyncResult BeginRead(byte[] array, int offset, int numBytes, System.AsyncCallback userCallback, System.Object stateObject) { throw null; }
+        public override int EndRead(System.IAsyncResult asyncResult) { throw null; }
+        public override System.IAsyncResult BeginWrite(byte[] buffer, int offset, int count, System.AsyncCallback callback, System.Object state) { throw null; }
+        public override void EndWrite(System.IAsyncResult asyncResult) { }
+        public override long Seek(long offset, System.IO.SeekOrigin origin) { throw null; }
+        public override void SetLength(long value) { throw null; }
+        public override int Read(byte[] buffer, int offset, int count) { throw null; }
+        public override int ReadByte() { throw null; }
+        public override void Write(byte[] buffer, int offset, int count) { throw null; }
+        public override void WriteByte(byte value) { }
     }
 }

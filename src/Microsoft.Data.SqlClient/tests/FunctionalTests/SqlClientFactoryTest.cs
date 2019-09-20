@@ -12,18 +12,18 @@ namespace Microsoft.Data.SqlClient.Tests
         [Fact]
         public void InstanceTest()
         {
-            SqlClientFactory instance = SqlClientFactory.Instance;
+            SqlClientFactory instance = SqlClientFactory.s_instance;
             Assert.NotNull(instance);
-            Assert.Same(instance, SqlClientFactory.Instance);
+            Assert.Same(instance, SqlClientFactory.s_instance);
         }
 
         public static readonly object[][] FactoryMethodTestData =
         {
-            new object[] { new Func<object>(SqlClientFactory.Instance.CreateCommand), typeof(SqlCommand) },
-            new object[] { new Func<object>(SqlClientFactory.Instance.CreateConnection), typeof(SqlConnection) },
-            new object[] { new Func<object>(SqlClientFactory.Instance.CreateConnectionStringBuilder), typeof(SqlConnectionStringBuilder) },
-            new object[] { new Func<object>(SqlClientFactory.Instance.CreateDataAdapter), typeof(SqlDataAdapter) },
-            new object[] { new Func<object>(SqlClientFactory.Instance.CreateParameter), typeof(SqlParameter) },
+            new object[] { new Func<object>(SqlClientFactory.s_instance.CreateCommand), typeof(SqlCommand) },
+            new object[] { new Func<object>(SqlClientFactory.s_instance.CreateConnection), typeof(SqlConnection) },
+            new object[] { new Func<object>(SqlClientFactory.s_instance.CreateConnectionStringBuilder), typeof(SqlConnectionStringBuilder) },
+            new object[] { new Func<object>(SqlClientFactory.s_instance.CreateDataAdapter), typeof(SqlDataAdapter) },
+            new object[] { new Func<object>(SqlClientFactory.s_instance.CreateParameter), typeof(SqlParameter) },
         };
 
         [Theory]

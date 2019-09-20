@@ -134,13 +134,22 @@ namespace Microsoft.Data.SqlTypes
         public byte[] TransactionContext { get { throw null; } }
         public override bool CanRead { get { throw null; } }
         public override bool CanSeek { get { throw null; } }
+        public override bool CanTimeout { get { throw null; } }
         public override bool CanWrite { get { throw null; } }
         public override long Length { get { throw null; } }
         public override long Position { get { throw null; } set { throw null; } }
+        public override int ReadTimeout { get { throw null; } }
+        public override int WriteTimeout { get { throw null; } }
         public override void Flush() { }
-        public override int Read(byte[] buffer, int offset, int count) { throw null; }
+        public override System.IAsyncResult BeginRead(byte[] array, int offset, int numBytes, System.AsyncCallback userCallback, System.Object stateObject) { throw null; }
+        public override int EndRead(System.IAsyncResult asyncResult) { throw null; }
+        public override System.IAsyncResult BeginWrite(byte[] buffer, int offset, int count, System.AsyncCallback callback, System.Object state) { throw null; }
+        public override void EndWrite(System.IAsyncResult asyncResult) { }
         public override long Seek(long offset, System.IO.SeekOrigin origin) { throw null; }
         public override void SetLength(long value) { throw null; }
+        public override int Read(byte[] buffer, int offset, int count) { throw null; }
+        public override int ReadByte() { throw null; }
         public override void Write(byte[] buffer, int offset, int count) { throw null; }
+        public override void WriteByte(byte value) { }
     }
 }

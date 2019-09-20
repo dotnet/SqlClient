@@ -335,7 +335,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/ColumnMappings/*'/>
         public SqlBulkCopyColumnMappingCollection ColumnMappings
         {
             get
@@ -344,6 +344,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/DestinationTableName/*'/>
         public string DestinationTableName
         {
             get
@@ -364,6 +365,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/NotifyAfter/*'/>
         public int NotifyAfter
         {
             get
@@ -383,6 +385,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/SqlRowsCopied/*'/>
         public event SqlRowsCopiedEventHandler SqlRowsCopied
         {
             add
@@ -802,6 +805,7 @@ namespace Microsoft.Data.SqlClient
 
         // Terminates the bulk copy operation.
         // Must be called at the end of the bulk copy session.
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/Close/*'/>
         public void Close()
         {
             if (_insideRowsCopiedEvent)

@@ -18,7 +18,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             string tempTable = DataTestUtility.GetUniqueNameForSqlServer("table");
 
-            DbProviderFactory provider = SqlClientFactory.Instance;
+            DbProviderFactory provider = SqlClientFactory.s_instance;
             try
             {
                 using (DbConnection con = provider.CreateConnection())

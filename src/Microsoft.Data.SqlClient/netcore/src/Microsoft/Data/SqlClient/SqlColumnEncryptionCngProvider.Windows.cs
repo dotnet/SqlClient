@@ -363,7 +363,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Extracts the CNG provider and key name from the key path
         /// </summary>
-        /// <param name="masterKeyPath">keypath in the format [CNG Provider]\[KeyName]</param>
+        /// <param name="keyPath">keypath in the format [CNG Provider]\[KeyName]</param>
         /// <param name="isSystemOp">Indicates if ADO.NET calls or the customer calls the API</param>
         /// <param name="cngProvider">CNG Provider</param>
         /// <param name="keyIdentifier">Key identifier inside the CNG provider</param>

@@ -30,7 +30,7 @@ namespace Microsoft.Data.SqlClient
         /// This function must be implemented by the corresponding Key Store providers. This function should use an asymmetric key identified by a key path
         /// and encrypt a plain text column encryption key with a given asymmetric key encryption algorithm.
         /// </summary>
-        /// <param name="keyPath">Complete path of an asymmetric key. Path format is specific to a key store provider.</param>
+        /// <param name="masterKeyPath">Complete path of an asymmetric key. Path format is specific to a key store provider.</param>
         /// <param name="encryptionAlgorithm">Asymmetric Key Encryption Algorithm</param>
         /// <param name="columnEncryptionKey">Plain text column encryption key to be encrypted</param>
         /// <returns>Encrypted column encryption key</returns>

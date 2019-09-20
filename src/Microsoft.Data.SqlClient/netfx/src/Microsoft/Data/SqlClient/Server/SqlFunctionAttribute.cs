@@ -6,21 +6,27 @@ using System;
 
 namespace Microsoft.Data.SqlClient.Server
 {
-
+    /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\DataAccessKind.xml' path='docs/members[@name="DataAccessKind"]/DataAccessKind/*' />
     [Serializable]
     public enum DataAccessKind
     {
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\DataAccessKind.xml' path='docs/members[@name="DataAccessKind"]/None/*' />
         None = 0,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\DataAccessKind.xml' path='docs/members[@name="DataAccessKind"]/Read/*' />
         Read = 1,
     }
 
+    /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SystemDataAccessKind.xml' path='docs/members[@name="SystemDataAccessKind"]/SystemDataAccessKind/*' />
     [Serializable]
     public enum SystemDataAccessKind
     {
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SystemDataAccessKind.xml' path='docs/members[@name="SystemDataAccessKind"]/None/*' />
         None = 0,
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SystemDataAccessKind.xml' path='docs/members[@name="SystemDataAccessKind"]/Read/*' />
         Read = 1,
     }
 
+    /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlFunctionAttribute.xml' path='docs/members[@name="SqlFunctionAttribute"]/SqlFunctionAttribute/*' />
     // sql specific attribute
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false), Serializable]
     public class SqlFunctionAttribute : System.Attribute
@@ -33,7 +39,7 @@ namespace Microsoft.Data.SqlClient.Server
         private string m_fTableDefinition;
         private string m_FillRowMethodName;
 
-
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlFunctionAttribute.xml' path='docs/members[@name="SqlFunctionAttribute"]/ctor/*' />
         public SqlFunctionAttribute()
         {
             // default values
@@ -46,6 +52,7 @@ namespace Microsoft.Data.SqlClient.Server
             m_FillRowMethodName = null;
         } // SqlFunctionAttribute
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlFunctionAttribute.xml' path='docs/members[@name="SqlFunctionAttribute"]/IsDeterministic/*' />
         public bool IsDeterministic
         {
             get
@@ -58,6 +65,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         } // Deterministic
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlFunctionAttribute.xml' path='docs/members[@name="SqlFunctionAttribute"]/DataAccess/*' />
         public DataAccessKind DataAccess
         {
             get
@@ -70,6 +78,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         } // public bool DataAccessKind
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlFunctionAttribute.xml' path='docs/members[@name="SqlFunctionAttribute"]/SystemDataAccess/*' />
         public SystemDataAccessKind SystemDataAccess
         {
             get
@@ -82,6 +91,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         } // public bool SystemDataAccessKind
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlFunctionAttribute.xml' path='docs/members[@name="SqlFunctionAttribute"]/IsPrecise/*' />
         public bool IsPrecise
         {
             get
@@ -94,6 +104,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         } // Precise
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlFunctionAttribute.xml' path='docs/members[@name="SqlFunctionAttribute"]/Name/*' />
         public string Name
         {
             get
@@ -106,6 +117,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlFunctionAttribute.xml' path='docs/members[@name="SqlFunctionAttribute"]/TableDefinition/*' />
         public string TableDefinition
         {
             get
@@ -117,6 +129,7 @@ namespace Microsoft.Data.SqlClient.Server
                 m_fTableDefinition = value;
             }
         }
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlFunctionAttribute.xml' path='docs/members[@name="SqlFunctionAttribute"]/FillRowMethodName/*' />
         public string FillRowMethodName
         {
             get

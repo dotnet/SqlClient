@@ -53,3 +53,4 @@ class Program
             + "Integrated Security=SSPI";
     }
 }
+// </Snippet1>
