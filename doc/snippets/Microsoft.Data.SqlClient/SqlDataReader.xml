@@ -58,6 +58,11 @@
             <value>The <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> associated with the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />.</value>
             <remarks>To be added.</remarks>
         </Connection>
+        <SensitivityClassification>
+            <summary>Gets the <see cref="T:Microsoft.Data.SqlClient.DataClassification.SensitivityClassification" /> information with the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />.</summary>
+            <value>The <see cref="T:Microsoft.Data.SqlClient.DataClassification.SensitivityClassification" /> associated with the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />.</value>
+            <remarks>To be added.</remarks>
+        </SensitivityClassification>
         <Depth>
             <summary>Gets a value that indicates the depth of nesting for the current row.</summary>
             <value>The depth of nesting for the current row.</value>

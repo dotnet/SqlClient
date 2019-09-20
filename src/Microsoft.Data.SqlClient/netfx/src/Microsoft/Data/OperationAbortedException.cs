@@ -10,6 +10,7 @@ namespace Microsoft.Data
     using Microsoft.Data.Common;
 
     [Serializable]
+    /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data\OperationAbortedException.xml' path='docs/members[@name="OperationAbortedException"]/OperationAbortedException/*' />
     public sealed class OperationAbortedException : SystemException
     {
         private OperationAbortedException(string message, Exception innerException) : base(message, innerException)
