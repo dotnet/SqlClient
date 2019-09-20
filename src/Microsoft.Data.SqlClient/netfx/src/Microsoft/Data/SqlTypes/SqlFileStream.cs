@@ -106,11 +106,13 @@ namespace Microsoft.Data.SqlTypes
         // NOTE: this destructor will only be called only if the Dispose
         //   method is not called by a client, giving the class a chance
         //   to finalize properly (i.e., free unmanaged resources)
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlTypes\SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Dispose/*' />
         ~SqlFileStream()
         {
             Dispose(false);
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlTypes\SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Dispose/*' />
         protected override void Dispose(bool disposing)
         {
             try

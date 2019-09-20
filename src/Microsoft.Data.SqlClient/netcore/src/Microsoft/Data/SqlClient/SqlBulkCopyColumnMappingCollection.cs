@@ -72,7 +72,6 @@ namespace Microsoft.Data.SqlClient
             return Add(new SqlBulkCopyColumnMapping(sourceColumnIndex, destinationColumnIndex));
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMappingCollection.xml' path='docs/members[@name="SqlBulkCopyColumnMappingCollection"]/Add[@name="sourceColumnIndexIntegerAnddestinationColumnIndexInteger"]/*'/>
         private void AssertWriteAccess()
         {
             if (ReadOnly)

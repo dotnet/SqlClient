@@ -26,7 +26,7 @@
     <NoConfig>True</NoConfig>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
-    <NoWarn>649,1699,1570,1572,1573,1591,1701,1702</NoWarn>
+    <NoWarn>1701,1702</NoWarn>
     <GenerateFullPaths>True</GenerateFullPaths>
     <NoStandardLib>True</NoStandardLib>
     <WarningLevel>4</WarningLevel>
@@ -38,7 +38,6 @@
     <OutputType>Library</OutputType>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
     <Utf8Output>True</Utf8Output>
-    <WarningsNotAsErrors>472,8073,649,675,1570,1574,1584,1658,1701,1717,3002,3003,1058</WarningsNotAsErrors>
     <ErrorReport>None</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <BuildProjectReferences>True</BuildProjectReferences>

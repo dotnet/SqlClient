@@ -13,7 +13,7 @@ public sealed partial class SqlMetaDataTester
 //<Snippet1>
 // using Microsoft.Data.SqlClient.Server;
 
-[Microsoft.SqlServer.Server.SqlProcedure]
+[Microsoft.Data.SqlClient.Server.SqlProcedure]
 public static void CreateNewRecord()
 {
    // Variables.

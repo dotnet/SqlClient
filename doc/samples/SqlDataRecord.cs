@@ -10,7 +10,7 @@ public sealed partial class SqlDataRecordTester
    {
    }
 
-[Microsoft.SqlServer.Server.SqlProcedure]
+[Microsoft.Data.SqlClient.Server.SqlProcedure]
 public static void CallTestMethods()
 {
    CreateNewRecord();
@@ -21,7 +21,7 @@ public static void CallTestMethods()
 //<Snippet1>
 //using Microsoft.Data.SqlClient.Server;
 
-[Microsoft.SqlServer.Server.SqlProcedure]
+[Microsoft.Data.SqlClient.Server.SqlProcedure]
 public static void CreateNewRecord()
 {
 

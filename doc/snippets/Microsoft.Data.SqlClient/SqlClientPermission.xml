@@ -82,5 +82,58 @@
             <returns>A copy of the current permission object.</returns>
             <remarks>To be added.</remarks>
         </Copy>
+        <ToXml>
+            <summary>Creates an XML encoding of the security object and its current state.</summary>
+            <returns>An XML encoding of the security object, including any state information.</returns>
+            <remarks>
+              <format type="text/markdown"><![CDATA[  
+      
+    ## Remarks  
+     Custom code that extends security objects must implement the <xref:System.Data.Common.DBDataPermission.ToXml%2A> and <xref:System.Data.Common.DBDataPermission.FromXml%2A> methods to make the objects security encodable.  
+      
+     ]]></format>
+            </remarks>
+        </ToXml>
+        <FromXml>
+            <param name="securityElement">The XML encoding to use to reconstruct the security object.</param>
+            <summary>Reconstructs a security object with a specified state from an XML encoding.</summary>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
+    
+    ## Remarks  
+    Custom code that extends security objects needs to implement the `ToXml` and `FromXml` methods to make the objects security encodable.  
+    
+    ]]></format>
+            </remarks>
+        </FromXml>
+        <Union>
+            <param name="target">A permission object to combine with the current permission object. It must be of the same type as the current permission object.</param>
+            <summary>Returns a new permission object that is the union of the current and specified permission objects.</summary>
+            <returns>A new permission object that represents the union of the current permission object and the specified permission object.</returns>
+            <remarks>
+              <format type="text/markdown"><![CDATA[  
+      
+    ## Remarks  
+     The result of a call to <xref:System.Data.Common.DBDataPermission.Union%2A> is a permission that represents all the operations permitted by both the current permission object and the specified permission object. Any demand that passes either permission passes their union.  
+      
+     ]]></format>
+            </remarks>
+            <exception cref="T:System.ArgumentException">The <paramref name="target" /> object is not the same type as the current permission object.</exception>
+        </Union>
+        <IsSubsetOf>
+            <param name="target">A permission object that is to be tested for the subset relationship. This object must be of the same type as the current permission object.</param>
+            <summary>Returns a value indicating whether the current permission object is a subset of the specified permission object.</summary>
+            <returns>
+              <see langword="true" /> if the current permission object is a subset of the specified permission object, otherwise <see langword="false" />.</returns>
+            <remarks>
+              <format type="text/markdown"><![CDATA[  
+      
+    ## Remarks  
+     The current permission object is a subset of the specified permission object if the current permission object specifies a set of operations that is wholly contained by the specified permission object. For example, a permission that represents access to C:\example.txt is a subset of a permission that represents access to C:\\. If this method returns `true`, the current permission object represents no more access to the protected resource than does the specified permission object.  
+      
+     ]]></format>
+            </remarks>
+            <exception cref="T:System.ArgumentException">The <paramref name="target" /> parameter is an object that is not of the same type as the current permission object.</exception>
+        </IsSubsetOf>
     </members>
 </docs>

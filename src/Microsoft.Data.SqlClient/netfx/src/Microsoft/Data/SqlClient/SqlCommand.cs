@@ -581,6 +581,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/DbConnection/*' />
         override protected DbConnection DbConnection
         { // V1.2.3300
             get
@@ -710,6 +711,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/DbTransaction/*' />
         override protected DbTransaction DbTransaction
         { // V1.2.3300
             get
@@ -2355,6 +2357,7 @@ namespace Microsoft.Data.SqlClient
             return BeginExecuteReader(callback, stateObject, CommandBehavior.Default);
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteDbDataReader[@name="CommandBehavior"]/*'/>
         override protected DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
         {
             Bid.CorrelationTrace("<sc.SqlCommand.ExecuteDbDataReader|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
@@ -3922,8 +3925,11 @@ namespace Microsoft.Data.SqlClient
         /// <param name="returnStream"></param>
         /// <param name="async"></param>
         /// <param name="timeout"></param>
-        /// <param name="task"></param>
+        /// <param name="completion"></param>
+        /// <param name="returnTask"></param>
         /// <param name="asyncWrite"></param>
+        /// <param name="usedCache"></param>
+        /// <param name="inRetry"></param>
         /// <returns></returns>
         private void PrepareForTransparentEncryption(CommandBehavior cmdBehavior, bool returnStream, bool async, int timeout, TaskCompletionSource<object> completion, out Task returnTask, bool asyncWrite, out bool usedCache, bool inRetry)
         {
@@ -4401,7 +4407,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <summary>
         /// Constructs the sp_describe_parameter_encryption request with the values from the original RPC call.	
-        /// Prototype for <sp_describe_parameter_encryption> is 	
+        /// Prototype for &lt;sp_describe_parameter_encryption&gt; is 	
         /// exec sp_describe_parameter_encryption @tsql=N'[SQL Statement]', @params=N'@p1 varbinary(256)'
         /// </summary>
         /// <param name="originalRpcRequest"></param>
@@ -5027,6 +5033,7 @@ namespace Microsoft.Data.SqlClient
         /// <param name="timeout"></param>
         /// <param name="task"></param>
         /// <param name="asyncWrite"></param>
+        /// <param name="inRetry"></param>
         /// <param name="ds"></param>
         /// <param name="describeParameterEncryptionRequest"></param>
         /// <param name="describeParameterEncryptionTask"></param>

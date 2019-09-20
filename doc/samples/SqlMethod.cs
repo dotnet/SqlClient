@@ -6,7 +6,7 @@ using System.Data.SqlTypes;
 using System.Text;
 
 [Serializable]
-[Microsoft.SqlServer.Server.SqlUserDefinedType(Format.Native,
+[Microsoft.Data.SqlClient.Server.SqlUserDefinedType(Format.Native,
      IsByteOrdered=true,  
      Name="Point",ValidationMethodName = "ValidatePoint")]
 public struct Point : INullable

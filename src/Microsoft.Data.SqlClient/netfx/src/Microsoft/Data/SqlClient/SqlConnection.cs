@@ -587,6 +587,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // AccessToken: To be used for token based authentication
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/AccessToken/*' />
         [
         Browsable(false),
         DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),

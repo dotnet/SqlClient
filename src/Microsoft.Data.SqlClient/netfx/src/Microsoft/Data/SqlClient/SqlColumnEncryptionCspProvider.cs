@@ -270,8 +270,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Encrypt the text using specified CSP key.
         /// </summary>
-        /// <param name="masterKeyPath">CSP key path.</param>
-        /// <param name="encryptionAlgorithm">Encryption Algorithm.</param>
+        /// <param name="rscp">RSACryptoServiceProvider</param>
         /// <param name="columnEncryptionKey">Plain text Column Encryption Key.</param>
         /// <returns>Returns an encrypted blob or throws an exception if there are any errors.</returns>
         private byte[] RSAEncrypt(RSACryptoServiceProvider rscp, byte[] columnEncryptionKey)
@@ -285,8 +284,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Decrypt the text using specified CSP key.
         /// </summary>
-        /// <param name="masterKeyPath">CSP key url.</param>
-        /// <param name="encryptionAlgorithm">Encryption Algorithm.</param>
+        /// <param name="rscp">RSACryptoServiceProvider</param>
         /// <param name="encryptedColumnEncryptionKey">Encrypted Column Encryption Key.</param>
         /// <returns>Returns the decrypted plaintext Column Encryption Key or throws an exception if there are any errors.</returns>
         private byte[] RSADecrypt(RSACryptoServiceProvider rscp, byte[] encryptedColumnEncryptionKey)

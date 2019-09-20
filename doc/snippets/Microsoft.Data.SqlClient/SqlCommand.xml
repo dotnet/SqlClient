@@ -3215,7 +3215,7 @@
 		<Notification>
 			<summary>
 				Gets or sets a value that specifies the
-				<see cref="T:System.Data.Sql.SqlNotificationRequest" />
+				<see cref="T:Microsoft.Data.Sql.SqlNotificationRequest" />
 				object bound to this command.
 			</summary>
 			<value>

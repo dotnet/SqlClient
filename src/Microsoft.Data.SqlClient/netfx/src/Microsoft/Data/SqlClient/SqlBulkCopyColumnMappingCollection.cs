@@ -28,6 +28,7 @@ namespace Microsoft.Data.SqlClient
         {
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMappingCollection.xml' path='docs/members[@name="SqlBulkCopyColumnMappingCollection"]/Item/*'/>
         public SqlBulkCopyColumnMapping this[int index]
         {
             get

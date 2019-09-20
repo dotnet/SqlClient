@@ -69,7 +69,6 @@ namespace Microsoft.Data.SqlClient
 
         private string _udtTypeName;
         private string _typeName;
-        private Type _udtType;
         private Exception _udtLoadError;
 
         private string _parameterName;
@@ -334,7 +333,7 @@ namespace Microsoft.Data.SqlClient
             set;
         }
 
-
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/DbType/*' />
         override public DbType DbType
         {
             get
@@ -428,7 +427,7 @@ namespace Microsoft.Data.SqlClient
 
                 SqlMetaData SqlMetaDataInstance = (SqlMetaData)SqlMetaDataType.GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance,
                       null, argTypes, null).Invoke(new Object[] { this.ParameterName, mt.SqlDbType, maxlen, GetActualPrecision(), GetActualScale(), LocaleId, CompareInfo,
-                                       XmlSchemaCollectionDatabase, XmlSchemaCollectionOwningSchema, XmlSchemaCollectionName, mt.IsPlp, _udtType });
+                                       XmlSchemaCollectionDatabase, XmlSchemaCollectionOwningSchema, XmlSchemaCollectionName, mt.IsPlp, null });
                 return SqlMetaDataInstance;
             }
         }

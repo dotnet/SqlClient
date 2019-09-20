@@ -40,23 +40,23 @@
             </remarks>
         </ctor2>
         <ctorCommand>
-            <param name="command">The <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object to associate with this <see cref="T:Microsoft.Data.SqlClient.SqlDependency" /> object. The constructor will set up a <see cref="T:System.Data.Sql.SqlNotificationRequest" /> object and bind it to the command.</param>
+            <param name="command">The <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object to associate with this <see cref="T:Microsoft.Data.SqlClient.SqlDependency" /> object. The constructor will set up a <see cref="T:Microsoft.Data.Sql.SqlNotificationRequest" /> object and bind it to the command.</param>
             <summary>Creates a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlDependency" /> class and associates it with the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> parameter.</summary>
             <remarks>
             <format type="text/markdown"><![CDATA[  
   
 ## Remarks  
- Internally, this constructor creates an instance of the <xref:System.Data.Sql.SqlNotificationRequest> class, and binds it to a <xref:Microsoft.Data.SqlClient.SqlCommand> object.  
+ Internally, this constructor creates an instance of the <xref:Microsoft.Data.Sql.SqlNotificationRequest> class, and binds it to a <xref:Microsoft.Data.SqlClient.SqlCommand> object.  
   
  Query notifications are supported only for SELECT statements that meet a list of specific requirements. For more information, see [SQL Server Service Broker](/sql/database-engine/configure-windows/sql-server-service-broker) and [Working with Query Notifications](/sql/connect/oledb/features/working-with-query-notifications).
   
  ]]></format>
             </remarks>
             <exception cref="T:System.ArgumentNullException">The <paramref name="command" /> parameter is NULL.</exception>
-            <exception cref="T:System.InvalidOperationException">The <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object already has a <see cref="T:System.Data.Sql.SqlNotificationRequest" /> object assigned to its <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Notification" /> property, and that <see cref="T:System.Data.Sql.SqlNotificationRequest" /> is not associated with this dependency.</exception>
+            <exception cref="T:System.InvalidOperationException">The <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object already has a <see cref="T:Microsoft.Data.Sql.SqlNotificationRequest" /> object assigned to its <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Notification" /> property, and that <see cref="T:Microsoft.Data.Sql.SqlNotificationRequest" /> is not associated with this dependency.</exception>
         </ctorCommand>
         <ctorCommandOptionsTimeout>
-            <param name="command">The <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object to associate with this <see cref="T:Microsoft.Data.SqlClient.SqlDependency" /> object. The constructor sets up a <see cref="T:System.Data.Sql.SqlNotificationRequest" /> object and bind it to the command.</param>
+            <param name="command">The <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object to associate with this <see cref="T:Microsoft.Data.SqlClient.SqlDependency" /> object. The constructor sets up a <see cref="T:Microsoft.Data.Sql.SqlNotificationRequest" /> object and bind it to the command.</param>
             <param name="options">The notification request options to be used by this dependency. <see langword="null" /> to use the default service.</param>
             <param name="timeout">The time-out for this notification in seconds. The default is 0, indicating that the server's time-out should be used.</param>
             <summary>Creates a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlDependency" /> class, associates it with the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> parameter, and specifies notification options and a time-out value.</summary>
@@ -70,7 +70,7 @@
             </remarks>
             <exception cref="T:System.ArgumentNullException">The <paramref name="command" /> parameter is NULL.</exception>
             <exception cref="T:System.ArgumentOutOfRangeException">The time-out value is less than zero.</exception>
-            <exception cref="T:System.InvalidOperationException">The <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object already has a <see cref="T:System.Data.Sql.SqlNotificationRequest" /> object assigned to its <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Notification" /> property and that <see cref="T:System.Data.Sql.SqlNotificationRequest" /> is not associated with this dependency.  
+            <exception cref="T:System.InvalidOperationException">The <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object already has a <see cref="T:Microsoft.Data.Sql.SqlNotificationRequest" /> object assigned to its <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Notification" /> property and that <see cref="T:Microsoft.Data.Sql.SqlNotificationRequest" /> is not associated with this dependency.  
     
     An attempt was made to create a **SqlDependency** instance from within SQLCLR.</exception>
         </ctorCommandOptionsTimeout>
@@ -86,7 +86,7 @@
  ]]></format>
             </remarks>
             <exception cref="T:System.ArgumentNullException">The <paramref name="command" /> parameter is null.</exception>
-            <exception cref="T:System.InvalidOperationException">The <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object already has a <see cref="T:System.Data.Sql.SqlNotificationRequest" /> object assigned to its <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Notification" /> property, and that <see cref="T:System.Data.Sql.SqlNotificationRequest" /> is not associated with this dependency.</exception>
+            <exception cref="T:System.InvalidOperationException">The <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object already has a <see cref="T:Microsoft.Data.Sql.SqlNotificationRequest" /> object assigned to its <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Notification" /> property, and that <see cref="T:Microsoft.Data.Sql.SqlNotificationRequest" /> is not associated with this dependency.</exception>
         </AddCommandDependency>
         <HasChanges>
             <summary>Gets a value that indicates whether one of the result sets associated with the dependency has changed.</summary>

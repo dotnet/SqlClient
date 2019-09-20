@@ -380,7 +380,6 @@
 					
 					Note that open <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instances are closed implicitly at the end of a `using` block.
 					
-
 					## Examples
 					The following example uses the same <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instance to add sales orders and their associated details to two destination tables. Because the **AdventureWorks** sales order tables are large, the sample reads only orders placed by a certain account number and bulk copies those orders and details to the destination tables. The <xref:Microsoft.Data.SqlClient.SqlBulkCopy.Close%2A> method is used only after both bulk copy operations are complete.
 					
