@@ -1055,30 +1055,20 @@ namespace Microsoft.Data.SqlClient
         Enabled,
     }
 
-    /// <summary>
-    /// Column Encryption Setting to be used for the SqlCommand.
-    /// </summary>
+    /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlCommandColumnEncryptionSetting.xml' path='docs/members[@name="SqlCommandColumnEncryptionSettingg"]/SqlCommandColumnEncryptionSetting/*' />
     public enum SqlCommandColumnEncryptionSetting
     {
-        /// <summary>
-        /// if “Column Encryption Setting=Enabled” in the connection string, use Enabled. Otherwise, maps to Disabled.
-        /// </summary>
+
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlCommandColumnEncryptionSetting.xml' path='docs/members[@name="SqlCommandColumnEncryptionSettingg"]/UseConnectionSetting/*' />
         UseConnectionSetting = 0,
 
-        /// <summary>
-        /// Enables TCE for the command. Overrides the connection level setting for this command.
-        /// </summary>
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlCommandColumnEncryptionSetting.xml' path='docs/members[@name="SqlCommandColumnEncryptionSettingg"]/Enabled/*' />
         Enabled,
 
-        /// <summary>
-        /// Parameters will not be encrypted, only the ResultSet will be decrypted. This is an optimization for queries that do not pass any encrypted input parameters.
-        /// Overrides the connection level setting for this command.
-        /// </summary>
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlCommandColumnEncryptionSetting.xml' path='docs/members[@name="SqlCommandColumnEncryptionSettingg"]/ResultSetOnly/*' />
         ResultSetOnly,
 
-        /// <summary>
-        /// Disables TCE for the command.Overrides the connection level setting for this command.
-        /// </summary>
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlCommandColumnEncryptionSetting.xml' path='docs/members[@name="SqlCommandColumnEncryptionSettingg"]/Disabled/*' />
         Disabled,
     }
 

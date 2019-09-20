@@ -10,9 +10,7 @@ using System.Text;
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <summary>
-    /// Certificate Key Store Provider class
-    /// </summary>
+    /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlColumnEncryptionCertificateStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionCertificateStoreProvider"]/SqlColumnEncryptionCertificateStoreProvider/*' />
     public class SqlColumnEncryptionCertificateStoreProvider : SqlColumnEncryptionKeyStoreProvider
     {
         // Constants
@@ -20,9 +18,7 @@ namespace Microsoft.Data.SqlClient
         // Assumption: Certificate Locations (LocalMachine & CurrentUser), Certificate Store name "My"
         // Certificate provider name (CertificateStore) dont need to be localized.
 
-        /// <summary>
-        /// Name for the certificate key store provider.
-        /// </summary>
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlColumnEncryptionCertificateStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionCertificateStoreProvider"]/ProviderName/*' />
         public const string ProviderName = @"MSSQL_CERTIFICATE_STORE";
 
         /// <summary>
@@ -60,14 +56,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private readonly byte[] _version = new byte[] { 0x01 };
 
-        /// <summary>
-        /// This function uses a certificate specified by the key path
-        /// and decrypts an encrypted CEK with RSA encryption algorithm.
-        /// </summary>
-        /// <param name="masterKeyPath">Complete path of a certificate</param>
-        /// <param name="encryptionAlgorithm">Asymmetric Key Encryption Algorithm</param>
-        /// <param name="encryptedColumnEncryptionKey">Encrypted Column Encryption Key</param>
-        /// <returns>Plain text column encryption key</returns>
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlColumnEncryptionCertificateStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionCertificateStoreProvider"]/DecryptColumnEncryptionKey/*' />
         public override byte[] DecryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] encryptedColumnEncryptionKey)
         {
             // Validate the input parameters
@@ -161,14 +150,7 @@ namespace Microsoft.Data.SqlClient
             return RSADecrypt(cipherText, certificate);
         }
 
-        /// <summary>
-        /// This function uses a certificate specified by the key path
-        /// and encrypts CEK with RSA encryption algorithm.
-        /// </summary>
-        /// <param name="masterKeyPath">Complete path of a certificate</param>
-        /// <param name="encryptionAlgorithm">Asymmetric Key Encryption Algorithm</param>
-        /// <param name="columnEncryptionKey">Plain text column encryption key</param>
-        /// <returns>Encrypted column encryption key</returns>
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlColumnEncryptionCertificateStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionCertificateStoreProvider"]/EncryptColumnEncryptionKey/*' />
         public override byte[] EncryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] columnEncryptionKey)
         {
             // Validate the input parameters
@@ -258,13 +240,7 @@ namespace Microsoft.Data.SqlClient
             return encryptedColumnEncryptionKey;
         }
 
-        /// <summary>
-        /// This function must be implemented by the corresponding Key Store providers. This function should use an asymmetric key identified by a key path
-        /// and sign the masterkey metadata consisting of (masterKeyPath, allowEnclaveComputations bit, providerName).
-        /// </summary>
-        /// <param name="masterKeyPath">Complete path of an asymmetric key. Path format is specific to a key store provider.</param>
-        /// <param name="allowEnclaveComputations">Boolean indicating whether this key can be sent to trusted enclave</param>
-        /// <returns>Signature for master key metadata</returns>
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlColumnEncryptionCertificateStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionCertificateStoreProvider"]/SignColumnMasterKeyMetadata/*' />
         public override byte[] SignColumnMasterKeyMetadata(string masterKeyPath, bool allowEnclaveComputations)
         {
             var hash = ComputeMasterKeyMetadataHash(masterKeyPath, allowEnclaveComputations, isSystemOp: false);
@@ -277,14 +253,7 @@ namespace Microsoft.Data.SqlClient
             return signature;
         }
 
-        /// <summary>
-        /// This function must be implemented by the corresponding Key Store providers. This function should use an asymmetric key identified by a key path
-        /// and verify the masterkey metadata consisting of (masterKeyPath, allowEnclaveComputations bit, providerName).
-        /// </summary>
-        /// <param name="masterKeyPath">Complete path of an asymmetric key. Path format is specific to a key store provider.</param>
-        /// <param name="allowEnclaveComputations">Boolean indicating whether this key can be sent to trusted enclave</param>
-        /// <param name="signature">Signature for the master key metadata</param>
-        /// <returns>Boolean indicating whether the master key metadata can be verified based on the provided signature</returns>
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlColumnEncryptionCertificateStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionCertificateStoreProvider"]/VerifyColumnMasterKeyMetadata/*' />
         public override bool VerifyColumnMasterKeyMetadata(string masterKeyPath, bool allowEnclaveComputations, byte[] signature)
         {
             var hash = ComputeMasterKeyMetadataHash(masterKeyPath, allowEnclaveComputations, isSystemOp: true);
