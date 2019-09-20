@@ -116,13 +116,12 @@ using (SqlConnection connection = new SqlConnection(connectionString))
  ]]></format>
             </remarks>
         </ctorConnectionString>
-        <ctorConnectionStringCredentialCred>
+        <ctorConnectionStringCredential>
             <param name="connectionString">A connection string that does not use any of the following connection string keywords: <see langword="Integrated Security = true" />, <see langword="UserId" />, or <see langword="Password" />; or that does not use <see langword="ContextConnection = true" />.</param>
             <param name="credential">A <see cref="T:Microsoft.Data.SqlClient.SqlCredential" /> object. If <paramref name="credential" /> is null, <see cref="M:Microsoft.Data.SqlClient.SqlConnection.#ctor(System.String,Microsoft.Data.SqlClient.SqlCredential)" /> is functionally equivalent to <see cref="M:Microsoft.Data.SqlClient.SqlConnection.#ctor(System.String)" />.</param>
-            <param name="cred">To be added.</param>
             <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> class given a connection string, that does not use <see langword="Integrated Security = true" /> and a <see cref="T:Microsoft.Data.SqlClient.SqlCredential" /> object that contains the user ID and password.</summary>
             <remarks>To be added.</remarks>
-        </ctorConnectionStringCredentialCred>
+        </ctorConnectionStringCredential>
         <AccessToken>
             <summary>Gets or sets the access token for the connection.</summary>
             <value>The access token for the connection.</value>
@@ -352,11 +351,10 @@ End Module
  The <paramref name="newPassword" /> exceeds 128 characters.</exception>
             <exception cref="T:System.ArgumentNullException">Either the <paramref name="connectionString" /> or the <paramref name="newPassword" /> parameter is null.</exception>
         </ChangePasswordConnectionStringNewPassword>
-        <ChangePasswordConnectionStringCredentialNewPassworNewSecurePassword>
+        <ChangePasswordConnectionStringCredentialNewSecurePassword>
             <param name="connectionString">The connection string that contains enough information to connect to a server. The connection string should not use any of the following connection string keywords: <see langword="Integrated Security = true" />, <see langword="UserId" />, or <see langword="Password" />; or <see langword="ContextConnection = true" />.</param>
             <param name="credential">A <see cref="T:Microsoft.Data.SqlClient.SqlCredential" /> object.</param>
-            <param name="newPassword">The new password.<paramref name="newPassword" /> must be read only. The password must also comply with any password security policy set on the server (for example, minimum length and requirements for specific characters).</param>
-            <param name="newSecurePassword">To be added.</param>
+            <param name="newSecurePassword">The new password. <paramref name="newSecurePassword" /> must be read only. The password must also comply with any password security policy set on the server (for example, minimum length and requirements for specific characters).</param>
             <summary>Changes the SQL Server password for the user indicated in the <see cref="T:Microsoft.Data.SqlClient.SqlCredential" /> object.</summary>
             <remarks>To be added.</remarks>
             <exception cref="T:System.ArgumentException">
@@ -368,17 +366,17 @@ The connection string contains <see langword="Context Connection=true" />.
 
 -or-
 
-<paramref name="newSecurePassword" /> (or <paramref name="newPassword" />) is greater than 128 characters.
+<paramref name="newSecurePassword" /> is greater than 128 characters.
 
 -or-
 
-<paramref name="newSecurePassword" /> (or <paramref name="newPassword" />) is not read only.
+<paramref name="newSecurePassword" /> is not read only.
 
 -or-
 
-<paramref name="newSecurePassword" /> (or <paramref name="newPassword" />) is an empty string.</exception>
+<paramref name="newSecurePassword" /> is an empty string.</exception>
             <exception cref="T:System.ArgumentNullException">One of the parameters (<paramref name="connectionString" />, <paramref name="credential" />, or <paramref name="newSecurePassword" />) is null.</exception>
-        </ChangePasswordConnectionStringCredentialNewPassworNewSecurePassword>
+        </ChangePasswordConnectionStringCredentialNewSecurePassword>
         <ClearAllPools>
             <summary>Empties the connection pool.</summary>
             <remarks>

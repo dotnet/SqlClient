@@ -27,6 +27,7 @@ namespace Microsoft.Data.SqlClient
 
         internal bool ReadOnly { get; set; }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMappingCollection.xml' path='docs/members[@name="SqlBulkCopyColumnMappingCollection"]/Item/*'/>
         public SqlBulkCopyColumnMapping this[int index] => (SqlBulkCopyColumnMapping)this.List[index];
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMappingCollection.xml' path='docs/members[@name="SqlBulkCopyColumnMappingCollection"]/Add[@name="bulkCopyColumnMappingParameter"]/*'/>
@@ -63,13 +64,14 @@ namespace Microsoft.Data.SqlClient
             AssertWriteAccess();
             return Add(new SqlBulkCopyColumnMapping(sourceColumn, destinationColumnIndex));
         }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMappingCollection.xml' path='docs/members[@name="SqlBulkCopyColumnMappingCollection"]/Add[@name="sourceColumnIndexIntegerAnddestinationColumnIndexInteger"]/*'/>
         public SqlBulkCopyColumnMapping Add(int sourceColumnIndex, int destinationColumnIndex)
         {
             AssertWriteAccess();
             return Add(new SqlBulkCopyColumnMapping(sourceColumnIndex, destinationColumnIndex));
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMappingCollection.xml' path='docs/members[@name="SqlBulkCopyColumnMappingCollection"]/Add[@name="sourceColumnIndexIntegerAnddestinationColumnIndexInteger"]/*'/>
         private void AssertWriteAccess()
         {
             if (ReadOnly)

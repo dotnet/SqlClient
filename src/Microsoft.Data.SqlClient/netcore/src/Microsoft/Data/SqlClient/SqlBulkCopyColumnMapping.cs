@@ -10,7 +10,7 @@ namespace Microsoft.Data.SqlClient
     // this class helps allows the user to create association between source- and targetcolumns
     //
     //
-    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMapping.xml' path='docs/members[@name="SqlBulkCopyColumnMapping"]/ctor[@name="sourceColumnStringAnddestinationColumnString"]/*'/>
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMapping.xml' path='docs/members[@name="SqlBulkCopyColumnMapping"]/ctor[@name="SqlBulkCopyColumnMapping"]/*'/>
     public sealed class SqlBulkCopyColumnMapping
     {
         internal string _destinationColumnName;

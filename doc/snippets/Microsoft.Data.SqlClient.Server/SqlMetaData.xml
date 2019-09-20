@@ -46,9 +46,7 @@
 |`TinyInt`|1|3|0|0|None|  
 |`UniqueIdentifier`|16|0|0|0|None|  
 |`Xml`|Max (-1)|0|0|0|IgnoreCase, IgnoreKanaType, IgnoreWidth|  
-  
-   
-  
+
 ## Examples  
  The following example creates a new <xref:Microsoft.Data.SqlClient.Server.SqlMetaData> object by specifying the column name and a column data type of <xref:System.Data.SqlDbType>.`Int`.  
   
@@ -56,7 +54,7 @@
   
  ]]></format>
             </remarks>
-            <exception cref="T:System.ArgumentNullException">The <paramref name="Name" /> is <see langword="null" />.</exception>
+            <exception cref="T:System.ArgumentNullException">The <paramref name="name" /> is <see langword="null" />.</exception>
             <exception cref="T:System.ArgumentException">A <see langword="SqlDbType" /> that is not allowed was passed to the constructor as <paramref name="dbType" />.</exception>
         </ctorNameDbType>
         <ctorNameDbTypeMaxLength>
@@ -97,7 +95,7 @@
   
  ]]></format>
             </remarks>
-            <exception cref="T:System.ArgumentNullException">The <paramref name="Name" /> is <see langword="null" />.</exception>
+            <exception cref="T:System.ArgumentNullException">The <paramref name="name" /> is <see langword="null" />.</exception>
             <exception cref="T:System.ArgumentException">A SqlDbType that is not allowed was passed to the constructor as <paramref name="dbType" />.</exception>
         </ctorNameDbTypeMaxLength>
         <ctorNameDbTypeUserDefinedType>
@@ -119,7 +117,7 @@
   
  ]]></format>
             </remarks>
-            <exception cref="T:System.ArgumentNullException">The <paramref name="Name" /> is <see langword="null" />.</exception>
+            <exception cref="T:System.ArgumentNullException">The <paramref name="name" /> is <see langword="null" />.</exception>
             <exception cref="T:System.ArgumentException">A SqlDbType that is not allowed was passed to the constructor as <paramref name="dbType" />, or <paramref name="userDefinedType" /> points to a type that does not have <see cref="T:Microsoft.Data.SqlClient.Server.SqlUserDefinedTypeAttribute" /> declared.</exception>
         </ctorNameDbTypeUserDefinedType>
         <ctorNameDbTypePrecisionScale>
@@ -142,7 +140,7 @@
   
  ]]></format>
             </remarks>
-            <exception cref="T:System.ArgumentNullException">The <paramref name="Name" /> is <see langword="null" />.</exception>
+            <exception cref="T:System.ArgumentNullException">The <paramref name="name" /> is <see langword="null" />.</exception>
             <exception cref="T:System.ArgumentException">A <see langword="SqlDbType" /> that is not allowed was passed to the constructor as <paramref name="dbType" />, or <paramref name="scale" /> was greater than <paramref name="precision" />.</exception>
         </ctorNameDbTypePrecisionScale>
         <ctorNameDbTypeUserDefinedTypeServerTypeName>
@@ -183,7 +181,7 @@
   
  ]]></format>
             </remarks>
-            <exception cref="T:System.ArgumentNullException">The <paramref name="Name" /> is <see langword="null" />.</exception>
+            <exception cref="T:System.ArgumentNullException">The <paramref name="name" /> is <see langword="null" />.</exception>
             <exception cref="T:System.ArgumentException">A SqlDbType that is not allowed was passed to the constructor as <paramref name="dbType" />.</exception>
         </ctorNameDbTypeMaxLengthLocaleCompareOptions>
         <ctorNameDbTypeDatabaseOwningSchemaObjectName>
@@ -207,11 +205,11 @@
   
  ]]></format>
             </remarks>
-            <exception cref="T:System.ArgumentNullException">The <paramref name="Name" /> is <see langword="null" />, or <paramref name="objectName" /> is <see langword="null" /> when <paramref name="database" /> and <paramref name="owningSchema" /> are non-<see langword="null" />.</exception>
+            <exception cref="T:System.ArgumentNullException">The <paramref name="name" /> is <see langword="null" />, or <paramref name="objectName" /> is <see langword="null" /> when <paramref name="database" /> and <paramref name="owningSchema" /> are non-<see langword="null" />.</exception>
             <exception cref="T:System.ArgumentException">A SqlDbType that is not allowed was passed to the constructor as <paramref name="dbType" />.</exception>
         </ctorNameDbTypeDatabaseOwningSchemaObjectName>
         <ctorNameDbTypeUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal>
-            <p  aram name="name">The name of the column.</param>
+            <param name="name">The name of the column.</param>
             <param name="dbType">The SQL Server type of the parameter or column.</param>
             <param name="useServerDefault">Specifies whether this column should use the default server value.</param>
             <param name="isUniqueKey">Specifies if the column in the table-valued parameter is unique.</param>
@@ -265,7 +263,7 @@
             </remarks>
         </ctorNameDbTypePrecisionScaleUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal>
         <ctorNameDbTypeMaxLengthPrecisionScaleLocaleCompareOptionsUserDefinedType>
-            <p  aram name="name">The name of the column.</param>
+            <param name="name">The name of the column.</param>
             <param name="dbType">The SQL Server type of the parameter or column.</param>
             <param name="maxLength">The maximum length of the specified type.</param>
             <param name="precision">The precision of the parameter or column.</param>
@@ -308,7 +306,7 @@
   
  ]]></format>
             </remarks>
-            <exception cref="T:System.ArgumentNullException">The <paramref name="Name" /> is <see langword="null" />.</exception>
+            <exception cref="T:System.ArgumentNullException">The <paramref name="name" /> is <see langword="null" />.</exception>
             <exception cref="T:System.ArgumentException">A <see langword="SqlDbType" /> that is not allowed was passed to the constructor as <paramref name="dbType" />, or <paramref name="userDefinedType" /> points to a type that does not have <see cref="T:Microsoft.Data.SqlClient.Server.SqlUserDefinedTypeAttribute" /> declared.</exception>
         </ctorNameDbTypeMaxLengthPrecisionScaleLocaleCompareOptionsUserDefinedType>
         <ctorNameDbTypeUserDefinedTypeServerTypeNameUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal>
@@ -402,7 +400,7 @@
             <returns>The adjusted value as a <see cref="T:System.Boolean" />.</returns>
             <remarks>To be added.</remarks>
             <exception cref="T:System.ArgumentException">
-            <paramref name="Value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
         </AdjustValue1>
         <AdjustValue2>
             <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
@@ -410,7 +408,7 @@
             <returns>The adjusted value as a <see cref="T:System.Byte" />.</returns>
             <remarks>To be added.</remarks>
             <exception cref="T:System.ArgumentException">
-            <paramref name="Value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
         </AdjustValue2>
         <AdjustValue3>
             <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
@@ -418,7 +416,7 @@
             <returns>The adjusted value as an array of <see cref="T:System.Byte" /> values.</returns>
             <remarks>To be added.</remarks>
             <exception cref="T:System.ArgumentException">
-            <paramref name="Value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
         </AdjustValue3>
         <AdjustValue4>
             <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
@@ -426,7 +424,7 @@
             <returns>The adjusted value as a <see cref="T:System.Char" />.</returns>
             <remarks>To be added.</remarks>
             <exception cref="T:System.ArgumentException">
-            <paramref name="Value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
         </AdjustValue4>
         <AdjustValue5>
             <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
@@ -434,7 +432,7 @@
             <returns>The adjusted value as an array <see cref="T:System.Char" /> values.</returns>
             <remarks>To be added.</remarks>
             <exception cref="T:System.ArgumentException">
-            <paramref name="Value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
         </AdjustValue5>
         <AdjustValue6>
             <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
@@ -442,7 +440,7 @@
             <returns>The adjusted value as a <see cref="T:System.Data.SqlTypes.SqlBinary" />.</returns>
             <remarks>To be added.</remarks>
             <exception cref="T:System.ArgumentException">
-            <paramref name="Value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
         </AdjustValue6>
         <AdjustValue7>
             <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
@@ -450,7 +448,7 @@
             <returns>The adjusted value as a <see cref="T:System.Data.SqlTypes.SqlBoolean" />.</returns>
             <remarks>To be added.</remarks>
             <exception cref="T:System.ArgumentException">
-            <paramref name="Value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
         </AdjustValue7>
         <AdjustValue8>
             <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
@@ -458,7 +456,7 @@
             <returns>The adjusted value as a <see cref="T:System.Data.SqlTypes.SqlByte" />.</returns>
             <remarks>To be added.</remarks>
             <exception cref="T:System.ArgumentException">
-            <paramref name="Value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
         </AdjustValue8>
         <AdjustValue9>
             <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
@@ -466,7 +464,7 @@
             <returns>The adjusted value as a <see cref="T:System.Data.SqlTypes.SqlBytes" />.</returns>
             <remarks>To be added.</remarks>
             <exception cref="T:System.ArgumentException">
-            <paramref name="Value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
         </AdjustValue9>
         <AdjustValue10>
             <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
@@ -474,7 +472,7 @@
             <returns>The adjusted value as a <see cref="T:System.Data.SqlTypes.SqlChars" />.</returns>
             <remarks>To be added.</remarks>
             <exception cref="T:System.ArgumentException">
-            <paramref name="Value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
         </AdjustValue10>
         <AdjustValue11>
             <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
@@ -482,7 +480,7 @@
             <returns>The adjusted value as a <see cref="T:System.Data.SqlTypes.SqlDateTime" />.</returns>
             <remarks>To be added.</remarks>
             <exception cref="T:System.ArgumentException">
-            <paramref name="Value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
         </AdjustValue11>
         <AdjustValue12>
             <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
@@ -490,7 +488,7 @@
             <returns>The adjusted value as a <see cref="T:System.Data.SqlTypes.SqlDecimal" />.</returns>
             <remarks>To be added.</remarks>
             <exception cref="T:System.ArgumentException">
-            <paramref name="Value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
         </AdjustValue12>
         <AdjustValue13>
             <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
@@ -498,7 +496,7 @@
             <returns>The adjusted value as a <see cref="T:System.Data.SqlTypes.SqlDouble" />.</returns>
             <remarks>To be added.</remarks>
             <exception cref="T:System.ArgumentException">
-            <paramref name="Value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
         </AdjustValue13>
         <AdjustValue14>
             <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
@@ -506,7 +504,7 @@
             <returns>The adjusted value as a <see cref="T:System.Data.SqlTypes.SqlGuid" />.</returns>
             <remarks>To be added.</remarks>
             <exception cref="T:System.ArgumentException">
-            <paramref name="Value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
         </AdjustValue14>
         <AdjustValue15>
             <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
@@ -514,7 +512,7 @@
             <returns>The adjusted value as a <see cref="T:System.Data.SqlTypes.SqlInt16" />.</returns>
             <remarks>To be added.</remarks>
             <exception cref="T:System.ArgumentException">
-            <paramref name="Value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
         </AdjustValue15>
         <AdjustValue16>
             <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
@@ -522,7 +520,7 @@
             <returns>The adjusted value as a <see cref="T:System.Data.SqlTypes.SqlInt32" />.</returns>
             <remarks>To be added.</remarks>
             <exception cref="T:System.ArgumentException">
-            <paramref name="Value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
         </AdjustValue16>
         <AdjustValue17>
             <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
@@ -530,7 +528,7 @@
             <returns>The adjusted value as a <see cref="T:System.Data.SqlTypes.SqlInt64" />.</returns>
             <remarks>To be added.</remarks>
             <exception cref="T:System.ArgumentException">
-            <paramref name="Value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
         </AdjustValue17>
         <AdjustValue18>
             <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
@@ -538,7 +536,7 @@
             <returns>The adjusted value as a <see cref="T:System.Data.SqlTypes.SqlMoney" />.</returns>
             <remarks>To be added.</remarks>
             <exception cref="T:System.ArgumentException">
-            <paramref name="Value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
         </AdjustValue18>
         <AdjustValue19>
             <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
@@ -546,7 +544,7 @@
             <returns>The adjusted value as a <see cref="T:System.Data.SqlTypes.SqlSingle" />.</returns>
             <remarks>To be added.</remarks>
             <exception cref="T:System.ArgumentException">
-            <paramref name="Value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
         </AdjustValue19>
         <AdjustValue20>
             <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
@@ -554,7 +552,7 @@
             <returns>The adjusted value as a <see cref="T:System.Data.SqlTypes.SqlString" />.</returns>
             <remarks>To be added.</remarks>
             <exception cref="T:System.ArgumentException">
-            <paramref name="Value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
         </AdjustValue20>
         <AdjustValue21>
             <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
@@ -562,7 +560,7 @@
             <returns>The adjusted value as a <see cref="T:System.Data.SqlTypes.SqlXml" />.</returns>
             <remarks>To be added.</remarks>
             <exception cref="T:System.ArgumentException">
-            <paramref name="Value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
         </AdjustValue21>
         <AdjustValue22>
             <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
@@ -570,7 +568,7 @@
             <returns>The adjusted value as a <see cref="T:System.DateTime" />.</returns>
             <remarks>To be added.</remarks>
             <exception cref="T:System.ArgumentException">
-            <paramref name="Value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
         </AdjustValue22>
         <AdjustValue23>
             <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
@@ -578,7 +576,7 @@
             <returns>The adjusted value as an array of <see cref="T:System.DateTimeOffset" /> values.</returns>
             <remarks>To be added.</remarks>
             <exception cref="T:System.ArgumentException">
-            <paramref name="Value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
         </AdjustValue23>
         <AdjustValue24>
             <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
@@ -586,7 +584,7 @@
             <returns>The adjusted value as a <see cref="T:System.Decimal" />.</returns>
             <remarks>To be added.</remarks>
             <exception cref="T:System.ArgumentException">
-            <paramref name="Value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
         </AdjustValue24>
         <AdjustValue25>
             <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
@@ -594,7 +592,7 @@
             <returns>The adjusted value as a <see cref="T:System.Double" />.</returns>
             <remarks>To be added.</remarks>
             <exception cref="T:System.ArgumentException">
-            <paramref name="Value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
         </AdjustValue25>
         <AdjustValue26>
             <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
@@ -602,7 +600,7 @@
             <returns>The adjusted value as a <see cref="T:System.Guid" />.</returns>
             <remarks>To be added.</remarks>
             <exception cref="T:System.ArgumentException">
-            <paramref name="Value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
         </AdjustValue26>
         <AdjustValue27>
             <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
@@ -610,7 +608,7 @@
             <returns>The adjusted value as a <see cref="T:System.Int16" />.</returns>
             <remarks>To be added.</remarks>
             <exception cref="T:System.ArgumentException">
-            <paramref name="Value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
         </AdjustValue27>
         <AdjustValue28>
             <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
@@ -618,7 +616,7 @@
             <returns>The adjusted value as a <see cref="T:System.Int32" />.</returns>
             <remarks>To be added.</remarks>
             <exception cref="T:System.ArgumentException">
-            <paramref name="Value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
         </AdjustValue28>
         <AdjustValue29>
             <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
@@ -626,7 +624,7 @@
             <returns>The adjusted value as a <see cref="T:System.Int64" />.</returns>
             <remarks>To be added.</remarks>
             <exception cref="T:System.ArgumentException">
-            <paramref name="Value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
         </AdjustValue29>
         <AdjustValue30>
             <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
@@ -634,15 +632,15 @@
             <returns>The adjusted value as a <see cref="T:System.Object" />.</returns>
             <remarks>To be added.</remarks>
             <exception cref="T:System.ArgumentException">
-            <paramref name="Value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
         </AdjustValue30>
         <AdjustValue31>
-            <pa ram name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
+            <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
             <summary>Validates the specified <see cref="T:System.Single" /> value against the metadata, and adjusts the value if necessary.</summary>
             <returns>The adjusted value as a <see cref="T:System.Single" />.</returns>
             <remarks>To be added.</remarks>
             <exception cref="T:System.ArgumentException">
-            <paramref name="Value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
         </AdjustValue31>
         <AdjustValue32>
             <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
@@ -650,7 +648,7 @@
             <returns>The adjusted value as a <see cref="T:System.String" />.</returns>
             <remarks>To be added.</remarks>
             <exception cref="T:System.ArgumentException">
-            <paramref name="Value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
         </AdjustValue32>
         <AdjustValue33>
             <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
@@ -658,7 +656,7 @@
             <returns>The adjusted value as an array of <see cref="T:System.TimeSpan" /> values.</returns>
             <remarks>To be added.</remarks>
             <exception cref="T:System.ArgumentException">
-            <paramref name="Value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
         </AdjustValue33>
         <CompareOptions>
             <summary>Gets the comparison rules used for the column or parameter.</summary>
@@ -747,7 +745,6 @@
             <summary>Gets the name of the column or parameter.</summary>
             <value>The name of the column or parameter as a <see cref="T:System.String" />.</value>
             <remarks>To be added.</remarks>
-            <exception cref="T:System.InvalidOperationException">The <paramref name="Name" /> specified in the constructor is longer than 128 characters.</exception>
         </Name>
         <Precision>
             <summary>Gets the precision of the column or parameter.</summary>

@@ -4,13 +4,12 @@
 
 namespace Microsoft.Data
 {
-
     using System;
     using System.Runtime.Serialization;
     using Microsoft.Data.Common;
 
+    /// <include file='..\..\..\..\..\..\doc\snippets\Microsoft.Data\OperationAbortedException.xml' path='docs/members[@name="OperationAbortedException"]/OperationAbortedException/*' />
     [Serializable]
-    /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data\OperationAbortedException.xml' path='docs/members[@name="OperationAbortedException"]/OperationAbortedException/*' />
     public sealed class OperationAbortedException : SystemException
     {
         private OperationAbortedException(string message, Exception innerException) : base(message, innerException)

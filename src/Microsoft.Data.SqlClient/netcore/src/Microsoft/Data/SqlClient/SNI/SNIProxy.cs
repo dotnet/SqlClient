@@ -42,6 +42,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// Enable SSL on a connection
         /// </summary>
         /// <param name="handle">Connection handle</param>
+        /// <param name="options"></param>
         /// <returns>SNI error code</returns>
         public uint EnableSsl(SNIHandle handle, uint options)
         {
@@ -262,6 +263,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="flushCache">Flush packet cache</param>
         /// <param name="async">Asynchronous connection</param>
         /// <param name="parallel">Attempt parallel connects</param>
+        /// <param name="isIntegratedSecurity"></param>
         /// <returns>SNI handle</returns>
         public SNIHandle CreateConnectionHandle(object callbackObject, string fullServerName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[] spnBuffer, bool flushCache, bool async, bool parallel, bool isIntegratedSecurity)
         {

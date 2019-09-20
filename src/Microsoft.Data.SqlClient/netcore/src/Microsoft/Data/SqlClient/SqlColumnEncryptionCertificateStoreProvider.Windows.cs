@@ -165,7 +165,7 @@ namespace Microsoft.Data.SqlClient
         /// This function uses a certificate specified by the key path
         /// and encrypts CEK with RSA encryption algorithm.
         /// </summary>
-        /// <param name="keyPath">Complete path of a certificate</param>
+        /// <param name="masterKeyPath">Complete path of a certificate</param>
         /// <param name="encryptionAlgorithm">Asymmetric Key Encryption Algorithm</param>
         /// <param name="columnEncryptionKey">Plain text column encryption key</param>
         /// <returns>Encrypted column encryption key</returns>
@@ -323,6 +323,7 @@ namespace Microsoft.Data.SqlClient
         /// then throws an exception
         /// </summary>
         /// <param name="encryptionAlgorithm">Asymmetric key encryptio algorithm</param>
+        /// <param name="isSystemOp"></param>
         private void ValidateEncryptionAlgorithm(string encryptionAlgorithm, bool isSystemOp)
         {
             // This validates that the encryption algorithm is RSA_OAEP
@@ -382,6 +383,7 @@ namespace Microsoft.Data.SqlClient
         /// <param name="keyPath">
         /// Certificate key path. Format of the path is [LocalMachine|CurrentUser]/[storename]/thumbprint
         /// </param>
+        /// <param name="isSystemOp"></param>
         /// <returns>Returns the certificate identified by the certificate path</returns>
         private X509Certificate2 GetCertificateByPath(string keyPath, bool isSystemOp)
         {
@@ -448,7 +450,9 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="storeLocation">Store Location: This can be one of LocalMachine or UserName</param>
         /// <param name="storeName">Store Location: Currently this can only be My store.</param>
+        /// <param name="masterKeyPath"></param>
         /// <param name="thumbprint">Certificate thumbprint</param>
+        /// <param name="isSystemOp"></param>
         /// <returns>Matching certificate</returns>
         private X509Certificate2 GetCertificate(StoreLocation storeLocation, StoreName storeName, string masterKeyPath, string thumbprint, bool isSystemOp)
         {
@@ -495,9 +499,8 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Encrypt the text using specified certificate.
         /// </summary>
-        /// <param name="plaintext">Text to encrypt.</param>
+        /// <param name="plainText">Text to encrypt.</param>
         /// <param name="certificate">Certificate object.</param>
-        /// <param name="masterKeyPath">Master key path that was used.</param>
         /// <returns>Returns an encrypted blob or throws an exception if there are any errors.</returns>
         private byte[] RSAEncrypt(byte[] plainText, X509Certificate2 certificate)
         {
@@ -512,9 +515,8 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Encrypt the text using specified certificate.
         /// </summary>
-        /// <param name="plaintext">Text to decrypt.</param>
+        /// <param name="cipherText">Text to decrypt.</param>
         /// <param name="certificate">Certificate object.</param>
-        /// <param name="masterKeyPath">Master key path that was used.</param>
         private byte[] RSADecrypt(byte[] cipherText, X509Certificate2 certificate)
         {
             Debug.Assert((cipherText != null) && (cipherText.Length != 0));

@@ -16,6 +16,7 @@
     <Platforms>AnyCPU;x64;x86</Platforms>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)\$(AssemblyName)\netcore\</IntermediateOutputPath>  
     <OutputPath>$(BinFolder)$(Configuration).$(Platform)\$(AssemblyName)\netcore\</OutputPath>
+    <DocumentationFile>$(OutputPath)\Microsoft.Data.SqlClient.xml</DocumentationFile>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Product>Core $(BaseProduct)</Product>
   </PropertyGroup>
