@@ -334,7 +334,7 @@ namespace Microsoft.Data.SqlClient
             set;
         }
 
-
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/DbType/*' />
         override public DbType DbType
         {
             get
