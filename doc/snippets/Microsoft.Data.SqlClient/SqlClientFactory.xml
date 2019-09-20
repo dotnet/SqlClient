@@ -21,7 +21,7 @@
                     ## Examples  
                     The following example displays a list of all available SQL Server data sources, using code that could enumerate data sources for any provider.  
   
-                    [!code-csharp[DataWorks SqlClientFactory_DataSourceEnumerator#1](~/samples/snippets/csharp/VS_Snippets_ADO.NET/DataWorks SqlClientFactory_DataSourceEnumerator/CS/source.cs#1)]
+                    [!code-csharp[SqlClientFactory_DataSourceEnumerator](~/sqlClient/doc/samples/ SqlClientFactory_DataSourceEnumerator.cs)]
   
                 ]]></format>
             </remarks>

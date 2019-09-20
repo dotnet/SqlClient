@@ -38,18 +38,21 @@ class Program
                 bulkCopy.DestinationTableName =
                     "dbo.BulkCopyDemoDifferentColumns";
 
-                // Set up the column mappings by name.
-                SqlBulkCopyColumnMapping mapID =
-                    new SqlBulkCopyColumnMapping("ProductID", "ProdID");
+                // Set up the column mappings source and destination.
+                SqlBulkCopyColumnMapping mapID = new SqlBulkCopyColumnMapping();
+                mapID.SourceColumn = "ProductID";
+                mapID.DestinationColumn = "ProdID";
                 bulkCopy.ColumnMappings.Add(mapID);
 
-                SqlBulkCopyColumnMapping mapName =
-                    new SqlBulkCopyColumnMapping("Name", "ProdName");
+                SqlBulkCopyColumnMapping mapName = new SqlBulkCopyColumnMapping();
+                mapName.SourceColumn = "Name";
+                mapName.DestinationColumn = "ProdName";
                 bulkCopy.ColumnMappings.Add(mapName);
 
-                SqlBulkCopyColumnMapping mapMumber =
-                    new SqlBulkCopyColumnMapping("ProductNumber", "ProdNum");
-                bulkCopy.ColumnMappings.Add(mapMumber);
+                SqlBulkCopyColumnMapping mapNumber = new SqlBulkCopyColumnMapping();
+                mapNumber.SourceColumn = "ProductNumber";
+                mapNumber.DestinationColumn = "ProdNum";
+                bulkCopy.ColumnMappings.Add(mapNumber);
 
                 // Write from the source to the destination.
                 try

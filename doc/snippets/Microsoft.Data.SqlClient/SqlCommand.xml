@@ -32,7 +32,7 @@
                     ## Examples  
                     The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection>, a <xref:Microsoft.Data.SqlClient.SqlCommand>, and a <xref:Microsoft.Data.SqlClient.SqlDataReader>. The example reads through the data, writing it to the console. Finally, the example closes the <xref:Microsoft.Data.SqlClient.SqlDataReader> and then the <xref:Microsoft.Data.SqlClient.SqlConnection> as it exits the `Using` code blocks.  
   
-                    [!code-csharp[Classic WebData SqlCommand Example#1](~/samples/snippets/csharp/VS_Snippets_ADO.NET/Classic WebData SqlCommand Example/CS/source.cs#1)]
+                    [!code-csharp[SqlCommand Example](~/sqlClient/doc/snippets SqlCommand.cs)]
   
                     The following sample shows how to create and execute different types of SqlCommand objects.  
   
@@ -380,7 +380,7 @@
                     ## Examples  
                     The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and sets the `CommandTimeout` property.  
                     
-                    [!code-csharp[Classic WebData IDbCommand_CommandTimeout.cs](~/sqlClient/doc/samples/  IDbCommand_CommandTimeout.cs)]
+                    [!code-csharp[IDbCommand_CommandTimeout.cs](~/sqlClient/doc/samples/  IDbCommand_CommandTimeout.cs)]
                     
                 ]]></format>
         </remarks>
@@ -1570,8 +1570,7 @@
                 ## Examples  
                 The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and then executes it using <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteScalar%2A>. The example is passed a string representing a new value to be inserted into a table, and a string to use to connect to the data source. The function returns the new **Identity** column value if a new row was inserted, 0 on failure.  
                 
-                [!code-csharp[DataWorks SqlCommand.ExecuteScalar#1](~/samples/snippets/csharp/VS_Snippets_ADO.NET/DataWorks SqlCommand.ExecuteScalar/CS/source.cs#1)]
-                [!code-vb[DataWorks SqlCommand.ExecuteScalar#1](~/samples/snippets/visualbasic/VS_Snippets_ADO.NET/DataWorks SqlCommand.ExecuteScalar/VB/source.vb#1)]  
+                [!code-csharp[DataWorks SqlCommand.ExecuteScalar#1](~/sqlClient/doc/samples SqlCommand.ExecuteScalar/CS/source.cs#1)]
                 
                 ]]></format>
                         </remarks>
@@ -1659,8 +1658,7 @@
                     ## Examples  
                     The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and then executes it using <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteXmlReader%2A>. The example is passed a string that is a Transact-SQL FOR XML SELECT statement, and a string to use to connect to the data source.  
                     
-                    [!code-csharp[Classic WebData SqlCommand.ExecuteXmlReader#1](~/samples/snippets/csharp/VS_Snippets_ADO.NET/Classic WebData SqlCommand.ExecuteXmlReader/CS/mysample.cs#1)]
-                    [!code-vb[Classic WebData SqlCommand.ExecuteXmlReader#1](~/samples/snippets/visualbasic/VS_Snippets_ADO.NET/Classic WebData SqlCommand.ExecuteXmlReader/VB/mysample.vb#1)]  
+                    [!code-csharp[SqlCommand.ExecuteXmlReader](~/sqlClient/doc/samples SqlCommand_ExecuteXmlReader.cs)]
                     
                 ]]></format>
             </remarks>
@@ -1818,7 +1816,7 @@
                     ## Examples  
                     The following example demonstrates how to create a <xref:Microsoft.Data.SqlClient.SqlCommand> and add parameters to the <xref:Microsoft.Data.SqlClient.SqlParameterCollection>.  
   
-                    [!code-csharp[DataWorks SqlParameterCollection.AddWithValue#1](~/samples/snippets/csharp/VS_Snippets_ADO.NET/DataWorks SqlParameterCollection.AddWithValue/CS/source.cs#1)]
+                    [!code-csharp[SqlParameterCollection.AddWithValue](~/sqlClient/doc/snippets SqlParameterCollection.AddWithValue.cs)]
   
                 ]]></format>
             </remarks>
@@ -1845,7 +1843,7 @@
                     ## Examples  
                     The following example demonstrates the use of the <xref:Microsoft.Data.SqlClient.SqlCommand.Prepare%2A> method.  
   
-                    [!code-csharp[Classic WebData SqlCommand.Prepare#1](~/samples/snippets/csharp/VS_Snippets_ADO.NET/Classic WebData SqlCommand.Prepare/CS/Source.cs#1)]
+                    [!code-csharp[SqlCommand.Prepare](~/sqlClient/doc/snippets SqlCommand_Prepare.cs)]
   
                 ]]></format>
             </remarks>

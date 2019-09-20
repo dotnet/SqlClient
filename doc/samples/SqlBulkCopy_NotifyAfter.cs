@@ -1,7 +1,7 @@
 using System;
 using System.Data;
 // <Snippet1>
-using Microsoft.Data.SqlClient;
+using Microsoft..Data.SqlClient;
 
 class Program
 {
@@ -17,10 +17,11 @@ class Program
             // Perform an initial count on the destination table.
             SqlCommand commandRowCount = new SqlCommand(
                 "SELECT COUNT(*) FROM " +
-                "dbo.BulkCopyDemoDifferentColumns;",
+                "dbo.BulkCopyDemoMatchingColumns;",
                 sourceConnection);
             long countStart = System.Convert.ToInt32(
                 commandRowCount.ExecuteScalar());
+            Console.WriteLine("NotifyAfter Sample");
             Console.WriteLine("Starting row count = {0}", countStart);
 
             // Get data from the source table as a SqlDataReader.
@@ -31,29 +32,22 @@ class Program
             SqlDataReader reader =
                 commandSourceData.ExecuteReader();
 
-            // Set up the bulk copy object.
-            using (SqlBulkCopy bulkCopy =
-                       new SqlBulkCopy(connectionString))
+            // Create the SqlBulkCopy object using a connection string. 
+            // In the real world you would not use SqlBulkCopy to move
+            // data from one table to the other in the same database.
+            using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connectionString))
             {
                 bulkCopy.DestinationTableName =
-                    "dbo.BulkCopyDemoDifferentColumns";
+                    "dbo.BulkCopyDemoMatchingColumns";
 
-                // Set up the column mappings by name.
-                SqlBulkCopyColumnMapping mapID =
-                    new SqlBulkCopyColumnMapping("ProductID", "ProdID");
-                bulkCopy.ColumnMappings.Add(mapID);
+                // Set up the event handler to notify after 50 rows.
+                bulkCopy.SqlRowsCopied +=
+                    new SqlRowsCopiedEventHandler(OnSqlRowsCopied);
+                bulkCopy.NotifyAfter = 50;
 
-                SqlBulkCopyColumnMapping mapName =
-                    new SqlBulkCopyColumnMapping("Name", "ProdName");
-                bulkCopy.ColumnMappings.Add(mapName);
-
-                SqlBulkCopyColumnMapping mapMumber =
-                    new SqlBulkCopyColumnMapping("ProductNumber", "ProdNum");
-                bulkCopy.ColumnMappings.Add(mapMumber);
-
-                // Write from the source to the destination.
                 try
                 {
+                    // Write from the source to the destination.
                     bulkCopy.WriteToServer(reader);
                 }
                 catch (Exception ex)
@@ -80,6 +74,11 @@ class Program
         }
     }
 
+    private static void OnSqlRowsCopied(
+        object sender, SqlRowsCopiedEventArgs e)
+    {
+        Console.WriteLine("Copied {0} so far...", e.RowsCopied);
+    }
     private static string GetConnectionString()
     // To avoid storing the sourceConnection string in your code, 
     // you can retrieve it from a configuration file. 

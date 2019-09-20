@@ -1,7 +1,8 @@
+// <Snippet1>
 using System;
 using System.Data;
-// <Snippet1>
 using Microsoft.Data.SqlClient;
+
 
 class Program
 {
@@ -52,4 +53,3 @@ class Program
             + "Integrated Security=SSPI";
     }
 }
-// </Snippet1>

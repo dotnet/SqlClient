@@ -30,7 +30,7 @@
                         This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a 
                         Transact-SQL `INSERT … SELECT` statement to copy the data.  
                         
-                        [!code-csharp[DataWorks SqlBulkCopy.ColumnMapping#1](~/samples/snippets/csharp/VS_Snippets_ADO.NET/DataWorks SqlBulkCopy.ColumnMapping/CS/source.cs#1)]
+                        [!code-csharp[SqlBulkCopy.ColumnMapping#1](~/sqlClient/doc/samples/ SqlBulkCopy.ColumnMapping/CS/source.cs)]
                         
                         ]]> </format>
             </remarks>
@@ -57,7 +57,7 @@
                                         This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, 
                                         it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.  
   
-                                        [!code-csharp[DataWorks SqlBulkCopy.ColumnMapping#1](~/samples/snippets/csharp/VS_Snippets_ADO.NET/DataWorks SqlBulkCopy.ColumnMapping/CS/source.cs#1)]
+                                        [!code-csharp[SqlBulkCopy.ColumnMapping#1](~/sqlClient/doc/samples/ SqlBulkCopy_ColumnMapping.cs)]
   
                     ]]></format>
             </remarks>
@@ -79,8 +79,7 @@
                 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier 
                 and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.  
   
-                [!code-csharp[DataWorks SqlBulkCopy.ColumnMappingOrdinal#1](~/samples/snippets/csharp/VS_Snippets_ADO.NET/DataWorks SqlBulkCopy.ColumnMappingOrdinal/CS/source.cs#1)]
-                [!code-vb[DataWorks SqlBulkCopy.ColumnMappingOrdinal#1](~/samples/snippets/visualbasic/VS_Snippets_ADO.NET/DataWorks SqlBulkCopy.ColumnMappingOrdinal/VB/source.vb#1)]  
+                [!code-csharp[SqlBulkCopy.ColumnMappingOrdinal#1](~/sqlClient/doc/snippets/ SqlBulkCopy-ColumnMappingOrdinal.cs)]
   
                 ]]></format>
             </remarks>
@@ -103,7 +102,7 @@
                 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and 
                 faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.  
     
-                [!code-csharp[DataWorks SqlBulkCopy.ColumnMappingOrdinalName#1](~/samples/snippets/csharp/VS_Snippets_ADO.NET/DataWorks SqlBulkCopy.ColumnMappingOrdinalName/CS/source.cs#1)]
+                [!code-csharp[SqlBulkCopy.ColumnMappingOrdinalName#1](~/sqlClient/doc/snippets SqlBulkCopy.ColumnMappingOrdinalName.cs)]
     
                 ]]></format>
             </remarks>
@@ -125,7 +124,7 @@
                 provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to 
                 use a Transact-SQL `INSERT … SELECT` statement to copy the data.  
   
-                [!code-csharp[DataWorks SqlBulkCopy.ColumnMappingNameOrdinal#1](~/samples/snippets/csharp/VS_Snippets_ADO.NET/DataWorks SqlBulkCopy.ColumnMappingNameOrdinal/CS/source.cs#1)]
+                [!code-csharp[SqlBulkCopy.ColumnMappingNameOrdinal#1](~/sqlClient/doc/snippets SqlBulkCopy.ColumnMappingNameOrdinal/CS/source.cs#1)]
   
                 ]]></format>
             </remarks>
@@ -147,7 +146,7 @@
                 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a 
                 Transact-SQL `INSERT … SELECT` statement to copy the data.  
   
-                [!code-csharp[DataWorks SqlBulkCopy.ColumnMapping#1](~/samples/snippets/csharp/VS_Snippets_ADO.NET/DataWorks SqlBulkCopy.ColumnMapping/CS/source.cs#1)]
+                [!code-csharp[SqlBulkCopy.ColumnMapping#1](~/sqlClient/doc/snippets SqlBulkCopy.ColumnMapping/CS/source.cs#1)]
   
                 ]]></format>
             </remarks>
@@ -174,7 +173,7 @@
                 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a 
                 Transact-SQL `INSERT … SELECT` statement to copy the data.  
   
-                [!code-csharp[DataWorks SqlBulkCopy.ColumnMappingDestinationColumn#1](~/samples/snippets/csharp/VS_Snippets_ADO.NET/DataWorks SqlBulkCopy.ColumnMappingDestinationColumn/CS/source.cs#1)]
+                [!code-csharp[SqlBulkCopy.ColumnMappingDestinationColumn#1](~/sqlClient/doc/snippets SqlBulkCopy.ColumnMappingDestinationColumn/CS/source.cs#1)]
   
                 ]]></format>
             </remarks>
@@ -201,7 +200,7 @@
                 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a 
                 Transact-SQL `INSERT … SELECT` statement to copy the data.  
   
-                [!code-csharp[DataWorks SqlBulkCopy.ColumnMappingDestinationOrdinal#1](~/samples/snippets/csharp/VS_Snippets_ADO.NET/DataWorks SqlBulkCopy.ColumnMappingDestinationOrdinal/CS/source.cs#1)]
+                [!code-csharp[SqlBulkCopy.ColumnMappingDestinationOrdinal#1](~/sqlClient/doc/snippets SqlBulkCopy_ColumnMappingDestinationOrdinal.cs#1)]
   
                 ]]></format>
             </remarks>

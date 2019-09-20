@@ -17,7 +17,7 @@ class Program
             // Perform an initial count on the destination table.
             SqlCommand commandRowCount = new SqlCommand(
                 "SELECT COUNT(*) FROM " +
-                "dbo.BulkCopyDemoDifferentColumns;",
+                "dbo.BulkCopyDemoMatchingColumns;",
                 sourceConnection);
             long countStart = System.Convert.ToInt32(
                 commandRowCount.ExecuteScalar());
@@ -31,29 +31,18 @@ class Program
             SqlDataReader reader =
                 commandSourceData.ExecuteReader();
 
-            // Set up the bulk copy object.
+            // Set up the bulk copy object using a connection string. 
+            // In the real world you would not use SqlBulkCopy to move
+            // data from one table to the other in the same database.
             using (SqlBulkCopy bulkCopy =
                        new SqlBulkCopy(connectionString))
             {
                 bulkCopy.DestinationTableName =
-                    "dbo.BulkCopyDemoDifferentColumns";
+                    "dbo.BulkCopyDemoMatchingColumns";
 
-                // Set up the column mappings by name.
-                SqlBulkCopyColumnMapping mapID =
-                    new SqlBulkCopyColumnMapping("ProductID", "ProdID");
-                bulkCopy.ColumnMappings.Add(mapID);
-
-                SqlBulkCopyColumnMapping mapName =
-                    new SqlBulkCopyColumnMapping("Name", "ProdName");
-                bulkCopy.ColumnMappings.Add(mapName);
-
-                SqlBulkCopyColumnMapping mapMumber =
-                    new SqlBulkCopyColumnMapping("ProductNumber", "ProdNum");
-                bulkCopy.ColumnMappings.Add(mapMumber);
-
-                // Write from the source to the destination.
                 try
                 {
+                    // Write from the source to the destination.
                     bulkCopy.WriteToServer(reader);
                 }
                 catch (Exception ex)
