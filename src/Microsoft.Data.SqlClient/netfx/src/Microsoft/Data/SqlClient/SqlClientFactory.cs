@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient
     {
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/Instance/*'/>
-        public static readonly SqlClientFactory Instance = new SqlClientFactory();
+        public static readonly SqlClientFactory s_instance = new SqlClientFactory();
 
         private SqlClientFactory()
         {

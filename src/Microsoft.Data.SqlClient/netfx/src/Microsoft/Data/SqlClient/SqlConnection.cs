@@ -582,7 +582,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                return SqlClientFactory.Instance;
+                return SqlClientFactory.s_instance;
             }
         }
 

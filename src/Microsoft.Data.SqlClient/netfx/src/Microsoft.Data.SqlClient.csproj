@@ -14,7 +14,6 @@
     <BinPath>$(BinFolder)$(Configuration).$(OutputPlatform)\</BinPath>
     <ObjPath>$(ObjFolder)$(Configuration).$(OutputPlatform)\</ObjPath>
     <OutputPath>$(BinPath)$(AssemblyName)\netfx\</OutputPath>
-    <DocumentationFile>$(OutputPath)\Microsoft.Data.SqlClient.xml</DocumentationFile>
     <IntermediateOutputPath>$(ObjPath)$(AssemblyName)\netfx\</IntermediateOutputPath>
     <Product>Framework $(BaseProduct)</Product>
     <!-- ResolveComReferenceSilent suppresses warnings thrown due to the inclusion of mscoree.
@@ -65,6 +64,9 @@
     <DefineConstants>$(DefineConstants);DEBUG;DBG;_DEBUG;_LOGGING;RESOURCE_ANNOTATION_WORK;</DefineConstants>
     <DebugType>Full</DebugType>
     <Optimize>False</Optimize>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(GenerateXML)'=='true'">
+    <DocumentationFile>$(OutputPath)\Microsoft.Data.SqlClient.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition="$(Configuration.Contains('Release'))">
     <DefineConstants>$(DefineConstants);RETAIL;</DefineConstants>
