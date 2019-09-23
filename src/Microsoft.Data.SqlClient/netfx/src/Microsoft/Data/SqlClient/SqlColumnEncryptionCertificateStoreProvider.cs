@@ -47,7 +47,7 @@ namespace Microsoft.Data.SqlClient
         private const string _certificatePathFormat = @"[LocalMachine|CurrentUser]/My/[Thumbprint]";
 
         /// <summary>
-        /// Hashig algoirthm used for signing
+        /// Hashing algorithm used for signing
         /// </summary>
         private const string _hashingAlgorithm = @"SHA256";
 

@@ -2626,7 +2626,7 @@
 				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
 			</exception>
 		</ExecuteReaderAsync>
-		<ExecuteReaderAsync name="commandBehaviorAndCancelationToken">
+		<ExecuteReaderAsync name="commandBehaviorAndCancellationToken">
 			<param name="behavior">
 				Options for statement execution and data retrieval.  When is set to
 				<see langword="Default" />
@@ -2824,7 +2824,7 @@
 				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
 			</exception>
 		</ExecuteScalar>
-		<ExecuteScalarAsync name="cancelationToken">
+		<ExecuteScalarAsync name="CancellationToken">
 			<param name="cancellationToken">
 				The cancellation instruction.
 			</param>
@@ -3017,7 +3017,7 @@
 				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
 			</exception>
 		</ExecuteXmlReader>
-		<ExecuteXmlReaderAsync>
+		<ExecuteXmlReaderAsync name="default">
 			<summary>
 				An asynchronous version of
 				<see cref="M:Microsoft.Data.SqlClient.SqlCommand.ExecuteXmlReader" />
@@ -3113,7 +3113,7 @@
 				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
 			</exception>
 		</ExecuteXmlReaderAsync>
-		<ExecuteXmlReaderAsync name="cancelationToken">
+		<ExecuteXmlReaderAsync name="CancellationToken">
 			<param name="cancellationToken">
 				The cancellation instruction.
 			</param>

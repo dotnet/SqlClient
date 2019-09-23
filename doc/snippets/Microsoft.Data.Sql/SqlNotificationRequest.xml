@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<doc>
+<docs>
     <members name="SqlNotificationRequest">
         <SqlNotificationRequest>
             <summary>Represents a request for notification for a given command.</summary>
@@ -97,4 +97,4 @@
             <related type="Article" href="~/docs/framework/data/adonet/sql/query-notifications-in-sql-server.md">Using Query Notifications</related>
         </UserData>
     </members>
-</doc>
+</docs>

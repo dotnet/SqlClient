@@ -300,7 +300,7 @@ namespace Microsoft.Data.SqlClient
             string quoteSuffixLocal = QuoteSuffix;
             string quotePrefixLocal = QuotePrefix;
             ConsistentQuoteDelimiters(quotePrefixLocal, quoteSuffixLocal);
-            // ignoring the return value becasue an unquoted source string is OK here
+            // ignoring the return value because an unquoted source string is OK here
             ADP.RemoveStringQuotes(quotePrefixLocal, quoteSuffixLocal, quotedIdentifier, out unquotedIdentifier);
             return unquotedIdentifier;
         }

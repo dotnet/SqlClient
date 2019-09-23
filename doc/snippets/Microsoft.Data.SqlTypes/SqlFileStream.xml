@@ -1,5 +1,4 @@
-<?xml version="1.0"?>
-<doc>
+<docs>
     <members name="SqlFileStream">
         <SqlFileStream>
             <summary>Exposes SQL Server data that is stored with the FILESTREAM column attribute as a sequence of bytes.</summary>
@@ -36,7 +35,7 @@
             <param name="path">The logical path to the file. The path can be retrieved by using the Transact-SQL Pathname function on the underlying FILESTREAM column in the table.</param>
             <param name="transactionContext">The transaction context for the <see langword="SqlFileStream" /> object. Applications should return the byte array returned by calling the GET_FILESTREAM_TRANSACTION_CONTEXT method.</param>
             <param name="access">The access mode to use when opening the file. Supported <see cref="T:System.IO.FileAccess" /> enumeration values are <see cref="F:System.IO.FileAccess.Read" />, <see cref="F:System.IO.FileAccess.Write" />, and <see cref="F:System.IO.FileAccess.ReadWrite" />.  
-    
+            
     When using <see langword="FileAccess.Read" />, the <see langword="SqlFileStream" /> object can be used to read all of the existing data.  
     
     When using <see langword="FileAccess.Write" />, <see langword="SqlFileStream" /> points to a zero byte file. Existing data will be overwritten when the object is closed and the transaction is committed.  
@@ -64,13 +63,10 @@
             <exception cref="T:System.ArgumentNullException">
             <paramref name="path" /> is a null reference, or <paramref name="transactionContext" /> is null.</exception>
             <exception cref="T:System.ArgumentOutOfRangeException">
-            <paramref name="path" /> is an empty string (""), contains only white space, or contains one or more invalid characters.  
-    
-    <paramref name="path" /> begins with "\\\\.\\", for example "\\\\.\PHYSICALDRIVE0 ".  
-    
-    The handle returned by the call to NTCreateFile is not of type FILE_TYPE_DISK.  
-    
-    <paramref name="options" /> contains an unsupported value.</exception>
+                <paramref name="path" /> is an empty string (""), contains only white space, or contains one or more invalid characters.  
+                <paramref name="path" /> begins with "\\\\.\\", for example "\\\\.\PHYSICALDRIVE0 ".  
+                    The handle returned by the call to NTCreateFile is not of type FILE_TYPE_DISK.  
+                <paramref name="path" /> contains an unsupported value.</exception>
             <exception cref="T:System.IO.FileNotFoundException">The file cannot be found.</exception>
             <exception cref="T:System.IO.IOException">An I/O error occurred.</exception>
             <exception cref="T:System.Security.SecurityException">The caller does not have the required permission.</exception>
@@ -194,6 +190,10 @@
             <remarks>To be added.</remarks>
             <related type="Article" href="https://msdn.microsoft.com/library/bd8b845c-0f09-4295-b466-97ef106eefa8">FILESTREAM Data in SQL Server 2008 (ADO.NET)</related>
         </CanWrite>
+        <dtor>
+            <summary>Destructor of the SqlFileStream class object.</summary>
+            <remarks>To be added.</remarks>
+        </dtor>
         <Dispose>
             <param name="disposing">To be added.</param>
             <summary>To be added.</summary>
@@ -302,7 +302,7 @@
         </SetLength>
         <TransactionContext>
             <summary>Gets or sets the transaction context for this <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" /> object.</summary>
-            <value>The <paramref name="transactionContext" /> array that was passed to the constructor for this <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" /> object.</value>
+            <value>The <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream.TransactionContext" /> array that was passed to the constructor for this <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" /> object.</value>
             <remarks>To be added.</remarks>
             <related type="Article" href="https://msdn.microsoft.com/library/bd8b845c-0f09-4295-b466-97ef106eefa8">FILESTREAM Data in SQL Server 2008 (ADO.NET)</related>
         </TransactionContext>
@@ -343,4 +343,4 @@
             <related type="Article" href="https://msdn.microsoft.com/library/bd8b845c-0f09-4295-b466-97ef106eefa8">FILESTREAM Data in SQL Server 2008 (ADO.NET)</related>
         </WriteTimeout>
     </members>
-</doc>
+</docs>

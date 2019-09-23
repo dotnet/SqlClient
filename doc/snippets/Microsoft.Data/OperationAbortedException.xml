@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<doc>
+<docs>
     <members name="OperationAbortedException">
         <OperationAbortedException>
             <summary>This exception is thrown when an ongoing operation is aborted by the user.</summary>
@@ -14,4 +14,4 @@
             </remarks>
         </OperationAbortedException>
     </members>
-</doc>
+</docs>

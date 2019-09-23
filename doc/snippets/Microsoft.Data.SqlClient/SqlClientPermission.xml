@@ -135,5 +135,19 @@
             </remarks>
             <exception cref="T:System.ArgumentException">The <paramref name="target" /> parameter is an object that is not of the same type as the current permission object.</exception>
         </IsSubsetOf>
+        <Intersect>
+                <param name="target">A permission object to intersect with the current permission object. It must be of the same type as the current permission object.</param>
+                <summary>Returns a new permission object representing the intersection of the current permission object and the specified permission object.</summary>
+                <returns>A new permission object that represents the intersection of the current permission object and the specified permission object. This new permission object is a null reference (<see langword="Nothing" /> in Visual Basic) if the intersection is empty.</returns>
+                <remarks>
+                  <format type="text/markdown"><![CDATA[  
+          
+        ## Remarks  
+         The intersection of two permissions is a permission that describes the set of operations they both describe. Only a demand that passes both original permissions will pass the intersection.  
+          
+         ]]></format>
+                </remarks>
+                <exception cref="T:System.ArgumentException">The <paramref name="target" /> parameter is not a null reference (<see langword="Nothing" /> in Visual Basic) and is not an instance of the same class as the current permission object.</exception>
+            </Intersect>
     </members>
 </docs>

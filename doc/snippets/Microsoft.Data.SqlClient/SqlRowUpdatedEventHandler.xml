@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <docs>
     <members name="SqlRowUpdatedEventHandler">
-        <SqlRowUpdatingEventHandler>
+        <SqlRowUpdatedEventHandler>
             <param name="sender">The source of the event.</param>
             <param name="e">The <see cref="T:Microsoft.Data.SqlClient.SqlRowUpdatedEventArgs" /> that contains the event data.</param>
             <summary>Represents the method that will handle the <see cref="E:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdated" /> event of a <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" />.</summary>
@@ -15,6 +15,6 @@
   
  ]]></format>
             </remarks>
-        </SqlRowUpdatingEventHandler>
+        </SqlRowUpdatedEventHandler>
     </members>
 </docs>

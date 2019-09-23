@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<doc>
+<docs>
     <members name="SensitivityClassification">
         <SensitivityClassification>
             <summary>Provides the functionlity to retrieve Sensitivity Classification data as received from SQL Server for the active 'SqlDataReader'</summary>
@@ -20,5 +20,9 @@
             <value>List of labels.</value>
             <remarks>To be added.</remarks>
         </Labels>
+        <ctor>
+            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.DataClassification.SensitivityClassification" />
+ class.</summary>
+        </ctor>
     </members>
-</doc>
+</docs>

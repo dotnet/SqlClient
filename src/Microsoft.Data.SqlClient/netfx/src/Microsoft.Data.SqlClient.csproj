@@ -13,6 +13,7 @@
     <OutputPlatform>AnyCPU</OutputPlatform>
     <BinPath>$(BinFolder)$(Configuration).$(OutputPlatform)\</BinPath>
     <ObjPath>$(ObjFolder)$(Configuration).$(OutputPlatform)\</ObjPath>
+    <DocumentationFile>$(OutputPath)\Microsoft.Data.SqlClient.xml</DocumentationFile>
     <OutputPath>$(BinPath)$(AssemblyName)\netfx\</OutputPath>
     <IntermediateOutputPath>$(ObjPath)$(AssemblyName)\netfx\</IntermediateOutputPath>
     <Product>Framework $(BaseProduct)</Product>
@@ -64,9 +65,6 @@
     <DefineConstants>$(DefineConstants);DEBUG;DBG;_DEBUG;_LOGGING;RESOURCE_ANNOTATION_WORK;</DefineConstants>
     <DebugType>Full</DebugType>
     <Optimize>False</Optimize>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(GenerateXML)'=='true'">
-    <DocumentationFile>$(OutputPath)\Microsoft.Data.SqlClient.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition="$(Configuration.Contains('Release'))">
     <DefineConstants>$(DefineConstants);RETAIL;</DefineConstants>

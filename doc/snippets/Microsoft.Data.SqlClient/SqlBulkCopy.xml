@@ -440,7 +440,7 @@
 				</format>
 			</remarks>
 		</ColumnMappings>
-		<DestinationTableNam>
+		<DestinationTableName>
 			<summary>
 				Name of the destination table on the server.
 			</summary>
@@ -481,7 +481,7 @@
 					]]>
 				</format>
 			</example>
-		</DestinationTableNam>
+		</DestinationTableName>
 		<NotifyAfter>
 			<summary>
 				Defines the number of rows to be processed before generating a notification event.
@@ -858,7 +858,7 @@
 				Returned in the task object, any error returned by SQL Server that occurred while opening the connection.
 			</exception>
 		</WriteToServerAsync>
-		<WriteToServerAsync name="DataRowAndCancelationTokenParameters">
+		<WriteToServerAsync name="DataRowAndCancellationTokenParameters">
 			<param name="rows">
 				An array of
 				<see cref="T:System.Data.DataRow" />
@@ -974,7 +974,7 @@
 				Returned in the task object, any error returned by SQL Server that occurred while opening the connection.
 			</exception>
 		</WriteToServerAsync>
-		<WriteToServerAsync name="DbDataReaderAndCancelationTokenParameters">
+		<WriteToServerAsync name="DbDataReaderAndCancellationTokenParameters">
 			<param name="reader">
 				A
 				<see cref="T:System.Data.Common.DbDataReader" />
@@ -1076,7 +1076,7 @@
 				Returned in the task object, any error returned by SQL Server that occurred while opening the connection.
 			</exception>
 		</WriteToServerAsync>
-		<WriteToServerAsync name="IDataReaderAndCancelationTokenParameters">
+		<WriteToServerAsync name="IDataReaderAndCancellationTokenParameters">
 			<param name="reader">
 				A
 				<see cref="T:System.Data.IDataReader" />
@@ -1208,7 +1208,7 @@
 				Returned in the task object, any error returned by SQL Server that occurred while opening the connection.
 			</exception>
 		</WriteToServerAsync>
-		<WriteToServerAsync name="DataTableAndCancelationTokenParameters">
+		<WriteToServerAsync name="DataTableAndCancellationTokenParameters">
 			<param name="table">
 				A
 				<see cref="T:System.Data.DataTable" />
@@ -1331,7 +1331,7 @@
 				Returned in the task object, any error returned by SQL Server that occurred while opening the connection.
 			</exception>
 		</WriteToServerAsync>
-		<WriteToServerAsync name="DataTableAndDataRowStateAndCancelationTokenParameters">
+		<WriteToServerAsync name="DataTableAndDataRowStateAndCancellationTokenParameters">
 			<param name="table">
 				A
 				<see cref="T:System.Data.DataTable" />

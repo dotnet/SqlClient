@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<doc>
+<docs>
     <members name="ColumnSensitivity">
         <ColumnSensitivity>
             <summary>Represents the Data Classification Sensitivity Information for columns as configured in Database.</summary>
@@ -14,4 +14,4 @@
             <remarks>To be added.</remarks>
         </GetSensitivityProperties>
     </members>
-</doc>
+</docs>
