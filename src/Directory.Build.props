@@ -15,8 +15,6 @@
     <DefineConstants>$(DefineConstants);DEBUG</DefineConstants>
   </PropertyGroup>
   <PropertyGroup>
-    <!-- Enable Generating XML by default unless asked to skip -->
-    <GenerateDocumentationFile Condition="'$(OSGroup)' != 'Windows_NT'">false</GenerateDocumentationFile>
     <ProjectDir>$(MSBuildThisFileDirectory)</ProjectDir>
     <RepoRoot>$(ProjectDir)..\</RepoRoot>
     <ManagedSourceCode>$(ProjectDir)Microsoft.Data.SqlClient\</ManagedSourceCode>
