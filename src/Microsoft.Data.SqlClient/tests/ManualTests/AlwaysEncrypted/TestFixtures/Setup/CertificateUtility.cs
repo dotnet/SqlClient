@@ -187,5 +187,70 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             return decryptedData;
         }
+
+        internal static SqlConnection GetOpenConnection(bool fTceEnabled, SqlConnectionStringBuilder sb, bool fSuppressAttestation = false)
+        {
+            SqlConnection conn = new SqlConnection(GetConnectionString(fTceEnabled, sb, fSuppressAttestation));
+            try
+            {
+                conn.Open();
+            }
+            catch (Exception)
+            {
+                conn.Dispose();
+                throw;
+            }
+            
+            SqlConnection.ClearPool(conn);
+            return conn;
+        }
+
+        /// <summary>
+        /// Fetches a connection string that can be used to connect to SQL Server
+        /// </summary>
+        public static string GetConnectionString(bool fTceEnabled, SqlConnectionStringBuilder sb, bool fSuppressAttestation = false)
+        {
+            if (fTceEnabled)
+            {
+                sb.ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Enabled;
+            }
+            if (!fSuppressAttestation)
+            {
+                sb.EnclaveAttestationUrl = sb.EnclaveAttestationUrl;
+            }
+            sb.ConnectTimeout = 65534;
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Turns on/off the TCE feature on server via traceflag
+        /// </summary>
+        public static void ChangeServerTceSetting(bool fEnable, SqlConnectionStringBuilder sb)
+        {
+            SqlConnection conn = GetOpenConnection(false, sb, fSuppressAttestation: true);
+            SqlCommand cmd = null;
+            try
+            {
+                if (fEnable)
+                {
+                    cmd = new SqlCommand("dbcc traceoff(4053, -1)", conn);
+                }
+                else
+                {
+                    cmd = new SqlCommand("dbcc traceon(4053, -1)", conn); // traceon disables feature
+                }
+
+                cmd.ExecuteNonQuery();
+                cmd.Dispose();
+                conn.Close();
+            }
+            finally
+            {
+                if (null != cmd)
+                    cmd.Dispose();
+                if (null != conn)
+                    conn.Dispose();
+            }
+        }
     }
 }
