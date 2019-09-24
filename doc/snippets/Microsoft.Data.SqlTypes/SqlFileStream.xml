@@ -26,12 +26,6 @@
             <related type="Article" href="https://msdn.microsoft.com/library/e00827b3-7511-4b2d-91d7-851ca86cc6b5">SQL Server Binary and Large-Value Data (ADO.NET)</related>
         </SqlFileStream>
         <ctor1>
-            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" /> class.</summary>
-            <remarks>
-            </remarks>
-            <related type="Article" href="https://msdn.microsoft.com/library/bd8b845c-0f09-4295-b466-97ef106eefa8">FILESTREAM Data in SQL Server 2008 (ADO.NET)</related>
-        </ctor1>
-        <ctor1>
             <param name="path">The logical path to the file. The path can be retrieved by using the Transact-SQL Pathname function on the underlying FILESTREAM column in the table.</param>
             <param name="transactionContext">The transaction context for the <see langword="SqlFileStream" /> object. Applications should return the byte array returned by calling the GET_FILESTREAM_TRANSACTION_CONTEXT method.</param>
             <param name="access">The access mode to use when opening the file. Supported <see cref="T:System.IO.FileAccess" /> enumeration values are <see cref="F:System.IO.FileAccess.Read" />, <see cref="F:System.IO.FileAccess.Write" />, and <see cref="F:System.IO.FileAccess.ReadWrite" />.  

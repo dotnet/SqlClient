@@ -128,7 +128,7 @@
 				ADO.NET Overview
 			</related>
 		</ctor>
-		<ctor name="connectionStringParameter">
+		<ctor name="ConnectionStringParameter">
 			<param name="connectionString">
 				The string defining the connection that will be opened for use by the
 				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" />
@@ -184,52 +184,7 @@
 				is thrown.
 			</exception>
 		</ctor>
-		<ctorWithConnectionCopyOptiontransaction>
-			<param name="connection">
-				The already open
-				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
-				instance that will be used to perform the bulk copy. If your connection string does not use
-				<see langword="Integrated Security = true" />
-				,
-				you can use
-				<see cref="T:Microsoft.Data.SqlClient.SqlCredential" />
-				to pass the user ID and password more securely than by specifying the user ID
-				and password as text in the connection string.
-			</param>
-			<param name="copyOptions">
-				A combination of values from the
-				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyOptions" />
-				enumeration that determines which data source rows are copied to the destination table.
-			</param>
-			<param name="externalTransaction">
-				An existing
-				<see cref="T:Microsoft.Data.SqlClient.SqlTransaction" />
-				instance under which the bulk copy will occur.
-			</param>
-			<summary>
-				Initializes a new instance of the
-				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" />
-				class using the supplied existing open instance of
-				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
-				.
-				The
-				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" />
-				instance behaves according to options supplied in the
-				<paramref name="copyOptions" />
-				parameter. If a non-null
-				<see cref="T:Microsoft.Data.SqlClient.SqlTransaction" />
-				is supplied, the copy operations will be performed within that transaction.
-			</summary>
-			<remarks>
-				<format type="text/markdown">
-					<![CDATA[
-					For examples demonstrating how to use `SqlBulkCopy` in a transaction, see
-					[Transaction and Bulk Copy Operations](~/docs/framework/data/adonet/sql/transaction-and-bulk-copy-operations.md).
-					]]>
-				</format>
-			</remarks>
-		</ctorWithConnectionCopyOptiontransaction>
-		<ctor name="connectionStringAndSqlBulkCopuOptionsParameters">
+		<ctor name="ConnectionStringAndSqlBulkCopyOptionsParameters">
 			<param name="connectionString">
 				The string defining the connection that will be opened for use by the
 				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" />
@@ -361,7 +316,7 @@
 					This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a
 					[!INCLUDE[tsql](~/includes/tsql-md.md)]`INSERT … SELECT` statement to copy the data.
 					
-					[!code-csharp[DataWorks SqlBulkCopy.Timeout#1](~/samples/snippets/csharp/VS_Snippets_ADO.NET/DataWorks SqlBulkCopy.Timeout/CS/source.cs#1)]
+					[!code-csharp[SqlBulkCopy.Timeout#1](~/sqlclient/doc/samples/SqlBulkCopy_Timeout.cs#1)]
 					]]>
 				</format>
 			</example>
@@ -386,7 +341,7 @@
 					> [!IMPORTANT]
 					>  This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md). This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 					
-					[!code-csharp[DataWorks SqlBulkCopy.OrdersDetails#1](~/samples/snippets/csharp/VS_Snippets_ADO.NET/DataWorks SqlBulkCopy.OrdersDetails/CS/source.cs#1)]
+					[!code-csharp[SqlBulkCopy.OrdersDetails#1](~/sqlclient/doc/samples/SqlBulkCopy_OrdersDetails.cs#1)]
 					]]>
 				</format>
 			</remarks>
@@ -477,7 +432,7 @@
 					This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md).
 					This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance,
 					it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
-					[!code-csharp[DataWorks SqlBulkCopy.Single#1](../../../samples SqlBulkCopy.Single/CS/source.cs#1)]
+					[!code-csharp[DataWorks SqlBulkCopy.Single#1](~/sqlclient/doc/samples/SqlBulkCopy_Single.cs#1)]
 					]]>
 				</format>
 			</example>
@@ -516,7 +471,7 @@
 					demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT`
 					statement to copy the data.
 					
-					[!code-csharp[SqlBulkCopy.NotifyAfter#1](~/samples/snippets/csharp/VS_Snippets_ADO.NET/DataWorks SqlBulkCopy.NotifyAfter/CS/source.cs#1)]
+					[!code-csharp[SqlBulkCopy.NotifyAfter#1](~/sqlclient/doc/samples/SqlBulkCopy_NotifyAfter.cs#1)]
 					]]>
 				</format>
 			</example>
@@ -558,7 +513,7 @@
 					This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier
 					and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 					
-					[!code-csharp[DataWorks SqlBulkCopy.NotifyAfter#1](~/samples/snippets/csharp/VS_Snippets_ADO.NET/DataWorks SqlBulkCopy.NotifyAfter/CS/source.cs#1)]
+					[!code-csharp[SqlBulkCopy.NotifyAfter#1](~/sqlclient/doc/samples/SqlBulkCopy_NotifyAfter.cs#1)]
 					]]>
 				</format>
 			</example>
@@ -647,7 +602,7 @@
 					to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a
 					Transact-SQL `INSERT … SELECT` statement to copy the data.
 					
-					[!code-csharp[DataWorks SqlBulkCopy.ConnectionString#1](~/samples/snippets/csharp/VS_Snippets_ADO.NET/DataWorks SqlBulkCopy.ConnectionString/CS/source.cs#1)]
+					[!code-csharp[SqlBulkCopy.ConnectionString#1](~/sqlclient/doc/samples/SqlBulkCopy_ConnectionString.cs#1)]
 					]]>
 				</format>
 			</example>
@@ -677,8 +632,6 @@
 					
 					The <xref:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnMappings%2A> collection maps from the <xref:System.Data.DataTable> columns to the destination database table.
 					
-					
-					
 					## Examples
 					The following Console application demonstrates how to bulk load data from a <xref:System.Data.DataTable>. The destination table is a table in the **AdventureWorks** database.
 					
@@ -687,8 +640,7 @@
 					> [!IMPORTANT]
 					>  This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md). This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 					
-					[!code-csharp[DataWorks SqlBulkCopy.DataTable#1](~/samples/snippets/csharp/VS_Snippets_ADO.NET/DataWorks SqlBulkCopy.DataTable/CS/source.cs#1)]
-					[!code-vb[DataWorks SqlBulkCopy.DataTable#1](~/samples/snippets/visualbasic/VS_Snippets_ADO.NET/DataWorks SqlBulkCopy.DataTable/VB/source.vb#1)]
+					[!code-csharp[SqlBulkCopy.DataTable#1](~/sqlclient/doc/samples/SqlBulkCopy_DataTable.cs#1)]
 					]]>
 				</format>
 			</remarks>
@@ -744,64 +696,34 @@
 					[!IMPORTANT]
 					This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md). This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 					
-					[!code-csharp[DataWorks SqlBulkCopy.DataRowState#1](~/samples/snippets/csharp/VS_Snippets_ADO.NET/DataWorks SqlBulkCopy.DataRowState/CS/source.cs#1)]
+					[!code-csharp[SqlBulkCopy.DataRowState#1](~/sqlclient/doc/samples/SqlBulkCopy_DataRowState.cs#1)]
 					]]>
 				</format>
 			</example>
 		</WriteToServer>
 		<WriteToServer name="DataRowParameter">
-			<param name="rows">
-				An array of
-				<see cref="T:System.Data.DataRow" />
-				objects that will be copied to the destination table.
-			</param>
-			<summary>
-				The asynchronous version of
-				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataRow[])" />
-				, which copies all rows from the supplied
-				<see cref="T:System.Data.DataRow" />
-				array to a destination table specified by the
-				<see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName" />
-				property of the
-				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" />
-				object.
-			</summary>
-			<returns>
-				A task representing the asynchronous operation.
-			</returns>
+			<param name="rows">An array of <see cref="T:System.Data.DataRow" /> objects that will be copied to the destination table.</param>
+			<summary>Copies all rows from the supplied <see cref="T:System.Data.DataRow" /> array to a destination table specified by the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName" /> property of the <see cref="T:System.Data.SqlClient.SqlBulkCopy" /> object.</summary>
 			<remarks>
-				<format type="text/markdown">
-					<![CDATA[                       For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](~/docs/framework/data/adonet/asynchronous-programming.md).                   ]]>
-				</format>
+				<format type="text/markdown"><![CDATA[  
+		
+			## Remarks  
+			While the bulk copy operation is in progress, the associated destination <xref:Microsoft.Data.SqlClient.SqlConnection> is busy serving it, and no other operations can be performed on the connection.  
+			
+			The <xref:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnMappings%2A> collection maps from the <xref:System.Data.DataRow> columns to the destination database table.  
+			
+			## Examples  
+			The following console application demonstrates how to bulk load data from a <xref:System.Data.DataRow> array. The destination table is a table in the **AdventureWorks** database.  
+			
+			In this example, a <xref:System.Data.DataTable> is created at run time. A single row is selected from the <xref:System.Data.DataTable> to copy to the destination table.  
+			
+			> [!IMPORTANT]
+			>  This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md). This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.  
+			
+			[!code-csharp[SqlBulkCopy.RowArray#1](~/sqlclient/doc/samples/SqlBulkCopy_RowArray.cs#1)]
+			
+			]]></format>
 			</remarks>
-			<exception cref="T:System.InvalidOperationException">
-				Calling
-				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataRow[])" />
-				multiple times for the same instance before task completion.  Calling
-				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataRow[])" />
-				and
-				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataRow[])" />
-				for the same instance before task completion.
-				
-				The connection drops or is closed during
-				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataRow[])" />
-				execution.
-				
-				Returned in the task object, the
-				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" />
-				object was closed during the method execution.
-				
-				Returned in the task object, there was a connection pool timeout.
-				
-				Returned in the task object, the
-				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
-				object is closed before method execution.
-				<see langword="Context Connection=true" />
-				is specified in the connection string.
-			</exception>
-			<exception cref="T:Microsoft.Data.SqlClient.SqlException">
-				Returned in the task object, any error returned by SQL Server that occurred while opening the connection.
-			</exception>
 		</WriteToServer>
 		<WriteToServerAsync name="DataRowParameter">
 			<param name="rows">

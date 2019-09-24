@@ -32,7 +32,7 @@
 					## Examples
 					The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection>, a <xref:Microsoft.Data.SqlClient.SqlCommand>, and a <xref:Microsoft.Data.SqlClient.SqlDataReader>. The example reads through the data, writing it to the console. Finally, the example closes the <xref:Microsoft.Data.SqlClient.SqlDataReader> and then the <xref:Microsoft.Data.SqlClient.SqlConnection> as it exits the `Using` code blocks.
 					
-					[!code-csharp[Classic WebData SqlCommand Example#1](~/samples/snippets/csharp/VS_Snippets_ADO.NET/Classic WebData SqlCommand Example/CS/source.cs#1)]
+					[!code-csharp[SqlCommand Example#1](~/sqlclient/doc/samples/SqlCommand.cs#1)]
 					
 					The following sample shows how to create and execute different types of SqlCommand objects.
 					
@@ -383,7 +383,7 @@
 					## Examples
 					The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and sets the `CommandTimeout` property.
 					
-					[!code-csharp[Classic WebData IDbCommand_CommandTimeout.cs](~/sqlClient/doc/samples/  IDbCommand_CommandTimeout.cs)]
+					[!code-csharp[Classic WebData IDbCommand_CommandTimeout.cs](~/sqlClient/doc/samples/IDbCommand_CommandTimeout.cs)]
 					]]>
 				</format>
 			</remarks>
@@ -412,12 +412,10 @@
 					
 					You can change the value for any of these properties through a separate call to the property.
 					
-					
-					
 					## Examples
 					The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand>, passing in the connection string and command text.
 					
-					[!code-csharp[SqlCommand_SqlCommand1](~/sqlClient/doc/samples/ SqlCommand_SqlCommand1.cs.cs)]
+					[!code-csharp[SqlCommand_SqlCommand1](~/sqlClient/doc/samples/SqlCommand_SqlCommand1.cs.cs)]
 					]]>
 				</format>
 			</remarks>
@@ -453,12 +451,10 @@
 					
 					You can change the value for any of these parameters by setting the related property.
 					
-					
-					
 					## Examples
 					The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and sets some of its properties.
 					
-					[!code-csharp[SqlCommand_SqlCommand2.cs](~/sqlClient/doc/samples/ SqlCommand_SqlCommand2.cs)]
+					[!code-csharp[SqlCommand_SqlCommand2.cs](~/sqlClient/doc/samples/SqlCommand_SqlCommand2.cs)]
 					]]>
 				</format>
 			</remarks>
@@ -1525,12 +1521,10 @@
 					
 					For more information, see [Configuring Parameters and Parameter Data Types](~/docs/framework/data/adonet/configuring-parameters-and-parameter-data-types.md).
 					
-					
-					
 					## Examples
 					The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and sets some of its properties.
 					
-					[!code-csharp[SqlCommand_CommandText](~/sqlClient/doc/samples/ SqlCommand_CommandText.cs)]
+					[!code-csharp[SqlCommand_CommandText](~/sqlClient/doc/samples/SqlCommand_CommandText.cs)]
 					]]>
 				</format>
 			</remarks>
@@ -1561,27 +1555,26 @@
 					```csharp
 					using System;
 					using Microsoft.Data.SqlClient;
-					///
+					
 					public class A {
-					///
-					public static void Main() {
-					string connectionString = "";
-					// Wait for 5 second delay in the command
-					string queryString = "waitfor delay '00:00:05'";
-					using (SqlConnection connection = new SqlConnection(connectionString)) {
-					connection.Open();
-					SqlCommand command = new SqlCommand(queryString, connection);
-					// Setting command timeout to 1 second
-					command.CommandTimeout = 1;
-					try {
-					command.ExecuteNonQuery();
-					}
-					catch (SqlException e) {
-					Console.WriteLine("Got expected SqlException due to command timeout ");
-					Console.WriteLine(e);
-					}
-					}
-					}
+						public static void Main() {
+							string connectionString = "";
+							// Wait for 5 second delay in the command
+							string queryString = "waitfor delay '00:00:05'";
+							using (SqlConnection connection = new SqlConnection(connectionString)) {
+								connection.Open();
+								SqlCommand command = new SqlCommand(queryString, connection);
+								// Setting command timeout to 1 second
+								command.CommandTimeout = 1;
+								try {
+									command.ExecuteNonQuery();
+								}
+								catch (SqlException e) {
+									Console.WriteLine("Got expected SqlException due to command timeout ");
+									Console.WriteLine(e);
+								}
+							}
+						}
 					}
 					```
 					]]>
@@ -1613,12 +1606,10 @@
 					
 					For more information, see [Configuring Parameters and Parameter Data Types](~/docs/framework/data/adonet/configuring-parameters-and-parameter-data-types.md).
 					
-					
-					
 					## Examples
 					The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and sets some of its properties.
 					
-					[!code-csharp[IDbCommand_CommandTimeout](~/sqlClient/doc/samples/ IDbCommand_CommandTimeout.cs)]
+					[!code-csharp[IDbCommand_CommandTimeout](~/sqlClient/doc/samples/IDbCommand_CommandTimeout.cs)]
 					]]>
 				</format>
 			</remarks>
@@ -1649,7 +1640,7 @@
 					## Examples
 					The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and sets some of its properties.
 					
-					[!code-csharp[SqlCommand_Connection](~/sqlClient/doc/samples/ SqlCommand_Connection.cs)]
+					[!code-csharp[SqlCommand_Connection](~/sqlClient/doc/samples/SqlCommand_Connection.cs)]
 					]]>
 				</format>
 			</remarks>
@@ -1769,8 +1760,6 @@
 					## Remarks
 					When you call <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery> to execute a [!INCLUDE[tsql](~/includes/tsql-md.md)] statement, you must call <xref:Microsoft.Data.SqlClient.SqlCommand.EndExecuteNonQuery> in order to complete the operation. If the process of executing the command has not yet finished, this method blocks until the operation is complete. Users can verify that the command has completed its operation by using the <xref:System.IAsyncResult> instance returned by the <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery> method. If a callback procedure was specified in the call to <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery>, this method must be called.
 					
-					
-					
 					## Examples
 					For examples demonstrating the use of the <xref:Microsoft.Data.SqlClient.SqlCommand.EndExecuteNonQuery%2A> method, see <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery>.
 					]]>
@@ -1798,7 +1787,7 @@
 				is not complete.
 				
 				-or-
-				
+			
 				In some situations,
 				<see cref="T:System.IAsyncResult" />
 				can be set to
@@ -1888,8 +1877,6 @@
 					## Remarks
 					When you call <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteXmlReader%2A> to execute a Transact-SQL statement, you must call <xref:Microsoft.Data.SqlClient.SqlCommand.EndExecuteXmlReader%2A> in order to complete the operation. If the process of executing the command has not yet finished, this method blocks until the operation is complete. Users can verify that the command has completed its operation by using the <xref:System.IAsyncResult> instance returned by the <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteXmlReader%2A> method. If a callback procedure was specified in the call to <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteXmlReader%2A>, this method must be called.
 					
-					
-					
 					## Examples
 					For examples demonstrating the use of the <xref:Microsoft.Data.SqlClient.SqlCommand.EndExecuteXmlReader%2A> method, see <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteXmlReader%2A>.
 					]]>
@@ -1963,7 +1950,7 @@
 					## Examples
 					The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and then executes it using <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteNonQuery%2A>. The example is passed a string that is a Transact-SQL statement (such as UPDATE, INSERT, or DELETE) and a string to use to connect to the data source.
 					
-					[!code-csharp[SqlCommand_ExecuteNonQuery](~/sqlClient/doc/samples/ SqlCommand_ExecuteNonQuery.cs)]
+					[!code-csharp[SqlCommand_ExecuteNonQuery](~/sqlClient/doc/samples/SqlCommand_ExecuteNonQuery.cs)]
 					]]>
 				</format>
 			</remarks>
@@ -2150,7 +2137,7 @@
 					## Examples
 					The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand>, and then executes it by passing a string that is a Transact-SQL SELECT statement, and a string to use to connect to the data source.
 					
-					[!code-csharp[SqlCommand_ExecuteReader](~/sqlClient/doc/samples/ SqlCommand_ExecuteReader.cs)]
+					[!code-csharp[SqlCommand_ExecuteReader](~/sqlClient/doc/samples/SqlCommand_ExecuteReader.cs)]
 					]]>
 				</format>
 			</remarks>
@@ -2257,12 +2244,10 @@
 					
 					If you use <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteReader%2A> or <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteReader%2A> to access XML data, SQL Server will return any XML results greater than 2,033 characters in length in multiple rows of 2,033 characters each. To avoid this behavior, use <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteXmlReader%2A> or <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteXmlReader%2A> to read FOR XML queries.
 					
-					
-					
 					## Examples
 					The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand>, and then executes it by passing a string that is a Transact-SQL SELECT statement, and a string to use to connect to the data source. <xref:System.Data.CommandBehavior> is set to <xref:System.Data.CommandBehavior.CloseConnection>.
 					
-					[!code-csharp[SqlCommand_ExecuteReader2](~/sqlClient/doc/samples/ SqlCommand.ExecuteReader2_.cs)]
+					[!code-csharp[SqlCommand_ExecuteReader2](~/sqlClient/doc/samples/SqlCommand.ExecuteReader2_.cs)]
 					]]>
 				</format>
 			</remarks>
@@ -2759,8 +2744,7 @@
 					## Examples
 					The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and then executes it using <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteScalar%2A>. The example is passed a string representing a new value to be inserted into a table, and a string to use to connect to the data source. The function returns the new **Identity** column value if a new row was inserted, 0 on failure.
 					
-					[!code-csharp[DataWorks SqlCommand.ExecuteScalar#1](~/samples/snippets/csharp/VS_Snippets_ADO.NET/DataWorks SqlCommand.ExecuteScalar/CS/source.cs#1)]
-					[!code-vb[DataWorks SqlCommand.ExecuteScalar#1](~/samples/snippets/visualbasic/VS_Snippets_ADO.NET/DataWorks SqlCommand.ExecuteScalar/VB/source.vb#1)]
+					[!code-csharp[SqlCommand.ExecuteScalar#1](~/sqlclient/doc/samples/SqlCommand_ExecuteScalar.cs#1)]
 					]]>
 				</format>
 			</remarks>
@@ -2952,8 +2936,7 @@
 					## Examples
 					The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and then executes it using <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteXmlReader%2A>. The example is passed a string that is a Transact-SQL FOR XML SELECT statement, and a string to use to connect to the data source.
 					
-					[!code-csharp[Classic WebData SqlCommand.ExecuteXmlReader#1](~/samples/snippets/csharp/VS_Snippets_ADO.NET/Classic WebData SqlCommand.ExecuteXmlReader/CS/mysample.cs#1)]
-					[!code-vb[Classic WebData SqlCommand.ExecuteXmlReader#1](~/samples/snippets/visualbasic/VS_Snippets_ADO.NET/Classic WebData SqlCommand.ExecuteXmlReader/VB/mysample.vb#1)]
+					[!code-csharp[SqlCommand.ExecuteXmlReader#1](~/sqlclient/doc/samples/SqlCommand_ExecuteXmlReader.cs#1)]
 					]]>
 				</format>
 			</remarks>
@@ -3280,7 +3263,7 @@
 					## Examples
 					The following example demonstrates how to create a <xref:Microsoft.Data.SqlClient.SqlCommand> and add parameters to the <xref:Microsoft.Data.SqlClient.SqlParameterCollection>.
 					
-					[!code-csharp[DataWorks SqlParameterCollection.AddWithValue#1](~/samples/snippets/csharp/VS_Snippets_ADO.NET/DataWorks SqlParameterCollection.AddWithValue/CS/source.cs#1)]
+					[!code-csharp[SqlParameterCollection.AddWithValue#1](~/sqlclient/doc/samples/SqlParameterCollection_AddWithValue.cs#1)]
 					]]>
 				</format>
 			</remarks>
@@ -3309,7 +3292,7 @@
 					## Examples
 					The following example demonstrates the use of the <xref:Microsoft.Data.SqlClient.SqlCommand.Prepare%2A> method.
 					
-					[!code-csharp[Classic WebData SqlCommand.Prepare#1](~/samples/snippets/csharp/VS_Snippets_ADO.NET/Classic WebData SqlCommand.Prepare/CS/Source.cs#1)]
+					[!code-csharp[SqlCommand.Prepare#1](~/sqlclient/doc/samples/SqlCommand_Prepare.cs#1)]
 					]]>
 				</format>
 			</remarks>

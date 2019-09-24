@@ -4,6 +4,9 @@
             <summary>Defines the core behavior of authentication providers and provides a base class for derived classes. </summary>
             <remarks>Derived classes must provide a parameterless constructor if they can be instantiated from the app.config file.</remarks>
         </SqlAuthenticationProvider>
+        <ctor>
+            <summary>Called from constructors in derived classes to initialize the <see cref="T:Microsoft.Data.SqlClient.SqlAuthenticationProvider" /> class.</summary>
+        </ctor>
         <GetProvider>
             <param name="authenticationMethod">The authentication method.</param>
             <summary>Gets an authentication provider by method.</summary>
