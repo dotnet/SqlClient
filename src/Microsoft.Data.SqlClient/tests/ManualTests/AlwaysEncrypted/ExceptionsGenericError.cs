@@ -7,6 +7,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     public class ExceptionsGenericErrors : IClassFixture<ExceptionGenericErrorFixture> {
         
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ActiveIssue(10036)]
         public void TestCommandOptionWithNoTceFeature () {
             SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr);
             CertificateUtility.ChangeServerTceSetting (false, sb); // disable TCE on engine.
