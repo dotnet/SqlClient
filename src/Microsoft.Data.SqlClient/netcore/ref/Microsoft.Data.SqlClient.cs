@@ -525,6 +525,7 @@ namespace Microsoft.Data.SqlClient
         public Microsoft.Data.SqlClient.ApplicationIntent ApplicationIntent { get { throw null; } set { } }
         public string ApplicationName { get { throw null; } set { } }
         public string AttachDBFilename { get { throw null; } set { } }
+        public Microsoft.Data.SqlClient.SqlAuthenticationMethod Authentication { get { throw null; } set { } }
         public int ConnectRetryCount { get { throw null; } set { } }
         public int ConnectRetryInterval { get { throw null; } set { } }
         public int ConnectTimeout { get { throw null; } set { } }

@@ -2784,6 +2784,11 @@ namespace Microsoft.Data.SqlClient
                         cmd.InternalRecordsAffected = count;
                     }
                 }
+                // Skip the bogus DONE counts sent by the server
+                if (stateObj._receivedColMetaData || (curCmd != TdsEnums.SELECT))
+                {
+                    cmd.OnStatementCompleted(count);
+                }
             }
 
             stateObj._receivedColMetaData = false;
