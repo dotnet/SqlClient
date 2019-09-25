@@ -8,7 +8,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly string s_connStr = (new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr) { PacketSize = 512 }).ConnectionString;
         private static bool completedHandlerExecuted = false;
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void VerifyStatmentCompletedCalled()
         {
             using (var conn = new SqlConnection(s_connStr))
