@@ -95,7 +95,8 @@
             </remarks>
         </IsFixedLength>
         <MaxByteSize>
-            <summary>The maximum size of the instance, in bytes.</summary> value representing the maximum size of the instance.</value>
+            <summary>The maximum size of the instance, in bytes.</summary>
+            <value>An <see cref="T:System.Int32" /> value representing the maximum size of the instance.</value>
             <remarks>
                 <format type="text/markdown"><![CDATA[  
   

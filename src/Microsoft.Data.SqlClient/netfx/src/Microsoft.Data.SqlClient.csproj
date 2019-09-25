@@ -13,8 +13,8 @@
     <OutputPlatform>AnyCPU</OutputPlatform>
     <BinPath>$(BinFolder)$(Configuration).$(OutputPlatform)\</BinPath>
     <ObjPath>$(ObjFolder)$(Configuration).$(OutputPlatform)\</ObjPath>
-    <DocumentationFile>$(OutputPath)\Microsoft.Data.SqlClient.xml</DocumentationFile>
     <OutputPath>$(BinPath)$(AssemblyName)\netfx\</OutputPath>
+    <DocumentationFile>$(OutputPath)\Microsoft.Data.SqlClient.xml</DocumentationFile>
     <IntermediateOutputPath>$(ObjPath)$(AssemblyName)\netfx\</IntermediateOutputPath>
     <Product>Framework $(BaseProduct)</Product>
     <!-- ResolveComReferenceSilent suppresses warnings thrown due to the inclusion of mscoree.
