@@ -27,7 +27,8 @@ namespace Microsoft.Data.SqlClient
                 .WithClientVersion(Common.ADP.GetAssemblyVersion().ToString())
                 .Build();
             AuthenticationResult result;
-            string[] scopes = parameters.Scopes;
+            string scope = parameters.Resource.EndsWith("/.default") ? parameters.Resource : parameters.Resource + "./default";
+            string[] scopes = new string[] { scope };
 
             // Note: CorrelationId, which existed in ADAL, can not be set in MSAL (yet?).
             // parameter.ConnectionId was passed as the CorrelationId in ADAL to aid support in troubleshooting.
