@@ -21,7 +21,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Resource URI.
         /// </summary>
-        public string[] Scopes { get; }
+        public string Resource { get; }
 
         /// <summary>
         /// Authority URI.
@@ -57,7 +57,7 @@ namespace Microsoft.Data.SqlClient
             SqlAuthenticationMethod authenticationMethod,
             string serverName,
             string databaseName,
-            string[] scopes,
+            string resource,
             string authority,
             string userId,
             string password,
@@ -65,7 +65,7 @@ namespace Microsoft.Data.SqlClient
             AuthenticationMethod = authenticationMethod;
             ServerName = serverName;
             DatabaseName = databaseName;
-            Scopes = scopes;
+            Resource = resource;
             Authority = authority;
             UserId = userId;
             Password = password;
@@ -79,7 +79,7 @@ namespace Microsoft.Data.SqlClient
             private readonly SqlAuthenticationMethod _authenticationMethod;
             private readonly string _serverName;
             private readonly string _databaseName;
-            private readonly string[] _scopes;
+            private readonly string _resource;
             private readonly string _authority;
             private string _userId;
             private string _password;
@@ -94,7 +94,7 @@ namespace Microsoft.Data.SqlClient
                     authenticationMethod: builder._authenticationMethod,
                     serverName: builder._serverName,
                     databaseName: builder._databaseName,
-                    scopes: builder._scopes,
+                    resource: builder._resource,
                     authority: builder._authority,
                     userId: builder._userId,
                     password: builder._password,
@@ -143,7 +143,7 @@ namespace Microsoft.Data.SqlClient
                 _authenticationMethod = authenticationMethod;
                 _serverName = serverName;
                 _databaseName = databaseName;
-                _scopes = new string[] { resource + "/.default" };
+                _resource = resource;
                 _authority = authority;
             }
         }
