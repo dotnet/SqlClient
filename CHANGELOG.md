@@ -8,9 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Fixed Issues
 
-- SqlCommand StatementCompleted event never being fired [#212](https://github.com/dotnet/SqlClient/issues/212)
-- Added missing Authentication property to SqlConnectionStringBuilder reference assembly
-- Reverted API changes in SqlAuthenticationParameters which had changed the `public string Resource` property to `public string[] Scopes`
+- `SqlCommand.StatementCompleted` event never being fired [#212](https://github.com/dotnet/SqlClient/issues/212)
+- Added missing `Authentication` property to `SqlConnectionStringBuilder` reference assembly
+- Reverted API changes in `SqlAuthenticationParameters` which had changed the `public string Resource` property to `public string[] Scopes`
 
 ## [Hotfix & Stable Release 1.0.19249.1] - 2019-09-06
 
