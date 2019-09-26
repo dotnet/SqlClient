@@ -48,7 +48,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void StatementCompletedHandler(object sender, StatementCompletedEventArgs args)
         {
-            // Increment on evert pass through
+            // Increment on event pass through
             completedHandlerExecuted++;
         }
     }
