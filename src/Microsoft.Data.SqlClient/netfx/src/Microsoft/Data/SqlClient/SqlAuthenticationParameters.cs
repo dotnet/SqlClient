@@ -143,7 +143,7 @@ namespace Microsoft.Data.SqlClient
                 _authenticationMethod = authenticationMethod;
                 _serverName = serverName;
                 _databaseName = databaseName;
-                _resource = resource + "/.default";
+                _resource = resource;
                 _authority = authority;
             }
         }
