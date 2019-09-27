@@ -20,6 +20,7 @@
     <Compile Include="AlwaysEncrypted\CoreCryptoTests.cs" />
     <Compile Include="AlwaysEncrypted\End2EndSmokeTests.cs" />
     <Compile Include="AlwaysEncrypted\CspProviderExt.cs" />
+    <Compile Include="AlwaysEncrypted\ConversionTests.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ApiTestTable.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\BulkCopyAETestTable.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ColumnEncryptionKey.cs" />
@@ -76,8 +77,9 @@
     <Compile Include="DDBasics\DDMARSTest\DDMARSTest.cs" />
     <Compile Include="ProviderAgnostic\MultipleResultsTest\MultipleResultsTest.cs" />
     <Compile Include="ProviderAgnostic\ReaderTest\ReaderTest.cs" />
-    <Compile Include="SQL\AsyncTest\AsyncTest.cs" /> 
-    <Compile Include="SQL\CommandCancelTest\CommandCancelTest.cs" />
+    <Compile Include="SQL\AsyncTest\AsyncTest.cs" />
+    <Compile Include="SQL\SqlCommand\SqlCommandCompletedTest.cs" /> 
+    <Compile Include="SQL\SqlCommand\SqlCommandCancelTest.cs" />
     <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolTest.cs" />
     <Compile Include="SQL\ConnectivityTests\ConnectivityTest.cs" />
     <Compile Include="SQL\DataBaseSchemaTest\ConnectionSchemaTest.cs" />

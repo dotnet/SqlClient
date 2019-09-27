@@ -182,23 +182,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         /// </summary>
         internal static string GetCspPathFromCertificate(X509Certificate2 certificate)
         {
-            RSACryptoServiceProvider rsaProvider = (RSACryptoServiceProvider)certificate.PrivateKey;
-            return string.Concat(rsaProvider.CspKeyContainerInfo.ProviderName, @"/", rsaProvider.CspKeyContainerInfo.KeyContainerName);
-        }
-
-        /// <summary>
-        /// Generates cryptographically random bytes
-        /// </summary>
-        /// <param name="length">No of cryptographically random bytes to be generated</param>
-        /// <returns>A byte array containing cryptographically generated random bytes</returns>
-        internal static byte[] GenerateRandomBytes(int length)
-        {
-            // Generate random bytes cryptographically.
-            byte[] randomBytes = new byte[length];
-            RNGCryptoServiceProvider rngCsp = new RNGCryptoServiceProvider();
-            rngCsp.GetBytes(randomBytes);
-
-            return randomBytes;
+            if (certificate.PrivateKey is RSACryptoServiceProvider csp)
+            {
+                return string.Concat(csp.CspKeyContainerInfo.ProviderName, @"/", csp.CspKeyContainerInfo.KeyContainerName);
+            }
+            else
+            {
+                return null;
+            }
         }
 
         /// <summary>
