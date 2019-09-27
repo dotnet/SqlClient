@@ -182,8 +182,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         /// </summary>
         internal static string GetCspPathFromCertificate(X509Certificate2 certificate)
         {
-            RSACryptoServiceProvider rsaProvider = (RSACryptoServiceProvider)certificate.PrivateKey;
-            return string.Concat(rsaProvider.CspKeyContainerInfo.ProviderName, @"/", rsaProvider.CspKeyContainerInfo.KeyContainerName);
+            if (certificate.PrivateKey is RSACryptoServiceProvider csp)
+            {
+                return string.Concat(csp.CspKeyContainerInfo.ProviderName, @"/", csp.CspKeyContainerInfo.KeyContainerName);
+            }
+            else
+            {
+                return null;
+            }
         }
 
         /// <summary>
