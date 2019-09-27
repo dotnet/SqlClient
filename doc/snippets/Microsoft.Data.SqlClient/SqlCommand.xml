@@ -237,7 +237,7 @@
 				<format type="text/markdown">
 					<![CDATA[
 					## Remarks
-					The <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery%2A> method starts the process of asynchronously executing a [!INCLUDE[tsql](~/includes/tsql-md.md)] statement or stored procedure that does not return rows, so that other tasks can run concurrently while the statement is executing. When the statement has completed, developers must call the <xref:Microsoft.Data.SqlClient.SqlCommand.EndExecuteNonQuery%2A> method to finish the operation. The <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery%2A> method returns immediately (<xref:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout%2A> has no effect on <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery%2A>), but until the code executes the corresponding <xref:Microsoft.Data.SqlClient.SqlCommand.EndExecuteNonQuery%2A> method call, it must not execute any other calls that start a synchronous or asynchronous execution against the same <xref:Microsoft.Data.SqlClient.SqlCommand> object. Calling the <xref:Microsoft.Data.SqlClient.SqlCommand.EndExecuteNonQuery%2A> before the command's execution is completed causes the <xref:Microsoft.Data.SqlClient.SqlCommand> object to block until the execution is finished.
+					The <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery%2A> method starts the process of asynchronously executing a Transact-SQL statement or stored procedure that does not return rows, so that other tasks can run concurrently while the statement is executing. When the statement has completed, developers must call the <xref:Microsoft.Data.SqlClient.SqlCommand.EndExecuteNonQuery%2A> method to finish the operation. The <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery%2A> method returns immediately (<xref:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout%2A> has no effect on <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery%2A>), but until the code executes the corresponding <xref:Microsoft.Data.SqlClient.SqlCommand.EndExecuteNonQuery%2A> method call, it must not execute any other calls that start a synchronous or asynchronous execution against the same <xref:Microsoft.Data.SqlClient.SqlCommand> object. Calling the <xref:Microsoft.Data.SqlClient.SqlCommand.EndExecuteNonQuery%2A> before the command's execution is completed causes the <xref:Microsoft.Data.SqlClient.SqlCommand> object to block until the execution is finished.
 					
 					Note that the command text and parameters are sent to the server synchronously. If a large command or many parameters are sent, this method may block during writes. After the command is sent, the method returns immediately without waiting for an answer from the server--that is, reads are asynchronous.
 					
@@ -1423,7 +1423,7 @@
 				<format type="text/markdown">
 					<![CDATA[
 					## Remarks
-					When you call <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery> to execute a [!INCLUDE[tsql](~/includes/tsql-md.md)] statement, you must call <xref:Microsoft.Data.SqlClient.SqlCommand.EndExecuteNonQuery> in order to complete the operation. If the process of executing the command has not yet finished, this method blocks until the operation is complete. Users can verify that the command has completed its operation by using the <xref:System.IAsyncResult> instance returned by the <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery> method. If a callback procedure was specified in the call to <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery>, this method must be called.
+					When you call <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery> to execute a Transact-SQL statement, you must call <xref:Microsoft.Data.SqlClient.SqlCommand.EndExecuteNonQuery> in order to complete the operation. If the process of executing the command has not yet finished, this method blocks until the operation is complete. Users can verify that the command has completed its operation by using the <xref:System.IAsyncResult> instance returned by the <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery> method. If a callback procedure was specified in the call to <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery>, this method must be called.
 					
 					## Examples
 					For examples demonstrating the use of the <xref:Microsoft.Data.SqlClient.SqlCommand.EndExecuteNonQuery%2A> method, see <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery>.
@@ -1686,7 +1686,7 @@
 			<summary>
 				An asynchronous version of
 				<see cref="M:Microsoft.Data.SqlClient.SqlCommand.ExecuteNonQuery" />
-				, which executes a [!INCLUDE[tsql](~/includes/tsql-md.md)] statement against the connection and returns the number of rows affected. The cancellation token can be used to request that the operation be abandoned before the command timeout elapses.  Exceptions will be reported via the returned Task object.
+				, which executes a Transact-SQL statement against the connection and returns the number of rows affected. The cancellation token can be used to request that the operation be abandoned before the command timeout elapses.  Exceptions will be reported via the returned Task object.
 			</summary>
 			<returns>
 				A task representing the asynchronous operation.
@@ -2585,7 +2585,7 @@
 					<![CDATA[
 					## Remarks
 					The **XmlReader** returned by this method does not support asynchronous operations.
-					The <xref:Microsoft.Data.SqlClient.SqlCommand.CommandText%2A> property ordinarily specifies a [!INCLUDE[tsql](~/includes/tsql-md.md)] statement with a valid FOR XML clause. However, <xref:Microsoft.Data.SqlClient.SqlCommand.CommandText%2A> can also specify a statement that returns `ntext` or `nvarchar` data that contains valid XML, or the contents of a column defined with the `xml` data type.
+					The <xref:Microsoft.Data.SqlClient.SqlCommand.CommandText%2A> property ordinarily specifies a Transact-SQL statement with a valid FOR XML clause. However, <xref:Microsoft.Data.SqlClient.SqlCommand.CommandText%2A> can also specify a statement that returns `ntext` or `nvarchar` data that contains valid XML, or the contents of a column defined with the `xml` data type.
 					
 					A typical <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteXmlReader%2A> query can be formatted as in the following Microsoft Visual C# example:
 					

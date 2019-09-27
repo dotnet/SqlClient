@@ -314,7 +314,7 @@
 					[!IMPORTANT]
 					This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md).
 					This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a
-					[!INCLUDE[tsql](~/includes/tsql-md.md)]`INSERT … SELECT` statement to copy the data.
+					Transact-SQL `INSERT … SELECT` statement to copy the data.
 					
 					[!code-csharp[SqlBulkCopy.Timeout#1](~/sqlclient/doc/samples/SqlBulkCopy_Timeout.cs#1)]
 					]]>

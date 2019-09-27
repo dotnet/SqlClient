@@ -1842,7 +1842,7 @@ namespace Microsoft.Data.SqlClient.DataClassification
     /// <include file='..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.DataClassification\SensitivityProperty.xml' path='docs/members[@name="SensitivityProperty"]/SensitivityProperty/*' />
     public partial class SensitivityProperty
     {
-        /// <include file='..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.DataClassification\SensitivityProperty.xml' path='docs/members[@name="SensitivityProperty"]/SensitivityProperty/*' />
+        /// <include file='..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.DataClassification\SensitivityProperty.xml' path='docs/members[@name="SensitivityProperty"]/ctor/*' />
         public SensitivityProperty(Microsoft.Data.SqlClient.DataClassification.Label label, Microsoft.Data.SqlClient.DataClassification.InformationType informationType) { }
         /// <include file='..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.DataClassification\SensitivityProperty.xml' path='docs/members[@name="SensitivityProperty"]/InformationType/*' />
         public Microsoft.Data.SqlClient.DataClassification.InformationType InformationType { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
