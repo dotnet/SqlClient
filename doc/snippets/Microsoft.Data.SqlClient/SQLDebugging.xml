@@ -6,5 +6,11 @@
             </summary>
             <remarks>To be added.</remarks>
         </SQLDebugging>
+        <ctor>
+            <summary>
+                Initiates instance of <see cref="T:Microsoft.Data.SqlClient.SQLDebugging"/> class object. Not intended for direct use.
+            </summary>
+            <remarks>To be added.</remarks>
+        </ctor>
     </members>
 </docs>

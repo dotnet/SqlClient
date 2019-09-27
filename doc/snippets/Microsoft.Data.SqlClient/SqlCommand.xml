@@ -1661,7 +1661,7 @@
 				To be added.
 			</remarks>
 		</CreateDbParameter>
-		<CreateParameter name="">
+		<CreateParameter>
 			<summary>
 				Creates a new instance of a
 				<see cref="T:Microsoft.Data.SqlClient.SqlParameter" />

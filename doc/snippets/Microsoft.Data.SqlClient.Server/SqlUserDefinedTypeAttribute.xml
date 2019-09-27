@@ -83,7 +83,8 @@
         <IsFixedLength>
             <summary>Indicates whether all instances of this user-defined type are the same length.</summary>
             <value>
-                <see langword="true" /> if all instances of this type are the same length; otherwise <see langword="false" />.</value>
+                <see langword="true" /> if all instances of this type are the same length; otherwise <see langword="false" />.
+            </value>
             <remarks>
                 <format type="text/markdown"><![CDATA[  
   

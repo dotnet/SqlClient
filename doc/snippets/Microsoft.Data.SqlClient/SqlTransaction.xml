@@ -76,9 +76,16 @@
             <remarks>To be added.</remarks>
         </Dispose>
         <DisposeDisposing>
-            <param name="disposing">To be added.</param>
-            <summary>To be added.</summary>
-            <remarks>To be added.</remarks>
+            <param name="disposing"><see langword="true" /> to release managed and unmanaged resources; <see langword="false" /> to release only unmanaged resources.</param>
+            <summary>Releases the unmanaged resources used and optionally releases the managed resources.</summary>
+            <remarks>
+              <format type="text/markdown"><![CDATA[  
+                  
+    ## Remarks  
+      This method calls <xref:System.Data.Common.DbTransaction.Dispose%2A>.
+    
+      ]]></format>
+            </remarks>
         </DisposeDisposing>
         <IsolationLevel>
             <summary>Specifies the <see cref="T:System.Data.IsolationLevel" /> for this transaction.</summary>

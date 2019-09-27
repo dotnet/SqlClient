@@ -6,10 +6,10 @@
             <remarks>To be added.</remarks>
         </SqlConnectionColumnEncryptionSetting>
         <Disabled>
-        <summary>Specifies the connection does not use Always Encrypted. Should be used if no queries sent over the connection access encrypted columns.</summary>
+            <summary>Specifies the connection does not use Always Encrypted. Should be used if no queries sent over the connection access encrypted columns.</summary>
         </Disabled>
         <Enabled>
-        <summary>Enables Always Encrypted functionality for the connection. Query parameters that correspond to encrypted columns will be transparently encrypted and query results from encrypted columns will be transparently decrypted.</summary>
+            <summary>Enables Always Encrypted functionality for the connection. Query parameters that correspond to encrypted columns will be transparently encrypted and query results from encrypted columns will be transparently decrypted.</summary>
         </Enabled>
     </members>
 </docs>

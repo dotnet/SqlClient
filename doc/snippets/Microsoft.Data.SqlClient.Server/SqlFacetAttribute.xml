@@ -54,14 +54,15 @@
             <value>
             <see langword="true" /> if the return type is of a fixed length; otherwise <see langword="false" />.</value>
             <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- This property must be set to `false` if the <xref:Microsoft.Data.SqlClient.Server.SqlFacetAttribute.MaxSize%2A> property is set to 1.  
-  
- The default value is `false`.  
-  
- ]]></format>
+                <format type="text/markdown"><![CDATA[  
+                    ## Remarks  
+                    This property must be set to `false` if the <xref:Microsoft.Data.SqlClient.Server.SqlFacetAttribute.MaxSize%2A> property is set to 1.  
+                    
+                    The default value is `false`.  
+                    
+                    ]]>
+                </format>
+            </remarks>
         </IsFixedLength>
         <IsNullable>
             <summary>Indicates whether the return type of the user-defined type can be <see langword="null" />.</summary>

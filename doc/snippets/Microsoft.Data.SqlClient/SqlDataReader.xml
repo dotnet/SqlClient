@@ -80,6 +80,18 @@
             <summary>To be added.</summary>
             <remarks>To be added.</remarks>
         </Dispose>
+        <DisposeDisposing>
+            <param name="disposing"><see langword="true" /> to release managed and unmanaged resources; <see langword="false" /> to release only unmanaged resources.</param>
+            <summary>Releases the unmanaged resources used by the <see cref="T:System.Data.SqlClient.SqlDataReader" /> and optionally releases the managed resources.</summary>
+            <remarks>
+              <format type="text/markdown"><![CDATA[  
+                  
+    ## Remarks  
+      This method calls <xref:System.Data.Common.DbDataReader.Dispose%2A>.
+    
+      ]]></format>
+            </remarks>
+        </DisposeDisposing>
         <FieldCount>
             <summary>Gets the number of columns in the current row.</summary>
             <value>When not positioned in a valid recordset, 0; otherwise the number of columns in the current row. The default is -1.</value>
@@ -185,9 +197,18 @@
             </remarks>
         </GetChars>
         <GetColumnSchema>
-            <summary>To be added.</summary>
-            <returns>To be added.</returns>
-            <remarks>To be added.</remarks>
+            <summary>Gets the read-only column schema collection.</summary>
+            <returns>The read-only column schema collection).</returns>
+            <remarks>
+                <format type="text/markdown"><![CDATA[  
+                
+                    ## Remarks  
+                    
+                    This method is an implementation of <xref:System.Data.Common.IDbColumnSchemaGenerator.GetColumnSchema?displayProperty=nameWithType> method, which enables the use of the <xref:System.Data.Common.IDbColumnSchemaGenerator> interface to populate the <xref:System.Data.Common.DbColumn> schema metadata without using a <xref:System.Data.DataTable>.
+                        
+                        ]]>
+                </format>
+            </remarks>
         </GetColumnSchema>
         <GetData>
             <param name="i">A column ordinal.</param>
