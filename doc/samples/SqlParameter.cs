@@ -5,11 +5,6 @@ using Microsoft.Data.SqlClient;
 
 class Program
 {
-    static void Main()
-    {
-    }
-
-
     // using Microsoft.Data.SqlClient;
     static void CreateSqlParameterOutput()
     {

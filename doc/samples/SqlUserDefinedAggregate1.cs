@@ -22,18 +22,18 @@ public struct CountVowels
     {
         // list of vowels to look for
         string vowels = "aeiou";
-        
+
         // for each character in the given parameter
-        for (int i=0; i < value.ToString().Length; i++)
+        for (int i = 0; i < value.ToString().Length; i++)
         {
             // for each character in the vowels string
-            for (int j=0; j < vowels.Length; j++)
+            for (int j = 0; j < vowels.Length; j++)
             {
                 // convert parameter character to lowercase and compare to vowel
-                if (value.Value.Substring(i,1).ToLower() == vowels.Substring(j,1))
+                if (value.Value.Substring(i, 1).ToLower() == vowels.Substring(j, 1))
                 {
                     // it is a vowel, increment the count
-                    countOfVowels+=1;
+                    countOfVowels += 1;
                 }
             }
         }
@@ -61,6 +61,6 @@ public struct CountVowels
 [SqlUserDefinedAggregate(Format.Native)]
 public class SampleAggregate
 {
-   //...
+    //...
 }
 //</Snippet6>

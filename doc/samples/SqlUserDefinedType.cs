@@ -7,11 +7,11 @@ using System.Text;
 
 [Serializable]
 [Microsoft.Data.SqlClient.Server.SqlUserDefinedType(Format.Native,
-     IsByteOrdered=true,  
-     Name="Point",ValidationMethodName = "ValidatePoint")]
+     IsByteOrdered = true,
+     Name = "Point", ValidationMethodName = "ValidatePoint")]
 public struct Point : INullable
 {
-//</Snippet1>
+    //</Snippet1>
     private bool is_Null;
     private Int32 _x;
     private Int32 _y;
@@ -68,7 +68,7 @@ public struct Point : INullable
 
         // Call ValidatePoint to enforce validation
         // for string conversions.
-        if (!pt.ValidatePoint()) 
+        if (!pt.ValidatePoint())
             throw new ArgumentException("Invalid XY coordinate values.");
         return pt;
     }
@@ -81,7 +81,7 @@ public struct Point : INullable
             return this._x;
         }
         // Call ValidatePoint to ensure valid range of Point values.
-        set 
+        set
         {
             Int32 temp = _x;
             _x = value;

@@ -7,8 +7,8 @@ using System.Text;
 
 [Serializable]
 [Microsoft.Data.SqlClient.Server.SqlUserDefinedType(Format.Native,
-     IsByteOrdered=true,  
-     Name="Point",ValidationMethodName = "ValidatePoint")]
+     IsByteOrdered = true,
+     Name = "Point", ValidationMethodName = "ValidatePoint")]
 public struct Point : INullable
 {
 
@@ -16,13 +16,13 @@ public struct Point : INullable
     private Int32 _x;
     private Int32 _y;
 
-// Distance from Point to the specified x and y values method.
-[SqlMethod(OnNullCall = false, IsMutator=false, InvokeIfReceiverIsNull=false)]
-public Double DistanceFromXY(Int32 iX, Int32 iY)
-{
-   return Math.Sqrt(Math.Pow(iX - _x, 2.0) + Math.Pow(iY - _y, 2.0));
-}
-//</Snippet1>
+    // Distance from Point to the specified x and y values method.
+    [SqlMethod(OnNullCall = false, IsMutator = false, InvokeIfReceiverIsNull = false)]
+    public Double DistanceFromXY(Int32 iX, Int32 iY)
+    {
+        return Math.Sqrt(Math.Pow(iX - _x, 2.0) + Math.Pow(iY - _y, 2.0));
+    }
+    //</Snippet1>
 
     public bool IsNull
     {
@@ -76,7 +76,7 @@ public Double DistanceFromXY(Int32 iX, Int32 iY)
 
         // Call ValidatePoint to enforce validation
         // for string conversions.
-        if (!pt.ValidatePoint()) 
+        if (!pt.ValidatePoint())
             throw new ArgumentException("Invalid XY coordinate values.");
         return pt;
     }
@@ -89,7 +89,7 @@ public Double DistanceFromXY(Int32 iX, Int32 iY)
             return this._x;
         }
         // Call ValidatePoint to ensure valid range of Point values.
-        set 
+        set
         {
             Int32 temp = _x;
             _x = value;

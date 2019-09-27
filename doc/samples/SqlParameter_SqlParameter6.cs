@@ -5,9 +5,6 @@ using Microsoft.Data.SqlClient;
 
 class Program
 {
-    static void Main()
-    {
-    }
     private static void AddSqlParameter(SqlCommand command)
     {
         SqlParameter parameter = new SqlParameter("@Description",

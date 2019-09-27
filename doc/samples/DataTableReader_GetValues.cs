@@ -5,9 +5,6 @@ using Microsoft.Data.SqlClient;
 
 class Program
 {
-    static void Main()
-    {
-    }
     // using Microsoft.Data.SqlClient;
     private static void TestGetValues(DataTableReader reader)
     {

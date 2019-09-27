@@ -24,7 +24,7 @@ public partial class UserDefinedFunctions
 
 public partial class UserDefinedFunctions
 {
-    [SqlFunction(Name="sp_scalarFunc")]
+    [SqlFunction(Name = "sp_scalarFunc")]
     public static SqlString SampleScalarFunction(SqlString s)
     {
         //...
@@ -39,11 +39,11 @@ public partial class UserDefinedFunctions
 
 public partial class UserDefinedFunctions
 {
-    [SqlFunction(Name="sp_tableFunc", TableDefinition="letter nchar(1)")]
+    [SqlFunction(Name = "sp_tableFunc", TableDefinition = "letter nchar(1)")]
     public static IEnumerable SampleTableFunction(SqlString s)
     {
         //...
-        return new ArrayList(new char[3] {'a', 'b', 'c'});
+        return new ArrayList(new char[3] { 'a', 'b', 'c' });
     }
 }
 //</Snippet11>
