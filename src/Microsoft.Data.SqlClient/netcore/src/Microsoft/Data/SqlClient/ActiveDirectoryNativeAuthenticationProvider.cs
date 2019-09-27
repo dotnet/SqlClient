@@ -14,6 +14,7 @@ namespace Microsoft.Data.SqlClient
     /// </summary>
     internal class ActiveDirectoryNativeAuthenticationProvider : SqlAuthenticationProvider
     {
+        private static readonly string s_defaultScopeSuffix = "/.default";
         private readonly string _type = typeof(ActiveDirectoryNativeAuthenticationProvider).Name;
 
         /// <summary>
@@ -27,7 +28,7 @@ namespace Microsoft.Data.SqlClient
                 .WithClientVersion(Common.ADP.GetAssemblyVersion().ToString())
                 .Build();
             AuthenticationResult result;
-            string scope = parameters.Resource.EndsWith("/.default") ? parameters.Resource : parameters.Resource + "./default";
+            string scope = parameters.Resource.EndsWith(s_defaultScopeSuffix) ? parameters.Resource : parameters.Resource + s_defaultScopeSuffix;
             string[] scopes = new string[] { scope };
 
             // Note: CorrelationId, which existed in ADAL, can not be set in MSAL (yet?).
