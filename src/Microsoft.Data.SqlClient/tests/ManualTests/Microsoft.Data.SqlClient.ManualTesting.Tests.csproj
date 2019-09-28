@@ -39,6 +39,7 @@
     <Compile Include="AlwaysEncrypted\TestFixtures\DatabaseHelper.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CertificateUtilityWin.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyCspExt.cs" />
+    <Compile Include="AlwaysEncrypted\TestTrustedMasterKeyPaths.cs" />
     <Compile Include="DataCommon\CheckConnStrSetupFactAttribute.cs" />
     <Compile Include="SQL\AdapterTest\AdapterTest.cs" />
     <Compile Include="SQL\AsyncTest\BeginExecAsyncTest.cs" />

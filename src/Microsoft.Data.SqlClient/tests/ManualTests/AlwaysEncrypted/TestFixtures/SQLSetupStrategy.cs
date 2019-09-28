@@ -19,6 +19,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public Table BulkCopyAETestTable { get; private set; }
         public Table SqlParameterPropertiesTable { get; private set; }
         public Table End2EndSmokeTable { get; private set; }
+        public Table TrustedMasterKeyPathsTestTable { get; private set; }
 
         protected List<DbObject> databaseObjects = new List<DbObject>();
 
@@ -77,6 +78,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             End2EndSmokeTable = new ApiTestTable(GenerateUniqueName("End2EndSmokeTable"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
             tables.Add(End2EndSmokeTable);
+
+            TrustedMasterKeyPathsTestTable = new ApiTestTable(GenerateUniqueName("TrustedMasterKeyPathsTestTable"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
+            tables.Add(TrustedMasterKeyPathsTestTable);
 
             return tables;
         }
