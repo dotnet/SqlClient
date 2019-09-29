@@ -282,5 +282,38 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 throw;
             }
         }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async Task CancelInInfiniteLoop()
+        {
+            Exception exception = null;
+            DateTime started = DateTime.UtcNow;
+            using (var connection = new SqlConnection(s_connStr))
+            {
+                await connection.OpenAsync().ConfigureAwait(false);
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = @"
+                        WHILE 1 = 1
+                        BEGIN
+                            DECLARE @x INT = 1
+                        END
+                    ";
+                    command.CommandTimeout = 30;
+                    CancellationTokenSource cancellationTokenSource = new CancellationTokenSource(1000);
+                    try
+                    {
+                        await command.ExecuteNonQueryAsync(cancellationTokenSource.Token).ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        exception = ex;
+                    }
+                }
+            }
+            DateTime ended = DateTime.UtcNow;
+            Assert.InRange((ended - started).TotalSeconds, 1, 9);
+            Assert.NotNull(exception);
+        }
     }
 }
