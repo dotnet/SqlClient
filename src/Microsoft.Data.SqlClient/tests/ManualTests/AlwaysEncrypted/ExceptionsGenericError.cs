@@ -147,7 +147,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 cmd.ExecuteNonQuery();
             }
             conn.Close();
-            CertificateUtility.ChangeServerTceSetting(true, sb);
+
+            // Only use traceoff for non-sysadmin role accounts, Azure accounts does not have the permission.
+            if (DataTestUtility.IsNotAzureServer())
+            {
+                CertificateUtility.ChangeServerTceSetting(true, sb);
+            }
         }
     }
 }
