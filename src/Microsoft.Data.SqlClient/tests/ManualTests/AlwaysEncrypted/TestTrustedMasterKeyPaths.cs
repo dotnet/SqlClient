@@ -57,6 +57,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.True(rowsFound == 1, "Incorrect number of rows returned in first execution.");
         }
 
+        [PlatformSpecific(TestPlatforms.Windows)]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void TestTrustedColumnEncryptionMasterKeyPathsWithNullDictionary()
         {
@@ -90,6 +91,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             SqlConnection.ColumnEncryptionTrustedMasterKeyPaths.Clear();
         }
 
+        [PlatformSpecific(TestPlatforms.Windows)]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void TestTrustedColumnEncryptionMasterKeyPathsWithOneServer()
         {
@@ -130,6 +132,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             SqlConnection.ColumnEncryptionTrustedMasterKeyPaths.Clear();
         }
 
+        [PlatformSpecific(TestPlatforms.Windows)]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void TestTrustedColumnEncryptionMasterKeyPathsWithMultipleServers()
         {
@@ -187,6 +190,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             SqlConnection.ColumnEncryptionTrustedMasterKeyPaths.Clear();
         }
 
+        [PlatformSpecific(TestPlatforms.Windows)]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void TestTrustedColumnEncryptionMasterKeyPathsWithInvalidInputs()
         {
