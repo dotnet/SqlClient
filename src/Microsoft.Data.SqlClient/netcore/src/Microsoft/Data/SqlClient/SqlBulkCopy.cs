@@ -124,7 +124,6 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-    // -------------------------------------------------------------------------------------------------
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/SqlBulkCopy/*'/>
     public sealed class SqlBulkCopy : IDisposable
     {

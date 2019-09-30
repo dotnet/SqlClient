@@ -22,7 +22,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private const string RSAEncryptionAlgorithmWithOAEP = @"RSA_OAEP";
 
-       
+
         private const string HashingAlgorithm = @"SHA256";
 
         /// <summary>

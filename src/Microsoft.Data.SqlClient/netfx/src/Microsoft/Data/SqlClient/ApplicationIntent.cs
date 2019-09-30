@@ -7,7 +7,7 @@ using System;
 namespace Microsoft.Data.SqlClient
 {
 
-    
+
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/ApplicationIntent.xml' path='docs/members[@name="ApplicationIntent"]/ApplicationIntent/*'/>
     [Serializable]
     public enum ApplicationIntent

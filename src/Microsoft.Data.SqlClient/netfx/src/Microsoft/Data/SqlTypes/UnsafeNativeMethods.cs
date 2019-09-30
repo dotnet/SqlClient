@@ -17,13 +17,13 @@ using System.Runtime.Versioning;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.Data.Common;
 
-namespace Microsoft.Data.SqlTypes 
+namespace Microsoft.Data.SqlTypes
 {
     [SuppressUnmanagedCodeSecurity]
     internal static class UnsafeNativeMethods
     {
         #region PInvoke methods
-        
+
         [DllImport("NtDll.dll", CharSet = CharSet.Unicode)]
         [ResourceExposure(ResourceScope.Machine)]
         internal static extern UInt32 NtCreateFile
@@ -53,7 +53,7 @@ namespace Microsoft.Data.SqlTypes
         [ResourceExposure(ResourceScope.Machine)]
         private static extern int GetFullPathName
             (
-                string path, 
+                string path,
                 int numBufferChars,
                 StringBuilder buffer,
                 IntPtr lpFilePartOrNull
@@ -110,8 +110,8 @@ namespace Microsoft.Data.SqlTypes
             // this should not happen since we already reallocate
             Debug.Assert(cchRequiredSize <= buffer.Capacity, string.Format(
                 System.Globalization.CultureInfo.InvariantCulture,
-                "second call to GetFullPathName returned greater size: {0} > {1}", 
-                cchRequiredSize, 
+                "second call to GetFullPathName returned greater size: {0} > {1}",
+                cchRequiredSize,
                 buffer.Capacity));
 
             return buffer.ToString();
@@ -178,7 +178,7 @@ namespace Microsoft.Data.SqlTypes
         #region definitions from devioctl.h
 
         internal const ushort FILE_DEVICE_FILE_SYSTEM = 0x0009;
-        
+
         internal enum Method
         {
             METHOD_BUFFERED,
@@ -202,36 +202,36 @@ namespace Microsoft.Data.SqlTypes
                 byte access
             )
         {
-            if ( function > 4095 )
-                throw ADP.ArgumentOutOfRange ( "function" );
+            if (function > 4095)
+                throw ADP.ArgumentOutOfRange("function");
 
-            return (uint) ( ( deviceType << 16 ) | ( access << 14 ) | ( function << 2 ) | method );
+            return (uint)((deviceType << 16) | (access << 14) | (function << 2) | method);
         }
 
         #endregion
-        
-        #endregion
-        
-        #region Error codes
-        
-        internal const int ERROR_INVALID_HANDLE             = 6;
-        internal const int ERROR_MR_MID_NOT_FOUND           = 317;
-        
-        internal const uint STATUS_INVALID_PARAMETER        = 0xc000000d;
-        internal const uint STATUS_SHARING_VIOLATION        = 0xc0000043;
-        internal const uint STATUS_OBJECT_NAME_NOT_FOUND    = 0xc0000034;
 
         #endregion
-        
+
+        #region Error codes
+
+        internal const int ERROR_INVALID_HANDLE = 6;
+        internal const int ERROR_MR_MID_NOT_FOUND = 317;
+
+        internal const uint STATUS_INVALID_PARAMETER = 0xc000000d;
+        internal const uint STATUS_SHARING_VIOLATION = 0xc0000043;
+        internal const uint STATUS_OBJECT_NAME_NOT_FOUND = 0xc0000034;
+
+        #endregion
+
         internal const uint SEM_FAILCRITICALERRORS = 0x0001;
-        
+
         internal enum FileType : uint
         {
             Unknown = 0x0000,   // FILE_TYPE_UNKNOWN
-            Disk    = 0x0001,   // FILE_TYPE_DISK
-            Char    = 0x0002,   // FILE_TYPE_CHAR
-            Pipe    = 0x0003,   // FILE_TYPE_PIPE
-            Remote  = 0x8000    // FILE_TYPE_REMOTE
+            Disk = 0x0001,   // FILE_TYPE_DISK
+            Char = 0x0002,   // FILE_TYPE_CHAR
+            Pipe = 0x0003,   // FILE_TYPE_PIPE
+            Remote = 0x8000    // FILE_TYPE_REMOTE
         }
 
         #region definitions from wdm.h
@@ -312,15 +312,15 @@ namespace Microsoft.Data.SqlTypes
             FILE_OVERWRITE = 4,
             FILE_OVERWRITE_IF = 5
         }
-        
+
         #endregion
 
         #region definitions from winnt.h
 
-        internal const int FILE_READ_DATA       = 0x0001;
-        internal const int FILE_WRITE_DATA      = 0x0002;
+        internal const int FILE_READ_DATA = 0x0001;
+        internal const int FILE_WRITE_DATA = 0x0002;
         internal const int FILE_READ_ATTRIBUTES = 0x0080;
-        internal const int SYNCHRONIZE          = 0x00100000;
+        internal const int SYNCHRONIZE = 0x00100000;
 
         #endregion
 
@@ -329,15 +329,15 @@ namespace Microsoft.Data.SqlTypes
         [Flags]
         internal enum Attributes : uint
         {
-            Inherit             = 0x00000002,
-            Permanent           = 0x00000010,
-            Exclusive           = 0x00000020,
-            CaseInsensitive     = 0x00000040,
-            OpenIf              = 0x00000080,
-            OpenLink            = 0x00000100,
-            KernelHandle        = 0x00000200,
-            ForceAccessCheck    = 0x00000400,
-            ValidAttributes     = 0x000007F2
+            Inherit = 0x00000002,
+            Permanent = 0x00000010,
+            Exclusive = 0x00000020,
+            CaseInsensitive = 0x00000040,
+            OpenIf = 0x00000080,
+            OpenLink = 0x00000100,
+            KernelHandle = 0x00000200,
+            ForceAccessCheck = 0x00000400,
+            ValidAttributes = 0x000007F2
         }
 
         #endregion

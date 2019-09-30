@@ -26,7 +26,7 @@ using SysTx = System.Transactions;
 
 namespace Microsoft.Data.SqlClient
 {
-    
+
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/SqlCommand/*'/>
     [
     DefaultEvent("RecordsAffected"),
@@ -433,7 +433,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        
+
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ctor[@name="default"]/*'/>
         public SqlCommand() : base()
         {
@@ -537,8 +537,8 @@ namespace Microsoft.Data.SqlClient
                             {
                                 tdsReliabilitySection.Start();
 #endif //DEBUG
-                                // cleanup
-                                Unprepare();
+                            // cleanup
+                            Unprepare();
 #if DEBUG
                             }
                             finally
@@ -1310,7 +1310,7 @@ namespace Microsoft.Data.SqlClient
                 Bid.ScopeLeave(ref hscp);
             }
         }
-       
+
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CreateParameter/*'/>
         new public SqlParameter CreateParameter()
         {
@@ -4042,24 +4042,24 @@ namespace Microsoft.Data.SqlClient
                                     {
                                         tdsReliabilitySectionAsync.Start();
 #endif //DEBUG
-                                        // Check for any exceptions on network write, before reading.
-                                        CheckThrowSNIException();
+                                    // Check for any exceptions on network write, before reading.
+                                    CheckThrowSNIException();
 
-                                        // If it is async, then TryFetchInputParameterEncryptionInfo-> RunExecuteReaderTds would have incremented the async count.
-                                        // Decrement it when we are about to complete async execute reader.
-                                        SqlInternalConnectionTds internalConnectionTds = _activeConnection.GetOpenTdsConnection();
-                                        if (internalConnectionTds != null)
-                                        {
-                                            internalConnectionTds.DecrementAsyncCount();
-                                            decrementAsyncCountInFinallyBlockAsync = false;
-                                        }
+                                    // If it is async, then TryFetchInputParameterEncryptionInfo-> RunExecuteReaderTds would have incremented the async count.
+                                    // Decrement it when we are about to complete async execute reader.
+                                    SqlInternalConnectionTds internalConnectionTds = _activeConnection.GetOpenTdsConnection();
+                                    if (internalConnectionTds != null)
+                                    {
+                                        internalConnectionTds.DecrementAsyncCount();
+                                        decrementAsyncCountInFinallyBlockAsync = false;
+                                    }
 
-                                        // Complete executereader.
-                                        describeParameterEncryptionDataReader = CompleteAsyncExecuteReader(forDescribeParameterEncryption: true);
-                                        Debug.Assert(null == _stateObj, "non-null state object in PrepareForTransparentEncryption.");
+                                    // Complete executereader.
+                                    describeParameterEncryptionDataReader = CompleteAsyncExecuteReader(forDescribeParameterEncryption: true);
+                                    Debug.Assert(null == _stateObj, "non-null state object in PrepareForTransparentEncryption.");
 
-                                        // Read the results of describe parameter encryption.
-                                        ReadDescribeEncryptionParameterResults(describeParameterEncryptionDataReader, describeParameterEncryptionRpcOriginalRpcMap);
+                                    // Read the results of describe parameter encryption.
+                                    ReadDescribeEncryptionParameterResults(describeParameterEncryptionDataReader, describeParameterEncryptionRpcOriginalRpcMap);
 
 #if DEBUG
                                         // Failpoint to force the thread to halt to simulate cancellation of SqlCommand.
@@ -4127,24 +4127,24 @@ namespace Microsoft.Data.SqlClient
                                             tdsReliabilitySectionAsync.Start();
 #endif //DEBUG
 
-                                            // Check for any exceptions on network write, before reading.
-                                            CheckThrowSNIException();
+                                        // Check for any exceptions on network write, before reading.
+                                        CheckThrowSNIException();
 
-                                            // If it is async, then TryFetchInputParameterEncryptionInfo-> RunExecuteReaderTds would have incremented the async count.
-                                            // Decrement it when we are about to complete async execute reader.
-                                            SqlInternalConnectionTds internalConnectionTds = _activeConnection.GetOpenTdsConnection();
-                                            if (internalConnectionTds != null)
-                                            {
-                                                internalConnectionTds.DecrementAsyncCount();
-                                                decrementAsyncCountInFinallyBlockAsync = false;
-                                            }
+                                        // If it is async, then TryFetchInputParameterEncryptionInfo-> RunExecuteReaderTds would have incremented the async count.
+                                        // Decrement it when we are about to complete async execute reader.
+                                        SqlInternalConnectionTds internalConnectionTds = _activeConnection.GetOpenTdsConnection();
+                                        if (internalConnectionTds != null)
+                                        {
+                                            internalConnectionTds.DecrementAsyncCount();
+                                            decrementAsyncCountInFinallyBlockAsync = false;
+                                        }
 
-                                            // Complete executereader.
-                                            describeParameterEncryptionDataReader = CompleteAsyncExecuteReader(forDescribeParameterEncryption: true);
-                                            Debug.Assert(null == _stateObj, "non-null state object in PrepareForTransparentEncryption.");
+                                        // Complete executereader.
+                                        describeParameterEncryptionDataReader = CompleteAsyncExecuteReader(forDescribeParameterEncryption: true);
+                                        Debug.Assert(null == _stateObj, "non-null state object in PrepareForTransparentEncryption.");
 
-                                            // Read the results of describe parameter encryption.
-                                            ReadDescribeEncryptionParameterResults(describeParameterEncryptionDataReader, describeParameterEncryptionRpcOriginalRpcMap);
+                                        // Read the results of describe parameter encryption.
+                                        ReadDescribeEncryptionParameterResults(describeParameterEncryptionDataReader, describeParameterEncryptionRpcOriginalRpcMap);
 #if DEBUG
                                             // Failpoint to force the thread to halt to simulate cancellation of SqlCommand.
                                             if (_sleepAfterReadDescribeEncryptionParameterResults)
@@ -5652,7 +5652,7 @@ namespace Microsoft.Data.SqlClient
                 _sqlDep.StartTimer(Notification);
             }
         }
-        
+
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Clone/*'/>
         public SqlCommand Clone()
         {

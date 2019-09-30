@@ -23,7 +23,8 @@ namespace Microsoft.Data.SqlClient
         public SqlMetaDataFactory(Stream XMLStream,
                                     string serverVersion,
                                     string serverVersionNormalized) :
-                base(XMLStream, serverVersion, serverVersionNormalized) { }
+                base(XMLStream, serverVersion, serverVersionNormalized)
+        { }
 
         private void addUDTsToDataTypesTable(DataTable dataTypesTable, SqlConnection connection, string ServerVersion)
         {

@@ -19,6 +19,6 @@ namespace Microsoft.Data.SqlClient
     [System.ComponentModel.TypeConverter(typeof(SqlParameterConverter))]
     public sealed partial class SqlParameter
     {
-      internal class SqlParameterConverter { }
+        internal class SqlParameterConverter { }
     }
 }

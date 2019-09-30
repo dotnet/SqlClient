@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClient
         /// Algorithm version
         /// </param>
         internal SqlAes256CbcAlgorithm(SqlAeadAes256CbcHmac256EncryptionKey encryptionKey, SqlClientEncryptionType encryptionType, byte algorithmVersion)
-            :base(encryptionKey, encryptionType, algorithmVersion)
+            : base(encryptionKey, encryptionType, algorithmVersion)
         { }
 
         /// <summary>
@@ -37,7 +37,8 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="plainText">Plaintext data to be encrypted</param>
         /// <returns>Returns the ciphertext corresponding to the plaintext.</returns>
-        internal override byte[] EncryptData(byte[] plainText) {
+        internal override byte[] EncryptData(byte[] plainText)
+        {
             return EncryptData(plainText, hasAuthenticationTag: false);
         }
 
@@ -47,7 +48,8 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="cipherText"></param>
         /// <returns></returns>
-        internal override byte[] DecryptData(byte[] cipherText) {
+        internal override byte[] DecryptData(byte[] cipherText)
+        {
             return base.DecryptData(cipherText, hasAuthenticationTag: false);
         }
     }

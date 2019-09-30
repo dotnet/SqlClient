@@ -11,7 +11,7 @@ namespace Microsoft.Data
     // The dangerous point there are the string arguments of the exported (internal) methods.
     // This string can be argument, table or constraint name but never text of exception itself.
     // Make an invariant that all texts of exceptions coming from resources only.
-    
+
     internal static class ExceptionBuilder
     {
         // The class defines the exceptions that are specific to the DataSet.

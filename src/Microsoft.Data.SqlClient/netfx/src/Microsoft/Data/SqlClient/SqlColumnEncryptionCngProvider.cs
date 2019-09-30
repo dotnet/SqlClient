@@ -261,7 +261,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
         }
-        
+
         /// <summary>
         /// Encrypt the text using specified CNG key.
         /// </summary>

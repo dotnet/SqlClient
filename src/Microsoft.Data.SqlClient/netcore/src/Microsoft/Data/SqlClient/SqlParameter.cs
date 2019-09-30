@@ -182,7 +182,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameDbTypeSizeDirectionPrecisionScaleSourceColumnSourceVersionSourceColumnNullMappingValue/*' />
         public SqlParameter(
             string parameterName,
-            SqlDbType dbType, 
+            SqlDbType dbType,
             int size,
             ParameterDirection direction,
             byte precision,

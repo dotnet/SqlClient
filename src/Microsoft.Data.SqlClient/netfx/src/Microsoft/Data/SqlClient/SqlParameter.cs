@@ -186,7 +186,7 @@ namespace Microsoft.Data.SqlClient
             this.ParameterName = parameterName;
             this.SqlDbType = dbType;
         }
-        
+
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameValue/*' />
         public SqlParameter(string parameterName, object value) : this()
         {
@@ -195,7 +195,7 @@ namespace Microsoft.Data.SqlClient
             this.ParameterName = parameterName;
             this.Value = value;
         }
-        
+
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameDbTypeSize/*' />
         public SqlParameter(string parameterName, SqlDbType dbType, int size) : this()
         {

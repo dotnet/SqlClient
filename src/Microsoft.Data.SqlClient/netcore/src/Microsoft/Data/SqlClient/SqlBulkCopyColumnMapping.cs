@@ -7,9 +7,7 @@ using Microsoft.Data.Common;
 namespace Microsoft.Data.SqlClient
 {
     // -------------------------------------------------------------------------------------------------
-    // this class helps allows the user to create association between source- and targetcolumns
-    //
-    //
+    // this class helps allows the user to create association between source and target columns
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMapping.xml' path='docs/members[@name="SqlBulkCopyColumnMapping"]/SqlBulkCopyColumnMapping/*'/>
     public sealed class SqlBulkCopyColumnMapping
     {
