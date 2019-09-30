@@ -5,27 +5,28 @@ using Xunit;
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     public class ExceptionsGenericErrors : IClassFixture<ExceptionGenericErrorFixture> {
-        
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [ActiveIssue(10036)]
         public void TestCommandOptionWithNoTceFeature () {
             SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr);
             CertificateUtility.ChangeServerTceSetting (false, sb); // disable TCE on engine.
             SqlConnection conn = CertificateUtility.GetOpenConnection (false, sb, fSuppressAttestation: true);
-            SqlCommand cmd = new SqlCommand (ExceptionGenericErrorFixture.encryptedProcedureName, conn, null, SqlCommandColumnEncryptionSetting.Enabled);
-            SqlParameter param = cmd.Parameters.AddWithValue("@c1", 2);
-            cmd.CommandType = CommandType.StoredProcedure;
-            string expectedErrorMessage = "SQL Server instance in use does not support column encryption.";
-            InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => cmd.ExecuteNonQuery());
-            Assert.Contains(expectedErrorMessage, e.Message);
+            using (SqlCommand cmd = new SqlCommand(ExceptionGenericErrorFixture.encryptedProcedureName, conn, null, SqlCommandColumnEncryptionSetting.Enabled))
+            {
+                SqlParameter param = cmd.Parameters.AddWithValue("@c1", 2);
+                cmd.CommandType = CommandType.StoredProcedure;
+                string expectedErrorMessage = "SQL Server instance in use does not support column encryption.";
+                InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => cmd.ExecuteNonQuery());
+                Assert.Contains(expectedErrorMessage, e.Message);
+            }
             
-            cmd.Dispose();
             conn.Close();
             // Turn on TCE now
             CertificateUtility.ChangeServerTceSetting (true, sb); // enable tce
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void TestDataAdapterAndEncrytionSetting () {
             SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr);
             // Create a new SqlCommand for select and delete
@@ -39,30 +40,32 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             cmdDelete.Parameters.Add("@c1", SqlDbType.Int, 4, "c1");
             cmdDelete.UpdatedRowSource = UpdateRowSource.None;
 
-            SqlDataAdapter adapter = new SqlDataAdapter($"select c1 from {ExceptionGenericErrorFixture.encryptedTableName}", conn);
-            adapter.InsertCommand = cmdInsert;
-            adapter.DeleteCommand = cmdDelete;
+            using (SqlDataAdapter adapter = new SqlDataAdapter($"select c1 from {ExceptionGenericErrorFixture.encryptedTableName}", conn))
+            {
+                adapter.InsertCommand = cmdInsert;
+                adapter.DeleteCommand = cmdDelete;
 
-            DataSet dataset = new DataSet();
-            adapter.Fill(dataset);
-            DataTable table = dataset.Tables[0];
-            foreach (DataRow row in table.Rows) {
-                row.Delete();
+                DataSet dataset = new DataSet();
+                adapter.Fill(dataset);
+                DataTable table = dataset.Tables[0];
+                foreach (DataRow row in table.Rows)
+                {
+                    row.Delete();
+                }
+                DataRow rowInserted = table.NewRow();
+                rowInserted["c1"] = 5;
+                table.Rows.Add(rowInserted);
+                adapter.UpdateBatchSize = 0; // remove batch size limit
+                                             // run batch update
+
+                string expectedErrorMessage = "SqlCommandColumnEncryptionSetting should be identical on all commands (SelectCommand, InsertCommand, UpdateCommand, DeleteCommand) when doing batch updates.";
+                InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => adapter.Update(dataset));
+                Assert.Contains(expectedErrorMessage, e.Message);
             }
-            DataRow rowInserted = table.NewRow();
-            rowInserted["c1"] = 5;
-            table.Rows.Add(rowInserted);
-            adapter.UpdateBatchSize = 0; // remove batch size limit
-            // run batch update
-
-            string expectedErrorMessage = "SqlCommandColumnEncryptionSetting should be identical on all commands (SelectCommand, InsertCommand, UpdateCommand, DeleteCommand) when doing batch updates.";
-            InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => adapter.Update(dataset));
-            Assert.Contains(expectedErrorMessage, e.Message);
-            adapter.Dispose();
             conn.Close();
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void TestInvalidForceColumnEncryptionSetting() {
             SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr);
             SqlConnection conn = CertificateUtility.GetOpenConnection(false, sb);
@@ -75,7 +78,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.Contains(expectedErrorMessage, e.Message);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void TestParamUnexpectedEncryptionMD() {
             SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr);
             SqlConnection conn = CertificateUtility.GetOpenConnection(true, sb);
@@ -104,40 +107,29 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             encryptedTableName = DatabaseHelper.GenerateUniqueName("encrypted");
             encryptedProcedureName = DatabaseHelper.GenerateUniqueName("encrypted");
-            SqlConnection conn = CertificateUtility.GetOpenConnection(false, new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr));
-            SqlCommand cmdCreate = null;
-            SqlCommand cmdInsert = null;
-            SqlCommand cmdCreateProc = null;
-
-            try
+            using (SqlConnection conn = CertificateUtility.GetOpenConnection(false, new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr)))
             {
-                cmdCreate = new SqlCommand($"create table {encryptedTableName}(c1 int)", conn);
-                cmdCreate.CommandType = CommandType.Text;
-                cmdCreate.ExecuteNonQuery();
 
-                cmdInsert = new SqlCommand($"insert into {encryptedTableName} values(1)", conn);
-                cmdInsert.CommandType = CommandType.Text;
-                cmdInsert.ExecuteNonQuery();
+                using (SqlCommand cmdCreate = new SqlCommand($"create table {encryptedTableName}(c1 int)", conn))
+                {
+                    cmdCreate.CommandType = CommandType.Text;
+                    cmdCreate.ExecuteNonQuery();
+                }
 
-                cmdCreateProc = new SqlCommand($"create procedure {encryptedProcedureName}(@c1 int) as insert into {encryptedTableName} values (@c1)", conn);
-                cmdCreateProc.CommandType = CommandType.Text;
-                cmdCreateProc.ExecuteNonQuery();
+
+                using (SqlCommand cmdInsert = new SqlCommand($"insert into {encryptedTableName} values(1)", conn))
+                {
+                    cmdInsert.CommandType = CommandType.Text;
+                    cmdInsert.ExecuteNonQuery();
+                }
+
+                using (SqlCommand cmdCreateProc = new SqlCommand($"create procedure {encryptedProcedureName}(@c1 int) as insert into {encryptedTableName} values (@c1)", conn))
+                {
+                    cmdCreateProc.CommandType = CommandType.Text;
+                    cmdCreateProc.ExecuteNonQuery();
+                }
+
                 conn.Close();
-            }
-            finally
-            {
-                DisposeCommand(cmdCreate);
-                DisposeCommand(cmdInsert);
-                DisposeCommand(cmdCreateProc);
-                if (null != conn)
-                    conn.Dispose();
-            }
-        }
-        public void DisposeCommand(SqlCommand cmd)
-        {
-            if (null != cmd)
-            {
-                cmd.Dispose();
             }
         }
 
@@ -146,13 +138,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             // Do NOT remove certificate for concurrent consistency. Certificates are used for other test cases as well.
             SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr);
             SqlConnection conn = CertificateUtility.GetOpenConnection(false, sb);
-            SqlCommand cmd = new SqlCommand($"drop table {encryptedTableName}", conn);
-            cmd.CommandType = CommandType.Text;
-            cmd.ExecuteNonQuery();
+            using (SqlCommand cmd = new SqlCommand($"drop table {encryptedTableName}", conn))
+            {
+                cmd.CommandType = CommandType.Text;
+                cmd.ExecuteNonQuery();
 
-            cmd.CommandText = $"drop procedure {encryptedProcedureName}";
-            cmd.ExecuteNonQuery();
-            cmd.Dispose();
+                cmd.CommandText = $"drop procedure {encryptedProcedureName}";
+                cmd.ExecuteNonQuery();
+            }
             conn.Close();
             CertificateUtility.ChangeServerTceSetting(true, sb);
         }
