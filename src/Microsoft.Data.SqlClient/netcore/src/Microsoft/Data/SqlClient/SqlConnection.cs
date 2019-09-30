@@ -708,7 +708,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/DbProviderFactory/*' />
         protected override DbProviderFactory DbProviderFactory
         {
-            get => SqlClientFactory.s_instance;
+            get => SqlClientFactory.Instance;
         }
 
         // SqlCredential: Pair User Id and password in SecureString which are to be used for SQL authentication

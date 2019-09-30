@@ -10,7 +10,7 @@ namespace Microsoft.Data.SqlClient
     public sealed partial class SqlClientFactory : DbProviderFactory
     {
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/Instance/*'/>
-        public static readonly SqlClientFactory s_instance = new SqlClientFactory();
+        public static readonly SqlClientFactory Instance = new SqlClientFactory();
 
         private SqlClientFactory()
         {

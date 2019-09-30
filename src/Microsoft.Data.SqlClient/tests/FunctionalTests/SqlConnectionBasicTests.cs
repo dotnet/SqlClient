@@ -49,7 +49,7 @@ namespace Microsoft.Data.SqlClient.Tests
             DbProviderFactory factory = dbProviderFactoryProperty.GetValue(con) as DbProviderFactory;
             Assert.NotNull(factory);
             Assert.Same(typeof(SqlClientFactory), factory.GetType());
-            Assert.Same(SqlClientFactory.s_instance, factory);
+            Assert.Same(SqlClientFactory.Instance, factory);
         }
 
         [Fact]

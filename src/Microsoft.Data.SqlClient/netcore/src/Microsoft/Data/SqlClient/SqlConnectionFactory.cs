@@ -24,7 +24,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                return SqlClientFactory.s_instance;
+                return SqlClientFactory.Instance;
             }
         }
 
