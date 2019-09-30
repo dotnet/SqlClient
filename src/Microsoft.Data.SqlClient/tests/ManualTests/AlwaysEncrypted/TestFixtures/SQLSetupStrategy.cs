@@ -48,6 +48,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 sqlConnection.Open();
                 databaseObjects.ForEach(o => o.Create(sqlConnection));
             }
+
+            // Insert data for TrustedMasterKeyPaths tests.
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr);
+            builder.ConnectTimeout = 65534;
+            Customer customer = new Customer(45, "Microsoft", "Corporation");
+            using (SqlConnection sqlConn = new SqlConnection(builder.ToString()))
+            {
+                sqlConn.Open();
+                DatabaseHelper.InsertCustomerData(sqlConn, TrustedMasterKeyPathsTestTable.Name, customer);
+            }
         }
 
         protected List<ColumnEncryptionKey> CreateColumnEncryptionKeys(ColumnMasterKey columnMasterKey, int count, SqlColumnEncryptionKeyStoreProvider columnEncryptionKeyStoreProvider)

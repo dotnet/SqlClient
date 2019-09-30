@@ -28,12 +28,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             this.fixture = fixture;
             tableName = fixture.TrustedMasterKeyPathsTestTable.Name;
-            Customer customer = new Customer(45, "Microsoft", "Corporation");
-            using (SqlConnection sqlConn = new SqlConnection(defaultConnectionString))
-            {
-                sqlConn.Open();
-                DatabaseHelper.InsertCustomerData(sqlConn, tableName, customer);
-            }
         }
 
         /// <summary>

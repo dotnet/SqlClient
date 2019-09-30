@@ -196,6 +196,7 @@
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Transactions" />
+    <Reference Include="System.Runtime.Caching" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="SQL\UdtTest\UDTs\Address\Address.csproj">
