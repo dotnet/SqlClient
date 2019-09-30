@@ -7,7 +7,7 @@
             <param name="authenticationMethod">One of the enumeration values that specifies the authentication method.</param>
             <param name="serverName">The server name.</param>
             <param name="databaseName">The database name.</param>
-            <param name="scopes">The resource URI.</param>
+            <param name="resource">The resource URI.</param>
             <param name="authority">The authority URI.</param>
             <param name="userId">The user login name/ID.</param>
             <param name="password">The user password.</param>
@@ -19,10 +19,10 @@
             <summary>Gets the authentication method.</summary>
             <value>The authentication method.</value>
         </AuthenticationMethod>
-        <Scopes>
-            <summary>Array of Resource URIs.</summary>
-            <value>Array of resource URI.</value>
-        </Scopes>
+        <Resource>
+            <summary>The resource URIs.</summary>
+            <value>The resource URI.</value>
+        </Resource>
         <Authority>
             <summary>Gets the authority URI.</summary>
             <value>The authority URI.</value>

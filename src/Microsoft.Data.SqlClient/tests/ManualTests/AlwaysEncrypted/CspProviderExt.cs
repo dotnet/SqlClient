@@ -24,7 +24,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             const string providersRegistryKeyPath = @"SOFTWARE\Microsoft\Cryptography\Defaults\Provider";
             Microsoft.Win32.RegistryKey defaultCryptoProvidersRegistryKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(providersRegistryKeyPath);
-        
+
             foreach (string subKeyName in defaultCryptoProvidersRegistryKey.GetSubKeyNames())
             {
                 // NOTE: RSACryptoServiceProvider.SignData() fails for other providers when testing locally
@@ -33,69 +33,78 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     Console.WriteLine(@"INFO: Skipping Certificate creation for {0}.", subKeyName);
                     continue;
                 }
-
+                string providerName;
+                string providerType;
+                string certificateName;
                 using (Microsoft.Win32.RegistryKey providerKey = defaultCryptoProvidersRegistryKey.OpenSubKey(subKeyName))
                 {
                     // Get Provider Name and its type
-                    string providerName = providerKey.Name.Substring(providerKey.Name.LastIndexOf(@"\") + 1);
-                    string providerType = providerKey.GetValue(@"Type").ToString();
+                    providerName = providerKey.Name.Substring(providerKey.Name.LastIndexOf(@"\") + 1);
+                    providerType = providerKey.GetValue(@"Type").ToString();
 
                     // Create a certificate from that provider
-                    string certificateName = string.Format(@"AETest - {0}", providerName);
+                    certificateName = string.Format(@"AETest - {0}", providerName);
+                }
 
-                    CertificateUtilityWin.CreateCertificate(certificateName, StoreLocation.CurrentUser.ToString(), providerName, providerType);
-
+                CertificateUtilityWin.CreateCertificate(certificateName, StoreLocation.CurrentUser.ToString(), providerName, providerType);
+                SQLSetupStrategyCspExt sqlSetupStrategyCsp = null;
+                try
+                {
                     if (false == CertificateUtilityWin.CertificateExists(certificateName, StoreLocation.CurrentUser))
                     {
                         Console.WriteLine(@"INFO: Certificate creation for provider {0} failed so skipping it.", providerName);
                         continue;
                     }
 
-                    // Get CSP Path
                     X509Certificate2 cert = CertificateUtilityWin.GetCertificate(certificateName, StoreLocation.CurrentUser);
                     string cspPath = CertificateUtilityWin.GetCspPathFromCertificate(cert);
+
+                    if (string.IsNullOrEmpty(cspPath))
+                    {
+                        Console.WriteLine(@"INFO: Certificate provider {0} is not a csp provider so skipping it.", providerName);
+                        continue;
+                    }
+
                     Console.WriteLine("CSP path is {0}", cspPath);
 
-                    SQLSetupStrategyCspExt sqlSetupStrategyCsp = new SQLSetupStrategyCspExt(cspPath);
+                    sqlSetupStrategyCsp = new SQLSetupStrategyCspExt(cspPath);
                     string tableName = sqlSetupStrategyCsp.CspProviderTable.Name;
 
-                    try
+                    using (SqlConnection sqlConn = new SqlConnection(DataTestUtility.TcpConnStr))
                     {
-                        using (SqlConnection sqlConn = new SqlConnection(DataTestUtility.TcpConnStr))
+                        sqlConn.Open();
+
+                        // insert 1 row data
+                        Customer customer = new Customer(45, "Microsoft", "Corporation");
+
+                        DatabaseHelper.InsertCustomerData(sqlConn, tableName, customer);
+
+                        // Test INPUT parameter on an encrypted parameter
+                        using (SqlCommand sqlCommand = new SqlCommand(string.Format(@"SELECT CustomerId, FirstName, LastName FROM [{0}] WHERE FirstName = @firstName", tableName),
+                                                                    sqlConn, null, SqlCommandColumnEncryptionSetting.Enabled))
                         {
-                            sqlConn.Open();
+                            SqlParameter customerFirstParam = sqlCommand.Parameters.AddWithValue(@"firstName", @"Microsoft");
+                            customerFirstParam.Direction = System.Data.ParameterDirection.Input;
 
-                            // insert 1 row data
-                            Customer customer = new Customer(45, "Microsoft", "Corporation");
-
-                            DatabaseHelper.InsertCustomerData(sqlConn, tableName, customer);
-
-                            // Test INPUT parameter on an encrypted parameter
-                            using (SqlCommand sqlCommand = new SqlCommand(string.Format(@"SELECT CustomerId, FirstName, LastName FROM [{0}] WHERE FirstName = @firstName", tableName),
-                                                                        sqlConn, null, SqlCommandColumnEncryptionSetting.Enabled))
+                            using (SqlDataReader sqlDataReader = sqlCommand.ExecuteReader())
                             {
-                                SqlParameter customerFirstParam = sqlCommand.Parameters.AddWithValue(@"firstName", @"Microsoft");
-                                customerFirstParam.Direction = System.Data.ParameterDirection.Input;
-
-                                using (SqlDataReader sqlDataReader = sqlCommand.ExecuteReader())
-                                {
-                                    ValidateResultSet(sqlDataReader);
-                                    Console.WriteLine(@"INFO: Successfully validated using a certificate using provider:{0}", providerName);
-                                }
+                                ValidateResultSet(sqlDataReader);
+                                Console.WriteLine(@"INFO: Successfully validated using a certificate using provider:{0}", providerName);
                             }
                         }
                     }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine(@"INFO: Failed to validate using a certificate using provider:{0}", providerName);
-                        Console.WriteLine(@"Exception: {0}", e.Message);
-                    }
-                    finally
-                    {
-                        CertificateUtilityWin.RemoveCertificate(certificateName, StoreLocation.CurrentUser);
-                        sqlSetupStrategyCsp.DropTable();
-                    }
                 }
+                catch (Exception e)
+                {
+                    Console.WriteLine(@"INFO: Failed to validate using a certificate using provider:{0}", providerName);
+                    Console.WriteLine(@"Exception: {0}", e.Message);
+                }
+                finally
+                {
+                    CertificateUtilityWin.RemoveCertificate(certificateName, StoreLocation.CurrentUser);
+                    sqlSetupStrategyCsp?.DropTable();
+                }
+                
             }
         }
 
@@ -108,24 +117,29 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             string certificateName = string.Format(@"AETest - {0}", providerName);
             CertificateUtilityWin.CreateCertificate(certificateName, StoreLocation.CurrentUser.ToString(), providerName, providerType);
+            try
+            {
+                X509Certificate2 cert = CertificateUtilityWin.GetCertificate(certificateName, StoreLocation.CurrentUser);
+                string cspPath = CertificateUtilityWin.GetCspPathFromCertificate(cert);
+                string certificatePath = String.Concat(@"CurrentUser/my/", cert.Thumbprint);
 
-            X509Certificate2 cert = CertificateUtilityWin.GetCertificate(certificateName, StoreLocation.CurrentUser);
-            string cspPath = CertificateUtilityWin.GetCspPathFromCertificate(cert);
-            string certificatePath = String.Concat(@"CurrentUser/my/", cert.Thumbprint);
+                SqlColumnEncryptionCertificateStoreProvider certProvider = new SqlColumnEncryptionCertificateStoreProvider();
+                SqlColumnEncryptionCspProvider cspProvider = new SqlColumnEncryptionCspProvider();
+                byte[] columnEncryptionKey = DatabaseHelper.GenerateRandomBytes(32);
 
-            SqlColumnEncryptionCertificateStoreProvider certProvider = new SqlColumnEncryptionCertificateStoreProvider();
-            SqlColumnEncryptionCspProvider cspProvider = new SqlColumnEncryptionCspProvider();
-            byte[] columnEncryptionKey = DatabaseHelper.GenerateRandomBytes(32);
+                byte[] encryptedColumnEncryptionKeyUsingCert = certProvider.EncryptColumnEncryptionKey(certificatePath, @"RSA_OAEP", columnEncryptionKey);
+                byte[] columnEncryptionKeyReturnedCert2CSP = cspProvider.DecryptColumnEncryptionKey(cspPath, @"RSA_OAEP", encryptedColumnEncryptionKeyUsingCert);
+                Assert.True(columnEncryptionKey.SequenceEqual(columnEncryptionKeyReturnedCert2CSP));
 
-            byte[] encryptedColumnEncryptionKeyUsingCert = certProvider.EncryptColumnEncryptionKey(certificatePath, @"RSA_OAEP", columnEncryptionKey);
-            byte[] columnEncryptionKeyReturnedCert2CSP = cspProvider.DecryptColumnEncryptionKey(cspPath, @"RSA_OAEP", encryptedColumnEncryptionKeyUsingCert);
-            Assert.True(columnEncryptionKey.SequenceEqual(columnEncryptionKeyReturnedCert2CSP));
+                byte[] encryptedColumnEncryptionKeyUsingCSP = cspProvider.EncryptColumnEncryptionKey(cspPath, @"RSA_OAEP", columnEncryptionKey);
+                byte[] columnEncryptionKeyReturnedCSP2Cert = certProvider.DecryptColumnEncryptionKey(certificatePath, @"RSA_OAEP", encryptedColumnEncryptionKeyUsingCSP);
+                Assert.True(columnEncryptionKey.SequenceEqual(columnEncryptionKeyReturnedCSP2Cert));
 
-            byte[] encryptedColumnEncryptionKeyUsingCSP = cspProvider.EncryptColumnEncryptionKey(cspPath, @"RSA_OAEP", columnEncryptionKey);
-            byte[] columnEncryptionKeyReturnedCSP2Cert = certProvider.DecryptColumnEncryptionKey(certificatePath, @"RSA_OAEP", encryptedColumnEncryptionKeyUsingCSP);
-            Assert.True(columnEncryptionKey.SequenceEqual(columnEncryptionKeyReturnedCSP2Cert));
-
-            CertificateUtilityWin.RemoveCertificate(certificateName, StoreLocation.CurrentUser);
+            }
+            finally
+            {
+                CertificateUtilityWin.RemoveCertificate(certificateName, StoreLocation.CurrentUser);
+            }
         }
         
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]

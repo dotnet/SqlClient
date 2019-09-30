@@ -61,7 +61,8 @@ namespace Microsoft.Data.SqlClient
             IntPtr pDll = LoadLibrary(localFolder + subfolder + SNI);
             if (pDll == IntPtr.Zero)
             {
-                throw new System.ComponentModel.Win32Exception("Failed to load " + localFolder + subfolder + SNI);
+                throw new System.ComponentModel.Win32Exception("Failed to load " + localFolder + subfolder + SNI,
+                    new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error()));
             }
         }
 
@@ -389,7 +390,7 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region DLL Imports
-        [DllImport("kernel32.dll")]
+        [DllImport("kernel32.dll", SetLastError=true)]
         public static extern IntPtr LoadLibrary(string dllToLoad);
 
         [DllImport("secur32.dll", ExactSpelling = true, SetLastError = true)]
