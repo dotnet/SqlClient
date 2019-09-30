@@ -2,14 +2,12 @@
 <docs>
     <members name="TriggerAction">
         <TriggerAction>
-            <summary>The <see cref="T:Microsoft.Data.SqlClient.Server.TriggerAction" /> enumeration is used by the <see cref="T:Microsoft.Data.SqlClient.Server.SqlTriggerContext" /> class to indicate what action fired the trigger.</summary>
+            <summary>The <see cref="T:Microsoft.Data.SqlClient.Server.TriggerAction" /> enumeration is used by the <see cref="T:Microsoft.SqlServer.Server.SqlTriggerContext" /> class to indicate what action fired the trigger.</summary>
             <remarks>
             <format type="text/markdown"><![CDATA[  
   
 ## Remarks  
- The <xref:Microsoft.Data.SqlClient.Server.TriggerAction> enumeration is used by the <xref:Microsoft.Data.SqlClient.Server.SqlTriggerContext> class to indicate what action fired the trigger.  
-  
- For more information, see the [Transact-SQL Reference](/sql/t-sql/language-reference).  
+ The <xref:Microsoft.Data.SqlClient.Server.TriggerAction> enumeration is used by the <xref:Microsoft.SqlServer.Server.SqlTriggerContext> class to indicate what action fired the trigger.
   
  ]]></format>
             </remarks>

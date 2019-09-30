@@ -7,7 +7,7 @@
                 <format type="text/markdown"><![CDATA[  
   
                     ## Examples  
-                    The following example shows the creation of several <xref:Microsoft.Data.SqlClient.Server.SqlMetaData> objects, which describe the column metadata of a record, and the creation of a <xref:Microsoft.Data.SqlClient.Server.SqlDataRecord>. The column values of the <xref:Microsoft.Data.SqlClient.Server.SqlDataRecord> are set and the <xref:Microsoft.Data.SqlClient.Server.SqlDataRecord> is sent to the calling program using the <xref:Microsoft.Data.SqlClient.Server.SqlContext> class.  
+                    The following example shows the creation of several <xref:Microsoft.Data.SqlClient.Server.SqlMetaData> objects, which describe the column metadata of a record, and the creation of a <xref:Microsoft.Data.SqlClient.Server.SqlDataRecord>. The column values of the <xref:Microsoft.Data.SqlClient.Server.SqlDataRecord> are set and the <xref:Microsoft.Data.SqlClient.Server.SqlDataRecord> is sent to the calling program using the <xref:Microsoft.SqlServer.Server.SqlContext> class.  
                     
                     [!code-csharp[SqlMetaData Samples#1](~/sqlclient/doc/samples/SqlMetaData.cs#1)]
                     

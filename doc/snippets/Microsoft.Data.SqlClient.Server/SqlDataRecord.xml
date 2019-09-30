@@ -4,17 +4,17 @@
         <SqlDataRecord>
             <summary>Represents a single row of data and its metadata. This class cannot be inherited.</summary>
             <remarks>
-            <format type="text/markdown"><![CDATA[  
+                <format type="text/markdown"><![CDATA[  
   
 ## Remarks  
- This class is used together with <xref:Microsoft.Data.SqlClient.Server.SqlPipe> to send result sets to the client from managed code stored-procedures.  
+ This class is used together with <xref:Microsoft.SqlServer.Server.SqlPipe> to send result sets to the client from managed code stored-procedures.  
   
  When writing common language runtime (CLR) applications, you should re-use existing `SqlDataRecord` objects instead of creating new ones every time. Creating many new `SqlDataRecord` objects could severely deplete memory and adversely affect performance.  
   
    
   
 ## Examples  
- The following example shows how to create several <xref:Microsoft.Data.SqlClient.Server.SqlMetaData> objects, which describe the column metadata of a record, and creating a <xref:Microsoft.Data.SqlClient.Server.SqlDataRecord>.  The column values of the <xref:Microsoft.Data.SqlClient.Server.SqlDataRecord> are set and the <xref:Microsoft.Data.SqlClient.Server.SqlDataRecord> is sent to the calling program by using the <xref:Microsoft.Data.SqlClient.Server.SqlContext> class.  
+ The following example shows how to create several <xref:Microsoft.Data.SqlClient.Server.SqlMetaData> objects, which describe the column metadata of a record, and creating a <xref:Microsoft.Data.SqlClient.Server.SqlDataRecord>.  The column values of the <xref:Microsoft.Data.SqlClient.Server.SqlDataRecord> are set and the <xref:Microsoft.Data.SqlClient.Server.SqlDataRecord> is sent to the calling program by using the <xref:Microsoft.SqlServer.Server.SqlContext> class.  
   
  [!code-csharp[SqlDataRecord Samples#1](~/sqlclient/doc/samples/SqlDataRecord.cs#1)]
   
@@ -25,7 +25,7 @@
             <param name="metaData">An array of <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> objects that describe each column in the <see cref="T:Microsoft.Data.SqlClient.Server.SqlDataRecord" />.</param>
             <summary>Inititializes a new <see cref="T:Microsoft.Data.SqlClient.Server.SqlDataRecord" /> instance with the schema based on the array of <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> objects passed as an argument.</summary>
             <remarks>
-            <format type="text/markdown"><![CDATA[  
+                <format type="text/markdown"><![CDATA[  
   
 ## Examples  
  The following example shows how to create a new <xref:Microsoft.Data.SqlClient.Server.SqlDataRecord> object from two  <xref:Microsoft.Data.SqlClient.Server.SqlMetaData> objects, which indicate the column name and data type.  
