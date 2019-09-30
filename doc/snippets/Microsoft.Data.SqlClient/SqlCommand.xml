@@ -38,7 +38,7 @@ The following sample shows how to create and execute different types of SqlComma
 
 First you must create the sample database, by executing the following script:
 
-[!sql[Setup Database](~/sqlclient/doc/samples/SqlCommand_Setup.sql#1)]
+[!code-sql[Setup Database](~/sqlclient/doc/samples/SqlCommand_Setup.sql#1)]
 
 Next, compile and execute the following:
 
