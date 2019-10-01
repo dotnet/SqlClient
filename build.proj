@@ -2,6 +2,7 @@
 <Project ToolsVersion="15.0" DefaultTargets="BuildAll" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="src/Directory.Build.props" />
   <Import Project="$(ToolsDir)targets\GenerateNugetPackage.targets" />
+  <Import Project="$(ToolsDir)targets\add-ons\GenerateAKVProviderNugetPackage.targets" />
 
   <PropertyGroup>
     <RestoreConfigFile>src\NuGet.config</RestoreConfigFile>
@@ -21,6 +22,8 @@
   <ItemGroup>
     <NetFxDriver     Include="**/netfx/**/Microsoft.Data.SqlClient*.csproj" Condition="'$(IsEnabledNetFx)' == 'true'"/>
     <NetCoreDriver   Include="**/netcore/**/Microsoft.Data.SqlClient*.csproj"/>
+    <AKVProvider     Include="**/add-ons/**/AzureKeyVaultProvider/*.csproj"/>
+
     <FunctionalTests Include="**/tools/TDS/TDS/TDS.csproj" />
     <FunctionalTests Include="**/tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
     <FunctionalTests Include="**/tools/TDS/TDS.Servers/TDS.Servers.csproj" />
@@ -99,4 +102,19 @@
     <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".",".nuget", SearchOption.AllDirectories))' />
   </Target>
 
+  <Target Name="BuildAddOns"           DependsOnTargets="BuildAKVProvider" />
+  <Target Name="BuildAKVProvider"      DependsOnTargets="BuildAKVNetFx;BuildAKVNetCore;GenerateAKVProviderNugetPackage" />
+  
+  <Target Name="BuildAKVNetFx" DependsOnTargets="BuildNetFx">
+    <MSBuild Projects="@(AKVProvider)" Targets="restore" Properties="TestTargetOS=$(TestOS)netfx" />
+    <MSBuild Projects="@(AKVProvider)" Properties="TestTargetOS=$(TestOS)netfx;Platform=AnyCPU;$(ProjectProperties)" />
+  </Target>
+
+  <Target Name="BuildAKVNetCore" DependsOnTargets="BuildNetCoreAllOS">
+    <MSBuild Projects="@(AKVProvider)" Targets="restore" Properties="TestTargetOS=$(TestOS)netcoreapp" />
+    <MSBuild Projects="@(AKVProvider)"  Properties="$(ProjectProperties);Platform=AnyCPU;OSGroup=Unix;"  RemoveProperties="TargetsWindows;TargetsUnix;" />
+    <MSBuild Projects="@(AKVProvider)"  Properties="$(ProjectProperties);Platform=AnyCPU;OSGroup=Windows_NT;"  RemoveProperties="TargetsWindows;TargetsUnix;" />
+    <MSBuild Projects="@(AKVProvider)"  Properties="$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;"  RemoveProperties="TargetsWindows;TargetsUnix;" />
+  </Target>
+  
 </Project>

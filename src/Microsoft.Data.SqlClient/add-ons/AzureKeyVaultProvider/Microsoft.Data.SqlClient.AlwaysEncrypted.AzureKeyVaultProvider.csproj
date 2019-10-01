@@ -1,8 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
-    <RootNamespace>AzureKeyVaultProvider</RootNamespace>
-    <AssemblyName>AzureKeyVaultProvider</AssemblyName>
+    <RootNamespace>Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider</RootNamespace>
+    <AssemblyName>Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider</AssemblyName>
     <ProjectGuid>{9073ABEF-92E0-4702-BB23-2C99CEF9BDD7}</ProjectGuid>
     <TargetGroup Condition="'$(TargetFramework)'=='netcoreapp2.1'">netcoreapp</TargetGroup>
     <TargetGroup Condition="'$(TargetFramework)'=='net46'">netfx</TargetGroup>
@@ -10,15 +9,16 @@
     <Platforms>AnyCPU;x86;x64</Platforms>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)\$(AssemblyName)</IntermediateOutputPath>
     <OutputPath>$(BinFolder)$(Configuration).$(Platform)\$(AssemblyName)</OutputPath>
+    <DocumentationFile>$(BinFolder)$(Configuration).$(Platform)\$(AssemblyName).xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
     <ProjectReference Condition="'$(TargetGroup)'=='netfx'" Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.KeyVault" Version="3.0.2" />
-    <PackageReference Include="Microsoft.Azure.KeyVault.WebKey" Version="3.0.2" />
-    <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.18" />
-    <PackageReference Include="Microsoft.Rest.ClientRuntime.Azure" Version="3.3.18" />
+    <PackageReference Include="Microsoft.Azure.KeyVault" Version="3.0.4" />
+    <PackageReference Include="Microsoft.Azure.KeyVault.WebKey" Version="3.0.4" />
+    <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.20" />
+    <PackageReference Include="Microsoft.Rest.ClientRuntime.Azure" Version="3.3.19" />
   </ItemGroup>
 </Project>
