@@ -330,7 +330,9 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Decrypts plain text data using AES in CBC mode
         /// </summary>
-        /// <param name="plainText"> cipher text data to be decrypted</param>
+        /// <param name="cipherText"> cipher text data to be decrypted</param>
+        /// <param name="offset"></param>
+        /// <param name="count"></param>
         /// <param name="iv">IV to be used for decryption</param>
         /// <returns>Returns decrypted plain text data</returns>
         private byte[] DecryptData(byte[] iv, byte[] cipherText, int offset, int count)
@@ -400,7 +402,10 @@ namespace Microsoft.Data.SqlClient
         /// Prepares an authentication tag.
         /// Authentication Tag = HMAC_SHA-2-256(mac_key, versionbyte + cell_iv + cell_ciphertext + versionbyte_length)
         /// </summary>
+        /// <param name="iv"></param>
         /// <param name="cipherText"></param>
+        /// <param name="offset"></param>
+        /// <param name="length"></param>
         /// <returns></returns>
         private byte[] PrepareAuthenticationTag(byte[] iv, byte[] cipherText, int offset, int length)
         {

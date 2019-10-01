@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <PropertyGroup Condition="'$(GeneratePlatformNotSupportedAssembly)' == 'true' OR '$(GeneratePlatformNotSupportedAssemblyMessage)' != ''">
     <!-- Tell ResolveMatchingContract to run and resolve contract to project reference -->
@@ -8,6 +8,7 @@
     <CoreCompileDependsOn>$(CoreCompileDependsOn);GenerateNotSupportedSource</CoreCompileDependsOn>
     <!-- Not supported sources are created from the ref assembly, we currently don't produce finalizers in dummmy assemblies, so we disable ApiCompat to not fail. -->
     <RunApiCompat>false</RunApiCompat>
+    <GenerateDocumentationFile Condition="'$(OSGroup)' != 'Windows_NT'">false</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(GeneratePlatformNotSupportedAssembly)' == 'true' OR '$(GeneratePlatformNotSupportedAssemblyMessage)' != ''">

@@ -22,6 +22,7 @@ using Microsoft.Data.SqlClient.Server;
 
 namespace Microsoft.Data.SqlClient
 {
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/SqlCommand/*'/>
     public sealed partial class SqlCommand : DbCommand, ICloneable
     {
         private string _commandText;
@@ -303,22 +304,26 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal bool CachingQueryMetadataPostponed { get; set; }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ctor[@name="default"]/*'/>
         public SqlCommand() : base()
         {
             GC.SuppressFinalize(this);
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ctor[@name="cmdTextString"]/*'/>
         public SqlCommand(string cmdText) : this()
         {
             CommandText = cmdText;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ctor[@name="cmdTextStringAndSqlConnection"]/*'/>
         public SqlCommand(string cmdText, SqlConnection connection) : this()
         {
             CommandText = cmdText;
             Connection = connection;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ctor[@name="cmdTextStringAndSqlConnectionAndSqlTransaction"]/*'/>
         public SqlCommand(string cmdText, SqlConnection connection, SqlTransaction transaction) : this()
         {
             CommandText = cmdText;
@@ -326,6 +331,7 @@ namespace Microsoft.Data.SqlClient
             Transaction = transaction;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ctor[@name="cmdTextStringAndSqlConnectionAndSqlTransactionAndSqlCommandColumnEncryptionSetting"]/*'/>
         public SqlCommand(string cmdText, SqlConnection connection, SqlTransaction transaction, SqlCommandColumnEncryptionSetting columnEncryptionSetting) : this()
         {
             CommandText = cmdText;
@@ -352,6 +358,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Connection/*'/>
         new public SqlConnection Connection
         {
             get
@@ -404,6 +411,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/DbConnection/*'/>
         override protected DbConnection DbConnection
         {
             get
@@ -424,6 +432,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Notification/*'/>
         public SqlNotificationRequest Notification
         {
             get
@@ -453,6 +462,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Transaction/*'/>
         new public SqlTransaction Transaction
         {
             get
@@ -479,6 +489,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/DbTransaction/*'/>
         override protected DbTransaction DbTransaction
         {
             get
@@ -491,6 +502,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandText/*'/>
         override public string CommandText
         {
             get
@@ -508,8 +520,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ColumnEncryptionSetting/*'/>
         public SqlCommandColumnEncryptionSetting ColumnEncryptionSetting => _columnEncryptionSetting;
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandTimeout/*'/>
         override public int CommandTimeout
         {
             get
@@ -530,6 +544,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ResetCommandTimeout/*'/>
         public void ResetCommandTimeout()
         {
             if (ADP.DefaultCommandTimeout != _commandTimeout)
@@ -539,6 +554,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandType/*'/>
         override public CommandType CommandType
         {
             get
@@ -570,6 +586,7 @@ namespace Microsoft.Data.SqlClient
         // to limit the number of components that clutter the design surface,
         // when the DataAdapter design wizard generates the insert/update/delete commands it will
         // set the DesignTimeVisible property to false so that cmds won't appear as individual objects
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/DesignTimeVisible/*'/>
         public override bool DesignTimeVisible
         {
             get
@@ -582,6 +599,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/Sqlcommand.xml' path='docs/members[@name="SqlCommand"]/Parameters/*'/>
         new public SqlParameterCollection Parameters
         {
             get
@@ -596,6 +614,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/DbParameterCollection/*'/>
         override protected DbParameterCollection DbParameterCollection
         {
             get
@@ -604,6 +623,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/UpdatedRowSource/*'/>
         override public UpdateRowSource UpdatedRowSource
         {
             get
@@ -626,6 +646,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/StatementCompleted/*'/>
         public event StatementCompletedEventHandler StatementCompleted
         {
             add
@@ -665,6 +686,7 @@ namespace Microsoft.Data.SqlClient
             this.IsDirty = true;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Prepare/*'/>
         override public void Prepare()
         {
             // Reset _pendingCancel upon entry into any Execute - used to synchronize state
@@ -786,11 +808,11 @@ namespace Microsoft.Data.SqlClient
             _cachedMetaData = null;
         }
 
-
         // Cancel is supposed to be multi-thread safe.
         // It doesn't make sense to verify the connection exists or that it is open during cancel
         // because immediately after checkin the connection can be closed or removed via another thread.
         //
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Cancel/*'/>
         override public void Cancel()
         {
             SqlStatistics statistics = null;
@@ -872,16 +894,19 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CreateParameter/*'/>
         new public SqlParameter CreateParameter()
         {
             return new SqlParameter();
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CreateDbParameter/*'/>
         override protected DbParameter CreateDbParameter()
         {
             return CreateParameter();
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Dispose/*'/>
         override protected void Dispose(bool disposing)
         {
             if (disposing)
@@ -892,6 +917,7 @@ namespace Microsoft.Data.SqlClient
             base.Dispose(disposing);
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteScalar/*'/>
         override public object ExecuteScalar()
         {
             // Reset _pendingCancel upon entry into any Execute - used to synchronize state
@@ -960,6 +986,7 @@ namespace Microsoft.Data.SqlClient
             return retResult;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteScalar/*'/>
         override public int ExecuteNonQuery()
         {
             // Reset _pendingCancel upon entry into any Execute - used to synchronize state
@@ -997,12 +1024,14 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteNonQuery[@name="default"]/*'/>
         public IAsyncResult BeginExecuteNonQuery()
         {
             // BeginExecuteNonQuery will track ExecutionTime for us
             return BeginExecuteNonQuery(null, null);
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteNonQuery[@name="AsyncCallbackAndStateObject"]/*'/>
         public IAsyncResult BeginExecuteNonQuery(AsyncCallback callback, object stateObject)
         {
             return BeginExecuteNonQueryInternal(0, callback, stateObject, 0, inRetry: false);
@@ -1046,7 +1075,8 @@ namespace Microsoft.Data.SqlClient
                     {
                         AsyncHelper.ContinueTaskWithState(execNQ, localCompletion,
                             state: Tuple.Create(this, localCompletion),
-                            onSuccess: state => {
+                            onSuccess: state =>
+                            {
                                 var parameters = (Tuple<SqlCommand, TaskCompletionSource<object>>)state;
                                 parameters.Item1.BeginExecuteNonQueryInternalReadStage(parameters.Item2);
                             }
@@ -1191,6 +1221,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/EndExecuteNonQuery[@name="IAsyncResult"]/*'/>
         public int EndExecuteNonQuery(IAsyncResult asyncResult) => EndExecuteNonQueryInternal(asyncResult);
 
         private void ThrowIfReconnectionHasBeenCanceled()
@@ -1205,6 +1236,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/EndExecuteNonQueryAsync[@name="IAsyncResult"]/*'/>
         public int EndExecuteNonQueryAsync(IAsyncResult asyncResult)
         {
             Debug.Assert(!_internalEndExecuteInitiated || _stateObj == null);
@@ -1275,14 +1307,14 @@ namespace Microsoft.Data.SqlClient
 
         private object InternalEndExecuteNonQuery(IAsyncResult asyncResult, bool isInternal, [CallerMemberName] string endMethod = "")
         {
-            VerifyEndExecuteState((Task) asyncResult, endMethod);
+            VerifyEndExecuteState((Task)asyncResult, endMethod);
             WaitForAsyncResults(asyncResult, isInternal);
 
             // If column encryption is enabled, also check the state after waiting for the task.
             // It would be better to do this for all cases, but avoiding for compatibility reasons.
             if (IsColumnEncryptionEnabled)
             {
-                VerifyEndExecuteState((Task) asyncResult, endMethod, fullCheckForColumnEncryption: true);
+                VerifyEndExecuteState((Task)asyncResult, endMethod, fullCheckForColumnEncryption: true);
             }
 
             bool processFinallyBlock = true;
@@ -1422,6 +1454,7 @@ namespace Microsoft.Data.SqlClient
             return task;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReader/*'/>
         public XmlReader ExecuteXmlReader()
         {
             // Reset _pendingCancel upon entry into any Execute - used to synchronize state
@@ -1462,12 +1495,14 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteXmlReader[@name="default"]/*'/>
         public IAsyncResult BeginExecuteXmlReader()
         {
             // BeginExecuteXmlReader will track executiontime
             return BeginExecuteXmlReader(null, null);
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteXmlReader[@name="AsyncCallbackAndstateObject"]/*'/>
         public IAsyncResult BeginExecuteXmlReader(AsyncCallback callback, object stateObject)
         {
             return BeginExecuteXmlReaderInternal(CommandBehavior.SequentialAccess, callback, stateObject, 0, inRetry: false);
@@ -1525,7 +1560,8 @@ namespace Microsoft.Data.SqlClient
                 {
                     AsyncHelper.ContinueTaskWithState(writeTask, localCompletion,
                         state: Tuple.Create(this, localCompletion),
-                        onSuccess: state => {
+                        onSuccess: state =>
+                        {
                             var parameters = (Tuple<SqlCommand, TaskCompletionSource<object>>)state;
                             parameters.Item1.BeginExecuteXmlReaderInternalReadStage(parameters.Item2);
                         }
@@ -1582,7 +1618,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/EndExecuteXmlReader[@name="IAsyncResult"]/*'/>
         public XmlReader EndExecuteXmlReader(IAsyncResult asyncResult)
         {
             return EndExecuteXmlReaderInternal(asyncResult);
@@ -1669,20 +1705,28 @@ namespace Microsoft.Data.SqlClient
             }
             return xr;
         }
-        
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteXmlReader[@name="default"]/*'/>
         public IAsyncResult BeginExecuteReader() => BeginExecuteReader(null, null, CommandBehavior.Default);
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteXmlReader[@name="AsyncCallbackAndstateObject"]/*'/>
         public IAsyncResult BeginExecuteReader(AsyncCallback callback, object stateObject) => BeginExecuteReader(callback, stateObject, CommandBehavior.Default);
 
+
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteReader[@name="CommandBehavior"]/*'/>
         public IAsyncResult BeginExecuteReader(CommandBehavior behavior) => BeginExecuteReader(null, null, behavior);
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteReader[@name="AsyncCallbackAndstateObjectAndCommandBehavior"]/*'/>
         public IAsyncResult BeginExecuteReader(AsyncCallback callback, object stateObject, CommandBehavior behavior) => BeginExecuteReaderInternal(behavior, callback, stateObject, 0, inRetry: false);
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteDbDataReader[@name="CommandBehavior"]/*'/>
         override protected DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
         {
             return ExecuteReader(behavior);
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReader[@name="default"]/*'/>
         new public SqlDataReader ExecuteReader()
         {
             SqlStatistics statistics = null;
@@ -1697,6 +1741,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReader[@name="CommandBehavior"]/*'/>
         new public SqlDataReader ExecuteReader(CommandBehavior behavior)
         {
             // Reset _pendingCancel upon entry into any Execute - used to synchronize state
@@ -1733,9 +1778,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/EndExecuteReader[@name="IAsyncResult2"]/*'/>
         public SqlDataReader EndExecuteReader(IAsyncResult asyncResult)
         {
-                return EndExecuteReaderInternal(asyncResult);
+            return EndExecuteReaderInternal(asyncResult);
         }
 
 
@@ -1845,7 +1891,8 @@ namespace Microsoft.Data.SqlClient
                 {
                     AsyncHelper.ContinueTaskWithState(writeTask, localCompletion,
                         state: Tuple.Create(this, localCompletion),
-                        onSuccess: state => {
+                        onSuccess: state =>
+                        {
                             var parameters = (Tuple<SqlCommand, TaskCompletionSource<object>>)state;
                             parameters.Item1.BeginExecuteReaderInternalReadStage(parameters.Item2);
                         }
@@ -1882,15 +1929,15 @@ namespace Microsoft.Data.SqlClient
 
         private bool TriggerInternalEndAndRetryIfNecessary(
             CommandBehavior behavior,
-            object stateObject, 
-            int timeout, 
-            bool usedCache, 
-            bool inRetry, 
-            bool asyncWrite, 
-            TaskCompletionSource<object> globalCompletion, 
-            TaskCompletionSource<object> localCompletion, 
-            Func<IAsyncResult, bool, string, object> endFunc, 
-            Func<CommandBehavior, AsyncCallback, object, int, bool, bool, IAsyncResult> retryFunc, 
+            object stateObject,
+            int timeout,
+            bool usedCache,
+            bool inRetry,
+            bool asyncWrite,
+            TaskCompletionSource<object> globalCompletion,
+            TaskCompletionSource<object> localCompletion,
+            Func<IAsyncResult, bool, string, object> endFunc,
+            Func<CommandBehavior, AsyncCallback, object, int, bool, bool, IAsyncResult> retryFunc,
             [CallerMemberName] string endMethod = ""
         )
         {
@@ -2003,7 +2050,7 @@ namespace Microsoft.Data.SqlClient
                             {
                                 // Kick off the retry.
                                 _internalEndExecuteInitiated = false;
-                                Task<object> retryTask = (Task<object>) retryFunc(behavior, null, stateObject,
+                                Task<object> retryTask = (Task<object>)retryFunc(behavior, null, stateObject,
                                     TdsParserStaticMethods.GetRemainingTimeout(timeout, firstAttemptStart), true /*inRetry*/,
                                     asyncWrite);
 
@@ -2075,6 +2122,7 @@ namespace Microsoft.Data.SqlClient
             return reader;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteNonQueryAsync[@name="CancellationToken"]/*'/>
         public override Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
         {
             Guid operationId = _diagnosticListener.WriteCommandBefore(this);
@@ -2129,6 +2177,7 @@ namespace Microsoft.Data.SqlClient
             return returnedTask;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteDbDataReaderAsync/*'/>
         protected override Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
         {
             return ExecuteReaderAsync(behavior, cancellationToken).ContinueWith<DbDataReader>((result) =>
@@ -2141,21 +2190,25 @@ namespace Microsoft.Data.SqlClient
             }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.NotOnCanceled, TaskScheduler.Default);
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="default"]/*'/>
         new public Task<SqlDataReader> ExecuteReaderAsync()
         {
             return ExecuteReaderAsync(CommandBehavior.Default, CancellationToken.None);
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="CommandBehavior"]/*'/>
         new public Task<SqlDataReader> ExecuteReaderAsync(CommandBehavior behavior)
         {
             return ExecuteReaderAsync(behavior, CancellationToken.None);
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="CancellationToken"]/*'/>
         new public Task<SqlDataReader> ExecuteReaderAsync(CancellationToken cancellationToken)
         {
             return ExecuteReaderAsync(CommandBehavior.Default, cancellationToken);
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="commandBehaviorAndCancellationToken"]/*'/>
         new public Task<SqlDataReader> ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
         {
             Guid operationId = default(Guid);
@@ -2216,6 +2269,7 @@ namespace Microsoft.Data.SqlClient
             return returnedTask;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="CancellationToken"]/*'/>
         public override Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
         {
             _parentOperationStarted = true;
@@ -2298,11 +2352,13 @@ namespace Microsoft.Data.SqlClient
             }, TaskScheduler.Default).Unwrap();
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReaderAsync[@name="default"]/*'/>
         public Task<XmlReader> ExecuteXmlReaderAsync()
         {
             return ExecuteXmlReaderAsync(CancellationToken.None);
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReaderAsync[@name="CancellationToken"]/*'/>
         public Task<XmlReader> ExecuteXmlReaderAsync(CancellationToken cancellationToken)
         {
             Guid operationId = _diagnosticListener.WriteCommandBefore(this);
@@ -2859,7 +2915,8 @@ namespace Microsoft.Data.SqlClient
                     bool dataReady;
                     Debug.Assert(_stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
                     bool result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj, out dataReady);
-                    if (!result) { throw SQL.SynchronousCallMayNotPend(); }
+                    if (!result)
+                    { throw SQL.SynchronousCallMayNotPend(); }
                 }
             }
             catch (Exception e)
@@ -2989,8 +3046,11 @@ namespace Microsoft.Data.SqlClient
         /// <param name="returnStream"></param>
         /// <param name="isAsync"></param>
         /// <param name="timeout"></param>
-        /// <param name="task"></param>
+        /// <param name="completion"></param>
+        /// <param name="returnTask"></param>
         /// <param name="asyncWrite"></param>
+        /// <param name="usedCache"></param>
+        /// <param name="inRetry"></param>
         /// <returns></returns>
         private void PrepareForTransparentEncryption(CommandBehavior cmdBehavior, bool returnStream, bool isAsync, int timeout, TaskCompletionSource<object> completion, out Task returnTask, bool asyncWrite, out bool usedCache, bool inRetry)
         {
@@ -3030,7 +3090,7 @@ namespace Microsoft.Data.SqlClient
             // Used in BatchRPCMode to maintain a map of describe parameter encryption RPC requests (Keys) and their corresponding original RPC requests (Values).
             ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap = null;
 
-            
+
             try
             {
                 try
@@ -3139,7 +3199,7 @@ namespace Microsoft.Data.SqlClient
             SqlDataReader describeParameterEncryptionDataReader,
             ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap, bool describeParameterEncryptionNeeded)
         {
-            returnTask = AsyncHelper.CreateContinuationTask(fetchInputParameterEncryptionInfoTask, () => 
+            returnTask = AsyncHelper.CreateContinuationTask(fetchInputParameterEncryptionInfoTask, () =>
             {
                 bool processFinallyBlockAsync = true;
                 bool decrementAsyncCountInFinallyBlockAsync = true;
@@ -3411,13 +3471,7 @@ namespace Microsoft.Data.SqlClient
             return sqlParam;
         }
 
-        /// <summary>
-        /// Constructs the sp_describe_parameter_encryption request with the values from the original RPC call.
-        /// Prototype for sp_describe_parameter_encryption is 
-        /// exec sp_describe_parameter_encryption @tsql=N'[SQL Statement]', @params=N'@p1 varbinary(256)'
-        /// </summary>
-        /// <param name="originalRpcRequest">Original RPC request</param>
-        /// <param name="describeParameterEncryptionRequest">sp_describe_parameter_encryption request being built</param>
+
         private void PrepareDescribeParameterEncryptionRequest(_SqlRPC originalRpcRequest, ref _SqlRPC describeParameterEncryptionRequest, byte[] attestationParameters = null)
         {
             Debug.Assert(originalRpcRequest != null);
@@ -3976,20 +4030,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <summary>
-        /// RunExecuteReaderTds after Transparent Parameter Encryption is complete.
-        /// </summary>
-        /// <param name="cmdBehavior"></param>
-        /// <param name="runBehavior"></param>
-        /// <param name="returnStream"></param>
-        /// <param name="isAsync"></param>
-        /// <param name="timeout"></param>
-        /// <param name="task"></param>
-        /// <param name="asyncWrite"></param>
-        /// <param name="ds"></param>
-        /// <param name="describeParameterEncryptionRequest"></param>
-        /// <param name="describeParameterEncryptionTask"></param>
-        /// <returns></returns>
+
         private SqlDataReader RunExecuteReaderTdsWithTransparentParameterEncryption(
             CommandBehavior cmdBehavior,
             RunBehavior runBehavior,
@@ -4015,7 +4056,8 @@ namespace Microsoft.Data.SqlClient
                 long parameterEncryptionStart = ADP.TimerCurrent();
                 TaskCompletionSource<object> completion = new TaskCompletionSource<object>();
                 AsyncHelper.ContinueTask(describeParameterEncryptionTask, completion,
-                    () => {
+                    () =>
+                    {
                         Task subTask = null;
                         GenerateEnclavePackage();
                         RunExecuteReaderTds(cmdBehavior, runBehavior, returnStream, isAsync, TdsParserStaticMethods.GetRemainingTimeout(timeout, parameterEncryptionStart), out subTask, asyncWrite, inRetry, ds);
@@ -4028,7 +4070,8 @@ namespace Microsoft.Data.SqlClient
                             AsyncHelper.ContinueTask(subTask, completion, () => completion.SetResult(null));
                         }
                     },
-                    onFailure: ((exception) => {
+                    onFailure: ((exception) =>
+                    {
                         if (_cachedAsyncState != null)
                         {
                             _cachedAsyncState.ResetAsyncState();
@@ -4038,7 +4081,8 @@ namespace Microsoft.Data.SqlClient
                             throw exception;
                         }
                     }),
-                    onCancellation: (() => {
+                    onCancellation: (() =>
+                    {
                         if (_cachedAsyncState != null)
                         {
                             _cachedAsyncState.ResetAsyncState();
@@ -4063,10 +4107,12 @@ namespace Microsoft.Data.SqlClient
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(this._activeConnection.EnclaveAttestationUrl)) throw SQL.NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage(this._activeConnection.Parser.EnclaveType);
+            if (string.IsNullOrWhiteSpace(this._activeConnection.EnclaveAttestationUrl))
+                throw SQL.NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage(this._activeConnection.Parser.EnclaveType);
 
             string enclaveType = this._activeConnection.Parser.EnclaveType;
-            if (string.IsNullOrWhiteSpace(enclaveType)) throw SQL.EnclaveTypeNullForEnclaveBasedQuery();
+            if (string.IsNullOrWhiteSpace(enclaveType))
+                throw SQL.EnclaveTypeNullForEnclaveBasedQuery();
 
             try
             {
@@ -4250,7 +4296,8 @@ namespace Microsoft.Data.SqlClient
                         Debug.Assert(executeTask == null, "Shouldn't get a task when doing sync writes");
                         Debug.Assert(_stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
                         bool result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj, out bool dataReady);
-                        if (!result) { throw SQL.SynchronousCallMayNotPend(); }
+                        if (!result)
+                        { throw SQL.SynchronousCallMayNotPend(); }
                         // and turn OFF when the ds exhausts the stream on Close()
                         optionSettings = GetResetOptionsString(cmdBehavior);
                     }
@@ -4311,8 +4358,8 @@ namespace Microsoft.Data.SqlClient
             Task task = AsyncHelper.CreateContinuationTask(writeTask,
                 onSuccess: () =>
                 {
-                _activeConnection.GetOpenTdsConnection(); // it will throw if connection is closed 
-                cachedAsyncState.SetAsyncReaderState(ds, runBehavior, optionSettings);
+                    _activeConnection.GetOpenTdsConnection(); // it will throw if connection is closed 
+                    cachedAsyncState.SetAsyncReaderState(ds, runBehavior, optionSettings);
                 },
                 onFailure: (exc) =>
                 {
@@ -4406,7 +4453,8 @@ namespace Microsoft.Data.SqlClient
                     bool dataReady;
                     Debug.Assert(_stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
                     bool result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, ds, null, _stateObj, out dataReady);
-                    if (!result) { throw SQL.SynchronousCallMayNotPend(); }
+                    if (!result)
+                    { throw SQL.SynchronousCallMayNotPend(); }
                 }
                 catch (Exception e)
                 {
@@ -5787,7 +5835,7 @@ namespace Microsoft.Data.SqlClient
                 _columnEncryptionSetting = newColumnEncryptionSetting;
                 _wasBatchModeColumnEncryptionSettingSetOnce = true;
             }
-            else if(_columnEncryptionSetting != newColumnEncryptionSetting)
+            else if (_columnEncryptionSetting != newColumnEncryptionSetting)
             {
                 throw SQL.BatchedUpdateColumnEncryptionSettingMismatch();
             }
@@ -5935,6 +5983,8 @@ namespace Microsoft.Data.SqlClient
 
         object ICloneable.Clone() => Clone();
 
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.Sqlclient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Clone/*'/>
         public SqlCommand Clone() => new SqlCommand(this);
     }
 }

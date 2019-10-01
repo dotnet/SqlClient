@@ -4,12 +4,13 @@
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <summary>
-    /// represents the application workload type when connecting to a server
-    /// </summary>
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/ApplicationIntent.xml' path='docs/members[@name="ApplicationIntent"]/ApplicationIntent/*'/>
     public enum ApplicationIntent
     {
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/ApplicationIntent.xml' path='docs/members[@name="ApplicationIntent"]/ReadWrite/*'/>
         ReadWrite = 0,
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/ApplicationIntent.xml' path='docs/members[@name="ApplicationIntent"]/ReadOnly/*'/>
         ReadOnly = 1,
     }
 }

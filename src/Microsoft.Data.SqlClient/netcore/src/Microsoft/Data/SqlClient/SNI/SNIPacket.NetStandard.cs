@@ -68,6 +68,9 @@ namespace Microsoft.Data.SqlClient.SNI
         /// Write data to a stream asynchronously
         /// </summary>
         /// <param name="stream">Stream to write to</param>
+        /// <param name="callback"></param>
+        /// <param name="provider"></param>
+        /// <param name="disposeAfterWriteAsync"></param>
         public void WriteToStreamAsync(Stream stream, SNIAsyncCallback callback, SNIProviders provider, bool disposeAfterWriteAsync = false)
         {
             // Treat local function as a static and pass all params otherwise as async will allocate

@@ -1,0 +1,14 @@
+<docs>
+    <members name="SqlAuthenticationInitializer">
+        <SqlAuthenticationInitializer>
+            <summary>Called from constructors in derived classes to initialize the  <see cref="T:Microsoft.Data.SqlClient.SqlAuthenticationInitializer" /> class.</summary>
+            <remarks>To be added.</remarks>
+        </SqlAuthenticationInitializer>
+        <ctor>
+            <summary>Default Constructor to initialize the <see cref="T:Microsoft.Data.SqlClient.SqlAuthenticationInitializer" /> class.</summary>
+        </ctor>
+        <Initialize>
+            <summary>When overridden in a derived class, initializes the authentication initializer. This method is called by the <see cref="M:Microsoft.Data.SqlClient.SqlAuthenticationInitializer.#ctor" /> constructor during startup.</summary>
+        </Initialize>
+    </members>
+</docs>

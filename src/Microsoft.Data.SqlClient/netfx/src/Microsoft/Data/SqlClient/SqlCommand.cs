@@ -27,6 +27,7 @@ using SysTx = System.Transactions;
 namespace Microsoft.Data.SqlClient
 {
 
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/SqlCommand/*'/>
     [
     DefaultEvent("RecordsAffected"),
     ToolboxItem(true),
@@ -433,22 +434,26 @@ namespace Microsoft.Data.SqlClient
         }
 
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ctor[@name="default"]/*'/>
         public SqlCommand() : base()
         {
             GC.SuppressFinalize(this);
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ctor[@name="cmdTextString"]/*'/>
         public SqlCommand(string cmdText) : this()
         {
             CommandText = cmdText;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ctor[@name="cmdTextStringAndSqlConnection"]/*'/>
         public SqlCommand(string cmdText, SqlConnection connection) : this()
         {
             CommandText = cmdText;
             Connection = connection;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ctor[@name="cmdTextStringAndSqlConnectionAndSqlTransaction"]/*'/>
         public SqlCommand(string cmdText, SqlConnection connection, SqlTransaction transaction) : this()
         {
             CommandText = cmdText;
@@ -456,6 +461,7 @@ namespace Microsoft.Data.SqlClient
             Transaction = transaction;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ctor[@name="cmdTextStringAndSqlConnectionAndSqlTransactionAndSqlCommandColumnEncryptionSetting"]/*'/>
         public SqlCommand(string cmdText, SqlConnection connection, SqlTransaction transaction, SqlCommandColumnEncryptionSetting columnEncryptionSetting) : this()
         {
             CommandText = cmdText;
@@ -482,6 +488,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Connection/*' />
         [
         DefaultValue(null),
         Editor("Microsoft.VSDesigner.Data.Design.DbConnectionEditor, " + AssemblyRef.MicrosoftVSDesigner, "System.Drawing.Design.UITypeEditor, " + AssemblyRef.SystemDrawing),
@@ -526,14 +533,16 @@ namespace Microsoft.Data.SqlClient
 #if DEBUG
                             TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
                             RuntimeHelpers.PrepareConstrainedRegions();
-                            try {
+                            try
+                            {
                                 tdsReliabilitySection.Start();
 #endif //DEBUG
                             // cleanup
                             Unprepare();
 #if DEBUG
                             }
-                            finally {
+                            finally
+                            {
                                 tdsReliabilitySection.Stop();
                             }
 #endif //DEBUG
@@ -572,6 +581,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/DbConnection/*' />
         override protected DbConnection DbConnection
         { // V1.2.3300
             get
@@ -611,6 +621,8 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/NotificationAutoEnlist/*'/>
         [
         DefaultValue(true),
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Notification),
@@ -628,6 +640,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Notification/*'/>
         [
         Browsable(false),
         DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden), // MDAC 90471
@@ -664,6 +677,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Transaction/*'/>
         [
         Browsable(false),
         DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
@@ -697,6 +711,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/DbTransaction/*' />
         override protected DbTransaction DbTransaction
         { // V1.2.3300
             get
@@ -709,6 +724,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandText/*'/>
         [
         DefaultValue(""),
         Editor("Microsoft.VSDesigner.Data.SQL.Design.SqlCommandTextEditor, " + AssemblyRef.MicrosoftVSDesigner, "System.Drawing.Design.UITypeEditor, " + AssemblyRef.SystemDrawing),
@@ -739,6 +755,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ColumnEncryptionSetting/*'/>
         [
         Browsable(false),
         DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
@@ -753,6 +770,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandTimeout/*'/>
         [
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
         ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_CommandTimeout),
@@ -778,6 +796,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ResetCommandTimeout/*'/>
         public void ResetCommandTimeout()
         { // V1.2.3300
             if (ADP.DefaultCommandTimeout != _commandTimeout)
@@ -792,6 +811,7 @@ namespace Microsoft.Data.SqlClient
             return (ADP.DefaultCommandTimeout != _commandTimeout);
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandType/*'/>
         [
         DefaultValue(System.Data.CommandType.Text),
         RefreshProperties(RefreshProperties.All),
@@ -826,6 +846,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/DesignTimeVisible/*'/>
         // @devnote: By default, the cmd object is visible on the design surface (i.e. VS7 Server Tray)
         // to limit the number of components that clutter the design surface,
         // when the DataAdapter design wizard generates the insert/update/delete commands it will
@@ -849,6 +870,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Parameters/*'/>
         [
         DesignerSerializationVisibility(DesignerSerializationVisibility.Content),
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
@@ -868,6 +890,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/DbParameterCollection/*'/>
         override protected DbParameterCollection DbParameterCollection
         { // V1.2.3300
             get
@@ -893,6 +916,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/UpdatedRowSource/*'/>
         [
         DefaultValue(System.Data.UpdateRowSource.Both),
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Update),
@@ -920,6 +944,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/StatementCompleted/*'/>
         [
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_StatementCompleted),
         ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_StatementCompleted),
@@ -967,6 +992,7 @@ namespace Microsoft.Data.SqlClient
             this.IsDirty = true;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Prepare/*'/>
         override public void Prepare()
         {
             SqlConnection.ExecutePermission.Demand();
@@ -1033,7 +1059,8 @@ namespace Microsoft.Data.SqlClient
 #if DEBUG
                     TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
                     RuntimeHelpers.PrepareConstrainedRegions();
-                    try {
+                    try
+                    {
                         tdsReliabilitySection.Start();
 #else
                     {
@@ -1041,7 +1068,8 @@ namespace Microsoft.Data.SqlClient
                         InternalPrepare();
                     }
 #if DEBUG
-                    finally {
+                    finally
+                    {
                         tdsReliabilitySection.Stop();
                     }
 #endif //DEBUG
@@ -1150,11 +1178,11 @@ namespace Microsoft.Data.SqlClient
             Bid.Trace("<sc.SqlCommand.Prepare|INFO> %d#, Command unprepared.\n", ObjectID);
         }
 
-
         // Cancel is supposed to be multi-thread safe.
         // It doesn't make sense to verify the connection exists or that it is open during cancel
         // because immediately after checkin the connection can be closed or removed via another thread.
         //
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Cancel/*'/>
         override public void Cancel()
         {
             IntPtr hscp;
@@ -1219,7 +1247,8 @@ namespace Microsoft.Data.SqlClient
                         TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                         RuntimeHelpers.PrepareConstrainedRegions();
-                        try {
+                        try
+                        {
                             tdsReliabilitySection.Start();
 #else
                         {
@@ -1251,7 +1280,8 @@ namespace Microsoft.Data.SqlClient
                             }
                         }
 #if DEBUG
-                        finally {
+                        finally
+                        {
                             tdsReliabilitySection.Stop();
                         }
 #endif //DEBUG
@@ -1281,16 +1311,19 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CreateParameter/*'/>
         new public SqlParameter CreateParameter()
         {
             return new SqlParameter();
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CreateDbParameter/*'/>
         override protected DbParameter CreateDbParameter()
         {
             return CreateParameter();
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Dispose/*'/>
         override protected void Dispose(bool disposing)
         {
             if (disposing)
@@ -1307,6 +1340,7 @@ namespace Microsoft.Data.SqlClient
             base.Dispose(disposing);
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteScalar/*'/>
         override public object ExecuteScalar()
         {
             SqlConnection.ExecutePermission.Demand();
@@ -1375,6 +1409,7 @@ namespace Microsoft.Data.SqlClient
             return retResult;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteNonQuery[@name="default"]/*'/>
         override public int ExecuteNonQuery()
         {
             SqlConnection.ExecutePermission.Demand();
@@ -1437,6 +1472,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteNonQuery[@name="default"]/*'/>
         [System.Security.Permissions.HostProtectionAttribute(ExternalThreading = true)]
         public IAsyncResult BeginExecuteNonQuery()
         {
@@ -1444,6 +1480,7 @@ namespace Microsoft.Data.SqlClient
             return BeginExecuteNonQuery(null, null);
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteNonQuery[@name="AsyncCallbackAndStateObject"]/*'/>
         [System.Security.Permissions.HostProtectionAttribute(ExternalThreading = true)]
         public IAsyncResult BeginExecuteNonQuery(AsyncCallback callback, object stateObject)
         {
@@ -1452,6 +1489,7 @@ namespace Microsoft.Data.SqlClient
             return BeginExecuteNonQueryInternal(0, callback, stateObject, 0, inRetry: false);
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteNonQuery[@name="AsyncCallbackAndStateObject"]/*'/>
         private IAsyncResult BeginExecuteNonQueryAsync(AsyncCallback callback, object stateObject)
         {
             return BeginExecuteNonQueryInternal(0, callback, stateObject, CommandTimeout, inRetry: false, asyncWrite: true);
@@ -1539,7 +1577,8 @@ namespace Microsoft.Data.SqlClient
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
-                try {
+                try
+                {
                     tdsReliabilitySection.Start();
 #else
                 {
@@ -1550,7 +1589,8 @@ namespace Microsoft.Data.SqlClient
                     _stateObj.ReadSni(completion);
                 }
 #if DEBUG
-                finally {
+                finally
+                {
                     tdsReliabilitySection.Stop();
                 }
 #endif //DEBUG
@@ -1661,6 +1701,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/EndExecuteNonQuery[@name="IAsyncResult"]/*'/>
         public int EndExecuteNonQuery(IAsyncResult asyncResult)
         {
             try
@@ -1770,7 +1811,8 @@ namespace Microsoft.Data.SqlClient
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
-                try {
+                try
+                {
                     tdsReliabilitySection.Start();
 #else
                 {
@@ -1854,7 +1896,8 @@ namespace Microsoft.Data.SqlClient
                     return _rowsAffected;
                 }
 #if DEBUG
-                finally {
+                finally
+                {
                     tdsReliabilitySection.Stop();
                 }
 #endif //DEBUG
@@ -1893,7 +1936,8 @@ namespace Microsoft.Data.SqlClient
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
-                try {
+                try
+                {
                     tdsReliabilitySection.Start();
 #else
                 {
@@ -1962,7 +2006,8 @@ namespace Microsoft.Data.SqlClient
                     return task;
                 }
 #if DEBUG
-                finally {
+                finally
+                {
                     tdsReliabilitySection.Stop();
                 }
 #endif //DEBUG
@@ -1985,6 +2030,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReader/*'/>
         public XmlReader ExecuteXmlReader()
         {
             SqlConnection.ExecutePermission.Demand();
@@ -2024,6 +2070,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteXmlReader[@name="default"]/*'/>
         [System.Security.Permissions.HostProtectionAttribute(ExternalThreading = true)]
         public IAsyncResult BeginExecuteXmlReader()
         {
@@ -2031,6 +2078,7 @@ namespace Microsoft.Data.SqlClient
             return BeginExecuteXmlReader(null, null);
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteXmlReader[@name="AsyncCallbackAndstateObject"]/*'/>
         [System.Security.Permissions.HostProtectionAttribute(ExternalThreading = true)]
         public IAsyncResult BeginExecuteXmlReader(AsyncCallback callback, object stateObject)
         {
@@ -2128,7 +2176,8 @@ namespace Microsoft.Data.SqlClient
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
-                try {
+                try
+                {
                     tdsReliabilitySection.Start();
 #else
                 {
@@ -2139,7 +2188,8 @@ namespace Microsoft.Data.SqlClient
                     _stateObj.ReadSni(completion);
                 }
 #if DEBUG
-                finally {
+                finally
+                {
                     tdsReliabilitySection.Stop();
                 }
 #endif //DEBUG
@@ -2176,6 +2226,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/EndExecuteXmlReader[@name="IAsyncResult"]/*'/>
         public XmlReader EndExecuteXmlReader(IAsyncResult asyncResult)
         {
             try
@@ -2292,24 +2343,28 @@ namespace Microsoft.Data.SqlClient
             return xr;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteXmlReader[@name="default"]/*'/>
         [System.Security.Permissions.HostProtectionAttribute(ExternalThreading = true)]
         public IAsyncResult BeginExecuteReader()
         {
             return BeginExecuteReader(null, null, CommandBehavior.Default);
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteXmlReader[@name="AsyncCallbackAndstateObject"]/*'/>
         [System.Security.Permissions.HostProtectionAttribute(ExternalThreading = true)]
         public IAsyncResult BeginExecuteReader(AsyncCallback callback, object stateObject)
         {
             return BeginExecuteReader(callback, stateObject, CommandBehavior.Default);
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteDbDataReader[@name="CommandBehavior"]/*'/>
         override protected DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
         {
             Bid.CorrelationTrace("<sc.SqlCommand.ExecuteDbDataReader|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
             return ExecuteReader(behavior, ADP.ExecuteReader);
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReader[@name="default"]/*'/>
         new public SqlDataReader ExecuteReader()
         {
             SqlStatistics statistics = null;
@@ -2328,6 +2383,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReader[@name="CommandBehavior"]/*'/>
         new public SqlDataReader ExecuteReader(CommandBehavior behavior)
         {
             IntPtr hscp;
@@ -2343,12 +2399,14 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteReader[@name="CommandBehavior"]/*'/>
         [System.Security.Permissions.HostProtectionAttribute(ExternalThreading = true)]
         public IAsyncResult BeginExecuteReader(CommandBehavior behavior)
         {
             return BeginExecuteReader(null, null, behavior);
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteReader[@name="AsyncCallbackAndstateObjectAndCommandBehavior"]/*'/>
         [System.Security.Permissions.HostProtectionAttribute(ExternalThreading = true)]
         public IAsyncResult BeginExecuteReader(AsyncCallback callback, object stateObject, CommandBehavior behavior)
         {
@@ -2378,7 +2436,8 @@ namespace Microsoft.Data.SqlClient
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
-                try {
+                try
+                {
                     tdsReliabilitySection.Start();
 #else
                 {
@@ -2390,7 +2449,8 @@ namespace Microsoft.Data.SqlClient
                     return result;
                 }
 #if DEBUG
-                finally {
+                finally
+                {
                     tdsReliabilitySection.Stop();
                 }
 #endif //DEBUG
@@ -2423,6 +2483,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/EndExecuteReader[@name="IAsyncResult2"]/*'/>
         public SqlDataReader EndExecuteReader(IAsyncResult asyncResult)
         {
             try
@@ -2726,7 +2787,8 @@ namespace Microsoft.Data.SqlClient
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
-                try {
+                try
+                {
                     tdsReliabilitySection.Start();
 #else
                 {
@@ -2737,7 +2799,8 @@ namespace Microsoft.Data.SqlClient
                     _stateObj.ReadSni(completion);
                 }
 #if DEBUG
-                finally {
+                finally
+                {
                     tdsReliabilitySection.Stop();
                 }
 #endif //DEBUG
@@ -2797,7 +2860,8 @@ namespace Microsoft.Data.SqlClient
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
-                try {
+                try
+                {
                     tdsReliabilitySection.Start();
 #else
                 {
@@ -2808,7 +2872,8 @@ namespace Microsoft.Data.SqlClient
                     return reader;
                 }
 #if DEBUG
-                finally {
+                finally
+                {
                     tdsReliabilitySection.Stop();
                 }
 #endif //DEBUG
@@ -2831,6 +2896,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteNonQueryAsync[@name="CancellationToken"]/*'/>
         public override Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
         {
 
@@ -2884,6 +2950,8 @@ namespace Microsoft.Data.SqlClient
             return returnedTask;
         }
 
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteDbDataReaderAsync/*'/>
         protected override Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
         {
             return ExecuteReaderAsync(behavior, cancellationToken).ContinueWith<DbDataReader>((result) =>
@@ -2896,21 +2964,25 @@ namespace Microsoft.Data.SqlClient
             }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.NotOnCanceled, TaskScheduler.Default);
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="default"]/*'/>
         new public Task<SqlDataReader> ExecuteReaderAsync()
         {
             return ExecuteReaderAsync(CommandBehavior.Default, CancellationToken.None);
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="CommandBehavior"]/*'/>
         new public Task<SqlDataReader> ExecuteReaderAsync(CommandBehavior behavior)
         {
             return ExecuteReaderAsync(behavior, CancellationToken.None);
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="CancellationToken"]/*'/>
         new public Task<SqlDataReader> ExecuteReaderAsync(CancellationToken cancellationToken)
         {
             return ExecuteReaderAsync(CommandBehavior.Default, cancellationToken);
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="commandBehaviorAndCancellationToken"]/*'/>
         new public Task<SqlDataReader> ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
         {
 
@@ -2964,6 +3036,7 @@ namespace Microsoft.Data.SqlClient
             return returnedTask;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="CancellationToken"]/*'/>
         public override Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
         {
             return ExecuteReaderAsync(cancellationToken).ContinueWith((executeTask) =>
@@ -3038,11 +3111,13 @@ namespace Microsoft.Data.SqlClient
             }, TaskScheduler.Default).Unwrap();
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReaderAsync[@name="default"]/*'/>
         public Task<XmlReader> ExecuteXmlReaderAsync()
         {
             return ExecuteXmlReaderAsync(CancellationToken.None);
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReaderAsync[@name="CancellationToken"]/*'/>
         public Task<XmlReader> ExecuteXmlReaderAsync(CancellationToken cancellationToken)
         {
 
@@ -3850,8 +3925,11 @@ namespace Microsoft.Data.SqlClient
         /// <param name="returnStream"></param>
         /// <param name="async"></param>
         /// <param name="timeout"></param>
-        /// <param name="task"></param>
+        /// <param name="completion"></param>
+        /// <param name="returnTask"></param>
         /// <param name="asyncWrite"></param>
+        /// <param name="usedCache"></param>
+        /// <param name="inRetry"></param>
         /// <returns></returns>
         private void PrepareForTransparentEncryption(CommandBehavior cmdBehavior, bool returnStream, bool async, int timeout, TaskCompletionSource<object> completion, out Task returnTask, bool asyncWrite, out bool usedCache, bool inRetry)
         {
@@ -3899,7 +3977,8 @@ namespace Microsoft.Data.SqlClient
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
-                try {
+                try
+                {
                     tdsReliabilitySection.Start();
 #else
                 {
@@ -3959,7 +4038,8 @@ namespace Microsoft.Data.SqlClient
 #if DEBUG
                                     TdsParser.ReliabilitySection tdsReliabilitySectionAsync = new TdsParser.ReliabilitySection();
                                     RuntimeHelpers.PrepareConstrainedRegions();
-                                    try {
+                                    try
+                                    {
                                         tdsReliabilitySectionAsync.Start();
 #endif //DEBUG
                                     // Check for any exceptions on network write, before reading.
@@ -3983,11 +4063,13 @@ namespace Microsoft.Data.SqlClient
 
 #if DEBUG
                                         // Failpoint to force the thread to halt to simulate cancellation of SqlCommand.
-                                        if (_sleepAfterReadDescribeEncryptionParameterResults) {
+                                        if (_sleepAfterReadDescribeEncryptionParameterResults)
+                                        {
                                             Thread.Sleep(10000);
                                         }
                                     }
-                                    finally {
+                                    finally
+                                    {
                                         tdsReliabilitySectionAsync.Stop();
                                     }
 #endif //DEBUG
@@ -4038,10 +4120,11 @@ namespace Microsoft.Data.SqlClient
                                     try
                                     {
 #if DEBUG
-                                            TdsParser.ReliabilitySection tdsReliabilitySectionAsync = new TdsParser.ReliabilitySection();
-                                            RuntimeHelpers.PrepareConstrainedRegions();
-                                            try {
-                                                tdsReliabilitySectionAsync.Start();
+                                        TdsParser.ReliabilitySection tdsReliabilitySectionAsync = new TdsParser.ReliabilitySection();
+                                        RuntimeHelpers.PrepareConstrainedRegions();
+                                        try
+                                        {
+                                            tdsReliabilitySectionAsync.Start();
 #endif //DEBUG
 
                                         // Check for any exceptions on network write, before reading.
@@ -4063,16 +4146,18 @@ namespace Microsoft.Data.SqlClient
                                         // Read the results of describe parameter encryption.
                                         ReadDescribeEncryptionParameterResults(describeParameterEncryptionDataReader, describeParameterEncryptionRpcOriginalRpcMap);
 #if DEBUG
-                                                // Failpoint to force the thread to halt to simulate cancellation of SqlCommand.
-                                                if (_sleepAfterReadDescribeEncryptionParameterResults) {
-                                                    Thread.Sleep(10000);
-                                                }
+                                            // Failpoint to force the thread to halt to simulate cancellation of SqlCommand.
+                                            if (_sleepAfterReadDescribeEncryptionParameterResults)
+                                            {
+                                                Thread.Sleep(10000);
+                                            }
 #endif
 #if DEBUG
-                                            }
-                                            finally {
-                                                tdsReliabilitySectionAsync.Stop();
-                                            }
+                                        }
+                                        finally
+                                        {
+                                            tdsReliabilitySectionAsync.Stop();
+                                        }
 #endif //DEBUG
                                     }
                                     catch (Exception e)
@@ -4101,7 +4186,8 @@ namespace Microsoft.Data.SqlClient
 
 #if DEBUG
                             // Failpoint to force the thread to halt to simulate cancellation of SqlCommand.
-                            if (_sleepAfterReadDescribeEncryptionParameterResults) {
+                            if (_sleepAfterReadDescribeEncryptionParameterResults)
+                            {
                                 Thread.Sleep(10000);
                             }
 #endif
@@ -4125,7 +4211,8 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
 #if DEBUG
-                finally {
+                finally
+                {
                     tdsReliabilitySection.Stop();
                 }
 #endif //DEBUG
@@ -4281,7 +4368,8 @@ namespace Microsoft.Data.SqlClient
 
 #if DEBUG
                 // Failpoint to force the thread to halt to simulate cancellation of SqlCommand.
-                if (_sleepDuringTryFetchInputParameterEncryptionInfo) {
+                if (_sleepDuringTryFetchInputParameterEncryptionInfo)
+                {
                     Thread.Sleep(10000);
                 }
 #endif
@@ -4318,12 +4406,13 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Constructs the sp_describe_parameter_encryption request with the values from the original RPC call.
-        /// Prototype for <sp_describe_parameter_encryption> is 
+        /// Constructs the sp_describe_parameter_encryption request with the values from the original RPC call.	
+        /// Prototype for &lt;sp_describe_parameter_encryption&gt; is 	
         /// exec sp_describe_parameter_encryption @tsql=N'[SQL Statement]', @params=N'@p1 varbinary(256)'
         /// </summary>
-        /// <param name="originalRpcRequest">Original RPC request</param>
-        /// <param name="describeParameterEncryptionRequest">sp_describe_parameter_encryption request being built</param>
+        /// <param name="originalRpcRequest"></param>
+        /// <param name="describeParameterEncryptionRequest"></param>
+        /// <param name="attestationParameters"></param>
         private void PrepareDescribeParameterEncryptionRequest(_SqlRPC originalRpcRequest, ref _SqlRPC describeParameterEncryptionRequest, byte[] attestationParameters = null)
         {
             Debug.Assert(originalRpcRequest != null);
@@ -4690,7 +4779,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
 #if DEBUG
-                Debug.Assert( (rowsAffected== 0) || (rowsAffected == RowsAffectedByDescribeParameterEncryption),
+                Debug.Assert((rowsAffected == 0) || (rowsAffected == RowsAffectedByDescribeParameterEncryption),
                             "number of rows received (if received) for describe parameter encryption should be equal to rows affected by describe parameter encryption.");
 #endif
 
@@ -4799,7 +4888,8 @@ namespace Microsoft.Data.SqlClient
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
-                try {
+                try
+                {
                     tdsReliabilitySection.Start();
 #else
                 {
@@ -4909,7 +4999,8 @@ namespace Microsoft.Data.SqlClient
 
                 }
 #if DEBUG
-                finally {
+                finally
+                {
                     tdsReliabilitySection.Stop();
                 }
 #endif //DEBUG
@@ -4942,6 +5033,7 @@ namespace Microsoft.Data.SqlClient
         /// <param name="timeout"></param>
         /// <param name="task"></param>
         /// <param name="asyncWrite"></param>
+        /// <param name="inRetry"></param>
         /// <param name="ds"></param>
         /// <param name="describeParameterEncryptionRequest"></param>
         /// <param name="describeParameterEncryptionTask"></param>
@@ -5132,7 +5224,8 @@ namespace Microsoft.Data.SqlClient
                 if (describeParameterEncryptionRequest)
                 {
 #if DEBUG
-                    if (_sleepDuringRunExecuteReaderTdsForSpDescribeParameterEncryption) {
+                    if (_sleepDuringRunExecuteReaderTdsForSpDescribeParameterEncryption)
+                    {
                         Thread.Sleep(10000);
                     }
 #endif
@@ -5560,6 +5653,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Clone/*'/>
         public SqlCommand Clone()
         {
             SqlCommand clone = new SqlCommand(this);
@@ -5637,7 +5731,8 @@ namespace Microsoft.Data.SqlClient
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
-                try {
+                try
+                {
                     tdsReliabilitySection.Start();
 #else
                 {
@@ -5649,7 +5744,8 @@ namespace Microsoft.Data.SqlClient
 
                 }
 #if DEBUG
-                finally {
+                finally
+                {
                     tdsReliabilitySection.Stop();
                 }
 #endif //DEBUG
@@ -5773,7 +5869,8 @@ namespace Microsoft.Data.SqlClient
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
-                try {
+                try
+                {
                     tdsReliabilitySection.Start();
 #else
                 {
@@ -5783,7 +5880,8 @@ namespace Microsoft.Data.SqlClient
 
                 }
 #if DEBUG
-                finally {
+                finally
+                {
                     tdsReliabilitySection.Stop();
                 }
 #endif //DEBUG
@@ -7400,32 +7498,42 @@ namespace Microsoft.Data.SqlClient
         }
 
 #if DEBUG
-        internal void CompletePendingReadWithSuccess(bool resetForcePendingReadsToWait) {
+        internal void CompletePendingReadWithSuccess(bool resetForcePendingReadsToWait)
+        {
             var stateObj = _stateObj;
-            if (stateObj != null) {
+            if (stateObj != null)
+            {
                 stateObj.CompletePendingReadWithSuccess(resetForcePendingReadsToWait);
             }
-            else {
+            else
+            {
                 var tempCachedAsyncState = cachedAsyncState;
-                if (tempCachedAsyncState != null) {
+                if (tempCachedAsyncState != null)
+                {
                     var reader = tempCachedAsyncState.CachedAsyncReader;
-                    if (reader != null) {
+                    if (reader != null)
+                    {
                         reader.CompletePendingReadWithSuccess(resetForcePendingReadsToWait);
                     }
                 }
             }
         }
 
-        internal void CompletePendingReadWithFailure(int errorCode, bool resetForcePendingReadsToWait) {
+        internal void CompletePendingReadWithFailure(int errorCode, bool resetForcePendingReadsToWait)
+        {
             var stateObj = _stateObj;
-            if (stateObj != null) {
+            if (stateObj != null)
+            {
                 stateObj.CompletePendingReadWithFailure(errorCode, resetForcePendingReadsToWait);
             }
-            else {
+            else
+            {
                 var tempCachedAsyncState = _cachedAsyncState;
-                if (tempCachedAsyncState != null) {
+                if (tempCachedAsyncState != null)
+                {
                     var reader = tempCachedAsyncState.CachedAsyncReader;
-                    if (reader != null) {
+                    if (reader != null)
+                    {
                         reader.CompletePendingReadWithFailure(errorCode, resetForcePendingReadsToWait);
                     }
                 }

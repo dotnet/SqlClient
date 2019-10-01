@@ -4,5 +4,6 @@
 
 namespace Microsoft.Data.SqlClient
 {
+    /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlRowUpdatingEventHandler.xml' path='docs/members[@name="SqlRowUpdatingEventHandler"]/SqlRowUpdatingEventHandler/*' />
     public delegate void SqlRowUpdatingEventHandler(object sender, SqlRowUpdatingEventArgs e);
 }

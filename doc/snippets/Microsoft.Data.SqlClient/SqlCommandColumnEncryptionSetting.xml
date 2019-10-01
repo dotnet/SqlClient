@@ -1,0 +1,29 @@
+<docs>
+    <members name="SqlCommandColumnEncryptionSetting">
+        <SqlCommandColumnEncryptionSetting>
+            <summary>Note that these settings cannot be used to bypass encryption and gain access to plaintext data. For details, see <see href="https://docs.microsoft.com/sql/relational-databases/security/encryption/always-encrypted-database-engine">Always Encrypted (Database Engine)</see>.
+            </summary>
+            <remarks>
+                <format type="text/markdown"><![CDATA[  
+
+## Remarks
+-   If Always Encrypted is disabled for a query and the query has parameters that need to be encrypted (parameters that correspond to encrypted columns), the query will fail.  
+-   If Always Encrypted is disabled for a query and the query returns results from encrypted columns, the query will return encrypted values. The encrypted values will have the varbinary datatype.  
+
+]]></format>
+            </remarks>
+        </SqlCommandColumnEncryptionSetting>
+        <Disabled>
+            <summary>Specifies the connection does not use Always Encrypted. Should be used if no queries sent over the connection access encrypted columns.</summary>
+        </Disabled>
+        <Enabled>
+            <summary>Enables Always Encrypted for the query.</summary>
+        </Enabled>
+        <ResultSetOnly>
+            <summary>Specifies that only the results of the command should be processed by the Always Encrypted routine in the driver. Use this value when the command has no parameters that require encryption.</summary>
+        </ResultSetOnly>
+        <UseConnectionSetting>
+            <summary>Specifies that the command should default to the Always Encrypted setting in the connection string.</summary>
+        </UseConnectionSetting>
+    </members>
+</docs>

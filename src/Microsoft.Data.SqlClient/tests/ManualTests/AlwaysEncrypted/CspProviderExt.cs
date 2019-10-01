@@ -104,7 +104,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     CertificateUtilityWin.RemoveCertificate(certificateName, StoreLocation.CurrentUser);
                     sqlSetupStrategyCsp?.DropTable();
                 }
-                
+
             }
         }
 
@@ -141,7 +141,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 CertificateUtilityWin.RemoveCertificate(certificateName, StoreLocation.CurrentUser);
             }
         }
-        
+
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void TestEncryptDecryptWithCSP()
         {

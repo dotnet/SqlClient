@@ -390,7 +390,7 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region DLL Imports
-        [DllImport("kernel32.dll", SetLastError=true)]
+        [DllImport("kernel32.dll", SetLastError = true)]
         public static extern IntPtr LoadLibrary(string dllToLoad);
 
         [DllImport("secur32.dll", ExactSpelling = true, SetLastError = true)]

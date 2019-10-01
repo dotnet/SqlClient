@@ -1,0 +1,20 @@
+<docs>
+    <members name="ApplicationIntent">
+        <ApplicationIntent>
+            <summary>
+                Specifies a value for <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ApplicationIntent" />. Possible values are <see langword="ReadWrite" /> and <see langword="ReadOnly" />.
+            </summary>
+            <remarks>To be added.</remarks>
+        </ApplicationIntent>
+        <ReadWrite>
+            <summary>The application workload type when connecting to a server is read write.</summary>
+            <returns>0</returns>
+            <value>0</value>
+        </ReadWrite>
+        <ReadOnly>
+            <summary>The application workload type when connecting to a server is read only.</summary>
+            <returns>1</returns>
+            <value>1</value>
+        </ReadOnly>
+    </members>
+</docs>

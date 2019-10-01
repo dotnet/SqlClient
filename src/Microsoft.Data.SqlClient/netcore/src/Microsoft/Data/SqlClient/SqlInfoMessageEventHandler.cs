@@ -4,10 +4,6 @@
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <devdoc>
-    ///    <para>
-    ///       Represents the method that will handle the <see cref='Microsoft.Data.SqlClient.SqlConnection.InfoMessage'/> event of a <see cref='Microsoft.Data.SqlClient.SqlConnection'/>.
-    ///    </para>
-    /// </devdoc>
+    /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlInfoMessageEventHandler.xml' path='docs/members[@name="SqlInfoMessageEventHandler"]/SqlInfoMessageEventHandler/*' />
     public delegate void SqlInfoMessageEventHandler(object sender, SqlInfoMessageEventArgs e);
 }

@@ -10,6 +10,7 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
+    /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/SqlTransaction/*' />
     public sealed class SqlTransaction : DbTransaction
     {
         private static readonly DiagnosticListener s_diagnosticListener = new DiagnosticListener(SqlClientDiagnosticListenerExtensions.DiagnosticListenerName);
@@ -43,6 +44,7 @@ namespace Microsoft.Data.SqlClient
         // PROPERTIES
         ////////////////////////////////////////////////////////////////////////////////////////
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Connection/*' />
         new public SqlConnection Connection
         {
             get
@@ -58,6 +60,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/DbConnection/*' />
         override protected DbConnection DbConnection
         {
             get
@@ -74,6 +77,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/IsolationLevel/*' />
         override public IsolationLevel IsolationLevel
         {
             get
@@ -119,6 +123,7 @@ namespace Microsoft.Data.SqlClient
         // PUBLIC METHODS
         ////////////////////////////////////////////////////////////////////////////////////////
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Commit/*' />
         override public void Commit()
         {
             Exception e = null;
@@ -157,6 +162,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/DisposeDisposing/*' />
         protected override void Dispose(bool disposing)
         {
             if (disposing)
@@ -169,6 +175,7 @@ namespace Microsoft.Data.SqlClient
             base.Dispose(disposing);
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Rollback2/*' />
         override public void Rollback()
         {
             Exception e = null;
@@ -214,6 +221,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/RollbackTransactionName/*' />
         public void Rollback(string transactionName)
         {
             Exception e = null;
@@ -252,6 +260,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Save/*' />
         public void Save(string savePointName)
         {
             ZombieCheck();

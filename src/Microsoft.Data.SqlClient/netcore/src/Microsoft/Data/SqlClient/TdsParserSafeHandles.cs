@@ -25,7 +25,8 @@ namespace Microsoft.Data.SqlClient
             // From security review - SafeHandle guarantees this is only called once.
             // The reason for the safehandle is guaranteed initialization and termination of SNI to
             // ensure SNI terminates and cleans up properly.
-            try { }
+            try
+            { }
             finally
             {
                 _sniStatus = SNINativeMethodWrapper.SNIInitialize();
@@ -145,7 +146,8 @@ namespace Microsoft.Data.SqlClient
             bool fParallel)
             : base(IntPtr.Zero, true)
         {
-            try { }
+            try
+            { }
             finally
             {
                 _fSync = fSync;
@@ -163,7 +165,8 @@ namespace Microsoft.Data.SqlClient
         // constructs SNI Handle for MARS session
         internal SNIHandle(SNINativeMethodWrapper.ConsumerInfo myInfo, SNIHandle parent) : base(IntPtr.Zero, true)
         {
-            try { }
+            try
+            { }
             finally
             {
                 _status = SNINativeMethodWrapper.SNIOpenMarsSession(myInfo, parent, ref base.handle, parent._fSync);

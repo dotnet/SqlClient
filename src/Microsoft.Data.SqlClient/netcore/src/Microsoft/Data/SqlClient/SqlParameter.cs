@@ -70,6 +70,7 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
+    /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SqlParameter/*' />
     [TypeConverter(typeof(SqlParameterConverter))]
     public sealed partial class SqlParameter : DbParameter, IDbDataParameter, ICloneable
     {
@@ -118,16 +119,19 @@ namespace Microsoft.Data.SqlClient
 
         private DataRowVersion _sourceVersion;
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctor2/*' />
         public SqlParameter() : base()
         {
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameDbType/*' />
         public SqlParameter(string parameterName, SqlDbType dbType) : this()
         {
             this.ParameterName = parameterName;
             this.SqlDbType = dbType;
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameValue/*' />
         public SqlParameter(string parameterName, object value) : this()
         {
             Debug.Assert(!(value is SqlDbType), "use SqlParameter(string, SqlDbType)");
@@ -136,6 +140,7 @@ namespace Microsoft.Data.SqlClient
             this.Value = value;
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameDbTypeSize/*' />
         public SqlParameter(string parameterName, SqlDbType dbType, int size) : this()
         {
             this.ParameterName = parameterName;
@@ -143,6 +148,7 @@ namespace Microsoft.Data.SqlClient
             this.Size = size;
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameDbTypeSizeSourceColumn/*' />
         public SqlParameter(string parameterName, SqlDbType dbType, int size, string sourceColumn) : this()
         {
             this.ParameterName = parameterName;
@@ -151,6 +157,7 @@ namespace Microsoft.Data.SqlClient
             this.SourceColumn = sourceColumn;
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameDbTypeSizeDirectionIsNullablePrecisionScaleSourceColumnSourceVersionValue/*' />
         public SqlParameter(
             string parameterName,
             SqlDbType dbType,
@@ -172,9 +179,10 @@ namespace Microsoft.Data.SqlClient
             this.Value = value;
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameDbTypeSizeDirectionPrecisionScaleSourceColumnSourceVersionSourceColumnNullMappingValue/*' />
         public SqlParameter(
             string parameterName,
-            SqlDbType dbType, 
+            SqlDbType dbType,
             int size,
             ParameterDirection direction,
             byte precision,
@@ -228,6 +236,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/CompareInfo/*' />
         public SqlCompareOptions CompareInfo
         {
             // Bits 21 through 25 represent the CompareInfo
@@ -262,6 +271,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/XmlSchemaCollectionDatabase/*' />
         public string XmlSchemaCollectionDatabase
         {
             get
@@ -275,6 +285,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/XmlSchemaCollectionOwningSchema/*' />
         public string XmlSchemaCollectionOwningSchema
         {
             get
@@ -288,6 +299,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/XmlSchemaCollectionName/*' />
         public string XmlSchemaCollectionName
         {
             get
@@ -301,12 +313,14 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ForceColumnEncryption/*' />
         public bool ForceColumnEncryption
         {
             get;
             set;
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/DbType/*' />
         public override DbType DbType
         {
             get
@@ -328,6 +342,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ResetDbType/*' />
         public override void ResetDbType()
         {
             ResetSqlDbType();
@@ -343,6 +358,7 @@ namespace Microsoft.Data.SqlClient
             set { _internalMetaType = value; }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/LocaleId/*' />
         public int LocaleId
         {
             // Lowest 20 bits represent LocaleId
@@ -563,6 +579,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ParameterName/*' />
         public override string ParameterName
         {
             get
@@ -602,6 +619,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Precision/*' />
         [DefaultValue((byte)0)]
         public new byte Precision
         {
@@ -647,6 +665,7 @@ namespace Microsoft.Data.SqlClient
             return (0 != _precision);
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Scale/*' />
         [DefaultValue((byte)0)]
         public new byte Scale
         {
@@ -689,6 +708,7 @@ namespace Microsoft.Data.SqlClient
             return (0 != _scale); // V1.0 compat, ignore _hasScale
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SqlDbType/*' />
         [DbProviderSpecificTypeProperty(true)]
         public SqlDbType SqlDbType
         {
@@ -717,6 +737,7 @@ namespace Microsoft.Data.SqlClient
             return (null != _metaType);
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ResetSqlDbType/*' />
         public void ResetSqlDbType()
         {
             if (null != _metaType)
@@ -726,6 +747,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SqlValue/*' />
         public object SqlValue
         {
             get
@@ -772,6 +794,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/UdtTypeName/*' />
         public string UdtTypeName
         {
             get
@@ -785,6 +808,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/TypeName/*' />
         public string TypeName
         {
             get
@@ -798,6 +822,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Value/*' />
         [TypeConverter(typeof(StringConverter))]
         public override object Value
         {
@@ -967,6 +992,7 @@ namespace Microsoft.Data.SqlClient
             return _actualSize;
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/System.ICloneable.Clone/*' />
         object ICloneable.Clone()
         {
             return new SqlParameter(this);
@@ -1189,6 +1215,7 @@ namespace Microsoft.Data.SqlClient
             destination.ForceColumnEncryption = ForceColumnEncryption;
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceVersion/*' />
         public override DataRowVersion SourceVersion
         {
             get

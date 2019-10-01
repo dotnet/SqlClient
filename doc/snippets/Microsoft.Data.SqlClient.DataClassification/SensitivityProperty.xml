@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<docs>
+    <members name="SensitivityProperty">
+        <SensitivityProperty>
+            <summary>Represents the Data Classification Sensitivity Information for columns as configured in Database.</summary>
+            <remarks>To be added.</remarks>
+        </SensitivityProperty>
+        <ctor>
+            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.DataClassification.SensitivityProperty" /> class.</summary>
+        </ctor>
+        <InformationType>
+            <summary>Returns the information type for this 'SensitivityProperty' Object</summary>
+            <value>Information type for this SensitivityProperty.</value>
+            <remarks>To be added.</remarks>
+        </InformationType>
+        <Label>
+            <summary>Returns the label for this 'SensitivityProperty' Object</summary>
+            <value>Label for this SensitivityProperty.</value>
+            <remarks>To be added.</remarks>
+        </Label>
+    </members>
+</docs>

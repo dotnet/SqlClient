@@ -1,0 +1,61 @@
+<docs>
+    <members name="SqlColumnEncryptionCertificateStoreProvider">
+        <SqlColumnEncryptionCertificateStoreProvider>
+            <summary>The implementation of the key store provider for Windows Certificate Store. This class enables using certificates stored in the Windows Certificate Store as column master keys. 
+        For details, see <see href="https://docs.microsoft.com/sql/relational-databases/security/encryption/always-encrypted-database-engine">Always Encrypted</see>.
+            </summary>
+            <remarks>To be added.</remarks>
+        </SqlColumnEncryptionCertificateStoreProvider>
+        <ctor>
+            <summary>Key store provider for Windows Certificate Store.</summary>
+            <remarks>To be added.</remarks>
+        </ctor>
+        <DecryptColumnEncryptionKey>
+            <param name="masterKeyPath">The master key path.</param>
+            <param name="encryptionAlgorithm">The encryption algorithm. Currently, the only valid value is: <c>RSA_OAEP</c>
+            </param>
+            <param name="encryptedColumnEncryptionKey">The encrypted column encryption key.</param>
+            <summary>Decrypts the specified encrypted value of a column encryption key. The encrypted value is expected to be encrypted using the certificate with the specified key path and using the specified 
+                algorithm. The format of the key path should be "Local Machine/My/&lt;certificate_thumbprint&gt;" or "Current User/My/&lt;certificate_thumbprint&gt;".
+            </summary>
+            <returns>Returns <see cref="T:System.Byte" />
+. The decrypted column encryption key.</returns>
+            <remarks>To be added.</remarks>
+        </DecryptColumnEncryptionKey>
+        <EncryptColumnEncryptionKey>
+            <param name="masterKeyPath">The master key path.</param>
+            <param name="encryptionAlgorithm">The encryption algorithm. Currently, the only valid value is: <c>RSA_OAEP</c>
+            </param>
+            <param name="columnEncryptionKey">The encrypted column encryption key.</param>
+            <summary>Encrypts a column encryption key using the certificate with the specified key path and using the specified algorithm. The format of the key path should be 
+                "Local Machine/My/&lt;certificate_thumbprint&gt;" or "Current User/My/&lt;certificate_thumbprint&gt;".
+            </summary>
+            <returns>Returns <see cref="T:System.Byte" />
+.  The encrypted column encryption key.</returns>
+            <remarks>To be added.</remarks>
+        </EncryptColumnEncryptionKey>
+        <ProviderName>
+            <summary>The provider name.</summary>
+            <remarks>To be added.</remarks>
+        </ProviderName>
+        <SignColumnMasterKeyMetadata>
+            <param name="masterKeyPath">The column master key path.</param>
+            <param name="allowEnclaveComputations">
+                <see langword="true" />
+to indicate that the column master key supports enclave computations; otherwise, <see langword="false" />
+.</param>
+            <summary>Digitally signs the column master key metadata with the column master key referenced by the <paramref name="masterKeyPath" />
+parameter.</summary>
+            <returns>The signature of the column master key metadata.</returns>
+            <remarks>To be added.</remarks>
+        </SignColumnMasterKeyMetadata>
+        <VerifyColumnMasterKeyMetadata>
+            <param name="masterKeyPath">The complete path of an asymmetric key. The path format is specific to a key store provider.</param>
+            <param name="allowEnclaveComputations">A Boolean that indicates if this key can be sent to the trusted enclave.</param>
+            <param name="signature">The master key metadata siognature.</param>
+            <summary>This function must be implemented by the corresponding Key Store providers. This function should use an asymmetric key identified by a key path and verify the masterkey metadata consisting of (masterKeyPath, allowEnclaveComputations, providerName).</summary>
+            <returns>A Boolean value that indicates if the master key metadata can be verified based on the provided signature.</returns>
+            <remarks>To be added.</remarks>
+        </VerifyColumnMasterKeyMetadata>
+    </members>
+</docs>

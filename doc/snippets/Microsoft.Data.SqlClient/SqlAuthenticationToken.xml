@@ -1,0 +1,21 @@
+<docs>
+    <members name="SqlAuthenticationToken">
+        <SqlAuthenticationToken>
+            <summary>Represents an AD authentication token.</summary>
+        </SqlAuthenticationToken>
+        <ctor>
+            <param name="accessToken">The access token.</param>
+            <param name="expiresOn">The token expiration time.</param>
+            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlAuthenticationToken" /> class.</summary>
+            <exception cref="T:System.ArgumentNullException">The <paramref name="accessToken" />parameter is <see langword="null" />or empty.</exception>
+        </ctor>
+        <ExpiresOn>
+            <summary>Gets the token expiration time.</summary>
+            <value>The token expiration time.</value>
+        </ExpiresOn>
+        <AccessToken>
+            <summary>Gets the token string.</summary>
+            <value>The token string.</value>
+        </AccessToken>
+    </members>
+</docs>

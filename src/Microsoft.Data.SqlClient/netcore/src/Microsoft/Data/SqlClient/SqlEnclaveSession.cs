@@ -4,9 +4,7 @@
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <summary>
-    /// Encapsulates the state of a secure session between SqlClient and an enclave inside SQL Server, which can be used for computations on encrypted columns protected with Always Encrypted.
-    /// </summary>
+    /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlEnclaveSession.xml' path='docs/members[@name="SqlEnclaveSession"]/SqlEnclaveSession/*' />
     public class SqlEnclaveSession
     {
 
@@ -15,14 +13,10 @@ namespace Microsoft.Data.SqlClient
 
         private readonly byte[] _sessionKey;
 
-        /// <summary>
-        /// A session id
-        /// </summary>
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlEnclaveSession.xml' path='docs/members[@name="SqlEnclaveSession"]/SessionId/*' />
         public long SessionId { get; }
 
-        /// <summary>
-        /// The symmetric key SqlClient uses to encrypt all the information it sends to the enclave using the session. 
-        /// </summary>
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlEnclaveSession.xml' path='docs/members[@name="SqlEnclaveSession"]/GetSessionKey/*' />
         public byte[] GetSessionKey()
         {
             return Clone(_sessionKey);
@@ -46,12 +40,7 @@ namespace Microsoft.Data.SqlClient
             return returnValue;
         }
 
-        /// <summary>
-        /// Creates a new session
-        /// </summary>
-        /// <param name="sessionKey">The symmetric key used to encrypt all the information sent using the session.</param>
-        /// <param name="sessionId">The session id.</param>
-        /// <param name="counter">The counter that helps prevent replay attacks and is incremented each time the session is retrieved from the cache.</param>
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlEnclaveSession.xml' path='docs/members[@name="SqlEnclaveSession"]/ctor/*' />
         public SqlEnclaveSession(byte[] sessionKey, long sessionId/*, long counter*/)
         {
             if (null == sessionKey)

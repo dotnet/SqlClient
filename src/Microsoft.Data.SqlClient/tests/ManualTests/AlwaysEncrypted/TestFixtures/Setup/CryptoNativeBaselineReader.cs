@@ -208,7 +208,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
         /// </summary>
         public void InitializeCryptoVectors(CryptNativeTestVectorType testVectorType)
         {
-            switch( testVectorType )
+            switch (testVectorType)
             {
                 case CryptNativeTestVectorType.Aead:
                     InitializeCryptoVectorsAead();
@@ -237,7 +237,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
 
                 // If input data is over, break.
                 if (!extractResult)
-                {                    
+                {
                     break;
                 }
 
@@ -285,7 +285,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
             // 1 - Extract RSA Key pair from the resource text file.
             extractResult = ExtractCryptoParameter(m_resource_data_rsa, regexKeyPairIdentifier, regexdataIdentifier, regexEndParameterIdentifier, 2, resourceIndex, out startIndex, out resourceIndex);
             Debug.Assert(!extractResult || resourceIndex >= startIndex);
-            
+
             // If input data is over, break.
             if (!extractResult)
             {
@@ -357,7 +357,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
 
                 finalcellCek = m_resource_data_rsa.Substring(startIndex, resourceIndex - startIndex);
                 Debug.Assert(!string.IsNullOrWhiteSpace(signedCek));
-                
+
                 // 3 - Instantiate a new crypto vector with these parameters and add it to the vector list.
                 CryptoVector = new CryptoVector(
                     StringToByteArray(plaintextCek)

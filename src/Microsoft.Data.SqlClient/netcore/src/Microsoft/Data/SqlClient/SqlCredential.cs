@@ -7,11 +7,13 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
+    /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlCredential.xml' path='docs/members[@name="SqlCredential"]/SqlCredential/*' />
     public sealed class SqlCredential
     {
         string _userId;
         SecureString _password;
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlCredential.xml' path='docs/members[@name="SqlCredential"]/ctor/*' />
         public SqlCredential(string userId, SecureString password)
         {
             if (userId == null)
@@ -43,8 +45,10 @@ namespace Microsoft.Data.SqlClient
             _password = password;
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlCredential.xml' path='docs/members[@name="SqlCredential"]/UserId/*' />
         public string UserId => _userId;
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlCredential.xml' path='docs/members[@name="SqlCredential"]/Password/*' />
         public SecureString Password => _password;
 
     }

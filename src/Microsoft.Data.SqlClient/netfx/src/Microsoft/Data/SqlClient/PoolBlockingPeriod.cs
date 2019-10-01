@@ -6,14 +6,18 @@ using System;
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <summary>
-    /// represents the Pool Blocking Period behaviour for connections in connection pool
-    /// </summary>
+
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/PoolBlockingPeriod.xml' path='docs/members[@name="PoolBlockingPeriod"]/PoolBlockingPeriod/*'/>
     [Serializable]
     public enum PoolBlockingPeriod
     {
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/PoolBlockingPeriod.xml' path='docs/members[@name="PoolBlockingPeriod"]/Auto/*'/>
         Auto = 0,
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/PoolBlockingPeriod.xml' path='docs/members[@name="PoolBlockingPeriod"]/AlwaysBlock/*'/>
         AlwaysBlock = 1,
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/PoolBlockingPeriod.xml' path='docs/members[@name="PoolBlockingPeriod"]/NeverBlock/*'/>
         NeverBlock = 2,
     }
 }

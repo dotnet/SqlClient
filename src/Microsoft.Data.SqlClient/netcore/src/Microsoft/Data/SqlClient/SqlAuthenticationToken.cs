@@ -7,25 +7,16 @@ using System.Text;
 
 namespace Microsoft.Data.SqlClient
 {
-
-    /// <summary>
-    /// AD authentication token.
-    /// </summary>
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationToken.xml' path='docs/members[@name="SqlAuthenticationToken"]/SqlAuthenticationToken/*'/>
     public class SqlAuthenticationToken
     {
-        /// <summary>
-        /// Token expiration time.
-        /// </summary>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationToken.xml' path='docs/members[@name="SqlAuthenticationToken"]/ExpiresOn/*'/>
         public DateTimeOffset ExpiresOn { get; }
 
-        /// <summary>
-        /// Token string.
-        /// </summary>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationToken.xml' path='docs/members[@name="SqlAuthenticationToken"]/AccessToken/*'/>
         public string AccessToken { get; }
 
-        /// <summary>
-        /// Constructor.
-        /// </summary>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationToken.xml' path='docs/members[@name="SqlAuthenticationToken"]/ctor/*'/>
         public SqlAuthenticationToken(string accessToken, DateTimeOffset expiresOn)
         {
             if (string.IsNullOrEmpty(accessToken))

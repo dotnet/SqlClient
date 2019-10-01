@@ -310,7 +310,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                             string currValueStr = valueStrList[valNum].ToString();
                                             for (int otherValNum = 0; otherValNum < valueStrList.Length; otherValNum++)
                                             {
-                                                if (valNum == otherValNum) continue;
+                                                if (valNum == otherValNum)
+                                                    continue;
 
                                                 Assert.True(currValueStr.Equals(valueStrList[otherValNum]),
                                                     string.Format("FAILED: Value from {0} not equivalent to {1} result", valueNameList[valNum], valueNameList[otherValNum]));
@@ -351,8 +352,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 "'9999-12-31 15:59:59.997 -08:00')";
             string tableInsert2 = "INSERT INTO " + tableName + " VALUES (NULL, NULL, NULL, NULL, NULL, NULL)";
 
-            using (SqlConnection conn = new SqlConnection(new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr) {
-                TypeSystemVersion = "SQL Server 2008" }.ConnectionString))
+            using (SqlConnection conn = new SqlConnection(new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr)
+            {
+                TypeSystemVersion = "SQL Server 2008"
+            }.ConnectionString))
             {
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
@@ -382,8 +385,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
             }
 
-            using (SqlConnection conn = new SqlConnection(new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr) {
-                TypeSystemVersion = "SQL Server 2005" }.ConnectionString))
+            using (SqlConnection conn = new SqlConnection(new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr)
+            {
+                TypeSystemVersion = "SQL Server 2005"
+            }.ConnectionString))
             {
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
@@ -412,7 +417,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                 }
                             }
                         }
-                    } finally
+                    }
+                    finally
                     {
                         cmd.CommandText = "DROP TABLE " + tableName;
                         cmd.ExecuteNonQuery();

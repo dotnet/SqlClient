@@ -12,6 +12,7 @@ using System.Text;
 
 namespace Microsoft.Data.SqlClient
 {
+    /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/SqlException/*' />
     [Serializable]
     [System.Runtime.CompilerServices.TypeForwardedFrom("System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")]
     public sealed partial class SqlException : System.Data.Common.DbException
@@ -43,6 +44,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/GetObjectData/*' />
         public override void GetObjectData(SerializationInfo si, StreamingContext context)
         {
             base.GetObjectData(si, context);
@@ -61,6 +63,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/Errors/*' />
         // runtime will call even if private...
         public SqlErrorCollection Errors
         {
@@ -74,6 +77,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/ClientConnectionId/*' />
         public Guid ClientConnectionId
         {
             get
@@ -82,42 +86,49 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/Class/*' />
         public byte Class
         {
             get { return Errors.Count > 0 ? this.Errors[0].Class : default; }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/LineNumber/*' />
         public int LineNumber
         {
             get { return Errors.Count > 0 ? Errors[0].LineNumber : default; }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/Number/*' />
         public int Number
         {
             get { return Errors.Count > 0 ? Errors[0].Number : default; }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/Procedure/*' />
         public string Procedure
         {
             get { return Errors.Count > 0 ? Errors[0].Procedure : default; }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/Server/*' />
         public string Server
         {
             get { return Errors.Count > 0 ? Errors[0].Server : default; }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/State/*' />
         public byte State
         {
             get { return Errors.Count > 0 ? Errors[0].State : default; }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/Source/*' />
         override public string Source
         {
             get { return Errors.Count > 0 ? Errors[0].Source : default; }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/ToString/*' />
         public override string ToString()
         {
             StringBuilder sb = new StringBuilder(base.ToString());

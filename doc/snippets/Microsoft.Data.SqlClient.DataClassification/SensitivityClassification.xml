@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<docs>
+    <members name="SensitivityClassification">
+        <SensitivityClassification>
+            <summary>Provides the functionlity to retrieve Sensitivity Classification data as received from SQL Server for the active 'SqlDataReader'</summary>
+            <remarks>To be added.</remarks>
+        </SensitivityClassification>
+        <ColumnSensitivities>
+            <summary>Returns the column sensitivity for this 'SensitivityClassification' Object</summary>
+            <value>List of column sensitivities.</value>
+            <remarks>To be added.</remarks>
+        </ColumnSensitivities>
+        <InformationTypes>
+            <summary>Returns the information types collection for this 'SensitivityClassification' Object</summary>
+            <value>List of information types.</value>
+            <remarks>To be added.</remarks>
+        </InformationTypes>
+        <Labels>
+            <summary>Returns the labels collection for this 'SensitivityClassification' Object</summary>
+            <value>List of labels.</value>
+            <remarks>To be added.</remarks>
+        </Labels>
+        <ctor>
+            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.DataClassification.SensitivityClassification" />
+ class.</summary>
+        </ctor>
+    </members>
+</docs>
