@@ -51,7 +51,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             // Insert data for TrustedMasterKeyPaths tests.
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr);
-            builder.ConnectTimeout = 65534;
+            builder.ConnectTimeout = 10000;
             Customer customer = new Customer(45, "Microsoft", "Corporation");
             using (SqlConnection sqlConn = new SqlConnection(builder.ToString()))
             {

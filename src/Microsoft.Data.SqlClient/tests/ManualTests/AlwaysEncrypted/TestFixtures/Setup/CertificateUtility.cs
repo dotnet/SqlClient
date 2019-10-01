@@ -237,7 +237,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             {
                 sb.EnclaveAttestationUrl = sb.EnclaveAttestationUrl;
             }
-            sb.ConnectTimeout = 65534;
+            sb.ConnectTimeout = 10000;
             return sb.ToString();
         }
 

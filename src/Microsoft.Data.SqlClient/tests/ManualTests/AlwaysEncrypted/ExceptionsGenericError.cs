@@ -11,17 +11,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public void TestCommandOptionWithNoTceFeature () {
             SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr);
             CertificateUtility.ChangeServerTceSetting (false, sb); // disable TCE on engine.
-            SqlConnection conn = CertificateUtility.GetOpenConnection (false, sb, fSuppressAttestation: true);
-            using (SqlCommand cmd = new SqlCommand(ExceptionGenericErrorFixture.encryptedProcedureName, conn, null, SqlCommandColumnEncryptionSetting.Enabled))
+            using (SqlConnection conn = CertificateUtility.GetOpenConnection(false, sb, fSuppressAttestation: true))
             {
-                SqlParameter param = cmd.Parameters.AddWithValue("@c1", 2);
-                cmd.CommandType = CommandType.StoredProcedure;
-                string expectedErrorMessage = "SQL Server instance in use does not support column encryption.";
-                InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => cmd.ExecuteNonQuery());
-                Assert.Contains(expectedErrorMessage, e.Message);
+                using (SqlCommand cmd = new SqlCommand(ExceptionGenericErrorFixture.encryptedProcedureName, conn, null, SqlCommandColumnEncryptionSetting.Enabled))
+                {
+                    SqlParameter param = cmd.Parameters.AddWithValue("@c1", 2);
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    string expectedErrorMessage = "SQL Server instance in use does not support column encryption.";
+                    InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => cmd.ExecuteNonQuery());
+                    Assert.Contains(expectedErrorMessage, e.Message);
+                }
+                conn.Close();
             }
-            
-            conn.Close();
             // Turn on TCE now
             CertificateUtility.ChangeServerTceSetting (true, sb); // enable tce
         }
@@ -96,10 +97,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     {
         static public string encryptedTableName;
         static public string encryptedProcedureName;
+
         public ExceptionGenericErrorFixture()
         {
             SqlConnection.ColumnEncryptionQueryMetadataCacheEnabled = false;
-
             CreateAndPopulateSimpleTable();
         }
 
@@ -109,20 +110,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             encryptedProcedureName = DatabaseHelper.GenerateUniqueName("encrypted");
             using (SqlConnection conn = CertificateUtility.GetOpenConnection(false, new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr)))
             {
-
                 using (SqlCommand cmdCreate = new SqlCommand($"create table {encryptedTableName}(c1 int)", conn))
                 {
                     cmdCreate.CommandType = CommandType.Text;
                     cmdCreate.ExecuteNonQuery();
                 }
-
-
                 using (SqlCommand cmdInsert = new SqlCommand($"insert into {encryptedTableName} values(1)", conn))
                 {
                     cmdInsert.CommandType = CommandType.Text;
                     cmdInsert.ExecuteNonQuery();
                 }
-
                 using (SqlCommand cmdCreateProc = new SqlCommand($"create procedure {encryptedProcedureName}(@c1 int) as insert into {encryptedTableName} values (@c1)", conn))
                 {
                     cmdCreateProc.CommandType = CommandType.Text;

@@ -221,19 +221,11 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         }
 
         [Theory]
-        [InlineData(StoreLocation.CurrentUser, CurrentUserMyPathPrefix)]
-        [InlineData(StoreLocation.LocalMachine, LocalMachineMyPathPrefix)]
+        [CEKEncryptionReversalParameters]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void TestCEKEncryptionReversal(StoreLocation certificateStoreLocation, String certificateStoreNameAndLocation)
         {
-            // If LocalMachine cert path is needed, but current role is not Admin, skip the test.
-            if (StoreLocation.LocalMachine == certificateStoreLocation && !CertificateFixture.IsAdmin)
-            {
-                return;
-            }
-
             Assert.True(!string.IsNullOrWhiteSpace(certificateStoreNameAndLocation));
-
             string certificateName = @"TestCertificate12";
 
             // Fetch the newly created cert.
@@ -387,10 +379,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
         [Theory]
         [PlatformSpecific(TestPlatforms.Windows)]
-        [InlineData(new object[2] { LocalMachineMyPathPrefix, StoreLocation.LocalMachine })]
-        [InlineData(new object[2] { CurrentUserMyPathPrefix, StoreLocation.CurrentUser })]
-        [InlineData(new object[2] { MyPathPrefix, null })]
-        [InlineData(new object[2] { @"", null })]
+        [ValidCertificatePathsParameters]
         public void TestValidCertificatePaths(string certificateStoreNameAndLocation, object location)
         {
             StoreLocation certificateStoreLocation;
@@ -407,13 +396,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             {
                 certificateStoreLocation = StoreLocation.CurrentUser;
             }
-
-            // If LocalMachine cert path is needed, but current role is not Admin, skip the test.
-            if (StoreLocation.LocalMachine == certificateStoreLocation && !CertificateFixture.IsAdmin)
-            {
-                return;
-            }
-
+            
             string certificateName = @"TestCertificate12";
 
             // Fetch the newly created cert.
@@ -512,6 +495,34 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
                 yield return new object[3] { IntStr, 1234, Utility.CColumnEncryptionType.Randomized };
                 yield return new object[3] { IntStr, int.MaxValue, Utility.CColumnEncryptionType.Randomized };
                 yield return new object[3] { IntStr, int.MinValue, Utility.CColumnEncryptionType.Randomized };
+            }
+        }
+
+        public class CEKEncryptionReversalParameters : DataAttribute
+        {
+            public override IEnumerable<Object[]> GetData(MethodInfo testMethod)
+            {
+                yield return new object[2] { StoreLocation.CurrentUser , CurrentUserMyPathPrefix };
+                // use localmachine cert path only when current user is Admin.
+                if (CertificateFixture.IsAdmin)
+                {
+                    yield return new object[2] { StoreLocation.LocalMachine, LocalMachineMyPathPrefix };
+                }
+            }
+        }
+
+        public class ValidCertificatePathsParameters : DataAttribute
+        {
+            public override IEnumerable<Object[]> GetData(MethodInfo testMethod)
+            {
+                yield return new object[2] { CurrentUserMyPathPrefix, StoreLocation.CurrentUser };
+                yield return new object[2] { MyPathPrefix, null };
+                yield return new object[2] { @"", null };
+                // use localmachine cert path only when current user is Admin.
+                if (CertificateFixture.IsAdmin)
+                {
+                    yield return new object[2] { LocalMachineMyPathPrefix, StoreLocation.LocalMachine };
+                }
             }
         }
 

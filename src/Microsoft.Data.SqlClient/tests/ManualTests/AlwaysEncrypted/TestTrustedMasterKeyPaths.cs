@@ -11,17 +11,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     public class TestTrustedMasterKeyPaths : IClassFixture<SQLSetupStrategy>
     {
         private SQLSetupStrategy fixture;
-
         static private string defaultConnectionString;
-
         private readonly string tableName;
-
         private readonly string columnMasterKeyPath;
 
         public TestTrustedMasterKeyPaths(SQLSetupStrategy fixture)
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr);
-            builder.ConnectTimeout = 65534;
+            builder.ConnectTimeout = 10000;
             defaultConnectionString = builder.ToString();
 
             columnMasterKeyPath = string.Format(@"{0}/{1}/{2}", StoreLocation.CurrentUser.ToString(), @"my", CertificateUtility.CreateCertificate().Thumbprint);
@@ -53,7 +50,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                 rowsFound++;
             }
-
             Assert.True(rowsFound == 1, "Incorrect number of rows returned in first execution.");
         }
 
@@ -74,8 +70,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 sqlConnection.Open();
                 
                 // Test INPUT parameter on an encrypted parameter
-                using (SqlCommand sqlCommand = new SqlCommand($@"SELECT CustomerId, FirstName, LastName FROM [{tableName}] WHERE FirstName = @firstName",
-                                                                sqlConnection))
+                using (SqlCommand sqlCommand = new SqlCommand(
+                       $@"SELECT CustomerId, FirstName, LastName 
+                          FROM [{tableName}] 
+                          WHERE FirstName = @firstName",
+                       sqlConnection))
                 {
                     SqlParameter customerFirstParam = sqlCommand.Parameters.AddWithValue(@"firstName", @"Microsoft");
                     customerFirstParam.Direction = System.Data.ParameterDirection.Input;
@@ -86,7 +85,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     }
                 }
             }
-
             // Clear out trusted key paths
             SqlConnection.ColumnEncryptionTrustedMasterKeyPaths.Clear();
         }
@@ -115,8 +113,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 sqlConnection.Open();
                 
                 // Test INPUT parameter on an encrypted parameter
-                using (SqlCommand sqlCommand = new SqlCommand($@"SELECT CustomerId, FirstName, LastName FROM [{tableName}] WHERE FirstName = @firstName",
-                                                                sqlConnection))
+                using (SqlCommand sqlCommand = new SqlCommand(
+                       $@"SELECT CustomerId, FirstName, LastName 
+                          FROM [{tableName}] 
+                          WHERE FirstName = @firstName",
+                       sqlConnection))
                 {
                     SqlParameter customerFirstParam = sqlCommand.Parameters.AddWithValue(@"firstName", @"Microsoft");
                     customerFirstParam.Direction = System.Data.ParameterDirection.Input;
@@ -127,7 +128,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     }
                 }
             }
-
             // Clear out trusted key paths
             SqlConnection.ColumnEncryptionTrustedMasterKeyPaths.Clear();
         }
@@ -173,8 +173,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 sqlConnection.Open();
                 
                 // Test INPUT parameter on an encrypted parameter
-                using (SqlCommand sqlCommand = new SqlCommand($@"SELECT CustomerId, FirstName, LastName FROM [{tableName}] WHERE FirstName = @firstName",
-                                                                sqlConnection))
+                using (SqlCommand sqlCommand = new SqlCommand(
+                       $@"SELECT CustomerId, FirstName, LastName 
+                          FROM [{tableName}] 
+                          WHERE FirstName = @firstName",
+                       sqlConnection))
                 {
                     SqlParameter customerFirstParam = sqlCommand.Parameters.AddWithValue(@"firstName", @"Microsoft");
                     customerFirstParam.Direction = System.Data.ParameterDirection.Input;
@@ -185,7 +188,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     }
                 }
             }
-
             // Clear out trusted key paths
             SqlConnection.ColumnEncryptionTrustedMasterKeyPaths.Clear();
         }
@@ -215,8 +217,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 sqlConnection.Open();
 
                 // Test INPUT parameter on an encrypted parameter
-                using (SqlCommand sqlCommand = new SqlCommand($@"SELECT CustomerId, FirstName, LastName FROM [{tableName}] WHERE FirstName = @firstName",
-                                                                sqlConnection))
+                using (SqlCommand sqlCommand = new SqlCommand(
+                       $@"SELECT CustomerId, FirstName, LastName 
+                          FROM [{tableName}] 
+                          WHERE FirstName = @firstName",
+                       sqlConnection))
                 {
                     SqlParameter customerFirstParam = sqlCommand.Parameters.AddWithValue(@"firstName", @"Microsoft");
                     customerFirstParam.Direction = System.Data.ParameterDirection.Input;
@@ -244,8 +249,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 sqlConnection.Open();
 
                 // Test INPUT parameter on an encrypted parameter
-                using (SqlCommand sqlCommand = new SqlCommand($@"SELECT CustomerId, FirstName, LastName FROM [{tableName}] WHERE FirstName = @firstName",
-                                                                sqlConnection))
+                using (SqlCommand sqlCommand = new SqlCommand(
+                       $@"SELECT CustomerId, FirstName, LastName 
+                          FROM [{tableName}] 
+                          WHERE FirstName = @firstName",
+                       sqlConnection))
                 {
                     SqlParameter customerFirstParam = sqlCommand.Parameters.AddWithValue(@"firstName", @"Microsoft");
                     customerFirstParam.Direction = System.Data.ParameterDirection.Input;
@@ -276,8 +284,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 sqlConnection.Open();
 
                 // Test INPUT parameter on an encrypted parameter
-                using (SqlCommand sqlCommand = new SqlCommand($@"SELECT CustomerId, FirstName, LastName FROM [{tableName}] WHERE FirstName = @firstName",
-                                                                sqlConnection))
+                using (SqlCommand sqlCommand = new SqlCommand(
+                       $@"SELECT CustomerId, FirstName, LastName 
+                          FROM [{tableName}] 
+                          WHERE FirstName = @firstName",
+                       sqlConnection))
                 {
                     SqlParameter customerFirstParam = sqlCommand.Parameters.AddWithValue(@"firstName", @"Microsoft");
                     customerFirstParam.Direction = System.Data.ParameterDirection.Input;
