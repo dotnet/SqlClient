@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<docs>
+    <members name="SqlInfoMessageEventArgs">
+        <SqlInfoMessageEventArgs>
+            <summary>Provides data for the <see cref="E:Microsoft.Data.SqlClient.SqlConnection.InfoMessage" /> event.</summary>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+ The <xref:Microsoft.Data.SqlClient.SqlConnection.InfoMessage> event contains a <xref:Microsoft.Data.SqlClient.SqlErrorCollection> collection which contains the warnings sent from the server.  
+  
+ An <xref:Microsoft.Data.SqlClient.SqlConnection.InfoMessage> event is generated when a SQL Server message with a severity level of 10 or less occurs.  
+  
+ ]]></format>
+            </remarks>
+        </SqlInfoMessageEventArgs>
+        <Errors>
+            <summary>Gets the collection of warnings sent from the server.</summary>
+            <value>The collection of warnings sent from the server.</value>
+            <remarks>To be added.</remarks>
+        </Errors>
+        <Message>
+            <summary>Gets the full text of the error sent from the database.</summary>
+            <value>The full text of the error.</value>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+ This is a wrapper for the <xref:Microsoft.Data.SqlClient.SqlError.Message%2A> property of the first <xref:Microsoft.Data.SqlClient.SqlError> in the <xref:Microsoft.Data.SqlClient.SqlInfoMessageEventArgs.Errors%2A> collection.  
+  
+ ]]></format>
+            </remarks>
+        </Message>
+        <Source>
+            <summary>Gets the name of the object that generated the error.</summary>
+            <value>The name of the object that generated the error.</value>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+ This is a wrapper for the <xref:Microsoft.Data.SqlClient.SqlError.Source%2A> property of the first <xref:Microsoft.Data.SqlClient.SqlError> in the <xref:Microsoft.Data.SqlClient.SqlInfoMessageEventArgs.Errors%2A> collection.  
+  
+ ]]></format>
+            </remarks>
+        </Source>
+        <ToString>
+            <summary>Retrieves a string representation of the <see cref="E:Microsoft.Data.SqlClient.SqlConnection.InfoMessage" /> event.</summary>
+            <returns>A string representing the <see cref="E:Microsoft.Data.SqlClient.SqlConnection.InfoMessage" /> event.</returns>
+            <remarks>To be added.</remarks>
+        </ToString>
+    </members>
+</docs>

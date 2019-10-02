@@ -6,7 +6,7 @@ using System;
 
 namespace Microsoft.Data.SqlClient.Server
 {
-
+    /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMethodAttribute.xml' path='docs/members[@name="SqlMethodAttribute"]/SqlMethodAttribute/*' />
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false), Serializable]
     public sealed class SqlMethodAttribute : SqlFunctionAttribute
     {
@@ -14,6 +14,7 @@ namespace Microsoft.Data.SqlClient.Server
         private bool m_fMutator;
         private bool m_fInvokeIfReceiverIsNull;
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMethodAttribute.xml' path='docs/members[@name="SqlMethodAttribute"]/ctor/*' />
         public SqlMethodAttribute()
         {
             // default values
@@ -23,6 +24,7 @@ namespace Microsoft.Data.SqlClient.Server
 
         } // SqlMethodAttribute
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMethodAttribute.xml' path='docs/members[@name="SqlMethodAttribute"]/OnNullCall/*' />
         public bool OnNullCall
         {
             get
@@ -35,6 +37,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         } // CallOnNullInputs
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMethodAttribute.xml' path='docs/members[@name="SqlMethodAttribute"]/IsMutator/*' />
         public bool IsMutator
         {
             get
@@ -47,6 +50,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         } // IsMutator
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMethodAttribute.xml' path='docs/members[@name="SqlMethodAttribute"]/InvokeIfReceiverIsNull/*' />
         public bool InvokeIfReceiverIsNull
         {
             get

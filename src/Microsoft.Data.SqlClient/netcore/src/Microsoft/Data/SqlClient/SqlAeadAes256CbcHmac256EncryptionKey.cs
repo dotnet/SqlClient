@@ -59,6 +59,7 @@ namespace Microsoft.Data.SqlClient
         /// Derives all the required keys from the given root key
         /// </summary>
         /// <param name="rootKey">Root key used to derive all the required derived keys</param>
+        /// <param name="algorithmName"></param>
         internal SqlAeadAes256CbcHmac256EncryptionKey(byte[] rootKey, string algorithmName) : base(rootKey)
         {
             _algorithmName = algorithmName;

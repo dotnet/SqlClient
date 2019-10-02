@@ -9,51 +9,34 @@ using System.Security;
 namespace Microsoft.Data.SqlClient
 {
 
-    /// <summary>
-    /// AD Authentication parameters passed by driver to auth providers.
-    /// </summary>
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/SqlAuthenticationParameters/*'/>
     public class SqlAuthenticationParameters
     {
-        /// <summary>
-        /// Authentication method.
-        /// </summary>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/AuthenticationMethod/*'/>
         public SqlAuthenticationMethod AuthenticationMethod { get; }
 
-        /// <summary>
-        /// Resource URI.
-        /// </summary>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/Resource/*'/>
         public string Resource { get; }
 
-        /// <summary>
-        /// Authority URI.
-        /// </summary>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/Authority/*'/>
         public string Authority { get; }
 
-        /// <summary>
-        /// User login name/id.
-        /// </summary>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/UserId/*'/>
         public string UserId { get; }
 
-        /// <summary>
-        /// User password.
-        /// </summary>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/Password/*'/>
         public string Password { get; }
 
-        /// <summary>
-        /// Connection Id.
-        /// </summary>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/ConnectionId/*'/>
         public Guid ConnectionId { get; }
 
-        /// <summary>
-        /// Server name.
-        /// </summary>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/ServerName/*'/>
         public string ServerName { get; }
 
-        /// <summary>
-        /// Database name.
-        /// </summary>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/DatabaseName/*'/>
         public string DatabaseName { get; }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/ctor/*'/>
         protected SqlAuthenticationParameters(
             SqlAuthenticationMethod authenticationMethod,
             string serverName,

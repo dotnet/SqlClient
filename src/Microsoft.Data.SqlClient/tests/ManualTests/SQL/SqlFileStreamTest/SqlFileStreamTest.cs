@@ -4,7 +4,6 @@
 
 using System;
 using System.Data;
-using System.Data.SqlTypes;
 using System.IO;
 using Microsoft.Data.SqlTypes;
 using Xunit;

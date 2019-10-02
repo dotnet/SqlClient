@@ -104,7 +104,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     CertificateUtilityWin.RemoveCertificate(certificateName, StoreLocation.CurrentUser);
                     sqlSetupStrategyCsp?.DropTable();
                 }
-                
+
             }
         }
 

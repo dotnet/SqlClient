@@ -398,8 +398,9 @@ namespace Microsoft.Data.SqlClient
         /// Constructor.
         /// </summary>
         /// <param name="sqlTceCipherInfoEntry"></param>
-        /// <param name="sqlClientEncryptionAlgorithm"></param>
+        /// <param name="ordinal"></param>
         /// <param name="cipherAlgorithmId"></param>
+        /// <param name="cipherAlgorithmName"></param>
         /// <param name="encryptionType"></param>
         /// <param name="normalizationRuleVersion"></param>
         internal SqlCipherMetadata(SqlTceCipherInfoEntry? sqlTceCipherInfoEntry,

@@ -1,0 +1,29 @@
+<docs>
+    <members name="SqlAuthenticationMethod">
+        <SqlAuthenticationMethod>
+            <summary>Describes the different SQL authentication methods that can be used by a client connecting to Azure SQL Database. For details, see <see href="https://docs.microsoft.com/azure/sql-database/sql-database-aad-authentication">Connecting to SQL Database By Using Azure Active Directory Authentication</see>.
+            </summary>
+            <remarks>To be added.</remarks>
+        </SqlAuthenticationMethod>
+        <NotSpecified>
+            <summary>The authentication method is not specified.</summary>
+            <value>0</value>
+        </NotSpecified>
+        <SqlPassword>
+            <summary>The authentication method is Sql Password.</summary>
+            <value>1</value>
+        </SqlPassword>
+        <ActiveDirectoryPassword>
+            <summary>The authentication method uses Active Directory Password. Use Active Directory Password to connect to a SQL Database using an Azure AD principal name and password.</summary>
+            <value>2</value>
+        </ActiveDirectoryPassword>
+        <ActiveDirectoryIntegrated>
+            <summary>The authentication method uses Active Directory Integrated. Use Active Directory Integrated to connect to a SQL Database using integrated Windows authentication. Available for .NET Framework applications only.</summary>
+            <value>3</value>
+        </ActiveDirectoryIntegrated>
+        <ActiveDirectoryInteractive>
+            <summary>The authentication method uses Active Directory Interactive. Available since the .NET Framework 4.7.2 and for .NET Framework applications only.</summary>
+            <value>4</value>
+        </ActiveDirectoryInteractive>
+    </members>
+</docs>
