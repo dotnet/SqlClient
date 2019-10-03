@@ -5,14 +5,16 @@
 using System;
 using System.Data;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 {
-    internal static class Utility
+    public static class Utility
     {
         internal const string ColumnEncryptionAlgorithmName = @"AEAD_AES_256_CBC_HMAC_SHA256";
 
@@ -63,7 +65,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         /// <summary>
         /// ECEK Corruption types (useful for testing)
         /// </summary>
-        internal enum ECEKCorruption
+        public enum ECEKCorruption
         {
             ALGORITHM_VERSION,
             CEK_LENGTH,
@@ -74,7 +76,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         /// <summary>
         /// Encryption Type as per the test code. Different than product code's enumeration.
         /// </summary>
-        internal enum CColumnEncryptionType
+        public enum CColumnEncryptionType
         {
             PlainText = 0,
             Deterministic,
@@ -197,6 +199,34 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             }
 
             return certificate;
+        }
+
+        /// <summary>
+        /// Gets the certificate.
+        /// </summary>
+        /// <param name="certificateName"></param>
+        /// <param name="certificateStoreLocation"></param>
+        /// <returns></returns>
+        internal static X509Certificate2 GetCertificate(string certificateName, StoreLocation certificateStoreLocation)
+        {
+            Assert.True(!string.IsNullOrWhiteSpace(certificateName));
+            X509Store certStore = null;
+            try
+            {
+                certStore = new X509Store(StoreName.My, certificateStoreLocation);
+                certStore.Open(OpenFlags.ReadOnly);
+                X509Certificate2Collection certCollection = certStore.Certificates.Find(X509FindType.FindBySubjectName, certificateName, validOnly: false);
+                Assert.True(certCollection != null && certCollection.Count > 0);
+
+                return certCollection[0];
+            }
+            finally
+            {
+                if (certStore != null)
+                {
+                    certStore.Close();
+                }
+            }
         }
 
         /// <summary>
@@ -348,6 +378,29 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         }
 
         /// <summary>
+        /// Gets hex representation of byte array.
+        /// <param name="input">input byte array</param>
+        /// <param name="addLeadingZeroX">Add leading 0x</param>
+        /// </summary>
+        internal static string GetHexString(byte[] input, bool addLeadingZeroX = false)
+        {
+            Assert.True(input != null);
+
+            StringBuilder str = new StringBuilder();
+            if (addLeadingZeroX)
+            {
+                str.Append(@"0x");
+            }
+
+            foreach (byte b in input)
+            {
+                str.AppendFormat(b.ToString(@"X2"));
+            }
+
+            return str.ToString();
+        }
+
+        /// <summary>
         /// Through reflection, clear the static provider list set on SqlConnection. 
         /// Note- This API doesn't use locks for synchronization.
         /// </summary>
@@ -384,6 +437,20 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             {
                 Write(@"ASSERT: {0}", message);
             }
+        }
+
+        /// <summary>
+        /// String to Byte array conversion.
+        /// </summary>
+        /// <param name="hex"></param>
+        /// <returns></returns>
+        internal static byte[] StringToByteArray(string hex)
+        {
+            Assert.True(!string.IsNullOrWhiteSpace(hex));
+            return Enumerable.Range(0, hex.Length)
+                             .Where(x => x % 2 == 0)
+                             .Select(x => Convert.ToByte(hex.Substring(x, 2), 16))
+                             .ToArray();
         }
     }
 }
