@@ -1,0 +1,60 @@
+<docs>
+    <members name="SqlClientMetaDataCollectionNames">
+        <SqlClientMetaDataCollectionNames>
+            <summary>Provides a list of constants for use with the **GetSchema** method to retrieve metadata collections.</summary>
+            <remarks>To be added.</remarks>
+        </SqlClientMetaDataCollectionNames>
+        <Columns>
+            <summary>A constant for use with the **GetSchema** method that represents the **Columns** collection.</summary>
+            <remarks>To be added.</remarks>
+        </Columns>
+        <Databases>
+            <summary>A constant for use with the **GetSchema** method that represents the **Databases** collection.</summary>
+            <remarks>To be added.</remarks>
+        </Databases>
+        <ForeignKeys>
+            <summary>A constant for use with the **GetSchema** method that represents the **ForeignKeys** collection.</summary>
+            <remarks>To be added.</remarks>
+        </ForeignKeys>
+        <IndexColumns>
+            <summary>A constant for use with the **GetSchema** method that represents the **IndexColumns** collection.</summary>
+            <remarks>To be added.</remarks>
+        </IndexColumns>
+        <Indexes>
+            <summary>A constant for use with the **GetSchema** method that represents the **Indexes** collection.</summary>
+            <remarks>To be added.</remarks>
+        </Indexes>
+        <Parameters>
+            <summary>A constant for use with the **GetSchema** method that represents the **Parameters** collection.</summary>
+            <remarks>To be added.</remarks>
+        </Parameters>
+        <ProcedureColumns>
+            <summary>A constant for use with the **GetSchema** method that represents the **ProcedureColumns** collection.</summary>
+            <remarks>To be added.</remarks>
+        </ProcedureColumns>
+        <Procedures>
+            <summary>A constant for use with the **GetSchema** method that represents the **Procedures** collection.</summary>
+            <remarks>To be added.</remarks>
+        </Procedures>
+        <Tables>
+            <summary>A constant for use with the **GetSchema** method that represents the **Tables** collection.</summary>
+            <remarks>To be added.</remarks>
+        </Tables>
+        <UserDefinedTypes>
+            <summary>A constant for use with the **GetSchema** method that represents the **UserDefinedTypes** collection.</summary>
+            <remarks>To be added.</remarks>
+        </UserDefinedTypes>
+        <Users>
+            <summary>A constant for use with the **GetSchema** method that represents the **Users** collection.</summary>
+            <remarks>To be added.</remarks>
+        </Users>
+        <ViewColumns>
+            <summary>A constant for use with the **GetSchema** method that represents the **ViewColumns** collection.</summary>
+            <remarks>To be added.</remarks>
+        </ViewColumns>
+        <Views>
+            <summary>A constant for use with the **GetSchema** method that represents the **Views** collection.</summary>
+            <remarks>To be added.</remarks>
+        </Views>
+    </members>
+</docs>

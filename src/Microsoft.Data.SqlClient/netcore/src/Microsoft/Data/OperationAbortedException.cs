@@ -7,6 +7,7 @@ using System.Runtime.Serialization;
 
 namespace Microsoft.Data
 {
+    /// <include file='..\..\..\..\..\..\doc\snippets\Microsoft.Data\OperationAbortedException.xml' path='docs/members[@name="OperationAbortedException"]/OperationAbortedException/*' />
     [Serializable]
     [System.Runtime.CompilerServices.TypeForwardedFrom("System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")]
     public sealed class OperationAbortedException : SystemException

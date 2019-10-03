@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<docs>
+    <members name="OperationAbortedException">
+        <OperationAbortedException>
+            <summary>This exception is thrown when an ongoing operation is aborted by the user.</summary>
+            <remarks>
+                <format type="text/markdown"><![CDATA[  
+
+## Remarks  
+This exception indicates that an operation has been aborted by the consumer of an API. 
+For example, if the event handler of the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.SqlRowsCopied> event sets the **Abort** property to `true` in the <xref:Microsoft.Data.SqlClient.SqlRowsCopiedEventArgs> object passed to the handler, the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer%2A> method stops sending rows to the server and throws an <xref:Microsoft.Data.OperationAbortedException>.  
+
+]]></format>
+            </remarks>
+        </OperationAbortedException>
+    </members>
+</docs>

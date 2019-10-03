@@ -13,9 +13,11 @@ using Microsoft.Data.Sql;
 
 namespace Microsoft.Data.SqlClient
 {
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/SqlCommandBuilder/*'/>
     public sealed class SqlCommandBuilder : DbCommandBuilder
     {
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/ctor1/*'/>
         public SqlCommandBuilder() : base()
         {
             GC.SuppressFinalize(this);
@@ -23,12 +25,14 @@ namespace Microsoft.Data.SqlClient
             base.QuoteSuffix = "]";
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/ctor2/*'/>
         public SqlCommandBuilder(SqlDataAdapter adapter) : this()
         {
             DataAdapter = adapter;
         }
 
         /// <devnote>SqlServer only supports CatalogLocation.Start</devnote>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/CatalogLocation/*'/>
         [
         Browsable(false),
         EditorBrowsableAttribute(EditorBrowsableState.Never),
@@ -50,6 +54,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <devnote>SqlServer only supports '.'</devnote>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/CatalogSeparator/*'/>
         [
         Browsable(false),
         EditorBrowsableAttribute(EditorBrowsableState.Never),
@@ -70,6 +75,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/DataAdapter/*'/>
         [
         DefaultValue(null),
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Update),
@@ -88,6 +94,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <devnote>SqlServer only supports '.'</devnote>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/QuotePrefix/*'/>
         [
         Browsable(false),
         EditorBrowsableAttribute(EditorBrowsableState.Never),
@@ -109,6 +116,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/QuoteSuffix/*'/>
         [
         Browsable(false),
         EditorBrowsableAttribute(EditorBrowsableState.Never),
@@ -130,6 +138,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/SchemaSeparator/*'/>
         [
         Browsable(false),
         EditorBrowsableAttribute(EditorBrowsableState.Never),
@@ -155,33 +164,42 @@ namespace Microsoft.Data.SqlClient
             base.RowUpdatingHandler(ruevent);
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetInsertCommand2/*'/>
         new public SqlCommand GetInsertCommand()
         {
             return (SqlCommand)base.GetInsertCommand();
         }
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetInsertCommand3/*'/>
         new public SqlCommand GetInsertCommand(bool useColumnsForParameterNames)
         {
             return (SqlCommand)base.GetInsertCommand(useColumnsForParameterNames);
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetUpdateCommand2/*'/>
         new public SqlCommand GetUpdateCommand()
         {
             return (SqlCommand)base.GetUpdateCommand();
         }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetUpdateCommand3/*'/>
         new public SqlCommand GetUpdateCommand(bool useColumnsForParameterNames)
         {
             return (SqlCommand)base.GetUpdateCommand(useColumnsForParameterNames);
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetDeleteCommand2/*'/>
         new public SqlCommand GetDeleteCommand()
         {
             return (SqlCommand)base.GetDeleteCommand();
         }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetDeleteCommand3/*'/>
         new public SqlCommand GetDeleteCommand(bool useColumnsForParameterNames)
         {
             return (SqlCommand)base.GetDeleteCommand(useColumnsForParameterNames);
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/ApplyParameterInfo/*'/>
         override protected void ApplyParameterInfo(DbParameter parameter, DataRow datarow, StatementType statementType, bool whereClause)
         {
             SqlParameter p = (SqlParameter)parameter;
@@ -213,15 +231,19 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetParameterName1/*'/>
         override protected string GetParameterName(int parameterOrdinal)
         {
             return "@p" + parameterOrdinal.ToString(System.Globalization.CultureInfo.InvariantCulture);
         }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetParameterName2/*'/>
         override protected string GetParameterName(string parameterName)
         {
             return "@" + parameterName;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetParameterPlaceholder/*'/>
         override protected string GetParameterPlaceholder(int parameterOrdinal)
         {
             return "@p" + parameterOrdinal.ToString(System.Globalization.CultureInfo.InvariantCulture);
@@ -238,6 +260,8 @@ namespace Microsoft.Data.SqlClient
             }
 
         }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/DeriveParameters/*'/>
         static public void DeriveParameters(SqlCommand command)
         { // MDAC 65927\
             SqlConnection.ExecutePermission.Demand();
@@ -315,6 +339,7 @@ namespace Microsoft.Data.SqlClient
                 }
         */
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetSchemaTable/*'/>
         protected override DataTable GetSchemaTable(DbCommand srcCommand)
         {
             SqlCommand sqlCommand = srcCommand as SqlCommand;
@@ -339,6 +364,7 @@ namespace Microsoft.Data.SqlClient
 
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/InitializeCommand/*'/>
         protected override DbCommand InitializeCommand(DbCommand command)
         {
             SqlCommand cmd = (SqlCommand)base.InitializeCommand(command);
@@ -346,6 +372,7 @@ namespace Microsoft.Data.SqlClient
             return cmd;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/QuoteIdentifier/*'/>
         public override string QuoteIdentifier(string unquotedIdentifier)
         {
             ADP.CheckArgumentNull(unquotedIdentifier, "unquotedIdentifier");
@@ -356,6 +383,7 @@ namespace Microsoft.Data.SqlClient
             ;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/SetRowUpdatingHandler/*'/>
         override protected void SetRowUpdatingHandler(DbDataAdapter adapter)
         {
             Debug.Assert(adapter is SqlDataAdapter, "!SqlDataAdapter");
@@ -369,6 +397,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/UnquoteIdentifier/*'/>
         public override string UnquoteIdentifier(string quotedIdentifier)
         {
 

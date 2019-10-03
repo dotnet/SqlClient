@@ -32,6 +32,7 @@ namespace Microsoft.Data.SqlClient
         /// Generate the byte package that needs to be sent to the enclave
         /// </summary>
         /// <param name="keysTobeSentToEnclave">Keys to be sent to enclave</param>
+        /// <param name="queryText"></param>
         /// <param name="enclaveType">enclave type</param>
         /// <param name="serverName">server name</param>
         /// <param name="enclaveAttestationUrl">url for attestation endpoint</param>
@@ -123,7 +124,7 @@ namespace Microsoft.Data.SqlClient
         /// Decrypt the keys that need to be sent to the enclave
         /// </summary>
         /// <param name="keysTobeSentToEnclave">Keys that need to sent to the enclave</param>
-        /// <param name="sqlConnection">active connection</param>
+        /// <param name="serverName"></param>
         /// <returns></returns>
         private List<ColumnEncryptionKeyInfo> GetDecryptedKeysToBeSentToEnclave(Dictionary<int, SqlTceCipherInfoEntry> keysTobeSentToEnclave, string serverName)
         {
@@ -157,6 +158,7 @@ namespace Microsoft.Data.SqlClient
         /// Generate a byte package consisting of decrypted keys and some headers expected by the enclave
         /// </summary>
         /// <param name="enclaveSessionCounter">counter to avoid replay attacks</param>
+        /// <param name="queryStringHashBytes"></param>
         /// <param name="keys"></param>
         /// <returns></returns>
         private byte[] GenerateBytePackageForKeys(long enclaveSessionCounter, byte[] queryStringHashBytes, List<ColumnEncryptionKeyInfo> keys)

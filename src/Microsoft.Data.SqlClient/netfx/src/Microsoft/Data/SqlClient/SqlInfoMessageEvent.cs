@@ -4,7 +4,7 @@
 
 namespace Microsoft.Data.SqlClient
 {
-
+    /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlInfoMessageEventArgs.xml' path='docs/members[@name="SqlInfoMessageEventArgs"]/SqlInfoMessageEventArgs/*' />
     public sealed class SqlInfoMessageEventArgs : System.EventArgs
     {
         private SqlException exception;
@@ -14,6 +14,7 @@ namespace Microsoft.Data.SqlClient
             this.exception = exception;
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlInfoMessageEventArgs.xml' path='docs/members[@name="SqlInfoMessageEventArgs"]/Errors/*' />
         public SqlErrorCollection Errors
         {
             get { return exception.Errors; }
@@ -25,16 +26,19 @@ namespace Microsoft.Data.SqlClient
             return (null != exception) && (0 < exception.Errors.Count);
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlInfoMessageEventArgs.xml' path='docs/members[@name="SqlInfoMessageEventArgs"]/Message/*' />
         public string Message
         { // MDAC 68482
             get { return exception.Message; }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlInfoMessageEventArgs.xml' path='docs/members[@name="SqlInfoMessageEventArgs"]/Source/*' />
         public string Source
         { // MDAC 68482
             get { return exception.Source; }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlInfoMessageEventArgs.xml' path='docs/members[@name="SqlInfoMessageEventArgs"]/ToString/*' />
         override public string ToString()
         { // MDAC 68482
             return Message;

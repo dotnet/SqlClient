@@ -8,6 +8,7 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient.Server
 {
+    /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\InvalidUdtException.xml' path='docs/members[@name="InvalidUdtException"]/InvalidUdtException/*' />
     [Serializable]
     public sealed class InvalidUdtException : SystemException
     {
@@ -32,6 +33,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
         }
 
+        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\InvalidUdtException.xml' path='docs/members[@name="InvalidUdtException"]/GetObjectData/*' />
         public override void GetObjectData(SerializationInfo si, StreamingContext context)
         {
             base.GetObjectData(si, context);

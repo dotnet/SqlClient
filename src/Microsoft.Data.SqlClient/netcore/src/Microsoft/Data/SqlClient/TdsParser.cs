@@ -1018,6 +1018,12 @@ namespace Microsoft.Data.SqlClient
                     _pMarsPhysicalConObj = null;
                 }
             }
+
+            _resetConnectionEvent?.Dispose();
+            _resetConnectionEvent = null;
+
+            _defaultEncoding = null;
+            _defaultCollation = null;
         }
 
         // Fires a single InfoMessageEvent
@@ -2791,6 +2797,11 @@ namespace Microsoft.Data.SqlClient
                     {
                         cmd.InternalRecordsAffected = count;
                     }
+                }
+                // Skip the bogus DONE counts sent by the server
+                if (stateObj._receivedColMetaData || (curCmd != TdsEnums.SELECT))
+                {
+                    cmd.OnStatementCompleted(count);
                 }
             }
 

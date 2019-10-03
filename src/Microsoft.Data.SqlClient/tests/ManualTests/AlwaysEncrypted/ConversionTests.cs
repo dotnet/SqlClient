@@ -1018,7 +1018,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         Assert.True(((byte[])encryptedValue).SequenceEqual((byte[])unencryptedValue), string.Format("The values read for row '{0}' column '{1}' are not identical", rowId, sqlDataReaderEncrypted.GetName(i)));
                     }
                     else if (sqlDataReaderEncrypted.GetDataTypeName(i) == "char" || sqlDataReaderEncrypted.GetDataTypeName(i) == "varchar" ||
-                             sqlDataReaderEncrypted.GetDataTypeName(i) == "nchar" || sqlDataReaderEncrypted.GetDataTypeName(i) == "nvarchar" )
+                             sqlDataReaderEncrypted.GetDataTypeName(i) == "nchar" || sqlDataReaderEncrypted.GetDataTypeName(i) == "nvarchar")
                     {
                         Assert.True(((string)encryptedValue).TrimEnd().Equals(((string)unencryptedValue).TrimEnd()), string.Format("The values read for row '{0}' column '{1}' are not identical", rowId, sqlDataReaderEncrypted.GetName(i)));
                     }
@@ -1152,7 +1152,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     }
 
                     millisecond = (0 == strBuilder.Length) ? 0 : rand.Next(0, Int32.Parse(strBuilder.ToString()));
-                    
+
                     if (SqlDbType.DateTime2 == columnInfo.ColumnType)
                     {
                         returnValue = new DateTime(year, month, day, hour, minute, second, millisecond);

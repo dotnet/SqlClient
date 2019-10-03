@@ -43,7 +43,7 @@ namespace Microsoft.Data.SqlClient
         /// This function uses the asymmetric key specified by the key path
         /// and encrypts CEK with RSA encryption algorithm.
         /// </summary>
-        /// <param name="keyPath">Complete path of an asymmetric key in AKV</param>
+        /// <param name="masterKeyPath">Complete path of an asymmetric key in AKV</param>
         /// <param name="encryptionAlgorithm">Asymmetric Key Encryption Algorithm</param>
         /// <param name="columnEncryptionKey">Plain text column encryption key</param>
         /// <returns>Encrypted column encryption key</returns>

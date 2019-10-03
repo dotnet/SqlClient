@@ -28,15 +28,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             Task.Factory.StartNew(() => { SetupProxy(actualHost, actualPort); });
 
-            for(int i = 0; i < 10 && Port == -1; i++)
+            for (int i = 0; i < 10 && Port == -1; i++)
             {
                 Thread.Sleep(500);
             }
-            if (Port == -1) throw new InvalidOperationException("Proxy local port not defined!");
+            if (Port == -1)
+                throw new InvalidOperationException("Proxy local port not defined!");
 
             builder.DataSource = "tcp:127.0.0.1," + Port;
             BaseConnString = builder.ConnectionString;
-        } 
+        }
 
         [CheckConnStrSetupFact]
         public void OneByteSplitTest()
@@ -44,7 +45,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SplitPacketSize = 1;
             OpenConnection();
         }
-      
+
         [CheckConnStrSetupFact]
         public void AlmostFullHeaderTest()
         {
@@ -157,12 +158,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static void GetTcpInfoFromDataSource(string dataSource, out string hostName, out int port)
         {
             string[] dataSourceParts = dataSource.Split(',');
-            if(dataSourceParts.Length == 1)
+            if (dataSourceParts.Length == 1)
             {
                 hostName = dataSourceParts[0].Replace("tcp:", "");
                 port = 1433;
             }
-            else if(dataSourceParts.Length == 2)
+            else if (dataSourceParts.Length == 2)
             {
                 hostName = dataSourceParts[0].Replace("tcp:", "");
                 port = int.Parse(dataSourceParts[1]);

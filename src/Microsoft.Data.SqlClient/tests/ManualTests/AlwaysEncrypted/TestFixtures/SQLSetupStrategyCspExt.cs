@@ -10,8 +10,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     public class SQLSetupStrategyCspExt : SQLSetupStrategy
     {
         //public string keyPath {get; private set;}
-        public Table CspProviderTable {get; private set;}
-        public SqlColumnEncryptionCspProvider keyStoreProvider {get;}
+        public Table CspProviderTable { get; private set; }
+        public SqlColumnEncryptionCspProvider keyStoreProvider { get; }
 
         public SQLSetupStrategyCspExt(string cspKeyPath) : base(cspKeyPath)
         {

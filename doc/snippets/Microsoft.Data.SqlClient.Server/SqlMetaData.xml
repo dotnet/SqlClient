@@ -1,0 +1,896 @@
+<?xml version="1.0"?>
+<docs>
+    <members name="SqlMetaData">
+        <SqlMetaData>
+            <summary>Specifies and retrieves metadata information from parameters and columns of <see cref="T:Microsoft.Data.SqlClient.Server.SqlDataRecord" /> objects. This class cannot be inherited.</summary>
+            <remarks>
+                <format type="text/markdown"><![CDATA[  
+
+## Examples  
+The following example shows the creation of several <xref:Microsoft.Data.SqlClient.Server.SqlMetaData> objects, which describe the column metadata of a record, and the creation of a <xref:Microsoft.Data.SqlClient.Server.SqlDataRecord>. The column values of the <xref:Microsoft.Data.SqlClient.Server.SqlDataRecord> are set and the <xref:Microsoft.Data.SqlClient.Server.SqlDataRecord> is sent to the calling program using the <xref:Microsoft.SqlServer.Server.SqlContext> class.  
+
+[!code-csharp[SqlMetaData Samples#1](~/sqlclient/doc/samples/SqlMetaData.cs#1)]
+
+]]></format>
+            </remarks>
+        </SqlMetaData>
+        <ctor>
+            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> class.</summary>
+        </ctor>
+        <ctorNameDbType>
+            <param name="name">The name of the column.</param>
+            <param name="dbType">The SQL Server type of the parameter or column.</param>
+            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> class with the specified column name and type.</summary>
+            <remarks>
+                <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+Only the following are allowed to be passed to the constructor as `dbType`: `Bit`, `BigInt`, `DateTime`, `Decimal`, `Float`, `Int`, `Money`, `Numeric`, `SmallDateTime`, `SmallInt`, `SmallMoney`, `TimeStamp`, `TinyInt`, `UniqueIdentifier`, `Xml`.  
+
+The following are the default values assigned to `dbType`, depending on the `SqlDbType` (the <xref:Microsoft.Data.SqlClient.Server.SqlMetaData.XmlSchemaCollectionDatabase%2A>, <xref:Microsoft.Data.SqlClient.Server.SqlMetaData.XmlSchemaCollectionName%2A>, <xref:Microsoft.Data.SqlClient.Server.SqlMetaData.XmlSchemaCollectionOwningSchema%2A>, and <xref:Microsoft.Data.SqlClient.Server.SqlMetaData.Type%2A> properties are set to `null`):  
+
+|SqlDbType|Maximum length|Precision|Scale|Locale|Compare options|  
+|---------------|--------------------|---------------|-----------|------------|---------------------|  
+|`Bit`|1|1|0|0|None|  
+|`BigInt`|8|19|0|0|None|  
+|`DateTime`|8|23|3|0|None|  
+|`Decimal`|9|18|0|0|None|  
+|`Float`|8|53|0|0|None|  
+|`Int`|4|10|0|0|None|  
+|`Money`|8|19|4|0|None|  
+|`Numeric`|9|18|0|0|None|  
+|`SmallDateTime`|4|16|0|0|None|  
+|`SmallInt`|2|5|0|0|None|  
+|`SmallMoney`|4|10|4|0|None|  
+|`TimeStamp`|8|0|0|0|None|  
+|`TinyInt`|1|3|0|0|None|  
+|`UniqueIdentifier`|16|0|0|0|None|  
+|`Xml`|Max (-1)|0|0|0|IgnoreCase, IgnoreKanaType, IgnoreWidth|  
+
+## Examples  
+The following example creates a new <xref:Microsoft.Data.SqlClient.Server.SqlMetaData> object by specifying the column name and a column data type of <xref:System.Data.SqlDbType>.`Int`.  
+
+[!code-csharp[SqlMetaData Samples#3](~/sqlclient/doc/samples/SqlMetaData.cs#3)]
+
+]]></format>
+            </remarks>
+            <exception cref="T:System.ArgumentNullException">The <paramref name="name" /> is <see langword="null" />.</exception>
+            <exception cref="T:System.ArgumentException">A <see langword="SqlDbType" /> that is not allowed was passed to the constructor as <paramref name="dbType" />.</exception>
+        </ctorNameDbType>
+        <ctorNameDbTypeMaxLength>
+            <param name="name">The name of the column.</param>
+            <param name="dbType">The SQL Server type of the parameter or column.</param>
+            <param name="maxLength">The maximum length of the specified type.</param>
+            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> class with the specified column name, type, and maximum length.</summary>
+            <remarks>
+                <format type="text/markdown"><![CDATA[  
+
+## Remarks  
+Only the following are allowed to be passed to the constructor as `dbType`: `Binary`, `Char`, `Image`, `NChar`, `Ntext`, `NVarChar`, `Text`, `VarBinary`, `VarChar`.  
+
+Only a `maxLength` specification of <xref:Microsoft.Data.SqlClient.Server.SqlMetaData.Max%2A>, or -1 is allowed for a `dbType` of `Text`, `NText`, or `Image`.  
+
+For a `dbType` of `Varchar`, `Nvarchar`, or `VarBinary`, a length specification of <xref:Microsoft.Data.SqlClient.Server.SqlMetaData.Max%2A>, or -1, declares the metadata as varchar(max), nvarchar(max), or nvarbinary(max), respectively.  
+
+The following are the default values assigned to `dbType`, depending on the `SqlDbType` (the <xref:Microsoft.Data.SqlClient.Server.SqlMetaData.XmlSchemaCollectionDatabase%2A>, <xref:Microsoft.Data.SqlClient.Server.SqlMetaData.XmlSchemaCollectionName%2A>, <xref:Microsoft.Data.SqlClient.Server.SqlMetaData.XmlSchemaCollectionOwningSchema%2A>, and <xref:Microsoft.Data.SqlClient.Server.SqlMetaData.Type%2A> properties are set to `null`):  
+
+|SqlDbType|Precision|Scale|Locale|Compare options|  
+|---------------|---------------|-----------|------------|---------------------|  
+|Binary|0|0|0|IgnoreCase, IgnoreKanaType, IgnoreWidth|  
+|Char|0|0|\<thread>|IgnoreCase, IgnoreKanaType, IgnoreWidth|  
+|Image|0|0|0|None|  
+|NChar|0|0|\<thread>|IgnoreCase, IgnoreKanaType, IgnoreWidth|  
+|NText|0|0|\<thread>|IgnoreCase, IgnoreKanaType, IgnoreWidth|  
+|NVarChar|0|0|\<thread>|IgnoreCase, IgnoreKanaType, IgnoreWidth|  
+|Text|0|0|\<thread>|IgnoreCase, IgnoreKanaType, IgnoreWidth|  
+|VarBinary|0|0||IgnoreCase, IgnoreKanaType, IgnoreWidth|  
+|VarChar|0|0|\<thread>|IgnoreCase, IgnoreKanaType, IgnoreWidth|  
+
+
+## Examples  
+The following example creates a new <xref:Microsoft.Data.SqlClient.Server.SqlMetaData> object by specifying the column name, a column data type of <xref:System.Data.SqlDbType>`.NVarChar`, and a maximum length of 12 characters.  
+
+[!code-csharp[SqlMetaData Samples#2](~/sqlclient/doc/samples/SqlMetaData.cs#2)]
+
+]]></format>
+            </remarks>
+            <exception cref="T:System.ArgumentNullException">The <paramref name="name" /> is <see langword="null" />.</exception>
+            <exception cref="T:System.ArgumentException">A SqlDbType that is not allowed was passed to the constructor as <paramref name="dbType" />.</exception>
+        </ctorNameDbTypeMaxLength>
+        <ctorNameDbTypeUserDefinedType>
+            <param name="name">The name of the column.</param>
+            <param name="dbType">The SQL Server type of the parameter or column.</param>
+            <param name="userDefinedType">A <see cref="T:System.Type" /> instance that points to the UDT.</param>
+            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> class with the specified column name, type, and user-defined type (UDT).</summary>
+            <remarks>
+                <format type="text/markdown"><![CDATA[  
+
+## Remarks  
+Only the following `SqlDbType` is allowed to be passed to the constructor as `dbType`: `UDT`.  
+
+The following are the default values assigned to `dbType`, depending on the `SqlDbType` (the <xref:Microsoft.Data.SqlClient.Server.SqlMetaData.XmlSchemaCollectionDatabase%2A>, <xref:Microsoft.Data.SqlClient.Server.SqlMetaData.XmlSchemaCollectionName%2A>, <xref:Microsoft.Data.SqlClient.Server.SqlMetaData.XmlSchemaCollectionOwningSchema%2A>, and <xref:Microsoft.Data.SqlClient.Server.SqlMetaData.Type%2A> properties are set to `null`):  
+
+|SqlDbType|Maximum length|Precision|Scale|Locale|Compare options|  
+|---------------|--------------------|---------------|-----------|------------|---------------------|  
+|UDT|\<Max length of the type> or -1|0|0|0|None|  
+
+]]></format>
+            </remarks>
+            <exception cref="T:System.ArgumentNullException">The <paramref name="name" /> is <see langword="null" />.</exception>
+            <exception cref="T:System.ArgumentException">A SqlDbType that is not allowed was passed to the constructor as <paramref name="dbType" />, or <paramref name="userDefinedType" /> points to a type that does not have <see cref="T:Microsoft.Data.SqlClient.Server.SqlUserDefinedTypeAttribute" /> declared.</exception>
+        </ctorNameDbTypeUserDefinedType>
+        <ctorNameDbTypePrecisionScale>
+            <param name="name">The name of the parameter or column.</param>
+            <param name="dbType">The SQL Server type of the parameter or column.</param>
+            <param name="precision">The precision of the parameter or column.</param>
+            <param name="scale">The scale of the parameter or column.</param>
+            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> class with the specified column name, type, precision, and scale.</summary>
+            <remarks>
+                <format type="text/markdown"><![CDATA[  
+
+## Remarks  
+Only the following `SqlDbType` is allowed to be passed to the constructor as `dbType`: `Decimal`.  
+
+The following are the default values assigned to `dbType`, depending on the `SqlDbType` (the <xref:Microsoft.Data.SqlClient.Server.SqlMetaData.XmlSchemaCollectionDatabase%2A>, <xref:Microsoft.Data.SqlClient.Server.SqlMetaData.XmlSchemaCollectionName%2A>, <xref:Microsoft.Data.SqlClient.Server.SqlMetaData.XmlSchemaCollectionOwningSchema%2A>, and <xref:Microsoft.Data.SqlClient.Server.SqlMetaData.Type%2A> properties are set to `null`):  
+
+|SqlDbType|Maximum length|Precision|Scale|Locale|Compare options|  
+|---------------|--------------------|---------------|-----------|------------|---------------------|  
+|Decimal|9|18|0|0|None|  
+
+]]></format>
+            </remarks>
+            <exception cref="T:System.ArgumentNullException">The <paramref name="name" /> is <see langword="null" />.</exception>
+            <exception cref="T:System.ArgumentException">A <see langword="SqlDbType" /> that is not allowed was passed to the constructor as <paramref name="dbType" />, or <paramref name="scale" /> was greater than <paramref name="precision" />.</exception>
+        </ctorNameDbTypePrecisionScale>
+        <ctorNameDbTypeUserDefinedTypeServerTypeName>
+            <param name="name">The name of the column.</param>
+            <param name="dbType">The SQL Server type of the parameter or column.</param>
+            <param name="userDefinedType">A <see cref="T:System.Type" /> instance that points to the UDT.</param>
+            <param name="serverTypeName">The SQL Server type name for <paramref name="userDefinedType" />.</param>
+            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> class with the specified column name, user-defined type (UDT), and SQLServer type.</summary>
+        </ctorNameDbTypeUserDefinedTypeServerTypeName>
+        <ctorNameDbTypeMaxLengthLocaleCompareOptions>
+            <param name="name">The name of the parameter or column.</param>
+            <param name="dbType">The SQL Server type of the parameter or column.</param>
+            <param name="maxLength">The maximum length of the specified type.</param>
+            <param name="locale">The locale ID of the parameter or column.</param>
+            <param name="compareOptions">The comparison rules of the parameter or column.</param>
+            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> class with the specified column name, type, maximum length, locale, and compare options.</summary>
+            <remarks>
+                <format type="text/markdown"><![CDATA[  
+
+## Remarks  
+Only the following are allowed to be passed to the constructor as `dbType`: `Char`, `NChar`, `Ntext`, `NVarChar`, `Text`, `VarChar`.  
+
+Only a `maxLength` specification of <xref:Microsoft.Data.SqlClient.Server.SqlMetaData.Max%2A>, or -1, is allowed for a `dbType` of `Text` or `NText`.  
+
+For a `dbType` of `Varchar` or `Nvarchar`, a length specification of <xref:Microsoft.Data.SqlClient.Server.SqlMetaData.Max%2A>, or -1, declares the metadata as varchar(max) and nvarchar(max), respectively.  
+
+The following are the default values assigned to `dbType`, depending on the `SqlDbType` (the <xref:Microsoft.Data.SqlClient.Server.SqlMetaData.XmlSchemaCollectionDatabase%2A>, <xref:Microsoft.Data.SqlClient.Server.SqlMetaData.XmlSchemaCollectionName%2A>, <xref:Microsoft.Data.SqlClient.Server.SqlMetaData.XmlSchemaCollectionOwningSchema%2A>, and <xref:Microsoft.Data.SqlClient.Server.SqlMetaData.Type%2A> properties are set to `null`):  
+
+|SqlDbType|Precision|Scale|  
+|---------------|---------------|-----------|  
+|`Char`|0|0|  
+|`NChar`|0|0|  
+|`NText`|0|0|  
+|`NVarChar`|0|0|  
+|`Text`|0|0|  
+|`VarChar`|0|0|  
+
+]]></format>
+            </remarks>
+            <exception cref="T:System.ArgumentNullException">The <paramref name="name" /> is <see langword="null" />.</exception>
+            <exception cref="T:System.ArgumentException">A SqlDbType that is not allowed was passed to the constructor as <paramref name="dbType" />.</exception>
+        </ctorNameDbTypeMaxLengthLocaleCompareOptions>
+        <ctorNameDbTypeDatabaseOwningSchemaObjectName>
+            <param name="name">The name of the column.</param>
+            <param name="dbType">The SQL Server type of the parameter or column.</param>
+            <param name="database">The database name of the XML schema collection of a typed XML instance.</param>
+            <param name="owningSchema">The relational schema name of the XML schema collection of a typed XML instance.</param>
+            <param name="objectName">The name of the XML schema collection of a typed XML instance.</param>
+            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> class with the specified column name, type, database name, owning schema, and object name.</summary>
+            <remarks>
+                <format type="text/markdown"><![CDATA[  
+
+## Remarks  
+Only the following `SqlDbType` is allowed to be passed to the constructor as `dbType`: `Xml`.  
+
+The following are the default values assigned to `dbType`, depending on the `SqlDbType`:  
+
+|SqlDbType|Maximum length|Precision|Scale|Locale|Compare options|  
+|---------------|--------------------|---------------|-----------|------------|---------------------|  
+|`Xml`|Max (-1)|0|0|0|IgnoreCase, IgnoreKanaType, IgnoreWidth|  
+
+]]></format>
+            </remarks>
+            <exception cref="T:System.ArgumentNullException">The <paramref name="name" /> is <see langword="null" />, or <paramref name="objectName" /> is <see langword="null" /> when <paramref name="database" /> and <paramref name="owningSchema" /> are non-<see langword="null" />.</exception>
+            <exception cref="T:System.ArgumentException">A SqlDbType that is not allowed was passed to the constructor as <paramref name="dbType" />.</exception>
+        </ctorNameDbTypeDatabaseOwningSchemaObjectName>
+        <ctorNameDbTypeUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal>
+            <param name="name">The name of the column.</param>
+            <param name="dbType">The SQL Server type of the parameter or column.</param>
+            <param name="useServerDefault">Specifies whether this column should use the default server value.</param>
+            <param name="isUniqueKey">Specifies if the column in the table-valued parameter is unique.</param>
+            <param name="columnSortOrder">Specifies the sort order for a column.</param>
+            <param name="sortOrdinal">Specifies the ordinal of the sort column.</param>
+            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> class with the specified column name, and default server. This form of the constructor supports table-valued parameters by allowing you to specify if the column is unique in the table-valued parameter, the sort order for the column, and the ordinal of the sort column.</summary>
+            <remarks>
+                <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+For more information, see [Table-Valued Parameters](~/docs/framework/data/adonet/sql/table-valued-parameters.md).  
+
+]]></format>
+            </remarks>
+        </ctorNameDbTypeUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal>
+        <ctorNameDbTypeMaxLengthUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal>
+            <param name="name">The name of the column.</param>
+            <param name="dbType">The SQL Server type of the parameter or column.</param>
+            <param name="maxLength">The maximum length of the specified type.</param>
+            <param name="useServerDefault">Specifies whether this column should use the default server value.</param>
+            <param name="isUniqueKey">Specifies if the column in the table-valued parameter is unique.</param>
+            <param name="columnSortOrder">Specifies the sort order for a column.</param>
+            <param name="sortOrdinal">Specifies the ordinal of the sort column.</param>
+            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> class with the specified column name, type, maximum length, and server default. This form of the constructor supports table-valued parameters by allowing you to specify if the column is unique in the table-valued parameter, the sort order for the column, and the ordinal of the sort column.</summary>
+            <remarks>
+                <format type="text/markdown"><![CDATA[  
+
+## Remarks  
+For more information, see [Table-Valued Parameters](~/docs/framework/data/adonet/sql/table-valued-parameters.md).  
+
+]]></format>
+            </remarks>
+        </ctorNameDbTypeMaxLengthUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal>
+        <ctorNameDbTypePrecisionScaleUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal>
+            <param name="name">The name of the column.</param>
+            <param name="dbType">The SQL Server type of the parameter or column.</param>
+            <param name="precision">The precision of the parameter or column.</param>
+            <param name="scale">The scale of the parameter or column.</param>
+            <param name="useServerDefault">Specifies whether this column should use the default server value.</param>
+            <param name="isUniqueKey">Specifies if the column in the table-valued parameter is unique.</param>
+            <param name="columnSortOrder">Specifies the sort order for a column.</param>
+            <param name="sortOrdinal">Specifies the ordinal of the sort column.</param>
+            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> class with the specified column name, type, precision, scale, and server default. This form of the constructor supports table-valued parameters by allowing you to specify if the column is unique in the table-valued parameter, the sort order for the column, and the ordinal of the sort column.</summary>
+            <remarks>
+                <format type="text/markdown"><![CDATA[  
+
+## Remarks  
+For more information, see [Table-Valued Parameters](~/docs/framework/data/adonet/sql/table-valued-parameters.md).  
+
+]]></format>
+            </remarks>
+        </ctorNameDbTypePrecisionScaleUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal>
+        <ctorNameDbTypeMaxLengthPrecisionScaleLocaleCompareOptionsUserDefinedType>
+            <param name="name">The name of the column.</param>
+            <param name="dbType">The SQL Server type of the parameter or column.</param>
+            <param name="maxLength">The maximum length of the specified type.</param>
+            <param name="precision">The precision of the parameter or column.</param>
+            <param name="scale">The scale of the parameter or column.</param>
+            <param name="locale">The locale ID of the parameter or column.</param>
+            <param name="compareOptions">The comparison rules of the parameter or column.</param>
+            <param name="userDefinedType">A <see cref="T:System.Type" /> instance that points to the UDT.</param>
+            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> class with the specified column name, type, maximum length, precision, scale, locale ID, compare options, and user-defined type (UDT).</summary>
+            <remarks>
+                <format type="text/markdown"><![CDATA[  
+
+## Remarks  
+Only the following are allowed to be passed to the constructor as `dbType`: `BigInt`, `Bit`, `BitInt`, `DateTime`, `Decimal`, `Float`, `Image`, `Int`, `Money`, `Ntext`, `Numeric`, `Real`, `SmallDateTime`, `SmallInt`, `SmallMoney`, `Text`, `TimeStamp`, `TinyInt`, `UniqueIdentifier`, `Variant`, `Xml`.  
+
+The following are the default values assigned to `dbType`, depending on the `SqlDbType` (the <xref:Microsoft.Data.SqlClient.Server.SqlMetaData.XmlSchemaCollectionDatabase%2A>, <xref:Microsoft.Data.SqlClient.Server.SqlMetaData.XmlSchemaCollectionName%2A>, <xref:Microsoft.Data.SqlClient.Server.SqlMetaData.XmlSchemaCollectionOwningSchema%2A>, and <xref:Microsoft.Data.SqlClient.Server.SqlMetaData.Type%2A> properties are set to `null`):  
+
+|SqlDbType|Maximum length|Precision|Scale|Locale|Compare options|  
+|---------------|--------------------|---------------|-----------|------------|---------------------|  
+|`BigInt`|8|19|0|0|None|  
+|`Bit`|1|1|0|0|None|  
+|`DateTime`|8|23|3|0|None|  
+|`Decimal`|9|18|0|0|None|  
+|`Float`|8|53|0|0|None|  
+|`Image`|Max (-1)|0|0|0|None|  
+|`Int`|4|10|0|0|None|  
+|`Money`|8|19|4|0|None|  
+|`Ntext`|Max (-1)|0|0|\<thread>|IgnoreCase, IgnoreKanaType, IgnoreWidth|  
+|`Real`|4|24|0|0|None|  
+|`Row`|\<number of columns>|0|0|0|None|  
+|`SmallDateTime`|4|16|0|0|None|  
+|`SmallInt`|2|5|0|0|None|  
+|`SmallMoney`|4|10|4|0|None|  
+|`Text`|Max (-1)|0|0|\<thread>|IgnoreCase, IgnoreKanaType, IgnoreWidth|  
+|`TimeStamp`|8|0|0|0|None|  
+|`TinyInt`|1|3|0|0|None|  
+|`UniqueIdentifier`|16|0|0|0|None|  
+|`UDT`|\<Max length of the type> or -1|0|0|0|None|  
+|`Variant`|8016|0|0|0|None|  
+|`Xml`|Max (-1)|0|0|0|IgnoreCase, IgnoreKanaType, IgnoreWidth|  
+
+]]></format>
+            </remarks>
+            <exception cref="T:System.ArgumentNullException">The <paramref name="name" /> is <see langword="null" />.</exception>
+            <exception cref="T:System.ArgumentException">A <see langword="SqlDbType" /> that is not allowed was passed to the constructor as <paramref name="dbType" />, or <paramref name="userDefinedType" /> points to a type that does not have <see cref="T:Microsoft.Data.SqlClient.Server.SqlUserDefinedTypeAttribute" /> declared.</exception>
+        </ctorNameDbTypeMaxLengthPrecisionScaleLocaleCompareOptionsUserDefinedType>
+        <ctorNameDbTypeUserDefinedTypeServerTypeNameUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal>
+            <param name="name">The name of the column.</param>
+            <param name="dbType">The SQL Server type of the parameter or column.</param>
+            <param name="userDefinedType">A <see cref="T:System.Type" /> instance that points to the UDT.</param>
+            <param name="serverTypeName">The SQL Server type name for <paramref name="userDefinedType" />.</param>
+            <param name="useServerDefault">Specifies whether this column should use the default server value.</param>
+            <param name="isUniqueKey">Specifies if the column in the table-valued parameter is unique.</param>
+            <param name="columnSortOrder">Specifies the sort order for a column.</param>
+            <param name="sortOrdinal">Specifies the ordinal of the sort column.</param>
+            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> class with the specified column name, type, user-defined type, SQL Server type, and server default. This form of the constructor supports table-valued parameters by allowing you to specify if the column is unique in the table-valued parameter, the sort order for the column, and the ordinal of the sort column.</summary>
+            <remarks>
+                <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+For more information, see [Table-Valued Parameters](~/docs/framework/data/adonet/sql/table-valued-parameters.md).  
+
+]]></format>
+            </remarks>
+        </ctorNameDbTypeUserDefinedTypeServerTypeNameUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal>
+        <ctorNameDbTypeMaxLengthLocaleCompareOptionsUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal>
+            <param name="name">The name of the column.</param>
+            <param name="dbType">The SQL Server type of the parameter or column.</param>
+            <param name="maxLength">The maximum length of the specified type.</param>
+            <param name="locale">The locale ID of the parameter or column.</param>
+            <param name="compareOptions">The comparison rules of the parameter or column.</param>
+            <param name="useServerDefault">Specifies whether this column should use the default server value.</param>
+            <param name="isUniqueKey">Specifies if the column in the table-valued parameter is unique.</param>
+            <param name="columnSortOrder">Specifies the sort order for a column.</param>
+            <param name="sortOrdinal">Specifies the ordinal of the sort column.</param>
+            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> class with the specified column name, type, maximum length, locale, compare options, and server default. This form of the constructor supports table-valued parameters by allowing you to specify if the column is unique in the table-valued parameter, the sort order for the column, and the ordinal of the sort column.</summary>
+            <remarks>
+                <format type="text/markdown"><![CDATA[  
+
+## Remarks  
+For more information, see [Table-Valued Parameters](~/docs/framework/data/adonet/sql/table-valued-parameters.md).  
+
+]]></format>
+            </remarks>
+        </ctorNameDbTypeMaxLengthLocaleCompareOptionsUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal>
+        <ctorNameDbTypeDatabaseOwningSchemaObjectNameUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal>
+            <param name="name">The name of the column.</param>
+            <param name="dbType">The SQL Server type of the parameter or column.</param>
+            <param name="database">The database name of the XML schema collection of a typed XML instance.</param>
+            <param name="owningSchema">The relational schema name of the XML schema collection of a typed XML instance.</param>
+            <param name="objectName">The name of the XML schema collection of a typed XML instance.</param>
+            <param name="useServerDefault">Specifies whether this column should use the default server value.</param>
+            <param name="isUniqueKey">Specifies if the column in the table-valued parameter is unique.</param>
+            <param name="columnSortOrder">Specifies the sort order for a column.</param>
+            <param name="sortOrdinal">Specifies the ordinal of the sort column.</param>
+            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> class with the specified column name, database name, owning schema, object name, and default server. This form of the constructor supports table-valued parameters by allowing you to specify if the column is unique in the table-valued parameter, the sort order for the column, and the ordinal of the sort column.</summary>
+            <remarks>
+                <format type="text/markdown"><![CDATA[  
+
+## Remarks  
+For more information, see [Table-Valued Parameters](~/docs/framework/data/adonet/sql/table-valued-parameters.md).  
+
+]]></format>
+            </remarks>
+        </ctorNameDbTypeDatabaseOwningSchemaObjectNameUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal>
+        <ctorNameDbTypeMaxLengthPrecisionScaleLocaleCompareOptionsUserDefinedTypeUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal>
+            <param name="name">The name of the column.</param>
+            <param name="dbType">The SQL Server type of the parameter or column.</param>
+            <param name="maxLength">The maximum length of the specified type.</param>
+            <param name="precision">The precision of the parameter or column.</param>
+            <param name="scale">The scale of the parameter or column.</param>
+            <param name="localeId">The locale ID of the parameter or column.</param>
+            <param name="compareOptions">The comparison rules of the parameter or column.</param>
+            <param name="userDefinedType">A <see cref="T:System.Type" /> instance that points to the UDT.</param>
+            <param name="useServerDefault">Specifies whether this column should use the default server value.</param>
+            <param name="isUniqueKey">Specifies if the column in the table-valued parameter is unique.</param>
+            <param name="columnSortOrder">Specifies the sort order for a column.</param>
+            <param name="sortOrdinal">Specifies the ordinal of the sort column.</param>
+            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> class with the specified column name, type, maximum length, precision, scale, locale ID, compare options, and user-defined type (UDT). This form of the constructor supports table-valued parameters by allowing you to specify if the column is unique in the table-valued parameter, the sort order for the column, and the ordinal of the sort column.</summary>
+            <remarks>
+                <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+For more information, see [Table-Valued Parameters](~/docs/framework/data/adonet/sql/table-valued-parameters.md).  
+
+]]></format>
+            </remarks>
+        </ctorNameDbTypeMaxLengthPrecisionScaleLocaleCompareOptionsUserDefinedTypeUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal>
+        <Adjust>
+            <summary>Validates the specified value against the metadata, and adjusts the value if necessary.</summary>
+        </Adjust>
+        <AdjustValue1>
+            <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
+            <summary>Validates the specified <see cref="T:System.Boolean" /> value against the metadata, and adjusts the value if necessary.</summary>
+            <returns>The adjusted value as a <see cref="T:System.Boolean" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentException">
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+        </AdjustValue1>
+        <AdjustValue2>
+            <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
+            <summary>Validates the specified <see cref="T:System.Byte" /> value against the metadata, and adjusts the value if necessary.</summary>
+            <returns>The adjusted value as a <see cref="T:System.Byte" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentException">
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+        </AdjustValue2>
+        <AdjustValue3>
+            <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
+            <summary>Validates the specified array of <see cref="T:System.Byte" /> values against the metadata, and adjusts the value if necessary.</summary>
+            <returns>The adjusted value as an array of <see cref="T:System.Byte" /> values.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentException">
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+        </AdjustValue3>
+        <AdjustValue4>
+            <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
+            <summary>Validates the specified <see cref="T:System.Char" /> value against the metadata, and adjusts the value if necessary.</summary>
+            <returns>The adjusted value as a <see cref="T:System.Char" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentException">
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+        </AdjustValue4>
+        <AdjustValue5>
+            <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
+            <summary>Validates the specified array of <see cref="T:System.Char" /> values against the metadata, and adjusts the value if necessary.</summary>
+            <returns>The adjusted value as an array <see cref="T:System.Char" /> values.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentException">
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+        </AdjustValue5>
+        <AdjustValue6>
+            <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
+            <summary>Validates the specified <see cref="T:System.Data.SqlTypes.SqlBinary" /> value against the metadata, and adjusts the value if necessary.</summary>
+            <returns>The adjusted value as a <see cref="T:System.Data.SqlTypes.SqlBinary" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentException">
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+        </AdjustValue6>
+        <AdjustValue7>
+            <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
+            <summary>Validates the specified <see cref="T:System.Data.SqlTypes.SqlBoolean" /> value against the metadata, and adjusts the value if necessary.</summary>
+            <returns>The adjusted value as a <see cref="T:System.Data.SqlTypes.SqlBoolean" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentException">
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+        </AdjustValue7>
+        <AdjustValue8>
+            <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
+            <summary>Validates the specified <see cref="T:System.Data.SqlTypes.SqlByte" /> value against the metadata, and adjusts the value if necessary.</summary>
+            <returns>The adjusted value as a <see cref="T:System.Data.SqlTypes.SqlByte" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentException">
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+        </AdjustValue8>
+        <AdjustValue9>
+            <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
+            <summary>Validates the specified <see cref="T:System.Data.SqlTypes.SqlBytes" /> value against the metadata, and adjusts the value if necessary.</summary>
+            <returns>The adjusted value as a <see cref="T:System.Data.SqlTypes.SqlBytes" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentException">
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+        </AdjustValue9>
+        <AdjustValue10>
+            <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
+            <summary>Validates the specified <see cref="T:System.Data.SqlTypes.SqlChars" /> value against the metadata, and adjusts the value if necessary.</summary>
+            <returns>The adjusted value as a <see cref="T:System.Data.SqlTypes.SqlChars" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentException">
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+        </AdjustValue10>
+        <AdjustValue11>
+            <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
+            <summary>Validates the specified <see cref="T:System.Data.SqlTypes.SqlDateTime" /> value against the metadata, and adjusts the value if necessary.</summary>
+            <returns>The adjusted value as a <see cref="T:System.Data.SqlTypes.SqlDateTime" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentException">
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+        </AdjustValue11>
+        <AdjustValue12>
+            <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
+            <summary>Validates the specified <see cref="T:System.Data.SqlTypes.SqlDecimal" /> value against the metadata, and adjusts the value if necessary.</summary>
+            <returns>The adjusted value as a <see cref="T:System.Data.SqlTypes.SqlDecimal" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentException">
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+        </AdjustValue12>
+        <AdjustValue13>
+            <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
+            <summary>Validates the specified <see cref="T:System.Data.SqlTypes.SqlDouble" /> value against the metadata, and adjusts the value if necessary.</summary>
+            <returns>The adjusted value as a <see cref="T:System.Data.SqlTypes.SqlDouble" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentException">
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+        </AdjustValue13>
+        <AdjustValue14>
+            <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
+            <summary>Validates the specified <see cref="T:System.Data.SqlTypes.SqlGuid" /> value against the metadata, and adjusts the value if necessary.</summary>
+            <returns>The adjusted value as a <see cref="T:System.Data.SqlTypes.SqlGuid" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentException">
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+        </AdjustValue14>
+        <AdjustValue15>
+            <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
+            <summary>Validates the specified <see cref="T:System.Data.SqlTypes.SqlInt16" /> value against the metadata, and adjusts the value if necessary.</summary>
+            <returns>The adjusted value as a <see cref="T:System.Data.SqlTypes.SqlInt16" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentException">
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+        </AdjustValue15>
+        <AdjustValue16>
+            <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
+            <summary>Validates the specified <see cref="T:System.Data.SqlTypes.SqlInt32" /> value against the metadata, and adjusts the value if necessary.</summary>
+            <returns>The adjusted value as a <see cref="T:System.Data.SqlTypes.SqlInt32" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentException">
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+        </AdjustValue16>
+        <AdjustValue17>
+            <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
+            <summary>Validates the specified <see cref="T:System.Data.SqlTypes.SqlInt64" /> value against the metadata, and adjusts the value if necessary.</summary>
+            <returns>The adjusted value as a <see cref="T:System.Data.SqlTypes.SqlInt64" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentException">
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+        </AdjustValue17>
+        <AdjustValue18>
+            <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
+            <summary>Validates the specified <see cref="T:System.Data.SqlTypes.SqlMoney" /> value against the metadata, and adjusts the value if necessary.</summary>
+            <returns>The adjusted value as a <see cref="T:System.Data.SqlTypes.SqlMoney" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentException">
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+        </AdjustValue18>
+        <AdjustValue19>
+            <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
+            <summary>Validates the specified <see cref="T:System.Data.SqlTypes.SqlSingle" /> value against the metadata, and adjusts the value if necessary.</summary>
+            <returns>The adjusted value as a <see cref="T:System.Data.SqlTypes.SqlSingle" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentException">
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+        </AdjustValue19>
+        <AdjustValue20>
+            <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
+            <summary>Validates the specified <see cref="T:System.Data.SqlTypes.SqlString" /> value against the metadata, and adjusts the value if necessary.</summary>
+            <returns>The adjusted value as a <see cref="T:System.Data.SqlTypes.SqlString" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentException">
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+        </AdjustValue20>
+        <AdjustValue21>
+            <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
+            <summary>Validates the specified <see cref="T:System.Data.SqlTypes.SqlXml" /> value against the metadata, and adjusts the value if necessary.</summary>
+            <returns>The adjusted value as a <see cref="T:System.Data.SqlTypes.SqlXml" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentException">
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+        </AdjustValue21>
+        <AdjustValue22>
+            <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
+            <summary>Validates the specified <see cref="T:System.DateTime" /> value against the metadata, and adjusts the value if necessary.</summary>
+            <returns>The adjusted value as a <see cref="T:System.DateTime" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentException">
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+        </AdjustValue22>
+        <AdjustValue23>
+            <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
+            <summary>Validates the specified <see cref="T:System.DateTimeOffset" /> value against the metadata, and adjusts the value if necessary.</summary>
+            <returns>The adjusted value as an array of <see cref="T:System.DateTimeOffset" /> values.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentException">
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+        </AdjustValue23>
+        <AdjustValue24>
+            <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
+            <summary>Validates the specified <see cref="T:System.Decimal" /> value against the metadata, and adjusts the value if necessary.</summary>
+            <returns>The adjusted value as a <see cref="T:System.Decimal" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentException">
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+        </AdjustValue24>
+        <AdjustValue25>
+            <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
+            <summary>Validates the specified <see cref="T:System.Double" /> value against the metadata, and adjusts the value if necessary.</summary>
+            <returns>The adjusted value as a <see cref="T:System.Double" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentException">
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+        </AdjustValue25>
+        <AdjustValue26>
+            <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
+            <summary>Validates the specified <see cref="T:System.Guid" /> value against the metadata, and adjusts the value if necessary.</summary>
+            <returns>The adjusted value as a <see cref="T:System.Guid" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentException">
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+        </AdjustValue26>
+        <AdjustValue27>
+            <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
+            <summary>Validates the specified <see cref="T:System.Int16" /> value against the metadata, and adjusts the value if necessary.</summary>
+            <returns>The adjusted value as a <see cref="T:System.Int16" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentException">
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+        </AdjustValue27>
+        <AdjustValue28>
+            <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
+            <summary>Validates the specified <see cref="T:System.Int32" /> value against the metadata, and adjusts the value if necessary.</summary>
+            <returns>The adjusted value as a <see cref="T:System.Int32" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentException">
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+        </AdjustValue28>
+        <AdjustValue29>
+            <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
+            <summary>Validates the specified <see cref="T:System.Int64" /> value against the metadata, and adjusts the value if necessary.</summary>
+            <returns>The adjusted value as a <see cref="T:System.Int64" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentException">
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+        </AdjustValue29>
+        <AdjustValue30>
+            <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
+            <summary>Validates the specified <see cref="T:System.Object" /> value against the metadata, and adjusts the value if necessary.</summary>
+            <returns>The adjusted value as a <see cref="T:System.Object" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentException">
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+        </AdjustValue30>
+        <AdjustValue31>
+            <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
+            <summary>Validates the specified <see cref="T:System.Single" /> value against the metadata, and adjusts the value if necessary.</summary>
+            <returns>The adjusted value as a <see cref="T:System.Single" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentException">
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+        </AdjustValue31>
+        <AdjustValue32>
+            <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
+            <summary>Validates the specified <see cref="T:System.String" /> value against the metadata, and adjusts the value if necessary.</summary>
+            <returns>The adjusted value as a <see cref="T:System.String" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentException">
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+        </AdjustValue32>
+        <AdjustValue33>
+            <param name="value">The value to validate against the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
+            <summary>Validates the specified <see cref="T:System.TimeSpan" /> value against the metadata, and adjusts the value if necessary.</summary>
+            <returns>The adjusted value as an array of <see cref="T:System.TimeSpan" /> values.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentException">
+            <paramref name="value" /> does not match the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> type, or <paramref name="value" /> could not be adjusted.</exception>
+        </AdjustValue33>
+        <CompareOptions>
+            <summary>Gets the comparison rules used for the column or parameter.</summary>
+            <value>The comparison rules used for the column or parameter as a <see cref="T:System.Data.SqlTypes.SqlCompareOptions" />.</value>
+            <remarks>To be added.</remarks>
+        </CompareOptions>
+        <DbType>
+            <summary>Gets the data type of the column or parameter.</summary>
+            <value>The data type of the column or parameter as a <see cref="T:System.Data.DbType" />.</value>
+            <remarks>
+                <format type="text/markdown"><![CDATA[  
+    
+## Remarks  
+The default type is <xref:System.Data.DbType>.`String`.  
+
+]]></format>
+            </remarks>
+        </DbType>
+        <InferFromValue>
+            <param name="value">The object used from which the metadata is inferred.</param>
+            <param name="name">The name assigned to the returned <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</param>
+            <summary>Infers the metadata from the specified object and returns it as a <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</summary>
+            <returns>The inferred metadata as a <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentNullException">The <paramref name="value" /> is <see langword="null" />.</exception>
+        </InferFromValue>
+        <IsUniqueKey>
+            <summary>Indicates if the column in the table-valued parameter is unique.</summary>
+            <value>A <see langword="Boolean" /> value.</value>
+            <remarks>
+                <format type="text/markdown"><![CDATA[  
+    
+## Remarks  
+The default is `FALSE`.  
+
+This property can only be set in one of the <xref:Microsoft.Data.SqlClient.Server.SqlMetaData> constructors.  
+
+For more information, see [Table-Valued Parameters](~/docs/framework/data/adonet/sql/table-valued-parameters.md).  
+
+]]></format>
+            </remarks>
+        </IsUniqueKey>
+        <LocaleId>
+            <summary>Gets the locale ID of the column or parameter.</summary>
+            <value>The locale ID of the column or parameter as a <see cref="T:System.Int64" />.</value>
+            <remarks>
+                <format type="text/markdown"><![CDATA[  
+
+## Remarks  
+The default value is the current locale of the current thread for string-valued SqlDbTypes, and 0 for SqlDbTypes that do not support collation.  
+
+Returns 0 if the collation of the underlying column type is not defined.  
+
+]]></format>
+            </remarks>
+        </LocaleId>
+        <Max>
+            <summary>Gets the length of <see langword="text" />, <see langword="ntext" />, and <see langword="image" /> data types.</summary>
+            <value>The length of <see langword="text" />, <see langword="ntext" />, and <see langword="image" /> data types.</value>
+            <remarks>
+                <format type="text/markdown"><![CDATA[  
+
+## Remarks  
+The default value is -1.  
+
+]]></format>
+            </remarks>
+        </Max>
+        <MaxLength>
+            <summary>Gets the maximum length of the column or parameter.</summary>
+            <value>The maximum length of the column or parameter as a <see cref="T:System.Int64" />.</value>
+            <remarks>
+                <format type="text/markdown"><![CDATA[  
+                    
+## Remarks  
+The potential maximum length for values of the specified column. Returns 0 for types other than fixed and varying length character and binary types. For variable size columns or parameters declared with the `Max` constructor parameter, it returns -1.  
+
+For <xref:System.Data.DbType>.`Row` this returns the number of columns in the row metadata instance.  
+
+The default value is 0.  
+
+]]></format>
+            </remarks>
+        </MaxLength>
+        <Name>
+            <summary>Gets the name of the column or parameter.</summary>
+            <value>The name of the column or parameter as a <see cref="T:System.String" />.</value>
+            <remarks>To be added.</remarks>
+        </Name>
+        <Precision>
+            <summary>Gets the precision of the column or parameter.</summary>
+            <value>The precision of the column or parameter as a <see cref="T:System.Byte" />.</value>
+            <remarks>
+                <format type="text/markdown"><![CDATA[  
+
+## Remarks  
+Returns 0 if the precision of the underlying column type is not defined.  
+
+]]></format>
+            </remarks>
+        </Precision>
+        <Scale>
+            <summary>Gets the scale of the column or parameter.</summary>
+            <value>The scale of the column or parameter.</value>
+            <remarks>
+                <format type="text/markdown"><![CDATA[  
+
+## Remarks  
+Returns 0 if the scale of the underlying column type is not defined.  
+
+]]></format>
+            </remarks>
+        </Scale>
+        <SortOrder>
+            <summary>Returns the sort order for a column.</summary>
+            <value>A <see cref="T:Microsoft.Data.SqlClient.SortOrder" /> object.</value>
+            <remarks>
+                <format type="text/markdown"><![CDATA[  
+
+## Remarks  
+This property can only be set in one of the <xref:Microsoft.Data.SqlClient.Server.SqlMetaData> constructors.  
+
+For more information, see [Table-Valued Parameters](~/docs/framework/data/adonet/sql/table-valued-parameters.md).  
+
+]]></format>
+            </remarks>
+        </SortOrder>
+        <SortOrdinal>
+            <summary>Returns the ordinal of the sort column.</summary>
+            <value>The ordinal of the sort column.</value>
+            <remarks>
+                <format type="text/markdown"><![CDATA[  
+
+## Remarks  
+The default is 1.  
+
+This property can only be set in one of the <xref:Microsoft.Data.SqlClient.Server.SqlMetaData> constructors.  
+
+For more information, see [Table-Valued Parameters](~/docs/framework/data/adonet/sql/table-valued-parameters.md).  
+
+]]></format>
+            </remarks>
+        </SortOrdinal>
+        <SqlDbType>
+            <summary>Gets the data type of the column or parameter.</summary>
+            <value>The data type of the column or parameter as a <see cref="T:System.Data.DbType" />.</value>
+            <remarks>
+                <format type="text/markdown"><![CDATA[  
+
+## Remarks  
+The default value is `NVarChar`.  
+
+]]></format>
+            </remarks>
+        </SqlDbType>
+        <Type>
+            <summary>Gets the common language runtime (CLR) type of a user-defined type (UDT).</summary>
+            <value>The CLR type name of a user-defined type as a <see cref="T:System.Type" />.</value>
+            <remarks>
+                <format type="text/markdown"><![CDATA[  
+
+## Remarks  
+The default value is `null`.  
+
+Returns `null` if <xref:Microsoft.Data.SqlClient.Server.SqlMetaData.SqlDbType%2A> is not a UDT type. `Null` may also returned for valid UDT result sets where the assembly is not available to the application.  
+
+]]></format>
+            </remarks>
+        </Type>
+        <TypeName>
+            <summary>Gets the three-part name of the user-defined type (UDT) or the SQL Server type represented by the instance.</summary>
+            <value>The name of the UDT or SQL Server type as a <see cref="T:System.String" />.</value>
+            <remarks>
+                <format type="text/markdown"><![CDATA[  
+
+## Remarks  
+The default value is `null`.  
+
+]]></format>
+            </remarks>
+        </TypeName>
+        <UseServerDefault>
+            <summary>Reports whether this column should use the default server value.</summary>
+            <value>A <see langword="Boolean" /> value.</value>
+            <remarks>
+                <format type="text/markdown"><![CDATA[  
+
+## Remarks  
+The default is `FALSE`.  
+
+This property can only be set in one of the <xref:Microsoft.Data.SqlClient.Server.SqlMetaData> constructors.  
+
+]]></format>
+            </remarks>
+        </UseServerDefault>
+        <XmlSchemaCollectionDatabase>
+            <summary>Gets the name of the database where the schema collection for this XML instance is located.</summary>
+            <value>The name of the database where the schema collection for this XML instance is located as a <see cref="T:System.String" />.</value>
+            <remarks>
+                <format type="text/markdown"><![CDATA[  
+
+## Remarks  
+The default value is `null`.  
+
+This property may be `null` if the collection is defined within the current database. It is also `null` if there is no schema collection, in which case <xref:Microsoft.Data.SqlClient.Server.SqlMetaData.XmlSchemaCollectionName%2A> and <xref:Microsoft.Data.SqlClient.Server.SqlMetaData.XmlSchemaCollectionOwningSchema%2A> are also null.  
+
+]]></format>
+            </remarks>
+        </XmlSchemaCollectionDatabase>
+        <XmlSchemaCollectionName>
+            <summary>Gets the name of the schema collection for this XML instance.</summary>
+            <value>The name of the schema collection for this XML instance as a <see cref="T:System.String" />.</value>
+            <remarks>
+                <format type="text/markdown"><![CDATA[  
+
+## Remarks  
+The default value is `null`.  
+
+This value is `null` if there is no associated schema collection. If the value is `null`, then <xref:Microsoft.Data.SqlClient.Server.SqlMetaData.XmlSchemaCollectionDatabase%2A> and <xref:Microsoft.Data.SqlClient.Server.SqlMetaData.XmlSchemaCollectionOwningSchema%2A> are also `null`.  
+
+]]></format>
+            </remarks>
+        </XmlSchemaCollectionName>
+        <XmlSchemaCollectionOwningSchema>
+            <summary>Gets the owning relational schema where the schema collection for this XML instance is located.</summary>
+            <value>The owning relational schema where the schema collection for this XML instance is located as a <see cref="T:System.String" />.</value>
+            <remarks>
+                <format type="text/markdown"><![CDATA[  
+                    
+## Remarks  
+The default value is `null`.  
+
+This value may be `null` if the collection is defined within the current database and default schema. It is also null if there is no schema collection, in which case <xref:Microsoft.Data.SqlClient.Server.SqlMetaData.XmlSchemaCollectionDatabase%2A> and <xref:Microsoft.Data.SqlClient.Server.SqlMetaData.XmlSchemaCollectionName%2A> are also `null`.  
+
+]]></format>
+            </remarks>
+        </XmlSchemaCollectionOwningSchema>
+    </members>
+</docs>

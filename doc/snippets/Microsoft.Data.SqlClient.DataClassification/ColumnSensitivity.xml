@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<docs>
+    <members name="ColumnSensitivity">
+        <ColumnSensitivity>
+            <summary>Represents the Data Classification Sensitivity Information for columns as configured in Database.</summary>
+            <remarks>To be added.</remarks>
+        </ColumnSensitivity>
+        <ctor>
+            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.DataClassification.ColumnSensitivity" /> class.</summary>
+        </ctor>
+        <GetSensitivityProperties>
+            <summary>Returns the list of sensitivity properties as received from Server for this 'ColumnSensitivity' information</summary>
+            <value>List of sensitivity properties.</value>
+            <remarks>To be added.</remarks>
+        </GetSensitivityProperties>
+    </members>
+</docs>

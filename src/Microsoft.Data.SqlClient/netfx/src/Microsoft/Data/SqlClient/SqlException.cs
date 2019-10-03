@@ -13,6 +13,7 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
+    /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/SqlException/*' />
     [Serializable]
     public sealed class SqlException : System.Data.Common.DbException
     {
@@ -46,6 +47,7 @@ namespace Microsoft.Data.SqlClient
 
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/GetObjectData/*' />
         override public void GetObjectData(SerializationInfo si, StreamingContext context)
         {
             if (null == si)
@@ -57,6 +59,7 @@ namespace Microsoft.Data.SqlClient
             base.GetObjectData(si, context);
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/Errors/*' />
         [
         DesignerSerializationVisibility(DesignerSerializationVisibility.Content)
         ]
@@ -72,6 +75,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/ClientConnectionId/*' />
         public Guid ClientConnectionId
         {
             get
@@ -86,41 +90,49 @@ namespace Microsoft.Data.SqlClient
             return ((null != _errors) && (0 < _errors.Count));
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/Class/*' />
         public byte Class
         {
             get { return this.Errors[0].Class; }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/LineNumber/*' />
         public int LineNumber
         {
             get { return this.Errors[0].LineNumber; }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/Number/*' />
         public int Number
         {
             get { return this.Errors[0].Number; }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/Procedure/*' />
         public string Procedure
         {
             get { return this.Errors[0].Procedure; }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/Server/*' />
         public string Server
         {
             get { return this.Errors[0].Server; }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/State/*' />
         public byte State
         {
             get { return this.Errors[0].State; }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/Source/*' />
         override public string Source
         {
             get { return this.Errors[0].Source; }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/ToString/*' />
         public override string ToString()
         {
             StringBuilder sb = new StringBuilder(base.ToString());
