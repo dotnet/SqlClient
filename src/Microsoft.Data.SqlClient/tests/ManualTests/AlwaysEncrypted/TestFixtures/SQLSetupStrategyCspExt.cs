@@ -9,7 +9,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     public class SQLSetupStrategyCspExt : SQLSetupStrategy
     {
-        //public string keyPath {get; private set;}
         public Table CspProviderTable { get; private set; }
         public SqlColumnEncryptionCspProvider keyStoreProvider { get; }
 
@@ -21,7 +20,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         internal override void SetupDatabase()
         {
-            ColumnMasterKey columnMasterKey = new CspColumnMasterKey(GenerateUniqueName("CMK"), SqlColumnEncryptionCspProvider.ProviderName, keyPath);
+            ColumnMasterKey columnMasterKey = new CspColumnMasterKey(GenerateUniqueName("CspExt"), SqlColumnEncryptionCspProvider.ProviderName, keyPath);
             databaseObjects.Add(columnMasterKey);
 
             List<ColumnEncryptionKey> columnEncryptionKeys = CreateColumnEncryptionKeys(columnMasterKey, 2, keyStoreProvider);
@@ -42,15 +41,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             CspProviderTable = new ApiTestTable(GenerateUniqueName("CspProviderTable"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
 
             return CspProviderTable;
-        }
-
-        public void DropTable()
-        {
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TcpConnStr))
-            {
-                sqlConnection.Open();
-                CspProviderTable.Drop(sqlConnection);
-            }
         }
     }
 }
