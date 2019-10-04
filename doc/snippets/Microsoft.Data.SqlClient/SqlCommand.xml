@@ -1205,7 +1205,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and s
 		</CommandText>
 		<CommandTimeout>
 			<summary>
-				Gets or sets the wait time before terminating the attempt to execute a command and generating an error.
+				Gets or sets the wait time (in seconds) before terminating the attempt to execute a command and generating an error. The default is 30 seconds.
 			</summary>
 			<value>
 				The time in seconds to wait for the command to execute. The default is 30 seconds.
