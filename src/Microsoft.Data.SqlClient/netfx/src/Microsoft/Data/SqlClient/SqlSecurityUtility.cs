@@ -59,7 +59,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Generates cryptographicall random bytes
         /// </summary>
-        /// <param name="length">No of cryptographically random bytes to be generated</param>
+        /// <param name="randomBytes">No of cryptographically random bytes to be generated</param>
         /// <returns>A byte array containing cryptographically generated random bytes</returns>
         internal static void GenerateRandomBytes(byte[] randomBytes)
         {
@@ -73,6 +73,8 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="buffer1">input buffer</param>
         /// <param name="buffer2">another buffer to be compared against</param>
+        /// <param name="buffer2Index"></param>
+        /// <param name="lengthToCompare"></param>
         /// <returns>returns true if both the arrays have the same byte values else returns false</returns>
         internal static bool CompareBytes(byte[] buffer1, byte[] buffer2, int buffer2Index, int lengthToCompare)
         {
@@ -130,6 +132,7 @@ namespace Microsoft.Data.SqlClient
         /// Return the algorithm name mapped to an Id.
         /// </summary>
         /// <param name="cipherAlgorithmId"></param>
+        /// <param name="cipherAlgorithmName"></param>
         /// <returns></returns>
         private static string ValidateAndGetEncryptionAlgorithmName(byte cipherAlgorithmId, string cipherAlgorithmName)
         {
@@ -261,7 +264,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// <para> Decrypts the symmetric key and saves it in metadata.
+        /// Decrypts the symmetric key and saves it in metadata.
         /// </summary>
         internal static void DecryptSymmetricKey(SqlTceCipherInfoEntry? sqlTceCipherInfoEntry, string serverName, out SqlClientSymmetricKey sqlClientSymmetricKey, out SqlEncryptionKeyInfo? encryptionkeyInfoChosen)
         {
@@ -314,7 +317,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// <para> Verifies Column Master Key Signature.
+        /// Verifies Column Master Key Signature.
         /// </summary>
         internal static void VerifyColumnMasterKeySignature(string keyStoreName, string keyPath, string serverName, bool isEnclaveEnabled, byte[] CMKSignature)
         {

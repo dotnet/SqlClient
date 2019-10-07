@@ -16,8 +16,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     [PlatformSpecific(TestPlatforms.Windows)]
     public class CspProviderExt
     {
-        private string GenerateUniqueName(string baseName) => string.Concat("AE-", baseName, "-", Guid.NewGuid().ToString());
-
         // [Fact(Skip="Run this in non-parallel mode")] or [ConditionalFact()]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void TestKeysFromCertificatesCreatedWithMultipleCryptoProviders()
@@ -102,9 +100,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 finally
                 {
                     CertificateUtilityWin.RemoveCertificate(certificateName, StoreLocation.CurrentUser);
-                    sqlSetupStrategyCsp?.DropTable();
+                    // clean up database resources
+                    sqlSetupStrategyCsp?.Dispose();
                 }
-                
+
             }
         }
 
@@ -141,7 +140,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 CertificateUtilityWin.RemoveCertificate(certificateName, StoreLocation.CurrentUser);
             }
         }
-        
+
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void TestEncryptDecryptWithCSP()
         {
@@ -187,7 +186,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 }
                 finally
                 {
-                    sqlSetupStrategyCsp.DropTable();
+                    // clean up database resources
+                    sqlSetupStrategyCsp.Dispose();
                 }
             }
             finally

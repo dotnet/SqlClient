@@ -123,7 +123,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         internal static bool CertificateExists(string certificateName, StoreLocation certificateStoreLocation)
         {
             Assert.False(string.IsNullOrWhiteSpace(certificateName), "FAILED: certificateName should not be null or empty.");
-      
+
             X509Store certStore = null;
             try
             {
@@ -201,14 +201,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         internal static void RemoveCertificate(string certificateName, StoreLocation certificateStoreLocation)
         {
             Assert.False(string.IsNullOrWhiteSpace(certificateName), "FAILED: certificateName should not be null or empty.");
-    
+
             X509Store certStore = null;
             try
             {
                 certStore = new X509Store(StoreName.My, certificateStoreLocation);
                 certStore.Open(OpenFlags.ReadWrite);
                 X509Certificate2Collection certificateCollection = certStore.Certificates.Find(X509FindType.FindBySubjectName, certificateName, validOnly: false);
-                
+
                 if (certificateCollection != null && certificateCollection.Count > 0)
                 {
                     certStore.RemoveRange(certificateCollection);

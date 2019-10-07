@@ -24,7 +24,7 @@ namespace Microsoft.Data.SqlClient
         private const string _keyStoreNameArgumentName = "keyStoreName";
         private const string _signatureName = "signature";
         private const string _cacheLookupKeySeparator = ":";
-        
+
         private static readonly ColumnMasterKeyMetadataSignatureVerificationCache _signatureVerificationCache = new ColumnMasterKeyMetadataSignatureVerificationCache();
 
         //singleton instance
@@ -33,7 +33,8 @@ namespace Microsoft.Data.SqlClient
         private readonly MemoryCache _cache;
         private int _inTrim = 0;
 
-        private ColumnMasterKeyMetadataSignatureVerificationCache() {
+        private ColumnMasterKeyMetadataSignatureVerificationCache()
+        {
             _cache = new MemoryCache(_className);
             _inTrim = 0;
         }
@@ -46,7 +47,8 @@ namespace Microsoft.Data.SqlClient
         /// <param name="allowEnclaveComputations">boolean indicating whether the key can be sent to enclave</param>
         /// <param name="signature">Signature for the CMK metadata</param>
         /// <returns>null if the data is not found in cache otherwise returns true/false indicating signature verification success/failure</returns>
-        internal bool? GetSignatureVerificationResult(string keyStoreName, string masterKeyPath, bool allowEnclaveComputations, byte[] signature) {
+        internal bool? GetSignatureVerificationResult(string keyStoreName, string masterKeyPath, bool allowEnclaveComputations, byte[] signature)
+        {
 
             ValidateStringArgumentNotNullOrEmpty(masterKeyPath, _masterkeypathArgumentName, _getSignatureVerificationResultMethodName);
             ValidateStringArgumentNotNullOrEmpty(keyStoreName, _keyStoreNameArgumentName, _getSignatureVerificationResultMethodName);
@@ -65,7 +67,8 @@ namespace Microsoft.Data.SqlClient
         /// <param name="allowEnclaveComputations">boolean indicating whether the key can be sent to enclave</param>
         /// <param name="signature">Signature for the CMK metadata</param>
         /// <param name="result">result indicating signature verification success/failure</param>
-        internal void AddSignatureVerificationResult(string keyStoreName, string masterKeyPath, bool allowEnclaveComputations, byte[] signature, bool result) {
+        internal void AddSignatureVerificationResult(string keyStoreName, string masterKeyPath, bool allowEnclaveComputations, byte[] signature, bool result)
+        {
 
             ValidateStringArgumentNotNullOrEmpty(masterKeyPath, _masterkeypathArgumentName, _addSignatureVerificationResultMethodName);
             ValidateStringArgumentNotNullOrEmpty(keyStoreName, _keyStoreNameArgumentName, _addSignatureVerificationResultMethodName);
@@ -79,47 +82,60 @@ namespace Microsoft.Data.SqlClient
             _cache.Set(cacheLookupKey, result, DateTimeOffset.UtcNow.AddHours(8));
         }
 
-        private void ValidateSignatureNotNullOrEmpty(byte[] signature, string methodName) {
-            if (signature == null || signature.Length == 0) {
-                if (null == signature) {
+        private void ValidateSignatureNotNullOrEmpty(byte[] signature, string methodName)
+        {
+            if (signature == null || signature.Length == 0)
+            {
+                if (null == signature)
+                {
                     throw SQL.NullArgumentInternal(_signatureName, _className, methodName);
                 }
-                else {
+                else
+                {
                     throw SQL.EmptyArgumentInternal(_signatureName, _className, methodName);
                 }
             }
         }
 
-        private void ValidateStringArgumentNotNullOrEmpty(string stringArgValue, string stringArgName, string methodName) {
-            if (string.IsNullOrWhiteSpace(stringArgValue)) {
-                if (null == stringArgValue) {
+        private void ValidateStringArgumentNotNullOrEmpty(string stringArgValue, string stringArgName, string methodName)
+        {
+            if (string.IsNullOrWhiteSpace(stringArgValue))
+            {
+                if (null == stringArgValue)
+                {
                     throw SQL.NullArgumentInternal(stringArgName, _className, methodName);
                 }
-                else {
+                else
+                {
                     throw SQL.EmptyArgumentInternal(stringArgName, _className, methodName);
                 }
             }
         }
 
-        private void TrimCacheIfNeeded() {
+        private void TrimCacheIfNeeded()
+        {
             // If the size of the cache exceeds the threshold, set that we are in trimming and trim the cache accordingly.
             long currentCacheSize = _cache.GetCount();
-            if ((currentCacheSize > _cacheSize + _cacheTrimThreshold) && (0 == Interlocked.CompareExchange(ref _inTrim, 1, 0))) {
-                try {
-                    _cache.Trim((int) (((double) (currentCacheSize - _cacheSize)/(double) currentCacheSize)*100));
+            if ((currentCacheSize > _cacheSize + _cacheTrimThreshold) && (0 == Interlocked.CompareExchange(ref _inTrim, 1, 0)))
+            {
+                try
+                {
+                    _cache.Trim((int)(((double)(currentCacheSize - _cacheSize) / (double)currentCacheSize) * 100));
                 }
-                finally {
+                finally
+                {
                     Interlocked.CompareExchange(ref _inTrim, 0, 1);
                 }
             }
         }
 
-        private string GetCacheLookupKey(string masterKeyPath, bool allowEnclaveComputations, byte[] signature, string keyStoreName) {
+        private string GetCacheLookupKey(string masterKeyPath, bool allowEnclaveComputations, byte[] signature, string keyStoreName)
+        {
             StringBuilder cacheLookupKeyBuilder = new StringBuilder(keyStoreName,
                 capacity:
-                    keyStoreName.Length + 
+                    keyStoreName.Length +
                     masterKeyPath.Length +
-                    SqlSecurityUtility.GetBase64LengthFromByteLength(signature.Length) + 
+                    SqlSecurityUtility.GetBase64LengthFromByteLength(signature.Length) +
                     3 /*separators*/ +
                     10 /*boolean value + somebuffer*/);
 

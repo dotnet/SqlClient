@@ -13,7 +13,7 @@ namespace Microsoft.Data.SqlClient
     /// 3) mac_key - A derived key that is used to compute HMAC of the cipher text
     /// 4) iv_key - A derived key that is used to generate a synthetic IV from plain text data.
     /// </summary>
-    internal class SqlAeadAes256CbcHmac256EncryptionKey : SqlClientSymmetricKey 
+    internal class SqlAeadAes256CbcHmac256EncryptionKey : SqlClientSymmetricKey
     {
         /// <summary>
         /// Key size in bits
@@ -59,14 +59,15 @@ namespace Microsoft.Data.SqlClient
         /// Derives all the required keys from the given root key
         /// </summary>
         /// <param name="rootKey">Root key used to derive all the required derived keys</param>
-        internal SqlAeadAes256CbcHmac256EncryptionKey(byte[] rootKey, string algorithmName): base(rootKey) 
+        /// <param name="algorithmName"></param>
+        internal SqlAeadAes256CbcHmac256EncryptionKey(byte[] rootKey, string algorithmName) : base(rootKey)
         {
             _algorithmName = algorithmName;
 
             int keySizeInBytes = KeySize / 8;
 
             // Key validation
-            if (rootKey.Length != keySizeInBytes) 
+            if (rootKey.Length != keySizeInBytes)
             {
                 throw SQL.InvalidKeySize(_algorithmName,
                                          rootKey.Length,
@@ -86,20 +87,20 @@ namespace Microsoft.Data.SqlClient
             // Derive mac key
             string macKeySalt = string.Format(_macKeySaltFormat, _algorithmName, KeySize);
             byte[] buff2 = new byte[keySizeInBytes];
-            SqlSecurityUtility.GetHMACWithSHA256(Encoding.Unicode.GetBytes(macKeySalt),RootKey,buff2);
+            SqlSecurityUtility.GetHMACWithSHA256(Encoding.Unicode.GetBytes(macKeySalt), RootKey, buff2);
             _macKey = new SqlClientSymmetricKey(buff2);
 
             // Derive iv key
             string ivKeySalt = string.Format(_ivKeySaltFormat, _algorithmName, KeySize);
             byte[] buff3 = new byte[keySizeInBytes];
-            SqlSecurityUtility.GetHMACWithSHA256(Encoding.Unicode.GetBytes(ivKeySalt),RootKey,buff3);
+            SqlSecurityUtility.GetHMACWithSHA256(Encoding.Unicode.GetBytes(ivKeySalt), RootKey, buff3);
             _ivKey = new SqlClientSymmetricKey(buff3);
         }
 
         /// <summary>
         /// Encryption key should be used for encryption and decryption
         /// </summary>
-        internal byte[] EncryptionKey 
+        internal byte[] EncryptionKey
         {
             get { return _encryptionKey.RootKey; }
         }
@@ -107,7 +108,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// MAC key should be used to compute and validate HMAC
         /// </summary>
-        internal byte[] MACKey 
+        internal byte[] MACKey
         {
             get { return _macKey.RootKey; }
         }
@@ -115,7 +116,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// IV key should be used to compute synthetic IV from a given plain text
         /// </summary>
-        internal byte[] IVKey 
+        internal byte[] IVKey
         {
             get { return _ivKey.RootKey; }
         }

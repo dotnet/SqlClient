@@ -51,7 +51,7 @@ namespace Microsoft.Data
         // the EventSource activity IDs (because they currently don't use tasks and this simply confuses the logic) and 
         // because of versioning requirements we don't have ActivityOptions capability (because mscorlib and System.Data version 
         // at different rates)  Sigh...
-        [Event(SqlEventSource.EndExecuteEventId, Keywords = Keywords.SqlClient, Task = Tasks.ExecuteCommand, Opcode = EventOpcode.Stop)]
+        [Event(SqlEventSource.BeginExecuteEventId, Keywords = Keywords.SqlClient, Task = Tasks.ExecuteCommand, Opcode = EventOpcode.Start)]
         public void BeginExecute(int objectId, string dataSource, string database, string commandText)
         {
             // we do not use unsafe code for better performance optization here because optimized helpers make the code unsafe where that would not be the case otherwise. 

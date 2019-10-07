@@ -10,24 +10,12 @@ using Microsoft.Win32;
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <summary>
-    /// Provides implementation similar to certificate store provider.
-    /// A CEK encrypted with certificate store provider should be decryptable by this provider and vice versa.
-    /// 
-    /// Envolope Format for the encrypted column encryption key  
-    ///           version + keyPathLength + ciphertextLength + keyPath + ciphertext +  signature
-    /// version: A single byte indicating the format version.
-    /// keyPathLength: Length of the keyPath.
-    /// ciphertextLength: ciphertext length
-    /// keyPath: keyPath used to encrypt the column encryption key. This is only used for troubleshooting purposes and is not verified during decryption.
-    /// ciphertext: Encrypted column encryption key
-    /// signature: Signature of the entire byte array. Signature is validated before decrypting the column encryption key.
-    /// </summary>
+
+    /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/SqlColumnEncryptionCspProvider/*' />
     public class SqlColumnEncryptionCspProvider : SqlColumnEncryptionKeyStoreProvider
     {
-        /// <summary>
-        /// Name for the CSP key store provider.
-        /// </summary>
+
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/ProviderName/*' />
         public const string ProviderName = @"MSSQL_CSP_PROVIDER";
 
         /// <summary>
@@ -46,14 +34,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private readonly byte[] _version = new byte[] { 0x01 };
 
-        /// <summary>
-        /// This function uses the asymmetric key specified by the key path
-        /// and decrypts an encrypted CEK with RSA encryption algorithm.
-        /// </summary>
-        /// <param name="masterKeyPath">Complete path of an asymmetric key in CSP</param>
-        /// <param name="encryptionAlgorithm">Asymmetric Key Encryption Algorithm</param>
-        /// <param name="encryptedColumnEncryptionKey">Encrypted Column Encryption Key</param>
-        /// <returns>Plain text column encryption key</returns>
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/DecryptColumnEncryptionKey/*' />
         public override byte[] DecryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] encryptedColumnEncryptionKey)
         {
             // Validate the input parameters
@@ -147,14 +128,7 @@ namespace Microsoft.Data.SqlClient
             return RSADecrypt(rsaProvider, cipherText);
         }
 
-        /// <summary>
-        /// This function uses the asymmetric key specified by the key path
-        /// and encrypts CEK with RSA encryption algorithm.
-        /// </summary>
-        /// <param name="keyPath">Complete path of an asymmetric key in AKV</param>
-        /// <param name="encryptionAlgorithm">Asymmetric Key Encryption Algorithm</param>
-        /// <param name="columnEncryptionKey">Plain text column encryption key</param>
-        /// <returns>Encrypted column encryption key</returns>
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/EncryptColumnEncryptionKey/*' />
         public override byte[] EncryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] columnEncryptionKey)
         {
             // Validate the input parameters
@@ -244,24 +218,13 @@ namespace Microsoft.Data.SqlClient
             return encryptedColumnEncryptionKey;
         }
 
-        /// <summary>
-        /// Throws NotSupportedException. In this version of .NET Framework this provider does not support signing column master key metadata.
-        /// </summary>
-        /// <param name="masterKeyPath">Complete path of an asymmetric key. Path format is specific to a key store provider.</param>
-        /// <param name="allowEnclaveComputations">Boolean indicating whether this key can be sent to trusted enclave</param>
-        /// <returns>Encrypted column encryption key</returns>
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/SignColumnMasterKeyMetadata/*' />
         public override byte[] SignColumnMasterKeyMetadata(string masterKeyPath, bool allowEnclaveComputations)
         {
             throw new NotSupportedException();
         }
 
-        /// <summary>
-        /// Throws NotSupportedException. In this version of .NET Framework this provider does not support verifying signatures of column master key metadata.
-        /// </summary>
-        /// <param name="masterKeyPath">Complete path of an asymmetric key. Path format is specific to a key store provider.</param>
-        /// <param name="allowEnclaveComputations">Boolean indicating whether this key can be sent to trusted enclave</param>
-        /// <param name="signature">Signature for the master key metadata</param>
-        /// <returns>Boolean indicating whether the master key metadata can be verified based on the provided signature</returns>
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/VerifyColumnMasterKeyMetadata/*' />
         public override bool VerifyColumnMasterKeyMetadata(string masterKeyPath, bool allowEnclaveComputations, byte[] signature)
         {
             throw new NotSupportedException();
@@ -311,8 +274,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Encrypt the text using specified CSP key.
         /// </summary>
-        /// <param name="masterKeyPath">CSP key path.</param>
-        /// <param name="encryptionAlgorithm">Encryption Algorithm.</param>
+        /// <param name="rscp">RSACryptoServiceProvider</param>
         /// <param name="columnEncryptionKey">Plain text Column Encryption Key.</param>
         /// <returns>Returns an encrypted blob or throws an exception if there are any errors.</returns>
         private byte[] RSAEncrypt(RSACryptoServiceProvider rscp, byte[] columnEncryptionKey)
@@ -326,8 +288,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Decrypt the text using specified CSP key.
         /// </summary>
-        /// <param name="masterKeyPath">CSP key url.</param>
-        /// <param name="encryptionAlgorithm">Encryption Algorithm.</param>
+        /// <param name="rscp">RSACryptoServiceProvider</param>
         /// <param name="encryptedColumnEncryptionKey">Encrypted Column Encryption Key.</param>
         /// <returns>Returns the decrypted plaintext Column Encryption Key or throws an exception if there are any errors.</returns>
         private byte[] RSADecrypt(RSACryptoServiceProvider rscp, byte[] encryptedColumnEncryptionKey)

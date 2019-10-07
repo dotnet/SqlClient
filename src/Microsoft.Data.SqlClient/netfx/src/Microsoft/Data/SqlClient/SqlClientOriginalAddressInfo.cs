@@ -10,8 +10,6 @@ namespace Microsoft.Data.SqlClient
     /// <summary>
     /// Class to pass original client information.
     /// </summary>
-    /// <param name="certificate"></param>
-    /// <returns></returns>
 #if ADONET_ORIGINAL_CLIENT_ADDRESS
     public 
 #else

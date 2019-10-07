@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<docs>
+    <members name="InformationType">
+        <InformationType>
+            <summary>Represents the Data Classification Information Types as received from SQL Server for the active 'SqlDataReader'</summary>
+            <remarks>To be added.</remarks>
+        </InformationType>
+        <ctor>
+            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.DataClassification.InformationType" /> class.</summary>
+        </ctor>
+        <Id>
+            <summary>Gets the ID for this 'InformationType' object</summary>
+            <value>ID of InformationType.</value>
+            <remarks>To be added.</remarks>
+        </Id>
+        <Name>
+            <summary>Gets the name for this 'InformationType' object</summary>
+            <value>Name of InformationType.</value>
+            <remarks>To be added.</remarks>
+        </Name>
+    </members>
+</docs>

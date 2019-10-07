@@ -25,6 +25,7 @@ using Microsoft.Data.SqlClient.Server;
 
 namespace Microsoft.Data.SqlClient
 {
+    /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/SqlConnection/*' />
     public sealed partial class SqlConnection : DbConnection, ICloneable
     {
         static SqlConnection()
@@ -106,24 +107,23 @@ namespace Microsoft.Data.SqlClient
                 capacity: 1,
                 comparer: StringComparer.OrdinalIgnoreCase);
 
-        /// <summary>
-        /// Defines whether query metadata caching is enabled.
-        /// </summary>
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionKeyCacheTtl/*' />
         public static TimeSpan ColumnEncryptionKeyCacheTtl { get; set; } = TimeSpan.FromHours(2);
 
-        /// <summary>
-        /// Defines whether query metadata caching is enabled.
-        /// </summary>
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionQueryMetadataCacheEnabled/*' />
         public static bool ColumnEncryptionQueryMetadataCacheEnabled { get; set; } = true;
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionTrustedMasterKeyPaths/*' />
         public static IDictionary<string, IList<string>> ColumnEncryptionTrustedMasterKeyPaths => _ColumnEncryptionTrustedMasterKeyPaths;
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctorConnectionString/*' />
         public SqlConnection(string connectionString) : this()
         {
             ConnectionString = connectionString;    // setting connection string first so that ConnectionOption is available
             CacheConnectionStringProperties();
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctorConnectionStringCredential/*' />
         public SqlConnection(string connectionString, SqlCredential credential) : this()
         {
             ConnectionString = connectionString;
@@ -235,18 +235,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <summary>
-        /// This function should only be called once in an app. This does shallow copying of the dictionary so that 
-        /// the app cannot alter the custom provider list once it has been set.
-        /// 
-        /// Example:
-        /// 
-        /// Dictionary&lt;string, SqlColumnEncryptionKeyStoreProvider&gt; customKeyStoreProviders = new Dictionary&lt;string, SqlColumnEncryptionKeyStoreProvider&gt;();
-        /// MySqlClientHSMProvider myProvider = new MySqlClientHSMProvider();
-        /// customKeyStoreProviders.Add(@"HSM Provider", myProvider);
-        /// SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customKeyStoreProviders);
-        /// </summary>
-        /// <param name="customProviders">Custom column encryption key provider dictionary</param>
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RegisterColumnEncryptionKeyStoreProviders/*' />
         public static void RegisterColumnEncryptionKeyStoreProviders(IDictionary<string, SqlColumnEncryptionKeyStoreProvider> customProviders)
         {
 
@@ -318,6 +307,7 @@ namespace Microsoft.Data.SqlClient
         // PUBLIC PROPERTIES
         //
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/StatisticsEnabled/*' />
         // used to start/stop collection of statistics data and do verify the current state
         //
         // devnote: start/stop should not performed using a property since it requires execution of code
@@ -327,8 +317,6 @@ namespace Microsoft.Data.SqlClient
         //  Create a new SqlStatistics object if not already there.
         //  connect the parser to the object.
         //  if there is no parser at this time we need to connect it after creation.
-        //
-
         public bool StatisticsEnabled
         {
             get
@@ -428,6 +416,7 @@ namespace Microsoft.Data.SqlClient
             get => ((SqlConnectionString)ConnectionOptions).ConnectRetryInterval;
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ConnectionString/*' />
         public override string ConnectionString
         {
             get
@@ -454,6 +443,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ConnectionTimeout/*' />
         public override int ConnectionTimeout
         {
             get
@@ -463,6 +453,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/AccessToken/*' />
         // AccessToken: To be used for token based authentication
         public string AccessToken
         {
@@ -494,6 +485,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Database/*' />
         public override string Database
         {
             // if the connection is open, we need to ask the inner connection what it's
@@ -517,6 +509,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/DataSource/*' />
         public override string DataSource
         {
             get
@@ -537,6 +530,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/PacketSize/*' />
         public int PacketSize
         {
             // if the connection is open, we need to ask the inner connection what it's
@@ -560,6 +554,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ClientConnectionId/*' />
         public Guid ClientConnectionId
         {
             get
@@ -582,11 +577,13 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ServerVersion/*' />
         public override string ServerVersion
         {
             get => GetOpenTdsConnection().ServerVersion;
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/State/*' />
         public override ConnectionState State
         {
             get
@@ -606,6 +603,7 @@ namespace Microsoft.Data.SqlClient
             get => _statistics;
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/WorkstationId/*' />
         public string WorkstationId
         {
             get
@@ -619,6 +617,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Credential/*' />
         public SqlCredential Credential
         {
             get
@@ -706,6 +705,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/DbProviderFactory/*' />
         protected override DbProviderFactory DbProviderFactory
         {
             get => SqlClientFactory.Instance;
@@ -717,8 +717,10 @@ namespace Microsoft.Data.SqlClient
         // PUBLIC EVENTS
         //
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/InfoMessage/*' />
         public event SqlInfoMessageEventHandler InfoMessage;
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/FireInfoMessageEventOnUserErrors/*' />
         public bool FireInfoMessageEventOnUserErrors
         {
             get => _fireInfoMessageEventOnUserErrors;
@@ -733,6 +735,7 @@ namespace Microsoft.Data.SqlClient
 
         internal bool ForceNewConnection { get; set; }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OnStateChange/*' />
         protected override void OnStateChange(StateChangeEventArgs stateChange)
         {
             if (!_suppressStateChangeForReconnection)
@@ -744,19 +747,21 @@ namespace Microsoft.Data.SqlClient
         //
         // PUBLIC METHODS
         //
-
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/BeginTransaction2/*' />
         new public SqlTransaction BeginTransaction()
         {
             // this is just a delegate. The actual method tracks executiontime
             return BeginTransaction(System.Data.IsolationLevel.Unspecified, null);
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/BeginTransactionIso/*' />
         new public SqlTransaction BeginTransaction(System.Data.IsolationLevel iso)
         {
             // this is just a delegate. The actual method tracks executiontime
             return BeginTransaction(iso, null);
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/BeginTransactionTransactionName/*' />
         public SqlTransaction BeginTransaction(string transactionName)
         {
             // Use transaction names only on the outermost pair of nested
@@ -766,6 +771,7 @@ namespace Microsoft.Data.SqlClient
             return BeginTransaction(System.Data.IsolationLevel.Unspecified, transactionName);
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/BeginDbTransaction/*' />
         [SuppressMessage("Microsoft.Reliability", "CA2004:RemoveCallsToGCKeepAlive")]
         override protected DbTransaction BeginDbTransaction(System.Data.IsolationLevel isolationLevel)
         {
@@ -780,6 +786,7 @@ namespace Microsoft.Data.SqlClient
             return transaction;
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/BeginTransactionIsoTransactionName/*' />
         public SqlTransaction BeginTransaction(System.Data.IsolationLevel iso, string transactionName)
         {
             WaitForPendingReconnection();
@@ -812,6 +819,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ChangeDatabase/*' />
         public override void ChangeDatabase(string database)
         {
             SqlStatistics statistics = null;
@@ -827,11 +835,13 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ClearAllPools/*' />
         public static void ClearAllPools()
         {
             SqlConnectionFactory.SingletonInstance.ClearAllPools();
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ClearPool/*' />
         public static void ClearPool(SqlConnection connection)
         {
             ADP.CheckArgumentNull(connection, nameof(connection));
@@ -854,6 +864,7 @@ namespace Microsoft.Data.SqlClient
             InnerConnection.CloseConnection(this, ConnectionFactory);
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Close/*' />
         public override void Close()
         {
             ConnectionState previousState = State;
@@ -930,6 +941,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CreateCommand/*' />
         new public SqlCommand CreateCommand()
         {
             return new SqlCommand(null, this);
@@ -957,7 +969,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Open/*' />
         public override void Open()
         {
             Guid operationId = s_diagnosticListener.WriteConnectionOpenBefore(this);
@@ -1204,6 +1216,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(_currentCompletion == null, "After waiting for an async call to complete, there should be no completion source");
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsync/*' />
         public override Task OpenAsync(CancellationToken cancellationToken)
         {
             Guid operationId = s_diagnosticListener.WriteConnectionOpenBefore(this);
@@ -1285,16 +1298,19 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchema2/*' />
         public override DataTable GetSchema()
         {
             return GetSchema(DbMetaDataCollectionNames.MetaDataCollections, null);
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaCollectionName/*' />
         public override DataTable GetSchema(string collectionName)
         {
             return GetSchema(collectionName, null);
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaCollectionNameRestrictionValues/*' />
         public override DataTable GetSchema(string collectionName, string[] restrictionValues)
         {
             return InnerConnection.GetSchema(ConnectionFactory, PoolGroup, this, collectionName, restrictionValues);
@@ -1647,7 +1663,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ChangePasswordConnectionStringNewPassword/*' />
         public static void ChangePassword(string connectionString, string newPassword)
         {
             if (string.IsNullOrEmpty(connectionString))
@@ -1678,6 +1694,7 @@ namespace Microsoft.Data.SqlClient
             ChangePassword(connectionString, connectionOptions, null, newPassword, null);
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ChangePasswordConnectionStringCredentialNewSecurePassword/*' />
         public static void ChangePassword(string connectionString, SqlCredential credential, SecureString newSecurePassword)
         {
             if (string.IsNullOrEmpty(connectionString))
@@ -1766,7 +1783,7 @@ namespace Microsoft.Data.SqlClient
             }, TaskScheduler.Default).Unwrap();
         }
 
-
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ResetStatistics/*' />
         public void ResetStatistics()
         {
             if (null != Statistics)
@@ -1780,6 +1797,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RetrieveStatistics/*' />
         public IDictionary RetrieveStatistics()
         {
             if (null != Statistics)
@@ -1804,6 +1822,7 @@ namespace Microsoft.Data.SqlClient
             Statistics.UpdateStatistics();
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/System.ICloneable.Clone/*' />
         object ICloneable.Clone() => new SqlConnection(this);
 
         private void CopyFrom(SqlConnection connection)

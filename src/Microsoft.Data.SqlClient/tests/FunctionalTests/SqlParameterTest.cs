@@ -83,7 +83,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal("address", p.ParameterName);
             Assert.Equal(0, p.Precision);
             Assert.Equal(0, p.Scale);
-            Assert.Equal (0, p.Size);
+            Assert.Equal(0, p.Size);
             Assert.Equal(string.Empty, p.SourceColumn);
             Assert.False(p.SourceColumnNullMapping);
             Assert.Equal(DataRowVersion.Current, p.SourceVersion);
@@ -847,7 +847,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(DbType.Int32, p1.DbType);
             Assert.Equal(SqlDbType.Int, p1.SqlDbType);
 
-            p1.SqlDbType = SqlDbType.DateTime; 
+            p1.SqlDbType = SqlDbType.DateTime;
             Assert.Equal(DbType.DateTime, p1.DbType);
             Assert.Equal(SqlDbType.DateTime, p1.SqlDbType);
 
@@ -1053,7 +1053,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.NotNull(parameter.SqlValue);
             Assert.Equal(typeof(SqlString), parameter.SqlValue.GetType());
             Assert.Equal("X", ((SqlString)parameter.SqlValue).Value);
-            Assert.Equal ("X", parameter.Value);
+            Assert.Equal("X", parameter.Value);
 
             value = new char[] { 'X', 'A' };
             parameter.SqlValue = value;
@@ -1061,7 +1061,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.NotNull(parameter.SqlValue);
             Assert.Equal(typeof(SqlString), parameter.SqlValue.GetType());
             Assert.Equal("XA", ((SqlString)parameter.SqlValue).Value);
-            Assert.Equal ("XA", parameter.Value);
+            Assert.Equal("XA", parameter.Value);
         }
 
         [Fact]
