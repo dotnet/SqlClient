@@ -242,10 +242,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             CopyWidenNullInexactNumerics.Test(srcConstr, dstConstr);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void DestinationTableNameWithSpecialCharTest()
         {
-            DestinationTableNameWithSpecialChar.Test(dstConstr, AddGuid("SqlBulkCopyTest_DestinationTableNameWithSpecialChar"));
+            DestinationTableNameWithSpecialChar.Test(srcConstr, AddGuid("SqlBulkCopyTest_DestinationTableNameWithSpecialChar"));
         }
     }
 }
