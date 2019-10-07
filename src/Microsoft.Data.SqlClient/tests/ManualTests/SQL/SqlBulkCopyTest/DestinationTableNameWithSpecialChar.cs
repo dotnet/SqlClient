@@ -6,7 +6,7 @@ using System.Data.Common;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
-    public class Bug221
+    public class DestinationTableNameWithSpecialChar
     {
         public static void Test(string constr, string dstTable)
         {

@@ -95,7 +95,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void MissingTargetTableTest()
         {
-            MissingTargetTable.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_MissingTargetTable"));
+            MissingTargetTable.Test(srcConstr, dstConstr, AddGuid("@SqlBulkCopyTest_MissingTargetTable"));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
@@ -155,7 +155,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Bug98182Test()
         {
-            Bug98182.Test(dstConstr, AddGuid("SqlBulkCopyTest_Bug98182 "));
+            Bug98182.Test(dstConstr, AddGuid("@SqlBulkCopyTest_Bug98182 "));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
@@ -167,13 +167,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void ErrorOnRowsMarkedAsDeletedTest()
         {
-            ErrorOnRowsMarkedAsDeleted.Test(dstConstr, AddGuid("SqlBulkCopyTest_ErrorOnRowsMarkedAsDeleted"));
+            ErrorOnRowsMarkedAsDeleted.Test(dstConstr, AddGuid("@SqlBulkCopyTest_ErrorOnRowsMarkedAsDeleted"));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void SpecialCharacterNamesTest()
         {
-            SpecialCharacterNames.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_SpecialCharacterNames"));
+            SpecialCharacterNames.Test(srcConstr, dstConstr, AddGuid("@SqlBulkCopyTest_SpecialCharacterNames"));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
@@ -215,25 +215,25 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [CheckConnStrSetupFact]
         public void CopyAllFromReaderCancelAsyncTest()
         {
-            CopyAllFromReaderCancelAsync.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_AsyncTest5")); //Async + Reader + cancellation token
+            CopyAllFromReaderCancelAsync.Test(srcConstr, dstConstr, AddGuid("@SqlBulkCopyTest_AsyncTest5")); //Async + Reader + cancellation token
         }
 
         [CheckConnStrSetupFact]
         public void CopyAllFromReaderConnectionClosedAsyncTest()
         {
-            CopyAllFromReaderConnectionClosedAsync.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_AsyncTest6")); //Async + Reader + Connection closed
+            CopyAllFromReaderConnectionClosedAsync.Test(srcConstr, dstConstr, AddGuid("@SqlBulkCopyTest_AsyncTest6")); //Async + Reader + Connection closed
         }
 
         [CheckConnStrSetupFact]
         public void CopyAllFromReaderConnectionClosedOnEventAsyncTest()
         {
-            CopyAllFromReaderConnectionClosedOnEventAsync.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_AsyncTest7")); //Async + Reader + Connection closed during the event
+            CopyAllFromReaderConnectionClosedOnEventAsync.Test(srcConstr, dstConstr, AddGuid("@SqlBulkCopyTest_AsyncTest7")); //Async + Reader + Connection closed during the event
         }
 
         [CheckConnStrSetupFact]
         public void TransactionTestAsyncTest()
         {
-            TransactionTestAsync.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_TransactionTestAsync")); //Async + Transaction rollback
+            TransactionTestAsync.Test(srcConstr, dstConstr, AddGuid("@SqlBulkCopyTest_TransactionTestAsync")); //Async + Transaction rollback
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
@@ -243,9 +243,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
-        public void Bug221Test()
+        public void DestinationTableNameWithSpecialCharTest()
         {
-            Bug221.Test(dstConstr, AddGuid("SqlBulkCopyTest_Bug221 "));
+            DestinationTableNameWithSpecialChar.Test(dstConstr, AddGuid("SqlBulkCopyTest_DestinationTableNameWithSpecialChar"));
         }
     }
 }
