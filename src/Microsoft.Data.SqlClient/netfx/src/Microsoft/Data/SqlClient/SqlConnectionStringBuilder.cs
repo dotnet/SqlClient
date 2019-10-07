@@ -77,8 +77,9 @@ namespace Microsoft.Data.SqlClient
             ConnectRetryInterval,
 
             ColumnEncryptionSetting,
-            EnclaveAttestationUrl,
 
+            EnclaveAttestationUrl,
+            AttestationProtocol,
 
 #if ADONET_CERT_AUTH
             Certificate,
@@ -132,6 +133,7 @@ namespace Microsoft.Data.SqlClient
         private SqlAuthenticationMethod _authentication = DbConnectionStringDefaults.Authentication;
         private SqlConnectionColumnEncryptionSetting _columnEncryptionSetting = DbConnectionStringDefaults.ColumnEncryptionSetting;
         private string _enclaveAttestationUrl = DbConnectionStringDefaults.EnclaveAttestationUrl;
+        private SqlConnectionAttestationProtocol _attestationProtocol = DbConnectionStringDefaults.AttestationProtocol;
         private PoolBlockingPeriod _poolBlockingPeriod = DbConnectionStringDefaults.PoolBlockingPeriod;
 
 #if ADONET_CERT_AUTH
@@ -180,6 +182,7 @@ namespace Microsoft.Data.SqlClient
             validKeywords[(int)Keywords.Authentication] = DbConnectionStringKeywords.Authentication;
             validKeywords[(int)Keywords.ColumnEncryptionSetting] = DbConnectionStringKeywords.ColumnEncryptionSetting;
             validKeywords[(int)Keywords.EnclaveAttestationUrl] = DbConnectionStringKeywords.EnclaveAttestationUrl;
+            validKeywords[(int)Keywords.AttestationProtocol] = DbConnectionStringKeywords.AttestationProtocol;
 #if ADONET_CERT_AUTH            
             validKeywords[(int)Keywords.Certificate]              = DbConnectionStringKeywords.Certificate;
 #endif
@@ -225,6 +228,7 @@ namespace Microsoft.Data.SqlClient
             hash.Add(DbConnectionStringKeywords.Authentication, Keywords.Authentication);
             hash.Add(DbConnectionStringKeywords.ColumnEncryptionSetting, Keywords.ColumnEncryptionSetting);
             hash.Add(DbConnectionStringKeywords.EnclaveAttestationUrl, Keywords.EnclaveAttestationUrl);
+            hash.Add(DbConnectionStringKeywords.AttestationProtocol, Keywords.AttestationProtocol);
 #if ADONET_CERT_AUTH                       
             hash.Add(DbConnectionStringKeywords.Certificate,						Keywords.Certificate);
 #endif
@@ -352,6 +356,9 @@ namespace Microsoft.Data.SqlClient
                             break;
                         case Keywords.EnclaveAttestationUrl:
                             EnclaveAttestationUrl = ConvertToString(value);
+                            break;
+                        case Keywords.AttestationProtocol:
+                            AttestationProtocol = ConvertToAttestationProtocol(keyword, value);
                             break;
 #if ADONET_CERT_AUTH
                     case Keywords.Certificate:						Certificate = ConvertToString(value); break;
@@ -638,7 +645,30 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+<<<<<<< HEAD
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TrustServerCertificate/*' />
+=======
+        // kz
+        [DisplayName(DbConnectionStringKeywords.AttestationProtocol)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Security)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.TCE_DbConnectionString_AttestationProtocol)]
+        [RefreshPropertiesAttribute(RefreshProperties.All)]
+        public SqlConnectionAttestationProtocol AttestationProtocol
+        {
+            get { return _attestationProtocol; }
+            set
+            {
+                if (!DbConnectionStringBuilderUtil.IsValidAttestationProtocol(value))
+                {
+                    throw ADP.InvalidEnumerationValue(typeof(SqlConnectionAttestationProtocol), (int)value);
+                }
+
+                SetAttestationProtocolValue(value);
+                _attestationProtocol = value;
+            }
+        }
+
+>>>>>>> fa3575d54cd96b37ca17ed34270bcad182121556
         [DisplayName(DbConnectionStringKeywords.TrustServerCertificate)]
         [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Security)]
         [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_TrustServerCertificate)]
@@ -1206,6 +1236,17 @@ namespace Microsoft.Data.SqlClient
             return DbConnectionStringBuilderUtil.ConvertToColumnEncryptionSetting(keyword, value);
         }
 
+        /// <summary>
+        /// Convert to SqlConnectionAttestationProtocol
+        /// </summary>
+        /// <param name="keyword"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        private static SqlConnectionAttestationProtocol ConvertToAttestationProtocol(string keyword, object value)
+        {
+            return DbConnectionStringBuilderUtil.ConvertToAttestationProtocol(keyword, value);
+        }
+
         private object GetAt(Keywords index)
         {
             switch (index)
@@ -1289,6 +1330,8 @@ namespace Microsoft.Data.SqlClient
                     return ColumnEncryptionSetting;
                 case Keywords.EnclaveAttestationUrl:
                     return EnclaveAttestationUrl;
+                case Keywords.AttestationProtocol:
+                    return AttestationProtocol;
 #if ADONET_CERT_AUTH
             case Keywords.Certificate:              return Certificate;
 #endif
@@ -1478,6 +1521,9 @@ namespace Microsoft.Data.SqlClient
                 case Keywords.EnclaveAttestationUrl:
                     _enclaveAttestationUrl = DbConnectionStringDefaults.EnclaveAttestationUrl;
                     break;
+                case Keywords.AttestationProtocol:
+                    _attestationProtocol = DbConnectionStringDefaults.AttestationProtocol;
+                    break;
                 default:
                     Debug.Fail("unexpected keyword");
                     throw ADP.KeywordNotSupported(_validKeywords[(int)index]);
@@ -1518,7 +1564,16 @@ namespace Microsoft.Data.SqlClient
             base[DbConnectionStringKeywords.ColumnEncryptionSetting] = DbConnectionStringBuilderUtil.ColumnEncryptionSettingToString(value);
         }
 
+<<<<<<< HEAD
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ShouldSerialize/*' />
+=======
+        private void SetAttestationProtocolValue(SqlConnectionAttestationProtocol value)
+        {
+            Debug.Assert(DbConnectionStringBuilderUtil.IsValidAttestationProtocol(value), "Invalid value for SqlConnectionAttestationProtocol");
+            base[DbConnectionStringKeywords.AttestationProtocol] = DbConnectionStringBuilderUtil.AttestationProtocolToString(value);
+        }
+
+>>>>>>> fa3575d54cd96b37ca17ed34270bcad182121556
         public override bool ShouldSerialize(string keyword)
         {
             ADP.CheckArgumentNull(keyword, "keyword");

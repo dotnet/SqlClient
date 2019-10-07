@@ -3470,6 +3470,42 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.EnclaveTypeNotReturned();
             }
 
+            // Check if enclave attestation url was specified and the attestation protocol supports the enclave type.
+            if (this.Connection.RoutingInfo == null
+                && (!string.IsNullOrWhiteSpace(_connHandler.ConnectionOptions.EnclaveAttestationUrl))
+                && (!string.IsNullOrWhiteSpace(EnclaveType))
+                && (!IsValidAttestationProtocol(EnclaveType)))
+            {
+                throw SQL.AttestationProtocolNotSupportEnclaveType(EnclaveType);
+            }
+
+            return true;
+        }
+
+        private bool IsValidAttestationProtocol(string enclaveType)
+        {
+            switch (enclaveType.ToUpper())
+            {
+                case TdsEnums.ENCLAVE_TYPE_VBS:
+                    if (_connHandler.ConnectionOptions.AttestationProtocol != SqlConnectionAttestationProtocol.AAS
+                        && _connHandler.ConnectionOptions.AttestationProtocol != SqlConnectionAttestationProtocol.HGS)
+                    {
+                        return false;
+                    }
+                    break;
+
+                case TdsEnums.ENCLAVE_TYPE_SGX:
+                    if (_connHandler.ConnectionOptions.AttestationProtocol != SqlConnectionAttestationProtocol.AAS)
+                    {
+                        return false;
+                    }
+                    break;
+
+                default:
+                    // if we reach here, the enclave type is not supported
+                    throw SQL.EnclaveTypeNotSupported(enclaveType);
+            }
+
             return true;
         }
 

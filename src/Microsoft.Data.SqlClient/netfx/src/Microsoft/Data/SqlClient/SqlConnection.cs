@@ -499,6 +499,20 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        // kz
+        /// <summary>
+        /// Get attestation protocol
+        /// </summary>
+        /// <value></value>
+        internal SqlConnectionAttestationProtocol AttestationProtocol
+        {
+            get
+            {
+                SqlConnectionString opt = (SqlConnectionString)ConnectionOptions;
+                return opt.AttestationProtocol;
+            }
+        }
+
         // Is this connection is a Context Connection?
         private bool UsesContextConnection(SqlConnectionString opt)
         {
