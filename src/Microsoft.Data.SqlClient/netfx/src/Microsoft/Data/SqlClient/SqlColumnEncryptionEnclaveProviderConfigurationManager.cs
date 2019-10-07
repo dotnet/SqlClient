@@ -18,7 +18,6 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         [ConfigurationProperty("providers")]
         public ProviderSettingsCollection Providers => (ProviderSettingsCollection)base["providers"];
-
     }
 
     internal class SqlColumnEncryptionEnclaveProviderConfigurationManager
