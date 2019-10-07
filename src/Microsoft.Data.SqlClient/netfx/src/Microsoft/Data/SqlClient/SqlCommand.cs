@@ -7446,8 +7446,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (SqlEventSource.Log.IsEnabled() && Connection != null)
             {
-                string commandText = CommandType == CommandType.StoredProcedure ? CommandText : string.Empty;
-                SqlEventSource.Log.BeginExecute(GetHashCode(), Connection.DataSource, Connection.Database, commandText);
+                SqlEventSource.Log.BeginExecute(GetHashCode(), Connection.DataSource, Connection.Database, CommandText);
             }
         }
 
