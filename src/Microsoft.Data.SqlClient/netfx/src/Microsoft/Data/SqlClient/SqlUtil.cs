@@ -1730,6 +1730,16 @@ namespace Microsoft.Data.SqlClient
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_EnclaveTypeNotReturned));
         }
 
+        static internal Exception EnclaveTypeNotSupported(string enclaveType)
+        {
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_SequentialAccessNotSupportedOnEncryptedColumn, enclaveType));
+        }
+
+        static internal Exception AttestationProtocolNotSupportEnclaveType(string enclaveType)
+        {
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_AttestationProtocolNotSupportEnclaveType, enclaveType));
+        }
+
         //
         // TCE- Extensibility related error messages
         //

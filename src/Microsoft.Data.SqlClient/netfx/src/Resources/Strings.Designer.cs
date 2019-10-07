@@ -11646,6 +11646,16 @@ namespace System {
                 return ResourceManager.GetString("TCE_DbConnectionString_EnclaveAttestationUrl", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Specifies an attestation protocol for its corresponding enclave attestation service.
+        /// </summary>
+        /// <value></value>
+        internal static string TCE_DbConnectionString_AttestationProtocol {
+            get {
+                return ResourceManager.GetString("TCE_DbConnectionString_AttestationProtocol", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to Decryption failed. The last 10 bytes of the encrypted column encryption key are: &apos;{0}&apos;. The first 10 bytes of ciphertext are: &apos;{1}&apos;..
@@ -11826,7 +11836,25 @@ namespace System {
                 return ResourceManager.GetString("TCE_EnclaveTypeNotReturned", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        /// Looks up a localized string similar to The enclave type '{0}' returned from the server is not supported.
+        /// </summary>
+        internal static string TCE_EnclaveTypeNotSupported {
+            get {
+                return ResourceManager.GetString("TCE_EnclaveTypeNotSupported", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        /// Looks up a localized string similar to Failed to initialize connection. The attestation protocol does not support the enclave type '{0}'.
+        /// </summary>
+        internal static string TCE_AttestationProtocolNotSupportEnclaveType {
+            get {
+                return ResourceManager.GetString("TCE_AttestationProtocolNotSupportEnclaveType", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Internal Error. Enclave type received from SQL Server is null or empty when executing a query requiring enclave computations..
         /// </summary>

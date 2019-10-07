@@ -467,6 +467,12 @@ namespace Microsoft.Data.SqlClient
         Disabled = 0,
         Enabled = 1,
     }
+    public enum SqlConnectionAttestationProtocol
+    {
+        None = 0,
+        AAS = 1,
+        HGS = 2
+    }
     [System.ComponentModel.DefaultPropertyAttribute("DataSource")]
     public sealed partial class SqlConnectionStringBuilder : System.Data.Common.DbConnectionStringBuilder
     {

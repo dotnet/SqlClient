@@ -945,6 +945,8 @@ namespace Microsoft.Data.SqlClient
 
         internal const int AES_256_CBC = 1;
         internal const int AEAD_AES_256_CBC_HMAC_SHA256 = 2;
+        internal const string ENCLAVE_TYPE_VBS = "VBS";
+        internal const string ENCLAVE_TYPE_SGX = "SGX";
 
         // TCE Param names for exec handling
         internal const string TCE_PARAM_CIPHERTEXT = "cipherText";
@@ -1031,7 +1033,7 @@ namespace Microsoft.Data.SqlClient
     public enum SqlCommandColumnEncryptionSetting
     {
         /// <summary>
-        /// if “Column Encryption Setting=Enabled” in the connection string, use Enabled. Otherwise, maps to Disabled.
+        /// if ï¿½Column Encryption Setting=Enabledï¿½ in the connection string, use Enabled. Otherwise, maps to Disabled.
         /// </summary>
         UseConnectionSetting = 0,
 
@@ -1050,6 +1052,24 @@ namespace Microsoft.Data.SqlClient
         /// Disables TCE for the command.Overrides the connection level setting for this command.
         /// </summary>
         Disabled,
+    }
+
+    public enum SqlConnectionAttestationProtocol
+    {
+        /// <summary>
+        /// If the attestation protocol is not specified. Use this as default value.
+        /// </summary>
+        None = 0,
+
+        /// <summary>
+        /// Attestation portocol for Azure Attestation Service
+        /// </summary>
+        AAS = 1,
+
+        /// <summary>
+        /// Attestation protocol for Host Guardian Service
+        /// </summary>
+        HGS = 2
     }
 
     public enum SqlAuthenticationMethod
