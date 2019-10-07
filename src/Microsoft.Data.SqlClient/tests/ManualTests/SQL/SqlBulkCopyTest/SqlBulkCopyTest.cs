@@ -241,5 +241,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             CopyWidenNullInexactNumerics.Test(srcConstr, dstConstr);
         }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        public void Bug221Test()
+        {
+            Bug221.Test(dstConstr, AddGuid("SqlBulkCopyTest_Bug221 "));
+        }
     }
 }
