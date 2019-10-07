@@ -24,13 +24,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 "create table " + srctable + "([col1] int)",
                 "insert into " + srctable + " values (33)",
-                "create table [" + dstTable + "]([col1] int)",
+                "create table [" + dsttable + "]([col1] int)",
             };
 
             string[] prologue =
             {
                 "drop table " + srctable,
-                "drop table [" + dstTable + "]",
+                "drop table [" + dsttable + "]",
             };
 
             using (SqlConnection dstConn = new SqlConnection(constr))
@@ -47,18 +47,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         srcConn.Open();
 
                         int expRows = 1;
-                        using (DbDataReader reader = srcCmd.ExecuteReader())
+                        foreach (string dsttablename in dsttablecombo)
                         {
-                            foreach (string dsttablename in dsttablecombo)
+                            using (DbDataReader reader = srcCmd.ExecuteReader())
                             {
                                 using (SqlBulkCopy bulkcopy = new SqlBulkCopy(dstConn))
                                 {
                                     bulkcopy.DestinationTableName = dsttablename;
                                     bulkcopy.WriteToServer(reader);
                                 }
-                                Helpers.VerifyResults(dstConn, dstTable, expRows, 1);
-                                expRows++;
+                                Helpers.VerifyResults(dstConn, "[" + dsttable + "]", 1, expRows);
                             }
+                            expRows++;
                         }
                     }
                 }
