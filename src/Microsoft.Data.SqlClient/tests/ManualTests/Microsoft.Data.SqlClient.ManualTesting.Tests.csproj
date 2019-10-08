@@ -99,6 +99,7 @@
     <Compile Include="SQL\SqlBulkCopyTest\AdjustPrecScaleForBulkCopy.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\AzureDistributedTransaction.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\ErrorOnRowsMarkedAsDeleted.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\DestinationTableNameWithSpecialChar.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\Bug84548.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\Bug85007.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\Bug903514.cs" />

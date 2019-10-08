@@ -76,7 +76,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     reader.Close();
 
                     DataTestUtility.AssertEqualsWithDescription(expectedColumns, numColumns, "Unexpected number of columns.");
-                    DataTestUtility.AssertEqualsWithDescription(expectedRows, numRows, "Unexpected number of columns.");
+                    DataTestUtility.AssertEqualsWithDescription(expectedRows, numRows, "Unexpected number of rows.");
                 }
             }
             return false;

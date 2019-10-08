@@ -437,7 +437,7 @@ namespace Microsoft.Data.SqlClient
             string TDSCommand;
 
 
-            TDSCommand = "select @@trancount; SET FMTONLY ON select * from " + this.DestinationTableName + " SET FMTONLY OFF ";
+            TDSCommand = "select @@trancount; SET FMTONLY ON select * from " + ADP.BuildMultiPartName(parts) + " SET FMTONLY OFF ";
 
             string TableCollationsStoredProc;
             if (_connection.IsKatmaiOrNewer)
@@ -544,7 +544,8 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.BulkLoadNoCollation();
             }
 
-            updateBulkCommandText.AppendFormat("insert bulk {0} (", this.DestinationTableName);
+            string[] parts = MultipartIdentifier.ParseMultipartIdentifier(this.DestinationTableName, "[\"", "]\"", SR.SQL_BulkCopyDestinationTableName, true);
+            updateBulkCommandText.AppendFormat("insert bulk {0} (", ADP.BuildMultiPartName(parts));
             int nmatched = 0;  // Number of columns that match and are accepted
             int nrejected = 0; // Number of columns that match but were rejected
             bool rejectColumn; // True if a column is rejected because of an excluded type

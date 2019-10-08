@@ -95,7 +95,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void MissingTargetTableTest()
         {
-            MissingTargetTable.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_MissingTargetTable"));
+            MissingTargetTable.Test(srcConstr, dstConstr, AddGuid("@SqlBulkCopyTest_MissingTargetTable"));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
@@ -155,7 +155,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Bug98182Test()
         {
-            Bug98182.Test(dstConstr, AddGuid("SqlBulkCopyTest_Bug98182 "));
+            Bug98182.Test(dstConstr, AddGuid("@SqlBulkCopyTest_Bug98182 "));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
@@ -173,7 +173,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void SpecialCharacterNamesTest()
         {
-            SpecialCharacterNames.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_SpecialCharacterNames"));
+            SpecialCharacterNames.Test(srcConstr, dstConstr, AddGuid("@SqlBulkCopyTest_SpecialCharacterNames"));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
@@ -240,6 +240,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void CopyWidenNullInexactNumericsTest()
         {
             CopyWidenNullInexactNumerics.Test(srcConstr, dstConstr);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public void DestinationTableNameWithSpecialCharTest()
+        {
+            DestinationTableNameWithSpecialChar.Test(srcConstr, AddGuid("SqlBulkCopyTest_DestinationTableNameWithSpecialChar"));
         }
     }
 }
