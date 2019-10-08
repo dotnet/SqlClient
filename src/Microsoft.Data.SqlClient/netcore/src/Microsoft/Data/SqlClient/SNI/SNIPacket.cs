@@ -67,14 +67,6 @@ namespace Microsoft.Data.SqlClient.SNI
         public bool IsInvalid => (_data == null);
 
         /// <summary>
-        /// Packet data
-        /// </summary>
-        public void Dispose()
-        {
-            Release();
-        }
-
-        /// <summary>
         /// Set async completion callback
         /// </summary>
         /// <param name="completionCallback">Completion callback</param>
