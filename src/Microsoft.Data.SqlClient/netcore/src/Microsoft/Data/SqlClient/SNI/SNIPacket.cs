@@ -44,6 +44,12 @@ namespace Microsoft.Data.SqlClient.SNI
                 _description = value;
             }
         }
+        public bool HasCompletionCallback => !(_completionCallback is null);
+
+        /// <summary>
+        /// Dispose Packet data
+        /// </summary>
+        public void Dispose() => Release();
 
         /// <summary>
         /// Length of data left to process
