@@ -786,12 +786,16 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionColumnEncryptionSetting.xml' path='docs/members[@name="SqlConnectionColumnEncryptionSetting"]/Enabled/*'/>
         Enabled = 1,
     }
+
+    // To add include file for docs
     public enum SqlConnectionAttestationProtocol
     {
         None = 0,
         AAS = 1,
         HGS = 2
     }
+
+    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/SqlConnectionStringBuilder/*'/>
     [System.ComponentModel.DefaultPropertyAttribute("DataSource")]
     public sealed partial class SqlConnectionStringBuilder : System.Data.Common.DbConnectionStringBuilder
     {

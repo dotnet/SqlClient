@@ -645,10 +645,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-<<<<<<< HEAD
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TrustServerCertificate/*' />
-=======
-        // kz
+        // to add docs include file
         [DisplayName(DbConnectionStringKeywords.AttestationProtocol)]
         [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Security)]
         [ResDescriptionAttribute(StringsHelper.ResourceNames.TCE_DbConnectionString_AttestationProtocol)]
@@ -668,7 +665,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
->>>>>>> fa3575d54cd96b37ca17ed34270bcad182121556
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TrustServerCertificate/*' />
         [DisplayName(DbConnectionStringKeywords.TrustServerCertificate)]
         [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Security)]
         [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_TrustServerCertificate)]
@@ -1564,16 +1561,14 @@ namespace Microsoft.Data.SqlClient
             base[DbConnectionStringKeywords.ColumnEncryptionSetting] = DbConnectionStringBuilderUtil.ColumnEncryptionSettingToString(value);
         }
 
-<<<<<<< HEAD
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ShouldSerialize/*' />
-=======
         private void SetAttestationProtocolValue(SqlConnectionAttestationProtocol value)
         {
             Debug.Assert(DbConnectionStringBuilderUtil.IsValidAttestationProtocol(value), "Invalid value for SqlConnectionAttestationProtocol");
             base[DbConnectionStringKeywords.AttestationProtocol] = DbConnectionStringBuilderUtil.AttestationProtocolToString(value);
         }
 
->>>>>>> fa3575d54cd96b37ca17ed34270bcad182121556
+
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ShouldSerialize/*' />
         public override bool ShouldSerialize(string keyword)
         {
             ADP.CheckArgumentNull(keyword, "keyword");

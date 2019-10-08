@@ -999,7 +999,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // kz
         internal SqlConnectionAttestationProtocol ConvertValueToAttestationProtocol()
         {
             object value = base.Parsetable[KEY.AttestationProtocol];

@@ -1024,7 +1024,6 @@ namespace Microsoft.Data.SqlClient
     /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlCommandColumnEncryptionSetting.xml' path='docs/members[@name="SqlCommandColumnEncryptionSetting"]/SqlCommandColumnEncryptionSetting/*' />
     public enum SqlCommandColumnEncryptionSetting
     {
-
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlCommandColumnEncryptionSetting.xml' path='docs/members[@name="SqlCommandColumnEncryptionSetting"]/UseConnectionSetting/*' />
         UseConnectionSetting = 0,
 
@@ -1036,6 +1035,25 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlCommandColumnEncryptionSetting.xml' path='docs/members[@name="SqlCommandColumnEncryptionSetting"]/Disabled/*' />
         Disabled,
+    }
+
+    // To add include file for docs
+    public enum SqlConnectionAttestationProtocol
+    {
+        /// <summary>
+        /// If the attestation protocol is not specified. Use this as default value.
+        /// </summary>
+        None = 0,
+
+        /// <summary>
+        /// Attestation portocol for Azure Attestation Service
+        /// </summary>
+        AAS = 1,
+
+        /// <summary>
+        /// Attestation protocol for Host Guardian Service
+        /// </summary>
+        HGS = 2
     }
 
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/SqlAuthenticationMethod/*'/>

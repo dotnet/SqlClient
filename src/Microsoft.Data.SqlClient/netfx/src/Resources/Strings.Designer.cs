@@ -11793,7 +11793,6 @@ namespace System {
         /// <summary>
         ///   Looks up a localized string similar to Specifies an attestation protocol for its corresponding enclave attestation service.
         /// </summary>
-        /// <value></value>
         internal static string TCE_DbConnectionString_AttestationProtocol {
             get {
                 return ResourceManager.GetString("TCE_DbConnectionString_AttestationProtocol", resourceCulture);

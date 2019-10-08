@@ -4443,7 +4443,6 @@
   <data name="SQL_Timeout_Execution" xml:space="preserve">
     <value>Execution Timeout Expired.  The timeout period elapsed prior to completion of the operation or the server is not responding.</value>
   </data>
-<<<<<<< HEAD
   <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
     <value>The validation of an attestation token failed. The token signature does not match the signature omputed using a public key retrieved from the attestation public key endpoint at '{0}'. Verify the DNS apping for the endpoint. If correct, contact Customer Support Services.</value>
   </data>
@@ -4506,7 +4505,7 @@
   </data>
   <data name="VerifyHealthCertificateChainFormat" xml:space="preserve">
     <value>Failed to build a chain of trust between the enclave host's health report and the HGS root certificate for attestation URL '{0}' with status: '{1}'. Verify the attestation URL matches the URL configured on the SQL Server machine. If both the client and SQL Server use the same attestation service, contact Customer Support Services.</value>
-=======
+  </data>
   <data name="TCE_DbConnectionString_AttestationProtocol" xml:space="preserve">
     <value>Specifies an attestation protocol for its corresponding enclave attestation service.</value>
   </data>
@@ -4515,6 +4514,5 @@
   </data>
   <data name="TCE_AttestationProtocolNotSupportEnclaveType" xml:space="preserve">
     <value>Failed to initialize connection. The attestation protocol does not support the enclave type '{0}'.</value>
->>>>>>> fa3575d54cd96b37ca17ed34270bcad182121556
   </data>
 </root>

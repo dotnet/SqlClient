@@ -499,11 +499,9 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // kz
         /// <summary>
         /// Get attestation protocol
         /// </summary>
-        /// <value></value>
         internal SqlConnectionAttestationProtocol AttestationProtocol
         {
             get
