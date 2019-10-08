@@ -282,5 +282,65 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 throw;
             }
         }
+
+        [CheckConnStrSetupFact]
+        public static void CancelDoesNotWait()
+        {
+            const int delaySeconds = 30;
+            const int cancelSeconds = 1;
+
+            using (SqlConnection conn = new SqlConnection(s_connStr))
+            using (var cmd = new SqlCommand($"WAITFOR DELAY '00:00:{delaySeconds:D2}'", conn))
+            {
+                conn.Open();
+
+                Task.Delay(TimeSpan.FromSeconds(cancelSeconds))
+                    .ContinueWith(t => cmd.Cancel());
+
+                DateTime started = DateTime.UtcNow;
+                DateTime ended = default;
+                Exception exception = null;
+                try
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                catch (Exception ex)
+                {
+                    exception = ex;
+                }
+                ended = DateTime.UtcNow;
+
+                Assert.NotNull(exception);
+                Assert.InRange((ended - started).TotalSeconds, cancelSeconds, delaySeconds - 1);
+            }
+        }
+
+        [CheckConnStrSetupFact]
+        public static async Task AsyncCancelDoesNotWait()
+        {
+            const int delaySeconds = 30;
+            const int cancelSeconds = 1;
+
+            using (SqlConnection conn = new SqlConnection(s_connStr))
+            using (var cmd = new SqlCommand($"WAITFOR DELAY '00:00:{delaySeconds:D2}'", conn))
+            {
+                await conn.OpenAsync();
+
+                DateTime started = DateTime.UtcNow;
+                Exception exception = null;
+                try
+                {
+                    await cmd.ExecuteNonQueryAsync(new CancellationTokenSource(1000).Token);
+                }
+                catch (Exception ex)
+                {
+                    exception = ex;
+                }
+                DateTime ended = DateTime.UtcNow;
+
+                Assert.NotNull(exception);
+                Assert.InRange((ended - started).TotalSeconds, cancelSeconds, delaySeconds - 1);
+            }
+        }
     }
 }

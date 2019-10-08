@@ -19,7 +19,6 @@ namespace Microsoft.Data.SqlClient.SNI
         private int _offset;
         private string _description;
         private SNIAsyncCallback _completionCallback;
-
         private bool _isBufferFromArrayPool;
 
         public SNIPacket() { }
@@ -49,6 +48,11 @@ namespace Microsoft.Data.SqlClient.SNI
         /// Length of data left to process
         /// </summary>
         public int DataLeft => (_length - _offset);
+
+        /// <summary>
+        /// Indicates that the packet should be sent out of band bypassing the normal send-recieve lock
+        /// </summary>
+        public bool IsOutOfBand { get; set; }
 
         /// <summary>
         /// Length of data
