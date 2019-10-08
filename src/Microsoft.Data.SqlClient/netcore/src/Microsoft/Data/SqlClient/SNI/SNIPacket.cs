@@ -44,6 +44,12 @@ namespace Microsoft.Data.SqlClient.SNI
                 _description = value;
             }
         }
+        public bool HasCompletionCallback => !(_completionCallback is null);
+
+        /// <summary>
+        /// Dispose Packet data
+        /// </summary>
+        public void Dispose() => Release();
 
         /// <summary>
         /// Length of data left to process
@@ -59,14 +65,6 @@ namespace Microsoft.Data.SqlClient.SNI
         /// Packet validity
         /// </summary>
         public bool IsInvalid => (_data == null);
-
-        /// <summary>
-        /// Packet data
-        /// </summary>
-        public void Dispose()
-        {
-            Release();
-        }
 
         /// <summary>
         /// Set async completion callback
