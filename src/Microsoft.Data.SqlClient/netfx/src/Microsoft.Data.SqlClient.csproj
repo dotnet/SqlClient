@@ -57,9 +57,7 @@
   </PropertyGroup>
   <!-- ********************** Configuration and Platform specific properties ********************* -->
   <!-- All Available Configurations-->
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
-    <DocumentationFile>..\..\..\..\bin\Windows_NT\Debug.AnyCPU\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.xml</DocumentationFile>
-  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'net46-Debug|AnyCPU'" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'net46-Release|AnyCPU'" />

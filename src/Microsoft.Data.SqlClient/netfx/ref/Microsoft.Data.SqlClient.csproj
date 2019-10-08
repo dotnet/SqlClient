@@ -4,7 +4,7 @@
     <TargetFrameworks>net46</TargetFrameworks>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration)\$(AssemblyName)\ref\</IntermediateOutputPath>  
     <OutputPath>$(BinFolder)$(Configuration)\$(AssemblyName)\ref\</OutputPath>
-    <DocumentationFile>C:\NetworkShareKZ\VSOGit\DotnetSqlClient\src\Microsoft.Data.SqlClient.xml</DocumentationFile>
+    <DocumentationFile>$(OutputPath)\src\Microsoft.Data.SqlClient.xml</DocumentationFile>
     <Product>Framework $(BaseProduct)</Product>
     <Configurations>Debug;Release;net46-Release;net46-Debug</Configurations>
   </PropertyGroup>
