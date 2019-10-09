@@ -49,23 +49,7 @@ namespace Microsoft.Data.SqlClient
 
         internal bool _supressStateChangeForReconnection = false; // Do not use for anything else ! Value will be overwritten by CR process
 
-        static SqlConnection()
-        {
-            SqlColumnEncryptionEnclaveProviderConfigurationSection sqlColumnEncryptionEnclaveProviderConfigurationSection = null;
-            try
-            {
-                sqlColumnEncryptionEnclaveProviderConfigurationSection = (SqlColumnEncryptionEnclaveProviderConfigurationSection)ConfigurationManager.GetSection("SqlColumnEncryptionEnclaveProviders");
-            }
-            catch (ConfigurationErrorsException e)
-            {
-                throw SQL.CannotGetSqlColumnEncryptionEnclaveProviderConfig(e);
-            }
-
-            sqlColumnEncryptionEnclaveProviderConfigurationManager = new SqlColumnEncryptionEnclaveProviderConfigurationManager(sqlColumnEncryptionEnclaveProviderConfigurationSection);
-        }
-
         static private readonly object EventInfoMessage = new object();
-        static internal readonly SqlColumnEncryptionEnclaveProviderConfigurationManager sqlColumnEncryptionEnclaveProviderConfigurationManager;
 
         // System column encryption key store providers are added by default
         static private readonly Dictionary<string, SqlColumnEncryptionKeyStoreProvider> _SystemColumnEncryptionKeyStoreProviders

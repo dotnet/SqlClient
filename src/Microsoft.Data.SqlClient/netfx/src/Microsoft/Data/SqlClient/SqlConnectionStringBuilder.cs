@@ -646,6 +646,9 @@ namespace Microsoft.Data.SqlClient
         }
 
         // to add docs include file
+        /// <summary>
+        /// 
+        /// </summary>
         [DisplayName(DbConnectionStringKeywords.AttestationProtocol)]
         [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Security)]
         [ResDescriptionAttribute(StringsHelper.ResourceNames.TCE_DbConnectionString_AttestationProtocol)]

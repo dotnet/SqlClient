@@ -1038,6 +1038,9 @@ namespace Microsoft.Data.SqlClient
     }
 
     // To add include file for docs
+    /// <summary>
+    /// 
+    /// </summary>
     public enum SqlConnectionAttestationProtocol
     {
         /// <summary>
