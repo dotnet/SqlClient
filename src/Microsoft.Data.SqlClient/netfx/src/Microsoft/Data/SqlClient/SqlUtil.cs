@@ -1740,9 +1740,9 @@ namespace Microsoft.Data.SqlClient
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_SequentialAccessNotSupportedOnEncryptedColumn, enclaveType));
         }
 
-        static internal Exception AttestationProtocolNotSupportEnclaveType(string enclaveType)
+        static internal Exception AttestationProtocolNotSupportEnclaveType(string attestationProtocolStr, string enclaveType)
         {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_AttestationProtocolNotSupportEnclaveType, enclaveType));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_AttestationProtocolNotSupportEnclaveType, attestationProtocolStr, enclaveType));
         }
 
         //

@@ -4513,7 +4513,7 @@
     <value>The enclave type '{0}' returned from the server is not supported.</value>
   </data>
   <data name="TCE_AttestationProtocolNotSupportEnclaveType" xml:space="preserve">
-    <value>Failed to initialize connection. The attestation protocol does not support the enclave type '{0}'.</value>
+    <value>Failed to initialize connection. The attestation protocol '{0}' does not support the enclave type '{1}'.</value>
   </data>
   <data name="TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage" xml:space="preserve">
     <value>Error occured when generating enclave package. Attestation Protocol has not been specified in the connection string, but the query requires enclave computations.</value>
