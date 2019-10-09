@@ -10254,7 +10254,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    throw e;
+                    throw;
                 }
             }
             finally

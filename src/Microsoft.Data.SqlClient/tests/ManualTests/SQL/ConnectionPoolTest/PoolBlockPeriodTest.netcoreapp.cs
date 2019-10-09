@@ -23,7 +23,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static bool AreConnectionStringsSetup() => DataTestUtility.AreConnStringsSetup();
 
         [OuterLoop()]
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), /* [ActiveIssue(108)] */ nameof(DataTestUtility.IsUsingNativeSNI))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [InlineData("Azure with Default Policy must Disable blocking (*.database.windows.net)", new object[] { AzureEndpointSample })]
         [InlineData("Azure with Default Policy must Disable blocking (*.database.chinacloudapi.cn)", new object[] { AzureChinaEnpointSample })]
         [InlineData("Azure with Default Policy must Disable blocking (*.database.usgovcloudapi.net)", new object[] { AzureUSGovernmentEndpointSample })]
@@ -49,7 +49,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [OuterLoop()]
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), /* [ActiveIssue(108)] */ nameof(DataTestUtility.IsUsingNativeSNI))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [InlineData("NonAzure with Default Policy must Enable blocking", new object[] { NonExistentServer })]
         [InlineData("NonAzure with Auto Policy must Enable Blocking", new object[] { NonExistentServer, PoolBlockingPeriod.Auto })]
         [InlineData("NonAzure with Always Policy must Enable Blocking", new object[] { NonExistentServer, PoolBlockingPeriod.AlwaysBlock })]
@@ -72,7 +72,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [OuterLoop()]
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), /* [ActiveIssue(108)] */ nameof(DataTestUtility.IsUsingNativeSNI))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [InlineData("Test policy with Auto (lowercase)", "auto")]
         [InlineData("Test policy with Auto (PascalCase)", "Auto")]
         [InlineData("Test policy with Always (lowercase)", "alwaysblock")]

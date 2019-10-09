@@ -5588,25 +5588,7 @@ namespace Microsoft.Data.SqlClient
         private string ParseAndQuoteIdentifier(string identifier, bool isUdtTypeName)
         {
             string[] strings = SqlParameter.ParseTypeName(identifier, isUdtTypeName);
-            StringBuilder bld = new StringBuilder();
-
-            // Stitching back together is a little tricky. Assume we want to build a full multi-part name
-            //  with all parts except trimming separators for leading empty names (null or empty strings,
-            //  but not whitespace). Separators in the middle should be added, even if the name part is 
-            //  null/empty, to maintain proper location of the parts.
-            for (int i = 0; i < strings.Length; i++)
-            {
-                if (0 < bld.Length)
-                {
-                    bld.Append('.');
-                }
-                if (null != strings[i] && 0 != strings[i].Length)
-                {
-                    bld.Append(ADP.BuildQuotedString("[", "]", strings[i]));
-                }
-            }
-
-            return bld.ToString();
+            return ADP.BuildMultiPartName(strings);
         }
 
         // returns set option text to turn on format only and key info on and off
