@@ -340,14 +340,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 conn.Open();
 
-                SqlCommand command = new SqlCommand(queryString, conn);
-
-                SqlDataReader reader1 = command.ExecuteReader();
-
-                DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() =>
+                using (SqlCommand command = new SqlCommand(queryString, conn))
                 {
-                    SqlDataReader reader2 = command.ExecuteReader();
-                }, openReaderExistsMessage);
+                    using (SqlDataReader reader1 = command.ExecuteReader())
+                    {
+                        DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() =>
+                        {
+                            SqlDataReader reader2 = command.ExecuteReader();
+                        }, openReaderExistsMessage);
+                    }
+                }
             }
 
             // With MARS off, one SqlConnection cannot have multiple DataReaders even if they are from different SqlCommands
@@ -357,15 +359,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 conn.Open();
 
-                SqlCommand command1 = new SqlCommand(queryString, conn);
-                SqlCommand command2 = new SqlCommand(queryString, conn);
-
-                SqlDataReader reader1 = command1.ExecuteReader();
-
-                DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() =>
+                using (SqlCommand command1 = new SqlCommand(queryString, conn))
+                using (SqlCommand command2 = new SqlCommand(queryString, conn))
                 {
-                    SqlDataReader reader2 = command2.ExecuteReader();
-                }, openReaderExistsMessage);
+                    using (SqlDataReader reader1 = command1.ExecuteReader())
+                    {
+                        DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() =>
+                        {
+                            SqlDataReader reader2 = command2.ExecuteReader();
+                        }, openReaderExistsMessage);
+                    }
+                }
             }
         }
     }
