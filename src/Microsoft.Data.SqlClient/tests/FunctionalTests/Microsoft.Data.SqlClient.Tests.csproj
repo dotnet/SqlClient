@@ -42,6 +42,7 @@
     <Compile Include="ExceptionTest.cs" />
     <Compile Include="TcpDefaultForAzureTest.cs" />
     <Compile Include="SqlConnectionStringBuilderTest.cs" />
+    <Compile Include="SerializeSqlTypesTest.cs" />
     <!-- <Compile Include="DiagnosticTest.cs" /> -->
     <Compile Include="$(TestsPath)ManualTests\DataCommon\DataTestUtility.cs" />
   </ItemGroup>
