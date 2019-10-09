@@ -14,7 +14,7 @@ See "CLR User-Defined Aggregates" in SQL Server 2005 Books Online for more infor
 ## Examples  
 The following example shows the <xref:Microsoft.Data.SqlClient.Server.SqlUserDefinedAggregateAttribute> attribute for a user-defined aggregate.  The aggregate uses custom serialization, has a maximum size of 8000 bytes when serialized, and is invariant to nulls, duplicates, and order.  
 
-[!code-csharp[SqlUserDefinedAggregate Sample#1](~/sqlclient/doc/samples/SqlUserDefinedAggregate.cs#1)]
+[!code-csharp[SqlUserDefinedAggregate Sample#1](~/../sqlclient/doc/samples/SqlUserDefinedAggregate.cs#1)]
 
 ]]></format>
             </remarks>
@@ -30,7 +30,7 @@ The following example shows the <xref:Microsoft.Data.SqlClient.Server.SqlUserDef
                 <format type="text/markdown"><![CDATA[  
 
 ## Examples  
-[!code-csharp[SqlUserDefinedAggregate1#6](~/sqlclient/doc/samples/SqlUserDefinedAggregate1.cs#6)]
+[!code-csharp[SqlUserDefinedAggregate1#6](~/../sqlclient/doc/samples/SqlUserDefinedAggregate1.cs#6)]
 
 ]]></format>
             </remarks>

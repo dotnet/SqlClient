@@ -14,7 +14,7 @@ For a property, the <xref:Microsoft.Data.SqlClient.Server.SqlMethodAttribute> sh
 ## Examples  
 The following example shows a UDT method that is attributed to indicate that the method will not be invoked on null instances of the type, that the method will not change the state of the type, and that the method will not be called when `null` parameters are supplied to the method invocation.  
 
-[!code-csharp[SqlMethod Sample#1](~/sqlclient/doc/samples/SqlMethod.cs#1)]
+[!code-csharp[SqlMethod Sample#1](~/../sqlclient/doc/samples/SqlMethod.cs#1)]
 
 ]]></format>
             </remarks>

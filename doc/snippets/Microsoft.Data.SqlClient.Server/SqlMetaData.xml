@@ -9,7 +9,7 @@
 ## Examples  
 The following example shows the creation of several <xref:Microsoft.Data.SqlClient.Server.SqlMetaData> objects, which describe the column metadata of a record, and the creation of a <xref:Microsoft.Data.SqlClient.Server.SqlDataRecord>. The column values of the <xref:Microsoft.Data.SqlClient.Server.SqlDataRecord> are set and the <xref:Microsoft.Data.SqlClient.Server.SqlDataRecord> is sent to the calling program using the <xref:Microsoft.SqlServer.Server.SqlContext> class.  
 
-[!code-csharp[SqlMetaData Samples#1](~/sqlclient/doc/samples/SqlMetaData.cs#1)]
+[!code-csharp[SqlMetaData Samples#1](~/../sqlclient/doc/samples/SqlMetaData.cs#1)]
 
 ]]></format>
             </remarks>
@@ -50,7 +50,7 @@ The following are the default values assigned to `dbType`, depending on the `Sql
 ## Examples  
 The following example creates a new <xref:Microsoft.Data.SqlClient.Server.SqlMetaData> object by specifying the column name and a column data type of <xref:System.Data.SqlDbType>.`Int`.  
 
-[!code-csharp[SqlMetaData Samples#3](~/sqlclient/doc/samples/SqlMetaData.cs#3)]
+[!code-csharp[SqlMetaData Samples#3](~/../sqlclient/doc/samples/SqlMetaData.cs#3)]
 
 ]]></format>
             </remarks>
@@ -90,7 +90,7 @@ The following are the default values assigned to `dbType`, depending on the `Sql
 ## Examples  
 The following example creates a new <xref:Microsoft.Data.SqlClient.Server.SqlMetaData> object by specifying the column name, a column data type of <xref:System.Data.SqlDbType>`.NVarChar`, and a maximum length of 12 characters.  
 
-[!code-csharp[SqlMetaData Samples#2](~/sqlclient/doc/samples/SqlMetaData.cs#2)]
+[!code-csharp[SqlMetaData Samples#2](~/../sqlclient/doc/samples/SqlMetaData.cs#2)]
 
 ]]></format>
             </remarks>
