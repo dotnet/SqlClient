@@ -78,6 +78,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
             SqlString sqlString = new SqlString("abcdefghijklmnopqrstuvwxyz");
             SqlString sqlStringDeserialized = SerializeAndDeserialize<SqlString>(sqlString, "<string>abcdefghijklmnopqrstuvwxyz</string>");
+            // Cannot use StrictEqual because information such as LCID is lost when the SqlString is serialized
             Assert.Equal(sqlString.Value, sqlStringDeserialized.Value);
         }
     }
