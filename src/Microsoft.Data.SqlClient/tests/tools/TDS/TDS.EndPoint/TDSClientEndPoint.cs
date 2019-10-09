@@ -105,7 +105,7 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                         if (e.ErrorCode != 10057)
                         {
                             // We don't recognize it
-                            throw e;
+                            throw;
                         }
 
                         // We are going to retry with IPv6 now because of won't fix bug
