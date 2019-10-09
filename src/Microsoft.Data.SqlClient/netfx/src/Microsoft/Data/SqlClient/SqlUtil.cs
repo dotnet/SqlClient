@@ -1592,9 +1592,14 @@ namespace Microsoft.Data.SqlClient
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_EnclaveProvidersNotConfiguredForEnclaveBasedQuery));
         }
 
-        static internal Exception EnclaveProviderNotFound(string enclaveType)
+        static internal Exception EnclaveProviderNotFound(string enclaveType, string attestationProtocol)
         {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_EnclaveProviderNotFound, enclaveType));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_EnclaveProviderNotFound, enclaveType, attestationProtocol));
+        }
+
+        static internal Exception AttestationProtocolNotSpecifiedForGeneratingEnclavePackage()
+        {
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage));
         }
 
         static internal Exception NullEnclaveSessionReturnedFromProvider(string enclaveType, string attestationUrl)

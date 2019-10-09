@@ -3484,7 +3484,7 @@ namespace Microsoft.Data.SqlClient
 
         private bool IsValidAttestationProtocol(string enclaveType)
         {
-            switch (enclaveType.ToUpper())
+            switch (enclaveType)
             {
                 case TdsEnums.ENCLAVE_TYPE_VBS:
                     if (_connHandler.ConnectionOptions.AttestationProtocol != SqlConnectionAttestationProtocol.AAS

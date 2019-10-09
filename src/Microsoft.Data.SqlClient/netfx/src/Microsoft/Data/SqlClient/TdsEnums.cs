@@ -1037,13 +1037,15 @@ namespace Microsoft.Data.SqlClient
         Disabled,
     }
 
-    // To add include file for docs
+    /// <summary>
+    /// To add include file for docs
+    /// </summary>
     public enum SqlConnectionAttestationProtocol
     {
         /// <summary>
         /// If the attestation protocol is not specified. Use this as default value.
         /// </summary>
-        None = 0,
+        NotSpecified = 0,
 
         /// <summary>
         /// Attestation portocol for Azure Attestation Service
@@ -1053,7 +1055,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Attestation protocol for Host Guardian Service
         /// </summary>
-        HGS = 2
+        HGS = 3
     }
 
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/SqlAuthenticationMethod/*'/>

@@ -854,7 +854,7 @@ namespace Microsoft.Data.Common
         internal static bool IsValidAttestationProtocol(SqlConnectionAttestationProtocol value)
         {
             Debug.Assert(Enum.GetNames(typeof(SqlConnectionAttestationProtocol)).Length == 3, "SqlConnectionAttestationProtocol enum has changed, update needed");
-            return value == SqlConnectionAttestationProtocol.None 
+            return value == SqlConnectionAttestationProtocol.NotSpecified 
                 || value == SqlConnectionAttestationProtocol.HGS 
                 || value == SqlConnectionAttestationProtocol.AAS;
 
@@ -1011,7 +1011,7 @@ namespace Microsoft.Data.Common
         internal static readonly SqlAuthenticationMethod Authentication = SqlAuthenticationMethod.NotSpecified;
         internal static readonly SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Disabled;
         internal const string EnclaveAttestationUrl = "";
-        internal static readonly SqlConnectionAttestationProtocol AttestationProtocol = SqlConnectionAttestationProtocol.None;
+        internal static readonly SqlConnectionAttestationProtocol AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified;
         internal const string Certificate = "";
         internal const PoolBlockingPeriod PoolBlockingPeriod = SqlClient.PoolBlockingPeriod.Auto;
     }

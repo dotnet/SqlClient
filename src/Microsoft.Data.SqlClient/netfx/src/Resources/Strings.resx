@@ -4321,7 +4321,7 @@
     <value>Executing a query requires enclave computations, but the application configuration is missing the enclave provider  section.</value>
   </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
-    <value>No enclave provider found for enclave type '{0}'. Please specify the provider in the application configuration. </value>
+    <value>No enclave provider found for enclave type '{0}' and attestation protocol '{1}'. Please specify the correct attestation protocol in the connection string. </value>
   </data>
   <data name="TCE_NullEnclaveSessionReturnedFromProvider" xml:space="preserve">
     <value>Unable to communicate with the enclave. Null enclave session information received from the enclave provider. Enclave type is '{0}' and enclave attestation URL is '{1}'.</value>
@@ -4514,5 +4514,8 @@
   </data>
   <data name="TCE_AttestationProtocolNotSupportEnclaveType" xml:space="preserve">
     <value>Failed to initialize connection. The attestation protocol does not support the enclave type '{0}'.</value>
+  </data>
+  <data name="TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage" xml:space="preserve">
+    <value>Error occured when generating enclave package. Attestation Protocol has not been specified in the connection string, but the query requires enclave computations.</value>
   </data>
 </root>
