@@ -600,7 +600,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         xr.Read();
 
                         // make sure we get an exception if we try to get another reader
-                        errorMessage = SystemDataResourceManager.Instance.ADP_OpenReaderExists;
+                        errorMessage = SystemDataResourceManager.Instance.ADP_OpenReaderExists("Connection");
                         DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => xr = cmd.ExecuteXmlReader(), errorMessage);
                     }
 
