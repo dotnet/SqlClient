@@ -292,7 +292,7 @@
     <value>{0} requires the command to have a transaction when the connection assigned to the command is in a pending local transaction.  The Transaction property of the command has not been initialized.</value>
   </data>
   <data name="ADP_OpenReaderExists" xml:space="preserve">
-    <value>There is already an open DataReader associated with this Command which must be closed first.</value>
+    <value>There is already an open DataReader associated with this {0} which must be closed first.</value>
   </data>
   <data name="ADP_CalledTwice" xml:space="preserve">
     <value>The method '{0}' cannot be called more than once for the same execution.</value>

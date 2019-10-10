@@ -695,7 +695,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     // if MARS is on, then a datareader associated with the command exists
                     // or if MARS is off, then a datareader exists
-                    throw ADP.OpenReaderExists();
+                    throw ADP.OpenReaderExists(parser.MARSOn);
                 }
                 else if (!parser.MARSOn && parser._physicalStateObj._pendingData)
                 {

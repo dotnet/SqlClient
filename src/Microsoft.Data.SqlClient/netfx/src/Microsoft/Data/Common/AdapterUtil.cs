@@ -1369,14 +1369,14 @@ namespace Microsoft.Data.Common
         {
             return InvalidOperation(StringsHelper.GetString(Strings.ADP_NoStoredProcedureExists, sproc));
         }
-        static internal Exception OpenReaderExists()
+        static internal Exception OpenReaderExists(bool marsOn)
         {
-            return OpenReaderExists(null);
+            return OpenReaderExists(null, marsOn);
         }
 
-        static internal Exception OpenReaderExists(Exception e)
+        static internal Exception OpenReaderExists(Exception e, bool marsOn)
         {
-            return InvalidOperation(StringsHelper.GetString(Strings.ADP_OpenReaderExists), e);
+            return InvalidOperation(StringsHelper.GetString(Strings.ADP_OpenReaderExists, marsOn ? ADP.Command : ADP.Connection), e);
         }
 
         static internal Exception TransactionCompleted()
@@ -2101,7 +2101,9 @@ namespace Microsoft.Data.Common
         internal const string ColumnEncryptionSystemProviderNamePrefix = "MSSQL_";
         internal const string CommitTransaction = "CommitTransaction";
         internal const string CommandTimeout = "CommandTimeout";
+        internal const string Command = "Command";
         internal const string ConnectionString = "ConnectionString";
+        internal const string Connection = "Connection";
         internal const string DataSetColumn = "DataSetColumn";
         internal const string DataSetTable = "DataSetTable";
         internal const string Delete = "Delete";

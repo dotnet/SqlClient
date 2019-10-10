@@ -1420,7 +1420,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to There is already an open DataReader associated with this Command which must be closed first..
+        ///   Looks up a localized string similar to There is already an open DataReader associated with this {0} which must be closed first..
         /// </summary>
         internal static string ADP_OpenReaderExists {
             get {
@@ -9224,12 +9224,11 @@ namespace System {
                 return ResourceManager.GetString("SQL_IntegratedWithUserIDAndPassword", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Interactive&apos; with &apos;User ID&apos;, &apos;UID&apos;, &apos;Password&apos; or &apos;PWD&apos; connection string keywords..
         /// </summary>
-        internal static string SQL_InteractiveWithUserIDAndPassword
-        {
+        internal static string SQL_InteractiveWithUserIDAndPassword {
             get {
                 return ResourceManager.GetString("SQL_InteractiveWithUserIDAndPassword", resourceCulture);
             }
