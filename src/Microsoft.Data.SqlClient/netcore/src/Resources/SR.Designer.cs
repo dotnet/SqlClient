@@ -97,7 +97,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to An {0} with {1} &apos;{2}&apos; is not contained by this {3}..
+        ///   Looks up a localized string similar to A {0} with {1} &apos;{2}&apos; is not contained by this {3}..
         /// </summary>
         internal static string ADP_CollectionIndexString {
             get {
