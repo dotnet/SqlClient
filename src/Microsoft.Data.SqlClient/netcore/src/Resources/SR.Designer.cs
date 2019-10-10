@@ -646,7 +646,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to There is already an open DataReader associated with this Command which must be closed first..
+        ///   Looks up a localized string similar to There is already an open DataReader associated with this {0} which must be closed first..
         /// </summary>
         internal static string ADP_OpenReaderExists {
             get {
