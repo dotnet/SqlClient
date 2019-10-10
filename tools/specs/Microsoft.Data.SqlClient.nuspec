@@ -8,7 +8,7 @@
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <license type="expression">MIT</license>
     <projectUrl>https://aka.ms/sqlclientproject</projectUrl>
-    <iconUrl>https://go.microsoft.com/fwlink/?linkid=2090301</iconUrl>
+    <icon>dotnet.png</icon>
     <description>Provides the data provider for SQL Server. These classes provide access to versions of SQL Server and encapsulate database-specific protocols, including tabular data stream (TDS)
 
 Commonly Used Types:
@@ -56,8 +56,27 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
       <frameworkAssembly assemblyName="mscorlib" targetFramework="net46" />
       <frameworkAssembly assemblyName="System.Data" targetFramework="net46" />
     </frameworkAssemblies>
+    <references>
+      <group targetFramework="net46">
+          <reference file="Microsoft.Data.SqlClient.dll" />
+          <reference file="Microsoft.Data.SqlClient.pdb" />
+          <reference file="Microsoft.Data.SqlClient.xml" />
+      </group>
+      <group targetFramework="netcoreapp2.1">
+          <reference file="Microsoft.Data.SqlClient.dll" />
+          <reference file="Microsoft.Data.SqlClient.pdb" />
+          <reference file="Microsoft.Data.SqlClient.xml" />
+      </group>
+      <group targetFramework="netstandard2.0">
+          <reference file="Microsoft.Data.SqlClient.dll" />
+          <reference file="Microsoft.Data.SqlClient.pdb" />
+          <reference file="Microsoft.Data.SqlClient.xml" />
+      </group>
+    </references>
   </metadata>
   <files>
+    <file src="..\icons\dotnet.png" target="" />
+
     <!-- ref NetFx -->
     <file src="..\..\bin\Windows_NT\$Configuration$\Microsoft.Data.SqlClient\ref\net46\Microsoft.Data.SqlClient.dll" target="ref\net46\" exclude="" />
     <file src="..\..\bin\Windows_NT\$Configuration$\Microsoft.Data.SqlClient\ref\net46\Microsoft.Data.SqlClient.pdb" target="ref\net46\" exclude="" />
