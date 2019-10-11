@@ -50,7 +50,7 @@ namespace Microsoft.Data.SqlClient
     /// <summary>
     /// Implementation of an Enclave provider (both for Sgx and Vsm) with Azure Attestation
     /// </summary>
-    public class AzureAttestationEnclaveProvider : EnclaveProviderBase
+    internal class AzureAttestationEnclaveProvider : EnclaveProviderBase
     {
         #region Constants
         private const int DiffieHellmanKeySize = 384;

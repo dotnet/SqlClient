@@ -8,7 +8,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Represents errors occuring during an Always Encrypted secure enclave operation
         /// </summary>
-        public class AlwaysEncryptedAttestationException : Exception
+        internal class AlwaysEncryptedAttestationException : Exception
         {
             /// <summary>
             /// 
