@@ -1369,14 +1369,14 @@ namespace Microsoft.Data.Common
         {
             return InvalidOperation(StringsHelper.GetString(Strings.ADP_NoStoredProcedureExists, sproc));
         }
-        static internal Exception OpenReaderExists()
+        static internal Exception OpenReaderExists(bool marsOn)
         {
-            return OpenReaderExists(null);
+            return OpenReaderExists(null, marsOn);
         }
 
-        static internal Exception OpenReaderExists(Exception e)
+        static internal Exception OpenReaderExists(Exception e, bool marsOn)
         {
-            return InvalidOperation(StringsHelper.GetString(Strings.ADP_OpenReaderExists), e);
+            return InvalidOperation(StringsHelper.GetString(Strings.ADP_OpenReaderExists, marsOn ? ADP.Command : ADP.Connection), e);
         }
 
         static internal Exception TransactionCompleted()
@@ -2101,7 +2101,9 @@ namespace Microsoft.Data.Common
         internal const string ColumnEncryptionSystemProviderNamePrefix = "MSSQL_";
         internal const string CommitTransaction = "CommitTransaction";
         internal const string CommandTimeout = "CommandTimeout";
+        internal const string Command = "Command";
         internal const string ConnectionString = "ConnectionString";
+        internal const string Connection = "Connection";
         internal const string DataSetColumn = "DataSetColumn";
         internal const string DataSetTable = "DataSetTable";
         internal const string Delete = "Delete";
@@ -2336,6 +2338,26 @@ namespace Microsoft.Data.Common
             }
 
             return resultString.ToString();
+        }
+
+        static internal string BuildMultiPartName(string[] strings)
+        {
+            StringBuilder bld = new StringBuilder();
+            // Assume we want to build a full multi-part name with all parts except trimming separators for
+            // leading empty names (null or empty strings, but not whitespace). Separators in the middle 
+            // should be added, even if the name part is null/empty, to maintain proper location of the parts.
+            for (int i = 0; i < strings.Length; i++)
+            {
+                if (0 < bld.Length)
+                {
+                    bld.Append('.');
+                }
+                if (null != strings[i] && 0 != strings[i].Length)
+                {
+                    bld.Append(BuildQuotedString("[", "]", strings[i]));
+                }
+            }
+            return bld.ToString();
         }
 
         private const string hexDigits = "0123456789abcdef";

@@ -518,8 +518,7 @@ namespace Microsoft.Data.SqlClient
             }
             string TDSCommand;
 
-
-            TDSCommand = "select @@trancount; SET FMTONLY ON select * from " + this.DestinationTableName + " SET FMTONLY OFF ";
+            TDSCommand = "select @@trancount; SET FMTONLY ON select * from " + ADP.BuildMultiPartName(parts) + " SET FMTONLY OFF ";
             if (_connection.IsShiloh)
             {
                 // If its a temp DB then try to connect 
@@ -638,7 +637,8 @@ namespace Microsoft.Data.SqlClient
 
             Debug.Assert((internalResults != null), "Where are the results from the initial query?");
 
-            updateBulkCommandText.AppendFormat("insert bulk {0} (", this.DestinationTableName);
+            string[] parts = MultipartIdentifier.ParseMultipartIdentifier(this.DestinationTableName, "[\"", "]\"", Strings.SQL_BulkCopyDestinationTableName, true);
+            updateBulkCommandText.AppendFormat("insert bulk {0} (", ADP.BuildMultiPartName(parts));
             int nmatched = 0;               // number of columns that match and are accepted
             int nrejected = 0;              // number of columns that match but were rejected
             bool rejectColumn;            // true if a column is rejected because of an excluded type

@@ -33,7 +33,7 @@ This enumeration is used by <xref:Microsoft.Data.SqlClient.Server.SqlUserDefined
 ## Examples  
 The following example shows the `UserDefinedType` attribute of the Point UDT.  The UDT is byte-ordered, is named "Point", has a validation method named "ValidatePoint", and uses the native serialization format.  
   
-[!code-csharp[SqlUserDefinedType Example#1](~/sqlclient/doc/samples/SqlUserDefinedType.cs#1)]
+[!code-csharp[SqlUserDefinedType Example#1](~/../sqlclient/doc/samples/SqlUserDefinedType.cs#1)]
   
  ]]></format>
             </remarks>

@@ -27,7 +27,7 @@ Although the number of columns in the destination matches the number of columns 
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to 
 use a Transact-SQL `INSERT … SELECT` statement to copy the data.  
 
-[!code-csharp[SqlBulkCopy.ColumnMappingCollection#1](~/sqlClient/doc/samples/SqlBulkCopy.ColumnMappingCollection/CS/source.cs#1)]
+[!code-csharp[SqlBulkCopy.ColumnMappingCollection#1](~/../sqlclient/doc/samples/SqlBulkCopy_ColumnMappingCollection.cs#1)]
 
 ]]></format>
             </remarks>
@@ -49,7 +49,7 @@ Although the number of columns in the destination matches the number of columns 
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, 
 it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.  
 
-[!code-csharp[SqlBulkCopy.ColumnMapping#1](~/sqlClient/doc/samples/SqlBulkCopy_ColumnMapping.cs)]
+[!code-csharp[SqlBulkCopy.ColumnMapping#1](~/../sqlclient/doc/samples/SqlBulkCopy_ColumnMapping.cs)]
 
 ]]>
 </format>
@@ -77,7 +77,7 @@ Although the number of columns in the destination matches the number of columns 
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a 
 Transact-SQL `INSERT … SELECT` statement to copy the data.  
 
-[!code-csharp[SqlBulkCopy.ColumnMappingCollectionOrdinal#1](~/sqlClient/doc/samples/SqlBulkCopy_ColumnMappingCollectionOrdinal.cs)]
+[!code-csharp[SqlBulkCopy.ColumnMappingCollectionOrdinal#1](~/../sqlclient/doc/samples/SqlBulkCopy_ColumnMappingCollectionOrdinal.cs#1)]
 
 ]]></format>
             </remarks>
@@ -104,7 +104,7 @@ column map for the bulk copy.
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a 
 Transact-SQL `INSERT … SELECT` statement to copy the data.  
 
-[!code-csharp[SqlBulkCopy_ColumnMappingIndexColName#1](~/sqlClient/doc/samples/SqlBulkCopy_ColumnMappingIndexColName.cs)]
+[!code-csharp[SqlBulkCopy_ColumnMappingIndexColName#1](~/../sqlclient/doc/samples/SqlBulkCopy_ColumnMappingIndexColName.cs#1)]
 
 ]]></format>
             </remarks>
@@ -131,7 +131,7 @@ Although the number of columns in the destination matches the number of columns 
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, 
 it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.  
 
-[!code-csharp[SqlBulkCopy.ColumnMappingColNameIndex#1](~/sqlClient/doc/samples/SqlBulkCopy_ColumnMappingColNameIndex.cs)]
+[!code-csharp[SqlBulkCopy.ColumnMappingColNameIndex#1](~/../sqlclient/doc/samples/SqlBulkCopy_ColumnMappingColNameIndex.cs#1)]
 
 ]]></format>
             </remarks>
@@ -158,7 +158,7 @@ Although the number of columns in the destination matches the number of columns 
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, 
 it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.  
 
-[!code-csharp[SqlBulkCopy.ColumnMappingCollection#1](~/sqlClient/doc/samples/SqlBulkCopy_ColumnMappingCollection.cs)]
+[!code-csharp[SqlBulkCopy.ColumnMappingCollection#1](~/../sqlclient/doc/samples/SqlBulkCopy_ColumnMappingCollection.cs#1)]
 
 ]]></format>
             </remarks>
@@ -186,7 +186,7 @@ The <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnMappingCollection.Clear%2A> 
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a 
 Transact-SQL `INSERT … SELECT` statement to copy the data.  
 
-[!code-csharp[SqlBulkCopy.ColumnMappingOrdersDetails#1](~/sqlClient/doc/samples/SqlBulkCopy_ColumnMappingOrdersDetails.cs)]
+[!code-csharp[SqlBulkCopy.ColumnMappingOrdersDetails#1](~/../sqlclient/doc/samples/SqlBulkCopy_ColumnMappingOrdersDetails.cs#1)]
 
 ]]></format>
             </remarks>
@@ -253,7 +253,7 @@ mapping and then adds the appropriate mappings for the second bulk copy operatio
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a 
 Transact-SQL `INSERT … SELECT` statement to copy the data.  
 
-[!code-csharp[SqlBulkCopy.ColumnMappingRemove#1](~/sqlClient/doc/samples/SqlBulkCopy_ColumnMappingRemove.cs)]
+[!code-csharp[SqlBulkCopy.ColumnMappingRemove#1](~/../sqlclient/doc/samples/SqlBulkCopy_ColumnMappingRemove.cs#1)]
 
 ]]></format>
             </remarks>
@@ -285,7 +285,7 @@ Both bulk copies include a mapping for the **SalesOrderID**, so rather than clea
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a 
 Transact-SQL `INSERT … SELECT` statement to copy the data.  
 
-[!code-csharp[SqlBulkCopy.ColumnMappingRemoveAt#1](~/sqlClient/doc/samples/SqlBulkCopy_ColumnMappingRemoveAt.cs)]
+[!code-csharp[SqlBulkCopy.ColumnMappingRemoveAt#1](~/../sqlclient/doc/samples/SqlBulkCopy_ColumnMappingRemoveAt.cs#1)]
 
 ]]></format>
             </remarks>

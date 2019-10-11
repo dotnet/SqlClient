@@ -26,7 +26,7 @@ If you call <xref:System.ComponentModel.Component.Dispose%2A>, the <xref:Microso
 ## Examples
 The following example uses the <xref:Microsoft.Data.SqlClient.SqlCommand>, along <xref:Microsoft.Data.SqlClient.SqlDataAdapter> and <xref:Microsoft.Data.SqlClient.SqlConnection>, to select rows from a data source. The example is passed a connection string, a query string that is a Transact-SQL SELECT statement, and a string that is the name of the database table. The example then creates a <xref:Microsoft.Data.SqlClient.SqlCommandBuilder>.
 
-[!code-csharp[SqlCommandBuilder#1](~/sqlclient/doc/samples/SqlCommandBuilder.cs#1)]
+[!code-csharp[SqlCommandBuilder#1](~/../sqlclient/doc/samples/SqlCommandBuilder.cs#1)]
 ]]></format>
             </remarks>
         </SqlCommandBuilder>
