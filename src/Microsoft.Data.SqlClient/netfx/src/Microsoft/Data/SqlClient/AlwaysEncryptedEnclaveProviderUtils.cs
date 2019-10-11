@@ -11,7 +11,7 @@ namespace Microsoft.Data.SqlClient
     /// Class to hold the enclave's RSA public key
     /// </summary>
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/EnclavePublicKey.xml' path='docs/members[@name="EnclavePublicKey"]/EnclavePublicKey/*' />
-    public class EnclavePublicKey
+    internal class EnclavePublicKey
     {
         /// <summary>
         /// 
@@ -29,7 +29,7 @@ namespace Microsoft.Data.SqlClient
     /// <summary>
     /// Class to hold the Enclave's Diffie-Hellman public key and signature
     /// </summary>
-    public class EnclaveDiffieHellmanInfo
+    internal class EnclaveDiffieHellmanInfo
     {
         /// <summary>
         /// 
@@ -72,7 +72,7 @@ namespace Microsoft.Data.SqlClient
     /// <summary>
     /// 
     /// </summary>
-    public enum EnclaveType
+    internal enum EnclaveType
     {
         /// <summary>
         /// 

@@ -69,7 +69,7 @@ namespace Microsoft.Data.SqlClient
     /// <summary>
     /// Base class for Enclave provider
     /// </summary>
-    public abstract class EnclaveProviderBase : SqlColumnEncryptionEnclaveProvider
+    internal abstract class EnclaveProviderBase : SqlColumnEncryptionEnclaveProvider
     {
         #region Constants
         private const int NonceSize = 256;

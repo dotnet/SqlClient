@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClient
     /// <summary>
     /// To be added.
     /// </summary>
-    public abstract class VirtualizationBasedSecurityEnclaveProviderBase : EnclaveProviderBase
+    internal abstract class VirtualizationBasedSecurityEnclaveProviderBase : EnclaveProviderBase
     {
         #region Members
 

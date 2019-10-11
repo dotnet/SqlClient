@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient
     /// <summary>
     /// Implementation of an Enclave provider for Windows Virtual Secure Mode enclaves
     /// </summary>
-    public class HostGuardianServiceEnclaveProvider : VirtualizationBasedSecurityEnclaveProviderBase
+    internal class HostGuardianServiceEnclaveProvider : VirtualizationBasedSecurityEnclaveProviderBase
     {
         #region Members
 
@@ -26,7 +26,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// 
         /// </summary>
-        public uint MaxNumRetries;
+        public uint MaxNumRetries { get; set; }
 
         private int enclaveRetrySleepInSeconds = 3;
 
