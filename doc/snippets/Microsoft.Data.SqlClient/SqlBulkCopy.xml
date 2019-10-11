@@ -222,7 +222,7 @@ to copy the data.
 
 [!code-csharp[SqlBulkCopy.KeepIdentity#1](~/../sqlclient/doc/samples/SqlBulkCopy_KeepIdentity.cs#1)]
 ]]></format>
-			</example>
+			</remarks>
 		</ctor>
 		<BatchSize>
 			<summary>
