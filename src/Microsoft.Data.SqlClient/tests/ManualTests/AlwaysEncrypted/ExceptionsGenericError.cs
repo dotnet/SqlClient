@@ -21,7 +21,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => cmd.ExecuteNonQuery());
                     Assert.Contains(expectedErrorMessage, e.Message);
                 }
-                conn.Close();
             }
             // Turn on TCE now
             CertificateUtility.ChangeServerTceSetting (true, sb); // enable tce
@@ -31,65 +30,72 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public void TestDataAdapterAndEncrytionSetting () {
             SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr);
             // Create a new SqlCommand for select and delete
-            SqlConnection conn = CertificateUtility.GetOpenConnection(false, sb);
-            SqlCommand cmdInsert = new SqlCommand(ExceptionGenericErrorFixture.encryptedProcedureName, conn, null, SqlCommandColumnEncryptionSetting.Enabled);
-            cmdInsert.CommandType = CommandType.StoredProcedure;
-            cmdInsert.Parameters.Add("@c1", SqlDbType.Int, 4, "c1");
-            cmdInsert.UpdatedRowSource = UpdateRowSource.None;
-
-            SqlCommand cmdDelete = new SqlCommand($"delete {ExceptionGenericErrorFixture.encryptedTableName} where c1 = @c1", conn, null, SqlCommandColumnEncryptionSetting.Disabled);
-            cmdDelete.Parameters.Add("@c1", SqlDbType.Int, 4, "c1");
-            cmdDelete.UpdatedRowSource = UpdateRowSource.None;
-
-            using (SqlDataAdapter adapter = new SqlDataAdapter($"select c1 from {ExceptionGenericErrorFixture.encryptedTableName}", conn))
+            using (SqlConnection conn = CertificateUtility.GetOpenConnection(false, sb))
             {
-                adapter.InsertCommand = cmdInsert;
-                adapter.DeleteCommand = cmdDelete;
-
-                DataSet dataset = new DataSet();
-                adapter.Fill(dataset);
-                DataTable table = dataset.Tables[0];
-                foreach (DataRow row in table.Rows)
+                using (SqlCommand cmdInsert = new SqlCommand(ExceptionGenericErrorFixture.encryptedProcedureName, conn, null, SqlCommandColumnEncryptionSetting.Enabled))
+                using (SqlCommand cmdDelete = new SqlCommand($"delete {ExceptionGenericErrorFixture.encryptedTableName} where c1 = @c1", conn, null, SqlCommandColumnEncryptionSetting.Disabled))
+                using (SqlDataAdapter adapter = new SqlDataAdapter($"select c1 from {ExceptionGenericErrorFixture.encryptedTableName}", conn))
                 {
-                    row.Delete();
-                }
-                DataRow rowInserted = table.NewRow();
-                rowInserted["c1"] = 5;
-                table.Rows.Add(rowInserted);
-                adapter.UpdateBatchSize = 0; // remove batch size limit
-                                             // run batch update
+                    cmdInsert.CommandType = CommandType.StoredProcedure;
+                    cmdInsert.Parameters.Add("@c1", SqlDbType.Int, 4, "c1");
+                    cmdInsert.UpdatedRowSource = UpdateRowSource.None;
+                    cmdDelete.Parameters.Add("@c1", SqlDbType.Int, 4, "c1");
+                    cmdDelete.UpdatedRowSource = UpdateRowSource.None;
+                    adapter.InsertCommand = cmdInsert;
+                    adapter.DeleteCommand = cmdDelete;
 
-                string expectedErrorMessage = "SqlCommandColumnEncryptionSetting should be identical on all commands (SelectCommand, InsertCommand, UpdateCommand, DeleteCommand) when doing batch updates.";
-                InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => adapter.Update(dataset));
-                Assert.Contains(expectedErrorMessage, e.Message);
+                    DataSet dataset = new DataSet();
+                    adapter.Fill(dataset);
+                    DataTable table = dataset.Tables[0];
+                    foreach (DataRow row in table.Rows)
+                    {
+                        row.Delete();
+                    }
+                    DataRow rowInserted = table.NewRow();
+                    rowInserted["c1"] = 5;
+                    table.Rows.Add(rowInserted);
+                    adapter.UpdateBatchSize = 0; // remove batch size limit
+                                                    // run batch update
+
+                    string expectedErrorMessage = "SqlCommandColumnEncryptionSetting should be identical on all commands (SelectCommand, InsertCommand, UpdateCommand, DeleteCommand) when doing batch updates.";
+                    InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => adapter.Update(dataset));
+                    Assert.Contains(expectedErrorMessage, e.Message);
+                }
             }
-            conn.Close();
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void TestInvalidForceColumnEncryptionSetting() {
             SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr);
-            SqlConnection conn = CertificateUtility.GetOpenConnection(false, sb);
-            SqlCommand cmd = new SqlCommand (ExceptionGenericErrorFixture.encryptedProcedureName, conn);
-            SqlParameter param = cmd.Parameters.AddWithValue("@c1", 2);
-            param.ForceColumnEncryption = true;
-            cmd.CommandType = CommandType.StoredProcedure;
-            string expectedErrorMessage = $"Cannot set ForceColumnEncryption(true) for SqlParameter '@c1' because encryption is not enabled for the statement or procedure '{ExceptionGenericErrorFixture.encryptedProcedureName}'.";
-            InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => cmd.ExecuteNonQuery());
-            Assert.Contains(expectedErrorMessage, e.Message);
+            using (SqlConnection conn = CertificateUtility.GetOpenConnection(false, sb))
+            {
+                using (SqlCommand cmd = new SqlCommand(ExceptionGenericErrorFixture.encryptedProcedureName, conn))
+                {
+                    SqlParameter param = cmd.Parameters.AddWithValue("@c1", 2);
+                    param.ForceColumnEncryption = true;
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    string expectedErrorMessage = $"Cannot set ForceColumnEncryption(true) for SqlParameter '@c1' because encryption is not enabled for the statement or procedure '{ExceptionGenericErrorFixture.encryptedProcedureName}'.";
+                    InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => cmd.ExecuteNonQuery());
+                    Assert.Contains(expectedErrorMessage, e.Message);
+                }
+            }
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void TestParamUnexpectedEncryptionMD() {
             SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr);
-            SqlConnection conn = CertificateUtility.GetOpenConnection(true, sb);
-            SqlCommand cmd = new SqlCommand (ExceptionGenericErrorFixture.encryptedProcedureName, conn);
-            SqlParameter param = cmd.Parameters.AddWithValue("@c1", 2);
-            param.ForceColumnEncryption = true;
-            cmd.CommandType = CommandType.StoredProcedure;
-            string expectedErrorMessage = $"Cannot execute statement or procedure '{ExceptionGenericErrorFixture.encryptedProcedureName}' because ForceColumnEncryption(true) was set for SqlParameter '@c1' and the database expects this parameter to be sent as plaintext. This may be due to a configuration error.";
-            InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => cmd.ExecuteNonQuery());
-            Assert.Contains(expectedErrorMessage, e.Message);
+            using (SqlConnection conn = CertificateUtility.GetOpenConnection(true, sb))
+            {
+                using (SqlCommand cmd = new SqlCommand(ExceptionGenericErrorFixture.encryptedProcedureName, conn))
+                {
+                    SqlParameter param = cmd.Parameters.AddWithValue("@c1", 2);
+                    param.ForceColumnEncryption = true;
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    string expectedErrorMessage = $"Cannot execute statement or procedure '{ExceptionGenericErrorFixture.encryptedProcedureName}' because ForceColumnEncryption(true) was set for SqlParameter '@c1' and the database expects this parameter to be sent as plaintext. This may be due to a configuration error.";
+                    InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => cmd.ExecuteNonQuery());
+                    Assert.Contains(expectedErrorMessage, e.Message);
+                }
+            }
         }
     }
 
@@ -125,8 +131,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     cmdCreateProc.CommandType = CommandType.Text;
                     cmdCreateProc.ExecuteNonQuery();
                 }
-
-                conn.Close();
             }
         }
 
@@ -134,16 +138,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             // Do NOT remove certificate for concurrent consistency. Certificates are used for other test cases as well.
             SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr);
-            SqlConnection conn = CertificateUtility.GetOpenConnection(false, sb);
-            using (SqlCommand cmd = new SqlCommand($"drop table {encryptedTableName}", conn))
+            using (SqlConnection conn = CertificateUtility.GetOpenConnection(false, sb))
             {
-                cmd.CommandType = CommandType.Text;
-                cmd.ExecuteNonQuery();
+                using (SqlCommand cmd = new SqlCommand($"drop table {encryptedTableName}", conn))
+                {
+                    cmd.CommandType = CommandType.Text;
+                    cmd.ExecuteNonQuery();
 
-                cmd.CommandText = $"drop procedure {encryptedProcedureName}";
-                cmd.ExecuteNonQuery();
+                    cmd.CommandText = $"drop procedure {encryptedProcedureName}";
+                    cmd.ExecuteNonQuery();
+                }
             }
-            conn.Close();
 
             // Only use traceoff for non-sysadmin role accounts, Azure accounts does not have the permission.
             if (DataTestUtility.IsNotAzureServer())

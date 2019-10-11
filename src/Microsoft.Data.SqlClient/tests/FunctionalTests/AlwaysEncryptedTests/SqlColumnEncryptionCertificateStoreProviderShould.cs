@@ -396,7 +396,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             {
                 certificateStoreLocation = StoreLocation.CurrentUser;
             }
-            
+
             string certificateName = @"TestCertificate12";
 
             // Fetch the newly created cert.
