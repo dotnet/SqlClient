@@ -55,6 +55,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 
         /// <summary>
         /// List of Trusted Endpoints
+        /// 
         /// </summary>
         public readonly string[] TrustedEndPoints;
 
@@ -66,7 +67,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// </summary>
         /// <param name="authenticationCallback">Callback function used for authenticating to AAD.</param>
         public SqlColumnEncryptionAzureKeyVaultProvider(KeyVaultClient.AuthenticationCallback authenticationCallback) :
-            this(authenticationCallback, new[] { Constants.AzureKeyVaultPublicDomainName })
+            this(authenticationCallback, Constants.AzureKeyVaultPublicDomainNames)
         { }
 
         /// <summary>

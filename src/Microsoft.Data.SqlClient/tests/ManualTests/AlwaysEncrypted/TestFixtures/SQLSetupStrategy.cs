@@ -5,7 +5,10 @@
 using System;
 using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
+using Microsoft.IdentityModel.Clients.ActiveDirectory;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
@@ -16,15 +19,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         private readonly X509Certificate2 certificate;
         public string keyPath { get; private set; }
         public Table ApiTestTable { get; private set; }
+        public Table AKVTestTable { get; private set; }
         public Table BulkCopyAETestTable { get; private set; }
         public Table SqlParameterPropertiesTable { get; private set; }
         public Table End2EndSmokeTable { get; private set; }
+
+        public SqlColumnEncryptionAzureKeyVaultProvider akvStoreProvider;
+        public SqlColumnEncryptionCertificateStoreProvider certStoreProvider;
+        public CspColumnMasterKey cspColumnMasterKey;
 
         protected List<DbObject> databaseObjects = new List<DbObject>();
 
         public SQLSetupStrategy()
         {
             certificate = CertificateUtility.CreateCertificate();
+            certStoreProvider = new SqlColumnEncryptionCertificateStoreProvider();
+            akvStoreProvider = new SqlColumnEncryptionAzureKeyVaultProvider(authenticationCallback: authenticationCallback);
             SetupDatabase();
         }
 
@@ -32,14 +42,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         internal virtual void SetupDatabase()
         {
-            ColumnMasterKey columnMasterKey = new CspColumnMasterKey(GenerateUniqueName("CMK"), certificate.Thumbprint);
-            databaseObjects.Add(columnMasterKey);
+            cspColumnMasterKey = new CspColumnMasterKey(GenerateUniqueName("CMK"), certificate.Thumbprint);
+            databaseObjects.Add(cspColumnMasterKey);
 
-            SqlColumnEncryptionCertificateStoreProvider certStoreProvider = new SqlColumnEncryptionCertificateStoreProvider();
-            List<ColumnEncryptionKey> columnEncryptionKeys = CreateColumnEncryptionKeys(columnMasterKey, 2, certStoreProvider);
+            ColumnMasterKey akvColumnMasterKey = new AkvColumnMasterKey(GenerateUniqueName("AKVCMK"), akvUrl:DataTestUtility.AKVUrl);
+            databaseObjects.Add(akvColumnMasterKey);
+
+            List<ColumnEncryptionKey> columnEncryptionKeys = CreateColumnEncryptionKeys(cspColumnMasterKey, 2, certStoreProvider);
             databaseObjects.AddRange(columnEncryptionKeys);
 
-            List<Table> tables = CreateTables(columnEncryptionKeys);
+            List<ColumnEncryptionKey> akcColumnEncryptionKeys = CreateColumnEncryptionKeys(akvColumnMasterKey, 2, akvStoreProvider);
+            databaseObjects.AddRange(akcColumnEncryptionKeys);
+
+            List<Table> tables = CreateTables(columnEncryptionKeys, akcColumnEncryptionKeys);
             databaseObjects.AddRange(tables);
 
             using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TcpConnStr))
@@ -47,6 +62,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 sqlConnection.Open();
                 databaseObjects.ForEach(o => o.Create(sqlConnection));
             }
+        }
+
+        public async Task<string> authenticationCallback(string authority, string resource, string scope)
+        {
+            var authContext = new AuthenticationContext(authority);
+            ClientCredential clientCred = new ClientCredential(DataTestUtility.ClientId, DataTestUtility.ClientSecret);
+            AuthenticationResult result = await authContext.AcquireTokenAsync(resource, clientCred);
+            if (result == null)
+            {
+                throw new InvalidOperationException("Failed to retrieve access token for Key Vault");
+            }
+
+            return result.AccessToken;
         }
 
         protected List<ColumnEncryptionKey> CreateColumnEncryptionKeys(ColumnMasterKey columnMasterKey, int count, SqlColumnEncryptionKeyStoreProvider columnEncryptionKeyStoreProvider)
@@ -62,12 +90,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             return columnEncryptionKeys;
         }
 
-        private List<Table> CreateTables(IList<ColumnEncryptionKey> columnEncryptionKeys)
+        private List<Table> CreateTables(IList<ColumnEncryptionKey> columnEncryptionKeys, IList<ColumnEncryptionKey> akvColumnEncryptionKeys)
         {
             List<Table> tables = new List<Table>();
 
             ApiTestTable = new ApiTestTable(GenerateUniqueName("ApiTestTable"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
             tables.Add(ApiTestTable);
+
+            AKVTestTable = new AKVTestTable(GenerateUniqueName("AKVTestTable"), akvColumnEncryptionKeys[0], akvColumnEncryptionKeys[1]);
+            tables.Add(AKVTestTable);
 
             BulkCopyAETestTable = new BulkCopyAETestTable(GenerateUniqueName("BulkCopyAETestTable"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
             tables.Add(BulkCopyAETestTable);

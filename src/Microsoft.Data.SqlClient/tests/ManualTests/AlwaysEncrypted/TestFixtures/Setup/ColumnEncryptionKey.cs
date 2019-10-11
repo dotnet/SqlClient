@@ -12,7 +12,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
         public string Algorithm { get; set; } = "RSA_OAEP";
         public string EncryptedValue { get; }
         public ColumnMasterKey ColumnMasterKey { get; }
-        public int KeySizeInBytes { get; } = 32;
+        public static int KeySizeInBytes { get; } = 32;
 
         public ColumnEncryptionKey(string name, ColumnMasterKey columnMasterKey, SqlColumnEncryptionKeyStoreProvider columnEncryptionProvider) : base(name)
         {
@@ -55,7 +55,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
         /// </summary>
         /// <param name="length">No of cryptographically random bytes to be generated</param>
         /// <returns>A byte array containing cryptographically generated random bytes</returns>
-        private static byte[] GenerateRandomBytes(int length)
+        public static byte[] GenerateRandomBytes(int length)
         {
             // Generate random bytes cryptographically.
             byte[] randomBytes = new byte[length];

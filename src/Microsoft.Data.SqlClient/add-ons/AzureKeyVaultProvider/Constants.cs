@@ -20,7 +20,12 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <summary>
         /// Azure Key Vault Domain Name
         /// </summary>
-        internal const string AzureKeyVaultPublicDomainName = @"vault.azure.net";
+        internal static readonly string[] AzureKeyVaultPublicDomainNames = new string[] {
+            @"vault.azure.net", // default
+            @"vault.azure.cn", // Azure China
+            @"vault.usgovcloudapi.net", // US Government
+            @"vault.microsoftazure.de" // Azure Germany
+            };
 
         /// <summary>
         /// Always Encrypted Param names for exec handling
