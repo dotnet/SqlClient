@@ -631,7 +631,7 @@
     <value>The given ColumnName '{0}' does not match up with any column in data source.</value>
   </data>
   <data name="SQL_BulkLoadStringTooLong" xml:space="preserve">
-    <value>String or binary data would be truncated.</value>
+    <value>String or binary data would be truncated in table '{0}', column '{1}'. Truncated value: '{2}'.</value>
   </data>
   <data name="SQL_BulkLoadInvalidTimeout" xml:space="preserve">
     <value>Timeout Value '{0}' is less than 0.</value>

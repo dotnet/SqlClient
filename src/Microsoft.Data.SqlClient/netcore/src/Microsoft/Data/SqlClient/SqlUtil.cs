@@ -822,9 +822,9 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_BulkLoadNonMatchingColumnName, columnName), e);
         }
-        internal static Exception BulkLoadStringTooLong()
+        internal static Exception BulkLoadStringTooLong(string tableName, string columnName, string tuncatedValue)
         {
-            return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_BulkLoadStringTooLong));
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_BulkLoadStringTooLong, tableName, columnName, tuncatedValue));
         }
         internal static Exception BulkLoadInvalidVariantValue()
         {
