@@ -246,29 +246,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         /// </summary>
         public static void ChangeServerTceSetting(bool fEnable, SqlConnectionStringBuilder sb)
         {
-            SqlConnection conn = GetOpenConnection(false, sb, fSuppressAttestation: true);
-            SqlCommand cmd = null;
-            try
+            using (SqlConnection conn = GetOpenConnection(false, sb, fSuppressAttestation: true))
             {
-                if (fEnable)
+                using (SqlCommand cmd = new SqlCommand("", conn))
                 {
-                    cmd = new SqlCommand("dbcc traceoff(4053, -1)", conn);
+                    if (fEnable)
+                    {
+                        cmd.CommandText = "dbcc traceoff(4053, -1)";
+                    }
+                    else
+                    {
+                        cmd.CommandText = "dbcc traceon(4053, -1)"; // traceon disables feature
+                    }
+                    cmd.ExecuteNonQuery();
                 }
-                else
-                {
-                    cmd = new SqlCommand("dbcc traceon(4053, -1)", conn); // traceon disables feature
-                }
-
-                cmd.ExecuteNonQuery();
-                cmd.Dispose();
-                conn.Close();
-            }
-            finally
-            {
-                if (null != cmd)
-                    cmd.Dispose();
-                if (null != conn)
-                    conn.Dispose();
             }
         }
     }
