@@ -1670,10 +1670,14 @@ namespace Microsoft.Data.SqlClient
                         value = SqlParameter.CoerceValue(value, mt, out coercedToDataFeed, out typeChanged, false);
                         if (!coercedToDataFeed)
                         { // We do not need to test for TextDataFeed as it is only assigned to (N)VARCHAR(MAX)
-                            int len = ((isSqlType) && (!typeChanged)) ? ((SqlString)value).Value.Length : ((string)value).Length;
-                            if (len > length / 2)
+                            string str = ((isSqlType) && (!typeChanged)) ? ((SqlString)value).Value : ((string)value);
+                            if (str.Length > length / 2)
                             {
-                                throw SQL.BulkLoadStringTooLong();
+                                if (str.Length > 100)
+                                {
+                                    str = str.Remove(100);
+                                }
+                                throw SQL.BulkLoadStringTooLong(_destinationTableName, metadata.column, str);
                             }
                         }
                         break;
