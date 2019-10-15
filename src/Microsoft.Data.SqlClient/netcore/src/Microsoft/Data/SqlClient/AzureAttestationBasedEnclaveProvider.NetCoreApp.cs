@@ -1,16 +1,14 @@
-﻿//------------------------------------------------------------
-// Copyright (c) Microsoft Corporation.  All rights reserved.
-//------------------------------------------------------------
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Runtime.Caching;
-using System.Runtime.Serialization.Json;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using Microsoft.IdentityModel.JsonWebTokens;
@@ -47,9 +45,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <summary>
-    /// Implementation of an Enclave provider (both for Sgx and Vsm) with Azure Attestation
-    /// </summary>
+    // Implementation of an Enclave provider (both for Sgx and Vsm) with Azure Attestation
     internal class AzureAttestationEnclaveProvider : EnclaveProviderBase
     {
         #region Constants
@@ -68,23 +64,14 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Public methods
-        /// <summary>
-        /// When overridden in a derived class, looks up an existing enclave session information in the enclave session cache.
-        /// If the enclave provider doesn't implement enclave session caching, this method is expected to return null in the sqlEnclaveSession parameter.
-        /// </summary>
-        /// <param name="servername">The name of the SQL Server instance containing the enclave.</param>
-        /// <param name="attestationUrl">The endpoint of an attestation service, SqlClient contacts to attest the enclave.</param>
-        /// <param name="sqlEnclaveSession">When this method returns, the requested enclave session or null if the provider doesn't implement session caching. This parameter is treated as uninitialized.</param>
-        /// <param name="counter">A counter that the enclave provider is expected to increment each time SqlClient retrieves the session from the cache. The purpose of this field is to prevent replay attacks.</param>
+        // When overridden in a derived class, looks up an existing enclave session information in the enclave session cache.
+        // If the enclave provider doesn't implement enclave session caching, this method is expected to return null in the sqlEnclaveSession parameter.
         public override void GetEnclaveSession(string servername, string attestationUrl, out SqlEnclaveSession sqlEnclaveSession, out long counter)
         {
             GetEnclaveSessionHelper(servername, attestationUrl, true, out sqlEnclaveSession, out counter);
         }
 
-        /// <summary>
-        /// Gets the information that SqlClient subsequently uses to initiate the process of attesting the enclave and to establish a secure session with the enclave.
-        /// </summary>
-        /// <returns>The information SqlClient subsequently uses to initiate the process of attesting the enclave and to establish a secure session with the enclave.</returns>
+        // Gets the information that SqlClient subsequently uses to initiate the process of attesting the enclave and to establish a secure session with the enclave.
         public override SqlEnclaveAttestationParameters GetAttestationParameters()
         {
             ECDiffieHellmanCng clientDHKey = new ECDiffieHellmanCng(DiffieHellmanKeySize);
@@ -94,15 +81,7 @@ namespace Microsoft.Data.SqlClient
             return new SqlEnclaveAttestationParameters(AzureBasedAttestationProtocolId, attestationParam, clientDHKey);
         }
 
-        /// <summary>
-        /// When overridden in a derived class, performs enclave attestation, generates a symmetric key for the session, creates a an enclave session and stores the session information in the cache.
-        /// </summary>
-        /// <param name="attestationInfo">The information the provider uses to attest the enclave and generate a symmetric key for the session. The format of this information is specific to the enclave attestation protocol.</param>
-        /// <param name="clientDHKey">A Diffie-Hellman algorithm object that encapsulates a client-side key pair.</param>
-        /// <param name="attestationUrl">The endpoint of an attestation service for attesting the enclave.</param>
-        /// <param name="servername">The name of the SQL Server instance containing the enclave.</param>
-        /// <param name="sqlEnclaveSession">The requested enclave session or null if the provider doesn't implement session caching.</param>
-        /// <param name="counter">A counter that the enclave provider is expected to increment each time SqlClient retrieves the session from the cache. The purpose of this field is to prevent replay attacks.</param>
+        // When overridden in a derived class, performs enclave attestation, generates a symmetric key for the session, creates a an enclave session and stores the session information in the cache.
         public override void CreateEnclaveSession(byte[] attestationInfo, ECDiffieHellmanCng clientDHKey, string attestationUrl, string servername, out SqlEnclaveSession sqlEnclaveSession, out long counter)
         {
             sqlEnclaveSession = null;
@@ -147,12 +126,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <summary>
-        /// When overridden in a derived class, looks up and evicts an enclave session from the enclave session cache, if the provider implements session caching.
-        /// </summary>
-        /// <param name="serverName">The name of the SQL Server instance containing the enclave.</param>
-        /// <param name="enclaveAttestationUrl">The endpoint of an attestation service, SqlClient contacts to attest the enclave.</param>
-        /// <param name="enclaveSessionToInvalidate">The session to be invalidated.</param>
+        // When overridden in a derived class, looks up and evicts an enclave session from the enclave session cache, if the provider implements session caching.
         public override void InvalidateEnclaveSession(string serverName, string enclaveAttestationUrl, SqlEnclaveSession enclaveSessionToInvalidate)
         {
             InvalidateEnclaveSessionHelper(serverName, enclaveAttestationUrl, enclaveSessionToInvalidate);
@@ -160,49 +134,40 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Internal Class
-        /// <summary>
-        /// A model class respresenting the deserialization of the byte payload the client
-        /// receives from SQL Server while setting up a session.
-        /// Protocol format:
-        /// 1. Total Size of the attestation blob as UINT
-        /// 2. Size of Enclave RSA public key as UINT
-        /// 3. Size of Attestation token as UINT
-        /// 4. Enclave Type as UINT
-        /// 5. Enclave RSA public key (raw key, of length #2)
-        /// 6. Attestation token (of length #3)
-        /// 7. Size of Session Id was UINT
-        /// 8. Session id value
-        /// 9. Size of enclave ECDH public key
-        /// 10. Enclave ECDH public key (of length #9)
-        /// </summary>
+
+        // A model class respresenting the deserialization of the byte payload the client
+        // receives from SQL Server while setting up a session.
+        // Protocol format:
+        // 1. Total Size of the attestation blob as UINT
+        // 2. Size of Enclave RSA public key as UINT
+        // 3. Size of Attestation token as UINT
+        // 4. Enclave Type as UINT
+        // 5. Enclave RSA public key (raw key, of length #2)
+        // 6. Attestation token (of length #3)
+        // 7. Size of Session Id was UINT
+        // 8. Session id value
+        // 9. Size of enclave ECDH public key
+        // 10. Enclave ECDH public key (of length #9)
         internal class AzureAttestationInfo
         {
             public uint TotalSize { get; set; }
 
-            /// <summary>
-            /// The enclave's RSA Public Key.
-            /// Needed to establish trust of the enclave.
-            /// Used to verify the enclave's DiffieHellman info.
-            /// </summary>
+            // The enclave's RSA Public Key.
+            // Needed to establish trust of the enclave.
+            // Used to verify the enclave's DiffieHellman info.
             public EnclavePublicKey Identity { get; set; }
 
-            /// <summary>
-            /// The enclave report from the SQL Server host's enclave.
-            /// </summary>
+            // The enclave report from the SQL Server host's enclave.
             public AzureAttestationToken AttestationToken { get; set; }
 
-            /// <summary>
-            /// The id of the current session.
-            /// Needed to set up a secure session between the client and enclave.
-            /// </summary>
+            // The id of the current session.
+            // Needed to set up a secure session between the client and enclave.
             public long SessionId { get; set; }
 
             public EnclaveType EnclaveType { get; set; }
 
-            /// <summary>
-            /// The DiffieHellman public key and signature of SQL Server host's enclave.
-            /// Needed to set up a secure session between the client and enclave.
-            /// </summary>
+            // The DiffieHellman public key and signature of SQL Server host's enclave.
+            // Needed to set up a secure session between the client and enclave.
             public EnclaveDiffieHellmanInfo EnclaveDHInfo { get; set; }
 
             public AzureAttestationInfo(byte[] attestationInfo)
@@ -256,10 +221,8 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <summary>
-        /// A managed model representing the output of EnclaveGetAttestationReport
-        /// https://msdn.microsoft.com/en-us/library/windows/desktop/mt844233(v=vs.85).aspx
-        /// </summary>
+        // A managed model representing the output of EnclaveGetAttestationReport
+        // https://msdn.microsoft.com/en-us/library/windows/desktop/mt844233(v=vs.85).aspx
         internal class AzureAttestationToken
         {
             public string AttestationToken { get; set; }
@@ -273,13 +236,11 @@ namespace Microsoft.Data.SqlClient
         #endregion Internal Class
 
         #region Private helpers
-        /// <summary>
-        /// Prepare the attestation data in following format
-        /// Attestation Url length
-        /// Attestation Url
-        /// Size of nonce
-        /// Nonce value
-        /// </summary>
+        // Prepare the attestation data in following format
+        // Attestation Url length
+        // Attestation Url
+        // Size of nonce
+        // Nonce value
         internal byte[] PrepareAttestationParameters()
         {
             AttestationInfoCacheItem attestationInfoCacheItem = AttestationInfoCache[Thread.CurrentThread.ManagedThreadId.ToString()] as AttestationInfoCacheItem;
@@ -322,14 +283,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <summary>
-        /// Performs Attestation per the protocol used by Azure Attestation Service
-        /// </summary>
-        /// <param name="attestationUrl">Url of the attestation service</param>
-        /// <param name="enclaveType">Type of Enclave which we are attesting</param>
-        /// <param name="attestationToken">The Azure enclave attestation token about the SQL Server host's enclave</param>
-        /// <param name="enclavePublicKey">The enclave's RSA public key</param>
-        /// <param name="nonce">Nonce value send by client during attestation</param>
+        // Performs Attestation per the protocol used by Azure Attestation Service
         private void VerifyAzureAttestationInfo(string attestationUrl, EnclaveType enclaveType, string attestationToken, EnclavePublicKey enclavePublicKey, byte[] nonce)
         {
             bool shouldForceUpdateSigningKeys = false;
@@ -368,11 +322,7 @@ namespace Microsoft.Data.SqlClient
             ValidateAttestationClaims(enclaveType, attestationToken, enclavePublicKey, nonce);
         }
 
-        /// <summary>
-        /// Returns the innermost exception value
-        /// </summary>
-        /// <param name="exception">Current exception value</param>
-        /// <returns></returns>
+        // Returns the innermost exception value
         private static string GetInnerMostExceptionMessage(Exception exception)
         {
             Exception exLocal = exception;
@@ -384,13 +334,8 @@ namespace Microsoft.Data.SqlClient
             return exLocal.Message;
         }
 
-        /// <summary>
-        /// For the given attestation url it downloads the token signing keys from the well-known openid configuration end point.
-        /// It also caches that information for 1 day to avoid DDOS attacks.
-        /// </summary>
-        /// <param name="url">Url of attestation service</param>
-        /// <param name="forceUpdate">Re-download the signing keys irrespective of caching</param>
-        /// <returns>OpenIdConnectConfiguration object for the signing keys</returns>
+        // For the given attestation url it downloads the token signing keys from the well-known openid configuration end point.
+        // It also caches that information for 1 day to avoid DDOS attacks.
         private OpenIdConnectConfiguration GetOpenIdConfigForSigningKeys(string url, bool forceUpdate)
         {
             OpenIdConnectConfiguration openIdConnectConfig = OpenIdConnectConfigurationCache[url] as OpenIdConnectConfiguration;
@@ -415,24 +360,16 @@ namespace Microsoft.Data.SqlClient
             return openIdConnectConfig;
         }
 
-        /// <summary>
-        /// Return the attestation instance url for given attestation url
-        /// such as for https://sql.azure.attest.com/attest/SgxEnclave?api-version=2017-11-01
-        /// It will return https://sql.azure.attest.com
-        /// </summary>
-        /// <param name="attestationUrl">Url of the attestation service</param>
-        /// <returns>altered url</returns>
+        // Return the attestation instance url for given attestation url
+        // such as for https://sql.azure.attest.com/attest/SgxEnclave?api-version=2017-11-01
+        // It will return https://sql.azure.attest.com
         private string GetAttestationInstanceUrl(string attestationUrl)
         {
             Uri attestationUri = new Uri(attestationUrl);
             return attestationUri.GetLeftPart(UriPartial.Authority);
         }
 
-        /// <summary>
-        /// Generate the list of valid issuer Url's (in case if tokenIssuerUrl is using default port)
-        /// </summary>
-        /// <param name="tokenIssuerUrl">Attestation token issuer url</param>
-        /// <returns>List of valid issuer urls (can't be null/empty)</returns>
+        // Generate the list of valid issuer Url's (in case if tokenIssuerUrl is using default port)
         private static ICollection<string> GenerateListOfIssuers(string tokenIssuerUrl)
         {
             List<string> issuerUrls = new List<string>();
@@ -452,15 +389,7 @@ namespace Microsoft.Data.SqlClient
             return issuerUrls;
         }
 
-        /// <summary>
-        /// Verifies the attestation token is signed by correct signing keys.
-        /// </summary>
-        /// <param name="attestationToken">Complete attestation token</param>
-        /// <param name="tokenIssuerUrl">Attestation token issuer url</param>
-        /// <param name="issuerSigningKeys">List of attestation token issuer signing keys</param>
-        /// <param name="isKeySigningExpired">return if token signing key is expired</param>
-        /// <param name="exceptionMessage">returns exception message to the caller</param>
-        /// <returns></returns>
+        // Verifies the attestation token is signed by correct signing keys.
         private bool VerifyTokenSignature(string attestationToken, string tokenIssuerUrl, ICollection<SecurityKey> issuerSigningKeys, out bool isKeySigningExpired, out string exceptionMessage)
         {
             exceptionMessage = string.Empty;
@@ -507,11 +436,7 @@ namespace Microsoft.Data.SqlClient
             return isSignatureValid;
         }
 
-        /// <summary>
-        /// Computes the SHA256 hash of the byte array
-        /// </summary>
-        /// <param name="data">Input for SHA256</param>
-        /// <returns>SHA256 of the input data</returns>
+        // Computes the SHA256 hash of the byte array
         private byte[] ComputeSHA256(byte[] data)
         {
             byte[] result = null;
@@ -529,13 +454,7 @@ namespace Microsoft.Data.SqlClient
             return result;
         }
 
-        /// <summary>
-        /// Validate the claims in the attestation token
-        /// </summary>
-        /// <param name="enclaveType">Type of Enclave which we are attesting</param>
-        /// <param name="attestationToken">The Azure enclave attestation token about the SQL Server host's enclave</param>
-        /// <param name="enclavePublicKey">The enclave's RSA public key</param>
-        /// <param name="nonce">Nonce value send by client during attestation</param>
+        // Validate the claims in the attestation token
         private void ValidateAttestationClaims(EnclaveType enclaveType, string attestationToken, EnclavePublicKey enclavePublicKey, byte[] nonce)
         {
             // Read the json token
@@ -567,12 +486,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <summary>
-        /// Validate the claim value against the actual data
-        /// </summary>
-        /// <param name="claims">Collection of all the claims in the JWT</param>
-        /// <param name="claimName">Claim to validate</param>
-        /// <param name="actualData">Data to validate against the claim</param>
+        // Validate the claim value against the actual data
         private void ValidateClaim(Dictionary<string, string> claims, string claimName, byte[] actualData)
         {
             // Get required claim data
@@ -601,15 +515,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <summary>
-        /// Derives the shared secret between the client and enclave.
-        /// </summary>
-        /// <param name="enclavePublicKey">The enclave's RSA public key</param>
-        /// <param name="nonce">Nonce value send by client during attestation</param>
-        /// <param name="enclaveType">Type of Enclave which we are attesting</param>
-        /// <param name="enclaveDHInfo">The enclave's DiffieHellman key and signature info</param>
-        /// <param name="clientDHKey">The client's DiffieHellman key info</param>
-        /// <returns>A byte buffer containing the shared secret</returns>
+        // Derives the shared secret between the client and enclave.
         private byte[] GetSharedSecret(EnclavePublicKey enclavePublicKey, byte[] nonce, EnclaveType enclaveType, EnclaveDiffieHellmanInfo enclaveDHInfo, ECDiffieHellmanCng clientDHKey)
         {
             byte[] enclaveRsaPublicKey = enclavePublicKey.PublicKey;

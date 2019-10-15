@@ -1,23 +1,16 @@
-﻿//------------------------------------------------------------
-// Copyright (c) Microsoft Corporation.  All rights reserved.
-//------------------------------------------------------------
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
-using System.Data.SqlClient;
-using System.IO;
 using System.Linq;
-using System.Net;
 using System.Runtime.Caching;
-using System.Runtime.Serialization.Json;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <summary>
-    /// 
-    /// </summary>
     internal abstract class VirtualizationBasedSecurityEnclaveProviderBase : EnclaveProviderBase
     {
         #region Members
@@ -31,9 +24,7 @@ namespace Microsoft.Data.SqlClient
         private const int DiffieHellmanKeySize = 384;
         private const int VsmHGSProtocolId = 3;
 
-        /// <summary>
-        /// ENCLAVE_IDENTITY related constants
-        /// </summary>
+        // ENCLAVE_IDENTITY related constants
         private static readonly EnclaveIdentity ExpectedPolicy = new EnclaveIdentity()
         {
             OwnerId = new byte[]
@@ -93,23 +84,14 @@ namespace Microsoft.Data.SqlClient
 
         #region Public methods
 
-        /// <summary>
-        /// When overridden in a derived class, looks up an existing enclave session information in the enclave session cache.
-        /// If the enclave provider doesn't implement enclave session caching, this method is expected to return null in the sqlEnclaveSession parameter.
-        /// </summary>
-        /// <param name="servername">The name of the SQL Server instance containing the enclave.</param>
-        /// <param name="attestationUrl">The endpoint of an attestation service, SqlClient contacts to attest the enclave.</param>
-        /// <param name="sqlEnclaveSession">When this method returns, the requested enclave session or null if the provider doesn't implement session caching. This parameter is treated as uninitialized.</param>
-        /// <param name="counter">A counter that the enclave provider is expected to increment each time SqlClient retrieves the session from the cache. The purpose of this field is to prevent replay attacks.</param>
+        // When overridden in a derived class, looks up an existing enclave session information in the enclave session cache.
+        // If the enclave provider doesn't implement enclave session caching, this method is expected to return null in the sqlEnclaveSession parameter.
         public override void GetEnclaveSession(string servername, string attestationUrl, out SqlEnclaveSession sqlEnclaveSession, out long counter)
         {
             GetEnclaveSessionHelper(servername, attestationUrl, false, out sqlEnclaveSession, out counter);
         }
 
-        /// <summary>
-        /// Gets the information that SqlClient subsequently uses to initiate the process of attesting the enclave and to establish a secure session with the enclave.
-        /// </summary>
-        /// <returns>The information SqlClient subsequently uses to initiate the process of attesting the enclave and to establish a secure session with the enclave.</returns>
+        // Gets the information that SqlClient subsequently uses to initiate the process of attesting the enclave and to establish a secure session with the enclave.
         public override SqlEnclaveAttestationParameters GetAttestationParameters()
         {
             ECDiffieHellmanCng clientDHKey = new ECDiffieHellmanCng(DiffieHellmanKeySize);
@@ -118,15 +100,7 @@ namespace Microsoft.Data.SqlClient
             return new SqlEnclaveAttestationParameters(VsmHGSProtocolId, new byte[] { }, clientDHKey);
         }
 
-        /// <summary>
-        /// When overridden in a derived class, performs enclave attestation, generates a symmetric key for the session, creates a an enclave session and stores the session information in the cache.
-        /// </summary>
-        /// <param name="attestationInfo">The information the provider uses to attest the enclave and generate a symmetric key for the session. The format of this information is specific to the enclave attestation protocol.</param>
-        /// <param name="clientDHKey">A Diffie-Hellman algorithm object that encapsulates a client-side key pair.</param>
-        /// <param name="attestationUrl">The endpoint of an attestation service for attesting the enclave.</param>
-        /// <param name="servername">The name of the SQL Server instance containing the enclave.</param>
-        /// <param name="sqlEnclaveSession">The requested enclave session or null if the provider doesn't implement session caching.</param>
-        /// <param name="counter">A counter that the enclave provider is expected to increment each time SqlClient retrieves the session from the cache. The purpose of this field is to prevent replay attacks.</param>
+        // When overridden in a derived class, performs enclave attestation, generates a symmetric key for the session, creates a an enclave session and stores the session information in the cache.
         public override void CreateEnclaveSession(byte[] attestationInfo, ECDiffieHellmanCng clientDHKey, string attestationUrl, string servername, out SqlEnclaveSession sqlEnclaveSession, out long counter)
         {
             sqlEnclaveSession = null;
@@ -166,12 +140,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <summary>
-        /// When overridden in a derived class, looks up and evicts an enclave session from the enclave session cache, if the provider implements session caching.
-        /// </summary>
-        /// <param name="serverName">The name of the SQL Server instance containing the enclave.</param>
-        /// <param name="enclaveAttestationUrl">The endpoint of an attestation service, SqlClient contacts to attest the enclave.</param>
-        /// <param name="enclaveSessionToInvalidate">The session to be invalidated.</param>
+        // When overridden in a derived class, looks up and evicts an enclave session from the enclave session cache, if the provider implements session caching.
         public override void InvalidateEnclaveSession(string serverName, string enclaveAttestationUrl, SqlEnclaveSession enclaveSessionToInvalidate)
         {
             InvalidateEnclaveSessionHelper(serverName, enclaveAttestationUrl, enclaveSessionToInvalidate);
@@ -181,12 +150,7 @@ namespace Microsoft.Data.SqlClient
 
         #region Private helpers
 
-        /// <summary>
-        /// Performs Attestation per the protocol used by Virtual Secure Modules.
-        /// </summary>
-        /// <param name="attestationUrl">Url of the attestation service</param>
-        /// <param name="healthReport">The health report about the SQL Server host</param>
-        /// <param name="enclaveReportPackage">The enclave report about the SQL Server host's enclave</param>
+        // Performs Attestation per the protocol used by Virtual Secure Modules.
         private void VerifyAttestationInfo(string attestationUrl, HealthReport healthReport, EnclaveReportPackage enclaveReportPackage)
         {
             bool shouldRetryValidation;
@@ -220,23 +184,14 @@ namespace Microsoft.Data.SqlClient
             VerifyEnclaveReportSignature(enclaveReportPackage, healthReport.Certificate);
         }
 
-        /// <summary>
-        /// Makes a web request to the provided url and returns the response as a byte[]
-        /// </summary>
-        /// <param name="url">The url to make the request to</param>
-        /// <returns>The response as a byte[]</returns>
+        // Makes a web request to the provided url and returns the response as a byte[]
         protected abstract byte[] MakeRequest(string url);
 
-        /// <summary>
-        /// Gets the root signing certificate for the provided attestation service.
-        /// If the certificate does not exist in the cache, this will make a call to the
-        /// attestation service's "/signingCertificates" endpoint. This endpoint can
-        /// return multiple certificates if the attestation service consists
-        /// of multiple nodes.
-        /// </summary>
-        /// <param name="attestationUrl">Url of attestation service</param>
-        /// <param name="forceUpdate">Re-download the signing certificate irrespective of caching</param>
-        /// <returns>The root signing certificate(s) for the attestation service</returns>
+        // Gets the root signing certificate for the provided attestation service.
+        // If the certificate does not exist in the cache, this will make a call to the
+        // attestation service's "/signingCertificates" endpoint. This endpoint can
+        // return multiple certificates if the attestation service consists
+        // of multiple nodes.
         private X509Certificate2Collection GetSigningCertificate(string attestationUrl, bool forceUpdate)
         {
             attestationUrl = GetAttestationUrl(attestationUrl);
@@ -261,30 +216,17 @@ namespace Microsoft.Data.SqlClient
             return (X509Certificate2Collection)rootSigningCertificateCache[attestationUrl];
         }
 
-        /// <summary>
-        /// Return the endpoint for given attestation url
-        /// </summary>
-        /// <param name="attestationUrl">The url to alter for corresponding provider</param>
-        /// <returns>altered url</returns>
+        // Return the endpoint for given attestation url
         protected abstract string GetAttestationUrl(string attestationUrl);
 
-        /// <summary>
-        /// Checks if any certificates in the collection are expired
-        /// </summary>
-        /// <param name="certificates">A collection of certificates</param>
-        /// <returns>true if any certificates or expired, false otherwise</returns>
+        // Checks if any certificates in the collection are expired
         private bool AnyCertificatesExpired(X509Certificate2Collection certificates)
         {
             return certificates.OfType<X509Certificate2>().Any(c => c.NotAfter < DateTime.Now);
         }
 
-        /// <summary>
-        /// Verifies that a chain of trust can be built from the health report provided
-        /// by SQL Server and the attestation service's root signing certificate(s).
-        /// </summary>
-        /// <param name="signingCerts">The root signing certificate(s) of the attestation service</param>
-        /// <param name="healthReportCert">The health report about the SQL Server host in the form of an X509Certificate2</param>
-        /// <returns>An X509ChainStatusFlags indicating why the chain failed to build</returns>
+        // Verifies that a chain of trust can be built from the health report provided
+        // by SQL Server and the attestation service's root signing certificate(s).
         private X509ChainStatusFlags VerifyHealthReportAgainstRootCertificate(X509Certificate2Collection signingCerts, X509Certificate2 healthReportCert)
         {
             var chain = new X509Chain();
@@ -341,11 +283,7 @@ namespace Microsoft.Data.SqlClient
             return X509ChainStatusFlags.NoError;
         }
 
-        /// <summary>
-        /// Verifies the enclave report signature using the health report.
-        /// </summary>
-        /// <param name="enclaveReportPackage">The enclave report about the SQL Server host's enclave</param>
-        /// <param name="healthReportCert">The health report about the SQL Server host in the form of an X509Certificate2</param>
+        // Verifies the enclave report signature using the health report.
         private void VerifyEnclaveReportSignature(EnclaveReportPackage enclaveReportPackage, X509Certificate2 healthReportCert)
         {
             // Check if report is formatted correctly
@@ -369,10 +307,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <summary>
-        /// Verifies the enclave policy matches expected policy.
-        /// </summary>
-        /// <param name="enclaveReportPackage">The enclave report about the SQL Server host's enclave</param>
+        // Verifies the enclave policy matches expected policy.
         private void VerifyEnclavePolicy(EnclaveReportPackage enclaveReportPackage)
         {
             EnclaveIdentity identity = enclaveReportPackage.Report.Identity;
@@ -385,7 +320,6 @@ namespace Microsoft.Data.SqlClient
             VerifyEnclavePolicyProperty("SecureKernelSvn", identity.SecureKernelSvn, ExpectedPolicy.SecureKernelSvn);
             VerifyEnclavePolicyProperty("PlatformSvn", identity.PlatformSvn, ExpectedPolicy.PlatformSvn);
 
-
             // This is a check that the enclave is running without debug support or not.
             //
             if (identity.Flags != ExpectedPolicy.Flags)
@@ -394,12 +328,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <summary>
-        /// Verifies a byte[] enclave policy property
-        /// </summary>
-        /// <param name="property">The enclave property name</param>
-        /// <param name="actual">The actual enclave property from the enclave report</param>
-        /// <param name="expected">The expected enclave property</param>
+        // Verifies a byte[] enclave policy property
         private void VerifyEnclavePolicyProperty(string property, byte[] actual, byte[] expected)
         {
             if (!actual.SequenceEqual(expected))
@@ -409,12 +338,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <summary>
-        /// Verifies a uint enclave policy property
-        /// </summary>
-        /// <param name="property">The enclave property name</param>
-        /// <param name="actual">The actual enclave property from the enclave report</param>
-        /// <param name="expected">The expected enclave property</param>
+        // Verifies a uint enclave policy property
         private void VerifyEnclavePolicyProperty(string property, uint actual, uint expected)
         {
             if (actual < expected)
@@ -424,13 +348,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <summary>
-        /// Derives the shared secret between the client and enclave.
-        /// </summary>
-        /// <param name="enclavePublicKey">The enclave's RSA public key</param>
-        /// <param name="enclaveDHInfo">The enclave's DiffieHellman key and signature info</param>
-        /// <param name="clientDHKey">The client's DiffieHellman key info</param>
-        /// <returns>A byte buffer containing the shared secret</returns>
+        // Derives the shared secret between the client and enclave.
         private byte[] GetSharedSecret(EnclavePublicKey enclavePublicKey, EnclaveDiffieHellmanInfo enclaveDHInfo, ECDiffieHellmanCng clientDHKey)
         {
             // Perform signature verification. The enclave's DiffieHellman public key was signed by the enclave's RSA public key.
