@@ -1519,12 +1519,10 @@ namespace Microsoft.Data.SqlClient
                         if (!coercedToDataFeed)
                         {   // We do not need to test for TextDataFeed as it is only assigned to (N)VARCHAR(MAX)
                             string str = ((isSqlType) && (!typeChanged)) ? ((SqlString)value).Value : ((string)value);
-                            if (str.Length > length / 2)
+                            int maxStringLength = length / 2;
+                            if (str.Length > maxStringLength)
                             {
-                                if (str.Length > 100)
-                                {
-                                    str = str.Remove(100);
-                                }
+                                str = str.Remove(Math.Min(maxStringLength, 100));
                                 throw SQL.BulkLoadStringTooLong(_destinationTableName, metadata.column, str);
                             }
                         }
