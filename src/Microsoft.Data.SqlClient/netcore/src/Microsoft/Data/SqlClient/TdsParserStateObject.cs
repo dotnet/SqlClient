@@ -4146,7 +4146,6 @@ namespace Microsoft.Data.SqlClient
                 packet.Clear();
                 _sparePacket = packet;
             }
-
         }
 
         /*
