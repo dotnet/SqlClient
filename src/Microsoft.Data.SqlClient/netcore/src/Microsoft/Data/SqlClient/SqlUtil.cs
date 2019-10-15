@@ -1672,6 +1672,26 @@ namespace Microsoft.Data.SqlClient
             return ADP.Argument(System.SRHelper.GetString(SR.TCE_NullEnclavePackageForEnclaveBasedQuery, enclaveType, enclaveAttestationUrl));
         }
 
+        internal static Exception EnclaveProviderNotFound(string enclaveType, string attestationProtocol)
+        {
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.TCE_EnclaveProviderNotFound, enclaveType, attestationProtocol));
+        }
+
+        internal static Exception EnclaveTypeNotSupported(string enclaveType)
+        {
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.TCE_EnclaveTypeNotSupported, enclaveType));
+        }
+
+        internal static Exception AttestationProtocolNotSupportEnclaveType(string attestationProtocolStr, string enclaveType)
+        {
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.TCE_AttestationProtocolNotSupportEnclaveType, attestationProtocolStr, enclaveType));
+        }
+
+        internal static Exception AttestationProtocolNotSpecifiedForGeneratingEnclavePackage()
+        {
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage));
+        }
+
         #endregion Always Encrypted - Client side query processing errors
 
         #region Always Encrypted - SQL connection related error messages

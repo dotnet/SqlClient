@@ -293,6 +293,18 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal string EnclaveAttestationUrl => ((SqlConnectionString)ConnectionOptions).EnclaveAttestationUrl;
 
+        /// <summary>
+        /// Get attestation protocol
+        /// </summary>
+        internal SqlConnectionAttestationProtocol AttestationProtocol
+        {
+            get
+            {
+                SqlConnectionString opt = (SqlConnectionString)ConnectionOptions;
+                return opt.AttestationProtocol;
+            }
+        }
+
         // This method will be called once connection string is set or changed. 
         private void CacheConnectionStringProperties()
         {

@@ -4334,7 +4334,43 @@ namespace System {
                 return ResourceManager.GetString("TCE_EnclaveProviderNotFound", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Specifies an attestation protocol for its corresponding enclave attestation service.
+        /// </summary>
+        internal static string TCE_DbConnectionString_AttestationProtocol {
+            get {
+                return ResourceManager.GetString("TCE_DbConnectionString_AttestationProtocol", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        /// Looks up a localized string similar to The enclave type '{0}' returned from the server is not supported.
+        /// </summary>
+        internal static string TCE_EnclaveTypeNotSupported {
+            get {
+                return ResourceManager.GetString("TCE_EnclaveTypeNotSupported", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        /// Looks up a localized string similar to Failed to initialize connection. The attestation protocol does not support the enclave type '{0}'.
+        /// </summary>
+        internal static string TCE_AttestationProtocolNotSupportEnclaveType {
+            get {
+                return ResourceManager.GetString("TCE_AttestationProtocolNotSupportEnclaveType", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        /// Looks up a localized string similar to Error occured when generating enclave package. Attestation Protocol has not been specified in the connection string, but the query requires enclave computations.
+        /// </summary>
+        internal static string TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage {
+            get {
+                return ResourceManager.GetString("TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Executing a query requires enclave computations, but the application configuration is missing the enclave provider section..
         /// </summary>

@@ -100,6 +100,25 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionColumnEncryptionSetting.xml' path='docs/members[@name="SqlConnectionColumnEncryptionSetting"]/Enabled/*'/>
         Enabled = 1,
     }
+    /// <summary>
+    /// To add include file for docs
+    /// </summary>
+    public enum SqlConnectionAttestationProtocol
+    {
+        /// <summary>
+        /// To add include file for docs
+        /// </summary>    
+        NotSpecified = 0,
+        /// <summary>
+        /// To add include file for docs
+        /// </summary>
+        AAS = 1,
+        /// <summary>
+        /// To add include file for docs
+        /// </summary>
+        HGS = 3
+    }
+
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCertificateStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionCertificateStoreProvider"]/SqlColumnEncryptionCertificateStoreProvider/*'/>
     public partial class SqlColumnEncryptionCertificateStoreProvider : Microsoft.Data.SqlClient.SqlColumnEncryptionKeyStoreProvider
     {
