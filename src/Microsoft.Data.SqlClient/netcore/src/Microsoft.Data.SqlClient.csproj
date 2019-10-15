@@ -277,7 +277,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlQueryMetadataCache.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlEnclaveAttestationParameters.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProviderConfigurationManager.cs" />
     <Compile Include="Microsoft\Data\SqlClient\ColumnEncryptionKeyInfo.cs" />
     <Compile Include="Microsoft\Data\SqlClient\EnclaveDelegate.cs" />
     <Compile Include="Microsoft\Data\SqlClient\DataClassification\SensitivityClassification.cs" />

@@ -28,22 +28,6 @@ namespace Microsoft.Data.SqlClient
     /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/SqlConnection/*' />
     public sealed partial class SqlConnection : DbConnection, ICloneable
     {
-        static SqlConnection()
-        {
-            SqlColumnEncryptionEnclaveProviderConfigurationSection sqlColumnEncryptionEnclaveProviderConfigurationSection = null;
-            try
-            {
-                sqlColumnEncryptionEnclaveProviderConfigurationSection = (SqlColumnEncryptionEnclaveProviderConfigurationSection)ConfigurationManager.GetSection("SqlColumnEncryptionEnclaveProviders");
-            }
-            catch (ConfigurationErrorsException e)
-            {
-                throw SQL.CannotGetSqlColumnEncryptionEnclaveProviderConfig(e);
-            }
-
-            sqlColumnEncryptionEnclaveProviderConfigurationManager = new SqlColumnEncryptionEnclaveProviderConfigurationManager(sqlColumnEncryptionEnclaveProviderConfigurationSection);
-        }
-
-        static internal readonly SqlColumnEncryptionEnclaveProviderConfigurationManager sqlColumnEncryptionEnclaveProviderConfigurationManager;
 
         private bool _AsyncCommandInProgress;
 
