@@ -66,9 +66,6 @@ using System.Threading;
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <summary>
-    /// Base class for Enclave provider
-    /// </summary>
     internal abstract class EnclaveProviderBase : SqlColumnEncryptionEnclaveProvider
     {
         #region Constants
@@ -100,21 +97,13 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <summary>
-        /// It is used to save the attestation url and nonce value across API calls
-        /// </summary>
+        // It is used to save the attestation url and nonce value across API calls
         protected static readonly MemoryCache AttestationInfoCache = new MemoryCache("AttestationInfoCache");
         #endregion
 
         #region Public methods
-        /// <summary>
-        /// Helper method to get the enclave session from the cache if present
-        /// </summary>
-        /// <param name="servername">The name of the SQL Server instance containing the enclave.</param>
-        /// <param name="attestationUrl">The endpoint of an attestation service, SqlClient contacts to attest the enclave.</param>
-        /// <param name="shouldGenerateNonce">True, if we want to create the nonce value. true for AAS</param>
-        /// <param name="sqlEnclaveSession">When this method returns, the requested enclave session or null if the provider doesn't implement session caching. This parameter is treated as uninitialized.</param>
-        /// <param name="counter">A counter that the enclave provider is expected to increment each time SqlClient retrieves the session from the cache. The purpose of this field is to prevent replay attacks.</param>
+
+        // Helper method to get the enclave session from the cache if present
         protected void GetEnclaveSessionHelper(string servername, string attestationUrl, bool shouldGenerateNonce, out SqlEnclaveSession sqlEnclaveSession, out long counter)
         {
             sqlEnclaveSession = SessionCache.GetEnclaveSession(servername, attestationUrl, out counter);
@@ -193,10 +182,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <summary>
-        /// Reset the session lock status
-        /// </summary>
-        /// <param name="sqlEnclaveSession"></param>
+        // Reset the session lock status
         protected void UpdateEnclaveSessionLockStatus(SqlEnclaveSession sqlEnclaveSession)
         {
             // As per current design, we want to minimize the number of create session calls. To acheive this we block all the GetEnclaveSession calls until the first call to
@@ -217,38 +203,19 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <summary>
-        /// Helper method to remove the enclave session from the cache
-        /// </summary>
-        /// <param name="servername">The name of the SQL Server instance containing the enclave.</param>
-        /// <param name="attestationUrl">The endpoint of an attestation service, SqlClient contacts to attest the enclave.</param>
-        /// <param name="enclaveSessionToInvalidate"></param>
+        // Helper method to remove the enclave session from the cache
         protected void InvalidateEnclaveSessionHelper(string servername, string attestationUrl, SqlEnclaveSession enclaveSessionToInvalidate)
         {
             SessionCache.InvalidateSession(servername, attestationUrl, enclaveSessionToInvalidate);
         }
 
-        /// <summary>
-        /// Helper method for getting the enclave session from the session cache
-        /// </summary>
-        /// <param name="attestationUrl">The endpoint of an attestation service, SqlClient contacts to attest the enclave.</param>
-        /// <param name="servername">The name of the SQL Server instance containing the enclave.</param>
-        /// <param name="counter">A counter that the enclave provider is expected to increment each time SqlClient retrieves the session from the cache. The purpose of this field is to prevent replay attacks.</param>
-        /// <returns></returns>
+        // Helper method for getting the enclave session from the session cache
         protected SqlEnclaveSession GetEnclaveSessionFromCache(string attestationUrl, string servername, out long counter)
         {
             return SessionCache.GetEnclaveSession(servername, attestationUrl, out counter);
         }
 
-        /// <summary>
-        /// Helper method for adding the enclave session to the session cache
-        /// </summary>
-        /// <param name="attestationUrl">The endpoint of an attestation service, SqlClient contacts to attest the enclave.</param>
-        /// <param name="servername">The name of the SQL Server instance containing the enclave.</param>
-        /// <param name="sharedSecret">Shared secret computed using enclave ECDH public key</param>
-        /// <param name="sessionId">Session id for the current enclave session</param>
-        /// <param name="counter">A counter that the enclave provider is expected to increment each time SqlClient retrieves the session from the cache. The purpose of this field is to prevent replay attacks.</param>
-        /// <returns></returns>
+        // Helper method for adding the enclave session to the session cache
         protected SqlEnclaveSession AddEnclaveSessionToCache(string attestationUrl, string servername, byte[] sharedSecret, long sessionId, out long counter)
         {
             return SessionCache.CreateSession(attestationUrl, servername, sharedSecret, sessionId, out counter);

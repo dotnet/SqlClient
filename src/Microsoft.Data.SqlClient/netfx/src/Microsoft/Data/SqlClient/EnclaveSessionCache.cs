@@ -8,31 +8,20 @@ using System.Threading;
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <summary>
-    /// Maintains a cache of SqlEnclaveSession instances
-    /// </summary>
+    // Maintains a cache of SqlEnclaveSession instances
     internal class EnclaveSessionCache
     {
         private readonly MemoryCache enclaveMemoryCache = new MemoryCache("EnclaveMemoryCache");
         private readonly Object enclaveCacheLock = new Object();
 
-        /// <summary>
-        /// Nonce for each message sent by the client to the server to prevent replay attacks by the server,
-        /// given that for Always Encrypted scenarios, the server is considered an "untrusted" man-in-the-middle.
-        /// </summary>
+        // Nonce for each message sent by the client to the server to prevent replay attacks by the server,
+        // given that for Always Encrypted scenarios, the server is considered an "untrusted" man-in-the-middle.
         private long _counter;
 
-        /// <summary>
-        /// Cache timeout of 8 hours to be consistent with jwt validity.
-        /// </summary>
+        // Cache timeout of 8 hours to be consistent with jwt validity.
         private static int enclaveCacheTimeOutInHours = 8;
 
-        /// <summary>
-        /// Retrieves a SqlEnclaveSession from the cache
-        /// </summary>
-        /// <param name="servername"></param>
-        /// <param name="attestationUrl"></param>
-        /// <param name="counter"></param>
+        // Retrieves a SqlEnclaveSession from the cache
         public SqlEnclaveSession GetEnclaveSession(string servername, string attestationUrl, out long counter)
         {
             string cacheKey = GenerateCacheKey(servername, attestationUrl);
@@ -41,12 +30,7 @@ namespace Microsoft.Data.SqlClient
             return enclaveSession;
         }
 
-        /// <summary>
-        /// Invalidates a SqlEnclaveSession entry in the cache
-        /// </summary>
-        /// <param name="serverName"></param>
-        /// <param name="enclaveAttestationUrl"></param>
-        /// <param name="enclaveSessionToInvalidate"></param>
+        // Invalidates a SqlEnclaveSession entry in the cache
         public void InvalidateSession(string serverName, string enclaveAttestationUrl, SqlEnclaveSession enclaveSessionToInvalidate)
         {
             string cacheKey = GenerateCacheKey(serverName, enclaveAttestationUrl);
@@ -67,14 +51,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <summary>
-        /// Creates a new SqlEnclaveSession and adds it to the cache
-        /// </summary>
-        /// <param name="attestationUrl"></param>
-        /// <param name="serverName"></param>
-        /// <param name="sharedSecret"></param>
-        /// <param name="sessionId"></param>
-        /// <param name="counter"></param>
+        // Creates a new SqlEnclaveSession and adds it to the cache
         public SqlEnclaveSession CreateSession(string attestationUrl, string serverName, byte[] sharedSecret, long sessionId, out long counter)
         {
             string cacheKey = GenerateCacheKey(serverName, attestationUrl);
@@ -89,12 +66,7 @@ namespace Microsoft.Data.SqlClient
             return enclaveSession;
         }
 
-        /// <summary>
-        /// Generates the cache key for the enclave session cache
-        /// </summary>
-        /// <param name="serverName"></param>
-        /// <param name="attestationUrl"></param>
-        /// <returns></returns>
+        // Generates the cache key for the enclave session cache
         private string GenerateCacheKey(string serverName, string attestationUrl)
         {
             return (serverName + attestationUrl).ToLowerInvariant();

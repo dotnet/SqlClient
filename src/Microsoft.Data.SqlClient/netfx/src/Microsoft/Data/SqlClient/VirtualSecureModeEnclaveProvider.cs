@@ -13,9 +13,7 @@ using System.Threading;
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <summary>
-    /// Implementation of an Enclave provider for Windows Virtual Secure Mode enclaves
-    /// </summary>
+    // Implementation of an Enclave provider for Windows Virtual Secure Mode enclaves
     internal class HostGuardianServiceEnclaveProvider : VirtualizationBasedSecurityEnclaveProviderBase
     {
         #region Members
@@ -23,16 +21,10 @@ namespace Microsoft.Data.SqlClient
         // this is endpoint given to us by HGS team from windows
         private const string AttestationUrlSuffix = @"/v2.0/signingCertificates";
 
-        /// <summary>
-        /// To be added.
-        /// </summary>
         public int MaxNumRetries { get; set; }
 
         private int enclaveRetrySleepInSeconds = 3;
 
-        /// <summary>
-        /// To be added.
-        /// </summary>
         public int EnclaveRetrySleepInSeconds
         {
             get
@@ -54,21 +46,13 @@ namespace Microsoft.Data.SqlClient
 
         #region Private helpers
 
-        /// <summary>
-        /// Return the endpoint for given attestation url
-        /// </summary>
-        /// <param name="attestationUrl">The url to alter for corresponding provider</param>
-        /// <returns>altered url</returns>
+        // Return the endpoint for given attestation url
         protected override string GetAttestationUrl(string attestationUrl)
         {
             return attestationUrl.TrimEnd('/') + AttestationUrlSuffix;
         }
 
-        /// <summary>
-        /// Makes a web request to the provided url and returns the response as a byte[]
-        /// </summary>
-        /// <param name="url">The url to make the request to</param>
-        /// <returns>The response as a byte[]</returns>
+        // Makes a web request to the provided url and returns the response as a byte[]
         protected override byte[] MakeRequest(string url)
         {
             Exception exception = null;
@@ -105,44 +89,32 @@ namespace Microsoft.Data.SqlClient
 
     #region Models
 
-    /// <summary>
-    /// A model class respresenting the deserialization of the byte payload the client
-    /// receives from SQL Server while setting up a session.
-    /// </summary>
+    // A model class respresenting the deserialization of the byte payload the client
+    // receives from SQL Server while setting up a session.
     internal class AttestationInfo
     {
         public uint TotalSize { get; set; }
 
-        /// <summary>
-        /// The enclave's RSA Public Key.
-        /// Needed to establish trust of the enclave.
-        /// Used to verify the enclave's DiffieHellman info.
-        /// </summary>
+        // The enclave's RSA Public Key.
+        // Needed to establish trust of the enclave.
+        // Used to verify the enclave's DiffieHellman info.
         public EnclavePublicKey Identity { get; set; }
 
-        /// <summary>
-        /// The SQL Server host's health report the server received from the attestation service
-        /// and forwarded to the client.
-        /// Needed to establish trust of the enclave report received from SQL Server.
-        /// Used to verify the enclave report's signature.
-        /// </summary>
+        // The SQL Server host's health report the server received from the attestation service
+        // and forwarded to the client.
+        // Needed to establish trust of the enclave report received from SQL Server.
+        // Used to verify the enclave report's signature.
         public HealthReport HealthReport { get; set; }
 
-        /// <summary>
-        /// The enclave report from the SQL Server host's enclave.
-        /// </summary>
+        // The enclave report from the SQL Server host's enclave.
         public EnclaveReportPackage EnclaveReportPackage { get; set; }
 
-        /// <summary>
-        /// The id of the current session.
-        /// Needed to set up a secure session between the client and enclave.
-        /// </summary>
+        // The id of the current session.
+        // Needed to set up a secure session between the client and enclave.
         public long SessionId { get; set; }
 
-        /// <summary>
-        /// The DiffieHellman public key and signature of SQL Server host's enclave.
-        /// Needed to set up a secure session between the client and enclave.
-        /// </summary>
+        // The DiffieHellman public key and signature of SQL Server host's enclave.
+        // Needed to set up a secure session between the client and enclave.
         public EnclaveDiffieHellmanInfo EnclaveDHInfo { get; set; }
 
         public AttestationInfo(byte[] attestationInfo)
@@ -186,9 +158,7 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-    /// <summary>
-    /// A model class to hold the SQL Server's host health report in an X509Certificate2
-    /// </summary>
+    // A model class to hold the SQL Server's host health report in an X509Certificate2
     internal class HealthReport
     {
         private int Size { get; set; }
@@ -207,10 +177,8 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-    /// <summary>
-    /// A managed model representing the output of EnclaveGetAttestationReport
-    /// https://msdn.microsoft.com/en-us/library/windows/desktop/mt844233(v=vs.85).aspx
-    /// </summary>
+    // A managed model representing the output of EnclaveGetAttestationReport
+    // https://msdn.microsoft.com/en-us/library/windows/desktop/mt844233(v=vs.85).aspx
     internal class EnclaveReportPackage
     {
         private int Size { get; set; }
@@ -266,10 +234,8 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-    /// <summary>
-    /// A managed model of struct VBS_ENCLAVE_REPORT_PKG_HEADER
-    /// https://msdn.microsoft.com/en-us/library/windows/desktop/mt844257(v=vs.85).aspx
-    /// </summary>
+    // A managed model of struct VBS_ENCLAVE_REPORT_PKG_HEADER
+    // https://msdn.microsoft.com/en-us/library/windows/desktop/mt844257(v=vs.85).aspx
     internal class EnclaveReportPackageHeader
     {
         public uint PackageSize { get; set; }
@@ -312,10 +278,8 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-    /// <summary>
-    /// A managed model of struct VBS_ENCLAVE_REPORT
-    /// https://msdn.microsoft.com/en-us/library/windows/desktop/mt844255(v=vs.85).aspx
-    /// </summary>
+    // A managed model of struct VBS_ENCLAVE_REPORT
+    // https://msdn.microsoft.com/en-us/library/windows/desktop/mt844255(v=vs.85).aspx
     internal class EnclaveReport
     {
         private int Size { get; set; }
@@ -355,10 +319,8 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-    /// <summary>
-    /// A managed model of struct ENCLAVE_IDENTITY
-    /// https://msdn.microsoft.com/en-us/library/windows/desktop/mt844239(v=vs.85).aspx
-    /// </summary>
+    // A managed model of struct ENCLAVE_IDENTITY
+    // https://msdn.microsoft.com/en-us/library/windows/desktop/mt844239(v=vs.85).aspx
     internal class EnclaveIdentity
     {
         private int Size { get; set; }
@@ -442,10 +404,8 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-    /// <summary>
-    /// A managed model of struct VBS_ENCLAVE_REPORT_VARDATA_HEADER
-    /// https://msdn.microsoft.com/en-us/library/windows/desktop/mt827065(v=vs.85).aspx
-    /// </summary>
+    // A managed model of struct VBS_ENCLAVE_REPORT_VARDATA_HEADER
+    // https://msdn.microsoft.com/en-us/library/windows/desktop/mt827065(v=vs.85).aspx
     internal class EnclaveReportModuleHeader
     {
         public uint DataType { get; set; }
@@ -468,10 +428,8 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-    /// <summary>
-    /// A managed model of struct VBS_ENCLAVE_REPORT_MODULE
-    /// https://msdn.microsoft.com/en-us/library/windows/desktop/mt844256(v=vs.85).aspx
-    /// </summary>
+    // A managed model of struct VBS_ENCLAVE_REPORT_MODULE
+    // https://msdn.microsoft.com/en-us/library/windows/desktop/mt844256(v=vs.85).aspx
     internal class EnclaveReportModule
     {
         private static readonly int ImageEnclaveLongIdLength = 32;
@@ -528,10 +486,8 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-    /// <summary>
-    /// An enum representing the Flags property of ENCLAVE_IDENTITY
-    /// https://msdn.microsoft.com/en-us/library/windows/desktop/mt844239(v=vs.85).aspx
-    /// </summary>
+    // An enum representing the Flags property of ENCLAVE_IDENTITY
+    // https://msdn.microsoft.com/en-us/library/windows/desktop/mt844239(v=vs.85).aspx
     internal enum EnclaveIdentityFlags
     {
         ENCLAVE_FLAG_NONE = 0x00000000,
