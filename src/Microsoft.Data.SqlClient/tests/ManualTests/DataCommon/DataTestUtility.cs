@@ -38,7 +38,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             NpConnStr = Environment.GetEnvironmentVariable("TEST_NP_CONN_STR");
             TcpConnStr = Environment.GetEnvironmentVariable("TEST_TCP_CONN_STR");
             AADPasswordConnStr = Environment.GetEnvironmentVariable("AAD_PASSWORD_CONN_STR");
-            AKVUrl = Environment.GetEnvironmentVariable("AZURE_KEY_VAULT_URL");
+            AKVUrl = Environment.GetEnvironmentVariable("AZURE_KEY_VAULT_KEY_URL");
             ClientId = Environment.GetEnvironmentVariable("AZURE_KEY_VAULT_CLIENT_ID");
             ClientSecret = Environment.GetEnvironmentVariable("AZURE_KEY_VAULT_CLIENT_SECRET");
         }
@@ -73,6 +73,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool IsAADPasswordConnStrSetup()
         {
             return !string.IsNullOrEmpty(AADPasswordConnStr);
+        }
+        public static bool IsAKVUrlAvailable()
+        {
+            return !string.IsNullOrEmpty(AKVUrl);
         }
         public static bool IsAKVSetupAvailable()
         {

@@ -151,7 +151,7 @@
     <value>Specified encrypted column encryption key contains an invalid encryption algorithm version '{0}'. Expected version is '{1}'.</value>
   </data>
   <data name="InvalidCiphertextLengthTemplate" xml:space="preserve">
-    <value>The specified encrypted column encryption key's ciphertext length ({0}) does not match the ciphertext length ({1}) when using column master key (Azure Key Vault key) in '{2}'. The encrypted column encryption key may be corrupt, or the specified Azure Key Vault key path may be incorrect.</value>
+    <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (Azure Key Vault key) in '{2}'. The encrypted column encryption key may be corrupt, or the specified Azure Key Vault key path may be incorrect.</value>
   </data>
   <data name="InvalidKeyAlgorithm" xml:space="preserve">
     <value>Invalid key encryption algorithm specified: '{0}'. Expected value: '{1}'.</value>
@@ -160,7 +160,7 @@
     <value>Invalid signature of the encrypted column encryption key computed.</value>
   </data>
   <data name="InvalidSignatureLengthTemplate" xml:space="preserve">
-    <value>The specified encrypted column encryption key's signature length ({0}) does not match the signature length ({1}) when using column master key (Azure Key Vault key) in '{2}'. The encrypted column encryption key may be corrupt, or the specified Azure Key Vault key path may be incorrect.</value>
+    <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key (Azure Key Vault key) in '{2}'. The encrypted column encryption key may be corrupt, or the specified Azure Key Vault key path may be incorrect.</value>
   </data>
   <data name="InvalidSignatureTemplate" xml:space="preserve">
     <value>The specified encrypted column encryption key signature does not match the signature computed with the column master key (Asymmetric key in Azure Key Vault) in '{0}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.</value>
@@ -169,7 +169,7 @@
     <value>Cannot use a non-RSA key: '{0}'.</value>
   </data>
   <data name="NullAkvPath" xml:space="preserve">
-    <value>Azure Key Vault key path cannot be null.</value>
+    <value>Internal error. Azure Key Vault key path cannot be null.</value>
   </data>
   <data name="NullAlgorithm" xml:space="preserve">
     <value>Key encryption algorithm cannot be null.</value>
@@ -184,12 +184,12 @@
     <value>Hash should not be null while decrypting encrypted column encryption key.</value>
   </data>
   <data name="EmptyCekvInternal" xml:space="preserve">
-    <value>Internal error: Empty encrypted column encryption key specified.</value>
+    <value>Internal error. Empty encrypted column encryption key specified.</value>
   </data>
   <data name="NullAlgorithmInternal" xml:space="preserve">
-    <value>Internal error: Key encryption algorithm cannot be null.</value>
+    <value>Internal error. Key encryption algorithm cannot be null.</value>
   </data>
   <data name="NullCekvInternal" xml:space="preserve">
-    <value>Internal error: Encrypted column encryption key cannot be null.</value>
+    <value>Internal error. Encrypted column encryption key cannot be null.</value>
   </data>
 </root>

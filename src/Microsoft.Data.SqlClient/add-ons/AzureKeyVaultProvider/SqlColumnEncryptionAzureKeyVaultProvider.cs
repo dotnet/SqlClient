@@ -261,7 +261,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         public override byte[] EncryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] columnEncryptionKey)
         {
             // Validate the input parameters
-            this.ValidateNonEmptyAKVPath(masterKeyPath, isSystemOp: false);
+            this.ValidateNonEmptyAKVPath(masterKeyPath, isSystemOp: true);
 
             if (null == columnEncryptionKey)
             {
@@ -391,8 +391,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             if (String.Equals(encryptionAlgorithm, JsonWebKeyEncryptionAlgorithm.RSAOAEP, StringComparison.OrdinalIgnoreCase) != true)
             {
                 throw new ArgumentException(String.Format(CultureInfo.InvariantCulture, Strings.InvalidKeyAlgorithm,
-                                                            encryptionAlgorithm,
-                                                            JsonWebKeyEncryptionAlgorithm.RSAOAEP),
+                                                            encryptionAlgorithm, "RSA_OAEP' or 'RSA-OAEP"), // For supporting both algorithm formats.
                                             Constants.AeParamEncryptionAlgorithm);
             }
         }
