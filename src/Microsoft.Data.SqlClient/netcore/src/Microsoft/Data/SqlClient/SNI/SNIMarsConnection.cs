@@ -132,7 +132,10 @@ namespace Microsoft.Data.SqlClient.SNI
             Debug.Assert(Monitor.IsEntered(this), "HandleReceiveError was called without being locked.");
             foreach (SNIMarsHandle handle in _sessions.Values)
             {
-                handle.HandleReceiveError(packet);
+                if (packet.HasCompletionCallback)
+                {
+                    handle.HandleReceiveError(packet);
+                }
             }
             packet?.Dispose();
         }

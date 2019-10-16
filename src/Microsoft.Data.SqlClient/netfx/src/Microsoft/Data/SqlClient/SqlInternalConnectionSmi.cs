@@ -626,7 +626,8 @@ namespace Microsoft.Data.SqlClient
             {
                 // if MARS is on, then a datareader associated with the command exists
                 // or if MARS is off, then a datareader exists
-                throw ADP.OpenReaderExists(); // MDAC 66411
+                TdsParser parser = command.Connection.Parser;
+                throw ADP.OpenReaderExists(parser.MARSOn); // MDAC 66411
             }
         }
     }

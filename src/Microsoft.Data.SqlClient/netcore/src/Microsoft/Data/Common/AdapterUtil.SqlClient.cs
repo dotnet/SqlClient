@@ -273,14 +273,14 @@ namespace Microsoft.Data.Common
             return InvalidOperation(System.SRHelper.GetString(SR.ADP_OpenConnectionRequired, method, ADP.ConnectionStateMsg(state)));
         }
 
-        internal static Exception OpenReaderExists()
+        internal static Exception OpenReaderExists(bool marsOn)
         {
-            return OpenReaderExists(null);
+            return OpenReaderExists(null, marsOn);
         }
 
-        internal static Exception OpenReaderExists(Exception e)
+        internal static Exception OpenReaderExists(Exception e, bool marsOn)
         {
-            return InvalidOperation(System.SRHelper.GetString(SR.ADP_OpenReaderExists), e);
+            return InvalidOperation(System.SRHelper.GetString(SR.ADP_OpenReaderExists, marsOn ? ADP.Command : ADP.Connection), e);
         }
 
 
@@ -581,6 +581,8 @@ namespace Microsoft.Data.Common
 
         // global constant strings
         internal const string ColumnEncryptionSystemProviderNamePrefix = "MSSQL_";
+        internal const string Command = "Command";
+        internal const string Connection = "Connection";
         internal const string Parameter = "Parameter";
         internal const string ParameterName = "ParameterName";
         internal const string ParameterSetPosition = "set_Position";

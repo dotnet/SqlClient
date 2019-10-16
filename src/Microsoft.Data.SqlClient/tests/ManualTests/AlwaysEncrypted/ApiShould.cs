@@ -1882,7 +1882,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 sqlConnection.Open();
                 foreach (string name in procNames)
                 {
-                    using (SqlCommand cmd = new SqlCommand(string.Format("IF EXISTS (SELECT * FROM sys.procedures WHERE name = '{0}') \n DROP PROCEDURE {0}", name), sqlConnection))
+                    string procedureName = name.Trim( new Char[] { '[', ']'});
+
+                    using (SqlCommand cmd = new SqlCommand(string.Format("IF EXISTS (SELECT * FROM sys.procedures WHERE name = '{0}') \n DROP PROCEDURE {0}", procedureName), sqlConnection))
                     {
                         cmd.ExecuteNonQuery();
                     }

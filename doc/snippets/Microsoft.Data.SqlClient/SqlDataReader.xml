@@ -25,7 +25,7 @@
 ## Examples  
  The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection>, a <xref:Microsoft.Data.SqlClient.SqlCommand>, and a <xref:Microsoft.Data.SqlClient.SqlDataReader>. The example reads through the data, writing it out to the console window. The code then closes the <xref:Microsoft.Data.SqlClient.SqlDataReader>. The <xref:Microsoft.Data.SqlClient.SqlConnection> is closed automatically at the end of the `using` code block.  
   
- [!code-csharp[SqlDataReader_Read Example#1](~/sqlclient/doc/samples/SqlDataReader_Read.cs#1)]
+ [!code-csharp[SqlDataReader_Read Example#1](~/../sqlclient/doc/samples/SqlDataReader_Read.cs#1)]
   
  ]]></format>
             </remarks>
@@ -48,7 +48,7 @@
 ## Examples  
  The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection>, a `SqlCommand`, and a <xref:Microsoft.Data.SqlClient.SqlDataReader>. The example reads through the data, writing it out to the console window. The code then closes the <xref:Microsoft.Data.SqlClient.SqlDataReader>. The <xref:Microsoft.Data.SqlClient.SqlConnection> is closed automatically at the end of the `using` code block.  
   
- [!code-csharp[SqlDataReader_Close Example#1](~/sqlclient/doc/samples/SqlDataReader_Close.cs#1)]
+ [!code-csharp[SqlDataReader_Close Example#1](~/../sqlclient/doc/samples/SqlDataReader_Close.cs#1)]
   
  ]]></format>
             </remarks>
@@ -499,7 +499,7 @@
 ## Examples  
  The following example demonstrates how to use the <xref:Microsoft.Data.SqlClient.SqlDataReader.GetOrdinal%2A> method.  
   
- [!code-csharp[SqlDataReader_GetOrdinal#1](~/sqlclient/doc/samples/SqlDataReader_GetOrdinal.cs#1)]
+ [!code-csharp[SqlDataReader_GetOrdinal#1](~/../sqlclient/doc/samples/SqlDataReader_GetOrdinal.cs#1)]
   
  ]]></format>
             </remarks>
@@ -969,7 +969,7 @@
 ## Examples  
  The following example demonstrates using a correctly sized  array  to read all values from the current row in the supplied <xref:Microsoft.Data.SqlClient.SqlDataReader>. In addition, the sample demonstrates using a fixed-sized array that could be either smaller or larger than the number of available columns.  
   
- [!code-csharp[DataTableReader_GetValues#2](~/sqlclient/doc/samples/DataTableReader_GetValues.cs#2)]
+ [!code-csharp[DataTableReader_GetValues#2](~/../sqlclient/doc/samples/DataTableReader_GetValues.cs#2)]
   
  ]]></format>
             </remarks>
@@ -1048,7 +1048,7 @@
 ## Remarks  
  Call this method to check for null column values before calling the typed get methods (for example, <xref:Microsoft.Data.SqlClient.SqlDataReader.GetByte%2A>, <xref:Microsoft.Data.SqlClient.SqlDataReader.GetChar%2A>, and so on) to avoid raising an error.  
   
- [!code-csharp[SqlDataReader_IsDBNull#1](~/sqlclient/doc/samples/SqlDataReader_IsDBNull.cs#1)]
+ [!code-csharp[SqlDataReader_IsDBNull#1](~/../sqlclient/doc/samples/SqlDataReader_IsDBNull.cs#1)]
   
  ]]></format>
             </remarks>
@@ -1159,7 +1159,7 @@
 ## Examples  
  The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection>, a <xref:Microsoft.Data.SqlClient.SqlCommand>, and a <xref:Microsoft.Data.SqlClient.SqlDataReader>. The example reads through the data, writing it out to the console window. The code then closes the <xref:Microsoft.Data.SqlClient.SqlDataReader>. The <xref:Microsoft.Data.SqlClient.SqlConnection> is closed automatically at the end of the `using` code block.  
   
- [!code-csharp[SqlDataReader_Read Example#1](~/sqlclient/doc/samples/SqlDataReader_Read.cs#1)]
+ [!code-csharp[SqlDataReader_Read Example#1](~/../sqlclient/doc/samples/SqlDataReader_Read.cs#1)]
   
  ]]></format>
             </remarks>

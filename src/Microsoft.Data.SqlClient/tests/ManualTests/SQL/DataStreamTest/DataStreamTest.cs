@@ -68,7 +68,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // These tests fail with named pipes, since they try to do DNS lookups on named pipe paths.
             if (!usingNamePipes)
             {
-                if (DataTestUtility.IsUsingNativeSNI()) /* [ActiveIssue(108)] */
+                if (DataTestUtility.IsUsingNativeSNI())
                 {
                     TimeoutDuringReadAsyncWithClosedReaderTest(connectionString);
                 }
@@ -600,7 +600,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         xr.Read();
 
                         // make sure we get an exception if we try to get another reader
-                        errorMessage = SystemDataResourceManager.Instance.ADP_OpenReaderExists;
+                        errorMessage = SystemDataResourceManager.Instance.ADP_OpenReaderExists("Connection");
                         DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => xr = cmd.ExecuteXmlReader(), errorMessage);
                     }
 

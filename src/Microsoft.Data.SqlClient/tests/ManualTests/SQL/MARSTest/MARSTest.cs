@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
 #if DEBUG
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), /* [ActiveIssue(108)] */ nameof(DataTestUtility.IsUsingNativeSNI))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void MARSAsyncTimeoutTest()
         {
             using (SqlConnection connection = new SqlConnection(_connStr))
@@ -75,7 +75,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), /* [ActiveIssue(108)] */ nameof(DataTestUtility.IsUsingNativeSNI))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void MARSSyncTimeoutTest()
         {
             using (SqlConnection connection = new SqlConnection(_connStr))
@@ -324,6 +324,51 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                 "MARSSyncExecuteReaderTest4 failure #2");
 
                     Assert.False(reader1.Read() || reader2.Read() || reader3.Read(), "MARSSyncExecuteReaderTest4 failure #3");
+                }
+            }
+        }
+
+        [CheckConnStrSetupFact]
+        public static void MARSMultiDataReaderErrTest()
+        {
+            string queryString = "SELECT TOP 3 OrderID, CustomerID FROM dbo.Orders";
+
+            // With MARS on, one SqlCommand cannot have multiple DataReaders
+            using (SqlConnection conn = new SqlConnection(_connStr))
+            {
+                string openReaderExistsMessage = SystemDataResourceManager.Instance.ADP_OpenReaderExists("Command");
+
+                conn.Open();
+
+                using (SqlCommand command = new SqlCommand(queryString, conn))
+                {
+                    using (SqlDataReader reader1 = command.ExecuteReader())
+                    {
+                        DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() =>
+                        {
+                            SqlDataReader reader2 = command.ExecuteReader();
+                        }, openReaderExistsMessage);
+                    }
+                }
+            }
+
+            // With MARS off, one SqlConnection cannot have multiple DataReaders even if they are from different SqlCommands
+            using (SqlConnection conn = new SqlConnection(DataTestUtility.TcpConnStr))
+            {
+                string openReaderExistsMessage = SystemDataResourceManager.Instance.ADP_OpenReaderExists("Connection");
+
+                conn.Open();
+
+                using (SqlCommand command1 = new SqlCommand(queryString, conn))
+                using (SqlCommand command2 = new SqlCommand(queryString, conn))
+                {
+                    using (SqlDataReader reader1 = command1.ExecuteReader())
+                    {
+                        DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() =>
+                        {
+                            SqlDataReader reader2 = command2.ExecuteReader();
+                        }, openReaderExistsMessage);
+                    }
                 }
             }
         }
