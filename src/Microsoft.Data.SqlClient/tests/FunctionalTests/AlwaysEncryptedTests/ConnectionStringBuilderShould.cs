@@ -280,6 +280,19 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
             // Query the property to check if the above add was effective.
             Assert.False(connectionStringBuilder.ShouldSerialize(@"Enclave Attestation Url"));
+
+            string protocol = "HGS";
+            //Use the Add function to update the column Encryption Setting in the dictionary.
+            connectionStringBuilder.Add(@"Attestation Protocol", protocol);
+
+            // Query the ShouldSerialize method to check if the above add was effective.
+            Assert.True(connectionStringBuilder.ShouldSerialize(@"Attestation Protocol"));
+
+            // Use the Remove function to Remove the Column Encryption Setting from the dictionary.
+            connectionStringBuilder.Remove(@"Attestation Protocol");
+
+            // Query the property to check if the above add was effective.
+            Assert.False(connectionStringBuilder.ShouldSerialize(@"Attestation Protocol"));
         }
 
         /// <summary>
@@ -297,6 +310,25 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
                     .GetValue(sqlConnection);
 
                 Assert.Equal(expectedAttestationUrl, enclaveAttestationUrl);
+            }
+        }
+
+        /// <summary>
+        /// Verifies expected Attestation Protocol value for SqlConnectionColumnEncryptionSetting.
+        /// </summary>
+        /// <param name="connectionStringBuilder"></param>
+        /// <param name="expectedAttestationProtocol"></param>
+        private void VerifyAttestationProtocol(SqlConnectionStringBuilder connectionStringBuilder, string expectedAttestationProtocol)
+        {
+            string connectionString = connectionStringBuilder.ToString();
+            using (SqlConnection sqlConnection = new SqlConnection(connectionString))
+            {
+                string currentAttestationProtocol = (string)typeof(SqlConnection)
+                    .GetProperty(@"Attestation Protocol", BindingFlags.Instance | BindingFlags.NonPublic)
+                    .GetValue(sqlConnection);
+
+                Assert.Equal(expectedAttestationProtocol, currentAttestationProtocol);
+
             }
         }
 
