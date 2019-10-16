@@ -8,7 +8,7 @@
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <license type="expression">MIT</license>
     <projectUrl>https://aka.ms/sqlclientproject</projectUrl>
-    <iconUrl>https://go.microsoft.com/fwlink/?linkid=2090301</iconUrl>
+    <icon>dotnet.png</icon>
     <description>Always Encrypted Azure Key Vault Provider for Microsoft.Data.SqlClient.
 
 Available Types:
@@ -38,6 +38,8 @@ Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyStoreProvider.SqlColumnEncrypti
     </frameworkAssemblies>
   </metadata>
   <files>
+    <file src="..\..\icons\dotnet.png" target="" />
+
     <!--  NetFx Files  -->
     <!--file src="..\..\..\bin\Windows_NT\$Configuration$\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider\ref\net46\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.dll" target="ref\net46\" exclude="" />
     <file src="..\..\..\bin\Windows_NT\$Configuration$\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider\ref\net46\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.pdb" target="ref\net46\" exclude="" />

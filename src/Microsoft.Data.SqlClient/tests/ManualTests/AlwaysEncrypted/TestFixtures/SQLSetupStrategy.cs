@@ -36,6 +36,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             certStoreProvider = new SqlColumnEncryptionCertificateStoreProvider();
             akvStoreProvider = new SqlColumnEncryptionAzureKeyVaultProvider(authenticationCallback: authenticationCallback);
             SetupDatabase();
+
+            Dictionary<string, SqlColumnEncryptionKeyStoreProvider> customAkvKeyStoreProviders = new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>(capacity: 1, comparer: StringComparer.OrdinalIgnoreCase)
+                {
+                    {SqlColumnEncryptionAzureKeyVaultProvider.ProviderName, akvStoreProvider}
+                };
+
+            SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders: customAkvKeyStoreProviders);
         }
 
         protected SQLSetupStrategy(string customKeyPath) => keyPath = customKeyPath;
