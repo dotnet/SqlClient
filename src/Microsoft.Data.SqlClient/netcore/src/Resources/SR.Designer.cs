@@ -4354,7 +4354,7 @@ namespace System {
         }
 
         /// <summary>
-        /// Looks up a localized string similar to Failed to initialize connection. The attestation protocol does not support the enclave type '{0}'.
+        /// Looks up a localized string similar to Failed to initialize connection. The attestation protocol '{0}' does not support the enclave type '{1}'.
         /// </summary>
         internal static string TCE_AttestationProtocolNotSupportEnclaveType {
             get {

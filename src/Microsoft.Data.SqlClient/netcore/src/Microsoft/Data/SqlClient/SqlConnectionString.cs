@@ -722,17 +722,14 @@ namespace Microsoft.Data.SqlClient
         /// <returns></returns>
         internal SqlConnectionAttestationProtocol ConvertValueToAttestationProtocol()
         {
-            object value = base.Parsetable[KEY.AttestationProtocol];
-
-            string valStr = value as string;
-            if (valStr == null)
+            if (!TryGetParsetableValue(KEY.AttestationProtocol, out string value))
             {
                 return DEFAULT.AttestationProtocol;
             }
 
             try
             {
-                return DbConnectionStringBuilderUtil.ConvertToAttestationProtocol(KEY.AttestationProtocol, valStr);
+                return DbConnectionStringBuilderUtil.ConvertToAttestationProtocol(KEY.AttestationProtocol, value);
             }
             catch (FormatException e)
             {
