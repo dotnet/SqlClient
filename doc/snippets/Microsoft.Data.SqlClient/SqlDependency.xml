@@ -206,7 +206,7 @@
             <altmember cref="P:Microsoft.Data.SqlClient.SqlConnection.ConnectionString" />
         </StartConnectionStringQueue>
         <Stop>
-            <summary>Stops a listener for a connection specified in a previous <see cref="M:Microsoft.Data.SqlClient.SqlDependency.Start" /> call.</summary>
+            <summary>Stops a listener for a connection specified in a previous <see cref="o:Microsoft.Data.SqlClient.SqlDependency.Start" /> call.</summary>
             <remarks>
             <format type="text/markdown"><![CDATA[  
   
@@ -218,7 +218,7 @@
         </Stop>
         <StopConnectionString>
             <param name="connectionString">Connection string for the instance of SQL Server that was used in a previous <see cref="M:Microsoft.Data.SqlClient.SqlDependency.Start(System.String)" /> call.</param>
-            <summary>Stops a listener for a connection specified in a previous <see cref="M:Microsoft.Data.SqlClient.SqlDependency.Start" /> call.</summary>
+            <summary>Stops a listener for a connection specified in a previous <see cref="o:Microsoft.Data.SqlClient.SqlDependency.Start" /> call.</summary>
             <returns>
             <see langword="true" /> if the listener was completely stopped; <see langword="false" /> if the <see cref="T:System.AppDomain" /> was unbound from the listener, but there are is at least one other <see cref="T:System.AppDomain" /> using the same listener.</returns>
             <remarks>
@@ -237,7 +237,7 @@
         <StopConnectionStringQueue>
             <param name="connectionString">Connection string for the instance of SQL Server that was used in a previous <see cref="M:Microsoft.Data.SqlClient.SqlDependency.Start(System.String,System.String)" /> call.</param>
             <param name="queue">The SQL Server Service Broker queue that was used in a previous <see cref="M:Microsoft.Data.SqlClient.SqlDependency.Start(System.String,System.String)" /> call.</param>
-            <summary>Stops a listener for a connection specified in a previous <see cref="M:Microsoft.Data.SqlClient.SqlDependency.Start" /> call.</summary>
+            <summary>Stops a listener for a connection specified in a previous <see cref="o:Microsoft.Data.SqlClient.SqlDependency.Start" /> call.</summary>
             <returns>
             <see langword="true" /> if the listener was completely stopped; <see langword="false" /> if the <see cref="T:System.AppDomain" /> was unbound from the listener, but there is at least one other <see cref="T:System.AppDomain" /> using the same listener.</returns>
             <remarks>

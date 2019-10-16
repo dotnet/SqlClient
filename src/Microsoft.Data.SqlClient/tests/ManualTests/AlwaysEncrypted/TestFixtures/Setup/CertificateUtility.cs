@@ -3,8 +3,10 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
+using System.Runtime.Caching;
 using System.Security.Cryptography.X509Certificates;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
@@ -29,6 +31,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public static MethodInfo SqlColumnEncryptionCertificateStoreProviderRSADecrypt = SqlColumnEncryptionCertificateStoreProvider.GetMethod("RSADecrypt", BindingFlags.Instance | BindingFlags.NonPublic);
         public static MethodInfo SqlColumnEncryptionCertificateStoreProviderRSAVerifySignature = SqlColumnEncryptionCertificateStoreProvider.GetMethod("RSAVerifySignature", BindingFlags.Instance | BindingFlags.NonPublic);
         public static MethodInfo sqlClientEncryptionAlgorithmDecryptData = sqlClientEncryptionAlgorithm.GetMethod("DecryptData", BindingFlags.Instance | BindingFlags.NonPublic);
+        public static Type SqlSymmetricKeyCache = systemData.GetType("Microsoft.Data.SqlClient.SqlSymmetricKeyCache");
+        public static MethodInfo SqlSymmetricKeyCacheGetInstance = SqlSymmetricKeyCache.GetMethod("GetInstance", BindingFlags.Static | BindingFlags.NonPublic);
+        public static FieldInfo SqlSymmetricKeyCacheFieldCache = SqlSymmetricKeyCache.GetField("_cache", BindingFlags.Instance | BindingFlags.NonPublic);
 
         /// <summary>
         /// ECEK Corruption types (useful for testing)
@@ -79,6 +84,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             encryptedData = (byte[])finalCellBlob;
 
             return encryptedData;
+        }
+
+        /// <summary>
+        /// Through reflection, clear the SqlClient cache
+        /// </summary>
+        internal static void CleanSqlClientCache()
+        {
+            object sqlSymmetricKeyCache = SqlSymmetricKeyCacheGetInstance.Invoke(null, null);
+            MemoryCache cache = SqlSymmetricKeyCacheFieldCache.GetValue(sqlSymmetricKeyCache) as MemoryCache;
+
+            foreach (KeyValuePair<String, object> item in cache)
+            {
+                cache.Remove(item.Key);
+            }
         }
 
         /// <summary>
@@ -186,6 +205,62 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             decryptedData = (byte[])decryptedValue;
 
             return decryptedData;
+        }
+
+        internal static SqlConnection GetOpenConnection(bool fTceEnabled, SqlConnectionStringBuilder sb, bool fSuppressAttestation = false)
+        {
+            SqlConnection conn = new SqlConnection(GetConnectionString(fTceEnabled, sb, fSuppressAttestation));
+            try
+            {
+                conn.Open();
+            }
+            catch (Exception)
+            {
+                conn.Dispose();
+                throw;
+            }
+            
+            SqlConnection.ClearPool(conn);
+            return conn;
+        }
+
+        /// <summary>
+        /// Fetches a connection string that can be used to connect to SQL Server
+        /// </summary>
+        public static string GetConnectionString(bool fTceEnabled, SqlConnectionStringBuilder sb, bool fSuppressAttestation = false)
+        {
+            if (fTceEnabled)
+            {
+                sb.ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Enabled;
+            }
+            if (!fSuppressAttestation)
+            {
+                sb.EnclaveAttestationUrl = sb.EnclaveAttestationUrl;
+            }
+            sb.ConnectTimeout = 10000;
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Turns on/off the TCE feature on server via traceflag
+        /// </summary>
+        public static void ChangeServerTceSetting(bool fEnable, SqlConnectionStringBuilder sb)
+        {
+            using (SqlConnection conn = GetOpenConnection(false, sb, fSuppressAttestation: true))
+            {
+                using (SqlCommand cmd = new SqlCommand("", conn))
+                {
+                    if (fEnable)
+                    {
+                        cmd.CommandText = "dbcc traceoff(4053, -1)";
+                    }
+                    else
+                    {
+                        cmd.CommandText = "dbcc traceon(4053, -1)"; // traceon disables feature
+                    }
+                    cmd.ExecuteNonQuery();
+                }
+            }
         }
     }
 }

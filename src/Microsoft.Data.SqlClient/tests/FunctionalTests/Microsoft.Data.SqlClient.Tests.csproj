@@ -21,7 +21,13 @@
     <Compile Include="AlwaysEncryptedTests\SqlConnectionShould.cs" />
     <Compile Include="AlwaysEncryptedTests\TestFixtures.cs" />
     <Compile Include="AlwaysEncryptedTests\Utility.cs" />
+    <Compile Include="SqlCommandBuilderTest.cs" />
+    <Compile Include="SqlBulkCopyTest.cs" />
+    <Compile Include="SqlClientMetaDataCollectionNamesTest.cs" />
+    <Compile Include="SqlDataAdapterTest.cs" />
     <Compile Include="SqlConnectionBasicTests.cs" />
+    <Compile Include="SqlCommandTest.cs" />
+    <Compile Include="SqlConnectionTest.cs" />
     <Compile Include="TestTdsServer.cs" />
     <Compile Include="AADAccessTokenTest.cs" />
     <Compile Include="CloneTests.cs" />
@@ -57,6 +63,9 @@
     <PackageReference Include="microsoft.dotnet.buildtools.testsuite" Version="2.2.0-preview1-03110-01" />
     <PackageReference Include="System.Linq.Expressions" Version="4.3.0" />
     <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="4.5.1" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.1'">
+    <PackageReference Include="System.Data.Odbc" Version="4.5.0" />
   </ItemGroup>
    <ItemGroup>
     <Reference Include="System.Transactions" />

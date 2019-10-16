@@ -14,13 +14,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         public AKVTest(SQLSetupStrategy fixture)
         {
-            Dictionary<string, SqlColumnEncryptionKeyStoreProvider> customAkvKeyStoreProviders = new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>(capacity: 1, comparer: StringComparer.OrdinalIgnoreCase)
-                {
-                    {SqlColumnEncryptionAzureKeyVaultProvider.ProviderName, fixture.akvStoreProvider}
-                };
-
-            SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders: customAkvKeyStoreProviders);
-
             this.fixture = fixture;
             tableName = fixture.AKVTestTable.Name;
 

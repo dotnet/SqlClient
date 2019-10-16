@@ -43,8 +43,8 @@
   <Target Name="Restore"                   DependsOnTargets="RestoreNetCore;RestoreNetFx" />
   <Target Name="BuildAll"                  DependsOnTargets="BuildNetFx;BuildNetCore" />
   <Target Name="BuildAllConfigurations"    DependsOnTargets="BuildNetFx;BuildNetCoreAllOS;GenerateNugetPackage" />
-  <Target Name="BuildTestsNetCore"         DependsOnTargets="BuildFunctionalTestsNetCore;BuildManualTestsNetCore" />
-  <Target Name="BuildTestsNetFx"           DependsOnTargets="BuildFunctionalTestsNetFx;BuildManualTestsNetFx" />
+  <Target Name="BuildTestsNetCore"         DependsOnTargets="BuildAKVNetCore;BuildFunctionalTestsNetCore;BuildManualTestsNetCore" />
+  <Target Name="BuildTestsNetFx"           DependsOnTargets="BuildAKVNetFx;BuildFunctionalTestsNetFx;BuildManualTestsNetFx" />
 
   <Target Name="RestoreNetCore">
     <PropertyGroup>
