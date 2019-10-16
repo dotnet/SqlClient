@@ -649,6 +649,17 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Fact]
+        public void InferType_DateTimeOffset()
+        {
+            DateTimeOffset value = new DateTimeOffset(new DateTime(2019, 10, 15), new TimeSpan(1, 0, 0));
+
+            SqlParameter param = new SqlParameter();
+            param.Value = value;
+            Assert.Equal(SqlDbType.DateTimeOffset, param.SqlDbType);
+            Assert.Equal(DbType.DateTimeOffset, param.DbType);
+        }
+
+        [Fact]
         public void LocaleId()
         {
             SqlParameter parameter = new SqlParameter();
@@ -832,6 +843,80 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(DbType.String, p.DbType);
             Assert.Equal(SqlDbType.NVarChar, p.SqlDbType);
             Assert.Null(p.Value);
+        }
+
+        //[InlineData(SqlDbType.BigInt, DbType.Int64)]
+        //[InlineData(SqlDbType.Binary, DbType.Binary)]
+        //[InlineData(SqlDbType.Bit, DbType.Boolean)]
+        //[InlineData(SqlDbType.Char, DbType.AnsiStringFixedLength)]
+        //[InlineData(SqlDbType.Date, DbType.Date)]
+        //[InlineData(SqlDbType.DateTime, DbType.DateTime)]
+        //[InlineData(SqlDbType.DateTimeOffset, DbType.DateTimeOffset)]
+        //[InlineData(SqlDbType.Decimal, DbType.Decimal)]
+        //[InlineData(SqlDbType.Float, DbType.Double)]
+        //[InlineData(SqlDbType.Image, DbType.Binary)]
+        //[InlineData(SqlDbType.Int, DbType.Int32)]
+        //[InlineData(SqlDbType.Money, DbType.Currency)]
+        //[InlineData(SqlDbType.NChar, DbType.StringFixedLength)]
+        //[InlineData(SqlDbType.NText, DbType.String)]
+        //[InlineData(SqlDbType.NVarChar, DbType.String)]
+        //[InlineData(SqlDbType.Real, DbType.Single)]
+        //[InlineData(SqlDbType.SmallDateTime, DbType.DateTime)]
+        //[InlineData(SqlDbType.SmallInt, DbType.Int16)]
+        //[InlineData(SqlDbType.SmallMoney, DbType.Currency)]
+        //[InlineData(SqlDbType.Structured, DbType.Object)]
+        //[InlineData(SqlDbType.Text, DbType.AnsiString)]
+        //[InlineData(SqlDbType.Time, DbType.Time)]
+        //[InlineData(SqlDbType.Timestamp, DbType.Binary)]
+        //[InlineData(SqlDbType.TinyInt, DbType.Byte)]
+        //[InlineData(SqlDbType.Udt, DbType.Object)]
+        //[InlineData(SqlDbType.UniqueIdentifier, DbType.Guid)]
+        //[InlineData(SqlDbType.VarBinary, DbType.Binary)]
+        //[InlineData(SqlDbType.VarChar, DbType.AnsiString)]
+        //[InlineData(SqlDbType.Variant, DbType.Object)]
+        //[InlineData(SqlDbType.Xml, DbType.Xml)]
+
+
+        [Theory]
+        [InlineData(DbType.AnsiString, SqlDbType.VarChar)]
+        [InlineData(DbType.AnsiStringFixedLength, SqlDbType.Char)]
+        [InlineData(DbType.Binary, SqlDbType.VarBinary)]
+        [InlineData(DbType.Boolean, SqlDbType.Bit)]
+        [InlineData(DbType.Byte, SqlDbType.TinyInt)]
+        [InlineData(DbType.Currency, SqlDbType.Money)]
+        [InlineData(DbType.Date, SqlDbType.Date)]
+        [InlineData(DbType.DateTime, SqlDbType.DateTime)]
+        [InlineData(DbType.DateTime2, SqlDbType.DateTime2)]
+        [InlineData(DbType.DateTimeOffset, SqlDbType.DateTimeOffset)]
+        [InlineData(DbType.Decimal, SqlDbType.Decimal)]
+        [InlineData(DbType.Double, SqlDbType.Float)]
+        [InlineData(DbType.Guid, SqlDbType.UniqueIdentifier)]
+        [InlineData(DbType.Int16, SqlDbType.SmallInt)]
+        [InlineData(DbType.Int32, SqlDbType.Int)]
+        [InlineData(DbType.Int64, SqlDbType.BigInt)]
+        [InlineData(DbType.Object, SqlDbType.Variant)]
+        [InlineData(DbType.Single, SqlDbType.Real)]
+        [InlineData(DbType.String, SqlDbType.NVarChar)]
+        [InlineData(DbType.Time, SqlDbType.Time)]
+        [InlineData(DbType.Xml, SqlDbType.Xml)]
+        public void Parameter_Supported(DbType dbType, SqlDbType sqlDbType)
+        {
+            var parameter = new SqlParameter();
+            parameter.DbType = dbType;
+            Assert.Equal(dbType, parameter.DbType);
+            Assert.Equal(sqlDbType, parameter.SqlDbType);
+        }
+
+        [Theory]
+        [InlineData(DbType.SByte)]
+        [InlineData(DbType.UInt16)]
+        [InlineData(DbType.UInt32)]
+        [InlineData(DbType.UInt64)]
+        [InlineData(DbType.VarNumeric)]
+        public void Parameter_Unsupported(DbType dbType)
+        {
+            var parameter = new SqlParameter();
+            Assert.Throws<ArgumentException>(() => parameter.DbType = dbType);
         }
 
         [Fact]
