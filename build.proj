@@ -47,21 +47,15 @@
   <Target Name="BuildTestsNetFx"           DependsOnTargets="BuildAKVNetFx;BuildFunctionalTestsNetFx;BuildManualTestsNetFx" />
 
   <Target Name="RestoreNetCore">
-    <PropertyGroup>
-      <NugetPackageSourcesProperty>@(NugetPackageSources)</NugetPackageSourcesProperty>
-    </PropertyGroup>
-    <MSBuild Projects="@(NetCoreDriver)" Targets="restore" Properties="RestoreSources=$(NugetPackageSourcesProperty);TestTargetOS=$(TestOS)netcoreapp" />
-    <MSBuild Projects="@(ManualTests)" Targets="restore" Properties="RestoreSources=$(NugetPackageSourcesProperty);TestTargetOS=$(TestOS)netcoreapp" />
-    <MSBuild Projects="@(FunctionalTests)" Targets="restore" Properties="RestoreSources=$(NugetPackageSourcesProperty);TestTargetOS=$(TestOS)netcoreapp" />
+    <MSBuild Projects="@(NetCoreDriver)" Targets="restore" Properties="TestTargetOS=$(TestOS)netcoreapp" />
+    <MSBuild Projects="@(ManualTests)" Targets="restore" Properties="TestTargetOS=$(TestOS)netcoreapp" />
+    <MSBuild Projects="@(FunctionalTests)" Targets="restore" Properties="TestTargetOS=$(TestOS)netcoreapp" />
   </Target>
 
   <Target Name="RestoreNetFx" Condition="'$(IsEnabledNetFx)' == 'true'">
-    <PropertyGroup>
-      <NugetPackageSourcesProperty>@(NugetPackageSources)</NugetPackageSourcesProperty>
-    </PropertyGroup>
-    <MSBuild Projects="@(NetFxDriver)" Targets="restore" Properties="RestoreSources=$(NugetPackageSourcesProperty);TestTargetOS=$(TestOS)netfx" />
-    <MSBuild Projects="@(ManualTests)" Targets="restore" Properties="RestoreSources=$(NugetPackageSourcesProperty);TestTargetOS=$(TestOS)netfx" />
-    <MSBuild Projects="@(FunctionalTests)" Targets="restore" Properties="RestoreSources=$(NugetPackageSourcesProperty);TestTargetOS=$(TestOS)netfx" />
+    <MSBuild Projects="@(NetFxDriver)" Targets="restore" Properties="TestTargetOS=$(TestOS)netfx" />
+    <MSBuild Projects="@(ManualTests)" Targets="restore" Properties="TestTargetOS=$(TestOS)netfx" />
+    <MSBuild Projects="@(FunctionalTests)" Targets="restore" Properties="TestTargetOS=$(TestOS)netfx" />
   </Target>
 
   <Target Name="BuildNetFx" DependsOnTargets="RestoreNetFx" Condition="'$(IsEnabledNetFx)' == 'true'">
@@ -105,16 +99,16 @@
   <Target Name="BuildAddOns"           DependsOnTargets="BuildAKVProvider" />
   <Target Name="BuildAKVProvider"      DependsOnTargets="BuildAKVNetFx;BuildAKVNetCore;GenerateAKVProviderNugetPackage" />
   
-  <Target Name="BuildAKVNetFx" DependsOnTargets="BuildNetFx">
+  <Target Name="BuildAKVNetFx">
     <MSBuild Projects="@(AKVProvider)" Targets="restore" Properties="TestTargetOS=$(TestOS)netfx" />
     <MSBuild Projects="@(AKVProvider)" Properties="TestTargetOS=$(TestOS)netfx;Platform=AnyCPU;$(ProjectProperties)" />
   </Target>
 
-  <Target Name="BuildAKVNetCore" DependsOnTargets="BuildNetCoreAllOS">
+  <Target Name="BuildAKVNetCore">
     <MSBuild Projects="@(AKVProvider)" Targets="restore" Properties="TestTargetOS=$(TestOS)netcoreapp" />
-    <MSBuild Projects="@(AKVProvider)"  Properties="$(ProjectProperties);Platform=AnyCPU;OSGroup=Unix;"  RemoveProperties="TargetsWindows;TargetsUnix;" />
-    <MSBuild Projects="@(AKVProvider)"  Properties="$(ProjectProperties);Platform=AnyCPU;OSGroup=Windows_NT;"  RemoveProperties="TargetsWindows;TargetsUnix;" />
-    <MSBuild Projects="@(AKVProvider)"  Properties="$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;"  RemoveProperties="TargetsWindows;TargetsUnix;" />
+    <MSBuild Projects="@(AKVProvider)"  Properties="TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=Unix;"  RemoveProperties="TargetsWindows;TargetsUnix;" />
+    <MSBuild Projects="@(AKVProvider)"  Properties="TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=Windows_NT;"  RemoveProperties="TargetsWindows;TargetsUnix;" />
+    <MSBuild Projects="@(AKVProvider)"  Properties="TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;"  RemoveProperties="TargetsWindows;TargetsUnix;" />
   </Target>
   
 </Project>
