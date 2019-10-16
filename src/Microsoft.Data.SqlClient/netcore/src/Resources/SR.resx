@@ -121,7 +121,7 @@
     <value>Invalid index {0} for this {1} with Count={2}.</value>
   </data>
   <data name="ADP_CollectionIndexString" xml:space="preserve">
-    <value>An {0} with {1} '{2}' is not contained by this {3}.</value>
+    <value>A {0} with {1} '{2}' is not contained by this {3}.</value>
   </data>
   <data name="ADP_CollectionInvalidType" xml:space="preserve">
     <value>The {0} only accepts non-null {1} type objects, not {2} objects.</value>

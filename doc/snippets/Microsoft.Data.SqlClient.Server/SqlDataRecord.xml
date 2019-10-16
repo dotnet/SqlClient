@@ -16,7 +16,7 @@
 ## Examples  
  The following example shows how to create several <xref:Microsoft.Data.SqlClient.Server.SqlMetaData> objects, which describe the column metadata of a record, and creating a <xref:Microsoft.Data.SqlClient.Server.SqlDataRecord>.  The column values of the <xref:Microsoft.Data.SqlClient.Server.SqlDataRecord> are set and the <xref:Microsoft.Data.SqlClient.Server.SqlDataRecord> is sent to the calling program by using the <xref:Microsoft.SqlServer.Server.SqlContext> class.  
   
- [!code-csharp[SqlDataRecord Samples#1](~/sqlclient/doc/samples/SqlDataRecord.cs#1)]
+ [!code-csharp[SqlDataRecord Samples#1](~/../sqlclient/doc/samples/SqlDataRecord.cs#1)]
   
  ]]></format>
             </remarks>
@@ -30,7 +30,7 @@
 ## Examples  
  The following example shows how to create a new <xref:Microsoft.Data.SqlClient.Server.SqlDataRecord> object from two  <xref:Microsoft.Data.SqlClient.Server.SqlMetaData> objects, which indicate the column name and data type.  
   
- [!code-csharp[SqlDataRecord Samples#2](~/sqlclient/doc/samples/SqlDataRecord.cs#2)]
+ [!code-csharp[SqlDataRecord Samples#2](~/../sqlclient/doc/samples/SqlDataRecord.cs#2)]
   
  ]]></format>
             </remarks>
