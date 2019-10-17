@@ -66,6 +66,7 @@ using System.Threading;
 namespace Microsoft.Data.SqlClient
 {
     // Base class for Enclave provider
+
     internal abstract class EnclaveProviderBase : SqlColumnEncryptionEnclaveProvider
     {
         #region Constants

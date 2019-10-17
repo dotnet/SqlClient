@@ -17,7 +17,6 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-    // Class to hold the Enclave's Diffie-Hellman public key and signature
     internal class EnclaveDiffieHellmanInfo
     {
         public int Size { get; private set; }

@@ -44,7 +44,6 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Microsoft.Data.SqlClient
 {
-
     // Implementation of an Enclave provider (both for Sgx and Vsm) with Azure Attestation
     internal class AzureAttestationEnclaveProvider : EnclaveProviderBase
     {
