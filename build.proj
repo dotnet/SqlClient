@@ -41,7 +41,7 @@
 
   <!-- Top Level Build targets -->
   <Target Name="Restore"                   DependsOnTargets="RestoreNetCore;RestoreNetFx" />
-  <Target Name="BuildAll"                  DependsOnTargets="BuildNetFx;BuildNetCore" />
+  <Target Name="BuildAll"                  DependsOnTargets="BuildNetFx;BuildNetCoreAllOS" />
   <Target Name="BuildAllConfigurations"    DependsOnTargets="BuildNetFx;BuildNetCoreAllOS;GenerateNugetPackage" />
   <Target Name="BuildTestsNetCore"         DependsOnTargets="BuildAKVNetCore;BuildFunctionalTestsNetCore;BuildManualTestsNetCore" />
   <Target Name="BuildTestsNetFx"           DependsOnTargets="BuildAKVNetFx;BuildFunctionalTestsNetFx;BuildManualTestsNetFx" />
@@ -99,9 +99,9 @@
   <Target Name="BuildAddOns"           DependsOnTargets="BuildAKVProvider" />
   <Target Name="BuildAKVProvider"      DependsOnTargets="BuildAKVNetFx;BuildAKVNetCore;GenerateAKVProviderNugetPackage" />
   
-  <Target Name="BuildAKVNetFx">
+  <Target Name="BuildAKVNetFx" Condition="'$(IsEnabledNetFx)' == 'true'">
     <MSBuild Projects="@(AKVProvider)" Targets="restore" Properties="TestTargetOS=$(TestOS)netfx" />
-    <MSBuild Projects="@(AKVProvider)" Properties="TestTargetOS=$(TestOS)netfx;Platform=AnyCPU;$(ProjectProperties)" />
+    <MSBuild Projects="@(AKVProvider)" Properties="TestTargetOS=$(TestOS)netfx;Platform=AnyCPU;$(TestProjectProperties)" />
   </Target>
 
   <Target Name="BuildAKVNetCore">
