@@ -202,13 +202,13 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             // Get the value for the key without setting it.
             tryGetValueResult = connectionStringBuilder.TryGetValue(@"Attestation Protocol", out outputValue);
             Assert.True(tryGetValueResult);
-            //Assert.Equal(string.Empty, (string)outputValue);
+            Assert.Equal(string.Empty, outputValue.ToString());
 
             // set the value for the protocol without setting it.
             connectionStringBuilder.AttestationProtocol = SqlConnectionAttestationProtocol.HGS;
             tryGetValueResult = connectionStringBuilder.TryGetValue(@"Attestation Protocol", out outputValue);
             Assert.True(tryGetValueResult);
-           // Assert.Equal("HGS", (string)outputValue);
+            Assert.Equal("HGS",outputValue.ToString());
         }
 
         [Theory]
