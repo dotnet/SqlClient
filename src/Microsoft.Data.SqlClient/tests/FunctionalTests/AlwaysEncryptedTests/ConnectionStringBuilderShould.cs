@@ -193,6 +193,22 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             tryGetValueResult = connectionStringBuilder.TryGetValue(@"Enclave Attestation Url", out outputValue);
             Assert.True(tryGetValueResult);
             Assert.Equal("www.foo.com", (string)outputValue);
+
+            // connectionStringBuilder should not have the key ColumnEncryptionSetting. The key is with spaces.
+            tryGetValueResult = connectionStringBuilder.TryGetValue(@"AttestationProtocol", out outputValue);
+            Assert.False(tryGetValueResult);
+            Assert.Null(outputValue);
+
+            // Get the value for the key without setting it.
+            tryGetValueResult = connectionStringBuilder.TryGetValue(@"Attestation Protocol", out outputValue);
+            Assert.True(tryGetValueResult);
+            Assert.Equal(string.Empty, outputValue.ToString());
+
+            // set the value for the protocol without setting it.
+            connectionStringBuilder.AttestationProtocol = SqlConnectionAttestationProtocol.HGS;
+            tryGetValueResult = connectionStringBuilder.TryGetValue(@"Attestation Protocol", out outputValue);
+            Assert.True(tryGetValueResult);
+            Assert.Equal("HGS",outputValue.ToString());
         }
 
         [Theory]
@@ -207,12 +223,22 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             // Query the property to check if the above add was effective.
             Assert.Equal(sqlConnectionColumnEncryptionSetting, connectionStringBuilder.ColumnEncryptionSetting);
 
-            // Use the Add function to update the Column Encryption Setting in the dictionary.
+           
+            //define value for Attestation Url and Attestation Protocol
             string url = "www.foo.com";
+            SqlConnectionAttestationProtocol protocol = SqlConnectionAttestationProtocol.HGS;
+
+            // Use the Add function to update the Column Encryption Setting in the dictionary.
             connectionStringBuilder.Add(@"Enclave Attestation Url", url);
 
             // Query the property to check if the above add was effective.
             Assert.Equal(url, connectionStringBuilder.EnclaveAttestationUrl);
+
+            // Use the Add function to update the Column Encryption Setting in the dictionary.
+            connectionStringBuilder.Add(@"Attestation Protocol", protocol);
+
+            // Query the property to check if the above add was effective.
+            Assert.Equal(protocol, connectionStringBuilder.AttestationProtocol);
         }
 
         [Theory]
@@ -280,6 +306,19 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
             // Query the property to check if the above add was effective.
             Assert.False(connectionStringBuilder.ShouldSerialize(@"Enclave Attestation Url"));
+
+            string protocol = "HGS";
+            //Use the Add function to update the column Encryption Setting in the dictionary.
+            connectionStringBuilder.Add(@"Attestation Protocol", protocol);
+
+            // Query the ShouldSerialize method to check if the above add was effective.
+            Assert.True(connectionStringBuilder.ShouldSerialize(@"Attestation Protocol"));
+
+            // Use the Remove function to Remove the Column Encryption Setting from the dictionary.
+            connectionStringBuilder.Remove(@"Attestation Protocol");
+
+            // Query the property to check if the above add was effective.
+            Assert.False(connectionStringBuilder.ShouldSerialize(@"Attestation Protocol"));
         }
 
         /// <summary>
@@ -297,6 +336,25 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
                     .GetValue(sqlConnection);
 
                 Assert.Equal(expectedAttestationUrl, enclaveAttestationUrl);
+            }
+        }
+
+        /// <summary>
+        /// Verifies expected Attestation Protocol value for SqlConnectionColumnEncryptionSetting.
+        /// </summary>
+        /// <param name="connectionStringBuilder"></param>
+        /// <param name="expectedAttestationProtocol"></param>
+        private void VerifyAttestationProtocol(SqlConnectionStringBuilder connectionStringBuilder, string expectedAttestationProtocol)
+        {
+            string connectionString = connectionStringBuilder.ToString();
+            using (SqlConnection sqlConnection = new SqlConnection(connectionString))
+            {
+                string currentAttestationProtocol = (string)typeof(SqlConnection)
+                    .GetProperty(@"Attestation Protocol", BindingFlags.Instance | BindingFlags.NonPublic)
+                    .GetValue(sqlConnection);
+
+                Assert.Equal(expectedAttestationProtocol, currentAttestationProtocol);
+
             }
         }
 
