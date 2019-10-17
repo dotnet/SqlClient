@@ -4,20 +4,28 @@
 
 using System;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
+using Microsoft.Azure.KeyVault;
+using Microsoft.Azure.KeyVault.Models;
+using Microsoft.Azure.KeyVault.WebKey;
 using Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
+using Microsoft.Rest.Azure;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     public class SQLSetupStrategy : IDisposable
     {
         internal const string ColumnEncryptionAlgorithmName = @"AEAD_AES_256_CBC_HMAC_SHA256";
+        internal const string AKVKeyName = "TestSqlClientAzureKeyVaultProvider";
 
         private readonly X509Certificate2 certificate;
+        private static readonly Uri AKVUri = new Uri(new Uri(DataTestUtility.AKVUrl), "/");
         public string keyPath { get; private set; }
+        public readonly string AKVKeyURL = (new Uri(AKVUri, $"/keys/{AKVKeyName}")).AbsoluteUri;
         public Table ApiTestTable { get; private set; }
         public Table AKVTestTable { get; private set; }
         public Table BulkCopyAETestTable { get; private set; }
@@ -34,6 +42,51 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public SQLSetupStrategy()
         {
             certificate = CertificateUtility.CreateCertificate();
+
+            KeyVaultClient keyVaultClient = keyVaultClient = new KeyVaultClient(authenticationCallback);
+            IPage<KeyItem> keys = keyVaultClient.GetKeysAsync(AKVUri.AbsoluteUri).Result;
+            bool testAKVKeyExists = false;
+            while (true)
+            {
+                foreach (KeyItem ki in keys)
+                {
+                    if (ki.Identifier.Name.Equals(AKVKeyName))
+                    {
+                        testAKVKeyExists = true;
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(keys.NextPageLink))
+                {
+                    keys = keyVaultClient.GetKeysNextAsync(keys.NextPageLink).Result;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            if (!testAKVKeyExists)
+            {
+                RSAParameters p = certificate.GetRSAPrivateKey().ExportParameters(true);
+                KeyBundle kb = new KeyBundle()
+                {
+                    Key = new Azure.KeyVault.WebKey.JsonWebKey
+                    {
+                        Kty = JsonWebKeyType.Rsa,
+                        D = p.D,
+                        DP = p.DP,
+                        DQ = p.DQ,
+                        P = p.P,
+                        Q = p.Q,
+                        QI = p.InverseQ,
+                        N = p.Modulus,
+                        E = p.Exponent,
+                    },
+                };
+                keyVaultClient.ImportKeyAsync(AKVUri.AbsoluteUri, AKVKeyName, kb);
+            }
+
             certStoreProvider = new SqlColumnEncryptionCertificateStoreProvider();
             akvStoreProvider = new SqlColumnEncryptionAzureKeyVaultProvider(authenticationCallback: authenticationCallback);
             SetupDatabase();
@@ -53,7 +106,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             cspColumnMasterKey = new CspColumnMasterKey(GenerateUniqueName("CMK"), certificate.Thumbprint);
             databaseObjects.Add(cspColumnMasterKey);
 
-            ColumnMasterKey akvColumnMasterKey = new AkvColumnMasterKey(GenerateUniqueName("AKVCMK"), akvUrl:DataTestUtility.AKVUrl);
+            ColumnMasterKey akvColumnMasterKey = new AkvColumnMasterKey(GenerateUniqueName("AKVCMK"), akvUrl:AKVKeyURL);
             databaseObjects.Add(akvColumnMasterKey);
 
             List<ColumnEncryptionKey> columnEncryptionKeys = CreateColumnEncryptionKeys(cspColumnMasterKey, 2, certStoreProvider);
