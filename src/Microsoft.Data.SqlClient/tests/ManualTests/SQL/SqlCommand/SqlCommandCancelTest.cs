@@ -283,37 +283,98 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        //[ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        //public static async Task CancelInInfiniteLoop()
+        //{
+        //    Exception exception = null;
+        //    DateTime started = DateTime.UtcNow;
+        //    using (var connection = new SqlConnection(s_connStr))
+        //    {
+        //        await connection.OpenAsync().ConfigureAwait(false);
+        //        using (var command = connection.CreateCommand())
+        //        {
+        //            command.CommandText = @"
+        //                WHILE 1 = 1
+        //                BEGIN
+        //                    DECLARE @x INT = 1
+        //                END
+        //            ";
+        //            command.CommandTimeout = 30;
+        //            CancellationTokenSource cancellationTokenSource = new CancellationTokenSource(1000);
+        //            try
+        //            {
+        //                await command.ExecuteNonQueryAsync(cancellationTokenSource.Token).ConfigureAwait(false);
+        //            }
+        //            catch (Exception ex)
+        //            {
+        //                exception = ex;
+        //            }
+        //        }
+        //    }
+        //    DateTime ended = DateTime.UtcNow;
+        //    Assert.InRange((ended - started).TotalSeconds, 1, 9);
+        //    Assert.NotNull(exception);
+        //}
+
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static async Task CancelInInfiniteLoop()
+        public static void CancelDoesNotWait()
         {
-            Exception exception = null;
-            DateTime started = DateTime.UtcNow;
-            using (var connection = new SqlConnection(s_connStr))
+            const int delaySeconds = 30;
+            const int cancelSeconds = 1;
+
+            using (SqlConnection conn = new SqlConnection(s_connStr))
+            using (var cmd = new SqlCommand($"WAITFOR DELAY '00:00:{delaySeconds:D2}'", conn))
             {
-                await connection.OpenAsync().ConfigureAwait(false);
-                using (var command = connection.CreateCommand())
+                conn.Open();
+
+                Task.Delay(TimeSpan.FromSeconds(cancelSeconds))
+                    .ContinueWith(t => cmd.Cancel());
+
+                DateTime started = DateTime.UtcNow;
+                DateTime ended = DateTime.MinValue;
+                Exception exception = null;
+                try
                 {
-                    command.CommandText = @"
-                        WHILE 1 = 1
-                        BEGIN
-                            DECLARE @x INT = 1
-                        END
-                    ";
-                    command.CommandTimeout = 30;
-                    CancellationTokenSource cancellationTokenSource = new CancellationTokenSource(1000);
-                    try
-                    {
-                        await command.ExecuteNonQueryAsync(cancellationTokenSource.Token).ConfigureAwait(false);
-                    }
-                    catch (Exception ex)
-                    {
-                        exception = ex;
-                    }
+                    cmd.ExecuteNonQuery();
                 }
+                catch (Exception ex)
+                {
+                    exception = ex;
+                }
+                ended = DateTime.UtcNow;
+
+                Assert.NotNull(exception);
+                Assert.InRange((ended - started).TotalSeconds, 0, delaySeconds - 1);
             }
-            DateTime ended = DateTime.UtcNow;
-            Assert.InRange((ended - started).TotalSeconds, 1, 9);
-            Assert.NotNull(exception);
         }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async Task AsyncCancelDoesNotWait()
+        {
+            const int delaySeconds = 30;
+            const int cancelSeconds = 1;
+
+            using (SqlConnection conn = new SqlConnection(s_connStr))
+            using (var cmd = new SqlCommand($"WAITFOR DELAY '00:00:{delaySeconds:D2}'", conn))
+            {
+                await conn.OpenAsync();
+
+                DateTime started = DateTime.UtcNow;
+                Exception exception = null;
+                try
+                {
+                    await cmd.ExecuteNonQueryAsync(new CancellationTokenSource(TimeSpan.FromSeconds(cancelSeconds)).Token);
+                }
+                catch (Exception ex)
+                {
+                    exception = ex;
+                }
+                DateTime ended = DateTime.UtcNow;
+
+                Assert.NotNull(exception);
+                Assert.InRange((ended - started).TotalSeconds, cancelSeconds, delaySeconds - 1);
+            }
+        }
+
     }
 }
