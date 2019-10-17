@@ -40,9 +40,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             NpConnStr = Environment.GetEnvironmentVariable("TEST_NP_CONN_STR");
             TcpConnStr = Environment.GetEnvironmentVariable("TEST_TCP_CONN_STR");
             AADPasswordConnStr = Environment.GetEnvironmentVariable("AAD_PASSWORD_CONN_STR");
-            Uri AKVBaseUri = new Uri(new Uri(Environment.GetEnvironmentVariable("AZURE_KEY_VAULT_URL")), "/");
-            AKVBaseUrl = AKVBaseUri.AbsoluteUri;
-            AKVUrl = (new Uri(AKVBaseUri, $"/keys/{AKVKeyName}")).AbsoluteUri;
+            string akvUrl = Environment.GetEnvironmentVariable("AZURE_KEY_VAULT_URL");
+            Uri AKVBaseUri = null;
+            if (!string.IsNullOrEmpty(akvUrl) && Uri.TryCreate(akvUrl, UriKind.Absolute, out AKVBaseUri))
+            {
+                AKVBaseUri = new Uri(AKVBaseUri, "/");
+                AKVBaseUrl = AKVBaseUri.AbsoluteUri;
+                AKVUrl = (new Uri(AKVBaseUri, $"/keys/{AKVKeyName}")).AbsoluteUri;
+            }
             ClientId = Environment.GetEnvironmentVariable("AZURE_KEY_VAULT_CLIENT_ID");
             ClientSecret = Environment.GetEnvironmentVariable("AZURE_KEY_VAULT_CLIENT_SECRET");
         }
