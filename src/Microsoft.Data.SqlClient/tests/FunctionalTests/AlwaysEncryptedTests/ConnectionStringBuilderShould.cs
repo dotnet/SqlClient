@@ -193,6 +193,22 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             tryGetValueResult = connectionStringBuilder.TryGetValue(@"Enclave Attestation Url", out outputValue);
             Assert.True(tryGetValueResult);
             Assert.Equal("www.foo.com", (string)outputValue);
+
+            // connectionStringBuilder should not have the key ColumnEncryptionSetting. The key is with spaces.
+            tryGetValueResult = connectionStringBuilder.TryGetValue(@"AttestationProtocol", out outputValue);
+            Assert.False(tryGetValueResult);
+            Assert.Null(outputValue);
+
+            // Get the value for the key without setting it.
+            tryGetValueResult = connectionStringBuilder.TryGetValue(@"Attestation Protocol", out outputValue);
+            Assert.True(tryGetValueResult);
+            //Assert.Equal(string.Empty, (string)outputValue);
+
+            // set the value for the protocol without setting it.
+            connectionStringBuilder.AttestationProtocol = SqlConnectionAttestationProtocol.HGS;
+            tryGetValueResult = connectionStringBuilder.TryGetValue(@"Attestation Protocol", out outputValue);
+            Assert.True(tryGetValueResult);
+           // Assert.Equal("HGS", (string)outputValue);
         }
 
         [Theory]
@@ -207,12 +223,22 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             // Query the property to check if the above add was effective.
             Assert.Equal(sqlConnectionColumnEncryptionSetting, connectionStringBuilder.ColumnEncryptionSetting);
 
-            // Use the Add function to update the Column Encryption Setting in the dictionary.
+           
+            //define value for Attestation Url and Attestation Protocol
             string url = "www.foo.com";
+            SqlConnectionAttestationProtocol protocol = SqlConnectionAttestationProtocol.HGS;
+
+            // Use the Add function to update the Column Encryption Setting in the dictionary.
             connectionStringBuilder.Add(@"Enclave Attestation Url", url);
 
             // Query the property to check if the above add was effective.
             Assert.Equal(url, connectionStringBuilder.EnclaveAttestationUrl);
+
+            // Use the Add function to update the Column Encryption Setting in the dictionary.
+            connectionStringBuilder.Add(@"Attestation Protocol", protocol);
+
+            // Query the property to check if the above add was effective.
+            Assert.Equal(protocol, connectionStringBuilder.AttestationProtocol);
         }
 
         [Theory]
