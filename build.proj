@@ -98,7 +98,7 @@
 
   <Target Name="BuildAKVNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
     <MSBuild Projects="@(AKVProvider)" Targets="restore" Properties="TestTargetOS=$(TestOS)netfx" />
-    <MSBuild Projects="@(AKVProvider)" Properties="TestTargetOS=$(TestOS)netfx;Platform=AnyCPU;$(TestProjectProperties)" />
+    <MSBuild Projects="@(AKVProvider)" Properties="TestTargetOS=$(TestOS)netfx;Platform=$(Platform);$(TestProjectProperties)" />
   </Target>
 
   <Target Name="BuildAKVNetCore">
