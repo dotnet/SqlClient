@@ -8,6 +8,7 @@ using System.Security.Cryptography;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
+    [PlatformSpecific(TestPlatforms.Windows)]
     public class ExceptionTestAKVStore : IClassFixture<SQLSetupStrategy>
     {
         private const string MasterKeyEncAlgo = "RSA_OAEP";

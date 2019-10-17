@@ -7,6 +7,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
+    [PlatformSpecific(TestPlatforms.Windows)]
     public class AKVTest : IClassFixture<SQLSetupStrategy>, IDisposable
     {
         private SQLSetupStrategy fixture;
