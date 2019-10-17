@@ -37,6 +37,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public SqlColumnEncryptionCertificateStoreProvider certStoreProvider;
         public CspColumnMasterKey cspColumnMasterKey;
 
+        private bool isAKVProviderRegistered = false;
+
         protected List<DbObject> databaseObjects = new List<DbObject>();
 
         public SQLSetupStrategy()
@@ -91,12 +93,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             akvStoreProvider = new SqlColumnEncryptionAzureKeyVaultProvider(authenticationCallback: authenticationCallback);
             SetupDatabase();
 
-            Dictionary<string, SqlColumnEncryptionKeyStoreProvider> customAkvKeyStoreProviders = new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>(capacity: 1, comparer: StringComparer.OrdinalIgnoreCase)
+            if (!isAKVProviderRegistered)
+            {
+                Dictionary<string, SqlColumnEncryptionKeyStoreProvider> customAkvKeyStoreProviders = new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>(capacity: 1, comparer: StringComparer.OrdinalIgnoreCase)
                 {
                     {SqlColumnEncryptionAzureKeyVaultProvider.ProviderName, akvStoreProvider}
                 };
 
-            SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders: customAkvKeyStoreProviders);
+                SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders: customAkvKeyStoreProviders);
+                isAKVProviderRegistered = true;
+            }
         }
 
         protected SQLSetupStrategy(string customKeyPath) => keyPath = customKeyPath;
@@ -106,7 +112,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             cspColumnMasterKey = new CspColumnMasterKey(GenerateUniqueName("CMK"), certificate.Thumbprint);
             databaseObjects.Add(cspColumnMasterKey);
 
-            ColumnMasterKey akvColumnMasterKey = new AkvColumnMasterKey(GenerateUniqueName("AKVCMK"), akvUrl:AKVKeyURL);
+            ColumnMasterKey akvColumnMasterKey = new AkvColumnMasterKey(GenerateUniqueName("AKVCMK"), akvUrl: AKVKeyURL);
             databaseObjects.Add(akvColumnMasterKey);
 
             List<ColumnEncryptionKey> columnEncryptionKeys = CreateColumnEncryptionKeys(cspColumnMasterKey, 2, certStoreProvider);
