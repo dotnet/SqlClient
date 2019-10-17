@@ -45,6 +45,13 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIPacket.NetCoreApp.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\AzureAttestationBasedEnclaveProvider.NetCoreApp.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProvider.NetCoreApp.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProviderBase.NetCoreApp.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\AlwaysEncryptedAttestationException.NetCoreApp.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\AlwaysEncryptedEnclaveProviderUtils.NetCoreApp.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\EnclaveProviderBase.NetCoreApp.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\EnclaveSessionCache.NetCoreApp.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(IsPartialFacadeAssembly)' != 'true' AND '$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netstandard'">
     <Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.NetStandard.cs" />
@@ -270,7 +277,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlQueryMetadataCache.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlEnclaveAttestationParameters.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProviderConfigurationManager.cs" />
     <Compile Include="Microsoft\Data\SqlClient\ColumnEncryptionKeyInfo.cs" />
     <Compile Include="Microsoft\Data\SqlClient\EnclaveDelegate.cs" />
     <Compile Include="Microsoft\Data\SqlClient\DataClassification\SensitivityClassification.cs" />
@@ -587,6 +593,7 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="5.5.0" />
     <PackageReference Condition="'$(TargetsWindows)' == 'true' And '$(IsPartialFacadeAssembly)' != 'true' and '$(IsUAPAssembly)' != 'true'" Include="Microsoft.Win32.Registry" Version="4.5.0" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="4.5.0" />
     <PackageReference Include="System.Security.Permissions" Version="4.5.0" />

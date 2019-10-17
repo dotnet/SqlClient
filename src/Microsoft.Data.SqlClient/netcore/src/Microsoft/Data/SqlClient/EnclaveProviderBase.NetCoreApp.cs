@@ -7,7 +7,6 @@ using System.Runtime.Caching;
 using System.Security.Cryptography;
 using System.Threading;
 
-
 // Enclave session locking model
 // 1. For doing the enclave attestation, driver makes either 1, 2 or 3 API calls(in order)
 // - GetEnclaveSession
@@ -66,6 +65,8 @@ using System.Threading;
 
 namespace Microsoft.Data.SqlClient
 {
+    // Base class for Enclave provider
+
     internal abstract class EnclaveProviderBase : SqlColumnEncryptionEnclaveProvider
     {
         #region Constants
@@ -90,6 +91,7 @@ namespace Microsoft.Data.SqlClient
             public string AttestationUrl { get; private set; }
 
             public byte[] AttestNonce { get; private set; }
+
             public AttestationInfoCacheItem(string attestationUri, byte[] nonce)
             {
                 AttestationUrl = attestationUri;
@@ -102,7 +104,6 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Public methods
-
         // Helper method to get the enclave session from the cache if present
         protected void GetEnclaveSessionHelper(string servername, string attestationUrl, bool shouldGenerateNonce, out SqlEnclaveSession sqlEnclaveSession, out long counter)
         {

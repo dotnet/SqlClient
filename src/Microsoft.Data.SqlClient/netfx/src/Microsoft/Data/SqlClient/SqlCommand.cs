@@ -2733,7 +2733,7 @@ namespace Microsoft.Data.SqlClient
 
                                 if (ShouldUseEnclaveBasedWorkflow && this.enclavePackage != null)
                                 {
-                                    EnclaveDelegate.Instance.InvalidateEnclaveSession(this._activeConnection.Parser.EnclaveType, this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this.enclavePackage.EnclaveSession);
+                                    EnclaveDelegate.Instance.InvalidateEnclaveSession(this._activeConnection.AttestationProtocol, this._activeConnection.Parser.EnclaveType, this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this.enclavePackage.EnclaveSession);
                                 }
 
                                 try
@@ -4274,14 +4274,15 @@ namespace Microsoft.Data.SqlClient
 
             if (ShouldUseEnclaveBasedWorkflow)
             {
+                SqlConnectionAttestationProtocol attestationProtocol = this._activeConnection.AttestationProtocol;
                 string enclaveType = this._activeConnection.Parser.EnclaveType;
                 string dataSource = this._activeConnection.DataSource;
                 string enclaveAttestationUrl = this._activeConnection.EnclaveAttestationUrl;
                 SqlEnclaveSession sqlEnclaveSession = null;
-                EnclaveDelegate.Instance.GetEnclaveSession(enclaveType, dataSource, enclaveAttestationUrl, out sqlEnclaveSession);
+                EnclaveDelegate.Instance.GetEnclaveSession(attestationProtocol, enclaveType, dataSource, enclaveAttestationUrl, out sqlEnclaveSession);
                 if (sqlEnclaveSession == null)
                 {
-                    this.enclaveAttestationParameters = EnclaveDelegate.Instance.GetAttestationParameters(enclaveType, dataSource, enclaveAttestationUrl);
+                    this.enclaveAttestationParameters = EnclaveDelegate.Instance.GetAttestationParameters(attestationProtocol, enclaveType, dataSource, enclaveAttestationUrl);
                     serializedAttestatationParameters = EnclaveDelegate.Instance.GetSerializedAttestationParameters(this.enclaveAttestationParameters, enclaveType);
                 }
             }
@@ -4805,11 +4806,12 @@ namespace Microsoft.Data.SqlClient
                         byte[] attestationInfo = new byte[attestationInfoLength];
                         ds.GetBytes((int)DescribeParameterEncryptionResultSet3.AttestationInfo, 0, attestationInfo, 0, attestationInfoLength);
 
+                        SqlConnectionAttestationProtocol attestationProtocol = this._activeConnection.AttestationProtocol;
                         string enclaveType = this._activeConnection.Parser.EnclaveType;
                         string dataSource = this._activeConnection.DataSource;
                         string enclaveAttestationUrl = this._activeConnection.EnclaveAttestationUrl;
 
-                        EnclaveDelegate.Instance.CreateEnclaveSession(enclaveType, dataSource, enclaveAttestationUrl, attestationInfo, enclaveAttestationParameters);
+                        EnclaveDelegate.Instance.CreateEnclaveSession(attestationProtocol, enclaveType, dataSource, enclaveAttestationUrl, attestationInfo, enclaveAttestationParameters);
                         enclaveAttestationParameters = null;
                         attestationInfoRead = true;
                     }
@@ -4943,7 +4945,8 @@ namespace Microsoft.Data.SqlClient
 
                             if (ShouldUseEnclaveBasedWorkflow && this.enclavePackage != null)
                             {
-                                EnclaveDelegate.Instance.InvalidateEnclaveSession(this._activeConnection.Parser.EnclaveType, this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this.enclavePackage.EnclaveSession);
+                                EnclaveDelegate.Instance.InvalidateEnclaveSession(this._activeConnection.AttestationProtocol, this._activeConnection.Parser.EnclaveType, 
+                                    this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this.enclavePackage.EnclaveSession);
                             }
 
                             return RunExecuteReader(cmdBehavior, runBehavior, returnStream, method, null, TdsParserStaticMethods.GetRemainingTimeout(timeout, firstAttemptStart), out task, out usedCache, async, inRetry: true);
@@ -4985,7 +4988,8 @@ namespace Microsoft.Data.SqlClient
 
                                 if (ShouldUseEnclaveBasedWorkflow && this.enclavePackage != null)
                                 {
-                                    EnclaveDelegate.Instance.InvalidateEnclaveSession(this._activeConnection.Parser.EnclaveType, this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this.enclavePackage.EnclaveSession);
+                                    EnclaveDelegate.Instance.InvalidateEnclaveSession(this._activeConnection.AttestationProtocol, this._activeConnection.Parser.EnclaveType,
+                                        this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this.enclavePackage.EnclaveSession);
                                 }
 
                                 return RunExecuteReader(cmdBehavior, runBehavior, returnStream, method, null, TdsParserStaticMethods.GetRemainingTimeout(timeout, firstAttemptStart), out task, out usedCache, async, inRetry: true);
@@ -5120,9 +5124,15 @@ namespace Microsoft.Data.SqlClient
             if (string.IsNullOrWhiteSpace(enclaveType))
                 throw SQL.EnclaveTypeNullForEnclaveBasedQuery();
 
+            SqlConnectionAttestationProtocol attestationProtocol = this._activeConnection.AttestationProtocol;
+            if (attestationProtocol == SqlConnectionAttestationProtocol.NotSpecified)
+            {
+                throw SQL.AttestationProtocolNotSpecifiedForGeneratingEnclavePackage();
+            }
+
             try
             {
-                this.enclavePackage = EnclaveDelegate.Instance.GenerateEnclavePackage(keysToBeSentToEnclave,
+                this.enclavePackage = EnclaveDelegate.Instance.GenerateEnclavePackage(attestationProtocol, keysToBeSentToEnclave,
                     this.CommandText, enclaveType, this._activeConnection.DataSource,
                     this._activeConnection.EnclaveAttestationUrl);
             }

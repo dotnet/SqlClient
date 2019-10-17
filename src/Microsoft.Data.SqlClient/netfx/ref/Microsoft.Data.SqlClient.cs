@@ -787,26 +787,23 @@ namespace Microsoft.Data.SqlClient
         Enabled = 1,
     }
 
-    // To add include file for docs
     /// <summary>
-    /// 
+    /// To add include file for docs
     /// </summary>
     public enum SqlConnectionAttestationProtocol
     {
         /// <summary>
-        /// 
-        /// </summary>
-        None = 0,
-
+        /// To add include file for docs
+        /// </summary>    
+        NotSpecified = 0,
         /// <summary>
-        /// 
+        /// To add include file for docs
         /// </summary>
         AAS = 1,
-
         /// <summary>
-        /// 
+        /// To add include file for docs
         /// </summary>
-        HGS = 2
+        HGS = 3
     }
 
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/SqlConnectionStringBuilder/*'/>

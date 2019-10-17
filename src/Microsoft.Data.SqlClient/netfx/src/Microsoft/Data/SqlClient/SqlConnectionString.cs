@@ -55,7 +55,7 @@ namespace Microsoft.Data.SqlClient
             internal static readonly SqlAuthenticationMethod Authentication = SqlAuthenticationMethod.NotSpecified;
             internal static readonly SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Disabled;
             internal const string EnclaveAttestationUrl = "";
-            internal static readonly SqlConnectionAttestationProtocol AttestationProtocol = SqlConnectionAttestationProtocol.None;
+            internal static readonly SqlConnectionAttestationProtocol AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified;
 #if ADONET_CERT_AUTH
             internal const  string Certificate            = "";
 #endif

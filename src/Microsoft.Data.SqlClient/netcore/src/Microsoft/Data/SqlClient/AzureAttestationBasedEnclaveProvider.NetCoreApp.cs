@@ -17,6 +17,7 @@ using Microsoft.IdentityModel.Protocols;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 
+
 // Azure Attestation Protocol Flow
 // To start the attestation process, Sql Client sends the Protocol Id (i.e. 1), Nonce, Attestation Url and ECDH Public Key
 // Sql Server uses attestation Url to attest the enclave and send the JWT to Sql client.
@@ -63,7 +64,6 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Public methods
-
         // When overridden in a derived class, looks up an existing enclave session information in the enclave session cache.
         // If the enclave provider doesn't implement enclave session caching, this method is expected to return null in the sqlEnclaveSession parameter.
         public override void GetEnclaveSession(string servername, string attestationUrl, out SqlEnclaveSession sqlEnclaveSession, out long counter)
@@ -80,7 +80,6 @@ namespace Microsoft.Data.SqlClient
             byte[] attestationParam = PrepareAttestationParameters();
             return new SqlEnclaveAttestationParameters(AzureBasedAttestationProtocolId, attestationParam, clientDHKey);
         }
-
 
         // When overridden in a derived class, performs enclave attestation, generates a symmetric key for the session, creates a an enclave session and stores the session information in the cache.
         public override void CreateEnclaveSession(byte[] attestationInfo, ECDiffieHellmanCng clientDHKey, string attestationUrl, string servername, out SqlEnclaveSession sqlEnclaveSession, out long counter)
@@ -113,7 +112,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        throw new AlwaysEncryptedAttestationException(Strings.FailToCreateEnclaveSession);
+                        throw new AlwaysEncryptedAttestationException(SR.FailToCreateEnclaveSession);
                     }
                 }
             }
@@ -127,7 +126,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-
         // When overridden in a derived class, looks up and evicts an enclave session from the enclave session cache, if the provider implements session caching.
         public override void InvalidateEnclaveSession(string serverName, string enclaveAttestationUrl, SqlEnclaveSession enclaveSessionToInvalidate)
         {
@@ -136,6 +134,7 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Internal Class
+
         // A model class respresenting the deserialization of the byte payload the client
         // receives from SQL Server while setting up a session.
         // Protocol format:
@@ -217,7 +216,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 catch (Exception exception)
                 {
-                    throw new AlwaysEncryptedAttestationException(String.Format(Strings.FailToParseAttestationInfo, exception.Message));
+                    throw new AlwaysEncryptedAttestationException(String.Format(SR.FailToParseAttestationInfo, exception.Message));
                 }
             }
         }
@@ -280,10 +279,11 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                throw new AlwaysEncryptedAttestationException(Strings.FailToCreateEnclaveSession);
+                throw new AlwaysEncryptedAttestationException(SR.FailToCreateEnclaveSession);
             }
         }
 
+        // Performs Attestation per the protocol used by Azure Attestation Service
         private void VerifyAzureAttestationInfo(string attestationUrl, EnclaveType enclaveType, string attestationToken, EnclavePublicKey enclavePublicKey, byte[] nonce)
         {
             bool shouldForceUpdateSigningKeys = false;
@@ -315,13 +315,14 @@ namespace Microsoft.Data.SqlClient
 
             if (!isSignatureValid)
             {
-                throw new AlwaysEncryptedAttestationException(String.Format(Strings.AttestationTokenSignatureValidationFailed, exceptionMessage));
+                throw new AlwaysEncryptedAttestationException(String.Format(SR.AttestationTokenSignatureValidationFailed, exceptionMessage));
             }
 
             // Validate claims in the token
             ValidateAttestationClaims(enclaveType, attestationToken, enclavePublicKey, nonce);
         }
 
+        // Returns the innermost exception value
         private static string GetInnerMostExceptionMessage(Exception exception)
         {
             Exception exLocal = exception;
@@ -333,6 +334,8 @@ namespace Microsoft.Data.SqlClient
             return exLocal.Message;
         }
 
+        // For the given attestation url it downloads the token signing keys from the well-known openid configuration end point.
+        // It also caches that information for 1 day to avoid DDOS attacks.
         private OpenIdConnectConfiguration GetOpenIdConfigForSigningKeys(string url, bool forceUpdate)
         {
             OpenIdConnectConfiguration openIdConnectConfig = OpenIdConnectConfigurationCache[url] as OpenIdConnectConfiguration;
@@ -348,7 +351,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 catch (Exception exception)
                 {
-                    throw new AlwaysEncryptedAttestationException(String.Format(Strings.GetAttestationTokenSigningKeysFailed, GetInnerMostExceptionMessage(exception)), exception);
+                    throw new AlwaysEncryptedAttestationException(String.Format(SR.GetAttestationTokenSigningKeysFailed, GetInnerMostExceptionMessage(exception)), exception);
                 }
 
                 OpenIdConnectConfigurationCache.Add(url, openIdConnectConfig, DateTime.UtcNow.AddDays(1));
@@ -357,12 +360,16 @@ namespace Microsoft.Data.SqlClient
             return openIdConnectConfig;
         }
 
+        // Return the attestation instance url for given attestation url
+        // such as for https://sql.azure.attest.com/attest/SgxEnclave?api-version=2017-11-01
+        // It will return https://sql.azure.attest.com
         private string GetAttestationInstanceUrl(string attestationUrl)
         {
             Uri attestationUri = new Uri(attestationUrl);
             return attestationUri.GetLeftPart(UriPartial.Authority);
         }
 
+        // Generate the list of valid issuer Url's (in case if tokenIssuerUrl is using default port)
         private static ICollection<string> GenerateListOfIssuers(string tokenIssuerUrl)
         {
             List<string> issuerUrls = new List<string>();
@@ -382,6 +389,7 @@ namespace Microsoft.Data.SqlClient
             return issuerUrls;
         }
 
+        // Verifies the attestation token is signed by correct signing keys.
         private bool VerifyTokenSignature(string attestationToken, string tokenIssuerUrl, ICollection<SecurityKey> issuerSigningKeys, out bool isKeySigningExpired, out string exceptionMessage)
         {
             exceptionMessage = string.Empty;
@@ -410,7 +418,7 @@ namespace Microsoft.Data.SqlClient
             }
             catch (SecurityTokenExpiredException securityException)
             {
-                throw new AlwaysEncryptedAttestationException(Strings.ExpiredAttestationToken, securityException);
+                throw new AlwaysEncryptedAttestationException(SR.ExpiredAttestationToken, securityException);
             }
             catch (SecurityTokenValidationException securityTokenException)
             {
@@ -422,12 +430,13 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception exception)
             {
-                throw new AlwaysEncryptedAttestationException(String.Format(Strings.InvalidAttestationToken, GetInnerMostExceptionMessage(exception)));
+                throw new AlwaysEncryptedAttestationException(String.Format(SR.InvalidAttestationToken, GetInnerMostExceptionMessage(exception)));
             }
 
             return isSignatureValid;
         }
 
+        // Computes the SHA256 hash of the byte array
         private byte[] ComputeSHA256(byte[] data)
         {
             byte[] result = null;
@@ -440,11 +449,12 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception argumentException)
             {
-                throw new AlwaysEncryptedAttestationException(Strings.InvalidArgumentToSHA256, argumentException);
+                throw new AlwaysEncryptedAttestationException(SR.InvalidArgumentToSHA256, argumentException);
             }
             return result;
         }
 
+        // Validate the claims in the attestation token
         private void ValidateAttestationClaims(EnclaveType enclaveType, string attestationToken, EnclavePublicKey enclavePublicKey, byte[] nonce)
         {
             // Read the json token
@@ -456,7 +466,7 @@ namespace Microsoft.Data.SqlClient
             }
             catch (ArgumentException argumentException)
             {
-                throw new AlwaysEncryptedAttestationException(String.Format(Strings.FailToParseAttestationToken, argumentException.Message));
+                throw new AlwaysEncryptedAttestationException(String.Format(SR.FailToParseAttestationToken, argumentException.Message));
             }
 
             // Get all the claims from the token
@@ -476,6 +486,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        // Validate the claim value against the actual data
         private void ValidateClaim(Dictionary<string, string> claims, string claimName, byte[] actualData)
         {
             // Get required claim data
@@ -483,7 +494,7 @@ namespace Microsoft.Data.SqlClient
             bool hasClaim = claims.TryGetValue(claimName, out claimData);
             if (!hasClaim)
             {
-                throw new AlwaysEncryptedAttestationException(String.Format(Strings.MissingClaimInAttestationToken, claimName));
+                throw new AlwaysEncryptedAttestationException(String.Format(SR.MissingClaimInAttestationToken, claimName));
             }
 
             // Get the Base64Url of the actual data and compare it with claim
@@ -494,16 +505,17 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception)
             {
-                throw new AlwaysEncryptedAttestationException(Strings.InvalidArgumentToBase64UrlDecoder);
+                throw new AlwaysEncryptedAttestationException(SR.InvalidArgumentToBase64UrlDecoder);
             }
 
             bool hasValidClaim = String.Equals(encodedActualData, claimData, StringComparison.InvariantCultureIgnoreCase);
             if (!hasValidClaim)
             {
-                throw new AlwaysEncryptedAttestationException(String.Format(Strings.InvalidClaimInAttestationToken, claimName, claimData));
+                throw new AlwaysEncryptedAttestationException(String.Format(SR.InvalidClaimInAttestationToken, claimName, claimData));
             }
         }
 
+        // Derives the shared secret between the client and enclave.
         private byte[] GetSharedSecret(EnclavePublicKey enclavePublicKey, byte[] nonce, EnclaveType enclaveType, EnclaveDiffieHellmanInfo enclaveDHInfo, ECDiffieHellmanCng clientDHKey)
         {
             byte[] enclaveRsaPublicKey = enclavePublicKey.PublicKey;
@@ -524,7 +536,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (!rsacng.VerifyData(enclaveDHInfo.PublicKey, enclaveDHInfo.PublicKeySignature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1))
                 {
-                    throw new ArgumentException(Strings.GetSharedSecretFailed);
+                    throw new ArgumentException(SR.GetSharedSecretFailed);
                 }
             }
 

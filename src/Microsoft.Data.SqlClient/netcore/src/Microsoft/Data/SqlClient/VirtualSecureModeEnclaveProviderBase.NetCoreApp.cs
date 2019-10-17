@@ -92,7 +92,6 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Gets the information that SqlClient subsequently uses to initiate the process of attesting the enclave and to establish a secure session with the enclave.
-        // <returns>The information SqlClient subsequently uses to initiate the process of attesting the enclave and to establish a secure session with the enclave.</returns>
         public override SqlEnclaveAttestationParameters GetAttestationParameters()
         {
             ECDiffieHellmanCng clientDHKey = new ECDiffieHellmanCng(DiffieHellmanKeySize);
@@ -131,7 +130,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        throw new AlwaysEncryptedAttestationException(Strings.FailToCreateEnclaveSession);
+                        throw new AlwaysEncryptedAttestationException(SR.FailToCreateEnclaveSession);
                     }
                 }
             }
@@ -176,7 +175,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        throw new AlwaysEncryptedAttestationException(String.Format(Strings.VerifyHealthCertificateChainFormat, attestationUrl, chainStatus));
+                        throw new AlwaysEncryptedAttestationException(String.Format(SR.VerifyHealthCertificateChainFormat, attestationUrl, chainStatus));
                     }
                 }
             } while (shouldRetryValidation);
@@ -208,7 +207,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 catch (CryptographicException exception)
                 {
-                    throw new AlwaysEncryptedAttestationException(String.Format(Strings.GetAttestationSigningCertificateFailedInvalidCertificate, attestationUrl), exception);
+                    throw new AlwaysEncryptedAttestationException(String.Format(SR.GetAttestationSigningCertificateFailedInvalidCertificate, attestationUrl), exception);
                 }
 
                 rootSigningCertificateCache.Add(attestationUrl, certificateCollection, DateTime.Now.AddDays(1));
@@ -292,7 +291,7 @@ namespace Microsoft.Data.SqlClient
 
             if (calculatedSize != enclaveReportPackage.PackageHeader.PackageSize)
             {
-                throw new ArgumentException(Strings.VerifyEnclaveReportFormatFailed);
+                throw new ArgumentException(SR.VerifyEnclaveReportFormatFailed);
             }
 
             // IDK_S is contained in healthReport cert public key
@@ -303,7 +302,8 @@ namespace Microsoft.Data.SqlClient
 
             if (!rsacng.VerifyData(enclaveReportPackage.ReportAsBytes, enclaveReportPackage.SignatureBlob, HashAlgorithmName.SHA256, RSASignaturePadding.Pss))
             {
-                throw new ArgumentException(Strings.VerifyEnclaveReportFailed);
+                throw new ArgumentException(SR.VerifyEnclaveReportFailed);
+
             }
         }
 
@@ -324,7 +324,7 @@ namespace Microsoft.Data.SqlClient
             //
             if (identity.Flags != ExpectedPolicy.Flags)
             {
-                throw new InvalidOperationException(Strings.VerifyEnclaveDebuggable);
+                throw new InvalidOperationException(SR.VerifyEnclaveDebuggable);
             }
         }
 
@@ -333,7 +333,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (!actual.SequenceEqual(expected))
             {
-                string exceptionMessage = String.Format(Strings.VerifyEnclavePolicyFailedFormat, property, BitConverter.ToString(actual), BitConverter.ToString(expected));
+                string exceptionMessage = String.Format(SR.VerifyEnclavePolicyFailedFormat, property, BitConverter.ToString(actual), BitConverter.ToString(expected));
                 throw new ArgumentException(exceptionMessage);
             }
         }
@@ -343,7 +343,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (actual < expected)
             {
-                string exceptionMessage = String.Format(Strings.VerifyEnclavePolicyFailedFormat, property, actual, expected);
+                string exceptionMessage = String.Format(SR.VerifyEnclavePolicyFailedFormat, property, actual, expected);
                 throw new ArgumentException(exceptionMessage);
             }
         }
@@ -356,7 +356,7 @@ namespace Microsoft.Data.SqlClient
             RSACng rsacng = new RSACng(cngkey);
             if (!rsacng.VerifyData(enclaveDHInfo.PublicKey, enclaveDHInfo.PublicKeySignature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1))
             {
-                throw new ArgumentException(Strings.GetSharedSecretFailed);
+                throw new ArgumentException(SR.GetSharedSecretFailed);
             }
 
             CngKey key = CngKey.Import(enclaveDHInfo.PublicKey, CngKeyBlobFormat.GenericPublicBlob);

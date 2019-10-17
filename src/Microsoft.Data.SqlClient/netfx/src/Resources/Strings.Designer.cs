@@ -11960,6 +11960,15 @@ namespace System {
                 return ResourceManager.GetString("TCE_EnclaveProviderNotFound", resourceCulture);
             }
         }
+
+        /// <summary>
+        /// Looks up a localized string similar to Error occured when generating enclave package. Attestation Protocol has not been specified in the connection string, but the query requires enclave computations.
+        /// </summary>
+        internal static string TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage {
+            get {
+                return ResourceManager.GetString("TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to Executing a query requires enclave computations, but the application configuration is missing the enclave provider  section..

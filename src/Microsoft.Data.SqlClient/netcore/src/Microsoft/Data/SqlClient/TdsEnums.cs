@@ -981,6 +981,8 @@ namespace Microsoft.Data.SqlClient
 
         internal const int AES_256_CBC = 1;
         internal const int AEAD_AES_256_CBC_HMAC_SHA256 = 2;
+        internal const string ENCLAVE_TYPE_VBS = "VBS";
+        internal const string ENCLAVE_TYPE_SGX = "SGX";
 
         // TCE Param names for exec handling
         internal const string TCE_PARAM_CIPHERTEXT = "cipherText";
@@ -1043,6 +1045,27 @@ namespace Microsoft.Data.SqlClient
         DataClassificationNotExpected = 25,
         DataClassificationInvalidLabelIndex = 26,
         DataClassificationInvalidInformationTypeIndex = 27
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public enum SqlConnectionAttestationProtocol
+    {
+        /// <summary>
+        /// If the attestation protocol is not specified. Use this as default value.
+        /// </summary>
+        NotSpecified = 0,
+
+        /// <summary>
+        /// Attestation portocol for Azure Attestation Service
+        /// </summary>
+        AAS = 1,
+
+        /// <summary>
+        /// Attestation protocol for Host Guardian Service
+        /// </summary>
+        HGS = 3
     }
 
     /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionColumnEncryptionSetting.xml' path='docs/members[@name="SqlConnectionColumnEncryptionSetting"]/SqlConnectionColumnEncryptionSetting/*' />

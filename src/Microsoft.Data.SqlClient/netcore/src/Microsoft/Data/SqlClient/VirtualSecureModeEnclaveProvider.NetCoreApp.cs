@@ -21,7 +21,7 @@ namespace Microsoft.Data.SqlClient
         // this is endpoint given to us by HGS team from windows
         private const string AttestationUrlSuffix = @"/v2.0/signingCertificates";
 
-        public int MaxNumRetries { get; set; }
+        public uint MaxNumRetries { get; set; }
 
         private int enclaveRetrySleepInSeconds = 3;
 
@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (value < 1)
                 {
-                    throw new ArgumentException(Strings.EnclaveRetrySleepInSecondsValueException);
+                    throw new ArgumentException(SR.EnclaveRetrySleepInSecondsValueException);
                 }
 
                 enclaveRetrySleepInSeconds = value;
@@ -81,7 +81,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            throw new AlwaysEncryptedAttestationException(String.Format(Strings.GetAttestationSigningCertificateRequestFailedFormat, url, exception.Message), exception);
+            throw new AlwaysEncryptedAttestationException(String.Format(SR.GetAttestationSigningCertificateRequestFailedFormat, url, exception.Message), exception);
         }
 
         #endregion

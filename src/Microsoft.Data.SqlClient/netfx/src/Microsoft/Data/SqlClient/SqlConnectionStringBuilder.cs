@@ -645,9 +645,8 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // to add docs include file
         /// <summary>
-        /// 
+        /// To add include file for docs
         /// </summary>
         [DisplayName(DbConnectionStringKeywords.AttestationProtocol)]
         [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Security)]
