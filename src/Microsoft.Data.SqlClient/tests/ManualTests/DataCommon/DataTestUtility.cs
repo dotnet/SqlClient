@@ -18,6 +18,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string NpConnStr = null;
         public static readonly string TcpConnStr = null;
         public static readonly string AADPasswordConnStr = null;
+        public static readonly string TcpEnclaveConnStr = null;
         public const string UdtTestDbName = "UdtTestDb";
         private static readonly Assembly s_systemDotData = typeof(Microsoft.Data.SqlClient.SqlConnection).GetTypeInfo().Assembly;
         private static readonly Type s_tdsParserStateObjectFactory = s_systemDotData?.GetType("Microsoft.Data.SqlClient.TdsParserStateObjectFactory");
@@ -35,6 +36,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             NpConnStr = Environment.GetEnvironmentVariable("TEST_NP_CONN_STR");
             TcpConnStr = Environment.GetEnvironmentVariable("TEST_TCP_CONN_STR");
             AADPasswordConnStr = Environment.GetEnvironmentVariable("AAD_PASSWORD_CONN_STR");
+            TcpEnclaveConnStr = Environment.GetEnvironmentVariable("TEST_TCP_ENCLAVE_CONN_STR");
         }
 
         public static bool IsDatabasePresent(string name)
@@ -98,6 +100,33 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
             }
             return retval;
+        }
+
+        public static bool IsEnclaveEnabled()
+        {
+            if (AreConnStringsSetup())
+            {
+                using (SqlConnection connection = new SqlConnection(DataTestUtility.TcpConnStr))
+                using (SqlCommand command = new SqlCommand())
+                {
+                    command.Connection = connection;
+                    command.CommandText = @"SELECT [value_in_use] FROM sys.configurations WHERE [name] = 'column encryption enclave type';";
+                    connection.Open();
+
+                    using (SqlDataReader reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            if (reader.GetInt32(0) > 0)
+                            {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return false;
         }
 
 
