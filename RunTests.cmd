@@ -2,7 +2,7 @@
 msbuild /p:Configuration="Release" /t:Clean,BuildAllConfigurations
 echo Building Add-Ons
 msbuild /p:Configuration="Release" /t:BuildAKVNetFx
-msbuild /p:Configuration="Release" /t:BuildAKVNetCore
+msbuild /p:Configuration="Release" /t:BuildAKVNetCoreAllOS
 msbuild /p:configuration="Release" /t:GenerateAKVProviderNugetPackage
 echo Building tests
 msbuild /p:Configuration="Release" /t:BuildTestsNetFx

@@ -1,7 +1,7 @@
 @echo off
 dotnet msbuild /p:Configuration="Release" /t:Clean,BuildAll /p:GenerateDocumentationFile=false
 echo Building Add-Ons
-dotnet msbuild /p:Configuration="Release" /t:BuildAKVNetCore
+dotnet msbuild /p:Configuration="Release" /t:BuildAKVNetCore /p:OSGroup=Unix /p:Platform=AnyCPU
 echo Building tests
 dotnet msbuild /p:Configuration="Release" /t:BuildTestsNetCore /p:OSGroup=Unix /p:Platform=AnyCPU
 echo Running SqlClient test suite
