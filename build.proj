@@ -8,9 +8,9 @@
     <RestoreConfigFile>src\NuGet.config</RestoreConfigFile>
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
-    <!-- Flag to control if NetFx driver should be built or not -->
-    <IsEnabledNetFx Condition="'$(IsEnabledNetFx)' == '' AND '$(TargetsWindows)' == 'true'">true</IsEnabledNetFx>
-    <IsEnabledNetFx Condition="'$(TargetsUnix)' == 'true'">false</IsEnabledNetFx>
+    <!-- Flag to control if Windows drivers should be built or not -->
+    <IsEnabledWindows Condition="'$(IsEnabledWindows)' == '' AND '$(TargetsWindows)' == 'true'">true</IsEnabledWindows>
+    <IsEnabledWindows Condition="'$(TargetsUnix)' == 'true'">false</IsEnabledWindows>
     <TestOS Condition="'$(TestTargetOS)' == '' AND '$(TargetsWindows)' == 'true'">Windows</TestOS>
     <TestOS Condition="'$(TestTargetOS)' == '' AND '$(TargetsUnix)' == 'true'">Unix</TestOS>
     <GenerateNuget Condition="'$(GenerateNuget)' == ''">true</GenerateNuget>
@@ -20,7 +20,7 @@
 
   <!-- Populate all managed projects -->
   <ItemGroup>
-    <NetFxDriver     Include="**/netfx/**/Microsoft.Data.SqlClient*.csproj" Condition="'$(IsEnabledNetFx)' == 'true'"/>
+    <NetFxDriver     Include="**/netfx/**/Microsoft.Data.SqlClient*.csproj" Condition="'$(IsEnabledWindows)' == 'true'"/>
     <NetCoreDriver   Include="**/netcore/**/Microsoft.Data.SqlClient*.csproj"/>
     <AKVProvider     Include="**/add-ons/**/AzureKeyVaultProvider/*.csproj"/>
 
@@ -52,13 +52,13 @@
     <MSBuild Projects="@(FunctionalTests)" Targets="restore" Properties="TestTargetOS=$(TestOS)netcoreapp" />
   </Target>
 
-  <Target Name="RestoreNetFx" Condition="'$(IsEnabledNetFx)' == 'true'">
+  <Target Name="RestoreNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
     <MSBuild Projects="@(NetFxDriver)" Targets="restore" Properties="TestTargetOS=$(TestOS)netfx" />
     <MSBuild Projects="@(ManualTests)" Targets="restore" Properties="TestTargetOS=$(TestOS)netfx" />
     <MSBuild Projects="@(FunctionalTests)" Targets="restore" Properties="TestTargetOS=$(TestOS)netfx" />
   </Target>
 
-  <Target Name="BuildNetFx" DependsOnTargets="RestoreNetFx" Condition="'$(IsEnabledNetFx)' == 'true'">
+  <Target Name="BuildNetFx" DependsOnTargets="RestoreNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
     <MSBuild Projects="@(NetFxDriver)"   Properties="Platform=AnyCPU;$(ProjectProperties)" />
   </Target>
 
@@ -68,7 +68,7 @@
 
   <Target Name="BuildNetCoreAllOS" DependsOnTargets="RestoreNetCore">
     <MSBuild Projects="@(NetCoreDriver)"  Properties="$(ProjectProperties);Platform=AnyCPU;OSGroup=Unix;"  RemoveProperties="TargetsWindows;TargetsUnix;" />
-    <MSBuild Projects="@(NetCoreDriver)"  Properties="$(ProjectProperties);Platform=AnyCPU;OSGroup=Windows_NT;"  RemoveProperties="TargetsWindows;TargetsUnix;" Condition="'$(IsEnabledNetFx)' == 'true'" />
+    <MSBuild Projects="@(NetCoreDriver)"  Properties="$(ProjectProperties);Platform=AnyCPU;OSGroup=Windows_NT;"  RemoveProperties="TargetsWindows;TargetsUnix;" Condition="'$(IsEnabledWindows)' == 'true'" />
     <MSBuild Projects="@(NetCoreDriver)"  Properties="$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;"  RemoveProperties="TargetsWindows;TargetsUnix;" />
   </Target>
 
@@ -80,12 +80,12 @@
     <MSBuild Projects="@(ManualTests)"   Properties="TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;" />
   </Target>
 
-  <Target Name="BuildFunctionalTestsNetFx" DependsOnTargets="RestoreNetFx" Condition="'$(IsEnabledNetFx)' == 'true'">
+  <Target Name="BuildFunctionalTestsNetFx" DependsOnTargets="RestoreNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
     <!-- Only build platform specific tests on Windows for .Net Framework -->
     <MSBuild Projects="@(FunctionalTests)"   Properties="TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=$(Platform);" />
   </Target>
 
-  <Target Name="BuildManualTestsNetFx" DependsOnTargets="RestoreNetFx" Condition="'$(IsEnabledNetFx)' == 'true'">
+  <Target Name="BuildManualTestsNetFx" DependsOnTargets="RestoreNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
     <MSBuild Projects="@(ManualTests)"   Properties="TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=$(Platform);" />
   </Target>
 
@@ -96,7 +96,7 @@
     <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".",".nuget", SearchOption.AllDirectories))' />
   </Target>
 
-  <Target Name="BuildAKVNetFx" Condition="'$(IsEnabledNetFx)' == 'true'">
+  <Target Name="BuildAKVNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
     <MSBuild Projects="@(AKVProvider)" Targets="restore" Properties="TestTargetOS=$(TestOS)netfx" />
     <MSBuild Projects="@(AKVProvider)" Properties="TestTargetOS=$(TestOS)netfx;Platform=AnyCPU;$(TestProjectProperties)" />
   </Target>
@@ -109,7 +109,7 @@
   <Target Name="BuildAKVNetCoreAllOS">
     <MSBuild Projects="@(AKVProvider)" Targets="restore" Properties="TestTargetOS=$(TestOS)netcoreapp" />
     <MSBuild Projects="@(AKVProvider)"  Properties="TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=Unix;"  RemoveProperties="TargetsWindows;TargetsUnix;" />
-    <MSBuild Projects="@(AKVProvider)"  Properties="TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=Windows_NT;"  RemoveProperties="TargetsWindows;TargetsUnix;"  Condition="'$(IsEnabledNetFx)' == 'true'"/>
+    <MSBuild Projects="@(AKVProvider)"  Properties="TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=Windows_NT;"  RemoveProperties="TargetsWindows;TargetsUnix;"  Condition="'$(IsEnabledWindows)' == 'true'"/>
     <MSBuild Projects="@(AKVProvider)"  Properties="TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;"  RemoveProperties="TargetsWindows;TargetsUnix;" />
   </Target>
   
