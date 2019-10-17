@@ -508,7 +508,7 @@ namespace Microsoft.Data.SqlClient
                 throw new AlwaysEncryptedAttestationException(SR.InvalidArgumentToBase64UrlDecoder);
             }
 
-            bool hasValidClaim = String.Equals(encodedActualData, claimData, StringComparison.InvariantCultureIgnoreCase);
+            bool hasValidClaim = String.Equals(encodedActualData, claimData, StringComparison.Ordinal);
             if (!hasValidClaim)
             {
                 throw new AlwaysEncryptedAttestationException(String.Format(SR.InvalidClaimInAttestationToken, claimName, claimData));
