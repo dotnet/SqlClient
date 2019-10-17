@@ -18,6 +18,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string NpConnStr = null;
         public static readonly string TcpConnStr = null;
         public static readonly string AADPasswordConnStr = null;
+        public const string AKVKeyName = "TestSqlClientAzureKeyVaultProvider";
+        public static readonly string AKVBaseUrl = null;
         public static readonly string AKVUrl = null;
         public static readonly string ClientId = null;
         public static readonly string ClientSecret = null;
@@ -38,7 +40,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             NpConnStr = Environment.GetEnvironmentVariable("TEST_NP_CONN_STR");
             TcpConnStr = Environment.GetEnvironmentVariable("TEST_TCP_CONN_STR");
             AADPasswordConnStr = Environment.GetEnvironmentVariable("AAD_PASSWORD_CONN_STR");
-            AKVUrl = Environment.GetEnvironmentVariable("AZURE_KEY_VAULT_KEY_URL");
+            Uri AKVBaseUri = new Uri(new Uri(Environment.GetEnvironmentVariable("AZURE_KEY_VAULT_URL")), "/");
+            AKVBaseUrl = AKVBaseUri.AbsoluteUri;
+            AKVUrl = (new Uri(AKVBaseUri, $"/keys/{AKVKeyName}")).AbsoluteUri;
             ClientId = Environment.GetEnvironmentVariable("AZURE_KEY_VAULT_CLIENT_ID");
             ClientSecret = Environment.GetEnvironmentVariable("AZURE_KEY_VAULT_CLIENT_SECRET");
         }
@@ -74,10 +78,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             return !string.IsNullOrEmpty(AADPasswordConnStr);
         }
-        public static bool IsAKVUrlAvailable()
-        {
-            return !string.IsNullOrEmpty(AKVUrl);
-        }
+
         public static bool IsAKVSetupAvailable()
         {
             return !string.IsNullOrEmpty(AKVUrl) && !string.IsNullOrEmpty(ClientId) && !string.IsNullOrEmpty(ClientSecret);

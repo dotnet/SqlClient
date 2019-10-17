@@ -1,5 +1,12 @@
-msbuild /p:configuration=Release /t:clean
-msbuild /p:configuration=Release /t:BuildAll
-msbuild /p:configuration=Release /t:BuildAKVNetFx
-msbuild /p:configuration=Release /t:BuildAKVNetCoreAllOS
-msbuild /p:configuration=Release /t:GenerateAKVProviderNugetPackage
+call :pauseOnError msbuild /p:configuration=Release /t:clean
+call :pauseOnError msbuild /p:configuration=Release /t:BuildAll
+call :pauseOnError msbuild /p:configuration=Release /t:BuildAKVNetFx
+call :pauseOnError msbuild /p:configuration=Release /t:BuildAKVNetCoreAllOS
+call :pauseOnError msbuild /p:configuration=Release /t:GenerateAKVProviderNugetPackage
+
+goto :eof
+
+:pauseOnError
+%*
+if ERRORLEVEL 1 pause
+goto :eof

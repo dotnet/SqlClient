@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             SqlConnection.ColumnEncryptionQueryMetadataCacheEnabled = false;
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVUrlAvailable))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void InvalidKeyEncryptionAlgorithm()
         {
             Exception ex1 = Assert.Throws<ArgumentException>(() => fixture.akvStoreProvider.DecryptColumnEncryptionKey(DataTestUtility.AKVUrl, BadMasterKeyEncAlgo, cek));
@@ -38,7 +38,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.Contains("Invalid key encryption algorithm specified: 'BadMasterKeyAlgorithm'. Expected value: 'RSA_OAEP' or 'RSA-OAEP'.\r\nParameter name: encryptionAlgorithm", ex2.Message);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVUrlAvailable))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void NullEncryptionAlgorithm()
         {
             Exception ex1 = Assert.Throws<ArgumentNullException>(() => fixture.akvStoreProvider.DecryptColumnEncryptionKey(DataTestUtility.AKVUrl, null, cek));
@@ -48,35 +48,35 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVUrlAvailable))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void EmptyColumnEncryptionKey()
         {
             Exception ex1 = Assert.Throws<ArgumentException>(() => fixture.akvStoreProvider.EncryptColumnEncryptionKey(DataTestUtility.AKVUrl, MasterKeyEncAlgo, new byte[] { }));
             Assert.Contains("Empty column encryption key specified.\r\nParameter name: columnEncryptionKey", ex1.Message);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVUrlAvailable))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void NullColumnEncryptionKey()
         {
             Exception ex1 = Assert.Throws<ArgumentNullException>(() => fixture.akvStoreProvider.EncryptColumnEncryptionKey(DataTestUtility.AKVUrl, MasterKeyEncAlgo, null));
             Assert.Contains("Column encryption key cannot be null.\r\nParameter name: columnEncryptionKey", ex1.Message);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVUrlAvailable))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void EmptyEncryptedColumnEncryptionKey()
         {
             Exception ex1 = Assert.Throws<ArgumentException>(() => fixture.akvStoreProvider.DecryptColumnEncryptionKey(DataTestUtility.AKVUrl, MasterKeyEncAlgo, new byte[] { }));
             Assert.Contains("Internal error. Empty encrypted column encryption key specified.\r\nParameter name: encryptedColumnEncryptionKey", ex1.Message);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVUrlAvailable))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void NullEncryptedColumnEncryptionKey()
         {
             Exception ex1 = Assert.Throws<ArgumentNullException>(() => fixture.akvStoreProvider.DecryptColumnEncryptionKey(DataTestUtility.AKVUrl, MasterKeyEncAlgo, null));
             Assert.Contains("Internal error. Encrypted column encryption key cannot be null.\r\nParameter name: encryptedColumnEncryptionKey", ex1.Message);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVUrlAvailable))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void InvalidAlgorithmVersion()
         {
             byte[] encrypteCekLocal = ColumnEncryptionKey.GenerateInvalidEncryptedCek(encryptedCek, ColumnEncryptionKey.ECEKCorruption.ALGORITHM_VERSION);
@@ -84,7 +84,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.Contains("Specified encrypted column encryption key contains an invalid encryption algorithm version '10'. Expected version is '01'.\r\nParameter name: encryptedColumnEncryptionKey", ex1.Message);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVUrlAvailable))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void InvalidCertificateSignature()
         {
             // Put an invalid signature
@@ -96,7 +96,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.Contains(errorMessage, ex1.Message);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVUrlAvailable))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void InvalidCipherTextLength()
         {
             // Put an invalid signature
@@ -107,7 +107,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.Contains(errorMessage, ex1.Message);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVUrlAvailable))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void InvalidSignatureInEncryptedCek()
         {
             byte[] encryptedCekLocal = ColumnEncryptionKey.GenerateInvalidEncryptedCek(encryptedCek, ColumnEncryptionKey.ECEKCorruption.SIGNATURE_LENGTH);
@@ -164,7 +164,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         // [InlineData(true)] -> Enable with AE v2
         [InlineData(false)]
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVUrlAvailable))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void AkvStoreProviderVerifyFunctionWithInvalidSignature(bool fEnclaveEnabled)
         {
             //sign the cmk
