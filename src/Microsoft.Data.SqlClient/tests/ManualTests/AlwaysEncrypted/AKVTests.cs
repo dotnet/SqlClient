@@ -7,17 +7,15 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
-    public class AKVTest : IClassFixture<SQLSetupStrategyCertStoreProvider>
+    public class AKVTest : IClassFixture<SQLSetupStrategyAzureKeyVault>
     {
-        private SQLSetupStrategyCertStoreProvider fixture;
-        private SQLSetupStrategyAzureKeyVault akvFixture;
+        private SQLSetupStrategyAzureKeyVault fixture;
         private readonly string akvTableName;
 
-        public AKVTest(SQLSetupStrategyCertStoreProvider fixture)
+        public AKVTest(SQLSetupStrategyAzureKeyVault fixture)
         {
             this.fixture = fixture;
-            akvFixture = new SQLSetupStrategyAzureKeyVault();
-            akvTableName = akvFixture.AKVTestTable.Name;
+            akvTableName = fixture.AKVTestTable.Name;
 
             // Disable the cache to avoid false failures.
             SqlConnection.ColumnEncryptionQueryMetadataCacheEnabled = false;
@@ -72,18 +70,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        [PlatformSpecific(TestPlatforms.Windows)]
         public void TestRoundTripWithAKVAndCertStoreProvider()
         {
+            SQLSetupStrategyCertStoreProvider certStoreFixture = new SQLSetupStrategyCertStoreProvider();
+
             byte[] plainTextColumnEncryptionKey = ColumnEncryptionKey.GenerateRandomBytes(ColumnEncryptionKey.KeySizeInBytes);
-            byte[] encryptedColumnEncryptionKeyUsingAKV = akvFixture.AkvStoreProvider.EncryptColumnEncryptionKey(DataTestUtility.AKVUrl, @"RSA_OAEP", plainTextColumnEncryptionKey);
-            byte[] columnEncryptionKeyReturnedAKV2Cert = fixture.CertStoreProvider.DecryptColumnEncryptionKey(fixture.CspColumnMasterKey.KeyPath, @"RSA_OAEP", encryptedColumnEncryptionKeyUsingAKV);
+            byte[] encryptedColumnEncryptionKeyUsingAKV = fixture.AkvStoreProvider.EncryptColumnEncryptionKey(DataTestUtility.AKVUrl, @"RSA_OAEP", plainTextColumnEncryptionKey);
+            byte[] columnEncryptionKeyReturnedAKV2Cert = certStoreFixture.CertStoreProvider.DecryptColumnEncryptionKey(certStoreFixture.CspColumnMasterKey.KeyPath, @"RSA_OAEP", encryptedColumnEncryptionKeyUsingAKV);
             Assert.True(plainTextColumnEncryptionKey.SequenceEqual(columnEncryptionKeyReturnedAKV2Cert), @"Roundtrip failed");
 
             // Try the opposite.
-            byte[] encryptedColumnEncryptionKeyUsingCert = fixture.CertStoreProvider.EncryptColumnEncryptionKey(fixture.CspColumnMasterKey.KeyPath, @"RSA_OAEP", plainTextColumnEncryptionKey);
-            byte[] columnEncryptionKeyReturnedCert2AKV = akvFixture.AkvStoreProvider.DecryptColumnEncryptionKey(DataTestUtility.AKVUrl, @"RSA_OAEP", encryptedColumnEncryptionKeyUsingCert);
+            byte[] encryptedColumnEncryptionKeyUsingCert = certStoreFixture.CertStoreProvider.EncryptColumnEncryptionKey(certStoreFixture.CspColumnMasterKey.KeyPath, @"RSA_OAEP", plainTextColumnEncryptionKey);
+            byte[] columnEncryptionKeyReturnedCert2AKV = fixture.AkvStoreProvider.DecryptColumnEncryptionKey(DataTestUtility.AKVUrl, @"RSA_OAEP", encryptedColumnEncryptionKeyUsingCert);
             Assert.True(plainTextColumnEncryptionKey.SequenceEqual(columnEncryptionKeyReturnedCert2AKV), @"Roundtrip failed");
-
         }
 
         /// <summary>
