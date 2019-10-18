@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public Table AKVTestTable { get; private set; }
         public SqlColumnEncryptionAzureKeyVaultProvider AkvStoreProvider;
 
-        public SQLSetupStrategyAzureKeyVault()
+        public SQLSetupStrategyAzureKeyVault() : base()
         {
             AkvStoreProvider = new SqlColumnEncryptionAzureKeyVaultProvider(authenticationCallback: AADUtility.AzureActiveDirectoryAuthenticationCallback);
 
@@ -43,16 +43,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             databaseObjects.AddRange(akvColumnEncryptionKeys);
 
             List<Table> tables = CreateTables(akvColumnEncryptionKeys);
-            databaseObjects.AddRange(tables);
-
             AKVTestTable = new AKVTestTable(GenerateUniqueName("AKVTestTable"), akvColumnEncryptionKeys[0], akvColumnEncryptionKeys[1]);
             tables.Add(AKVTestTable);
+            databaseObjects.AddRange(tables);
 
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TcpConnStr))
-            {
-                sqlConnection.Open();
-                databaseObjects.ForEach(o => o.Create(sqlConnection));
-            }
+            base.SetupDatabase();
         }
     }
 }

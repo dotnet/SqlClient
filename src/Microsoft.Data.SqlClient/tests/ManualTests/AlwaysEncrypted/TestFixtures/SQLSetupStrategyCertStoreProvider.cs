@@ -15,6 +15,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public SQLSetupStrategyCertStoreProvider() : base()
         {
             CertStoreProvider = new SqlColumnEncryptionCertificateStoreProvider();
+            SetupDatabase();
         }
 
         protected SQLSetupStrategyCertStoreProvider(string customKeyPath) => keyPath = customKeyPath;
@@ -30,11 +31,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             List<Table> tables = CreateTables(columnEncryptionKeys);
             databaseObjects.AddRange(tables);
 
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TcpConnStr))
-            {
-                sqlConnection.Open();
-                databaseObjects.ForEach(o => o.Create(sqlConnection));
-            }
+            base.SetupDatabase();
         }
     }
 }

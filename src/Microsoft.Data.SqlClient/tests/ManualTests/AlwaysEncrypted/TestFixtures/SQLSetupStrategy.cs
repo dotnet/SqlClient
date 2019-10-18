@@ -26,7 +26,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public SQLSetupStrategy()
         {
             certificate = CertificateUtility.CreateCertificate();
-            SetupDatabase();
         }
 
         protected SQLSetupStrategy(string customKeyPath) => keyPath = customKeyPath;
