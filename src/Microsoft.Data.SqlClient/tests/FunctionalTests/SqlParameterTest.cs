@@ -881,7 +881,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData(DbType.UInt32)]
         [InlineData(DbType.UInt64)]
         [InlineData(DbType.VarNumeric)]
-        public void Parameter_Unsupported(DbType dbType)
+        public void Parameter_NotSupported(DbType dbType)
         {
             var parameter = new SqlParameter();
             Assert.Throws<ArgumentException>(() => parameter.DbType = dbType);
