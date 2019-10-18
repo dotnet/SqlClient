@@ -332,9 +332,7 @@
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </COMReference>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Microsoft\SqlServer\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.SqlClient.SNI">
       <Version>1.0.19235.1</Version>

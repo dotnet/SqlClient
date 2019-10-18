@@ -105,8 +105,11 @@ Manual Tests require the below setup to run:
 
 |Env Variable|Description|Value|
 |------|--------|-------------------|
-|TEST_NP_CONN_STR | Connection String for Named Pipes enabled SQL Server instance.| `Server=\\{servername}\pipe\sql\query;Database={Database_Name};Trusted_Connection=True;` <br/> OR <br/> `Data Source=np:{servername};Initial Catalog={Database_Name};Integrated Security=True;`|
-|TEST_TCP_CONN_STR | Connection String for TCP enabled SQL Server instance. | `Server={servername};Database={Database_Name};Trusted_Connection=True;` <br/> OR `Data Source={servername};Initial Catalog={Database_Name};Integrated Security=True;`|
+|TEST_NP_CONN_STR | Connection String for a Named Pipes enabled SQL Server instance.| `Server=\\{servername}\pipe\sql\query;Database={Database_Name};Trusted_Connection=True;` <br/> OR <br/> `Data Source=np:{servername};Initial Catalog={Database_Name};Integrated Security=True;`|
+|TEST_TCP_CONN_STR | Connection String for a TCP enabled SQL Server instance. | `Server={servername};Database={Database_Name};Trusted_Connection=True;` <br/> OR `Data Source={servername};Initial Catalog={Database_Name};Integrated Security=True;`|
+|AZURE_KEY_VAULT_URL | (Optional) Azure Key Vault Identifier URL | `https://{keyvaultname}.vault.azure.net/` |
+|AZURE_KEY_VAULT_CLIENT_ID | (Optional) "Application (client) ID" of an Active Directory registered application, granted access to the Azure Key Vault specified in `AZURE_KEY_VAULT_URL`. Requires the key permissions Get, List, Import, Decrypt, Encrypt, Unwrap, Wrap, Verify, and Sign. | _{Client Application ID}_ |
+|AZURE_KEY_VAULT_CLIENT_KEY | (Optional) "Client Secret" of the Active Directory registered application, granted access to the Azure Key Vault specified in `AZURE_KEY_VAULT_URL` | _{Client Application Secret}_ |
 |AAD_PASSWORD_CONN_STR | (Optional) Connection String for testing Azure Active Directory Password Authentication. | `Data Source={server.database.windows.net}; Initial Catalog={Azure_DB_Name};Authentication=Active Directory Password; User ID={AAD_User}; Password={AAD_User_Password};`|
 |TEST_ACCESSTOKEN_SETUP| (Optional) Contains the Access Token to be used for tests.| _<OAuth 2.0 Access Token>_ |
 |TEST_LOCALDB_INSTALLED| (Optional) Whether or not a LocalDb instance of SQL Server is installed on the machine running the tests. |`1` OR `0`|

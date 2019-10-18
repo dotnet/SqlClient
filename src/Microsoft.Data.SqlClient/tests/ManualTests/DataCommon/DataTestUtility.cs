@@ -18,6 +18,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string NpConnStr = null;
         public static readonly string TcpConnStr = null;
         public static readonly string AADPasswordConnStr = null;
+        public const string AKVKeyName = "TestSqlClientAzureKeyVaultProvider";
+        public static readonly string AKVBaseUrl = null;
+        public static readonly string AKVUrl = null;
+        public static readonly string ClientId = null;
+        public static readonly string ClientSecret = null;
         public const string UdtTestDbName = "UdtTestDb";
         private static readonly Assembly s_systemDotData = typeof(Microsoft.Data.SqlClient.SqlConnection).GetTypeInfo().Assembly;
         private static readonly Type s_tdsParserStateObjectFactory = s_systemDotData?.GetType("Microsoft.Data.SqlClient.TdsParserStateObjectFactory");
@@ -35,6 +40,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             NpConnStr = Environment.GetEnvironmentVariable("TEST_NP_CONN_STR");
             TcpConnStr = Environment.GetEnvironmentVariable("TEST_TCP_CONN_STR");
             AADPasswordConnStr = Environment.GetEnvironmentVariable("AAD_PASSWORD_CONN_STR");
+            string akvUrl = Environment.GetEnvironmentVariable("AZURE_KEY_VAULT_URL");
+            Uri AKVBaseUri = null;
+            if (!string.IsNullOrEmpty(akvUrl) && Uri.TryCreate(akvUrl, UriKind.Absolute, out AKVBaseUri))
+            {
+                AKVBaseUri = new Uri(AKVBaseUri, "/");
+                AKVBaseUrl = AKVBaseUri.AbsoluteUri;
+                AKVUrl = (new Uri(AKVBaseUri, $"/keys/{AKVKeyName}")).AbsoluteUri;
+            }
+            ClientId = Environment.GetEnvironmentVariable("AZURE_KEY_VAULT_CLIENT_ID");
+            ClientSecret = Environment.GetEnvironmentVariable("AZURE_KEY_VAULT_CLIENT_SECRET");
         }
 
         public static bool IsDatabasePresent(string name)
@@ -67,6 +82,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool IsAADPasswordConnStrSetup()
         {
             return !string.IsNullOrEmpty(AADPasswordConnStr);
+        }
+
+        public static bool IsAKVSetupAvailable()
+        {
+            return !string.IsNullOrEmpty(AKVUrl) && !string.IsNullOrEmpty(ClientId) && !string.IsNullOrEmpty(ClientSecret);
         }
 
         public static bool IsNotAzureServer() => !DataTestUtility.IsAzureSqlServer(new SqlConnectionStringBuilder((DataTestUtility.TcpConnStr)).DataSource);

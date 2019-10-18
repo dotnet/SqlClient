@@ -15,19 +15,23 @@
     <Compile Include="$(CommonTestPath)\System\Collections\DictionaryExtensions.cs">
       <Link>Common\System\Collections\DictionaryExtensions.cs</Link>
     </Compile>
+    <Compile Include="AlwaysEncrypted\AKVTests.cs" />
     <Compile Include="AlwaysEncrypted\ApiShould.cs" />
     <Compile Include="AlwaysEncrypted\BulkCopyAE.cs" />
+    <Compile Include="AlwaysEncrypted\ExceptionTestAKVStore.cs" />
     <Compile Include="AlwaysEncrypted\CoreCryptoTests.cs" />
     <Compile Include="AlwaysEncrypted\End2EndSmokeTests.cs" />
     <Compile Include="AlwaysEncrypted\CspProviderExt.cs" />
     <Compile Include="AlwaysEncrypted\ConversionTests.cs" />
     <Compile Include="AlwaysEncrypted\ExceptionsGenericError.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\AKVTestTable.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ApiTestTable.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\BulkCopyAETestTable.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ColumnEncryptionKey.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ColumnMasterKey.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CryptoNativeBaselineReader.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CryptoVector.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\AkvColumnMasterKey.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CspColumnMasterKey.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\DbObject.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ICreatable.cs" />
@@ -40,6 +44,7 @@
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CertificateUtilityWin.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyCspExt.cs" />
     <Compile Include="AlwaysEncrypted\TestTrustedMasterKeyPaths.cs" />
+    <Compile Include="DataCommon\AADUtility.cs" />
     <Compile Include="DataCommon\CheckConnStrSetupFactAttribute.cs" />
     <Compile Include="SQL\AdapterTest\AdapterTest.cs" />
     <Compile Include="SQL\AsyncTest\BeginExecAsyncTest.cs" />
@@ -201,6 +206,7 @@
     <Reference Include="System.Runtime.Caching" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\add-ons\AzureKeyVaultProvider\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
     <ProjectReference Include="SQL\UdtTest\UDTs\Address\Address.csproj">
       <Name>Address</Name>
     </ProjectReference>
@@ -226,6 +232,12 @@
     <Reference Include="System.Transactions" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.Azure.KeyVault" Version="3.0.4" />
+    <PackageReference Include="Microsoft.Azure.KeyVault.WebKey" Version="3.0.4" />
+    <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="3.19.1" />
+    <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.20" />
+    <PackageReference Include="Microsoft.Rest.ClientRuntime.Azure" Version="3.3.19" />
+    <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.9.0" />
     <PackageReference Include="xunit" Version="2.3.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.3.1" />
