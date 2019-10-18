@@ -78,7 +78,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Object aesFactory = Activator.CreateInstance(sqlAeadAes256CbcHmac256Factory);
             Debug.Assert(aesFactory != null);
 
-            object[] parameters = new object[] { columnEncryptionKey, encryptionType, SQLSetupStrategyCertStoreProvider.ColumnEncryptionAlgorithmName };
+            object[] parameters = new object[] { columnEncryptionKey, encryptionType, SQLSetupStrategy.ColumnEncryptionAlgorithmName };
             Object authenticatedAES = sqlAeadAes256CbcHmac256FactoryCreate.Invoke(aesFactory, parameters);
             Debug.Assert(authenticatedAES != null);
 
@@ -246,7 +246,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Object aesFactory = Activator.CreateInstance(sqlAeadAes256CbcHmac256Factory);
             Debug.Assert(aesFactory != null);
 
-            object[] parameters = new object[] { columnEncryptionKey, encryptionType, SQLSetupStrategyCertStoreProvider.ColumnEncryptionAlgorithmName };
+            object[] parameters = new object[] { columnEncryptionKey, encryptionType, SQLSetupStrategy.ColumnEncryptionAlgorithmName };
             Object authenticatedAES = sqlAeadAes256CbcHmac256FactoryCreate.Invoke(aesFactory, parameters);
             Debug.Assert(authenticatedAES != null);
 
