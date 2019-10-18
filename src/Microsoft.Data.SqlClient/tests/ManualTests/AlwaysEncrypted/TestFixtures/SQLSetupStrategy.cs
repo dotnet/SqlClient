@@ -62,16 +62,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             cspColumnMasterKey = new CspColumnMasterKey(GenerateUniqueName("CMK"), certificate.Thumbprint);
             databaseObjects.Add(cspColumnMasterKey);
 
-            ColumnMasterKey akvColumnMasterKey = new AkvColumnMasterKey(GenerateUniqueName("AKVCMK"), akvUrl: DataTestUtility.AKVUrl);
-            databaseObjects.Add(akvColumnMasterKey);
+            List<ColumnEncryptionKey> akvColumnEncryptionKeys = null;
+            
+            if (DataTestUtility.IsAKVSetupAvailable())
+            {
+                ColumnMasterKey akvColumnMasterKey = new AkvColumnMasterKey(GenerateUniqueName("AKVCMK"), akvUrl: DataTestUtility.AKVUrl);
+                databaseObjects.Add(akvColumnMasterKey);
+
+                akvColumnEncryptionKeys = CreateColumnEncryptionKeys(akvColumnMasterKey, 2, akvStoreProvider);
+                databaseObjects.AddRange(akvColumnEncryptionKeys);
+            }
 
             List<ColumnEncryptionKey> columnEncryptionKeys = CreateColumnEncryptionKeys(cspColumnMasterKey, 2, certStoreProvider);
             databaseObjects.AddRange(columnEncryptionKeys);
 
-            List<ColumnEncryptionKey> akcColumnEncryptionKeys = CreateColumnEncryptionKeys(akvColumnMasterKey, 2, akvStoreProvider);
-            databaseObjects.AddRange(akcColumnEncryptionKeys);
-
-            List<Table> tables = CreateTables(columnEncryptionKeys, akcColumnEncryptionKeys);
+            List<Table> tables = CreateTables(columnEncryptionKeys, akvColumnEncryptionKeys);
             databaseObjects.AddRange(tables);
 
             using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TcpConnStr))
@@ -111,7 +116,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             ApiTestTable = new ApiTestTable(GenerateUniqueName("ApiTestTable"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
             tables.Add(ApiTestTable);
 
-            if (DataTestUtility.IsAKVSetupAvailable())
+            if (DataTestUtility.IsAKVSetupAvailable() && akvColumnEncryptionKeys != null)
             {
                 AKVTestTable = new AKVTestTable(GenerateUniqueName("AKVTestTable"), akvColumnEncryptionKeys[0], akvColumnEncryptionKeys[1]);
                 tables.Add(AKVTestTable);
