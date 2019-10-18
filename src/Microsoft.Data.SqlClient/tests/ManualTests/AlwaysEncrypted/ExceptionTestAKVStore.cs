@@ -117,7 +117,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.Contains(errorMessage, ex1.Message);
         }
 
-        [Fact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void InvalidURL()
         {
             char[] barePath = new char[32780];
@@ -136,7 +136,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.Contains(errorMessage, ex2.Message);
         }
 
-        [Fact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void NullAKVKeyPath()
         {
             Exception ex1 = Assert.Throws<ArgumentNullException>(
@@ -148,7 +148,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.Contains("Internal error. Azure Key Vault key path cannot be null.\r\nParameter name: masterKeyPath", ex2.Message);
         }
 
-        [Fact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void InvalidCertificatePath()
         {
             string dummyPath = @"https://www.microsoft.com";
