@@ -129,7 +129,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return false;
         }
 
-
         // the name length will be no more then (16 + prefix.Length + escapeLeft.Length + escapeRight.Length)
         // some providers does not support names (Oracle supports up to 30)
         public static string GetUniqueName(string prefix)
