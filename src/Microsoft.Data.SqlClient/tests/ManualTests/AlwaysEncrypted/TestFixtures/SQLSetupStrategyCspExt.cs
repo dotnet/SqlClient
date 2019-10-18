@@ -7,7 +7,7 @@ using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
-    public class SQLSetupStrategyCspExt : SQLSetupStrategy
+    public class SQLSetupStrategyCspExt : SQLSetupStrategyCertStoreProvider
     {
         public Table CspProviderTable { get; private set; }
         public SqlColumnEncryptionCspProvider keyStoreProvider { get; }
