@@ -90,8 +90,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             // Put an invalid signature
             byte[] encrypteCekLocal = ColumnEncryptionKey.GenerateInvalidEncryptedCek(encryptedCek, ColumnEncryptionKey.ECEKCorruption.SIGNATURE);
-            string errorMessage = String.Format(
-                $"The specified encrypted column encryption key signature does not match the signature computed with the column master key (Asymmetric key in Azure Key Vault) in '{0}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.{Environment.NewLine}Parameter name: encryptedColumnEncryptionKey", DataTestUtility.AKVUrl);
+            string errorMessage =
+                $"The specified encrypted column encryption key signature does not match the signature computed with the column master key (Asymmetric key in Azure Key Vault) in '{DataTestUtility.AKVUrl}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.{Environment.NewLine}Parameter name: encryptedColumnEncryptionKey";
 
             Exception ex1 = Assert.Throws<ArgumentException>(() => fixture.AkvStoreProvider.DecryptColumnEncryptionKey(DataTestUtility.AKVUrl, MasterKeyEncAlgo, encrypteCekLocal));
             Assert.Contains(errorMessage, ex1.Message);
@@ -102,7 +102,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             // Put an invalid signature
             byte[] encrypteCekLocal = ColumnEncryptionKey.GenerateInvalidEncryptedCek(encryptedCek, ColumnEncryptionKey.ECEKCorruption.CEK_LENGTH);
-            string errorMessage = String.Format($"The specified encrypted column encryption key's ciphertext length: 251 does not match the ciphertext length: 256 when using column master key (Azure Key Vault key) in '{0}'. The encrypted column encryption key may be corrupt, or the specified Azure Key Vault key path may be incorrect.{Environment.NewLine}Parameter name: encryptedColumnEncryptionKey", DataTestUtility.AKVUrl);
+            string errorMessage = $"The specified encrypted column encryption key's ciphertext length: 251 does not match the ciphertext length: 256 when using column master key (Azure Key Vault key) in '{DataTestUtility.AKVUrl}'. The encrypted column encryption key may be corrupt, or the specified Azure Key Vault key path may be incorrect.{Environment.NewLine}Parameter name: encryptedColumnEncryptionKey";
 
             Exception ex1 = Assert.Throws<ArgumentException>(() => fixture.AkvStoreProvider.DecryptColumnEncryptionKey(DataTestUtility.AKVUrl, MasterKeyEncAlgo, encrypteCekLocal));
             Assert.Contains(errorMessage, ex1.Message);
@@ -112,7 +112,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public void InvalidSignatureInEncryptedCek()
         {
             byte[] encryptedCekLocal = ColumnEncryptionKey.GenerateInvalidEncryptedCek(encryptedCek, ColumnEncryptionKey.ECEKCorruption.SIGNATURE_LENGTH);
-            string errorMessage = String.Format($"The specified encrypted column encryption key's signature length: 249 does not match the signature length: 256 when using column master key (Azure Key Vault key) in '{0}'. The encrypted column encryption key may be corrupt, or the specified Azure Key Vault key path may be incorrect.{Environment.NewLine}Parameter name: encryptedColumnEncryptionKey", DataTestUtility.AKVUrl);
+            string errorMessage = $"The specified encrypted column encryption key's signature length: 249 does not match the signature length: 256 when using column master key (Azure Key Vault key) in '{DataTestUtility.AKVUrl}'. The encrypted column encryption key may be corrupt, or the specified Azure Key Vault key path may be incorrect.{Environment.NewLine}Parameter name: encryptedColumnEncryptionKey";
 
             Exception ex1 = Assert.Throws<ArgumentException>(() => fixture.AkvStoreProvider.DecryptColumnEncryptionKey(DataTestUtility.AKVUrl, MasterKeyEncAlgo, encryptedCekLocal));
             Assert.Contains(errorMessage, ex1.Message);
@@ -128,7 +128,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
 
             string fakePath = new string(barePath);
-            string errorMessage = String.Format($"Invalid url specified: '{0}'.{Environment.NewLine}Parameter name: masterKeyPath", fakePath);
+            string errorMessage = $"Invalid url specified: '{fakePath}'.{Environment.NewLine}Parameter name: masterKeyPath";
 
             Exception ex1 = Assert.Throws<ArgumentException>(() => fixture.AkvStoreProvider.EncryptColumnEncryptionKey(fakePath, MasterKeyEncAlgo, cek));
             Assert.Contains(errorMessage, ex1.Message);
@@ -153,7 +153,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public void InvalidCertificatePath()
         {
             string dummyPath = @"https://www.microsoft.com";
-            string errorMessage = String.Format($"Invalid Azure Key Vault key path specified: '{0}'. Valid trusted endpoints: vault.azure.net, vault.azure.cn, vault.usgovcloudapi.net, vault.microsoftazure.de.{Environment.NewLine}Parameter name: masterKeyPath", dummyPath);
+            string errorMessage = $"Invalid Azure Key Vault key path specified: '{dummyPath}'. Valid trusted endpoints: vault.azure.net, vault.azure.cn, vault.usgovcloudapi.net, vault.microsoftazure.de.{Environment.NewLine}Parameter name: masterKeyPath";
             
             Exception ex1 = Assert.Throws<ArgumentException>(() => fixture.AkvStoreProvider.EncryptColumnEncryptionKey(dummyPath, MasterKeyEncAlgo, cek));
             Assert.Contains(errorMessage, ex1.Message);
