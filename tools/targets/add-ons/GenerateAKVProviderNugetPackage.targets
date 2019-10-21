@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Target Name="GenerateAKVProviderNugetPackage" Condition="'$(GenerateNuget)' == 'true'">
+    <PropertyGroup>
+      <NugetPackageVersion Condition="'$(Configuration)' == 'Debug'">$(NugetPackageVersion)-debug</NugetPackageVersion>
+    </PropertyGroup>
+    <Message Text="Setting NugetPackageVersion to $(NugetPackageVersion)" />
+    <Exec Command="powershell.exe -NonInteractive -executionpolicy Unrestricted ^
+      -command &quot;&amp;$(ToolsDir)scripts\downloadLatestNuget.ps1 -nugetDestPath '$(NuGetRoot)'&quot;" />
+    <Exec Command="$(NuGetCmd) pack $(ToolsDir)specs\add-ons\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.nuspec -Version $(NugetPackageVersion) -OutputDirectory $(PackagesDir) -properties Configuration=$(Configuration)" />
+  </Target>
+</Project>

@@ -20,6 +20,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string s_tcpConnString = null;
         public static readonly string s_aadAccessToken = null;
         public static readonly string s_aadPassConnString = null;
+        public const string AKVKeyName = "TestSqlClientAzureKeyVaultProvider";
+        public static readonly string AKVBaseUrl = null;
+        public static readonly string AKVUrl = null;
+        public static readonly string ClientId = null;
+        public static readonly string ClientSecret = null;
         public static readonly bool s_supportsIntegratedSecurity = false;
         public static readonly bool s_supportsLocalDb = false;
         public static readonly bool s_supportsFileStream = false;
@@ -64,6 +69,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 s_supportsLocalDb = c.SupportsLocalDb;
                 s_supportsIntegratedSecurity = c.SupportsIntegratedSecurity;
                 s_supportsFileStream = c.SupportsFileStream;
+	            string akvUrl = Environment.GetEnvironmentVariable("AZURE_KEY_VAULT_URL");
+	            Uri AKVBaseUri = null;
+	            if (!string.IsNullOrEmpty(akvUrl) && Uri.TryCreate(akvUrl, UriKind.Absolute, out AKVBaseUri))
+	            {
+	                AKVBaseUri = new Uri(AKVBaseUri, "/");
+	                AKVBaseUrl = AKVBaseUri.AbsoluteUri;
+	                AKVUrl = (new Uri(AKVBaseUri, $"/keys/{AKVKeyName}")).AbsoluteUri;
+	            }
+	            ClientId = Environment.GetEnvironmentVariable("AZURE_KEY_VAULT_CLIENT_ID");
+	            ClientSecret = Environment.GetEnvironmentVariable("AZURE_KEY_VAULT_CLIENT_SECRET");
             }
         }
 
@@ -100,6 +115,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         public static bool IsNotAzureServer() => !DataTestUtility.IsAzureSqlServer(new SqlConnectionStringBuilder((DataTestUtility.s_tcpConnString)).DataSource);
+
+        public static bool IsAKVSetupAvailable()
+        {
+            return !string.IsNullOrEmpty(AKVUrl) && !string.IsNullOrEmpty(ClientId) && !string.IsNullOrEmpty(ClientSecret);
+        }
 
         public static bool IsUsingManagedSNI() => (bool)(s_useManagedSNI?.GetValue(null) ?? false);
 
