@@ -8,14 +8,14 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
-    public class TestTrustedMasterKeyPaths : IClassFixture<SQLSetupStrategy>
+    public class TestTrustedMasterKeyPaths : IClassFixture<SQLSetupStrategyCertStoreProvider>
     {
-        private SQLSetupStrategy fixture;
+        private SQLSetupStrategyCertStoreProvider fixture;
         static private string defaultConnectionString;
         private readonly string tableName;
         private readonly string columnMasterKeyPath;
 
-        public TestTrustedMasterKeyPaths(SQLSetupStrategy fixture)
+        public TestTrustedMasterKeyPaths(SQLSetupStrategyCertStoreProvider fixture)
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr);
             builder.ConnectTimeout = 10000;

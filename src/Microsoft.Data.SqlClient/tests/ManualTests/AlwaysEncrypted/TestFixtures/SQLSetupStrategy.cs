@@ -5,7 +5,6 @@
 using System;
 using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
-using Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
@@ -14,71 +13,25 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     {
         internal const string ColumnEncryptionAlgorithmName = @"AEAD_AES_256_CBC_HMAC_SHA256";
 
-        private readonly X509Certificate2 certificate;
-        public string keyPath { get; private set; }
+        protected internal readonly X509Certificate2 certificate;
+        public string keyPath { get; internal set; }
         public Table ApiTestTable { get; private set; }
-        public Table AKVTestTable { get; private set; }
         public Table BulkCopyAETestTable { get; private set; }
         public Table SqlParameterPropertiesTable { get; private set; }
         public Table End2EndSmokeTable { get; private set; }
         public Table TrustedMasterKeyPathsTestTable { get; private set; }
-
-        public SqlColumnEncryptionAzureKeyVaultProvider akvStoreProvider;
-        public SqlColumnEncryptionCertificateStoreProvider certStoreProvider;
-        public CspColumnMasterKey cspColumnMasterKey;
-
-        private static bool isAKVProviderRegistered = false;
 
         protected List<DbObject> databaseObjects = new List<DbObject>();
 
         public SQLSetupStrategy()
         {
             certificate = CertificateUtility.CreateCertificate();
-            certStoreProvider = new SqlColumnEncryptionCertificateStoreProvider();
-
-            if (DataTestUtility.IsAKVSetupAvailable())
-            {
-                akvStoreProvider = new SqlColumnEncryptionAzureKeyVaultProvider(authenticationCallback: AADUtility.AzureActiveDirectoryAuthenticationCallback);
-
-                if (!isAKVProviderRegistered)
-                {
-                    Dictionary<string, SqlColumnEncryptionKeyStoreProvider> customAkvKeyStoreProviders = new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>(capacity: 1, comparer: StringComparer.OrdinalIgnoreCase)
-                    {
-                        {SqlColumnEncryptionAzureKeyVaultProvider.ProviderName, akvStoreProvider}
-                    };
-
-                    SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders: customAkvKeyStoreProviders);
-                    isAKVProviderRegistered = true;
-                }
-            }
-
-            SetupDatabase();
         }
 
         protected SQLSetupStrategy(string customKeyPath) => keyPath = customKeyPath;
 
         internal virtual void SetupDatabase()
         {
-            cspColumnMasterKey = new CspColumnMasterKey(GenerateUniqueName("CMK"), certificate.Thumbprint);
-            databaseObjects.Add(cspColumnMasterKey);
-
-            List<ColumnEncryptionKey> akvColumnEncryptionKeys = null;
-            
-            if (DataTestUtility.IsAKVSetupAvailable())
-            {
-                ColumnMasterKey akvColumnMasterKey = new AkvColumnMasterKey(GenerateUniqueName("AKVCMK"), akvUrl: DataTestUtility.AKVUrl);
-                databaseObjects.Add(akvColumnMasterKey);
-
-                akvColumnEncryptionKeys = CreateColumnEncryptionKeys(akvColumnMasterKey, 2, akvStoreProvider);
-                databaseObjects.AddRange(akvColumnEncryptionKeys);
-            }
-
-            List<ColumnEncryptionKey> columnEncryptionKeys = CreateColumnEncryptionKeys(cspColumnMasterKey, 2, certStoreProvider);
-            databaseObjects.AddRange(columnEncryptionKeys);
-
-            List<Table> tables = CreateTables(columnEncryptionKeys, akvColumnEncryptionKeys);
-            databaseObjects.AddRange(tables);
-
             using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TcpConnStr))
             {
                 sqlConnection.Open();
@@ -109,18 +62,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             return columnEncryptionKeys;
         }
 
-        private List<Table> CreateTables(IList<ColumnEncryptionKey> columnEncryptionKeys, IList<ColumnEncryptionKey> akvColumnEncryptionKeys)
+        protected List<Table> CreateTables(IList<ColumnEncryptionKey> columnEncryptionKeys)
         {
             List<Table> tables = new List<Table>();
 
             ApiTestTable = new ApiTestTable(GenerateUniqueName("ApiTestTable"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
             tables.Add(ApiTestTable);
-
-            if (DataTestUtility.IsAKVSetupAvailable() && akvColumnEncryptionKeys != null)
-            {
-                AKVTestTable = new AKVTestTable(GenerateUniqueName("AKVTestTable"), akvColumnEncryptionKeys[0], akvColumnEncryptionKeys[1]);
-                tables.Add(AKVTestTable);
-            }
 
             BulkCopyAETestTable = new BulkCopyAETestTable(GenerateUniqueName("BulkCopyAETestTable"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
             tables.Add(BulkCopyAETestTable);

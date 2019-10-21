@@ -19,13 +19,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     /// TODO: These tests are marked as Windows only for now but should be run for all platforms once the Master Key is accessible to this app from Azure Key Vault.
     /// </summary>
     [PlatformSpecific(TestPlatforms.Windows)]
-    public class ApiShould : IClassFixture<SQLSetupStrategy>, IDisposable
+    public class ApiShould : IClassFixture<SQLSetupStrategyCertStoreProvider>, IDisposable
     {
-        private SQLSetupStrategy fixture;
+        private SQLSetupStrategyCertStoreProvider fixture;
 
         private readonly string tableName;
 
-        public ApiShould(SQLSetupStrategy fixture)
+        public ApiShould(SQLSetupStrategyCertStoreProvider fixture)
         {
             this.fixture = fixture;
             tableName = fixture.ApiTestTable.Name;
