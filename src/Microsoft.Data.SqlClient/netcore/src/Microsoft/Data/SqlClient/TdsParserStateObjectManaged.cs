@@ -163,6 +163,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 SetPacketData(PacketHandle.FromManagedPacket(attnPacket), SQL.AttentionHeader, TdsEnums.HEADER_LEN);
                 _sniAsyncAttnPacket = attnPacket;
             }
+            PacketHandle.FromManagedPacket(_sniAsyncAttnPacket).ManagedPacket.IsOutOfBand = true;
             return PacketHandle.FromManagedPacket(_sniAsyncAttnPacket);
         }
 
