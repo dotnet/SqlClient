@@ -46,6 +46,7 @@
     <Compile Include="FakeDiagnosticListenerObserver.cs" />
     <Compile Include="SqlMetaDataTest.cs" />
     <Compile Include="SqlConnectionStringBuilderTest.cs" />
+    <!-- <Compile Include="DiagnosticTest.cs" /> -->
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.9.0" />
