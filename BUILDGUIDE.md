@@ -17,7 +17,7 @@ Once the environment is setup properly, execute the desired set of commands belo
 
 > msbuild
 # Builds the driver for the Client OS in 'Debug' Configuration for 'AnyCPU' platform.
-# Both .Net Framework (NetFx) and .Net Core drivers are built by default (as supported by Client OS).
+# Both .Net Framework (NetFx) and .NET Core drivers are built by default (as supported by Client OS).
 ```
 
 ```bash
@@ -65,12 +65,12 @@ Once the environment is setup properly, execute the desired set of commands belo
 
 ```bash
 > msbuild /t:BuildTestsNetCore
-# Build the tests for the .Net Core driver.
+# Build the tests for the .NET Core driver. Default .NET Core version is 2.1.
 ```
 
 ```bash
 > msbuild /t:BuildTestsNetFx
-# Build the tests for the .Net Framework (NetFx) driver.
+# Build the tests for the .Net Framework (NetFx) driver. Default NetFx version is 4.6.
 ```
 
 ## Run Functional Tests
@@ -144,7 +144,8 @@ Unix (`netcoreapp`):
 ```
 
 ## Testing with Custom TargetFramework
-Tests can be built and run with custom Target Frameworks as under:
+
+Tests can be built and run with custom Target Frameworks. See the below examples.
 
 ### Building Tests:
 
