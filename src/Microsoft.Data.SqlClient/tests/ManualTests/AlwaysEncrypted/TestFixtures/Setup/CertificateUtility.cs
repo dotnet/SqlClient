@@ -134,7 +134,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             if (DataTestUtility.IsAKVSetupAvailable())
             {
                 KeyVaultClient keyVaultClient = keyVaultClient = new KeyVaultClient(AADUtility.AzureActiveDirectoryAuthenticationCallback);
-                IPage<KeyItem> keys = keyVaultClient.GetKeysAsync(DataTestUtility.AkvBaseUrl).Result;
+                IPage<KeyItem> keys = keyVaultClient.GetKeysAsync(DataTestUtility.AKVBaseUrl).Result;
                 bool testAKVKeyExists = false;
                 while (true)
                 {
@@ -174,7 +174,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                             E = p.Exponent,
                         },
                     };
-                    keyVaultClient.ImportKeyAsync(DataTestUtility.AkvBaseUrl, DataTestUtility.AKVKeyName, kb);
+                    keyVaultClient.ImportKeyAsync(DataTestUtility.AKVBaseUrl, DataTestUtility.AKVKeyName, kb);
                 }
             }
 
