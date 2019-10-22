@@ -1,22 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using System;
 using System.Linq;
-using Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
-    [PlatformSpecific(TestPlatforms.Windows)]
-    public class AKVTest : IClassFixture<SQLSetupStrategy>, IDisposable
+    public class AKVTest : IClassFixture<SQLSetupStrategyAzureKeyVault>
     {
-        private SQLSetupStrategy fixture;
-        private readonly string tableName;
+        private SQLSetupStrategyAzureKeyVault fixture;
+        private readonly string akvTableName;
 
-        public AKVTest(SQLSetupStrategy fixture)
+        public AKVTest(SQLSetupStrategyAzureKeyVault fixture)
         {
             this.fixture = fixture;
-            tableName = fixture.AKVTestTable.Name;
+            akvTableName = fixture.AKVTestTable.Name;
 
             // Disable the cache to avoid false failures.
             SqlConnection.ColumnEncryptionQueryMetadataCacheEnabled = false;
@@ -39,7 +40,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 }
 
                 // Test INPUT parameter on an encrypted parameter
-                using (SqlCommand sqlCommand = new SqlCommand($"SELECT CustomerId, FirstName, LastName FROM [{tableName}] WHERE FirstName = @firstName",
+                using (SqlCommand sqlCommand = new SqlCommand($"SELECT CustomerId, FirstName, LastName FROM [{akvTableName}] WHERE FirstName = @firstName",
                                                                 sqlConnection))
                 {
                     SqlParameter customerFirstParam = sqlCommand.Parameters.AddWithValue(@"firstName", @"Microsoft");
@@ -57,7 +58,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         private void InsertCustomerRecord(SqlConnection sqlConnection, SqlTransaction sqlTransaction, Customer customer)
         {
             using (SqlCommand sqlCommand = new SqlCommand(
-                $"INSERT INTO [{tableName}] (CustomerId, FirstName, LastName) VALUES (@CustomerId, @FirstName, @LastName);",
+                $"INSERT INTO [{akvTableName}] (CustomerId, FirstName, LastName) VALUES (@CustomerId, @FirstName, @LastName);",
                 connection: sqlConnection,
                 transaction: sqlTransaction,
                 columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
@@ -71,18 +72,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        [PlatformSpecific(TestPlatforms.Windows)]
         public void TestRoundTripWithAKVAndCertStoreProvider()
         {
+            SQLSetupStrategyCertStoreProvider certStoreFixture = new SQLSetupStrategyCertStoreProvider();
+
             byte[] plainTextColumnEncryptionKey = ColumnEncryptionKey.GenerateRandomBytes(ColumnEncryptionKey.KeySizeInBytes);
-            byte[] encryptedColumnEncryptionKeyUsingAKV = fixture.akvStoreProvider.EncryptColumnEncryptionKey(DataTestUtility.AKVUrl, @"RSA_OAEP", plainTextColumnEncryptionKey);
-            byte[] columnEncryptionKeyReturnedAKV2Cert = fixture.certStoreProvider.DecryptColumnEncryptionKey(fixture.cspColumnMasterKey.KeyPath, @"RSA_OAEP", encryptedColumnEncryptionKeyUsingAKV);
+            byte[] encryptedColumnEncryptionKeyUsingAKV = fixture.AkvStoreProvider.EncryptColumnEncryptionKey(DataTestUtility.AKVUrl, @"RSA_OAEP", plainTextColumnEncryptionKey);
+            byte[] columnEncryptionKeyReturnedAKV2Cert = certStoreFixture.CertStoreProvider.DecryptColumnEncryptionKey(certStoreFixture.CspColumnMasterKey.KeyPath, @"RSA_OAEP", encryptedColumnEncryptionKeyUsingAKV);
             Assert.True(plainTextColumnEncryptionKey.SequenceEqual(columnEncryptionKeyReturnedAKV2Cert), @"Roundtrip failed");
 
             // Try the opposite.
-            byte[] encryptedColumnEncryptionKeyUsingCert = fixture.certStoreProvider.EncryptColumnEncryptionKey(fixture.cspColumnMasterKey.KeyPath, @"RSA_OAEP", plainTextColumnEncryptionKey);
-            byte[] columnEncryptionKeyReturnedCert2AKV = fixture.akvStoreProvider.DecryptColumnEncryptionKey(DataTestUtility.AKVUrl, @"RSA_OAEP", encryptedColumnEncryptionKeyUsingCert);
+            byte[] encryptedColumnEncryptionKeyUsingCert = certStoreFixture.CertStoreProvider.EncryptColumnEncryptionKey(certStoreFixture.CspColumnMasterKey.KeyPath, @"RSA_OAEP", plainTextColumnEncryptionKey);
+            byte[] columnEncryptionKeyReturnedCert2AKV = fixture.AkvStoreProvider.DecryptColumnEncryptionKey(DataTestUtility.AKVUrl, @"RSA_OAEP", encryptedColumnEncryptionKeyUsingCert);
             Assert.True(plainTextColumnEncryptionKey.SequenceEqual(columnEncryptionKeyReturnedCert2AKV), @"Roundtrip failed");
-
         }
 
         /// <summary>
@@ -112,15 +115,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
 
             Assert.True(rowsFound == 1, "Incorrect number of rows returned in first execution.");
-        }
-
-        public void Dispose()
-        {
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TcpConnStr))
-            {
-                sqlConnection.Open();
-                Table.DeleteData(fixture.AKVTestTable.Name, sqlConnection);
-            }
         }
     }
 }
