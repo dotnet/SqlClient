@@ -50,7 +50,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             public string AADAccessToken = null;
             public string AADPasswordConnectionString = null;
             public string AzureKeyVaultURL = null;
-            public string AzureKayVaultClientId = null;
+            public string AzureKeyVaultClientId = null;
             public string AzureKeyVaultClientSecret = null;
             public bool SupportsIntegratedSecurity = false;
             public bool SupportsLocalDb = false;
@@ -81,7 +81,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     AkvUrl = (new Uri(AKVBaseUri, $"/keys/{AKVKeyName}")).AbsoluteUri;
                 }
                 
-                AkvClientId = c.AzureKayVaultClientId;
+                AkvClientId = c.AzureKeyVaultClientId;
                 AkvClientSecret = c.AzureKeyVaultClientSecret;
             }
         }

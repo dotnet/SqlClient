@@ -98,41 +98,48 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(nameof(DataTestUtility.IsUsingManagedSNI))]
-        public void NamedPipeInvalidConnStringTest_ManagedSNI()
+        [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp)]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public void NamedPipeInvalidConnStringTest()
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
             builder.ConnectTimeout = 1;
 
-            string invalidConnStringError = "(provider: Named Pipes Provider, error: 25 - Connection string is not valid)";
+            string invalidConnStringError = "(provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)";
             string fakeServerName = Guid.NewGuid().ToString("N");
 
             // Using forward slashes
             builder.DataSource = "np://" + fakeServerName + "/pipe/sql/query";
             OpenBadConnection(builder.ConnectionString, invalidConnStringError);
 
+            invalidConnStringError = "(provider: Named Pipes Provider, error: 5 - Invalid parameter(s) found)";
+
             // Without pipe token
             builder.DataSource = @"np:\\" + fakeServerName + @"\sql\query";
             OpenBadConnection(builder.ConnectionString, invalidConnStringError);
 
+            invalidConnStringError = "(provider: SQL Network Interfaces, error: 25 - Connection string is not valid)";
+
             // Without a pipe name
             builder.DataSource = @"np:\\" + fakeServerName + @"\pipe";
-            OpenBadConnection(builder.ConnectionString, invalidConnStringError);
-
-            // Nothing after server
-            builder.DataSource = @"np:\\" + fakeServerName;
-            OpenBadConnection(builder.ConnectionString, invalidConnStringError);
-
-            // No leading slashes
-            builder.DataSource = @"np:" + fakeServerName + @"\pipe\sql\query";
             OpenBadConnection(builder.ConnectionString, invalidConnStringError);
 
             // No server name
             builder.DataSource = @"np:\\\pipe\sql\query";
             OpenBadConnection(builder.ConnectionString, invalidConnStringError);
 
+            // Nothing after server
+            builder.DataSource = @"np:\\" + fakeServerName;
+            OpenBadConnection(builder.ConnectionString, invalidConnStringError);
+
             // Nothing but slashes
             builder.DataSource = @"np:\\\\\";
+            OpenBadConnection(builder.ConnectionString, invalidConnStringError);
+
+            invalidConnStringError = "(provider: SQL Network Interfaces, error: 26 - Error Locating Server/Instance Specified)";
+
+            // No leading slashes
+            builder.DataSource = @"np:" + fakeServerName + @"\pipe\sql\query";
             OpenBadConnection(builder.ConnectionString, invalidConnStringError);
         }
 
