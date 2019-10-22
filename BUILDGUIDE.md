@@ -17,7 +17,7 @@ Once the environment is setup properly, execute the desired set of commands belo
 
 > msbuild
 # Builds the driver for the Client OS in 'Debug' Configuration for 'AnyCPU' platform.
-# Both .Net Framework (NetFx) and .NET Core drivers are built by default (as supported by Client OS).
+# Both .NET Framework  (NetFx) and .NET Core drivers are built by default (as supported by Client OS).
 ```
 
 ```bash
@@ -27,7 +27,7 @@ Once the environment is setup properly, execute the desired set of commands belo
 
 ```bash
 > msbuild /p:Platform=x86
-# Builds the .Net Framework (NetFx) driver for Win32 (x86) platform on Windows.
+# Builds the .NET Framework  (NetFx) driver for Win32 (x86) platform on Windows.
 ```
 
 ```bash
@@ -47,7 +47,7 @@ Once the environment is setup properly, execute the desired set of commands belo
 
 ```bash
 > msbuild /p:BuildNetFx=false
-# Skips building the .Net Framework (NetFx) Driver on Windows.
+# Skips building the .NET Framework (NetFx) Driver on Windows.
 # On Unix the netfx driver build is automatically skipped.
 ```
 
@@ -70,7 +70,7 @@ Once the environment is setup properly, execute the desired set of commands belo
 
 ```bash
 > msbuild /t:BuildTestsNetFx
-# Build the tests for the .Net Framework (NetFx) driver. Default NetFx version is 4.6.
+# Build the tests for the .NET Framework (NetFx) driver. Default .NET Framework version is 4.6.
 ```
 
 ## Run Functional Tests

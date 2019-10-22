@@ -83,7 +83,7 @@
   </Target>
 
   <Target Name="BuildFunctionalTestsNetFx" DependsOnTargets="RestoreNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
-    <!-- Only build platform specific tests on Windows for .Net Framework -->
+    <!-- Only build platform specific tests on Windows for .NET Framework  -->
     <MSBuild Projects="@(FunctionalTests)" Properties="TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=$(Platform);" />
   </Target>
 
