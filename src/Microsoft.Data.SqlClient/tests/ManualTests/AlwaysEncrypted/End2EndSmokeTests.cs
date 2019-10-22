@@ -10,13 +10,13 @@ using Xunit;
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     [PlatformSpecific(TestPlatforms.Windows)]
-    public class End2EndSmokeTests : IClassFixture<SQLSetupStrategy>, IDisposable
+    public class End2EndSmokeTests : IClassFixture<SQLSetupStrategyCertStoreProvider>, IDisposable
     {
-        private SQLSetupStrategy fixture;
+        private SQLSetupStrategyCertStoreProvider fixture;
 
         private readonly string tableName;
 
-        public End2EndSmokeTests(SQLSetupStrategy fixture)
+        public End2EndSmokeTests(SQLSetupStrategyCertStoreProvider fixture)
         {
             this.fixture = fixture;
             tableName = fixture.End2EndSmokeTable.Name;
@@ -32,7 +32,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.False(string.IsNullOrWhiteSpace(selectQuery), "FAILED: select query should not be null or empty.");
             Assert.True(totalColumnsInSelect <= 3, "FAILED: totalColumnsInSelect should <= 3.");
 
-            using (SqlConnection sqlConn = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection sqlConn = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 sqlConn.Open();
 
@@ -180,7 +180,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.False(string.IsNullOrWhiteSpace(selectQuery), "FAILED: select query should not be null or empty.");
             Assert.True(totalColumnsInSelect <= 3, "FAILED: totalColumnsInSelect should <= 3.");
 
-            using (SqlConnection sqlConn = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection sqlConn = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 sqlConn.Open();
 
@@ -309,7 +309,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         public void Dispose()
         {
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 sqlConnection.Open();
                 Table.DeleteData(fixture.End2EndSmokeTable.Name, sqlConnection);

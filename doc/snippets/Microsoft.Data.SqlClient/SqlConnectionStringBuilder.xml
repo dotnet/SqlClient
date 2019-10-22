@@ -48,7 +48,7 @@ Integrated Security=True
 > [!NOTE]
 >  This example includes a password to demonstrate how <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> works with connection strings. In your applications, we recommend that you use Windows Authentication. If you must use a password, do not include a hard-coded password in your application.  
   
- [!code-csharp[SqlConnectionStringBuilder#1](~/sqlclient/doc/samples/SqlConnectionStringBuilder.cs#1)]
+ [!code-csharp[SqlConnectionStringBuilder#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder.cs#1)]
   
  ]]></format>
             </remarks>
@@ -77,7 +77,7 @@ Integrated Security=True
 > [!NOTE]
 >  This example includes a password to demonstrate how <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> works with connection strings. In your applications, we recommend that you use Windows Authentication. If you must use a password, do not include a hard-coded password in your application.  
   
- [!code-csharp[SqlConnectionStringBuilder3#1](~/sqlclient/doc/samples/SqlConnectionStringBuilder3.cs#1)]
+ [!code-csharp[SqlConnectionStringBuilder3#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder3.cs#1)]
   
  ]]></format>
             </remarks>
@@ -105,7 +105,7 @@ Integrated Security=True
 ## Examples  
  The following example creates a new <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> and assigns a connection string in the object's constructor. The code displays the parsed and recreated version of the connection string, and then modifies the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ApplicationName%2A> property of the object. Finally, the code displays the new connection string, including the new key/value pair.  
   
- [!code-csharp[SqlConnectionStringBuilder.ApplicationName#1](~/sqlclient/doc/samples/SqlConnectionStringBuilder_ApplicationName.cs#1)]
+ [!code-csharp[SqlConnectionStringBuilder.ApplicationName#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder_ApplicationName.cs#1)]
   
  The sample displays the following text in the console window:  
   
@@ -133,7 +133,7 @@ Modified: Data Source=(local);Initial Catalog=AdventureWorks;Integrated Security
 ## Examples  
  The following example retrieves a connection string and verifies that the connection string is configured to allow for asynchronous processing. (In this case, the string comes from a procedure within the application, but in a production application, the connection string might come from a configuration file, or some other source.) Then, the example performs an asynchronous operation, updating values within a sample database on a background thread.  
   
- [!code-csharp[SqlConnectionStringBuilder_AsynchronousProcessing#1](~/sqlclient/doc/samples/SqlConnectionStringBuilder_AsynchronousProcessing.cs#1)]
+ [!code-csharp[SqlConnectionStringBuilder_AsynchronousProcessing#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder_AsynchronousProcessing.cs#1)]
   
  ]]></format>
             </remarks>
@@ -159,7 +159,7 @@ Modified: Data Source=(local);Initial Catalog=AdventureWorks;Integrated Security
 ## Examples  
  The following example creates a new <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> instance, and sets the `AttachDBFilename` property in order to specify the name of an attached data file.  
   
- [!code-csharp[DataWorks SqlConnectionStringBuilder_AttachDBFilename#1](~/sqlclient/doc/samples/SqlConnectionStringBuilder_AttachDBFilename.cs#1)]
+ [!code-csharp[DataWorks SqlConnectionStringBuilder_AttachDBFilename#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder_AttachDBFilename.cs#1)]
   
  ]]></format>
             </remarks>
@@ -185,7 +185,7 @@ Modified: Data Source=(local);Initial Catalog=AdventureWorks;Integrated Security
 ## Examples  
  The following example demonstrates calling the <xref:System.Data.Common.DbConnectionStringBuilder.Clear%2A> method. This example populates the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> with some key/value pairs, and then calls the <xref:System.Data.Common.DbConnectionStringBuilder.Clear%2A> method and shows the results.  
   
- [!code-csharp[DataWorks SqlConnectionStringBuilder_Clear#1](~/sqlclient/doc/samples/SqlConnectionStringBuilder_Clear.cs#1)]
+ [!code-csharp[DataWorks SqlConnectionStringBuilder_Clear#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder_Clear.cs#1)]
   
  ]]></format>
             </remarks>
@@ -231,7 +231,7 @@ Modified: Data Source=(local);Initial Catalog=AdventureWorks;Integrated Security
 ## Examples  
  The following example first displays the contents of a connection string that does not specify the "Connect Timeout" value, sets the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ConnectTimeout%2A> property, and then displays the new connection string.  
   
- [!code-csharp[SqlConnectionStringBuilder_ConnectTimeout#1](~/sqlclient/doc/samples/SqlConnectionStringBuilder_ConnectTimeout.cs#1)]
+ [!code-csharp[SqlConnectionStringBuilder_ConnectTimeout#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder_ConnectTimeout.cs#1)]
   
  ]]></format>
             </remarks>
@@ -251,7 +251,7 @@ Modified: Data Source=(local);Initial Catalog=AdventureWorks;Integrated Security
 ## Examples  
  The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> instance, sets some of its properties, and then tries to determine whether various keys exist within the object by calling the **ContainsKey** method.  
   
- [!code-csharp[SqlConnectionStringBuilder_ContainsKey#1](~/sqlclient/doc/samples/SqlConnectionStringBuilder_ContainsKey.cs#1)]
+ [!code-csharp[SqlConnectionStringBuilder_ContainsKey#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder_ContainsKey.cs#1)]
   
  The example displays the following output in the console window:  
   
@@ -310,7 +310,7 @@ False
 ## Examples  
  The following example demonstrates that the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> class converts synonyms for the "Data Source" connection string key into the well-known key:  
   
- [!code-csharp[SqlConnectionStringBuilder_DataSource#1](~/sqlclient/doc/samples/SqlConnectionStringBuilder_DataSource.cs#1)]
+ [!code-csharp[SqlConnectionStringBuilder_DataSource#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder_DataSource.cs#1)]
   
  ]]></format>
             </remarks>
@@ -372,7 +372,7 @@ False
 ## Examples  
  The following example creates a simple connection string and then uses the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> class to add the name of the database to the connection string. The code displays the contents of the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.InitialCatalog%2A> property, just to verify that the class was able to convert from the synonym ("Database") to the appropriate property value.  
   
- [!code-csharp[SqlConnectionStringBuilder_InitialCatalog#1](~/sqlclient/doc/samples/SqlConnectionStringBuilder_InitialCatalog.cs#1)]
+ [!code-csharp[SqlConnectionStringBuilder_InitialCatalog#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder_InitialCatalog.cs#1)]
   
  ]]></format>
             </remarks>
@@ -395,7 +395,7 @@ False
 > [!NOTE]
 >  This example includes a password to demonstrate how <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> works with connection strings. In your applications, we recommend that you use Windows Authentication. If you must use a password, do not include a hard-coded password in your application.  
   
- [!code-csharp[SqlConnectionStringBuilder_IntegratedSecurity#1](~/sqlclient/doc/samples/SqlConnectionStringBuilder_IntegratedSecurity.cs#1)]
+ [!code-csharp[SqlConnectionStringBuilder_IntegratedSecurity#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder_IntegratedSecurity.cs#1)]
   
  ]]></format>
             </remarks>
@@ -423,7 +423,7 @@ False
 ## Examples  
  The following code, in a console application, creates a new <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> and adds key/value pairs to its connection string, using the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Item%2A> property.  
   
- [!code-csharp[SqlConnectionStringBuilder2#1](~/sqlclient/doc/samples/SqlConnectionStringBuilder2.cs#1)]
+ [!code-csharp[SqlConnectionStringBuilder2#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder2.cs#1)]
   
  ]]></format>
             </remarks>
@@ -446,7 +446,7 @@ False
 ## Examples  
  The following console application example creates a new <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder>. The code loops through the <xref:System.Collections.ICollection> returned by the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Keys%2A> property displaying the key/value pairs.  
   
- [!code-csharp[SqlConnectionStringBuilder_Keys#1](~/sqlclient/doc/samples/SqlConnectionStringBuilder_Keys.cs#1)]
+ [!code-csharp[SqlConnectionStringBuilder_Keys#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder_Keys.cs#1)]
   
  ]]></format>
             </remarks>
@@ -503,7 +503,7 @@ False
 ## Examples  
  The following example explicitly disables the Multiple Active Result Sets feature.  
   
- [!code-csharp[SqlConnectionStringBuilder_MultipleActiveResultSets.MARS#1](~/sqlclient/doc/samples/SqlConnectionStringBuilder_MultipleActiveResultSets.cs#1)]
+ [!code-csharp[SqlConnectionStringBuilder_MultipleActiveResultSets.MARS#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder_MultipleActiveResultSets.cs#1)]
   
  ]]></format>
             </remarks>
@@ -556,7 +556,7 @@ False
 ## Examples  
  The following example shows how to set <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Password%2A>.  
   
- [!code-csharp[SqlConnectionStringBuilder_Password#1](~/sqlclient/doc/samples/SqlConnectionStringBuilder_Password.cs#1)]
+ [!code-csharp[SqlConnectionStringBuilder_Password#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder_Password.cs#1)]
   
  ]]></format>
             </remarks>
@@ -650,7 +650,7 @@ False
 > [!NOTE]
 >  This example includes a password to demonstrate how <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> works with connection strings. In your applications, we recommend that you use Windows Authentication. If you must use a password, do not include a hard-coded password in your application.  
   
- [!code-csharp[SqlConnectionStringBuilder_Remove#1](~/sqlclient/doc/samples/SqlConnectionStringBuilder_Remove.cs#1)]
+ [!code-csharp[SqlConnectionStringBuilder_Remove#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder_Remove.cs#1)]
   
  The example displays the following text in the console window:  
   
@@ -777,7 +777,7 @@ Database = AdventureWorks
 ## Examples  
  The following example demonstrates the behavior of the **TryGetValue** method.  
   
- [!code-csharp[SqlConnectionStringBuilder_TryGetValue#1](~/sqlclient/doc/samples/SqlConnectionStringBuilder_TryGetValue.cs#1)]
+ [!code-csharp[SqlConnectionStringBuilder_TryGetValue#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder_TryGetValue.cs#1)]
   
  The sample displays the following results:  
   
@@ -866,7 +866,7 @@ Unable to retrieve value for null key.
 ## Examples  
  The following example first creates a new <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder>, and then iterates through all the values within the object.  
   
- [!code-csharp[SqlConnectionStringBuilder_Values#1](~/sqlclient/doc/samples/SqlConnectionStringBuilder_Values.cs#1)]
+ [!code-csharp[SqlConnectionStringBuilder_Values#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder_Values.cs#1)]
   
  ]]></format>
             </remarks>

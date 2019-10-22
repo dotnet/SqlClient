@@ -9,7 +9,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
-    public class CoreCryptoTests : IClassFixture<SQLSetupStrategy>
+    public class CoreCryptoTests : IClassFixture<SQLSetupStrategyCertStoreProvider>
     {
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [PlatformSpecific(TestPlatforms.Windows)]

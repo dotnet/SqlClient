@@ -28,7 +28,7 @@
 ## Examples  
  The following example shows the implementation of the <xref:Microsoft.Data.SqlClient.Server.IBinarySerialize.Read%2A> method of a UDT, which uses a <xref:System.IO.BinaryReader> to de-serialize a previously persisted UDT. This example assumes that the UDT has two data properties: `StringValue` and `DoubleValue`.  
   
- [!code-csharp[IBinarySerialize Samples#1](~/sqlclient/doc/samples/IBinarySerialize.cs#1)]
+ [!code-csharp[IBinarySerialize Samples#1](~/../sqlclient/doc/samples/IBinarySerialize.cs#1)]
   
  ]]></format>
             </remarks>
@@ -45,7 +45,7 @@
 ## Examples  
  The following example shows the implementation of the <xref:Microsoft.Data.SqlClient.Server.IBinarySerialize.Write%2A> method of a UDT, which uses a <xref:System.IO.BinaryWriter> to serialize the UDT in the user-defined binary format. The purpose of the null character padding is to ensure that the string value is completely separated from the double value, so that one UDT is compared to another in Transact-SQL code, string bytes are compared to string bytes and double bytes are compared to double bytes.  
   
- [!code-csharp[IBinarySerialize Samples#2](~/sqlclient/doc/samples/IBinarySerialize.cs#2)]
+ [!code-csharp[IBinarySerialize Samples#2](~/../sqlclient/doc/samples/IBinarySerialize.cs#2)]
   
  ]]></format>
             </remarks>

@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 };
 
             SqlInfoMessageEventHandler handler = new SqlInfoMessageEventHandler(warningCallback);
-            using (SqlConnection sqlConnection = new SqlConnection((new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr) { Pooling = false }).ConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection((new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { Pooling = false }).ConnectionString))
             {
                 sqlConnection.InfoMessage += handler;
                 sqlConnection.Open();
@@ -50,10 +50,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static bool EmployeesTableHasFullTextIndex()
         {
-            if (DataTestUtility.TcpConnStr == null)
+            if (DataTestUtility.TCPConnectionString == null)
                 return false;
 
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand cmd = conn.CreateCommand())
             {
                 conn.Open();
@@ -80,7 +80,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 };
 
             SqlInfoMessageEventHandler handler = new SqlInfoMessageEventHandler(warningCallback);
-            SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TcpConnStr);
+            SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString);
             sqlConnection.InfoMessage += handler;
             sqlConnection.Open();
             foreach (string orderClause in new string[] { "", " order by FirstName" })
@@ -151,7 +151,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public static void ExceptionTests()
         {
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr);
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
 
             // tests improper server name thrown from constructor of tdsparser
             SqlConnectionStringBuilder badBuilder = new SqlConnectionStringBuilder(builder.ConnectionString) { DataSource = badServer, ConnectTimeout = 1 };
@@ -182,7 +182,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [CheckConnStrSetupFact]
         public static void VariousExceptionTests()
         {
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr);
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
 
 
             // Test 1 - A
@@ -208,7 +208,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [CheckConnStrSetupFact]
         public static void IndependentConnectionExceptionTest()
         {
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr);
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
 
             SqlConnectionStringBuilder badBuilder = new SqlConnectionStringBuilder(builder.ConnectionString) { DataSource = badServer, ConnectTimeout = 1 };
             using (var sqlConnection = new SqlConnection(badBuilder.ConnectionString))
@@ -237,7 +237,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             TaskScheduler.UnobservedTaskException += handler;
 
-            using (var connection = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 await connection.OpenAsync();
                 using (var command = new SqlCommand("select null; select * from dbo.NonexistentTable;", connection))

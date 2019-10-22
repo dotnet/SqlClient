@@ -38,7 +38,7 @@
   
  event args: (command=Microsoft.Data.SqlClient.SQLCommand commandType=2 recordsAffected=1 row=System.Data.DataRow[37] status=0)  
   
- [!code-csharp[SqlRowUpdatingEventArgs Example#1](~/sqlclient/doc/samples/SqlRowUpdatingEventArgs.cs#1)]
+ [!code-csharp[SqlRowUpdatingEventArgs Example#1](~/../sqlclient/doc/samples/SqlRowUpdatingEventArgs.cs#1)]
   
  ]]></format>
             </remarks>

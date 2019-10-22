@@ -16,6 +16,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
     {
         private const string MASTER_KEY_PATH = "Microsoft Enhanced RSA and AES Cryptographic Provider/KeyName";
         private const string ENCRYPTION_ALGORITHM = "RSA_OAEP";
+        private const string DUMMY_KEY = "ASKLSAVASLDJAS";
 
         [Theory]
         [InvalidDecryptionParameters]
@@ -97,7 +98,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             private const string TCE_InvalidCiphertextLengthInEncryptedCEK = "The specified encrypted column encryption key's ciphertext length: 128 does not match the ciphertext length: 256 when using column master key (asymmetric key) in 'Microsoft Enhanced RSA and AES Cryptographic Provider/KeyName'. The encrypted column encryption key may be corrupt, or the specified Microsoft Cryptographic Service provider (CSP) path may be incorrect.\r\nParameter name: encryptedColumnEncryptionKey";
             private const string TCE_InvalidSignatureInEncryptedCEK = "The specified encrypted column encryption key's signature length: 128 does not match the signature length: 256 when using column master key (asymmetric key) in 'Microsoft Enhanced RSA and AES Cryptographic Provider/KeyName'. The encrypted column encryption key may be corrupt, or the specified Microsoft cryptographic service provider (CSP) path may be incorrect.\r\nParameter name: encryptedColumnEncryptionKey";
             private const string TCE_InvalidSignature = "The specified encrypted column encryption key signature does not match the signature computed with the column master key (asymmetric key) in 'Microsoft Enhanced RSA and AES Cryptographic Provider/KeyName'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.\r\nParameter name: encryptedColumnEncryptionKey";
-
+            private string TCE_InvalidCspKeyId = $"Internal error. Invalid key identifier: 'KeyName/{DUMMY_KEY}'. Verify that the key identifier in column master key path: 'Microsoft Enhanced RSA and AES Cryptographic Provider/KeyName/{DUMMY_KEY}' is valid and exists in the CSP.\r\nParameter name: masterKeyPath";
 
             public override IEnumerable<Object[]> GetData(MethodInfo testMethod)
             {
@@ -110,6 +111,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
                 yield return new Object[] { TCE_InvalidCspPath, typeof(ArgumentException), "KeyName", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
                 yield return new Object[] { TCE_EmptyCspName, typeof(ArgumentException), "/KeyName", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
                 yield return new Object[] { TCE_EmptyCspKeyId, typeof(ArgumentException), "MSSQL_CSP_PROVIDER/", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
+                yield return new Object[] { TCE_InvalidCspKeyId, typeof(ArgumentException), $"{MASTER_KEY_PATH}/{DUMMY_KEY}", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
                 yield return new Object[] { TCE_InvalidCspKey, typeof(ArgumentException), "MSSQL_CSP_PROVIDER/KeyName", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
                 yield return new Object[] { TCE_InvalidAlgorithmVersion, typeof(ArgumentException), MASTER_KEY_PATH, ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(2, 0, 256, 256) };
                 yield return new Object[] { TCE_InvalidCiphertextLengthInEncryptedCEK, typeof(ArgumentException), MASTER_KEY_PATH, ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 128, 256) };
@@ -130,6 +132,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             private const string TCE_EmptyCspName = "Empty Microsoft cryptographic service provider (CSP) name specified in column master key path: '/KeyName'. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): <CSP Provider Name>/<Key Identifier>.\r\nParameter name: masterKeyPath";
             private const string TCE_EmptyCspKeyId = "Empty key identifier specified in column master key path: 'MSSQL_CSP_PROVIDER/'. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): <CSP Provider Name>/<Key Identifier>.\r\nParameter name: masterKeyPath";
             private const string TCE_InvalidCspKey = "Invalid Microsoft cryptographic service provider (CSP) name: 'MSSQL_CSP_PROVIDER'. Verify that the CSP provider name in column master key path: 'MSSQL_CSP_PROVIDER/KeyName' is valid and installed on the machine.\r\nParameter name: masterKeyPath";
+            private string TCE_InvalidCspKeyId = $"Invalid key identifier: 'KeyName/{DUMMY_KEY}'. Verify that the key identifier in column master key path: '{MASTER_KEY_PATH}/{DUMMY_KEY}' is valid and exists in the CSP.\r\nParameter name: masterKeyPath";
 
             public override IEnumerable<Object[]> GetData(MethodInfo testMethod)
             {
@@ -142,6 +145,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
                 yield return new Object[] { TCE_InvalidCspPath, typeof(ArgumentException), "KeyName", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
                 yield return new Object[] { TCE_EmptyCspName, typeof(ArgumentException), "/KeyName", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
                 yield return new Object[] { TCE_EmptyCspKeyId, typeof(ArgumentException), "MSSQL_CSP_PROVIDER/", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
+                yield return new Object[] { TCE_InvalidCspKeyId, typeof(ArgumentException), $"{MASTER_KEY_PATH}/{DUMMY_KEY}", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
                 yield return new Object[] { TCE_InvalidCspKey, typeof(ArgumentException), "MSSQL_CSP_PROVIDER/KeyName", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
             }
         }

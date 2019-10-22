@@ -357,3 +357,6 @@ MigrationBackup/
 
 # Nuget package files
 .nuget/
+
+# Config Json file
+src/Microsoft.Data.SqlClient/tests/ManualTests/config.json

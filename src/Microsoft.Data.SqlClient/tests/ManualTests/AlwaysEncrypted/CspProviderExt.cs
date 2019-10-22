@@ -68,7 +68,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     sqlSetupStrategyCsp = new SQLSetupStrategyCspExt(cspPath);
                     string tableName = sqlSetupStrategyCsp.CspProviderTable.Name;
 
-                    using (SqlConnection sqlConn = new SqlConnection(DataTestUtility.TcpConnStr))
+                    using (SqlConnection sqlConn = new SqlConnection(DataTestUtility.TCPConnectionString))
                     {
                         sqlConn.Open();
 
@@ -157,7 +157,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                 try
                 {
-                    using (SqlConnection sqlConn = new SqlConnection(DataTestUtility.TcpConnStr))
+                    using (SqlConnection sqlConn = new SqlConnection(DataTestUtility.TCPConnectionString))
                     {
                         sqlConn.Open();
 

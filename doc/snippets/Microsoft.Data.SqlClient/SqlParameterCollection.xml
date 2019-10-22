@@ -16,7 +16,7 @@ For more information with additional sample code demonstrating how to use parame
 ## Examples  
 The following example creates multiple instances of <xref:Microsoft.Data.SqlClient.SqlParameter> through the <xref:Microsoft.Data.SqlClient.SqlParameterCollection> collection. The parameters are used to select data within the data source and populate the <xref:System.Data.DataSet>. This code assumes that a <xref:System.Data.DataSet> and a <xref:Microsoft.Data.SqlClient.SqlDataAdapter> have already been created with the appropriate schema, commands, and connection.  
 
-[!code-csharp[SqlParameterCollection_Add6 Example#1](~/sqlclient/doc/samples/SqlParameterCollection_Add6.cs#1)]
+[!code-csharp[SqlParameterCollection_Add6 Example#1](~/../sqlclient/doc/samples/SqlParameterCollection_Add6.cs#1)]
 
 ]]></format>
             </remarks>
@@ -32,7 +32,7 @@ The following example creates multiple instances of <xref:Microsoft.Data.SqlClie
             <format type="text/markdown"><![CDATA[  
   
 ## Examples  
-[!code-csharp[SqlParameterCollection_Add Example#1](~/sqlclient/doc/samples/SqlParameterCollection_Add.cs#1)]
+[!code-csharp[SqlParameterCollection_Add Example#1](~/../sqlclient/doc/samples/SqlParameterCollection_Add.cs#1)]
 
 ]]></format>
             </remarks>
@@ -55,7 +55,7 @@ The following example creates multiple instances of <xref:Microsoft.Data.SqlClie
             <format type="text/markdown"><![CDATA[  
 
 ## Examples  
-[!code-csharp[SqlParameterCollection_Add3 Example#1](~/sqlclient/doc/samples/SqlParameterCollection_Add3.cs#1)]
+[!code-csharp[SqlParameterCollection_Add3 Example#1](~/../sqlclient/doc/samples/SqlParameterCollection_Add3.cs#1)]
 
 ]]></format>
             </remarks>
@@ -77,7 +77,7 @@ If you do not perform this conversion, the compiler assumes that you are trying 
         <format type="text/markdown"><![CDATA[  
 
 ## Examples  
-[!code-csharp[SqlParameterCollection_Add1 Example#1](~/sqlclient/doc/samples/SqlParameterCollection_Add1.cs#1)]
+[!code-csharp[SqlParameterCollection_Add1 Example#1](~/../sqlclient/doc/samples/SqlParameterCollection_Add1.cs#1)]
 
 ]]></format>
             </remarks>
@@ -99,7 +99,7 @@ This overload is useful when you are adding a parameter of a variable-length dat
 
 
 ## Examples  
-[!code-csharp[SqlParameterCollection_Add1 Example#1](~/sqlclient/doc/samples/SqlParameterCollection_Add1.cs#1)]
+[!code-csharp[SqlParameterCollection_Add1 Example#1](~/../sqlclient/doc/samples/SqlParameterCollection_Add1.cs#1)]
 
 ]]></format>
             </remarks>
@@ -115,7 +115,7 @@ This overload is useful when you are adding a parameter of a variable-length dat
             <format type="text/markdown"><![CDATA[  
 
 ## Examples  
-[!code-csharp[SqlParameterCollection_Add5 Example#1](~/sqlclient/doc/samples/SqlParameterCollection_Add5.cs#1)]
+[!code-csharp[SqlParameterCollection_Add5 Example#1](~/../sqlclient/doc/samples/SqlParameterCollection_Add5.cs#1)]
 
 ]]></format>
             </remarks>
@@ -151,7 +151,7 @@ For <xref:System.Data.SqlDbType>`Xml` enumeration values, you can use a string, 
 ## Examples  
 The following example demonstrates how to use the `AddWithValue` method.  
 
-[!code-csharp[SqlParameterCollection_AddWithValue#1](~/sqlclient/doc/samples/SqlParameterCollection_AddWithValue.cs#1)]
+[!code-csharp[SqlParameterCollection_AddWithValue#1](~/../sqlclient/doc/samples/SqlParameterCollection_AddWithValue.cs#1)]
 
 ]]></format>
             </remarks>
@@ -288,7 +288,7 @@ The following example demonstrates how to use the `AddWithValue` method.
 ## Examples  
 The following example demonstrates creating <xref:Microsoft.Data.SqlClient.SqlParameter> objects to supply an input parameter to a stored procedure that returns results in an output parameter. The code iterates through the items in the <xref:Microsoft.Data.SqlClient.SqlParameterCollection> and displays some parameter properties in the console window. This example assumes a valid connection string to the **AdventureWorks** sample database on an instance of SQL Server.  
 
-[!code-csharp[SqlParameterCollection_Count Example#1](~/sqlclient/doc/samples/SqlParameterCollection_Count.cs#1)]  
+[!code-csharp[SqlParameterCollection_Count Example#1](~/../sqlclient/doc/samples/SqlParameterCollection_Count.cs#1)]  
 
 ]]></format>
             </remarks>
@@ -320,7 +320,7 @@ The `parameterName` is used to look up the index value in the underlying <xref:M
 ## Examples  
 The following example searches for a <xref:Microsoft.Data.SqlClient.SqlParameter> object in a <xref:Microsoft.Data.SqlClient.SqlParameterCollection> collection. If the parameter exists, the example removes it. This example assumes that a <xref:Microsoft.Data.SqlClient.SqlParameterCollection> collection has already been created by a <xref:Microsoft.Data.SqlClient.SqlCommand>.  
 
-[!code-csharp[SqlParameterCollection_Remove Example#1](~/sqlclient/doc/samples/SqlParameterCollection_Remove.cs#1)]
+[!code-csharp[SqlParameterCollection_Remove Example#1](~/../sqlclient/doc/samples/SqlParameterCollection_Remove.cs#1)]
 
 ]]></format>
         </remarks>

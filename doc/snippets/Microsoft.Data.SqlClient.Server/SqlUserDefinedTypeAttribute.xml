@@ -12,7 +12,7 @@ SQL Server creates a user-defined type that is bound to the type definition that
 ## Examples  
 The following example shows the `UserDefinedType` attribute of the Point UDT.  The UDT is byte-ordered, is named "Point", has a validation method named "ValidatePoint", and uses the native serialization format.  
 
-[!code-csharp[SqlUserDefinedType Example#1](~/sqlclient/doc/samples/SqlUserDefinedType.cs#1)]
+[!code-csharp[SqlUserDefinedType Example#1](~/../sqlclient/doc/samples/SqlUserDefinedType.cs#1)]
 
 ]]></format>
             </remarks>
@@ -27,7 +27,7 @@ The following example shows the `UserDefinedType` attribute of the Point UDT.  T
 The following example specifies that the `Format` of the user-defined type is `SerializedDataWithMetadata` and the `MaxByteSize` is 8000 bytes.  
 
 ## Examples  
-[!code-csharp[SqlUserDefinedType1#12](~/sqlclient/doc/samples/SqlUserDefinedType1.cs#12)]
+[!code-csharp[SqlUserDefinedType1#12](~/../sqlclient/doc/samples/SqlUserDefinedType1.cs#12)]
 
 ]]></format>
             </remarks>

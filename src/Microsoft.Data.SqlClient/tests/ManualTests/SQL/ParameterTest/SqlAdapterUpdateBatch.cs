@@ -23,7 +23,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     "PRIMARY KEY CLUSTERED([TransactionNumber] ASC)WITH(PAD_INDEX = OFF,STATISTICS_NORECOMPUTE = OFF, " +
                     "IGNORE_DUP_KEY = OFF,ALLOW_ROW_LOCKS = ON,ALLOW_PAGE_LOCKS = ON,FILLFACTOR = 90) ON[PRIMARY]) ON[PRIMARY]";
 
-                using (var connection = new SqlConnection(DataTestUtility.TcpConnStr))
+                using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
                 using (var cmd = new SqlCommand(createTableQuery, connection))
                 {
                     connection.Open();
@@ -39,7 +39,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             finally
             {
                 var dropTableQuery = "DROP TABLE IF EXISTS " + tableName;
-                using (var connection = new SqlConnection(DataTestUtility.TcpConnStr))
+                using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
                 using (var cmd = new SqlCommand(dropTableQuery, connection))
                 {
                     connection.Open();
@@ -72,7 +72,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             };
 
             var sql = "INSERT INTO " + tableName + "(Level, Message, EventTime)  VALUES(@Level, @Message, @EventTime)";
-            using (var connection = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             using (var adapter = new SqlDataAdapter())
             using (var cmd = new SqlCommand(sql, connection))
             {
