@@ -32,7 +32,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.False(string.IsNullOrWhiteSpace(selectQuery), "FAILED: select query should not be null or empty.");
             Assert.True(totalColumnsInSelect <= 3, "FAILED: totalColumnsInSelect should <= 3.");
 
-            using (SqlConnection sqlConn = new SqlConnection(DataTestUtility.s_tcpConnString))
+            using (SqlConnection sqlConn = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 sqlConn.Open();
 
@@ -180,7 +180,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.False(string.IsNullOrWhiteSpace(selectQuery), "FAILED: select query should not be null or empty.");
             Assert.True(totalColumnsInSelect <= 3, "FAILED: totalColumnsInSelect should <= 3.");
 
-            using (SqlConnection sqlConn = new SqlConnection(DataTestUtility.s_tcpConnString))
+            using (SqlConnection sqlConn = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 sqlConn.Open();
 
@@ -309,7 +309,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         public void Dispose()
         {
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.s_tcpConnString))
+            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 sqlConnection.Open();
                 Table.DeleteData(fixture.End2EndSmokeTable.Name, sqlConnection);

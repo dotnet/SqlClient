@@ -16,31 +16,32 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class DataTestUtility
     {
-        public static readonly string s_npConnString = null;
-        public static readonly string s_tcpConnString = null;
-        public static readonly string s_aadAccessToken = null;
-        public static readonly string s_aadPassConnString = null;
-        public const string AKVKeyName = "TestSqlClientAzureKeyVaultProvider";
-        public static readonly string AKVBaseUrl = null;
-        public static readonly string AKVUrl = null;
-        public static readonly string ClientId = null;
-        public static readonly string ClientSecret = null;
-        public static readonly bool s_supportsIntegratedSecurity = false;
-        public static readonly bool s_supportsLocalDb = false;
-        public static readonly bool s_supportsFileStream = false;
+        public static readonly string NPConnectionString = null;
+        public static readonly string TCPConnectionString = null;
+        public static readonly string AADAccessToken = null;
+        public static readonly string AADPasswordConnectionString = null;
+        public static readonly string AkvBaseUrl = null;
+        public static readonly string AkvUrl = null;
+        public static readonly string AkvClientId = null;
+        public static readonly string AkvClientSecret = null;
+
+        public static readonly bool SupportsIntegratedSecurity = false;
+        public static readonly bool SupportsLocalDb = false;
+        public static readonly bool SupportsFileStream = false;
 
         public const string UdtTestDbName = "UdtTestDb";
+        public const string AKVKeyName = "TestSqlClientAzureKeyVaultProvider";
 
-        private static readonly Assembly s_systemDotData = typeof(Microsoft.Data.SqlClient.SqlConnection).GetTypeInfo().Assembly;
-        private static readonly Type s_tdsParserStateObjectFactory = s_systemDotData?.GetType("Microsoft.Data.SqlClient.TdsParserStateObjectFactory");
-        private static readonly PropertyInfo s_useManagedSNI = s_tdsParserStateObjectFactory?.GetProperty("UseManagedSNI", BindingFlags.Static | BindingFlags.Public);
+        private static readonly Assembly MdsAssembly = typeof(Microsoft.Data.SqlClient.SqlConnection).GetTypeInfo().Assembly;
+        private static readonly Type TdsStateObjectFactoryInstance = MdsAssembly?.GetType("Microsoft.Data.SqlClient.TdsParserStateObjectFactory");
+        private static readonly PropertyInfo UseManagedSni = TdsStateObjectFactoryInstance?.GetProperty("UseManagedSNI", BindingFlags.Static | BindingFlags.Public);
 
-        private static readonly string[] s_azureSqlServerEndpoints = {".database.windows.net",
+        private static readonly string[] AzureSqlServerEndpoints = {".database.windows.net",
                                                                      ".database.cloudapi.de",
                                                                      ".database.usgovcloudapi.net",
                                                                      ".database.chinacloudapi.cn"};
 
-        private static Dictionary<string, bool> databasesAvailable;
+        private static Dictionary<string, bool> AvailableDatabases;
 
         private class Config
         {
@@ -48,9 +49,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             public string NPConnectionString = null;
             public string AADAccessToken = null;
             public string AADPasswordConnectionString = null;
-
-            public bool SupportsLocalDb = false;
+            public string AzureKeyVaultURL = null;
+            public string AzureKayVaultClientId = null;
+            public string AzureKeyVaultClientSecret = null;
             public bool SupportsIntegratedSecurity = false;
+            public bool SupportsLocalDb = false;
             public bool SupportsFileStream = false;
         }
 
@@ -59,36 +62,37 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (StreamReader r = new StreamReader("config.json"))
             {
                 string json = r.ReadToEnd();
-                List<Config> configs = JsonConvert.DeserializeObject<List<Config>>(json);
-                Config c = configs[0];
+                Config c = JsonConvert.DeserializeObject<Config>(json);
 
-                s_npConnString = c.NPConnectionString;
-                s_tcpConnString = c.TCPConnectionString;
-                s_aadAccessToken = c.AADAccessToken;
-                s_aadPassConnString = c.AADPasswordConnectionString;
-                s_supportsLocalDb = c.SupportsLocalDb;
-                s_supportsIntegratedSecurity = c.SupportsIntegratedSecurity;
-                s_supportsFileStream = c.SupportsFileStream;
-	            string akvUrl = Environment.GetEnvironmentVariable("AZURE_KEY_VAULT_URL");
-	            Uri AKVBaseUri = null;
-	            if (!string.IsNullOrEmpty(akvUrl) && Uri.TryCreate(akvUrl, UriKind.Absolute, out AKVBaseUri))
-	            {
-	                AKVBaseUri = new Uri(AKVBaseUri, "/");
-	                AKVBaseUrl = AKVBaseUri.AbsoluteUri;
-	                AKVUrl = (new Uri(AKVBaseUri, $"/keys/{AKVKeyName}")).AbsoluteUri;
-	            }
-	            ClientId = Environment.GetEnvironmentVariable("AZURE_KEY_VAULT_CLIENT_ID");
-	            ClientSecret = Environment.GetEnvironmentVariable("AZURE_KEY_VAULT_CLIENT_SECRET");
+                NPConnectionString = c.NPConnectionString;
+                TCPConnectionString = c.TCPConnectionString;
+                AADAccessToken = c.AADAccessToken;
+                AADPasswordConnectionString = c.AADPasswordConnectionString;
+                SupportsLocalDb = c.SupportsLocalDb;
+                SupportsIntegratedSecurity = c.SupportsIntegratedSecurity;
+                SupportsFileStream = c.SupportsFileStream;
+                
+                string akvUrl = c.AzureKeyVaultURL;
+                Uri AKVBaseUri = null;
+                if (!string.IsNullOrEmpty(akvUrl) && Uri.TryCreate(akvUrl, UriKind.Absolute, out AKVBaseUri))
+                {
+                    AKVBaseUri = new Uri(AKVBaseUri, "/");
+                    AkvBaseUrl = AKVBaseUri.AbsoluteUri;
+                    AkvUrl = (new Uri(AKVBaseUri, $"/keys/{AKVKeyName}")).AbsoluteUri;
+                }
+                
+                AkvClientId = c.AzureKayVaultClientId;
+                AkvClientSecret = c.AzureKeyVaultClientSecret;
             }
         }
 
         public static bool IsDatabasePresent(string name)
         {
-            databasesAvailable = databasesAvailable ?? new Dictionary<string, bool>();
+            AvailableDatabases = AvailableDatabases ?? new Dictionary<string, bool>();
             bool present = false;
-            if (AreConnStringsSetup() && !string.IsNullOrEmpty(name) && !databasesAvailable.TryGetValue(name, out present))
+            if (AreConnStringsSetup() && !string.IsNullOrEmpty(name) && !AvailableDatabases.TryGetValue(name, out present))
             {
-                var builder = new SqlConnectionStringBuilder(s_tcpConnString);
+                var builder = new SqlConnectionStringBuilder(TCPConnectionString);
                 builder.ConnectTimeout = 2;
                 using (var connection = new SqlConnection(builder.ToString()))
                 using (var command = new SqlCommand("SELECT COUNT(*) FROM sys.databases WHERE name=@name", connection))
@@ -97,7 +101,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     command.Parameters.AddWithValue("name", name);
                     present = Convert.ToInt32(command.ExecuteScalar()) == 1;
                 }
-                databasesAvailable[name] = present;
+                AvailableDatabases[name] = present;
             }
             return present;
         }
@@ -106,22 +110,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool AreConnStringsSetup()
         {
-            return !string.IsNullOrEmpty(s_npConnString) && !string.IsNullOrEmpty(s_tcpConnString);
+            return !string.IsNullOrEmpty(NPConnectionString) && !string.IsNullOrEmpty(TCPConnectionString);
         }
 
         public static bool IsAADPasswordConnStrSetup()
         {
-            return !string.IsNullOrEmpty(s_aadPassConnString);
+            return !string.IsNullOrEmpty(AADPasswordConnectionString);
         }
 
-        public static bool IsNotAzureServer() => !DataTestUtility.IsAzureSqlServer(new SqlConnectionStringBuilder((DataTestUtility.s_tcpConnString)).DataSource);
+        public static bool IsNotAzureServer() => !DataTestUtility.IsAzureSqlServer(new SqlConnectionStringBuilder((DataTestUtility.TCPConnectionString)).DataSource);
 
         public static bool IsAKVSetupAvailable()
         {
-            return !string.IsNullOrEmpty(AKVUrl) && !string.IsNullOrEmpty(ClientId) && !string.IsNullOrEmpty(ClientSecret);
+            return !string.IsNullOrEmpty(AkvUrl) && !string.IsNullOrEmpty(AkvClientId) && !string.IsNullOrEmpty(AkvClientSecret);
         }
 
-        public static bool IsUsingManagedSNI() => (bool)(s_useManagedSNI?.GetValue(null) ?? false);
+        public static bool IsUsingManagedSNI() => (bool)(UseManagedSni?.GetValue(null) ?? false);
 
         public static bool IsUsingNativeSNI() => !IsUsingManagedSNI();
 
@@ -130,7 +134,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             bool retval = false;
             if (AreConnStringsSetup())
             {
-                using (SqlConnection connection = new SqlConnection(DataTestUtility.s_tcpConnString))
+                using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
                 using (SqlCommand command = new SqlCommand())
                 {
                     command.Connection = connection;
@@ -183,18 +187,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return name;
         }
 
-        public static bool IsLocalDBInstalled() => s_supportsLocalDb;
+        public static bool IsLocalDBInstalled() => SupportsLocalDb;
 
-        public static bool IsIntegratedSecuritySetup() => s_supportsIntegratedSecurity;
+        public static bool IsIntegratedSecuritySetup() => SupportsIntegratedSecurity;
 
-        public static string getAccessToken()
+        public static string GetAccessToken()
         {
-            return s_aadAccessToken;
+            return AADAccessToken;
         }
 
-        public static bool IsAccessTokenSetup() => string.IsNullOrEmpty(getAccessToken()) ? false : true;
+        public static bool IsAccessTokenSetup() => string.IsNullOrEmpty(GetAccessToken()) ? false : true;
 
-        public static bool IsFileStreamSetup() => s_supportsFileStream;
+        public static bool IsFileStreamSetup() => SupportsFileStream;
 
         // This method assumes dataSource parameter is in TCP connection string format.
         public static bool IsAzureSqlServer(string dataSource)
@@ -215,9 +219,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             dataSource = dataSource.Trim();
 
             // check if servername end with any azure endpoints
-            for (i = 0; i < s_azureSqlServerEndpoints.Length; i++)
+            for (i = 0; i < AzureSqlServerEndpoints.Length; i++)
             {
-                if (dataSource.EndsWith(s_azureSqlServerEndpoints[i], StringComparison.OrdinalIgnoreCase))
+                if (dataSource.EndsWith(AzureSqlServerEndpoints[i], StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
                 }

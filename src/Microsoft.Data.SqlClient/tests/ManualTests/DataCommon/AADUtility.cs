@@ -13,7 +13,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static async Task<string> AzureActiveDirectoryAuthenticationCallback(string authority, string resource, string scope)
         {
             var authContext = new AuthenticationContext(authority);
-            ClientCredential clientCred = new ClientCredential(DataTestUtility.ClientId, DataTestUtility.ClientSecret);
+            ClientCredential clientCred = new ClientCredential(DataTestUtility.AkvClientId, DataTestUtility.AkvClientSecret);
             AuthenticationResult result = await authContext.AcquireTokenAsync(resource, clientCred);
             if (result == null)
             {

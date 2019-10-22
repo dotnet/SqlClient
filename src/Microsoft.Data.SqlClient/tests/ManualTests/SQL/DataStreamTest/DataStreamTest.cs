@@ -22,11 +22,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                DataTestUtility.AssertThrowsWrapper<PlatformNotSupportedException>(() => RunAllTestsForSingleServer(DataTestUtility.s_npConnString, true));
+                DataTestUtility.AssertThrowsWrapper<PlatformNotSupportedException>(() => RunAllTestsForSingleServer(DataTestUtility.NPConnectionString, true));
             }
             else
             {
-                RunAllTestsForSingleServer(DataTestUtility.s_npConnString, true);
+                RunAllTestsForSingleServer(DataTestUtility.NPConnectionString, true);
             }
         }
 
@@ -34,7 +34,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [CheckConnStrSetupFact]
         public static void RunAllTestsForSingleServer_TCP()
         {
-            RunAllTestsForSingleServer(DataTestUtility.s_tcpConnString);
+            RunAllTestsForSingleServer(DataTestUtility.TCPConnectionString);
         }
 
         private static void RunAllTestsForSingleServer(string connectionString, bool usingNamePipes = false)

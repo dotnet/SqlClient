@@ -9,7 +9,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [ActiveIssue(10036)]
         public void TestCommandOptionWithNoTceFeature () {
-            SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr);
+            SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
             CertificateUtility.ChangeServerTceSetting (false, sb); // disable TCE on engine.
             using (SqlConnection conn = CertificateUtility.GetOpenConnection(false, sb, fSuppressAttestation: true))
             {
@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void TestDataAdapterAndEncrytionSetting () {
-            SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr);
+            SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
             // Create a new SqlCommand for select and delete
             using (SqlConnection conn = CertificateUtility.GetOpenConnection(false, sb))
             {
@@ -66,7 +66,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void TestInvalidForceColumnEncryptionSetting() {
-            SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr);
+            SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
             using (SqlConnection conn = CertificateUtility.GetOpenConnection(false, sb))
             {
                 using (SqlCommand cmd = new SqlCommand(ExceptionGenericErrorFixture.encryptedProcedureName, conn))
@@ -83,7 +83,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void TestParamUnexpectedEncryptionMD() {
-            SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr);
+            SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
             using (SqlConnection conn = CertificateUtility.GetOpenConnection(true, sb))
             {
                 using (SqlCommand cmd = new SqlCommand(ExceptionGenericErrorFixture.encryptedProcedureName, conn))
@@ -114,7 +114,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             encryptedTableName = DatabaseHelper.GenerateUniqueName("encrypted");
             encryptedProcedureName = DatabaseHelper.GenerateUniqueName("encrypted");
-            using (SqlConnection conn = CertificateUtility.GetOpenConnection(false, new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr)))
+            using (SqlConnection conn = CertificateUtility.GetOpenConnection(false, new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)))
             {
                 using (SqlCommand cmdCreate = new SqlCommand($"create table {encryptedTableName}(c1 int)", conn))
                 {
@@ -137,7 +137,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public void Dispose()
         {
             // Do NOT remove certificate for concurrent consistency. Certificates are used for other test cases as well.
-            SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr);
+            SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
             using (SqlConnection conn = CertificateUtility.GetOpenConnection(false, sb))
             {
                 using (SqlCommand cmd = new SqlCommand($"drop table {encryptedTableName}", conn))

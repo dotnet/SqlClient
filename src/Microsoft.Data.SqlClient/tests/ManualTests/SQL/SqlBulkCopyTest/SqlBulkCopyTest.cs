@@ -11,12 +11,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         private string srcConstr = null;
         private string dstConstr = null;
-        private static bool IsAzureServer() => DataTestUtility.IsAzureSqlServer(new SqlConnectionStringBuilder((DataTestUtility.s_tcpConnString)).DataSource);
+        private static bool IsAzureServer() => DataTestUtility.IsAzureSqlServer(new SqlConnectionStringBuilder((DataTestUtility.TCPConnectionString)).DataSource);
         private static bool AreConnectionStringsSetup() => DataTestUtility.AreConnStringsSetup();
 
         public SqlBulkCopyTest()
         {
-            srcConstr = DataTestUtility.s_tcpConnString;
+            srcConstr = DataTestUtility.TCPConnectionString;
             dstConstr = (new SqlConnectionStringBuilder(srcConstr) { InitialCatalog = "tempdb" }).ConnectionString;
         }
 

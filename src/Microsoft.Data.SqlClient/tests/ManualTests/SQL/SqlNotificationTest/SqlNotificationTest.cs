@@ -25,8 +25,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public SqlNotificationTest()
         {
-            _startConnectionString = DataTestUtility.s_tcpConnString;
-            _execConnectionString = DataTestUtility.s_tcpConnString;
+            _startConnectionString = DataTestUtility.TCPConnectionString;
+            _execConnectionString = DataTestUtility.TCPConnectionString;
 
             _schemaQueue = $"[{_queueName}]";
 

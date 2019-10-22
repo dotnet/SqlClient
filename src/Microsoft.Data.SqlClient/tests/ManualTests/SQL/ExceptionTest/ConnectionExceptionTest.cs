@@ -98,9 +98,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        public static bool IsUsingManagedSNI() => DataTestUtility.IsUsingManagedSNI();
-
-        [ConditionalFact(nameof(IsUsingManagedSNI))]
+        [ConditionalFact(nameof(DataTestUtility.IsUsingManagedSNI))]
         public void NamedPipeInvalidConnStringTest_ManagedSNI()
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();

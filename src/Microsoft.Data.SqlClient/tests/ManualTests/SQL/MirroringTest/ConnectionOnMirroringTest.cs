@@ -19,11 +19,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string mirroringStateDesc;
             string failoverPartnerName;
-            bool isMirroring = GetMirroringInfo(DataTestUtility.s_tcpConnString, out mirroringStateDesc, out failoverPartnerName);
+            bool isMirroring = GetMirroringInfo(DataTestUtility.TCPConnectionString, out mirroringStateDesc, out failoverPartnerName);
             bool isSynchronized = "SYNCHRONIZED".Equals(mirroringStateDesc, StringComparison.InvariantCultureIgnoreCase);
             if (isMirroring && isSynchronized && !string.IsNullOrEmpty(failoverPartnerName))
             {
-                SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.s_tcpConnString);
+                SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
                 builder.ConnectTimeout = 0;
 
                 TestWorker worker = new TestWorker(builder.ConnectionString);

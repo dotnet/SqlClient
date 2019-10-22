@@ -1,9 +1,12 @@
 {
-	"TCPConnectionString": "Data Source=tcp:localhost;Database=Northwind;UID={user};Password=***",
-	"NPConnectionString": "Data Source=np:localhost;Database=Northwind;UID={user};Password=***",
-	"SupportsIntegratedSecurity": true,
-	"SupportsLocalDb": false,
-	"SupportsFilesStream": false,
-	"AADAccessToken": "",
-	"AADPasswordConnectionString": "Data Source={server.database.windows.net}; Initial Catalog={Azure_DB_Name};Authentication=Active Directory Password; User ID={AAD_User}; Password={AAD_User_Password};"
+    "TCPConnectionString": "Data Source=tcp:localhost;Database=Northwind;Integrated Security=true",
+    "NPConnectionString": "Data Source=np:localhost;Database=Northwind;Integrated Security=true;",
+    "AADAccessToken": "",
+    "AADPasswordConnectionString": "",
+    "AzureKeyVaultURL": "",
+    "AzureKeyVaultClientId": "",
+    "AzureKeyVaultClientSecret": "",
+    "SupportsIntegratedSecurity": true,
+    "SupportsLocalDb": false,
+    "SupportsFileStream": false
 }
