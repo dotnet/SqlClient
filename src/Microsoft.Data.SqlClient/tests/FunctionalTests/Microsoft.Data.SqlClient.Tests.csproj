@@ -46,6 +46,7 @@
     <Compile Include="FakeDiagnosticListenerObserver.cs" />
     <Compile Include="SqlMetaDataTest.cs" />
     <Compile Include="SqlConnectionStringBuilderTest.cs" />
+    <Compile Include="SerializeSqlTypesTest.cs" />
     <!-- <Compile Include="DiagnosticTest.cs" /> -->
   </ItemGroup>
   <ItemGroup>
