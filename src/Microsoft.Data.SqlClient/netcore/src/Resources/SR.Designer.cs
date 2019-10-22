@@ -2131,7 +2131,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to String or binary data would be truncated..
+        ///   Looks up a localized string similar to String or binary data would be truncated in table &apos;{0}&apos;, column &apos;{1}&apos;. Truncated value: &apos;{2}&apos;..
         /// </summary>
         internal static string SQL_BulkLoadStringTooLong {
             get {
