@@ -16,8 +16,6 @@ This library enables .NET Core and .NET Framework applications to use Microsoft 
 
 Use this library only with the Microsoft.Data.SqlClient (https://www.nuget.org/packages/Microsoft.Data.SqlClient) client driver. If you are using the legacy .NET Framework Data Provider for SQL Server within the System.Data.SqlClient namespace in .NET Framework (https://www.nuget.org/packages/System.Data.SqlClient) as a client driver, you need to use Microsoft.SqlServer.Management.AlwaysEncrypted.AzureKeyVaultProvider (http://www.nuget.org/packages/Microsoft.SqlServer.Management.AlwaysEncrypted.AzureKeyVaultProvider) instead of this package.
 
-For more information on Always Encrypted, please refer to: https://aka.ms/AlwaysEncrypted.
-
 Available Types:
 Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyStoreProvider.SqlColumnEncryptionAzureKeyVaultProvider
 
