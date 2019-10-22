@@ -21,7 +21,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void TestReaderMars()
         {
             string connectionString =
-                (new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr)
+                (new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
                 {
                     MultipleActiveResultSets = true,
                     MaxPoolSize = 1
@@ -53,7 +53,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void TestTransactionSingle()
         {
             string connectionString =
-                (new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr)
+                (new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
                 {
                     MultipleActiveResultSets = true,
                     MaxPoolSize = 1

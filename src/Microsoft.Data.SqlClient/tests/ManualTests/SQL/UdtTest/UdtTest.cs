@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public UdtTest()
         {
-            _connStr = (new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr) { InitialCatalog = DataTestUtility.UdtTestDbName }).ConnectionString;
+            _connStr = (new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { InitialCatalog = DataTestUtility.UdtTestDbName }).ConnectionString;
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsUdtTestDatabasePresent), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]

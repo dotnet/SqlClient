@@ -22,7 +22,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 createTestUser(user, passStr);
 
-                var csb = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr);
+                var csb = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
                 csb.Remove("User ID");
                 csb.Remove("Password");
                 csb.IntegratedSecurity = false;
@@ -56,7 +56,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 createTestUser(user, pass);
 
-                var csb = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr);
+                var csb = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
                 csb.UserID = user;
                 csb.Password = pass;
                 csb.IntegratedSecurity = false;
@@ -90,7 +90,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 createTestUser(user, passStr);
 
-                var csb = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr);
+                var csb = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
                 csb.Remove("User ID");
                 csb.Remove("Password");
                 csb.IntegratedSecurity = false;
@@ -129,7 +129,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 createTestUser(user, passStr);
 
-                SqlConnectionStringBuilder sqlConnectionStringBuilder = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr);
+                SqlConnectionStringBuilder sqlConnectionStringBuilder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
                 sqlConnectionStringBuilder.Remove("User ID");
                 sqlConnectionStringBuilder.Remove("Password");
                 sqlConnectionStringBuilder.IntegratedSecurity = false;
@@ -171,7 +171,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string createUserCmd = $"CREATE LOGIN {username} WITH PASSWORD = '{password}', CHECK_POLICY=OFF;"
                                     + $"EXEC sp_adduser '{username}', '{username}', 'db_datareader';";
 
-            using (var conn = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (var conn = new SqlConnection(DataTestUtility.TCPConnectionString))
             using (var cmd = new SqlCommand(createUserCmd, conn))
             {
                 conn.Open();
@@ -189,7 +189,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // Pool must be cleared to prevent DROP LOGIN failure.
             SqlConnection.ClearAllPools();
 
-            using (var conn = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (var conn = new SqlConnection(DataTestUtility.TCPConnectionString))
             using (var cmd = new SqlCommand(dropUserCmd, conn))
             {
                 conn.Open();

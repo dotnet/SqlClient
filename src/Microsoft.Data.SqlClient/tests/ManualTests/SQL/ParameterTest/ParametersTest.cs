@@ -12,7 +12,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class ParametersTest
     {
-        private static string s_connString = DataTestUtility.TcpConnStr;
+        private static string s_connString = DataTestUtility.TCPConnectionString;
 
         [CheckConnStrSetupFact]
         public static void CodeCoverageSqlClient()
@@ -244,7 +244,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public static void TestParametersWithDatatablesTVPInsert()
         {
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr);
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
             builder.InitialCatalog = "tempdb";
             int x = 4, y = 5;
 

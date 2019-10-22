@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <ProjectGuid>{45DB5F86-7AE3-45C6-870D-F9357B66BDB5}</ProjectGuid>
-    <TargetGroup Condition="'$(TargetFramework)'=='netcoreapp2.1'">netcoreapp</TargetGroup>
-    <TargetGroup Condition="'$(TargetFramework)'=='net46'">netfx</TargetGroup>
+    <TargetGroup Condition="$(TargetFramework.StartsWith('netcoreapp'))">netcoreapp</TargetGroup>
+    <TargetGroup Condition="$(TargetFramework.StartsWith('net4'))">netfx</TargetGroup>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <CodeAnalysisRuleSet>Microsoft.Data.SqlClient.ManualTesting.Tests.ruleset</CodeAnalysisRuleSet>
     <Configurations>Debug;Release;net46-Release;net46-Debug;netcoreapp2.1-Debug;netcoreapp2.1-Release</Configurations>
@@ -69,6 +69,7 @@
     <Compile Include="DataCommon\SystemDataResourceManager.cs" />
     <Compile Include="SQL\ConnectivityTests\ConnectionBehaviorTest.cs" />
     <Compile Include="SQL\ConnectivityTests\AADConnectionTest.cs" />
+    <Compile Include="SQL\ConnectivityTests\TcpDefaultForAzureTest.cs" />
     <Compile Include="SQL\ParameterTest\DateTimeVariantTest.cs" />
     <Compile Include="SQL\ParameterTest\OutputParameter.cs" />
     <Compile Include="SQL\ParameterTest\ParametersTest.cs" />
@@ -93,6 +94,7 @@
     <Compile Include="SQL\DataBaseSchemaTest\ConnectionSchemaTest.cs" />
     <Compile Include="SQL\DataReaderTest\DataReaderTest.cs" />
     <Compile Include="SQL\ExceptionTest\ExceptionTest.cs" />
+    <Compile Include="SQL\ExceptionTest\ConnectionExceptionTest.cs" />
     <Compile Include="SQL\DataStreamTest\DataStreamTest.cs" />
     <Compile Include="SQL\DateTimeTest\DateTimeTest.cs" />
     <Compile Include="SQL\InstanceNameTest\InstanceNameTest.cs" />
@@ -172,6 +174,10 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>data.xml</Link>
     </Content>
+    <Content Include="config.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>config.json</Link>
+    </Content>
     <Content Include="ProviderAgnostic\MultipleResultsTest\MultipleResultsTest.bsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>MultipleResultsTest.bsl</Link>
@@ -249,6 +255,7 @@
     <PackageReference Include="System.Linq.Expressions" Version="4.3.0" />
     <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="4.5.1" />
     <PackageReference Include="System.Net.Sockets" Version="4.3.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
     <PackageReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="Microsoft.Windows.Compatibility" Version="2.1.1" />
   </ItemGroup>
 </Project>

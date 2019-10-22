@@ -38,7 +38,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             dataTable.Rows.Add(dataRow);
             dataTable.AcceptChanges();
 
-            var encryptionEnabledConnectionString = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr)
+            var encryptionEnabledConnectionString = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
             {
                 ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Enabled
             }.ConnectionString;
@@ -64,7 +64,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         public void Dispose()
         {
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 sqlConnection.Open();
                 Table.DeleteData(fixture.BulkCopyAETestTable.Name, sqlConnection);

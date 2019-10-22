@@ -32,14 +32,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         internal virtual void SetupDatabase()
         {
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 sqlConnection.Open();
                 databaseObjects.ForEach(o => o.Create(sqlConnection));
             }
 
             // Insert data for TrustedMasterKeyPaths tests.
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr);
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
             builder.ConnectTimeout = 10000;
             Customer customer = new Customer(45, "Microsoft", "Corporation");
             using (SqlConnection sqlConn = new SqlConnection(builder.ToString()))
@@ -89,7 +89,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public void Dispose()
         {
             databaseObjects.Reverse();
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 sqlConnection.Open();
                 databaseObjects.ForEach(o => o.Drop(sqlConnection));

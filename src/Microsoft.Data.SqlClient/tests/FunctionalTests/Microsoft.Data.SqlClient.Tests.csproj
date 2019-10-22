@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <TargetGroup Condition="'$(TargetFramework)'=='netcoreapp2.1'">netcoreapp</TargetGroup>
-    <TargetGroup Condition="'$(TargetFramework)'=='net46'">netfx</TargetGroup>
+    <TargetGroup Condition="$(TargetFramework.StartsWith('netcoreapp'))">netcoreapp</TargetGroup>
+    <TargetGroup Condition="$(TargetFramework.StartsWith('net4'))">netfx</TargetGroup>
     <Configurations>Debug;Release;net46-Release;net46-Debug;netcoreapp2.1-Debug;netcoreapp2.1-Release</Configurations>
     <Platforms>AnyCPU;x86;x64</Platforms>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).FunctionalTests</IntermediateOutputPath>  
@@ -45,11 +45,8 @@
     <Compile Include="SqlConnectionTest.RetrieveStatistics.cs" />
     <Compile Include="FakeDiagnosticListenerObserver.cs" />
     <Compile Include="SqlMetaDataTest.cs" />
-    <Compile Include="ExceptionTest.cs" />
-    <Compile Include="TcpDefaultForAzureTest.cs" />
     <Compile Include="SqlConnectionStringBuilderTest.cs" />
     <!-- <Compile Include="DiagnosticTest.cs" /> -->
-    <Compile Include="$(TestsPath)ManualTests\DataCommon\DataTestUtility.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.9.0" />
@@ -63,6 +60,7 @@
     <PackageReference Include="microsoft.dotnet.buildtools.testsuite" Version="2.2.0-preview1-03110-01" />
     <PackageReference Include="System.Linq.Expressions" Version="4.3.0" />
     <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="4.5.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.1'">
     <PackageReference Include="System.Data.Odbc" Version="4.5.0" />
@@ -86,9 +84,9 @@
     <ProjectReference Include="$(TestsPath)tools\CoreFx.Private.TestUtilities\CoreFx.Private.TestUtilities.csproj">
       <Name>CoreFx.Private.TestUtilities</Name>
     </ProjectReference>
-      <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
-      <ProjectReference Condition="'$(TargetGroup)'=='netfx'" Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
-     <!-- <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="$(CommonTestPath)\System\Diagnostics\RemoteExecutorConsoleApp\RemoteExecutorConsoleApp.csproj"> -->
+    <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
+    <ProjectReference Condition="'$(TargetGroup)'=='netfx'" Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
+    <!-- <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="$(CommonTestPath)\System\Diagnostics\RemoteExecutorConsoleApp\RemoteExecutorConsoleApp.csproj"> -->
       <!-- <Project>{69e46a6f-9966-45a5-8945-2559fe337827}</Project> -->
       <!-- <Name>RemoteExecutorConsoleApp</Name> -->
     <!-- </ProjectReference > -->
