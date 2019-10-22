@@ -18,8 +18,10 @@ using Microsoft.Azure.KeyVault.Models;
 namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 {
     /// <summary>
-    /// Provides implementation similar to certificate store provider.
-    /// A CEK encrypted with certificate store provider should be decryptable by this provider and vice versa.
+    /// Implementation of column master key store provider that allows client applications to access data when a 
+    /// column master key is stored in Microsoft Azure Key Vault. For more information on Always Encrypted, please refer to: https://aka.ms/AlwaysEncrypted.
+    ///
+    /// A Column Encryption Key encrypted with certificate store provider should be decryptable by this provider and vice versa.
     /// 
     /// Envolope Format for the encrypted column encryption key  
     ///           version + keyPathLength + ciphertextLength + keyPath + ciphertext +  signature
@@ -30,6 +32,23 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
     /// ciphertext: Encrypted column encryption key
     /// signature: Signature of the entire byte array. Signature is validated before decrypting the column encryption key.
     /// </summary>
+    /// <remarks>
+	///	    <format ttype="text/markdown"><![CDATA[
+    /// ## Remarks
+    /// 
+    /// <xref=Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.SqlColumnEncryptionAzureKeyVaultProvider> is implemented for Microsoft.Data.SqlClient driver and supports .NET Framework 4.6+ and .NET Core 2.1+.
+    /// The provider name identifier for this implementation is "AZURE_KEY_VAULT" and it is not registered in driver by default.
+    /// Client applications must call <xref=Microsoft.Data.SqlClient.SqlConnection.RegisterColumnEncryptionKeyStoreProviders> API only once in the lifetime of driver to register this custom provider by implementing a custom Authentication Callback mechanism.
+    /// 
+    /// Once the provider is registered, it can used to perform Always Encrypted operations by creating Column Master Key using Azure Key Vault Key Identifier URL.
+    /// 
+    /// ## Example
+    /// 
+    /// A sample C# application to demonstrate Always Encrypted with Azure Key Vault can be download from samples directory: 
+    /// 
+    /// [!code-csharp[AzureKeyVaultProviderExample#1](~/../sqlclient/doc/samples/AzureKeyVaultProvider.cs#1)]
+    /// ]]></format>
+    /// </remarks>
     public class SqlColumnEncryptionAzureKeyVaultProvider : SqlColumnEncryptionKeyStoreProvider
     {
         #region Properties

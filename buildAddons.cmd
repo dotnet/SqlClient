@@ -1,5 +1,5 @@
 call :pauseOnError msbuild /p:configuration=Release /t:clean
-call :pauseOnError msbuild /p:configuration=Release /t:BuildAll
+call :pauseOnError msbuild /p:configuration=Release /t:BuildAllConfigurations
 call :pauseOnError msbuild /p:configuration=Release /t:BuildAKVNetFx
 call :pauseOnError msbuild /p:configuration=Release /t:BuildAKVNetCoreAllOS
 call :pauseOnError msbuild /p:configuration=Release /t:GenerateAKVProviderNugetPackage

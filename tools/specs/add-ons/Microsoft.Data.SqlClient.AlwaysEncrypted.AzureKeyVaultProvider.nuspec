@@ -9,7 +9,14 @@
     <license type="expression">MIT</license>
     <projectUrl>https://aka.ms/sqlclientproject</projectUrl>
     <icon>dotnet.png</icon>
+    <repository type="git" url="https://github.com/dotnet/sqlclient" />
     <description>Always Encrypted Azure Key Vault Provider for Microsoft.Data.SqlClient.
+
+This library enables .NET Core and .NET Framework applications to use Microsoft Azure Key Vault with Always Encrypted in Microsoft Azure SQL Database and Microsoft SQL Server. The library includes the column master key store provider that allows client applications to access data when a column master key is stored in Microsoft Azure Key Vault. For more information on Always Encrypted, please refer to: https://aka.ms/AlwaysEncrypted.
+
+Use this library only with the Microsoft.Data.SqlClient (https://www.nuget.org/packages/Microsoft.Data.SqlClient) client driver. If you are using the legacy .NET Framework Data Provider for SQL Server within the System.Data.SqlClient namespace in .NET Framework (https://www.nuget.org/packages/System.Data.SqlClient) as a client driver, you need to use Microsoft.SqlServer.Management.AlwaysEncrypted.AzureKeyVaultProvider (http://www.nuget.org/packages/Microsoft.SqlServer.Management.AlwaysEncrypted.AzureKeyVaultProvider) instead of this package.
+
+For more information on Always Encrypted, please refer to: https://aka.ms/AlwaysEncrypted.
 
 Available Types:
 Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyStoreProvider.SqlColumnEncryptionAzureKeyVaultProvider
@@ -17,19 +24,21 @@ Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyStoreProvider.SqlColumnEncrypti
     </description>
     <releaseNotes>https://go.microsoft.com/fwlink/?linkid=2090501</releaseNotes>
     <copyright>© Microsoft Corporation. All rights reserved.</copyright>
-    <tags>sqlclient microsoft.data.sqlclient AzureKeyVaultProvider akvprovider alwaysencrypted</tags>
+    <tags>sqlclient microsoft.data.sqlclient azurekeyvaultprovider akvprovider alwaysencrypted</tags>
     <dependencies>
       <group targetFramework="net46">
-        <dependency id="Microsoft.Azure.KeyVault" version="3.0.4" />
-        <dependency id="Microsoft.Azure.KeyVault.WebKey" version="3.0.4" />
-        <dependency id="Microsoft.Rest.ClientRuntime" version="2.3.20" />
-        <dependency id="Microsoft.Rest.ClientRuntime.Azure" version="3.3.19" />
+        <dependency id="Microsoft.Data.SqlClient" version="[1.0.19269.1,)" />
+        <dependency id="Microsoft.Azure.KeyVault" version="[3.0.4,4.0.0)" />
+        <dependency id="Microsoft.Azure.KeyVault.WebKey" version="[3.0.4,4.0.0)" />
+        <dependency id="Microsoft.Rest.ClientRuntime" version="[2.3.20,3.0.0)" />
+        <dependency id="Microsoft.Rest.ClientRuntime.Azure" version="[3.3.19,4.0.0)" />
       </group>
       <group targetFramework="netcoreapp2.1">
-        <dependency id="Microsoft.Azure.KeyVault" version="3.0.4" />
-        <dependency id="Microsoft.Azure.KeyVault.WebKey" version="3.0.4" />
-        <dependency id="Microsoft.Rest.ClientRuntime" version="2.3.20" />
-        <dependency id="Microsoft.Rest.ClientRuntime.Azure" version="3.3.19" />
+        <dependency id="Microsoft.Data.SqlClient" version="[1.0.19269.1,)" />
+        <dependency id="Microsoft.Azure.KeyVault" version="[3.0.4,4.0.0)" />
+        <dependency id="Microsoft.Azure.KeyVault.WebKey" version="[3.0.4,4.0.0)" />
+        <dependency id="Microsoft.Rest.ClientRuntime" version="[2.3.20,3.0.0)" />
+        <dependency id="Microsoft.Rest.ClientRuntime.Azure" version="[3.3.19,4.0.0)" />
       </group>
     </dependencies>
     <frameworkAssemblies>
