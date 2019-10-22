@@ -170,4 +170,3 @@ Tests can be built and run with custom Target Frameworks as under:
 # Use above property to run Functional Tests with custom TargetFramework (.NET Core)
 # Applicable values: netcoreapp2.1 | netcoreapp2.2 | netcoreapp3.0
 ```
-```
