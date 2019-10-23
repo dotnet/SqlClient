@@ -32,11 +32,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [InlineData(true)]
-        [InlineData(false)]
-        public void TestSqlTransactionCommitRollbackWithTransparentInsert(bool isCommitted)
+        [InlineData(false, "Data Source = WIN-K4TQB0TR8JQ; Initial Catalog = Northwind; Column Encryption Setting = Enabled; Attestation Protocol = HGS; Enclave Attestation Url= http://WIN-K4TQB0TR8JQ/Attestation;User ID=sa; Password=Moonshine4me; Integrated Security= False;")]
+        [InlineData(true, "Data Source = WIN-K4TQB0TR8JQ; Initial Catalog = Northwind; Column Encryption Setting = Enabled; Attestation Protocol = HGS; Enclave Attestation Url= http://WIN-K4TQB0TR8JQ/Attestation;User ID=sa; Password=Moonshine4me; Integrated Security= False;")]
+        [InlineData(true, "Data Source=tcp:localhost;Database=Northwind;Integrated Security=true")]
+
+        public void TestSqlTransactionCommitRollbackWithTransparentInsert(bool isCommitted, string value)
         {
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            
+            using (SqlConnection sqlConnection = new SqlConnection(value))
             {
                 sqlConnection.Open();
 
@@ -72,7 +75,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void TestSqlTransactionRollbackToSavePoint()
         {
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionStringWithAEV2HGSVBSSupport))
             {
                 sqlConnection.Open();
 
@@ -126,7 +129,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             const int decimalColumnScale = 4;
             const int timeColumnScale = 5;
 
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionStringWithAEV2HGSVBSSupport))
             {
                 try
                 {
@@ -392,7 +395,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values);
 
-            var encryptionEnabledConnectionString = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+            var encryptionEnabledConnectionString = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionStringWithAEV2HGSVBSSupport)
             {
                 ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Enabled
             }.ConnectionString;
@@ -457,7 +460,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             // Insert a bunch of rows in to the table.
             int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values);
 
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionStringWithAEV2HGSVBSSupport))
             {
                 sqlConnection.Open();
                 SqlDataAdapter adapter = CreateSqlDataAdapter(sqlConnection);
@@ -507,7 +510,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                 Assert.Equal(numberOfRows, rowsAffected);
                 rowsAffected = -1;
-                using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+                using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionStringWithAEV2HGSVBSSupport))
                 {
                     sqlConnection.Open();
 
@@ -550,7 +553,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 // Insert a bunch of rows in to the table.
                 int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values);
 
-                using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+                using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionStringWithAEV2HGSVBSSupport))
                 {
                     sqlConnection.Open();
 
@@ -589,7 +592,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             DataTable dataTable = CreateDataTable(tableName: tableName, numberofRows: numberofRows);
 
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionStringWithAEV2HGSVBSSupport))
             {
                 sqlConnection.Open();
 
@@ -637,7 +640,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values);
                 Assert.True(numberOfRows == rowsAffected, "Two values failed");
 
-                using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+                using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionStringWithAEV2HGSVBSSupport))
                 {
                     sqlConnection.Open();
 
@@ -695,7 +698,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values);
                 Assert.Equal(rowsAffected, numberOfRows);
 
-                using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+                using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionStringWithAEV2HGSVBSSupport))
                 {
                     sqlConnection.Open();
 
@@ -811,7 +814,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             Assert.True(rowsAffected == numberOfRows, "number of rows affected is unexpected.");
 
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionStringWithAEV2HGSVBSSupport))
             {
                 sqlConnection.Open();
                 using (SqlCommand sqlCommand =
@@ -853,7 +856,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             // Insert a bunch of rows in to the table.
             int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values);
 
-            using (SqlConnection sqlconnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlconnection = new SqlConnection(DataTestUtility.TCPConnectionStringWithAEV2HGSVBSSupport))
             {
                 sqlconnection.Open();
 
@@ -908,7 +911,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             Assert.True(rowsAffected == numberOfRows, "number of rows affected is unexpected.");
 
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionStringWithAEV2HGSVBSSupport))
             {
                 sqlConnection.Open();
 
@@ -972,7 +975,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             Assert.True(rowsAffected == numberOfRows, "number of rows affected is unexpected.");
 
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionStringWithAEV2HGSVBSSupport))
             {
                 sqlConnection.Open();
                 using (SqlCommand sqlCommand = new SqlCommand(
@@ -1024,7 +1027,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             Assert.True(rowsAffected == numberOfRows, "number of rows affected is unexpected.");
 
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionStringWithAEV2HGSVBSSupport))
             {
                 sqlConnection.Open();
 
@@ -1088,7 +1091,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             Assert.True(rowsAffected == numberOfRows, "number of rows affected is unexpected.");
 
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionStringWithAEV2HGSVBSSupport))
             {
                 sqlConnection.Open();
 
@@ -1283,7 +1286,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             Assert.Equal(rowsAffected, numberOfRows);
 
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionStringWithAEV2HGSVBSSupport))
             {
                 sqlConnection.Open();
                 using (SqlCommand sqlCommand = new SqlCommand($"SELECT CustomerId, FirstName, LastName  FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
@@ -1707,7 +1710,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             Assert.True(rowsAffected == numberOfRows, "number of rows affected is unexpected.");
 
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionStringWithAEV2HGSVBSSupport))
             {
                 sqlConnection.Open();
                 // Test SqlDataReader.GetStream() on encrypted column, throw an exception.
@@ -1851,7 +1854,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             int rowsAffected = 0;
 
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionStringWithAEV2HGSVBSSupport))
             {
                 sqlConnection.Open();
 
@@ -1877,7 +1880,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         /// <param name="procNames"></param>
         private void DropHelperProcedures(string[] procNames)
         {
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionStringWithAEV2HGSVBSSupport))
             {
                 sqlConnection.Open();
                 foreach (string name in procNames)
@@ -2009,7 +2012,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         public void Dispose()
         {
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionStringWithAEV2HGSVBSSupport))
             {
                 sqlConnection.Open();
 

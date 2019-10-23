@@ -1,6 +1,7 @@
 {
     "TCPConnectionString": "Data Source=tcp:localhost;Database=Northwind;Integrated Security=true",
     "NPConnectionString": "Data Source=np:localhost;Database=Northwind;Integrated Security=true;",
+    "TCPConnectionStringWithAEV2HGSVBSSupport": "Data Source = WIN-K4TQB0TR8JQ; Initial Catalog = Northwind; Column Encryption Setting = Enabled; Attestation Protocol = HGS; Enclave Attestation Url= http://WIN-K4TQB0TR8JQ/Attestation;User ID=sa; Password=Moonshine4me; Integrated Security= False;",
     "AADAccessToken": "",
     "AADPasswordConnectionString": "",
     "AzureKeyVaultURL": "",

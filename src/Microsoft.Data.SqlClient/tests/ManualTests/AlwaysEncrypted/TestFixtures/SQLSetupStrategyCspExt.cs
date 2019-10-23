@@ -29,11 +29,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Table table = CreateTable(columnEncryptionKeys);
             databaseObjects.Add(table);
 
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            foreach(var value in DataTestUtility.connStrings.Values)
             {
-                sqlConnection.Open();
-                databaseObjects.ForEach(o => o.Create(sqlConnection));
+                using (SqlConnection sqlConnection = new SqlConnection(value))
+                {
+                    sqlConnection.Open();
+                    databaseObjects.ForEach(o => o.Create(sqlConnection));
+                }
             }
+           
         }
 
         private Table CreateTable(IList<ColumnEncryptionKey> columnEncryptionKeys)

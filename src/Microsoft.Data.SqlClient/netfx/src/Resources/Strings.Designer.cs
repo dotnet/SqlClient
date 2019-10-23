@@ -7777,7 +7777,7 @@ namespace System {
         ///   Looks up a localized string similar to Failed to initialize the &apos;{0}&apos; property for one of the following reasons:
         ///	The value data type was not the data type of the property or was not null. For example, the property was DBPROP_MEMORYUSAGE, which has a data type of Int32, and the data type was Int64.
         ///	The value was not a valid value. For example, the property was DBPROP_MEMORYUSAGE and the value was negative.
-        ///	The value was a valid value for the property and the provider supports the property as a settable property, but the provider does not su [rest of string was truncated]&quot;;.
+        ///	The value was a valid value for the property and the provider supports the property as a settable property, but the provider does not suppo [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string OleDb_PropertyBadValue {
             get {
@@ -11665,6 +11665,24 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Error occured when generating enclave package. Attestation Protocol has not been specified in the connection string, but the query requires enclave computations..
+        /// </summary>
+        internal static string TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage {
+            get {
+                return ResourceManager.GetString("TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to initialize connection. The attestation protocol &apos;{0}&apos; does not support the enclave type &apos;{1}&apos;..
+        /// </summary>
+        internal static string TCE_AttestationProtocolNotSupportEnclaveType {
+            get {
+                return ResourceManager.GetString("TCE_AttestationProtocolNotSupportEnclaveType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to {0} should be identical on all commands ({1}, {2}, {3}, {4}) when doing batch updates..
         /// </summary>
         internal static string TCE_BatchedUpdateColumnEncryptionSettingMismatch {
@@ -11773,6 +11791,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Specifies an attestation protocol for its corresponding enclave attestation service..
+        /// </summary>
+        internal static string TCE_DbConnectionString_AttestationProtocol {
+            get {
+                return ResourceManager.GetString("TCE_DbConnectionString_AttestationProtocol", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Default column encryption setting for all the commands on the connection..
         /// </summary>
         internal static string TCE_DbConnectionString_ColumnEncryptionSetting {
@@ -11787,15 +11814,6 @@ namespace System {
         internal static string TCE_DbConnectionString_EnclaveAttestationUrl {
             get {
                 return ResourceManager.GetString("TCE_DbConnectionString_EnclaveAttestationUrl", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Specifies an attestation protocol for its corresponding enclave attestation service.
-        /// </summary>
-        internal static string TCE_DbConnectionString_AttestationProtocol {
-            get {
-                return ResourceManager.GetString("TCE_DbConnectionString_AttestationProtocol", resourceCulture);
             }
         }
         
@@ -11953,20 +11971,11 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to No enclave provider found for enclave type &apos;{0}&apos;. Please specify the provider in the application configuration. .
+        ///   Looks up a localized string similar to No enclave provider found for enclave type &apos;{0}&apos; and attestation protocol &apos;{1}&apos;. Please specify the correct attestation protocol in the connection string. .
         /// </summary>
         internal static string TCE_EnclaveProviderNotFound {
             get {
                 return ResourceManager.GetString("TCE_EnclaveProviderNotFound", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        /// Looks up a localized string similar to Error occured when generating enclave package. Attestation Protocol has not been specified in the connection string, but the query requires enclave computations.
-        /// </summary>
-        internal static string TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage {
-            get {
-                return ResourceManager.GetString("TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage", resourceCulture);
             }
         }
         
@@ -11987,25 +11996,16 @@ namespace System {
                 return ResourceManager.GetString("TCE_EnclaveTypeNotReturned", resourceCulture);
             }
         }
-
+        
         /// <summary>
-        /// Looks up a localized string similar to The enclave type '{0}' returned from the server is not supported.
+        ///   Looks up a localized string similar to The enclave type &apos;{0}&apos; returned from the server is not supported..
         /// </summary>
         internal static string TCE_EnclaveTypeNotSupported {
             get {
                 return ResourceManager.GetString("TCE_EnclaveTypeNotSupported", resourceCulture);
             }
         }
-
-        /// <summary>
-        /// Looks up a localized string similar to Failed to initialize connection. The attestation protocol does not support the enclave type '{0}'.
-        /// </summary>
-        internal static string TCE_AttestationProtocolNotSupportEnclaveType {
-            get {
-                return ResourceManager.GetString("TCE_AttestationProtocolNotSupportEnclaveType", resourceCulture);
-            }
-        }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Internal Error. Enclave type received from SQL Server is null or empty when executing a query requiring enclave computations..
         /// </summary>
