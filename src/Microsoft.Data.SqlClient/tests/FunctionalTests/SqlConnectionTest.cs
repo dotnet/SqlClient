@@ -547,6 +547,67 @@ namespace Microsoft.Data.SqlClient.Tests
             }
         }
 
+        [Theory]
+        [InlineData(@"AttachDbFileName=C:\test\attach.mdf", @"AttachDbFileName=C:\test\attach.mdf")]
+        [InlineData(@"AttachDbFileName=C:\test\attach.mdf;", @"AttachDbFileName=C:\test\attach.mdf;")]
+        public void ConnectionString_AttachDbFileName_Plain(string value, string expected)
+        {
+            SqlConnection cn = new SqlConnection();
+            cn.ConnectionString = value;
+            Assert.Equal(expected, cn.ConnectionString);
+        }
+
+        [Theory]
+        [InlineData(@"Data Source=.;AttachDbFileName=|DataDirectory|\attach.mdf",
+                    @"Data Source=.;AttachDbFileName=|DataDirectory|\attach.mdf",
+                    @"C:\test\")]
+        [InlineData(@"Data Source=.;AttachDbFileName=|DataDirectory|\attach.mdf",
+                    @"Data Source=.;AttachDbFileName=|DataDirectory|\attach.mdf",
+                    @"C:\test")]
+        [InlineData(@"Data Source=.;AttachDbFileName=|DataDirectory|attach.mdf",
+                    @"Data Source=.;AttachDbFileName=|DataDirectory|attach.mdf",
+                    @"C:\test")]
+        [InlineData(@"Data Source=.;AttachDbFileName=|DataDirectory|attach.mdf",
+                    @"Data Source=.;AttachDbFileName=|DataDirectory|attach.mdf",
+                    @"C:\test\")]
+        [InlineData(@"Data Source=.;AttachDbFileName=C:\test\attach.mdf;AttachDbFileName=|DataDirectory|attach.mdf",
+                    @"Data Source=.;AttachDbFileName=C:\test\attach.mdf;AttachDbFileName=|DataDirectory|attach.mdf",
+                    null)]
+        public void ConnectionString_AttachDbFileName_DataDirectory(string value, string expected, string dataDirectory)
+        {
+            AppDomain.CurrentDomain.SetData("DataDirectory", dataDirectory);
+
+            SqlConnection cn = new SqlConnection();
+            cn.ConnectionString = value;
+            Assert.Equal(expected, cn.ConnectionString);
+        }
+
+        [Theory]
+        [InlineData(@"Data Source=.;AttachDbFileName=|DataDirectory|attach.mdf", @"..\test\")]
+        [InlineData(@"Data Source=(local);AttachDbFileName=|DataDirectory|attach.mdf", @"c:\temp\..\test")]
+        [InlineData(@"Data Source=.;AttachDbFileName=|DataDirectory|attach.mdf", @"c:\temp\..\test\")]
+        [InlineData(@"Data Source=Random12344321;AttachDbFileName=|DataDirectory|attach.mdf", @"C:\\test\\")]
+        [InlineData(@"Data Source=local;AttachDbFileName=|DataDirectory|attach.mdf", @"C:\\test\\")]
+        [InlineData(@"Data Source=..;AttachDbFileName=|DataDirectory|attach.mdf", @"C:\\test\\")]
+        public void ConnectionString_AttachDbFileName_DataDirectory_Fails(string value, string dataDirectory)
+        {
+            AppDomain.CurrentDomain.SetData("DataDirectory", dataDirectory);
+
+            SqlConnection cn = new SqlConnection();
+            Assert.Throws<ArgumentException>(() => cn.ConnectionString = value);
+        }
+
+        [Theory]
+        [InlineData(@"Data Source=.;AttachDbFileName=|DataDirectory|attach.mdf", 1)]
+        [InlineData(@"Data Source=.;AttachDbFileName=|DataDirectory|attach.mdf", 1.5)]
+        public void ConnectionString_AttachDbFileName_DataDirectory_Throws(string value, object dataDirectory)
+        {
+            AppDomain.CurrentDomain.SetData("DataDirectory", dataDirectory);
+
+            SqlConnection cn = new SqlConnection();
+            Assert.Throws<InvalidOperationException>(() => cn.ConnectionString = value);
+        }
+
         [Fact]
         public void ConnectionString_ConnectTimeout()
         {
