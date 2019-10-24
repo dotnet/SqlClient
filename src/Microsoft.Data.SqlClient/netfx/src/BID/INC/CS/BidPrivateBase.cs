@@ -102,7 +102,15 @@ internal static partial class Bid
 
 } // Bid{PrivateBase}
 
-
+/// <summary>
+/// This attribute is used by FxCopBid rule to mark methods that accept format string and list of arguments that match it
+/// FxCopBid rule uses this attribute to check if the method needs to be included in checks and to read type mappings
+/// between the argument type to printf Type spec.
+///
+/// If you need to rename/remove the attribute or change its properties, make sure to update the FxCopBid rule!
+/// </summary>
+[System.Diagnostics.ConditionalAttribute("CODE_ANALYSIS")]
+[System.AttributeUsage(AttributeTargets.Method)]
 internal sealed class BidMethodAttribute : Attribute
 {
     internal BidMethodAttribute()
