@@ -614,7 +614,8 @@ namespace Microsoft.Data.SqlClient.Tests
             AppDomain.CurrentDomain.SetData("DataDirectory", @"C:\test\" + new string('x', 261));
 
             SqlConnection cn = new SqlConnection();
-            Assert.Throws<ArgumentException>(() => cn.ConnectionString = @"Data Source=.;AttachDbFileName=|DataDirectory|attach.mdf");
+            var exception = Record.Exception(() => cn.ConnectionString = @"Data Source=.;AttachDbFileName=|DataDirectory|attach.mdf");
+            Assert.NotNull(exception);
         }
 
         [Fact]
