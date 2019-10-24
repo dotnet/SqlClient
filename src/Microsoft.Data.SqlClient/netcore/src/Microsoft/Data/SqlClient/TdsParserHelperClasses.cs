@@ -459,7 +459,7 @@ namespace Microsoft.Data.SqlClient
 
         public bool IsReadOnly
         {
-            get => flags.HasFlag(_SqlMetadataFlags.IsReadOnlyMask);
+            get => (flags & _SqlMetadataFlags.IsReadOnlyMask) == 0;
         }
 
         public bool IsDifferentName
