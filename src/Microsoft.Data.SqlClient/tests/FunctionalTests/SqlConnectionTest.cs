@@ -558,6 +558,7 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Theory]
+        [PlatformSpecific(TestPlatforms.Windows)]
         [InlineData(@"Data Source=.;AttachDbFileName=|DataDirectory|\attach.mdf",
                     @"Data Source=.;AttachDbFileName=|DataDirectory|\attach.mdf",
                     @"C:\test\")]
