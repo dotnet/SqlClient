@@ -609,6 +609,22 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Fact]
+        public void ConnectionString_AttachDbFileName_DataDirectory_Long_Throws()
+        {
+            AppDomain.CurrentDomain.SetData("DataDirectory", @"C:\test\" + new string('x', 261));
+
+            SqlConnection cn = new SqlConnection();
+            Assert.Throws<ArgumentException>(() => cn.ConnectionString = @"Data Source=.;AttachDbFileName=|DataDirectory|attach.mdf");
+        }
+
+        [Fact]
+        public void ConnectionString_AttachDbFileName_Long_Throws()
+        {
+            SqlConnection cn = new SqlConnection();
+            Assert.Throws<ArgumentException>(() => cn.ConnectionString = @"Data Source=.;AttachDbFileName=C:\test\" + new string('x', 261));
+        }
+
+        [Fact]
         public void ConnectionString_ConnectTimeout()
         {
             SqlConnection cn = new SqlConnection();

@@ -131,11 +131,7 @@ namespace Microsoft.Data.Common
                 }
                 else if (string.IsNullOrEmpty(rootFolderPath))
                 {
-                    rootFolderPath = AppDomain.CurrentDomain.BaseDirectory;
-                }
-                if (null == rootFolderPath)
-                {
-                    rootFolderPath = "";
+                    rootFolderPath = AppDomain.CurrentDomain.BaseDirectory ?? string.Empty;
                 }
 
                 // We don't know if rootFolderpath ends with '\', and we don't know if the given name starts with onw
