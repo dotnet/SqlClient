@@ -583,17 +583,14 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(expected, cn.ConnectionString);
         }
 
-        [Theory]
+        [Fact]
         [PlatformSpecific(TestPlatforms.Linux)]
-        [InlineData(@"Data Source=.;AttachDbFileName=|DataDirectory|\attach.mdf",
-            @"Data Source=.;AttachDbFileName=|DataDirectory|\attach.mdf",
-            @"C:\test\")]
-        public void ConnectionString_AttachDbFileName_DataDirectory_NoLinuxRootFolder(string value, string expected, string dataDirectory)
+        public void ConnectionString_AttachDbFileName_DataDirectory_NoLinuxRootFolder()
         {
-            AppDomain.CurrentDomain.SetData("DataDirectory", dataDirectory);
+            AppDomain.CurrentDomain.SetData("DataDirectory", @"C:\test\");
 
             SqlConnection cn = new SqlConnection();
-            Assert.Throws<ArgumentException>(() => cn.ConnectionString = value);
+            Assert.Throws<ArgumentException>(() => cn.ConnectionString = @"Data Source=.;AttachDbFileName=|DataDirectory|\attach.mdf");
         }
 
         [Theory]
