@@ -3,10 +3,12 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
@@ -91,8 +93,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 AKVClientId = c.AzureKeyVaultClientId;
                 AKVClientSecret = c.AzureKeyVaultClientSecret;
             }
-            connStrings.Add("TCPConnectionString", TCPConnectionString);
-            connStrings.Add("TCPConnectionStringWithAEV2HGSVBSSupport", TCPConnectionStringWithAEV2HGSVBSSupport);
+            if (!string.IsNullOrEmpty(TCPConnectionString))
+            {
+                connStrings.Add("TCPConnectionString", TCPConnectionString);
+                connStrings.Add("TCPConnectionStringWithAEV2HGSVBSSupport", TCPConnectionStringWithAEV2HGSVBSSupport);
+            }
         }
 
         public static bool IsDatabasePresent(string name)
@@ -119,8 +124,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool AreConnStringsSetup()
         {
-            return (connStrings.Values.Count > 0);
-            //return !string.IsNullOrEmpty(NPConnectionString) && !string.IsNullOrEmpty(TCPConnectionString);
+            return connStrings.TryGetValue("TCPConnectionString", out _);
         }
 
         public static bool IsAADPasswordConnStrSetup()
@@ -430,5 +434,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             return result;
         }
+    }
+    public class ConnectionStringProviderWithBooleanVariable : IEnumerable<object[]>
+    {
+        public IEnumerator<object[]> GetEnumerator()
+        {
+            yield return new object[] { DataTestUtility.TCPConnectionString, true };
+            yield return new object[] { DataTestUtility.TCPConnectionString, false };
+            yield return new object[] { DataTestUtility.TCPConnectionStringWithAEV2HGSVBSSupport, true };
+            yield return new object[] { DataTestUtility.TCPConnectionStringWithAEV2HGSVBSSupport, false };
+        }
+
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+    }
+    public class ConnectionStringProvider : IEnumerable<object[]>
+    {
+        public IEnumerator<object[]> GetEnumerator()
+        {
+            yield return new object[] { DataTestUtility.TCPConnectionString };
+            yield return new object[] { DataTestUtility.TCPConnectionStringWithAEV2HGSVBSSupport };
+
+        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }
