@@ -584,6 +584,19 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Theory]
+        [PlatformSpecific(TestPlatforms.Linux)]
+        [InlineData(@"Data Source=.;AttachDbFileName=|DataDirectory|\attach.mdf",
+            @"Data Source=.;AttachDbFileName=|DataDirectory|\attach.mdf",
+            @"C:\test\")]
+        public void ConnectionString_AttachDbFileName_DataDirectory_NoLinuxRootFolder(string value, string expected, string dataDirectory)
+        {
+            AppDomain.CurrentDomain.SetData("DataDirectory", dataDirectory);
+
+            SqlConnection cn = new SqlConnection();
+            Assert.Throws<ArgumentException>(() => cn.ConnectionString = value);
+        }
+
+        [Theory]
         [InlineData(@"Data Source=.;AttachDbFileName=|DataDirectory|attach.mdf", @"..\test\")]
         [InlineData(@"Data Source=(local);AttachDbFileName=|DataDirectory|attach.mdf", @"c:\temp\..\test")]
         [InlineData(@"Data Source=.;AttachDbFileName=|DataDirectory|attach.mdf", @"c:\temp\..\test\")]
