@@ -8,6 +8,7 @@ using System.Data;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Xunit;
@@ -26,6 +27,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string AKVClientId = null;
         public static readonly string AKVClientSecret = null;
         public static Dictionary<string, string> connStrings = new Dictionary<string, string>();
+        public static string CertificateSignature;
         public static readonly bool SupportsIntegratedSecurity = false;
         public static readonly bool SupportsLocalDb = false;
         public static readonly bool SupportsFileStream = false;
@@ -48,7 +50,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             public string TCPConnectionString = null;
             public string NPConnectionString = null;
-            public string TCPConnectionStringWithAEV2HGSVBSSupport = "";
+            public string TCPConnectionStringWithAEV2HGSVBSSupport = null;
+            public string CertificateSignature = null;
             public string AADAccessToken = null;
             public string AADPasswordConnectionString = null;
             public string AzureKeyVaultURL = null;
@@ -69,8 +72,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 NPConnectionString = c.NPConnectionString;
                 TCPConnectionString = c.TCPConnectionString;
                 TCPConnectionStringWithAEV2HGSVBSSupport = c.TCPConnectionStringWithAEV2HGSVBSSupport;
-                connStrings.Add("TCPConnectionString", c.TCPConnectionString);
-                connStrings.Add("TCPConnectionStringWithAEV2HGSVBSSupport", c.TCPConnectionStringWithAEV2HGSVBSSupport);
+                CertificateSignature = c.CertificateSignature;
                 AADAccessToken = c.AADAccessToken;
                 AADPasswordConnectionString = c.AADPasswordConnectionString;
                 SupportsLocalDb = c.SupportsLocalDb;
@@ -89,6 +91,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 AKVClientId = c.AzureKeyVaultClientId;
                 AKVClientSecret = c.AzureKeyVaultClientSecret;
             }
+            connStrings.Add("TCPConnectionString", TCPConnectionString);
+            connStrings.Add("TCPConnectionStringWithAEV2HGSVBSSupport", TCPConnectionStringWithAEV2HGSVBSSupport);
         }
 
         public static bool IsDatabasePresent(string name)
@@ -115,7 +119,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool AreConnStringsSetup()
         {
-            return !string.IsNullOrEmpty(NPConnectionString) && !string.IsNullOrEmpty(TCPConnectionString);
+            return (connStrings.Values.Count > 0);
+            //return !string.IsNullOrEmpty(NPConnectionString) && !string.IsNullOrEmpty(TCPConnectionString);
         }
 
         public static bool IsAADPasswordConnStrSetup()
