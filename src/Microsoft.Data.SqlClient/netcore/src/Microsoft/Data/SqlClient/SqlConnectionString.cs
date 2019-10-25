@@ -5,6 +5,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Net;
+using System.Net.NetworkInformation;
 using System.Threading;
 using Microsoft.Data.Common;
 
@@ -726,8 +728,8 @@ namespace Microsoft.Data.SqlClient
         {
             try
             {
-                var domainName = "." + System.Net.NetworkInformation.IPGlobalProperties.GetIPGlobalProperties().DomainName;
-                var hostName = System.Net.Dns.GetHostName();
+                var domainName = "." + IPGlobalProperties.GetIPGlobalProperties().DomainName;
+                var hostName = Dns.GetHostName();
                 if (domainName != "." && !hostName.EndsWith(domainName))
                     hostName += domainName;
                 return hostName;
