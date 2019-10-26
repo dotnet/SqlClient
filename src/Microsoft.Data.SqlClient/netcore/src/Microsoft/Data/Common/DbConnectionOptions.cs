@@ -134,27 +134,14 @@ namespace Microsoft.Data.Common
                     rootFolderPath = AppDomain.CurrentDomain.BaseDirectory ?? string.Empty;
                 }
 
-                // We don't know if rootFolderpath ends with '\', and we don't know if the given name starts with onw
-                int fileNamePosition = DataDirectory.Length;    // filename starts right after the '|datadirectory|' keyword
-                bool rootFolderEndsWith = (0 < rootFolderPath.Length) && rootFolderPath[rootFolderPath.Length - 1] == Path.DirectorySeparatorChar;
-                bool fileNameStartsWith = (fileNamePosition < value.Length) && value[fileNamePosition] == Path.DirectorySeparatorChar;
+                var fileName = value.Substring(DataDirectory.Length);
 
-                // replace |datadirectory| with root folder path
-                if (!rootFolderEndsWith && !fileNameStartsWith)
+                if (Path.IsPathRooted(fileName))
                 {
-                    // need to insert '\'
-                    fullPath = rootFolderPath + Path.DirectorySeparatorChar + value.Substring(fileNamePosition);
+                    fileName = fileName.TrimStart(new char[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar });
                 }
-                else if (rootFolderEndsWith && fileNameStartsWith)
-                {
-                    // need to strip one out
-                    fullPath = rootFolderPath + value.Substring(fileNamePosition + 1);
-                }
-                else
-                {
-                    // simply concatenate the strings
-                    fullPath = rootFolderPath + value.Substring(fileNamePosition);
-                }
+
+                fullPath = Path.Combine(rootFolderPath, fileName);
 
                 // verify root folder path is a real path without unexpected "..\"
                 if (!Path.GetFullPath(fullPath).StartsWith(rootFolderPath, StringComparison.Ordinal))
