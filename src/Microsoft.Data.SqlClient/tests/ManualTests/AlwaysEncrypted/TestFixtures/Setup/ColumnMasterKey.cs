@@ -8,6 +8,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
 {
     public abstract class ColumnMasterKey : DbObject
     {
+
         protected ColumnMasterKey(string name) : base(name)
         {
         }
@@ -22,7 +23,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
         {
             string sql = string.Empty;
             var connStrings = sqlConnection.ConnectionString;
-            if (connStrings.Contains("HGS") ||connStrings.Contains("AAS"))
+            if (connStrings.Contains("HGS") || connStrings.Contains("AAS"))
             {
                 sql =
                $@"CREATE COLUMN MASTER KEY [{Name}]

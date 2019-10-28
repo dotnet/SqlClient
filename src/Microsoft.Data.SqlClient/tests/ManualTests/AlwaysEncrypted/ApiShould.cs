@@ -539,9 +539,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [InlineData(false)]
-        [InlineData(true)]
-        public void TestExecuteScalar(bool isAsync)
+        [ClassData(typeof(ConnectionStringProviderWithBooleanVariable))]
+
+        public void TestExecuteScalar(string connection,bool isAsync)
         {
             Parallel.For(0, 10, i =>
             {
@@ -551,7 +551,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 // Insert a bunch of rows in to the table.
                 int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values);
 
-                using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionStringWithAEV2HGSVBSSupport))
+                using (SqlConnection sqlConnection = new SqlConnection(connection))
                 {
                     sqlConnection.Open();
 
@@ -573,7 +573,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         }
                         else
                         {
-                            customerId = (int)sqlCommand.ExecuteScalar();
+                            customerId = (int)sqlCommand?.ExecuteScalar();
                         }
 
                         Assert.Equal((int)values[0], customerId);
