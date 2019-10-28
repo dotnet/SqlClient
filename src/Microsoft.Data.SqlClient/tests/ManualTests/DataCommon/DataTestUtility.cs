@@ -21,7 +21,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         public static readonly string NPConnectionString = null;
         public static readonly string TCPConnectionString = null;
-        public static readonly string TCPConnectionStringWithAEV2HGSVBSSupport = null;
+        public static readonly string TCPConnectionStringHGSVBS = null;
         public static readonly string AADAccessToken = null;
         public static readonly string AADPasswordConnectionString = null;
         public static readonly string AKVBaseUrl = null;
@@ -52,7 +52,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             public string TCPConnectionString = null;
             public string NPConnectionString = null;
-            public string TCPConnectionStringWithAEV2HGSVBSSupport = null;
+            public string TCPConnectionStringHGSVBS = null;
             public string CertificateSignature = null;
             public string AADAccessToken = null;
             public string AADPasswordConnectionString = null;
@@ -73,7 +73,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 NPConnectionString = c.NPConnectionString;
                 TCPConnectionString = c.TCPConnectionString;
-                TCPConnectionStringWithAEV2HGSVBSSupport = c.TCPConnectionStringWithAEV2HGSVBSSupport;
+                TCPConnectionStringHGSVBS = c.TCPConnectionStringHGSVBS;
                 CertificateSignature = c.CertificateSignature;
                 AADAccessToken = c.AADAccessToken;
                 AADPasswordConnectionString = c.AADPasswordConnectionString;
@@ -96,7 +96,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (!string.IsNullOrEmpty(TCPConnectionString))
             {
                 connStrings.Add("TCPConnectionString", TCPConnectionString);
-                connStrings.Add("TCPConnectionStringWithAEV2HGSVBSSupport", TCPConnectionStringWithAEV2HGSVBSSupport);
+                connStrings.Add("TCPConnectionStringWithAEV2HGSVBSSupport", TCPConnectionStringHGSVBS);
             }
         }
 
@@ -434,6 +434,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             return result;
         }
+
+       
     }
     public class ConnectionStringProviderWithBooleanVariable : IEnumerable<object[]>
     {
@@ -441,8 +443,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             yield return new object[] { DataTestUtility.TCPConnectionString, true };
             yield return new object[] { DataTestUtility.TCPConnectionString, false };
-            yield return new object[] { DataTestUtility.TCPConnectionStringWithAEV2HGSVBSSupport, true };
-            yield return new object[] { DataTestUtility.TCPConnectionStringWithAEV2HGSVBSSupport, false };
+            yield return new object[] { DataTestUtility.TCPConnectionStringHGSVBS, true };
+            yield return new object[] { DataTestUtility.TCPConnectionStringHGSVBS, false };
         }
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
@@ -452,7 +454,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public IEnumerator<object[]> GetEnumerator()
         {
             yield return new object[] { DataTestUtility.TCPConnectionString };
-            yield return new object[] { DataTestUtility.TCPConnectionStringWithAEV2HGSVBSSupport };
+            yield return new object[] { DataTestUtility.TCPConnectionStringHGSVBS };
 
         }
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
