@@ -3,11 +3,15 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Data;
+using System.Data.SqlTypes;
+using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
 {
     public abstract class ColumnMasterKey : DbObject
     {
+
         protected ColumnMasterKey(string name) : base(name)
         {
         }
@@ -20,19 +24,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
 
         public override void Create(SqlConnection sqlConnection)
         {
-            string sql = string.Empty;
+            string sql;
             var connStrings = sqlConnection.ConnectionString;
-            if (connStrings.Contains("HGS") ||connStrings.Contains("AAS"))
+            if (connStrings.Contains("HGS") || connStrings.Contains("AAS"))
             {
                 sql =
                $@"CREATE COLUMN MASTER KEY [{Name}]
                     WITH (
                         KEY_STORE_PROVIDER_NAME = N'{KeyStoreProviderName}',
                         KEY_PATH = N'{KeyPath}',
-                        ENCLAVE_COMPUTATIONS (SIGNATURE = {DataTestUtility.CertificateSignature})
+                        ENCLAVE_COMPUTATIONS (SIGNATURE ={DataTestUtility.CertificateSignature})
                     );";
             }
-            else 
+            else
             {
                 sql =
                   $@"CREATE COLUMN MASTER KEY [{Name}]

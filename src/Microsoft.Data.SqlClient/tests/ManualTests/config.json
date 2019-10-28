@@ -1,9 +1,8 @@
 {
     "TCPConnectionString": "Data Source=tcp:localhost;Database=Northwind;Integrated Security=true",
     "NPConnectionString": "Data Source=np:localhost;Database=Northwind;Integrated Security=true;",
-    "TCPConnectionStringWithAEV2HGSVBSSupport": "",
+    "TCPConnectionStringHGSVBS": "",
     "CertificateSignature": "",
-    "AADAccessToken": "",
     "AADPasswordConnectionString": "",
     "AzureKeyVaultURL": "",
     "AzureKeyVaultClientId": "",
