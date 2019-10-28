@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
-  <metadata minClientVersion="2.12">
+  <metadata minClientVersion="5.0">
     <id>Microsoft.Data.SqlClient</id>
     <version>1.0.0</version>
     <title>Microsoft.Data.SqlClient</title>
@@ -8,7 +8,7 @@
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <license type="expression">MIT</license>
     <projectUrl>https://aka.ms/sqlclientproject</projectUrl>
-    <iconUrl>https://go.microsoft.com/fwlink/?linkid=2090301</iconUrl>
+    <icon>dotnet.png</icon>
     <description>Provides the data provider for SQL Server. These classes provide access to versions of SQL Server and encapsulate database-specific protocols, including tabular data stream (TDS)
 
 Commonly Used Types:
@@ -28,7 +28,7 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
     <dependencies>
       <group targetFramework="net46">
         <dependency id="System.Data.Common" version="4.3.0" />
-        <dependency id="Microsoft.Data.SqlClient.sni" version="1.0.19235.1" />
+        <dependency id="Microsoft.Data.SqlClient.sni" version="1.1.0" />
         <dependency id="Microsoft.Identity.Client" version="3.0.8" />
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="5.5.0" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="5.5.0" />
@@ -60,8 +60,27 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
       <frameworkAssembly assemblyName="mscorlib" targetFramework="net46" />
       <frameworkAssembly assemblyName="System.Data" targetFramework="net46" />
     </frameworkAssemblies>
+    <references>
+      <group targetFramework="net46">
+          <reference file="Microsoft.Data.SqlClient.dll" />
+          <reference file="Microsoft.Data.SqlClient.pdb" />
+          <reference file="Microsoft.Data.SqlClient.xml" />
+      </group>
+      <group targetFramework="netcoreapp2.1">
+          <reference file="Microsoft.Data.SqlClient.dll" />
+          <reference file="Microsoft.Data.SqlClient.pdb" />
+          <reference file="Microsoft.Data.SqlClient.xml" />
+      </group>
+      <group targetFramework="netstandard2.0">
+          <reference file="Microsoft.Data.SqlClient.dll" />
+          <reference file="Microsoft.Data.SqlClient.pdb" />
+          <reference file="Microsoft.Data.SqlClient.xml" />
+      </group>
+    </references>
   </metadata>
   <files>
+    <file src="..\icons\dotnet.png" target="" />
+
     <!-- ref NetFx -->
     <file src="..\..\bin\Windows_NT\$Configuration$\Microsoft.Data.SqlClient\ref\net46\Microsoft.Data.SqlClient.dll" target="ref\net46\" exclude="" />
     <file src="..\..\bin\Windows_NT\$Configuration$\Microsoft.Data.SqlClient\ref\net46\Microsoft.Data.SqlClient.pdb" target="ref\net46\" exclude="" />

@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             "select * from sys.databases; print 'THIS IS THE END!'";
 
         private static readonly string _testConnString =
-            (new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr)
+            (new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
             {
                 PacketSize = 512,
                 MaxPoolSize = 1,

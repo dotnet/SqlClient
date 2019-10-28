@@ -64,7 +64,7 @@ catch (Exception ex) {
 ## Examples  
  The following example generates a <xref:Microsoft.Data.SqlClient.SqlException> and then displays the exception.  
   
- [!code-csharp[SqlException_Errors1 Example#1](~/sqlclient/doc/samples/SqlException_Errors1.cs#1)]
+ [!code-csharp[SqlException_Errors1 Example#1](~/../sqlclient/doc/samples/SqlException_Errors1.cs#1)]
   
  ]]></format>
             </remarks>
@@ -91,7 +91,7 @@ catch (Exception ex) {
 ## Examples  
  The following example displays each <xref:Microsoft.Data.SqlClient.SqlError> within the <xref:Microsoft.Data.SqlClient.SqlErrorCollection> collection.  
   
- [!code-csharp[SqlException_Errors2 Example#1](~/sqlclient/doc/samples/SqlException_Errors2.cs#1)]
+ [!code-csharp[SqlException_Errors2 Example#1](~/../sqlclient/doc/samples/SqlException_Errors2.cs#1)]
   
  ]]></format>
             </remarks>
@@ -130,7 +130,7 @@ catch (Exception ex) {
 ## Examples  
  The following example displays each <xref:Microsoft.Data.SqlClient.SqlError> within the <xref:Microsoft.Data.SqlClient.SqlErrorCollection> collection.  
   
- [!code-csharp[SqlError_ToString Example#1](~/sqlclient/doc/samples/SqlError_ToString.cs#1)]
+ [!code-csharp[SqlError_ToString Example#1](~/../sqlclient/doc/samples/SqlError_ToString.cs#1)]
   
  ]]></format>
             </remarks>
@@ -167,7 +167,7 @@ catch (Exception ex) {
 ## Examples  
  The following example displays each <xref:Microsoft.Data.SqlClient.SqlError> within the <xref:Microsoft.Data.SqlClient.SqlErrorCollection> collection.  
   
- [!code-csharp[SqlException_Errors2 Example#1](~/sqlclient/doc/samples/SqlException_Errors2.cs#1)]
+ [!code-csharp[SqlException_Errors2 Example#1](~/../sqlclient/doc/samples/SqlException_Errors2.cs#1)]
   
  ]]></format>
             </remarks>
@@ -197,7 +197,7 @@ catch (Exception ex) {
 ## Examples  
  The following example displays each <xref:Microsoft.Data.SqlClient.SqlError> within the <xref:Microsoft.Data.SqlClient.SqlErrorCollection> collection.  
   
- [!code-csharp[SqlException_Errors2 Example#1](~/sqlclient/doc/samples/SqlException_Errors2.cs#1)]
+ [!code-csharp[SqlException_Errors2 Example#1](~/../sqlclient/doc/samples/SqlException_Errors2.cs#1)]
   
  ]]></format>
             </remarks>
@@ -222,7 +222,7 @@ catch (Exception ex) {
 ## Examples  
  The following example displays each <xref:Microsoft.Data.SqlClient.SqlError> within the <xref:Microsoft.Data.SqlClient.SqlErrorCollection> collection.  
   
- [!code-csharp[SqlException_Errors2 Example#1](~/sqlclient/doc/samples/SqlException_Errors2.cs#1)]
+ [!code-csharp[SqlException_Errors2 Example#1](~/../sqlclient/doc/samples/SqlException_Errors2.cs#1)]
   
  ]]></format>
             </remarks>
@@ -247,7 +247,7 @@ catch (Exception ex) {
 ## Examples  
  The following example displays each <xref:Microsoft.Data.SqlClient.SqlError> within the <xref:Microsoft.Data.SqlClient.SqlErrorCollection> collection.  
   
- [!code-csharp[SqlException_Errors2 Example#1](~/sqlclient/doc/samples/SqlException_Errors2.cs#1)]
+ [!code-csharp[SqlException_Errors2 Example#1](~/../sqlclient/doc/samples/SqlException_Errors2.cs#1)]
   
  ]]></format>
             </remarks>
@@ -272,7 +272,7 @@ catch (Exception ex) {
 ## Examples  
  The following example displays each <xref:Microsoft.Data.SqlClient.SqlError> within the <xref:Microsoft.Data.SqlClient.SqlErrorCollection> collection.  
   
- [!code-csharp[SqlException_Errors2 Example#1](~/sqlclient/doc/samples/SqlException_Errors2.cs#1)]
+ [!code-csharp[SqlException_Errors2 Example#1](~/../sqlclient/doc/samples/SqlException_Errors2.cs#1)]
   
  ]]></format>
             </remarks>
@@ -297,7 +297,7 @@ catch (Exception ex) {
 ## Examples  
  The following example displays each <xref:Microsoft.Data.SqlClient.SqlError> within the <xref:Microsoft.Data.SqlClient.SqlErrorCollection> collection.  
   
- [!code-csharp[SqlException_Errors2 Example#1](~/sqlclient/doc/samples/SqlException_Errors2.cs#1)]
+ [!code-csharp[SqlException_Errors2 Example#1](~/../sqlclient/doc/samples/SqlException_Errors2.cs#1)]
   
  ]]></format>
             </remarks>

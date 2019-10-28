@@ -6,7 +6,7 @@ using System;
 using System.Diagnostics;
 using Xunit;
 
-namespace Microsoft.Data.SqlClient.Tests
+namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     [OuterLoop("Takes minutes on some networks")]
     public static class TcpDefaultForAzureTest
@@ -33,12 +33,12 @@ namespace Microsoft.Data.SqlClient.Tests
             builder.ConnectTimeout = 1;
         }
 
-        [Fact]
         [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // Cannot retrieve UseManagedSNI flag via reflection on UAP
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void NonAzureNoProtocolConnectionTest()
         {
             builder.DataSource = InvalidHostname;
-            CheckConnectionFailure(builder.ConnectionString, ManualTesting.Tests.DataTestUtility.IsUsingManagedSNI() ? TCP : NP);
+            CheckConnectionFailure(builder.ConnectionString, DataTestUtility.IsUsingManagedSNI() ? TCP : NP);
         }
 
         [Fact]

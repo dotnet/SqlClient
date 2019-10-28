@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
+
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
 {
     public abstract class ColumnMasterKey : DbObject
@@ -13,19 +15,39 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
         protected string KeyStoreProviderName { get; set; }
         public abstract string KeyPath { get; }
 
+        //public const byte[] Signature =Configuration()
+
+
         public override void Create(SqlConnection sqlConnection)
         {
-            string sql =
-                $@"CREATE COLUMN MASTER KEY [{Name}]
+            string sql = string.Empty;
+            var connStrings = sqlConnection.ConnectionString;
+            if (connStrings.Contains("HGS") ||connStrings.Contains("AAS"))
+            {
+                sql =
+               $@"CREATE COLUMN MASTER KEY [{Name}]
+                    WITH (
+                        KEY_STORE_PROVIDER_NAME = N'{KeyStoreProviderName}',
+                        KEY_PATH = N'{KeyPath}',
+                        ENCLAVE_COMPUTATIONS (SIGNATURE = {DataTestUtility.CertificateSignature})
+                    );";
+            }
+            else 
+            {
+                sql =
+                  $@"CREATE COLUMN MASTER KEY [{Name}]
                     WITH (
                         KEY_STORE_PROVIDER_NAME = N'{KeyStoreProviderName}',
                         KEY_PATH = N'{KeyPath}'
                     );";
-
+            }
             using (SqlCommand command = sqlConnection.CreateCommand())
             {
-                command.CommandText = sql;
-                command.ExecuteNonQuery();
+                if (!string.IsNullOrEmpty(sql))
+                {
+                    command.CommandText = sql;
+                    command.ExecuteNonQuery();
+                }
             }
         }
 

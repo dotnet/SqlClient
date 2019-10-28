@@ -22,7 +22,7 @@ primary key violations.
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, 
 it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.  
 
-[!code-csharp[SqlBulkCopy.KeepIdentity#1](~/sqlClient/doc/samples/SqlBulkCopy_KeepIdentity.cs)]
+[!code-csharp[SqlBulkCopy.KeepIdentity#1](~/../sqlclient/doc/samples/SqlBulkCopy_KeepIdentity.cs)]
 
 ]]></format>
             </remarks>
@@ -33,8 +33,7 @@ it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to c
 
 When specified, **AllowEncryptedValueModifications** enables bulk copying of encrypted data between tables or databases, without decrypting the data. Typically, 
 an application would select data from encrypted columns from one table without decrypting the data (the app would connect to the database with the column encryption setting keyword set 
-to disabled) and then would use this option to bulk insert the data, which is still encrypted. For more information, see 
-[Always Encrypted](~/sql/relational-databases/security/encryption/always-encrypted-database-engine).  
+to disabled) and then would use this option to bulk insert the data, which is still encrypted.
 
 Use caution when specifying **AllowEncryptedValueModifications** as this may lead to corrupting the database because the driver does not check if the data is indeed encrypted, 
 or if it is correctly encrypted using the same encryption type, algorithm and key as the target column.

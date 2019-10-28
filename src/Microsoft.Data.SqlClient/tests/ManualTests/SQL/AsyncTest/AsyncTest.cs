@@ -34,7 +34,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static async Task<double> RunReadAsync(string sql)
         {
             double maxElapsedTimeMillisecond = 0;
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 await connection.OpenAsync();
                 using (SqlCommand command = connection.CreateCommand())
@@ -70,7 +70,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static double RunReadSync(string sql)
         {
             double maxElapsedTimeMillisecond = 0;
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 connection.Open();
                 using (SqlCommand command = connection.CreateCommand())

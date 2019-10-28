@@ -820,7 +820,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     // if MARS is on, then a datareader associated with the command exists
                     // or if MARS is off, then a datareader exists
-                    throw ADP.OpenReaderExists(); // MDAC 66411
+                    throw ADP.OpenReaderExists(parser.MARSOn); // MDAC 66411
                 }
                 else if (!parser.MARSOn && parser._physicalStateObj._pendingData)
                 {
@@ -1302,7 +1302,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else if (internalTransaction.OpenResultsCount != 0)
                     {
-                        throw SQL.CannotCompleteDelegatedTransactionWithOpenResults(this);
+                        throw SQL.CannotCompleteDelegatedTransactionWithOpenResults(this, _parser.MARSOn);
                     }
                 }
 

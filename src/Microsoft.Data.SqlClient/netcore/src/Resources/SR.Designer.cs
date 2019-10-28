@@ -97,7 +97,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to An {0} with {1} &apos;{2}&apos; is not contained by this {3}..
+        ///   Looks up a localized string similar to A {0} with {1} &apos;{2}&apos; is not contained by this {3}..
         /// </summary>
         internal static string ADP_CollectionIndexString {
             get {
@@ -646,7 +646,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to There is already an open DataReader associated with this Command which must be closed first..
+        ///   Looks up a localized string similar to There is already an open DataReader associated with this {0} which must be closed first..
         /// </summary>
         internal static string ADP_OpenReaderExists {
             get {
@@ -2275,7 +2275,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to String or binary data would be truncated..
+        ///   Looks up a localized string similar to String or binary data would be truncated in table &apos;{0}&apos;, column &apos;{1}&apos;. Truncated value: &apos;{2}&apos;..
         /// </summary>
         internal static string SQL_BulkLoadStringTooLong {
             get {

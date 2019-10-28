@@ -1669,11 +1669,22 @@ namespace Microsoft.Data.SqlClient
                         mt = MetaType.GetMetaTypeFromSqlDbType(type.SqlDbType, false);
                         value = SqlParameter.CoerceValue(value, mt, out coercedToDataFeed, out typeChanged, false);
                         if (!coercedToDataFeed)
-                        { // We do not need to test for TextDataFeed as it is only assigned to (N)VARCHAR(MAX)
-                            int len = ((isSqlType) && (!typeChanged)) ? ((SqlString)value).Value.Length : ((string)value).Length;
-                            if (len > length / 2)
+                        {   // We do not need to test for TextDataFeed as it is only assigned to (N)VARCHAR(MAX)
+                            string str = ((isSqlType) && (!typeChanged)) ? ((SqlString)value).Value : ((string)value);
+                            int maxStringLength = length / 2;
+                            if (str.Length > maxStringLength)
                             {
-                                throw SQL.BulkLoadStringTooLong();
+                                if (metadata.isEncrypted)
+                                {
+                                    str = "<encrypted>";
+                                }
+                                else
+                                {
+                                    // We truncate to at most 100 characters to match SQL Servers behavior as described in
+                                    // https://blogs.msdn.microsoft.com/sql_server_team/string-or-binary-data-would-be-truncated-replacing-the-infamous-error-8152/
+                                    str = str.Remove(Math.Min(maxStringLength, 100));
+                                }
+                                throw SQL.BulkLoadStringTooLong(_destinationTableName, metadata.column, str);
                             }
                         }
                         break;

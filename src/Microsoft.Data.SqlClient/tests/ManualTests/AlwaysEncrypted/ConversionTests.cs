@@ -63,7 +63,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                                                           certStoreProvider);
             databaseObjects.Add(columnEncryptionKey);
 
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 sqlConnection.Open();
                 databaseObjects.ForEach(o => o.Create(sqlConnection));
@@ -125,8 +125,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             CompareTables(encryptedTableName, unencryptedTableName);
 
             // Now send a query with a predicate using the larger type and confirm that the row that was inserted with the smaller type can still be found.
-            using (SqlConnection sqlConnectionEncrypted = new SqlConnection(DataTestUtility.TcpConnStr))
-            using (SqlConnection sqlConnectionUnencrypted = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection sqlConnectionEncrypted = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnectionUnencrypted = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 sqlConnectionEncrypted.Open();
                 sqlConnectionUnencrypted.Open();
@@ -247,8 +247,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             CompareTables(targetTableName, witnessTableName);
 
             // Now send a query with a predicate using the larger type and confirm that the row that was inserted with the smaller type can still be found.
-            using (SqlConnection sqlConnectionEncrypted = new SqlConnection(DataTestUtility.TcpConnStr))
-            using (SqlConnection sqlConnectionUnencrypted = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection sqlConnectionEncrypted = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnectionUnencrypted = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 sqlConnectionEncrypted.Open();
                 sqlConnectionUnencrypted.Open();
@@ -356,8 +356,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             List<ValueErrorTuple> valueList = GenerateOutOfRangeValuesForType(currentDbType, currentColumnInfo.ColumnSize, currentColumnInfo.Precision, currentColumnInfo.Scale);
             Assert.True(valueList.Count != 0, "Test bug, the list is empty!");
 
-            using (SqlConnection sqlConnectionEncrypted = new SqlConnection(DataTestUtility.TcpConnStr))
-            using (SqlConnection sqlConnectionUnencrypted = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection sqlConnectionEncrypted = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnectionUnencrypted = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 sqlConnectionEncrypted.Open();
                 sqlConnectionUnencrypted.Open();
@@ -811,7 +811,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             object[] valueArray = new object[NumberOfRows];
 
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 sqlConnection.Open();
 
@@ -860,7 +860,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             object[] valueArray = new object[NumberOfRows];
 
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 sqlConnection.Open();
 
@@ -895,7 +895,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         /// <param name="targetConnectionFlag"></param>
         private void portDataToTablePairViaBulkCopy(string sourceName, SqlConnectionColumnEncryptionSetting sourceConnectionFlag, string targetName, SqlConnectionColumnEncryptionSetting targetConnectionFlag)
         {
-            SqlConnectionStringBuilder strbld = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr);
+            SqlConnectionStringBuilder strbld = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
             strbld.ColumnEncryptionSetting = sourceConnectionFlag;
 
             using (SqlConnection sourceConnection = new SqlConnection(strbld.ToString()))
@@ -939,7 +939,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             object[] valueArray = new object[NumberOfRows];
             int index = 0;
 
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 sqlConnection.Open();
 
@@ -970,8 +970,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         /// <param name="unencryptedTableName"></param>
         private void CompareTables(string encryptedTableName, string unencryptedTableName)
         {
-            using (SqlConnection sqlConnectionEncrypted = new SqlConnection(DataTestUtility.TcpConnStr))
-            using (SqlConnection sqlConnectionUnencrypted = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection sqlConnectionEncrypted = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnectionUnencrypted = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 sqlConnectionEncrypted.Open();
                 sqlConnectionUnencrypted.Open();
@@ -1363,7 +1363,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                       )";
             }
 
-            using (SqlConnection sqlConn = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection sqlConn = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 sqlConn.Open();
 
@@ -1415,7 +1415,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public void Dispose()
         {
             databaseObjects.Reverse();
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 sqlConnection.Open();
                 databaseObjects.ForEach(o => o.Drop(sqlConnection));

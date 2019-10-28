@@ -53,7 +53,7 @@ using (SqlConnection connection = new SqlConnection(connectionString))
 ## Examples  
  The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and a <xref:Microsoft.Data.SqlClient.SqlConnection>. The <xref:Microsoft.Data.SqlClient.SqlConnection> is opened and set as the <xref:Microsoft.Data.SqlClient.SqlCommand.Connection%2A> for the <xref:Microsoft.Data.SqlClient.SqlCommand>. The example then calls <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteNonQuery%2A>. To accomplish this, the <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteNonQuery%2A> is passed a connection string and a query string that is a Transact-SQL INSERT statement. The connection is closed automatically when the code exits the using block.  
   
- [!code-csharp[SqlCommand_ExecuteNonQuery Example#1](~/sqlclient/doc/samples/SqlCommand_ExecuteNonQuery.cs#1)]
+ [!code-csharp[SqlCommand_ExecuteNonQuery Example#1](~/../sqlclient/doc/samples/SqlCommand_ExecuteNonQuery.cs#1)]
   
  ]]></format>
             </remarks>
@@ -83,7 +83,7 @@ using (SqlConnection connection = new SqlConnection(connectionString))
 ## Examples  
  The following example creates and opens a <xref:Microsoft.Data.SqlClient.SqlConnection>.  
   
- [!code-csharp[SqlConnection_SqlConnection Example#1](~/sqlclient/doc/samples/SqlConnection_SqlConnection.cs#1)]
+ [!code-csharp[SqlConnection_SqlConnection Example#1](~/../sqlclient/doc/samples/SqlConnection_SqlConnection.cs#1)]
   
  ]]></format>
             </remarks>
@@ -111,7 +111,7 @@ using (SqlConnection connection = new SqlConnection(connectionString))
 ## Examples  
  The following example creates and opens a <xref:Microsoft.Data.SqlClient.SqlConnection>.  
   
- [!code-csharp[SqlConnection_SqlConnection1 Example#1](~/sqlclient/doc/samples/SqlConnection_SqlConnection1.cs#1)]
+ [!code-csharp[SqlConnection_SqlConnection1 Example#1](~/../sqlclient/doc/samples/SqlConnection_SqlConnection1.cs#1)]
   
  ]]></format>
             </remarks>
@@ -163,7 +163,7 @@ using (SqlConnection connection = new SqlConnection(connectionString))
 ## Examples  
  The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> and a <xref:Microsoft.Data.SqlClient.SqlTransaction>. It also demonstrates how to use the <xref:Microsoft.Data.SqlClient.SqlConnection.BeginTransaction%2A>, a <xref:Microsoft.Data.SqlClient.SqlTransaction.Commit%2A>, and <xref:Microsoft.Data.SqlClient.SqlTransaction.Rollback%2A> methods.  
   
- [!code-csharp[SqlConnection_BeginTransaction Example#1](~/sqlclient/doc/samples/SqlConnection_BeginTransaction.cs#1)]
+ [!code-csharp[SqlConnection_BeginTransaction Example#1](~/../sqlclient/doc/samples/SqlConnection_BeginTransaction.cs#1)]
   
  ]]></format>
             </remarks>
@@ -195,7 +195,7 @@ using (SqlConnection connection = new SqlConnection(connectionString))
 ## Examples  
  The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> and a <xref:Microsoft.Data.SqlClient.SqlTransaction>. It also demonstrates how to use the <xref:Microsoft.Data.SqlClient.SqlConnection.BeginTransaction%2A>, a <xref:Microsoft.Data.SqlClient.SqlTransaction.Commit%2A>, and <xref:Microsoft.Data.SqlClient.SqlTransaction.Rollback%2A> methods.  
   
- [!code-csharp[SqlConnection_BeginTransaction1 Example#1](~/sqlclient/doc/samples/SqlConnection_BeginTransaction1.cs#1)]
+ [!code-csharp[SqlConnection_BeginTransaction1 Example#1](~/../sqlclient/doc/samples/SqlConnection_BeginTransaction1.cs#1)]
   
  ]]></format>
             </remarks>
@@ -228,7 +228,7 @@ using (SqlConnection connection = new SqlConnection(connectionString))
 ## Examples  
  The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> and a <xref:Microsoft.Data.SqlClient.SqlTransaction>. It also demonstrates how to use the <xref:Microsoft.Data.SqlClient.SqlConnection.BeginTransaction%2A>, a <xref:Microsoft.Data.SqlClient.SqlTransaction.Commit%2A>, and <xref:Microsoft.Data.SqlClient.SqlTransaction.Rollback%2A> methods.  
   
- [!code-csharp[SqlConnection_BeginTransaction2 Example#1](~/sqlclient/doc/samples/SqlConnection_BeginTransaction2.cs#1)]
+ [!code-csharp[SqlConnection_BeginTransaction2 Example#1](~/../sqlclient/doc/samples/SqlConnection_BeginTransaction2.cs#1)]
   
  ]]></format>
             </remarks>
@@ -263,7 +263,7 @@ using (SqlConnection connection = new SqlConnection(connectionString))
 ## Examples  
  The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> and a <xref:Microsoft.Data.SqlClient.SqlTransaction>. It also demonstrates how to use the <xref:Microsoft.Data.SqlClient.SqlConnection.BeginTransaction%2A>, a <xref:Microsoft.Data.SqlClient.SqlTransaction.Commit%2A>, and <xref:Microsoft.Data.SqlClient.SqlTransaction.Rollback%2A> methods.  
   
- [!code-csharp[SqlConnection_BeginTransaction3 Example#1](~/sqlclient/doc/samples/SqlConnection_BeginTransaction3.cs#1)]
+ [!code-csharp[SqlConnection_BeginTransaction3 Example#1](~/../sqlclient/doc/samples/SqlConnection_BeginTransaction3.cs#1)]
   
  ]]></format>
             </remarks>
@@ -284,7 +284,7 @@ using (SqlConnection connection = new SqlConnection(connectionString))
 ## Examples  
  The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> and displays some of its read-only properties.  
   
- [!code-csharp[SqlConnection_Database Example#1](~/sqlclient/doc/samples/SqlConnection_Database.cs#1)]
+ [!code-csharp[SqlConnection_Database Example#1](~/../sqlclient/doc/samples/SqlConnection_Database.cs#1)]
   
  ]]></format>
             </remarks>
@@ -340,7 +340,7 @@ End Module
   
  The following console application demonstrates the issues involved in changing a user's password because the current password has expired.  
   
- [!code-csharp[SqlConnection_ConnectionString1#1](~/sqlclient/doc/samples/SqlConnection_ConnectionString1.cs#1)]
+ [!code-csharp[SqlConnection_ConnectionString1#1](~/../sqlclient/doc/samples/SqlConnection_ConnectionString1.cs#1)]
   
  ]]></format>
             </remarks>
@@ -440,7 +440,7 @@ The connection string contains <see langword="Context Connection=true" />.
 ## Examples  
  The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection>, opens it, displays some of its properties. The connection is automatically closed at the end of the `using` block.  
   
- [!code-csharp[SqlConnection_Open Example#1](~/sqlclient/doc/samples/SqlConnection_Open.cs#1)]
+ [!code-csharp[SqlConnection_Open Example#1](~/../sqlclient/doc/samples/SqlConnection_Open.cs#1)]
   
  ]]></format>
             </remarks>
@@ -571,7 +571,7 @@ The connection string contains <see langword="Context Connection=true" />.
 ## Examples  
  The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> and sets the <xref:Microsoft.Data.SqlClient.SqlConnection.ConnectionString%2A> property before opening the connection.  
   
- [!code-csharp[SqlConnection_ConnectionString Example#1](~/sqlclient/doc/samples/SqlConnection_ConnectionString.cs#1)]
+ [!code-csharp[SqlConnection_ConnectionString Example#1](~/../sqlclient/doc/samples/SqlConnection_ConnectionString.cs#1)]
   
  ]]></format>
             </remarks>
@@ -591,7 +591,7 @@ The connection string contains <see langword="Context Connection=true" />.
 ## Examples  
  The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> and sets the `Connection Timeout` to 30 seconds in the connection string. The code opens the connection and displays the <xref:Microsoft.Data.SqlClient.SqlConnection.ConnectionTimeout%2A> property in the console window.  
   
- [!code-csharp[SqlConnection_ConnectionTimeout Example#1](~/sqlclient/doc/samples/SqlConnection_ConnectionTimeout.cs#1)]
+ [!code-csharp[SqlConnection_ConnectionTimeout Example#1](~/../sqlclient/doc/samples/SqlConnection_ConnectionTimeout.cs#1)]
   
  ]]></format>
             </remarks>
@@ -604,7 +604,7 @@ The connection string contains <see langword="Context Connection=true" />.
             <format type="text/markdown"><![CDATA[  
   
 ## Examples  
- [!code-csharp[SqlConnection_CreateCommand#1](~/sqlclient/doc/samples/SqlConnection_CreateCommand.cs#1)]
+ [!code-csharp[SqlConnection_CreateCommand#1](~/../sqlclient/doc/samples/SqlConnection_CreateCommand.cs#1)]
   
  ]]></format>
             </remarks>
@@ -659,7 +659,7 @@ The connection string contains <see langword="Context Connection=true" />.
 ## Examples  
  The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> and displays some of its read-only properties.  
   
- [!code-csharp[SqlConnection_Database Example#1](~/sqlclient/doc/samples/SqlConnection_Database.cs#1)]
+ [!code-csharp[SqlConnection_Database Example#1](~/../sqlclient/doc/samples/SqlConnection_Database.cs#1)]
   
  ]]></format>
             </remarks>
@@ -680,7 +680,7 @@ The connection string contains <see langword="Context Connection=true" />.
 ## Examples  
  The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> and displays some of its read-only properties.  
   
- [!code-csharp[SqlConnection_DataSource Example#1](~/sqlclient/doc/samples/SqlConnection_DataSource.cs#1)]
+ [!code-csharp[SqlConnection_DataSource Example#1](~/../sqlclient/doc/samples/SqlConnection_DataSource.cs#1)]
   
  ]]></format>
             </remarks>
@@ -841,7 +841,7 @@ GO
   
  [How to Get Schema Information from Database](https://code.msdn.microsoft.com/How-to-Get-Schema-b66d62e2) has C# and Visual Basic versions of this code sample in a Visual Studio project.  
   
- [!code-csharp[SqlConnection.GetSchema#1](~/sqlclient/doc/samples/SqlConnection_GetSchema.cs#1)]
+ [!code-csharp[SqlConnection.GetSchema#1](~/../sqlclient/doc/samples/SqlConnection_GetSchema.cs#1)]
 
   
  ]]></format>
@@ -912,7 +912,7 @@ GO
 ## Examples  
  The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection>, opens it, and displays some of its properties. The connection is automatically closed at the end of the `using` block.  
   
- [!code-csharp[SqlConnection_Open Example#1](~/sqlclient/doc/samples/SqlConnection_Open.cs#1)]
+ [!code-csharp[SqlConnection_Open Example#1](~/../sqlclient/doc/samples/SqlConnection_Open.cs#1)]
   
  ]]></format>
             </remarks>
@@ -967,7 +967,7 @@ GO
 ## Examples  
  The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection>, including setting the `Packet Size` to 512 in the connection string. It displays the <xref:Microsoft.Data.SqlClient.SqlConnection.PacketSize%2A> and <xref:Microsoft.Data.SqlClient.SqlConnection.ServerVersion%2A> properties in the console window.  
   
- [!code-csharp[SqlConnection_PacketSize Example#1](~/sqlclient/doc/samples/SqlConnection_PacketSize.cs#1)]
+ [!code-csharp[SqlConnection_PacketSize Example#1](~/../sqlclient/doc/samples/SqlConnection_PacketSize.cs#1)]
   
  ]]></format>
             </remarks>
@@ -1026,7 +1026,7 @@ GO
 ## Examples  
  The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> and displays the <xref:Microsoft.Data.SqlClient.SqlConnection.ServerVersion%2A> property.  
   
- [!code-csharp[SqlConnection_ServerVersion Example#1](~/sqlclient/doc/samples/SqlConnection_ServerVersion.cs#1)]
+ [!code-csharp[SqlConnection_ServerVersion Example#1](~/../sqlclient/doc/samples/SqlConnection_ServerVersion.cs#1)]
   
  ]]></format>
             </remarks>
@@ -1115,7 +1115,7 @@ Once the transaction has completed, you must explicitly commit or roll back the 
 ## Examples  
  The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> and displays the <xref:Microsoft.Data.SqlClient.SqlConnection.WorkstationId%2A> property.  
   
- [!code-csharp[SqlConnection_WorkstationId Example#1](~/sqlclient/doc/samples/SqlConnection_WorkstationId.cs#1)]
+ [!code-csharp[SqlConnection_WorkstationId Example#1](~/../sqlclient/doc/samples/SqlConnection_WorkstationId.cs#1)]
   
  ]]></format>
             </remarks>
