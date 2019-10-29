@@ -459,4 +459,43 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
+    public class ConnectionStringProviderWithCommandBehavior : IEnumerable<object[]>
+    {
+        public IEnumerator<object[]> GetEnumerator()
+        {
+            yield return new object[] { DataTestUtility.TCPConnectionString, CommandBehavior.SingleResult };
+            yield return new object[] { DataTestUtility.TCPConnectionString, CommandBehavior.SingleRow };
+            yield return new object[] { DataTestUtility.TCPConnectionString, CommandBehavior.CloseConnection };
+            yield return new object[] { DataTestUtility.TCPConnectionString, CommandBehavior.SequentialAccess };
+            yield return new object[] { DataTestUtility.TCPConnectionStringHGSVBS, CommandBehavior.SingleResult };
+            yield return new object[] { DataTestUtility.TCPConnectionStringHGSVBS, CommandBehavior.SingleRow };
+            yield return new object[] { DataTestUtility.TCPConnectionStringHGSVBS, CommandBehavior.CloseConnection };
+            yield return new object[] { DataTestUtility.TCPConnectionStringHGSVBS, CommandBehavior.SequentialAccess };
+        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+    }
+
+    public class ConnectionStringProviderWithSchemaType : IEnumerable<object[]>
+    {
+        public IEnumerator<object[]> GetEnumerator()
+        {
+            yield return new object[] { DataTestUtility.TCPConnectionString, SchemaType.Source };
+            yield return new object[] { DataTestUtility.TCPConnectionString, SchemaType.Mapped };
+            yield return new object[] { DataTestUtility.TCPConnectionStringHGSVBS, SchemaType.Source };
+            yield return new object[] { DataTestUtility.TCPConnectionStringHGSVBS, SchemaType.Mapped };
+        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+    }
+
+    public class ConnectionStringProviderWithIntegers : IEnumerable<object[]>
+    {
+        public IEnumerator<object[]> GetEnumerator()
+        {
+            yield return new object[] { DataTestUtility.TCPConnectionString, 1 };
+            yield return new object[] { DataTestUtility.TCPConnectionString, 100};
+            yield return new object[] { DataTestUtility.TCPConnectionStringHGSVBS, 1 };
+            yield return new object[] { DataTestUtility.TCPConnectionStringHGSVBS, 100 };
+        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+    }
 }

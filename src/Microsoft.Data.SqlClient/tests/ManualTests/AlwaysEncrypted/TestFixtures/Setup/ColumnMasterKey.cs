@@ -28,12 +28,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
             var connStrings = sqlConnection.ConnectionString;
             if (connStrings.Contains("HGS") || connStrings.Contains("AAS"))
             {
+
+                SqlColumnEncryptionCertificateStoreProvider sqlColumnCertStoreProvider = new SqlColumnEncryptionCertificateStoreProvider();
+                byte[] cmkSign = sqlColumnCertStoreProvider.SignColumnMasterKeyMetadata(KeyPath, true);
+                string cmkSignStr = string.Concat("0x", BitConverter.ToString(cmkSign).Replace("-", string.Empty));
+
                 sql =
-               $@"CREATE COLUMN MASTER KEY [{Name}]
-                    WITH (
+                    $@"CREATE COLUMN MASTER KEY [{Name}]
+                     WITH (
                         KEY_STORE_PROVIDER_NAME = N'{KeyStoreProviderName}',
                         KEY_PATH = N'{KeyPath}',
-                        ENCLAVE_COMPUTATIONS (SIGNATURE ={DataTestUtility.CertificateSignature})
+                        ENCLAVE_COMPUTATIONS (SIGNATURE = {cmkSignStr})
                     );";
             }
             else

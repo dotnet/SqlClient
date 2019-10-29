@@ -68,7 +68,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             using (SqlConnection sqlConnection = new SqlConnection(string.Concat(defaultConnectionString, @";Column Encryption Setting = Enabled;")))
             {
                 sqlConnection.Open();
-                
+
                 // Test INPUT parameter on an encrypted parameter
                 using (SqlCommand sqlCommand = new SqlCommand(
                        $@"SELECT CustomerId, FirstName, LastName 
@@ -94,7 +94,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public void TestTrustedColumnEncryptionMasterKeyPathsWithOneServer()
         {
             SqlConnectionStringBuilder connBuilder = new SqlConnectionStringBuilder(defaultConnectionString);
-            
+
             // 2.. Test with valid key path
             //
             // Clear existing dictionary.
@@ -111,7 +111,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             using (SqlConnection sqlConnection = new SqlConnection(string.Concat(defaultConnectionString, @";Column Encryption Setting = Enabled;")))
             {
                 sqlConnection.Open();
-                
+
                 // Test INPUT parameter on an encrypted parameter
                 using (SqlCommand sqlCommand = new SqlCommand(
                        $@"SELECT CustomerId, FirstName, LastName 
@@ -137,7 +137,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public void TestTrustedColumnEncryptionMasterKeyPathsWithMultipleServers()
         {
             SqlConnectionStringBuilder connBuilder = new SqlConnectionStringBuilder(defaultConnectionString);
-            
+
             // 3. Test with multiple servers with multiple key paths
             //
             // Clear existing dictionary.
@@ -171,7 +171,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             using (SqlConnection sqlConnection = new SqlConnection(string.Concat(defaultConnectionString, @";Column Encryption Setting = Enabled;")))
             {
                 sqlConnection.Open();
-                
+
                 // Test INPUT parameter on an encrypted parameter
                 using (SqlCommand sqlCommand = new SqlCommand(
                        $@"SELECT CustomerId, FirstName, LastName 
