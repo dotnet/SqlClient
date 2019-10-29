@@ -19,9 +19,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
         protected string KeyStoreProviderName { get; set; }
         public abstract string KeyPath { get; }
 
-        //public const byte[] Signature =Configuration()
-
-
         public override void Create(SqlConnection sqlConnection)
         {
             string sql;
