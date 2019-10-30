@@ -400,7 +400,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             IList<object> values = GetValues(dataHint: 71);
 
-            InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection);
+            InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
 
             var encryptionEnabledConnectionString = new SqlConnectionStringBuilder(connection)
             {
@@ -466,7 +466,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             int numberOfRows = 42;
 
             // Insert a bunch of rows in to the table.
-            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection);
+            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
 
             using (SqlConnection sqlConnection = new SqlConnection(connection))
             {
@@ -515,7 +515,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 int numberOfRows = 10 + i;
 
                 // Insert a bunch of rows in to the table.
-                int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection);
+                int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
 
                 Assert.Equal(numberOfRows, rowsAffected);
                 rowsAffected = -1;
@@ -567,7 +567,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 int numberOfRows = 10 + i;
 
                 // Insert a bunch of rows in to the table.
-                int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection);
+                int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
 
                 using (SqlConnection sqlConnection = new SqlConnection(connection))
                 {
@@ -663,7 +663,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 IList<object> values = GetValues(dataHint: 45 + i + 1);
                 int numberOfRows = 10 + i;
                 // Insert a bunch of rows in to the table.
-                int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection);
+                int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
                 Assert.True(numberOfRows == rowsAffected, "Two values failed");
 
                 using (SqlConnection sqlConnection = new SqlConnection(connection))
@@ -726,7 +726,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 Assert.False(values == null || values.Count < 3, @"values should not be null and count should be >= 3.");
                 int numberOfRows = 10 + i;
                 // Insert a bunch of rows in to the table.
-                int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection);
+                int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
                 Assert.Equal(rowsAffected, numberOfRows);
 
                 using (SqlConnection sqlConnection = new SqlConnection(connection))
@@ -844,7 +844,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             int numberOfRows = 10;
 
             // Insert a bunch of rows in to the table.
-            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection);
+            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
 
             Assert.True(rowsAffected == numberOfRows, "number of rows affected is unexpected.");
 
@@ -891,7 +891,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             int numberOfRows = 10;
 
             // Insert a bunch of rows in to the table.
-            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection);
+            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
 
             using (SqlConnection sqlconnection = new SqlConnection(connection))
             {
@@ -947,7 +947,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             int numberOfRows = 10;
 
             // Insert a bunch of rows in to the table.
-            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection);
+            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
 
             Assert.True(rowsAffected == numberOfRows, "number of rows affected is unexpected.");
 
@@ -1014,7 +1014,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             int numberOfRows = 10;
 
             // Insert a bunch of rows in to the table.
-            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection);
+            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
 
             Assert.True(rowsAffected == numberOfRows, "number of rows affected is unexpected.");
 
@@ -1134,7 +1134,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.True(values != null && values.Count >= 3, @"values should not be null and count should be >= 3.");
 
             // Insert a bunch of rows in to the table.
-            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection);
+            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
 
             Assert.True(rowsAffected == numberOfRows, "number of rows affected is unexpected.");
 
@@ -1332,7 +1332,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             int numberOfRows = 10;
 
             // Insert a bunch of rows in to the table.
-            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection);
+            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
 
             Assert.Equal(rowsAffected, numberOfRows);
 
@@ -1757,7 +1757,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             int numberOfRows = 100;
 
             //Insert a bunch of rows in to the table.
-            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection);
+            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
 
             Assert.True(rowsAffected == numberOfRows, "number of rows affected is unexpected.");
 
