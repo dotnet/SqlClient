@@ -5,6 +5,7 @@
 using System;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
+using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
@@ -17,8 +18,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     public class CspProviderExt
     {
         // [Fact(Skip="Run this in non-parallel mode")] or [ConditionalFact()]
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public void TestKeysFromCertificatesCreatedWithMultipleCryptoProviders()
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public void TestKeysFromCertificatesCreatedWithMultipleCryptoProviders(string connectionString)
         {
             const string providersRegistryKeyPath = @"SOFTWARE\Microsoft\Cryptography\Defaults\Provider";
             Microsoft.Win32.RegistryKey defaultCryptoProvidersRegistryKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(providersRegistryKeyPath);
@@ -68,9 +70,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     sqlSetupStrategyCsp = new SQLSetupStrategyCspExt(cspPath);
                     string tableName = sqlSetupStrategyCsp.CspProviderTable.Name;
 
-                    using (SqlConnection sqlConn = new SqlConnection(DataTestUtility.TCPConnectionString))
+                    using (SqlConnection sqlConn = new SqlConnection(connectionString))
                     {
                         sqlConn.Open();
+
+                        Table.DeleteData(tableName, sqlConn);
 
                         // insert 1 row data
                         Customer customer = new Customer(45, "Microsoft", "Corporation");
@@ -141,8 +145,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public void TestEncryptDecryptWithCSP()
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public void TestEncryptDecryptWithCSP(string connectionString)
         {
             string providerName = @"Microsoft Enhanced RSA and AES Cryptographic Provider";
             string keyIdentifier = "BasicCMK";
@@ -157,9 +162,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                 try
                 {
-                    using (SqlConnection sqlConn = new SqlConnection(DataTestUtility.TCPConnectionString))
+                    using (SqlConnection sqlConn = new SqlConnection(connectionString))
                     {
                         sqlConn.Open();
+
+                        Table.DeleteData(tableName, sqlConn);
 
                         // insert 1 row data
                         Customer customer = new Customer(45, "Microsoft", "Corporation");

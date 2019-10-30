@@ -26,8 +26,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             tableName = fixture.BulkCopyAETestTable.Name;
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [ClassData(typeof(ConnectionStringProvider))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(AEConnectionStringProvider))]
         public void TestBulkCopyString(string connectionString)
         {
             var dataTable = new DataTable();
@@ -53,6 +53,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             })
             {
                 connection.Open();
+                Table.DeleteData(tableName, connection);
+
                 bulkCopy.WriteToServer(dataTable);
 
                 string queryString = "SELECT * FROM [" + tableName + "];";
@@ -65,7 +67,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         public void Dispose()
         {
-            foreach (var connection in DataTestUtility.connStrings.Values)
+            foreach (string connection in DataTestUtility.AEConnStringsSetup)
             {
                 using (SqlConnection sqlConnection = new SqlConnection(connection))
                 {

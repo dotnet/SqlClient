@@ -22,14 +22,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string NPConnectionString = null;
         public static readonly string TCPConnectionString = null;
         public static readonly string TCPConnectionStringHGSVBS = null;
+        public static readonly string TCPConnectionStringAASVBS = null;
+        public static readonly string TCPConnectionStringAASSGX = null;
         public static readonly string AADAccessToken = null;
         public static readonly string AADPasswordConnectionString = null;
         public static readonly string AKVBaseUrl = null;
         public static readonly string AKVUrl = null;
         public static readonly string AKVClientId = null;
         public static readonly string AKVClientSecret = null;
-        public static Dictionary<string, string> connStrings = new Dictionary<string, string>();
-        public static string CertificateSignature;
+        public static List<string> AEConnStrings = new List<string>();
+        public static List<string> AEConnStringsSetup = new List<string>();
+        public static readonly bool EnclaveEnabled = false;
         public static readonly bool SupportsIntegratedSecurity = false;
         public static readonly bool SupportsLocalDb = false;
         public static readonly bool SupportsFileStream = false;
@@ -53,12 +56,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             public string TCPConnectionString = null;
             public string NPConnectionString = null;
             public string TCPConnectionStringHGSVBS = null;
-            public string CertificateSignature = null;
+            public string TCPConnectionStringAASVBS = null;
+            public string TCPConnectionStringAASSGX = null;
             public string AADAccessToken = null;
             public string AADPasswordConnectionString = null;
             public string AzureKeyVaultURL = null;
             public string AzureKeyVaultClientId = null;
             public string AzureKeyVaultClientSecret = null;
+            public bool EnclaveEnabled = false;
             public bool SupportsIntegratedSecurity = false;
             public bool SupportsLocalDb = false;
             public bool SupportsFileStream = false;
@@ -74,12 +79,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 NPConnectionString = c.NPConnectionString;
                 TCPConnectionString = c.TCPConnectionString;
                 TCPConnectionStringHGSVBS = c.TCPConnectionStringHGSVBS;
-                CertificateSignature = c.CertificateSignature;
+                TCPConnectionStringAASVBS = c.TCPConnectionStringAASVBS;
+                TCPConnectionStringAASSGX = c.TCPConnectionStringAASSGX;
                 AADAccessToken = c.AADAccessToken;
                 AADPasswordConnectionString = c.AADPasswordConnectionString;
                 SupportsLocalDb = c.SupportsLocalDb;
                 SupportsIntegratedSecurity = c.SupportsIntegratedSecurity;
                 SupportsFileStream = c.SupportsFileStream;
+                EnclaveEnabled = c.EnclaveEnabled;
 
                 string url = c.AzureKeyVaultURL;
                 Uri AKVBaseUri = null;
@@ -93,10 +100,33 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 AKVClientId = c.AzureKeyVaultClientId;
                 AKVClientSecret = c.AzureKeyVaultClientSecret;
             }
-            if (!string.IsNullOrEmpty(TCPConnectionString))
+
+            if (EnclaveEnabled)
             {
-                connStrings.Add("TCPConnectionString", TCPConnectionString);
-                connStrings.Add("TCPConnectionStringWithAEV2HGSVBSSupport", TCPConnectionStringHGSVBS);
+                if (!string.IsNullOrEmpty(TCPConnectionStringHGSVBS))
+                {
+                    AEConnStrings.Add(TCPConnectionStringHGSVBS);
+                    AEConnStringsSetup.Add(TCPConnectionStringHGSVBS);
+                }
+
+                if (!string.IsNullOrEmpty(TCPConnectionStringAASVBS))
+                {
+                    AEConnStrings.Add(TCPConnectionStringAASVBS);
+                }
+
+                if (!string.IsNullOrEmpty(TCPConnectionStringAASSGX))
+                {
+                    AEConnStrings.Add(TCPConnectionStringAASSGX);
+                    AEConnStringsSetup.Add(TCPConnectionStringAASSGX);
+                }
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(TCPConnectionString))
+                {
+                    AEConnStrings.Add(TCPConnectionString);
+                    AEConnStringsSetup.Add(TCPConnectionString);
+                }
             }
         }
 
@@ -124,7 +154,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool AreConnStringsSetup()
         {
-            return connStrings.TryGetValue("TCPConnectionString", out _);
+            return !string.IsNullOrEmpty(NPConnectionString) && !string.IsNullOrEmpty(TCPConnectionString);
+        }
+
+        public static bool AreConnStringSetupForAE()
+        {
+            return AEConnStrings.Count > 0;
         }
 
         public static bool IsAADPasswordConnStrSetup()
@@ -435,67 +470,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return result;
         }
 
-       
-    }
-    public class ConnectionStringProviderWithBooleanVariable : IEnumerable<object[]>
-    {
-        public IEnumerator<object[]> GetEnumerator()
-        {
-            yield return new object[] { DataTestUtility.TCPConnectionString, true };
-            yield return new object[] { DataTestUtility.TCPConnectionString, false };
-            yield return new object[] { DataTestUtility.TCPConnectionStringHGSVBS, true };
-            yield return new object[] { DataTestUtility.TCPConnectionStringHGSVBS, false };
-        }
-
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-    }
-    public class ConnectionStringProvider : IEnumerable<object[]>
-    {
-        public IEnumerator<object[]> GetEnumerator()
-        {
-            yield return new object[] { DataTestUtility.TCPConnectionString };
-            yield return new object[] { DataTestUtility.TCPConnectionStringHGSVBS };
-
-        }
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-    }
-    public class ConnectionStringProviderWithCommandBehavior : IEnumerable<object[]>
-    {
-        public IEnumerator<object[]> GetEnumerator()
-        {
-            yield return new object[] { DataTestUtility.TCPConnectionString, CommandBehavior.SingleResult };
-            yield return new object[] { DataTestUtility.TCPConnectionString, CommandBehavior.SingleRow };
-            yield return new object[] { DataTestUtility.TCPConnectionString, CommandBehavior.CloseConnection };
-            yield return new object[] { DataTestUtility.TCPConnectionString, CommandBehavior.SequentialAccess };
-            yield return new object[] { DataTestUtility.TCPConnectionStringHGSVBS, CommandBehavior.SingleResult };
-            yield return new object[] { DataTestUtility.TCPConnectionStringHGSVBS, CommandBehavior.SingleRow };
-            yield return new object[] { DataTestUtility.TCPConnectionStringHGSVBS, CommandBehavior.CloseConnection };
-            yield return new object[] { DataTestUtility.TCPConnectionStringHGSVBS, CommandBehavior.SequentialAccess };
-        }
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
-    public class ConnectionStringProviderWithSchemaType : IEnumerable<object[]>
-    {
-        public IEnumerator<object[]> GetEnumerator()
-        {
-            yield return new object[] { DataTestUtility.TCPConnectionString, SchemaType.Source };
-            yield return new object[] { DataTestUtility.TCPConnectionString, SchemaType.Mapped };
-            yield return new object[] { DataTestUtility.TCPConnectionStringHGSVBS, SchemaType.Source };
-            yield return new object[] { DataTestUtility.TCPConnectionStringHGSVBS, SchemaType.Mapped };
-        }
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-    }
-
-    public class ConnectionStringProviderWithIntegers : IEnumerable<object[]>
-    {
-        public IEnumerator<object[]> GetEnumerator()
-        {
-            yield return new object[] { DataTestUtility.TCPConnectionString, 1 };
-            yield return new object[] { DataTestUtility.TCPConnectionString, 100};
-            yield return new object[] { DataTestUtility.TCPConnectionStringHGSVBS, 1 };
-            yield return new object[] { DataTestUtility.TCPConnectionStringHGSVBS, 100 };
-        }
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-    }
 }

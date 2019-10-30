@@ -20,33 +20,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public Table SqlParameterPropertiesTable { get; private set; }
         public Table End2EndSmokeTable { get; private set; }
         public Table TrustedMasterKeyPathsTestTable { get; private set; }
-
         protected List<DbObject> databaseObjects = new List<DbObject>();
 
-        protected Dictionary<string, string> ConnectionStrings = new Dictionary<string, string>();
         public SQLSetupStrategy()
         {
             certificate = CertificateUtility.CreateCertificate();
-            ConnectionStrings = DataTestUtility.connStrings;
         }
 
         protected SQLSetupStrategy(string customKeyPath) => keyPath = customKeyPath;
 
         internal virtual void SetupDatabase()
         {
-            foreach (var value in ConnectionStrings.Values)
+            foreach (string value in DataTestUtility.AEConnStringsSetup)
             {
                 using (SqlConnection sqlConnection = new SqlConnection(value))
                 {
                     sqlConnection.Open();
                     databaseObjects.ForEach(o => o.Create(sqlConnection));
                 }
-
-                //using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionStringWithAEV2HGSVBSSupport))
-                //{
-                //    sqlConnection.Open();
-                //    databaseObjects.ForEach(o => o.Create(sqlConnection));
-                //}
 
                 // Insert data for TrustedMasterKeyPaths tests.
                 SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(value);
@@ -100,7 +91,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public void Dispose()
         {
             databaseObjects.Reverse();
-            foreach (var value in ConnectionStrings.Values)
+            foreach (string value in DataTestUtility.AEConnStringsSetup)
             {
                 using (SqlConnection sqlConnection = new SqlConnection(value))
                 {

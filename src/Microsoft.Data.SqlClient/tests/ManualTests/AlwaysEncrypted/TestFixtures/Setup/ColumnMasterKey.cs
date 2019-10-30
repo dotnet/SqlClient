@@ -17,19 +17,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
         }
 
         protected string KeyStoreProviderName { get; set; }
+        protected string cmkSignStr { get; set; }
         public abstract string KeyPath { get; }
 
         public override void Create(SqlConnection sqlConnection)
         {
             string sql;
             var connStrings = sqlConnection.ConnectionString;
-            if (connStrings.Contains("HGS") || connStrings.Contains("AAS"))
+            if (DataTestUtility.EnclaveEnabled && !String.IsNullOrEmpty(cmkSignStr))
             {
-
-                SqlColumnEncryptionCertificateStoreProvider sqlColumnCertStoreProvider = new SqlColumnEncryptionCertificateStoreProvider();
-                byte[] cmkSign = sqlColumnCertStoreProvider.SignColumnMasterKeyMetadata(KeyPath, true);
-                string cmkSignStr = string.Concat("0x", BitConverter.ToString(cmkSign).Replace("-", string.Empty));
-
                 sql =
                     $@"CREATE COLUMN MASTER KEY [{Name}]
                      WITH (
@@ -47,6 +43,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
                         KEY_PATH = N'{KeyPath}'
                     );";
             }
+
             using (SqlCommand command = sqlConnection.CreateCommand())
             {
                 if (!string.IsNullOrEmpty(sql))

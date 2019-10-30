@@ -18,7 +18,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
 
         public override void Create(SqlConnection sqlConnection)
         {
-            string encryptionType = sqlConnection.ConnectionString.Contains("HGS") ? "RANDOMIZED" : "DETERMINISTIC";
+            string encryptionType = DataTestUtility.EnclaveEnabled ? "RANDOMIZED" : "DETERMINISTIC";
             string sql =
                 $@"CREATE TABLE [dbo].[{Name}]
                 (
