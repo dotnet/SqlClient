@@ -854,8 +854,8 @@ namespace Microsoft.Data.Common
         internal static bool IsValidAttestationProtocol(SqlConnectionAttestationProtocol value)
         {
             Debug.Assert(Enum.GetNames(typeof(SqlConnectionAttestationProtocol)).Length == 3, "SqlConnectionAttestationProtocol enum has changed, update needed");
-            return value == SqlConnectionAttestationProtocol.NotSpecified 
-                || value == SqlConnectionAttestationProtocol.HGS 
+            return value == SqlConnectionAttestationProtocol.NotSpecified
+                || value == SqlConnectionAttestationProtocol.HGS
                 || value == SqlConnectionAttestationProtocol.AAS;
 
         }
