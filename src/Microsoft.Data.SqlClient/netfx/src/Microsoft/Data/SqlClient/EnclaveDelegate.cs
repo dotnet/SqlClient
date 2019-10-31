@@ -11,9 +11,6 @@ using System.Text;
 namespace Microsoft.Data.SqlClient
 {
 
-    /// <summary>
-    /// A delegate for communicating with secure enclave
-    /// </summary>
     internal class EnclaveDelegate
     {
 
@@ -35,16 +32,6 @@ namespace Microsoft.Data.SqlClient
 
         private EnclaveDelegate() { }
 
-        /// <summary>
-        /// Generate the byte package that needs to be sent to the enclave
-        /// </summary>
-        /// <param name="attestationProtocol">attestation protocol</param>
-        /// <param name="keysTobeSentToEnclave">Keys to be sent to enclave</param>
-        /// <param name="queryText"></param>
-        /// <param name="enclaveType">enclave type</param>
-        /// <param name="serverName">server name</param>
-        /// <param name="enclaveAttestationUrl">url for attestation endpoint</param>
-        /// <returns></returns>
         internal EnclavePackage GenerateEnclavePackage(SqlConnectionAttestationProtocol attestationProtocol, Dictionary<int, SqlTceCipherInfoEntry> keysTobeSentToEnclave, string queryText, string enclaveType, string serverName, string enclaveAttestationUrl)
         {
 
@@ -153,15 +140,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <summary>
-        /// Create a new enclave session
-        /// </summary>
-        /// <param name="attestationProtocol">attestation protocol</param>
-        /// <param name="enclaveType">enclave type</param>
-        /// <param name="serverName">servername</param>
-        /// <param name="attestationUrl">attestation url for attestation service endpoint</param>
-        /// <param name="attestationInfo">attestation info from SQL Server</param>
-        /// <param name="attestationParameters">attestation parameters</param>
         internal void CreateEnclaveSession(SqlConnectionAttestationProtocol attestationProtocol, string enclaveType, string serverName, string attestationUrl,
             byte[] attestationInfo, SqlEnclaveAttestationParameters attestationParameters)
         {
@@ -233,12 +211,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <summary>
-        /// Decrypt the keys that need to be sent to the enclave
-        /// </summary>
-        /// <param name="keysTobeSentToEnclave">Keys that need to sent to the enclave</param>
-        /// <param name="serverName"></param>
-        /// <returns></returns>
         private List<ColumnEncryptionKeyInfo> GetDecryptedKeysToBeSentToEnclave(Dictionary<int, SqlTceCipherInfoEntry> keysTobeSentToEnclave, string serverName)
         {
             List<ColumnEncryptionKeyInfo> decryptedKeysToBeSentToEnclave = new List<ColumnEncryptionKeyInfo>();
@@ -267,13 +239,6 @@ namespace Microsoft.Data.SqlClient
             return decryptedKeysToBeSentToEnclave;
         }
 
-        /// <summary>
-        /// Generate a byte package consisting of decrypted keys and some headers expected by the enclave
-        /// </summary>
-        /// <param name="enclaveSessionCounter">counter to avoid replay attacks</param>
-        /// <param name="queryStringHashBytes"></param>
-        /// <param name="keys"></param>
-        /// <returns></returns>
         private byte[] GenerateBytePackageForKeys(long enclaveSessionCounter, byte[] queryStringHashBytes, List<ColumnEncryptionKeyInfo> keys)
         {
 
@@ -311,13 +276,6 @@ namespace Microsoft.Data.SqlClient
             return bytePackage;
         }
 
-        /// <summary>
-        /// Encrypt the byte package containing keys with the session key
-        /// </summary>
-        /// <param name="bytePackage">byte package containing keys</param>
-        /// <param name="sessionKey">session key used to encrypt the package</param>
-        /// <param name="serverName">server hosting the enclave</param>
-        /// <returns></returns>
         private byte[] EncryptBytePackage(byte[] bytePackage, byte[] sessionKey, string serverName)
         {
             if (sessionKey == null)
@@ -340,11 +298,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <summary>
-        /// Combine the array of given byte arrays into one
-        /// </summary>
-        /// <param name="byteArraysToCombine">byte arrays to be combined</param>
-        /// <returns></returns>
         private byte[] CombineByteArrays(byte[][] byteArraysToCombine)
         {
             byte[] combinedArray = new byte[byteArraysToCombine.Sum(ba => ba.Length)];
@@ -385,28 +338,17 @@ namespace Microsoft.Data.SqlClient
             return hash;
         }
 
-        /// <summary>
-        /// Exception when executing a enclave based Always Encrypted query 
-        /// </summary>
         internal class RetriableEnclaveQueryExecutionException : Exception
         {
             internal RetriableEnclaveQueryExecutionException(string message, Exception innerException) : base(message, innerException) { }
         }
 
-        /// <summary>
-        /// Class encapsulating necessary information about the byte package that needs to be sent to the enclave
-        /// </summary>
         internal class EnclavePackage
         {
 
             public SqlEnclaveSession EnclaveSession { get; }
             public byte[] EnclavePackageBytes { get; }
 
-            /// <summary>
-            /// Constructor
-            /// </summary>
-            /// <param name="enclavePackageBytes">byte package to be sent to enclave</param>
-            /// <param name="enclaveSession"> enclave session to be used</param>
             internal EnclavePackage(byte[] enclavePackageBytes, SqlEnclaveSession enclaveSession)
             {
                 EnclavePackageBytes = enclavePackageBytes;

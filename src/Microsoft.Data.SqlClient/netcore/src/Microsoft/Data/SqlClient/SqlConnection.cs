@@ -74,17 +74,13 @@ namespace Microsoft.Data.SqlClient
         // Lock to control setting of _CustomColumnEncryptionKeyStoreProviders
         private static readonly Object _CustomColumnEncryptionKeyProvidersLock = new Object();
 
-        /// <summary>
-        /// Custom provider list should be provided by the user. We shallow copy the user supplied dictionary into a ReadOnlyDictionary.
-        /// Custom provider list can only supplied once per application.
-        /// </summary>
+        // Custom provider list should be provided by the user. We shallow copy the user supplied dictionary into a ReadOnlyDictionary.
+        // Custom provider list can only supplied once per application.
         private static ReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> _CustomColumnEncryptionKeyStoreProviders;
 
-        /// <summary>
-        /// Dictionary object holding trusted key paths for various SQL Servers.
-        /// Key to the dictionary is a SQL Server Name
-        /// IList contains a list of trusted key paths.
-        /// </summary>
+        // Dictionary object holding trusted key paths for various SQL Servers.
+        // Key to the dictionary is a SQL Server Name
+        // IList contains a list of trusted key paths.
         private static readonly ConcurrentDictionary<string, IList<string>> _ColumnEncryptionTrustedMasterKeyPaths
             = new ConcurrentDictionary<string, IList<string>>(concurrencyLevel: 4 * Environment.ProcessorCount /* default value in ConcurrentDictionary*/,
                 capacity: 1,
@@ -149,12 +145,7 @@ namespace Microsoft.Data.SqlClient
             CacheConnectionStringProperties();
         }
 
-        /// <summary>
-        /// This function walks through both system and custom column encryption key store providers and returns an object if found.
-        /// </summary>
-        /// <param name="providerName">Provider Name to be searched in System Provider diction and Custom provider dictionary.</param>
-        /// <param name="columnKeyStoreProvider">If the provider is found, returns the corresponding SqlColumnEncryptionKeyStoreProvider instance.</param>
-        /// <returns>true if the provider is found, else returns false</returns>
+        // This function walks through both system and custom column encryption key store providers and returns an object if found.
         static internal bool TryGetColumnEncryptionKeyStoreProvider(string providerName, out SqlColumnEncryptionKeyStoreProvider columnKeyStoreProvider)
         {
             Debug.Assert(!string.IsNullOrWhiteSpace(providerName), "Provider name is invalid");
@@ -181,20 +172,14 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <summary>
-        /// This function returns a list of system provider dictionary currently supported by this driver.
-        /// </summary>
-        /// <returns>Combined list of provider names</returns>
+        // This function returns a list of system provider dictionary currently supported by this driver.
         static internal List<string> GetColumnEncryptionSystemKeyStoreProviders()
         {
             HashSet<string> providerNames = new HashSet<string>(_SystemColumnEncryptionKeyStoreProviders.Keys);
             return providerNames.ToList();
         }
 
-        /// <summary>
-        /// This function returns a list of custom provider dictionary currently registered.
-        /// </summary>
-        /// <returns>Combined list of provider names</returns>
+        // This function returns a list of custom provider dictionary currently registered.
         static internal List<string> GetColumnEncryptionCustomKeyStoreProviders()
         {
             if (_CustomColumnEncryptionKeyStoreProviders != null)
@@ -206,9 +191,7 @@ namespace Microsoft.Data.SqlClient
             return new List<string>();
         }
 
-        /// <summary>
-        /// Is this connection using column encryption ?
-        /// </summary>
+        // Is this connection using column encryption ?
         internal bool IsColumnEncryptionSettingEnabled
         {
             get
@@ -271,14 +254,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <summary>
-        /// Get enclave attestation url to be used with enclave based Always Encrypted
-        /// </summary>
+        // Get enclave attestation url to be used with enclave based Always Encrypted
         internal string EnclaveAttestationUrl => ((SqlConnectionString)ConnectionOptions).EnclaveAttestationUrl;
 
-        /// <summary>
-        /// Get attestation protocol
-        /// </summary>
+        // Get attestation protocol
         internal SqlConnectionAttestationProtocol AttestationProtocol
         {
             get
