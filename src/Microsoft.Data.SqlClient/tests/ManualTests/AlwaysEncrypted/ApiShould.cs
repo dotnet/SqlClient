@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProviderWithBooleanVariable))]
-        public void TestSqlTransactionCommitRollbackWithTransparentInsert(string connection, bool isPermitted)
+        public void TestSqlTransactionCommitRollbackWithTransparentInsert(string connection, bool isCommitted)
         {
             CleanUpTable(connection, tableName);
             
@@ -48,7 +48,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 {
                     InsertCustomerRecord(sqlConnection, sqlTransaction, customer);
 
-                    if (isPermitted)
+                    if (isCommitted)
                     {
                         sqlTransaction.Commit();
                     }
@@ -59,7 +59,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 }
 
                 // Data should be available on select if committed else, data should not be available.
-                if (isPermitted)
+                if (isCommitted)
                 {
                     VerifyRecordPresent(sqlConnection, customer);
                 }
@@ -598,7 +598,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         }
                         else
                         {
-                            customerId = (int)sqlCommand?.ExecuteScalar();
+                            customerId = (int)sqlCommand.ExecuteScalar();
                         }
 
                         Assert.Equal((int)values[0], customerId);

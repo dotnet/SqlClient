@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         private const decimal SmallMoneyMaxValue = 214748.3647M;
         private const decimal SmallMoneyMinValue = -214748.3648M;
         private const int MaxLength = 10000;
-        private const int NumberOfRows = 100;
+        private int NumberOfRows = DataTestUtility.EnclaveEnabled ? 10 : 100;
         private readonly X509Certificate2 certificate;
         private ColumnMasterKey columnMasterKey;
         private ColumnEncryptionKey columnEncryptionKey;
