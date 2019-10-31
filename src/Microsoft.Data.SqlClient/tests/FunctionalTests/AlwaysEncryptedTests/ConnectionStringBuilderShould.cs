@@ -46,6 +46,8 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             VerifyEnclaveAttestationUrlSetting(connectionStringBuilder2, "www.foo.com");
 
             connectionStringBuilder2.Clear();
+
+            Assert.Equal(SqlConnectionAttestationProtocol.NotSpecified, connectionStringBuilder2.AttestationProtocol);
             Assert.Equal(string.Empty, connectionStringBuilder2.EnclaveAttestationUrl);
 
             Assert.True(string.IsNullOrEmpty(connectionStringBuilder2.DataSource));
@@ -84,7 +86,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
             connectionStringBuilder3.Clear();
 
-            //Assert.Equal(SqlConnectionAttestationProtocol.NotSpecified, connectionStringBuilder3.AttestationProtocol);
+            Assert.Equal(SqlConnectionAttestationProtocol.NotSpecified, connectionStringBuilder3.AttestationProtocol);
             Assert.True(string.IsNullOrEmpty(connectionStringBuilder3.DataSource));
         }
 
@@ -148,16 +150,15 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         [Theory]
         [InlineData(SqlConnectionAttestationProtocol.AAS)]
         [InlineData(SqlConnectionAttestationProtocol.HGS)]
+        [InlineData(SqlConnectionAttestationProtocol.NotSpecified)]
         public void TestSqlConnectionStringBuilderAttestationProtocol(SqlConnectionAttestationProtocol protocol)
         {
             SqlConnectionStringBuilder connectionStringBuilder = new SqlConnectionStringBuilder();
+            connectionStringBuilder.DataSource = @"localhost";
 
             // Modify value.
-            if (protocol != SqlConnectionAttestationProtocol.NotSpecified)
-            {
                 connectionStringBuilder.AttestationProtocol = protocol;
-            }
-
+          
             //Create a connection object with the above builder and verify the expected value.
             VerifyAttestationProtocol(connectionStringBuilder, protocol);
         }
