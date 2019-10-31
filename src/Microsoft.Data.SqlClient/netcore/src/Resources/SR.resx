@@ -1774,7 +1774,7 @@
     <value>Globalization Invariant Mode is not supported.</value>
   </data>
   <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
-    <value>The validation of an attestation token failed. The token signature does not match the signature omputed using a public key retrieved from the attestation public key endpoint at '{0}'. Verify the DNS apping for the endpoint. If correct, contact Customer Support Services.</value>
+    <value>The validation of an attestation token failed. The token signature does not match the signature computed using a public key retrieved from the attestation public key endpoint at '{0}'. Verify the DNS mapping for the endpoint. If correct, contact Customer Support Services.</value>
   </data>
   <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
     <value>Internal error occurred when retrying the download of the HGS root certificate after the initial request failed. Contact Customer Support Services.</value>
