@@ -17,7 +17,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     [PlatformSpecific(TestPlatforms.Windows)]
     public class CspProviderExt
     {
-        // [Fact(Skip="Run this in non-parallel mode")] or [ConditionalFact()]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestKeysFromCertificatesCreatedWithMultipleCryptoProviders(string connectionString)

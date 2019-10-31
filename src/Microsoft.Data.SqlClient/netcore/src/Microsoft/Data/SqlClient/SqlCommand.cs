@@ -3357,7 +3357,7 @@ namespace Microsoft.Data.SqlClient
                 EnclaveDelegate.Instance.GetEnclaveSession(attestationProtocol, enclaveType, dataSource, enclaveAttestationUrl, out sqlEnclaveSession);
                 if (sqlEnclaveSession == null)
                 {
-                    enclaveAttestationParameters = EnclaveDelegate.Instance.GetAttestationParameters(attestationProtocol, enclaveType, dataSource, enclaveAttestationUrl);
+                    enclaveAttestationParameters = EnclaveDelegate.Instance.GetAttestationParameters(attestationProtocol, enclaveType);
                     serializedAttestatationParameters = EnclaveDelegate.Instance.GetSerializedAttestationParameters(enclaveAttestationParameters, enclaveType);
                 }
             }

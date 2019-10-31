@@ -48,7 +48,7 @@ namespace Microsoft.Data.SqlClient
             throw new PlatformNotSupportedException();
         }
 
-        internal SqlEnclaveAttestationParameters GetAttestationParameters(SqlConnectionAttestationProtocol attestationProtocol, string enclaveType, string serverName, string enclaveAttestationUrl)
+        internal SqlEnclaveAttestationParameters GetAttestationParameters(SqlConnectionAttestationProtocol attestationProtocol, string enclaveType)
         {
             throw new PlatformNotSupportedException();
         }
