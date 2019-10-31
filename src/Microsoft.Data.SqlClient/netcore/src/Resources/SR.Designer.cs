@@ -4064,554 +4064,868 @@ namespace System {
                 return ResourceManager.GetString("TCE_AttestationInfoNotReturnedFromSQLServer", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to {0} should be identical on all commands ({1}, {2}, {3}, {4}) when doing batch updates..
-        internal static string TCE_BatchedUpdateColumnEncryptionSettingMismatch {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} should be identical on all commands ({1}, {2}, {3}, {4}) when doing batch updates..
+        /// </summary>
+        internal static string TCE_BatchedUpdateColumnEncryptionSettingMismatch
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_BatchedUpdateColumnEncryptionSettingMismatch", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Failed to instantiate an enclave provider with type &apos;{1}&apos; for name &apos;{0}&apos;. Error message: {2}.
-        internal static string TCE_CannotCreateSqlColumnEncryptionEnclaveProvider {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to instantiate an enclave provider with type &apos;{1}&apos; for name &apos;{0}&apos;. Error message: {2}.
+        /// </summary>
+        internal static string TCE_CannotCreateSqlColumnEncryptionEnclaveProvider
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_CannotCreateSqlColumnEncryptionEnclaveProvider", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Failed to read the configuration section for enclave providers. Make sure the section is correctly formatted in your application configuration file. Error Message: {0}.
-        internal static string TCE_CannotGetSqlColumnEncryptionEnclaveProviderConfig {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to read the configuration section for enclave providers. Make sure the section is correctly formatted in your application configuration file. Error Message: {0}.
+        /// </summary>
+        internal static string TCE_CannotGetSqlColumnEncryptionEnclaveProviderConfig
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_CannotGetSqlColumnEncryptionEnclaveProviderConfig", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Key store providers cannot be set more than once..
-        internal static string TCE_CanOnlyCallOnce {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Key store providers cannot be set more than once..
+        /// </summary>
+        internal static string TCE_CanOnlyCallOnce
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_CanOnlyCallOnce", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Certificate with thumbprint &apos;{0}&apos; not found in certificate store &apos;{1}&apos; in certificate location &apos;{2}&apos;..
-        internal static string TCE_CertificateNotFound {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Certificate with thumbprint &apos;{0}&apos; not found in certificate store &apos;{1}&apos; in certificate location &apos;{2}&apos;..
+        /// </summary>
+        internal static string TCE_CertificateNotFound
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_CertificateNotFound", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Certificate with thumbprint &apos;{0}&apos; not found in certificate store &apos;{1}&apos; in certificate location &apos;{2}&apos;. Verify the certificate path in the column master key definition in the database is correct, and the certificate has been imported correctly into the certificate location/store..
-        internal static string TCE_CertificateNotFoundSysErr {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Certificate with thumbprint &apos;{0}&apos; not found in certificate store &apos;{1}&apos; in certificate location &apos;{2}&apos;. Verify the certificate path in the column master key definition in the database is correct, and the certificate has been imported correctly into the certificate location/store..
+        /// </summary>
+        internal static string TCE_CertificateNotFoundSysErr
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_CertificateNotFoundSysErr", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Certificate specified in key path &apos;{0}&apos; does not have a private key to encrypt a column encryption key. Verify the certificate is imported correctly..
-        internal static string TCE_CertificateWithNoPrivateKey {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Certificate specified in key path &apos;{0}&apos; does not have a private key to encrypt a column encryption key. Verify the certificate is imported correctly..
+        /// </summary>
+        internal static string TCE_CertificateWithNoPrivateKey
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_CertificateWithNoPrivateKey", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Certificate specified in key path &apos;{0}&apos; does not have a private key to decrypt a column encryption key. Verify the certificate is imported correctly..
-        internal static string TCE_CertificateWithNoPrivateKeySysErr {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Certificate specified in key path &apos;{0}&apos; does not have a private key to decrypt a column encryption key. Verify the certificate is imported correctly..
+        /// </summary>
+        internal static string TCE_CertificateWithNoPrivateKeySysErr
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_CertificateWithNoPrivateKeySysErr", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Failed to decrypt column &apos;{0}&apos;..
-        internal static string TCE_ColumnDecryptionFailed {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to decrypt column &apos;{0}&apos;..
+        /// </summary>
+        internal static string TCE_ColumnDecryptionFailed
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_ColumnDecryptionFailed", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Internal Error. Encrypted column encryption keys not found when trying to send the keys to the enclave..
-        internal static string TCE_ColumnEncryptionKeysNotFound {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Internal Error. Encrypted column encryption keys not found when trying to send the keys to the enclave..
+        /// </summary>
+        internal static string TCE_ColumnEncryptionKeysNotFound
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_ColumnEncryptionKeysNotFound", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Internal error. The signature returned by SQL Server for enclave-enabled column master key, specified at key path &apos;{0}&apos;, cannot be null or empty..
-        internal static string TCE_ColumnMasterKeySignatureNotFound {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Internal error. The signature returned by SQL Server for enclave-enabled column master key, specified at key path &apos;{0}&apos;, cannot be null or empty..
+        /// </summary>
+        internal static string TCE_ColumnMasterKeySignatureNotFound
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_ColumnMasterKeySignatureNotFound", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to The signature returned by SQL Server for the column master key, specified in key path &apos;{0}&apos;, is invalid (does not match the computed signature). Recreate column master key metadata, making sure the signature inside the metadata is computed using the column master key being referenced in the metadata. If the error persists, please contact Microsoft for assistance..
-        internal static string TCE_ColumnMasterKeySignatureVerificationFailed {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to The signature returned by SQL Server for the column master key, specified in key path &apos;{0}&apos;, is invalid (does not match the computed signature). Recreate column master key metadata, making sure the signature inside the metadata is computed using the column master key being referenced in the metadata. If the error persists, please contact Microsoft for assistance..
+        /// </summary>
+        internal static string TCE_ColumnMasterKeySignatureVerificationFailed
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_ColumnMasterKeySignatureVerificationFailed", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Decryption failed. The last 10 bytes of the encrypted column encryption key are: &apos;{0}&apos;. The first 10 bytes of ciphertext are: &apos;{1}&apos;..
-        internal static string TCE_DecryptionFailed {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Decryption failed. The last 10 bytes of the encrypted column encryption key are: &apos;{0}&apos;. The first 10 bytes of ciphertext are: &apos;{1}&apos;..
+        /// </summary>
+        internal static string TCE_DecryptionFailed
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_DecryptionFailed", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Internal Error. Empty argument &apos;{0}&apos; specified when constructing an object of type &apos;{1}&apos;. &apos;{0}&apos; cannot be empty..
-        internal static string TCE_EmptyArgumentInConstructorInternal {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Internal Error. Empty argument &apos;{0}&apos; specified when constructing an object of type &apos;{1}&apos;. &apos;{0}&apos; cannot be empty..
+        /// </summary>
+        internal static string TCE_EmptyArgumentInConstructorInternal
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_EmptyArgumentInConstructorInternal", resourceCulture);
             }
         }
-        
-        //  Looks up a localized string similar to Internal Error. Argument &apos;{0}&apos; cannot be empty when executing method &apos;{1}.{2}&apos;..
-        internal static string TCE_EmptyArgumentInternal {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Internal Error. Argument &apos;{0}&apos; cannot be empty when executing method &apos;{1}.{2}&apos;..
+        /// </summary>
+        internal static string TCE_EmptyArgumentInternal
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_EmptyArgumentInternal", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Empty certificate thumbprint specified in certificate path &apos;{0}&apos;..
-        internal static string TCE_EmptyCertificateThumbprint {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Empty certificate thumbprint specified in certificate path &apos;{0}&apos;..
+        /// </summary>
+        internal static string TCE_EmptyCertificateThumbprint
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_EmptyCertificateThumbprint", resourceCulture);
             }
         }
-        
-        //  Looks up a localized string similar to Internal error. Empty certificate thumbprint specified in certificate path &apos;{0}&apos;..
-        internal static string TCE_EmptyCertificateThumbprintSysErr {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Internal error. Empty certificate thumbprint specified in certificate path &apos;{0}&apos;..
+        /// </summary>
+        internal static string TCE_EmptyCertificateThumbprintSysErr
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_EmptyCertificateThumbprintSysErr", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Empty key identifier specified in column master key path: &apos;{0}&apos;. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;..
-        internal static string TCE_EmptyCngKeyId {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Empty key identifier specified in column master key path: &apos;{0}&apos;. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;..
+        /// </summary>
+        internal static string TCE_EmptyCngKeyId
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_EmptyCngKeyId", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Internal error. Empty key identifier specified in column master key path: &apos;{0}&apos;. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;..
-        internal static string TCE_EmptyCngKeyIdSysErr {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Internal error. Empty key identifier specified in column master key path: &apos;{0}&apos;. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;..
+        /// </summary>
+        internal static string TCE_EmptyCngKeyIdSysErr
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_EmptyCngKeyIdSysErr", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Empty Microsoft Cryptography API: Next Generation (CNG) provider name specified in column master key path: &apos;{0}&apos;. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;..
-        internal static string TCE_EmptyCngName {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Empty Microsoft Cryptography API: Next Generation (CNG) provider name specified in column master key path: &apos;{0}&apos;. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;..
+        /// </summary>
+        internal static string TCE_EmptyCngName
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_EmptyCngName", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Internal error. Empty Microsoft Cryptography API: Next Generation (CNG) provider name specified in column master key path: &apos;{0}&apos;. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;..
-        internal static string TCE_EmptyCngNameSysErr {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Internal error. Empty Microsoft Cryptography API: Next Generation (CNG) provider name specified in column master key path: &apos;{0}&apos;. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;..
+        /// </summary>
+        internal static string TCE_EmptyCngNameSysErr
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_EmptyCngNameSysErr", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Empty column encryption key specified..
-        internal static string TCE_EmptyColumnEncryptionKey {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Empty column encryption key specified..
+        /// </summary>
+        internal static string TCE_EmptyColumnEncryptionKey
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_EmptyColumnEncryptionKey", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Empty key identifier specified in column master key path: &apos;{0}&apos;. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;..
-        internal static string TCE_EmptyCspKeyId {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Empty key identifier specified in column master key path: &apos;{0}&apos;. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;..
+        /// </summary>
+        internal static string TCE_EmptyCspKeyId
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_EmptyCspKeyId", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Internal error. Empty key identifier specified in column master key path: &apos;{0}&apos;. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;..
-        internal static string TCE_EmptyCspKeyIdSysErr {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Internal error. Empty key identifier specified in column master key path: &apos;{0}&apos;. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;..
+        /// </summary>
+        internal static string TCE_EmptyCspKeyIdSysErr
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_EmptyCspKeyIdSysErr", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Empty Microsoft cryptographic service provider (CSP) name specified in column master key path: &apos;{0}&apos;. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;..
-        internal static string TCE_EmptyCspName {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Empty Microsoft cryptographic service provider (CSP) name specified in column master key path: &apos;{0}&apos;. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;..
+        /// </summary>
+        internal static string TCE_EmptyCspName
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_EmptyCspName", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Internal error. Empty Microsoft cryptographic service provider (CSP) name specified in column master key path: &apos;{0}&apos;. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;..
-        internal static string TCE_EmptyCspNameSysErr {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Internal error. Empty Microsoft cryptographic service provider (CSP) name specified in column master key path: &apos;{0}&apos;. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;..
+        /// </summary>
+        internal static string TCE_EmptyCspNameSysErr
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_EmptyCspNameSysErr", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Internal error. Empty encrypted column encryption key specified..
-        internal static string TCE_EmptyEncryptedColumnEncryptionKey {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Internal error. Empty encrypted column encryption key specified..
+        /// </summary>
+        internal static string TCE_EmptyEncryptedColumnEncryptionKey
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_EmptyEncryptedColumnEncryptionKey", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Invalid key store provider name specified. Key store provider names cannot be null or empty..
-        internal static string TCE_EmptyProviderName {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid key store provider name specified. Key store provider names cannot be null or empty..
+        /// </summary>
+        internal static string TCE_EmptyProviderName
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_EmptyProviderName", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to You have specified the enclave attestation URL in the connection string, but the SQL Server instance in use does not support enclave based computations..
-        internal static string TCE_EnclaveComputationsNotSupported {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to You have specified the enclave attestation URL in the connection string, but the SQL Server instance in use does not support enclave based computations..
+        /// </summary>
+        internal static string TCE_EnclaveComputationsNotSupported
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_EnclaveComputationsNotSupported", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to No enclave provider found for enclave type &apos;{0}&apos;. Please specify the provider in the application configuration..
-        internal static string TCE_EnclaveProviderNotFound {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to No enclave provider found for enclave type &apos;{0}&apos;. Please specify the provider in the application configuration..
+        /// </summary>
+        internal static string TCE_EnclaveProviderNotFound
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_EnclaveProviderNotFound", resourceCulture);
             }
         }
 
-        //   Looks up a localized string similar to Specifies an attestation protocol for its corresponding enclave attestation service.
-        internal static string TCE_DbConnectionString_AttestationProtocol {
-            get {
+        /// <summary>
+        ///   Looks up a localized string similar to Specifies an attestation protocol for its corresponding enclave attestation service.
+        /// </summary>
+        internal static string TCE_DbConnectionString_AttestationProtocol
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_DbConnectionString_AttestationProtocol", resourceCulture);
             }
         }
 
-        // Looks up a localized string similar to The enclave type '{0}' returned from the server is not supported.
-        internal static string TCE_EnclaveTypeNotSupported {
-            get {
+        /// <summary>
+        /// Looks up a localized string similar to The enclave type '{0}' returned from the server is not supported.
+        /// </summary>
+        internal static string TCE_EnclaveTypeNotSupported
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_EnclaveTypeNotSupported", resourceCulture);
             }
         }
 
-        // Looks up a localized string similar to Failed to initialize connection. The attestation protocol '{0}' does not support the enclave type '{1}'.
-        internal static string TCE_AttestationProtocolNotSupportEnclaveType {
-            get {
+        /// <summary>
+        /// Looks up a localized string similar to Failed to initialize connection. The attestation protocol '{0}' does not support the enclave type '{1}'.
+        /// </summary>
+        internal static string TCE_AttestationProtocolNotSupportEnclaveType
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_AttestationProtocolNotSupportEnclaveType", resourceCulture);
             }
         }
 
-        // Looks up a localized string similar to Error occured when generating enclave package. Attestation Protocol has not been specified in the connection string, but the query requires enclave computations.
-        internal static string TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage {
-            get {
+        /// <summary>
+        /// Looks up a localized string similar to Error occured when generating enclave package. Attestation Protocol has not been specified in the connection string, but the query requires enclave computations.
+        /// </summary>
+        internal static string TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage", resourceCulture);
             }
         }
 
-        //   Looks up a localized string similar to Executing a query requires enclave computations, but the application configuration is missing the enclave provider section..
-        internal static string TCE_EnclaveProvidersNotConfiguredForEnclaveBasedQuery {
-            get {
+        /// <summary>
+        ///   Looks up a localized string similar to Executing a query requires enclave computations, but the application configuration is missing the enclave provider section..
+        /// </summary>
+        internal static string TCE_EnclaveProvidersNotConfiguredForEnclaveBasedQuery
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_EnclaveProvidersNotConfiguredForEnclaveBasedQuery", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to You have specified the enclave attestation URL in the connection string, but the SQL Server instance did not return an enclave type. Please make sure the enclave type is correctly configured in your instance..
-        internal static string TCE_EnclaveTypeNotReturned {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to You have specified the enclave attestation URL in the connection string, but the SQL Server instance did not return an enclave type. Please make sure the enclave type is correctly configured in your instance..
+        /// </summary>
+        internal static string TCE_EnclaveTypeNotReturned
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_EnclaveTypeNotReturned", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Internal Error. Enclave type received from SQL Server is null or empty when executing a query requiring enclave computations..
-        internal static string TCE_EnclaveTypeNullForEnclaveBasedQuery {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Internal Error. Enclave type received from SQL Server is null or empty when executing a query requiring enclave computations..
+        /// </summary>
+        internal static string TCE_EnclaveTypeNullForEnclaveBasedQuery
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_EnclaveTypeNullForEnclaveBasedQuery", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Error encountered while generating package to be sent to enclave. Error message: {0}.
-        internal static string TCE_ExceptionWhenGeneratingEnclavePackage {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Error encountered while generating package to be sent to enclave. Error message: {0}.
+        /// </summary>
+        internal static string TCE_ExceptionWhenGeneratingEnclavePackage
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_ExceptionWhenGeneratingEnclavePackage", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Internal Error.  Failed to encrypt byte package to be sent to the enclave. Error Message: {0}.
-        internal static string TCE_FailedToEncryptRegisterRulesBytePackage {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Internal Error.  Failed to encrypt byte package to be sent to the enclave. Error Message: {0}.
+        /// </summary>
+        internal static string TCE_FailedToEncryptRegisterRulesBytePackage
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_FailedToEncryptRegisterRulesBytePackage", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Internal Error. The buffer specified by argument &apos;{0}&apos; for method &apos;{1}.{2}&apos; has insufficient space..
-        internal static string TCE_InsufficientBuffer {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Internal Error. The buffer specified by argument &apos;{0}&apos; for method &apos;{1}.{2}&apos; has insufficient space..
+        /// </summary>
+        internal static string TCE_InsufficientBuffer
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_InsufficientBuffer", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to The specified ciphertext&apos;s encryption algorithm version &apos;{0}&apos; does not match the expected encryption algorithm version &apos;{1}&apos;..
-        internal static string TCE_InvalidAlgorithmVersion {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to The specified ciphertext&apos;s encryption algorithm version &apos;{0}&apos; does not match the expected encryption algorithm version &apos;{1}&apos;..
+        /// </summary>
+        internal static string TCE_InvalidAlgorithmVersion
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_InvalidAlgorithmVersion", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Specified encrypted column encryption key contains an invalid encryption algorithm version &apos;{0}&apos;. Expected version is &apos;{1}&apos;..
-        internal static string TCE_InvalidAlgorithmVersionInEncryptedCEK {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Specified encrypted column encryption key contains an invalid encryption algorithm version &apos;{0}&apos;. Expected version is &apos;{1}&apos;..
+        /// </summary>
+        internal static string TCE_InvalidAlgorithmVersionInEncryptedCEK
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_InvalidAlgorithmVersionInEncryptedCEK", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Invalid attestation parameters specified by the enclave provider for enclave type &apos;{0}&apos;. Error occurred when converting the value &apos;{1}&apos; of parameter &apos;{2}&apos; to unsigned int. Error Message: {3}.
-        internal static string TCE_InvalidAttestationParameterUnableToConvertToUnsignedInt {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid attestation parameters specified by the enclave provider for enclave type &apos;{0}&apos;. Error occurred when converting the value &apos;{1}&apos; of parameter &apos;{2}&apos; to unsigned int. Error Message: {3}.
+        /// </summary>
+        internal static string TCE_InvalidAttestationParameterUnableToConvertToUnsignedInt
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_InvalidAttestationParameterUnableToConvertToUnsignedInt", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Specified ciphertext has an invalid authentication tag..
-        internal static string TCE_InvalidAuthenticationTag {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Specified ciphertext has an invalid authentication tag..
+        /// </summary>
+        internal static string TCE_InvalidAuthenticationTag
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_InvalidAuthenticationTag", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Invalid certificate location &apos;{0}&apos; in certificate path &apos;{1}&apos;. Use the following format: &lt;certificate location&gt;{4}&lt;certificate store&gt;{4}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either &apos;{2}&apos; or &apos;{3}&apos;..
-        internal static string TCE_InvalidCertificateLocation {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid certificate location &apos;{0}&apos; in certificate path &apos;{1}&apos;. Use the following format: &lt;certificate location&gt;{4}&lt;certificate store&gt;{4}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either &apos;{2}&apos; or &apos;{3}&apos;..
+        /// </summary>
+        internal static string TCE_InvalidCertificateLocation
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_InvalidCertificateLocation", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Internal error. Invalid certificate location &apos;{0}&apos; in certificate path &apos;{1}&apos;. Use the following format: &lt;certificate location&gt;{4}&lt;certificate store&gt;{4}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either &apos;{2}&apos; or &apos;{3}&apos;..
-        internal static string TCE_InvalidCertificateLocationSysErr {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Internal error. Invalid certificate location &apos;{0}&apos; in certificate path &apos;{1}&apos;. Use the following format: &lt;certificate location&gt;{4}&lt;certificate store&gt;{4}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either &apos;{2}&apos; or &apos;{3}&apos;..
+        /// </summary>
+        internal static string TCE_InvalidCertificateLocationSysErr
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_InvalidCertificateLocationSysErr", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Invalid certificate path: &apos;{0}&apos;. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either &apos;{1}&apos; or &apos;{2}&apos;..
-        internal static string TCE_InvalidCertificatePath {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid certificate path: &apos;{0}&apos;. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either &apos;{1}&apos; or &apos;{2}&apos;..
+        /// </summary>
+        internal static string TCE_InvalidCertificatePath
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_InvalidCertificatePath", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Internal error. Invalid certificate path: &apos;{0}&apos;. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either &apos;{1}&apos; or &apos;{2}&apos;..
-        internal static string TCE_InvalidCertificatePathSysErr {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Internal error. Invalid certificate path: &apos;{0}&apos;. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either &apos;{1}&apos; or &apos;{2}&apos;..
+        /// </summary>
+        internal static string TCE_InvalidCertificatePathSysErr
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_InvalidCertificatePathSysErr", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to The specified encrypted column encryption key signature does not match the signature computed with the column master key (certificate) in &apos;{0}&apos;. The encrypted column encryption key may be corrupt, or the specified path may be incorrect..
-        internal static string TCE_InvalidCertificateSignature {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to The specified encrypted column encryption key signature does not match the signature computed with the column master key (certificate) in &apos;{0}&apos;. The encrypted column encryption key may be corrupt, or the specified path may be incorrect..
+        /// </summary>
+        internal static string TCE_InvalidCertificateSignature
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_InvalidCertificateSignature", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Invalid certificate store &apos;{0}&apos; specified in certificate path &apos;{1}&apos;. Expected value: &apos;{2}&apos;..
-        internal static string TCE_InvalidCertificateStore {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid certificate store &apos;{0}&apos; specified in certificate path &apos;{1}&apos;. Expected value: &apos;{2}&apos;..
+        /// </summary>
+        internal static string TCE_InvalidCertificateStore
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_InvalidCertificateStore", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Internal error. Invalid certificate store &apos;{0}&apos; specified in certificate path &apos;{1}&apos;. Expected value: &apos;{2}&apos;..
-        internal static string TCE_InvalidCertificateStoreSysErr {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Internal error. Invalid certificate store &apos;{0}&apos; specified in certificate path &apos;{1}&apos;. Expected value: &apos;{2}&apos;..
+        /// </summary>
+        internal static string TCE_InvalidCertificateStoreSysErr
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_InvalidCertificateStoreSysErr", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to The specified encrypted column encryption key&apos;s ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (certificate) in &apos;{2}&apos;. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect..
-        internal static string TCE_InvalidCiphertextLengthInEncryptedCEK {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to The specified encrypted column encryption key&apos;s ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (certificate) in &apos;{2}&apos;. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect..
+        /// </summary>
+        internal static string TCE_InvalidCiphertextLengthInEncryptedCEK
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_InvalidCiphertextLengthInEncryptedCEK", resourceCulture);
             }
         }
-        
-        //  Looks up a localized string similar to The specified encrypted column encryption key&apos;s ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (asymmetric key) in &apos;{2}&apos;. The encrypted column encryption key may be corrupt, or the specified Microsoft Cryptography API: Next Generation (CNG) provider path may be incorrect..
-        internal static string TCE_InvalidCiphertextLengthInEncryptedCEKCng {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to The specified encrypted column encryption key&apos;s ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (asymmetric key) in &apos;{2}&apos;. The encrypted column encryption key may be corrupt, or the specified Microsoft Cryptography API: Next Generation (CNG) provider path may be incorrect..
+        /// </summary>
+        internal static string TCE_InvalidCiphertextLengthInEncryptedCEKCng
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_InvalidCiphertextLengthInEncryptedCEKCng", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to The specified encrypted column encryption key&apos;s ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (asymmetric key) in &apos;{2}&apos;. The encrypted column encryption key may be corrupt, or the specified Microsoft Cryptographic Service provider (CSP) path may be incorrect..
-        internal static string TCE_InvalidCiphertextLengthInEncryptedCEKCsp {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to The specified encrypted column encryption key&apos;s ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (asymmetric key) in &apos;{2}&apos;. The encrypted column encryption key may be corrupt, or the specified Microsoft Cryptographic Service provider (CSP) path may be incorrect..
+        /// </summary>
+        internal static string TCE_InvalidCiphertextLengthInEncryptedCEKCsp
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_InvalidCiphertextLengthInEncryptedCEKCsp", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Specified ciphertext has an invalid size of {0} bytes, which is below the minimum {1} bytes required for decryption..
-        internal static string TCE_InvalidCipherTextSize {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Specified ciphertext has an invalid size of {0} bytes, which is below the minimum {1} bytes required for decryption..
+        /// </summary>
+        internal static string TCE_InvalidCipherTextSize
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_InvalidCipherTextSize", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to An error occurred while opening the Microsoft Cryptography API: Next Generation (CNG) key: &apos;{0}&apos;. Verify that the CNG provider name &apos;{1}&apos; is valid, installed on the machine, and the key &apos;{2}&apos; exists..
-        internal static string TCE_InvalidCngKey {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to An error occurred while opening the Microsoft Cryptography API: Next Generation (CNG) key: &apos;{0}&apos;. Verify that the CNG provider name &apos;{1}&apos; is valid, installed on the machine, and the key &apos;{2}&apos; exists..
+        /// </summary>
+        internal static string TCE_InvalidCngKey
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_InvalidCngKey", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Internal error. An error occurred while opening the Microsoft Cryptography API: Next Generation (CNG) key: &apos;{0}&apos;. Verify that the CNG provider name &apos;{1}&apos; is valid, installed on the machine, and the key &apos;{2}&apos; exists..
-        internal static string TCE_InvalidCngKeySysErr {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Internal error. An error occurred while opening the Microsoft Cryptography API: Next Generation (CNG) key: &apos;{0}&apos;. Verify that the CNG provider name &apos;{1}&apos; is valid, installed on the machine, and the key &apos;{2}&apos; exists..
+        /// </summary>
+        internal static string TCE_InvalidCngKeySysErr
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_InvalidCngKeySysErr", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Invalid column master key path: &apos;{0}&apos;. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;..
-        internal static string TCE_InvalidCngPath {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid column master key path: &apos;{0}&apos;. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;..
+        /// </summary>
+        internal static string TCE_InvalidCngPath
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_InvalidCngPath", resourceCulture);
             }
         }
 
-        //   Looks up a localized string similar to Internal error. Invalid column master key path: &apos;{0}&apos;. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;..
-        internal static string TCE_InvalidCngPathSysErr {
-            get {
+        /// <summary>
+        ///   Looks up a localized string similar to Internal error. Invalid column master key path: &apos;{0}&apos;. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;..
+        /// </summary>
+        internal static string TCE_InvalidCngPathSysErr
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_InvalidCngPathSysErr", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Invalid key identifier: &apos;{0}&apos;. Verify that the key identifier in column master key path: &apos;{1}&apos; is valid and exists in the CSP..
-        internal static string TCE_InvalidCspKeyId {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid key identifier: &apos;{0}&apos;. Verify that the key identifier in column master key path: &apos;{1}&apos; is valid and exists in the CSP..
+        /// </summary>
+        internal static string TCE_InvalidCspKeyId
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_InvalidCspKeyId", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Internal error. Invalid key identifier: &apos;{0}&apos;. Verify that the key identifier in column master key path: &apos;{1}&apos; is valid and exists in the CSP..
-        internal static string TCE_InvalidCspKeyIdSysErr {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Internal error. Invalid key identifier: &apos;{0}&apos;. Verify that the key identifier in column master key path: &apos;{1}&apos; is valid and exists in the CSP..
+        /// </summary>
+        internal static string TCE_InvalidCspKeyIdSysErr
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_InvalidCspKeyIdSysErr", resourceCulture);
             }
         }
-        
-        //  Looks up a localized string similar to Invalid Microsoft cryptographic service provider (CSP) name: &apos;{0}&apos;. Verify that the CSP provider name in column master key path: &apos;{1}&apos; is valid and installed on the machine..
-        internal static string TCE_InvalidCspName {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid Microsoft cryptographic service provider (CSP) name: &apos;{0}&apos;. Verify that the CSP provider name in column master key path: &apos;{1}&apos; is valid and installed on the machine..
+        /// </summary>
+        internal static string TCE_InvalidCspName
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_InvalidCspName", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Internal error. Invalid Microsoft cryptographic service provider (CSP) name: &apos;{0}&apos;. Verify that the CSP provider name in column master key path: &apos;{1}&apos; is valid and installed on the machine..
-        internal static string TCE_InvalidCspNameSysErr {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Internal error. Invalid Microsoft cryptographic service provider (CSP) name: &apos;{0}&apos;. Verify that the CSP provider name in column master key path: &apos;{1}&apos; is valid and installed on the machine..
+        /// </summary>
+        internal static string TCE_InvalidCspNameSysErr
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_InvalidCspNameSysErr", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Invalid column master key path: &apos;{0}&apos;. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;..
-        internal static string TCE_InvalidCspPath {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid column master key path: &apos;{0}&apos;. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;..
+        /// </summary>
+        internal static string TCE_InvalidCspPath
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_InvalidCspPath", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Internal error. Invalid column master key path: &apos;{0}&apos;. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;..
-        internal static string TCE_InvalidCspPathSysErr {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Internal error. Invalid column master key path: &apos;{0}&apos;. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;..
+        /// </summary>
+        internal static string TCE_InvalidCspPathSysErr
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_InvalidCspPathSysErr", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Invalid key store provider name &apos;{0}&apos;. &apos;{1}&apos; prefix is reserved for system key store providers..
-        internal static string TCE_InvalidCustomKeyStoreProviderName {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid key store provider name &apos;{0}&apos;. &apos;{1}&apos; prefix is reserved for system key store providers..
+        /// </summary>
+        internal static string TCE_InvalidCustomKeyStoreProviderName
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_InvalidCustomKeyStoreProviderName", resourceCulture);
             }
         }
-        
-        //  Looks up a localized string similar to Internal Error. The given database id &apos;{0}&apos; is not valid. Error occurred when converting the database id to unsigned int. Error Message: {1}.
-        internal static string TCE_InvalidDatabaseIdUnableToCastToUnsignedInt {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Internal Error. The given database id &apos;{0}&apos; is not valid. Error occurred when converting the database id to unsigned int. Error Message: {1}.
+        /// </summary>
+        internal static string TCE_InvalidDatabaseIdUnableToCastToUnsignedInt
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_InvalidDatabaseIdUnableToCastToUnsignedInt", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Internal error. Error occurred when populating enclave metadata. The referenced column encryption key ordinal &apos;{0}&apos; is missing in the encryption metadata returned by SQL Server. Max ordinal is &apos;{1}&apos;..
-        internal static string TCE_InvalidEncryptionKeyOrdinalEnclaveMetadata {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Internal error. Error occurred when populating enclave metadata. The referenced column encryption key ordinal &apos;{0}&apos; is missing in the encryption metadata returned by SQL Server. Max ordinal is &apos;{1}&apos;..
+        /// </summary>
+        internal static string TCE_InvalidEncryptionKeyOrdinalEnclaveMetadata
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_InvalidEncryptionKeyOrdinalEnclaveMetadata", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Internal error. Error occurred when populating parameter metadata. The referenced column encryption key ordinal &apos;{0}&apos; is missing in the encryption metadata returned by SQL Server. Max ordinal is &apos;{1}&apos;..
-        internal static string TCE_InvalidEncryptionKeyOrdinalParameterMetadata {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Internal error. Error occurred when populating parameter metadata. The referenced column encryption key ordinal &apos;{0}&apos; is missing in the encryption metadata returned by SQL Server. Max ordinal is &apos;{1}&apos;..
+        /// </summary>
+        internal static string TCE_InvalidEncryptionKeyOrdinalParameterMetadata
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_InvalidEncryptionKeyOrdinalParameterMetadata", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Encryption type &apos;{1}&apos; specified for the column in the database is either invalid or corrupted. Valid encryption types for algorithm &apos;{0}&apos; are: {2}..
-        internal static string TCE_InvalidEncryptionType {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Encryption type &apos;{1}&apos; specified for the column in the database is either invalid or corrupted. Valid encryption types for algorithm &apos;{0}&apos; are: {2}..
+        /// </summary>
+        internal static string TCE_InvalidEncryptionType
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_InvalidEncryptionType", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Invalid key encryption algorithm specified: &apos;{0}&apos;. Expected value: &apos;{1}&apos;..
-        internal static string TCE_InvalidKeyEncryptionAlgorithm {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid key encryption algorithm specified: &apos;{0}&apos;. Expected value: &apos;{1}&apos;..
+        /// </summary>
+        internal static string TCE_InvalidKeyEncryptionAlgorithm
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_InvalidKeyEncryptionAlgorithm", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Internal error. Invalid key encryption algorithm specified: &apos;{0}&apos;. Expected value: &apos;{1}&apos;..
-        internal static string TCE_InvalidKeyEncryptionAlgorithmSysErr {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Internal error. Invalid key encryption algorithm specified: &apos;{0}&apos;. Expected value: &apos;{1}&apos;..
+        /// </summary>
+        internal static string TCE_InvalidKeyEncryptionAlgorithmSysErr
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_InvalidKeyEncryptionAlgorithmSysErr", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Internal Error. The given key id &apos;{0}&apos; is not valid. Error occurred when converting the key id to unsigned short. Error Message: {1}.
-        internal static string TCE_InvalidKeyIdUnableToCastToUnsignedShort {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Internal Error. The given key id &apos;{0}&apos; is not valid. Error occurred when converting the key id to unsigned short. Error Message: {1}.
+        /// </summary>
+        internal static string TCE_InvalidKeyIdUnableToCastToUnsignedShort
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_InvalidKeyIdUnableToCastToUnsignedShort", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to The column encryption key has been successfully decrypted but it&apos;s length: {1} does not match the length: {2} for algorithm &apos;{0}&apos;. Verify the encrypted value of the column encryption key in the database..
-        internal static string TCE_InvalidKeySize {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to The column encryption key has been successfully decrypted but it&apos;s length: {1} does not match the length: {2} for algorithm &apos;{0}&apos;. Verify the encrypted value of the column encryption key in the database..
+        /// </summary>
+        internal static string TCE_InvalidKeySize
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_InvalidKeySize", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to Invalid key store provider name: &apos;{0}&apos;. A key store provider name must denote either a system key store provider or a registered custom key store provider. Valid system key store provider names are: {1}. Valid (currently registered) custom key store provider names are: {2}. Please verify key store provider information in column master key definitions in the database, and verify all custom key store providers used in your application are registered properly..
-        internal static string TCE_InvalidKeyStoreProviderName {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid key store provider name: &apos;{0}&apos;. A key store provider name must denote either a system key store provider or a registered custom key store provider. Valid system key store provider names are: {1}. Valid (currently registered) custom key store provider names are: {2}. Please verify key store provider information in column master key definitions in the database, and verify all custom key store providers used in your application are registered properly..
+        /// </summary>
+        internal static string TCE_InvalidKeyStoreProviderName
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_InvalidKeyStoreProviderName", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to The specified encrypted column encryption key signature does not match the signature computed with the column master key (asymmetric key) in &apos;{0}&apos;. The encrypted column encryption key may be corrupt, or the specified path may be incorrect..
-        internal static string TCE_InvalidSignature {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to The specified encrypted column encryption key signature does not match the signature computed with the column master key (asymmetric key) in &apos;{0}&apos;. The encrypted column encryption key may be corrupt, or the specified path may be incorrect..
+        /// </summary>
+        internal static string TCE_InvalidSignature
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_InvalidSignature", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to The specified encrypted column encryption key&apos;s signature length: {0} does not match the signature length: {1} when using column master key (certificate) in &apos;{2}&apos;. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect..
-        internal static string TCE_InvalidSignatureInEncryptedCEK {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to The specified encrypted column encryption key&apos;s signature length: {0} does not match the signature length: {1} when using column master key (certificate) in &apos;{2}&apos;. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect..
+        /// </summary>
+        internal static string TCE_InvalidSignatureInEncryptedCEK
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_InvalidSignatureInEncryptedCEK", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to The specified encrypted column encryption key&apos;s signature length: {0} does not match the signature length: {1} when using column master key (asymmetric key) in &apos;{2}&apos;. The encrypted column encryption key may be corrupt, or the specified Microsoft Cryptography API: Next Generation (CNG) provider path may be incorrect..
-        internal static string TCE_InvalidSignatureInEncryptedCEKCng {
-            get {
+
+        /// <summary>
+        ///   Looks up a localized string similar to The specified encrypted column encryption key&apos;s signature length: {0} does not match the signature length: {1} when using column master key (asymmetric key) in &apos;{2}&apos;. The encrypted column encryption key may be corrupt, or the specified Microsoft Cryptography API: Next Generation (CNG) provider path may be incorrect..
+        /// </summary>
+        internal static string TCE_InvalidSignatureInEncryptedCEKCng
+        {
+            get
+            {
                 return ResourceManager.GetString("TCE_InvalidSignatureInEncryptedCEKCng", resourceCulture);
             }
         }
-        
-        //   Looks up a localized string similar to The specified encrypted column encryption key&apos;s signature length: {0} does not match the signature length: {1} when using column master key (asymmetric key) in &apos;{2}&apos;. The encrypted column encryption key may be corrupt, or the specified Microsoft cryptographic service provider (CSP) path may be incorrect..
+
+        /// <summary>
+        ///   Looks up a localized string similar to The specified encrypted column encryption key&apos;s signature length: {0} does not match the signature length: {1} when using column master key (asymmetric key) in &apos;{2}&apos;. The encrypted column encryption key may be corrupt, or the specified Microsoft cryptographic service provider (CSP) path may be incorrect..
+        /// </summary>
         internal static string TCE_InvalidSignatureInEncryptedCEKCsp {
             get {
                 return ResourceManager.GetString("TCE_InvalidSignatureInEncryptedCEKCsp", resourceCulture);

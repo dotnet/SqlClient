@@ -45,33 +45,39 @@ namespace Microsoft.Data.SqlClient
         private UpdateRowSource _updatedRowSource = UpdateRowSource.Both;
         private bool _designTimeInvisible;
 
-        
-        // Indicates if the column encryption setting was set at-least once in the batch rpc mode, when using AddBatchCommand.
-        
+        /// <summary>
+        /// Indicates if the column encryption setting was set at-least once in the batch rpc mode, when using AddBatchCommand.
+        /// </summary>
         private bool _wasBatchModeColumnEncryptionSettingSetOnce;
 
-       
-        // Column Encryption Override. Defaults to SqlConnectionSetting, in which case
-        // it will be Enabled if SqlConnectionOptions.IsColumnEncryptionSettingEnabled = true, Disabled if false.
-        // This may also be used to set other behavior which overrides connection level setting.
-       
+        /// <summary>
+        /// Column Encryption Override. Defaults to SqlConnectionSetting, in which case
+        /// it will be Enabled if SqlConnectionOptions.IsColumnEncryptionSettingEnabled = true, Disabled if false.
+        /// This may also be used to set other behavior which overrides connection level setting.
+        /// </summary>
         private SqlCommandColumnEncryptionSetting _columnEncryptionSetting = SqlCommandColumnEncryptionSetting.UseConnectionSetting;
 
         internal SqlDependency _sqlDep;
 
 #if DEBUG
-       
-        // Force the client to sleep during sp_describe_parameter_encryption in the function TryFetchInputParameterEncryptionInfo.
+        /// <summary>
+        /// Force the client to sleep during sp_describe_parameter_encryption in the function TryFetchInputParameterEncryptionInfo.
+        /// </summary>
         private static bool _sleepDuringTryFetchInputParameterEncryptionInfo = false;
 
-       
-        // Force the client to sleep during sp_describe_parameter_encryption in the function RunExecuteReaderTds.
+        /// <summary>
+        /// Force the client to sleep during sp_describe_parameter_encryption in the function RunExecuteReaderTds.
+        /// </summary>
         private static bool _sleepDuringRunExecuteReaderTdsForSpDescribeParameterEncryption = false;
 
-        // Force the client to sleep during sp_describe_parameter_encryption after ReadDescribeEncryptionParameterResults.
+        /// <summary>
+        /// Force the client to sleep during sp_describe_parameter_encryption after ReadDescribeEncryptionParameterResults.
+        /// </summary>
         private static bool _sleepAfterReadDescribeEncryptionParameterResults = false;
 
-        // Internal flag for testing purposes that forces all queries to internally end async calls.
+        /// <summary>
+        /// Internal flag for testing purposes that forces all queries to internally end async calls.
+        /// </summary>
         private static bool _forceInternalEndQuery = false;
 #endif 
 
@@ -134,11 +140,12 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-      
-        // Return if column encryption setting is enabled.
-        // The order in the below if is important since _activeConnection.Parser can throw if the 
-        // underlying tds connection is closed and we don't want to change the behavior for folks
-        // not trying to use transparent parameter encryption i.e. who don't use (SqlCommandColumnEncryptionSetting.Enabled or _activeConnection.IsColumnEncryptionSettingEnabled) here.
+        /// <summary>
+        /// Return if column encryption setting is enabled.
+        /// The order in the below if is important since _activeConnection.Parser can throw if the 
+        /// underlying tds connection is closed and we don't want to change the behavior for folks
+        /// not trying to use transparent parameter encryption i.e. who don't use (SqlCommandColumnEncryptionSetting.Enabled or _activeConnection.IsColumnEncryptionSettingEnabled) here.
+        /// </summary>
         internal bool IsColumnEncryptionEnabled
         {
             get
@@ -289,16 +296,21 @@ namespace Microsoft.Data.SqlClient
         private List<SqlParameterCollection> _parameterCollectionList;
         private int _currentlyExecutingBatch;
 
-      
-        // This variable is used to keep track of which RPC batch's results are being read when reading the results of
-        // describe parameter encryption RPC requests in BatchRPCMode.
+        /// <summary>
+        /// This variable is used to keep track of which RPC batch's results are being read when reading the results of
+        /// describe parameter encryption RPC requests in BatchRPCMode.
+        /// </summary>
         private int _currentlyExecutingDescribeParameterEncryptionRPC;
 
-        // A flag to indicate if we have in-progress describe parameter encryption RPC requests.
-        // Reset to false when completed.
+        /// <summary>
+        /// A flag to indicate if we have in-progress describe parameter encryption RPC requests.
+        /// Reset to false when completed.
+        /// </summary>
         private bool _isDescribeParameterEncryptionRPCCurrentlyInProgress;
 
-        // Return the flag that indicates if describe parameter encryption RPC requests are in-progress.
+        /// <summary>
+        /// Return the flag that indicates if describe parameter encryption RPC requests are in-progress.
+        /// </summary>
         internal bool IsDescribeParameterEncryptionRPCCurrentlyInProgress
         {
             get
@@ -307,10 +319,14 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // A flag to indicate if EndExecute was already initiated by the Begin call.
+        /// <summary>
+        /// A flag to indicate if EndExecute was already initiated by the Begin call.
+        /// </summary>
         private volatile bool _internalEndExecuteInitiated;
 
-        // A flag to indicate whether we postponed caching the query metadata for this command.
+        /// <summary>
+        /// A flag to indicate whether we postponed caching the query metadata for this command.
+        /// </summary>
         internal bool CachingQueryMetadataPostponed { get; set; }
 
         //
@@ -521,8 +537,8 @@ namespace Microsoft.Data.SqlClient
                             {
                                 tdsReliabilitySection.Start();
 #endif //DEBUG
-                            // cleanup
-                            Unprepare();
+                                // cleanup
+                                Unprepare();
 #if DEBUG
                             }
                             finally
@@ -3828,9 +3844,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // Resets the encryption related state of the command object and each of the parameters.
-        // BatchRPC doesn't need special handling to cleanup the state of each RPC object and its parameters since a new RPC object and 
-        // parameters are generated on every execution.
+        /// <summary>
+        /// Resets the encryption related state of the command object and each of the parameters.
+        /// BatchRPC doesn't need special handling to cleanup the state of each RPC object and its parameters since a new RPC object and 
+        /// parameters are generated on every execution.
+        /// </summary>
         private void ResetEncryptionState()
         {
             // First reset the command level state.
@@ -3858,7 +3876,9 @@ namespace Microsoft.Data.SqlClient
             enclaveAttestationParameters = null;
         }
 
-        // Steps to be executed in the Prepare Transparent Encryption finally block.
+        /// <summary>
+        /// Steps to be executed in the Prepare Transparent Encryption finally block.
+        /// </summary>
         private void PrepareTransparentEncryptionFinallyBlock(bool closeDataReader,
                                                                 bool clearDataStructures,
                                                                 bool decrementAsyncCount,
@@ -3897,8 +3917,20 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // Executes the reader after checking to see if we need to encrypt input parameters and then encrypting it if required.
-        // TryFetchInputParameterEncryptionInfo() -> ReadDescribeEncryptionParameterResults()-> EncryptInputParameters() ->RunExecuteReaderTds()
+        /// <summary>
+        /// Executes the reader after checking to see if we need to encrypt input parameters and then encrypting it if required.
+        /// TryFetchInputParameterEncryptionInfo() -> ReadDescribeEncryptionParameterResults()-> EncryptInputParameters() ->RunExecuteReaderTds()
+        /// </summary>
+        /// <param name="cmdBehavior"></param>
+        /// <param name="returnStream"></param>
+        /// <param name="async"></param>
+        /// <param name="timeout"></param>
+        /// <param name="completion"></param>
+        /// <param name="returnTask"></param>
+        /// <param name="asyncWrite"></param>
+        /// <param name="usedCache"></param>
+        /// <param name="inRetry"></param>
+        /// <returns></returns>
         private void PrepareForTransparentEncryption(CommandBehavior cmdBehavior, bool returnStream, bool async, int timeout, TaskCompletionSource<object> completion, out Task returnTask, bool asyncWrite, out bool usedCache, bool inRetry)
         {
             // Fetch reader with input params
@@ -4010,24 +4042,24 @@ namespace Microsoft.Data.SqlClient
                                     {
                                         tdsReliabilitySectionAsync.Start();
 #endif //DEBUG
-                                    // Check for any exceptions on network write, before reading.
-                                    CheckThrowSNIException();
+                                        // Check for any exceptions on network write, before reading.
+                                        CheckThrowSNIException();
 
-                                    // If it is async, then TryFetchInputParameterEncryptionInfo-> RunExecuteReaderTds would have incremented the async count.
-                                    // Decrement it when we are about to complete async execute reader.
-                                    SqlInternalConnectionTds internalConnectionTds = _activeConnection.GetOpenTdsConnection();
-                                    if (internalConnectionTds != null)
-                                    {
-                                        internalConnectionTds.DecrementAsyncCount();
-                                        decrementAsyncCountInFinallyBlockAsync = false;
-                                    }
+                                        // If it is async, then TryFetchInputParameterEncryptionInfo-> RunExecuteReaderTds would have incremented the async count.
+                                        // Decrement it when we are about to complete async execute reader.
+                                        SqlInternalConnectionTds internalConnectionTds = _activeConnection.GetOpenTdsConnection();
+                                        if (internalConnectionTds != null)
+                                        {
+                                            internalConnectionTds.DecrementAsyncCount();
+                                            decrementAsyncCountInFinallyBlockAsync = false;
+                                        }
 
-                                    // Complete executereader.
-                                    describeParameterEncryptionDataReader = CompleteAsyncExecuteReader(forDescribeParameterEncryption: true);
-                                    Debug.Assert(null == _stateObj, "non-null state object in PrepareForTransparentEncryption.");
+                                        // Complete executereader.
+                                        describeParameterEncryptionDataReader = CompleteAsyncExecuteReader(forDescribeParameterEncryption: true);
+                                        Debug.Assert(null == _stateObj, "non-null state object in PrepareForTransparentEncryption.");
 
-                                    // Read the results of describe parameter encryption.
-                                    ReadDescribeEncryptionParameterResults(describeParameterEncryptionDataReader, describeParameterEncryptionRpcOriginalRpcMap);
+                                        // Read the results of describe parameter encryption.
+                                        ReadDescribeEncryptionParameterResults(describeParameterEncryptionDataReader, describeParameterEncryptionRpcOriginalRpcMap);
 
 #if DEBUG
                                         // Failpoint to force the thread to halt to simulate cancellation of SqlCommand.
@@ -4095,24 +4127,24 @@ namespace Microsoft.Data.SqlClient
                                             tdsReliabilitySectionAsync.Start();
 #endif //DEBUG
 
-                                        // Check for any exceptions on network write, before reading.
-                                        CheckThrowSNIException();
+                                            // Check for any exceptions on network write, before reading.
+                                            CheckThrowSNIException();
 
-                                        // If it is async, then TryFetchInputParameterEncryptionInfo-> RunExecuteReaderTds would have incremented the async count.
-                                        // Decrement it when we are about to complete async execute reader.
-                                        SqlInternalConnectionTds internalConnectionTds = _activeConnection.GetOpenTdsConnection();
-                                        if (internalConnectionTds != null)
-                                        {
-                                            internalConnectionTds.DecrementAsyncCount();
-                                            decrementAsyncCountInFinallyBlockAsync = false;
-                                        }
+                                            // If it is async, then TryFetchInputParameterEncryptionInfo-> RunExecuteReaderTds would have incremented the async count.
+                                            // Decrement it when we are about to complete async execute reader.
+                                            SqlInternalConnectionTds internalConnectionTds = _activeConnection.GetOpenTdsConnection();
+                                            if (internalConnectionTds != null)
+                                            {
+                                                internalConnectionTds.DecrementAsyncCount();
+                                                decrementAsyncCountInFinallyBlockAsync = false;
+                                            }
 
-                                        // Complete executereader.
-                                        describeParameterEncryptionDataReader = CompleteAsyncExecuteReader(forDescribeParameterEncryption: true);
-                                        Debug.Assert(null == _stateObj, "non-null state object in PrepareForTransparentEncryption.");
+                                            // Complete executereader.
+                                            describeParameterEncryptionDataReader = CompleteAsyncExecuteReader(forDescribeParameterEncryption: true);
+                                            Debug.Assert(null == _stateObj, "non-null state object in PrepareForTransparentEncryption.");
 
-                                        // Read the results of describe parameter encryption.
-                                        ReadDescribeEncryptionParameterResults(describeParameterEncryptionDataReader, describeParameterEncryptionRpcOriginalRpcMap);
+                                            // Read the results of describe parameter encryption.
+                                            ReadDescribeEncryptionParameterResults(describeParameterEncryptionDataReader, describeParameterEncryptionRpcOriginalRpcMap);
 #if DEBUG
                                             // Failpoint to force the thread to halt to simulate cancellation of SqlCommand.
                                             if (_sleepAfterReadDescribeEncryptionParameterResults)
@@ -4217,8 +4249,17 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // Executes an RPC to fetch param encryption info from SQL Engine. If this method is not done writing
-        //  the request to wire, it'll set the "task" parameter which can be used to create continuations.
+        /// <summary>
+        /// Executes an RPC to fetch param encryption info from SQL Engine. If this method is not done writing
+        ///  the request to wire, it'll set the "task" parameter which can be used to create continuations.
+        /// </summary>
+        /// <param name="timeout"></param>
+        /// <param name="async"></param>
+        /// <param name="asyncWrite"></param>
+        /// <param name="inputParameterEncryptionNeeded"></param>
+        /// <param name="task"></param>
+        /// <param name="describeParameterEncryptionRpcOriginalRpcMap"></param>
+        /// <returns></returns>
         private SqlDataReader TryFetchInputParameterEncryptionInfo(int timeout,
                                                                    bool async,
                                                                    bool asyncWrite,
@@ -4352,7 +4393,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // Constructs a SqlParameter with a given string value
+        /// <summary>
+        /// Constructs a SqlParameter with a given string value
+        /// </summary>
+        /// <param name="queryText"></param>
+        /// <returns></returns>
         private SqlParameter GetSqlParameterWithQueryText(string queryText)
         {
             SqlParameter sqlParam = new SqlParameter(null, ((queryText.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText, queryText.Length);
@@ -4361,9 +4406,14 @@ namespace Microsoft.Data.SqlClient
             return sqlParam;
         }
 
-        // Constructs the sp_describe_parameter_encryption request with the values from the original RPC call.	
-        // Prototype for &lt;sp_describe_parameter_encryption&gt; is 	
-        // exec sp_describe_parameter_encryption @tsql=N'[SQL Statement]', @params=N'@p1 varbinary(256)'
+        /// <summary>
+        /// Constructs the sp_describe_parameter_encryption request with the values from the original RPC call.	
+        /// Prototype for &lt;sp_describe_parameter_encryption&gt; is 	
+        /// exec sp_describe_parameter_encryption @tsql=N'[SQL Statement]', @params=N'@p1 varbinary(256)'
+        /// </summary>
+        /// <param name="originalRpcRequest"></param>
+        /// <param name="describeParameterEncryptionRequest"></param>
+        /// <param name="attestationParameters"></param>
         private void PrepareDescribeParameterEncryptionRequest(_SqlRPC originalRpcRequest, ref _SqlRPC describeParameterEncryptionRequest, byte[] attestationParameters = null)
         {
             Debug.Assert(originalRpcRequest != null);
@@ -4474,7 +4524,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // Read the output of sp_describe_parameter_encryption
+        /// <summary>
+        /// Read the output of sp_describe_parameter_encryption
+        /// </summary>
+        /// <param name="ds">Resultset from calling to sp_describe_parameter_encryption</param>
+        /// <param name="describeParameterEncryptionRpcOriginalRpcMap"> Readonly dictionary with the map of parameter encryption rpc requests with the corresponding original rpc requests.</param>
         private void ReadDescribeEncryptionParameterResults(SqlDataReader ds, ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap)
         {
             _SqlRPC rpc = null;
@@ -4891,7 +4945,7 @@ namespace Microsoft.Data.SqlClient
 
                             if (ShouldUseEnclaveBasedWorkflow && this.enclavePackage != null)
                             {
-                                EnclaveDelegate.Instance.InvalidateEnclaveSession(this._activeConnection.AttestationProtocol, this._activeConnection.Parser.EnclaveType, 
+                                EnclaveDelegate.Instance.InvalidateEnclaveSession(this._activeConnection.AttestationProtocol, this._activeConnection.Parser.EnclaveType,
                                     this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this.enclavePackage.EnclaveSession);
                             }
 
@@ -4973,7 +5027,21 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // RunExecuteReaderTds after Transparent Parameter Encryption is complete.
+        /// <summary>
+        /// RunExecuteReaderTds after Transparent Parameter Encryption is complete.
+        /// </summary>
+        /// <param name="cmdBehavior"></param>
+        /// <param name="runBehavior"></param>
+        /// <param name="returnStream"></param>
+        /// <param name="async"></param>
+        /// <param name="timeout"></param>
+        /// <param name="task"></param>
+        /// <param name="asyncWrite"></param>
+        /// <param name="inRetry"></param>
+        /// <param name="ds"></param>
+        /// <param name="describeParameterEncryptionRequest"></param>
+        /// <param name="describeParameterEncryptionTask"></param>
+        /// <returns></returns>
         private SqlDataReader RunExecuteReaderTdsWithTransparentParameterEncryption(CommandBehavior cmdBehavior,
                                                                                     RunBehavior runBehavior,
                                                                                     bool returnStream,
@@ -5857,8 +5925,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // IMPORTANT NOTE: This is created as a copy of OnDoneProc below for Transparent Column Encryption improvement
-        // as there is not much time, to address regressions. Will revisit removing the duplication, when we have time again.
+        /// <summary>
+        /// IMPORTANT NOTE: This is created as a copy of OnDoneProc below for Transparent Column Encryption improvement
+        /// as there is not much time, to address regressions. Will revisit removing the duplication, when we have time again.
+        /// </summary>
         internal void OnDoneDescribeParameterEncryptionProc(TdsParserStateObject stateObj)
         {
             // called per rpc batch complete
@@ -5895,8 +5965,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // IMPORTANT NOTE: There is a copy of this function above in OnDoneDescribeParameterEncryptionProc.
-        // Please consider the changes being done in this function for the above function as well.
+        /// <summary>
+        /// IMPORTANT NOTE: There is a copy of this function above in OnDoneDescribeParameterEncryptionProc.
+        /// Please consider the changes being done in this function for the above function as well.
+        /// </summary>
         internal void OnDoneProc()
         { // called per rpc batch complete
             if (BatchRPCMode)
@@ -6591,9 +6663,14 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // This function constructs a string parameter containing the exec statement in the following format
-        // N'EXEC sp_name @param1=@param1, @param1=@param2, ..., @paramN=@paramN'
-        // TODO: Need to handle return values.
+        /// <summary>
+        /// This function constructs a string parameter containing the exec statement in the following format
+        /// N'EXEC sp_name @param1=@param1, @param1=@param2, ..., @paramN=@paramN'
+        /// TODO: Need to handle return values.
+        /// </summary>
+        /// <param name="storedProcedureName">Stored procedure name</param>
+        /// <param name="parameters">SqlParameter list</param>
+        /// <returns>A string SqlParameter containing the constructed sql statement value</returns>
         private SqlParameter BuildStoredProcedureStatementForColumnEncryption(string storedProcedureName, SqlParameter[] parameters)
         {
             Debug.Assert(CommandType == CommandType.StoredProcedure, "BuildStoredProcedureStatementForColumnEncryption() should only be called for stored procedures");
@@ -7006,8 +7083,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // Get or set the number of records affected by SpDescribeParameterEncryption.
-        // The below line is used only for debug asserts and not exposed publicly or impacts functionality otherwise.
+        /// <summary>
+        /// Get or set the number of records affected by SpDescribeParameterEncryption.
+        /// The below line is used only for debug asserts and not exposed publicly or impacts functionality otherwise.
+        /// </summary>
         internal int RowsAffectedByDescribeParameterEncryption
         {
             get
@@ -7074,7 +7153,9 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // Clear the state in sqlcommand related to describe parameter encryption RPC requests.
+        /// <summary>
+        /// Clear the state in sqlcommand related to describe parameter encryption RPC requests.
+        /// </summary>
         private void ClearDescribeParameterEncryptionRequests()
         {
             _sqlRPCParameterEncryptionReqArray = null;
@@ -7098,8 +7179,10 @@ namespace Microsoft.Data.SqlClient
             _currentlyExecutingBatch = 0;
         }
 
-        // Set the column encryption setting to the new one.
-        // Do not allow conflicting column encryption settings.
+        /// <summary>
+        /// Set the column encryption setting to the new one.
+        /// Do not allow conflicting column encryption settings.
+        /// </summary>
         private void SetColumnEncryptionSetting(SqlCommandColumnEncryptionSetting newColumnEncryptionSetting)
         {
             if (!this._wasBatchModeColumnEncryptionSettingSetOnce)
@@ -7377,7 +7460,12 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // Writes and end execute event in Event Source.
+        /// <summary>
+        /// Writes and end execute event in Event Source.
+        /// </summary>
+        /// <param name="success">True if SQL command finished successfully, otherwise false.</param>
+        /// <param name="sqlExceptionNumber">Gets a number that identifies the type of error.</param>
+        /// <param name="synchronous">True if SQL command was executed synchronously, otherwise false.</param>
         private void WriteEndExecuteEvent(bool success, int? sqlExceptionNumber, bool synchronous)
         {
             if (SqlEventSource.Log.IsEnabled())

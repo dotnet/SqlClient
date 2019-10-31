@@ -7,6 +7,9 @@ using System.Security.Cryptography;
 
 namespace Microsoft.Data.SqlClient
 {
+    /// <summary>
+    /// A delegate for communicating with secure enclave
+    /// </summary>
     internal partial class EnclaveDelegate
     {
         private static readonly string GetSerializedAttestationParametersName = "GetSerializedAttestationParameters";
@@ -53,6 +56,15 @@ namespace Microsoft.Data.SqlClient
             return CombineByteArrays(new[] { attestationProtocolBytes, attestationProtocolInputLengthBytes, attestationProtocolInputBytes, clientDHPublicKeyLengthBytes, clientDHPublicKey });
         }
 
+        /// <summary>
+        /// Create a new enclave session
+        /// </summary>
+        /// <param name="attestationProtocol">attestation protocol</param>
+        /// <param name="enclaveType">enclave type</param>
+        /// <param name="serverName">servername</param>
+        /// <param name="attestationUrl">attestation url for attestation service endpoint</param>
+        /// <param name="attestationInfo">attestation info from SQL Server</param>
+        /// <param name="attestationParameters">attestation parameters</param>
         internal void CreateEnclaveSession(SqlConnectionAttestationProtocol attestationProtocol, string enclaveType, string serverName, string attestationUrl,
             byte[] attestationInfo, SqlEnclaveAttestationParameters attestationParameters)
         {
@@ -75,6 +87,16 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <summary>
+        /// Generate the byte package that needs to be sent to the enclave
+        /// </summary>
+        /// <param name="attestationProtocol">attestation protocol</param>
+        /// <param name="keysTobeSentToEnclave">Keys to be sent to enclave</param>
+        /// <param name="queryText"></param>
+        /// <param name="enclaveType">enclave type</param>
+        /// <param name="serverName">server name</param>
+        /// <param name="enclaveAttestationUrl">url for attestation endpoint</param>
+        /// <returns></returns>
         internal EnclavePackage GenerateEnclavePackage(SqlConnectionAttestationProtocol attestationProtocol, Dictionary<int, SqlTceCipherInfoEntry> keysTobeSentToEnclave, string queryText, string enclaveType, string serverName, string enclaveAttestationUrl)
         {
 
