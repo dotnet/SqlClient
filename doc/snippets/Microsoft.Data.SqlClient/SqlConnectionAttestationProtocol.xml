@@ -1,0 +1,21 @@
+<docs>
+    <members name="SqlConnectionAttestationProtocol">
+        <SqlConnectionAttestationProtocol>
+            <summary>
+                Specifies a value for Attestation Protocol.
+            </summary>
+        </SqlConnectionAttestationProtocol>
+        <NotSpecified>
+            <summary>If the attestation protocol is not specified. Use this as default value.</summary>
+            <value>0</value>
+        </NotSpecified>
+        <AAS>
+            <summary>Attestation portocol for Azure Attestation Service</summary>
+            <value>1</value>
+        </AAS>
+        <HGS>
+            <summary>Attestation protocol for Host Guardian Service</summary>
+             <value>3</value>
+        </HGS>
+    </members>
+</docs>

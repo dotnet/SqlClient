@@ -46,7 +46,6 @@ namespace Microsoft.Data.SqlClient
 
     internal enum EnclaveType
     {
-
         None = 0,
 
         Vbs = 1,
