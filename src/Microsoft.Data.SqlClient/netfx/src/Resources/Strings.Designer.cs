@@ -19,7 +19,7 @@ namespace System {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Strings {
@@ -7777,7 +7777,7 @@ namespace System {
         ///   Looks up a localized string similar to Failed to initialize the &apos;{0}&apos; property for one of the following reasons:
         ///	The value data type was not the data type of the property or was not null. For example, the property was DBPROP_MEMORYUSAGE, which has a data type of Int32, and the data type was Int64.
         ///	The value was not a valid value. For example, the property was DBPROP_MEMORYUSAGE and the value was negative.
-        ///	The value was a valid value for the property and the provider supports the property as a settable property, but the provider does not suppo [rest of string was truncated]&quot;;.
+        ///	The value was a valid value for the property and the provider supports the property as a settable property, but the provider does not su [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string OleDb_PropertyBadValue {
             get {

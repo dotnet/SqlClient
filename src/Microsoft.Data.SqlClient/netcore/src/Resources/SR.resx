@@ -292,7 +292,7 @@
     <value>{0} requires the command to have a transaction when the connection assigned to the command is in a pending local transaction.  The Transaction property of the command has not been initialized.</value>
   </data>
   <data name="ADP_OpenReaderExists" xml:space="preserve">
-    <value>There is already an open DataReader associated with this Command which must be closed first.</value>
+    <value>There is already an open DataReader associated with this {0} which must be closed first.</value>
   </data>
   <data name="ADP_CalledTwice" xml:space="preserve">
     <value>The method '{0}' cannot be called more than once for the same execution.</value>
@@ -631,7 +631,7 @@
     <value>The given ColumnName '{0}' does not match up with any column in data source.</value>
   </data>
   <data name="SQL_BulkLoadStringTooLong" xml:space="preserve">
-    <value>String or binary data would be truncated.</value>
+    <value>String or binary data would be truncated in table '{0}', column '{1}'. Truncated value: '{2}'.</value>
   </data>
   <data name="SQL_BulkLoadInvalidTimeout" xml:space="preserve">
     <value>Timeout Value '{0}' is less than 0.</value>
