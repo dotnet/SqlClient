@@ -53,6 +53,11 @@ namespace Microsoft.Data.SqlClient
         public Microsoft.Data.SqlClient.SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting { get { throw null; } set { } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/EnclaveAttestationUrl/*'/>
         public string EnclaveAttestationUrl { get { throw null; } set { } }
+
+        /// <summary>
+        /// To Do : add docs file
+        /// </summary>
+        public Microsoft.Data.SqlClient.SqlConnectionAttestationProtocol AttestationProtocol {get { throw null; } set { } }
     }
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SqlParameter/*'/>
     public sealed partial class SqlParameter : System.Data.Common.DbParameter, System.ICloneable, System.Data.IDataParameter, System.Data.IDbDataParameter

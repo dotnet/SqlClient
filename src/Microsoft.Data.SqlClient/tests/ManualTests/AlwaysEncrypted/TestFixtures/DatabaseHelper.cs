@@ -59,7 +59,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 yield return new object[] {connStrAE, false};
             }
         }
-        
+
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
