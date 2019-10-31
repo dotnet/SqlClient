@@ -267,7 +267,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             Assert.True(tryGetValueResult);
             Assert.Equal(sqlConnectionColumnEncryptionSetting, (SqlConnectionColumnEncryptionSetting)outputValue);
 
-            // connectionStringBuilder should not have the key ColumnEncryptionSetting. The key is with spaces.
+            // connectionStringBuilder should not have the key Enclave Attestation URL. The key is with spaces.
             tryGetValueResult = connectionStringBuilder.TryGetValue(@"EnclaveAttestationUrl", out outputValue);
             Assert.False(tryGetValueResult);
             Assert.Null(outputValue);
@@ -283,7 +283,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             Assert.True(tryGetValueResult);
             Assert.Equal("www.foo.com", (string)outputValue);
 
-            // connectionStringBuilder should not have the key ColumnEncryptionSetting. The key is with spaces.
+            // connectionStringBuilder should not have the key Enclave Attestation Protocol. The key is with spaces.
             tryGetValueResult = connectionStringBuilder.TryGetValue(@"AttestationProtocol", out outputValue);
             Assert.False(tryGetValueResult);
             Assert.Null(outputValue);
