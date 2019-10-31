@@ -691,7 +691,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // Convert the value to SqlConnectionColumnEncryptionSetting.
+        /// <summary>
+        /// Convert the value to SqlConnectionColumnEncryptionSetting.
+        /// </summary>
+        /// <returns></returns>
         internal SqlConnectionColumnEncryptionSetting ConvertValueToColumnEncryptionSetting()
         {
             if (!TryGetParsetableValue(KEY.ColumnEncryptionSetting, out string value))
@@ -713,8 +716,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-      
-        // Convert the value to SqlConnectionAttestationProtocol
+        /// <summary>
+        /// Convert the value to SqlConnectionAttestationProtocol
+        /// </summary>
+        /// <returns></returns>
         internal SqlConnectionAttestationProtocol ConvertValueToAttestationProtocol()
         {
             if (!TryGetParsetableValue(KEY.AttestationProtocol, out string value))

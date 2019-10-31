@@ -971,7 +971,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // Convert the value to SqlConnectionColumnEncryptionSetting.
+        /// <summary>
+        /// Convert the value to SqlConnectionColumnEncryptionSetting.
+        /// </summary>
+        /// <returns></returns>
         internal SqlConnectionColumnEncryptionSetting ConvertValueToColumnEncryptionSetting()
         {
             object value = base.Parsetable[KEY.ColumnEncryptionSetting];

@@ -148,9 +148,18 @@ namespace Microsoft.Data.Common
             }
         }
 
+        /// <summary>
+        /// Column Encryption Setting.
+        /// </summary>
         const string ColumnEncryptionSettingEnabledString = "Enabled";
         const string ColumnEncryptionSettingDisabledString = "Disabled";
 
+        /// <summary>
+        /// Convert a string value to the corresponding SqlConnectionColumnEncryptionSetting.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="result"></param>
+        /// <returns></returns>
         internal static bool TryConvertToColumnEncryptionSetting(string value, out SqlConnectionColumnEncryptionSetting result)
         {
             bool isSuccess = false;
@@ -173,12 +182,22 @@ namespace Microsoft.Data.Common
             return isSuccess;
         }
 
+        /// <summary>
+        /// Is it a valid connection level column encryption setting ?
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
         internal static bool IsValidColumnEncryptionSetting(SqlConnectionColumnEncryptionSetting value)
         {
             Debug.Assert(Enum.GetNames(typeof(SqlConnectionColumnEncryptionSetting)).Length == 2, "SqlConnectionColumnEncryptionSetting enum has changed, update needed");
             return value == SqlConnectionColumnEncryptionSetting.Enabled || value == SqlConnectionColumnEncryptionSetting.Disabled;
         }
 
+        /// <summary>
+        /// Convert connection level column encryption setting value to string.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
         internal static string ColumnEncryptionSettingToString(SqlConnectionColumnEncryptionSetting value)
         {
             Debug.Assert(IsValidColumnEncryptionSetting(value), "value is not a valid connection level column encryption setting.");
@@ -197,9 +216,18 @@ namespace Microsoft.Data.Common
 
         #region <<AttestationProtocol Utility>>
 
+        /// <summary>
+        /// Attestation Protocol.
+        /// </summary>
         const string AttestationProtocolHGS = "HGS";
         const string AttestationProtocolAAS = "AAS";
 
+        /// <summary>
+        ///  Convert a string value to the corresponding SqlConnectionAttestationProtocol
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="result"></param>
+        /// <returns></returns>
         internal static bool TryConvertToAttestationProtocol(string value, out SqlConnectionAttestationProtocol result)
         {
             if (StringComparer.InvariantCultureIgnoreCase.Equals(value, AttestationProtocolHGS))
@@ -214,15 +242,15 @@ namespace Microsoft.Data.Common
             }
             else
 
-            result = DbConnectionStringDefaults.AttestationProtocol;
+                result = DbConnectionStringDefaults.AttestationProtocol;
             return false;
-        }
+            }
 
         internal static bool IsValidAttestationProtocol(SqlConnectionAttestationProtocol value)
         {
             Debug.Assert(Enum.GetNames(typeof(SqlConnectionAttestationProtocol)).Length == 3, "SqlConnectionAttestationProtocol enum has changed, update needed");
-            return value == SqlConnectionAttestationProtocol.NotSpecified 
-                || value == SqlConnectionAttestationProtocol.HGS 
+            return value == SqlConnectionAttestationProtocol.NotSpecified
+                || value == SqlConnectionAttestationProtocol.HGS
                 || value == SqlConnectionAttestationProtocol.AAS;
 
         }
@@ -327,6 +355,16 @@ namespace Microsoft.Data.Common
             }
         }
 
+        /// <summary>
+        /// This method attempts to convert the given value tp ApplicationIntent enum. The algorithm is:
+        /// * if the value is from type string, it will be matched against ApplicationIntent enum names only, using ordinal, case-insensitive comparer
+        /// * if the value is from type ApplicationIntent, it will be used as is
+        /// * if the value is from integral type (SByte, Int16, Int32, Int64, Byte, UInt16, UInt32, or UInt64), it will be converted to enum
+        /// * if the value is another enum or any other type, it will be blocked with an appropriate ArgumentException
+        /// 
+        /// in any case above, if the converted value is out of valid range, the method raises ArgumentOutOfRangeException.
+        /// </summary>
+        /// <returns>application intent value in the valid range</returns>
         internal static ApplicationIntent ConvertToApplicationIntent(string keyword, object value)
         {
             Debug.Assert(null != value, "ConvertToApplicationIntent(null)");
@@ -492,6 +530,12 @@ namespace Microsoft.Data.Common
             }
         }
 
+        /// <summary>
+        /// Convert the provided value to a SqlConnectionColumnEncryptionSetting.
+        /// </summary>
+        /// <param name="keyword"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
         internal static SqlConnectionColumnEncryptionSetting ConvertToColumnEncryptionSetting(string keyword, object value)
         {
             if (null == value)

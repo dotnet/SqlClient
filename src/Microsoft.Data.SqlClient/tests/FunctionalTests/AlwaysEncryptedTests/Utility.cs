@@ -439,6 +439,11 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             }
         }
 
+        /// <summary>
+        /// String to Byte array conversion.
+        /// </summary>
+        /// <param name="hex"></param>
+        /// <returns></returns>
         internal static byte[] StringToByteArray(string hex)
         {
             Assert.True(!string.IsNullOrWhiteSpace(hex));

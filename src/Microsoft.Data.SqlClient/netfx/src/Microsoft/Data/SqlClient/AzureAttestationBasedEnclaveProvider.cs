@@ -127,7 +127,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-
         // When overridden in a derived class, looks up and evicts an enclave session from the enclave session cache, if the provider implements session caching.
         public override void InvalidateEnclaveSession(string serverName, string enclaveAttestationUrl, SqlEnclaveSession enclaveSessionToInvalidate)
         {
