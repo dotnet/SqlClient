@@ -56,7 +56,7 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e)
             {
-                throw new RetriableEnclaveQueryExecutionException(e.Message, e);
+                throw new RetryableEnclaveQueryExecutionException(e.Message, e);
             }
 
             List<ColumnEncryptionKeyInfo> decryptedKeysToBeSentToEnclave = GetDecryptedKeysToBeSentToEnclave(keysTobeSentToEnclave, serverName);
@@ -387,9 +387,9 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Exception when executing a enclave based Always Encrypted query 
         /// </summary>
-        internal class RetriableEnclaveQueryExecutionException : Exception
+        internal class RetryableEnclaveQueryExecutionException : Exception
         {
-            internal RetriableEnclaveQueryExecutionException(string message, Exception innerException) : base(message, innerException) { }
+            internal RetryableEnclaveQueryExecutionException(string message, Exception innerException) : base(message, innerException) { }
         }
 
         /// <summary>

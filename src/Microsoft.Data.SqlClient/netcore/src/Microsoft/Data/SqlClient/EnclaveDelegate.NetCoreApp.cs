@@ -109,7 +109,7 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e)
             {
-                throw new RetriableEnclaveQueryExecutionException(e.Message, e);
+                throw new RetryableEnclaveQueryExecutionException(e.Message, e);
             }
 
             List<ColumnEncryptionKeyInfo> decryptedKeysToBeSentToEnclave = GetDecryptedKeysToBeSentToEnclave(keysTobeSentToEnclave, serverName);
