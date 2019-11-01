@@ -228,10 +228,10 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
             //also check attestatin url
 
-            // Key is "Column Encryption Setting" with spaces. So lookup for ColumnEncryptionSetting should return false.
+            // Key is "Column Encryption Setting" with spaces. So lookup for Enclave Attestation URL should return false.
             Assert.False(connectionStringBuilder.ContainsKey(@"EnclaveAttestationUrl"));
 
-            // connectionStringBuilder should have the key Column Encryption Setting, even if value is not set.
+            // connectionStringBuilder should have the key Enclave Attestation URL, even if value is not set.
             Assert.True(connectionStringBuilder.ContainsKey(@"Enclave Attestation Url"));
 
             // set a value and check for the key again, it should exist.
@@ -293,11 +293,26 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             Assert.True(tryGetValueResult);
             Assert.Equal(SqlConnectionAttestationProtocol.NotSpecified, outputValue);
 
-            // set the value for the protocol without setting it.
+            // Get the value for the protocol without setting it. It should return not specified.
+            tryGetValueResult = connectionStringBuilder.TryGetValue(@"Attestation Protocol", out outputValue);
+            Assert.True(tryGetValueResult);
+            Assert.Equal(SqlConnectionAttestationProtocol.NotSpecified, outputValue);
+
+            //Set the value for protocol to HGS.
             connectionStringBuilder.AttestationProtocol = SqlConnectionAttestationProtocol.HGS;
+
+            //Get value for Attestation Protocol.
             tryGetValueResult = connectionStringBuilder.TryGetValue(@"Attestation Protocol", out outputValue);
             Assert.True(tryGetValueResult);
             Assert.Equal(SqlConnectionAttestationProtocol.HGS, outputValue);
+
+            //Set the value for protocol to AAS.
+            connectionStringBuilder.AttestationProtocol = SqlConnectionAttestationProtocol.AAS;
+
+            //Get value for Attestation Protocol.
+            tryGetValueResult = connectionStringBuilder.TryGetValue(@"Attestation Protocol", out outputValue);
+            Assert.True(tryGetValueResult);
+            Assert.Equal(SqlConnectionAttestationProtocol.AAS, outputValue);
         }
 
         [Theory]
@@ -316,13 +331,13 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             string url = "www.foo.com";
             SqlConnectionAttestationProtocol protocol = SqlConnectionAttestationProtocol.HGS;
 
-            // Use the Add function to update the Column Encryption Setting in the dictionary.
+            // Use the Add function to update the Enclae Attestation URL in the dictionary.
             connectionStringBuilder.Add(@"Enclave Attestation Url", url);
 
             // Query the property to check if the above add was effective.
             Assert.Equal(url, connectionStringBuilder.EnclaveAttestationUrl);
 
-            // Use the Add function to update the Column Encryption Setting in the dictionary.
+            // Use the Add function to update the Enclave Attestatopm Protocol in the dictionary.
             connectionStringBuilder.Add(@"Attestation Protocol", protocol);
 
             // Query the property to check if the above add was effective.
@@ -349,14 +364,14 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             connectionStringBuilder.TryGetValue(@"Column Encryption Setting", out outputValue);
             Assert.Equal(SqlConnectionColumnEncryptionSetting.Disabled, outputValue);
 
-            // Use the Add function to update the Column Encryption Setting in the dictionary.
+            // Use the Add function to update the Enclave Attestation URL in the dictionary.
             string url = "www.foo.com";
             connectionStringBuilder.Add(@"Enclave Attestation Url", url);
 
             // Query the property to check if the above add was effective.
             Assert.Equal(url, connectionStringBuilder.EnclaveAttestationUrl);
 
-            // Use the Remove function to remove the Column Encryption Setting from the dictionary.
+            // Use the Remove function to remove the Enclave Attestation URL from the dictionary.
             connectionStringBuilder.Remove(@"Enclave Attestation Url");
 
             // Query the property to check if the above remove was effective.
@@ -395,27 +410,27 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             // Query the property to check if the above add was effective.
             Assert.False(connectionStringBuilder.ShouldSerialize(@"Column Encryption Setting"));
 
-            // Use the Add function to update the Column Encryption Setting in the dictionary.
+            // Use the Add function to update the Enclave Attestation URL in the dictionary.
             string url = "www.foo.com";
             connectionStringBuilder.Add(@"Enclave Attestation Url", url);
 
             // Query the ShouldSerialize method to check if the above add was effective.
             Assert.True(connectionStringBuilder.ShouldSerialize(@"Enclave Attestation Url"));
 
-            // Use the Remove function to Remove the Column Encryption Setting from the dictionary.
+            // Use the Remove function to Remove the Enclave Attestation URL from the dictionary.
             connectionStringBuilder.Remove(@"Enclave Attestation Url");
 
             // Query the property to check if the above add was effective.
             Assert.False(connectionStringBuilder.ShouldSerialize(@"Enclave Attestation Url"));
 
             string protocol = "HGS";
-            //Use the Add function to update the column Encryption Setting in the dictionary.
+            //Use the Add function to update the Enclave Attestation Protocol in the dictionary.
             connectionStringBuilder.Add(@"Attestation Protocol", protocol);
 
             // Query the ShouldSerialize method to check if the above add was effective.
             Assert.True(connectionStringBuilder.ShouldSerialize(@"Attestation Protocol"));
 
-            // Use the Remove function to Remove the Column Encryption Setting from the dictionary.
+            // Use the Remove function to Remove the Enclave Attestation Protocol from the dictionary.
             connectionStringBuilder.Remove(@"Attestation Protocol");
 
             // Query the property to check if the above add was effective.
