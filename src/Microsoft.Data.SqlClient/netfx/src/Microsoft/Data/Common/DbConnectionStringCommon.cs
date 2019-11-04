@@ -831,24 +831,21 @@ namespace Microsoft.Data.Common
         /// <returns></returns>
         internal static bool TryConvertToAttestationProtocol(string value, out SqlConnectionAttestationProtocol result)
         {
-            bool isSuccess = false;
-
             if (StringComparer.InvariantCultureIgnoreCase.Equals(value, AttestationProtocolHGS))
             {
                 result = SqlConnectionAttestationProtocol.HGS;
-                isSuccess = true;
+                return true;
             }
             else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, AttestationProtocolAAS))
             {
                 result = SqlConnectionAttestationProtocol.AAS;
-                isSuccess = true;
+                return true;
             }
             else
             {
                 result = DbConnectionStringDefaults.AttestationProtocol;
+                return false;
             }
-
-            return isSuccess;
         }
 
         internal static bool IsValidAttestationProtocol(SqlConnectionAttestationProtocol value)
@@ -887,11 +884,6 @@ namespace Microsoft.Data.Common
 
             if (null != sValue)
             {
-                if (TryConvertToAttestationProtocol(sValue, out result))
-                {
-                    return result;
-                }
-
                 // try again after remove leading & trailing whitespaces.
                 sValue = sValue.Trim();
                 if (TryConvertToAttestationProtocol(sValue, out result))
