@@ -26,8 +26,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             tableName = fixture.BulkCopyAETestTable.Name;
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public void TestBulkCopyString()
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public void TestBulkCopyString(string connectionString)
         {
             var dataTable = new DataTable();
             dataTable.Columns.Add("c1", typeof(string));
@@ -38,7 +39,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             dataTable.Rows.Add(dataRow);
             dataTable.AcceptChanges();
 
-            var encryptionEnabledConnectionString = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+            var encryptionEnabledConnectionString = new SqlConnectionStringBuilder(connectionString)
             {
                 ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Enabled
             }.ConnectionString;
@@ -52,6 +53,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             })
             {
                 connection.Open();
+                Table.DeleteData(tableName, connection);
+
                 bulkCopy.WriteToServer(dataTable);
 
                 string queryString = "SELECT * FROM [" + tableName + "];";
@@ -64,10 +67,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         public void Dispose()
         {
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            foreach (string connection in DataTestUtility.AEConnStringsSetup)
             {
-                sqlConnection.Open();
-                Table.DeleteData(fixture.BulkCopyAETestTable.Name, sqlConnection);
+                using (SqlConnection sqlConnection = new SqlConnection(connection))
+                {
+                    sqlConnection.Open();
+                    Table.DeleteData(fixture.BulkCopyAETestTable.Name, sqlConnection);
+                }
             }
         }
     }

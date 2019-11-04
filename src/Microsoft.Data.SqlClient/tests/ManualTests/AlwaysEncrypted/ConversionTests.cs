@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.using System;
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlTypes;
@@ -27,7 +28,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         private const decimal SmallMoneyMaxValue = 214748.3647M;
         private const decimal SmallMoneyMinValue = -214748.3648M;
         private const int MaxLength = 10000;
-        private const int NumberOfRows = 100;
+        private int NumberOfRows = DataTestUtility.EnclaveEnabled ? 10 : 100;
         private readonly X509Certificate2 certificate;
         private ColumnMasterKey columnMasterKey;
         private ColumnEncryptionKey columnEncryptionKey;
@@ -55,7 +56,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public ConversionTests()
         {
             certificate = CertificateUtility.CreateCertificate();
-            columnMasterKey = new CspColumnMasterKey(DatabaseHelper.GenerateUniqueName("CMK"), certificate.Thumbprint);
+            columnMasterKey = new CspColumnMasterKey(DatabaseHelper.GenerateUniqueName("CMK"), certificate.Thumbprint, certStoreProvider, DataTestUtility.EnclaveEnabled);
             databaseObjects.Add(columnMasterKey);
 
             columnEncryptionKey = new ColumnEncryptionKey(DatabaseHelper.GenerateUniqueName("CEK"),
@@ -63,43 +64,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                                                           certStoreProvider);
             databaseObjects.Add(columnEncryptionKey);
 
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            foreach(string connectionStr in DataTestUtility.AEConnStringsSetup)
             {
-                sqlConnection.Open();
-                databaseObjects.ForEach(o => o.Create(sqlConnection));
+                using (SqlConnection sqlConnection = new SqlConnection(connectionStr))
+                {
+                    sqlConnection.Open();
+                    databaseObjects.ForEach(o => o.Create(sqlConnection));
+                }
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [InlineData(SqlDbType.SmallMoney, SqlDbType.Money)]
-        [InlineData(SqlDbType.Bit, SqlDbType.TinyInt)]
-        [InlineData(SqlDbType.Bit, SqlDbType.SmallInt)]
-        [InlineData(SqlDbType.Bit, SqlDbType.Int)]
-        [InlineData(SqlDbType.Bit, SqlDbType.BigInt)]
-        [InlineData(SqlDbType.TinyInt, SqlDbType.SmallInt)]
-        [InlineData(SqlDbType.TinyInt, SqlDbType.Int)]
-        [InlineData(SqlDbType.TinyInt, SqlDbType.BigInt)]
-        [InlineData(SqlDbType.SmallInt, SqlDbType.Int)]
-        [InlineData(SqlDbType.SmallInt, SqlDbType.BigInt)]
-        [InlineData(SqlDbType.Int, SqlDbType.BigInt)]
-        [InlineData(SqlDbType.Binary, SqlDbType.Binary)]
-        [InlineData(SqlDbType.Binary, SqlDbType.VarBinary)]
-        [InlineData(SqlDbType.VarBinary, SqlDbType.Binary)]
-        [InlineData(SqlDbType.VarBinary, SqlDbType.VarBinary)]
-        [InlineData(SqlDbType.Char, SqlDbType.Char)]
-        [InlineData(SqlDbType.Char, SqlDbType.VarChar)]  // padding whitespace issue, trimEnd for now
-        [InlineData(SqlDbType.VarChar, SqlDbType.Char)]
-        [InlineData(SqlDbType.VarChar, SqlDbType.VarChar)]
-        [InlineData(SqlDbType.NChar, SqlDbType.NChar)]
-        [InlineData(SqlDbType.NChar, SqlDbType.NVarChar)]
-        [InlineData(SqlDbType.NVarChar, SqlDbType.NChar)]
-        [InlineData(SqlDbType.NVarChar, SqlDbType.NVarChar)]
-        [InlineData(SqlDbType.Time, SqlDbType.Time)]
-        [InlineData(SqlDbType.DateTime2, SqlDbType.DateTime2)]
-        [InlineData(SqlDbType.DateTimeOffset, SqlDbType.DateTimeOffset)]
-        [InlineData(SqlDbType.Float, SqlDbType.Float)]
-        [InlineData(SqlDbType.Real, SqlDbType.Real)]
-        public void ConversionSmallerToLargerInsertAndSelect(SqlDbType smallDbType, SqlDbType largeDbType)
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(ConversionSmallerToLargerInsertAndSelectData))]
+        public void ConversionSmallerToLargerInsertAndSelect(string connString, SqlDbType smallDbType, SqlDbType largeDbType)
         {
             ColumnMetaData largeColumnInfo = new ColumnMetaData(largeDbType, 0, 1, 1, false);
             ColumnMetaData smallColumnInfo = new ColumnMetaData(smallDbType, 0, 1, 1, false);
@@ -112,21 +89,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             string unencryptedTableName = DatabaseHelper.GenerateUniqueName("unencrypted");
 
             // Create the encrypted and unencrypted table with the proper column types.
-            CreateTable(largeColumnInfo, encryptedTableName, isEncrypted: true);
-            CreateTable(largeColumnInfo, unencryptedTableName, isEncrypted: false);
+            CreateTable(connString, largeColumnInfo, encryptedTableName, isEncrypted: true);
+            CreateTable(connString, largeColumnInfo, unencryptedTableName, isEncrypted: false);
 
             // Insert data using the smaller type to the tables with the large type.
-            object[] rawValues = PopulateTablesAndReturnRandomValue(encryptedTableName, unencryptedTableName, smallColumnInfo);
+            object[] rawValues = PopulateTablesAndReturnRandomValue(connString, encryptedTableName, unencryptedTableName, smallColumnInfo);
 
             // Keep the values from unencryptedTable other than the rawValues to perform a select later for DateTime2 and DateTimeOffset.
-            object[] valuesToSelect = RetriveDataFromDatabase(unencryptedTableName);
+            object[] valuesToSelect = RetriveDataFromDatabase(connString, unencryptedTableName);
 
             // Now read back everything and make sure the values and types are identical.
-            CompareTables(encryptedTableName, unencryptedTableName);
+            CompareTables(connString, encryptedTableName, unencryptedTableName);
 
             // Now send a query with a predicate using the larger type and confirm that the row that was inserted with the smaller type can still be found.
-            using (SqlConnection sqlConnectionEncrypted = new SqlConnection(DataTestUtility.TCPConnectionString))
-            using (SqlConnection sqlConnectionUnencrypted = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnectionEncrypted = new SqlConnection(connString))
+            using (SqlConnection sqlConnectionUnencrypted = new SqlConnection(connString))
             {
                 sqlConnectionEncrypted.Open();
                 sqlConnectionUnencrypted.Open();
@@ -186,36 +163,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [InlineData(SqlDbType.SmallMoney, SqlDbType.Money)]
-        [InlineData(SqlDbType.Bit, SqlDbType.TinyInt)]
-        [InlineData(SqlDbType.Bit, SqlDbType.SmallInt)]
-        [InlineData(SqlDbType.Bit, SqlDbType.Int)]
-        [InlineData(SqlDbType.Bit, SqlDbType.BigInt)]
-        [InlineData(SqlDbType.TinyInt, SqlDbType.SmallInt)]
-        [InlineData(SqlDbType.TinyInt, SqlDbType.Int)]
-        [InlineData(SqlDbType.TinyInt, SqlDbType.BigInt)]
-        [InlineData(SqlDbType.SmallInt, SqlDbType.Int)]
-        [InlineData(SqlDbType.SmallInt, SqlDbType.BigInt)]
-        [InlineData(SqlDbType.Int, SqlDbType.BigInt)]
-        [InlineData(SqlDbType.Binary, SqlDbType.Binary)]
-        [InlineData(SqlDbType.Binary, SqlDbType.VarBinary)]
-        [InlineData(SqlDbType.VarBinary, SqlDbType.Binary)]
-        [InlineData(SqlDbType.VarBinary, SqlDbType.VarBinary)]
-        [InlineData(SqlDbType.Char, SqlDbType.Char)] // padding whitespace issue
-        [InlineData(SqlDbType.Char, SqlDbType.VarChar)]  // padding whitespace issue
-        [InlineData(SqlDbType.VarChar, SqlDbType.Char)]
-        [InlineData(SqlDbType.VarChar, SqlDbType.VarChar)]
-        [InlineData(SqlDbType.NChar, SqlDbType.NChar)]
-        [InlineData(SqlDbType.NChar, SqlDbType.NVarChar)]
-        [InlineData(SqlDbType.NVarChar, SqlDbType.NChar)]
-        [InlineData(SqlDbType.NVarChar, SqlDbType.NVarChar)]
-        [InlineData(SqlDbType.Time, SqlDbType.Time)]
-        [InlineData(SqlDbType.DateTime2, SqlDbType.DateTime2)]
-        [InlineData(SqlDbType.DateTimeOffset, SqlDbType.DateTimeOffset)]
-        [InlineData(SqlDbType.Float, SqlDbType.Float)]
-        [InlineData(SqlDbType.Real, SqlDbType.Real)]
-        public void ConversionSmallerToLargerInsertAndSelectBulk(SqlDbType smallDbType, SqlDbType largeDbType)
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(ConversionSmallerToLargerInsertAndSelectBulkData))]
+        public void ConversionSmallerToLargerInsertAndSelectBulk(string connString, SqlDbType smallDbType, SqlDbType largeDbType)
         {
             ColumnMetaData largeColumnInfo = new ColumnMetaData(largeDbType, 0, 1, 1, false);
             ColumnMetaData smallColumnInfo = new ColumnMetaData(smallDbType, 0, 1, 1, false);
@@ -228,27 +178,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             string witnessTableName = DatabaseHelper.GenerateUniqueName("large_type_pt");
 
             // Create the encrypted and unencrypted table with the proper column types.
-            CreateTable(smallColumnInfo, originTableName, isEncrypted: false);
-            CreateTable(largeColumnInfo, targetTableName, isEncrypted: true);
-            CreateTable(largeColumnInfo, witnessTableName, isEncrypted: false);
+            CreateTable(connString, smallColumnInfo, originTableName, isEncrypted: false);
+            CreateTable(connString, largeColumnInfo, targetTableName, isEncrypted: true);
+            CreateTable(connString, largeColumnInfo, witnessTableName, isEncrypted: false);
 
             // Insert data using the smaller type to the tables with the large type.
             // Also keep the values on the side to perform a select later.
-            object[] rawValues = PopulateTablesAndReturnRandomValuePlaintextOnly(originTableName, smallColumnInfo);
+            object[] rawValues = PopulateTablesAndReturnRandomValuePlaintextOnly(connString, originTableName, smallColumnInfo);
 
             // Keep the values from originTable other than the rawValues to perform a select later for DateTime2 and DateTimeOffset.
-            object[] valuesToSelect = RetriveDataFromDatabase(originTableName);
+            object[] valuesToSelect = RetriveDataFromDatabase(connString, originTableName);
 
             // populate the witness table & the target table using bulk insert
-            portDataToTablePairViaBulkCopy(originTableName, SqlConnectionColumnEncryptionSetting.Disabled, targetTableName, SqlConnectionColumnEncryptionSetting.Enabled);
-            portDataToTablePairViaBulkCopy(originTableName, SqlConnectionColumnEncryptionSetting.Disabled, witnessTableName, SqlConnectionColumnEncryptionSetting.Disabled);
+            portDataToTablePairViaBulkCopy(connString, originTableName, SqlConnectionColumnEncryptionSetting.Disabled, targetTableName, SqlConnectionColumnEncryptionSetting.Enabled);
+            portDataToTablePairViaBulkCopy(connString, originTableName, SqlConnectionColumnEncryptionSetting.Disabled, witnessTableName, SqlConnectionColumnEncryptionSetting.Disabled);
 
             // Now read back everything and make sure the values and types are identical.
-            CompareTables(targetTableName, witnessTableName);
+            CompareTables(connString, targetTableName, witnessTableName);
 
             // Now send a query with a predicate using the larger type and confirm that the row that was inserted with the smaller type can still be found.
-            using (SqlConnection sqlConnectionEncrypted = new SqlConnection(DataTestUtility.TCPConnectionString))
-            using (SqlConnection sqlConnectionUnencrypted = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnectionEncrypted = new SqlConnection(connString))
+            using (SqlConnection sqlConnectionUnencrypted = new SqlConnection(connString))
             {
                 sqlConnectionEncrypted.Open();
                 sqlConnectionUnencrypted.Open();
@@ -312,31 +262,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [InlineData(SqlDbType.BigInt)]
-        [InlineData(SqlDbType.Binary)]
-        [InlineData(SqlDbType.Bit)]
-        [InlineData(SqlDbType.Char)]
-        [InlineData(SqlDbType.Date)]
-        [InlineData(SqlDbType.DateTime)]
-        [InlineData(SqlDbType.DateTime2)]
-        [InlineData(SqlDbType.DateTimeOffset)]
-        [InlineData(SqlDbType.Decimal)]
-        [InlineData(SqlDbType.Float)]
-        [InlineData(SqlDbType.Int)]
-        [InlineData(SqlDbType.Money)]
-        [InlineData(SqlDbType.NChar)]
-        [InlineData(SqlDbType.NVarChar)]
-        [InlineData(SqlDbType.Real)]
-        [InlineData(SqlDbType.SmallDateTime)]
-        [InlineData(SqlDbType.SmallInt)]
-        [InlineData(SqlDbType.SmallMoney)]
-        [InlineData(SqlDbType.Time)]
-        [InlineData(SqlDbType.TinyInt)]
-        [InlineData(SqlDbType.UniqueIdentifier)]
-        [InlineData(SqlDbType.VarBinary)]
-        [InlineData(SqlDbType.VarChar)]
-        public void TestOutOfRangeValues(SqlDbType currentDbType)
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(TestOutOfRangeValuesData))]
+        public void TestOutOfRangeValues(string connString, SqlDbType currentDbType)
         {
             ColumnMetaData currentColumnInfo = new ColumnMetaData(currentDbType, 0, 1, 1, false);
             ColumnMetaData dummyColumnInfo = null;
@@ -349,15 +277,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             string unencryptedTableName = DatabaseHelper.GenerateUniqueName("unencrypted");
 
             // Create the encrypted and unencrypted table with the proper column types.
-            CreateTable(currentColumnInfo, encryptedTableName, isEncrypted: true);
-            CreateTable(currentColumnInfo, unencryptedTableName, isEncrypted: false);
+            CreateTable(connString, currentColumnInfo, encryptedTableName, isEncrypted: true);
+            CreateTable(connString, currentColumnInfo, unencryptedTableName, isEncrypted: false);
 
             // Generate a list of out of range values, indicating which should fail and which shouldn't.
             List<ValueErrorTuple> valueList = GenerateOutOfRangeValuesForType(currentDbType, currentColumnInfo.ColumnSize, currentColumnInfo.Precision, currentColumnInfo.Scale);
             Assert.True(valueList.Count != 0, "Test bug, the list is empty!");
 
-            using (SqlConnection sqlConnectionEncrypted = new SqlConnection(DataTestUtility.TCPConnectionString))
-            using (SqlConnection sqlConnectionUnencrypted = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnectionEncrypted = new SqlConnection(connString))
+            using (SqlConnection sqlConnectionUnencrypted = new SqlConnection(connString))
             {
                 sqlConnectionEncrypted.Open();
                 sqlConnectionUnencrypted.Open();
@@ -393,7 +321,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                     }
 
-                    CompareTables(encryptedTableName, unencryptedTableName);
+                    CompareTables(connString, encryptedTableName, unencryptedTableName);
                 }
                 finally
                 {
@@ -807,11 +735,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         /// <param name="unencryptedTableName"></param>
         /// <param name="columnInfo"></param>
         /// <returns></returns>
-        private object[] PopulateTablesAndReturnRandomValue(string encryptedTableName, string unencryptedTableName, ColumnMetaData columnInfo)
+        private object[] PopulateTablesAndReturnRandomValue(string connString, string encryptedTableName, string unencryptedTableName, ColumnMetaData columnInfo)
         {
             object[] valueArray = new object[NumberOfRows];
 
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(connString))
             {
                 sqlConnection.Open();
 
@@ -856,11 +784,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         /// <param name="unencryptedTableName"></param>
         /// <param name="columnInfo"></param>
         /// <returns></returns>
-        private object[] PopulateTablesAndReturnRandomValuePlaintextOnly(string unencryptedTableName, ColumnMetaData columnInfo)
+        private object[] PopulateTablesAndReturnRandomValuePlaintextOnly(string connSting, string unencryptedTableName, ColumnMetaData columnInfo)
         {
             object[] valueArray = new object[NumberOfRows];
 
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(connSting))
             {
                 sqlConnection.Open();
 
@@ -893,9 +821,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         /// <param name="sourceConnectionFlag"></param>
         /// <param name="targetName"></param>
         /// <param name="targetConnectionFlag"></param>
-        private void portDataToTablePairViaBulkCopy(string sourceName, SqlConnectionColumnEncryptionSetting sourceConnectionFlag, string targetName, SqlConnectionColumnEncryptionSetting targetConnectionFlag)
+        private void portDataToTablePairViaBulkCopy(string connString, string sourceName, SqlConnectionColumnEncryptionSetting sourceConnectionFlag, string targetName, SqlConnectionColumnEncryptionSetting targetConnectionFlag)
         {
-            SqlConnectionStringBuilder strbld = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
+            SqlConnectionStringBuilder strbld = new SqlConnectionStringBuilder(connString);
             strbld.ColumnEncryptionSetting = sourceConnectionFlag;
 
             using (SqlConnection sourceConnection = new SqlConnection(strbld.ToString()))
@@ -934,12 +862,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         /// </summary>
         /// <param name="unencryptedTableName"></param>
         /// <returns></returns>
-        private object[] RetriveDataFromDatabase(string unencryptedTableName)
+        private object[] RetriveDataFromDatabase(string connString, string unencryptedTableName)
         {
             object[] valueArray = new object[NumberOfRows];
             int index = 0;
 
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(connString))
             {
                 sqlConnection.Open();
 
@@ -968,10 +896,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         /// </summary>
         /// <param name="encryptedTableName"></param>
         /// <param name="unencryptedTableName"></param>
-        private void CompareTables(string encryptedTableName, string unencryptedTableName)
+        private void CompareTables(string connString, string encryptedTableName, string unencryptedTableName)
         {
-            using (SqlConnection sqlConnectionEncrypted = new SqlConnection(DataTestUtility.TCPConnectionString))
-            using (SqlConnection sqlConnectionUnencrypted = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnectionEncrypted = new SqlConnection(connString))
+            using (SqlConnection sqlConnectionUnencrypted = new SqlConnection(connString))
             {
                 sqlConnectionEncrypted.Open();
                 sqlConnectionUnencrypted.Open();
@@ -1243,7 +1171,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         /// <param name="columnMeta"></param>
         /// <param name="tableName"></param>
         /// <param name="isEncrypted"></param>
-        private void CreateTable(ColumnMetaData columnMeta, string tableName, bool isEncrypted)
+        private void CreateTable(string connString, ColumnMetaData columnMeta, string tableName, bool isEncrypted)
         {
             string columnType = columnMeta.ColumnType.ToString().ToLower();
             string columnInfo = "";
@@ -1345,13 +1273,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
 
             string sql;
+            string encryptionType = DataTestUtility.EnclaveEnabled ? "RANDOMIZED" : "DETERMINISTIC";
 
             if (isEncrypted)
             {
                 sql = $@"CREATE TABLE [dbo].[{tableName}]
                       (
                           [{IdentityColumnName}] int IDENTITY(1,1),
-                          [{FirstColumnName}] {columnInfo} ENCRYPTED WITH (COLUMN_ENCRYPTION_KEY = [{columnEncryptionKey.Name}], ENCRYPTION_TYPE = DETERMINISTIC, ALGORITHM = '{ColumnEncryptionAlgorithmName}'),
+                          [{FirstColumnName}] {columnInfo} ENCRYPTED WITH (COLUMN_ENCRYPTION_KEY = [{columnEncryptionKey.Name}], ENCRYPTION_TYPE = {encryptionType}, ALGORITHM = '{ColumnEncryptionAlgorithmName}'),
                       )";
             }
             else
@@ -1363,7 +1292,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                       )";
             }
 
-            using (SqlConnection sqlConn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConn = new SqlConnection(connString))
             {
                 sqlConn.Open();
 
@@ -1411,19 +1340,133 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-
         public void Dispose()
         {
             databaseObjects.Reverse();
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            foreach(string connectionStr in DataTestUtility.AEConnStringsSetup)
             {
-                sqlConnection.Open();
-                databaseObjects.ForEach(o => o.Drop(sqlConnection));
+                using (SqlConnection sqlConnection = new SqlConnection(connectionStr))
+                {
+                    sqlConnection.Open();
+                    databaseObjects.ForEach(o => o.Drop(sqlConnection));
+                }
+            }
+        }
+    }
+
+    public class ConversionSmallerToLargerInsertAndSelectData : IEnumerable<object[]>
+    {
+        public IEnumerator<object[]> GetEnumerator()
+        {
+            foreach (string connStrAE in DataTestUtility.AEConnStrings)
+            {
+                yield return new object[] { connStrAE, SqlDbType.SmallMoney, SqlDbType.Money };
+                yield return new object[] { connStrAE, SqlDbType.Bit, SqlDbType.TinyInt };
+                yield return new object[] { connStrAE, SqlDbType.Bit, SqlDbType.SmallInt };
+                yield return new object[] { connStrAE, SqlDbType.Bit, SqlDbType.Int };
+                yield return new object[] { connStrAE, SqlDbType.Bit, SqlDbType.BigInt };
+                yield return new object[] { connStrAE, SqlDbType.TinyInt, SqlDbType.SmallInt };
+                yield return new object[] { connStrAE, SqlDbType.TinyInt, SqlDbType.Int };
+                yield return new object[] { connStrAE, SqlDbType.TinyInt, SqlDbType.BigInt };
+                yield return new object[] { connStrAE, SqlDbType.SmallInt, SqlDbType.Int };
+                yield return new object[] { connStrAE, SqlDbType.SmallInt, SqlDbType.BigInt };
+                yield return new object[] { connStrAE, SqlDbType.Int, SqlDbType.BigInt };
+                yield return new object[] { connStrAE, SqlDbType.Binary, SqlDbType.Binary };
+                yield return new object[] { connStrAE, SqlDbType.Binary, SqlDbType.VarBinary };
+                yield return new object[] { connStrAE, SqlDbType.VarBinary, SqlDbType.Binary };
+                yield return new object[] { connStrAE, SqlDbType.VarBinary, SqlDbType.VarBinary };
+                yield return new object[] { connStrAE, SqlDbType.Char, SqlDbType.Char };
+                yield return new object[] { connStrAE, SqlDbType.Char, SqlDbType.VarChar }; // padding whitespace issue, trimEnd for now
+                yield return new object[] { connStrAE, SqlDbType.VarChar, SqlDbType.Char };
+                yield return new object[] { connStrAE, SqlDbType.VarChar, SqlDbType.VarChar };
+                yield return new object[] { connStrAE, SqlDbType.NChar, SqlDbType.NChar };
+                yield return new object[] { connStrAE, SqlDbType.NChar, SqlDbType.NVarChar };
+                yield return new object[] { connStrAE, SqlDbType.NVarChar, SqlDbType.NChar };
+                yield return new object[] { connStrAE, SqlDbType.NVarChar, SqlDbType.NVarChar };
+                yield return new object[] { connStrAE, SqlDbType.Time, SqlDbType.Time };
+                yield return new object[] { connStrAE, SqlDbType.DateTime2, SqlDbType.DateTime2 };
+                yield return new object[] { connStrAE, SqlDbType.DateTimeOffset, SqlDbType.DateTimeOffset };
+                yield return new object[] { connStrAE, SqlDbType.Float, SqlDbType.Float };
+                yield return new object[] { connStrAE, SqlDbType.Real, SqlDbType.Real };
+            }
+        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+    }
+
+    public class ConversionSmallerToLargerInsertAndSelectBulkData : IEnumerable<object[]>
+    {
+        public IEnumerator<object[]> GetEnumerator()
+        {
+            foreach (string connStrAE in DataTestUtility.AEConnStrings)
+            {
+                yield return new object[] { connStrAE, SqlDbType.SmallMoney, SqlDbType.Money };
+                yield return new object[] { connStrAE, SqlDbType.Bit, SqlDbType.TinyInt };
+                yield return new object[] { connStrAE, SqlDbType.Bit, SqlDbType.SmallInt };
+                yield return new object[] { connStrAE, SqlDbType.Bit, SqlDbType.Int };
+                yield return new object[] { connStrAE, SqlDbType.Bit, SqlDbType.BigInt };
+                yield return new object[] { connStrAE, SqlDbType.TinyInt, SqlDbType.SmallInt };
+                yield return new object[] { connStrAE, SqlDbType.TinyInt, SqlDbType.Int };
+                yield return new object[] { connStrAE, SqlDbType.TinyInt, SqlDbType.BigInt };
+                yield return new object[] { connStrAE, SqlDbType.SmallInt, SqlDbType.Int };
+                yield return new object[] { connStrAE, SqlDbType.SmallInt, SqlDbType.BigInt };
+                yield return new object[] { connStrAE, SqlDbType.Int, SqlDbType.BigInt };
+                yield return new object[] { connStrAE, SqlDbType.Binary, SqlDbType.Binary };
+                yield return new object[] { connStrAE, SqlDbType.Binary, SqlDbType.VarBinary };
+                yield return new object[] { connStrAE, SqlDbType.VarBinary, SqlDbType.Binary };
+                yield return new object[] { connStrAE, SqlDbType.VarBinary, SqlDbType.VarBinary };
+                yield return new object[] { connStrAE, SqlDbType.Char, SqlDbType.Char }; // padding whitespace issue
+                yield return new object[] { connStrAE, SqlDbType.Char, SqlDbType.VarChar }; // padding whitespace issue
+                yield return new object[] { connStrAE, SqlDbType.VarChar, SqlDbType.Char };
+                yield return new object[] { connStrAE, SqlDbType.VarChar, SqlDbType.VarChar };
+                yield return new object[] { connStrAE, SqlDbType.NChar, SqlDbType.NChar };
+                yield return new object[] { connStrAE, SqlDbType.NChar, SqlDbType.NVarChar };
+                yield return new object[] { connStrAE, SqlDbType.NVarChar, SqlDbType.NChar };
+                yield return new object[] { connStrAE, SqlDbType.NVarChar, SqlDbType.NVarChar };
+                yield return new object[] { connStrAE, SqlDbType.Time, SqlDbType.Time };
+                yield return new object[] { connStrAE, SqlDbType.DateTime2, SqlDbType.DateTime2 };
+                yield return new object[] { connStrAE, SqlDbType.DateTimeOffset, SqlDbType.DateTimeOffset };
+                yield return new object[] { connStrAE, SqlDbType.Float, SqlDbType.Float };
+                yield return new object[] { connStrAE, SqlDbType.Real, SqlDbType.Real};
             }
         }
 
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+    }
 
+    
+    public class TestOutOfRangeValuesData : IEnumerable<object[]>
+    {
+        public IEnumerator<object[]> GetEnumerator()
+        {
+            foreach (string connStrAE in DataTestUtility.AEConnStrings)
+            {
+                yield return new object[] { connStrAE, SqlDbType.BigInt };
+                yield return new object[] { connStrAE, SqlDbType.Binary };
+                yield return new object[] { connStrAE, SqlDbType.Bit };
+                yield return new object[] { connStrAE, SqlDbType.Char };
+                yield return new object[] { connStrAE, SqlDbType.Date };
+                yield return new object[] { connStrAE, SqlDbType.DateTime };
+                yield return new object[] { connStrAE, SqlDbType.DateTime2 };
+                yield return new object[] { connStrAE, SqlDbType.DateTimeOffset };
+                yield return new object[] { connStrAE, SqlDbType.Decimal };
+                yield return new object[] { connStrAE, SqlDbType.Float };
+                yield return new object[] { connStrAE, SqlDbType.Int };
+                yield return new object[] { connStrAE, SqlDbType.Money };
+                yield return new object[] { connStrAE, SqlDbType.NChar };
+                yield return new object[] { connStrAE, SqlDbType.NVarChar };
+                yield return new object[] { connStrAE, SqlDbType.Real };
+                yield return new object[] { connStrAE, SqlDbType.SmallDateTime };
+                yield return new object[] { connStrAE, SqlDbType.SmallInt };
+                yield return new object[] { connStrAE, SqlDbType.SmallMoney };
+                yield return new object[] { connStrAE, SqlDbType.Time };
+                yield return new object[] { connStrAE, SqlDbType.TinyInt };
+                yield return new object[] { connStrAE, SqlDbType.UniqueIdentifier };
+                yield return new object[] { connStrAE, SqlDbType.VarBinary };
+                yield return new object[] { connStrAE, SqlDbType.VarChar };
+            }
+        }
 
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
 }

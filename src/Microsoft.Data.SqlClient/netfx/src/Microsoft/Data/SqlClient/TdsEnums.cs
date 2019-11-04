@@ -945,6 +945,8 @@ namespace Microsoft.Data.SqlClient
 
         internal const int AES_256_CBC = 1;
         internal const int AEAD_AES_256_CBC_HMAC_SHA256 = 2;
+        internal const string ENCLAVE_TYPE_VBS = "VBS";
+        internal const string ENCLAVE_TYPE_SGX = "SGX";
 
         // TCE Param names for exec handling
         internal const string TCE_PARAM_CIPHERTEXT = "cipherText";
@@ -1022,7 +1024,6 @@ namespace Microsoft.Data.SqlClient
     /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlCommandColumnEncryptionSetting.xml' path='docs/members[@name="SqlCommandColumnEncryptionSetting"]/SqlCommandColumnEncryptionSetting/*' />
     public enum SqlCommandColumnEncryptionSetting
     {
-
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlCommandColumnEncryptionSetting.xml' path='docs/members[@name="SqlCommandColumnEncryptionSetting"]/UseConnectionSetting/*' />
         UseConnectionSetting = 0,
 
@@ -1034,6 +1035,19 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlCommandColumnEncryptionSetting.xml' path='docs/members[@name="SqlCommandColumnEncryptionSetting"]/Disabled/*' />
         Disabled,
+    }
+
+    /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/SqlConnectionAttestationProtocol/*' />
+    public enum SqlConnectionAttestationProtocol
+    {
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/NotSpecified/*' />
+        NotSpecified = 0,
+
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/AAS/*' />
+        AAS = 1,
+
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/HGS/*' />
+        HGS = 3
     }
 
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/SqlAuthenticationMethod/*'/>

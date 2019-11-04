@@ -31,12 +31,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             tableName = fixture.ApiTestTable.Name;
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [InlineData(true)]
-        [InlineData(false)]
-        public void TestSqlTransactionCommitRollbackWithTransparentInsert(bool isCommitted)
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(AEConnectionStringProviderWithBooleanVariable))]
+        public void TestSqlTransactionCommitRollbackWithTransparentInsert(string connection, bool isCommitted)
         {
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            CleanUpTable(connection, tableName);
+            
+            using (SqlConnection sqlConnection = new SqlConnection(connection))
             {
                 sqlConnection.Open();
 
@@ -69,10 +70,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public void TestSqlTransactionRollbackToSavePoint()
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public void TestSqlTransactionRollbackToSavePoint(string connection)
         {
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            CleanUpTable(connection, tableName);
+            
+            using (SqlConnection sqlConnection = new SqlConnection(connection))
             {
                 sqlConnection.Open();
 
@@ -112,8 +116,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public void SqlParameterProperties()
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public void SqlParameterProperties(string connection)
         {
             string tableName = fixture.SqlParameterPropertiesTable.Name;
             const string firstColumnName = @"firstColumn";
@@ -126,7 +131,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             const int decimalColumnScale = 4;
             const int timeColumnScale = 5;
 
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            CleanUpTable(connection, tableName);
+
+            using (SqlConnection sqlConnection = new SqlConnection(connection))
             {
                 try
                 {
@@ -314,7 +321,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 }
                 finally
                 {
-                    DropHelperProcedures(new string[] { inputProcedureName, outputProcedureName });
+                    DropHelperProcedures(new string[] { inputProcedureName, outputProcedureName }, connection);
                 }
 
             }
@@ -382,17 +389,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public void TestSqlDataAdapterFillDataTable()
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public void TestSqlDataAdapterFillDataTable(string connection)
         {
+            CleanUpTable(connection, tableName);
+            
             const string DummyParamName = "@dummyParam";
             int numberOfRows = 100;
 
             IList<object> values = GetValues(dataHint: 71);
 
-            InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values);
+            InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
 
-            var encryptionEnabledConnectionString = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+            var encryptionEnabledConnectionString = new SqlConnectionStringBuilder(connection)
             {
                 ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Enabled
             }.ConnectionString;
@@ -446,18 +456,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [InlineData(SchemaType.Source)]
-        [InlineData(SchemaType.Mapped)]
-        public void TestSqlDataAdapterFillSchema(SchemaType schemaType)
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(AEConnectionStringProviderWithSchemaType))]
+        public void TestSqlDataAdapterFillSchema(string connection, SchemaType schemaType)
         {
+            CleanUpTable(connection, tableName);
+
             IList<object> values = GetValues(dataHint: 44);
             int numberOfRows = 42;
 
             // Insert a bunch of rows in to the table.
-            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values);
+            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
 
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(connection))
             {
                 sqlConnection.Open();
                 SqlDataAdapter adapter = CreateSqlDataAdapter(sqlConnection);
@@ -492,22 +503,23 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.Equal(typeof(string), dataColumns[2].DataType);
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [InlineData(false)]
-        [InlineData(true)]
-        public void TestExecuteNonQuery(bool isAsync)
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(AEConnectionStringProviderWithBooleanVariable))]
+        public void TestExecuteNonQuery(string connection, bool isAsync)
         {
+            CleanUpTable(connection, tableName);
+
             Parallel.For(0, 10, i =>
             {
                 IList<object> values = GetValues(dataHint: 45 + i + 1);
                 int numberOfRows = 10 + i;
 
                 // Insert a bunch of rows in to the table.
-                int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values);
+                int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
 
                 Assert.Equal(numberOfRows, rowsAffected);
                 rowsAffected = -1;
-                using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+                using (SqlConnection sqlConnection = new SqlConnection(connection))
                 {
                     sqlConnection.Open();
 
@@ -518,6 +530,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         transaction: null,
                         columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
                     {
+                        if (DataTestUtility.EnclaveEnabled)
+                        {
+                            //Increase Time out for enclave-enabled server.
+                            sqlCommand.CommandTimeout = 90;
+                        }
+
                         sqlCommand.Parameters.AddWithValue(@"FirstName", string.Format(@"Microsoft{0}", i + 100));
                         sqlCommand.Parameters.AddWithValue(@"CustomerId", values[0]);
 
@@ -537,20 +555,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             });
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [InlineData(false)]
-        [InlineData(true)]
-        public void TestExecuteScalar(bool isAsync)
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(AEConnectionStringProviderWithBooleanVariable))]
+        public void TestExecuteScalar(string connection, bool isAsync)
         {
+            CleanUpTable(connection, tableName);
+
             Parallel.For(0, 10, i =>
             {
                 IList<object> values = GetValues(dataHint: 42);
                 int numberOfRows = 10 + i;
 
                 // Insert a bunch of rows in to the table.
-                int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values);
+                int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
 
-                using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+                using (SqlConnection sqlConnection = new SqlConnection(connection))
                 {
                     sqlConnection.Open();
 
@@ -562,6 +581,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         transaction: null,
                         columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
                     {
+                        if (DataTestUtility.EnclaveEnabled)
+                        {
+                            // Increase timeout for enclave-enabled server
+                            sqlCommand.CommandTimeout = 60;
+                        }
+
+
                         sqlCommand.Parameters.AddWithValue(@"CustomerId", values[0]);
                         int customerId = -1;
 
@@ -581,15 +607,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             });
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [InlineData(1)]
-        [InlineData(100)]
-        public void TestSqlDataAdapterBatchUpdate(int numberofRows)
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(AEConnectionStringProviderWithIntegers))]
+        public void TestSqlDataAdapterBatchUpdate(string connection,int numberofRows)
         {
+            CleanUpTable(connection, tableName);
 
             DataTable dataTable = CreateDataTable(tableName: tableName, numberofRows: numberofRows);
 
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(connection))
             {
                 sqlConnection.Open();
 
@@ -626,18 +652,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public void TestExecuteReader()
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public void TestExecuteReader(string connection)
         {
+            CleanUpTable(connection, tableName);
+
             Parallel.For(0, 10, i =>
             {
                 IList<object> values = GetValues(dataHint: 45 + i + 1);
                 int numberOfRows = 10 + i;
                 // Insert a bunch of rows in to the table.
-                int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values);
+                int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
                 Assert.True(numberOfRows == rowsAffected, "Two values failed");
 
-                using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+                using (SqlConnection sqlConnection = new SqlConnection(connection))
                 {
                     sqlConnection.Open();
 
@@ -648,6 +677,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         transaction: null,
                         columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
                     {
+                        if (DataTestUtility.EnclaveEnabled)
+                        {
+                            //Increas command time out to a minute for enclave-enabled server.
+                            sqlCommand.CommandTimeout = 60;
+                        }
+
                         sqlCommand.Parameters.AddWithValue(@"FirstName", string.Format(@"Microsoft{0}", i + 100));
                         sqlCommand.Parameters.AddWithValue(@"CustomerId", values[0]);
                         IAsyncResult asyncResult = sqlCommand.BeginExecuteReader();
@@ -671,12 +706,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             });
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [InlineData(CommandBehavior.SingleResult)]
-        [InlineData(CommandBehavior.SingleRow)]
-        [InlineData(CommandBehavior.CloseConnection)]
-        [InlineData(CommandBehavior.SequentialAccess)]
-        public void TestExecuteReaderWithCommandBehavior(CommandBehavior commandBehavior)
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(AEConnectionStringProviderWithCommandBehaviorSet1))]
+        public void TestExecuteReaderWithCommandBehavior(string connection, CommandBehavior commandBehavior)
         {
             string[] columnNames = new string[3] { "CustomerId", "FirstName", "LastName" };
             string[] columnOrdinals = new string[3] { @"0", @"1", @"2" };
@@ -686,16 +718,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             string[] dataType = new string[3] { @"System.Int32", @"System.String", @"System.String" };
             string[] columnSizes = new string[3] { @"4", @"50", @"50" };
 
+            CleanUpTable(connection, tableName);
+
             Parallel.For(0, 1, i =>
             {
                 IList<object> values = GetValues(dataHint: 16 + i);
                 Assert.False(values == null || values.Count < 3, @"values should not be null and count should be >= 3.");
                 int numberOfRows = 10 + i;
                 // Insert a bunch of rows in to the table.
-                int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values);
+                int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
                 Assert.Equal(rowsAffected, numberOfRows);
 
-                using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+                using (SqlConnection sqlConnection = new SqlConnection(connection))
                 {
                     sqlConnection.Open();
 
@@ -797,9 +831,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             });
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public void TestPrepareWithExecuteNonQuery()
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public void TestPrepareWithExecuteNonQuery(string connection)
         {
+            CleanUpTable(connection, tableName);
+
             IList<object> values = GetValues(dataHint: 52);
 
             Assert.True(values != null && values.Count >= 3, @"values should not be null and count should be >= 3.");
@@ -807,11 +844,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             int numberOfRows = 10;
 
             // Insert a bunch of rows in to the table.
-            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values);
+            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
 
             Assert.True(rowsAffected == numberOfRows, "number of rows affected is unexpected.");
 
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(connection))
             {
                 sqlConnection.Open();
                 using (SqlCommand sqlCommand =
@@ -843,17 +880,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public void TestAsyncWriteDelayWithExecuteNonQueryAsync()
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public void TestAsyncWriteDelayWithExecuteNonQueryAsync(string connection)
         {
+            CleanUpTable(connection, tableName);
+
             IList<object> values = GetValues(dataHint: 53);
             Assert.True(values != null && values.Count >= 3, @"values should not be null and count should be >= 3.");
             int numberOfRows = 10;
 
             // Insert a bunch of rows in to the table.
-            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values);
+            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
 
-            using (SqlConnection sqlconnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlconnection = new SqlConnection(connection))
             {
                 sqlconnection.Open();
 
@@ -894,9 +934,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public void TestAsyncWriteDelayWithExecuteReaderAsync()
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public void TestAsyncWriteDelayWithExecuteReaderAsync(string connection)
         {
+            CleanUpTable(connection, tableName);
+
             IList<object> values = GetValues(dataHint: 53);
 
             Assert.True(values != null && values.Count >= 3, @"values should not be null and count should be >= 3.");
@@ -904,11 +947,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             int numberOfRows = 10;
 
             // Insert a bunch of rows in to the table.
-            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values);
+            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
 
             Assert.True(rowsAffected == numberOfRows, "number of rows affected is unexpected.");
 
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(connection))
             {
                 sqlConnection.Open();
 
@@ -958,9 +1001,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public void TestPrepareWithExecuteNonQueryAsync()
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public void TestPrepareWithExecuteNonQueryAsync(string connection)
         {
+            CleanUpTable(connection, tableName);
+
             IList<object> values = GetValues(dataHint: 53);
 
             Assert.True(values != null && values.Count >= 3, @"values should not be null and count should be >= 3.");
@@ -968,11 +1014,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             int numberOfRows = 10;
 
             // Insert a bunch of rows in to the table.
-            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values);
+            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
 
             Assert.True(rowsAffected == numberOfRows, "number of rows affected is unexpected.");
 
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(connection))
             {
                 sqlConnection.Open();
                 using (SqlCommand sqlCommand = new SqlCommand(
@@ -1010,21 +1056,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [InlineData(CommandBehavior.Default)]
-        [InlineData(CommandBehavior.SequentialAccess)]
-        public void TestPrepareWithExecuteReaderAsync(CommandBehavior commandBehavior)
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(AEConnectionStringProviderWithCommandBehaviorSet2))]
+        public void TestPrepareWithExecuteReaderAsync(string connection, CommandBehavior commandBehavior)
         {
+            CleanUpTable(connection, tableName);
+
             IList<object> values = GetValues(dataHint: 54);
             Assert.True(values != null && values.Count <= 3, @"values should not be null and count should be >= 3.");
             int numberOfRows = 10;
 
             // Insert a bunch of rows in to the table.
-            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values);
+            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
 
             Assert.True(rowsAffected == numberOfRows, "number of rows affected is unexpected.");
 
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(connection))
             {
                 sqlConnection.Open();
 
@@ -1071,10 +1118,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [InlineData(SqlCommandColumnEncryptionSetting.Enabled)]
-        public void TestSqlDataReaderAPIs(SqlCommandColumnEncryptionSetting value)
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public void TestSqlDataReaderAPIs(string connection)
         {
+            CleanUpTable(connection, tableName);
+
+            SqlCommandColumnEncryptionSetting  value = SqlCommandColumnEncryptionSetting.Enabled;
             char[] textValue = null;
             int numberOfRows = 100;
             string commandTextForEncryptionDisabledResultSetOnly = @"SELECT CustomerId, FirstName, LastName/*, BinaryColumn, NvarcharMaxColumn */ FROM [{0}]";
@@ -1084,11 +1134,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.True(values != null && values.Count >= 3, @"values should not be null and count should be >= 3.");
 
             // Insert a bunch of rows in to the table.
-            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values);
+            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
 
             Assert.True(rowsAffected == numberOfRows, "number of rows affected is unexpected.");
 
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(connection))
             {
                 sqlConnection.Open();
 
@@ -1265,10 +1315,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [InlineData(CommandBehavior.SequentialAccess)]
-        public void TestSqlDataReaderAPIsWithSequentialAccess(object value)
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public void TestSqlDataReaderAPIsWithSequentialAccess(string connection)
         {
+            CleanUpTable(connection, tableName);
+
+            CommandBehavior value = CommandBehavior.SequentialAccess;
             char[] textValue = null;
             CommandBehavior commandBehavior = (CommandBehavior)value;
 
@@ -1279,11 +1332,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             int numberOfRows = 10;
 
             // Insert a bunch of rows in to the table.
-            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values);
+            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
 
             Assert.Equal(rowsAffected, numberOfRows);
 
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(connection))
             {
                 sqlConnection.Open();
                 using (SqlCommand sqlCommand = new SqlCommand($"SELECT CustomerId, FirstName, LastName  FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
@@ -1690,24 +1743,25 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [InlineData(CommandBehavior.Default)]
-        [InlineData(CommandBehavior.SequentialAccess)]
-        public void TestSqlCommandSequentialAccessCodePaths(object value)
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(AEConnectionStringProviderWithCommandBehaviorSet2))]
+        public void TestSqlCommandSequentialAccessCodePaths(string connection, CommandBehavior value)
         {
+            CleanUpTable(connection, tableName);
+
             CommandBehavior commandBehavior = (CommandBehavior)value;
             IList<object> values = GetValues(dataHint: 57);
 
             Assert.True(values != null && values.Count >= 3, @"values should not be null and count should be >= 3.");
 
-            int numberOfRows = 300;
+            int numberOfRows = 100;
 
             //Insert a bunch of rows in to the table.
-            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values);
+            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
 
             Assert.True(rowsAffected == numberOfRows, "number of rows affected is unexpected.");
 
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(connection))
             {
                 sqlConnection.Open();
                 // Test SqlDataReader.GetStream() on encrypted column, throw an exception.
@@ -1716,6 +1770,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     transaction: null,
                     columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
                 {
+                    if (DataTestUtility.EnclaveEnabled)
+                    {
+                        //Increase Time out for enclave-enabled server.
+                        sqlCommand.CommandTimeout = 90;
+                    }
+
                     sqlCommand.Parameters.AddWithValue(@"CustomerId", values[0]);
                     sqlCommand.Parameters.AddWithValue(@"FirstName", values[1]);
 
@@ -1725,6 +1785,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     }
                 }
             }
+
         }
 
         private SqlDataAdapter CreateSqlDataAdapter(SqlConnection sqlConnection)
@@ -1847,11 +1908,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         /// <param name="numberofRows"></param>
         /// <param name="values"></param>
         /// <returns></returns>
-        private int InsertRows(string tableName, int numberofRows, IList<object> values)
+        private int InsertRows(string tableName, int numberofRows, IList<object> values, string connection)
         {
             int rowsAffected = 0;
 
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(connection))
             {
                 sqlConnection.Open();
 
@@ -1875,14 +1936,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         /// Drops the specified procedures.
         /// </summary>
         /// <param name="procNames"></param>
-        private void DropHelperProcedures(string[] procNames)
+        private void DropHelperProcedures(string[] procNames, string connection)
         {
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(connection))
             {
                 sqlConnection.Open();
                 foreach (string name in procNames)
                 {
-                    string procedureName = name.Trim( new Char[] { '[', ']'});
+                    string procedureName = name.Trim(new Char[] { '[', ']' });
 
                     using (SqlCommand cmd = new SqlCommand(string.Format("IF EXISTS (SELECT * FROM sys.procedures WHERE name = '{0}') \n DROP PROCEDURE {0}", procedureName), sqlConnection))
                     {
@@ -2007,13 +2068,25 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        public void Dispose()
+        private void CleanUpTable(string connString, string tableName)
         {
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (var sqlConnection = new SqlConnection(connString))
             {
                 sqlConnection.Open();
+                Table.DeleteData(tableName, sqlConnection);
+            }
+        }
 
-                Table.DeleteData(fixture.ApiTestTable.Name, sqlConnection);
+        public void Dispose()
+        {
+            foreach (string connection in DataTestUtility.AEConnStringsSetup)
+            {
+                using (SqlConnection sqlConnection = new SqlConnection(connection))
+                {
+                    sqlConnection.Open();
+
+                    Table.DeleteData(fixture.ApiTestTable.Name, sqlConnection);
+                }
             }
         }
     }

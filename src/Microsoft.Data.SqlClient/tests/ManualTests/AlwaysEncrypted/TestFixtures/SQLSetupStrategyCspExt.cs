@@ -20,7 +20,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         internal override void SetupDatabase()
         {
-            ColumnMasterKey columnMasterKey = new CspColumnMasterKey(GenerateUniqueName("CspExt"), SqlColumnEncryptionCspProvider.ProviderName, keyPath);
+            ColumnMasterKey columnMasterKey = new CspProviderColumnMasterKey(GenerateUniqueName("CspExt"), SqlColumnEncryptionCspProvider.ProviderName, keyPath);
             databaseObjects.Add(columnMasterKey);
 
             List<ColumnEncryptionKey> columnEncryptionKeys = CreateColumnEncryptionKeys(columnMasterKey, 2, keyStoreProvider);
@@ -29,11 +29,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Table table = CreateTable(columnEncryptionKeys);
             databaseObjects.Add(table);
 
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            foreach(string value in DataTestUtility.AEConnStringsSetup)
             {
-                sqlConnection.Open();
-                databaseObjects.ForEach(o => o.Create(sqlConnection));
+                using (SqlConnection sqlConnection = new SqlConnection(value))
+                {
+                    sqlConnection.Open();
+                    databaseObjects.ForEach(o => o.Create(sqlConnection));
+                }
             }
+           
         }
 
         private Table CreateTable(IList<ColumnEncryptionKey> columnEncryptionKeys)

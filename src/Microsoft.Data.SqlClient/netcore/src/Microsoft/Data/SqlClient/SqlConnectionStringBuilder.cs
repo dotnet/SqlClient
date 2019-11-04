@@ -67,6 +67,7 @@ namespace Microsoft.Data.SqlClient
 
             ColumnEncryptionSetting,
             EnclaveAttestationUrl,
+            AttestationProtocol,
 
             // keep the count value last
             KeywordsCount
@@ -113,6 +114,7 @@ namespace Microsoft.Data.SqlClient
         private SqlAuthenticationMethod _authentication = DbConnectionStringDefaults.Authentication;
         private SqlConnectionColumnEncryptionSetting _columnEncryptionSetting = DbConnectionStringDefaults.ColumnEncryptionSetting;
         private string _enclaveAttestationUrl = DbConnectionStringDefaults.EnclaveAttestationUrl;
+        private SqlConnectionAttestationProtocol _attestationProtocol = DbConnectionStringDefaults.AttestationProtocol;
 
         private static string[] CreateValidKeywords()
         {
@@ -153,6 +155,7 @@ namespace Microsoft.Data.SqlClient
             validKeywords[(int)Keywords.Authentication] = DbConnectionStringKeywords.Authentication;
             validKeywords[(int)Keywords.ColumnEncryptionSetting] = DbConnectionStringKeywords.ColumnEncryptionSetting;
             validKeywords[(int)Keywords.EnclaveAttestationUrl] = DbConnectionStringKeywords.EnclaveAttestationUrl;
+            validKeywords[(int)Keywords.AttestationProtocol] = DbConnectionStringKeywords.AttestationProtocol;
             return validKeywords;
         }
 
@@ -195,6 +198,7 @@ namespace Microsoft.Data.SqlClient
             hash.Add(DbConnectionStringKeywords.Authentication, Keywords.Authentication);
             hash.Add(DbConnectionStringKeywords.ColumnEncryptionSetting, Keywords.ColumnEncryptionSetting);
             hash.Add(DbConnectionStringKeywords.EnclaveAttestationUrl, Keywords.EnclaveAttestationUrl);
+            hash.Add(DbConnectionStringKeywords.AttestationProtocol, Keywords.AttestationProtocol);
 
             hash.Add(DbConnectionStringSynonyms.APP, Keywords.ApplicationName);
             hash.Add(DbConnectionStringSynonyms.EXTENDEDPROPERTIES, Keywords.AttachDBFilename);
@@ -312,6 +316,9 @@ namespace Microsoft.Data.SqlClient
                             break;
                         case Keywords.EnclaveAttestationUrl:
                             EnclaveAttestationUrl = ConvertToString(value);
+                            break;
+                        case Keywords.AttestationProtocol:
+                            AttestationProtocol = ConvertToAttestationProtocol(keyword, value);
                             break;
 #if netcoreapp
                         case Keywords.PoolBlockingPeriod: PoolBlockingPeriod = ConvertToPoolBlockingPeriod(keyword, value); break;
@@ -472,6 +479,22 @@ namespace Microsoft.Data.SqlClient
             {
                 SetValue(DbConnectionStringKeywords.EnclaveAttestationUrl, value);
                 _enclaveAttestationUrl = value;
+            }
+        }
+
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/AttestationProtocol/*' />
+        public SqlConnectionAttestationProtocol AttestationProtocol
+        {
+            get { return _attestationProtocol; }
+            set
+            {
+                if (!DbConnectionStringBuilderUtil.IsValidAttestationProtocol(value))
+                {
+                    throw ADP.InvalidEnumerationValue(typeof(SqlConnectionAttestationProtocol), (int)value);
+                }
+
+                SetAttestationProtocolValue(value);
+                _attestationProtocol = value;
             }
         }
 
@@ -850,6 +873,16 @@ namespace Microsoft.Data.SqlClient
             return DbConnectionStringBuilderUtil.ConvertToColumnEncryptionSetting(keyword, value);
         }
 
+        /// <summary>
+        /// Convert to SqlConnectionAttestationProtocol
+        /// </summary>
+        /// <param name="keyword"></param>
+        /// <param name="value"></param>
+        private static SqlConnectionAttestationProtocol ConvertToAttestationProtocol(string keyword, object value)
+        {
+            return DbConnectionStringBuilderUtil.ConvertToAttestationProtocol(keyword, value);
+        }
+
         private object GetAt(Keywords index)
         {
             switch (index)
@@ -922,6 +955,8 @@ namespace Microsoft.Data.SqlClient
                     return ColumnEncryptionSetting;
                 case Keywords.EnclaveAttestationUrl:
                     return EnclaveAttestationUrl;
+                case Keywords.AttestationProtocol:
+                    return AttestationProtocol;
 
                 default:
                     Debug.Fail("unexpected keyword");
@@ -1064,6 +1099,9 @@ namespace Microsoft.Data.SqlClient
                 case Keywords.EnclaveAttestationUrl:
                     _enclaveAttestationUrl = DbConnectionStringDefaults.EnclaveAttestationUrl;
                     break;
+                case Keywords.AttestationProtocol:
+                    _attestationProtocol = DbConnectionStringDefaults.AttestationProtocol;
+                    break;
                 default:
                     Debug.Fail("unexpected keyword");
                     throw UnsupportedKeyword(s_validKeywords[(int)index]);
@@ -1092,6 +1130,12 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(DbConnectionStringBuilderUtil.IsValidColumnEncryptionSetting(value), "Invalid value for SqlConnectionColumnEncryptionSetting");
             base[DbConnectionStringKeywords.ColumnEncryptionSetting] = DbConnectionStringBuilderUtil.ColumnEncryptionSettingToString(value);
+        }
+
+        private void SetAttestationProtocolValue(SqlConnectionAttestationProtocol value)
+        {
+            Debug.Assert(DbConnectionStringBuilderUtil.IsValidAttestationProtocol(value), "Invalid value for SqlConnectionAttestationProtocol");
+            base[DbConnectionStringKeywords.AttestationProtocol] = DbConnectionStringBuilderUtil.AttestationProtocolToString(value);
         }
 
         private void SetAuthenticationValue(SqlAuthenticationMethod value)

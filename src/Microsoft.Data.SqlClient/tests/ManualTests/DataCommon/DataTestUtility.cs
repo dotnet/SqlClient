@@ -3,11 +3,14 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Xunit;
@@ -18,13 +21,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         public static readonly string NPConnectionString = null;
         public static readonly string TCPConnectionString = null;
+        public static readonly string TCPConnectionStringHGSVBS = null;
+        public static readonly string TCPConnectionStringAASVBS = null;
+        public static readonly string TCPConnectionStringAASSGX = null;
         public static readonly string AADAccessToken = null;
         public static readonly string AADPasswordConnectionString = null;
         public static readonly string AKVBaseUrl = null;
         public static readonly string AKVUrl = null;
         public static readonly string AKVClientId = null;
         public static readonly string AKVClientSecret = null;
-
+        public static List<string> AEConnStrings = new List<string>();
+        public static List<string> AEConnStringsSetup = new List<string>();
+        public static readonly bool EnclaveEnabled = false;
         public static readonly bool SupportsIntegratedSecurity = false;
         public static readonly bool SupportsLocalDb = false;
         public static readonly bool SupportsFileStream = false;
@@ -47,11 +55,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             public string TCPConnectionString = null;
             public string NPConnectionString = null;
+            public string TCPConnectionStringHGSVBS = null;
+            public string TCPConnectionStringAASVBS = null;
+            public string TCPConnectionStringAASSGX = null;
             public string AADAccessToken = null;
             public string AADPasswordConnectionString = null;
             public string AzureKeyVaultURL = null;
             public string AzureKeyVaultClientId = null;
             public string AzureKeyVaultClientSecret = null;
+            public bool EnclaveEnabled = false;
             public bool SupportsIntegratedSecurity = false;
             public bool SupportsLocalDb = false;
             public bool SupportsFileStream = false;
@@ -66,12 +78,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 NPConnectionString = c.NPConnectionString;
                 TCPConnectionString = c.TCPConnectionString;
+                TCPConnectionStringHGSVBS = c.TCPConnectionStringHGSVBS;
+                TCPConnectionStringAASVBS = c.TCPConnectionStringAASVBS;
+                TCPConnectionStringAASSGX = c.TCPConnectionStringAASSGX;
                 AADAccessToken = c.AADAccessToken;
                 AADPasswordConnectionString = c.AADPasswordConnectionString;
                 SupportsLocalDb = c.SupportsLocalDb;
                 SupportsIntegratedSecurity = c.SupportsIntegratedSecurity;
                 SupportsFileStream = c.SupportsFileStream;
-                
+                EnclaveEnabled = c.EnclaveEnabled;
+
                 string url = c.AzureKeyVaultURL;
                 Uri AKVBaseUri = null;
                 if (!string.IsNullOrEmpty(url) && Uri.TryCreate(url, UriKind.Absolute, out AKVBaseUri))
@@ -80,9 +96,37 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     AKVBaseUrl = AKVBaseUri.AbsoluteUri;
                     AKVUrl = (new Uri(AKVBaseUri, $"/keys/{AKVKeyName}")).AbsoluteUri;
                 }
-                
+
                 AKVClientId = c.AzureKeyVaultClientId;
                 AKVClientSecret = c.AzureKeyVaultClientSecret;
+            }
+
+            if (EnclaveEnabled)
+            {
+                if (!string.IsNullOrEmpty(TCPConnectionStringHGSVBS))
+                {
+                    AEConnStrings.Add(TCPConnectionStringHGSVBS);
+                    AEConnStringsSetup.Add(TCPConnectionStringHGSVBS);
+                }
+
+                if (!string.IsNullOrEmpty(TCPConnectionStringAASVBS))
+                {
+                    AEConnStrings.Add(TCPConnectionStringAASVBS);
+                }
+
+                if (!string.IsNullOrEmpty(TCPConnectionStringAASSGX))
+                {
+                    AEConnStrings.Add(TCPConnectionStringAASSGX);
+                    AEConnStringsSetup.Add(TCPConnectionStringAASSGX);
+                }
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(TCPConnectionString))
+                {
+                    AEConnStrings.Add(TCPConnectionString);
+                    AEConnStringsSetup.Add(TCPConnectionString);
+                }
             }
         }
 
@@ -113,12 +157,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return !string.IsNullOrEmpty(NPConnectionString) && !string.IsNullOrEmpty(TCPConnectionString);
         }
 
+        public static bool AreConnStringSetupForAE()
+        {
+            return AEConnStrings.Count > 0;
+        }
+
         public static bool IsAADPasswordConnStrSetup()
         {
             return !string.IsNullOrEmpty(AADPasswordConnectionString);
         }
 
-        public static bool IsNotAzureServer() => !DataTestUtility.IsAzureSqlServer(new SqlConnectionStringBuilder((DataTestUtility.TCPConnectionString)).DataSource);
+        public static bool IsNotAzureServer() 
+        {
+            return AreConnStringsSetup() ? !DataTestUtility.IsAzureSqlServer(new SqlConnectionStringBuilder((DataTestUtility.TCPConnectionString)).DataSource) : true;
+        }
 
         public static bool IsAKVSetupAvailable()
         {
@@ -153,7 +205,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             return retval;
         }
-
 
         // the name length will be no more then (16 + prefix.Length + escapeLeft.Length + escapeRight.Length)
         // some providers does not support names (Oracle supports up to 30)
@@ -421,5 +472,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             return result;
         }
+
     }
+
 }

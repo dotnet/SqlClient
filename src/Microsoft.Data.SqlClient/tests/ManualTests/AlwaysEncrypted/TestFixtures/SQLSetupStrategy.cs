@@ -20,7 +20,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public Table SqlParameterPropertiesTable { get; private set; }
         public Table End2EndSmokeTable { get; private set; }
         public Table TrustedMasterKeyPathsTestTable { get; private set; }
-
         protected List<DbObject> databaseObjects = new List<DbObject>();
 
         public SQLSetupStrategy()
@@ -32,20 +31,23 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         internal virtual void SetupDatabase()
         {
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            foreach (string value in DataTestUtility.AEConnStringsSetup)
             {
-                sqlConnection.Open();
-                databaseObjects.ForEach(o => o.Create(sqlConnection));
-            }
+                using (SqlConnection sqlConnection = new SqlConnection(value))
+                {
+                    sqlConnection.Open();
+                    databaseObjects.ForEach(o => o.Create(sqlConnection));
+                }
 
-            // Insert data for TrustedMasterKeyPaths tests.
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
-            builder.ConnectTimeout = 10000;
-            Customer customer = new Customer(45, "Microsoft", "Corporation");
-            using (SqlConnection sqlConn = new SqlConnection(builder.ToString()))
-            {
-                sqlConn.Open();
-                DatabaseHelper.InsertCustomerData(sqlConn, TrustedMasterKeyPathsTestTable.Name, customer);
+                // Insert data for TrustedMasterKeyPaths tests.
+                SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(value);
+                builder.ConnectTimeout = 10000;
+                Customer customer = new Customer(45, "Microsoft", "Corporation");
+                using (SqlConnection sqlConn = new SqlConnection(builder.ToString()))
+                {
+                    sqlConn.Open();
+                    DatabaseHelper.InsertCustomerData(sqlConn, TrustedMasterKeyPathsTestTable.Name, customer);
+                }
             }
         }
 
@@ -89,11 +91,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public void Dispose()
         {
             databaseObjects.Reverse();
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            foreach (string value in DataTestUtility.AEConnStringsSetup)
             {
-                sqlConnection.Open();
-                databaseObjects.ForEach(o => o.Drop(sqlConnection));
+                using (SqlConnection sqlConnection = new SqlConnection(value))
+                {
+                    sqlConnection.Open();
+                    databaseObjects.ForEach(o => o.Drop(sqlConnection));
+                }
             }
+            
+           
         }
     }
 }

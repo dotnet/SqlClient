@@ -33,6 +33,7 @@
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CryptoVector.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\AkvColumnMasterKey.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CspColumnMasterKey.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CspProviderColumnMasterKey.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\DbObject.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ICreatable.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\IDroppable.cs" />

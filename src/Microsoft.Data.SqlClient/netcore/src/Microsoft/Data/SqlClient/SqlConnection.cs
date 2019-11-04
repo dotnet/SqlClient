@@ -7,7 +7,6 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Configuration;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
@@ -28,22 +27,6 @@ namespace Microsoft.Data.SqlClient
     /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/SqlConnection/*' />
     public sealed partial class SqlConnection : DbConnection, ICloneable
     {
-        static SqlConnection()
-        {
-            SqlColumnEncryptionEnclaveProviderConfigurationSection sqlColumnEncryptionEnclaveProviderConfigurationSection = null;
-            try
-            {
-                sqlColumnEncryptionEnclaveProviderConfigurationSection = (SqlColumnEncryptionEnclaveProviderConfigurationSection)ConfigurationManager.GetSection("SqlColumnEncryptionEnclaveProviders");
-            }
-            catch (ConfigurationErrorsException e)
-            {
-                throw SQL.CannotGetSqlColumnEncryptionEnclaveProviderConfig(e);
-            }
-
-            sqlColumnEncryptionEnclaveProviderConfigurationManager = new SqlColumnEncryptionEnclaveProviderConfigurationManager(sqlColumnEncryptionEnclaveProviderConfigurationSection);
-        }
-
-        static internal readonly SqlColumnEncryptionEnclaveProviderConfigurationManager sqlColumnEncryptionEnclaveProviderConfigurationManager;
 
         private bool _AsyncCommandInProgress;
 
@@ -292,6 +275,18 @@ namespace Microsoft.Data.SqlClient
         /// Get enclave attestation url to be used with enclave based Always Encrypted
         /// </summary>
         internal string EnclaveAttestationUrl => ((SqlConnectionString)ConnectionOptions).EnclaveAttestationUrl;
+
+        /// <summary>
+        /// Get attestation protocol
+        /// </summary>
+        internal SqlConnectionAttestationProtocol AttestationProtocol
+        {
+            get
+            {
+                SqlConnectionString opt = (SqlConnectionString)ConnectionOptions;
+                return opt.AttestationProtocol;
+            }
+        }
 
         // This method will be called once connection string is set or changed. 
         private void CacheConnectionStringProperties()

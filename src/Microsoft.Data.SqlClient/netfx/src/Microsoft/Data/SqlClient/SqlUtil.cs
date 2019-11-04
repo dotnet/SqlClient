@@ -1592,9 +1592,14 @@ namespace Microsoft.Data.SqlClient
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_EnclaveProvidersNotConfiguredForEnclaveBasedQuery));
         }
 
-        static internal Exception EnclaveProviderNotFound(string enclaveType)
+        static internal Exception EnclaveProviderNotFound(string enclaveType, string attestationProtocol)
         {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_EnclaveProviderNotFound, enclaveType));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_EnclaveProviderNotFound, enclaveType, attestationProtocol));
+        }
+
+        static internal Exception AttestationProtocolNotSpecifiedForGeneratingEnclavePackage()
+        {
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage));
         }
 
         static internal Exception NullEnclaveSessionReturnedFromProvider(string enclaveType, string attestationUrl)
@@ -1728,6 +1733,16 @@ namespace Microsoft.Data.SqlClient
         static internal Exception EnclaveTypeNotReturned()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_EnclaveTypeNotReturned));
+        }
+
+        static internal Exception EnclaveTypeNotSupported(string enclaveType)
+        {
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_EnclaveTypeNotSupported, enclaveType));
+        }
+
+        static internal Exception AttestationProtocolNotSupportEnclaveType(string attestationProtocolStr, string enclaveType)
+        {
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_AttestationProtocolNotSupportEnclaveType, attestationProtocolStr, enclaveType));
         }
 
         //

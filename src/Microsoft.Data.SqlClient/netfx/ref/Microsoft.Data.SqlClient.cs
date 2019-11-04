@@ -786,6 +786,20 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionColumnEncryptionSetting.xml' path='docs/members[@name="SqlConnectionColumnEncryptionSetting"]/Enabled/*'/>
         Enabled = 1,
     }
+
+    /// <include file='..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/SqlConnectionAttestationProtocol/*' />
+    public enum SqlConnectionAttestationProtocol
+    {
+        /// <include file='..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/NotSpecified/*' />
+        NotSpecified = 0,
+
+        /// <include file='..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/AAS/*' />
+        AAS = 1,
+
+        /// <include file='..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/HGS/*' />
+        HGS = 3
+    }
+
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/SqlConnectionStringBuilder/*'/>
     [System.ComponentModel.DefaultPropertyAttribute("DataSource")]
     public sealed partial class SqlConnectionStringBuilder : System.Data.Common.DbConnectionStringBuilder
@@ -853,6 +867,11 @@ namespace Microsoft.Data.SqlClient
         [System.ComponentModel.DisplayNameAttribute("Enclave Attestation Url")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public string EnclaveAttestationUrl { get { throw null; } set { } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/AttestationProtocol/*'/>
+        [System.ComponentModel.DisplayNameAttribute("Attestation Protocol")]
+        [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
+        public Microsoft.Data.SqlClient.SqlConnectionAttestationProtocol AttestationProtocol {get { throw null; } set { } }
+
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Encrypt/*'/>
         [System.ComponentModel.DisplayNameAttribute("Encrypt")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]

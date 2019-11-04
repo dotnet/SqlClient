@@ -214,6 +214,128 @@ namespace Microsoft.Data.Common
             }
         }
 
+        #region <<AttestationProtocol Utility>>
+
+        /// <summary>
+        /// Attestation Protocol.
+        /// </summary>
+        const string AttestationProtocolHGS = "HGS";
+        const string AttestationProtocolAAS = "AAS";
+
+        /// <summary>
+        ///  Convert a string value to the corresponding SqlConnectionAttestationProtocol
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="result"></param>
+        /// <returns></returns>
+        internal static bool TryConvertToAttestationProtocol(string value, out SqlConnectionAttestationProtocol result)
+        {
+            if (StringComparer.InvariantCultureIgnoreCase.Equals(value, AttestationProtocolHGS))
+            {
+                result = SqlConnectionAttestationProtocol.HGS;
+                return true;
+            }
+            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, AttestationProtocolAAS))
+            {
+                result = SqlConnectionAttestationProtocol.AAS;
+                return true;
+            }
+            else
+            {
+                result = DbConnectionStringDefaults.AttestationProtocol;
+                return false;
+            }
+        }
+
+        internal static bool IsValidAttestationProtocol(SqlConnectionAttestationProtocol value)
+        {
+            Debug.Assert(Enum.GetNames(typeof(SqlConnectionAttestationProtocol)).Length == 3, "SqlConnectionAttestationProtocol enum has changed, update needed");
+            return value == SqlConnectionAttestationProtocol.NotSpecified
+                || value == SqlConnectionAttestationProtocol.HGS
+                || value == SqlConnectionAttestationProtocol.AAS;
+
+        }
+
+        internal static string AttestationProtocolToString(SqlConnectionAttestationProtocol value)
+        {
+            Debug.Assert(IsValidAttestationProtocol(value), "value is not a valid attestation protocol");
+
+            switch (value)
+            {
+                case SqlConnectionAttestationProtocol.HGS:
+                    return AttestationProtocolHGS;
+                case SqlConnectionAttestationProtocol.AAS:
+                    return AttestationProtocolAAS;
+                default:
+                    return null;
+            }
+        }
+
+        internal static SqlConnectionAttestationProtocol ConvertToAttestationProtocol(string keyword, object value)
+        {
+            if (null == value)
+            {
+                return DbConnectionStringDefaults.AttestationProtocol;
+            }
+
+            string sValue = (value as string);
+            SqlConnectionAttestationProtocol result;
+
+            if (null != sValue)
+            {
+                // try again after remove leading & trailing whitespaces.
+                sValue = sValue.Trim();
+                if (TryConvertToAttestationProtocol(sValue, out result))
+                {
+                    return result;
+                }
+
+                // string values must be valid
+                throw ADP.InvalidConnectionOptionValue(keyword);
+            }
+            else
+            {
+                // the value is not string, try other options
+                SqlConnectionAttestationProtocol eValue;
+
+                if (value is SqlConnectionAttestationProtocol)
+                {
+                    eValue = (SqlConnectionAttestationProtocol)value;
+                }
+                else if (value.GetType().IsEnum)
+                {
+                    // explicitly block scenarios in which user tries to use wrong enum types, like:
+                    // builder["SqlConnectionAttestationProtocol"] = EnvironmentVariableTarget.Process;
+                    // workaround: explicitly cast non-SqlConnectionAttestationProtocol enums to int
+                    throw ADP.ConvertFailed(value.GetType(), typeof(SqlConnectionAttestationProtocol), null);
+                }
+                else
+                {
+                    try
+                    {
+                        // Enum.ToObject allows only integral and enum values (enums are blocked above), rasing ArgumentException for the rest
+                        eValue = (SqlConnectionAttestationProtocol)Enum.ToObject(typeof(SqlConnectionAttestationProtocol), value);
+                    }
+                    catch (ArgumentException e)
+                    {
+                        // to be consistent with the messages we send in case of wrong type usage, replace 
+                        // the error with our exception, and keep the original one as inner one for troubleshooting
+                        throw ADP.ConvertFailed(value.GetType(), typeof(SqlConnectionAttestationProtocol), e);
+                    }
+                }
+
+                if (IsValidAttestationProtocol(eValue))
+                {
+                    return eValue;
+                }
+                else
+                {
+                    throw ADP.InvalidEnumerationValue(typeof(SqlConnectionAttestationProtocol), (int)eValue);
+                }
+            }
+        }
+
+        #endregion
 
         internal static bool IsValidApplicationIntentValue(ApplicationIntent value)
         {
@@ -524,6 +646,7 @@ namespace Microsoft.Data.Common
         internal static readonly SqlAuthenticationMethod Authentication = SqlAuthenticationMethod.NotSpecified;
         internal const SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Disabled;
         internal const string EnclaveAttestationUrl = "";
+        internal const SqlConnectionAttestationProtocol AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified;
     }
 
 
@@ -559,6 +682,7 @@ namespace Microsoft.Data.Common
         internal const string Authentication = "Authentication";
         internal const string ColumnEncryptionSetting = "Column Encryption Setting";
         internal const string EnclaveAttestationUrl = "Enclave Attestation Url";
+        internal const string AttestationProtocol = "Attestation Protocol";
 
         // common keywords (OleDb, OracleClient, SqlClient)
         internal const string DataSource = "Data Source";

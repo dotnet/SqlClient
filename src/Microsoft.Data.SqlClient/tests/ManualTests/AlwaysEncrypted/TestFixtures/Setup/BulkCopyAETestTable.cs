@@ -18,10 +18,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
 
         public override void Create(SqlConnection sqlConnection)
         {
+            string encryptionType = DataTestUtility.EnclaveEnabled ? "RANDOMIZED" : "DETERMINISTIC";
             string sql =
                 $@"CREATE TABLE [dbo].[{Name}]
                 (
-                    [c1] varchar(2000) COLLATE Latin1_General_BIN2 ENCRYPTED WITH (COLUMN_ENCRYPTION_KEY = [{columnEncryptionKey1.Name}], ENCRYPTION_TYPE = RANDOMIZED, ALGORITHM = '{ColumnEncryptionAlgorithmName}')
+                    [c1] varchar(2000) COLLATE Latin1_General_BIN2 ENCRYPTED WITH (COLUMN_ENCRYPTION_KEY = [{columnEncryptionKey1.Name}], ENCRYPTION_TYPE = {encryptionType}, ALGORITHM = '{ColumnEncryptionAlgorithmName}')
                 )";
 
             using (SqlCommand command = sqlConnection.CreateCommand())

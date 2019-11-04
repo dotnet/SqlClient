@@ -1654,7 +1654,7 @@
     <value>You have specified the enclave attestation URL in the connection string, but the SQL Server instance in use does not support enclave based computations.</value>
   </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
-    <value>No enclave provider found for enclave type '{0}'. Please specify the provider in the application configuration.</value>
+    <value>No enclave provider found for enclave type '{0}' and attestation protocol '{1}'. Please specify the correct attestation protocol in the connection string.</value>
   </data>
   <data name="TCE_EnclaveProvidersNotConfiguredForEnclaveBasedQuery" xml:space="preserve">
     <value>Executing a query requires enclave computations, but the application configuration is missing the enclave provider section.</value>
@@ -1772,5 +1772,80 @@
   </data>
   <data name="SQL_GlobalizationInvariantModeNotSupported" xml:space="preserve">
     <value>Globalization Invariant Mode is not supported.</value>
+  </data>
+  <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
+    <value>The validation of an attestation token failed. The token signature does not match the signature computed using a public key retrieved from the attestation public key endpoint at '{0}'. Verify the DNS mapping for the endpoint. If correct, contact Customer Support Services.</value>
+  </data>
+  <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
+    <value>Internal error occurred when retrying the download of the HGS root certificate after the initial request failed. Contact Customer Support Services.</value>
+  </data>
+  <data name="EnclaveSessionInvalidationFailed" xml:space="preserve">
+    <value>Internal error. Unable to invalidate the requested enclave session, because it does not exist in the cache. Contact Customer Support Services.</value>
+  </data>
+  <data name="ExpiredAttestationToken" xml:space="preserve">
+    <value>The validation of an attestation token failed. The token received from SQL Server is expired. Contact Customer Support Services.</value>
+  </data>
+  <data name="FailToCreateEnclaveSession" xml:space="preserve">
+    <value>Failed to create enclave session as attestation server is busy.</value>
+  </data>
+  <data name="FailToParseAttestationInfo" xml:space="preserve">
+    <value>The validation of an attestation information failed. The attestation information has an invalid format. Contact Customer Support Services. Error details: '{0}'.</value>
+  </data>
+  <data name="FailToParseAttestationToken" xml:space="preserve">
+    <value>The validation of an attestation token failed. The token has an invalid format. Contact Customer Support Services. Error details: '{0}'.</value>
+  </data>
+  <data name="GetAttestationSigningCertificateFailedInvalidCertificate" xml:space="preserve">
+    <value>The attestation service returned an expired HGS root certificate for attestation URL '{0}'. Check the HGS root certificate configured for your HGS instance.</value>
+  </data>
+  <data name="GetAttestationSigningCertificateRequestFailedFormat" xml:space="preserve">
+    <value>The obtained HGS root certificate for attestation URL '{0}' has an invalid format. Verify the attestation URL is correct and the HGS server is online and fully initialized. For more information contact Customer Support Services. Error details: '{1}'.</value>
+  </data>
+  <data name="GetAttestationTokenSigningKeysFailed" xml:space="preserve">
+    <value>The validation of an attestation token failed. Cannot retrieve a public key from the attestation public key endpoint, or the retrieved key has an invalid format. Error details: '{0}'.</value>
+  </data>
+  <data name="GetSharedSecretFailed" xml:space="preserve">
+    <value>Signature verification of the enclave's Diffie-Hellman key failed. Contact Customer Support Services.</value>
+  </data>
+  <data name="InvalidArgumentToBase64UrlDecoder" xml:space="preserve">
+    <value>The validation of an attestation token failed due to an error while decoding the enclave public key obtained from SQL Server. Contact Customer Support Services.</value>
+  </data>
+  <data name="InvalidArgumentToSHA256" xml:space="preserve">
+    <value>The validation of an attestation token failed due to an error while computing a hash of the enclave public key obtained from SQL Server. Contact Customer Support Services.</value>
+  </data>
+  <data name="InvalidAttestationToken" xml:space="preserve">
+    <value>The validation of the attestation token has failed during signature validation. Exception: '{0}'.</value>
+  </data>
+  <data name="InvalidClaimInAttestationToken" xml:space="preserve">
+    <value>The validation of an attestation token failed. Claim '{0}' in the token has an invalid value of '{1}'. Verify the attestation policy. If the policy is correct, contact Customer Support Services.</value>
+  </data>
+  <data name="MissingClaimInAttestationToken" xml:space="preserve">
+    <value>The validation of the attestation token failed. Claim '{0}' is missing in the token. Verify the attestation policy. If the policy is correct, contact Customer Support Services.</value>
+  </data>
+  <data name="VerifyEnclaveDebuggable" xml:space="preserve">
+    <value>Failed to check if the enclave is running in the production mode. Contact Customer Support Services.</value>
+  </data>
+  <data name="VerifyEnclavePolicyFailedFormat" xml:space="preserve">
+    <value>Could not verify enclave policy due to a difference between the expected and actual values of the policy on property '{0}'. Actual: '{1}', Expected: '{2}'.</value>
+  </data>
+  <data name="VerifyEnclaveReportFailed" xml:space="preserve">
+    <value>Signature verification of the enclave report failed. The report signature does not match the signature computed using the HGS root certificate. Verify the DNS mapping for the endpoint. If correct, contact Customer Support Services.</value>
+  </data>
+  <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
+    <value>The enclave report received from SQL Server is not in the correct format. Contact Customer Support Services.</value>
+  </data>
+  <data name="VerifyHealthCertificateChainFormat" xml:space="preserve">
+    <value>Failed to build a chain of trust between the enclave host's health report and the HGS root certificate for attestation URL '{0}' with status: '{1}'. Verify the attestation URL matches the URL configured on the SQL Server machine. If both the client and SQL Server use the same attestation service, contact Customer Support Services.</value>
+  </data>
+  <data name="TCE_DbConnectionString_AttestationProtocol" xml:space="preserve">
+    <value>Specifies an attestation protocol for its corresponding enclave attestation service.</value>
+  </data>
+  <data name="TCE_EnclaveTypeNotSupported" xml:space="preserve">
+    <value>The enclave type '{0}' returned from the server is not supported.</value>
+  </data>
+  <data name="TCE_AttestationProtocolNotSupportEnclaveType" xml:space="preserve">
+    <value>Failed to initialize connection. The attestation protocol '{0}' does not support the enclave type '{1}'.</value>
+  </data>
+  <data name="TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage" xml:space="preserve">
+    <value>Error occured when generating enclave package. Attestation Protocol has not been specified in the connection string, but the query requires enclave computations.</value>
   </data>
 </root>

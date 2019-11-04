@@ -53,6 +53,9 @@ namespace Microsoft.Data.SqlClient
         public Microsoft.Data.SqlClient.SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting { get { throw null; } set { } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/EnclaveAttestationUrl/*'/>
         public string EnclaveAttestationUrl { get { throw null; } set { } }
+
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/AttestationProtocol/*' />
+        public Microsoft.Data.SqlClient.SqlConnectionAttestationProtocol AttestationProtocol {get { throw null; } set { } }
     }
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SqlParameter/*'/>
     public sealed partial class SqlParameter : System.Data.Common.DbParameter, System.ICloneable, System.Data.IDataParameter, System.Data.IDbDataParameter
@@ -100,6 +103,20 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionColumnEncryptionSetting.xml' path='docs/members[@name="SqlConnectionColumnEncryptionSetting"]/Enabled/*'/>
         Enabled = 1,
     }
+
+    /// <include file='..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/SqlConnectionAttestationProtocol/*' />
+    public enum SqlConnectionAttestationProtocol
+    {
+        /// <include file='..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/NotSpecified/*' />
+        NotSpecified = 0,
+
+        /// <include file='..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/AAS/*' />
+        AAS = 1,
+
+        /// <include file='..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/HGS/*' />
+        HGS = 3
+    }
+
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCertificateStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionCertificateStoreProvider"]/SqlColumnEncryptionCertificateStoreProvider/*'/>
     public partial class SqlColumnEncryptionCertificateStoreProvider : Microsoft.Data.SqlClient.SqlColumnEncryptionKeyStoreProvider
     {
