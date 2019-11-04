@@ -241,10 +241,11 @@ namespace Microsoft.Data.Common
                 return true;
             }
             else
-
+            {
                 result = DbConnectionStringDefaults.AttestationProtocol;
-            return false;
+                return false;
             }
+        }
 
         internal static bool IsValidAttestationProtocol(SqlConnectionAttestationProtocol value)
         {

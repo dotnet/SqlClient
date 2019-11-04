@@ -267,7 +267,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             Assert.True(tryGetValueResult);
             Assert.Equal(sqlConnectionColumnEncryptionSetting, (SqlConnectionColumnEncryptionSetting)outputValue);
 
-            // connectionStringBuilder should not have the key Enclave Attestation URL. The key is with spaces.
+            // connectionStringBuilder should not have the key EnclaveAttestationUrl. The key is with spaces.
             tryGetValueResult = connectionStringBuilder.TryGetValue(@"EnclaveAttestationUrl", out outputValue);
             Assert.False(tryGetValueResult);
             Assert.Null(outputValue);
@@ -283,7 +283,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             Assert.True(tryGetValueResult);
             Assert.Equal("www.foo.com", (string)outputValue);
 
-            // connectionStringBuilder should not have the key Enclave Attestation Protocol. The key is with spaces.
+            // connectionStringBuilder should not have the key AttestationProtocol. The key is with spaces.
             tryGetValueResult = connectionStringBuilder.TryGetValue(@"AttestationProtocol", out outputValue);
             Assert.False(tryGetValueResult);
             Assert.Null(outputValue);
@@ -331,13 +331,13 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             string url = "www.foo.com";
             SqlConnectionAttestationProtocol protocol = SqlConnectionAttestationProtocol.HGS;
 
-            // Use the Add function to update the Enclae Attestation URL in the dictionary.
+            // Use the Add function to update the Enclave Attestation Url in the dictionary.
             connectionStringBuilder.Add(@"Enclave Attestation Url", url);
 
             // Query the property to check if the above add was effective.
             Assert.Equal(url, connectionStringBuilder.EnclaveAttestationUrl);
 
-            // Use the Add function to update the Enclave Attestatopm Protocol in the dictionary.
+            // Use the Add function to update the Attestation Protocol in the dictionary.
             connectionStringBuilder.Add(@"Attestation Protocol", protocol);
 
             // Query the property to check if the above add was effective.
