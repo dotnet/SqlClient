@@ -6,10 +6,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     public class ExceptionsGenericErrors : IClassFixture<ExceptionGenericErrorFixture> {
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
-        [ActiveIssue(10036)]
-        public void TestCommandOptionWithNoTceFeature () {
-            SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.IsNotAzureServer), Skip = "ActiveIssue 10036")]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public void TestCommandOptionWithNoTceFeature (string connectionString) {
+            SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder(connectionString);
             CertificateUtility.ChangeServerTceSetting (false, sb); // disable TCE on engine.
             using (SqlConnection conn = CertificateUtility.GetOpenConnection(false, sb, fSuppressAttestation: true))
             {
@@ -26,9 +26,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             CertificateUtility.ChangeServerTceSetting (true, sb); // enable tce
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
-        public void TestDataAdapterAndEncrytionSetting () {
-            SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.IsNotAzureServer))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public void TestDataAdapterAndEncrytionSetting (string connectionString) {
+            SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder(connectionString);
             // Create a new SqlCommand for select and delete
             using (SqlConnection conn = CertificateUtility.GetOpenConnection(false, sb))
             {
@@ -64,9 +65,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
-        public void TestInvalidForceColumnEncryptionSetting() {
-            SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.IsNotAzureServer))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public void TestInvalidForceColumnEncryptionSetting(string connectionString) {
+            SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder(connectionString);
             using (SqlConnection conn = CertificateUtility.GetOpenConnection(false, sb))
             {
                 using (SqlCommand cmd = new SqlCommand(ExceptionGenericErrorFixture.encryptedProcedureName, conn))
@@ -81,9 +83,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
-        public void TestParamUnexpectedEncryptionMD() {
-            SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.IsNotAzureServer))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public void TestParamUnexpectedEncryptionMD(string connectionString) {
+            SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder(connectionString);
             using (SqlConnection conn = CertificateUtility.GetOpenConnection(true, sb))
             {
                 using (SqlCommand cmd = new SqlCommand(ExceptionGenericErrorFixture.encryptedProcedureName, conn))
@@ -114,22 +117,25 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             encryptedTableName = DatabaseHelper.GenerateUniqueName("encrypted");
             encryptedProcedureName = DatabaseHelper.GenerateUniqueName("encrypted");
-            using (SqlConnection conn = CertificateUtility.GetOpenConnection(false, new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)))
+            foreach (string connectionStr in DataTestUtility.AEConnStringsSetup)
             {
-                using (SqlCommand cmdCreate = new SqlCommand($"create table {encryptedTableName}(c1 int)", conn))
+                using (SqlConnection conn = CertificateUtility.GetOpenConnection(false, new SqlConnectionStringBuilder(connectionStr)))
                 {
-                    cmdCreate.CommandType = CommandType.Text;
-                    cmdCreate.ExecuteNonQuery();
-                }
-                using (SqlCommand cmdInsert = new SqlCommand($"insert into {encryptedTableName} values(1)", conn))
-                {
-                    cmdInsert.CommandType = CommandType.Text;
-                    cmdInsert.ExecuteNonQuery();
-                }
-                using (SqlCommand cmdCreateProc = new SqlCommand($"create procedure {encryptedProcedureName}(@c1 int) as insert into {encryptedTableName} values (@c1)", conn))
-                {
-                    cmdCreateProc.CommandType = CommandType.Text;
-                    cmdCreateProc.ExecuteNonQuery();
+                    using (SqlCommand cmdCreate = new SqlCommand($"create table {encryptedTableName}(c1 int)", conn))
+                    {
+                        cmdCreate.CommandType = CommandType.Text;
+                        cmdCreate.ExecuteNonQuery();
+                    }
+                    using (SqlCommand cmdInsert = new SqlCommand($"insert into {encryptedTableName} values(1)", conn))
+                    {
+                        cmdInsert.CommandType = CommandType.Text;
+                        cmdInsert.ExecuteNonQuery();
+                    }
+                    using (SqlCommand cmdCreateProc = new SqlCommand($"create procedure {encryptedProcedureName}(@c1 int) as insert into {encryptedTableName} values (@c1)", conn))
+                    {
+                        cmdCreateProc.CommandType = CommandType.Text;
+                        cmdCreateProc.ExecuteNonQuery();
+                    }
                 }
             }
         }
@@ -137,23 +143,26 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public void Dispose()
         {
             // Do NOT remove certificate for concurrent consistency. Certificates are used for other test cases as well.
-            SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
-            using (SqlConnection conn = CertificateUtility.GetOpenConnection(false, sb))
+            foreach (string connectionStr in DataTestUtility.AEConnStringsSetup)
             {
-                using (SqlCommand cmd = new SqlCommand($"drop table {encryptedTableName}", conn))
+                SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder(connectionStr);
+                using (SqlConnection conn = CertificateUtility.GetOpenConnection(false, sb))
                 {
-                    cmd.CommandType = CommandType.Text;
-                    cmd.ExecuteNonQuery();
+                    using (SqlCommand cmd = new SqlCommand($"drop table {encryptedTableName}", conn))
+                    {
+                        cmd.CommandType = CommandType.Text;
+                        cmd.ExecuteNonQuery();
 
-                    cmd.CommandText = $"drop procedure {encryptedProcedureName}";
-                    cmd.ExecuteNonQuery();
+                        cmd.CommandText = $"drop procedure {encryptedProcedureName}";
+                        cmd.ExecuteNonQuery();
+                    }
                 }
-            }
 
-            // Only use traceoff for non-sysadmin role accounts, Azure accounts does not have the permission.
-            if (DataTestUtility.IsNotAzureServer())
-            {
-                CertificateUtility.ChangeServerTceSetting(true, sb);
+                // Only use traceoff for non-sysadmin role accounts, Azure accounts does not have the permission.
+                if (DataTestUtility.IsNotAzureServer())
+                {
+                    CertificateUtility.ChangeServerTceSetting(true, sb);
+                }
             }
         }
     }
