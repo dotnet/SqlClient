@@ -4,6 +4,7 @@
 
 using System;
 using System.Data;
+using System.Data.Common;
 using System.Data.SqlTypes;
 using Xunit;
 
@@ -239,8 +240,171 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             Assert.True(IsValidParam(SqlDbType.DateTimeOffset, "c4", dto.LocalDateTime, conn, tableName), "FAILED: Invalid param for DateTimeOffset SqlDbType");
                             Assert.False(IsValidParam(SqlDbType.DateTimeOffset, "c4", new TimeSpan(), conn, tableName), "FAILED: Invalid param for DateTimeOffset SqlDbType");
                             Assert.True(IsValidParam(SqlDbType.DateTimeOffset, "c4", "9999-12-31 23:59:59.997 +00:00", conn, tableName), "FAILED: Invalid param for DateTimeOffset SqlDbType");
-                            #endregion
                         }
+
+                        // Do the same thing as above except using DbType now
+                        using (DbCommand cmd3 = conn.CreateCommand())
+                        {
+                            cmd3.CommandText = tempTableInsert2;
+                            DbParameter pi = cmd3.CreateParameter();
+                            pi.DbType = DbType.Int32;
+                            pi.ParameterName = "@pi";
+                            DbParameter p0 = cmd3.CreateParameter();
+                            p0.DbType = DbType.DateTime;
+                            p0.ParameterName = "@p0";
+                            DbParameter p1 = cmd3.CreateParameter();
+                            p1.DbType = DbType.Date;
+                            p1.ParameterName = "@p1";
+                            DbParameter p2 = cmd3.CreateParameter();
+                            p2.DbType = DbType.Time;
+                            p2.ParameterName = "@p2";
+                            DbParameter p3 = cmd3.CreateParameter();
+                            p3.DbType = DbType.DateTime2;
+                            p3.ParameterName = "@p3";
+                            DbParameter p4 = cmd3.CreateParameter();
+                            p4.DbType = DbType.DateTimeOffset;
+                            p4.ParameterName = "@p4";
+                            pi.Value = DBNull.Value;
+                            p0.Value = DBNull.Value;
+                            p1.Value = DBNull.Value;
+                            p2.Value = DBNull.Value;
+                            p3.Value = DBNull.Value;
+                            p4.Value = DBNull.Value;
+                            p3.Scale = 7;
+
+                            cmd3.Parameters.Add(pi);
+                            cmd3.Parameters.Add(p0);
+                            cmd3.Parameters.Add(p1);
+                            cmd3.Parameters.Add(p2);
+                            cmd3.Parameters.Add(p3);
+                            cmd3.Parameters.Add(p4);
+                            cmd3.ExecuteNonQuery();
+                            pi.Value = 1;
+                            p0.Value = new DateTime(2000, 12, 31);
+                            p1.Value = new DateTime(2000, 12, 31);
+                            p2.Value = new TimeSpan(23, 59, 59);
+                            p3.Value = new DateTime(2000, 12, 31);
+                            p4.Value = new DateTimeOffset(2000, 12, 31, 23, 59, 59, new TimeSpan(-8, 0, 0));
+                            p3.Scale = 3;
+
+                            // This used to be broken for p2/TimeSpan before removing back-compat code for DbType.Date and DbType.Time parameters
+                            cmd3.ExecuteNonQuery();
+
+                            // Test 2
+                            cmd3.CommandText = "SELECT COUNT(*) FROM " + tableName + " WHERE @pi = ci AND @p0 = c0 AND @p1 = c1 AND @p2 = c2 AND @p3 = c3 AND @p4 = c4";
+                            pi.Value = 0;
+                            p0.Value = new DateTime(1753, 1, 1, 0, 0, 0);
+                            p1.Value = new DateTime(1753, 1, 1, 0, 0, 0);
+                            p2.Value = new TimeSpan(0, 20, 12, 13, 360);
+                            p3.Value = new DateTime(2000, 12, 31, 23, 59, 59, 997);
+                            p4.Value = new DateTimeOffset(9999, 12, 31, 23, 59, 59, 997, TimeSpan.Zero);
+                            p4.Scale = 3;
+                            cmd3.Parameters.Clear();
+                            cmd3.Parameters.Add(pi);
+                            cmd3.Parameters.Add(p0);
+                            cmd3.Parameters.Add(p1);
+                            cmd3.Parameters.Add(p2);
+                            cmd3.Parameters.Add(p3);
+                            cmd3.Parameters.Add(p4);
+
+                            // This used to be broken for p2/TimeSpan before removing back-compat code for DbType.Date and DbType.Time parameters
+                            object scalarResult = cmd3.ExecuteScalar();
+                            Assert.True(scalarResult.Equals(1), string.Format("FAILED: Execute scalar returned unexpected result. Expected: {0}. Actual: {1}.", 1, scalarResult));
+
+                            // Test 3
+
+                            using (SqlCommand cmd4 = conn.CreateCommand())
+                            {
+                                cmd4.CommandType = CommandType.StoredProcedure;
+                                cmd4.CommandText = procName;
+                                p0 = cmd3.CreateParameter();
+                                p0.DbType = DbType.DateTime;
+                                p0.ParameterName = "@p0";
+                                cmd4.Parameters.Add(p0);
+                                p1 = cmd3.CreateParameter();
+                                p1.DbType = DbType.Date;
+                                p1.ParameterName = "@p1";
+                                cmd4.Parameters.Add(p1);
+                                p2 = cmd3.CreateParameter();
+                                p2.DbType = DbType.Time;
+                                p2.ParameterName = "@p2";
+                                cmd4.Parameters.Add(p2);
+                                p3 = cmd3.CreateParameter();
+                                p3.DbType = DbType.DateTime2;
+                                p3.ParameterName = "@p3";
+                                cmd4.Parameters.Add(p3);
+                                p4 = cmd3.CreateParameter();
+                                p4.DbType = DbType.DateTimeOffset;
+                                p4.ParameterName = "@p4";
+                                cmd4.Parameters.Add(p4);
+                                p0.Direction = ParameterDirection.Output;
+                                p1.Direction = ParameterDirection.Output;
+                                p2.Direction = ParameterDirection.Output;
+                                p3.Direction = ParameterDirection.Output;
+                                p4.Direction = ParameterDirection.Output;
+                                p2.Scale = 7;
+                                cmd4.ExecuteNonQuery();
+
+                                Assert.True(p0.Value.Equals((new SqlDateTime(1753, 1, 1, 0, 0, 0)).Value), "FAILED: SqlParameter p0 contained incorrect value");
+                                Assert.True(p1.Value.Equals(new DateTime(1753, 1, 1, 0, 0, 0)), "FAILED: SqlParameter p1 contained incorrect value");
+                                // This used to be broken for p2/TimeSpan before removing back-compat code for DbType.Date and DbType.Time parameters
+                                Assert.True(p2.Value.Equals(new TimeSpan(0, 20, 12, 13, 360)), "FAILED: SqlParameter p2 contained incorrect value");
+                                Assert.True(p2.Scale.Equals(7), "FAILED: SqlParameter p0 contained incorrect scale");
+                                Assert.True(p3.Value.Equals(new DateTime(2000, 12, 31, 23, 59, 59, 997)), "FAILED: SqlParameter p3 contained incorrect value");
+                                Assert.True(p3.Scale.Equals(7), "FAILED: SqlParameter p3 contained incorrect scale");
+                                Assert.True(p4.Value.Equals(new DateTimeOffset(9999, 12, 31, 23, 59, 59, 997, TimeSpan.Zero)), "FAILED: SqlParameter p4 contained incorrect value");
+                                Assert.True(p4.Scale.Equals(7), "FAILED: SqlParameter p4 contained incorrect scale");
+
+                                // Test 4
+                                cmd4.CommandText = procNullName;
+                                cmd4.ExecuteNonQuery();
+                            }
+                            Assert.True(p0.Value.Equals(DBNull.Value), "FAILED: SqlParameter p0 expected to be NULL");
+                            Assert.True(p1.Value.Equals(DBNull.Value), "FAILED: SqlParameter p1 expected to be NULL");
+                            Assert.True(p2.Value.Equals(DBNull.Value), "FAILED: SqlParameter p2 expected to be NULL");
+                            Assert.True(p3.Value.Equals(DBNull.Value), "FAILED: SqlParameter p3 expected to be NULL");
+                            Assert.True(p4.Value.Equals(DBNull.Value), "FAILED: SqlParameter p4 expected to be NULL");
+
+                            // Date
+                            Assert.False(IsValidParam(DbType.Date, "c1", new DateTimeOffset(1753, 1, 1, 0, 0, 0, TimeSpan.Zero), conn, tableName), "FAILED: Invalid param for Date DbType");
+                            Assert.False(IsValidParam(DbType.Date, "c1", new SqlDateTime(1753, 1, 1, 0, 0, 0), conn, tableName), "FAILED: Invalid param for Date DbType");
+                            Assert.True(IsValidParam(DbType.Date, "c1", new DateTime(1753, 1, 1, 0, 0, 0, DateTimeKind.Unspecified), conn, tableName), "FAILED: Invalid param for Date DbType");
+                            Assert.True(IsValidParam(DbType.Date, "c1", new DateTime(1753, 1, 1, 0, 0, 0, DateTimeKind.Utc), conn, tableName), "FAILED: Invalid param for Date DbType");
+                            Assert.True(IsValidParam(DbType.Date, "c1", new DateTime(1753, 1, 1, 0, 0, 0, DateTimeKind.Local), conn, tableName), "FAILED: Invalid param for Date DbType");
+                            Assert.False(IsValidParam(DbType.Date, "c1", new TimeSpan(), conn, tableName), "FAILED: Invalid param for Date DbType");
+                            Assert.True(IsValidParam(DbType.Date, "c1", "1753-1-1", conn, tableName), "FAILED: Invalid param for Date DbType");
+
+                            // Time
+                            // These 7 Asserts used to be broken for before removing back-compat code for DbType.Date and DbType.Time parameters
+                            Assert.False(IsValidParam(DbType.Time, "c2", new DateTimeOffset(1753, 1, 1, 0, 0, 0, TimeSpan.Zero), conn, tableName), "FAILED: Invalid param for Time DbType");
+                            Assert.False(IsValidParam(DbType.Time, "c2", new SqlDateTime(1753, 1, 1, 0, 0, 0), conn, tableName), "FAILED: Invalid param for Time DbType");
+                            Assert.False(IsValidParam(DbType.Time, "c2", new DateTime(1753, 1, 1, 0, 0, 0, DateTimeKind.Unspecified), conn, tableName), "FAILED: Invalid param for Time DbType");
+                            Assert.False(IsValidParam(DbType.Time, "c2", new DateTime(1753, 1, 1, 0, 0, 0, DateTimeKind.Utc), conn, tableName), "FAILED: Invalid param for Time DbType");
+                            Assert.False(IsValidParam(DbType.Time, "c2", new DateTime(1753, 1, 1, 0, 0, 0, DateTimeKind.Local), conn, tableName), "FAILED: Invalid param for Time DbType");
+                            Assert.True(IsValidParam(DbType.Time, "c2", TimeSpan.Parse("20:12:13.36"), conn, tableName), "FAILED: Invalid param for Time DbType");
+                            Assert.True(IsValidParam(DbType.Time, "c2", "20:12:13.36", conn, tableName), "FAILED: Invalid param for Time DbType");
+
+                            // DateTime2
+                            DateTime dt = DateTime.Parse("2000-12-31 23:59:59.997");
+                            Assert.False(IsValidParam(DbType.DateTime2, "c3", new DateTimeOffset(1753, 1, 1, 0, 0, 0, TimeSpan.Zero), conn, tableName), "FAILED: Invalid param for DateTime2 DbType");
+                            Assert.False(IsValidParam(DbType.DateTime2, "c3", new SqlDateTime(2000, 12, 31, 23, 59, 59, 997), conn, tableName), "FAILED: Invalid param for DateTime2 DbType");
+                            Assert.True(IsValidParam(DbType.DateTime2, "c3", new DateTime(2000, 12, 31, 23, 59, 59, 997, DateTimeKind.Unspecified), conn, tableName), "FAILED: Invalid param for DateTime2 DbType");
+                            Assert.True(IsValidParam(DbType.DateTime2, "c3", new DateTime(2000, 12, 31, 23, 59, 59, 997, DateTimeKind.Utc), conn, tableName), "FAILED: Invalid param for DateTime2 DbType");
+                            Assert.True(IsValidParam(DbType.DateTime2, "c3", new DateTime(2000, 12, 31, 23, 59, 59, 997, DateTimeKind.Local), conn, tableName), "FAILED: Invalid param for DateTime2 DbType");
+                            Assert.False(IsValidParam(DbType.DateTime2, "c3", new TimeSpan(), conn, tableName), "FAILED: Invalid param for DateTime2 DbType");
+                            Assert.True(IsValidParam(DbType.DateTime2, "c3", "2000-12-31 23:59:59.997", conn, tableName), "FAILED: Invalid param for DateTime2 DbType");
+
+                            // DateTimeOffset
+                            DateTimeOffset dto = DateTimeOffset.Parse("9999-12-31 23:59:59.997 +00:00");
+                            Assert.True(IsValidParam(DbType.DateTimeOffset, "c4", dto, conn, tableName), "FAILED: Invalid param for DateTimeOffset DbType");
+                            Assert.False(IsValidParam(DbType.DateTimeOffset, "c4", new SqlDateTime(1753, 1, 1, 0, 0, 0), conn, tableName), "FAILED: Invalid param for DateTimeOffset DbType");
+                            Assert.True(IsValidParam(DbType.DateTimeOffset, "c4", new DateTime(9999, 12, 31, 15, 59, 59, 997, DateTimeKind.Unspecified), conn, tableName), "FAILED: Invalid param for DateTimeOffset DbType");
+                            Assert.True(IsValidParam(DbType.DateTimeOffset, "c4", dto.UtcDateTime, conn, tableName), "FAILED: Invalid param for DateTimeOffset DbType");
+                            Assert.True(IsValidParam(DbType.DateTimeOffset, "c4", dto.LocalDateTime, conn, tableName), "FAILED: Invalid param for DateTimeOffset DbType");
+                            Assert.False(IsValidParam(DbType.DateTimeOffset, "c4", new TimeSpan(), conn, tableName), "FAILED: Invalid param for DateTimeOffset DbType");
+                            Assert.True(IsValidParam(DbType.DateTimeOffset, "c4", "9999-12-31 23:59:59.997 +00:00", conn, tableName), "FAILED: Invalid param for DateTimeOffset DbType");
+                        }
+                        #endregion
 
                         #region reader
                         // Reader Tests
@@ -434,6 +598,25 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 SqlCommand cmd = new SqlCommand("SELECT COUNT(*) FROM " + tempTable + " WHERE " + col + " = @p", conn);
                 cmd.Parameters.Add("@p", dbType).Value = value;
+                cmd.ExecuteScalar();
+            }
+            catch (InvalidCastException)
+            {
+                return false;
+            }
+            return true;
+        }
+
+        private static bool IsValidParam(DbType dbType, string col, object value, SqlConnection conn, string tempTable)
+        {
+            try
+            {
+                DbCommand cmd = new SqlCommand("SELECT COUNT(*) FROM " + tempTable + " WHERE " + col + " = @p", conn);
+                DbParameter p = cmd.CreateParameter();
+                p.ParameterName = "@p";
+                p.DbType = dbType;
+                p.Value = value;
+                cmd.Parameters.Add(p);
                 cmd.ExecuteScalar();
             }
             catch (InvalidCastException)
