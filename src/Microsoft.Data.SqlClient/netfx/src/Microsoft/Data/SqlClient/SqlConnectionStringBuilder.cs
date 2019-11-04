@@ -645,9 +645,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <summary>
-        /// To add include file for docs
-        /// </summary>
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/AttestationProtocol/*' />
         [DisplayName(DbConnectionStringKeywords.AttestationProtocol)]
         [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Security)]
         [ResDescriptionAttribute(StringsHelper.ResourceNames.TCE_DbConnectionString_AttestationProtocol)]

@@ -482,10 +482,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <value></value>
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/AttestationProtocol/*' />
         public SqlConnectionAttestationProtocol AttestationProtocol
         {
             get { return _attestationProtocol; }
