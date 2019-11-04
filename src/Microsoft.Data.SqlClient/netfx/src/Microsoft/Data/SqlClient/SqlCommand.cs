@@ -2697,7 +2697,7 @@ namespace Microsoft.Data.SqlClient
                                 ReliablePutStateObject();
                             }
 
-                            bool shouldRetry = e is EnclaveDelegate.RetriableEnclaveQueryExecutionException;
+                            bool shouldRetry = e is EnclaveDelegate.RetryableEnclaveQueryExecutionException;
 
                             // Check if we have an error indicating that we can retry.
                             if (e is SqlException)
@@ -4932,7 +4932,7 @@ namespace Microsoft.Data.SqlClient
                                 describeParameterEncryptionRequest: false, describeParameterEncryptionTask: returnTask);
                         }
 
-                        catch (EnclaveDelegate.RetriableEnclaveQueryExecutionException)
+                        catch (EnclaveDelegate.RetryableEnclaveQueryExecutionException)
                         {
                             if (inRetry || async)
                             {
@@ -5136,7 +5136,7 @@ namespace Microsoft.Data.SqlClient
                     this.CommandText, enclaveType, this._activeConnection.DataSource,
                     this._activeConnection.EnclaveAttestationUrl);
             }
-            catch (EnclaveDelegate.RetriableEnclaveQueryExecutionException)
+            catch (EnclaveDelegate.RetryableEnclaveQueryExecutionException)
             {
                 throw;
             }

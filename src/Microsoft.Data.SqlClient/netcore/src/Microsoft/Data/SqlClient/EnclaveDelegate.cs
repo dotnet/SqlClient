@@ -197,9 +197,9 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Exception when executing a enclave based Always Encrypted query 
         /// </summary>
-        internal class RetriableEnclaveQueryExecutionException : Exception
+        internal class RetryableEnclaveQueryExecutionException : Exception
         {
-            internal RetriableEnclaveQueryExecutionException(string message, Exception innerException) : base(message, innerException) { }
+            internal RetryableEnclaveQueryExecutionException(string message, Exception innerException) : base(message, innerException) { }
         }
     }
 }

@@ -281,16 +281,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         /// </summary>
         public static string GetConnectionString(bool fTceEnabled, SqlConnectionStringBuilder sb, bool fSuppressAttestation = false)
         {
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
+            builder.DataSource = sb.DataSource;
+            builder.InitialCatalog = sb.InitialCatalog;
+            builder.UserID = sb.UserID;
+            builder.Password = sb.Password;
             if (fTceEnabled)
             {
-                sb.ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Enabled;
+                builder.ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Enabled;
             }
-            if (!fSuppressAttestation)
+            if (!fSuppressAttestation && DataTestUtility.EnclaveEnabled)
             {
-                sb.EnclaveAttestationUrl = sb.EnclaveAttestationUrl;
+                builder.EnclaveAttestationUrl = sb.EnclaveAttestationUrl;
+                builder.AttestationProtocol = sb.AttestationProtocol;
             }
-            sb.ConnectTimeout = 10000;
-            return sb.ToString();
+            builder.ConnectTimeout = 10000;
+            return builder.ToString();
         }
 
         /// <summary>
