@@ -867,9 +867,7 @@ namespace Microsoft.Data.SqlClient
         [System.ComponentModel.DisplayNameAttribute("Enclave Attestation Url")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public string EnclaveAttestationUrl { get { throw null; } set { } }
-        /// <summary>
-        /// To Do : add docs file
-        /// </summary>
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/AttestationProtocol/*'/>
         [System.ComponentModel.DisplayNameAttribute("Attestation Protocol")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public Microsoft.Data.SqlClient.SqlConnectionAttestationProtocol AttestationProtocol {get { throw null; } set { } }
