@@ -25,7 +25,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Changes
 
 - Update dependency to Microsoft.Data.SqlClient.SNI v1.1.0 [#276](https://github.com/dotnet/SqlClient/pull/276)
-- Update minimum NuGet client version to 5.0 to support buildTransitive [#274](https://github.com/dotnet/SqlClient/pull/274)
 - Correct timeout remarks for async command methods [#264](https://github.com/dotnet/SqlClient/pull/264)
 - Improve SqlBulkCopy truncation error message [#256](https://github.com/dotnet/SqlClient/issues/256)
 - Intellisense tooltip for SqlCommand's CommandTimeout doesn't describe units [#33](https://github.com/dotnet/SqlClient/issues/33)
