@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
-## [Preview Release 1.1.0-preview1.19308.2] - 2019-11-04
+## [Preview Release 1.1.0-preview1.19309.1] - 2019-11-04
 
 ### Added
 
