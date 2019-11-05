@@ -4,6 +4,34 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Preview Release 1.1.0-preview1.19309.1] - 2019-11-04
+
+### Added
+
+- Add support for secure enclaves with Always Encrypted [#293](https://github.com/dotnet/SqlClient/pull/293)
+
+### Fixed
+
+- Setting the value DbParameter.DbType to DbType.Time property fails after setting the Value property [#5](https://github.com/dotnet/SqlClient/issues/5)
+- SQLDataAdapter.FillSchema doesn't mark computed columns as readonly [#275](https://github.com/dotnet/SqlClient/issues/275)
+- SqlDependency.Start throws FileNotFoundException [#260](https://github.com/dotnet/SqlClient/issues/260)
+- Misleading ADP_OpenReaderExists exception message on MARS-disabled Sql Connection when incorrectly doing parallel requests [#82](https://github.com/dotnet/SqlClient/issues/82)
+- SqlClient ManualTest MARSSyncTimeoutTest fails in managed mode [#108](https://github.com/dotnet/SqlClient/issues/108)
+- System.Data.SqlClient.SqlInternalConnectionTds constructor purges original call stack when re-throwing an exception [#100](https://github.com/dotnet/SqlClient/issues/100)
+- InvalidOperationException(SqlException) on SqlBulkCopy [#221](https://github.com/dotnet/SqlClient/issues/221)
+- Exception message grammar: "An SqlParameter [...] is not contained by this SqlParameterCollection" [#159](https://github.com/dotnet/SqlClient/issues/159)
+- Fixing incorrect event id and opcode for the SqlEventSource [#241](https://github.com/dotnet/SqlClient/pull/241)
+
+### Changes
+
+- Update dependency to Microsoft.Data.SqlClient.SNI v1.1.0 [#276](https://github.com/dotnet/SqlClient/pull/276)
+- Correct timeout remarks for async command methods [#264](https://github.com/dotnet/SqlClient/pull/264)
+- Improve SqlBulkCopy truncation error message [#256](https://github.com/dotnet/SqlClient/issues/256)
+- Intellisense tooltip for SqlCommand's CommandTimeout doesn't describe units [#33](https://github.com/dotnet/SqlClient/issues/33)
+- Enable SQL Command text for non-stored procs in EventSource events for .NET Framework [242](https://github.com/dotnet/SqlClient/pull/242)
+- Many test changes to support a public CI
+
+
 ## [Preview Release 1.1.0-preview1.19275.1] - 2019-10-02
 
 ### Added
