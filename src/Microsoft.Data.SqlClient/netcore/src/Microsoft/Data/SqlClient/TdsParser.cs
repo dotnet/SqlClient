@@ -2799,7 +2799,7 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
                 // Skip the bogus DONE counts sent by the server
-                if (stateObj._receivedColMetaData || (curCmd != TdsEnums.SELECT))
+                if (stateObj.HasReceivedColumnMetadata || (curCmd != TdsEnums.SELECT))
                 {
                     cmd.OnStatementCompleted(count);
                 }
