@@ -3967,8 +3967,8 @@ namespace Microsoft.Data.SqlClient
             private _SqlMetaDataSetCollection _snapshotCleanupAltMetaDataSetArray;
 
             internal byte[] _plpBuffer;
-
-            private readonly TdsParserStateObject _stateObj;
+            private PLPData _plpData;
+            private TdsParserStateObject _stateObj;
 
             private int _snapshotInBuffCount;
             private int _snapshotInBuffCurrent;
