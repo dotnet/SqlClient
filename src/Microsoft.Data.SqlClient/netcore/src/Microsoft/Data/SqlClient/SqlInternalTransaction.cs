@@ -219,15 +219,6 @@ namespace Microsoft.Data.SqlClient
             _transactionState = TransactionState.Active;
         }
 
-        private void DoomConnectionNoReuse(SqlInternalConnection innerConnection)
-        {
-            if (null != innerConnection)
-            {
-                innerConnection.DoNotPoolThisConnection();
-                innerConnection.DoomThisConnection();
-            }
-        }
-
         private void CheckTransactionLevelAndZombie()
         {
             try
