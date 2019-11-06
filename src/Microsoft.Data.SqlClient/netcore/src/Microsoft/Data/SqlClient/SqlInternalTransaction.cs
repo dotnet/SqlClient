@@ -298,11 +298,6 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e)
             {
-                // GitHub Issue #130 - When an exception has occurred on transaction completion request, 
-                // this connection may not be in reusable state.
-                // We will doom this connection and make sure it does not go back to the pool.
-                DoomConnectionNoReuse(_innerConnection);
-
                 if (ADP.IsCatchableExceptionType(e))
                 {
                     CheckTransactionLevelAndZombie();

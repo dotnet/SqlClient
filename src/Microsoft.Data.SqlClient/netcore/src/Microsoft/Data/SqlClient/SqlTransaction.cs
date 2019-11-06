@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
@@ -139,6 +140,19 @@ namespace Microsoft.Data.SqlClient
                 _isFromAPI = true;
 
                 _internalTransaction.Commit();
+            }
+            catch (SqlException ex)
+            {
+                // GitHub Issue #130 - When a timeout exception has occurred on transaction completion request, 
+                // this connection may not be in reusable state.
+                // We will doom this connection and make sure it does not go back to the pool.
+                var innerException = ex.InnerException as Win32Exception;
+                if (innerException != null && innerException.NativeErrorCode == TdsEnums.SNI_WAIT_TIMEOUT)
+                {
+                    _connection.Abort(ex);
+                }
+                e = ex;
+                throw;
             }
             catch (Exception ex)
             {
