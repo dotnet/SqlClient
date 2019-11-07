@@ -101,7 +101,7 @@ Unix (`netcoreapp`):
 Manual Tests require the below setup to run:
 * SQL Server with enabled Shared Memory, TCP and Named Pipes Protocols and access to the Client OS.
 * Databases "NORTHWIND" and "UdtTestDb" present in SQL Server, created using SQL scripts [createNorthwindDb.sql](tools\testsql\createNorthwindDb.sql) and [createUdtTestDb.sql](tools\testsql\createUdtTestDb.sql).
-* Configuration file [config.json](src\Microsoft.Data.SqlClient\tests\ManualTests\config.json) updated with values:
+* Make a copy of the configuration file [config.default.json](src\Microsoft.Data.SqlClient\tests\ManualTests\config.default.json) and rename it to `config.json`. Update the values in `config.json`:
 
 |Property|Description|Value|
 |------|--------|-------------------|
