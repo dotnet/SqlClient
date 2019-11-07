@@ -58,6 +58,11 @@ namespace Microsoft.Data.SqlClient.SNI
                     // Completed
                     return;
                 }
+                else
+                {
+                    // Avoid consuming the same instance twice.
+                    vt = new ValueTask<int>(_length);
+                }
             }
 
             // Not complete or error call the async local function to complete
