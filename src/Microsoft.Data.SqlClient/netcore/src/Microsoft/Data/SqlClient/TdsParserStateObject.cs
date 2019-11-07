@@ -1910,7 +1910,7 @@ namespace Microsoft.Data.SqlClient
         // Every time you call this method increment the offset and decrease len by the value of totalBytesRead
         internal bool TryReadPlpBytes(ref byte[] buff, int offset, int len, out int totalBytesRead)
         {
-            int bytesRead = 0;
+            int bytesRead;
             int bytesLeft;
             byte[] newbuf;
             ulong ignored;
@@ -1928,16 +1928,27 @@ namespace Microsoft.Data.SqlClient
                 return true;       // No data
             }
 
-            Debug.Assert((_longlen != TdsEnums.SQL_PLP_NULL),
-                    "Out of sync plp read request");
-
+            Debug.Assert(_longlen != TdsEnums.SQL_PLP_NULL, "Out of sync plp read request");
             Debug.Assert((buff == null && offset == 0) || (buff.Length >= offset + len), "Invalid length sent to ReadPlpBytes()!");
+
             bytesLeft = len;
 
             // If total length is known up front, allocate the whole buffer in one shot instead of realloc'ing and copying over each time
             if (buff == null && _longlen != TdsEnums.SQL_PLP_UNKNOWNLEN)
             {
-                buff = new byte[(int)Math.Min((int)_longlen, len)];
+                if (_snapshot != null)
+                {
+                    // if there is a snapshot and it contains a stored plp buffer take it
+                    // and try to use it if it is the right length
+                    buff = _snapshot._plpBuffer;
+                    _snapshot._plpBuffer = null;
+                }
+
+                if ((ulong)(buff?.Length ?? 0) != _longlen)
+                {
+                    // if the buffer is null or the wrong length create one to use
+                    buff = new byte[(int)Math.Min((int)_longlen, len)];
+                }
             }
 
             if (_longlenleft == 0)
@@ -1982,13 +1993,26 @@ namespace Microsoft.Data.SqlClient
                 _longlenleft -= (ulong)bytesRead;
                 if (!result)
                 {
+                    if (_snapshot != null)
+                    {
+                        // a partial read has happened so store the target buffer in the snapshot
+                        // so it can be re-used when another packet arrives and we read again
+                        _snapshot._plpBuffer = buff;
+                    }
                     return false;
                 }
 
                 if (_longlenleft == 0)
-                { // Read the next chunk or cleanup state if hit the end
+                { 
+                    // Read the next chunk or cleanup state if hit the end
                     if (!TryReadPlpLength(false, out ignored))
                     {
+                        if (_snapshot != null)
+                        {
+                            // a partial read has happened so store the target buffer in the snapshot
+                            // so it can be re-used when another packet arrives and we read again
+                            _snapshot._plpBuffer = buff;
+                        }
                         return false;
                     }
                 }
@@ -3941,6 +3965,8 @@ namespace Microsoft.Data.SqlClient
             private NullBitmap _snapshotNullBitmapInfo;
             private _SqlMetaDataSet _snapshotCleanupMetaData;
             private _SqlMetaDataSetCollection _snapshotCleanupAltMetaDataSetArray;
+
+            internal byte[] _plpBuffer;
             private PLPData _plpData;
             private TdsParserStateObject _stateObj;
 
