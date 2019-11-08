@@ -11,6 +11,9 @@
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).ManualTests</IntermediateOutputPath>  
     <OutputPath>$(BinFolder)$(Configuration).ManualTests</OutputPath>
   </PropertyGroup>
+  <Target Name="CopyConfig" BeforeTargets="Compile">
+    <Copy SourceFiles="config.default.json" DestinationFiles="config.json" Condition="!Exists('config.json')" />
+  </Target>
   <ItemGroup>
     <Compile Include="$(CommonTestPath)\System\Collections\DictionaryExtensions.cs">
       <Link>Common\System\Collections\DictionaryExtensions.cs</Link>
