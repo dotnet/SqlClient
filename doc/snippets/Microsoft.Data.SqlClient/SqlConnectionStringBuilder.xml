@@ -321,6 +321,10 @@ False
             <value>The enclave attestation Url.</value>
             <remarks>To be added.</remarks>
         </EnclaveAttestationUrl>
+        <AttestationProtocol>
+            <summary>Set/Get the value of Attestation Protocol.</summary>
+            <returns>Returns Attestation Protocol.</returns>
+        </AttestationProtocol>
         <Encrypt>
             <summary>Gets or sets a Boolean value that indicates whether SQL Server uses SSL encryption for all data sent between the client and server if the server has a certificate installed.</summary>
             <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Encrypt" /> property, or <see langword="false" /> if none has been supplied.</value>

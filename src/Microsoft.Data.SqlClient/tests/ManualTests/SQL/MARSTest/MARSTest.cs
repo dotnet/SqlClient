@@ -13,13 +13,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class MARSTest
     {
-        private static readonly string _connStr = (new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr) { MultipleActiveResultSets = true }).ConnectionString;
+        private static readonly string _connStr = (new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { MultipleActiveResultSets = true }).ConnectionString;
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public static void NamedPipesMARSTest()
         {
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.NpConnStr);
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.NPConnectionString);
             builder.MultipleActiveResultSets = true;
             builder.ConnectTimeout = 5;
 
@@ -353,7 +353,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             // With MARS off, one SqlConnection cannot have multiple DataReaders even if they are from different SqlCommands
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 string openReaderExistsMessage = SystemDataResourceManager.Instance.ADP_OpenReaderExists("Connection");
 

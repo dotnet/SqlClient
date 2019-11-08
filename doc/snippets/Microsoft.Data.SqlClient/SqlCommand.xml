@@ -232,11 +232,14 @@ You can change the value for any of these parameters by setting the related prop
 				<format type="text/markdown"><![CDATA[
 					
 ## Remarks
-The <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery%2A> method starts the process of asynchronously executing a Transact-SQL statement or stored procedure that does not return rows, so that other tasks can run concurrently while the statement is executing. When the statement has completed, developers must call the <xref:Microsoft.Data.SqlClient.SqlCommand.EndExecuteNonQuery%2A> method to finish the operation. The <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery%2A> method returns immediately (<xref:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout%2A> has no effect on <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery%2A>), but until the code executes the corresponding <xref:Microsoft.Data.SqlClient.SqlCommand.EndExecuteNonQuery%2A> method call, it must not execute any other calls that start a synchronous or asynchronous execution against the same <xref:Microsoft.Data.SqlClient.SqlCommand> object. Calling the <xref:Microsoft.Data.SqlClient.SqlCommand.EndExecuteNonQuery%2A> before the command's execution is completed causes the <xref:Microsoft.Data.SqlClient.SqlCommand> object to block until the execution is finished.
+The <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery%2A> method starts the process of asynchronously executing a Transact-SQL statement or stored procedure that does not return rows, so that other tasks can run concurrently while the statement is executing. When the statement has completed, developers must call the <xref:Microsoft.Data.SqlClient.SqlCommand.EndExecuteNonQuery%2A> method to finish the operation. The <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery%2A> method returns immediately, but until the code executes the corresponding <xref:Microsoft.Data.SqlClient.SqlCommand.EndExecuteNonQuery%2A> method call, it must not execute any other calls that start a synchronous or asynchronous execution against the same <xref:Microsoft.Data.SqlClient.SqlCommand> object. Calling the <xref:Microsoft.Data.SqlClient.SqlCommand.EndExecuteNonQuery%2A> before the command's execution is completed causes the <xref:Microsoft.Data.SqlClient.SqlCommand> object to block until the execution is finished.
 
 Note that the command text and parameters are sent to the server synchronously. If a large command or many parameters are sent, this method may block during writes. After the command is sent, the method returns immediately without waiting for an answer from the server--that is, reads are asynchronous.
 
 Because this overload does not support a callback procedure, developers must either poll to determine whether the command has completed, using the <xref:System.IAsyncResult.IsCompleted%2A> property of the <xref:System.IAsyncResult> returned by the <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery%2A> method; or wait for the completion of one or more commands using the <xref:System.IAsyncResult.AsyncWaitHandle%2A> property of the returned <xref:System.IAsyncResult>.
+
+This method ignores the <xref:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout%2A> property.
+
 
 ## Examples
 The following console application creates updates data within the **AdventureWorks** sample database, doing its work asynchronously. In order to emulate a long-running process, this example inserts a WAITFOR statement in the command text. Normally, you would not take efforts to make your commands run slower, but doing this in this case makes it easier to demonstrate the asynchronous behavior.
@@ -341,7 +344,7 @@ The following console application creates updates data within the **AdventureWor
 				<format type="text/markdown"><![CDATA[
 
 ## Remarks
-The <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery%2A> method starts the process of asynchronously executing a Transact-SQL statement or stored procedure that does not return rows, so that other tasks can run concurrently while the statement is executing. When the statement has completed, developers must call the <xref:Microsoft.Data.SqlClient.SqlCommand.EndExecuteNonQuery%2A> method to finish the operation. The <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery%2A> method returns immediately (<xref:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout%2A> has no effect on <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery%2A>), but until the code executes the corresponding <xref:Microsoft.Data.SqlClient.SqlCommand.EndExecuteNonQuery%2A> method call, it must not execute any other calls that start a synchronous or asynchronous execution against the same <xref:Microsoft.Data.SqlClient.SqlCommand> object. Calling the <xref:Microsoft.Data.SqlClient.SqlCommand.EndExecuteNonQuery%2A> before the command's execution is completed causes the <xref:Microsoft.Data.SqlClient.SqlCommand> object to block until the execution is finished.
+The <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery%2A> method starts the process of asynchronously executing a Transact-SQL statement or stored procedure that does not return rows, so that other tasks can run concurrently while the statement is executing. When the statement has completed, developers must call the <xref:Microsoft.Data.SqlClient.SqlCommand.EndExecuteNonQuery%2A> method to finish the operation. The <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery%2A> method returns immediately, but until the code executes the corresponding <xref:Microsoft.Data.SqlClient.SqlCommand.EndExecuteNonQuery%2A> method call, it must not execute any other calls that start a synchronous or asynchronous execution against the same <xref:Microsoft.Data.SqlClient.SqlCommand> object. Calling the <xref:Microsoft.Data.SqlClient.SqlCommand.EndExecuteNonQuery%2A> before the command's execution is completed causes the <xref:Microsoft.Data.SqlClient.SqlCommand> object to block until the execution is finished.
 
 The `callback` parameter lets you specify an <xref:System.AsyncCallback> delegate that is called when the statement has completed. You can call the <xref:Microsoft.Data.SqlClient.SqlCommand.EndExecuteNonQuery%2A> method from within this delegate procedure, or from any other location within your application. In addition, you can pass any object in the `asyncStateObject` parameter, and your callback procedure can retrieve this information using the <xref:System.IAsyncResult.AsyncState%2A> property.
 
@@ -351,6 +354,7 @@ Because the callback procedure executes from within a background thread supplied
 
 All errors that occur during the execution of the operation are thrown as exceptions in the callback procedure. You must handle the exception in the callback procedure, not in the main application. See the example in this topic for additional information on handling exceptions in the callback procedure.
 
+This method ignores the <xref:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout%2A> property.
 
 ## Examples
 The following Windows application demonstrates the use of the <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery%2A> method, executing a Transact-SQL statement that includes a delay of several seconds (emulating a long-running command).
@@ -436,6 +440,8 @@ Note that the command text and parameters are sent to the server synchronously. 
 Because this overload does not support a callback procedure, developers must either poll to determine whether the command has completed, using the <xref:System.IAsyncResult.IsCompleted%2A> property of the <xref:System.IAsyncResult> returned by the <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteReader%2A> method; or wait for the completion of one or more commands using the <xref:System.IAsyncResult.AsyncWaitHandle%2A> property of the returned <xref:System.IAsyncResult>.
 
 If you use <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteReader%2A> or <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteReader%2A> to access XML data, SQL Server will return any XML results greater than 2,033 characters in length in multiple rows of 2,033 characters each. To avoid this behavior, use <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteXmlReader%2A> or <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteXmlReader%2A> to read FOR XML queries.
+
+This method ignores the <xref:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout%2A> property.
 
 
 ## Examples
@@ -546,6 +552,7 @@ Because this overload does not support a callback procedure, developers must eit
 
 If you use <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteReader%2A> or <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteReader%2A> to access XML data, SQL Server returns any XML results greater than 2,033 characters in length in multiple rows of 2,033 characters each. To avoid this behavior, use <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteXmlReader%2A> or <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteXmlReader%2A> to read FOR XML queries.
 
+This method ignores the <xref:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout%2A> property.
 
 
 ## Examples
@@ -667,6 +674,7 @@ All errors that occur during the execution of the operation are thrown as except
 
 If you use <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteReader%2A> or <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteReader%2A> to access XML data, SQL Server returns any XML results greater than 2,033 characters in length in multiple rows of 2,033 characters each. To avoid this behavior, use <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteXmlReader%2A> or <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteXmlReader%2A> to read FOR XML queries.
 
+This method ignores the <xref:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout%2A> property.
 
 
 ## Examples
@@ -799,6 +807,7 @@ All errors that occur during the execution of the operation are thrown as except
 
 If you use <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteReader%2A> or <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteReader%2A> to access XML data, SQL Server will return any XML results greater than 2,033 characters in length in multiple rows of 2,033 characters each. To avoid this behavior, use <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteXmlReader%2A> or <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteXmlReader%2A> to read FOR XML queries.
 
+This method ignores the <xref:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout%2A> property.
 
 
 ## Examples
@@ -918,6 +927,7 @@ Because this overload does not support a callback procedure, developers need to 
 
 If you use <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteReader%2A> or <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteReader%2A> to access XML data, SQL Server returns any XML results greater than 2,033 characters in length in multiple rows of 2,033 characters each. To avoid this behavior, use <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteXmlReader%2A> or <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteXmlReader%2A> to read FOR XML queries.
 
+This method ignores the <xref:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout%2A> property.
 
 
 ## Examples
@@ -1047,6 +1057,7 @@ All errors that occur during the execution of the operation are thrown as except
 
 If you use <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteReader%2A> or <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteReader%2A> to access XML data, SQL Server will return any XML results greater than 2,033 characters in length in multiple rows of 2,033 characters each. To avoid this behavior, use <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteXmlReader%2A> or <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteXmlReader%2A> to read FOR XML queries.
 
+This method ignores the <xref:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout%2A> property.
 
 
 ## Examples
@@ -1217,7 +1228,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and s
 A value of 0 indicates no limit (an attempt to execute a command will wait indefinitely).
 
 > [!NOTE]
-> The <xref:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout%2A> property will be ignored during asynchronous method calls such as <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteReader%2A>.
+> The <xref:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout%2A> property will be ignored during old-style asynchronous method calls such as <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteReader%2A>. It will be honored by the newer async methods such as <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteReaderAsync%2A>.
 
 <xref:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout%2A> has no effect when the command is executed against a context connection (a <xref:Microsoft.Data.SqlClient.SqlConnection> opened with "context connection=true" in the connection string).
 

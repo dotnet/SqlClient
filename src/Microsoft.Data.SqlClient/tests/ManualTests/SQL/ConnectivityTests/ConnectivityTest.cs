@@ -17,7 +17,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private const string COL_HOSTNAME = "HostName";
         private static readonly string s_databaseName = "d_" + Guid.NewGuid().ToString().Replace('-', '_');
         private static readonly string s_tableName = DataTestUtility.GenerateObjectName();
-        private static readonly string s_connectionString = DataTestUtility.TcpConnStr;
+        private static readonly string s_connectionString = DataTestUtility.TCPConnectionString;
         private static readonly string s_dbConnectionString = new SqlConnectionStringBuilder(s_connectionString) { InitialCatalog = s_databaseName }.ConnectionString;
         private static readonly string s_createDatabaseCmd = $"CREATE DATABASE {s_databaseName}";
         private static readonly string s_createTableCmd = $"CREATE TABLE {s_tableName} (NAME NVARCHAR(40), AGE INT)";
@@ -29,7 +29,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [CheckConnStrSetupFact]
         public static void EnvironmentHostNameTest()
         {
-            SqlConnectionStringBuilder builder = (new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr) { Pooling = true });
+            SqlConnectionStringBuilder builder = (new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { Pooling = true });
             builder.ApplicationName = "HostNameTest";
 
             using (SqlConnection sqlConnection = new SqlConnection(builder.ConnectionString))
@@ -78,7 +78,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             const int numOfTry = 2;
             const int numOfThreads = 5;
 
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr);
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
             builder.DataSource = "invalidhost";
             builder.ConnectTimeout = timeoutSec;
             string connStrNotAvailable = builder.ConnectionString;
@@ -108,7 +108,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [CheckConnStrSetupFact]
         public static void ProcessIdTest()
         {
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr);
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
             string sqlProviderName = builder.ApplicationName;
             string sqlProviderProcessID = System.Diagnostics.Process.GetCurrentProcess().Id.ToString();
 

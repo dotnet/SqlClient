@@ -3,6 +3,9 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Data;
+using System.Collections;
+using System.Collections.Generic;
 using System.Security.Cryptography;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
@@ -44,5 +47,85 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         internal static string GenerateUniqueName(string baseName) => string.Concat("AE_", baseName, "_", Guid.NewGuid().ToString().Replace('-', '_'));
+    }
+
+    public class AEConnectionStringProviderWithBooleanVariable : IEnumerable<object[]>
+    {
+        public IEnumerator<object[]> GetEnumerator()
+        {
+            foreach (string connStrAE in DataTestUtility.AEConnStrings)
+            {
+                yield return new object[] {connStrAE, true};
+                yield return new object[] {connStrAE, false};
+            }
+        }
+
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+    }
+
+    public class AEConnectionStringProvider : IEnumerable<object[]>
+    {
+        public IEnumerator<object[]> GetEnumerator()
+        {
+            foreach (string connStrAE in DataTestUtility.AEConnStrings)
+            {
+                yield return new object[] {connStrAE};
+            }
+        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+    }
+
+    public class AEConnectionStringProviderWithCommandBehaviorSet1 : IEnumerable<object[]>
+    {
+        public IEnumerator<object[]> GetEnumerator()
+        {
+            foreach (string connStrAE in DataTestUtility.AEConnStrings)
+            {
+                yield return new object[] { connStrAE, CommandBehavior.SingleResult };
+                yield return new object[] { connStrAE, CommandBehavior.SingleRow };
+                yield return new object[] { connStrAE, CommandBehavior.CloseConnection };
+                yield return new object[] { connStrAE, CommandBehavior.SequentialAccess };
+            }
+        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+    }
+
+    public class AEConnectionStringProviderWithCommandBehaviorSet2 : IEnumerable<object[]>
+    {
+        public IEnumerator<object[]> GetEnumerator()
+        {
+            foreach (string connStrAE in DataTestUtility.AEConnStrings)
+            {
+                yield return new object[] { connStrAE, CommandBehavior.Default };
+                yield return new object[] { connStrAE, CommandBehavior.SequentialAccess };
+            }
+        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+    }
+
+    public class AEConnectionStringProviderWithSchemaType : IEnumerable<object[]>
+    {
+        public IEnumerator<object[]> GetEnumerator()
+        {
+            foreach (string connStrAE in DataTestUtility.AEConnStrings)
+            {
+                yield return new object[] { connStrAE, SchemaType.Source };
+                yield return new object[] { connStrAE, SchemaType.Mapped };
+            }
+        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+    }
+
+    public class AEConnectionStringProviderWithIntegers : IEnumerable<object[]>
+    {
+        public IEnumerator<object[]> GetEnumerator()
+        {
+            foreach (string connStrAE in DataTestUtility.AEConnStrings)
+            {
+                yield return new object[] { connStrAE, 1 };
+                yield return new object[] { connStrAE, 100 };
+            }
+        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }

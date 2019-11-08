@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void OpenConnection_WithAsyncTrue_ThrowsNotSupportedException()
         {
             //Fails on NetCore
-            var asyncConnectionString = DataTestUtility.TcpConnStr + ";async=true";
+            var asyncConnectionString = DataTestUtility.TCPConnectionString + ";async=true";
             Assert.Throws<NotSupportedException>(() => { new SqlConnection(asyncConnectionString); });
         }
 
@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void OpenConnection_WithAsyncTrue()
         {
             // Passes on NetFx
-            var asyncConnectionString = DataTestUtility.TcpConnStr + ";async=true";
+            var asyncConnectionString = DataTestUtility.TCPConnectionString + ";async=true";
             SqlConnection connection = new SqlConnection(asyncConnectionString);
         }
 
@@ -59,7 +59,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static async Task ExecuteCommandWithNewConnectionAsync(string processName, string cmdText, ICollection<string> executedProcessList)
         {
-            var conn = new SqlConnection(DataTestUtility.TcpConnStr);
+            var conn = new SqlConnection(DataTestUtility.TCPConnectionString);
 
             await conn.OpenAsync();
             var cmd = new SqlCommand(cmdText, conn);
@@ -81,7 +81,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             var executedProcessList = new List<string>();
 
             //for shared connection we need to add MARS capabilities
-            using (var conn = new SqlConnection((new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr) { MultipleActiveResultSets = true }).ConnectionString))
+            using (var conn = new SqlConnection((new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { MultipleActiveResultSets = true }).ConnectionString))
             {
                 conn.Open();
                 var task1 = ExecuteCommandWithSharedConnectionAsync(conn, "C", "SELECT top 10 * FROM Orders", executedProcessList);

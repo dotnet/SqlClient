@@ -4,9 +4,9 @@
 
 # Microsoft SqlClient Data Provider for SQL Server
 
-Welcome to the home of Microsoft ADO.NET driver for SQL Server aka the Microsoft.Data.SqlClient GitHub repository.
+Welcome to the home of the Microsoft ADO.NET driver for SQL Server aka the Microsoft.Data.SqlClient GitHub repository.
 
-Microsoft.Data.SqlClient is a data provider for Microsoft Sql Server. Now in General Availability, it is a union of the two System.Data.SqlClient components which live independently in .NET Framework and .NET Core. Going forward, support for new SQL Server features will be implemented in Microsoft.Data.SqlClient.
+Microsoft.Data.SqlClient is a data provider for Microsoft SQL Server and Azure SQL Database. Now in General Availability, it is a union of the two System.Data.SqlClient components which live independently in .NET Framework and .NET Core. Going forward, support for new SQL Server features will be implemented in Microsoft.Data.SqlClient.
 
 ## Supportability
 

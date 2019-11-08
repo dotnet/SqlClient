@@ -585,7 +585,7 @@ namespace Microsoft.Data.SqlClient
             IsIdentity = 1 << 6,
             IsColumnSet = 1 << 7,
 
-            IsReadOnlyMask = (Updatable | UpdateableUnknown) // two bit field (0 is read only, 1 is updatable, 2 is updatability unknown)
+            IsUpdatableMask = (Updatable | UpdateableUnknown) // two bit field (0 is read only, 1 is updatable, 2 is updatability unknown)
         }
 
         internal string column;
@@ -633,13 +633,13 @@ namespace Microsoft.Data.SqlClient
 
         public byte Updatability
         {
-            get => (byte)(flags & _SqlMetadataFlags.IsReadOnlyMask);
+            get => (byte)(flags & _SqlMetadataFlags.IsUpdatableMask);
             set => flags = (_SqlMetadataFlags)((value & 0x3) | ((int)flags & ~0x03));
         }
 
         public bool IsReadOnly
         {
-            get => flags.HasFlag(_SqlMetadataFlags.IsReadOnlyMask);
+            get => (flags & _SqlMetadataFlags.IsUpdatableMask) == 0;
         }
 
         public bool IsDifferentName

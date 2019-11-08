@@ -15,7 +15,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsIntegratedSecurityEnvironmentSet), nameof(AreConnectionStringsSetup))]
         public static void IntegratedAuthenticationTestWithConnectionPooling()
         {
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr);
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
             builder.IntegratedSecurity = true;
             builder.Pooling = true;
             TryOpenConnectionWithIntegratedAuthentication(builder.ConnectionString);
@@ -24,7 +24,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsIntegratedSecurityEnvironmentSet), nameof(AreConnectionStringsSetup))]
         public static void IntegratedAuthenticationTestWithOutConnectionPooling()
         {
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr);
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
             builder.IntegratedSecurity = true;
             builder.Pooling = false;
             TryOpenConnectionWithIntegratedAuthentication(builder.ConnectionString);

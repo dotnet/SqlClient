@@ -12,7 +12,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [CheckConnStrSetupFact]
         public static void BasicParallelTest_shouldThrowsUnsupported()
         {
-            string connectionString = DataTestUtility.TcpConnStr;
+            string connectionString = DataTestUtility.TCPConnectionString;
             string expectedErrorMessage = SystemDataResourceManager.Instance.ADP_ParallelTransactionsNotSupported(typeof(SqlConnection).Name);
             string tempTableName = "";
             try
@@ -68,7 +68,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [CheckConnStrSetupFact]
         public static void MultipleExecutesInSameTransactionTest_shouldThrowsUnsupported()
         {
-            string connectionString = DataTestUtility.TcpConnStr;
+            string connectionString = DataTestUtility.TCPConnectionString;
             string expectedErrorMessage = SystemDataResourceManager.Instance.ADP_ParallelTransactionsNotSupported(typeof(SqlConnection).Name);
             string tempTableName = "";
             try

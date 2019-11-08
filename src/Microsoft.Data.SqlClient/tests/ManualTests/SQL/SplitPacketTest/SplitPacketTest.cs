@@ -23,7 +23,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string actualHost;
             int actualPort;
 
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr);
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
             GetTcpInfoFromDataSource(builder.DataSource, out actualHost, out actualPort);
 
             Task.Factory.StartNew(() => { SetupProxy(actualHost, actualPort); });

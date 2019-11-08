@@ -13,7 +13,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public static class SqlCommandCancelTest
     {
         // Shrink the packet size - this should make timeouts more likely
-        private static readonly string s_connStr = (new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr) { PacketSize = 512 }).ConnectionString;
+        private static readonly string s_connStr = (new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { PacketSize = 512 }).ConnectionString;
 
         [CheckConnStrSetupFact]
         public static void PlainCancelTest()

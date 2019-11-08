@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlTypes;
 using System.Diagnostics;
@@ -66,7 +67,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [CheckConnStrSetupFact]
         public void SimpleFillTest()
         {
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlDataAdapter adapter = new SqlDataAdapter("SELECT EmployeeID, LastName, FirstName, Title, Address, City, Region, PostalCode, Country FROM Employees", conn))
             {
                 DataSet employeesSet = new DataSet();
@@ -88,7 +89,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void PrepUnprepTest()
         {
             // share the connection
-            using (SqlCommand cmd = new SqlCommand("select * from shippers", new SqlConnection(DataTestUtility.TcpConnStr)))
+            using (SqlCommand cmd = new SqlCommand("select * from shippers", new SqlConnection(DataTestUtility.TCPConnectionString)))
             using (SqlDataAdapter sqlAdapter = new SqlDataAdapter())
             {
                 cmd.Connection.Open();
@@ -179,7 +180,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 ExecuteNonQueryCommand("CREATE TABLE " + tableName + " (c0_bigint bigint, c1_variant sql_variant)");
 
                 // good test for null values and unicode strings
-                using (SqlCommand cmd = new SqlCommand(null, new SqlConnection(DataTestUtility.TcpConnStr)))
+                using (SqlCommand cmd = new SqlCommand(null, new SqlConnection(DataTestUtility.TCPConnectionString)))
                 using (SqlDataAdapter sqlAdapter = new SqlDataAdapter())
                 {
                     cmd.Connection.Open();
@@ -317,7 +318,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 ExecuteNonQueryCommand(spCreateAllTypes);
                 dropSP = true;
 
-                using (SqlConnection conn = new SqlConnection(DataTestUtility.TcpConnStr))
+                using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
                 using (SqlCommand cmd = new SqlCommand(procName, conn))
                 using (SqlDataAdapter sqlAdapter = new SqlDataAdapter())
                 {
@@ -495,7 +496,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 ExecuteNonQueryCommand(spCreateInOut);
                 dropSP = true;
 
-                using (SqlConnection conn = new SqlConnection(DataTestUtility.TcpConnStr))
+                using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
                 using (SqlCommand cmd = new SqlCommand(procName, conn))
                 using (SqlDataAdapter sqlAdapter = new SqlDataAdapter())
                 {
@@ -576,7 +577,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [CheckConnStrSetupFact]
         public void UpdateTest()
         {
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand cmd = conn.CreateCommand())
             using (SqlDataAdapter adapter = new SqlDataAdapter())
             using (SqlDataAdapter adapterVerify = new SqlDataAdapter())
@@ -660,7 +661,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [CheckConnStrSetupFact]
         public void BulkUpdateTest()
         {
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand cmd = conn.CreateCommand())
             using (SqlDataAdapter adapter = new SqlDataAdapter())
             using (SqlDataAdapter adapterVerify = new SqlDataAdapter())
@@ -773,7 +774,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             bool dropSP = false;
 
             using (SqlDataAdapter adapter = new SqlDataAdapter())
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand cmd = new SqlCommand(null, conn))
             using (SqlCommand temp = new SqlCommand("SELECT id, LastName, FirstName into " + _tempTable + " from ID_" + _tempTable, conn))
             using (SqlCommand tableClean = new SqlCommand("", conn))
@@ -867,7 +868,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 ExecuteNonQueryCommand(createSP);
                 dropSP = true;
 
-                using (SqlConnection conn = new SqlConnection(DataTestUtility.TcpConnStr))
+                using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
                 using (SqlCommand cmdInsert = new SqlCommand(procName, conn))
                 using (SqlCommand cmdSelect = new SqlCommand("select * from " + tableName, conn))
                 using (SqlCommand tableClean = new SqlCommand("delete " + tableName, conn))
@@ -923,7 +924,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 ExecuteNonQueryCommand(createSP);
                 dropSP = true;
 
-                using (SqlConnection conn = new SqlConnection(DataTestUtility.TcpConnStr))
+                using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
                 using (SqlCommand cmdInsert = new SqlCommand(procName, conn))
                 using (SqlCommand cmdSelect = new SqlCommand("select * from " + tableName, conn))
                 using (SqlCommand tableClean = new SqlCommand("delete " + tableName, conn))
@@ -980,7 +981,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void SelectAllTest()
         {
             // Test exceptions
-            using (SqlDataAdapter sqlAdapter = new SqlDataAdapter(new SqlCommand("select * from orders", new SqlConnection(DataTestUtility.TcpConnStr))))
+            using (SqlDataAdapter sqlAdapter = new SqlDataAdapter(new SqlCommand("select * from orders", new SqlConnection(DataTestUtility.TCPConnectionString))))
             {
                 DataSet dataset = new DataSet();
                 sqlAdapter.TableMappings.Add("Table", "orders");
@@ -992,7 +993,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [CheckConnStrSetupFact]
         public void AutoGenUpdateTest()
         {
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand cmd = conn.CreateCommand())
             using (SqlDataAdapter adapter = new SqlDataAdapter())
             using (SqlDataAdapter adapterVerify = new SqlDataAdapter())
@@ -1070,7 +1071,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             try
             {
-                using (SqlConnection conn = new SqlConnection(DataTestUtility.TcpConnStr))
+                using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
                 using (SqlCommand cmd = new SqlCommand("SELECT * into " + _tempTable + " from ID_" + _tempTable, conn))
                 using (SqlDataAdapter adapter = new SqlDataAdapter())
                 {
@@ -1108,7 +1109,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [CheckConnStrSetupFact]
         public void AutoGenBulkUpdateTest()
         {
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand cmd = conn.CreateCommand())
             using (SqlDataAdapter adapter = new SqlDataAdapter())
             using (SqlDataAdapter adapterVerify = new SqlDataAdapter())
@@ -1219,7 +1220,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             try
             {
                 ExecuteNonQueryCommand(spEmployeeSales);
-                using (SqlConnection connection = new SqlConnection(DataTestUtility.TcpConnStr))
+                using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
                 using (SqlCommand cmd = new SqlCommand(procName, connection))
                 {
                     string errorMessage = string.Format(SystemDataResourceManager.Instance.ADP_DeriveParametersNotSupported, "SqlCommand", cmd.CommandType);
@@ -1252,6 +1253,52 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             finally
             {
                 ExecuteNonQueryCommand(dropSpEmployeeSales);
+            }
+        }
+
+        [CheckConnStrSetupFact]
+        public void TestReadOnlyColumnMetadata()
+        {
+            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                connection.Open();
+                using (SqlCommand command = connection.CreateCommand())
+                {
+                    command.CommandText = "Create table #t (ID int identity(1,1), sText varchar(12), sMemo as (convert(varchar,ID) + ' ' + sText))";
+                    command.ExecuteNonQuery();
+                }
+                using (SqlDataAdapter dataAdapter = new SqlDataAdapter("Select * from #t", connection))
+                {
+                    using (SqlCommandBuilder commandBuilder = new SqlCommandBuilder(dataAdapter))
+                    {
+                        using (SqlCommand cmd = commandBuilder.GetInsertCommand())
+                        {
+                            DataTestUtility.AssertEqualsWithDescription("INSERT INTO [#t] ([sText]) VALUES (@p1)", cmd.CommandText, "Unexpected insert command.");
+                        }
+                    }
+
+                    using (DataTable dataTable = new DataTable())
+                    {
+                        dataAdapter.FillSchema(dataTable, SchemaType.Mapped);
+                        Dictionary<string, bool> expAutoIncrement = new Dictionary<string, bool>()
+                        {
+                            {"ID", true},
+                            {"sText", false},
+                            {"sMemo", false}
+                        };
+                        Dictionary<string, bool> expReadOnly = new Dictionary<string, bool>()
+                        {
+                            {"ID", true},
+                            {"sText", false},
+                            {"sMemo", true}
+                        };
+                        foreach (DataColumn dataColumn in dataTable.Columns)
+                        {
+                            DataTestUtility.AssertEqualsWithDescription(dataColumn.AutoIncrement, expAutoIncrement[dataColumn.ColumnName], "Unexpected AutoIncrement metadata.");
+                            DataTestUtility.AssertEqualsWithDescription(dataColumn.ReadOnly, expReadOnly[dataColumn.ColumnName], "Unexpected ReadOnly metadata.");
+                        }
+                    }
+                }
             }
         }
 
@@ -1713,7 +1760,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private void ExecuteNonQueryCommand(string cmdText)
         {
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand cmd = conn.CreateCommand())
             {
                 conn.Open();

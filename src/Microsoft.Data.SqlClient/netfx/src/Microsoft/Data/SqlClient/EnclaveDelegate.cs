@@ -26,6 +26,8 @@ namespace Microsoft.Data.SqlClient
         private static readonly string GetSerializedAttestationParametersName = "GetSerializedAttestationParameters";
         private static readonly string ComputeQueryStringHashName = "ComputeQueryStringHash";
 
+        private static Dictionary<SqlConnectionAttestationProtocol, SqlColumnEncryptionEnclaveProvider> EnclaveProviders = new Dictionary<SqlConnectionAttestationProtocol, SqlColumnEncryptionEnclaveProvider>();
+
         private readonly Object _lock = new Object();
 
         //singleton instance
@@ -36,24 +38,25 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Generate the byte package that needs to be sent to the enclave
         /// </summary>
+        /// <param name="attestationProtocol">attestation protocol</param>
         /// <param name="keysTobeSentToEnclave">Keys to be sent to enclave</param>
         /// <param name="queryText"></param>
         /// <param name="enclaveType">enclave type</param>
         /// <param name="serverName">server name</param>
         /// <param name="enclaveAttestationUrl">url for attestation endpoint</param>
         /// <returns></returns>
-        internal EnclavePackage GenerateEnclavePackage(Dictionary<int, SqlTceCipherInfoEntry> keysTobeSentToEnclave, string queryText, string enclaveType, string serverName, string enclaveAttestationUrl)
+        internal EnclavePackage GenerateEnclavePackage(SqlConnectionAttestationProtocol attestationProtocol, Dictionary<int, SqlTceCipherInfoEntry> keysTobeSentToEnclave, string queryText, string enclaveType, string serverName, string enclaveAttestationUrl)
         {
 
             SqlEnclaveSession sqlEnclaveSession = null;
             long counter;
             try
             {
-                GetEnclaveSession(enclaveType, serverName, enclaveAttestationUrl, out sqlEnclaveSession, out counter, throwIfNull: true);
+                GetEnclaveSession(attestationProtocol, enclaveType, serverName, enclaveAttestationUrl, out sqlEnclaveSession, out counter, throwIfNull: true);
             }
             catch (Exception e)
             {
-                throw new RetriableEnclaveQueryExecutionException(e.Message, e);
+                throw new RetryableEnclaveQueryExecutionException(e.Message, e);
             }
 
             List<ColumnEncryptionKeyInfo> decryptedKeysToBeSentToEnclave = GetDecryptedKeysToBeSentToEnclave(keysTobeSentToEnclave, serverName);
@@ -66,33 +69,32 @@ namespace Microsoft.Data.SqlClient
             return new EnclavePackage(byteArrayToBeSentToEnclave, sqlEnclaveSession);
         }
 
-        internal void InvalidateEnclaveSession(string enclaveType, string serverName, string EnclaveAttestationUrl, SqlEnclaveSession enclaveSession)
+        internal void InvalidateEnclaveSession(SqlConnectionAttestationProtocol attestationProtocol, string enclaveType, string serverName, string EnclaveAttestationUrl, SqlEnclaveSession enclaveSession)
         {
-            SqlColumnEncryptionEnclaveProvider sqlColumnEncryptionEnclaveProvider = GetEnclaveProvider(enclaveType);
+            SqlColumnEncryptionEnclaveProvider sqlColumnEncryptionEnclaveProvider = GetEnclaveProvider(attestationProtocol, enclaveType);
             sqlColumnEncryptionEnclaveProvider.InvalidateEnclaveSession(serverName, EnclaveAttestationUrl, enclaveSession);
         }
 
-        internal void GetEnclaveSession(string enclaveType, string serverName, string enclaveAttestationUrl, out SqlEnclaveSession sqlEnclaveSession)
+        internal void GetEnclaveSession(SqlConnectionAttestationProtocol attestationProtocol, string enclaveType, string serverName, string enclaveAttestationUrl, out SqlEnclaveSession sqlEnclaveSession)
         {
             long counter;
-            GetEnclaveSession(enclaveType, serverName, enclaveAttestationUrl, out sqlEnclaveSession, out counter, throwIfNull: false);
+            GetEnclaveSession(attestationProtocol, enclaveType, serverName, enclaveAttestationUrl, out sqlEnclaveSession, out counter, throwIfNull: false);
         }
 
-        private void GetEnclaveSession(string enclaveType, string serverName, string enclaveAttestationUrl, out SqlEnclaveSession sqlEnclaveSession, out long counter, bool throwIfNull)
+        private void GetEnclaveSession(SqlConnectionAttestationProtocol attestationProtocol, string enclaveType, string serverName, string enclaveAttestationUrl, out SqlEnclaveSession sqlEnclaveSession, out long counter, bool throwIfNull)
         {
-            SqlColumnEncryptionEnclaveProvider sqlColumnEncryptionEnclaveProvider = GetEnclaveProvider(enclaveType);
+            SqlColumnEncryptionEnclaveProvider sqlColumnEncryptionEnclaveProvider = GetEnclaveProvider(attestationProtocol, enclaveType);
             sqlColumnEncryptionEnclaveProvider.GetEnclaveSession(serverName, enclaveAttestationUrl, out sqlEnclaveSession, out counter);
 
-            if (throwIfNull)
+            if (throwIfNull && sqlEnclaveSession == null)
             {
-                if (sqlEnclaveSession == null)
                     throw SQL.NullEnclaveSessionDuringQueryExecution(enclaveType, enclaveAttestationUrl);
             }
         }
 
-        internal SqlEnclaveAttestationParameters GetAttestationParameters(string enclaveType, string serverName, string enclaveAttestationUrl)
+        internal SqlEnclaveAttestationParameters GetAttestationParameters(SqlConnectionAttestationProtocol attestationProtocol, string enclaveType)
         {
-            SqlColumnEncryptionEnclaveProvider sqlColumnEncryptionEnclaveProvider = GetEnclaveProvider(enclaveType);
+            SqlColumnEncryptionEnclaveProvider sqlColumnEncryptionEnclaveProvider = GetEnclaveProvider(attestationProtocol, enclaveType);
             return sqlColumnEncryptionEnclaveProvider.GetAttestationParameters();
         }
 
@@ -153,18 +155,19 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Create a new enclave session
         /// </summary>
+        /// <param name="attestationProtocol">attestation protocol</param>
         /// <param name="enclaveType">enclave type</param>
         /// <param name="serverName">servername</param>
         /// <param name="attestationUrl">attestation url for attestation service endpoint</param>
         /// <param name="attestationInfo">attestation info from SQL Server</param>
         /// <param name="attestationParameters">attestation parameters</param>
-        internal void CreateEnclaveSession(string enclaveType, string serverName, string attestationUrl,
+        internal void CreateEnclaveSession(SqlConnectionAttestationProtocol attestationProtocol, string enclaveType, string serverName, string attestationUrl,
             byte[] attestationInfo, SqlEnclaveAttestationParameters attestationParameters)
         {
 
             lock (_lock)
             {
-                SqlColumnEncryptionEnclaveProvider sqlColumnEncryptionEnclaveProvider = GetEnclaveProvider(enclaveType);
+                SqlColumnEncryptionEnclaveProvider sqlColumnEncryptionEnclaveProvider = GetEnclaveProvider(attestationProtocol, enclaveType);
                 long counter;
                 SqlEnclaveSession sqlEnclaveSession = null;
                 sqlColumnEncryptionEnclaveProvider.GetEnclaveSession(serverName, attestationUrl, out sqlEnclaveSession, out counter);
@@ -181,18 +184,52 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private SqlColumnEncryptionEnclaveProvider GetEnclaveProvider(string enclaveType)
+        private SqlColumnEncryptionEnclaveProvider GetEnclaveProvider(SqlConnectionAttestationProtocol attestationProtocol, string enclaveType)
         {
-            if (SqlConnection.sqlColumnEncryptionEnclaveProviderConfigurationManager == null)
-                throw SQL.EnclaveProvidersNotConfiguredForEnclaveBasedQuery();
+            SqlColumnEncryptionEnclaveProvider sqlColumnEncryptionEnclaveProvider = null;
 
-            var sqlColumnEncryptionEnclaveProvider =
-                SqlConnection.sqlColumnEncryptionEnclaveProviderConfigurationManager.GetSqlColumnEncryptionEnclaveProvider(
-                    enclaveType);
+            if (!EnclaveProviders.TryGetValue(attestationProtocol, out sqlColumnEncryptionEnclaveProvider))
+            {
+                switch (attestationProtocol)
+                {
+                    case SqlConnectionAttestationProtocol.AAS:
+                        AzureAttestationEnclaveProvider azureAttestationEnclaveProvider = new AzureAttestationEnclaveProvider();
+                        EnclaveProviders[attestationProtocol] = (SqlColumnEncryptionEnclaveProvider)azureAttestationEnclaveProvider;
+                        sqlColumnEncryptionEnclaveProvider = EnclaveProviders[attestationProtocol];
+                        break;
+
+                    case SqlConnectionAttestationProtocol.HGS:
+                        HostGuardianServiceEnclaveProvider hostGuardianServiceEnclaveProvider = new HostGuardianServiceEnclaveProvider();
+                        EnclaveProviders[attestationProtocol] = (SqlColumnEncryptionEnclaveProvider)hostGuardianServiceEnclaveProvider;
+                        sqlColumnEncryptionEnclaveProvider = EnclaveProviders[attestationProtocol];
+                        break;
+
+                    default:
+                        break;
+                }
+            }
 
             if (sqlColumnEncryptionEnclaveProvider == null)
-                throw SQL.EnclaveProviderNotFound(enclaveType);
+            {
+                throw SQL.EnclaveProviderNotFound(enclaveType, ConvertAttestationProtocolToString(attestationProtocol));
+            }
+
             return sqlColumnEncryptionEnclaveProvider;
+        }
+
+        private string ConvertAttestationProtocolToString(SqlConnectionAttestationProtocol attestationProtocol)
+        {
+            switch (attestationProtocol)
+            {
+                case SqlConnectionAttestationProtocol.AAS:
+                    return "AAS";
+
+                case SqlConnectionAttestationProtocol.HGS:
+                    return "HGS";
+
+                default:
+                    return "NotSpecified";
+            }
         }
 
         /// <summary>
@@ -350,9 +387,9 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Exception when executing a enclave based Always Encrypted query 
         /// </summary>
-        internal class RetriableEnclaveQueryExecutionException : Exception
+        internal class RetryableEnclaveQueryExecutionException : Exception
         {
-            internal RetriableEnclaveQueryExecutionException(string message, Exception innerException) : base(message, innerException) { }
+            internal RetryableEnclaveQueryExecutionException(string message, Exception innerException) : base(message, innerException) { }
         }
 
         /// <summary>

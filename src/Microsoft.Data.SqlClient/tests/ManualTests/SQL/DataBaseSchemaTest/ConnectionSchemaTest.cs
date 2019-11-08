@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void VerifySchemaTable(string schemaItemName, string[] testColumnNames)
         {
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr)
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
             {
                 InitialCatalog = "master"
             };
