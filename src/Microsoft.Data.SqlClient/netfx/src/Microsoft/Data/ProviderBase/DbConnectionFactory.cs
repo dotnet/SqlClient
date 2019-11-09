@@ -454,7 +454,7 @@ namespace Microsoft.Data.ProviderBase
                     userConnectionOptions = connectionOptions;
                     expandedConnectionString = connectionOptions.Expand();
 
-                    // if the expanded string is same instance (default implementation), the use the already created options
+                    // if the expanded string is same instance (default implementation), then use the already created options
                     if ((object)expandedConnectionString != (object)key.ConnectionString)
                     {
                         // CONSIDER: caching the original string to reduce future parsing
