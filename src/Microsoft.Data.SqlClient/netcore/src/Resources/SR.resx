@@ -165,6 +165,9 @@
   <data name="ADP_InternalConnectionError" xml:space="preserve">
     <value>Internal DbConnection Error: {0}</value>
   </data>
+  <data name="ADP_InvalidDataDirectory" xml:space="preserve">
+    <value>The DataDirectory substitute is not a string.</value>
+  </data>  
   <data name="ADP_InvalidEnumerationValue" xml:space="preserve">
     <value>The {0} enumeration value, {1}, is invalid.</value>
   </data>
