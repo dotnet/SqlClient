@@ -145,7 +145,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // GitHub Issue #130 - When a timeout exception has occurred on transaction completion request, 
                 // this connection may not be in reusable state.
-                // We will doom this connection and make sure it does not go back to the pool.
+                // We will abort this connection and make sure it does not go back to the pool.
                 var innerException = ex.InnerException as Win32Exception;
                 if (innerException != null && innerException.NativeErrorCode == TdsEnums.SNI_WAIT_TIMEOUT)
                 {
