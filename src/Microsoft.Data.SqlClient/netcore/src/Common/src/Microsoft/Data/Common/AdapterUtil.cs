@@ -305,6 +305,11 @@ namespace Microsoft.Data.Common
         {
             return Argument(System.SRHelper.Format(SR.ADP_InvalidConnectionOptionValue, key), inner);
         }
+        static internal InvalidOperationException InvalidDataDirectory()
+        {
+            InvalidOperationException e = new InvalidOperationException(SR.ADP_InvalidDataDirectory);
+            return e;
+        }
 
         //
         // Generic Data Provider Collection
