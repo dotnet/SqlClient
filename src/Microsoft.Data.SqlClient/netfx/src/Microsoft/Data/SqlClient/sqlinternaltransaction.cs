@@ -244,15 +244,6 @@ namespace Microsoft.Data.SqlClient
             _transactionState = TransactionState.Active;
         }
 
-        private void DoomConnectionNoReuse(SqlInternalConnection innerConnection)
-        {
-            if (null != innerConnection)
-            {
-                innerConnection.DoNotPoolThisConnection();
-                innerConnection.DoomThisConnection();
-            }
-        }
-
         private void CheckTransactionLevelAndZombie()
         {
             try
@@ -344,11 +335,6 @@ namespace Microsoft.Data.SqlClient
                 }
                 catch (Exception e)
                 {
-                    // GitHub Issue #130 - When an exception has occurred on transaction completion request, 
-                    // this connection may not be in reusable state.
-                    // We will doom this connection and make sure it does not go back to the pool.
-                    DoomConnectionNoReuse(_innerConnection);
-
                     // UNDONE - should not be catching all exceptions!!!
                     if (ADP.IsCatchableExceptionType(e))
                     {
