@@ -453,6 +453,44 @@ namespace Microsoft.Data.Common
             return Argument(System.SRHelper.GetString(SR.SQLCR_InvalidConnectRetryIntervalValue));
         }
 
+        // Retry Logic
+        internal static Exception InvalidRetryStrategy()
+        {
+            return Argument(System.SRHelper.GetString(SR.SQLCR_InvalidRetryStrategy));
+        }
+        internal static Exception InvalidRetryCount()
+        {
+            return Argument(System.SRHelper.GetString(SR.SQLCR_InvalidRetryCount));
+        }
+        internal static Exception InvalidRetryInterval()
+        {
+            return Argument(System.SRHelper.GetString(SR.SQLCR_InvalidRetryInterval));
+        }
+        internal static Exception InvalidRetryIncrement()
+        {
+            return Argument(System.SRHelper.GetString(SR.SQLCR_InvalidRetryIncrement));
+        }
+        internal static Exception InvalidRetryMinBackoff()
+        {
+            return Argument(System.SRHelper.GetString(SR.SQLCR_InvalidRetryMinBackoff));
+        }
+        internal static Exception InvalidRetryMaxBackoff()
+        {
+            return Argument(System.SRHelper.GetString(SR.SQLCR_InvalidRetryMaxBackoff));
+        }
+        internal static Exception InvalidRetryDeltaBackoff()
+        {
+            return Argument(System.SRHelper.GetString(SR.SQLCR_InvalidRetryDeltaBackoff));
+        }
+        internal static Exception InvalidRetryLogFilePath()
+        {
+            return Argument(System.SRHelper.GetString(SR.SQLCR_InvalidRetryLogFilePath));
+        }
+        internal static Exception InvalidRetriableErrors()
+        {
+            return Argument(System.SRHelper.GetString(SR.SQLCR_InvalidRetriableErrors));
+        }
+
         //
         // : DbDataReader
         //

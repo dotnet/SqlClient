@@ -880,7 +880,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The validation of an attestation token failed. The token signature does not match the signature omputed using a public key retrieved from the attestation public key endpoint at &apos;{0}&apos;. Verify the DNS apping for the endpoint. If correct, contact Customer Support Services..
+        ///   Looks up a localized string similar to The validation of an attestation token failed. The token signature does not match the signature computed using a public key retrieved from the attestation public key endpoint at &apos;{0}&apos;. Verify the DNS mapping for the endpoint. If correct, contact Customer Support Services..
         /// </summary>
         internal static string AttestationTokenSignatureValidationFailed {
             get {
@@ -3391,6 +3391,87 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Invalid RetriableErrors value (should be a comma-separated list of valid error codes preceded or followed by a &quot;+&quot; or &quot;-&quot; sign)..
+        /// </summary>
+        internal static string SQLCR_InvalidRetriableErrors {
+            get {
+                return ResourceManager.GetString("SQLCR_InvalidRetriableErrors", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid RetryCount value (should be 1-60)..
+        /// </summary>
+        internal static string SQLCR_InvalidRetryCount {
+            get {
+                return ResourceManager.GetString("SQLCR_InvalidRetryCount", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid DeltaBackoffvalue (should be 0-120)..
+        /// </summary>
+        internal static string SQLCR_InvalidRetryDeltaBackoff {
+            get {
+                return ResourceManager.GetString("SQLCR_InvalidRetryDeltaBackoff", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid RetryIncrement value (should be 0-120)..
+        /// </summary>
+        internal static string SQLCR_InvalidRetryIncrement {
+            get {
+                return ResourceManager.GetString("SQLCR_InvalidRetryIncrement", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid RetryInterval value (should be 0-120)..
+        /// </summary>
+        internal static string SQLCR_InvalidRetryInterval {
+            get {
+                return ResourceManager.GetString("SQLCR_InvalidRetryInterval", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid RetryLogFilePath value (should be a valid file path)..
+        /// </summary>
+        internal static string SQLCR_InvalidRetryLogFilePath {
+            get {
+                return ResourceManager.GetString("SQLCR_InvalidRetryLogFilePath", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid RetryMaxBackoff value (should be 0-120)..
+        /// </summary>
+        internal static string SQLCR_InvalidRetryMaxBackoff {
+            get {
+                return ResourceManager.GetString("SQLCR_InvalidRetryMaxBackoff", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid RetryMinBackoff value (should be 0-120)..
+        /// </summary>
+        internal static string SQLCR_InvalidRetryMinBackoff {
+            get {
+                return ResourceManager.GetString("SQLCR_InvalidRetryMinBackoff", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid RetryStrategy value (should be &quot;None&quot;, &quot;FixedInterval&quot;,&quot;Incremental&quot;, &quot;ExponentialBackoff&quot;)..
+        /// </summary>
+        internal static string SQLCR_InvalidRetryStrategy {
+            get {
+                return ResourceManager.GetString("SQLCR_InvalidRetryStrategy", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Next reconnection attempt will exceed query timeout. Reconnection was terminated..
         /// </summary>
         internal static string SQLCR_NextAttemptWillExceedQueryTimeout {
@@ -4066,6 +4147,24 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Error occured when generating enclave package. Attestation Protocol has not been specified in the connection string, but the query requires enclave computations..
+        /// </summary>
+        internal static string TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage {
+            get {
+                return ResourceManager.GetString("TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to initialize connection. The attestation protocol &apos;{0}&apos; does not support the enclave type &apos;{1}&apos;..
+        /// </summary>
+        internal static string TCE_AttestationProtocolNotSupportEnclaveType {
+            get {
+                return ResourceManager.GetString("TCE_AttestationProtocolNotSupportEnclaveType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to {0} should be identical on all commands ({1}, {2}, {3}, {4}) when doing batch updates..
         /// </summary>
         internal static string TCE_BatchedUpdateColumnEncryptionSettingMismatch {
@@ -4170,6 +4269,15 @@ namespace System {
         internal static string TCE_ColumnMasterKeySignatureVerificationFailed {
             get {
                 return ResourceManager.GetString("TCE_ColumnMasterKeySignatureVerificationFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Specifies an attestation protocol for its corresponding enclave attestation service..
+        /// </summary>
+        internal static string TCE_DbConnectionString_AttestationProtocol {
+            get {
+                return ResourceManager.GetString("TCE_DbConnectionString_AttestationProtocol", resourceCulture);
             }
         }
         
@@ -4327,50 +4435,14 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to No enclave provider found for enclave type &apos;{0}&apos;. Please specify the provider in the application configuration..
+        ///   Looks up a localized string similar to No enclave provider found for enclave type &apos;{0}&apos; and attestation protocol &apos;{1}&apos;. Please specify the correct attestation protocol in the connection string..
         /// </summary>
         internal static string TCE_EnclaveProviderNotFound {
             get {
                 return ResourceManager.GetString("TCE_EnclaveProviderNotFound", resourceCulture);
             }
         }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Specifies an attestation protocol for its corresponding enclave attestation service.
-        /// </summary>
-        internal static string TCE_DbConnectionString_AttestationProtocol {
-            get {
-                return ResourceManager.GetString("TCE_DbConnectionString_AttestationProtocol", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        /// Looks up a localized string similar to The enclave type '{0}' returned from the server is not supported.
-        /// </summary>
-        internal static string TCE_EnclaveTypeNotSupported {
-            get {
-                return ResourceManager.GetString("TCE_EnclaveTypeNotSupported", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        /// Looks up a localized string similar to Failed to initialize connection. The attestation protocol '{0}' does not support the enclave type '{1}'.
-        /// </summary>
-        internal static string TCE_AttestationProtocolNotSupportEnclaveType {
-            get {
-                return ResourceManager.GetString("TCE_AttestationProtocolNotSupportEnclaveType", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        /// Looks up a localized string similar to Error occured when generating enclave package. Attestation Protocol has not been specified in the connection string, but the query requires enclave computations.
-        /// </summary>
-        internal static string TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage {
-            get {
-                return ResourceManager.GetString("TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage", resourceCulture);
-            }
-        }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Executing a query requires enclave computations, but the application configuration is missing the enclave provider section..
         /// </summary>
@@ -4386,6 +4458,15 @@ namespace System {
         internal static string TCE_EnclaveTypeNotReturned {
             get {
                 return ResourceManager.GetString("TCE_EnclaveTypeNotReturned", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The enclave type &apos;{0}&apos; returned from the server is not supported..
+        /// </summary>
+        internal static string TCE_EnclaveTypeNotSupported {
+            get {
+                return ResourceManager.GetString("TCE_EnclaveTypeNotSupported", resourceCulture);
             }
         }
         

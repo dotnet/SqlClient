@@ -19,6 +19,7 @@ using System.Xml;
 using Microsoft.Data.Common;
 using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.Server;
+using Microsoft.Data.SqlClient.Reliability;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -125,6 +126,18 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 return _inPrepare;
+            }
+        }
+
+        // Retry Logic
+        internal RetryPolicy _retryPolicy = null;
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/RetryPolicy/*'/>
+        public RetryPolicy RetryPolicy
+        {
+            get
+            {
+                return Connection.RetryPolicy;
             }
         }
 
@@ -934,6 +947,12 @@ namespace Microsoft.Data.SqlClient
                 statistics = SqlStatistics.StartTimer(Statistics);
                 SqlDataReader ds;
                 ds = RunExecuteReader(0, RunBehavior.ReturnImmediately, returnStream: true);
+
+                if (RetryPolicy != null)
+                    ds = RetryPolicy.ExecuteAction(() => { return RunExecuteReader(0, RunBehavior.ReturnImmediately, returnStream: true); });
+                else
+                    ds = RunExecuteReader(0, RunBehavior.ReturnImmediately, returnStream: true);
+
                 return CompleteExecuteScalar(ds, false);
             }
             catch (Exception ex)
@@ -1001,7 +1020,11 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
-                InternalExecuteNonQuery(completion: null, sendToPipe: false, timeout: CommandTimeout, out _, methodName: nameof(ExecuteNonQuery));
+                if (RetryPolicy != null)
+                    RetryPolicy.ExecuteAction(() => { InternalExecuteNonQuery(completion: null, sendToPipe: false, timeout: CommandTimeout, out _, methodName: nameof(ExecuteNonQuery)); });
+                else
+                    InternalExecuteNonQuery(completion: null, sendToPipe: false, timeout: CommandTimeout, out _, methodName: nameof(ExecuteNonQuery));
+
                 return _rowsAffected;
             }
             catch (Exception ex)
@@ -1472,7 +1495,12 @@ namespace Microsoft.Data.SqlClient
 
                 // use the reader to consume metadata
                 SqlDataReader ds;
-                ds = RunExecuteReader(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, returnStream: true);
+
+                if (RetryPolicy != null)
+                    ds = RetryPolicy.ExecuteAction(() => { return RunExecuteReader(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, returnStream: true); });
+                else
+                    ds = RunExecuteReader(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, returnStream: true);
+
                 return CompleteXmlReader(ds);
             }
             catch (Exception ex)
@@ -1756,7 +1784,11 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
-                return RunExecuteReader(behavior, RunBehavior.ReturnImmediately, returnStream: true);
+
+                if (RetryPolicy!=null)
+                    return RetryPolicy.ExecuteAction(()=> {return RunExecuteReader(behavior, RunBehavior.ReturnImmediately, returnStream: true); });
+                else
+                    return RunExecuteReader(behavior, RunBehavior.ReturnImmediately, returnStream: true);
             }
             catch (Exception ex)
             {

@@ -12,6 +12,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Microsoft.Data.Common;
+using System.Text.RegularExpressions;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -65,6 +66,19 @@ namespace Microsoft.Data.SqlClient
 
             ConnectRetryInterval,
 
+            // Retry Logic attributes, different from Connection Reliability ones above
+            RetryStrategy,
+            RetryCount,
+            RetryInterval,
+            RetryIncrement,
+            RetryMinBackoff,
+            RetryMaxBackoff,
+            RetryDeltaBackoff,
+            RetryFastFirst,
+            RetryLogFilePath,
+            RetriableErrors,
+
+
             ColumnEncryptionSetting,
             EnclaveAttestationUrl,
             AttestationProtocol,
@@ -100,6 +114,18 @@ namespace Microsoft.Data.SqlClient
         private int _packetSize = DbConnectionStringDefaults.PacketSize;
         private int _connectRetryCount = DbConnectionStringDefaults.ConnectRetryCount;
         private int _connectRetryInterval = DbConnectionStringDefaults.ConnectRetryInterval;
+
+        // Retry Logic private variable
+        private string _retryStrategy = DbConnectionStringDefaults.RetryStrategy;
+        private int _retryCount = DbConnectionStringDefaults.RetryCount;
+        private int _RetryInterval = DbConnectionStringDefaults.RetryInterval;
+        private int _retryIncrement = DbConnectionStringDefaults.RetryIncrement;
+        private int _retryMinBackoff = DbConnectionStringDefaults.RetryMinBackoff;
+        private int _retryMaxBackoff = DbConnectionStringDefaults.RetryMaxBackoff;
+        private int _retryDeltaBackoff = DbConnectionStringDefaults.RetryDeltaBackoff;
+        private bool _retryFastFirst = DbConnectionStringDefaults.RetryFastFirst;
+        private string _retryLogFilePath = DbConnectionStringDefaults.RetryLogFilePath;
+        private string _retriableErrors = DbConnectionStringDefaults.RetriableErrors;
 
         private bool _encrypt = DbConnectionStringDefaults.Encrypt;
         private bool _trustServerCertificate = DbConnectionStringDefaults.TrustServerCertificate;
@@ -152,6 +178,18 @@ namespace Microsoft.Data.SqlClient
             validKeywords[(int)Keywords.WorkstationID] = DbConnectionStringKeywords.WorkstationID;
             validKeywords[(int)Keywords.ConnectRetryCount] = DbConnectionStringKeywords.ConnectRetryCount;
             validKeywords[(int)Keywords.ConnectRetryInterval] = DbConnectionStringKeywords.ConnectRetryInterval;
+
+            // Retry Logic
+            validKeywords[(int)Keywords.RetryStrategy] = DbConnectionStringKeywords.RetryStrategy;
+            validKeywords[(int)Keywords.RetryCount] = DbConnectionStringKeywords.RetryCount;
+            validKeywords[(int)Keywords.RetryInterval] = DbConnectionStringKeywords.RetryInterval;
+            validKeywords[(int)Keywords.RetryMinBackoff] = DbConnectionStringKeywords.RetryMinBackoff;
+            validKeywords[(int)Keywords.RetryMaxBackoff] = DbConnectionStringKeywords.RetryMaxBackoff;
+            validKeywords[(int)Keywords.RetryDeltaBackoff] = DbConnectionStringKeywords.RetryDeltaBackoff;
+            validKeywords[(int)Keywords.RetryFastFirst] = DbConnectionStringKeywords.RetryFastFirst;
+            validKeywords[(int)Keywords.RetryLogFilePath] = DbConnectionStringKeywords.RetryLogFilePath;
+            validKeywords[(int)Keywords.RetriableErrors] = DbConnectionStringKeywords.RetriableErrors;
+
             validKeywords[(int)Keywords.Authentication] = DbConnectionStringKeywords.Authentication;
             validKeywords[(int)Keywords.ColumnEncryptionSetting] = DbConnectionStringKeywords.ColumnEncryptionSetting;
             validKeywords[(int)Keywords.EnclaveAttestationUrl] = DbConnectionStringKeywords.EnclaveAttestationUrl;
@@ -195,6 +233,19 @@ namespace Microsoft.Data.SqlClient
             hash.Add(DbConnectionStringKeywords.WorkstationID, Keywords.WorkstationID);
             hash.Add(DbConnectionStringKeywords.ConnectRetryCount, Keywords.ConnectRetryCount);
             hash.Add(DbConnectionStringKeywords.ConnectRetryInterval, Keywords.ConnectRetryInterval);
+
+            //Retry Logic
+            hash.Add(DbConnectionStringKeywords.RetryStrategy, Keywords.RetryStrategy);
+            hash.Add(DbConnectionStringKeywords.RetryCount, Keywords.RetryCount);
+            hash.Add(DbConnectionStringKeywords.RetryInterval, Keywords.RetryInterval);
+            hash.Add(DbConnectionStringKeywords.RetryIncrement, Keywords.RetryIncrement);
+            hash.Add(DbConnectionStringKeywords.RetryMinBackoff, Keywords.RetryMinBackoff);
+            hash.Add(DbConnectionStringKeywords.RetryMaxBackoff, Keywords.RetryMaxBackoff);
+            hash.Add(DbConnectionStringKeywords.RetryDeltaBackoff, Keywords.RetryDeltaBackoff);
+            hash.Add(DbConnectionStringKeywords.RetryFastFirst, Keywords.RetryFastFirst);
+            hash.Add(DbConnectionStringKeywords.RetryLogFilePath, Keywords.RetryLogFilePath);
+            hash.Add(DbConnectionStringKeywords.RetriableErrors, Keywords.RetriableErrors);
+
             hash.Add(DbConnectionStringKeywords.Authentication, Keywords.Authentication);
             hash.Add(DbConnectionStringKeywords.ColumnEncryptionSetting, Keywords.ColumnEncryptionSetting);
             hash.Add(DbConnectionStringKeywords.EnclaveAttestationUrl, Keywords.EnclaveAttestationUrl);
@@ -355,6 +406,37 @@ namespace Microsoft.Data.SqlClient
                             break;
                         case Keywords.ConnectRetryInterval:
                             ConnectRetryInterval = ConvertToInt32(value);
+                            break;
+                        // Retry Logic
+                        case Keywords.RetryStrategy:
+                            RetryStrategy = ConvertToString(value);
+                            break;
+                        case Keywords.RetryCount:
+                            RetryCount = ConvertToInt32(value);
+                            break;
+                        case Keywords.RetryInterval:
+                            RetryInterval = ConvertToInt32(value);
+                            break;
+                        case Keywords.RetryIncrement:
+                            RetryIncrement = ConvertToInt32(value);
+                            break;
+                        case Keywords.RetryMinBackoff:
+                            RetryMinBackoff = ConvertToInt32(value);
+                            break;
+                        case Keywords.RetryMaxBackoff:
+                            RetryMaxBackoff = ConvertToInt32(value);
+                            break;
+                        case Keywords.RetryDeltaBackoff:
+                            RetryDeltaBackoff = ConvertToInt32(value);
+                            break;
+                        case Keywords.RetryFastFirst:
+                            RetryFastFirst = ConvertToBoolean(value);
+                            break;
+                        case Keywords.RetryLogFilePath:
+                            RetryLogFilePath = ConvertToString(value);
+                            break;
+                        case Keywords.RetriableErrors:
+                            RetriableErrors = ConvertToString(value);
                             break;
 
                         default:
@@ -630,6 +712,153 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        // Retry Logic
+
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectRetryInterval/*' />
+        public string RetryStrategy
+        {
+            get { return _retryStrategy; }
+            set
+            {
+                if ((value != "None") && (value != "FixedInterval") && (value != "Incremental") && (value != "ExponentialBackoff"))
+                {
+                    throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.RetryStrategy);
+                }
+                SetValue(DbConnectionStringKeywords.RetryStrategy, value);
+                _retryStrategy = value;
+            }
+        }
+
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectRetryCount/*' />
+        public int RetryCount
+        {
+            get { return _retryCount; }
+            set
+            {
+                if ((value < 0) || (value > 60))
+                {
+                    throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.RetryCount);
+                }
+                SetValue(DbConnectionStringKeywords.RetryCount, value);
+                _retryCount = value;
+            }
+        }
+
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectRetryCount/*' />
+        public int RetryInterval
+        {
+            get { return _RetryInterval; }
+            set
+            {
+                if ((value < 0) || (value > 120))
+                {
+                    throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.RetryInterval);
+                }
+                SetValue(DbConnectionStringKeywords.RetryInterval, value);
+                _RetryInterval = value;
+            }
+        }
+
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectRetryCount/*' />
+        public int RetryIncrement
+        {
+            get { return _retryIncrement; }
+            set
+            {
+                if ((value < 0) || (value > 120))
+                {
+                    throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.RetryIncrement);
+                }
+                SetValue(DbConnectionStringKeywords.RetryIncrement, value);
+                _retryIncrement = value;
+            }
+        }
+
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectRetryCount/*' />
+        public int RetryMinBackoff
+        {
+            get { return _retryMinBackoff; }
+            set
+            {
+                if ((value < 0) || (value > 120))
+                {
+                    throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.RetryMinBackoff);
+                }
+                SetValue(DbConnectionStringKeywords.RetryMinBackoff, value);
+                _retryMinBackoff = value;
+            }
+        }
+
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectRetryCount/*' />
+        public int RetryMaxBackoff
+        {
+            get { return _retryMaxBackoff; }
+            set
+            {
+                if ((value < 0) || (value > 120))
+                {
+                    throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.RetryMaxBackoff);
+                }
+                SetValue(DbConnectionStringKeywords.RetryMaxBackoff, value);
+                _retryMaxBackoff = value;
+            }
+        }
+
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectRetryCount/*' />
+        public int RetryDeltaBackoff
+        {
+            get { return _retryDeltaBackoff; }
+            set
+            {
+                if ((value < 0) || (value > 120))
+                {
+                    throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.RetryDeltaBackoff);
+                }
+                SetValue(DbConnectionStringKeywords.RetryDeltaBackoff, value);
+                _retryDeltaBackoff = value;
+            }
+        }
+
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectRetryCount/*' />
+        public bool RetryFastFirst
+        {
+            get { return _retryFastFirst; }
+            set
+            {
+                SetValue(DbConnectionStringKeywords.RetryFastFirst, value);
+                _retryFastFirst = value;
+            }
+        }
+
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectRetryCount/*' />
+        public string RetryLogFilePath
+        {
+            get { return _retryLogFilePath; }
+            set
+            {   // Need to find a better way to validate file path
+                if (value.Length > 255)
+                {
+                    throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.RetryLogFilePath);
+                }
+                SetValue(DbConnectionStringKeywords.RetryLogFilePath, value);
+                _retryLogFilePath = value;
+            }
+        }
+
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectRetryCount/*' />
+        public string RetriableErrors
+        {
+            get { return _retriableErrors; }
+            set
+            {   // Need to find a better way to validate file path
+                if (!Regex.IsMatch(value, "^([0-9+-]+(\\-[0-9+-]+)*,*)+$", RegexOptions.None))
+                {
+                    throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.RetriableErrors);
+                }
+                SetValue(DbConnectionStringKeywords.RetriableErrors, value);
+                _retriableErrors = value;
+            }
+        }
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/MinPoolSize/*' />
         public int MinPoolSize
@@ -949,6 +1178,29 @@ namespace Microsoft.Data.SqlClient
                     return ConnectRetryCount;
                 case Keywords.ConnectRetryInterval:
                     return ConnectRetryInterval;
+
+                // Retry Logic
+                case Keywords.RetryStrategy:
+                    return RetryStrategy;
+                case Keywords.RetryCount:
+                    return RetryCount;
+                case Keywords.RetryInterval:
+                    return RetryInterval;
+                case Keywords.RetryIncrement:
+                    return RetryIncrement;
+                case Keywords.RetryMinBackoff:
+                    return RetryMinBackoff;
+                case Keywords.RetryMaxBackoff:
+                    return RetryMaxBackoff;
+                case Keywords.RetryDeltaBackoff:
+                    return RetryDeltaBackoff;
+                case Keywords.RetryFastFirst:
+                    return RetryFastFirst;
+                case Keywords.RetryLogFilePath:
+                    return RetryLogFilePath;
+                case Keywords.RetriableErrors:
+                    return RetriableErrors;
+
                 case Keywords.Authentication:
                     return Authentication;
                 case Keywords.ColumnEncryptionSetting:
@@ -1072,6 +1324,39 @@ namespace Microsoft.Data.SqlClient
                 case Keywords.ConnectRetryInterval:
                     _connectRetryInterval = DbConnectionStringDefaults.ConnectRetryInterval;
                     break;
+
+                // Retry Logic
+                case Keywords.RetryStrategy:
+                    _retryStrategy = DbConnectionStringDefaults.RetryStrategy;
+                    break;
+                case Keywords.RetryCount:
+                    _retryCount = DbConnectionStringDefaults.RetryCount;
+                    break;
+                case Keywords.RetryInterval:
+                    _RetryInterval = DbConnectionStringDefaults.RetryInterval;
+                    break;
+                case Keywords.RetryIncrement:
+                    _retryIncrement = DbConnectionStringDefaults.RetryIncrement;
+                    break;
+                case Keywords.RetryMinBackoff:
+                    _retryMinBackoff = DbConnectionStringDefaults.RetryMinBackoff;
+                    break;
+                case Keywords.RetryMaxBackoff:
+                    _retryMaxBackoff = DbConnectionStringDefaults.RetryMaxBackoff;
+                    break;
+                case Keywords.RetryDeltaBackoff:
+                    _retryDeltaBackoff = DbConnectionStringDefaults.RetryDeltaBackoff;
+                    break;
+                case Keywords.RetryFastFirst:
+                    _retryFastFirst = DbConnectionStringDefaults.RetryFastFirst;
+                    break;
+                case Keywords.RetryLogFilePath:
+                    _retryLogFilePath = DbConnectionStringDefaults.RetryLogFilePath;
+                    break;
+                case Keywords.RetriableErrors:
+                    _retriableErrors = DbConnectionStringDefaults.RetriableErrors;
+                    break;
+
                 case Keywords.Replication:
                     _replication = DbConnectionStringDefaults.Replication;
                     break;

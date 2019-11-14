@@ -21,6 +21,7 @@ using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Server;
+using Microsoft.Data.SqlClient.Reliability;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -53,6 +54,9 @@ namespace Microsoft.Data.SqlClient
         internal SessionData _recoverySessionData;
         internal bool _suppressStateChangeForReconnection;
         private int _reconnectCount;
+
+        // Retry Logic
+        private RetryPolicy _retryPolicy;
 
         // diagnostics listener
         private static readonly DiagnosticListener s_diagnosticListener = new DiagnosticListener(SqlClientDiagnosticListenerExtensions.DiagnosticListenerName);
@@ -295,8 +299,66 @@ namespace Microsoft.Data.SqlClient
             if (connString != null)
             {
                 _connectRetryCount = connString.ConnectRetryCount;
+
+                // Retry Logic
+                switch (connString.RetryStrategy)
+                {
+                    case "None":
+                    case "":
+                        _retryPolicy = null;
+                        break;
+
+                    case "FixedInterval":
+                        _retryPolicy = new RetryPolicy<TransientErrorDetectionStrategy>(new FixedInterval(connString.RetryCount, TimeSpan.FromSeconds(connString.RetryInterval)));
+                        break;
+
+                    case "Incremental":
+                        _retryPolicy = new RetryPolicy<TransientErrorDetectionStrategy>(new Incremental(connString.RetryCount, TimeSpan.FromSeconds(connString.RetryInterval), TimeSpan.FromSeconds(connString.RetryIncrement)));
+                        break;
+
+                    case "ExponentialBackoff":
+                        _retryPolicy = new RetryPolicy<TransientErrorDetectionStrategy>(new ExponentialBackoff(connString.RetryCount, TimeSpan.FromSeconds(connString.RetryMinBackoff), TimeSpan.FromSeconds(connString.RetryMaxBackoff), TimeSpan.FromSeconds(connString.RetryDeltaBackoff)));
+                        break;
+                }
+
+                List<int> errorsToAdd  = new List<int>();
+                List<int> errorsToRemove = new List<int>();
+
+                if (_retryPolicy != null)
+                {
+                    if (connString.RetriableErrors != "")
+                    {
+                        foreach (string s in connString.RetriableErrors.Split(','))
+                        {
+                            int err;
+                            if (s.IndexOf('+') != -1)
+                            {
+                                if(int.TryParse(s.Replace("+",""), out err))
+                                    errorsToAdd.Add(err);
+                            } else if (s.IndexOf('-') != -1)
+                            {
+                                if(int.TryParse(s.Replace("-",""), out err))
+                                    errorsToRemove.Add(err);
+                            } else
+                            {
+                                if (int.TryParse(s, out err))
+                                    errorsToAdd.Add(err);
+                            }
+                        }
+                    }
+                    foreach(int err in errorsToAdd)
+                    {
+                        _retryPolicy.ErrorDetectionStrategy.RetriableErrors.Add(err);
+                    }
+                    foreach(int err in errorsToRemove)
+                    {
+                        _retryPolicy.ErrorDetectionStrategy.RetriableErrors.Remove(err);
+                    }
+                }
             }
         }
+
+
 
         //
         // PUBLIC PROPERTIES
@@ -739,6 +801,18 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        // Retry Logic
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RetryPolicy/*' />
+        public RetryPolicy RetryPolicy
+        {
+            get => _retryPolicy;
+            set
+            {
+                // Need to validate value before setting
+                _retryPolicy = value;
+            }
+        }
+
         //
         // PUBLIC METHODS
         //
@@ -964,6 +1038,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        private void _retryPolicy_Retrying(object sender, RetryingEventArgs ev, Guid operationId)
+        {
+            s_diagnosticListener.WriteConnectionOpenRetry(operationId, this, ev.LastException, ev.CurrentRetryCount);
+        }
+
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Open/*' />
         public override void Open()
         {
@@ -973,15 +1052,24 @@ namespace Microsoft.Data.SqlClient
 
             SqlStatistics statistics = null;
 
+            if(_retryPolicy != null)
+                _retryPolicy.Retrying += new EventHandler<RetryingEventArgs>((s,ex)=>_retryPolicy_Retrying(s,ex,operationId));
+
             Exception e = null;
+
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
 
-                if (!TryOpen(null))
+                bool completed;
+
+                completed = (_retryPolicy != null) ? _retryPolicy.ExecuteAction<bool>(() => { return TryOpen(null).Result; }) : TryOpen(null).Result;
+
+                if (!completed)
                 {
                     throw ADP.InternalError(ADP.InternalErrorCode.SynchronousConnectReturnedPending);
                 }
+
             }
             catch (Exception ex)
             {
@@ -1218,7 +1306,11 @@ namespace Microsoft.Data.SqlClient
 
             PrepareStatisticsForNewConnection();
 
+            if (_retryPolicy != null)
+                _retryPolicy.Retrying += new EventHandler<RetryingEventArgs>((s, ex) => _retryPolicy_Retrying(s, ex, operationId));
+
             SqlStatistics statistics = null;
+
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
@@ -1230,7 +1322,7 @@ namespace Microsoft.Data.SqlClient
                 if (s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlAfterOpenConnection) ||
                     s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlErrorOpenConnection))
                 {
-                    result.Task.ContinueWith((t) =>
+                     result.Task.ContinueWith((t) =>
                     {
                         if (t.Exception != null)
                         {
@@ -1249,12 +1341,20 @@ namespace Microsoft.Data.SqlClient
                     return result.Task;
                 }
 
-
-                bool completed;
+                bool completed=false;
 
                 try
                 {
-                    completed = TryOpen(completion);
+                    if (RetryPolicy != null)
+                    {
+                        completed = _retryPolicy.ExecuteAction<bool>(() => { return TryOpen(null).Result; });
+                    }
+                    else
+                    {
+                        completed = TryOpen(completion).Result;
+                    }
+                    // execute async not working for now
+                    //completed = _retryPolicy.ExecuteAsync(() => { return TryOpen(completion); }).Result;
                 }
                 catch (Exception e)
                 {
@@ -1355,7 +1455,7 @@ namespace Microsoft.Data.SqlClient
                             // protect continuation from races with close and cancel
                             lock (_parent.InnerConnection)
                             {
-                                result = _parent.TryOpen(_retry);
+                                result = _parent.TryOpen(_retry).Result;
                             }
                             if (result)
                             {
@@ -1401,7 +1501,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private bool TryOpen(TaskCompletionSource<DbConnectionInternal> retry)
+        private Task<bool> TryOpen(TaskCompletionSource<DbConnectionInternal> retry)
         {
             SqlConnectionString connectionOptions = (SqlConnectionString)ConnectionOptions;
 
@@ -1428,14 +1528,14 @@ namespace Microsoft.Data.SqlClient
             {
                 if (!InnerConnection.TryReplaceConnection(this, ConnectionFactory, retry, UserConnectionOptions))
                 {
-                    return false;
+                    return Task.FromResult<bool>(false);
                 }
             }
             else
             {
                 if (!InnerConnection.TryOpenConnection(this, ConnectionFactory, retry, UserConnectionOptions))
                 {
-                    return false;
+                    return Task.FromResult<bool>(false);
                 }
             }
             // does not require GC.KeepAlive(this) because of ReRegisterForFinalize below.
@@ -1464,7 +1564,7 @@ namespace Microsoft.Data.SqlClient
                 _statistics = null; // in case of previous Open/Close/reset_CollectStats sequence
             }
 
-            return true;
+            return Task.FromResult<bool>(true);
         }
 
 

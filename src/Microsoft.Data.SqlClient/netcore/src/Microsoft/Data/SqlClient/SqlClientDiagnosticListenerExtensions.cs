@@ -38,6 +38,10 @@ namespace Microsoft.Data.SqlClient
         public const string SqlAfterRollbackTransaction = SqlClientPrefix + nameof(WriteTransactionRollbackAfter);
         public const string SqlErrorRollbackTransaction = SqlClientPrefix + nameof(WriteTransactionRollbackError);
 
+        // Retry Logic
+        public const string SqlRetryOpenConnection = SqlClientPrefix + nameof(WriteConnectionOpenRetry);
+
+
         public static Guid WriteCommandBefore(this DiagnosticListener @this, SqlCommand sqlCommand, [CallerMemberName] string operation = "")
         {
             if (@this.IsEnabled(SqlBeforeExecuteCommand))
@@ -334,5 +338,24 @@ namespace Microsoft.Data.SqlClient
                     });
             }
         }
+
+        public static void WriteConnectionOpenRetry(this DiagnosticListener @this, Guid operationId, SqlConnection sqlConnection, Exception ex, int currentRetryCount, [CallerMemberName] string operation = "")
+        {
+            if (@this.IsEnabled(SqlRetryOpenConnection))
+            {
+                @this.Write(
+                    SqlRetryOpenConnection,
+                    new
+                    {
+                        OperationId = operationId,
+                        Operation = operation,
+                        Connection = sqlConnection,
+                        Exception = ex,
+                        CurrentRetryCount = currentRetryCount,
+                        Timestamp = Stopwatch.GetTimestamp()
+                    });
+            }
+        }
+
     }
 }

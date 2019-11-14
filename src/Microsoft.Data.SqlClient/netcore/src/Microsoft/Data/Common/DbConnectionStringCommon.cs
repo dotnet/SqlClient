@@ -643,6 +643,23 @@ namespace Microsoft.Data.Common
         internal const string TransactionBinding = "Implicit Unbind";
         internal const int ConnectRetryCount = 1;
         internal const int ConnectRetryInterval = 10;
+
+        // Retry Logic
+        internal const string RetryStrategy = "None";
+        internal const int RetryCount = 3;
+
+        internal const int RetryInterval = 10;
+        internal const int RetryIncrement = 10;
+
+        internal const int RetryMinBackoff = 10;
+        internal const int RetryMaxBackoff = 10;
+        internal const int RetryDeltaBackoff = 10;
+
+        internal const bool RetryFastFirst = false;
+
+        internal const string RetryLogFilePath = "";
+        internal const string RetriableErrors = "";
+
         internal static readonly SqlAuthenticationMethod Authentication = SqlAuthenticationMethod.NotSpecified;
         internal const SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Disabled;
         internal const string EnclaveAttestationUrl = "";
@@ -679,6 +696,19 @@ namespace Microsoft.Data.Common
         internal const string WorkstationID = "Workstation ID";
         internal const string ConnectRetryCount = "ConnectRetryCount";
         internal const string ConnectRetryInterval = "ConnectRetryInterval";
+
+        // Retry Logic
+        internal const string RetryStrategy = "RetryStrategy";
+        internal const string RetryCount = "RetryCount";
+        internal const string RetryInterval = "RetryInterval";
+        internal const string RetryIncrement = "RetryIncrement";
+        internal const string RetryMinBackoff = "RetryMinBackoff";
+        internal const string RetryMaxBackoff = "RetryMaxBackoff";
+        internal const string RetryDeltaBackoff = "RetryDeltaBackoff";
+        internal const string RetryFastFirst = "RetryFastFirst";
+        internal const string RetryLogFilePath = "RetryLogFilePath";
+        internal const string RetriableErrors = "RetriableErrors";
+
         internal const string Authentication = "Authentication";
         internal const string ColumnEncryptionSetting = "Column Encryption Setting";
         internal const string EnclaveAttestationUrl = "Enclave Attestation Url";

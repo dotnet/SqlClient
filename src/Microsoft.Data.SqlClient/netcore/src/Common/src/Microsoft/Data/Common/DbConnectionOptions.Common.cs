@@ -580,6 +580,7 @@ namespace Microsoft.Data.Common
                     string realkeyname = null != synonyms ?
                         (synonyms.TryGetValue(keyname, out synonym) ? synonym : null) :
                         keyname;
+
                     if (!IsKeyNameValid(realkeyname))
                     {
                         throw ADP.KeywordNotSupported(keyname);

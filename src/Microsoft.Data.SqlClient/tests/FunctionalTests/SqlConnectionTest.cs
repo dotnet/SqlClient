@@ -61,6 +61,17 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Fact]
+        public void Constructor2_ConnectionString_RetryLogic()
+        {
+            string connectionString = "RetryStrategy=Incremental";
+
+            SqlConnection cn = new SqlConnection(connectionString);
+
+            Assert.NotNull(cn.RetryPolicy);
+            Assert.NotNull(cn.RetryPolicy.RetryStrategy);
+        }
+
+        [Fact]
         public void Constructor2_ConnectionString_Invalid()
         {
             try
@@ -90,6 +101,132 @@ namespace Microsoft.Data.SqlClient.Tests
                 Assert.Null(ex.InnerException);
                 Assert.NotNull(ex.Message);
                 Assert.True(ex.Message.IndexOf("'invalidkeyword'") != -1);
+                Assert.Null(ex.ParamName);
+            }
+
+            // invalid retry strategy
+            try
+            {
+                new SqlConnection("RetryStrategy=xyz");
+            }
+            catch (ArgumentException ex)
+            {
+                // Invalid RetryStrategy value
+                Assert.Equal(typeof(ArgumentException), ex.GetType());
+                Assert.Null(ex.InnerException);
+                Assert.NotNull(ex.Message);
+                Assert.Null(ex.ParamName);
+            }
+
+            // invalid retriable errors
+            try
+            {
+                new SqlConnection("RetriableErrors=!zy");
+            }
+            catch (ArgumentException ex)
+            {
+                // Invalid RetriableErrors value
+                Assert.Equal(typeof(ArgumentException), ex.GetType());
+                Assert.Null(ex.InnerException);
+                Assert.NotNull(ex.Message);
+                Assert.Null(ex.ParamName);
+            }
+
+            // invalid retry count
+            try
+            {
+                new SqlConnection("RetryCount=1234");
+            }
+            catch (ArgumentException ex)
+            {
+                // Invalid RetryCount value
+                Assert.Equal(typeof(ArgumentException), ex.GetType());
+                Assert.Null(ex.InnerException);
+                Assert.NotNull(ex.Message);
+                Assert.Null(ex.ParamName);
+            }
+
+            // invalid retry increment
+            try
+            {
+                new SqlConnection("RetryIncrement=1234");
+            }
+            catch (ArgumentException ex)
+            {
+                // Invalid RetryIncrement value
+                Assert.Equal(typeof(ArgumentException), ex.GetType());
+                Assert.Null(ex.InnerException);
+                Assert.NotNull(ex.Message);
+                Assert.Null(ex.ParamName);
+            }
+
+            // invalid retry interval
+            try
+            {
+                new SqlConnection("RetryInterval=1234");
+            }
+            catch (ArgumentException ex)
+            {
+                // Invalid RetryInterval value
+                Assert.Equal(typeof(ArgumentException), ex.GetType());
+                Assert.Null(ex.InnerException);
+                Assert.NotNull(ex.Message);
+                Assert.Null(ex.ParamName);
+            }
+
+            // invalid retry log file path
+            try
+            {
+                new SqlConnection("RetryLogFilePath=!@#$");
+            }
+            catch (ArgumentException ex)
+            {
+                // Invalid RetryLogFilePath value
+                Assert.Equal(typeof(ArgumentException), ex.GetType());
+                Assert.Null(ex.InnerException);
+                Assert.NotNull(ex.Message);
+                Assert.Null(ex.ParamName);
+            }
+
+            // invalid retry delta backoff
+            try
+            {
+                new SqlConnection("RetryDeltaBackoff=1234");
+            }
+            catch (ArgumentException ex)
+            {
+                // Invalid RetryDeltaBackoff value
+                Assert.Equal(typeof(ArgumentException), ex.GetType());
+                Assert.Null(ex.InnerException);
+                Assert.NotNull(ex.Message);
+                Assert.Null(ex.ParamName);
+            }
+
+            // invalid retry mix backoff
+            try
+            {
+                new SqlConnection("RetryMixBackoff=1234");
+            }
+            catch (ArgumentException ex)
+            {
+                // Invalid RetryMixBackoff value
+                Assert.Equal(typeof(ArgumentException), ex.GetType());
+                Assert.Null(ex.InnerException);
+                Assert.NotNull(ex.Message);
+                Assert.Null(ex.ParamName);
+            }
+
+            // invalid retry delta backoff
+            try
+            {
+                new SqlConnection("RetryMaxBackoff=1234");
+            }
+            catch (ArgumentException ex)
+            {
+                // Invalid RetryMaxBackoff value
+                Assert.Equal(typeof(ArgumentException), ex.GetType());
+                Assert.Null(ex.InnerException);
+                Assert.NotNull(ex.Message);
                 Assert.Null(ex.ParamName);
             }
 
@@ -1015,6 +1152,15 @@ namespace Microsoft.Data.SqlClient.Tests
             cn.ConnectionString = "attachdbfilename=dunno";
             cn.ConnectionString = "extended properties=dunno";
             cn.ConnectionString = "initial file name=dunno";
+            cn.ConnectionString = "RetryStrategy=None";
+            cn.ConnectionString = "RetryCount=3";
+            cn.ConnectionString = "RetryInterval=10";
+            cn.ConnectionString = "RetryIncrement=5";
+            cn.ConnectionString = "RetriableErrors=40501+";
+            cn.ConnectionString = "RetryLogFilePath=c:\\log\\log.txt";
+            cn.ConnectionString = "RetryDeltaBackoff=10";
+            cn.ConnectionString = "RetryMinBackoff=10";
+            cn.ConnectionString = "RetryMaxBackoff=10";
         }
 
         [Fact]

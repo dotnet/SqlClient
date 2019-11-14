@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -1847,5 +1847,32 @@
   </data>
   <data name="TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage" xml:space="preserve">
     <value>Error occured when generating enclave package. Attestation Protocol has not been specified in the connection string, but the query requires enclave computations.</value>
+  </data>
+  <data name="SQLCR_InvalidRetriableErrors" xml:space="preserve">
+    <value>Invalid RetriableErrors value (should be a comma-separated list of valid error codes preceded or followed by a "+" or "-" sign).</value>
+  </data>
+  <data name="SQLCR_InvalidRetryCount" xml:space="preserve">
+    <value>Invalid RetryCount value (should be 1-60).</value>
+  </data>
+  <data name="SQLCR_InvalidRetryDeltaBackoff" xml:space="preserve">
+    <value>Invalid DeltaBackoffvalue (should be 0-120).</value>
+  </data>
+  <data name="SQLCR_InvalidRetryIncrement" xml:space="preserve">
+    <value>Invalid RetryIncrement value (should be 0-120).</value>
+  </data>
+  <data name="SQLCR_InvalidRetryInterval" xml:space="preserve">
+    <value>Invalid RetryInterval value (should be 0-120).</value>
+  </data>
+  <data name="SQLCR_InvalidRetryLogFilePath" xml:space="preserve">
+    <value>Invalid RetryLogFilePath value (should be a valid file path).</value>
+  </data>
+  <data name="SQLCR_InvalidRetryMaxBackoff" xml:space="preserve">
+    <value>Invalid RetryMaxBackoff value (should be 0-120).</value>
+  </data>
+  <data name="SQLCR_InvalidRetryMinBackoff" xml:space="preserve">
+    <value>Invalid RetryMinBackoff value (should be 0-120).</value>
+  </data>
+  <data name="SQLCR_InvalidRetryStrategy" xml:space="preserve">
+    <value>Invalid RetryStrategy value (should be "None", "FixedInterval","Incremental", "ExponentialBackoff").</value>
   </data>
 </root>

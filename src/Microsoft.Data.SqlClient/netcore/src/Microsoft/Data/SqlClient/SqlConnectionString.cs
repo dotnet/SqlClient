@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using Microsoft.Data.Common;
+using System.Text.RegularExpressions;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -45,6 +46,24 @@ namespace Microsoft.Data.SqlClient
             internal const bool Replication = false;
             internal const int Connect_Retry_Count = 1;
             internal const int Connect_Retry_Interval = 10;
+
+            // Retry Logic
+            internal const string RetryStrategy = "None";
+            internal const int RetryCount = 3;
+
+            internal const int RetryInterval = 10;
+            internal const int RetryIncrement = 10;
+
+            internal const int RetryMinBackoff = 10;
+            internal const int RetryMaxBackoff = 10;
+            internal const int RetryDeltaBackoff = 10;
+
+            internal const bool RetryFastFirst = false;
+
+            internal const string RetryLogFilePath = "";
+            internal const string RetriableErrors = "";
+
+
             internal static readonly SqlAuthenticationMethod Authentication = SqlAuthenticationMethod.NotSpecified;
             internal const SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Disabled;
             internal const string EnclaveAttestationUrl = "";
@@ -94,6 +113,19 @@ namespace Microsoft.Data.SqlClient
             internal const string Replication = "replication";
             internal const string Connect_Retry_Count = "connectretrycount";
             internal const string Connect_Retry_Interval = "connectretryinterval";
+
+            // Retry Logic
+            internal const string Retry_Strategy = "retrystrategy";
+            internal const string Retry_Count = "retrycount";
+            internal const string Retry_Initial_Interval = "retryinterval";
+            internal const string Retry_Increment = "retryincrement";
+            internal const string Retry_Min_Backoff = "retryminbackoff";
+            internal const string Retry_Max_Backoff = "retrymaxbackoff";
+            internal const string Retry_Delta_Backoff = "retrydeltabackoff";
+            internal const string Retry_Fast_First = "retryfastfirst";
+            internal const string Retry_Log_File_Path = "retrylogfilepath";
+            internal const string Retriable_Errors = "retriableerrors";
+
             internal const string Authentication = "authentication";
         }
 
@@ -190,13 +222,25 @@ namespace Microsoft.Data.SqlClient
         private readonly string _enclaveAttestationUrl;
         private readonly SqlConnectionAttestationProtocol _attestationProtocol;
 
-        private readonly int _connectTimeout;
+        private readonly  int _connectTimeout;
         private readonly int _loadBalanceTimeout;
         private readonly int _maxPoolSize;
         private readonly int _minPoolSize;
         private readonly int _packetSize;
         private readonly int _connectRetryCount;
         private readonly int _connectRetryInterval;
+
+        // Retry Logic
+        private readonly string _retryStrategy;
+        private readonly int _retryCount;
+        private readonly int _RetryInterval;
+        private readonly int _retryIncrement;
+        private readonly int _retryMinBackoff;
+        private readonly int _retryMaxBackoff;
+        private readonly int _retryDeltaBackoff;
+        private readonly bool _retryFastFirst;
+        private readonly string _retryLogFilePath;
+        private readonly string _retriableErrors;
 
         private readonly ApplicationIntent _applicationIntent;
         private readonly string _applicationName;
@@ -250,6 +294,18 @@ namespace Microsoft.Data.SqlClient
             _packetSize = ConvertValueToInt32(KEY.Packet_Size, DEFAULT.Packet_Size);
             _connectRetryCount = ConvertValueToInt32(KEY.Connect_Retry_Count, DEFAULT.Connect_Retry_Count);
             _connectRetryInterval = ConvertValueToInt32(KEY.Connect_Retry_Interval, DEFAULT.Connect_Retry_Interval);
+
+            // Retry Logic
+            _retryStrategy = ConvertValueToString(KEY.Retry_Strategy, DEFAULT.RetryStrategy);
+            _retryCount = ConvertValueToInt32(KEY.Retry_Count, DEFAULT.RetryCount);
+            _RetryInterval = ConvertValueToInt32(KEY.Retry_Initial_Interval, DEFAULT.RetryInterval);
+            _retryIncrement = ConvertValueToInt32(KEY.Retry_Increment, DEFAULT.RetryIncrement);
+            _retryMinBackoff = ConvertValueToInt32(KEY.Retry_Min_Backoff, DEFAULT.RetryMinBackoff);
+            _retryMaxBackoff = ConvertValueToInt32(KEY.Retry_Max_Backoff, DEFAULT.RetryMaxBackoff);
+            _retryDeltaBackoff = ConvertValueToInt32(KEY.Retry_Delta_Backoff, DEFAULT.RetryDeltaBackoff);
+            _retryFastFirst = ConvertValueToBoolean(KEY.Retry_Fast_First, DEFAULT.RetryFastFirst);
+            _retryLogFilePath = ConvertValueToString(KEY.Retry_Log_File_Path, DEFAULT.RetryLogFilePath);
+            _retriableErrors = ConvertValueToString(KEY.Retriable_Errors, DEFAULT.RetriableErrors);
 
             _applicationIntent = ConvertValueToApplicationIntent();
             _applicationName = ConvertValueToString(KEY.Application_Name, DEFAULT.Application_Name);
@@ -410,6 +466,52 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.InvalidConnectRetryIntervalValue();
             }
 
+            // Retry Logic
+            if ((_retryStrategy != "None") && (_retryStrategy != "FixedInterval") && (_retryStrategy != "Incremental") && (_retryStrategy != "ExponentialBackoff"))
+            {
+                throw ADP.InvalidRetryStrategy();
+            }
+
+            if ((_retryCount < 0) || (_retryCount > 60))
+            {
+                throw ADP.InvalidRetryCount();
+            }
+
+            if ((_RetryInterval < 0) || (_RetryInterval > 120))
+            {
+                throw ADP.InvalidRetryInterval();
+            }
+
+            if ((_retryIncrement < 0) || (_retryIncrement > 120))
+            {
+                throw ADP.InvalidRetryIncrement();
+            }
+
+            if ((_retryMinBackoff < 0) || (_retryMinBackoff > 120))
+            {
+                throw ADP.InvalidRetryMinBackoff();
+            }
+
+            if ((_retryMaxBackoff < 0) || (_retryMaxBackoff > 120))
+            {
+                throw ADP.InvalidRetryMaxBackoff();
+            }
+
+            if ((_retryDeltaBackoff < 0) || (_retryDeltaBackoff > 120))
+            {
+                throw ADP.InvalidRetryDeltaBackoff();
+            }
+
+            if (_retryLogFilePath.Length > 255)
+            {
+                throw ADP.InvalidRetryLogFilePath();
+            }
+
+            if (_retriableErrors != "" && !Regex.IsMatch(_retriableErrors, "^([0-9+-]+(\\-[0-9+-]+)*,*)+$", RegexOptions.None))
+            {
+                throw ADP.InvalidRetriableErrors();
+            }
+
             if (Authentication != SqlAuthenticationMethod.NotSpecified && _integratedSecurity == true)
             {
                 throw SQL.AuthenticationAndIntegratedSecurity();
@@ -476,6 +578,19 @@ namespace Microsoft.Data.SqlClient
             _applicationIntent = connectionOptions._applicationIntent;
             _connectRetryCount = connectionOptions._connectRetryCount;
             _connectRetryInterval = connectionOptions._connectRetryInterval;
+
+            // Retry Logic
+            _retryStrategy = connectionOptions._retryStrategy;
+            _retryCount = connectionOptions._retryCount;
+            _RetryInterval = connectionOptions._RetryInterval;
+            _retryIncrement = connectionOptions._retryIncrement;
+            _retryMinBackoff = connectionOptions._retryMinBackoff;
+            _retryMaxBackoff = connectionOptions._retryMaxBackoff;
+            _retryDeltaBackoff = connectionOptions._retryDeltaBackoff;
+            _retryFastFirst = connectionOptions._retryFastFirst;
+            _retryLogFilePath = connectionOptions._retryLogFilePath;
+            _retriableErrors = connectionOptions._retriableErrors;
+
             _authType = connectionOptions._authType;
             _columnEncryptionSetting = connectionOptions._columnEncryptionSetting;
             _enclaveAttestationUrl = connectionOptions._enclaveAttestationUrl;
@@ -513,6 +628,17 @@ namespace Microsoft.Data.SqlClient
         internal int PacketSize { get { return _packetSize; } }
         internal int ConnectRetryCount { get { return _connectRetryCount; } }
         internal int ConnectRetryInterval { get { return _connectRetryInterval; } }
+        // Retry Logic
+        internal string RetryStrategy { get { return _retryStrategy; } }
+        internal int RetryCount { get { return _retryCount; } }
+        internal int RetryInterval { get { return _RetryInterval; } }
+        internal int RetryIncrement { get { return _retryIncrement; } }
+        internal int RetryMinBackoff { get { return _retryMinBackoff; } }
+        internal int RetryMaxBackoff { get { return _retryMaxBackoff; } }
+        internal int RetryDeltaBackoff { get { return _retryDeltaBackoff; } }
+        internal bool RetryFastFirst { get { return _retryFastFirst; } }
+        internal string RetryLogFilePath { get { return _retryLogFilePath; } }
+        internal string RetriableErrors { get { return _retriableErrors; } }
 
         internal ApplicationIntent ApplicationIntent { get { return _applicationIntent; } }
         internal string ApplicationName { get { return _applicationName; } }
@@ -580,6 +706,19 @@ namespace Microsoft.Data.SqlClient
                     { KEY.Workstation_Id, KEY.Workstation_Id },
                     { KEY.Connect_Retry_Count, KEY.Connect_Retry_Count },
                     { KEY.Connect_Retry_Interval, KEY.Connect_Retry_Interval },
+
+                    // Retry Logic
+                    { KEY.Retry_Strategy, KEY.Retry_Strategy },
+                    { KEY.Retry_Count, KEY.Retry_Count },
+                    { KEY.Retry_Initial_Interval, KEY.Retry_Initial_Interval },
+                    { KEY.Retry_Increment, KEY.Retry_Increment },
+                    { KEY.Retry_Min_Backoff, KEY.Retry_Min_Backoff },
+                    { KEY.Retry_Max_Backoff, KEY.Retry_Max_Backoff },
+                    { KEY.Retry_Delta_Backoff, KEY.Retry_Delta_Backoff },
+                    { KEY.Retry_Fast_First, KEY.Retry_Fast_First },
+                    { KEY.Retry_Log_File_Path, KEY.Retry_Log_File_Path },
+                    { KEY.Retriable_Errors, KEY.Retriable_Errors },
+
                     { KEY.Authentication, KEY.Authentication },
 
                     { SYNONYM.APP, KEY.Application_Name },
