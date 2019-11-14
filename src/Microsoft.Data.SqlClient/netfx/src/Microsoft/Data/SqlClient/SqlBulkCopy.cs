@@ -2916,7 +2916,7 @@ namespace Microsoft.Data.SqlClient
 
                     if (_stateObj != null)
                     {
-                        CleanUpStateObject(isCancelRequested: true);
+                        CleanUpStateObject();
                     }
 #if DEBUG
                 }
@@ -2947,7 +2947,7 @@ namespace Microsoft.Data.SqlClient
 
         //Cleans the stateobj. Used in a number of places, specially in  exceptions
         //
-        private void CleanUpStateObject(bool isCancelRequested)
+        private void CleanUpStateObject(bool isCancelRequested = true)
         {
             if (_stateObj != null)
             {
@@ -3019,7 +3019,7 @@ namespace Microsoft.Data.SqlClient
                             _localColumnMappings = null;
                             try
                             {
-                                CleanUpStateObject(isCancelRequested: true);
+                                CleanUpStateObject();
                             }
                             finally
                             {
@@ -3080,11 +3080,11 @@ namespace Microsoft.Data.SqlClient
 
                 try
                 {
-                    CleanUpStateObject(isCancelRequested: true);
+                    CleanUpStateObject();
                 }
                 catch (Exception cleanupEx)
                 {
-                    Debug.Fail($"Unexpected exception during {nameof(CleanUpstateObject)} (ignored)", cleanupEx.ToString());
+                    Debug.Fail($"Unexpected exception during {nameof(CleanUpStateObject)} (ignored)", cleanupEx.ToString());
                 }
 
                 if (source != null)
