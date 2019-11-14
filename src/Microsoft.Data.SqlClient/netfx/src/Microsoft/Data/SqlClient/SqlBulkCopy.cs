@@ -3084,7 +3084,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 catch (Exception cleanupEx)
                 {
-                    Debug.Fail("Unexpected exception during CleanUpstateObject (ignored)", cleanupEx.ToString());
+                    Debug.Fail($"Unexpected exception during {nameof(CleanUpstateObject)} (ignored)", cleanupEx.ToString());
                 }
 
                 if (source != null)
