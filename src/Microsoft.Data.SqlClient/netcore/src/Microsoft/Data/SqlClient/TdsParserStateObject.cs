@@ -2514,23 +2514,36 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     uint error;
-                    SniContext = SniContext.Snix_Connect;
 
-                    error = CheckConnection();
-                    if ((error != TdsEnums.SNI_SUCCESS) && (error != TdsEnums.SNI_WAIT_TIMEOUT))
+                    // Read an empty packet from the network so that we can tell if the network has been interupted
+                    PacketHandle readPacket = EmptyReadPacket;
+                    try
                     {
-                        // Connection is dead
-                        isAlive = false;
-                        if (throwOnException)
+                        SniContext = SniContext.Snix_Connect;
+
+                        error = CheckConnection();
+                        if ((error != TdsEnums.SNI_SUCCESS) && (error != TdsEnums.SNI_WAIT_TIMEOUT))
                         {
-                            // Get the error from SNI so that we can throw the correct exception
-                            AddError(_parser.ProcessSNIError(this));
-                            ThrowExceptionAndWarning();
+                            // Connection is dead
+                            isAlive = false;
+                            if (throwOnException)
+                            {
+                                // Get the error from SNI so that we can throw the correct exception
+                                AddError(_parser.ProcessSNIError(this));
+                                ThrowExceptionAndWarning();
+                            }
+                        }
+                        else
+                        {
+                            _lastSuccessfulIOTimer._value = DateTime.UtcNow.Ticks;
                         }
                     }
-                    else
+                    finally
                     {
-                        _lastSuccessfulIOTimer._value = DateTime.UtcNow.Ticks;
+                        if (!IsPacketEmpty(readPacket))
+                        {
+                            ReleasePacket(readPacket);
+                        }
                     }
                 }
             }
