@@ -174,9 +174,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     yield return new object[] { connStrAE, 1 /*ExecuteNonQuery*/, 5000 /*CancelAfterMilliseconds*/ };
                     yield return new object[] { connStrAE, 2 /*ExecuteScalar*/, 5000 /*CancelAfterMilliseconds*/ };
                 }
-               
-               
-               
             }
         }
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
