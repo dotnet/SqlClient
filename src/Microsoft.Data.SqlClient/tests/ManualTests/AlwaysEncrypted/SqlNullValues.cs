@@ -75,11 +75,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             using (SqlConnection sqlConn = new SqlConnection(connString))
             {
                 sqlConn.Open();
+                object value1;
+                object value2;
+                SqlParameter param;
 
                 // Create a command similarly
                 using (SqlCommand cmd = new SqlCommand(String.Format("SELECT c1 FROM [{0}] ORDER BY c2 ASC", tableName),
-                    sqlConn, null, commandSetting))
-                using (SqlCommand cmd2 = new SqlCommand((ReturnValueSetting.Null == nullReturnValue) ? UdfName : UdfNameNotNull,
                     sqlConn, null, commandSetting))
                 {
                     using (SqlDataReader reader = cmd.ExecuteReader())
@@ -87,68 +88,69 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         Assert.True(reader.Read(), "No rows fetched first time");
 
                         // Depending on the various flags verify the results
-                        object value1 = reader.GetProviderSpecificValue(0);
+                        value1 = reader.GetProviderSpecificValue(0);
 
                         // Read next row
                         Assert.True(reader.Read(), "No rows fetched second time");
-                        object value2 = reader.GetProviderSpecificValue(0);
+                        value2 = reader.GetProviderSpecificValue(0);
 
-                        // Dispose off the reader and the command and test the SQL Return values now (using UDF)!
-                        reader.Dispose();
-                        cmd.Dispose();
-
-                        cmd2.CommandType = CommandType.StoredProcedure;
-                        SqlParameter param = cmd2.Parameters.Add("@foo", SqlDbType.Int);
-                        param.Direction = ParameterDirection.ReturnValue;
-                        param.Value = new System.Data.SqlTypes.SqlInt32(1);
-                        cmd2.ExecuteNonQuery();
-
-                        switch (commandSetting)
-                        {
-                            case SqlCommandColumnEncryptionSetting.Disabled:
-                                // everything should be varbinary
-                                Assert.True(value1 is System.Data.SqlTypes.SqlBinary, "Unexpected type");
-                                Assert.True(value2 is System.Data.SqlTypes.SqlBinary, "Unexpected type");
-                                Assert.True(param.Value is System.Data.SqlTypes.SqlBinary, "Unexpected Return value");
-                                break;
-                            case SqlCommandColumnEncryptionSetting.Enabled:
-                            // Everything should be int
-                            // intentional fall through
-                            case SqlCommandColumnEncryptionSetting.ResultSetOnly:
-                                // Again expect int
-                                Assert.True(value1 is System.Data.SqlTypes.SqlInt32, "Unexpected type");
-                                Assert.True(value2 is System.Data.SqlTypes.SqlInt32, "Unexpected type");
-                                Assert.True(10 == ((System.Data.SqlTypes.SqlInt32)value2).Value, "Unexpected Value");
-                                if (SqlCommandColumnEncryptionSetting.ResultSetOnly == commandSetting)
-                                {
-                                    // For ResultSetOnly we don't expect to see plaintext for return values
-                                    Assert.True(param.Value is System.Data.SqlTypes.SqlBinary, "Unexpected Return value");
-                                }
-                                else
-                                {
-                                    Assert.True(param.Value is System.Data.SqlTypes.SqlInt32, "Unexpected Return value");
-                                }
-                                break;
-                            case SqlCommandColumnEncryptionSetting.UseConnectionSetting:
-                                // Examine the connection string setting to figure out what to expect
-                                if (ConnStringColumnEncryptionSetting.Enabled == connStringSetting)
-                                {
-                                    // Expect int
-                                    Assert.True(value1 is System.Data.SqlTypes.SqlInt32, "Unexpected type");
-                                    Assert.True(value2 is System.Data.SqlTypes.SqlInt32, "Unexpected type");
-                                    Assert.True(10 == ((System.Data.SqlTypes.SqlInt32)value2).Value, "Unexpected Value");
-                                    Assert.True(param.Value is System.Data.SqlTypes.SqlInt32, "Unexpected Return value");
-                                }
-                                else
-                                {
-                                    // Expect varbinary
-                                    Assert.True(value1 is System.Data.SqlTypes.SqlBinary, "Unexpected type");
-                                    Assert.True(value2 is System.Data.SqlTypes.SqlBinary, "Unexpected type");
-                                    Assert.True(param.Value is System.Data.SqlTypes.SqlBinary, "Unexpected Return value");
-                                }
-                                break;
-                        }
                     }
+                }
+
+                using (SqlCommand cmd2 = new SqlCommand((ReturnValueSetting.Null == nullReturnValue) ? UdfName : UdfNameNotNull,
+                    sqlConn, null, commandSetting))
+                {
+                    cmd2.CommandType = CommandType.StoredProcedure;
+                    param = cmd2.Parameters.Add("@foo", SqlDbType.Int);
+                    param.Direction = ParameterDirection.ReturnValue;
+                    param.Value = new System.Data.SqlTypes.SqlInt32(1);
+                    cmd2.ExecuteNonQuery();
+                }
+
+                switch (commandSetting)
+                {
+                    case SqlCommandColumnEncryptionSetting.Disabled:
+                        // everything should be varbinary
+                        Assert.True(value1 is System.Data.SqlTypes.SqlBinary, "Unexpected type");
+                        Assert.True(value2 is System.Data.SqlTypes.SqlBinary, "Unexpected type");
+                        Assert.True(param.Value is System.Data.SqlTypes.SqlBinary, "Unexpected Return value");
+                        break;
+                    case SqlCommandColumnEncryptionSetting.Enabled:
+                    // Everything should be int
+                    // intentional fall through
+                    case SqlCommandColumnEncryptionSetting.ResultSetOnly:
+                        // Again expect int
+                        Assert.True(value1 is System.Data.SqlTypes.SqlInt32, "Unexpected type");
+                        Assert.True(value2 is System.Data.SqlTypes.SqlInt32, "Unexpected type");
+                        Assert.True(10 == ((System.Data.SqlTypes.SqlInt32)value2).Value, "Unexpected Value");
+                        if (SqlCommandColumnEncryptionSetting.ResultSetOnly == commandSetting)
+                        {
+                            // For ResultSetOnly we don't expect to see plaintext for return values
+                            Assert.True(param.Value is System.Data.SqlTypes.SqlBinary, "Unexpected Return value");
+                        }
+                        else
+                        {
+                            Assert.True(param.Value is System.Data.SqlTypes.SqlInt32, "Unexpected Return value");
+                        }
+                        break;
+                    case SqlCommandColumnEncryptionSetting.UseConnectionSetting:
+                        // Examine the connection string setting to figure out what to expect
+                        if (ConnStringColumnEncryptionSetting.Enabled == connStringSetting)
+                        {
+                            // Expect int
+                            Assert.True(value1 is System.Data.SqlTypes.SqlInt32, "Unexpected type");
+                            Assert.True(value2 is System.Data.SqlTypes.SqlInt32, "Unexpected type");
+                            Assert.True(10 == ((System.Data.SqlTypes.SqlInt32)value2).Value, "Unexpected Value");
+                            Assert.True(param.Value is System.Data.SqlTypes.SqlInt32, "Unexpected Return value");
+                        }
+                        else
+                        {
+                            // Expect varbinary
+                            Assert.True(value1 is System.Data.SqlTypes.SqlBinary, "Unexpected type");
+                            Assert.True(value2 is System.Data.SqlTypes.SqlBinary, "Unexpected type");
+                            Assert.True(param.Value is System.Data.SqlTypes.SqlBinary, "Unexpected Return value");
+                        }
+                        break;
                 }
             }
         }
