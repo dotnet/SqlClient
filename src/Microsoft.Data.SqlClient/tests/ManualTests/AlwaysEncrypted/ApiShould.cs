@@ -1902,7 +1902,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     transaction: null,
                     columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
                 {
-                    sqlCommand.CommandTimeout = 0;
                     sqlCommand.Parameters.AddWithValue(@"CustomerId", values[0]);
                     sqlCommand.Parameters.AddWithValue(@"FirstName", values[1]);
 
@@ -1940,7 +1939,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     rowsAffected = 0;
 
                     // See that we can still use the command object for running queries.
-                    IAsyncResult asyncResult = sqlCommand.BeginExecuteReader(CommandBehavior.Default);
+                    IAsyncResult asyncResult = sqlCommand.BeginExecuteReader();
                     using (SqlDataReader sqlDataReader = sqlCommand.EndExecuteReader(asyncResult))
                     {
                         while (sqlDataReader.Read())
@@ -1987,8 +1986,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     rowsAffected = 0;
 
                     // See that we can still use the command object for running queries.
-                    asyncResult = sqlCommand.BeginExecuteReader(CommandBehavior.Default);
-                    using (SqlDataReader sqlDataReader = sqlCommand.EndExecuteReader(asyncResult))
+                    IAsyncResult asyncResult1 = sqlCommand.BeginExecuteReader(CommandBehavior.Default);
+                    using (SqlDataReader sqlDataReader = sqlCommand.EndExecuteReader(asyncResult1))
                     {
                         while (sqlDataReader.Read())
                         {
@@ -2627,8 +2626,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.True(sqlCommand != null, "sqlCommand should not be null.");
 
             string.Format(@"SELECT * FROM {0} WHERE FirstName = @FirstName AND CustomerId = @CustomerId", ((TestCommandCancelParams)cancelCommandTestParamsObject).TableName);
-
-            Assert.Throws<InvalidOperationException>(() => sqlCommand.ExecuteReader());
+            using (SqlDataReader reader = sqlCommand.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    Assert.Throws<InvalidOperationException>(() => sqlCommand.ExecuteReader());
+                }
+            }
         }
 
         private void Thread_ExecuteNonQuery(object cancelCommandTestParamsObject)
