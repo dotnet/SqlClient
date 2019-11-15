@@ -79,7 +79,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 // Create a command similarly
                 using (SqlCommand cmd = new SqlCommand(String.Format("SELECT c1 FROM [{0}] ORDER BY c2 ASC", tableName),
                     sqlConn, null, commandSetting))
-                using (SqlCommand cmd2 = new SqlCommand((ReturnValueSetting.Null == nullReturnValue) ? UdfName : UdfNameNotNull, 
+                using (SqlCommand cmd2 = new SqlCommand((ReturnValueSetting.Null == nullReturnValue) ? UdfName : UdfNameNotNull,
                     sqlConn, null, commandSetting))
                 {
                     using (SqlDataReader reader = cmd.ExecuteReader())
