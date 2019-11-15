@@ -119,6 +119,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     AEConnStrings.Add(TCPConnectionStringAASSGX);
                     AEConnStringsSetup.Add(TCPConnectionStringAASSGX);
                 }
+
+                System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12;
             }
             else
             {
