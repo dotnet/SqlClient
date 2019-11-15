@@ -1795,6 +1795,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestExecuteXmlReader(string connection)
         {
+            CleanUpTable(connection, tableName);
+
             IList<object> values = GetValues(dataHint: 60);
             int numberOfRows = 10;
 
@@ -1825,7 +1827,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     //string xmlResult;
                     IAsyncResult asyncResult = sqlCommand.BeginExecuteXmlReader();
 
+#if netcoreapp
+                    Assert.Throws<InvalidOperationException>(() => sqlCommand.EndExecuteXmlReader(asyncResult));
+#elif net46
                     Assert.Throws<SqlException>(() => sqlCommand.EndExecuteXmlReader(asyncResult));
+
+#endif
                 }
             }
         }
@@ -1834,6 +1841,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProviderWithCommandBehaviorSet1))]
         public void TestBeginAndEndExecuteReaderWithAsyncCallback(string connection, CommandBehavior commandbehavior)
         {
+            CleanUpTable(connection, tableName);
+
             var test = commandbehavior;
             IList<object> values = GetValues(dataHint: 51);
             Assert.True(values != null && values.Count >= 3, @"values should not be null and count should be >= 3.");
@@ -1869,6 +1878,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProviderWithExecutionMethod))]
         public void TestSqlCommandCancel(string connection, string value, int number)
         {
+            CleanUpTable(connection, tableName);
+
             string executeMethod = value;
             Assert.True(!string.IsNullOrWhiteSpace(executeMethod), @"executeMethod should not be null or empty");
 
@@ -2044,6 +2055,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProviderWithCancellationTime))]
         public void TestSqlCommandCancellationToken(string connection, int initalValue, int cancellationTime)
         {
+            CleanUpTable(connection, tableName);
+
             IList<object> values = GetValues(dataHint: 59);
             int numberOfRows = 10;
 
@@ -2451,7 +2464,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         Assert.True(sqlDataReader.GetInt32(0) == (int)testAsyncCallBackStateObject.Values[0], "CustomerId value read from the table was incorrect.");
                         Assert.True(sqlDataReader.GetString(1) == (string)testAsyncCallBackStateObject.Values[1], "FirstName value read from the table was incorrect.");
                         Assert.True(sqlDataReader.GetString(2) == (string)testAsyncCallBackStateObject.Values[2], "LastName value read from the table was incorrect.");
-                        //					CError.Compare(sqlDataReader.GetString(4) == (string)testAsyncCallBackStateObject.Values[4], "NvarcharMaxColumn value read from the table was incorrect.");
                     }
 
                     Assert.True(3 == sqlDataReader.VisibleFieldCount, "value returned by sqlDataReader.VisibleFieldCount is unexpected.");
@@ -2499,6 +2511,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             catch (Exception e)
             {
                 testAsyncCallBackStateObject.Completion.SetException(e);
+                Assert.True(false, $"{e.Message}");
             }
         }
 
@@ -2615,13 +2628,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             string.Format(@"SELECT * FROM {0} WHERE FirstName = @FirstName AND CustomerId = @CustomerId", ((TestCommandCancelParams)cancelCommandTestParamsObject).TableName);
 
-            using (SqlDataReader reader = sqlCommand.ExecuteReader())
-            {
-                while (reader.Read())
-                {
-                    Assert.Equal(@"Operation cancelled by user.", Assert.Throws<InvalidOperationException>(() => reader).Message);
-                }
-            }
+            Assert.Throws<InvalidOperationException>(() => sqlCommand.ExecuteReader());
         }
 
         private void Thread_ExecuteNonQuery(object cancelCommandTestParamsObject)
