@@ -1790,6 +1790,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
 
         }
+
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestExecuteXmlReader(string connection)
@@ -1819,7 +1820,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     rowsAffected = 0;
 
                     var ex = Assert.Throws<SqlException>(() => sqlCommand.ExecuteXmlReader());
-                    Assert.Equal("'FOR XML' clause is unsupported for encrypted columns.\r\nStatement(s) could not be prepared.", ex.Message);
+                    Assert.Equal($"'FOR XML' clause is unsupported for encrypted columns.{Environment.NewLine}Statement(s) could not be prepared.", ex.Message);
 
                     //string xmlResult;
                     IAsyncResult asyncResult = sqlCommand.BeginExecuteXmlReader();
@@ -1871,8 +1872,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             string executeMethod = value;
             Assert.True(!string.IsNullOrWhiteSpace(executeMethod), @"executeMethod should not be null or empty");
 
-            int numberofCancelCalls = number;
-            Assert.True(numberofCancelCalls >= 0, "numberofCancelCalls should be >=0.");
+            int numberOfCancelCalls = number;
+            Assert.True(numberOfCancelCalls >= 0, "numberofCancelCalls should be >=0.");
 
             IList<object> values = GetValues(dataHint: 58);
             Assert.True(values != null && values.Count >= 3, @"values should not be null and count should be >= 3.");
@@ -1911,10 +1912,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     threads[1] = new Thread(new ParameterizedThreadStart(Thread_Cancel));
 
                     // Start the execute thread.
-                    threads[0].Start(new TestCommandCancelParams(sqlCommand, tableName, numberofCancelCalls));
+                    threads[0].Start(new TestCommandCancelParams(sqlCommand, tableName, numberOfCancelCalls));
 
                     // Start the thread which cancels the above command started by the execute thread.
-                    threads[1].Start(new TestCommandCancelParams(sqlCommand, tableName, numberofCancelCalls));
+                    threads[1].Start(new TestCommandCancelParams(sqlCommand, tableName, numberOfCancelCalls));
 
                     // Wait for the threads to finish.
                     threads[0].Join();
@@ -1958,10 +1959,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     threads[1] = new Thread(new ParameterizedThreadStart(Thread_Cancel));
 
                     // Start the execute thread.
-                    threads[0].Start(new TestCommandCancelParams(sqlCommand, tableName, numberofCancelCalls));
+                    threads[0].Start(new TestCommandCancelParams(sqlCommand, tableName, numberOfCancelCalls));
 
                     // Start the thread which cancels the above command started by the execute thread.
-                    threads[1].Start(new TestCommandCancelParams(sqlCommand, tableName, numberofCancelCalls));
+                    threads[1].Start(new TestCommandCancelParams(sqlCommand, tableName, numberOfCancelCalls));
 
                     // Wait for the threads to finish.
                     threads[0].Join();
@@ -2004,10 +2005,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     threads[1] = new Thread(new ParameterizedThreadStart(Thread_Cancel));
 
                     // Start the execute thread.
-                    threads[0].Start(new TestCommandCancelParams(sqlCommand, tableName, numberofCancelCalls));
+                    threads[0].Start(new TestCommandCancelParams(sqlCommand, tableName, numberOfCancelCalls));
 
                     // Start the thread which cancels the above command started by the execute thread.
-                    threads[1].Start(new TestCommandCancelParams(sqlCommand, tableName, numberofCancelCalls));
+                    threads[1].Start(new TestCommandCancelParams(sqlCommand, tableName, numberOfCancelCalls));
 
                     // Wait for the threads to finish.
                     threads[0].Join();
