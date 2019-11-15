@@ -31,6 +31,4 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
             }
         }
     }
-
-
 }
