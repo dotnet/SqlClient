@@ -17,8 +17,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     {
         private SQLSetupStrategyCertStoreProvider fixture;
         private readonly string tableName;
-        private string UdfName = "SqlNullValuesRetVal";
-        private string UdfNameNotNull = "SqlNullValuesRetValNotNull";
+        private string UdfName = DatabaseHelper.GenerateUniqueName("SqlNullValuesRetVal");
+        private string UdfNameNotNull = DatabaseHelper.GenerateUniqueName("SqlNullValuesRetValNotNull");
 
         public SqlNullValuesTests(SQLSetupStrategyCertStoreProvider fixture)
         {
