@@ -10,7 +10,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public class ConnectionExceptionTest
     {
         // test connection string
-        private string connectionString = "server=tcp:server,1432;database=test;uid=admin;pwd=SQLDB;connect timeout=60;";
+        private string connectionString = "server=tcp:server,1432;database=test;connect timeout=60;";
 
         // data value and server consts
         private const string badServer = "NotAServer";
