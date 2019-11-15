@@ -205,7 +205,18 @@ namespace Microsoft.Data.ProviderBase
 
                 if (null == userConnectionOptions)
                 { // we only allow one expansion on the connection string
+
                     userConnectionOptions = connectionOptions;
+                    string expandedConnectionString = connectionOptions.Expand();
+
+                    // if the expanded string is same instance (default implementation), then use the already created options
+                    if ((object)expandedConnectionString != (object)key.ConnectionString)
+                    {
+                        // CONSIDER: caching the original string to reduce future parsing
+                        DbConnectionPoolKey newKey = (DbConnectionPoolKey)((ICloneable)key).Clone();
+                        newKey.ConnectionString = expandedConnectionString;
+                        return GetConnectionPoolGroup(newKey, null, ref userConnectionOptions);
+                    }
                 }
 
                 // We don't support connection pooling on Win9x
