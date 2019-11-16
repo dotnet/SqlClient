@@ -1792,6 +1792,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         }
 
+        [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp)]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestExecuteXmlReader(string connection)
@@ -1828,11 +1829,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     //string xmlResult;
                     IAsyncResult asyncResult = sqlCommand.BeginExecuteXmlReader();
 
-#if netcoreapp
-                    Assert.Throws<InvalidOperationException>(() => sqlCommand.EndExecuteXmlReader(asyncResult));
-#elif net46
                     Assert.Throws<SqlException>(() => sqlCommand.EndExecuteXmlReader(asyncResult));
-#endif
                 }
             }
         }
