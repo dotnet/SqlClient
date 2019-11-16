@@ -1832,7 +1832,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     Assert.Throws<InvalidOperationException>(() => sqlCommand.EndExecuteXmlReader(asyncResult));
 #elif net46
                     Assert.Throws<SqlException>(() => sqlCommand.EndExecuteXmlReader(asyncResult));
-
 #endif
                 }
             }
@@ -1874,7 +1873,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 }
             }
         }
-
+        [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp)]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProviderWithExecutionMethod))]
         public void TestSqlCommandCancel(string connection, string value, int number)
@@ -1907,7 +1906,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     sqlCommand.Parameters.AddWithValue(@"FirstName", values[1]);
 
                     CommandHelper.s_sleepDuringTryFetchInputParameterEncryptionInfo?.SetValue(null, true);
-#if net46
+
                     Thread[] threads = new Thread[2];
 
                     // Invoke ExecuteReader or ExecuteNonQuery in another thread.
@@ -2047,7 +2046,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                     // Verify the state of the sql command object.
                     VerifySqlCommandStateAfterCompletionOrCancel(sqlCommand);
-#endif
                 };
             }
         }
