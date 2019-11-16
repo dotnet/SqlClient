@@ -20,6 +20,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public Table SqlParameterPropertiesTable { get; private set; }
         public Table End2EndSmokeTable { get; private set; }
         public Table TrustedMasterKeyPathsTestTable { get; private set; }
+        public Table SqlNullValuesTable { get; private set; }
         protected List<DbObject> databaseObjects = new List<DbObject>();
 
         public SQLSetupStrategy()
@@ -37,6 +38,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 {
                     sqlConnection.Open();
                     databaseObjects.ForEach(o => o.Create(sqlConnection));
+
+                    // Enable rich computation when Enclave is enabled
+                    if (DataTestUtility.EnclaveEnabled)
+                    {
+                        using(SqlCommand command = new SqlCommand(@"DBCC traceon(127,-1);", sqlConnection))
+                        {
+                            command.ExecuteNonQuery();
+                        }
+                    }
                 }
 
                 // Insert data for TrustedMasterKeyPaths tests.
@@ -82,6 +92,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             TrustedMasterKeyPathsTestTable = new ApiTestTable(GenerateUniqueName("TrustedMasterKeyPathsTestTable"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
             tables.Add(TrustedMasterKeyPathsTestTable);
+
+            SqlNullValuesTable = new SqlNullValuesTable(GenerateUniqueName("SqlNullValuesTable"), columnEncryptionKeys[0]);
+            tables.Add(SqlNullValuesTable);
 
             return tables;
         }
