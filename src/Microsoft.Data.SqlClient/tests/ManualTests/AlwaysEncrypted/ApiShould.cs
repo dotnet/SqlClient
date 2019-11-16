@@ -418,6 +418,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     cmdText: $"select * from [{tableName}] where FirstName != {DummyParamName} and CustomerId = @CustomerId",
                     connection: sqlConnection))
                 {
+                    cmd.CommandTimeout = 90;
                     SqlParameter dummyParam = new SqlParameter(DummyParamName, SqlDbType.NVarChar, 150)
                     {
                         Value = "a"
@@ -1906,7 +1907,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     sqlCommand.Parameters.AddWithValue(@"FirstName", values[1]);
 
                     CommandHelper.s_sleepDuringTryFetchInputParameterEncryptionInfo?.SetValue(null, true);
-
+#if net46
                     Thread[] threads = new Thread[2];
 
                     // Invoke ExecuteReader or ExecuteNonQuery in another thread.
@@ -2046,6 +2047,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                     // Verify the state of the sql command object.
                     VerifySqlCommandStateAfterCompletionOrCancel(sqlCommand);
+#endif
                 };
             }
         }
