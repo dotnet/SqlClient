@@ -24,14 +24,14 @@ namespace Microsoft.Data.SqlClient
         static SqlAuthenticationProviderManager()
         {
             var activeDirectoryAuthNativeProvider = new ActiveDirectoryNativeAuthenticationProvider();
-            SqlAuthenticationProviderConfigurationSection configurationSection;
+            SqlAuthenticationProviderConfigurationSection configurationSection = null;
             try
             {
                 configurationSection = (SqlAuthenticationProviderConfigurationSection)ConfigurationManager.GetSection(SqlAuthenticationProviderConfigurationSection.Name);
             }
-            catch (ConfigurationErrorsException e)
+            catch (ConfigurationErrorsException)
             {
-                throw SQL.CannotGetAuthProviderConfig(e);
+                // Don't throw an error for invalid config files
             }
             Instance = new SqlAuthenticationProviderManager(configurationSection);
             Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryIntegrated, activeDirectoryAuthNativeProvider);
