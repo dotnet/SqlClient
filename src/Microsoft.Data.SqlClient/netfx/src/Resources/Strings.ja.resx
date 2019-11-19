@@ -1948,7 +1948,7 @@
     <value>このコマンドに関連付けられている SqlResultSet が既に開かれています。これを先に閉じる必要があります。</value>
   </data>
   <data name="ADP_OpenReaderExists" xml:space="preserve">
-    <value>この Command に関連付けられている DataReader が既に開かれています。このコマンドを最初に閉じる必要があります。</value>
+    <value>この {0} に関連付けられている DataReader が既に開かれています。これを最初に閉じる必要があります。</value>
   </data>
   <data name="ADP_DeriveParametersNotSupported" xml:space="preserve">
     <value>{0} DeriveParameters は、CommandType.{1} ではなく、 CommandType.StoredProcedure のみサポートします。</value>
@@ -2818,7 +2818,7 @@
     <value>指定された ColumnName '{0}' はデータ ソースのいずれの列とも一致しません。</value>
   </data>
   <data name="SQL_BulkLoadStringTooLong" xml:space="preserve">
-    <value>String または binary データは切り詰められました。</value>
+    <value>文字列またはバイナリ データがテーブル '{0}'、列 '{1}' で切り捨てられます。切り捨てられた値: '{2}'。</value>
   </data>
   <data name="SQL_BulkLoadInvalidTimeout" xml:space="preserve">
     <value>Timeout 値 '{0}' が 0 未満です。</value>
@@ -4321,7 +4321,7 @@
     <value>クエリを実行するためにエンクレーブ計算が必要ですが、アプリケーション構成にエンクレーブ プロバイダー セクションがありません。</value>
   </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
-    <value>エンクレーブ型 '{0}' のエンクレーブ プロバイダーが見つかりません。アプリケーション構成でプロバイダーを指定してください。 </value>
+    <value>エンクレーブの種類 '{0}' および構成証明プロトコル '{1}' に対して、エンクレーブ プロバイダーが見つかりませんでした。接続文字列に正しい構成証明プロトコルを指定してください。</value>
   </data>
   <data name="TCE_NullEnclaveSessionReturnedFromProvider" xml:space="preserve">
     <value>エンクレーブと通信できません。エンクレーブ プロバイダーから受信したエンクレーブ セッション情報が null です。エンクレーブ型は '{0}' で、エンクレーブ構成証明 URL は '{1}' です。</value>
@@ -4442,5 +4442,80 @@
   </data>
   <data name="SQL_Timeout_Execution" xml:space="preserve">
     <value>実行タイムアウトの期限が切れました。操作完了前にタイムアウト期間が過ぎたか、サーバーが応答していません。</value>
+  </data>
+  <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
+    <value>構成証明トークンの検証に失敗しました。トークンの署名が、'{0}' の構成証明の公開キー エンドポイントから取得した公開キーを使用して計算された署名と一致しません。エンドポイントの DNS マッピングをご確認ください。適切である場合、カスタマー サポート サービスにお問い合わせください。</value>
+  </data>
+  <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
+    <value>最初の要求が失敗した後に、HGS ルート証明書のダウンロードを再試行しているときに内部エラーが発生しました。カスタマー サポート サービスにお問い合わせください。</value>
+  </data>
+  <data name="EnclaveSessionInvalidationFailed" xml:space="preserve">
+    <value>内部エラーが発生しました。要求されたエンクレーブ セッションを無効にできません。キャッシュに存在しません。カスタマー サポート サービスにお問い合わせください。</value>
+  </data>
+  <data name="ExpiredAttestationToken" xml:space="preserve">
+    <value>構成証明トークンの検証に失敗しました。SQL Server から受信したトークンの有効期限が切れています。カスタマー サポート サービスにお問い合わせください。</value>
+  </data>
+  <data name="FailToCreateEnclaveSession" xml:space="preserve">
+    <value>構成証明サーバーがビジー状態のため、エンクレーブ セッションを作成できませんでした。</value>
+  </data>
+  <data name="FailToParseAttestationInfo" xml:space="preserve">
+    <value>構成証明情報の検証に失敗しました。構成証明情報の形式が無効です。カスタマー サポート サービスにお問い合わせください。エラーの詳細: '{0}'。</value>
+  </data>
+  <data name="FailToParseAttestationToken" xml:space="preserve">
+    <value>構成証明トークンの検証に失敗しました。トークンの形式が無効です。カスタマー サポート サービスにお問い合わせください。エラーの詳細: '{0}'。</value>
+  </data>
+  <data name="GetAttestationSigningCertificateFailedInvalidCertificate" xml:space="preserve">
+    <value>構成証明サービスにより、構成証明 URL '{0}' の期限切れの HGS ルート証明書が返されました。HGS インスタンス用に構成されている HGS ルート証明書をご確認ください。</value>
+  </data>
+  <data name="GetAttestationSigningCertificateRequestFailedFormat" xml:space="preserve">
+    <value>構成証明 URL '{0}' に関する、取得された HGS ルート証明書の形式が無効です。構成証明 URL が正しいこと、および HGS サーバーがオンラインであり完全に初期化されていることをご確認ください。詳細については、カスタマー サポート サービスにお問い合わせください。エラーの詳細: '{1}'。</value>
+  </data>
+  <data name="GetAttestationTokenSigningKeysFailed" xml:space="preserve">
+    <value>構成証明トークンの検証に失敗しました。構成証明の公開キー エンドポイントから公開キーを取得できないか、取得したキーの形式が無効です。エラーの詳細: '{0}'。</value>
+  </data>
+  <data name="GetSharedSecretFailed" xml:space="preserve">
+    <value>エンクレーブの Diffie-Hellman キーの署名の検証に失敗しました。カスタマー サポート サービスにお問い合わせください。</value>
+  </data>
+  <data name="InvalidArgumentToBase64UrlDecoder" xml:space="preserve">
+    <value>SQL Server から取得したエンクレーブ公開キーをデコード中にエラーが発生したため、構成証明トークンの検証に失敗しました。カスタマー サポート サービスにお問い合わせください。</value>
+  </data>
+  <data name="InvalidArgumentToSHA256" xml:space="preserve">
+    <value>SQL Server から取得したエンクレーブ公開キーのハッシュを計算中にエラーが発生したため、構成証明トークンの検証に失敗しました。カスタマー サポート サービスにお問い合わせください。</value>
+  </data>
+  <data name="InvalidAttestationToken" xml:space="preserve">
+    <value>署名の検証中に、構成証明トークンの検証に失敗しました。例外: '{0}'。</value>
+  </data>
+  <data name="InvalidClaimInAttestationToken" xml:space="preserve">
+    <value>構成証明トークンの検証に失敗しました。トークン内の要求 '{0}' の値 '{1}' が無効です。構成証明ポリシーをご確認ください。ポリシーが適切である場合、カスタマー サポート サービスにお問い合わせください。</value>
+  </data>
+  <data name="MissingClaimInAttestationToken" xml:space="preserve">
+    <value>構成証明トークンの検証に失敗しました。要求 '{0}' がトークンにありません。構成証明ポリシーをご確認ください。ポリシーが適切である場合、カスタマー サポート サービスにお問い合わせください。</value>
+  </data>
+  <data name="VerifyEnclaveDebuggable" xml:space="preserve">
+    <value>エンクレーブが運用モードで実行されているかどうかを確認できませんでした。カスタマー サポート サービスにお問い合わせください。</value>
+  </data>
+  <data name="VerifyEnclavePolicyFailedFormat" xml:space="preserve">
+    <value>プロパティ '{0}' のポリシーの必要な値と実際の値の違いにより、エンクレーブ ポリシーを確認できませんでした。実際の値: '{1}'、必要な値: '{2}'。</value>
+  </data>
+  <data name="VerifyEnclaveReportFailed" xml:space="preserve">
+    <value>エンクレーブ レポートの署名の検証に失敗しました。レポートの署名が、HGS ルート証明書を使用して計算された署名と一致しません。エンドポイントの DNS マッピングをご確認ください。適切である場合、カスタマー サポート サービスにお問い合わせください。</value>
+  </data>
+  <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
+    <value>SQL Server から受信したエンクレーブ レポートの形式が適切ではありません。カスタマー サポート サービスにお問い合わせください。</value>
+  </data>
+  <data name="VerifyHealthCertificateChainFormat" xml:space="preserve">
+    <value>エンクレーブ ホストの正常性レポートと構成証明 URL '{0}' の HGS ルート証明書との間で信頼チェーンを構築できませんでした。状態は '{1}' です。構成証明 URL が SQL Server マシンで構成されている URL と一致していることをご確認ください。クライアントと SQL Server の両方で同じ構成証明サービスが使用されている場合は、カスタマー サポート サービスにお問い合わせください。</value>
+  </data>
+  <data name="TCE_DbConnectionString_AttestationProtocol" xml:space="preserve">
+    <value>対応するエンクレーブ構成証明サービスに対して構成証明プロトコルを指定します。</value>
+  </data>
+  <data name="TCE_EnclaveTypeNotSupported" xml:space="preserve">
+    <value>サーバーから返されたエンクレーブの種類 '{0}' はサポートされていません。</value>
+  </data>
+  <data name="TCE_AttestationProtocolNotSupportEnclaveType" xml:space="preserve">
+    <value>接続を初期化できませんでした。構成証明プロトコル '{0}' は、エンクレーブの種類 '{1}' をサポートしていません。</value>
+  </data>
+  <data name="TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage" xml:space="preserve">
+    <value>エンクレーブ パッケージの生成中にエラーが発生しました。接続文字列の中では構成証明プロトコルが指定されていませんが、クエリではエンクレーブ計算が必要です。</value>
   </data>
 </root>
