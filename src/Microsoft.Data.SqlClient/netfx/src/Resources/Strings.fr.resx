@@ -124,7 +124,7 @@
     <value>Index {0} non valide pour ce {1} avec Count={2}.</value>
   </data>
   <data name="ADP_CollectionIndexString" xml:space="preserve">
-    <value>Un {0} avec {1} '{2}' n'est pas contenu dans ce {3}.</value>
+    <value>Un {0} avec {1} « {2} » n'est pas contenu dans ce {3}.</value>
   </data>
   <data name="ADP_CollectionInvalidType" xml:space="preserve">
     <value>{0} accepte uniquement des objets de type {1} non null, et non des objets {2}.</value>
@@ -1948,7 +1948,7 @@
     <value>Un SqlResultSet associé à cette commande est déjà ouvert. Il doit d'abord être fermé.</value>
   </data>
   <data name="ADP_OpenReaderExists" xml:space="preserve">
-    <value>Un DataReader associé à cette Command est déjà ouvert. Il doit d'abord être fermé.</value>
+    <value>Un DataReader ouvert est déjà associé à {0} et doit d'abord être fermé.</value>
   </data>
   <data name="ADP_DeriveParametersNotSupported" xml:space="preserve">
     <value>DeriveParameters {0} ne prend en charge que CommandType.StoredProcedure, et pas CommandType.{1}.</value>
@@ -2818,7 +2818,7 @@
     <value>Le ColumnName fourni '{0}' ne correspond à aucune colonne de la source de données.</value>
   </data>
   <data name="SQL_BulkLoadStringTooLong" xml:space="preserve">
-    <value>Les données binary ou String seront tronquées.</value>
+    <value>Les données de chaîne ou binaires sont tronquées dans la table « {0} », colonne « {1} ». Valeur tronquée : « {2} ».</value>
   </data>
   <data name="SQL_BulkLoadInvalidTimeout" xml:space="preserve">
     <value>La valeur '{0}' de Timeout est inférieure à 0.</value>
@@ -4321,7 +4321,7 @@
     <value>L'exécution d'une requête nécessite des calculs d'enclave. Toutefois, il manque la section relative aux fournisseurs d'enclaves dans la configuration de l'application.</value>
   </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
-    <value>Fournisseur d'enclave introuvable pour le type d'enclave '{0}'. Spécifiez le fournisseur dans la configuration de l'application. </value>
+    <value>Aucun fournisseur d'enclave pour le type d'enclave « {0} » et le protocole d'attestation « {1} ». Spécifiez le protocole d'attestation approprié dans la chaîne de connexion. </value>
   </data>
   <data name="TCE_NullEnclaveSessionReturnedFromProvider" xml:space="preserve">
     <value>Impossible de communiquer avec l'enclave. Des informations de session d'enclave ayant une valeur null ont été reçues de la part du fournisseur d'enclave. Le type d'enclave est '{0}' et l'URL d'attestation d'enclave est '{1}'.</value>
@@ -4442,5 +4442,80 @@
   </data>
   <data name="SQL_Timeout_Execution" xml:space="preserve">
     <value>Le délai d'exécution a expiré. Le délai d'attente s'est écoulé avant la fin de l'opération ou le serveur ne répond pas.</value>
+  </data>
+  <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
+    <value>La validation d'un jeton d'attestation a échoué. La signature du jeton ne correspond pas à la signature calculée à l'aide d'une clé publique récupérée sur le point de terminaison de clé publique d'attestation dans « {0} ». Vérifiez le mappage DNS pour le point de terminaison. S'il est correct, contactez le service client.</value>
+  </data>
+  <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
+    <value>Une erreur interne s'est produite pendant la nouvelle tentative de téléchargement du certificat racine SGH après l'échec de la demande initiale. Contactez le service client.</value>
+  </data>
+  <data name="EnclaveSessionInvalidationFailed" xml:space="preserve">
+    <value>Erreur interne. Impossible d'invalider la session d'enclave demandée, car celle-ci n'existe pas dans le cache. Contactez le service client.</value>
+  </data>
+  <data name="ExpiredAttestationToken" xml:space="preserve">
+    <value>La validation d'un jeton d'attestation a échoué. Le jeton envoyé par SQL Server a expiré. Contactez le service client.</value>
+  </data>
+  <data name="FailToCreateEnclaveSession" xml:space="preserve">
+    <value>La création de la session d'enclave a échoué car le serveur d'attestation est occupé.</value>
+  </data>
+  <data name="FailToParseAttestationInfo" xml:space="preserve">
+    <value>La validation des informations d'attestation a échoué. Le format des informations d'attestation n'est pas valide. Contactez le service client. Détails de l'erreur : « {0} ».</value>
+  </data>
+  <data name="FailToParseAttestationToken" xml:space="preserve">
+    <value>La validation d'un jeton d'attestation a échoué. Le jeton a un format non valide. Contactez le service client. Détails de l'erreur : « {0} ».</value>
+  </data>
+  <data name="GetAttestationSigningCertificateFailedInvalidCertificate" xml:space="preserve">
+    <value>Le service d'attestation a retourné un certificat racine SGH expiré pour l'URL d'attestation « {0} ». Vérifiez le certificat racine SGH configuré pour votre instance SGH.</value>
+  </data>
+  <data name="GetAttestationSigningCertificateRequestFailedFormat" xml:space="preserve">
+    <value>Le certificat racine SGH obtenu pour l'URL d'attestation « {0} » a un format non valide. Vérifiez que l'URL d'attestation est correcte et que le serveur SGH est en ligne et complètement initialisé. Pour plus d'informations, contactez le service client. Détails de l'erreur : « {1} ».</value>
+  </data>
+  <data name="GetAttestationTokenSigningKeysFailed" xml:space="preserve">
+    <value>La validation d'un jeton d'attestation a échoué. Impossible de récupérer une clé publique sur le point de terminaison de clé publique d'attestation, ou la clé récupérée a un format non valide. Détails de l'erreur : « {0} ».</value>
+  </data>
+  <data name="GetSharedSecretFailed" xml:space="preserve">
+    <value>La vérification de signature de la clé Diffie-Hellman de l'enclave a échoué. Contactez le service client.</value>
+  </data>
+  <data name="InvalidArgumentToBase64UrlDecoder" xml:space="preserve">
+    <value>La validation d'un jeton d'attestation a échoué en raison d'une erreur pendant le décodage de la clé publique d'enclave donnée par SQL Server. Contactez le service client.</value>
+  </data>
+  <data name="InvalidArgumentToSHA256" xml:space="preserve">
+    <value>La validation d'un jeton d'attestation a échoué en raison d'une erreur pendant le calcul du code de hachage de la clé publique d'enclave donnée par SQL Server. Contactez le service client.</value>
+  </data>
+  <data name="InvalidAttestationToken" xml:space="preserve">
+    <value>La validation du jeton d'attestation a échoué pendant la validation de la signature. Exception : « {0} ».</value>
+  </data>
+  <data name="InvalidClaimInAttestationToken" xml:space="preserve">
+    <value>La validation d'un jeton d'attestation a échoué. La revendication « {0} » dans le jeton a la valeur non valide « {1} ». Vérifiez la stratégie d'attestation. Si la stratégie est correcte, contactez le service client.</value>
+  </data>
+  <data name="MissingClaimInAttestationToken" xml:space="preserve">
+    <value>La validation du jeton d'attestation a échoué. La revendication « {0} » est manquante dans le jeton. Vérifiez la stratégie d'attestation. Si la stratégie est correcte, contactez le service client.</value>
+  </data>
+  <data name="VerifyEnclaveDebuggable" xml:space="preserve">
+    <value>La vérification de l'exécution de l'enclave en mode de production a échoué. Contactez le service client.</value>
+  </data>
+  <data name="VerifyEnclavePolicyFailedFormat" xml:space="preserve">
+    <value>Impossible de vérifier la stratégie de l'enclave en raison d'une différence entre la valeur attendue et la valeur réelle de la stratégie sur la propriété '{0}'. Valeur réelle : '{1}', valeur attendue : '{2}'.</value>
+  </data>
+  <data name="VerifyEnclaveReportFailed" xml:space="preserve">
+    <value>La vérification de signature du rapport d'enclave a échoué. La signature de rapport ne correspond pas à la signature calculée à l'aide du certificat racine SGH. Vérifiez le mappage DNS pour le point de terminaison. S'il est correct, contactez le service client.</value>
+  </data>
+  <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
+    <value>Le rapport d'enclave envoyé par SQL Server n'a pas un format correct. Contactez le service client.</value>
+  </data>
+  <data name="VerifyHealthCertificateChainFormat" xml:space="preserve">
+    <value>La génération d'une chaîne d'approbation entre le rapport d'intégrité de l'hôte d'enclave et le certificat racine SGH pour l'URL d'attestation « {0} » a échoué avec l'état « {1} ». Vérifiez que l'URL d'attestation correspond à l'URL configurée sur la machine SQL Server. Si le client et le serveur SQL utilisent le même service d'attestation, contactez le service client.</value>
+  </data>
+  <data name="TCE_DbConnectionString_AttestationProtocol" xml:space="preserve">
+    <value>Spécifie un protocole d'attestation pour le service d'attestation d'enclave correspondant.</value>
+  </data>
+  <data name="TCE_EnclaveTypeNotSupported" xml:space="preserve">
+    <value>Le type d'enclave « {0} » retourné par le serveur n'est pas pris en charge.</value>
+  </data>
+  <data name="TCE_AttestationProtocolNotSupportEnclaveType" xml:space="preserve">
+    <value>L'initialisation de la connexion a échoué. Le protocole d'attestation « {0} » ne prend pas en charge le type d'enclave « {1} ».</value>
+  </data>
+  <data name="TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage" xml:space="preserve">
+    <value>Une erreur s'est produite pendant la génération du package d'enclave. Le protocole d'attestation n'a pas été spécifié dans la chaîne de connexion, mais la requête nécessite des calculs d'enclave.</value>
   </data>
 </root>
