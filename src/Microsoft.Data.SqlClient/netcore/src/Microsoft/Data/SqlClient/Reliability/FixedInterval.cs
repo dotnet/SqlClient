@@ -10,7 +10,7 @@ namespace Microsoft.Data.SqlClient.Reliability
     /// <summary>
     /// Represents a retry strategy with a specified number of retry attempts and a default, fixed time interval between retries.
     /// </summary>
-    public class FixedInterval : RetryStrategy
+    public class FixedInterval : SqlRetryStrategy
     {
         private readonly int retryCount;
         private readonly TimeSpan retryInterval;

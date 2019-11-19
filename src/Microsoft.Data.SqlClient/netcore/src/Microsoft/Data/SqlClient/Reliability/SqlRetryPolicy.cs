@@ -12,14 +12,14 @@ namespace Microsoft.Data.SqlClient.Reliability
     /// <summary>
     /// Provides the base implementation of the retry mechanism for unreliable actions and transient conditions.
     /// </summary>
-    public class RetryPolicy
+    public class SqlRetryPolicy
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="RetryPolicy"/> class with the specified number of retry attempts and parameters defining the progressive delay between retries.
+        /// Initializes a new instance of the <see cref="SqlRetryPolicy"/> class with the specified number of retry attempts and parameters defining the progressive delay between retries.
         /// </summary>
         /// <param name="errorDetectionStrategy">The <see cref="ITransientErrorDetectionStrategy"/> that is responsible for detecting transient conditions.</param>
         /// <param name="retryStrategy">The strategy to use for this retry policy.</param>
-        public RetryPolicy(ITransientErrorDetectionStrategy errorDetectionStrategy, RetryStrategy retryStrategy)
+        public SqlRetryPolicy(ITransientErrorDetectionStrategy errorDetectionStrategy, SqlRetryStrategy retryStrategy)
         {
             this.ErrorDetectionStrategy = errorDetectionStrategy;
 
@@ -32,45 +32,45 @@ namespace Microsoft.Data.SqlClient.Reliability
         }
 
         /// <summary>
-        /// RetryPolicy
+        /// SqlRetryPolicy
         /// </summary>
-        public RetryPolicy(ITransientErrorDetectionStrategy errorDetectionStrategy, int retryCount)
+        public SqlRetryPolicy(ITransientErrorDetectionStrategy errorDetectionStrategy, int retryCount)
             : this(errorDetectionStrategy, new FixedInterval(retryCount))
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="RetryPolicy"/> class with the specified number of retry attempts and fixed time interval between retries.
+        /// Initializes a new instance of the <see cref="SqlRetryPolicy"/> class with the specified number of retry attempts and fixed time interval between retries.
         /// </summary>
         /// <param name="errorDetectionStrategy">The <see cref="ITransientErrorDetectionStrategy"/> that is responsible for detecting transient conditions.</param>
         /// <param name="retryCount">The number of retry attempts.</param>
         /// <param name="retryInterval">The interval between retries.</param>
-        public RetryPolicy(ITransientErrorDetectionStrategy errorDetectionStrategy, int retryCount, TimeSpan retryInterval)
+        public SqlRetryPolicy(ITransientErrorDetectionStrategy errorDetectionStrategy, int retryCount, TimeSpan retryInterval)
             : this(errorDetectionStrategy, new FixedInterval(retryCount, retryInterval))
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="RetryPolicy"/> class with the specified number of retry attempts and backoff parameters for calculating the exponential delay between retries.
+        /// Initializes a new instance of the <see cref="SqlRetryPolicy"/> class with the specified number of retry attempts and backoff parameters for calculating the exponential delay between retries.
         /// </summary>
         /// <param name="errorDetectionStrategy">The <see cref="ITransientErrorDetectionStrategy"/> that is responsible for detecting transient conditions.</param>
         /// <param name="retryCount">The number of retry attempts.</param>
         /// <param name="minBackoff">The minimum backoff time.</param>
         /// <param name="maxBackoff">The maximum backoff time.</param>
         /// <param name="deltaBackoff">The time value that will be used to calculate a random delta in the exponential delay between retries.</param>
-        public RetryPolicy(ITransientErrorDetectionStrategy errorDetectionStrategy, int retryCount, TimeSpan minBackoff, TimeSpan maxBackoff, TimeSpan deltaBackoff)
+        public SqlRetryPolicy(ITransientErrorDetectionStrategy errorDetectionStrategy, int retryCount, TimeSpan minBackoff, TimeSpan maxBackoff, TimeSpan deltaBackoff)
             : this(errorDetectionStrategy, new ExponentialBackoff(retryCount, minBackoff, maxBackoff, deltaBackoff))
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="RetryPolicy"/> class with the specified number of retry attempts and parameters defining the progressive delay between retries.
+        /// Initializes a new instance of the <see cref="SqlRetryPolicy"/> class with the specified number of retry attempts and parameters defining the progressive delay between retries.
         /// </summary>
         /// <param name="errorDetectionStrategy">The <see cref="ITransientErrorDetectionStrategy"/> that is responsible for detecting transient conditions.</param>
         /// <param name="retryCount">The number of retry attempts.</param>
         /// <param name="initialInterval">The initial interval that will apply for the first retry.</param>
         /// <param name="increment">The incremental time value that will be used to calculate the progressive delay between retries.</param>
-        public RetryPolicy(ITransientErrorDetectionStrategy errorDetectionStrategy, int retryCount, TimeSpan initialInterval, TimeSpan increment)
+        public SqlRetryPolicy(ITransientErrorDetectionStrategy errorDetectionStrategy, int retryCount, TimeSpan initialInterval, TimeSpan increment)
             : this(errorDetectionStrategy, new Incremental(retryCount, initialInterval, increment))
         {
         }
@@ -78,12 +78,12 @@ namespace Microsoft.Data.SqlClient.Reliability
         /// <summary>
         /// An instance of a callback delegate that will be invoked whenever a retry condition is encountered.
         /// </summary>
-        public event EventHandler<RetryingEventArgs> Retrying;
+        public event EventHandler<SqlRetryingEventArgs> Retrying;
 
         /// <summary>
         /// Gets the retry strategy.
         /// </summary>
-        public RetryStrategy RetryStrategy { get; private set; }
+        public SqlRetryStrategy RetryStrategy { get; private set; }
 
         /// <summary>
         /// Gets the instance of the error detection strategy.
@@ -176,7 +176,7 @@ namespace Microsoft.Data.SqlClient.Reliability
         {
             if (taskAction == null) throw new ArgumentNullException("taskAction");
 
-            return new AsyncExecution(
+            return new SqlAsyncExecution(
                     taskAction,
                     this.RetryStrategy.GetShouldRetry(),
                     this.ErrorDetectionStrategy.IsTransient,
@@ -214,7 +214,7 @@ namespace Microsoft.Data.SqlClient.Reliability
         {
             if (taskFunc == null) throw new ArgumentNullException("taskFunc");
 
-            return new AsyncExecution<TResult>(
+            return new SqlAsyncExecution<TResult>(
                     taskFunc,
                     this.RetryStrategy.GetShouldRetry(),
                     this.ErrorDetectionStrategy.IsTransient,
@@ -234,7 +234,7 @@ namespace Microsoft.Data.SqlClient.Reliability
         {
             if (this.Retrying != null)
             {
-                this.Retrying(this, new RetryingEventArgs(retryCount, delay, lastError));
+                this.Retrying(this, new SqlRetryingEventArgs(retryCount, delay, lastError));
             }
         }
     }

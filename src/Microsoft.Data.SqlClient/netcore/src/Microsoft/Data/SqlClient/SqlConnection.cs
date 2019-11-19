@@ -56,7 +56,7 @@ namespace Microsoft.Data.SqlClient
         private int _reconnectCount;
 
         // Retry Logic
-        private RetryPolicy _retryPolicy;
+        private SqlRetryPolicy _retryPolicy;
 
         // diagnostics listener
         private static readonly DiagnosticListener s_diagnosticListener = new DiagnosticListener(SqlClientDiagnosticListenerExtensions.DiagnosticListenerName);
@@ -309,15 +309,15 @@ namespace Microsoft.Data.SqlClient
                         break;
 
                     case "FixedInterval":
-                        _retryPolicy = new RetryPolicy<TransientErrorDetectionStrategy>(new FixedInterval(connString.RetryCount, TimeSpan.FromSeconds(connString.RetryInterval)));
+                        _retryPolicy = new SqlRetryPolicy<TransientErrorDetectionStrategy>(new FixedInterval(connString.RetryCount, TimeSpan.FromSeconds(connString.RetryInterval)));
                         break;
 
                     case "Incremental":
-                        _retryPolicy = new RetryPolicy<TransientErrorDetectionStrategy>(new Incremental(connString.RetryCount, TimeSpan.FromSeconds(connString.RetryInterval), TimeSpan.FromSeconds(connString.RetryIncrement)));
+                        _retryPolicy = new SqlRetryPolicy<TransientErrorDetectionStrategy>(new Incremental(connString.RetryCount, TimeSpan.FromSeconds(connString.RetryInterval), TimeSpan.FromSeconds(connString.RetryIncrement)));
                         break;
 
                     case "ExponentialBackoff":
-                        _retryPolicy = new RetryPolicy<TransientErrorDetectionStrategy>(new ExponentialBackoff(connString.RetryCount, TimeSpan.FromSeconds(connString.RetryMinBackoff), TimeSpan.FromSeconds(connString.RetryMaxBackoff), TimeSpan.FromSeconds(connString.RetryDeltaBackoff)));
+                        _retryPolicy = new SqlRetryPolicy<TransientErrorDetectionStrategy>(new ExponentialBackoff(connString.RetryCount, TimeSpan.FromSeconds(connString.RetryMinBackoff), TimeSpan.FromSeconds(connString.RetryMaxBackoff), TimeSpan.FromSeconds(connString.RetryDeltaBackoff)));
                         break;
                 }
 
@@ -802,8 +802,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Retry Logic
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RetryPolicy/*' />
-        public RetryPolicy RetryPolicy
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/SqlRetryPolicy/*' />
+        public SqlRetryPolicy RetryPolicy
         {
             get => _retryPolicy;
             set
@@ -1038,7 +1038,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private void _retryPolicy_Retrying(object sender, RetryingEventArgs ev, Guid operationId)
+        private void _retryPolicy_Retrying(object sender, SqlRetryingEventArgs ev, Guid operationId)
         {
             s_diagnosticListener.WriteConnectionOpenRetry(operationId, this, ev.LastException, ev.CurrentRetryCount);
         }
@@ -1053,7 +1053,7 @@ namespace Microsoft.Data.SqlClient
             SqlStatistics statistics = null;
 
             if(_retryPolicy != null)
-                _retryPolicy.Retrying += new EventHandler<RetryingEventArgs>((s,ex)=>_retryPolicy_Retrying(s,ex,operationId));
+                _retryPolicy.Retrying += new EventHandler<SqlRetryingEventArgs>((s,ex)=>_retryPolicy_Retrying(s,ex,operationId));
 
             Exception e = null;
 
@@ -1307,7 +1307,7 @@ namespace Microsoft.Data.SqlClient
             PrepareStatisticsForNewConnection();
 
             if (_retryPolicy != null)
-                _retryPolicy.Retrying += new EventHandler<RetryingEventArgs>((s, ex) => _retryPolicy_Retrying(s, ex, operationId));
+                _retryPolicy.Retrying += new EventHandler<SqlRetryingEventArgs>((s, ex) => _retryPolicy_Retrying(s, ex, operationId));
 
             SqlStatistics statistics = null;
 

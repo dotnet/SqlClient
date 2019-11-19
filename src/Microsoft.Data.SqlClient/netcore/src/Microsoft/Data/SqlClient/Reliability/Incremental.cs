@@ -9,7 +9,7 @@ namespace Microsoft.Data.SqlClient.Reliability
     /// <summary>
     /// A retry strategy with a specified number of retry attempts and an incremental time interval between retries.
     /// </summary>
-    public class Incremental : RetryStrategy
+    public class Incremental : SqlRetryStrategy
     {
         private readonly int retryCount;
         private readonly TimeSpan initialInterval;

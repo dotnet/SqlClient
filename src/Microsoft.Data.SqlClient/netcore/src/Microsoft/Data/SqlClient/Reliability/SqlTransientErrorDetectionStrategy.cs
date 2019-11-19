@@ -103,9 +103,9 @@ namespace Microsoft.Data.SqlClient.Reliability
                         retriable = IsRetriable(err.Number);
                         if (retriable)
                         {
-                            if (err.Number == ThrottlingCondition.ThrottlingErrorNumber)
+                            if (err.Number == SqlThrottlingCondition.ThrottlingErrorNumber)
                             {
-                                var condition = ThrottlingCondition.FromError(err);
+                                var condition = SqlThrottlingCondition.FromError(err);
 
                                 // Attach the decoded values as additional attributes to the original SQL exception.
                                 sqlException.Data[condition.ThrottlingMode.GetType().Name] =

@@ -3418,7 +3418,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Invalid RetryIncrement value (should be 0-120)..
+        ///   Looks up a localized string similar to Invalid RetryIncrementSec value (should be 0-120)..
         /// </summary>
         internal static string SQLCR_InvalidRetryIncrement {
             get {
@@ -3427,7 +3427,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Invalid RetryInterval value (should be 0-120)..
+        ///   Looks up a localized string similar to Invalid RetryIntervalSec value (should be 0-120)..
         /// </summary>
         internal static string SQLCR_InvalidRetryInterval {
             get {
@@ -3445,7 +3445,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Invalid RetryMaxBackoff value (should be 0-120)..
+        ///   Looks up a localized string similar to Invalid RetryMaxBackoffSec value (should be 0-120)..
         /// </summary>
         internal static string SQLCR_InvalidRetryMaxBackoff {
             get {
@@ -3454,7 +3454,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Invalid RetryMinBackoff value (should be 0-120)..
+        ///   Looks up a localized string similar to Invalid RetryMinBackoffSec value (should be 0-120)..
         /// </summary>
         internal static string SQLCR_InvalidRetryMinBackoff {
             get {

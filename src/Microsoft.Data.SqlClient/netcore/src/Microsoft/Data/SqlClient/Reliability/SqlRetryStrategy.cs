@@ -18,7 +18,7 @@ namespace Microsoft.Data.SqlClient.Reliability
     /// <summary>
     /// Represents a retry strategy that determines the number of retry attempts and the interval between retries.
     /// </summary>
-    public abstract class RetryStrategy
+    public abstract class SqlRetryStrategy
     {
         #region Public members
         /// <summary>
@@ -59,51 +59,51 @@ namespace Microsoft.Data.SqlClient.Reliability
 
         #endregion
 
-        private static RetryStrategy noRetry = new FixedInterval(0, DefaultRetryInterval);
-        private static RetryStrategy defaultFixed = new FixedInterval(DefaultClientRetryCount, DefaultRetryInterval);
-        private static RetryStrategy defaultIncremental = new Incremental(DefaultClientRetryCount, DefaultRetryInterval, DefaultRetryIncrement);
-        private static RetryStrategy defaultExponential = new ExponentialBackoff(DefaultClientRetryCount, DefaultMinBackoff, DefaultMaxBackoff, DefaultDeltaBackoff);
+        private static SqlRetryStrategy noRetry = new FixedInterval(0, DefaultRetryInterval);
+        private static SqlRetryStrategy defaultFixed = new FixedInterval(DefaultClientRetryCount, DefaultRetryInterval);
+        private static SqlRetryStrategy defaultIncremental = new Incremental(DefaultClientRetryCount, DefaultRetryInterval, DefaultRetryIncrement);
+        private static SqlRetryStrategy defaultExponential = new ExponentialBackoff(DefaultClientRetryCount, DefaultMinBackoff, DefaultMaxBackoff, DefaultDeltaBackoff);
 
         /// <summary>
         /// Returns a default policy that performs no retries, but invokes the action only once.
         /// </summary>
-        public static RetryStrategy NoRetry
+        public static SqlRetryStrategy NoRetry
         {
             get { return noRetry; }
         }
 
         /// <summary>
-        /// Returns a default policy that implements a fixed retry interval configured with the <see cref="RetryStrategy.DefaultClientRetryCount"/> and <see cref="RetryStrategy.DefaultRetryInterval"/> parameters.
+        /// Returns a default policy that implements a fixed retry interval configured with the <see cref="SqlRetryStrategy.DefaultClientRetryCount"/> and <see cref="SqlRetryStrategy.DefaultRetryInterval"/> parameters.
         /// The default retry policy treats all caught exceptions as transient errors.
         /// </summary>
-        public static RetryStrategy DefaultFixed
+        public static SqlRetryStrategy DefaultFixed
         {
             get { return defaultFixed; }
         }
 
         /// <summary>
-        /// Returns a default policy that implements a progressive retry interval configured with the <see cref="RetryStrategy.DefaultClientRetryCount"/>, <see cref="RetryStrategy.DefaultRetryInterval"/>, and <see cref="RetryStrategy.DefaultRetryIncrement"/> parameters.
+        /// Returns a default policy that implements a progressive retry interval configured with the <see cref="SqlRetryStrategy.DefaultClientRetryCount"/>, <see cref="SqlRetryStrategy.DefaultRetryInterval"/>, and <see cref="SqlRetryStrategy.DefaultRetryIncrement"/> parameters.
         /// The default retry policy treats all caught exceptions as transient errors.
         /// </summary>
-        public static RetryStrategy DefaultIncremental
+        public static SqlRetryStrategy DefaultIncremental
         {
             get { return defaultIncremental; }
         }
 
         /// <summary>
-        /// Returns a default policy that implements a random exponential retry interval configured with the <see cref="RetryStrategy.DefaultClientRetryCount"/>, <see cref="RetryStrategy.DefaultMinBackoff"/>, <see cref="RetryStrategy.DefaultMaxBackoff"/>, and <see cref="RetryStrategy.DefaultDeltaBackoff"/> parameters.
+        /// Returns a default policy that implements a random exponential retry interval configured with the <see cref="SqlRetryStrategy.DefaultClientRetryCount"/>, <see cref="SqlRetryStrategy.DefaultMinBackoff"/>, <see cref="SqlRetryStrategy.DefaultMaxBackoff"/>, and <see cref="SqlRetryStrategy.DefaultDeltaBackoff"/> parameters.
         /// The default retry policy treats all caught exceptions as transient errors.
         /// </summary>
-        public static RetryStrategy DefaultExponential
+        public static SqlRetryStrategy DefaultExponential
         {
             get { return defaultExponential; }
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="RetryStrategy"/> class. 
+        /// Initializes a new instance of the <see cref="SqlRetryStrategy"/> class. 
         /// </summary>
         /// <param name="firstFastRetry">true to immediately retry in the first attempt; otherwise, false. The subsequent retries will remain subject to the configured retry interval.</param>
-        protected RetryStrategy(bool firstFastRetry)
+        protected SqlRetryStrategy(bool firstFastRetry)
         {
             this.FastFirstRetry = firstFastRetry;
         }

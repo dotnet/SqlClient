@@ -648,12 +648,12 @@ namespace Microsoft.Data.Common
         internal const string RetryStrategy = "None";
         internal const int RetryCount = 3;
 
-        internal const int RetryInterval = 10;
-        internal const int RetryIncrement = 10;
+        internal const int RetryIntervalSec = 10;
+        internal const int RetryIncrementSec = 10;
 
-        internal const int RetryMinBackoff = 10;
-        internal const int RetryMaxBackoff = 10;
-        internal const int RetryDeltaBackoff = 10;
+        internal const int RetryMinBackoffSec = 10;
+        internal const int RetryMaxBackoffSec = 10;
+        internal const int RetryDeltaBackoffSec = 10;
 
         internal const bool RetryFastFirst = false;
 

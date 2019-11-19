@@ -153,7 +153,7 @@ namespace Microsoft.Data.SqlClient.Tests
             }
             catch (ArgumentException ex)
             {
-                // Invalid RetryIncrement value
+                // Invalid RetryIncrementSec value
                 Assert.Equal(typeof(ArgumentException), ex.GetType());
                 Assert.Null(ex.InnerException);
                 Assert.NotNull(ex.Message);
@@ -167,7 +167,7 @@ namespace Microsoft.Data.SqlClient.Tests
             }
             catch (ArgumentException ex)
             {
-                // Invalid RetryInterval value
+                // Invalid RetryIntervalSec value
                 Assert.Equal(typeof(ArgumentException), ex.GetType());
                 Assert.Null(ex.InnerException);
                 Assert.NotNull(ex.Message);
@@ -195,7 +195,7 @@ namespace Microsoft.Data.SqlClient.Tests
             }
             catch (ArgumentException ex)
             {
-                // Invalid RetryDeltaBackoff value
+                // Invalid RetryDeltaBackoffSec value
                 Assert.Equal(typeof(ArgumentException), ex.GetType());
                 Assert.Null(ex.InnerException);
                 Assert.NotNull(ex.Message);
@@ -223,7 +223,7 @@ namespace Microsoft.Data.SqlClient.Tests
             }
             catch (ArgumentException ex)
             {
-                // Invalid RetryMaxBackoff value
+                // Invalid RetryMaxBackoffSec value
                 Assert.Equal(typeof(ArgumentException), ex.GetType());
                 Assert.Null(ex.InnerException);
                 Assert.NotNull(ex.Message);

@@ -10,7 +10,7 @@ namespace Microsoft.Data.SqlClient.Reliability
     /// <summary>
     /// A retry strategy with backoff parameters for calculating the exponential delay between retries.
     /// </summary>
-    public class ExponentialBackoff : RetryStrategy
+    public class ExponentialBackoff : SqlRetryStrategy
     {
         private readonly int retryCount;
         private readonly TimeSpan minBackoff;

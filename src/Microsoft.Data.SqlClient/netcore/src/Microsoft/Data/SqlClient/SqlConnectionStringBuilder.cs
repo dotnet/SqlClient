@@ -118,11 +118,11 @@ namespace Microsoft.Data.SqlClient
         // Retry Logic private variable
         private string _retryStrategy = DbConnectionStringDefaults.RetryStrategy;
         private int _retryCount = DbConnectionStringDefaults.RetryCount;
-        private int _RetryInterval = DbConnectionStringDefaults.RetryInterval;
-        private int _retryIncrement = DbConnectionStringDefaults.RetryIncrement;
-        private int _retryMinBackoff = DbConnectionStringDefaults.RetryMinBackoff;
-        private int _retryMaxBackoff = DbConnectionStringDefaults.RetryMaxBackoff;
-        private int _retryDeltaBackoff = DbConnectionStringDefaults.RetryDeltaBackoff;
+        private int _RetryInterval = DbConnectionStringDefaults.RetryIntervalSec;
+        private int _retryIncrement = DbConnectionStringDefaults.RetryIncrementSec;
+        private int _retryMinBackoff = DbConnectionStringDefaults.RetryMinBackoffSec;
+        private int _retryMaxBackoff = DbConnectionStringDefaults.RetryMaxBackoffSec;
+        private int _retryDeltaBackoff = DbConnectionStringDefaults.RetryDeltaBackoffSec;
         private bool _retryFastFirst = DbConnectionStringDefaults.RetryFastFirst;
         private string _retryLogFilePath = DbConnectionStringDefaults.RetryLogFilePath;
         private string _retriableErrors = DbConnectionStringDefaults.RetriableErrors;
@@ -1333,19 +1333,19 @@ namespace Microsoft.Data.SqlClient
                     _retryCount = DbConnectionStringDefaults.RetryCount;
                     break;
                 case Keywords.RetryInterval:
-                    _RetryInterval = DbConnectionStringDefaults.RetryInterval;
+                    _RetryInterval = DbConnectionStringDefaults.RetryIntervalSec;
                     break;
                 case Keywords.RetryIncrement:
-                    _retryIncrement = DbConnectionStringDefaults.RetryIncrement;
+                    _retryIncrement = DbConnectionStringDefaults.RetryIncrementSec;
                     break;
                 case Keywords.RetryMinBackoff:
-                    _retryMinBackoff = DbConnectionStringDefaults.RetryMinBackoff;
+                    _retryMinBackoff = DbConnectionStringDefaults.RetryMinBackoffSec;
                     break;
                 case Keywords.RetryMaxBackoff:
-                    _retryMaxBackoff = DbConnectionStringDefaults.RetryMaxBackoff;
+                    _retryMaxBackoff = DbConnectionStringDefaults.RetryMaxBackoffSec;
                     break;
                 case Keywords.RetryDeltaBackoff:
-                    _retryDeltaBackoff = DbConnectionStringDefaults.RetryDeltaBackoff;
+                    _retryDeltaBackoff = DbConnectionStringDefaults.RetryDeltaBackoffSec;
                     break;
                 case Keywords.RetryFastFirst:
                     _retryFastFirst = DbConnectionStringDefaults.RetryFastFirst;

@@ -128,7 +128,7 @@ namespace Microsoft.Data.SqlClient.Reliability.Data
     /// Implements an object that holds the decoded reason code returned from SQL Database when throttling conditions are encountered.
     /// </summary>
     [Serializable]
-    public class ThrottlingCondition
+    public class SqlThrottlingCondition
     {
         /// <summary>
         /// Gets the error number that corresponds to the throttling conditions reported by SQL Database.
@@ -148,11 +148,11 @@ namespace Microsoft.Data.SqlClient.Reliability.Data
         /// <summary>
         /// Gets an unknown throttling condition in the event that the actual throttling condition cannot be determined.
         /// </summary>
-        public static ThrottlingCondition Unknown
+        public static SqlThrottlingCondition Unknown
         {
             get
             {
-                var unknownCondition = new ThrottlingCondition { ThrottlingMode = ThrottlingMode.Unknown };
+                var unknownCondition = new SqlThrottlingCondition { ThrottlingMode = ThrottlingMode.Unknown };
                 unknownCondition.throttledResources.Add(Tuple.Create(ThrottledResourceType.Unknown, ThrottlingType.Unknown));
 
                 return unknownCondition;
@@ -242,7 +242,7 @@ namespace Microsoft.Data.SqlClient.Reliability.Data
         /// </summary>
         /// <param name="ex">The <see cref="SqlException"/> object that contains information relevant to an error returned by SQL Server when throttling conditions were encountered.</param>
         /// <returns>An instance of the object that holds the decoded reason codes returned from SQL Database when throttling conditions were encountered.</returns>
-        public static ThrottlingCondition FromException(SqlException ex)
+        public static SqlThrottlingCondition FromException(SqlException ex)
         {
             if (ex != null)
             {
@@ -263,7 +263,7 @@ namespace Microsoft.Data.SqlClient.Reliability.Data
         /// </summary>
         /// <param name="error">The <see cref="SqlError"/> object that contains information relevant to a warning or error returned by SQL Server.</param>
         /// <returns>An instance of the object that holds the decoded reason codes returned from SQL Database when throttling conditions were encountered.</returns>
-        public static ThrottlingCondition FromError(SqlError error)
+        public static SqlThrottlingCondition FromError(SqlError error)
         {
             if (error != null)
             {
@@ -284,14 +284,14 @@ namespace Microsoft.Data.SqlClient.Reliability.Data
         /// </summary>
         /// <param name="reasonCode">The reason code returned by SQL Database that contains the throttling mode and the exceeded resource types.</param>
         /// <returns>An instance of the object holding the decoded reason codes returned from SQL Database when encountering throttling conditions.</returns>
-        public static ThrottlingCondition FromReasonCode(int reasonCode)
+        public static SqlThrottlingCondition FromReasonCode(int reasonCode)
         {
             if (reasonCode > 0)
             {
                 // Decode throttling mode from the last 2 bits.
                 var throttlingMode = (ThrottlingMode)(reasonCode & 3);
 
-                var condition = new ThrottlingCondition { ThrottlingMode = throttlingMode };
+                var condition = new SqlThrottlingCondition { ThrottlingMode = throttlingMode };
 
                 // Shift 8 bits to truncate throttling mode.
                 var groupCode = reasonCode >> 8;

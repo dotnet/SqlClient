@@ -130,16 +130,10 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Retry Logic
-        internal RetryPolicy _retryPolicy = null;
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/SqlRetryPolicy/*'/>
+        public SqlRetryPolicy RetryPolicy => Connection.RetryPolicy;
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/RetryPolicy/*'/>
-        public RetryPolicy RetryPolicy
-        {
-            get
-            {
-                return Connection.RetryPolicy;
-            }
-        }
+        internal SqlRetryPolicy _retryPolicy = null;
 
         /// <summary>
         /// Return if column encryption setting is enabled.
@@ -946,7 +940,6 @@ namespace Microsoft.Data.SqlClient
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
                 SqlDataReader ds;
-                ds = RunExecuteReader(0, RunBehavior.ReturnImmediately, returnStream: true);
 
                 if (RetryPolicy != null)
                     ds = RetryPolicy.ExecuteAction(() => { return RunExecuteReader(0, RunBehavior.ReturnImmediately, returnStream: true); });

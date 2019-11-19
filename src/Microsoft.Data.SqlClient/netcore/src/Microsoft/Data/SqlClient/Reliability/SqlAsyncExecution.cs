@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClient.Reliability
     /// Handles the execution and retries of the user-initiated task.
     /// </summary>
     /// <typeparam name="TResult">The result type of the user-initiated task.</typeparam>
-    internal class AsyncExecution<TResult>
+    internal class SqlAsyncExecution<TResult>
     {
         private readonly Func<Task<TResult>> taskFunc;
         private readonly ShouldRetry shouldRetry;
@@ -26,7 +26,7 @@ namespace Microsoft.Data.SqlClient.Reliability
         private Task<TResult> previousTask;
         private int retryCount;
 
-        public AsyncExecution(
+        public SqlAsyncExecution(
             Func<Task<TResult>> taskFunc,
             ShouldRetry shouldRetry,
             Func<Exception, bool> isTransient,
@@ -154,11 +154,11 @@ namespace Microsoft.Data.SqlClient.Reliability
     /// Provides a wrapper for a non-generic <see cref="Task"/> and calls into the pipeline
     /// to retry only the generic version of the <see cref="Task"/>.
     /// </summary>
-    internal class AsyncExecution : AsyncExecution<bool>
+    internal class SqlAsyncExecution : SqlAsyncExecution<bool>
     {
         private static Task<bool> cachedBoolTask;
 
-        public AsyncExecution(
+        public SqlAsyncExecution(
             Func<Task> taskAction,
             ShouldRetry shouldRetry,
             Func<Exception, bool> isTransient,
