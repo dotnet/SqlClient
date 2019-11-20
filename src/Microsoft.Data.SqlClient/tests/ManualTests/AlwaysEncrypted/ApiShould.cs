@@ -514,48 +514,59 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             Parallel.For(0, 10, i =>
             {
-                IList<object> values = GetValues(dataHint: 45 + i + 1);
-                int numberOfRows = 10 + i;
-
-                // Insert a bunch of rows in to the table.
-                int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
-
-                Assert.Equal(numberOfRows, rowsAffected);
-                rowsAffected = -1;
-                using (SqlConnection sqlConnection = new SqlConnection(connection))
+                bool tryagain = false;
+                do
                 {
-                    sqlConnection.Open();
+                    IList<object> values = GetValues(dataHint: 45 + i + 1);
+                    int numberOfRows = 10 + i;
 
-                    // Update the set of rows that were inserted just now. And verify the rows affected as returned by ExecuteNonQuery.
-                    using (SqlCommand sqlCommand = new SqlCommand(
-                        cmdText: $"UPDATE [{tableName}] SET FirstName = @FirstName WHERE CustomerId = @CustomerId",
-                        connection: sqlConnection,
-                        transaction: null,
-                        columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
+                    // Insert a bunch of rows in to the table.
+                    int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
+
+                    Assert.Equal(numberOfRows, rowsAffected);
+                    rowsAffected = -1;
+                    using (SqlConnection sqlConnection = new SqlConnection(connection))
                     {
-                        sqlCommand.CommandTimeout = 90;
-                        if (DataTestUtility.EnclaveEnabled)
+                        try
                         {
-                            //Increase Time out for enclave-enabled server.
-                            sqlCommand.CommandTimeout = 90;
+                            sqlConnection.Open();
+
+                            // Update the set of rows that were inserted just now. And verify the rows affected as returned by ExecuteNonQuery.
+                            using (SqlCommand sqlCommand = new SqlCommand(
+                                cmdText: $"UPDATE [{tableName}] SET FirstName = @FirstName WHERE CustomerId = @CustomerId",
+                                connection: sqlConnection,
+                                transaction: null,
+                                columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
+                            {
+                                sqlCommand.CommandTimeout = 90;
+
+                                sqlCommand.Parameters.AddWithValue(@"FirstName", string.Format(@"Microsoft{0}", i + 100));
+                                sqlCommand.Parameters.AddWithValue(@"CustomerId", values[0]);
+
+                                if (isAsync)
+                                {
+                                    Task<int> executeTask = VerifyExecuteNonQueryAsync(sqlCommand);
+                                    rowsAffected = executeTask.Result;
+                                }
+                                else
+                                {
+                                    rowsAffected = sqlCommand.ExecuteNonQuery();
+                                }
+                            }
                         }
-
-                        sqlCommand.Parameters.AddWithValue(@"FirstName", string.Format(@"Microsoft{0}", i + 100));
-                        sqlCommand.Parameters.AddWithValue(@"CustomerId", values[0]);
-
-                        if (isAsync)
+                        catch (SqlException sqle)
                         {
-                            Task<int> executeTask = VerifyExecuteNonQueryAsync(sqlCommand);
-                            rowsAffected = executeTask.Result;
+                            // SQL Server deadlocks are possible if test executes multiple parallel threads. We will try again.
+                            if (sqle.ErrorCode.Equals(1205))
+                            {
+                                tryagain = true;
+                                break;
+                            }
                         }
-                        else
-                        {
-                            rowsAffected = sqlCommand.ExecuteNonQuery();
-                        }
-
                         Assert.Equal(numberOfRows, rowsAffected);
+                        tryagain = false;
                     }
-                }
+                } while (tryagain);
             });
         }
 
