@@ -143,7 +143,7 @@ namespace Microsoft.Data.SqlClient.Reliability
 
                 if (retryCount > 0)
                 {
-                    Task.Delay(delay).Wait();
+                    Thread.Sleep(delay);
                 }
             }
         }
