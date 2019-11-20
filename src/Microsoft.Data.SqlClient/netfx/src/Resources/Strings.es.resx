@@ -124,7 +124,7 @@
     <value>Índice {0} no válido para {1} con Count={2}.</value>
   </data>
   <data name="ADP_CollectionIndexString" xml:space="preserve">
-    <value>{3} no contiene {0} con {1} '{2}'.</value>
+    <value>{3} no contiene {0} con {1} "{2}".</value>
   </data>
   <data name="ADP_CollectionInvalidType" xml:space="preserve">
     <value>{0} sólo acepta objetos de tipo no nulo {1}, no objetos {2}.</value>
@@ -1948,7 +1948,7 @@
     <value>Hay abierto un SqlResultSet asociado a este comando que debe cerrarse antes.</value>
   </data>
   <data name="ADP_OpenReaderExists" xml:space="preserve">
-    <value>Ya hay un DataReader abierto asociado a este Command, debe cerrarlo primero.</value>
+    <value>Ya hay un DataReader abierto asociado a {0}; debe cerrarlo primero.</value>
   </data>
   <data name="ADP_DeriveParametersNotSupported" xml:space="preserve">
     <value>{0} DeriveParameters sólo admite CommandType.StoredProcedure, no CommandType.{1}.</value>
@@ -2494,16 +2494,16 @@
     <value>No se puede usar 'Authentication' con 'Integrated Security'.</value>
   </data>
   <data name="SQL_IntegratedWithUserIDAndPassword" xml:space="preserve">
-    <value>No se puede usar 'Authentication=Active Directory Integrated' con las palabras clave de cadena de conexión 'User ID', 'UID', 'Password' o 'PWD'.</value>
+    <value>No se puede usar "Authentication=Active Directory Integrated" con las palabras clave de cadena de conexión "User ID", "UID", "Password" ni "PWD".</value>
   </data>
   <data name="SQL_InteractiveWithUserIDAndPassword" xml:space="preserve">
     <value>No se puede usar "Authentication=Active Directory Interactive" con las palabras clave de cadena de conexión "User ID", "UID", "Password" ni "PWD".</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
-    <value>No se puede usar 'Authentication=Active Directory Integrated' si se ha establecido la propiedad Credential.</value>
+    <value>No se puede usar "Authentication=Active Directory Integrated" si se ha establecido la propiedad Credential.</value>
   </data>
   <data name="SQL_SettingCredentialWithIntegrated" xml:space="preserve">
-    <value>No se puede establecer la propiedad Credential si se ha especificado 'Authentication=Active Directory Integrated' en la cadena de conexión.</value>
+    <value>No se puede establecer la propiedad Credential si se ha especificado "Authentication=Active Directory Integrated" en la cadena de conexión.</value>
   </data>
   <data name="SQL_Certificate" xml:space="preserve">
     <value>Se especificaron parámetros de autenticación incorrectos con la autenticación de certificado.</value>
@@ -2818,7 +2818,7 @@
     <value>La ColumnName '{0}' no coincide con ninguna columna del origen de datos.</value>
   </data>
   <data name="SQL_BulkLoadStringTooLong" xml:space="preserve">
-    <value>Los datos binary o de tipo String se truncarían.</value>
+    <value>Los datos binarios o de cadena se truncarían en la tabla "{0}", columna "{1}". Valor truncado: "{2}".</value>
   </data>
   <data name="SQL_BulkLoadInvalidTimeout" xml:space="preserve">
     <value>El valor de Timeout '{0}' es inferior a 0.</value>
@@ -4321,7 +4321,7 @@
     <value>La ejecución de una consulta requiere cálculos de enclave, pero falta la sección de proveedor de enclave en la configuración de la aplicación.</value>
   </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
-    <value>No se encontró ningún proveedor de enclave para el tipo de enclave "{0}". Especifique el proveedor en la configuración de la aplicación. </value>
+    <value>No se ha encontrado ningún proveedor de enclave para el tipo de enclave "{0}" y el protocolo de atestación "{1}". Especifique el protocolo de atestación correcto en la cadena de conexión. </value>
   </data>
   <data name="TCE_NullEnclaveSessionReturnedFromProvider" xml:space="preserve">
     <value>No se ha podido comunicar con el enclave. Se ha recibido información de sesión de enclave nula del proveedor de enclave. El tipo de enclave es "{0}" y la dirección URL de atestación de enclave es "{1}".</value>
@@ -4442,5 +4442,80 @@
   </data>
   <data name="SQL_Timeout_Execution" xml:space="preserve">
     <value>Se agotó el tiempo de espera de ejecución. El período de tiempo de espera transcurrió antes de la finalización de la operación o el servidor no responde.</value>
+  </data>
+  <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
+    <value>Error en la validación de un token de atestación. La firma del token no coincide con la firma calculada mediante una clave pública recuperada del punto de conexión de clave pública de atestación en "{0}". Compruebe la asignación de DNS del punto de conexión. Si es correcta, póngase en contacto con el servicio de atención al cliente.</value>
+  </data>
+  <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
+    <value>Se ha producido un error interno al reintentar la descarga del certificado raíz de HGS después de un error en la solicitud inicial. Póngase en contacto con el servicio de atención al cliente.</value>
+  </data>
+  <data name="EnclaveSessionInvalidationFailed" xml:space="preserve">
+    <value>Error interno. No se puede invalidar la sesión de enclave solicitada porque no existe en la caché. Póngase en contacto con el servicio de atención al cliente.</value>
+  </data>
+  <data name="ExpiredAttestationToken" xml:space="preserve">
+    <value>Error en la validación de un token de atestación. El token recibido de SQL Server ha expirado. Póngase en contacto con el servicio de atención al cliente.</value>
+  </data>
+  <data name="FailToCreateEnclaveSession" xml:space="preserve">
+    <value>No se pudo crear la sesión de enclave porque el servidor de atestación está ocupado.</value>
+  </data>
+  <data name="FailToParseAttestationInfo" xml:space="preserve">
+    <value>Error en la validación de la información de atestación. La información de atestación tiene un formato no válido. Póngase en contacto con el servicio de atención al cliente. Detalles del error: "{0}".</value>
+  </data>
+  <data name="FailToParseAttestationToken" xml:space="preserve">
+    <value>Error en la validación de un token de atestación. El token tiene un formato no válido. Póngase en contacto con el servicio de atención al cliente. Detalles del error: "{0}".</value>
+  </data>
+  <data name="GetAttestationSigningCertificateFailedInvalidCertificate" xml:space="preserve">
+    <value>El servicio de atestación devolvió un certificado raíz de HGS expirado para la dirección URL de atestación "{0}". Compruebe el certificado raíz de HGS configurado para su instancia de HGS.</value>
+  </data>
+  <data name="GetAttestationSigningCertificateRequestFailedFormat" xml:space="preserve">
+    <value>El certificado raíz de HGS obtenido para la dirección URL de atestación "{0}" tiene un formato no válido. Compruebe que la dirección URL de atestación sea correcta y que el servidor HGS esté en línea y completamente inicializado. Para obtener más información, póngase en contacto con los servicios de atención al cliente. Detalles del error: "{1}".</value>
+  </data>
+  <data name="GetAttestationTokenSigningKeysFailed" xml:space="preserve">
+    <value>Error en la validación de un token de atestación. No se puede recuperar una clave pública del punto de conexión de clave pública de atestación o la clave recuperada tiene un formato no válido. Detalles del error: "{0}".</value>
+  </data>
+  <data name="GetSharedSecretFailed" xml:space="preserve">
+    <value>Error de comprobación de firma de la clave Diffie-Hellman del enclave. Póngase en contacto con el servicio de atención al cliente.</value>
+  </data>
+  <data name="InvalidArgumentToBase64UrlDecoder" xml:space="preserve">
+    <value>Error en la validación de un token de atestación debido a un error al descodificar la clave pública del enclave obtenida de SQL Server. Póngase en contacto con el servicio de atención al cliente.</value>
+  </data>
+  <data name="InvalidArgumentToSHA256" xml:space="preserve">
+    <value>Error al validar un token de atestación debido a un error durante el cálculo de un hash de la clave pública del enclave obtenida de SQL Server. Póngase en contacto con el servicio de atención al cliente.</value>
+  </data>
+  <data name="InvalidAttestationToken" xml:space="preserve">
+    <value>Error en la validación del token de atestación durante la validación de la firma. Excepción: "{0}".</value>
+  </data>
+  <data name="InvalidClaimInAttestationToken" xml:space="preserve">
+    <value>Error en la validación de un token de atestación. La notificación "{0}" del token tiene un valor no válido de "{1}". Compruebe la directiva de atestación. Si es correcta, póngase en contacto con el servicio de atención al cliente.</value>
+  </data>
+  <data name="MissingClaimInAttestationToken" xml:space="preserve">
+    <value>Error en la validación del token de atestación. Falta la notificación "{0}" en el token. Compruebe la directiva de atestación. Si es correcta, póngase en contacto con el servicio de atención al cliente.</value>
+  </data>
+  <data name="VerifyEnclaveDebuggable" xml:space="preserve">
+    <value>No se pudo comprobar si el enclave se está ejecutando en modo de producción. Póngase en contacto con el servicio de atención al cliente.</value>
+  </data>
+  <data name="VerifyEnclavePolicyFailedFormat" xml:space="preserve">
+    <value>No se pudo comprobar la directiva de enclave debido a una diferencia entre los valores reales y esperados de la directiva en la propiedad "{0}". Valores reales: "{1}"; valores esperados: "{2}".</value>
+  </data>
+  <data name="VerifyEnclaveReportFailed" xml:space="preserve">
+    <value>Error de comprobación de firma del informe de enclave. La firma del informe no coincide con la firma calculada mediante el certificado raíz de HGS. Compruebe la asignación de DNS del punto de conexión. Si es correcta, póngase en contacto con el servicio de atención al cliente.</value>
+  </data>
+  <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
+    <value>El informe de enclave recibido desde SQL Server no tiene el formato correcto. Póngase en contacto con el servicio de atención al cliente.</value>
+  </data>
+  <data name="VerifyHealthCertificateChainFormat" xml:space="preserve">
+    <value>No se pudo compilar una cadena de confianza entre el informe de mantenimiento del host del enclave y el certificado raíz de HGS para la dirección URL de atestación "{0}" con el estado "{1}". Compruebe que la dirección URL de atestación coincida con la configurada en la máquina SQL Server. Si el cliente y SQL Server usan el mismo servicio de atestación, póngase en contacto con los servicios de atención al cliente.</value>
+  </data>
+  <data name="TCE_DbConnectionString_AttestationProtocol" xml:space="preserve">
+    <value>Especifica un protocolo de atestación para el servicio de atestación de enclave correspondiente.</value>
+  </data>
+  <data name="TCE_EnclaveTypeNotSupported" xml:space="preserve">
+    <value>No se admite el tipo de enclave "{0}" que ha devuelto el servidor.</value>
+  </data>
+  <data name="TCE_AttestationProtocolNotSupportEnclaveType" xml:space="preserve">
+    <value>No se pudo inicializar la conexión. El protocolo de atestación "{0}" no admite el tipo de enclave "{1}".</value>
+  </data>
+  <data name="TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage" xml:space="preserve">
+    <value>Error durante la generación del paquete enclave. No se ha especificado el protocolo de atestación en la cadena de conexión, pero la consulta requiere cálculos de enclave.</value>
   </data>
 </root>

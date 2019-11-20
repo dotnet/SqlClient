@@ -85,6 +85,7 @@ namespace Microsoft.Data.Common
             internal const string Password = "password";
             internal const string Persist_Security_Info = "persist security info";
             internal const string User_ID = "user id";
+            internal const string AttachDBFileName = "attachdbfilename";
         }
 
         // known connection string common synonyms

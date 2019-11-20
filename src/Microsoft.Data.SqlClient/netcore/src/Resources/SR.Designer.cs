@@ -340,6 +340,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The DataDirectory substitute is not a string..
+        /// </summary>
+        internal static string ADP_InvalidDataDirectory {
+            get {
+                return ResourceManager.GetString("ADP_InvalidDataDirectory", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Specified length &apos;{0}&apos; is out of range..
         /// </summary>
         internal static string ADP_InvalidDataLength2 {

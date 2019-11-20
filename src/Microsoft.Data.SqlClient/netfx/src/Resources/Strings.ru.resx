@@ -124,7 +124,7 @@
     <value>Недопустимый индекс {0} для этого {1} с Count={2}.</value>
   </data>
   <data name="ADP_CollectionIndexString" xml:space="preserve">
-    <value>{0} с {1} "{2}" не содержится в данном {3}.</value>
+    <value>{0}, где используется {1} "{2}", не входит в состав "{3}".</value>
   </data>
   <data name="ADP_CollectionInvalidType" xml:space="preserve">
     <value>Для {0} могут задаваться только объекты типа {1}, имеющие определенные значения, но не объекты {2}.</value>
@@ -1948,7 +1948,7 @@
     <value>Существует назначенный этой команде открытый SqlResultSet, который требуется предварительно закрыть.</value>
   </data>
   <data name="ADP_OpenReaderExists" xml:space="preserve">
-    <value>Существует назначенный этой команде Command открытый DataReader, который требуется предварительно закрыть.</value>
+    <value>{0} уже имеет связанный открытый поставщик DataReader, который сначала нужно закрыть.</value>
   </data>
   <data name="ADP_DeriveParametersNotSupported" xml:space="preserve">
     <value>DeriveParameters {0} поддерживает только CommandType.StoredProcedure, но не поддерживает CommandType.{1}.</value>
@@ -2494,16 +2494,16 @@
     <value>Нельзя использовать 'Authentication' с 'Integrated Security'.</value>
   </data>
   <data name="SQL_IntegratedWithUserIDAndPassword" xml:space="preserve">
-    <value>Нельзя использовать 'Authentication=Active Directory Integrated' с ключевыми словами строки подключения 'User ID', 'UID', 'Password' или 'PWD'.</value>
+    <value>Невозможно использовать "Authentication=Active Directory Integrated" с ключевыми словами строки подключения "User ID", "UID", "Password" или "PWD".</value>
   </data>
   <data name="SQL_InteractiveWithUserIDAndPassword" xml:space="preserve">
     <value>Невозможно использовать "Authentication=Active Directory Interactive" с ключевыми словами строки подключения "User ID", "UID", "Password" или "PWD".</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
-    <value>Не удается использовать 'Authentication=Active Directory Integrated', если задано свойство «Credential».</value>
+    <value>Не удается использовать "Authentication=Active Directory Integrated", если задано свойство "Credential".</value>
   </data>
   <data name="SQL_SettingCredentialWithIntegrated" xml:space="preserve">
-    <value>Не удается задать свойство Credential, если в строке подключения указано Authentication=Active Directory Integrated'.</value>
+    <value>Не удается задать свойство "Credential", если в строке подключения указано "Authentication=Active Directory Integrated".</value>
   </data>
   <data name="SQL_Certificate" xml:space="preserve">
     <value>Указаны неверные параметры проверки подлинности с использованием сертификата.</value>
@@ -2818,7 +2818,7 @@
     <value>Указанное ColumnName "{0}" не соответствует ни одному столбцу в источнике данных.</value>
   </data>
   <data name="SQL_BulkLoadStringTooLong" xml:space="preserve">
-    <value>Строка String или двоичные данные binary будут усечены.</value>
+    <value>Произойдет усечение строковых или двоичных данных в столбце "{1}" таблицы "{0}". Усеченное значение: "{2}".</value>
   </data>
   <data name="SQL_BulkLoadInvalidTimeout" xml:space="preserve">
     <value>Значение времени ожидания Timeout Value "{0}" меньше 0.</value>
@@ -4321,7 +4321,7 @@
     <value>Для выполнения запроса требуются вычисления анклава, но в конфигурации приложения отсутствует раздел поставщика анклава.</value>
   </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
-    <value>Поставщик анклава не найден для типа анклава "{0}". Укажите поставщик в конфигурации приложения. </value>
+    <value>Не найден поставщик для анклава типа "{0}" и протокола аттестации "{1}". Укажите корректный протокол аттестации в строке подключения. </value>
   </data>
   <data name="TCE_NullEnclaveSessionReturnedFromProvider" xml:space="preserve">
     <value>Не удалось связаться с анклавом. Сведения о сеансе анклава, равные NULL, получены от поставщика анклава. Тип анклава — "{0}", а URL-адрес аттестации анклава — "{1}".</value>
@@ -4442,5 +4442,80 @@
   </data>
   <data name="SQL_Timeout_Execution" xml:space="preserve">
     <value>Время ожидания выполнения истекло. Время ожидания истекло до завершения операции, или сервер не отвечает.</value>
+  </data>
+  <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
+    <value>Проверка токена аттестации не пройдена. Подпись токена не соответствует подписи, вычисленной на базе открытого ключа, полученного от конечной точки открытых ключей аттестации по адресу "{0}". Проверьте сопоставление DNS для конечной точки. Если оно верно, обратитесь в службу поддержки пользователей.</value>
+  </data>
+  <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
+    <value>Произошла внутренняя ошибка при повторной попытке скачивания корневого сертификата HGS после сбоя начального запроса. Обратитесь в службу поддержки пользователей.</value>
+  </data>
+  <data name="EnclaveSessionInvalidationFailed" xml:space="preserve">
+    <value>Внутренняя ошибка. Не удалось сделать недействительным запрошенный сеанс анклава, так как он отсутствует в кэше. Обратитесь в службу поддержки пользователей.</value>
+  </data>
+  <data name="ExpiredAttestationToken" xml:space="preserve">
+    <value>Проверка токена аттестации не пройдена. Истек срок действия токена, полученного с SQL Server. Обратитесь в службу поддержки пользователей.</value>
+  </data>
+  <data name="FailToCreateEnclaveSession" xml:space="preserve">
+    <value>Не удалось создать сеанс анклава, так как сервер аттестации занят.</value>
+  </data>
+  <data name="FailToParseAttestationInfo" xml:space="preserve">
+    <value>Проверка сведений об аттестации не пройдена. Недопустимый формат сведений об аттестации. Обратитесь в службу поддержки пользователей. Сведения об ошибке: "{0}".</value>
+  </data>
+  <data name="FailToParseAttestationToken" xml:space="preserve">
+    <value>Проверка токена аттестации не пройдена. Недопустимый формат токена. Обратитесь в службу поддержки пользователей. Сведения об ошибке: "{0}".</value>
+  </data>
+  <data name="GetAttestationSigningCertificateFailedInvalidCertificate" xml:space="preserve">
+    <value>Служба аттестации вернула просроченный корневой сертификат HGS для URL-адреса аттестации "{0}". Проверьте корневой сертификат HGS, настроенный для вашего экземпляра HGS.</value>
+  </data>
+  <data name="GetAttestationSigningCertificateRequestFailedFormat" xml:space="preserve">
+    <value>Полученный корневой сертификат HGS для URL-адреса аттестации "{0}" имеет недопустимый формат. Проверьте правильность URL-адреса аттестации и убедитесь, что сервер HGS подключен к сети и полностью инициализирован. За дополнительными сведениями обратитесь в службу поддержки пользователей. Сведения об ошибке: "{1}".</value>
+  </data>
+  <data name="GetAttestationTokenSigningKeysFailed" xml:space="preserve">
+    <value>Проверка токена аттестации не пройдена. Не удается получить открытый ключ из конечной точки открытого ключа аттестации либо полученный ключ имеет недопустимый формат. Сведения об ошибке: "{0}".</value>
+  </data>
+  <data name="GetSharedSecretFailed" xml:space="preserve">
+    <value>Проверка подписи ключа Диффи-Хелмана анклава не пройдена. Обратитесь в службу поддержки пользователей.</value>
+  </data>
+  <data name="InvalidArgumentToBase64UrlDecoder" xml:space="preserve">
+    <value>Проверка токена аттестации не пройдена из-за ошибки при декодировании открытого ключа анклава, полученного с SQL Server. Обратитесь в службу поддержки пользователей.</value>
+  </data>
+  <data name="InvalidArgumentToSHA256" xml:space="preserve">
+    <value>Произошел сбой при проверке токена аттестации из-за ошибки при вычислении хэша открытого ключа анклава, полученного из SQL Server. Обратитесь в службу поддержки пользователей.</value>
+  </data>
+  <data name="InvalidAttestationToken" xml:space="preserve">
+    <value>Проверка токена аттестации не пройдена при проверке подписи. Исключение: "{0}".</value>
+  </data>
+  <data name="InvalidClaimInAttestationToken" xml:space="preserve">
+    <value>Проверка токена аттестации не пройдена. Недопустимое значение "{1}" утверждения "{0}" в токене. Проверьте политику аттестации. Если политика верна, обратитесь в службу поддержки пользователей.</value>
+  </data>
+  <data name="MissingClaimInAttestationToken" xml:space="preserve">
+    <value>Проверка токена аттестации не пройдена. В токене отсутствует утверждение "{0}". Проверьте политику аттестации. Если политика верна, обратитесь в службу поддержки пользователей.</value>
+  </data>
+  <data name="VerifyEnclaveDebuggable" xml:space="preserve">
+    <value>Не удалось проверить, работает ли анклав в рабочем режиме. Обратитесь в службу поддержки пользователей.</value>
+  </data>
+  <data name="VerifyEnclavePolicyFailedFormat" xml:space="preserve">
+    <value>Не удалось проверить политику анклава из-за различий между ожидаемым и фактическим значениями политики в свойстве "{0}". Фактическое: "{1}", ожидаемое: "{2}".</value>
+  </data>
+  <data name="VerifyEnclaveReportFailed" xml:space="preserve">
+    <value>Проверка подписи отчета анклава не пройдена. Подпись отчета не соответствует подписи, вычисленной с помощью корневого сертификата HGS. Проверьте сопоставление DNS для конечной точки. Если оно верно, обратитесь в службу поддержки пользователей.</value>
+  </data>
+  <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
+    <value>Полученный с SQL Server отчет анклава имеет неправильный формат. Обратитесь в службу поддержки пользователей.</value>
+  </data>
+  <data name="VerifyHealthCertificateChainFormat" xml:space="preserve">
+    <value>Не удалось создать цепь доверия между отчетом о работоспособности узла анклава и корневым сертификатом HGS для URL-адреса аттестации "{0}" с состоянием: "{1}". Убедитесь, что URL-адрес аттестации совпадает с URL-адресом, настроенным на компьютере с SQL Server. Если клиент и SQL Server используют одну и ту же службу аттестации, обратитесь в службу поддержки пользователей.</value>
+  </data>
+  <data name="TCE_DbConnectionString_AttestationProtocol" xml:space="preserve">
+    <value>Указывает протокол аттестации для соответствующей службы аттестации анклава.</value>
+  </data>
+  <data name="TCE_EnclaveTypeNotSupported" xml:space="preserve">
+    <value>Возвращаемый с сервера анклав типа "{0}" не поддерживается.</value>
+  </data>
+  <data name="TCE_AttestationProtocolNotSupportEnclaveType" xml:space="preserve">
+    <value>Не удалось инициализировать подключение. Протокол аттестации "{0}" не поддерживает анклав типа "{1}".</value>
+  </data>
+  <data name="TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage" xml:space="preserve">
+    <value>Ошибка при создании пакета анклава. Запрос требует вычислений анклава, но в строке подключения не указан протокол аттестации.</value>
   </data>
 </root>

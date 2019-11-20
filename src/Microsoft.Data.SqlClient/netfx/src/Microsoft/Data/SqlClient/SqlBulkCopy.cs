@@ -288,11 +288,14 @@ namespace Microsoft.Data.SqlClient
         // TODO: I will make this internal to use Reflection.
 #if DEBUG
         internal static bool _setAlwaysTaskOnWrite = false; //when set and in DEBUG mode, TdsParser::WriteBulkCopyValue will always return a task 
-        internal static bool SetAlwaysTaskOnWrite {
-            set {
+        internal static bool SetAlwaysTaskOnWrite
+        {
+            set
+            {
                 _setAlwaysTaskOnWrite = value;
             }
-            get{
+            get
+            {
                 return _setAlwaysTaskOnWrite;
             }
         }
@@ -1072,7 +1075,8 @@ namespace Microsoft.Data.SqlClient
                                 isNull = (columnAsINullable != null) && columnAsINullable.IsNull;
                             }
 #if DEBUG
-                            else if (!isNull) {
+                            else if (!isNull)
+                            {
                                 Debug.Assert(!(value is INullable) || !((INullable)value).IsNull, "IsDBNull returned false, but GetValue returned a null INullable");
                             }
 #endif                            
@@ -2151,7 +2155,8 @@ namespace Microsoft.Data.SqlClient
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
-                try {
+                try
+                {
                     tdsReliabilitySection.Start();
 #else   // !DEBUG
                 {
@@ -2188,7 +2193,8 @@ namespace Microsoft.Data.SqlClient
                 }
 
 #if DEBUG
-                finally {
+                finally
+                {
                     tdsReliabilitySection.Stop();
                 }
 #endif //DEBUG
@@ -2896,24 +2902,26 @@ namespace Microsoft.Data.SqlClient
 #if DEBUG
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
                 RuntimeHelpers.PrepareConstrainedRegions();
-                try {
+                try
+                {
                     tdsReliabilitySection.Start();
 #endif //DEBUG
-                if ((cleanupParser) && (_parser != null) && (_stateObj != null))
-                {
-                    _parser._asyncWrite = false;
-                    Task task = _parser.WriteBulkCopyDone(_stateObj);
-                    Debug.Assert(task == null, "Write should not pend when error occurs");
-                    RunParser();
-                }
+                    if ((cleanupParser) && (_parser != null) && (_stateObj != null))
+                    {
+                        _parser._asyncWrite = false;
+                        Task task = _parser.WriteBulkCopyDone(_stateObj);
+                        Debug.Assert(task == null, "Write should not pend when error occurs");
+                        RunParser();
+                    }
 
-                if (_stateObj != null)
-                {
-                    CleanUpStateObjectOnError();
-                }
+                    if (_stateObj != null)
+                    {
+                        CleanUpStateObject();
+                    }
 #if DEBUG
                 }
-                finally {
+                finally
+                {
                     tdsReliabilitySection.Stop();
                 }
 #endif //DEBUG
@@ -2939,7 +2947,7 @@ namespace Microsoft.Data.SqlClient
 
         //Cleans the stateobj. Used in a number of places, specially in  exceptions
         //
-        private void CleanUpStateObjectOnError()
+        private void CleanUpStateObject(bool isCancelRequested = true)
         {
             if (_stateObj != null)
             {
@@ -2949,7 +2957,7 @@ namespace Microsoft.Data.SqlClient
                     _stateObj.ResetBuffer();
                     _stateObj.ResetPacketCounters();
                     //If _parser is closed, sending attention will raise debug assertion, so we avoid it but not calling CancelRequest;
-                    if (_parser.State == TdsParserState.OpenNotLoggedIn || _parser.State == TdsParserState.OpenLoggedIn)
+                    if (isCancelRequested && (_parser.State == TdsParserState.OpenNotLoggedIn || _parser.State == TdsParserState.OpenLoggedIn))
                     {
                         _stateObj.CancelRequest();
                     }
@@ -3011,13 +3019,12 @@ namespace Microsoft.Data.SqlClient
                             _localColumnMappings = null;
                             try
                             {
-                                CleanUpStateObjectOnError();
+                                CleanUpStateObject();
                             }
                             finally
                             {
                                 source.SetCanceled();
                             }
-
                         }
                         else if (task.Exception != null)
                         {
@@ -3028,7 +3035,7 @@ namespace Microsoft.Data.SqlClient
                             _localColumnMappings = null;
                             try
                             {
-                                CleanUpStateObjectOnError();
+                                CleanUpStateObject(isCancelRequested: false);
                             }
                             finally
                             {
@@ -3054,11 +3061,11 @@ namespace Microsoft.Data.SqlClient
 
                     try
                     {
-                        CleanUpStateObjectOnError();
+                        CleanUpStateObject(isCancelRequested: false);
                     }
                     catch (Exception cleanupEx)
                     {
-                        Debug.Fail("Unexpected exception during CleanUpstateObjectOnError (ignored)", cleanupEx.ToString());
+                        Debug.Fail($"Unexpected exception during {nameof(CleanUpStateObject)} (ignored)", cleanupEx.ToString());
                     }
 
                     if (source != null)
@@ -3073,11 +3080,11 @@ namespace Microsoft.Data.SqlClient
 
                 try
                 {
-                    CleanUpStateObjectOnError();
+                    CleanUpStateObject();
                 }
                 catch (Exception cleanupEx)
                 {
-                    Debug.Fail("Unexpected exception during CleanUpstateObjectOnError (ignored)", cleanupEx.ToString());
+                    Debug.Fail($"Unexpected exception during {nameof(CleanUpStateObject)} (ignored)", cleanupEx.ToString());
                 }
 
                 if (source != null)
