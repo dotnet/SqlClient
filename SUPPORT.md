@@ -6,9 +6,9 @@ Microsoft.Data.SqlClient library follows the latest .NET Core support policy for
 
 ## Microsoft.Data.SqlClient release cadence
 
-We will publish new major (GA or stable) releases every 6 months on a regular cadence beginning with v1.2 along with 2-3 preview releases in the time frame. LTS releases will be chosen by stakeholders and maintainers based on a few qualifications and customer response.
+We will publish new GA (stable) releases every 6 months on a regular cadence beginning with v1.2 along with 2-3 preview releases in between. LTS releases will be chosen by stakeholders and maintainers based on a few qualifications and customer response.
 
-## Release Lifecycles
+## Release Life Cycles
 
 | Version | Official Release Date | Latest Patch Version | Patch Release Date | Support Level  | End of Support |
 | -- | -- | -- | -- | -- | -- |
