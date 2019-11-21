@@ -36,7 +36,7 @@
             <format type="text/markdown"><![CDATA[  
   
 ## Remarks  
- You must ensure the <xref:Microsoft.Data.SqlClient.SqlDataReader.Close%2A> method is called when you are through using the <xref:Microsoft.Data.SqlClient.SqlDataReader> before using the associated <xref:Microsoft.Data.SqlClient.SqlConnection> for any other purpose. The `Close` method may either be called directly or through the <xref:Microsoft.Data.SqlClient.SqlDataReader.Dispose%2A> method, disposing directly or in the context of [the using statement](~/_csharplang/spec/statements.md#the-using-statement) block.
+ You must ensure the <xref:Microsoft.Data.SqlClient.SqlDataReader.Close%2A> method is called when you are through using the <xref:Microsoft.Data.SqlClient.SqlDataReader> before using the associated <xref:Microsoft.Data.SqlClient.SqlConnection> for any other purpose. The `Close` method may either be called directly or through the `Dispose` method, disposing directly or in the context of [the using statement](~/_csharplang/spec/statements.md#the-using-statement) block.
   
  The `Close` method populates the values for output parameters, return values and `RecordsAffected` on the <xref:Microsoft.Data.SqlClient.SqlDataReader> by consuming any pending results. This may be a long operation depending on the amount of data to be consumed. If output values, return values, and `RecordsAffected` are not important to your application, the time to close may be shortened by calling the <xref:Microsoft.Data.SqlClient.SqlCommand.Cancel%2A> method of the associated <xref:Microsoft.Data.SqlClient.SqlCommand> object before the `Close` method is called.
   
