@@ -418,7 +418,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     cmdText: $"select * from [{tableName}] where FirstName != {DummyParamName} and CustomerId = @CustomerId",
                     connection: sqlConnection))
                 {
-                    cmd.CommandTimeout = 90;
+                    if (DataTestUtility.EnclaveEnabled)
+                    {
+                        //Increase Time out for enclave-enabled server.
+                        cmd.CommandTimeout = 90;
+                    }
+
                     SqlParameter dummyParam = new SqlParameter(DummyParamName, SqlDbType.NVarChar, 150)
                     {
                         Value = "a"
@@ -538,7 +543,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                                 transaction: null,
                                 columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
                             {
-                                sqlCommand.CommandTimeout = 90;
+                                if (DataTestUtility.EnclaveEnabled)
+                                {
+                                    //Increase Time out for enclave-enabled server.
+                                    sqlCommand.CommandTimeout = 90;
+                                }
 
                                 sqlCommand.Parameters.AddWithValue(@"FirstName", string.Format(@"Microsoft{0}", i + 100));
                                 sqlCommand.Parameters.AddWithValue(@"CustomerId", values[0]);
@@ -1824,7 +1833,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 // select the set of rows that were inserted just now.
                 using (SqlCommand sqlCommand = new SqlCommand($"SELECT LastName FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId FOR XML AUTO;", sqlConnection, transaction: null, columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
                 {
-                    sqlCommand.CommandTimeout = 90;
+                    if (DataTestUtility.EnclaveEnabled)
+                    {
+                        //Increase Time out for enclave-enabled server.
+                        sqlCommand.CommandTimeout = 90;
+                    }
                     sqlCommand.Parameters.Add(@"CustomerId", SqlDbType.Int);
                     sqlCommand.Parameters.Add(@"FirstName", SqlDbType.NVarChar, ((string)values[1]).Length);
 
