@@ -6,11 +6,11 @@ This guide is to cover all namespace changes needed in client applications when 
 
 | Namespace Change | Applicability |
 |--|--|
-| <pre><code><del>using System.Data.SqlClient;</del> <br>using Microsoft.Data.SqlClient;</pre></code> | Applicable on all classes, enums and delegates. |
-| <pre><code><del>using Microsoft.SqlServer.Server;</del> <br>using Microsoft.Data.SqlClient.Server;</pre></code> | Applicable Classes: <br>`InvalidUdtException`<br>`SqlDataRecord`<br>`SqlFunctionAttribute`<br>`SqlMetaData`<br>`SqlMethodAttribute`<br>`SqlUserDefinedAggregateAttribute`<br>`SqlUserDefinedTypeAttribute`<br><br>Applicable Interfaces: <br>`IBinarySerialize`<br><br>Applicable Enums: <br>`DataAccessKind`<br>`Format`<br>`SystemDataAccessKind`|
-| <pre><code><del>using System.Data.SqlTypes;</del> <br>using Microsoft.Data.SqlTypes;</pre></code> | Applicable Classes:<br>`SqlFileStream`|
-| <pre><code><del>using System.Data.Sql;</del> <br>using Microsoft.Data.Sql;</pre></code> | Applicable Classes:<br>`SqlNotificationRequest`<br> |
-| <pre><code><del>using System.Data;</del> <br>using Microsoft.Data;</pre></code> | Applicable Classes:<br>`OperationAbortedException`|
+| <s>`using System.Data.SqlClient;`</s><br>`using Microsoft.Data.SqlClient;` | Applicable on all classes, enums and delegates. |
+| <s>`using Microsoft.SqlServer.Server;`</s><br>`using Microsoft.Data.SqlClient.Server;` | Applicable Classes: <br>`InvalidUdtException`<br>`SqlDataRecord`<br>`SqlFunctionAttribute`<br>`SqlMetaData`<br>`SqlMethodAttribute`<br>`SqlUserDefinedAggregateAttribute`<br>`SqlUserDefinedTypeAttribute`<br><br>Applicable Interfaces: <br>`IBinarySerialize`<br><br>Applicable Enums: <br>`DataAccessKind`<br>`Format`<br>`SystemDataAccessKind`|
+| <s>`using System.Data.SqlTypes;`</s> <br>`using Microsoft.Data.SqlTypes;` | Applicable Classes:<br>`SqlFileStream`|
+| <s>`using System.Data.Sql;`</s> <br>`using Microsoft.Data.Sql;`</s> | Applicable Classes:<br>`SqlNotificationRequest`<br> |
+| <s>`using System.Data;`</s> <br>`using Microsoft.Data;`</s> | Applicable Classes:<br>`OperationAbortedException`|
 
 ## Contribute to Cheat Sheet
 
