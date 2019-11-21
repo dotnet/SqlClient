@@ -40,6 +40,7 @@ When referencing the native `SNI.dll` on Windows, the Microsoft Visual C++ Redis
 | Guidelines for building the driver | [BUILDGUIDE.md](BUILDGUIDE.md) |
 | Guidelines for Contributors | [CONTRIBUTING.md](CONTRIBUTING.md) |
 | Changelog for all driver releases | [CHANGELOG.md](CHANGELOG.md) |
+| Support Policy | [SUPPORT.md](SUPPORT.md) |
 | Code of Conduct | [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) |
 | Copyright Information | [COPYRIGHT.md](COPYRIGHT.md) |
 | | |
@@ -47,6 +48,10 @@ When referencing the native `SNI.dll` on Windows, the Microsoft Visual C++ Redis
 ## Release Notes
 
 All preview and stable driver release notes are available under [release-notes](release-notes).
+
+## Porting from System.Data.SqlClient
+
+Refer to [porting-cheat-sheet.md](porting-cheat-sheet.md) for a safe porting experience from System.Data.SqlClient to Microsoft.Data.SqlClient and share your experience with us by advancing this guide for future developers.
 
 ## Still have questions?
 
