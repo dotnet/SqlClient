@@ -61,7 +61,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 else
                 {
                     // Avoid consuming the same instance twice.
-                    vt = new ValueTask<int>(_length);
+                    vt = new ValueTask<int>(_dataLength);
                 }
             }
 
