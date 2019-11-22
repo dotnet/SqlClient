@@ -176,7 +176,8 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
         public void Dispose()
         {
-            RemoveKeyFromCng(providerName, containerName);
+            // Do Not remove Key for concurrency.
+            // RemoveKeyFromCng(providerName, containerName);
         }
 
         public static void AddKeyToCng(string providerName, string containerName)
@@ -184,12 +185,16 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             CngKeyCreationParameters keyParams = new CngKeyCreationParameters();
 
             keyParams.Provider = new CngProvider(providerName);
-            keyParams.KeyCreationOptions = CngKeyCreationOptions.OverwriteExistingKey;
+            keyParams.KeyCreationOptions = CngKeyCreationOptions.None;
 
             CngProperty keySizeProperty = new CngProperty("Length", BitConverter.GetBytes(2048), CngPropertyOptions.None);
             keyParams.Parameters.Add(keySizeProperty);
 
-            CngKey mycngKey = CngKey.Create(CngAlgorithm.Rsa, containerName, keyParams);
+            // Add Cng Key only if not exists.
+            if (!CngKey.Exists(containerName))
+            {
+                CngKey mycngKey = CngKey.Create(CngAlgorithm.Rsa, containerName, keyParams);
+            }
         }
 
         public static void RemoveKeyFromCng(string providerName, string containerName)
