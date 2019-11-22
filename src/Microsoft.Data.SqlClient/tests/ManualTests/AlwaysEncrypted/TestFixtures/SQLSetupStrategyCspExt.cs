@@ -7,11 +7,10 @@ using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
-    public class SQLSetupStrategyCspExt : SQLSetupStrategy
+    public class SQLSetupStrategyCspExt : SQLSetupStrategyCertStoreProvider
     {
-        //public string keyPath {get; private set;}
-        public Table CspProviderTable {get; private set;}
-        public SqlColumnEncryptionCspProvider keyStoreProvider {get;}
+        public Table CspProviderTable { get; private set; }
+        public SqlColumnEncryptionCspProvider keyStoreProvider { get; }
 
         public SQLSetupStrategyCspExt(string cspKeyPath) : base(cspKeyPath)
         {
@@ -21,7 +20,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         internal override void SetupDatabase()
         {
-            ColumnMasterKey columnMasterKey = new CspColumnMasterKey(GenerateUniqueName("CMK"), SqlColumnEncryptionCspProvider.ProviderName, keyPath);
+            ColumnMasterKey columnMasterKey = new CspProviderColumnMasterKey(GenerateUniqueName("CspExt"), SqlColumnEncryptionCspProvider.ProviderName, keyPath);
             databaseObjects.Add(columnMasterKey);
 
             List<ColumnEncryptionKey> columnEncryptionKeys = CreateColumnEncryptionKeys(columnMasterKey, 2, keyStoreProvider);
@@ -30,11 +29,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Table table = CreateTable(columnEncryptionKeys);
             databaseObjects.Add(table);
 
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TcpConnStr))
+            foreach(string value in DataTestUtility.AEConnStringsSetup)
             {
-                sqlConnection.Open();
-                databaseObjects.ForEach(o => o.Create(sqlConnection));
+                using (SqlConnection sqlConnection = new SqlConnection(value))
+                {
+                    sqlConnection.Open();
+                    databaseObjects.ForEach(o => o.Create(sqlConnection));
+                }
             }
+           
         }
 
         private Table CreateTable(IList<ColumnEncryptionKey> columnEncryptionKeys)
@@ -42,15 +45,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             CspProviderTable = new ApiTestTable(GenerateUniqueName("CspProviderTable"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
 
             return CspProviderTable;
-        }
-
-        public void DropTable()
-        {
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TcpConnStr))
-            {
-                sqlConnection.Open();
-                CspProviderTable.Drop(sqlConnection);
-            }
         }
     }
 }

@@ -4,21 +4,15 @@
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <summary>
-    /// Encapsulates the information SqlClient sends to SQL Server to initiate the process of attesting and creating a secure session with the enclave, SQL Server uses for computations on columns protected using Always Encrypted.
-    /// </summary>
+    /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlEnclaveAttestationParameters.xml' path='docs/members[@name="SqlEnclaveAttestationParameters"]/SqlEnclaveAttestationParameters/*' />
     public partial class SqlEnclaveAttestationParameters
     {
         private readonly byte[] _input = null;
 
-        /// <summary>
-        /// Identifies an enclave attestation protocol.  
-        /// </summary>
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlEnclaveAttestationParameters.xml' path='docs/members[@name="SqlEnclaveAttestationParameters"]/Protocol/*' />
         public int Protocol { get; }
 
-        /// <summary>
-        /// The information used to initiate the process of attesting the enclave. The format and the content of this information is specific to the attestation protocol. 
-        /// </summary>
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlEnclaveAttestationParameters.xml' path='docs/members[@name="SqlEnclaveAttestationParameters"]/GetInput/*' />
         public byte[] GetInput()
         {
             return Clone(_input);

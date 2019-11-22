@@ -24,14 +24,14 @@ namespace Microsoft.Data.SqlClient
         static SqlAuthenticationProviderManager()
         {
             var activeDirectoryAuthNativeProvider = new ActiveDirectoryNativeAuthenticationProvider();
-            SqlAuthenticationProviderConfigurationSection configurationSection;
+            SqlAuthenticationProviderConfigurationSection configurationSection = null;
             try
             {
                 configurationSection = (SqlAuthenticationProviderConfigurationSection)ConfigurationManager.GetSection(SqlAuthenticationProviderConfigurationSection.Name);
             }
-            catch (ConfigurationErrorsException e)
+            catch (ConfigurationErrorsException)
             {
-                throw SQL.CannotGetAuthProviderConfig(e);
+                // Don't throw an error for invalid config files
             }
             Instance = new SqlAuthenticationProviderManager(configurationSection);
             Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryIntegrated, activeDirectoryAuthNativeProvider);
@@ -202,14 +202,12 @@ namespace Microsoft.Data.SqlClient
         public string InitializerType => base["initializerType"] as string;
     }
 
-    /// <summary>
-    /// The abstract initializer class that users can implement to initialize their component before SqlAuthenticationProviderManager starts.
-    /// </summary>
+
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationInitializer.xml' path='docs/members[@name="SqlAuthenticationInitializer"]/SqlAuthenticationInitializer/*'/>
     public abstract class SqlAuthenticationInitializer
     {
-        /// <summary>
-        /// The initialize callback from SqlAuthenticationProviderManager. This is called before SqlAuthenticationProviderManager loads providers.
-        /// </summary>
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationInitializer.xml' path='docs/members[@name="SqlAuthenticationInitializer"]/Initialize/*'/>
         public abstract void Initialize();
     }
 }

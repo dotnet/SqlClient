@@ -739,7 +739,7 @@
     <value>'{0}' 선언이 중복되었습니다.</value>
   </data>
   <data name="Xml_MissingTable" xml:space="preserve">
-    <value>diffGram을 로드할 수 없습니다. 대상 데이터 집합에 테이블 '{0}'이(가) 없습니다.</value>
+    <value>diffGram을 로드할 수 없습니다. 대상 데이터 세트에 테이블 '{0}'이(가) 없습니다.</value>
   </data>
   <data name="Xml_MissingSQL" xml:space="preserve">
     <value>diffGram을 로드할 수 없습니다. 'sql' 노드가 없습니다.</value>
@@ -760,7 +760,7 @@
     <value>유형 '{0}'은(는) IXmlSerializable 인터페이스를 구현하지 않으므로 serialization을 계속할 수 없습니다.</value>
   </data>
   <data name="Xml_CanNotDeserializeObjectType" xml:space="preserve">
-    <value>Deserialization을 계속할 수 없습니다. 데이터가 IXMLSerializable을 구현하지 않으므로 다형성이 지원되지 않습니다.</value>
+    <value>역직렬화를 계속할 수 없습니다. 데이터가 IXMLSerializable을 구현하지 않으므로 다형성이 지원되지 않습니다.</value>
   </data>
   <data name="Xml_DataTableInferenceNotSupported" xml:space="preserve">
     <value>DataTable은 Xml에서 스키마 유추를 지원하지 않습니다.</value>
@@ -775,7 +775,7 @@
     <value>DataSet 요소를 확인할 수 없습니다. IsDataSet 특성이 둘 이상 있습니다.</value>
   </data>
   <data name="Xml_DynamicWithoutXmlSerializable" xml:space="preserve">
-    <value>데이터 집합은 IDynamicMetaObjectProvider를 구현하면서 IXmlSerializable은 구현하지 않는 형식을 직렬화하지 않습니다.</value>
+    <value>데이터 세트은 IDynamicMetaObjectProvider를 구현하면서 IXmlSerializable은 구현하지 않는 형식을 직렬화하지 않습니다.</value>
   </data>
   <data name="Expr_NYI" xml:space="preserve">
     <value>기능이 구현되지 않았습니다. {0}</value>
@@ -1486,10 +1486,10 @@
     <value>집계 함수 {0}() 및 형식 {1} 사용이 잘못되었습니다.</value>
   </data>
   <data name="DataStorage_InvalidStorageType" xml:space="preserve">
-    <value>저장소 형식이 잘못되었습니다. {0}</value>
+    <value>스토리지 형식이 잘못되었습니다. {0}</value>
   </data>
   <data name="DataStorage_ProblematicChars" xml:space="preserve">
-    <value>DataSet Xml 지속성은 '{0}' 값을 Char 값으로 지원하지 않습니다. Byte 저장소를 대신 사용하세요.</value>
+    <value>DataSet Xml 지속성은 '{0}' 값을 Char 값으로 지원하지 않습니다. Byte 스토리지를 대신 사용하세요.</value>
   </data>
   <data name="DataStorage_SetInvalidDataType" xml:space="preserve">
     <value>값의 유형이 열 유형과 일치하지 않습니다.</value>
@@ -1948,7 +1948,7 @@
     <value>이 명령과 연결된 SqlResultSet이 이미 열려 있습니다. 먼저 닫아야 합니다.</value>
   </data>
   <data name="ADP_OpenReaderExists" xml:space="preserve">
-    <value>이 Command와 연결된 DataReader가 이미 열려 있습니다. 먼저 닫아야 합니다.</value>
+    <value>이 {0}과(와) 연결된 DataReader가 이미 열려 있습니다. 먼저 닫아야 합니다.</value>
   </data>
   <data name="ADP_DeriveParametersNotSupported" xml:space="preserve">
     <value>{0} DeriveParameters는 CommandType.StoredProcedure만 지원하며 CommandType.{1}은(는) 지원하지 않습니다.</value>
@@ -2818,7 +2818,7 @@
     <value>지정된 ColumnName '{0}'이(가) 데이터 원본의 열과 일치하지 않습니다.</value>
   </data>
   <data name="SQL_BulkLoadStringTooLong" xml:space="preserve">
-    <value>String 또는 binary 데이터가 잘립니다.</value>
+    <value>'{0}' 테이블, '{1}' 열에서 문자열 또는 이진 데이터가 잘립니다. '{2}' 값이 잘렸습니다.</value>
   </data>
   <data name="SQL_BulkLoadInvalidTimeout" xml:space="preserve">
     <value>Timeout 값 '{0}'이(가) 0보다 작습니다.</value>
@@ -3241,10 +3241,10 @@
     <value>true인 경우 한 연결에서 여러 결과 집합을 반환하고 읽을 수 있습니다.</value>
   </data>
   <data name="DbConnectionString_MultiSubnetFailover" xml:space="preserve">
-    <value>응용 프로그램이 서로 다른 서브넷에 있는 고가용성 재해 복구(AlwaysOn) AG(가용성 그룹)에 연결하는 경우, MultiSubnetFailover=Yes로 설정하면 현재 활성 서버에 대한 검색 및 연결 속도가 더 빨라지도록 SqlConnection이 구성됩니다.</value>
+    <value>애플리케이션이 서로 다른 서브넷에 있는 고가용성 재해 복구(AlwaysOn) AG(가용성 그룹)에 연결하는 경우, MultiSubnetFailover=Yes로 설정하면 현재 활성 서버에 대한 검색 및 연결 속도가 더 빨라지도록 SqlConnection이 구성됩니다.</value>
   </data>
   <data name="DbConnectionString_TransparentNetworkIPResolution" xml:space="preserve">
-    <value>응용 프로그램이 다른 네트워크에 연결되어 있는 경우 TransparentNetworkIPResolution=Yes는 네트워크 IP 토폴로지와 독립적으로 현재 활성 서버에 대한 투명한 연결 확인을 제공하도록 SqlConnection을 구성합니다.</value>
+    <value>애플리케이션이 다른 네트워크에 연결되어 있는 경우 TransparentNetworkIPResolution=Yes는 네트워크 IP 토폴로지와 독립적으로 현재 활성 서버에 대한 투명한 연결 확인을 제공하도록 SqlConnection을 구성합니다.</value>
   </data>
   <data name="DbConnectionString_NetworkLibrary" xml:space="preserve">
     <value>SQL Server의 인스턴스에 대한 연결을 설정하는 데 사용되는 네트워크 라이브러리입니다.</value>
@@ -3283,7 +3283,7 @@
     <value>SQL Server에 연결하는 워크스테이션의 이름입니다.</value>
   </data>
   <data name="DbConnectionString_ApplicationIntent" xml:space="preserve">
-    <value>서버에 연결할 때 응용 프로그램 작업 형식을 선언합니다.</value>
+    <value>서버에 연결할 때 애플리케이션 작업 형식을 선언합니다.</value>
   </data>
   <data name="DbConnectionString_ConnectRetryCount" xml:space="preserve">
     <value>연결 복구 시도 횟수입니다.</value>
@@ -4144,10 +4144,10 @@
     <value>지정한 암호화된 열 암호화 키 서명이 '{0}'에 있는 열 마스터 키(비대칭 키)로 계산된 서명과 일치하지 않습니다. 암호화된 열 암호화 키가 손상되었거나 지정된 경로가 잘못되었을 수 있습니다.</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
-    <value>키 경로 '{0}'의 지정된 인증서에 열 암호화 키를 암호화할 개인 키가 없습니다. 인증서를 올바로 가져왔는지 확인하세요.</value>
+    <value>키 경로 '{0}'의 지정된 인증서에 열 암호화 키를 암호화할 프라이빗 키가 없습니다. 인증서를 올바로 가져왔는지 확인하세요.</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKeySysErr" xml:space="preserve">
-    <value>키 경로 '{0}'의 지정된 인증서에 열 암호화 키의 암호를 해독할 개인 키가 없습니다. 인증서를 올바로 가져왔는지 확인하세요.</value>
+    <value>키 경로 '{0}'의 지정된 인증서에 열 암호화 키의 암호를 해독할 프라이빗 키가 없습니다. 인증서를 올바로 가져왔는지 확인하세요.</value>
   </data>
   <data name="TCE_NullColumnEncryptionKeySysErr" xml:space="preserve">
     <value>내부 오류입니다. 열 암호화 키는 null일 수 없습니다.</value>
@@ -4228,7 +4228,7 @@
     <value>{2}에서 받은 정규화 버전 '{0}'이(가) 지원되지 않습니다. 유효한 정규화 버전은 {1}입니다.</value>
   </data>
   <data name="TCE_UnrecognizedKeyStoreProviderName" xml:space="preserve">
-    <value>열 암호화 키의 암호를 해독하지 못했습니다. 키 저장소 공급자 이름 '{0}'이(가) 잘못되었습니다. 키 저장소 공급자 이름은 시스템 키 저장소 공급자나 등록된 사용자 지정 키 저장소 공급자를 나타내야 합니다. 유효한 시스템 키 저장소 공급자 이름은 {1}입니다. 유효한(현재 등록된) 사용자 지정 키 저장소 공급자 이름은 {2}입니다. 데이터베이스의 열 마스터 키 정의에서 키 저장소 공급자 정보를 확인하고 응용 프로그램에서 사용된 모든 사용자 지정 키 저장소 공급자가 올바로 등록되어 있는지 확인하세요.</value>
+    <value>열 암호화 키의 암호를 해독하지 못했습니다. 키 저장소 공급자 이름 '{0}'이(가) 잘못되었습니다. 키 저장소 공급자 이름은 시스템 키 저장소 공급자나 등록된 사용자 지정 키 저장소 공급자를 나타내야 합니다. 유효한 시스템 키 저장소 공급자 이름은 {1}입니다. 유효한(현재 등록된) 사용자 지정 키 저장소 공급자 이름은 {2}입니다. 데이터베이스의 열 마스터 키 정의에서 키 저장소 공급자 정보를 확인하고 애플리케이션에서 사용된 모든 사용자 지정 키 저장소 공급자가 올바로 등록되어 있는지 확인하세요.</value>
   </data>
   <data name="TCE_KeyDecryptionFailedCertStore" xml:space="preserve">
     <value>키 저장소 공급자 '{0}'을(를) 사용하여 열 암호화 키의 암호를 해독하지 못했습니다. 암호화된 열 암호화 키의 마지막 10바이트는 '{1}'입니다.</value>
@@ -4258,7 +4258,7 @@
     <value>enclave 형식 '{0}'에 대해 enclave 공급자가 지정한 증명 매개 변수가 잘못되었습니다. 매개 변수 '{2}'의 값 '{1}'을(를) 부호 없는 정수로 변환하는 중 오류가 발생했습니다. 오류 메시지: {3}</value>
   </data>
   <data name="TCE_InvalidKeyStoreProviderName" xml:space="preserve">
-    <value>키 저장소 공급자 이름 '{0}'이(가) 잘못되었습니다. 키 저장소 공급자 이름은 시스템 키 저장소 공급자나 등록된 사용자 지정 키 저장소 공급자를 나타내야 합니다. 유효한 시스템 키 저장소 공급자 이름은 {1}입니다. 유효한(현재 등록된) 사용자 지정 키 저장소 공급자 이름은 {2}입니다. 데이터베이스의 열 마스터 키 정의에서 키 저장소 공급자 정보를 확인하고 응용 프로그램에서 사용된 모든 사용자 지정 키 저장소 공급자가 올바로 등록되어 있는지 확인하세요.</value>
+    <value>키 저장소 공급자 이름 '{0}'이(가) 잘못되었습니다. 키 저장소 공급자 이름은 시스템 키 저장소 공급자나 등록된 사용자 지정 키 저장소 공급자를 나타내야 합니다. 유효한 시스템 키 저장소 공급자 이름은 {1}입니다. 유효한(현재 등록된) 사용자 지정 키 저장소 공급자 이름은 {2}입니다. 데이터베이스의 열 마스터 키 정의에서 키 저장소 공급자 정보를 확인하고 애플리케이션에서 사용된 모든 사용자 지정 키 저장소 공급자가 올바로 등록되어 있는지 확인하세요.</value>
   </data>
   <data name="TCE_FailedToEncryptRegisterRulesBytePackage" xml:space="preserve">
     <value>내부 오류가 발생했습니다. enclave로 전송할 바이트 패키지를 암호화하지 못했습니다. 오류 메시지: {0} </value>
@@ -4297,10 +4297,10 @@
     <value>내부 오류가 발생했습니다. '{1}.{2}' 메서드를 실행할 때 인수 '{0}'을(를) 비워둘 수 없습니다.</value>
   </data>
   <data name="TCE_DbConnectionString_EnclaveAttestationUrl" xml:space="preserve">
-    <value>Always Encrypted를 사용하여 암호화된 데이터베이스 열의 계산에 대해 SQL Server 인스턴스에 구성된 elclave가 유효하고 안전한지를 확인하는 데 사용할 enclave 증명 서비스의 끝점을 지정합니다.</value>
+    <value>Always Encrypted를 사용하여 암호화된 데이터베이스 열의 계산에 대해 SQL Server 인스턴스에 구성된 elclave가 유효하고 안전한지를 확인하는 데 사용할 enclave 증명 서비스의 엔드포인트을 지정합니다.</value>
   </data>
   <data name="TCE_CannotGetSqlColumnEncryptionEnclaveProviderConfig" xml:space="preserve">
-    <value>enclave 공급자의 구성 섹션을 읽지 못했습니다. 섹션이 응용 프로그램 구성 파일에 올바르게 형식이 지정되어 있는지 확인하세요. 오류 메시지: {0}</value>
+    <value>enclave 공급자의 구성 섹션을 읽지 못했습니다. 섹션이 애플리케이션 구성 파일에 올바르게 형식이 지정되어 있는지 확인하세요. 오류 메시지: {0}</value>
   </data>
   <data name="TCE_CannotCreateSqlColumnEncryptionEnclaveProvider" xml:space="preserve">
     <value>이름 '{0}'에 대해 '{1}' 형식을 사용하여 enclave 공급자를 인스턴스화하지 못했습니다. 오류 메시지: {2} </value>
@@ -4318,10 +4318,10 @@
     <value>내부 오류가 발생했습니다. enclave 계산이 필요한 쿼리를 실행할 때 SQL Server에서 수신된 enclave 형식이 null이거나 비어 있습니다.</value>
   </data>
   <data name="TCE_EnclaveProvidersNotConfiguredForEnclaveBasedQuery" xml:space="preserve">
-    <value>쿼리를 실행하려면 enclave 계산이 필요하지만 응용 프로그램 구성에 enclave 공급자 섹션이 없습니다.</value>
+    <value>쿼리를 실행하려면 enclave 계산이 필요하지만 애플리케이션 구성에 enclave 공급자 섹션이 없습니다.</value>
   </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
-    <value>enclave 형식 '{0}'에 대해 enclave 공급자를 찾지 못했습니다. 응용 프로그램 구성에서 공급자를 지정하세요. </value>
+    <value>enclave 형식 '{0}' 및 증명 프로토콜 '{1}'에 대한 enclave 공급자를 찾을 수 없습니다. 연결 문자열에 올바른 증명 프로토콜을 지정하세요. </value>
   </data>
   <data name="TCE_NullEnclaveSessionReturnedFromProvider" xml:space="preserve">
     <value>enclave와 통신할 수 없습니다. Null enclave 세션 정보를 enclave 공급자로부터 받았습니다. enclave 형식은 '{0}'이고 enclave 증명 URL은 '{1}'입니다.</value>
@@ -4442,5 +4442,80 @@
   </data>
   <data name="SQL_Timeout_Execution" xml:space="preserve">
     <value>실행 제한 시간을 초과했습니다. 작업이 완료되기 전에 실행 제한 시간이 지났거나 서버가 응답하지 않습니다.</value>
+  </data>
+  <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
+    <value>증명 토큰의 유효성을 검사하지 못했습니다. 토큰 서명이 '{0}'의 증명 공개 키 엔드포인트에서 검색된 공개 키를 사용하여 계산된 서명과 일치하지 않습니다. 엔드포인트에 대한 DNS 매핑을 확인하세요. 올바른 경우 고객 지원 서비스에 문의하세요.</value>
+  </data>
+  <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
+    <value>초기 요청이 실패한 후 HGS 루트 인증서 다운로드를 다시 시도하는 동안 내부 오류가 발생했습니다. 고객 지원 서비스에 문의하세요.</value>
+  </data>
+  <data name="EnclaveSessionInvalidationFailed" xml:space="preserve">
+    <value>내부 오류입니다. 요청한 enclave 세션이 캐시에 없으므로 무효화할 수 없습니다. 고객 지원 서비스에 문의하세요.</value>
+  </data>
+  <data name="ExpiredAttestationToken" xml:space="preserve">
+    <value>증명 토큰의 유효성을 검사하지 못했습니다. SQL Server에서 수신된 토큰이 만료되었습니다. 고객 지원 서비스에 문의하세요.</value>
+  </data>
+  <data name="FailToCreateEnclaveSession" xml:space="preserve">
+    <value>증명 서버 사용량이 많기 때문에 enclave 세션을 만들지 못했습니다.</value>
+  </data>
+  <data name="FailToParseAttestationInfo" xml:space="preserve">
+    <value>증명 정보의 유효성을 검사하지 못했습니다. 증명 정보의 형식이 유효하지 않습니다. 고객 지원 서비스에 문의하세요. 오류 세부 정보: '{0}'.</value>
+  </data>
+  <data name="FailToParseAttestationToken" xml:space="preserve">
+    <value>증명 토큰의 유효성을 검사하지 못했습니다. 토큰의 형식이 유효하지 않습니다. 고객 지원 서비스에 문의하세요. 오류 세부 정보: '{0}'.</value>
+  </data>
+  <data name="GetAttestationSigningCertificateFailedInvalidCertificate" xml:space="preserve">
+    <value>증명 서비스가 증명 URL '{0}'에 대해 만료된 HGS 루트 인증서를 반환했습니다. HGS 인스턴스에 대해 구성된 HGS 루트 인증서를 확인하세요.</value>
+  </data>
+  <data name="GetAttestationSigningCertificateRequestFailedFormat" xml:space="preserve">
+    <value>증명 URL '{0}'에 대해 가져온 HGS 루트 인증서의 형식이 유효하지 않습니다. 증명 URL이 올바르며 HGS 서버가 온라인 상태이고 완전히 초기화되었는지 확인하세요. 자세한 내용은 고객 지원 서비스 팀에 문의하세요. 오류 세부 정보: '{1}'.</value>
+  </data>
+  <data name="GetAttestationTokenSigningKeysFailed" xml:space="preserve">
+    <value>증명 토큰의 유효성을 검사하지 못했습니다. 증명 공개 키 엔드포인트에서 공개 키를 검색할 수 없거나, 검색된 키의 형식이 유효하지 않습니다. 오류 세부 정보: '{0}'.</value>
+  </data>
+  <data name="GetSharedSecretFailed" xml:space="preserve">
+    <value>enclave의 Diffie-hellman 키에 대한 서명을 확인하지 못했습니다. 고객 지원 서비스에 문의하세요.</value>
+  </data>
+  <data name="InvalidArgumentToBase64UrlDecoder" xml:space="preserve">
+    <value>SQL Server에서 가져온 enclave 공개 키를 디코딩하는 동안 오류가 발생하여 증명 토큰의 유효성을 검사하지 못했습니다. 고객 지원 서비스에 문의하세요.</value>
+  </data>
+  <data name="InvalidArgumentToSHA256" xml:space="preserve">
+    <value>SQL Server에서 가져온 enclave 공개 키의 해시를 계산하는 동안 오류가 발생하여 증명 토큰의 유효성을 검사하지 못했습니다. 고객 지원 서비스에 문의하세요.</value>
+  </data>
+  <data name="InvalidAttestationToken" xml:space="preserve">
+    <value>서명 유효성 검사 도중 증명 토큰의 유효성을 검사하지 못했습니다. 예외: '{0}'.</value>
+  </data>
+  <data name="InvalidClaimInAttestationToken" xml:space="preserve">
+    <value>증명 토큰의 유효성을 검사하지 못했습니다. 토큰의 클레임 '{0}'에 유효하지 않은 값 '{1}'이(가) 있습니다. 증명 정책을 확인하세요. 정책이 올바르면 고객 지원 서비스에 문의하세요.</value>
+  </data>
+  <data name="MissingClaimInAttestationToken" xml:space="preserve">
+    <value>증명 토큰의 유효성을 검사하지 못했습니다. 클레임 '{0}'이(가) 토큰에 없습니다. 증명 정책을 확인하세요. 정책이 올바르면 고객 지원 서비스에 문의하세요.</value>
+  </data>
+  <data name="VerifyEnclaveDebuggable" xml:space="preserve">
+    <value>enclave가 프로덕션 모드에서 실행되고 있는지 확인하지 못했습니다. 고객 지원 서비스에 문의하세요.</value>
+  </data>
+  <data name="VerifyEnclavePolicyFailedFormat" xml:space="preserve">
+    <value>속성 '{0}'의 예상 값과 실제 값 간의 차이로 인해 enclave 정책을 확인할 수 없습니다. 실제: '{1}', 예상: '{2}'.</value>
+  </data>
+  <data name="VerifyEnclaveReportFailed" xml:space="preserve">
+    <value>enclave 보고서의 서명을 확인하지 못했습니다. 보고서 서명이 HGS 루트 인증서를 사용하여 계산된 서명과 일치하지 않습니다. 엔드포인트에 대한 DNS 매핑을 확인하세요. 올바른 경우 고객 지원 서비스에 문의하세요.</value>
+  </data>
+  <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
+    <value>SQL Server에서 수신된 enclave 보고서의 형식이 잘못되었습니다. 고객 지원 서비스에 문의하세요.</value>
+  </data>
+  <data name="VerifyHealthCertificateChainFormat" xml:space="preserve">
+    <value>상태가 '{1}' 인 증명 URL '{0}'에 대한 HGS 루트 인증서와 enclave 호스트의 상태 보고서 간에 신뢰 체인을 만들지 못했습니다. 증명 URL이 SQL Server 컴퓨터에 구성된 URL과 일치하는지 확인하세요. 클라이언트와 SQL Server 모두 동일한 증명 서비스를 사용하는 경우 고객 지원 서비스 팀에 문의하세요.</value>
+  </data>
+  <data name="TCE_DbConnectionString_AttestationProtocol" xml:space="preserve">
+    <value>해당하는 enclave 증명 서비스에 대한 증명 프로토콜을 지정합니다.</value>
+  </data>
+  <data name="TCE_EnclaveTypeNotSupported" xml:space="preserve">
+    <value>서버에서 반환된 enclave 형식 '{0}'은(는) 지원되지 않습니다.</value>
+  </data>
+  <data name="TCE_AttestationProtocolNotSupportEnclaveType" xml:space="preserve">
+    <value>연결을 초기화하지 못했습니다. 증명 프로토콜 '{0}'은(는) enclave 형식 '{1}'을(를) 지원하지 않습니다.</value>
+  </data>
+  <data name="TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage" xml:space="preserve">
+    <value>enclave 패키지를 생성하는 동안 오류가 발생했습니다. 연결 문자열에 증명 프로토콜이 지정되지 않았지만 쿼리에 enclave 계산이 필요합니다.</value>
   </data>
 </root>

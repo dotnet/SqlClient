@@ -1,0 +1,252 @@
+<docs>
+	<members name="SqlClientFactory">
+		<SqlClientFactory>
+			<summary>
+				Represents a set of methods for creating instances of the
+				<see cref="N:Microsoft.Data.SqlClient" />
+				provider's implementation of the data source classes.
+			</summary>
+			<remarks>
+				To be added.
+			</remarks>
+		</SqlClientFactory>
+		<CanCreateDataSourceEnumerator>
+			<summary>
+				Gets a value that indicates whether a
+				<see cref="T:System.Data.Sql.SqlDataSourceEnumerator" />
+				can be created.
+			</summary>
+			<value>
+				<see langword="true" />
+				if a
+				<see cref="T:System.Data.Sql.SqlDataSourceEnumerator" />
+				can be created; otherwise,
+				<see langword="false" />
+				.
+			</value>
+			<remarks>
+				<format type="text/markdown"><![CDATA[
+
+## Remarks
+The <xref:System.Data.Common.DbProviderFactory> class provides the <xref:System.Data.Common.DbProviderFactory.CanCreateDataSourceEnumerator%2A> property so that inheritors can indicate
+whether they can provide a data source enumerator. The <xref:Microsoft.Data.SqlClient.SqlClientFactory> displays this property, but its value is always `true`.
+
+## Examples
+The following example displays a list of all available SQL Server data sources, using code that could enumerate data sources for any provider.
+
+[!code-csharp[SqlClientFactory.DataSourceEnumerator#1](~/../sqlclient/doc/samples/SqlClientFactory_DataSourceEnumerator.cs#1)]
+]]></format>
+			</remarks>
+		</CanCreateDataSourceEnumerator>
+		<CreateCommand>
+			<summary>
+				Returns a strongly typed
+				<see cref="T:System.Data.Common.DbCommand" />
+				instance.
+			</summary>
+			<returns>
+				A new strongly typed instance of
+				<see cref="T:System.Data.Common.DbCommand" />
+				.
+			</returns>
+			<remarks>
+				<format type="text/markdown"><![CDATA[
+
+## Examples
+The following code fragment returns a strongly typed <xref:System.Data.Common.DbCommand> instance:
+
+
+```csharp
+SqlClientFactory newFactory = SqlClientFactory.Instance;
+DbCommand cmd = newFactory.CreateCommand();
+```
+]]></format>
+			</remarks>
+		</CreateCommand>
+		<CreateCommandBuilder>
+			<summary>
+				Returns a strongly typed
+				<see cref="T:System.Data.Common.DbCommandBuilder" />
+				instance.
+			</summary>
+			<returns>
+				A new strongly typed instance of
+				<see cref="T:System.Data.Common.DbCommandBuilder" />
+				.
+			</returns>
+			<remarks>
+				<format type="text/markdown"><![CDATA[
+
+## Examples
+The following code fragment returns a strongly typed <xref:System.Data.Common.DbCommandBuilder> instance:
+
+
+```csharp
+SqlClientFactory newFactory = SqlClientFactory.Instance;
+DbCommandBuilder cmd = newFactory.CreateCommandBuilder();
+```
+]]></format>
+			</remarks>
+		</CreateCommandBuilder>
+		<CreateConnection>
+			<summary>
+				Returns a strongly typed
+				<see cref="T:System.Data.Common.DbConnection" />
+				instance.
+			</summary>
+			<returns>
+				A new strongly typed instance of
+				<see cref="T:System.Data.Common.DbConnection" />
+				.
+			</returns>
+			<remarks>
+				<format type="text/markdown"><![CDATA[
+					
+## Examples
+The following code fragment returns a strongly typed <xref:System.Data.Common.DbConnection> instance:
+
+
+```csharp
+SqlClientFactory newFactory = SqlClientFactory.Instance;
+DbConnection cmd = newFactory.CreateConnection();
+
+```
+]]></format>
+			</remarks>
+		</CreateConnection>
+		<CreateConnectionStringBuilder>
+			<summary>
+				Returns a strongly typed
+				<see cref="T:System.Data.Common.DbConnectionStringBuilder" />
+				instance.
+			</summary>
+			<returns>
+				A new strongly typed instance of
+				<see cref="T:System.Data.Common.DbConnectionStringBuilder" />
+				.
+			</returns>
+			<remarks>
+				<format type="text/markdown"><![CDATA[
+
+## Examples
+The following code fragment returns a strongly typed <xref:System.Data.Common.DbConnectionStringBuilder> instance:
+
+```csharp
+SqlClientFactory newFactory = SqlClientFactory.Instance;
+DbConnectionStringBuilder cmd =
+newFactory.CreateConnectionStringBuilder();
+```
+]]></format>
+			</remarks>
+		</CreateConnectionStringBuilder>
+		<CreateDataAdapter>
+			<summary>
+				Returns a strongly typed
+				<see cref="T:System.Data.Common.DbDataAdapter" />
+				instance.
+			</summary>
+			<returns>
+				A new strongly typed instance of
+				<see cref="T:System.Data.Common.DbDataAdapter" />
+				.
+			</returns>
+			<remarks>
+				<format type="text/markdown"><![CDATA[
+					
+## Examples
+The following code fragment returns a strongly typed <xref:System.Data.Common.DbDataAdapter> instance:
+
+```csharp
+SqlClientFactory newFactory = SqlClientFactory.Instance;
+DbDataAdapter cmd = newFactory.CreateDataAdapter();
+```
+]]></format>
+			</remarks>
+		</CreateDataAdapter>
+		<CreateDataSourceEnumerator>
+			<summary>
+				Returns a new
+				<see cref="T:System.Data.Sql.SqlDataSourceEnumerator" />
+				.
+			</summary>
+			<returns>
+				A new data source enumerator.
+			</returns>
+			<remarks>
+				<format type="text/markdown"><![CDATA[
+
+## Examples
+The following example displays a list of all available SQL Server data sources, using code that could enumerate data sources for any provider.
+
+[!code-csharp[SqlClientFactory_DataSourceEnumerator#1](~/../sqlclient/doc/samples/SqlClientFactory_DataSourceEnumerator.cs)]
+]]></format>
+			</remarks>
+		</CreateDataSourceEnumerator>
+		<CreateParameter>
+			<summary>
+				Returns a strongly typed
+				<see cref="T:System.Data.Common.DbParameter" />
+				instance.
+			</summary>
+			<returns>
+				A new strongly typed instance of
+				<see cref="T:System.Data.Common.DbParameter" />
+				.
+			</returns>
+			<remarks>
+				<format type="text/markdown"><![CDATA[
+					
+## Examples
+The following code fragment returns a strongly typed <xref:System.Data.Common.DbParameter> instance:
+
+
+```csharp
+SqlClientFactory newFactory = SqlClientFactory.Instance;
+DbParameter cmd = newFactory.CreateParameter();
+```
+]]></format>
+			</remarks>
+		</CreateParameter>
+		<CreatePermission>
+			<param name="state">
+				A member of the
+				<see cref="T:System.Security.Permissions.PermissionState" />
+				enumeration.
+			</param>
+			<summary>
+				Returns a new
+				<see cref="T:System.Security.CodeAccessPermission" />
+				.
+			</summary>
+			<returns>
+				A strongly typed instance of
+				<see cref="T:System.Security.CodeAccessPermission" />
+				.
+			</returns>
+			<remarks>
+				To be added.
+			</remarks>
+		</CreatePermission>
+		<Instance>
+			<summary>
+				Gets an instance of the
+				<see cref="T:Microsoft.Data.SqlClient.SqlClientFactory" />
+				. This can be used to retrieve strongly typed data objects.
+			</summary>
+			<remarks>
+				<format type="text/markdown"><![CDATA[
+
+## Examples
+The following code fragment uses the <xref:Microsoft.Data.SqlClient.SqlClientFactory.Instance> property to retrieve a **SqlClientFactory** instance, and then return a strongly typed
+<xref:System.Data.Common.DbCommand> instance:
+
+
+```csharp
+SqlClientFactory newFactory = SqlClientFactory.Instance;
+DbCommand cmd = newFactory.CreateCommand();
+```
+]]></format>
+			</remarks>
+		</Instance>
+	</members>
+</docs>

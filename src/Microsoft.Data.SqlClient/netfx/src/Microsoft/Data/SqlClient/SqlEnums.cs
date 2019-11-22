@@ -279,6 +279,7 @@ namespace Microsoft.Data.SqlClient
                 case DbType.Currency:
                     return MetaMoney;
                 case DbType.Date:
+                    return MetaDate;
                 case DbType.DateTime:
                     return MetaDateTime;
                 case DbType.Decimal:
@@ -302,7 +303,7 @@ namespace Microsoft.Data.SqlClient
                 case DbType.StringFixedLength:
                     return MetaNChar;
                 case DbType.Time:
-                    return MetaDateTime;
+                    return MetaTime;
                 case DbType.Xml:
                     return MetaXml;
                 case DbType.DateTime2:
@@ -601,6 +602,7 @@ namespace Microsoft.Data.SqlClient
         /// Assert that the supplied object is an instance of a SQL User-Defined Type (UDT).
         /// </summary>
         /// <param name="sqlValue">Object instance to be tested.</param>
+        /// <param name="failedAssertMessage"></param>
         /// <remarks>
         /// This method is only compiled with debug builds, and it a helper method for the GetComValueFromSqlVariant method defined in this class.
         /// 

@@ -15,6 +15,7 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
+    /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/SqlConnectionStringBuilder/*' />
     public sealed partial class SqlConnectionStringBuilder : DbConnectionStringBuilder
     {
         private enum Keywords
@@ -66,6 +67,7 @@ namespace Microsoft.Data.SqlClient
 
             ColumnEncryptionSetting,
             EnclaveAttestationUrl,
+            AttestationProtocol,
 
             // keep the count value last
             KeywordsCount
@@ -112,6 +114,7 @@ namespace Microsoft.Data.SqlClient
         private SqlAuthenticationMethod _authentication = DbConnectionStringDefaults.Authentication;
         private SqlConnectionColumnEncryptionSetting _columnEncryptionSetting = DbConnectionStringDefaults.ColumnEncryptionSetting;
         private string _enclaveAttestationUrl = DbConnectionStringDefaults.EnclaveAttestationUrl;
+        private SqlConnectionAttestationProtocol _attestationProtocol = DbConnectionStringDefaults.AttestationProtocol;
 
         private static string[] CreateValidKeywords()
         {
@@ -152,6 +155,7 @@ namespace Microsoft.Data.SqlClient
             validKeywords[(int)Keywords.Authentication] = DbConnectionStringKeywords.Authentication;
             validKeywords[(int)Keywords.ColumnEncryptionSetting] = DbConnectionStringKeywords.ColumnEncryptionSetting;
             validKeywords[(int)Keywords.EnclaveAttestationUrl] = DbConnectionStringKeywords.EnclaveAttestationUrl;
+            validKeywords[(int)Keywords.AttestationProtocol] = DbConnectionStringKeywords.AttestationProtocol;
             return validKeywords;
         }
 
@@ -194,6 +198,7 @@ namespace Microsoft.Data.SqlClient
             hash.Add(DbConnectionStringKeywords.Authentication, Keywords.Authentication);
             hash.Add(DbConnectionStringKeywords.ColumnEncryptionSetting, Keywords.ColumnEncryptionSetting);
             hash.Add(DbConnectionStringKeywords.EnclaveAttestationUrl, Keywords.EnclaveAttestationUrl);
+            hash.Add(DbConnectionStringKeywords.AttestationProtocol, Keywords.AttestationProtocol);
 
             hash.Add(DbConnectionStringSynonyms.APP, Keywords.ApplicationName);
             hash.Add(DbConnectionStringSynonyms.EXTENDEDPROPERTIES, Keywords.AttachDBFilename);
@@ -217,10 +222,12 @@ namespace Microsoft.Data.SqlClient
             return hash;
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ctor2/*' />
         public SqlConnectionStringBuilder() : this((string)null)
         {
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ctorConnectionString/*' />
         public SqlConnectionStringBuilder(string connectionString) : base()
         {
             if (!string.IsNullOrEmpty(connectionString))
@@ -229,6 +236,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Item/*' />
         public override object this[string keyword]
         {
             get
@@ -309,6 +317,9 @@ namespace Microsoft.Data.SqlClient
                         case Keywords.EnclaveAttestationUrl:
                             EnclaveAttestationUrl = ConvertToString(value);
                             break;
+                        case Keywords.AttestationProtocol:
+                            AttestationProtocol = ConvertToAttestationProtocol(keyword, value);
+                            break;
 #if netcoreapp
                         case Keywords.PoolBlockingPeriod: PoolBlockingPeriod = ConvertToPoolBlockingPeriod(keyword, value); break;
 #endif
@@ -358,6 +369,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ApplicationIntent/*' />
         public ApplicationIntent ApplicationIntent
         {
             get { return _applicationIntent; }
@@ -373,6 +385,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ApplicationName/*' />
         public string ApplicationName
         {
             get { return _applicationName; }
@@ -383,6 +396,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/AttachDBFilename/*' />
         public string AttachDBFilename
         {
             get { return _attachDBFilename; }
@@ -393,6 +407,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectTimeout/*' />
         public int ConnectTimeout
         {
             get { return _connectTimeout; }
@@ -407,6 +422,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/CurrentLanguage/*' />
         public string CurrentLanguage
         {
             get { return _currentLanguage; }
@@ -417,6 +433,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/DataSource/*' />
         public string DataSource
         {
             get { return _dataSource; }
@@ -427,6 +444,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Encrypt/*' />
         public bool Encrypt
         {
             get { return _encrypt; }
@@ -437,7 +455,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ColumnEncryptionSetting/*' />
         public SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting
         {
             get { return _columnEncryptionSetting; }
@@ -453,7 +471,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/EnclaveAttestationUrl/*' />
         public string EnclaveAttestationUrl
         {
             get { return _enclaveAttestationUrl; }
@@ -464,6 +482,23 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/AttestationProtocol/*' />
+        public SqlConnectionAttestationProtocol AttestationProtocol
+        {
+            get { return _attestationProtocol; }
+            set
+            {
+                if (!DbConnectionStringBuilderUtil.IsValidAttestationProtocol(value))
+                {
+                    throw ADP.InvalidEnumerationValue(typeof(SqlConnectionAttestationProtocol), (int)value);
+                }
+
+                SetAttestationProtocolValue(value);
+                _attestationProtocol = value;
+            }
+        }
+
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TrustServerCertificate/*' />
         public bool TrustServerCertificate
         {
             get { return _trustServerCertificate; }
@@ -474,6 +509,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Enlist/*' />
         public bool Enlist
         {
             get { return _enlist; }
@@ -484,6 +520,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/FailoverPartner/*' />
         public string FailoverPartner
         {
             get { return _failoverPartner; }
@@ -494,6 +531,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/InitialCatalog/*' />
         [TypeConverter(typeof(SqlInitialCatalogConverter))]
         public string InitialCatalog
         {
@@ -505,6 +543,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/IntegratedSecurity/*' />
         public bool IntegratedSecurity
         {
             get { return _integratedSecurity; }
@@ -515,6 +554,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Authentication/*' />
         public SqlAuthenticationMethod Authentication
         {
             get { return _authentication; }
@@ -530,6 +570,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/LoadBalanceTimeout/*' />
         public int LoadBalanceTimeout
         {
             get { return _loadBalanceTimeout; }
@@ -544,6 +585,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/MaxPoolSize/*' />
         public int MaxPoolSize
         {
             get { return _maxPoolSize; }
@@ -558,6 +600,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectRetryCount/*' />
         public int ConnectRetryCount
         {
             get { return _connectRetryCount; }
@@ -572,6 +615,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectRetryInterval/*' />
         public int ConnectRetryInterval
         {
             get { return _connectRetryInterval; }
@@ -587,7 +631,7 @@ namespace Microsoft.Data.SqlClient
         }
 
 
-
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/MinPoolSize/*' />
         public int MinPoolSize
         {
             get { return _minPoolSize; }
@@ -602,6 +646,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/MultipleActiveResultSets/*' />
         public bool MultipleActiveResultSets
         {
             get { return _multipleActiveResultSets; }
@@ -612,6 +657,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/MultiSubnetFailover/*' />
         [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", Justification = "Reviewed and Approved by UE")]
         public bool MultiSubnetFailover
         {
@@ -636,6 +682,7 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
         */
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/PacketSize/*' />
         public int PacketSize
         {
             get { return _packetSize; }
@@ -650,6 +697,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Password/*' />
         public string Password
         {
             get { return _password; }
@@ -660,6 +708,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/PersistSecurityInfo/*' />
         public bool PersistSecurityInfo
         {
             get { return _persistSecurityInfo; }
@@ -670,6 +719,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Pooling/*' />
         public bool Pooling
         {
             get { return _pooling; }
@@ -680,6 +730,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Replication/*' />
         public bool Replication
         {
             get { return _replication; }
@@ -690,6 +741,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TransactionBinding/*' />
         public string TransactionBinding
         {
             get { return _transactionBinding; }
@@ -700,6 +752,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TypeSystemVersion/*' />
         public string TypeSystemVersion
         {
             get { return _typeSystemVersion; }
@@ -710,6 +763,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/UserID/*' />
         public string UserID
         {
             get { return _userID; }
@@ -720,6 +774,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/UserInstance/*' />
         public bool UserInstance
         {
             get { return _userInstance; }
@@ -730,6 +785,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/WorkstationID/*' />
         public string WorkstationID
         {
             get { return _workstationID; }
@@ -740,7 +796,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Keys/*' />
         public override ICollection Keys
         {
             get
@@ -749,6 +805,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Values/*' />
         public override ICollection Values
         {
             get
@@ -764,6 +821,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Clear/*' />
         public override void Clear()
         {
             base.Clear();
@@ -773,6 +831,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ContainsKey/*' />
         public override bool ContainsKey(string keyword)
         {
             ADP.CheckArgumentNull(keyword, nameof(keyword));
@@ -812,6 +871,16 @@ namespace Microsoft.Data.SqlClient
         private static SqlConnectionColumnEncryptionSetting ConvertToColumnEncryptionSetting(string keyword, object value)
         {
             return DbConnectionStringBuilderUtil.ConvertToColumnEncryptionSetting(keyword, value);
+        }
+
+        /// <summary>
+        /// Convert to SqlConnectionAttestationProtocol
+        /// </summary>
+        /// <param name="keyword"></param>
+        /// <param name="value"></param>
+        private static SqlConnectionAttestationProtocol ConvertToAttestationProtocol(string keyword, object value)
+        {
+            return DbConnectionStringBuilderUtil.ConvertToAttestationProtocol(keyword, value);
         }
 
         private object GetAt(Keywords index)
@@ -886,6 +955,8 @@ namespace Microsoft.Data.SqlClient
                     return ColumnEncryptionSetting;
                 case Keywords.EnclaveAttestationUrl:
                     return EnclaveAttestationUrl;
+                case Keywords.AttestationProtocol:
+                    return AttestationProtocol;
 
                 default:
                     Debug.Fail("unexpected keyword");
@@ -904,7 +975,7 @@ namespace Microsoft.Data.SqlClient
             throw UnsupportedKeyword(keyword);
         }
 
-
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Remove/*' />
         public override bool Remove(string keyword)
         {
             ADP.CheckArgumentNull(keyword, nameof(keyword));
@@ -1028,6 +1099,9 @@ namespace Microsoft.Data.SqlClient
                 case Keywords.EnclaveAttestationUrl:
                     _enclaveAttestationUrl = DbConnectionStringDefaults.EnclaveAttestationUrl;
                     break;
+                case Keywords.AttestationProtocol:
+                    _attestationProtocol = DbConnectionStringDefaults.AttestationProtocol;
+                    break;
                 default:
                     Debug.Fail("unexpected keyword");
                     throw UnsupportedKeyword(s_validKeywords[(int)index]);
@@ -1058,12 +1132,19 @@ namespace Microsoft.Data.SqlClient
             base[DbConnectionStringKeywords.ColumnEncryptionSetting] = DbConnectionStringBuilderUtil.ColumnEncryptionSettingToString(value);
         }
 
+        private void SetAttestationProtocolValue(SqlConnectionAttestationProtocol value)
+        {
+            Debug.Assert(DbConnectionStringBuilderUtil.IsValidAttestationProtocol(value), "Invalid value for SqlConnectionAttestationProtocol");
+            base[DbConnectionStringKeywords.AttestationProtocol] = DbConnectionStringBuilderUtil.AttestationProtocolToString(value);
+        }
+
         private void SetAuthenticationValue(SqlAuthenticationMethod value)
         {
             Debug.Assert(DbConnectionStringBuilderUtil.IsValidAuthenticationTypeValue(value), "Invalid value for AuthenticationType");
             base[DbConnectionStringKeywords.Authentication] = DbConnectionStringBuilderUtil.AuthenticationTypeToString(value);
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ShouldSerialize/*' />
         public override bool ShouldSerialize(string keyword)
         {
             ADP.CheckArgumentNull(keyword, nameof(keyword));
@@ -1071,6 +1152,7 @@ namespace Microsoft.Data.SqlClient
             return s_keywords.TryGetValue(keyword, out index) && base.ShouldSerialize(s_validKeywords[(int)index]);
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TryGetValue/*' />
         public override bool TryGetValue(string keyword, out object value)
         {
             Keywords index;

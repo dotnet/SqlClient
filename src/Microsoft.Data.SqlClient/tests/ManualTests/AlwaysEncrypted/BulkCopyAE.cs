@@ -14,20 +14,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     /// TODO: These tests are marked as Windows only for now but should be run for all platforms once the Master Key is accessible to this app from Azure Key Vault.
     /// </summary>
     [PlatformSpecific(TestPlatforms.Windows)]
-    public class BulkCopyAE : IClassFixture<SQLSetupStrategy>, IDisposable
+    public class BulkCopyAE : IClassFixture<SQLSetupStrategyCertStoreProvider>, IDisposable
     {
-        private SQLSetupStrategy fixture;
+        private SQLSetupStrategyCertStoreProvider fixture;
 
         private readonly string tableName;
 
-        public BulkCopyAE(SQLSetupStrategy fixture)
+        public BulkCopyAE(SQLSetupStrategyCertStoreProvider fixture)
         {
             this.fixture = fixture;
             tableName = fixture.BulkCopyAETestTable.Name;
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public void TestBulkCopyString()
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public void TestBulkCopyString(string connectionString)
         {
             var dataTable = new DataTable();
             dataTable.Columns.Add("c1", typeof(string));
@@ -38,7 +39,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             dataTable.Rows.Add(dataRow);
             dataTable.AcceptChanges();
 
-            using (var connection = new SqlConnection(string.Concat(DataTestUtility.TcpConnStr, " Column Encryption Setting = Enabled;")))
+            var encryptionEnabledConnectionString = new SqlConnectionStringBuilder(connectionString)
+            {
+                ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Enabled
+            }.ConnectionString;
+
+            using (var connection = new SqlConnection(encryptionEnabledConnectionString))
             using (var bulkCopy = new SqlBulkCopy(connection)
             {
                 EnableStreaming = true,
@@ -47,6 +53,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             })
             {
                 connection.Open();
+                Table.DeleteData(tableName, connection);
+
                 bulkCopy.WriteToServer(dataTable);
 
                 string queryString = "SELECT * FROM [" + tableName + "];";
@@ -59,10 +67,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         public void Dispose()
         {
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TcpConnStr))
+            foreach (string connection in DataTestUtility.AEConnStringsSetup)
             {
-                sqlConnection.Open();
-                Table.DeleteData(fixture.BulkCopyAETestTable.Name, sqlConnection);
+                using (SqlConnection sqlConnection = new SqlConnection(connection))
+                {
+                    sqlConnection.Open();
+                    Table.DeleteData(fixture.BulkCopyAETestTable.Name, sqlConnection);
+                }
             }
         }
     }

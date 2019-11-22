@@ -1,0 +1,17 @@
+<docs>
+    <members name="OnChangeEventHandler">
+        <OnChangeEventHandler>
+            <param name="sender">The source of the event.</param>
+            <param name="e">A <see cref="T:Microsoft.Data.SqlClient.SqlNotificationEventArgs" /> object that contains the event data.</param>
+            <summary>Handles the <see cref="E:Microsoft.Data.SqlClient.SqlDependency.OnChange" /> event that is fired when a notification is received for any of the commands associated with a <see cref="T:Microsoft.Data.SqlClient.SqlDependency" /> object.</summary>
+            <remarks>
+                <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+The <xref:Microsoft.Data.SqlClient.SqlDependency.OnChange> event does not necessarily imply a change in the data. Other circumstances, such as time-out expired and failure to set the notification request, also generate <xref:Microsoft.Data.SqlClient.SqlDependency.OnChange>.  
+
+]]></format>
+            </remarks>
+        </OnChangeEventHandler>
+    </members>
+</docs>

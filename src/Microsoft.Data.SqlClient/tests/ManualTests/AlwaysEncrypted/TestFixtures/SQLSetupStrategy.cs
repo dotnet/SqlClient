@@ -13,39 +13,51 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     {
         internal const string ColumnEncryptionAlgorithmName = @"AEAD_AES_256_CBC_HMAC_SHA256";
 
-        private readonly X509Certificate2 certificate;
-        public string keyPath { get; private set; }
+        protected internal readonly X509Certificate2 certificate;
+        public string keyPath { get; internal set; }
         public Table ApiTestTable { get; private set; }
         public Table BulkCopyAETestTable { get; private set; }
         public Table SqlParameterPropertiesTable { get; private set; }
         public Table End2EndSmokeTable { get; private set; }
-
+        public Table TrustedMasterKeyPathsTestTable { get; private set; }
+        public Table SqlNullValuesTable { get; private set; }
         protected List<DbObject> databaseObjects = new List<DbObject>();
 
         public SQLSetupStrategy()
         {
             certificate = CertificateUtility.CreateCertificate();
-            SetupDatabase();
         }
 
         protected SQLSetupStrategy(string customKeyPath) => keyPath = customKeyPath;
 
         internal virtual void SetupDatabase()
         {
-            ColumnMasterKey columnMasterKey = new CspColumnMasterKey(GenerateUniqueName("CMK"), certificate.Thumbprint);
-            databaseObjects.Add(columnMasterKey);
-
-            SqlColumnEncryptionCertificateStoreProvider certStoreProvider = new SqlColumnEncryptionCertificateStoreProvider();
-            List<ColumnEncryptionKey> columnEncryptionKeys = CreateColumnEncryptionKeys(columnMasterKey, 2, certStoreProvider);
-            databaseObjects.AddRange(columnEncryptionKeys);
-
-            List<Table> tables = CreateTables(columnEncryptionKeys);
-            databaseObjects.AddRange(tables);
-
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TcpConnStr))
+            foreach (string value in DataTestUtility.AEConnStringsSetup)
             {
-                sqlConnection.Open();
-                databaseObjects.ForEach(o => o.Create(sqlConnection));
+                using (SqlConnection sqlConnection = new SqlConnection(value))
+                {
+                    sqlConnection.Open();
+                    databaseObjects.ForEach(o => o.Create(sqlConnection));
+
+                    // Enable rich computation when Enclave is enabled
+                    if (DataTestUtility.EnclaveEnabled)
+                    {
+                        using(SqlCommand command = new SqlCommand(@"DBCC traceon(127,-1);", sqlConnection))
+                        {
+                            command.ExecuteNonQuery();
+                        }
+                    }
+                }
+
+                // Insert data for TrustedMasterKeyPaths tests.
+                SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(value);
+                builder.ConnectTimeout = 10000;
+                Customer customer = new Customer(45, "Microsoft", "Corporation");
+                using (SqlConnection sqlConn = new SqlConnection(builder.ToString()))
+                {
+                    sqlConn.Open();
+                    DatabaseHelper.InsertCustomerData(sqlConn, TrustedMasterKeyPathsTestTable.Name, customer);
+                }
             }
         }
 
@@ -62,7 +74,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             return columnEncryptionKeys;
         }
 
-        private List<Table> CreateTables(IList<ColumnEncryptionKey> columnEncryptionKeys)
+        protected List<Table> CreateTables(IList<ColumnEncryptionKey> columnEncryptionKeys)
         {
             List<Table> tables = new List<Table>();
 
@@ -78,6 +90,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             End2EndSmokeTable = new ApiTestTable(GenerateUniqueName("End2EndSmokeTable"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
             tables.Add(End2EndSmokeTable);
 
+            TrustedMasterKeyPathsTestTable = new ApiTestTable(GenerateUniqueName("TrustedMasterKeyPathsTestTable"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
+            tables.Add(TrustedMasterKeyPathsTestTable);
+
+            SqlNullValuesTable = new SqlNullValuesTable(GenerateUniqueName("SqlNullValuesTable"), columnEncryptionKeys[0]);
+            tables.Add(SqlNullValuesTable);
+
             return tables;
         }
 
@@ -86,11 +104,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public void Dispose()
         {
             databaseObjects.Reverse();
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TcpConnStr))
+            foreach (string value in DataTestUtility.AEConnStringsSetup)
             {
-                sqlConnection.Open();
-                databaseObjects.ForEach(o => o.Drop(sqlConnection));
+                using (SqlConnection sqlConnection = new SqlConnection(value))
+                {
+                    sqlConnection.Open();
+                    databaseObjects.ForEach(o => o.Drop(sqlConnection));
+                }
             }
+            
+           
         }
     }
 }

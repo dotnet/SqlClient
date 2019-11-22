@@ -8,7 +8,8 @@ using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data.Common
 {
-    internal static class GreenMethods {
+    internal static class GreenMethods
+    {
 
         private const string ExtensionAssemblyRef = "System.Data.Entity, Version=4.0.0.0, Culture=neutral, PublicKeyToken=" + AssemblyRef.EcmaPublicKey;
 
@@ -20,17 +21,20 @@ namespace Microsoft.Data.Common
         // Access to the DbProviderServices type
         private const string SystemDataCommonDbProviderServices_TypeName = "System.Data.Common.DbProviderServices, " + ExtensionAssemblyRef;
         internal static Type SystemDataCommonDbProviderServices_Type = Type.GetType(SystemDataCommonDbProviderServices_TypeName, false);
-        
+
         //------------------------------------------------------------------------------
         // Access to the SqlProviderServices class singleton instance;
         private const string MicrosoftDataSqlClientSqlProviderServices_TypeName = "Microsoft.Data.SqlClient.SQLProviderServices, " + ExtensionAssemblyRef;
         private static FieldInfo MicrosoftDataSqlClientSqlProviderServices_Instance_FieldInfo;
-        
-        internal static object MicrosoftDataSqlClientSqlProviderServices_Instance() {
-            if (null == MicrosoftDataSqlClientSqlProviderServices_Instance_FieldInfo) {
+
+        internal static object MicrosoftDataSqlClientSqlProviderServices_Instance()
+        {
+            if (null == MicrosoftDataSqlClientSqlProviderServices_Instance_FieldInfo)
+            {
                 Type t = Type.GetType(MicrosoftDataSqlClientSqlProviderServices_TypeName, false);
 
-                if (null != t) {
+                if (null != t)
+                {
                     MicrosoftDataSqlClientSqlProviderServices_Instance_FieldInfo = t.GetField("Instance", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Static);
                 }
             }
@@ -38,10 +42,12 @@ namespace Microsoft.Data.Common
             return result;
         }
 
-        [System.Security.Permissions.ReflectionPermission(System.Security.Permissions.SecurityAction.Assert, MemberAccess=true)]
-        private static object MicrosoftDataSqlClientSqlProviderServices_Instance_GetValue() {
+        [System.Security.Permissions.ReflectionPermission(System.Security.Permissions.SecurityAction.Assert, MemberAccess = true)]
+        private static object MicrosoftDataSqlClientSqlProviderServices_Instance_GetValue()
+        {
             object result = null;
-            if (null != MicrosoftDataSqlClientSqlProviderServices_Instance_FieldInfo) {
+            if (null != MicrosoftDataSqlClientSqlProviderServices_Instance_FieldInfo)
+            {
                 result = MicrosoftDataSqlClientSqlProviderServices_Instance_FieldInfo.GetValue(null);
             }
             return result;

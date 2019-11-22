@@ -178,14 +178,10 @@ namespace Microsoft.Data.SqlClient
         public string InitializerType => base["initializerType"] as string;
     }
 
-    /// <summary>
-    /// The abstract initializer class that users can implement to initialize their component before SqlAuthenticationProviderManager starts.
-    /// </summary>
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationInitializer.xml' path='docs/members[@name="SqlAuthenticationInitializer"]/SqlAuthenticationInitializer/*'/>
     public abstract class SqlAuthenticationInitializer
     {
-        /// <summary>
-        /// The initialize callback from SqlAuthenticationProviderManager. This is called before SqlAuthenticationProviderManager loads providers.
-        /// </summary>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationInitializer.xml' path='docs/members[@name="SqlAuthenticationInitializer"]/SqlAuthenticationInitializer/*'/>
         public abstract void Initialize();
     }
 }

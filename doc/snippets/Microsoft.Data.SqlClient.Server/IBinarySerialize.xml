@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<docs>
+    <members name="IBinarySerialize">
+        <IBinarySerialize>
+            <summary>Provides custom implementation for user-defined type (UDT) and user-defined aggregate serialization and deserialization.</summary>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+ User-defined types (UDTs) and user-defined aggregates are required to define a storage format, which can be either <xref:Microsoft.Data.SqlClient.Server.Format>.`Native` or <xref:Microsoft.Data.SqlClient.Server.Format>.`UserDefined`.  
+  
+ <xref:Microsoft.Data.SqlClient.Server.Format>.`Native` allows SQL Server to handle serialization and deserialization automatically, but the format has restrictions on the kind of types it can handle. <xref:Microsoft.Data.SqlClient.Server.Format>.`UserDefined` allows user-defined types and aggregates to handle their own serialization. User-defined types and aggregates must be marked with <xref:Microsoft.Data.SqlClient.Server.Format>.`UserDefined` in the `SqlUserDefinedType` or `SqlUserDefinedAggregate` attribute, and must implement the <xref:Microsoft.Data.SqlClient.Server.IBinarySerialize> interface.  
+  
+ Note that even with custom serialization, the total size of each instance must be under the maximum allowed limit, currently 8000 bytes.  
+  
+ ]]></format>
+            </remarks>
+        </IBinarySerialize>
+        <Read>
+            <param name="r">The <see cref="T:System.IO.BinaryReader" /> stream from which the object is deserialized.</param>
+            <summary>Generates a user-defined type (UDT) or user-defined aggregate from its binary form.</summary>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+ The <xref:Microsoft.Data.SqlClient.Server.IBinarySerialize.Read%2A> method must reconstitute your object using the information written by the <xref:Microsoft.Data.SqlClient.Server.IBinarySerialize.Write%2A> method.  
+
+## Examples  
+ The following example shows the implementation of the <xref:Microsoft.Data.SqlClient.Server.IBinarySerialize.Read%2A> method of a UDT, which uses a <xref:System.IO.BinaryReader> to de-serialize a previously persisted UDT. This example assumes that the UDT has two data properties: `StringValue` and `DoubleValue`.  
+  
+ [!code-csharp[IBinarySerialize Samples#1](~/../sqlclient/doc/samples/IBinarySerialize.cs#1)]
+  
+ ]]></format>
+            </remarks>
+        </Read>
+        <Write>
+            <param name="w">The <see cref="T:System.IO.BinaryWriter" /> stream to which the UDT or user-defined aggregate is serialized.</param>
+            <summary>Converts a user-defined type (UDT) or user-defined aggregate into its binary format so that it may be persisted.</summary>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+ Write sufficient information to the binary stream to allow the <xref:Microsoft.Data.SqlClient.Server.IBinarySerialize.Read%2A> method to reconstitute your UDT or user-defined aggregate.  
+
+## Examples  
+ The following example shows the implementation of the <xref:Microsoft.Data.SqlClient.Server.IBinarySerialize.Write%2A> method of a UDT, which uses a <xref:System.IO.BinaryWriter> to serialize the UDT in the user-defined binary format. The purpose of the null character padding is to ensure that the string value is completely separated from the double value, so that one UDT is compared to another in Transact-SQL code, string bytes are compared to string bytes and double bytes are compared to double bytes.  
+  
+ [!code-csharp[IBinarySerialize Samples#2](~/../sqlclient/doc/samples/IBinarySerialize.cs#2)]
+  
+ ]]></format>
+            </remarks>
+        </Write>
+    </members>
+</docs>

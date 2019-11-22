@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [CheckConnStrSetupFact]
         public static void TestMain()
         {
-            string connectionString = DataTestUtility.TcpConnStr;
+            string connectionString = DataTestUtility.TCPConnectionString;
 
             string tempTable = DataTestUtility.GetUniqueNameForSqlServer("table");
 

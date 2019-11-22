@@ -448,7 +448,7 @@ namespace Microsoft.Data.SqlClient
                             || _timeout.MillisecondsRemaining < transientRetryIntervalInMilliSeconds
                             || !IsTransientError(sqlex))
                         {
-                            throw sqlex;
+                            throw;
                         }
                         else
                         {
@@ -695,13 +695,13 @@ namespace Microsoft.Data.SqlClient
                 {
                     // if MARS is on, then a datareader associated with the command exists
                     // or if MARS is off, then a datareader exists
-                    throw ADP.OpenReaderExists();
+                    throw ADP.OpenReaderExists(parser.MARSOn);
                 }
-                else if (!parser.MARSOn && parser._physicalStateObj._pendingData)
+                else if (!parser.MARSOn && parser._physicalStateObj.HasPendingData)
                 {
                     parser.DrainData(parser._physicalStateObj);
                 }
-                Debug.Assert(!parser._physicalStateObj._pendingData, "Should not have a busy physicalStateObject at this point!");
+                Debug.Assert(!parser._physicalStateObj.HasPendingData, "Should not have a busy physicalStateObject at this point!");
 
                 parser.RollbackOrphanedAPITransactions();
             }
@@ -840,7 +840,7 @@ namespace Microsoft.Data.SqlClient
             // obtains a clone.
 
             Debug.Assert(!HasLocalTransactionFromAPI, "Upon ResetConnection SqlInternalConnectionTds has a currently ongoing local transaction.");
-            Debug.Assert(!_parser._physicalStateObj._pendingData, "Upon ResetConnection SqlInternalConnectionTds has pending data.");
+            Debug.Assert(!_parser._physicalStateObj.HasPendingData, "Upon ResetConnection SqlInternalConnectionTds has pending data.");
 
             if (_fResetConnection)
             {
@@ -1703,6 +1703,12 @@ namespace Microsoft.Data.SqlClient
                 string host = serverInfo.UserServerName;
                 string protocol = serverInfo.UserProtocol;
 
+                //TODO: fix local host enforcement with datadirectory and failover
+                if (options.EnforceLocalHost)
+                {
+                    // verify LocalHost for |DataDirectory| usage
+                    SqlConnectionString.VerifyLocalHostAndFixup(ref host, true, true /*fix-up to "."*/);
+                }
 
                 serverInfo.SetDerivedNames(protocol, host);
             }

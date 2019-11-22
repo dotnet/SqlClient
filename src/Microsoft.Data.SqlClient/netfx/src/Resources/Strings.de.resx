@@ -124,7 +124,7 @@
     <value>Ungültiger Index {0} für {1} mit Count={2}.</value>
   </data>
   <data name="ADP_CollectionIndexString" xml:space="preserve">
-    <value>{0} mit {1} '{2}' ist nicht in {3} enthalten.</value>
+    <value>{0} mit {1} "{2}" ist nicht in {3} enthalten.</value>
   </data>
   <data name="ADP_CollectionInvalidType" xml:space="preserve">
     <value>{0} akzeptiert nur Nicht-Null {1}-Typenobjekte, nicht {2}-Objekte.</value>
@@ -1948,7 +1948,7 @@
     <value>Diesem Befehl ist bereits ein geöffnetes SqlResultSet zugeordnet, das zuerst geschlossen werden muss.</value>
   </data>
   <data name="ADP_OpenReaderExists" xml:space="preserve">
-    <value>Diesem Command ist bereits ein geöffneter DataReader zugeordnet, der zuerst geschlossen werden muss.</value>
+    <value>Diesem {0}-Element ist bereits ein geöffneter DataReader zugeordnet, der zuerst geschlossen werden muss.</value>
   </data>
   <data name="ADP_DeriveParametersNotSupported" xml:space="preserve">
     <value>{0} DeriveParameters unterstützen nur CommandType.StoredProcedure, nicht CommandType.{1}.</value>
@@ -2494,7 +2494,7 @@
     <value>"Authentication" kann nicht mit "Integrated Security" verwendet werden.</value>
   </data>
   <data name="SQL_IntegratedWithUserIDAndPassword" xml:space="preserve">
-    <value>"Authentication=Active Directory Integrated" kann nicht mit Schlüsselwörtern "User ID", "UID", "Password" oder "PWD" für die Verbindungszeichenfolge verwendet werden.</value>
+    <value>"Authentication=Active Directory Integrated" kann nicht mit den Schlüsselwörtern "User ID", "UID", "Password" oder "PWD" für die Verbindungszeichenfolge verwendet werden.</value>
   </data>
   <data name="SQL_InteractiveWithUserIDAndPassword" xml:space="preserve">
     <value>"Authentication=Active Directory Interactive" kann nicht mit den Schlüsselwörtern "User ID", "UID", "Password" oder "PWD" für die Verbindungszeichenfolge verwendet werden.</value>
@@ -2818,7 +2818,7 @@
     <value>Der angegebene ColumnName '{0}' entspricht keiner Spalte in der Datenquelle.</value>
   </data>
   <data name="SQL_BulkLoadStringTooLong" xml:space="preserve">
-    <value>String- oder binary-Daten würden abgeschnitten.</value>
+    <value>Zeichenfolgen- oder Binärdaten würden in der Tabelle "{0}", Spalte "{1}" abgeschnitten. Abgeschnittener Wert: {2}.</value>
   </data>
   <data name="SQL_BulkLoadInvalidTimeout" xml:space="preserve">
     <value>Timeoutwert '{0}' ist kleiner 0.</value>
@@ -4321,7 +4321,7 @@
     <value>Das Ausführen einer Abfrage erfordert Enclave-Berechnungen, aber die Anwendungskonfiguration enthält keinen Abschnitt zum Enclave-Anbieter.</value>
   </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
-    <value>Für den Enclave-Typ "{0}" wurde kein Enclave-Anbieter gefunden. Geben Sie den Anbieter in der Anwendungskonfiguration an.</value>
+    <value>Für den Enclave-Typ "{0}" und das Nachweisprotokoll "{1}" wurde kein Enclave-Anbieter gefunden. Geben Sie das richtige Nachweisprotokoll in der Verbindungszeichenfolge an. </value>
   </data>
   <data name="TCE_NullEnclaveSessionReturnedFromProvider" xml:space="preserve">
     <value>Kommunikation mit Enclave nicht möglich. Die vom Enclave-Anbieter empfangenen Enclave-Sitzungsinformationen lauteten NULL. Enclave-Typ: {0}, Enclave-Nachweis-URL: {1}.</value>
@@ -4442,5 +4442,80 @@
   </data>
   <data name="SQL_Timeout_Execution" xml:space="preserve">
     <value>Das Ausführungstimeout ist abgelaufen. Der Timeoutzeitraum wurde überschritten, bevor der Vorgang beendet wurde, oder der Server antwortet nicht.</value>
+  </data>
+  <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
+    <value>Fehler bei der Überprüfung eines Nachweistokens. Die Tokensignatur stimmt nicht mit der Signatur überein, die anhand eines öffentlichen Schlüssels berechnet wurde, der vom Endpunkt für öffentliche Nachweisschlüssel unter "{0}" abgerufen wurde. Überprüfen Sie die DNS-Zuordnung für den Endpunkt. Wenn diese korrekt ist, wenden Sie sich an den Kundensupport.</value>
+  </data>
+  <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
+    <value>Interner Fehler beim erneuten Download des HGS-Stammzertifikats, nachdem bei der ersten Anforderung ein Fehler aufgetreten ist. Wenden Sie sich an den Kundensupport.</value>
+  </data>
+  <data name="EnclaveSessionInvalidationFailed" xml:space="preserve">
+    <value>Interner Fehler. Die angeforderte Enclavesitzung kann nicht als ungültig deklariert werden, weil sie nicht im Cache enthalten ist. Wenden Sie sich an den Kundensupport.</value>
+  </data>
+  <data name="ExpiredAttestationToken" xml:space="preserve">
+    <value>Fehler bei der Überprüfung eines Nachweistokens. Das von SQL Server empfangene Token ist abgelaufen. Wenden Sie sich an den Kundensupport.</value>
+  </data>
+  <data name="FailToCreateEnclaveSession" xml:space="preserve">
+    <value>Fehler beim Erstellen der Enclave-Sitzung, weil der Nachweisserver ausgelastet ist.</value>
+  </data>
+  <data name="FailToParseAttestationInfo" xml:space="preserve">
+    <value>Fehler bei der Überprüfung von Nachweisinformationen. Die Nachweisinformationen weisen ein ungültiges Format auf. Wenden Sie sich an den Kundensupport. Fehlerdetails: {0}.</value>
+  </data>
+  <data name="FailToParseAttestationToken" xml:space="preserve">
+    <value>Fehler bei der Überprüfung eines Nachweistokens. Das Token weisen ein ungültiges Format auf. Wenden Sie sich an den Kundensupport. Fehlerdetails: {0}.</value>
+  </data>
+  <data name="GetAttestationSigningCertificateFailedInvalidCertificate" xml:space="preserve">
+    <value>Der Nachweisdienst hat ein abgelaufenes HGS-Stammzertifikat für die Nachweis-URL {0} zurückgegeben. Überprüfen Sie das für Ihre HGS-Instanz konfigurierte HGS-Stammzertifikat.</value>
+  </data>
+  <data name="GetAttestationSigningCertificateRequestFailedFormat" xml:space="preserve">
+    <value>Das abgerufene HGS-Stammzertifikat für die Nachweis-URL {0} weist ein ungültiges Format auf. Überprüfen Sie, ob die Nachweis-URL korrekt und der HGS-Server online und vollständig initialisiert ist. Wenden Sie sich an den Kundensupport, um weitere Informationen zu erhalten. Fehlerdetails: "{1}".</value>
+  </data>
+  <data name="GetAttestationTokenSigningKeysFailed" xml:space="preserve">
+    <value>Fehler bei der Überprüfung eines Nachweistokens. Ein öffentlicher Schlüssel kann nicht aus dem Endpunkt für öffentliche Nachweisschlüssel abgerufen werden, oder der abgerufene Schlüssel weist ein ungültiges Format auf. Fehlerdetails: {0}.</value>
+  </data>
+  <data name="GetSharedSecretFailed" xml:space="preserve">
+    <value>Fehler bei der Signaturüberprüfung des Diffie-Hellman-Schlüssels für Enclave. Wenden Sie sich an den Kundensupport.</value>
+  </data>
+  <data name="InvalidArgumentToBase64UrlDecoder" xml:space="preserve">
+    <value>Fehler bei der Überprüfung eines Nachweistokens aufgrund eines Fehlers beim Decodieren des öffentlichen Enclaveschlüssels, der von SQL Server abgerufen wurde. Wenden Sie sich an den Kundensupport.</value>
+  </data>
+  <data name="InvalidArgumentToSHA256" xml:space="preserve">
+    <value>Fehler bei der Überprüfung eines Nachweistokens aufgrund eines Fehlers beim Berechnen eines Hashs des öffentlichen Enclaveschlüssels, der von SQL Server abgerufen wurde. Wenden Sie sich an den Kundensupport.</value>
+  </data>
+  <data name="InvalidAttestationToken" xml:space="preserve">
+    <value>Fehler bei der Überprüfung des Nachweistokens während der Signaturüberprüfung. Ausnahme: {0}.</value>
+  </data>
+  <data name="InvalidClaimInAttestationToken" xml:space="preserve">
+    <value>Fehler bei der Überprüfung eines Nachweistokens. Der Anspruch "{0}" im Token weist den ungültigen Wert "{1}" auf. Überprüfen Sie die Nachweisrichtlinie. Wenn die Richtlinie korrekt ist, wenden Sie sich an den Kundensupport.</value>
+  </data>
+  <data name="MissingClaimInAttestationToken" xml:space="preserve">
+    <value>Fehler bei der Überprüfung des Nachweistokens. Der Anspruch "{0}" fehlt im Token. Überprüfen Sie die Nachweisrichtlinie. Wenn die Richtlinie korrekt ist, wenden Sie sich an den Kundensupport.</value>
+  </data>
+  <data name="VerifyEnclaveDebuggable" xml:space="preserve">
+    <value>Es konnte nicht überprüft werden, ob die Enclave im Produktionsmodus ausgeführt wird. Wenden Sie sich an den Kundensupport.</value>
+  </data>
+  <data name="VerifyEnclavePolicyFailedFormat" xml:space="preserve">
+    <value>Die Enclaverichtlinie konnte aufgrund einer Abweichung zwischen den erwarteten und den tatsächlichen Werten der Richtlinie für die Eigenschaft "{0}" nicht überprüft werden. Tatsächlich: "{1}", erwartet: "{2}".</value>
+  </data>
+  <data name="VerifyEnclaveReportFailed" xml:space="preserve">
+    <value>Fehler bei der Signaturüberprüfung des Enclaveberichts. Die Berichtssignatur stimmt nicht mit der Signatur überein, die mit dem HGS-Stammzertifikat berechnet wurde. Überprüfen Sie die DNS-Zuordnung für den Endpunkt. Wenn sie korrekt ist, wenden Sie sich an den Kundensupport.</value>
+  </data>
+  <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
+    <value>Der von SQL Server empfangene Enclavebericht weist nicht das richtige Format auf. Wenden Sie sich an den Kundensupport.</value>
+  </data>
+  <data name="VerifyHealthCertificateChainFormat" xml:space="preserve">
+    <value>Fehler beim Erstellen einer Vertrauenskette zwischen dem Integritätsbericht für den Enclave-Host und dem HGS-Stammzertifikat für die Nachweis-URL {0} mit dem Status "{1}". Überprüfen Sie, ob die Nachweis-URL mit der auf dem SQL Server-Computer konfigurierten URL übereinstimmt. Wenn sowohl der Client als auch SQL Server denselben Nachweisdienst verwenden, wenden Sie sich an den Kundensupport.</value>
+  </data>
+  <data name="TCE_DbConnectionString_AttestationProtocol" xml:space="preserve">
+    <value>Gibt ein Nachweisprotokoll für den entsprechenden Enclave-Nachweisdienst an.</value>
+  </data>
+  <data name="TCE_EnclaveTypeNotSupported" xml:space="preserve">
+    <value>Der vom Server zurückgegebene Enclave-Typ "{0}" wird nicht unterstützt.</value>
+  </data>
+  <data name="TCE_AttestationProtocolNotSupportEnclaveType" xml:space="preserve">
+    <value>Fehler beim Initialisieren der Verbindung. Der Enclave-Typ "{1}" wird vom Nachweisprotokoll "{0}" nicht unterstützt.</value>
+  </data>
+  <data name="TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage" xml:space="preserve">
+    <value>Fehler beim Generieren des Enclave-Pakets. In der Verbindungszeichenfolge wurde kein Nachweisprotokoll angegeben, aber für die Abfrage sind Enclave-Berechnungen erforderlich.</value>
   </data>
 </root>

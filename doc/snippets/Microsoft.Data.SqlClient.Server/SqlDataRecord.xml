@@ -1,0 +1,789 @@
+<?xml version="1.0"?>
+<docs>
+    <members name="SqlDataRecord">
+        <SqlDataRecord>
+            <summary>Represents a single row of data and its metadata. This class cannot be inherited.</summary>
+            <remarks>
+                <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+ This class is used together with <xref:Microsoft.SqlServer.Server.SqlPipe> to send result sets to the client from managed code stored-procedures.  
+  
+ When writing common language runtime (CLR) applications, you should re-use existing `SqlDataRecord` objects instead of creating new ones every time. Creating many new `SqlDataRecord` objects could severely deplete memory and adversely affect performance.  
+  
+   
+  
+## Examples  
+ The following example shows how to create several <xref:Microsoft.Data.SqlClient.Server.SqlMetaData> objects, which describe the column metadata of a record, and creating a <xref:Microsoft.Data.SqlClient.Server.SqlDataRecord>.  The column values of the <xref:Microsoft.Data.SqlClient.Server.SqlDataRecord> are set and the <xref:Microsoft.Data.SqlClient.Server.SqlDataRecord> is sent to the calling program by using the <xref:Microsoft.SqlServer.Server.SqlContext> class.  
+  
+ [!code-csharp[SqlDataRecord Samples#1](~/../sqlclient/doc/samples/SqlDataRecord.cs#1)]
+  
+ ]]></format>
+            </remarks>
+        </SqlDataRecord>
+        <ctor>
+            <param name="metaData">An array of <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> objects that describe each column in the <see cref="T:Microsoft.Data.SqlClient.Server.SqlDataRecord" />.</param>
+            <summary>Inititializes a new <see cref="T:Microsoft.Data.SqlClient.Server.SqlDataRecord" /> instance with the schema based on the array of <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> objects passed as an argument.</summary>
+            <remarks>
+                <format type="text/markdown"><![CDATA[  
+  
+## Examples  
+ The following example shows how to create a new <xref:Microsoft.Data.SqlClient.Server.SqlDataRecord> object from two  <xref:Microsoft.Data.SqlClient.Server.SqlMetaData> objects, which indicate the column name and data type.  
+  
+ [!code-csharp[SqlDataRecord Samples#2](~/../sqlclient/doc/samples/SqlDataRecord.cs#2)]
+  
+ ]]></format>
+            </remarks>
+            <exception cref="T:System.ArgumentNullException">The <paramref name="metaData" /> is <see langword="null" />.</exception>
+        </ctor>
+        <FieldCount>
+            <summary>Gets the number of columns in the data row. This property is read-only.</summary>
+            <value>The number of columns in the data row as an integer.</value>
+            <remarks>To be added.</remarks>
+        </FieldCount>
+        <GetBoolean>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <summary>Gets the value for the column specified by the ordinal as a <see cref="T:System.Boolean" />.</summary>
+            <returns>The column value as a <see cref="T:System.Boolean" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.IndexOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+            <exception cref="T:System.Data.SqlTypes.SqlNullValueException">The column specified by <paramref name="ordinal" /> is null.</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
+        </GetBoolean>
+        <GetByte>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <summary>Gets the value for the column specified by the ordinal as a <see cref="T:System.Byte" />.</summary>
+            <returns>The column value as a <see cref="T:System.Byte" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.IndexOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+            <exception cref="T:System.Data.SqlTypes.SqlNullValueException">The column specified by <paramref name="ordinal" /> is null.</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
+        </GetByte>
+        <GetBytes>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <param name="fieldOffset">The offset into the field value to start retrieving bytes.</param>
+            <param name="buffer">The target buffer to which to copy bytes.</param>
+            <param name="bufferOffset">The offset into the buffer to which to start copying bytes.</param>
+            <param name="length">The number of bytes to copy to the buffer.</param>
+            <summary>Gets the value for the column specified by the ordinal as an array of <see cref="T:System.Byte" /> objects.</summary>
+            <returns>The number of bytes copied.</returns>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+ This method enables you to obtain a binary value either in a single call or in chunks. Getting the value in chunks is useful for large values or values of unknown size.  
+  
+ To obtain the value in several chunks, allocate a byte array of the chunk-size and call <xref:Microsoft.Data.SqlClient.Server.SqlDataRecord.GetBytes%2A> repeatedly, adjusting the `fieldOffset` parameter accordingly in each call.  
+  
+ ]]></format>
+            </remarks>
+            <exception cref="T:System.IndexOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+            <exception cref="T:System.Data.SqlTypes.SqlNullValueException">The column specified by <paramref name="ordinal" /> is null.</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
+        </GetBytes>
+        <GetChar>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <summary>Gets the value for the column specified by the ordinal as a <see cref="T:System.Char" />.</summary>
+            <returns>The column value as a <see cref="T:System.Char" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.IndexOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+            <exception cref="T:System.Data.SqlTypes.SqlNullValueException">The column specified by <paramref name="ordinal" /> is null.</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
+        </GetChar>
+        <GetChars>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <param name="fieldOffset">The offset into the field value to start retrieving characters.</param>
+            <param name="buffer">The target buffer to copy chars to.</param>
+            <param name="bufferOffset">The offset into the buffer to start copying chars to.</param>
+            <param name="length">The number of chars to copy to the buffer.</param>
+            <summary>Gets the value for the column specified by the ordinal as an array of <see cref="T:System.Char" /> objects.</summary>
+            <returns>The number of characters copied.</returns>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+ This method enables you to obtain a character value either in a single call or in chunks. Getting the value in chunks is useful for large values or values of unknown size.  
+  
+ To obtain the value in several chunks, allocate a char array of the chunk-size and call <xref:Microsoft.Data.SqlClient.Server.SqlDataRecord.GetChars%2A> repeatedly adjusting the `fieldOffset` parameter accordingly in each call.  
+  
+ ]]></format>
+            </remarks>
+            <exception cref="T:System.IndexOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+            <exception cref="T:System.Data.SqlTypes.SqlNullValueException">The column specified by <paramref name="ordinal" /> is null.</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
+        </GetChars>
+        <GetData>
+            <param name="ordinal">To be added.</param>
+            <summary>To be added.</summary>
+            <returns>To be added.</returns>
+            <remarks>To be added.</remarks>
+        </GetData>
+        <GetDataTypeName>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <summary>Returns the name of the data type for the column specified by the ordinal argument.</summary>
+            <returns>A <see cref="T:System.String" /> that contains the data type of the column.</returns>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+ This method returns the type name as known in the SQL Server type-system. For user-defined types (UDTs), it returns the three-part name that was used to register the type with SQL Server.  
+  
+ ]]></format>
+            </remarks>
+            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
+        </GetDataTypeName>
+        <GetDateTime>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <summary>Gets the value for the column specified by the ordinal as a <see cref="T:System.DateTime" />.</summary>
+            <returns>The column value as a <see cref="T:System.DateTime" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.IndexOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+            <exception cref="T:System.Data.SqlTypes.SqlNullValueException">The column specified by <paramref name="ordinal" /> is null.</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
+        </GetDateTime>
+        <GetDateTimeOffset>
+            <param name="ordinal">The zero-based column ordinal.</param>
+            <summary>Returns the specified column's data as a <see cref="T:System.DateTimeOffset" />.</summary>
+            <returns>The value of the specified column as a <see cref="T:System.DateTimeOffset" />.</returns>
+            <remarks>To be added.</remarks>
+        </GetDateTimeOffset>
+        <GetDecimal>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <summary>Gets the value for the column specified by the ordinal as a <see cref="T:System.Decimal" />.</summary>
+            <returns>The column value as a <see cref="T:System.Decimal" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.IndexOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+            <exception cref="T:System.Data.SqlTypes.SqlNullValueException">The column specified by <paramref name="ordinal" /> is null.</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
+        </GetDecimal>
+        <GetDouble>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <summary>Gets the value for the column specified by the ordinal as a <see cref="T:System.Double" />.</summary>
+            <returns>The column value as a <see cref="T:System.Double" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.IndexOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+            <exception cref="T:System.Data.SqlTypes.SqlNullValueException">The column specified by <paramref name="ordinal" /> is null.</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
+        </GetDouble>
+        <GetFieldType>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <summary>Returns a <see cref="T:System.Type" /> object representing the common language runtime (CLR) type that maps to the SQL Server type of the column specified by the <paramref name="ordinal" /> argument.</summary>
+            <returns>The column type as a <see cref="T:System.Type" /> object.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.IndexOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+            <exception cref="T:System.TypeLoadException">The column is of a user-defined type that is not available to the calling application domain.</exception>
+            <exception cref="T:System.IO.FileNotFoundException">The column is of a user-defined type that is not available to the calling application domain.</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
+        </GetFieldType>
+        <GetFloat>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <summary>Gets the value for the column specified by the ordinal as a <see langword="float" />.</summary>
+            <returns>The column value as a <see langword="float" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.IndexOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+            <exception cref="T:System.Data.SqlTypes.SqlNullValueException">The column specified by <paramref name="ordinal" /> is null.</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
+        </GetFloat>
+        <GetGuid>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <summary>Gets the value for the column specified by the ordinal as a <see cref="T:System.Guid" />.</summary>
+            <returns>The column value as a <see cref="T:System.Guid" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.IndexOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+            <exception cref="T:System.Data.SqlTypes.SqlNullValueException">The column specified by <paramref name="ordinal" /> is null.</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
+        </GetGuid>
+        <GetInt16>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <summary>Gets the value for the column specified by the ordinal as a <see cref="T:System.Int16" />.</summary>
+            <returns>The column value as a <see cref="T:System.Int16" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.IndexOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+            <exception cref="T:System.Data.SqlTypes.SqlNullValueException">The column specified by <paramref name="ordinal" /> is null.</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
+        </GetInt16>
+        <GetInt32>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <summary>Gets the value for the column specified by the ordinal as a <see cref="T:System.Int32" />.</summary>
+            <returns>The column value as a <see cref="T:System.Int32" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.IndexOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+            <exception cref="T:System.Data.SqlTypes.SqlNullValueException">The column specified by <paramref name="ordinal" /> is null.</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
+        </GetInt32>
+        <GetInt64>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <summary>Gets the value for the column specified by the ordinal as a <see cref="T:System.Int64" />.</summary>
+            <returns>The column value as a <see cref="T:System.Int64" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.IndexOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+            <exception cref="T:System.Data.SqlTypes.SqlNullValueException">The column specified by <paramref name="ordinal" /> is null.</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
+        </GetInt64>
+        <GetName>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <summary>Returns the name of the column specified by the ordinal argument.</summary>
+            <returns>A <see cref="T:System.String" /> containing the column name.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.IndexOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
+        </GetName>
+        <GetOrdinal>
+            <param name="name">The name of the column to look up.</param>
+            <summary>Returns the column ordinal specified by the column name.</summary>
+            <returns>The zero-based ordinal of the column as an integer.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentNullException">
+            <paramref name="name" /> is <see langword="null" />.</exception>
+            <exception cref="T:System.IndexOutOfRangeException">The column name could not be found.</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
+        </GetOrdinal>
+        <GetSqlBinary>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <summary>Gets the value for the column specified by the ordinal as a <see cref="T:System.Data.SqlTypes.SqlBinary" />.</summary>
+            <returns>The column value as a <see cref="T:System.Data.SqlTypes.SqlBinary" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.IndexOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
+        </GetSqlBinary>
+        <GetSqlBoolean>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <summary>Gets the value for the column specified by the ordinal as a <see cref="T:System.Data.SqlTypes.SqlBoolean" />.</summary>
+            <returns>The column value as a <see cref="T:System.Data.SqlTypes.SqlBoolean" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.IndexOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
+        </GetSqlBoolean>
+        <GetSqlByte>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <summary>Gets the value for the column specified by the ordinal as a <see cref="T:System.Data.SqlTypes.SqlByte" />.</summary>
+            <returns>The column value as a <see cref="T:System.Data.SqlTypes.SqlByte" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.IndexOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
+        </GetSqlByte>
+        <GetSqlBytes>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <summary>Gets the value for the column specified by the ordinal as a <see cref="T:System.Data.SqlTypes.SqlBytes" />.</summary>
+            <returns>The column value as a <see cref="T:System.Data.SqlTypes.SqlBytes" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.IndexOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
+        </GetSqlBytes>
+        <GetSqlChars>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <summary>Gets the value for the column specified by the ordinal as a <see cref="T:System.Data.SqlTypes.SqlChars" />.</summary>
+            <returns>The column value as a <see cref="T:System.Data.SqlTypes.SqlChars" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.IndexOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
+        </GetSqlChars>
+        <GetSqlDateTime>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <summary>Gets the value for the column specified by the ordinal as a <see cref="T:System.Data.SqlTypes.SqlDateTime" />.</summary>
+            <returns>The column value as a <see cref="T:System.Data.SqlTypes.SqlDateTime" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.IndexOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
+        </GetSqlDateTime>
+        <GetSqlDecimal>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <summary>Gets the value for the column specified by the ordinal as a <see cref="T:System.Data.SqlTypes.SqlDecimal" />.</summary>
+            <returns>The column value as a <see cref="T:System.Data.SqlTypes.SqlDecimal" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.IndexOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
+        </GetSqlDecimal>
+        <GetSqlDouble>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <summary>Gets the value for the column specified by the ordinal as a <see cref="T:System.Data.SqlTypes.SqlDouble" />.</summary>
+            <returns>The column value as a <see cref="T:System.Data.SqlTypes.SqlDouble" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.IndexOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
+        </GetSqlDouble>
+        <GetSqlFieldType>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <summary>Returns a <see cref="T:System.Type" /> object that represents the type (as a SQL Server type, defined in <see cref="N:System.Data.SqlTypes" />) that maps to the SQL Server type of the column.</summary>
+            <returns>The column type as a <see cref="T:System.Type" /> object.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.IndexOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+            <exception cref="T:System.TypeLoadException">The column is of a user-defined type that is not available to the calling application domain.</exception>
+            <exception cref="T:System.IO.FileNotFoundException">The column is of a user-defined type that is not available to the calling application domain.</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
+        </GetSqlFieldType>
+        <GetSqlGuid>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <summary>Gets the value for the column specified by the ordinal as a <see cref="T:System.Data.SqlTypes.SqlGuid" />.</summary>
+            <returns>The column value as a <see cref="T:System.Data.SqlTypes.SqlGuid" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.IndexOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
+        </GetSqlGuid>
+        <GetSqlInt16>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <summary>Gets the value for the column specified by the ordinal as a <see cref="T:System.Data.SqlTypes.SqlInt16" />.</summary>
+            <returns>The column value as a <see cref="T:System.Data.SqlTypes.SqlInt16" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.IndexOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
+        </GetSqlInt16>
+        <GetSqlInt32>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <summary>Gets the value for the column specified by the ordinal as a <see cref="T:System.Data.SqlTypes.SqlInt32" />.</summary>
+            <returns>The column value as a <see cref="T:System.Data.SqlTypes.SqlInt32" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.IndexOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
+        </GetSqlInt32>
+        <GetSqlInt64>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <summary>Gets the value for the column specified by the ordinal as a <see cref="T:System.Data.SqlTypes.SqlInt64" />.</summary>
+            <returns>The column value as a <see cref="T:System.Data.SqlTypes.SqlInt64" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.IndexOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>   
+        </GetSqlInt64>
+        <GetSqlMetaData>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <summary>Returns a <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> object, describing the metadata of the column specified by the column ordinal.</summary>
+            <returns>The column metadata as a <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> object.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.IndexOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
+        </GetSqlMetaData>
+        <GetSqlMoney>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <summary>Gets the value for the column specified by the ordinal as a <see cref="T:System.Data.SqlTypes.SqlMoney" />.</summary>
+            <returns>The column value as a <see cref="T:System.Data.SqlTypes.SqlMoney" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.IndexOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
+        </GetSqlMoney>
+        <GetSqlSingle>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <summary>Gets the value for the column specified by the ordinal as a <see cref="T:System.Data.SqlTypes.SqlSingle" />.</summary>
+            <returns>The column value as a <see cref="T:System.Data.SqlTypes.SqlSingle" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.IndexOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
+        </GetSqlSingle>
+        <GetSqlString>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <summary>Gets the value for the column specified by the ordinal as a <see cref="T:System.Data.SqlTypes.SqlString" />.</summary>
+            <returns>The column value as a <see cref="T:System.Data.SqlTypes.SqlString" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.IndexOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
+        </GetSqlString>
+        <GetSqlValue>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <summary>Returns the data value stored in the column, expressed as a SQL Server type, specified by the column ordinal.</summary>
+            <returns>The value of the column, expressed as a SQL Server type, as a <see cref="T:System.Object" />.</returns>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+ For null values, a SQL Server type instance is returned where the <xref:System.Data.SqlTypes.INullable.IsNull%2A> property is true.  
+  
+ ]]></format>
+            </remarks>
+            <exception cref="T:System.IndexOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
+            <altmember cref="N:System.Data.SqlTypes" />
+        </GetSqlValue>
+        <GetSqlValues>
+            <param name="values">The array into which to copy the values column values.</param>
+            <summary>Returns the values for all the columns in the record, expressed as SQL Server types, in an array.</summary>
+            <returns>An <see cref="T:System.Int32" /> that indicates the number of columns copied.</returns>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+ The SQL Server type values of the column are copied into the `values` array that is passed as a parameter. For null values, a Sql type instance is returned where the <xref:System.Data.SqlTypes.INullable.IsNull%2A> property is true.  
+  
+ The length of the `values` array does not need to match the number of columns in the record. If the array length is greater than the number of columns, all of the column values are copied into the array; if it is less, only the array length number of column values are copied into the array, starting at the column value with ordinal 0.  
+  
+ ]]></format>
+            </remarks>
+            <exception cref="T:System.ArgumentNullException">
+            <paramref name="values" /> is <see langword="null" />.</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
+            <altmember cref="N:System.Data.SqlTypes" />
+        </GetSqlValues>
+        <GetSqlXml>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <summary>Gets the value for the column specified by the ordinal as a <see cref="T:System.Data.SqlTypes.SqlXml" />.</summary>
+            <returns>The column value as a <see cref="T:System.Data.SqlTypes.SqlXml" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
+        </GetSqlXml>
+        <GetString>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <summary>Gets the value for the column specified by the ordinal as a <see cref="T:System.String" />.</summary>
+            <returns>The column value as a <see cref="T:System.String" />.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
+        </GetString>
+        <GetTimeSpan>
+            <param name="ordinal">The zero-based column ordinal.</param>
+            <summary>Returns the specified column's data as a <see cref="T:System.TimeSpan" />.</summary>
+            <returns>The value of the specified column as a <see cref="T:System.TimeSpan" />.</returns>
+            <remarks>To be added.</remarks>
+        </GetTimeSpan>
+        <GetValue>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <summary>Returns the common language runtime (CLR) type value for the column specified by the ordinal argument.</summary>
+            <returns>The CLR type value of the column specified by the ordinal.</returns>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+ For columns with null value, <xref:System.DBNull.Value> is returned.  
+  
+ ]]></format>
+            </remarks>
+            <exception cref="T:System.IndexOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
+        </GetValue>
+        <GetValues>
+            <param name="values">The array into which to copy the values column values.</param>
+            <summary>Returns the values for all the columns in the record, expressed as common language runtime (CLR) types, in an array.</summary>
+            <returns>An <see cref="T:System.Int32" /> that indicates the number of columns copied.</returns>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+ The CLR type values of the column are copied into the `values` array that is passed as a parameter. For columns with null value, <xref:System.DBNull.Value> is returned.  
+  
+ The length of the `values` array does not need to match the number of columns in the record. If the array length is greater than the number of columns, all of the column values are copied into the array; if it is less, only the array length number of column values is copied into the array, starting at the column value with ordinal 0.  
+  
+ ]]></format>
+            </remarks>
+            <exception cref="T:System.ArgumentNullException">
+            <paramref name="values" /> is <see langword="null" />.</exception>
+            <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
+        </GetValues>
+        <IsDBNull>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <summary>Returns true if the column specified by the column ordinal parameter is null.</summary>
+            <returns>
+            <see langword="true" /> if the column is null; <see langword="false" /> otherwise.</returns>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.IndexOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+        </IsDBNull>
+        <Item>
+            <summary>Gets the common language runtime (CLR) type value for the column.</summary>
+        </Item>
+        <ItemOrdinal>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <summary>Gets the common language runtime (CLR) type value for the column specified by the column <paramref name="ordinal" /> argument.</summary>
+            <value>The CLR type value of the column specified by the <paramref name="ordinal" />.</value>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+ For columns with null value, <xref:System.DBNull.Value> is returned.  
+  
+ ]]></format>
+            </remarks>
+            <exception cref="T:System.IndexOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+        </ItemOrdinal>
+        <ItemName>
+            <param name="name">The name of the column.</param>
+            <summary>Gets the common language runtime (CLR) type value for the column specified by the column <paramref name="name" /> argument.</summary>
+            <value>The CLR type value of the column specified by the <paramref name="name" />.</value>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+ For columns with null value, <xref:System.DBNull.Value> is returned.  
+  
+ ]]></format>
+            </remarks>
+        </ItemName>
+        <SetBoolean>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <param name="value">The new value of the column.</param>
+            <summary>Sets the data stored in the column to the specified <see cref="T:System.Boolean" /> value.</summary>
+            <remarks>To be added.</remarks>
+        </SetBoolean>
+        <SetByte>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <param name="value">The new value of the column.</param>
+            <summary>Sets the data stored in the column to the specified <see cref="T:System.Byte" /> value.</summary>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+        </SetByte>
+        <SetBytes>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <param name="fieldOffset">The offset into the field value to start copying bytes.</param>
+            <param name="buffer">The target buffer from which to copy bytes.</param>
+            <param name="bufferOffset">The offset into the buffer from which to start copying bytes.</param>
+            <param name="length">The number of bytes to copy from the buffer.</param>
+            <summary>Sets the data stored in the column to the specified array of <see cref="T:System.Byte" /> values.</summary>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+        </SetBytes>
+        <SetChar><param name="ordinal">The zero-based ordinal of the column.</param>
+            <param name="value">The new value of the column.</param>
+            <summary>Sets the data stored in the column to the specified <see cref="T:System.Char" /> value.</summary>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+        </SetChar>
+        <SetChars>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <param name="fieldOffset">The offset into the field value to start copying characters.</param>
+            <param name="buffer">The target buffer from which to copy chars.</param>
+            <param name="bufferOffset">The offset into the buffer from which to start copying chars.</param>
+            <param name="length">The number of chars to copy from the buffer.</param>
+            <summary>Sets the data stored in the column to the specified array of <see cref="T:System.Char" /> values.</summary>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+        </SetChars>
+        <SetDateTime>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <param name="value">The new value of the column.</param>
+            <summary>Sets the data stored in the column to the specified <see cref="T:System.DateTime" /> value.</summary>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+        </SetDateTime>
+        <SetDateTimeOffset>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <param name="value">The new value of the column.</param>
+            <summary>Sets the value of the column specified to the <see cref="T:System.DateTimeOffset" /> value.</summary>
+            <remarks>To be added.</remarks>
+        </SetDateTimeOffset>
+        <SetDBNull>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <summary>Sets the value in the specified column to <see cref="T:System.DBNull" />.</summary>
+            <remarks>To be added.</remarks>
+        </SetDBNull>
+        <SetDecimal>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <param name="value">The new value of the column.</param>
+            <summary>Sets the data stored in the column to the specified <see cref="T:System.Decimal" /> value.</summary>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+        </SetDecimal>
+        <SetDouble>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <param name="value">The new value of the column.</param>
+            <summary>Sets the data stored in the column to the specified <see cref="T:System.Double" /> value.</summary>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+        </SetDouble>
+        <SetFloat>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <param name="value">The new value of the column.</param>
+            <summary>Sets the data stored in the column to the specified <see langword="float" /> value.</summary>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+        </SetFloat>
+        <SetGuid>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <param name="value">The new value of the column.</param>
+            <summary>Sets the data stored in the column to the specified <see cref="T:System.Guid" /> value.</summary>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+        </SetGuid>
+        <SetInt16>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <param name="value">The new value of the column.</param>
+            <summary>Sets the data stored in the column to the specified <see cref="T:System.Int16" /> value.</summary>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+        </SetInt16>
+        <SetInt32>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <param name="value">The new value of the column.</param>
+            <summary>Sets the data stored in the column to the specified <see cref="T:System.Int32" /> value.</summary>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+        </SetInt32>
+        <SetInt64>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <param name="value">The new value of the column.</param>
+            <summary>Sets the data stored in the column to the specified <see cref="T:System.Int64" /> value.</summary>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+        </SetInt64>
+        <SetSqlBinary>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <param name="value">The new value of the column.</param>
+            <summary>Sets the data stored in the column to the specified <see cref="T:System.Data.SqlTypes.SqlBinary" /> value.</summary>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+        </SetSqlBinary>
+        <SetSqlBoolean>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <param name="value">The new value of the column.</param>
+            <summary>Sets the data stored in the column to the specified <see cref="T:System.Data.SqlTypes.SqlBoolean" /> value.</summary>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+        </SetSqlBoolean>
+        <SetSqlByte>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <param name="value">The new value of the column.</param>
+            <summary>Sets the data stored in the column to the specified <see cref="T:System.Data.SqlTypes.SqlByte" /> value.</summary>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+        </SetSqlByte>
+        <SetSqlBytes>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <param name="value">The new value of the column.</param>
+            <summary>Sets the data stored in the column to the specified <see cref="T:System.Data.SqlTypes.SqlBytes" /> value.</summary>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+        </SetSqlBytes>
+        <SetSqlChars>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <param name="value">The new value of the column.</param>
+            <summary>Sets the data stored in the column to the specified <see cref="T:System.Data.SqlTypes.SqlChars" /> value.</summary>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+        </SetSqlChars>
+        <SetSqlDateTime>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <param name="value">The new value of the column.</param>
+            <summary>Sets the data stored in the column to the specified <see cref="T:System.Data.SqlTypes.SqlDateTime" /> value.</summary>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+        </SetSqlDateTime>
+        <SetSqlDecimal>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <param name="value">The new value of the column.</param>
+            <summary>Sets the data stored in the column to the specified <see cref="T:System.Data.SqlTypes.SqlDecimal" /> value.</summary>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+        </SetSqlDecimal>
+        <SetSqlDouble>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <param name="value">The new value of the column.</param>
+            <summary>Sets the data stored in the column to the specified <see cref="T:System.Data.SqlTypes.SqlDouble" /> value.</summary>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+        </SetSqlDouble>
+        <SetSqlGuid>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <param name="value">The new value of the column.</param>
+            <summary>Sets the data stored in the column to the specified <see cref="T:System.Data.SqlTypes.SqlGuid" /> value.</summary>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+        </SetSqlGuid>
+        <SetSqlInt16>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <param name="value">The new value of the column.</param>
+            <summary>Sets the data stored in the column to the specified <see cref="T:System.Data.SqlTypes.SqlInt16" /> value.</summary>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+        </SetSqlInt16>
+        <SetSqlInt32>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <param name="value">The new value of the column.</param>
+            <summary>Sets the data stored in the column to the specified <see cref="T:System.Data.SqlTypes.SqlInt32" /> value.</summary>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+        </SetSqlInt32>
+        <SetSqlInt64>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <param name="value">The new value of the column.</param>
+            <summary>Sets the data stored in the column to the specified <see cref="T:System.Data.SqlTypes.SqlInt64" /> value.</summary>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+        </SetSqlInt64>
+        <SetSqlMoney>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <param name="value">The new value of the column.</param>
+            <summary>Sets the data stored in the column to the specified <see cref="T:System.Data.SqlTypes.SqlMoney" /> value.</summary>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+        </SetSqlMoney>
+        <SetSqlSingle>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <param name="value">The new value of the column.</param>
+            <summary>Sets the data stored in the column to the specified <see cref="T:System.Data.SqlTypes.SqlSingle" /> value.</summary>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+        </SetSqlSingle>
+        <SetSqlString>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <param name="value">The new value of the column.</param>
+            <summary>Sets the data stored in the column to the specified <see cref="T:System.Data.SqlTypes.SqlString" /> value.</summary>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+        </SetSqlString>
+        <SetSqlXml>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <param name="value">The new value of the column.</param>
+            <summary>Sets the data stored in the column to the specified <see cref="T:System.Data.SqlTypes.SqlXml" /> value.</summary>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+        </SetSqlXml>
+        <SetString>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <param name="value">The new value of the column.</param>
+            <summary>Sets the data stored in the column to the specified <see cref="T:System.String" /> value.</summary>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+        </SetString>
+        <SetTimeSpan>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <param name="value">The new value of the column.</param>
+            <summary>Sets the value of the column specified to the <see cref="T:System.TimeSpan" />.</summary>
+            <remarks>To be added.</remarks>
+            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="ordinal" /> passed in is a negative number.</exception>
+            <exception cref="T:System.ArgumentException">The <see cref="T:System.TimeSpan" /> value passed in is greater than 24 hours in length.</exception>
+        </SetTimeSpan>
+        <SetValue>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <param name="value">The new value for the specified column.</param>
+            <summary>Sets a new value, expressed as a common language runtime (CLR) type, for the column specified by the column ordinal.</summary>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+ `value` is a SQL type boxed as a <xref:System.Object> instance.  
+  
+ ]]></format>
+            </remarks>
+            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+        </SetValue>
+        <SetValues>
+            <param name="values">The array of new values, expressed as CLR types boxed as <see cref="T:System.Object" /> references, for the <see cref="T:Microsoft.Data.SqlClient.Server.SqlDataRecord" /> instance.</param>
+            <summary>Sets new values for all of the columns in the <see cref="T:Microsoft.Data.SqlClient.Server.SqlDataRecord" />. These values are expressed as common language runtime (CLR) types.</summary>
+            <returns>The number of column values set as an integer.</returns>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+ The length of values must match the number of columns in the <xref:Microsoft.Data.SqlClient.Server.SqlDataRecord> instance.  
+  
+ ]]></format>
+            </remarks>
+            <exception cref="T:System.ArgumentNullException">
+            <paramref name="values" /> is <see langword="null" />.</exception>
+            <exception cref="T:System.ArgumentException">The size of values does not match the number of columns in the <see cref="T:Microsoft.Data.SqlClient.Server.SqlDataRecord" /> instance.</exception>
+        </SetValues>
+        <System.Data.IDataRecord.GetData>
+            <param name="ordinal">The zero-based ordinal of the column.</param>
+            <summary>Not supported in this release.</summary>
+            <returns>
+            <see cref="T:System.Data.IDataReader" />  
+    
+    Always throws an exception.</returns>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+ This method is not supported in this release, and throws <xref:System.NotSupportedException> if called.  
+  
+ ]]></format>
+            </remarks>
+            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
+        </System.Data.IDataRecord.GetData>
+    </members>
+</docs>

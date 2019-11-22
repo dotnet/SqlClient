@@ -11,7 +11,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [CheckConnStrSetupFact]
         public static void TestMain()
         {
-            string connstr = (new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr) { MultipleActiveResultSets = true }).ConnectionString;
+            string connstr = (new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { MultipleActiveResultSets = true }).ConnectionString;
             string cmdText1 = "select * from Orders; select count(*) from Customers";
             string cmdText2 = "select * from Customers; select count(*) from Orders";
 

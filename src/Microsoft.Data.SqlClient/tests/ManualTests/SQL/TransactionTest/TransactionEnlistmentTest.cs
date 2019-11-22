@@ -176,7 +176,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void RunTestSet(Action TestCase)
         {
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr);
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
             builder.ConnectTimeout = 5;
 
             builder.Pooling = true;

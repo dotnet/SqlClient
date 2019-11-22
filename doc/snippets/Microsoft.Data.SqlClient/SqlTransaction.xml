@@ -1,0 +1,193 @@
+<?xml version="1.0"?>
+<docs>
+    <members name="SqlTransaction">
+        <SqlTransaction>
+            <summary>Represents a Transact-SQL transaction to be made in a SQL Server database. This class cannot be inherited.</summary>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+ The application creates a <xref:Microsoft.Data.SqlClient.SqlTransaction> object by calling <xref:Microsoft.Data.SqlClient.SqlConnection.BeginTransaction%2A> on the <xref:Microsoft.Data.SqlClient.SqlConnection> object. All subsequent operations associated with the transaction (for example, committing or aborting the transaction), are performed on the <xref:Microsoft.Data.SqlClient.SqlTransaction> object.  
+  
+> [!NOTE]
+>  `Try`/`Catch` exception handling should always be used when committing or rolling back a <xref:Microsoft.Data.SqlClient.SqlTransaction>. Both <xref:Microsoft.Data.SqlClient.SqlTransaction.Commit%2A> and <xref:Microsoft.Data.SqlClient.SqlTransaction.Rollback%2A> generate an <xref:System.InvalidOperationException> if the connection is terminated or if the transaction has already been rolled back on the server.  
+  
+ For more information on SQL Server transactions, see [Explicit Transactions](https://msdn.microsoft.com/library/ms175127\(SQL.105\).aspx) and [Coding Efficient Transactions](https://msdn.microsoft.com/library/ms187484\(SQL.105\).aspx).  
+  
+   
+  
+## Examples  
+ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> and a <xref:Microsoft.Data.SqlClient.SqlTransaction>. It also demonstrates how to use the <xref:Microsoft.Data.SqlClient.SqlConnection.BeginTransaction%2A>, <xref:Microsoft.Data.SqlClient.SqlTransaction.Commit%2A>, and <xref:Microsoft.Data.SqlClient.SqlTransaction.Rollback%2A> methods. The transaction is rolled back on any error, or if it is disposed without first being committed. `Try`/`Catch` error handling is used to handle any errors when attempting to commit or roll back the transaction.  
+  
+ [!code-csharp[SqlConnection_BeginTransaction Example#1](~/../sqlclient/doc/samples/SqlConnection_BeginTransaction.cs#1)]
+  
+ ]]></format>
+            </remarks>
+        </SqlTransaction>
+        <Commit>
+            <summary>Commits the database transaction.</summary>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+ The <xref:Microsoft.Data.SqlClient.SqlTransaction.Commit%2A> method is equivalent to the Transact-SQL COMMIT TRANSACTION statement. You cannot roll back a transaction once it has been committed, because all modifications have become a permanent part of the database. For more information, see [COMMIT TRANSACTION (Transact-SQL)](/sql/t-sql/language-elements/commit-transaction-transact-sql).
+  
+> [!NOTE]
+>  `Try`/`Catch` exception handling should always be used when committing or rolling back a <xref:Microsoft.Data.SqlClient.SqlTransaction>. Both `Commit` and <xref:Microsoft.Data.SqlClient.SqlTransaction.Rollback%2A> generates an <xref:System.InvalidOperationException> if the connection is terminated or if the transaction has already been rolled back on the server.  
+  
+ For more information on SQL Server transactions, see [Transactions (Transact-SQL)](/sql/t-sql/language-elements/transactions-transact-sql).
+  
+   
+  
+## Examples  
+ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> and a <xref:Microsoft.Data.SqlClient.SqlTransaction>. It also demonstrates how to use the <xref:Microsoft.Data.SqlClient.SqlTransaction.Commit%2A>, <xref:Microsoft.Data.SqlClient.SqlConnection.BeginTransaction%2A>, and <xref:Microsoft.Data.SqlClient.SqlTransaction.Rollback%2A> methods. The transaction is rolled back on any error. `Try`/`Catch` error handling is used to handle any errors when attempting to commit or roll back the transaction.  
+  
+ [!code-csharp[SqlConnection_BeginTransaction Example#1](~/../sqlclient/doc/samples/SqlConnection_BeginTransaction.cs#1)]
+  
+ ]]></format>
+            </remarks>
+            <exception cref="T:System.Exception">An error occurred while trying to commit the transaction.</exception>
+            <exception cref="T:System.InvalidOperationException">The transaction has already been committed or rolled back.  
+  
+ -or-  
+  
+ The connection is broken.</exception>
+        </Commit>
+        <Connection>
+            <summary>Gets the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object associated with the transaction, or <see langword="null" /> if the transaction is no longer valid.</summary>
+            <value>The <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object associated with the transaction.</value>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+ A single application may have multiple database connections, each with zero or more transactions. This property lets you determine the connection object associated with a particular transaction created by <xref:Microsoft.Data.SqlClient.SqlConnection.BeginTransaction%2A>.  
+  
+ ]]></format>
+            </remarks>
+        </Connection>
+        <DbConnection>
+            <summary>To be added.</summary>
+            <value>To be added.</value>
+            <remarks>To be added.</remarks>
+        </DbConnection>
+        <Dispose>
+            <summary>Releases the resources that are held by the object.</summary>
+            <remarks>To be added.</remarks>
+        </Dispose>
+        <DisposeDisposing>
+            <param name="disposing"><see langword="true" /> to release managed and unmanaged resources; <see langword="false" /> to release only unmanaged resources.</param>
+            <summary>Releases the unmanaged resources used and optionally releases the managed resources.</summary>
+            <remarks>
+              <format type="text/markdown"><![CDATA[  
+            
+## Remarks  
+This method calls <xref:System.Data.Common.DbTransaction.Dispose%2A>.
+
+]]></format>
+            </remarks>
+        </DisposeDisposing>
+        <IsolationLevel>
+            <summary>Specifies the <see cref="T:System.Data.IsolationLevel" /> for this transaction.</summary>
+            <value>The <see cref="T:System.Data.IsolationLevel" /> for this transaction. The default is <see langword="ReadCommitted" />.</value>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+ Parallel transactions are not supported. Therefore, the <xref:System.Data.IsolationLevel> applies to the whole transaction.  
+  
+ For more information on SQL Server isolation levels, see [Transaction Isolation Levels](/sql/t-sql/language-elements/transaction-isolation-levels).
+  
+ ]]></format>
+            </remarks>
+        </IsolationLevel>
+        <Rollback1>
+            <summary>Rolls back a transaction from a pending state.</summary>
+        </Rollback1>
+        <Rollback2>
+            <summary>Rolls back a transaction from a pending state.</summary>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+ The <xref:Microsoft.Data.SqlClient.SqlTransaction.Rollback%2A> method is equivalent to the Transact-SQL ROLLBACK TRANSACTION statement. For more information, see [ROLLBACK TRANSACTION (Transact-SQL)
+](/sql/t-sql/language-elements/rollback-transaction-transact-sql).
+  
+ The transaction can only be rolled back from a pending state (after <xref:Microsoft.Data.SqlClient.SqlConnection.BeginTransaction%2A> has been called, but before <xref:Microsoft.Data.SqlClient.SqlTransaction.Commit%2A> is called). The transaction is rolled back in the event it is disposed before `Commit` or `Rollback` is called.  
+  
+> [!NOTE]
+>  `Try`/`Catch` exception handling should always be used when rolling back a transaction. A `Rollback` generates an <xref:System.InvalidOperationException> if the connection is terminated or if the transaction has already been rolled back on the server.  
+  
+ For more information on SQL Server transactions, see [Transactions (Transact-SQL)](/sql/t-sql/language-elements/transactions-transact-sql).
+  
+   
+  
+## Examples  
+ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> and a <xref:Microsoft.Data.SqlClient.SqlTransaction>. It also demonstrates how to use the <xref:Microsoft.Data.SqlClient.SqlConnection.BeginTransaction%2A>, <xref:Microsoft.Data.SqlClient.SqlTransaction.Commit%2A>, and <xref:Microsoft.Data.SqlClient.SqlTransaction.Rollback%2A> methods. The transaction is rolled back on any error. `Try`/`Catch` error handling is used to handle any errors when attempting to commit or roll back the transaction.  
+  
+ [!code-csharp[SqlConnection_BeginTransaction Example#1](~/../sqlclient/doc/samples/SqlConnection_BeginTransaction.cs#1)]
+  
+ ]]></format>
+            </remarks>
+            <exception cref="T:System.Exception">An error occurred while trying to commit the transaction.</exception>
+            <exception cref="T:System.InvalidOperationException">The transaction has already been committed or rolled back.  
+  
+ -or-  
+  
+ The connection is broken.</exception>
+        </Rollback2>
+        <RollbackTransactionName>
+            <param name="transactionName">The name of the transaction to roll back, or the savepoint to which to roll back.</param>
+            <summary>Rolls back a transaction from a pending state, and specifies the transaction or savepoint name.</summary>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+ The <xref:Microsoft.Data.SqlClient.SqlTransaction.Rollback%2A> method is equivalent to the Transact-SQL ROLLBACK TRANSACTION statement. For more information, see [Transactions (Transact-SQL)](/sql/t-sql/language-elements/transactions-transact-sql).  
+  
+ The transaction can only be rolled back from a pending state (after <xref:Microsoft.Data.SqlClient.SqlConnection.BeginTransaction%2A> has been called, but before <xref:Microsoft.Data.SqlClient.SqlTransaction.Commit%2A> is called). The transaction is rolled back if it is disposed before `Commit` or `Rollback` is called.  
+  
+> [!NOTE]
+>  `Try`/`Catch` exception handling should always be used when rolling back a transaction. A `Rollback` generates an <xref:System.InvalidOperationException> if the connection is terminated or if the transaction has already been rolled back on the server.  
+  
+ For more information on SQL Server transactions, see [Transactions (Transact-SQL)](/sql/t-sql/language-elements/transactions-transact-sql).
+  
+   
+  
+## Examples  
+ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> and a <xref:Microsoft.Data.SqlClient.SqlTransaction>. It also demonstrates how to use the <xref:Microsoft.Data.SqlClient.SqlConnection.BeginTransaction%2A>, <xref:Microsoft.Data.SqlClient.SqlTransaction.Commit%2A>, and <xref:Microsoft.Data.SqlClient.SqlTransaction.Rollback%2A> methods. The transaction is rolled back on any error. `Try`/`Catch` error handling is used to handle any errors when attempting to commit or roll back the transaction.  
+  
+ [!code-csharp[SqlConnection_BeginTransaction2 Example#1](~/../sqlclient/doc/samples/SqlConnection_BeginTransaction2.cs#1)]
+  
+ ]]></format>
+            </remarks>
+            <exception cref="T:System.ArgumentException">No transaction name was specified.</exception>
+            <exception cref="T:System.InvalidOperationException">The transaction has already been committed or rolled back.  
+  
+ -or-  
+  
+ The connection is broken.</exception>
+        </RollbackTransactionName>
+        <Save>
+            <param name="savePointName">The name of the savepoint.</param>
+            <summary>Creates a savepoint in the transaction that can be used to roll back a part of the transaction, and specifies the savepoint name.</summary>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+ <xref:Microsoft.Data.SqlClient.SqlTransaction.Save%2A> method is equivalent to the Transact-SQL SAVE TRANSACTION statement.  
+  
+ The value used in the `savePoint` parameter can be the same value used in the `transactionName` parameter of some implementations of the <xref:Microsoft.Data.SqlClient.SqlConnection.BeginTransaction%2A> method.  
+  
+ Savepoints offer a mechanism to roll back parts of transactions. You create a savepoint using the <xref:Microsoft.Data.SqlClient.SqlTransaction.Save%2A> method, and then later call the <xref:Microsoft.Data.SqlClient.SqlTransaction.Rollback%2A> method to roll back to the savepoint instead of rolling back to the start of the transaction.  
+  
+ ]]></format>
+            </remarks>
+            <exception cref="T:System.Exception">An error occurred while trying to commit the transaction.</exception>
+            <exception cref="T:System.InvalidOperationException">The transaction has already been committed or rolled back.  
+  
+ -or-  
+  
+ The connection is broken.</exception>
+        </Save>
+    </members>
+</docs>

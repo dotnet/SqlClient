@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <ProjectGuid>{45DB5F86-7AE3-45C6-870D-F9357B66BDB5}</ProjectGuid>
-    <TargetGroup Condition="'$(TargetFramework)'=='netcoreapp2.1'">netcoreapp</TargetGroup>
-    <TargetGroup Condition="'$(TargetFramework)'=='net46'">netfx</TargetGroup>
+    <TargetGroup Condition="$(TargetFramework.StartsWith('netcoreapp'))">netcoreapp</TargetGroup>
+    <TargetGroup Condition="$(TargetFramework.StartsWith('net4'))">netfx</TargetGroup>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <CodeAnalysisRuleSet>Microsoft.Data.SqlClient.ManualTesting.Tests.ruleset</CodeAnalysisRuleSet>
     <Configurations>Debug;Release;net46-Release;net46-Debug;netcoreapp2.1-Debug;netcoreapp2.1-Release</Configurations>
@@ -11,32 +11,48 @@
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).ManualTests</IntermediateOutputPath>  
     <OutputPath>$(BinFolder)$(Configuration).ManualTests</OutputPath>
   </PropertyGroup>
+  <Target Name="CopyConfig" BeforeTargets="Compile">
+    <Copy SourceFiles="config.default.json" DestinationFiles="config.json" Condition="!Exists('config.json')" />
+  </Target>
   <ItemGroup>
     <Compile Include="$(CommonTestPath)\System\Collections\DictionaryExtensions.cs">
       <Link>Common\System\Collections\DictionaryExtensions.cs</Link>
     </Compile>
+    <Compile Include="AlwaysEncrypted\AKVTests.cs" />
     <Compile Include="AlwaysEncrypted\ApiShould.cs" />
     <Compile Include="AlwaysEncrypted\BulkCopyAE.cs" />
+    <Compile Include="AlwaysEncrypted\ExceptionTestAKVStore.cs" />
     <Compile Include="AlwaysEncrypted\CoreCryptoTests.cs" />
     <Compile Include="AlwaysEncrypted\End2EndSmokeTests.cs" />
     <Compile Include="AlwaysEncrypted\CspProviderExt.cs" />
+    <Compile Include="AlwaysEncrypted\ConversionTests.cs" />
+    <Compile Include="AlwaysEncrypted\SqlNullValues.cs" />
+    <Compile Include="AlwaysEncrypted\ExceptionsGenericError.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\SqlNullValuesTable.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\AKVTestTable.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ApiTestTable.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\BulkCopyAETestTable.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ColumnEncryptionKey.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ColumnMasterKey.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CryptoNativeBaselineReader.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CryptoVector.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\AkvColumnMasterKey.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CspColumnMasterKey.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CspProviderColumnMasterKey.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\DbObject.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ICreatable.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\IDroppable.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\SqlParameterPropertiesTable.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategy.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyAzureKeyVault.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyCertStoreProvider.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\Table.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CertificateUtility.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\DatabaseHelper.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CertificateUtilityWin.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyCspExt.cs" />
+    <Compile Include="AlwaysEncrypted\TestTrustedMasterKeyPaths.cs" />
+    <Compile Include="DataCommon\AADUtility.cs" />
     <Compile Include="DataCommon\CheckConnStrSetupFactAttribute.cs" />
     <Compile Include="SQL\AdapterTest\AdapterTest.cs" />
     <Compile Include="SQL\AsyncTest\BeginExecAsyncTest.cs" />
@@ -59,6 +75,7 @@
     <Compile Include="DataCommon\SystemDataResourceManager.cs" />
     <Compile Include="SQL\ConnectivityTests\ConnectionBehaviorTest.cs" />
     <Compile Include="SQL\ConnectivityTests\AADConnectionTest.cs" />
+    <Compile Include="SQL\ConnectivityTests\TcpDefaultForAzureTest.cs" />
     <Compile Include="SQL\ParameterTest\DateTimeVariantTest.cs" />
     <Compile Include="SQL\ParameterTest\OutputParameter.cs" />
     <Compile Include="SQL\ParameterTest\ParametersTest.cs" />
@@ -75,13 +92,15 @@
     <Compile Include="DDBasics\DDMARSTest\DDMARSTest.cs" />
     <Compile Include="ProviderAgnostic\MultipleResultsTest\MultipleResultsTest.cs" />
     <Compile Include="ProviderAgnostic\ReaderTest\ReaderTest.cs" />
-    <Compile Include="SQL\AsyncTest\AsyncTest.cs" /> 
-    <Compile Include="SQL\CommandCancelTest\CommandCancelTest.cs" />
+    <Compile Include="SQL\AsyncTest\AsyncTest.cs" />
+    <Compile Include="SQL\SqlCommand\SqlCommandCompletedTest.cs" /> 
+    <Compile Include="SQL\SqlCommand\SqlCommandCancelTest.cs" />
     <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolTest.cs" />
     <Compile Include="SQL\ConnectivityTests\ConnectivityTest.cs" />
     <Compile Include="SQL\DataBaseSchemaTest\ConnectionSchemaTest.cs" />
     <Compile Include="SQL\DataReaderTest\DataReaderTest.cs" />
     <Compile Include="SQL\ExceptionTest\ExceptionTest.cs" />
+    <Compile Include="SQL\ExceptionTest\ConnectionExceptionTest.cs" />
     <Compile Include="SQL\DataStreamTest\DataStreamTest.cs" />
     <Compile Include="SQL\DateTimeTest\DateTimeTest.cs" />
     <Compile Include="SQL\InstanceNameTest\InstanceNameTest.cs" />
@@ -97,6 +116,7 @@
     <Compile Include="SQL\SqlBulkCopyTest\AdjustPrecScaleForBulkCopy.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\AzureDistributedTransaction.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\ErrorOnRowsMarkedAsDeleted.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\DestinationTableNameWithSpecialChar.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\Bug84548.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\Bug85007.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\Bug903514.cs" />
@@ -160,6 +180,10 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>data.xml</Link>
     </Content>
+    <Content Include="config.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>config.json</Link>
+    </Content>
     <Content Include="ProviderAgnostic\MultipleResultsTest\MultipleResultsTest.bsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>MultipleResultsTest.bsl</Link>
@@ -193,8 +217,10 @@
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Transactions" />
+    <Reference Include="System.Runtime.Caching" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\add-ons\AzureKeyVaultProvider\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
     <ProjectReference Include="SQL\UdtTest\UDTs\Address\Address.csproj">
       <Name>Address</Name>
     </ProjectReference>
@@ -220,6 +246,12 @@
     <Reference Include="System.Transactions" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.Azure.KeyVault" Version="3.0.4" />
+    <PackageReference Include="Microsoft.Azure.KeyVault.WebKey" Version="3.0.4" />
+    <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="3.19.1" />
+    <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.20" />
+    <PackageReference Include="Microsoft.Rest.ClientRuntime.Azure" Version="3.3.19" />
+    <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.9.0" />
     <PackageReference Include="xunit" Version="2.3.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.3.1" />
@@ -229,6 +261,7 @@
     <PackageReference Include="System.Linq.Expressions" Version="4.3.0" />
     <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="4.5.1" />
     <PackageReference Include="System.Net.Sockets" Version="4.3.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
     <PackageReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="Microsoft.Windows.Compatibility" Version="2.1.1" />
   </ItemGroup>
 </Project>

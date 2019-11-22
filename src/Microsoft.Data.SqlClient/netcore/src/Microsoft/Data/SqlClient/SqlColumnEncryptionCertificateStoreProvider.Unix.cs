@@ -6,9 +6,7 @@ using System;
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <summary>
-    /// Certificate Key Store Provider class
-    /// </summary>
+    /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlColumnEncryptionCertificateStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionCertificateStoreProvider"]/SqlColumnEncryptionCertificateStoreProvider/*' />
     public class SqlColumnEncryptionCertificateStoreProvider : SqlColumnEncryptionKeyStoreProvider
     {
         /// <summary>
@@ -33,7 +31,7 @@ namespace Microsoft.Data.SqlClient
         /// This function uses a certificate specified by the key path
         /// and encrypts CEK with RSA encryption algorithm.
         /// </summary>
-        /// <param name="keyPath">Complete path of a certificate</param>
+        /// <param name="masterKeyPath">Complete path of a certificate</param>
         /// <param name="encryptionAlgorithm">Asymmetric Key Encryption Algorithm</param>
         /// <param name="columnEncryptionKey">Plain text column encryption key</param>
         /// <returns>Encrypted column encryption key</returns>

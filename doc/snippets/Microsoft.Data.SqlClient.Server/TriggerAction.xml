@@ -1,0 +1,244 @@
+<?xml version="1.0"?>
+<docs>
+    <members name="TriggerAction">
+        <TriggerAction>
+            <summary>The <see cref="T:Microsoft.Data.SqlClient.Server.TriggerAction" /> enumeration is used by the <see cref="T:Microsoft.SqlServer.Server.SqlTriggerContext" /> class to indicate what action fired the trigger.</summary>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+ The <xref:Microsoft.Data.SqlClient.Server.TriggerAction> enumeration is used by the <xref:Microsoft.SqlServer.Server.SqlTriggerContext> class to indicate what action fired the trigger.
+  
+ ]]></format>
+            </remarks>
+        </TriggerAction>
+        <AlterAppRole>
+            <summary>An ALTER APPLICATION ROLE Transact-SQL statement was executed.</summary>
+        </AlterAppRole>
+        <AlterAssembly>
+            <summary>An ALTER ASSEMBLY Transact-SQL statement was executed.</summary>
+        </AlterAssembly>
+        <AlterBinding>
+            <summary>An ALTER_REMOTE_SERVICE_BINDING event type was specified when an event notification was created on the database or server instance.</summary>
+        </AlterBinding>
+        <AlterFunction>
+            <summary>An ALTER FUNCTION Transact-SQL statement was executed.</summary>
+        </AlterFunction>
+        <AlterIndex>
+            <summary>An ALTER INDEX Transact-SQL statement was executed.</summary>
+        </AlterIndex>
+        <AlterLogin>
+            <summary>An ALTER LOGIN Transact-SQL statement was executed.</summary>
+        </AlterLogin>
+        <AlterPartitionFunction>
+            <summary>An ALTER PARTITION FUNCTION Transact-SQL statement was executed.</summary>
+        </AlterPartitionFunction>
+        <AlterPartitionScheme>
+            <summary>An ALTER PARTITION SCHEME Transact-SQL statement was executed.</summary>
+        </AlterPartitionScheme>
+        <AlterProcedure>
+            <summary>An ALTER PROCEDURE Transact-SQL statement was executed.</summary>
+        </AlterProcedure>
+        <AlterQueue>
+            <summary>An ALTER QUEUE Transact-SQL statement was executed.</summary>
+        </AlterQueue>
+        <AlterRole>
+            <summary>An ALTER ROLE Transact-SQL statement was executed.</summary>
+        </AlterRole>
+        <AlterRoute>
+            <summary>An ALTER ROUTE Transact-SQL statement was executed.</summary>
+        </AlterRoute>
+        <AlterSchema>
+            <summary>An ALTER SCHEMA Transact-SQL statement was executed.</summary>
+        </AlterSchema>
+        <AlterService>
+            <summary>An ALTER SERVICE Transact-SQL statement was executed.</summary>
+        </AlterService>
+        <AlterTable>
+            <summary>An ALTER TABLE Transact-SQL statement was executed.</summary>
+        </AlterTable>
+        <AlterTrigger>
+            <summary>An ALTER TRIGGER Transact-SQL statement was executed.</summary>
+        </AlterTrigger>
+        <AlterUser>
+            <summary>An ALTER USER Transact-SQL statement was executed.</summary>
+        </AlterUser>
+        <AlterView>
+            <summary>An ALTER VIEW Transact-SQL statement was executed.</summary>
+        </AlterView>
+        <CreateAppRole>
+            <summary>A CREATE APPLICATION ROLE Transact-SQL statement was executed.</summary>
+        </CreateAppRole>
+        <CreateAssembly>
+            <summary>A CREATE ASSEMBLY Transact-SQL statement was executed.</summary>
+        </CreateAssembly>
+        <CreateBinding>
+            <summary>A CREATE_REMOTE_SERVICE_BINDING event type was specified when an event notification was created on the database or server instance.</summary>
+        </CreateBinding>
+        <CreateContract>
+            <summary>A CREATE CONTRACT Transact-SQL statement was executed.</summary>
+        </CreateContract>
+        <CreateEventNotification>
+            <summary>A CREATE EVENT NOTIFICATION Transact-SQL statement was executed.</summary>
+        </CreateEventNotification>
+        <CreateFunction>
+            <summary>A CREATE FUNCTION Transact-SQL statement was executed.</summary>
+        </CreateFunction>
+        <CreateIndex>
+            <summary>A CREATE INDEX Transact-SQL statement was executed.</summary>
+        </CreateIndex>
+        <CreateLogin>
+            <summary>A CREATE LOGIN Transact-SQL statement was executed.</summary>
+        </CreateLogin>
+        <CreateMsgType>
+            <summary>A CREATE MESSAGE TYPE Transact-SQL statement was executed.</summary>
+        </CreateMsgType>
+        <CreatePartitionFunction>
+            <summary>A CREATE PARTITION FUNCTION Transact-SQL statement was executed.</summary>
+        </CreatePartitionFunction>
+        <CreatePartitionScheme>
+            <summary>A CREATE PARTITION SCHEME Transact-SQL statement was executed.</summary>
+        </CreatePartitionScheme>
+        <CreateProcedure>
+            <summary>A CREATE PROCEDURE Transact-SQL statement was executed.</summary>
+        </CreateProcedure>
+        <CreateQueue>
+            <summary>A CREATE QUEUE Transact-SQL statement was executed.</summary>
+        </CreateQueue>
+        <CreateRole>
+            <summary>A CREATE ROLE Transact-SQL statement was executed.</summary>
+        </CreateRole>
+        <CreateRoute>
+            <summary>A CREATE ROUTE Transact-SQL statement was executed.</summary>
+        </CreateRoute>
+        <CreateSchema>
+            <summary>A CREATE SCHEMA Transact-SQL statement was executed.</summary>
+        </CreateSchema>
+        <CreateSecurityExpression>
+            <summary>Not available.</summary>
+        </CreateSecurityExpression>
+        <CreateService>
+            <summary>A CREATE SERVICE Transact-SQL statement was executed.</summary>
+        </CreateService>
+        <CreateSynonym>
+            <summary>A CREATE SYNONYM Transact-SQL statement was executed.</summary>
+        </CreateSynonym>
+        <CreateTable>
+            <summary>A CREATE TABLE Transact-SQL statement was executed.</summary>
+        </CreateTable>
+        <CreateTrigger>
+            <summary>A CREATE TRIGGER Transact-SQL statement was executed.</summary>
+        </CreateTrigger>
+        <CreateType>
+            <summary>A CREATE TYPE Transact-SQL statement was executed.</summary>
+        </CreateType>
+        <CreateUser>
+            <summary>A CREATE USER Transact-SQL statement was executed.</summary>
+        </CreateUser>
+        <CreateView>
+            <summary>A CREATE VIEW Transact-SQL statement was executed.</summary>
+        </CreateView>
+        <Delete>
+            <summary>A DELETE Transact-SQL statement was executed.</summary>
+        </Delete>
+        <DenyObject>
+            <summary>A DENY Object Permissions Transact-SQL statement was executed.</summary>
+        </DenyObject>
+        <DenyStatement>
+            <summary>A DENY Transact-SQL statement was executed.</summary>
+        </DenyStatement>
+        <DropAppRole>
+            <summary>A DROP APPLICATION ROLE Transact-SQL statement was executed.</summary>
+        </DropAppRole>
+        <DropAssembly>
+            <summary>A DROP ASSEMBLY Transact-SQL statement was executed.</summary>
+        </DropAssembly>
+        <DropBinding>
+            <summary>A DROP_REMOTE_SERVICE_BINDING event type was specified when an event notification was created on the database or server instance.</summary>
+        </DropBinding>
+        <DropContract>
+            <summary>A DROP CONTRACT Transact-SQL statement was executed.</summary>
+        </DropContract>
+        <DropEventNotification>
+            <summary>A DROP EVENT NOTIFICATION Transact-SQL statement was executed.</summary>
+        </DropEventNotification>
+        <DropFunction>
+            <summary>A DROP FUNCTION Transact-SQL statement was executed.</summary>
+        </DropFunction>
+        <DropIndex>
+            <summary>A DROP INDEX Transact-SQL statement was executed.</summary>
+        </DropIndex>
+        <DropLogin>
+            <summary>A DROP LOGIN Transact-SQL statement was executed.</summary>
+        </DropLogin>
+        <DropMsgType>
+            <summary>A DROP MESSAGE TYPE Transact-SQL statement was executed.</summary>
+        </DropMsgType>
+        <DropPartitionFunction>
+            <summary>A DROP PARTITION FUNCTION Transact-SQL statement was executed.</summary>
+        </DropPartitionFunction>
+        <DropPartitionScheme>
+            <summary>A DROP PARTITION SCHEME Transact-SQL statement was executed.</summary>
+        </DropPartitionScheme>
+        <DropProcedure>
+            <summary>A DROP PROCEDURE Transact-SQL statement was executed.</summary>
+        </DropProcedure>
+        <DropQueue>
+            <summary>A DROP QUEUE Transact-SQL statement was executed.</summary>
+        </DropQueue>
+        <DropRole>
+            <summary>A DROP ROLE Transact-SQL statement was executed.</summary>
+        </DropRole>
+        <DropRoute>
+            <summary>A DROP ROUTE Transact-SQL statement was executed.</summary>
+        </DropRoute>
+        <DropSchema>
+            <summary>A DROP SCHEMA Transact-SQL statement was executed.</summary>
+        </DropSchema>
+        <DropSecurityExpression>
+            <summary>Not available.</summary>
+        </DropSecurityExpression>
+        <DropService>
+            <summary>A DROP SERVICE Transact-SQL statement was executed.</summary>
+        </DropService>
+        <DropSynonym>
+            <summary>A DROP SYNONYM Transact-SQL statement was executed.</summary>
+        </DropSynonym>
+        <DropTable>
+            <summary>A DROP TABLE Transact-SQL statement was executed.</summary>
+        </DropTable>
+        <DropTrigger>
+            <summary>A DROP TRIGGER Transact-SQL statement was executed.</summary>
+        </DropTrigger>
+        <DropType>
+            <summary>A DROP TYPE Transact-SQL statement was executed.</summary>
+        </DropType>
+        <DropUser>
+            <summary>A DROP USER Transact-SQL statement was executed.</summary>
+        </DropUser>
+        <DropView>
+            <summary>A DROP VIEW Transact-SQL statement was executed.</summary>
+        </DropView>
+        <GrantObject>
+            <summary>A GRANT OBJECT Transact-SQL statement was executed.</summary>
+        </GrantObject>
+        <GrantStatement>
+            <summary>A GRANT Transact-SQL statement was executed.</summary>
+        </GrantStatement>
+        <Insert>
+            <summary>An INSERT Transact-SQL statement was executed.</summary>
+        </Insert>
+        <Invalid>
+            <summary>An invalid trigger action, one that is not exposed to the user, occurred.</summary>
+        </Invalid>
+        <RevokeObject>
+            <summary>A REVOKE OBJECT Transact-SQL statement was executed.</summary>
+        </RevokeObject>
+        <RevokeStatement>
+            <summary>A REVOKE Transact-SQL statement was executed.</summary>
+        </RevokeStatement>
+        <Update>
+            <summary>An UPDATE Transact-SQL statement was executed.</summary>
+        </Update>
+    </members>
+</docs>

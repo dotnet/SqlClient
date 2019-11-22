@@ -305,6 +305,11 @@ namespace Microsoft.Data.Common
         {
             return Argument(System.SRHelper.Format(SR.ADP_InvalidConnectionOptionValue, key), inner);
         }
+        static internal InvalidOperationException InvalidDataDirectory()
+        {
+            InvalidOperationException e = new InvalidOperationException(SR.ADP_InvalidDataDirectory);
+            return e;
+        }
 
         //
         // Generic Data Provider Collection
@@ -381,6 +386,26 @@ namespace Microsoft.Data.Common
             }
 
             return resultString.ToString();
+        }
+
+        static internal string BuildMultiPartName(string[] strings)
+        {
+            StringBuilder bld = new StringBuilder();
+            // Assume we want to build a full multi-part name with all parts except trimming separators for
+            // leading empty names (null or empty strings, but not whitespace). Separators in the middle 
+            // should be added, even if the name part is null/empty, to maintain proper location of the parts.
+            for (int i = 0; i < strings.Length; i++)
+            {
+                if (0 < bld.Length)
+                {
+                    bld.Append('.');
+                }
+                if (null != strings[i] && 0 != strings[i].Length)
+                {
+                    bld.Append(BuildQuotedString("[", "]", strings[i]));
+                }
+            }
+            return bld.ToString();
         }
 
         //

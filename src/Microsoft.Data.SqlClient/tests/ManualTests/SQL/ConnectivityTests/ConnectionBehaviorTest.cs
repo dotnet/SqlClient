@@ -13,7 +13,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void ConnectionBehaviorClose()
         {
-            using (SqlConnection sqlConnection = new SqlConnection((new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr) { MaxPoolSize = 1 }).ConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection((new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { MaxPoolSize = 1 }).ConnectionString))
             {
                 using (SqlCommand command = new SqlCommand("SELECT '1'", sqlConnection))
                 {
@@ -34,7 +34,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void ConnectionBehaviorCloseAsync()
         {
-            using (SqlConnection sqlConnection = new SqlConnection((new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr) { MaxPoolSize = 1 }).ConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection((new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { MaxPoolSize = 1 }).ConnectionString))
             {
                 Task<bool> result = VerifyConnectionBehaviorCloseAsync(sqlConnection);
                 bool value = result.Result;

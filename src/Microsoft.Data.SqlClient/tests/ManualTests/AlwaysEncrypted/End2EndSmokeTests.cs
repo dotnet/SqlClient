@@ -4,35 +4,35 @@
 
 using System;
 using System.Threading.Tasks;
+using System.Collections;
+using System.Collections.Generic;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     [PlatformSpecific(TestPlatforms.Windows)]
-    public class End2EndSmokeTests : IClassFixture<SQLSetupStrategy>, IDisposable
+    public class End2EndSmokeTests : IClassFixture<SQLSetupStrategyCertStoreProvider>, IDisposable
     {
-        private SQLSetupStrategy fixture;
+        private SQLSetupStrategyCertStoreProvider fixture;
 
         private readonly string tableName;
 
-        public End2EndSmokeTests(SQLSetupStrategy fixture)
+        public End2EndSmokeTests(SQLSetupStrategyCertStoreProvider fixture)
         {
             this.fixture = fixture;
             tableName = fixture.End2EndSmokeTable.Name;
         }
 
         // tests
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [InlineData(@"select CustomerId, FirstName, LastName from  [{0}] ", 3, new string[] { @"int", @"string", @"string" })]
-        [InlineData(@"select CustomerId, FirstName from  [{0}] ", 2, new string[] { @"int", @"string" })]
-        [InlineData(@"select LastName from  [{0}] ", 1, new string[] { @"string" })]
-        public void TestSelectOnEncryptedNonEncryptedColumns(string selectQuery, int totalColumnsInSelect, string[] types)
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(TestSelectOnEncryptedNonEncryptedColumnsData))]
+        public void TestSelectOnEncryptedNonEncryptedColumns(string connString, string selectQuery, int totalColumnsInSelect, string[] types)
         {
             Assert.False(string.IsNullOrWhiteSpace(selectQuery), "FAILED: select query should not be null or empty.");
             Assert.True(totalColumnsInSelect <= 3, "FAILED: totalColumnsInSelect should <= 3.");
 
-            using (SqlConnection sqlConn = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection sqlConn = new SqlConnection(connString))
             {
                 sqlConn.Open();
 
@@ -59,118 +59,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [InlineData(true, /*sync*/
-                    @"select CustomerId, FirstName, LastName from [{0}] where CustomerId = @CustomerId and FirstName = @FirstName",
-                    3, /*total number of columns in select statement*/
-                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/ 
-                                   @"string", /*unencrypted datatype of second column in select statement*/ 
-                                   @"string" /*datatype of third column in select statement*/},
-                    2, /*no:of input parameters*/
-                    new object[] { @"CustomerId", /*input parameter name*/
-                                   @"int", /*input parameter data type*/
-                                   45, /*input parameter value*/
-                                   @"FirstName", /*input parameter name*/
-                                   @"string", /*input parameter data type*/
-                                   @"Microsoft" /*input parameter value*/})]
-        [InlineData(true, /*sync*/
-                    @"select CustomerId, FirstName, LastName from [{0}] where CustomerId = @CustomerId",
-                    3, /*total number of columns in select statement*/
-                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/ 
-                                   @"string", /*unencrypted datatype of second column in select statement*/ 
-                                   @"string" /*datatype of third column in select statement*/},
-                    1, /*no:of input parameters*/
-                    new object[] { @"CustomerId", /*input parameter name*/
-                                   @"int", /*input parameter data type*/
-                                   45, /*input parameter value*/})]
-        [InlineData(true, /*sync*/
-                    @"select CustomerId, FirstName, LastName from [{0}] where FirstName = @FirstName",
-                    3, /*total number of columns in select statement*/
-                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/ 
-                                   @"string", /*unencrypted datatype of second column in select statement*/ 
-                                   @"string" /*datatype of third column in select statement*/},
-                    1, /*no:of input parameters*/
-                    new object[] { @"FirstName", /*input parameter name*/
-                                   @"string", /*input parameter data type*/
-                                   @"Microsoft" /*input parameter value*/})]
-        [InlineData(true, /*sync*/
-                    @"select CustomerId, FirstName, LastName from [{0}] where LastName = @LastName",
-                    3, /*total number of columns in select statement*/
-                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/ 
-                                   @"string", /*unencrypted datatype of second column in select statement*/ 
-                                   @"string" /*datatype of third column in select statement*/},
-                    1, /*no:of input parameters*/
-                    new object[] { @"LastName", /*input parameter name*/
-                                   @"string", /*input parameter data type*/
-                                   @"Corporation" /*input parameter value*/})]
-        [InlineData(true, /*sync*/
-                    @"select CustomerId, FirstName from [{0}] where CustomerId = @CustomerId and FirstName = @FirstName",
-                    2, /*total number of columns in select statement*/
-                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/ 
-                                   @"string", /*unencrypted datatype of second column in select statement*/},
-                    2, /*no:of input parameters*/
-                    new object[] { @"CustomerId", /*input parameter name*/
-                                   @"int", /*input parameter data type*/
-                                   45, /*input parameter value*/
-                                   @"FirstName", /*input parameter name*/
-                                   @"string", /*input parameter data type*/
-                                   @"Microsoft" /*input parameter value*/})]
-        [InlineData(false, /*sync*/
-                    @"select CustomerId, FirstName, LastName from [{0}] where CustomerId = @CustomerId and FirstName = @FirstName",
-                    3, /*total number of columns in select statement*/
-                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/ 
-                                   @"string", /*unencrypted datatype of second column in select statement*/ 
-                                   @"string" /*datatype of third column in select statement*/},
-                    2, /*no:of input parameters*/
-                    new object[] { @"CustomerId", /*input parameter name*/
-                                   @"int", /*input parameter data type*/
-                                   45, /*input parameter value*/
-                                   @"FirstName", /*input parameter name*/
-                                   @"string", /*input parameter data type*/
-                                   @"Microsoft" /*input parameter value*/})]
-        [InlineData(false, /*sync*/
-                    @"select CustomerId, FirstName, LastName from [{0}] where CustomerId = @CustomerId",
-                    3, /*total number of columns in select statement*/
-                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/ 
-                                   @"string", /*unencrypted datatype of second column in select statement*/ 
-                                   @"string" /*datatype of third column in select statement*/},
-                    1, /*no:of input parameters*/
-                    new object[] { @"CustomerId", /*input parameter name*/
-                                   @"int", /*input parameter data type*/
-                                   45, /*input parameter value*/})]
-        [InlineData(false, /*sync*/
-                    @"select CustomerId, FirstName, LastName from [{0}] where FirstName = @FirstName",
-                    3, /*total number of columns in select statement*/
-                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/ 
-                                   @"string", /*unencrypted datatype of second column in select statement*/ 
-                                   @"string" /*datatype of third column in select statement*/},
-                    1, /*no:of input parameters*/
-                    new object[] { @"FirstName", /*input parameter name*/
-                                   @"string", /*input parameter data type*/
-                                   @"Microsoft" /*input parameter value*/})]
-        [InlineData(false, /*sync*/
-                    @"select CustomerId, FirstName, LastName from [{0}] where LastName = @LastName",
-                    3, /*total number of columns in select statement*/
-                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/ 
-                                   @"string", /*unencrypted datatype of second column in select statement*/ 
-                                   @"string" /*datatype of third column in select statement*/},
-                    1, /*no:of input parameters*/
-                    new object[] { @"LastName", /*input parameter name*/
-                                   @"string", /*input parameter data type*/
-                                   @"Corporation" /*input parameter value*/})]
-        [InlineData(false, /*sync*/
-                    @"select CustomerId, FirstName from [{0}] where CustomerId = @CustomerId and FirstName = @FirstName",
-                    2, /*total number of columns in select statement*/
-                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/ 
-                                   @"string", /*unencrypted datatype of second column in select statement*/},
-                    2, /*no:of input parameters*/
-                    new object[] { @"CustomerId", /*input parameter name*/
-                                   @"int", /*input parameter data type*/
-                                   45, /*input parameter value*/
-                                   @"FirstName", /*input parameter name*/
-                                   @"string", /*input parameter data type*/
-                                   @"Microsoft" /*input parameter value*/})]
-        public void TestSelectOnEncryptedNonEncryptedColumnsWithEncryptedParameters(bool sync,
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(TestSelectOnEncryptedNonEncryptedColumnsWithEncryptedParametersData))]
+        public void TestSelectOnEncryptedNonEncryptedColumnsWithEncryptedParameters(string connString,
+                                                                                    bool sync,
                                                                                     string selectQuery,
                                                                                     int totalColumnsInSelect,
                                                                                     string[] types,
@@ -180,7 +72,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.False(string.IsNullOrWhiteSpace(selectQuery), "FAILED: select query should not be null or empty.");
             Assert.True(totalColumnsInSelect <= 3, "FAILED: totalColumnsInSelect should <= 3.");
 
-            using (SqlConnection sqlConn = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection sqlConn = new SqlConnection(connString))
             {
                 sqlConn.Open();
 
@@ -309,11 +201,188 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         public void Dispose()
         {
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TcpConnStr))
+            foreach (string connStrAE in DataTestUtility.AEConnStringsSetup)
             {
-                sqlConnection.Open();
-                Table.DeleteData(fixture.End2EndSmokeTable.Name, sqlConnection);
+                using (SqlConnection sqlConnection = new SqlConnection(connStrAE))
+                {
+                    sqlConnection.Open();
+                    Table.DeleteData(fixture.End2EndSmokeTable.Name, sqlConnection);
+                }
             }
         }
+    }
+
+    public class TestSelectOnEncryptedNonEncryptedColumnsData : IEnumerable<object[]>
+    {
+        public IEnumerator<object[]> GetEnumerator()
+        {
+            foreach (string connStrAE in DataTestUtility.AEConnStrings)
+            {
+                yield return new object[] { connStrAE, @"select CustomerId, FirstName, LastName from  [{0}] ", 3, new string[] { @"int", @"string", @"string" } };
+                yield return new object[] { connStrAE, @"select CustomerId, FirstName from  [{0}] ", 2, new string[] { @"int", @"string" } };
+                yield return new object[] { connStrAE, @"select LastName from  [{0}] ", 1, new string[] { @"string" }};
+            }
+        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+    }
+
+    public class TestSelectOnEncryptedNonEncryptedColumnsWithEncryptedParametersData : IEnumerable<object[]>
+    {
+        public IEnumerator<object[]> GetEnumerator()
+        {
+            foreach (string connStrAE in DataTestUtility.AEConnStrings)
+            {
+                yield return new object[] { 
+                    connStrAE, 
+                    true, /*sync*/
+                    @"select CustomerId, FirstName, LastName from [{0}] where CustomerId = @CustomerId and FirstName = @FirstName",
+                    3, /*total number of columns in select statement*/
+                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/ 
+                                   @"string", /*unencrypted datatype of second column in select statement*/ 
+                                   @"string" /*datatype of third column in select statement*/},
+                    2, /*no:of input parameters*/
+                    new object[] { @"CustomerId", /*input parameter name*/
+                                   @"int", /*input parameter data type*/
+                                   45, /*input parameter value*/
+                                   @"FirstName", /*input parameter name*/
+                                   @"string", /*input parameter data type*/
+                                   @"Microsoft" /*input parameter value*/}
+                };
+
+                yield return new object[] { 
+                    connStrAE,
+                    true, /*sync*/
+                    @"select CustomerId, FirstName, LastName from [{0}] where CustomerId = @CustomerId",
+                    3, /*total number of columns in select statement*/
+                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/ 
+                                   @"string", /*unencrypted datatype of second column in select statement*/ 
+                                   @"string" /*datatype of third column in select statement*/},
+                    1, /*no:of input parameters*/
+                    new object[] { @"CustomerId", /*input parameter name*/
+                                   @"int", /*input parameter data type*/
+                                   45, /*input parameter value*/}
+                };
+
+                yield return new object[] { 
+                    connStrAE,
+                    true, /*sync*/
+                    @"select CustomerId, FirstName, LastName from [{0}] where FirstName = @FirstName",
+                    3, /*total number of columns in select statement*/
+                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/ 
+                                   @"string", /*unencrypted datatype of second column in select statement*/ 
+                                   @"string" /*datatype of third column in select statement*/},
+                    1, /*no:of input parameters*/
+                    new object[] { @"FirstName", /*input parameter name*/
+                                   @"string", /*input parameter data type*/
+                                   @"Microsoft" /*input parameter value*/}
+                };
+
+                yield return new object[] {
+                    connStrAE,
+                    true, /*sync*/
+                    @"select CustomerId, FirstName, LastName from [{0}] where LastName = @LastName",
+                    3, /*total number of columns in select statement*/
+                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/ 
+                                   @"string", /*unencrypted datatype of second column in select statement*/ 
+                                   @"string" /*datatype of third column in select statement*/},
+                    1, /*no:of input parameters*/
+                    new object[] { @"LastName", /*input parameter name*/
+                                   @"string", /*input parameter data type*/
+                                   @"Corporation" /*input parameter value*/}
+                };
+
+                yield return new object[] {
+                    connStrAE,
+                    true, /*sync*/
+                    @"select CustomerId, FirstName from [{0}] where CustomerId = @CustomerId and FirstName = @FirstName",
+                    2, /*total number of columns in select statement*/
+                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/ 
+                                   @"string", /*unencrypted datatype of second column in select statement*/},
+                    2, /*no:of input parameters*/
+                    new object[] { @"CustomerId", /*input parameter name*/
+                                   @"int", /*input parameter data type*/
+                                   45, /*input parameter value*/
+                                   @"FirstName", /*input parameter name*/
+                                   @"string", /*input parameter data type*/
+                                   @"Microsoft" /*input parameter value*/}
+                };
+
+                yield return new object[] {
+                    connStrAE,
+                    false, /*sync*/
+                    @"select CustomerId, FirstName, LastName from [{0}] where CustomerId = @CustomerId and FirstName = @FirstName",
+                    3, /*total number of columns in select statement*/
+                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/ 
+                                   @"string", /*unencrypted datatype of second column in select statement*/ 
+                                   @"string" /*datatype of third column in select statement*/},
+                    2, /*no:of input parameters*/
+                    new object[] { @"CustomerId", /*input parameter name*/
+                                   @"int", /*input parameter data type*/
+                                   45, /*input parameter value*/
+                                   @"FirstName", /*input parameter name*/
+                                   @"string", /*input parameter data type*/
+                                   @"Microsoft" /*input parameter value*/}
+                };
+
+                yield return new object[] {
+                    connStrAE,
+                    false, /*sync*/
+                    @"select CustomerId, FirstName, LastName from [{0}] where CustomerId = @CustomerId",
+                    3, /*total number of columns in select statement*/
+                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/ 
+                                   @"string", /*unencrypted datatype of second column in select statement*/ 
+                                   @"string" /*datatype of third column in select statement*/},
+                    1, /*no:of input parameters*/
+                    new object[] { @"CustomerId", /*input parameter name*/
+                                   @"int", /*input parameter data type*/
+                                   45, /*input parameter value*/}
+                };
+
+                yield return new object[] {
+                    connStrAE,
+                    false, /*sync*/
+                    @"select CustomerId, FirstName, LastName from [{0}] where FirstName = @FirstName",
+                    3, /*total number of columns in select statement*/
+                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/ 
+                                   @"string", /*unencrypted datatype of second column in select statement*/ 
+                                   @"string" /*datatype of third column in select statement*/},
+                    1, /*no:of input parameters*/
+                    new object[] { @"FirstName", /*input parameter name*/
+                                   @"string", /*input parameter data type*/
+                                   @"Microsoft" /*input parameter value*/}
+                };
+
+                yield return new object[] {
+                    connStrAE,
+                    false, /*sync*/
+                    @"select CustomerId, FirstName, LastName from [{0}] where LastName = @LastName",
+                    3, /*total number of columns in select statement*/
+                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/ 
+                                   @"string", /*unencrypted datatype of second column in select statement*/ 
+                                   @"string" /*datatype of third column in select statement*/},
+                    1, /*no:of input parameters*/
+                    new object[] { @"LastName", /*input parameter name*/
+                                   @"string", /*input parameter data type*/
+                                   @"Corporation" /*input parameter value*/}
+                };
+
+                yield return new object[] {
+                    connStrAE,
+                    false, /*sync*/
+                    @"select CustomerId, FirstName from [{0}] where CustomerId = @CustomerId and FirstName = @FirstName",
+                    2, /*total number of columns in select statement*/
+                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/ 
+                                   @"string", /*unencrypted datatype of second column in select statement*/},
+                    2, /*no:of input parameters*/
+                    new object[] { @"CustomerId", /*input parameter name*/
+                                   @"int", /*input parameter data type*/
+                                   45, /*input parameter value*/
+                                   @"FirstName", /*input parameter name*/
+                                   @"string", /*input parameter data type*/
+                                   @"Microsoft" /*input parameter value*/}
+                };
+            }
+        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }

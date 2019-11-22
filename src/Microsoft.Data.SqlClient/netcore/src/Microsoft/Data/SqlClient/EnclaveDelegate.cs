@@ -28,69 +28,6 @@ namespace Microsoft.Data.SqlClient
 
         private EnclaveDelegate() { }
 
-        /// <summary>
-        /// Generate the byte package that needs to be sent to the enclave
-        /// </summary>
-        /// <param name="keysTobeSentToEnclave">Keys to be sent to enclave</param>
-        /// <param name="enclaveType">enclave type</param>
-        /// <param name="serverName">server name</param>
-        /// <param name="enclaveAttestationUrl">url for attestation endpoint</param>
-        /// <returns></returns>
-        internal EnclavePackage GenerateEnclavePackage(Dictionary<int, SqlTceCipherInfoEntry> keysTobeSentToEnclave, string queryText, string enclaveType, string serverName, string enclaveAttestationUrl)
-        {
-
-            SqlEnclaveSession sqlEnclaveSession = null;
-            long counter;
-            try
-            {
-                GetEnclaveSession(enclaveType, serverName, enclaveAttestationUrl, out sqlEnclaveSession, out counter, throwIfNull: true);
-            }
-            catch (Exception e)
-            {
-                throw new RetriableEnclaveQueryExecutionException(e.Message, e);
-            }
-
-            List<ColumnEncryptionKeyInfo> decryptedKeysToBeSentToEnclave = GetDecryptedKeysToBeSentToEnclave(keysTobeSentToEnclave, serverName);
-            byte[] queryStringHashBytes = ComputeQueryStringHash(queryText);
-            byte[] keyBytePackage = GenerateBytePackageForKeys(counter, queryStringHashBytes, decryptedKeysToBeSentToEnclave);
-            byte[] sessionKey = sqlEnclaveSession.GetSessionKey();
-            byte[] encryptedBytePackage = EncryptBytePackage(keyBytePackage, sessionKey, serverName);
-            byte[] enclaveSessionHandle = BitConverter.GetBytes(sqlEnclaveSession.SessionId);
-            byte[] byteArrayToBeSentToEnclave = CombineByteArrays(new[] { enclaveSessionHandle, encryptedBytePackage });
-            return new EnclavePackage(byteArrayToBeSentToEnclave, sqlEnclaveSession);
-        }
-
-        internal void InvalidateEnclaveSession(string enclaveType, string serverName, string EnclaveAttestationUrl, SqlEnclaveSession enclaveSession)
-        {
-            SqlColumnEncryptionEnclaveProvider sqlColumnEncryptionEnclaveProvider = GetEnclaveProvider(enclaveType);
-            sqlColumnEncryptionEnclaveProvider.InvalidateEnclaveSession(serverName, EnclaveAttestationUrl, enclaveSession);
-        }
-
-        internal void GetEnclaveSession(string enclaveType, string serverName, string enclaveAttestationUrl, out SqlEnclaveSession sqlEnclaveSession)
-        {
-            long counter;
-            GetEnclaveSession(enclaveType, serverName, enclaveAttestationUrl, out sqlEnclaveSession, out counter, throwIfNull: false);
-        }
-
-        private void GetEnclaveSession(string enclaveType, string serverName, string enclaveAttestationUrl, out SqlEnclaveSession sqlEnclaveSession, out long counter, bool throwIfNull)
-        {
-            SqlColumnEncryptionEnclaveProvider sqlColumnEncryptionEnclaveProvider = GetEnclaveProvider(enclaveType);
-            sqlColumnEncryptionEnclaveProvider.GetEnclaveSession(serverName, enclaveAttestationUrl, out sqlEnclaveSession, out counter);
-
-            if (throwIfNull)
-            {
-                if (sqlEnclaveSession == null)
-                    throw SQL.NullEnclaveSessionDuringQueryExecution(enclaveType, enclaveAttestationUrl);
-            }
-        }
-
-        internal SqlEnclaveAttestationParameters GetAttestationParameters(string enclaveType, string serverName, string enclaveAttestationUrl)
-        {
-            SqlColumnEncryptionEnclaveProvider sqlColumnEncryptionEnclaveProvider = GetEnclaveProvider(enclaveType);
-            return sqlColumnEncryptionEnclaveProvider.GetAttestationParameters();
-        }
-
-
         private byte[] GetUintBytes(string enclaveType, int intValue, string variableName)
         {
             try
@@ -105,25 +42,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private SqlColumnEncryptionEnclaveProvider GetEnclaveProvider(string enclaveType)
-        {
-            if (SqlConnection.sqlColumnEncryptionEnclaveProviderConfigurationManager == null)
-                throw SQL.EnclaveProvidersNotConfiguredForEnclaveBasedQuery();
-
-            var sqlColumnEncryptionEnclaveProvider =
-                SqlConnection.sqlColumnEncryptionEnclaveProviderConfigurationManager.GetSqlColumnEncryptionEnclaveProvider(
-                    enclaveType);
-
-            if (sqlColumnEncryptionEnclaveProvider == null)
-                throw SQL.EnclaveProviderNotFound(enclaveType);
-            return sqlColumnEncryptionEnclaveProvider;
-        }
-
         /// <summary>
         /// Decrypt the keys that need to be sent to the enclave
         /// </summary>
         /// <param name="keysTobeSentToEnclave">Keys that need to sent to the enclave</param>
-        /// <param name="sqlConnection">active connection</param>
+        /// <param name="serverName"></param>
         /// <returns></returns>
         private List<ColumnEncryptionKeyInfo> GetDecryptedKeysToBeSentToEnclave(Dictionary<int, SqlTceCipherInfoEntry> keysTobeSentToEnclave, string serverName)
         {
@@ -157,6 +80,7 @@ namespace Microsoft.Data.SqlClient
         /// Generate a byte package consisting of decrypted keys and some headers expected by the enclave
         /// </summary>
         /// <param name="enclaveSessionCounter">counter to avoid replay attacks</param>
+        /// <param name="queryStringHashBytes"></param>
         /// <param name="keys"></param>
         /// <returns></returns>
         private byte[] GenerateBytePackageForKeys(long enclaveSessionCounter, byte[] queryStringHashBytes, List<ColumnEncryptionKeyInfo> keys)
@@ -273,9 +197,9 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Exception when executing a enclave based Always Encrypted query 
         /// </summary>
-        internal class RetriableEnclaveQueryExecutionException : Exception
+        internal class RetryableEnclaveQueryExecutionException : Exception
         {
-            internal RetriableEnclaveQueryExecutionException(string message, Exception innerException) : base(message, innerException) { }
+            internal RetryableEnclaveQueryExecutionException(string message, Exception innerException) : base(message, innerException) { }
         }
     }
 }

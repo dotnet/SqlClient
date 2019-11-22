@@ -13,7 +13,7 @@ namespace Microsoft.Samples.SqlServer
     [SqlUserDefinedType(Format.UserDefined, IsByteOrdered = true, MaxByteSize = 8000)]
     public class Utf8String : INullable, IComparable, IBinarySerialize
     {
-#region conversion to/from Unicode strings
+        #region conversion to/from Unicode strings
         /// <summary>
         /// Parse the given string and return a utf8 representation for it.
         /// </summary>
@@ -132,9 +132,9 @@ namespace Microsoft.Samples.SqlServer
             return this.GetSortKeyUsingCultureInternal(CultureInfo.CurrentCulture,
                 ignoreCase, ignoreNonSpace, ignoreWidth);
         }
-#endregion
+        #endregion
 
-#region comparison operators
+        #region comparison operators
         public override bool Equals(object obj)
         {
             return this.CompareTo(obj) == 0;
@@ -233,9 +233,9 @@ namespace Microsoft.Samples.SqlServer
             return this.ToString().CompareTo(s.ToString());
         }
 
-#endregion
+        #endregion
 
-#region private state and constructors
+        #region private state and constructors
         private string m_String;
 
         private byte[] m_Bytes;
@@ -249,9 +249,9 @@ namespace Microsoft.Samples.SqlServer
         {
             this.m_Bytes = bytes;
         }
-#endregion
+        #endregion
 
-#region UserDefinedType boilerplate code
+        #region UserDefinedType boilerplate code
 
         public bool IsNull
         {
@@ -274,9 +274,9 @@ namespace Microsoft.Samples.SqlServer
         public Utf8String()
         {
         }
-#endregion
+        #endregion
 
-#region IBinarySerialize Members
+        #region IBinarySerialize Members
         public void Write(System.IO.BinaryWriter w)
         {
             byte header = (byte)(this.IsNull ? 1 : 0);
@@ -305,6 +305,6 @@ namespace Microsoft.Samples.SqlServer
 
             this.m_Bytes = r.ReadBytes(length);
         }
-#endregion
+        #endregion
     }
 }

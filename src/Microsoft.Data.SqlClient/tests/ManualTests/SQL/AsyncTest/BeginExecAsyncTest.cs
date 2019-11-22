@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [CheckConnStrSetupFact]
         public static void ExecuteTest()
         {
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 try
                 {
@@ -71,7 +71,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [CheckConnStrSetupFact]
         public static void FailureTest()
         {
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 bool caughtException = false;
                 SqlCommand command = new SqlCommand(GenerateCommandText(), connection);

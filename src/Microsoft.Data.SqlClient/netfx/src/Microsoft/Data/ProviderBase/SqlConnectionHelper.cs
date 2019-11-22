@@ -27,6 +27,7 @@ namespace Microsoft.Data.SqlClient
         private static int _objectTypeCount; // Bid counter
         internal readonly int ObjectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctor2/*' />
         public SqlConnection() : base()
         {
             GC.SuppressFinalize(this);
@@ -195,7 +196,7 @@ namespace Microsoft.Data.SqlClient
             InnerConnection.AddWeakReference(value, tag);
         }
 
-
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CreateDbCommand/*' />
         override protected DbCommand CreateDbCommand()
         {
             DbCommand command = null;
@@ -221,6 +222,7 @@ namespace Microsoft.Data.SqlClient
             return p;
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Dispose/*' />
         override protected void Dispose(bool disposing)
         {
             if (disposing)
@@ -266,6 +268,7 @@ namespace Microsoft.Data.SqlClient
             GC.KeepAlive(this);
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/EnlistTransaction/*' />
         override public void EnlistTransaction(SysTx.Transaction transaction)
         {
             SqlConnection.ExecutePermission.Demand();
@@ -316,16 +319,19 @@ namespace Microsoft.Data.SqlClient
             return GetMetaDataFactory(internalConnection);
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchema2/*' />
         override public DataTable GetSchema()
         {
             return this.GetSchema(DbMetaDataCollectionNames.MetaDataCollections, null);
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaCollectionName/*' />
         override public DataTable GetSchema(string collectionName)
         {
             return this.GetSchema(collectionName, null);
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaCollectionNameRestrictionValues/*' />
         override public DataTable GetSchema(string collectionName, string[] restrictionValues)
         {
             // NOTE: This is virtual because not all providers may choose to support

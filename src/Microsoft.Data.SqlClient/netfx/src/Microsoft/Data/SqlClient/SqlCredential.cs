@@ -7,6 +7,7 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
+    /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlCredential.xml' path='docs/members[@name="SqlCredential"]/SqlCredential/*' />
     // Represent a pair of user id and password which to be used for SQL Authentication
     // SqlCredential takes password as SecureString which is better way to store security sensitive information
     // This class is immutable
@@ -15,14 +16,11 @@ namespace Microsoft.Data.SqlClient
         string _userId;
         SecureString _password;
 
-        //
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlCredential.xml' path='docs/members[@name="SqlCredential"]/ctor/*' />
         // PUBLIC CONSTRUCTOR
-        //
-
         // SqlCredential
         //  userId: userId
         //  password: password
-        //
         public SqlCredential(string userId, SecureString password)
         {
             if (userId == null)
@@ -54,9 +52,8 @@ namespace Microsoft.Data.SqlClient
             _password = password;
         }
 
-        //
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlCredential.xml' path='docs/members[@name="SqlCredential"]/UserId/*' />
         // PUBLIC PROPERTIES
-        //
         public string UserId
         {
             get
@@ -65,6 +62,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlCredential.xml' path='docs/members[@name="SqlCredential"]/Password/*' />
         public SecureString Password
         {
             get

@@ -23,6 +23,7 @@ namespace Microsoft.Data.SqlClient
             return DbConnectionStringBuilderUtil.ConvertToPoolBlockingPeriod(keyword, value);
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/PoolBlockingPeriod/*' />
         public PoolBlockingPeriod PoolBlockingPeriod
         {
             get { return _poolBlockingPeriod; }

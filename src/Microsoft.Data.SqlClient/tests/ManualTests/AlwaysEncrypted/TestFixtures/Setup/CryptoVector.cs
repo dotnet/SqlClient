@@ -90,7 +90,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
         /// Defineds the test vector type.
         /// </summary>
         private readonly CryptNativeTestVectorType m_CryptNativeTestVectorType;
-        
+
         /// <summary>
         /// Return the root key.
         /// </summary>
@@ -111,7 +111,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
             {
                 return m_blob1;
             }
-        }    
+        }
 
         /// <summary>
         /// Return the final cell.
@@ -226,7 +226,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
         {
             Debug.Assert(rootKey != null);
             Debug.Assert(plainText != null);
-            Debug.Assert(finalCell != null);            
+            Debug.Assert(finalCell != null);
 
             m_blob0 = rootKey;
             m_blob1 = plainText;

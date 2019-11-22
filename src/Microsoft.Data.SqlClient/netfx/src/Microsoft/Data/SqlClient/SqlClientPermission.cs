@@ -15,20 +15,23 @@ using DBDataPermission = System.Data.Common.DBDataPermission;
 
 namespace Microsoft.Data.SqlClient
 {
-
+    /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/SqlClientPermission/*' />
     [Serializable]
     public sealed class SqlClientPermission : System.Data.Common.DBDataPermission
     {
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/ctor[@name="default"]/*' />
         [Obsolete("SqlClientPermission() has been deprecated.  Use the SqlClientPermission(PermissionState.None) constructor.  http://go.microsoft.com/fwlink/?linkid=14202", true)] // MDAC 86034
         public SqlClientPermission() : this(PermissionState.None)
         {
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/ctor[@name="PermissionState"]/*' />
         public SqlClientPermission(PermissionState state) : base(state)
         {
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/ctor[@name="PermissionStateAndallowBlankPasswordBool"]/*' />
         [Obsolete("SqlClientPermission(PermissionState state, Boolean allowBlankPassword) has been deprecated.  Use the SqlClientPermission(PermissionState.None) constructor.  http://go.microsoft.com/fwlink/?linkid=14202", true)] // MDAC 86034
         public SqlClientPermission(PermissionState state, bool allowBlankPassword) : this(state)
         {
@@ -58,12 +61,14 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/Add[@name="connectionStringAndrestrictionsStringAndBehavior"]/*' />
         public override void Add(string connectionString, string restrictions, KeyRestrictionBehavior behavior)
         {
             DBConnectionString constr = new DBConnectionString(connectionString, restrictions, behavior, SqlConnectionString.GetParseSynonyms(), false);
             AddPermissionEntry(constr);
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/Copy/*' />
         override public IPermission Copy()
         {
             return new SqlClientPermission(this);
@@ -121,6 +126,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/Intersect/*' />
         override public IPermission Intersect(IPermission target)
         { // used during Deny actions
             if (null == target)
@@ -173,6 +179,7 @@ namespace Microsoft.Data.SqlClient
             return flag;
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/IsSubsetOf/*' />
         override public bool IsSubsetOf(IPermission target)
         {
             if (null == target)
@@ -211,6 +218,7 @@ namespace Microsoft.Data.SqlClient
             return subset;
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/Union/*' />
         override public IPermission Union(IPermission target)
         {
             if (null == target)
@@ -273,6 +281,7 @@ namespace Microsoft.Data.SqlClient
         // <IPermission class="...Permission" version="1" AllowBlankPassword=false>
         //     <add ConnectionString="provider=x;data source=y;" KeyRestrictions="address=;server=" KeyRestrictionBehavior=PreventUsage/>
         // </IPermission>
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/FromXml/*' />
         override public void FromXml(SecurityElement securityElement)
         {
             // code derived from CodeAccessPermission.ValidateElement
@@ -335,6 +344,7 @@ namespace Microsoft.Data.SqlClient
         //     <add ConnectionString="provider=x;data source=y;" KeyRestrictions="user id=;password=;" KeyRestrictionBehavior=AllowOnly/>
         //     <add ConnectionString="provider=x;data source=y;" KeyRestrictions="address=;server=" KeyRestrictionBehavior=PreventUsage/>
         // </IPermission>
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/ToXml/*' />
         override public SecurityElement ToXml()
         {
             Type type = this.GetType();
@@ -400,15 +410,18 @@ namespace Microsoft.Data.SqlClient
 
     }
 
+    /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlClientPermissionAttribute.xml' path='docs/members[@name="SqlClientPermissionAttribute"]/SqlClientPermissionAttribute/*' />
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Constructor | AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Assembly, AllowMultiple = true, Inherited = false)]
     [Serializable]
     public sealed class SqlClientPermissionAttribute : DBDataPermissionAttribute
     {
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlClientPermissionAttribute.xml' path='docs/members[@name="SqlClientPermissionAttribute"]/ctor/*' />
         public SqlClientPermissionAttribute(SecurityAction action) : base(action)
         {
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlClientPermissionAttribute.xml' path='docs/members[@name="SqlClientPermissionAttribute"]/CreatePermission/*' />
         override public IPermission CreatePermission()
         {
             return new SqlClientPermission(this);

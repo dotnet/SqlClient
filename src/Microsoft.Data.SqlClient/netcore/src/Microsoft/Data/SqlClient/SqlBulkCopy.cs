@@ -124,6 +124,7 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/SqlBulkCopy/*'/>
     public sealed class SqlBulkCopy : IDisposable
     {
         private enum ValueSourceType
@@ -235,6 +236,7 @@ namespace Microsoft.Data.SqlClient
         }
 #endif
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/ctor[@name="SqlConnectionParameter"]/*'/>
         public SqlBulkCopy(SqlConnection connection)
         {
             if (connection == null)
@@ -245,6 +247,7 @@ namespace Microsoft.Data.SqlClient
             _columnMappings = new SqlBulkCopyColumnMappingCollection();
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/ctor[@name="SqlConnectionAndSqlBulkCopyOptionAndSqlTransactionParameters"]/*'/>
         public SqlBulkCopy(SqlConnection connection, SqlBulkCopyOptions copyOptions, SqlTransaction externalTransaction)
             : this(connection)
         {
@@ -260,6 +263,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/ctor[@name="ConnectionStringParameter"]/*'/>
         public SqlBulkCopy(string connectionString)
         {
             if (connectionString == null)
@@ -271,12 +275,14 @@ namespace Microsoft.Data.SqlClient
             _ownConnection = true;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/ctor[@name="ConnectionStringAndSqlBulkCopyOptionsParameters"]/*'/>
         public SqlBulkCopy(string connectionString, SqlBulkCopyOptions copyOptions)
             : this(connectionString)
         {
             _copyOptions = copyOptions;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/BatchSize/*'/>
         public int BatchSize
         {
             get
@@ -296,6 +302,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/BulkCopyTimeout/*'/>
         public int BulkCopyTimeout
         {
             get
@@ -312,6 +319,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/EnableStreaming/*'/>
         public bool EnableStreaming
         {
             get
@@ -324,6 +332,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/ColumnMappings/*'/>
         public SqlBulkCopyColumnMappingCollection ColumnMappings
         {
             get
@@ -332,6 +341,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/DestinationTableName/*'/>
         public string DestinationTableName
         {
             get
@@ -352,6 +362,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/NotifyAfter/*'/>
         public int NotifyAfter
         {
             get
@@ -371,6 +382,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/SqlRowsCopied/*'/>
         public event SqlRowsCopiedEventHandler SqlRowsCopied
         {
             add
@@ -425,7 +437,7 @@ namespace Microsoft.Data.SqlClient
             string TDSCommand;
 
 
-            TDSCommand = "select @@trancount; SET FMTONLY ON select * from " + this.DestinationTableName + " SET FMTONLY OFF ";
+            TDSCommand = "select @@trancount; SET FMTONLY ON select * from " + ADP.BuildMultiPartName(parts) + " SET FMTONLY OFF ";
 
             string TableCollationsStoredProc;
             if (_connection.IsKatmaiOrNewer)
@@ -532,7 +544,8 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.BulkLoadNoCollation();
             }
 
-            updateBulkCommandText.AppendFormat("insert bulk {0} (", this.DestinationTableName);
+            string[] parts = MultipartIdentifier.ParseMultipartIdentifier(this.DestinationTableName, "[\"", "]\"", SR.SQL_BulkCopyDestinationTableName, true);
+            updateBulkCommandText.AppendFormat("insert bulk {0} (", ADP.BuildMultiPartName(parts));
             int nmatched = 0;  // Number of columns that match and are accepted
             int nrejected = 0; // Number of columns that match but were rejected
             bool rejectColumn; // True if a column is rejected because of an excluded type
@@ -790,6 +803,7 @@ namespace Microsoft.Data.SqlClient
 
         // Terminates the bulk copy operation.
         // Must be called at the end of the bulk copy session.
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/Close/*'/>
         public void Close()
         {
             if (_insideRowsCopiedEvent)
@@ -1504,10 +1518,21 @@ namespace Microsoft.Data.SqlClient
                         value = SqlParameter.CoerceValue(value, mt, out coercedToDataFeed, out typeChanged, false);
                         if (!coercedToDataFeed)
                         {   // We do not need to test for TextDataFeed as it is only assigned to (N)VARCHAR(MAX)
-                            int len = ((isSqlType) && (!typeChanged)) ? ((SqlString)value).Value.Length : ((string)value).Length;
-                            if (len > length / 2)
+                            string str = ((isSqlType) && (!typeChanged)) ? ((SqlString)value).Value : ((string)value);
+                            int maxStringLength = length / 2;
+                            if (str.Length > maxStringLength)
                             {
-                                throw SQL.BulkLoadStringTooLong();
+                                if (metadata.isEncrypted)
+                                {
+                                    str = "<encrypted>";
+                                }
+                                else
+                                {
+                                    // We truncate to at most 100 characters to match SQL Servers behavior as described in
+                                    // https://blogs.msdn.microsoft.com/sql_server_team/string-or-binary-data-would-be-truncated-replacing-the-infamous-error-8152/
+                                    str = str.Remove(Math.Min(maxStringLength, 100));
+                                }
+                                throw SQL.BulkLoadStringTooLong(_destinationTableName, metadata.column, str);
                             }
                         }
                         break;
@@ -1562,6 +1587,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServer[@name="DbDataReaderParameter"]/*'/>
         public void WriteToServer(DbDataReader reader)
         {
             if (reader == null)
@@ -1594,6 +1620,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServer[@name="IDataReaderParameter"]/*'/>
         public void WriteToServer(IDataReader reader)
         {
             if (reader == null)
@@ -1624,8 +1651,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServer[@name="DataTableParameter"]/*'/>
         public void WriteToServer(DataTable table) => WriteToServer(table, 0);
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServer[@name="DataTableAndRowStateParameters"]/*'/>
         public void WriteToServer(DataTable table, DataRowState rowState)
         {
             if (table == null)
@@ -1658,6 +1687,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServer[@name="DataRowParameter"]/*'/>
         public void WriteToServer(DataRow[] rows)
         {
             SqlStatistics statistics = Statistics;
@@ -1699,8 +1729,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="DataRowParameter"]/*'/>
         public Task WriteToServerAsync(DataRow[] rows) => WriteToServerAsync(rows, CancellationToken.None);
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="DataRowAndCancellationTokenParameters"]/*'/>
         public Task WriteToServerAsync(DataRow[] rows, CancellationToken cancellationToken)
         {
             Task resultTask = null;
@@ -1745,8 +1777,10 @@ namespace Microsoft.Data.SqlClient
             return resultTask;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="DbDataReaderParameter"]/*'/>
         public Task WriteToServerAsync(DbDataReader reader) => WriteToServerAsync(reader, CancellationToken.None);
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="DbDataReaderAndCancellationTokenParameters"]/*'/>
         public Task WriteToServerAsync(DbDataReader reader, CancellationToken cancellationToken)
         {
             Task resultTask = null;
@@ -1779,8 +1813,10 @@ namespace Microsoft.Data.SqlClient
             return resultTask;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="IDataReaderParameter"]/*'/>
         public Task WriteToServerAsync(IDataReader reader) => WriteToServerAsync(reader, CancellationToken.None);
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="IDataReaderAndCancellationTokenParameters"]/*'/>
         public Task WriteToServerAsync(IDataReader reader, CancellationToken cancellationToken)
         {
             Task resultTask = null;
@@ -1814,12 +1850,16 @@ namespace Microsoft.Data.SqlClient
             return resultTask;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="DataTableParameter"]/*'/>
         public Task WriteToServerAsync(DataTable table) => WriteToServerAsync(table, 0, CancellationToken.None);
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="DataTableAndCancellationTokenParameters"]/*'/>
         public Task WriteToServerAsync(DataTable table, CancellationToken cancellationToken) => WriteToServerAsync(table, 0, cancellationToken);
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="DataTableAndDataRowStateParameter"]/*'/>
         public Task WriteToServerAsync(DataTable table, DataRowState rowState) => WriteToServerAsync(table, rowState, CancellationToken.None);
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="DataTableAndDataRowStateAndCancellationTokenParameters"]/*'/>
         public Task WriteToServerAsync(DataTable table, DataRowState rowState, CancellationToken cancellationToken)
         {
             Task resultTask = null;
@@ -2609,7 +2649,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (_stateObj != null)
                 {
-                    CleanUpStateObjectOnError();
+                    CleanUpStateObject();
                 }
             }
             catch (OutOfMemoryException)
@@ -2632,7 +2672,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Cleans the stateobj. Used in a number of places, specially in  exceptions.
-        private void CleanUpStateObjectOnError()
+        private void CleanUpStateObject(bool isCancelRequested = true)
         {
             if (_stateObj != null)
             {
@@ -2642,7 +2682,7 @@ namespace Microsoft.Data.SqlClient
                     _stateObj.ResetBuffer();
                     _stateObj.ResetPacketCounters();
                     // If _parser is closed, sending attention will raise debug assertion, so we avoid it (but not calling CancelRequest).
-                    if (_parser.State == TdsParserState.OpenNotLoggedIn || _parser.State == TdsParserState.OpenLoggedIn)
+                    if (isCancelRequested && (_parser.State == TdsParserState.OpenNotLoggedIn || _parser.State == TdsParserState.OpenLoggedIn))
                     {
                         _stateObj.CancelRequest();
                     }
@@ -2703,7 +2743,7 @@ namespace Microsoft.Data.SqlClient
                                 _localColumnMappings = null;
                                 try
                                 {
-                                    CleanUpStateObjectOnError();
+                                    CleanUpStateObject();
                                 }
                                 finally
                                 {
@@ -2719,7 +2759,7 @@ namespace Microsoft.Data.SqlClient
                                 _localColumnMappings = null;
                                 try
                                 {
-                                    CleanUpStateObjectOnError();
+                                    CleanUpStateObject(isCancelRequested: false);
                                 }
                                 finally
                                 {
@@ -2746,11 +2786,11 @@ namespace Microsoft.Data.SqlClient
 
                     try
                     {
-                        CleanUpStateObjectOnError();
+                        CleanUpStateObject(isCancelRequested: false);
                     }
                     catch (Exception cleanupEx)
                     {
-                        Debug.Fail("Unexpected exception during CleanUpstateObjectOnError (ignored)", cleanupEx.ToString());
+                        Debug.Fail($"Unexpected exception during {nameof(CleanUpStateObject)} (ignored)", cleanupEx.ToString());
                     }
 
                     if (source != null)
@@ -2765,11 +2805,11 @@ namespace Microsoft.Data.SqlClient
 
                 try
                 {
-                    CleanUpStateObjectOnError();
+                    CleanUpStateObject();
                 }
                 catch (Exception cleanupEx)
                 {
-                    Debug.Fail("Unexpected exception during CleanUpstateObjectOnError (ignored)", cleanupEx.ToString());
+                    Debug.Fail($"Unexpected exception during {nameof(CleanUpStateObject)} (ignored)", cleanupEx.ToString());
                 }
 
                 if (source != null)

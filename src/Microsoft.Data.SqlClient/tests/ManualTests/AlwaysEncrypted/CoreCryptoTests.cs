@@ -3,13 +3,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.Diagnostics;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
-    public class CoreCryptoTests : IClassFixture<SQLSetupStrategy>
+    public class CoreCryptoTests : IClassFixture<SQLSetupStrategyCertStoreProvider>
     {
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [PlatformSpecific(TestPlatforms.Windows)]
@@ -26,7 +26,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.True(cryptoParametersListForTest.Count >= 1, @"Invalid number of AEAD test vectors. Expected at least 1.");
 
             // For each crypto vector, run the test to compare the output generated through sqlclient's code and the native code.
-            foreach(CryptoVector cryptoParameter in cryptoParametersListForTest)
+            foreach (CryptoVector cryptoParameter in cryptoParametersListForTest)
             {
                 // For Deterministic encryption, compare the result of encrypting the cell data (or plain text).
                 if (cryptoParameter.CryptoVectorEncryptionTypeVal == CryptoVectorEncryptionType.Deterministic)

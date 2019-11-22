@@ -10,7 +10,7 @@ namespace Microsoft.Data.SqlClient
     // this class helps allows the user to create association between source- and targetcolumns
     //
     //
-
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMapping.xml' path='docs/members[@name="SqlBulkCopyColumnMapping"]/SqlBulkCopyColumnMapping/*'/>
     public sealed class SqlBulkCopyColumnMapping
     {
         internal string _destinationColumnName;
@@ -23,6 +23,7 @@ namespace Microsoft.Data.SqlClient
         internal int _internalDestinationColumnOrdinal;
         internal int _internalSourceColumnOrdinal;   // -1 indicates an undetermined value
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMapping.xml' path='docs/members[@name="SqlBulkCopyColumnMapping"]/DestinationColumn/*'/>
         public string DestinationColumn
         {
             get
@@ -40,6 +41,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMapping.xml' path='docs/members[@name="SqlBulkCopyColumnMapping"]/DestinationOrdinal/*'/>
         public int DestinationOrdinal
         {
             get
@@ -60,6 +62,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMapping.xml' path='docs/members[@name="SqlBulkCopyColumnMapping"]/SourceColumn/*'/>
         public string SourceColumn
         {
             get
@@ -77,6 +80,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMapping.xml' path='docs/members[@name="SqlBulkCopyColumnMapping"]/SourceOrdinal/*'/>
         public int SourceOrdinal
         {
             get
@@ -97,29 +101,34 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMapping.xml' path='docs/members[@name="SqlBulkCopyColumnMapping"]/ctor[@name="default"]/*'/>
         public SqlBulkCopyColumnMapping()
         {
             _internalSourceColumnOrdinal = -1;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMapping.xml' path='docs/members[@name="SqlBulkCopyColumnMapping"]/ctor[@name="sourceColumnStringAnddestinationColumnString"]/*'/>
         public SqlBulkCopyColumnMapping(string sourceColumn, string destinationColumn)
         {
             SourceColumn = sourceColumn;
             DestinationColumn = destinationColumn;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMapping.xml' path='docs/members[@name="SqlBulkCopyColumnMapping"]/ctor[@name="sourceColumnOrdinalIntegerAnddestinationColumnString"]/*'/>
         public SqlBulkCopyColumnMapping(int sourceColumnOrdinal, string destinationColumn)
         {
             SourceOrdinal = sourceColumnOrdinal;
             DestinationColumn = destinationColumn;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMapping.xml' path='docs/members[@name="SqlBulkCopyColumnMapping"]/ctor[@name="sourceColumnStringAnddestinationOrdinalInteger"]/*'/>
         public SqlBulkCopyColumnMapping(string sourceColumn, int destinationOrdinal)
         {
             SourceColumn = sourceColumn;
             DestinationOrdinal = destinationOrdinal;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMapping.xml' path='docs/members[@name="SqlBulkCopyColumnMapping"]/ctor[@name="sourceColumnOrdinalIntegerAnddestinationOrdinalInteger"]/*'/>
         public SqlBulkCopyColumnMapping(int sourceColumnOrdinal, int destinationOrdinal)
         {
             SourceOrdinal = sourceColumnOrdinal;

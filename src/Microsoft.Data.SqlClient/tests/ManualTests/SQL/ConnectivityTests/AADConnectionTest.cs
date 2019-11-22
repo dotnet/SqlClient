@@ -72,9 +72,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAADConnStringsSetup))]
         public static void AccessTokenTest()
         {
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
-                connection.AccessToken = DataTestUtility.getAccessToken();
+                connection.AccessToken = DataTestUtility.GetAccessToken();
                 connection.Open();
             }
         }
@@ -84,11 +84,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             // Remove cred info and add invalid token
             string[] credKeys = { "User ID", "Password", "Authentication" };
-            string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnStr, credKeys);
+            string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys);
 
             using (SqlConnection connection = new SqlConnection(connStr))
             {
-                connection.AccessToken = DataTestUtility.getAccessToken() + "abc";
+                connection.AccessToken = DataTestUtility.GetAccessToken() + "abc";
                 SqlException e = Assert.Throws<SqlException>(() => connection.Open());
 
                 string expectedMessage = "Login failed for user";
@@ -101,12 +101,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             // Remove cred info and add invalid token
             string[] credKeys = { "User ID", "Password" };
-            string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnStr, credKeys);
+            string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys);
 
             using (SqlConnection connection = new SqlConnection(connStr))
             {
                 InvalidOperationException e = Assert.Throws<InvalidOperationException>(() =>
-                    connection.AccessToken = DataTestUtility.getAccessToken());
+                    connection.AccessToken = DataTestUtility.GetAccessToken());
 
                 string expectedMessage = "Cannot set the AccessToken property if 'Authentication' has been specified in the connection string.";
                 Assert.Contains(expectedMessage, e.Message);
@@ -118,12 +118,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             // Remove cred info and add invalid token
             string[] credKeys = { "Authentication" };
-            string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnStr, credKeys);
+            string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys);
 
             using (SqlConnection connection = new SqlConnection(connStr))
             {
                 InvalidOperationException e = Assert.Throws<InvalidOperationException>(() =>
-                connection.AccessToken = DataTestUtility.getAccessToken());
+                connection.AccessToken = DataTestUtility.GetAccessToken());
 
                 string expectedMessage = "Cannot set the AccessToken property if 'UserID', 'UID', 'Password', or 'PWD' has been specified in connection string.";
                 Assert.Contains(expectedMessage, e.Message);
@@ -135,7 +135,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             // Remove cred info and add invalid token
             string[] credKeys = { "User ID", "Password", "Authentication" };
-            string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnStr, credKeys);
+            string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys);
 
             using (SqlConnection connection = new SqlConnection(connStr))
             {
@@ -152,7 +152,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             // Remove cred info and add invalid token
             string[] credKeys = { "User ID", "Password", "Authentication" };
-            string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnStr, credKeys) + "Integrated Security=True;";
+            string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) + "Integrated Security=True;";
 
             using (SqlConnection connection = new SqlConnection(connStr))
             {
@@ -168,7 +168,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             // Remove cred info and add invalid token
             string[] credKeys = { "Authentication" };
-            string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnStr, credKeys) + "Authentication=Active Directory Pass;";
+            string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) + "Authentication=Active Directory Pass;";
 
             ArgumentException e = Assert.Throws<ArgumentException>(() => ConnectAndDisconnect(connStr));
 
@@ -179,7 +179,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAADConnStringsSetup))]
         public static void AADPasswordWithIntegratedSecurityTrue()
         {
-            string connStr = DataTestUtility.AADPasswordConnStr + "Integrated Security=True;";
+            string connStr = DataTestUtility.AADPasswordConnectionString + "Integrated Security=True;";
 
             ArgumentException e = Assert.Throws<ArgumentException>(() => ConnectAndDisconnect(connStr));
 
@@ -191,7 +191,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void AADPasswordWithWrongPassword()
         {
             string[] credKeys = { "Password" };
-            string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnStr, credKeys) + "Password=TestPassword;";
+            string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) + "Password=TestPassword;";
 
             AggregateException e = Assert.Throws<AggregateException>(() => ConnectAndDisconnect(connStr));
 
@@ -203,7 +203,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
         public static void GetAccessTokenByPasswordTest()
         {
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.AADPasswordConnStr))
+            using (SqlConnection connection = new SqlConnection(DataTestUtility.AADPasswordConnectionString))
             {
                 connection.Open();
             }
@@ -215,7 +215,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // Connect to Azure DB with password and retrieve user name.
             try
             {
-                using (SqlConnection conn = new SqlConnection(DataTestUtility.AADPasswordConnStr))
+                using (SqlConnection conn = new SqlConnection(DataTestUtility.AADPasswordConnectionString))
                 {
                     conn.Open();
                     SqlCommand sqlCommand = new SqlCommand
@@ -225,7 +225,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         transaction: null
                     );
                     string customerId = (string)sqlCommand.ExecuteScalar();
-                    string expected = RetrieveValueFromConnStr(DataTestUtility.AADPasswordConnStr, "User ID");
+                    string expected = RetrieveValueFromConnStr(DataTestUtility.AADPasswordConnectionString, "User ID");
                     Assert.Equal(expected, customerId);
                 }
             }
@@ -240,7 +240,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             // connection fails with expected error message.
             string[] AuthKey = { "Authentication" };
-            string connStrWithNoAuthType = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnStr, AuthKey);
+            string connStrWithNoAuthType = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, AuthKey);
             SqlException e = Assert.Throws<SqlException>(() => ConnectAndDisconnect(connStrWithNoAuthType));
 
             string expectedMessage = "Cannot open server \"microsoft.com\" requested by the login.  The login failed.";
@@ -253,7 +253,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             // connection fails with expected error message.
             string[] AuthKey = { "Authentication" };
-            string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnStr, AuthKey) + "Authentication=Active Directory Integrated;";
+            string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, AuthKey) + "Authentication=Active Directory Integrated;";
             ArgumentException e = Assert.Throws<ArgumentException>(() => ConnectAndDisconnect(connStr));
 
             string expectedMessage = "Cannot use 'Authentication=Active Directory Integrated' with 'User ID', 'UID', 'Password' or 'PWD' connection string keywords.";
@@ -266,7 +266,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             // connection fails with expected error message.
             string[] AuthKey = { "Authentication" };
-            string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnStr, AuthKey) + "Authentication=Active Directory Interactive;";
+            string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, AuthKey) + "Authentication=Active Directory Interactive;";
             ArgumentException e = Assert.Throws<ArgumentException>(() => ConnectAndDisconnect(connStr));
 
             string expectedMessage = "Cannot use 'Authentication=Active Directory Interactive' with 'User ID', 'UID', 'Password' or 'PWD' connection string keywords.";
@@ -278,7 +278,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             // connection fails with expected error message.
             string[] pwdKey = { "Password" };
-            string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnStr, pwdKey) + "Password=;";
+            string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, pwdKey) + "Password=;";
             AggregateException e = Assert.Throws<AggregateException>(() => ConnectAndDisconnect(connStr));
 
             string expectedMessage = "ID3242: The security token could not be authenticated or authorized.";
@@ -291,7 +291,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             // connection fails with expected error message.
             string[] removeKeys = { "User ID", "Password" };
-            string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnStr, removeKeys) + "User ID=; Password=;";
+            string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, removeKeys) + "User ID=; Password=;";
             AggregateException e = Assert.Throws<AggregateException>(() => ConnectAndDisconnect(connStr));
 
             string expectedMessage = "Unsupported User Type 'Unknown'";
@@ -303,7 +303,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             // connection fails with expected error message.
             string[] removeKeys = { "User ID" };
-            string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnStr, removeKeys) + "User ID=testdotnet@microsoft.com";
+            string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, removeKeys) + "User ID=testdotnet@microsoft.com";
             AggregateException e = Assert.Throws<AggregateException>(() => ConnectAndDisconnect(connStr));
 
             string expectedMessage = "ID3242: The security token could not be authenticated or authorized.";
@@ -314,11 +314,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void NoCredentialsActiveDirectoryPassword()
         {
             // test Passes with correct connection string.
-            ConnectAndDisconnect(DataTestUtility.AADPasswordConnStr);
+            ConnectAndDisconnect(DataTestUtility.AADPasswordConnectionString);
 
             // connection fails with expected error message.
             string[] credKeys = { "User ID", "Password" };
-            string connStrWithNoCred = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnStr, credKeys);
+            string connStrWithNoCred = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys);
             InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => ConnectAndDisconnect(connStrWithNoCred));
 
             string expectedMessage = "Either Credential or both 'User ID' and 'Password' (or 'UID' and 'PWD') connection string keywords must be specified, if 'Authentication=Active Directory Password'.";

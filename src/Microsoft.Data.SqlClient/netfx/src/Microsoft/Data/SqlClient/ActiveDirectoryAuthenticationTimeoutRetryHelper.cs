@@ -9,8 +9,6 @@ using System.Text;
 
 namespace Microsoft.Data.SqlClient
 {
-
-
     /// <summary>
     /// AD auth retry states.
     /// </summary>

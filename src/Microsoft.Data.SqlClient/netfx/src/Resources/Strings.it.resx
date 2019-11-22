@@ -1948,7 +1948,7 @@
     <value>Al comando è già associato un SqlResultSet aperto, che deve essere chiuso.</value>
   </data>
   <data name="ADP_OpenReaderExists" xml:space="preserve">
-    <value>A Command è già associato un DataReader aperto, che deve essere chiuso.</value>
+    <value>A {0} è già associato un DataReader aperto, che deve prima essere chiuso.</value>
   </data>
   <data name="ADP_DeriveParametersNotSupported" xml:space="preserve">
     <value>DeriveParameters {0} supporta solo CommandType.StoredProcedure, non CommandType.{1}.</value>
@@ -2818,7 +2818,7 @@
     <value>Il ColumnName specificato "{0}" non corrisponde a nessuna colonna nell'origine dati.</value>
   </data>
   <data name="SQL_BulkLoadStringTooLong" xml:space="preserve">
-    <value>I dati di tipo String o binary verrebbero troncati.</value>
+    <value>I dati stringa o binari verranno troncati nella tabella '{0}', colonna '{1}'. Valore troncato: '{2}'.</value>
   </data>
   <data name="SQL_BulkLoadInvalidTimeout" xml:space="preserve">
     <value>Il valore di Timeout "{0}" è minore di 0.</value>
@@ -4321,7 +4321,7 @@
     <value>Per eseguire una query, sono richiesti calcoli enclave, ma nella configurazione dell'applicazione manca la sezione relativa al provider di enclave.</value>
   </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
-    <value>Non è stato trovato alcun provider di enclave per il tipo di enclave '{0}'. Specificare il provider nella configurazione dell'applicazione. </value>
+    <value>Non sono stati trovati provider di enclave per il tipo di enclave '{0}' e il protocollo di attestazione '{1}'. Specificare il protocollo di attestazione corretto nella stringa di connessione. </value>
   </data>
   <data name="TCE_NullEnclaveSessionReturnedFromProvider" xml:space="preserve">
     <value>Non è possibile comunicare con l'enclave. Le informazioni sulla sessione dell'enclave ricevute dal provider di enclave sono Null. Il tipo di enclave è '{0}' e l'URL di attestazione dell'enclave è '{1}'.</value>
@@ -4442,5 +4442,80 @@
   </data>
   <data name="SQL_Timeout_Execution" xml:space="preserve">
     <value>Il timeout di esecuzione è scaduto. Il periodo di timeout è scaduto prima del completamento dell'operazione oppure il server non risponde.</value>
+  </data>
+  <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
+    <value>La convalida di un token di attestazione non è riuscita. La firma del token non corrisponde alla firma calcolata usando una chiave pubblica recuperata dall'endpoint della chiave pubblica di attestazione in '{0}'. Verificare il mapping DNS per l'endpoint. Se è corretto, contattare il Servizio Supporto Tecnico Clienti.</value>
+  </data>
+  <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
+    <value>Si è verificato un errore interno durante il tentativo di eseguire il download del certificato radice HGS dopo che la richiesta iniziale non è riuscita. Contattare il Servizio Supporto Tecnico Clienti.</value>
+  </data>
+  <data name="EnclaveSessionInvalidationFailed" xml:space="preserve">
+    <value>Errore interno. Non è possibile invalidare la sessione dell'enclave richiesta perché non esiste nella cache. Contattare il Servizio Supporto Tecnico Clienti.</value>
+  </data>
+  <data name="ExpiredAttestationToken" xml:space="preserve">
+    <value>La convalida di un token di attestazione non è riuscita. Il token ricevuto da SQL Server è scaduto. Contattare il Servizio Supporto Tecnico Clienti.</value>
+  </data>
+  <data name="FailToCreateEnclaveSession" xml:space="preserve">
+    <value>Non è stato possibile creare la sessione dell'enclave perché il server di attestazione è occupato.</value>
+  </data>
+  <data name="FailToParseAttestationInfo" xml:space="preserve">
+    <value>La convalida delle informazioni dell'attestazione non è riuscita. Il formato delle informazioni dell'attestazione non è valido. Contattare il Servizio Supporto Tecnico Clienti. Dettagli dell'errore: '{0}'.</value>
+  </data>
+  <data name="FailToParseAttestationToken" xml:space="preserve">
+    <value>La convalida di un token di attestazione non è riuscita. Il formato del token non è valido. Contattare il Servizio Supporto Tecnico Clienti. Dettagli dell'errore: '{0}'.</value>
+  </data>
+  <data name="GetAttestationSigningCertificateFailedInvalidCertificate" xml:space="preserve">
+    <value>Il servizio di attestazione ha restituito un certificato radice HGS scaduto per l'URL di attestazione '{0}'. Controllare il certificato radice HGS configurato per l'istanza di HGS.</value>
+  </data>
+  <data name="GetAttestationSigningCertificateRequestFailedFormat" xml:space="preserve">
+    <value>Il formato del certificato radice HGS ottenuto per l'URL di attestazione '{0}' non è valido. Verificare che l'URL di attestazione sia corretto e che il server HGS sia online e completamente inizializzato. Per altre informazioni, contattare il Servizio Supporto Tecnico Clienti. Dettagli errore: '{1}'.</value>
+  </data>
+  <data name="GetAttestationTokenSigningKeysFailed" xml:space="preserve">
+    <value>La convalida di un token di attestazione non è riuscita. Non è possibile recuperare una chiave pubblica dall'endpoint della chiave pubblica di attestazione oppure la chiave recuperata ha un formato non valido. Dettagli dell'errore: '{0}'.</value>
+  </data>
+  <data name="GetSharedSecretFailed" xml:space="preserve">
+    <value>La verifica della firma della chiave Diffie-Hellman dell'enclave non è riuscita. Contattare il Servizio Supporto Tecnico Clienti.</value>
+  </data>
+  <data name="InvalidArgumentToBase64UrlDecoder" xml:space="preserve">
+    <value>La convalida di un token di attestazione non è riuscita a causa di un errore durante la decodifica della chiave pubblica dell'enclave ottenuta da SQL Server. Contattare il Servizio Supporto Tecnico Clienti.</value>
+  </data>
+  <data name="InvalidArgumentToSHA256" xml:space="preserve">
+    <value>La convalida di un token di attestazione non è riuscita a causa di un errore durante il calcolo di un hash della chiave pubica dell'enclave ottenuta da SQL Server. Contattare il Servizio Supporto Tecnico Clienti.</value>
+  </data>
+  <data name="InvalidAttestationToken" xml:space="preserve">
+    <value>La convalida del token di attestazione non è riuscita durante la convalida della firma. Eccezione: '{0}'.</value>
+  </data>
+  <data name="InvalidClaimInAttestationToken" xml:space="preserve">
+    <value>La convalida di un token di attestazione non è riuscita. Il valore '{1}' dell'attestazione '{0}' nel token non è valido. Verificare i criteri di attestazione. Se i criteri sono corretti, contattare il Servizio Supporto Tecnico Clienti.</value>
+  </data>
+  <data name="MissingClaimInAttestationToken" xml:space="preserve">
+    <value>La convalida del token di attestazione non è riuscita. L'attestazione '{0}' non è presente nel token. Verificare i criteri di attestazione. Se i criteri sono corretti, contattare il Servizio Supporto Tecnico Clienti.</value>
+  </data>
+  <data name="VerifyEnclaveDebuggable" xml:space="preserve">
+    <value>Non è stato possibile verificare se l'enclave è in esecuzione in modalità di produzione. Contattare il Servizio Supporto Tecnico Clienti.</value>
+  </data>
+  <data name="VerifyEnclavePolicyFailedFormat" xml:space="preserve">
+    <value>Non è stato possibile verificare i criteri dell'enclave a causa di una differenza tra il valore previsto e il valore effettivo dei criteri per la proprietà '{0}'. Effettivo: '{1}', previsto: '{2}'.</value>
+  </data>
+  <data name="VerifyEnclaveReportFailed" xml:space="preserve">
+    <value>La verifica della firma del report dell'enclave non è riuscita. La firma del report non corrisponde alla firma calcolata usando il certificato radice HGS. Verificare il mapping DNS per l'endpoint. Se è corretto, contattare il Servizio Supporto Tecnico Clienti.</value>
+  </data>
+  <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
+    <value>Il formato del report dell'enclave ricevuto da SQL Server non è corretto. Contattare il Servizio Supporto Tecnico Clienti.</value>
+  </data>
+  <data name="VerifyHealthCertificateChainFormat" xml:space="preserve">
+    <value>Non è stato possibile creare una catena di certificati tra il report sull'integrità dell'host dell'enclave e il certificato radice HGS per l'URL di attestazione '{0}' con stato: '{1}'. Verificare che l'URL di attestazione corrisponda all'URL configurato nel computer SQL Server. Se il client e SQL Server usano lo stesso servizio di attestazione, contattare il Servizio Supporto Tecnico Clienti.</value>
+  </data>
+  <data name="TCE_DbConnectionString_AttestationProtocol" xml:space="preserve">
+    <value>Specifica un protocollo di attestazione per il servizio di attestazione dell'enclave corrispondente.</value>
+  </data>
+  <data name="TCE_EnclaveTypeNotSupported" xml:space="preserve">
+    <value>Il tipo di enclave '{0}' restituito dal server non è supportato.</value>
+  </data>
+  <data name="TCE_AttestationProtocolNotSupportEnclaveType" xml:space="preserve">
+    <value>Non è stato possibile inizializzare la connessione. Il protocollo di attestazione '{0}' non supporta il tipo di enclave '{1}'.</value>
+  </data>
+  <data name="TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage" xml:space="preserve">
+    <value>Si è verificato un errore durante la generazione del pacchetto dell'enclave. Il protocollo di attestazione non è stato specificato nella stringa di connessione, ma la query richiede calcoli enclave.</value>
   </data>
 </root>

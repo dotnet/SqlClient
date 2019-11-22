@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
@@ -11,6 +12,7 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
+    /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/SqlTransaction/*' />
     public sealed class SqlTransaction : DbTransaction
     {
         private static int _objectTypeCount; // Bid counter
@@ -46,6 +48,7 @@ namespace Microsoft.Data.SqlClient
         // PROPERTIES
         ////////////////////////////////////////////////////////////////////////////////////////
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Connection/*' />
         new public SqlConnection Connection
         { // MDAC 66655
             get
@@ -61,6 +64,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/DbConnection/*' />
         override protected DbConnection DbConnection
         {
             get
@@ -77,6 +81,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/IsolationLevel/*' />
         override public IsolationLevel IsolationLevel
         {
             get
@@ -129,6 +134,7 @@ namespace Microsoft.Data.SqlClient
         // PUBLIC METHODS
         ////////////////////////////////////////////////////////////////////////////////////////
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Commit/*' />
         override public void Commit()
         {
             SqlConnection.ExecutePermission.Demand(); // MDAC 81476
@@ -183,6 +189,18 @@ namespace Microsoft.Data.SqlClient
                 SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
                 throw;
             }
+            catch (SqlException e)
+            {
+                // GitHub Issue #130 - When a timeout exception has occurred on transaction completion request, 
+                // this connection may not be in reusable state.
+                // We will abort this connection and make sure it does not go back to the pool.
+                var innerException = e.InnerException as Win32Exception;
+                if (innerException != null && innerException.NativeErrorCode == TdsEnums.SNI_WAIT_TIMEOUT)
+                {
+                    _connection.Abort(e);
+                }
+                throw;
+            }
             finally
             {
                 _isFromAPI = false;
@@ -192,6 +210,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/DisposeDisposing/*' />
         protected override void Dispose(bool disposing)
         {
             if (disposing)
@@ -241,6 +260,7 @@ namespace Microsoft.Data.SqlClient
             base.Dispose(disposing);
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Rollback2/*' />
         override public void Rollback()
         {
             if (IsYukonPartialZombie)
@@ -313,6 +333,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/RollbackTransactionName/*' />
         public void Rollback(string transactionName)
         {
             SqlConnection.ExecutePermission.Demand(); // MDAC 81476
@@ -374,6 +395,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Save/*' />
         public void Save(string savePointName)
         {
             SqlConnection.ExecutePermission.Demand(); // MDAC 81476

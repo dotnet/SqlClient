@@ -26,6 +26,12 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             Allocate(headerSize, dataSize);
         }
+        public bool HasCompletionCallback => !(_completionCallback is null);
+
+        /// <summary>
+        /// Dispose Packet data
+        /// </summary>
+        public void Dispose() => Release();
 
         /// <summary>
         /// Length of data left to process
