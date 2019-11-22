@@ -1,8 +1,8 @@
 using System;
+//<Snippet1>
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
-// <Snippet1>
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
@@ -255,4 +255,4 @@ namespace Microsoft.Data.SqlClient.Samples
         }
     }
 }
-// </Snippet1>
+//</Snippet1>

@@ -1,4 +1,5 @@
 ﻿using System;
+//<Snippet1>
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
@@ -260,3 +261,4 @@ namespace AKVEnclaveExample
         }
     }
 }
+//</Snippet1>
