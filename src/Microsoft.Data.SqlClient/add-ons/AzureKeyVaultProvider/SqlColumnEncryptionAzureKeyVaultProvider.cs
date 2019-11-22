@@ -25,6 +25,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
     /// 
     /// Envelope Format for the encrypted column encryption key  
     ///           version + keyPathLength + ciphertextLength + keyPath + ciphertext +  signature
+    /// 
     /// version: A single byte indicating the format version.
     /// keyPathLength: Length of the keyPath.
     /// ciphertextLength: ciphertext length
