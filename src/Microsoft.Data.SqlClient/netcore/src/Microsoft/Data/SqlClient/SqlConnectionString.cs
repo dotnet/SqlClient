@@ -5,6 +5,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Net;
+using System.Net.NetworkInformation;
 using System.Threading;
 using Microsoft.Data.Common;
 
@@ -218,6 +220,8 @@ namespace Microsoft.Data.SqlClient
         private static readonly Version constTypeSystemAsmVersion10 = new Version("10.0.0.0");
         private static readonly Version constTypeSystemAsmVersion11 = new Version("11.0.0.0");
 
+        private readonly string _expandedAttachDBFilename; // expanded during construction so that CreatePermissionSet & Expand are consistent
+
         internal SqlConnectionString(string connectionString) : base(connectionString, GetParseSynonyms())
         {
             ThrowUnsupportedIfKeywordSet(KEY.AsynchronousProcessing);
@@ -332,7 +336,24 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            if (0 <= _attachDBFileName.IndexOf('|'))
+            // expand during construction so that CreatePermissionSet and Expand are consistent
+            _expandedAttachDBFilename = ExpandDataDirectory(KEY.AttachDBFilename, _attachDBFileName);
+            if (null != _expandedAttachDBFilename)
+            {
+                if (0 <= _expandedAttachDBFilename.IndexOf('|'))
+                {
+                    throw ADP.InvalidConnectionOptionValue(KEY.AttachDBFilename);
+                }
+                ValidateValueLength(_expandedAttachDBFilename, TdsEnums.MAXLEN_ATTACHDBFILE, KEY.AttachDBFilename);
+                if (_localDBInstance == null)
+                {
+                    // fail fast to verify LocalHost when using |DataDirectory|
+                    // still must check again at connect time
+                    string host = _dataSource;
+                    VerifyLocalHostAndFixup(ref host, true, false /*don't fix-up*/);
+                }
+            }
+            else if (0 <= _attachDBFileName.IndexOf('|'))
             {
                 throw ADP.InvalidConnectionOptionValue(KEY.AttachDBFilename);
             }
@@ -340,7 +361,6 @@ namespace Microsoft.Data.SqlClient
             {
                 ValidateValueLength(_attachDBFileName, TdsEnums.MAXLEN_ATTACHDBFILE, KEY.AttachDBFilename);
             }
-
             _typeSystemAssemblyVersion = constTypeSystemAsmVersion10;
 
             if (true == _userInstance && !string.IsNullOrEmpty(_failoverPartner))
@@ -471,6 +491,7 @@ namespace Microsoft.Data.SqlClient
             _password = connectionOptions._password;
             _userID = connectionOptions._userID;
             _workstationId = connectionOptions._workstationId;
+            _expandedAttachDBFilename = connectionOptions._expandedAttachDBFilename;
             _typeSystemVersion = connectionOptions._typeSystemVersion;
             _transactionBinding = connectionOptions._transactionBinding;
             _applicationIntent = connectionOptions._applicationIntent;
@@ -530,6 +551,52 @@ namespace Microsoft.Data.SqlClient
         internal Version TypeSystemAssemblyVersion { get { return _typeSystemAssemblyVersion; } }
 
         internal TransactionBindingEnum TransactionBinding { get { return _transactionBinding; } }
+
+        internal bool EnforceLocalHost
+        {
+            get
+            {
+                // so tdsparser.connect can determine if SqlConnection.UserConnectionOptions
+                // needs to enfoce local host after datasource alias lookup
+                return (null != _expandedAttachDBFilename) && (null == _localDBInstance);
+            }
+        }
+
+        protected internal override string Expand()
+        {
+            if (null != _expandedAttachDBFilename)
+            {
+                return  ExpandAttachDbFileName(_expandedAttachDBFilename);
+            }
+            else
+            {
+                return base.Expand();
+            }
+        }
+
+        private static bool CompareHostName(ref string host, string name, bool fixup)
+        {
+            // same computer name or same computer name + "\named instance"
+            bool equal = false;
+
+            if (host.Equals(name, StringComparison.OrdinalIgnoreCase))
+            {
+                if (fixup)
+                {
+                    host = ".";
+                }
+                equal = true;
+            }
+            else if (host.StartsWith(name + @"\", StringComparison.OrdinalIgnoreCase))
+            {
+                if (fixup)
+                {
+                    host = "." + host.Substring(name.Length);
+                }
+                equal = true;
+            }
+            return equal;
+        }
 
         // This dictionary is meant to be read-only translation of parsed string
         // keywords/synonyms to a known keyword string.
@@ -636,6 +703,49 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        internal static void VerifyLocalHostAndFixup(ref string host, bool enforceLocalHost, bool fixup)
+        {
+            if (string.IsNullOrEmpty(host))
+            {
+                if (fixup)
+                {
+                    host = ".";
+                }
+            }
+            else if (!CompareHostName(ref host, @".", fixup) &&
+                     !CompareHostName(ref host, @"(local)", fixup))
+            {
+                // Fix-up completed in CompareHostName if return value true.
+                string name = GetComputerNameDnsFullyQualified(); // i.e, machine.location.corp.company.com
+                if (!CompareHostName(ref host, name, fixup))
+                {
+                    int separatorPos = name.IndexOf('.'); // to compare just 'machine' part
+                    if ((separatorPos <= 0) || !CompareHostName(ref host, name.Substring(0, separatorPos), fixup))
+                    {
+                        if (enforceLocalHost)
+                        {
+                            throw ADP.InvalidConnectionOptionValue(KEY.AttachDBFilename);
+                        }
+                    }
+                }
+            }
+        }
+
+        private static string GetComputerNameDnsFullyQualified()
+        {
+            try
+            {
+                var domainName = "." + IPGlobalProperties.GetIPGlobalProperties().DomainName;
+                var hostName = Dns.GetHostName();
+                if (domainName != "." && !hostName.EndsWith(domainName))
+                    hostName += domainName;
+                return hostName;
+            }
+            catch (System.Net.Sockets.SocketException)
+            {
+                return Environment.MachineName;
+            }
+        }
 
         internal ApplicationIntent ConvertValueToApplicationIntent()
         {

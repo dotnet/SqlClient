@@ -1703,6 +1703,12 @@ namespace Microsoft.Data.SqlClient
                 string host = serverInfo.UserServerName;
                 string protocol = serverInfo.UserProtocol;
 
+                //TODO: fix local host enforcement with datadirectory and failover
+                if (options.EnforceLocalHost)
+                {
+                    // verify LocalHost for |DataDirectory| usage
+                    SqlConnectionString.VerifyLocalHostAndFixup(ref host, true, true /*fix-up to "."*/);
+                }
 
                 serverInfo.SetDerivedNames(protocol, host);
             }

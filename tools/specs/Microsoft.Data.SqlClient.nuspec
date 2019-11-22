@@ -21,6 +21,9 @@ Microsoft.Data.SqlClient.SqlTransaction
 Microsoft.Data.SqlClient.SqlParameterCollection
 Microsoft.Data.SqlClient.SqlClientFactory
 
+When running on Windows, this library has a dependency on Microsoft.Data.SqlClient.SNI on .NET Framework and runtime.native.System.Data.SqlClient.sni on .NET Core, which requires the Microsoft Visual C++ Redistributable to be installed:
+https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads
+
 When using NuGet 3.x this package requires at least version 3.4.</description>
     <releaseNotes>https://go.microsoft.com/fwlink/?linkid=2090501</releaseNotes>
     <copyright>© Microsoft Corporation. All rights reserved.</copyright>

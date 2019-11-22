@@ -119,6 +119,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     AEConnStrings.Add(TCPConnectionStringAASSGX);
                     AEConnStringsSetup.Add(TCPConnectionStringAASSGX);
                 }
+
+                System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12;
             }
             else
             {
@@ -473,6 +475,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return result;
         }
 
+        public static void DropFunction(SqlConnection sqlConnection, string funcName)
+        {
+            using (SqlCommand cmd = new SqlCommand(string.Format("IF EXISTS (SELECT * FROM sys.objects WHERE name = '{0}') \n DROP FUNCTION {0}", funcName), sqlConnection))
+            {
+                cmd.ExecuteNonQuery();
+            }
+        }
     }
-
 }
