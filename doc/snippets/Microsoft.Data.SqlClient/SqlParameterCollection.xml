@@ -108,7 +108,7 @@ This overload is useful when you are adding a parameter of a variable-length dat
             <param name="parameterName">The name of the parameter.</param>
             <param name="sqlDbType">One of the <see cref="T:System.Data.SqlDbType" /> values.</param>
             <param name="size">The column length.</param>
-            <param name="sourceColumn">The name of the source column (<see cref="P:Microsoft.Data.SqlClient.SqlParameter.SourceColumn" />) if this <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> is used in a call to <see cref="o:System.Data.Common.DbDataAdapter.Update" />.</param>
+            <param name="sourceColumn">The name of the source column (<see cref="P:Microsoft.Data.SqlClient.SqlParameter.SourceColumn" />) if this <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> is used in a call to <see cref="M:System.Data.Common.DbDataAdapter.Update" />.</param>
             <summary>Adds a <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> to the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> with the parameter name, the data type, and the column length.</summary>
             <returns>A new <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> object.</returns>
             <remarks>

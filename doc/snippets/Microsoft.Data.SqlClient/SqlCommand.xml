@@ -1156,7 +1156,7 @@ In some rare cases, if you call <xref:Microsoft.Data.SqlClient.SqlCommand.Execut
 ## Examples
 The following example demonstrates the use of the <xref:Microsoft.Data.SqlClient.SqlCommand.Cancel%2A> method.
 
-[!code-csharp[SqlCommand_Cancel](~/../sqlclient/doc/samples/WebData SqlCommand_Cancel.cs)]
+[!code-csharp[SqlCommand_Cancel](~/../sqlclient/doc/samples/SqlCommand_Cancel.cs)]
 ]]></format>
 			</remarks>
 		</Cancel>

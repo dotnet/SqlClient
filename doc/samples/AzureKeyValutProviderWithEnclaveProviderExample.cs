@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 //<Snippet1>
 using System.Collections.Generic;
 using System.Security.Cryptography;
@@ -7,9 +7,9 @@ using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 
-namespace Microsoft.Data.SqlClient.Samples
+namespace AKVEnclaveExample
 {
-    public class AzureKeyVaultProviderExample
+    class Program
     {
         static readonly string s_algorithm = "RSA_OAEP";
 
@@ -17,10 +17,10 @@ namespace Microsoft.Data.SqlClient.Samples
         static readonly string s_akvUrl = "https://{KeyVaultName}.vault.azure.net/keys/{Key}/{KeyIdentifier}";
         static readonly string s_clientId = "{Application_Client_ID}";
         static readonly string s_clientSecret = "{Application_Client_Secret}";
-        static readonly string s_connectionString = "Server={Server}; Database={database}; Integrated Security=true; Column Encryption Setting=Enabled;";
+        static readonly string s_connectionString = "Server={Server}; Database={database}; Integrated Security=true; Column Encryption Setting=Enabled; Attestation Protocol=HGS; Enclave Attestation Url = {attestation_url_for_HGS};";
         // ******************************************
 
-        public static void Main(string[] args)
+        static void Main(string[] args)
         {
             // Initialize AKV provider
             SqlColumnEncryptionAzureKeyVaultProvider sqlColumnEncryptionAzureKeyVaultProvider = new SqlColumnEncryptionAzureKeyVaultProvider(AzureActiveDirectoryAuthenticationCallback);
@@ -49,7 +49,7 @@ namespace Microsoft.Data.SqlClient.Samples
                     dropObjects(sqlConnection, cmkName, cekName, tblName);
 
                     // Create Column Master Key with AKV Url
-                    createCMK(sqlConnection, cmkName);
+                    createCMK(sqlConnection, cmkName, sqlColumnEncryptionAzureKeyVaultProvider);
                     Console.WriteLine("Column Master Key created.");
 
                     // Create Column Encryption Key
@@ -76,6 +76,8 @@ namespace Microsoft.Data.SqlClient.Samples
                 }
 
                 Console.WriteLine("Completed AKV provider Sample.");
+
+                Console.ReadKey();
             }
         }
 
@@ -92,15 +94,19 @@ namespace Microsoft.Data.SqlClient.Samples
             return result.AccessToken;
         }
 
-        private static void createCMK(SqlConnection sqlConnection, string cmkName)
+        private static void createCMK(SqlConnection sqlConnection, string cmkName, SqlColumnEncryptionAzureKeyVaultProvider sqlColumnEncryptionAzureKeyVaultProvider)
         {
             string KeyStoreProviderName = SqlColumnEncryptionAzureKeyVaultProvider.ProviderName;
+
+            byte[] cmkSign = sqlColumnEncryptionAzureKeyVaultProvider.SignColumnMasterKeyMetadata(s_akvUrl, true);
+            string cmkSignStr = string.Concat("0x", BitConverter.ToString(cmkSign).Replace("-", string.Empty));
 
             string sql =
                 $@"CREATE COLUMN MASTER KEY [{cmkName}]
                     WITH (
                         KEY_STORE_PROVIDER_NAME = N'{KeyStoreProviderName}',
-                        KEY_PATH = N'{s_akvUrl}'
+                        KEY_PATH = N'{s_akvUrl}',
+                        ENCLAVE_COMPUTATIONS (SIGNATURE = {cmkSignStr})
                     );";
 
             using (SqlCommand command = sqlConnection.CreateCommand())
@@ -145,9 +151,9 @@ namespace Microsoft.Data.SqlClient.Samples
             string sql =
                     $@"CREATE TABLE [dbo].[{tblName}]
                 (
-                    [CustomerId] [int] ENCRYPTED WITH (COLUMN_ENCRYPTION_KEY = [{cekName}], ENCRYPTION_TYPE = DETERMINISTIC, ALGORITHM = '{ColumnEncryptionAlgorithmName}'),
-                    [FirstName] [nvarchar](50) COLLATE Latin1_General_BIN2 ENCRYPTED WITH (COLUMN_ENCRYPTION_KEY = [{cekName}], ENCRYPTION_TYPE = DETERMINISTIC, ALGORITHM = '{ColumnEncryptionAlgorithmName}'),
-                    [LastName] [nvarchar](50) COLLATE Latin1_General_BIN2 ENCRYPTED WITH (COLUMN_ENCRYPTION_KEY = [{cekName}], ENCRYPTION_TYPE = DETERMINISTIC, ALGORITHM = '{ColumnEncryptionAlgorithmName}')
+                    [CustomerId] [int] ENCRYPTED WITH (COLUMN_ENCRYPTION_KEY = [{cekName}], ENCRYPTION_TYPE = RANDOMIZED, ALGORITHM = '{ColumnEncryptionAlgorithmName}'),
+                    [FirstName] [nvarchar](50) COLLATE Latin1_General_BIN2 ENCRYPTED WITH (COLUMN_ENCRYPTION_KEY = [{cekName}], ENCRYPTION_TYPE = RANDOMIZED, ALGORITHM = '{ColumnEncryptionAlgorithmName}'),
+                    [LastName] [nvarchar](50) COLLATE Latin1_General_BIN2 ENCRYPTED WITH (COLUMN_ENCRYPTION_KEY = [{cekName}], ENCRYPTION_TYPE = RANDOMIZED, ALGORITHM = '{ColumnEncryptionAlgorithmName}')
                 )";
 
             using (SqlCommand command = sqlConnection.CreateCommand())
