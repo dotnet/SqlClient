@@ -44,9 +44,10 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
     /// 
     /// ## Example
     /// 
-    /// A sample C# application to demonstrate Always Encrypted use with Azure Key Vault is under: 
+    /// Sample C# applications to demonstrate Always Encrypted use with Azure Key Vault are available at links below:
     /// 
-    /// [!code-csharp[AzureKeyVaultProviderExample#1](~/../sqlclient/doc/samples/AzureKeyVaultProviderExample.cs#1)]
+    /// - [Example: Using Azure Key Vault with Always Encrypted](~/connect/ado-net/sql/azure-key-vault-example.md)
+    /// - [Example: Using Azure Key Vault with Always Encrypted with enclaves enabled](~/connect/ado-net/sql/azure-key-vault-enclave-example.md)
     /// ]]></format>
     /// </remarks>
     public class SqlColumnEncryptionAzureKeyVaultProvider : SqlColumnEncryptionKeyStoreProvider
