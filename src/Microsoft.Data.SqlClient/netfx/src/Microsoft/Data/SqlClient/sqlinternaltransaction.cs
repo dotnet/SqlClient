@@ -215,14 +215,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                SqlTransaction result = null;
-                // Should we protect against this, since this probably is an invalid state?
-                Debug.Assert(null != _parent, "Why are we calling Parent with no parent?");
-                if (null != _parent)
-                {
-                    result = (SqlTransaction)_parent.Target;
-                }
-                return result;
+                return _parent?.Target as SqlTransaction;
             }
         }
 

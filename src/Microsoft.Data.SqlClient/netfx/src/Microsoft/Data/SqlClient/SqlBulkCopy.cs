@@ -2715,7 +2715,7 @@ namespace Microsoft.Data.SqlClient
                     if (IsCopyOption(SqlBulkCopyOptions.UseInternalTransaction))
                     {
                         // prevent BeginTransaction() if we already have one
-                        if (internalConnection.HasLocalTransaction || internalConnection.HasLocalTransactionFromAPI)
+                        if (internalConnection.HasLocalTransactionFromAPI)
                         {
                             throw SQL.BulkLoadExistingTransaction();
                         }
