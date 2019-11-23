@@ -252,29 +252,18 @@ namespace Microsoft.Data.SqlClient
         {
             _copyOptions = copyOptions;
 
-            if (externalTransaction != null && IsCopyOption(SqlBulkCopyOptions.UseInternalTransaction))
+            if (IsCopyOption(SqlBulkCopyOptions.UseInternalTransaction))
             {
-                throw SQL.BulkLoadConflictingTransactionOption();
-            }
-
-            if (!IsCopyOption(SqlBulkCopyOptions.UseInternalTransaction))
-            {
-                if (externalTransaction is null)
+                if (null != externalTransaction)
                 {
-                    ADP.ArgumentNull(nameof(externalTransaction));
-                }
-
-                if (externalTransaction.Connection != connection)
-                {
-                    throw ADP.TransactionConnectionMismatch();
+                    throw SQL.BulkLoadConflictingTransactionOption();
                 }
             }
             else
             {
-                // throw externalTransaction exists and UseInternalTransaction is present
-                if (null != externalTransaction)
+                if (null != externalTransaction && externalTransaction.Connection != connection)
                 {
-                    throw SQL.BulkLoadConflictingTransactionOption();
+                    throw ADP.TransactionConnectionMismatch();
                 }
             }
         }
@@ -2441,15 +2430,23 @@ namespace Microsoft.Data.SqlClient
         private Task CopyBatchesAsync(BulkCopySimpleResultSet internalResults, string updateBulkCommandText, CancellationToken cts, TaskCompletionSource<object> source = null)
         {
             Debug.Assert(source == null || !source.Task.IsCompleted, "Called into CopyBatchesAsync with a completed task!");
+
             try
             {
                 while (_hasMoreRowToCopy)
                 {
-                    //pre->before every batch: Transaction, BulkCmd and metadata are done.
+                    // pre->before every batch: Transaction, BulkCmd and metadata are done.
                     SqlInternalConnectionTds internalConnection = _connection.GetOpenTdsConnection();
 
                     if (IsCopyOption(SqlBulkCopyOptions.UseInternalTransaction))
-                    { //internal transaction is started prior to each batch if the Option is set.
+                    {
+                        // prevent BeginTransaction() if we already have one
+                        if (internalConnection.HasLocalTransaction || internalConnection.HasLocalTransactionFromAPI)
+                        {
+                            throw SQL.BulkLoadExistingTransaction();
+                        }
+
+                        // internal transaction is started prior to each batch if the Option is set.
                         internalConnection.ThreadHasParserLockForClose = true;     // In case of error, tell the connection we already have the parser lock
                         try
                         {

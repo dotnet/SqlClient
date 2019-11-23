@@ -679,7 +679,8 @@ namespace Microsoft.Data.SqlClient
             {
                 // there is no real reason to read this value except when creating a new command based on this command
                 // so we just use the Connection's CurrentTransaction since that it the only valid value anyway
-                return (_activeConnection?.InnerConnection as SqlInternalConnectionTds)?.CurrentTransaction?.Parent;
+                SqlTransaction transaction = (_activeConnection?.InnerConnection as SqlInternalConnectionTds)?.CurrentTransaction?.Parent;
+                return transaction?.IsZombied == true ? default : transaction;
             }
             set
             {
@@ -692,8 +693,8 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
 
-                // on null transaction just move on
-                if (value is null)
+                // on null/zombied transaction just move on
+                if (value is null || value.IsZombied)
                 {
                     return;
                 }
@@ -706,6 +707,12 @@ namespace Microsoft.Data.SqlClient
 
                 // if connection differ's from the transaction's connection, throw
                 if (_activeConnection != value.Connection)
+                {
+                    throw ADP.TransactionConnectionMismatch();
+                }
+
+                // check to see if transaction
+                if (value != Transaction)
                 {
                     throw ADP.TransactionConnectionMismatch();
                 }
