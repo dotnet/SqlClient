@@ -234,8 +234,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     SqlTransaction tx = connection.BeginTransaction();
 
                     string invalidSaveStateMessage = SystemDataResourceManager.Instance.SQL_NullEmptyTransactionName;
-                    string executeCommandWithoutTransactionMessage = SystemDataResourceManager.Instance.ADP_TransactionRequired("ExecuteNonQuery");
-                    string transactionConflictErrorMessage = SystemDataResourceManager.Instance.ADP_TransactionConnectionMismatch;
                     string parallelTransactionErrorMessage = SystemDataResourceManager.Instance.ADP_ParallelTransactionsNotSupported("SqlConnection");
 
                     DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() =>
