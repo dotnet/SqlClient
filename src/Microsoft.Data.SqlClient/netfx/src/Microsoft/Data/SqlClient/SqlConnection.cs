@@ -287,6 +287,9 @@ namespace Microsoft.Data.SqlClient
         // using SqlConnection.Open() method. 
         internal bool _applyTransientFaultHandling = false;
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CurrentTransaction/*' />
+        public SqlTransaction CurrentTransaction => (InnerConnection as SqlInternalConnectionTds)?.CurrentTransaction?.Parent;
+
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctorConnectionString/*' />
         public SqlConnection(string connectionString) : this(connectionString, null)
         {

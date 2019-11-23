@@ -275,9 +275,6 @@ namespace Microsoft.Data.SqlClient
         private SqlNotificationRequest _notification;
         private bool _notificationAutoEnlist = true;            // Notifications auto enlistment is turned on by default
 
-        // transaction support
-        private SqlTransaction _transaction;
-
         private StatementCompletedEventHandler _statementCompletedEventHandler;
 
         private TdsParserStateObject _stateObj; // this is the TDS session we're using.
@@ -512,13 +509,6 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
 
-                // Check to see if the currently set transaction has completed.  If so,
-                // null out our local reference.
-                if (null != _transaction && _transaction.Connection == null)
-                {
-                    _transaction = null;
-                }
-
                 // If the connection has changes, then the request context may have changed as well
                 _smiRequestContext = null;
 
@@ -687,17 +677,14 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                // if the transaction object has been zombied, just return null
-                if ((null != _transaction) && (null == _transaction.Connection))
-                { // MDAC 72720
-                    _transaction = null;
-                }
-                return _transaction;
+                // there is no real reason to read this value except when creating a new command based on this command
+                // so we just use the Connection's CurrentTransaction since that it the only valid value anyway
+                return (_activeConnection?.InnerConnection as SqlInternalConnectionTds)?.CurrentTransaction?.Parent;
             }
             set
             {
                 // Don't allow the transaction to be changed while in a async opperation.
-                if (_transaction != value && _activeConnection != null)
+                if (Transaction != value && _activeConnection != null)
                 { // If new value...
                     if (cachedAsyncState.PendingAsyncOperation)
                     { // If in pending async state, throw
@@ -705,9 +692,29 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
 
+                // on null transaction just move on
+                if (value is null)
+                {
+                    return;
+                }
+
+                // if connection is not already set-up, grab it from the transaction
+                if (null == _activeConnection)
+                {
+                    Connection = value.Connection;
+                }
+
+                // if connection differ's from the transaction's connection, throw
+                if (_activeConnection != value.Connection)
+                {
+                    throw ADP.TransactionConnectionMismatch();
+                }
+
                 // TODO: Add objid here
                 Bid.Trace("<sc.SqlCommand.set_Transaction|API> %d#\n", ObjectID);
-                _transaction = value;
+
+                // we don't store the transaction in any way as the connection has its own value
+                // all above code are just validations for the user's input
             }
         }
 
@@ -5776,21 +5783,6 @@ namespace Microsoft.Data.SqlClient
                 SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
                 throw;
             }
-            // Check to see if the currently set transaction has completed.  If so,
-            // null out our local reference.
-            if (null != _transaction && _transaction.Connection == null)
-                _transaction = null;
-
-            // throw if the connection is in a transaction but there is no
-            // locally assigned transaction object
-            if (_activeConnection.HasLocalTransactionFromAPI && (null == _transaction))
-                throw ADP.TransactionRequired(method);
-
-            // if we have a transaction, check to ensure that the active
-            // connection property matches the connection associated with
-            // the transaction
-            if (null != _transaction && _activeConnection != _transaction.Connection)
-                throw ADP.TransactionConnectionMismatch();
 
             if (ADP.IsEmpty(this.CommandText))
                 throw ADP.CommandTextRequired(method);
