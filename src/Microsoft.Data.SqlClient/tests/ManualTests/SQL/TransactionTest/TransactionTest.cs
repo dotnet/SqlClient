@@ -237,21 +237,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     string executeCommandWithoutTransactionMessage = SystemDataResourceManager.Instance.ADP_TransactionRequired("ExecuteNonQuery");
                     string transactionConflictErrorMessage = SystemDataResourceManager.Instance.ADP_TransactionConnectionMismatch;
                     string parallelTransactionErrorMessage = SystemDataResourceManager.Instance.ADP_ParallelTransactionsNotSupported("SqlConnection");
-                    DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() =>
-                    {
-                        SqlCommand command = new SqlCommand("sql", connection);
-                        command.ExecuteNonQuery();
-                    }, executeCommandWithoutTransactionMessage);
-
-                    DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() =>
-                    {
-                        SqlConnection con1 = new SqlConnection(_connectionString);
-                        con1.Open();
-
-                        SqlCommand command = new SqlCommand("sql", con1);
-                        command.Transaction = tx;
-                        command.ExecuteNonQuery();
-                    }, transactionConflictErrorMessage);
 
                     DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() =>
                     {

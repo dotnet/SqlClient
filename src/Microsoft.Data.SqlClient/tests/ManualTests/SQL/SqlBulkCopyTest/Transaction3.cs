@@ -31,19 +31,28 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             conn3.Open();
                             // Start a local transaction on the wrong connection.
                             SqlTransaction myTrans = conn3.BeginTransaction();
-                            using (SqlBulkCopy bulkcopy = new SqlBulkCopy(dstConn, SqlBulkCopyOptions.Default, myTrans))
+
+                            string exceptionMsg = SystemDataResourceManager.Instance.ADP_TransactionConnectionMismatch;
+                            DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(delegate
                             {
-                                SqlBulkCopyColumnMappingCollection ColumnMappings = bulkcopy.ColumnMappings;
-                                bulkcopy.DestinationTableName = dstTable;
+                                using (SqlBulkCopy bulkcopy = new SqlBulkCopy(dstConn, SqlBulkCopyOptions.Default, myTrans))
+                                {
+                                    SqlBulkCopyColumnMappingCollection ColumnMappings = bulkcopy.ColumnMappings;
+                                    bulkcopy.DestinationTableName = dstTable;
 
-                                string exceptionMsg = SystemDataResourceManager.Instance.ADP_TransactionConnectionMismatch;
-                                DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => bulkcopy.WriteToServer(reader), exceptionMessage: exceptionMsg);
+                                    bulkcopy.WriteToServer(reader);
+                                }
+                            }, exceptionMessage: exceptionMsg);
 
-                                SqlCommand myCmd = dstConn.CreateCommand();
+                            using (SqlCommand myCmd = dstConn.CreateCommand())
+                            {
                                 myCmd.CommandText = "select * from " + dstTable;
-                                myCmd.Transaction = myTrans;
 
-                                DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => myCmd.ExecuteReader(), exceptionMessage: exceptionMsg);
+                                DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() =>
+                                {
+                                    myCmd.Transaction = myTrans;
+                                    myCmd.ExecuteReader();
+                                }, exceptionMessage: exceptionMsg);
                             }
                         }
                     }
