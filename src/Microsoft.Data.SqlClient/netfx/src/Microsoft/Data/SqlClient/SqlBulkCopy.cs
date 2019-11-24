@@ -319,7 +319,7 @@ namespace Microsoft.Data.SqlClient
             _copyOptions = copyOptions;
 
             // if user decides to provide arguments, we validate them
-            // there's always the externalTransaction's constructor for a late-validation experience
+            // there's always the externalTransaction'less (2-arg) constructor for late-validation
             if (IsCopyOption(SqlBulkCopyOptions.UseInternalTransaction))
             {
                 if (null != externalTransaction)
