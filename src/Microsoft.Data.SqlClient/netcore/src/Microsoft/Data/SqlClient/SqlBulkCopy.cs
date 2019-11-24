@@ -252,6 +252,8 @@ namespace Microsoft.Data.SqlClient
         {
             _copyOptions = copyOptions;
 
+            // if user decides to provide arguments, we validate them
+            // there's always the externalTransaction's constructor for a late-validation experience
             if (IsCopyOption(SqlBulkCopyOptions.UseInternalTransaction))
             {
                 if (null != externalTransaction)
@@ -261,9 +263,17 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                if (null != externalTransaction && externalTransaction.Connection != connection)
+                if (null != externalTransaction)
                 {
-                    throw ADP.TransactionConnectionMismatch();
+                    if (externalTransaction.IsZombied)
+                    {
+                        throw ADP.TransactionZombied(externalTransaction);
+                    }
+
+                    if (externalTransaction.Connection != connection)
+                    {
+                        throw ADP.TransactionConnectionMismatch();
+                    }
                 }
             }
         }
@@ -282,6 +292,7 @@ namespace Microsoft.Data.SqlClient
             {
                 throw ADP.ArgumentNull(nameof(connectionString));
             }
+
             _connection = new SqlConnection(connectionString);
             _columnMappings = new SqlBulkCopyColumnMappingCollection();
             _ownConnection = true;

@@ -472,10 +472,17 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
 
-                // on null/zombied transaction just move on
-                if (value is null || value.IsZombied)
+                // on null transaction just move on
+                if (value is null)
                 {
                     return;
+                }
+
+                // on zombied transaction throw and warn the user
+                // or just fail silently?
+                if (value.IsZombied)
+                {
+                    throw ADP.TransactionZombied(value);
                 }
 
                 // if connection is not already set-up, grab it from the transaction
