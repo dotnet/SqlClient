@@ -113,7 +113,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     sqlTransaction.Rollback();
 
                     // Now even row no:1 should not be available.
-                    VerifyRecordAbsent(sqlConnection, customer1, sqlTransaction);
+                    // Removed transaction argument as it's zombied.
+                    VerifyRecordAbsent(sqlConnection, customer1);
                 }
             }
         }
