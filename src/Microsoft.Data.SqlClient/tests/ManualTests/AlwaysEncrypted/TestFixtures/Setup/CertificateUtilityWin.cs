@@ -34,6 +34,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Process process = new Process();
             process.StartInfo = processStartInfo;
             process.StartInfo.UseShellExecute = true;
+            process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
             process.StartInfo.CreateNoWindow = true;
             process.Start();
             process.WaitForExit();
