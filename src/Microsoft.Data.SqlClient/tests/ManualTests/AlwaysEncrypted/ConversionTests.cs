@@ -444,7 +444,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 case SqlDbType.Date:
                     // These values are out of range and should fail.
                     list.Add(new ValueErrorTuple("10000/1/1", true));
-                    list.Add(new ValueErrorTuple("0/12/31", true));
+                    // Former value of "0/12/31" passed insert even if test expected failure.
+                    // Debugging noticed a coerced value that turned into 2000/12/31.
+                    // Changed date to a clear invalid day value.
+                    list.Add(new ValueErrorTuple("0/12/32", true));
                     break;
                 case SqlDbType.Time:
                 case SqlDbType.DateTime2:
