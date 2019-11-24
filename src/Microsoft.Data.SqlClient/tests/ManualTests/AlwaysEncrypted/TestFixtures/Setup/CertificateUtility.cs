@@ -261,7 +261,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         internal static SqlConnection GetOpenConnection(bool fTceEnabled, SqlConnectionStringBuilder sb, bool fSuppressAttestation = false)
         {
-            SqlConnection conn = new SqlConnection(GetConnectionString(fTceEnabled, sb, fSuppressAttestation));
+            var cs = GetConnectionString(fTceEnabled, sb, fSuppressAttestation);
+            SqlConnection conn = new SqlConnection(cs);
             try
             {
                 conn.Open();
@@ -284,8 +285,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
             builder.DataSource = sb.DataSource;
             builder.InitialCatalog = sb.InitialCatalog;
-            builder.UserID = sb.UserID;
-            builder.Password = sb.Password;
+            // if connection string has integrated security, respect that
+            if (!sb.IntegratedSecurity)
+            {
+                builder.UserID = sb.UserID;
+                builder.Password = sb.Password;
+                builder.IntegratedSecurity = false;
+            }
+            else
+            {
+                builder.IntegratedSecurity = true;
+            }
             if (fTceEnabled)
             {
                 builder.ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Enabled;
