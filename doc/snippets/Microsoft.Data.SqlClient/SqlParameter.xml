@@ -115,7 +115,7 @@ If you do not perform this conversion, the compiler assumes that you are trying 
             <param name="parameterName">The name of the parameter to map.</param>
             <param name="dbType">One of the <see cref="T:System.Data.SqlDbType" /> values.</param>
             <param name="size">The length of the parameter.</param>
-            <param name="sourceColumn">The name of the source column (<see cref="P:Microsoft.Data.SqlClient.SqlParameter.SourceColumn" />) if this <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> is used in a call to <see cref="o:System.Data.Common.DbDataAdapter.Update" />.</param>
+            <param name="sourceColumn">The name of the source column (<see cref="P:Microsoft.Data.SqlClient.SqlParameter.SourceColumn" />) if this <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> is used in a call to <see cref="M:System.Data.Common.DbDataAdapter.Update" />.</param>
             <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> class that uses the parameter name, the <see cref="T:System.Data.SqlDbType" />, the size, and the source column name.</summary>
             <remarks>
             <format type="text/markdown"><![CDATA[  
@@ -143,7 +143,7 @@ If you do not perform this conversion, the compiler assumes that you are trying 
             <see langword="true" /> if the value of the field can be null; otherwise, <see langword="false" />.</param>
             <param name="precision">The total number of digits to the left and right of the decimal point to which <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> is resolved.</param>
             <param name="scale">The total number of decimal places to which <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> is resolved.</param>
-            <param name="sourceColumn">The name of the source column (<see cref="P:Microsoft.Data.SqlClient.SqlParameter.SourceColumn" />) if this <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> is used in a call to <see cref="o:System.Data.Common.DbDataAdapter.Update" />.</param>
+            <param name="sourceColumn">The name of the source column (<see cref="P:Microsoft.Data.SqlClient.SqlParameter.SourceColumn" />) if this <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> is used in a call to <see cref="M:System.Data.Common.DbDataAdapter.Update" />.</param>
             <param name="sourceVersion">One of the <see cref="T:System.Data.DataRowVersion" /> values.</param>
             <param name="value">An <see cref="T:System.Object" /> that is the value of the <see cref="T:Microsoft.Data.SqlClient.SqlParameter" />.</param>
             <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> class that uses the parameter name, the type of the parameter, the size of the parameter, a <see cref="T:System.Data.ParameterDirection" />, the precision of the parameter, the scale of the parameter, the source column, a <see cref="T:System.Data.DataRowVersion" /> to use, and the value of the parameter.</summary>
@@ -171,7 +171,7 @@ If you do not perform this conversion, the compiler assumes that you are trying 
             <param name="direction">One of the <see cref="T:System.Data.ParameterDirection" /> values.</param>
             <param name="precision">The total number of digits to the left and right of the decimal point to which <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> is resolved.</param>
             <param name="scale">The total number of decimal places to which <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> is resolved.</param>
-            <param name="sourceColumn">The name of the source column (<see cref="P:Microsoft.Data.SqlClient.SqlParameter.SourceColumn" />) if this <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> is used in a call to <see cref="o:System.Data.Common.DbDataAdapter.Update" />.</param>
+            <param name="sourceColumn">The name of the source column (<see cref="P:Microsoft.Data.SqlClient.SqlParameter.SourceColumn" />) if this <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> is used in a call to <see cref="M:System.Data.Common.DbDataAdapter.Update" />.</param>
             <param name="sourceVersion">One of the <see cref="T:System.Data.DataRowVersion" /> values.</param>
             <param name="sourceColumnNullMapping">
             <see langword="true" /> if the source column is nullable; <see langword="false" /> if it is not.</param>
