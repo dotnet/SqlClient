@@ -459,7 +459,7 @@ namespace Microsoft.Data.SqlClient
                 // there is no real reason to read this value except when creating a new command based on this command
                 // so we just use the Connection's CurrentTransaction since that it the only valid value anyway
                 SqlTransaction transaction = (_activeConnection?.InnerConnection as SqlInternalConnectionTds)?.CurrentTransaction?.Parent;
-                return transaction?.IsZombied == true ? default : transaction;
+                return transaction?.IsZombied == true ? default(SqlTransaction) : transaction;
             }
             set
             {
