@@ -1789,52 +1789,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     }
                 }
             }
-
-        }
-
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
-        [ClassData(typeof(AEConnectionStringProvider))]
-        public void TestExecuteXmlReader(string connection)
-        {
-            CleanUpTable(connection, tableName);
-
-            IList<object> values = GetValues(dataHint: 60);
-            int numberOfRows = 10;
-
-            // Insert a bunch of rows in to the table.
-            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
-            Assert.True(rowsAffected == numberOfRows, "number of rows affected is unexpected.");
-
-            using (SqlConnection sqlConnection = new SqlConnection(connection))
-            {
-                sqlConnection.Open();
-
-                // select the set of rows that were inserted just now.
-                using (SqlCommand sqlCommand = new SqlCommand($"SELECT LastName FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId FOR XML AUTO;", sqlConnection, transaction: null, columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
-                {
-                    sqlCommand.CommandTimeout = 90;
-                    sqlCommand.Parameters.Add(@"CustomerId", SqlDbType.Int);
-                    sqlCommand.Parameters.Add(@"FirstName", SqlDbType.NVarChar, ((string)values[1]).Length);
-
-                    sqlCommand.Parameters[0].Value = values[0];
-                    sqlCommand.Parameters[1].Value = values[1];
-
-                    sqlCommand.Prepare();
-                    rowsAffected = 0;
-
-                    var ex = Assert.Throws<SqlException>(() => sqlCommand.ExecuteXmlReader());
-                    Assert.Equal($"'FOR XML' clause is unsupported for encrypted columns.{Environment.NewLine}Statement(s) could not be prepared.", ex.Message);
-
-                    //string xmlResult;
-                    IAsyncResult asyncResult = sqlCommand.BeginExecuteXmlReader();
-
-#if netcoreapp
-                    Assert.Throws<InvalidOperationException>(() => sqlCommand.EndExecuteXmlReader(asyncResult));
-#elif net46
-                    Assert.Throws<SqlException>(() => sqlCommand.EndExecuteXmlReader(asyncResult));
-#endif
-                }
-            }
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
@@ -1947,6 +1901,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                             rowsAffected++;
                             VerifyData(sqlDataReader, values);
                         }
+                        sqlDataReader.Close();
                     }
 
                     Assert.True(rowsAffected == numberOfRows, "Unexpected number of rows affected as returned by EndExecuteReader.");
@@ -1994,6 +1949,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                             rowsAffected++;
                             VerifyData(sqlDataReader, values);
                         }
+                        sqlDataReader.Close();
                     }
 
                     Assert.True(rowsAffected == numberOfRows, "Unexpected number of rows affected as returned by EndExecuteReader.");
@@ -2626,12 +2582,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.True(sqlCommand != null, "sqlCommand should not be null.");
 
             string.Format(@"SELECT * FROM {0} WHERE FirstName = @FirstName AND CustomerId = @CustomerId", ((TestCommandCancelParams)cancelCommandTestParamsObject).TableName);
-            using (SqlDataReader reader = sqlCommand.ExecuteReader())
+            try
             {
-                while (reader.Read())
+                using(SqlDataReader reader = sqlCommand.ExecuteReader())
                 {
-                    Assert.Throws<InvalidOperationException>(() => sqlCommand.ExecuteReader());
+                    while (reader.Read())
+                    { }
+                    reader.Close();
                 }
+            }
+            catch (Exception ex)
+            {
+                var test = ex.GetType();
+                Assert.True(ex is InvalidOperationException);
             }
         }
 
@@ -2652,8 +2615,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.True(cancelCommandTestParamsObject != null, @"cancelCommandTestParamsObject should not be null.");
             SqlCommand sqlCommand = ((TestCommandCancelParams)cancelCommandTestParamsObject).SqlCommand as SqlCommand;
             Assert.True(sqlCommand != null, "sqlCommand should not be null.");
-
-            Thread.Sleep(millisecondsTimeout: 500);
 
             // Repeatedly cancel.
             for (int i = 0; i < ((TestCommandCancelParams)cancelCommandTestParamsObject).NumberofTimesToRunCancel; i++)
