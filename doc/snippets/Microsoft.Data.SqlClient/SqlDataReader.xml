@@ -36,9 +36,9 @@
             <format type="text/markdown"><![CDATA[  
   
 ## Remarks  
- You must explicitly call the <xref:Microsoft.Data.SqlClient.SqlDataReader.Close%2A> method when you are through using the <xref:Microsoft.Data.SqlClient.SqlDataReader> to use the associated <xref:Microsoft.Data.SqlClient.SqlConnection> for any other purpose.  
+ You must ensure the <xref:Microsoft.Data.SqlClient.SqlDataReader.Close%2A> method is called when you are through using the <xref:Microsoft.Data.SqlClient.SqlDataReader> before using the associated <xref:Microsoft.Data.SqlClient.SqlConnection> for any other purpose. The `Close` method may either be called directly or through the `Dispose` method, disposing directly or in the context of [the using statement](~/_csharplang/spec/statements.md#the-using-statement) block.
   
- The `Close` method fills in the values for output parameters, return values and `RecordsAffected`, increasing the time that it takes to close a `SqlDataReader` that was used to process a large or complex query. When the return values and the number of records affected by a query are not significant, the time that it takes to close the `SqlDataReader` can be reduced by calling the <xref:Microsoft.Data.SqlClient.SqlCommand.Cancel%2A> method of the associated <xref:Microsoft.Data.SqlClient.SqlCommand> object before calling the `Close` method.  
+ The `Close` method populates the values for output parameters, return values and `RecordsAffected` on the <xref:Microsoft.Data.SqlClient.SqlDataReader> by consuming any pending results. This may be a long operation depending on the amount of data to be consumed. If output values, return values, and `RecordsAffected` are not important to your application, the time to close may be shortened by calling the <xref:Microsoft.Data.SqlClient.SqlCommand.Cancel%2A> method of the associated <xref:Microsoft.Data.SqlClient.SqlCommand> object before the `Close` method is called.
   
 > [!CAUTION]
 >  Do not call `Close` or `Dispose` on a Connection, a DataReader, or any other managed object in the `Finalize` method of your class. In a finalizer, you should only release unmanaged resources that your class owns directly. If your class does not own any unmanaged resources, do not include a `Finalize` method in your class definition. For more information, see [Garbage Collection](~/docs/standard/garbage-collection/index.md).  
@@ -46,7 +46,7 @@
    
   
 ## Examples  
- The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection>, a `SqlCommand`, and a <xref:Microsoft.Data.SqlClient.SqlDataReader>. The example reads through the data, writing it out to the console window. The code then closes the <xref:Microsoft.Data.SqlClient.SqlDataReader>. The <xref:Microsoft.Data.SqlClient.SqlConnection> is closed automatically at the end of the `using` code block.  
+ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection>, a <xref:Microsoft.Data.SqlClient.SqlCommand>, and a <xref:Microsoft.Data.SqlClient.SqlDataReader>. The example reads through the data, writing it out to the console window. The code then closes the <xref:Microsoft.Data.SqlClient.SqlDataReader>. The <xref:Microsoft.Data.SqlClient.SqlConnection> is closed automatically at the end of the `using` code block.  
   
  [!code-csharp[SqlDataReader_Close Example#1](~/../sqlclient/doc/samples/SqlDataReader_Close.cs#1)]
   

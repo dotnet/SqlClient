@@ -418,7 +418,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     cmdText: $"select * from [{tableName}] where FirstName != {DummyParamName} and CustomerId = @CustomerId",
                     connection: sqlConnection))
                 {
-                    cmd.CommandTimeout = 90;
+                    if (DataTestUtility.EnclaveEnabled)
+                    {
+                        //Increase Time out for enclave-enabled server.
+                        cmd.CommandTimeout = 90;
+                    }
+
                     SqlParameter dummyParam = new SqlParameter(DummyParamName, SqlDbType.NVarChar, 150)
                     {
                         Value = "a"
@@ -514,48 +519,63 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             Parallel.For(0, 10, i =>
             {
-                IList<object> values = GetValues(dataHint: 45 + i + 1);
-                int numberOfRows = 10 + i;
-
-                // Insert a bunch of rows in to the table.
-                int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
-
-                Assert.Equal(numberOfRows, rowsAffected);
-                rowsAffected = -1;
-                using (SqlConnection sqlConnection = new SqlConnection(connection))
+                bool tryagain = false;
+                do
                 {
-                    sqlConnection.Open();
+                    IList<object> values = GetValues(dataHint: 45 + i + 1);
+                    int numberOfRows = 10 + i;
 
-                    // Update the set of rows that were inserted just now. And verify the rows affected as returned by ExecuteNonQuery.
-                    using (SqlCommand sqlCommand = new SqlCommand(
-                        cmdText: $"UPDATE [{tableName}] SET FirstName = @FirstName WHERE CustomerId = @CustomerId",
-                        connection: sqlConnection,
-                        transaction: null,
-                        columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
+                    // Insert a bunch of rows in to the table.
+                    int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
+
+                    Assert.Equal(numberOfRows, rowsAffected);
+                    rowsAffected = -1;
+                    using (SqlConnection sqlConnection = new SqlConnection(connection))
                     {
-                        sqlCommand.CommandTimeout = 90;
-                        if (DataTestUtility.EnclaveEnabled)
+                        try
                         {
-                            //Increase Time out for enclave-enabled server.
-                            sqlCommand.CommandTimeout = 90;
+                            sqlConnection.Open();
+
+                            // Update the set of rows that were inserted just now. And verify the rows affected as returned by ExecuteNonQuery.
+                            using (SqlCommand sqlCommand = new SqlCommand(
+                                cmdText: $"UPDATE [{tableName}] SET FirstName = @FirstName WHERE CustomerId = @CustomerId",
+                                connection: sqlConnection,
+                                transaction: null,
+                                columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
+                            {
+                                if (DataTestUtility.EnclaveEnabled)
+                                {
+                                    //Increase Time out for enclave-enabled server.
+                                    sqlCommand.CommandTimeout = 90;
+                                }
+
+                                sqlCommand.Parameters.AddWithValue(@"FirstName", string.Format(@"Microsoft{0}", i + 100));
+                                sqlCommand.Parameters.AddWithValue(@"CustomerId", values[0]);
+
+                                if (isAsync)
+                                {
+                                    Task<int> executeTask = VerifyExecuteNonQueryAsync(sqlCommand);
+                                    rowsAffected = executeTask.Result;
+                                }
+                                else
+                                {
+                                    rowsAffected = sqlCommand.ExecuteNonQuery();
+                                }
+                            }
                         }
-
-                        sqlCommand.Parameters.AddWithValue(@"FirstName", string.Format(@"Microsoft{0}", i + 100));
-                        sqlCommand.Parameters.AddWithValue(@"CustomerId", values[0]);
-
-                        if (isAsync)
+                        catch (SqlException sqle)
                         {
-                            Task<int> executeTask = VerifyExecuteNonQueryAsync(sqlCommand);
-                            rowsAffected = executeTask.Result;
+                            // SQL Server deadlocks are possible if test executes multiple parallel threads. We will try again.
+                            if (sqle.ErrorCode.Equals(1205))
+                            {
+                                tryagain = true;
+                                break;
+                            }
                         }
-                        else
-                        {
-                            rowsAffected = sqlCommand.ExecuteNonQuery();
-                        }
-
                         Assert.Equal(numberOfRows, rowsAffected);
+                        tryagain = false;
                     }
-                }
+                } while (tryagain);
             });
         }
 
@@ -2056,6 +2076,317 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
+        [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp)]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public void TestExecuteXmlReader(string connection)
+        {
+            CleanUpTable(connection, tableName);
+
+            IList<object> values = GetValues(dataHint: 60);
+            int numberOfRows = 10;
+
+            // Insert a bunch of rows in to the table.
+            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
+            Assert.True(rowsAffected == numberOfRows, "number of rows affected is unexpected.");
+
+            using (SqlConnection sqlConnection = new SqlConnection(connection))
+            {
+                sqlConnection.Open();
+
+                // select the set of rows that were inserted just now.
+                using (SqlCommand sqlCommand = new SqlCommand($"SELECT LastName FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId FOR XML AUTO;", sqlConnection, transaction: null, columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
+                {
+                    if (DataTestUtility.EnclaveEnabled)
+                    {
+                        //Increase Time out for enclave-enabled server.
+                        sqlCommand.CommandTimeout = 90;
+                    }
+                    sqlCommand.Parameters.Add(@"CustomerId", SqlDbType.Int);
+                    sqlCommand.Parameters.Add(@"FirstName", SqlDbType.NVarChar, ((string)values[1]).Length);
+
+                    sqlCommand.Parameters[0].Value = values[0];
+                    sqlCommand.Parameters[1].Value = values[1];
+
+                    sqlCommand.Prepare();
+                    rowsAffected = 0;
+
+                    var ex = Assert.Throws<SqlException>(() => sqlCommand.ExecuteXmlReader());
+                    Assert.Equal($"'FOR XML' clause is unsupported for encrypted columns.{Environment.NewLine}Statement(s) could not be prepared.", ex.Message);
+
+                    //string xmlResult;
+                    IAsyncResult asyncResult = sqlCommand.BeginExecuteXmlReader();
+
+                    Assert.Throws<SqlException>(() => sqlCommand.EndExecuteXmlReader(asyncResult));
+                }
+            }
+        }
+
+        [ActiveIssue("10620")] // Randomly hangs the process.
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(AEConnectionStringProviderWithCommandBehaviorSet1))]
+        public void TestBeginAndEndExecuteReaderWithAsyncCallback(string connection, CommandBehavior commandbehavior)
+        {
+            CleanUpTable(connection, tableName);
+
+            var test = commandbehavior;
+            IList<object> values = GetValues(dataHint: 51);
+            Assert.True(values != null && values.Count >= 3, @"values should not be null and count should be >= 3.");
+
+            int numberOfRows = 10;
+            // Insert a bunch of rows in to the table.
+            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
+            Assert.Equal(rowsAffected, numberOfRows);
+
+            using (SqlConnection sqlConnection = new SqlConnection(connection))
+            {
+                sqlConnection.Open();
+
+                using (SqlCommand sqlCommand = new SqlCommand($@"SELECT * FROM {tableName} WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
+                    sqlConnection,
+                    transaction: null,
+                    columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
+                {
+                    sqlCommand.Parameters.AddWithValue(@"FirstName", values[1]);
+                    sqlCommand.Parameters.AddWithValue(@"CustomerId", values[0]);
+
+                    TaskCompletionSource<object> completion = new TaskCompletionSource<object>();
+                    IAsyncResult asyncResult = sqlCommand.BeginExecuteReader(new AsyncCallback(EndExecuteReaderAsyncCallBack),
+                        stateObject: new TestAsyncCallBackStateObject(sqlCommand, expectedRowsAffected: commandbehavior == CommandBehavior.SingleRow ? 1 : numberOfRows,
+                        completion: completion, expectedValues: values, commandBehavior: commandbehavior),
+                        behavior: commandbehavior);
+                    Assert.True(asyncResult != null, "asyncResult should not be null.");
+                }
+            }
+        }
+
+        [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp)]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(AEConnectionStringProviderWithExecutionMethod))]
+        public void TestSqlCommandCancel(string connection, string value, int number)
+        {
+            CleanUpTable(connection, tableName);
+
+            string executeMethod = value;
+            Assert.True(!string.IsNullOrWhiteSpace(executeMethod), @"executeMethod should not be null or empty");
+
+            int numberOfCancelCalls = number;
+            Assert.True(numberOfCancelCalls >= 0, "numberofCancelCalls should be >=0.");
+
+            IList<object> values = GetValues(dataHint: 58);
+            Assert.True(values != null && values.Count >= 3, @"values should not be null and count should be >= 3.");
+
+            int numberOfRows = 300;
+            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
+            Assert.True(rowsAffected == numberOfRows, "number of rows affected is unexpected.");
+
+            using (SqlConnection sqlConnection = new SqlConnection(connection))
+            {
+                sqlConnection.Open();
+
+                using (SqlCommand sqlCommand = new SqlCommand($@"SELECT * FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
+                    sqlConnection,
+                    transaction: null,
+                    columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
+                {
+                    sqlCommand.Parameters.AddWithValue(@"CustomerId", values[0]);
+                    sqlCommand.Parameters.AddWithValue(@"FirstName", values[1]);
+
+                    CommandHelper.s_sleepDuringTryFetchInputParameterEncryptionInfo?.SetValue(null, true);
+
+                    Thread[] threads = new Thread[2];
+
+                    // Invoke ExecuteReader or ExecuteNonQuery in another thread.
+                    if (executeMethod == @"ExecuteReader")
+                    {
+                        threads[0] = new Thread(new ParameterizedThreadStart(Thread_ExecuteReader));
+                    }
+                    else
+                    {
+                        threads[0] = new Thread(new ParameterizedThreadStart(Thread_ExecuteNonQuery));
+                    }
+
+                    threads[1] = new Thread(new ParameterizedThreadStart(Thread_Cancel));
+
+                    // Start the execute thread.
+                    threads[0].Start(new TestCommandCancelParams(sqlCommand, tableName, numberOfCancelCalls));
+
+                    // Start the thread which cancels the above command started by the execute thread.
+                    threads[1].Start(new TestCommandCancelParams(sqlCommand, tableName, numberOfCancelCalls));
+
+                    // Wait for the threads to finish.
+                    threads[0].Join();
+                    threads[1].Join();
+
+                    CommandHelper.s_sleepDuringTryFetchInputParameterEncryptionInfo?.SetValue(null, false);
+
+                    // Verify the state of the sql command object.
+                    VerifySqlCommandStateAfterCompletionOrCancel(sqlCommand);
+
+                    rowsAffected = 0;
+
+                    // See that we can still use the command object for running queries.
+                    IAsyncResult asyncResult = sqlCommand.BeginExecuteReader();
+                    using (SqlDataReader sqlDataReader = sqlCommand.EndExecuteReader(asyncResult))
+                    {
+                        while (sqlDataReader.Read())
+                        {
+                            rowsAffected++;
+                            VerifyData(sqlDataReader, values);
+                        }
+                    }
+
+                    Assert.True(rowsAffected == numberOfRows, "Unexpected number of rows affected as returned by EndExecuteReader.");
+
+                    // Verify the state of the sql command object.
+                    VerifySqlCommandStateAfterCompletionOrCancel(sqlCommand);
+
+                    CommandHelper.s_sleepDuringRunExecuteReaderTdsForSpDescribeParameterEncryption?.SetValue(null, true);
+
+                    // Invoke ExecuteReader or ExecuteNonQuery in another thread.
+                    threads = new Thread[2];
+                    if (executeMethod == @"ExecuteReader")
+                    {
+                        threads[0] = new Thread(new ParameterizedThreadStart(Thread_ExecuteReader));
+                    }
+                    else
+                    {
+                        threads[0] = new Thread(new ParameterizedThreadStart(Thread_ExecuteNonQuery));
+                    }
+                    threads[1] = new Thread(new ParameterizedThreadStart(Thread_Cancel));
+
+                    // Start the execute thread.
+                    threads[0].Start(new TestCommandCancelParams(sqlCommand, tableName, numberOfCancelCalls));
+
+                    // Start the thread which cancels the above command started by the execute thread.
+                    threads[1].Start(new TestCommandCancelParams(sqlCommand, tableName, numberOfCancelCalls));
+
+                    // Wait for the threads to finish.
+                    threads[0].Join();
+                    threads[1].Join();
+
+                    CommandHelper.s_sleepDuringRunExecuteReaderTdsForSpDescribeParameterEncryption?.SetValue(null, false);
+
+                    // Verify the state of the sql command object.
+                    VerifySqlCommandStateAfterCompletionOrCancel(sqlCommand);
+
+                    rowsAffected = 0;
+
+                    // See that we can still use the command object for running queries.
+                    IAsyncResult asyncResult1 = sqlCommand.BeginExecuteReader(CommandBehavior.Default);
+                    using (SqlDataReader sqlDataReader = sqlCommand.EndExecuteReader(asyncResult1))
+                    {
+                        while (sqlDataReader.Read())
+                        {
+                            rowsAffected++;
+                            VerifyData(sqlDataReader, values);
+                        }
+                    }
+
+                    Assert.True(rowsAffected == numberOfRows, "Unexpected number of rows affected as returned by EndExecuteReader.");
+
+                    // Verify the state of the sql command object.
+                    VerifySqlCommandStateAfterCompletionOrCancel(sqlCommand);
+
+                    CommandHelper.s_sleepAfterReadDescribeEncryptionParameterResults?.SetValue(null, true);
+
+                    threads = new Thread[2];
+                    if (executeMethod == @"ExecuteReader")
+                    {
+                        threads[0] = new Thread(new ParameterizedThreadStart(Thread_ExecuteReader));
+                    }
+                    else
+                    {
+                        threads[0] = new Thread(new ParameterizedThreadStart(Thread_ExecuteNonQuery));
+                    }
+                    threads[1] = new Thread(new ParameterizedThreadStart(Thread_Cancel));
+
+                    // Start the execute thread.
+                    threads[0].Start(new TestCommandCancelParams(sqlCommand, tableName, numberOfCancelCalls));
+
+                    // Start the thread which cancels the above command started by the execute thread.
+                    threads[1].Start(new TestCommandCancelParams(sqlCommand, tableName, numberOfCancelCalls));
+
+                    // Wait for the threads to finish.
+                    threads[0].Join();
+                    threads[1].Join();
+
+                    CommandHelper.s_sleepAfterReadDescribeEncryptionParameterResults?.SetValue(null, false);
+
+                    // Verify the state of the sql command object.
+                    VerifySqlCommandStateAfterCompletionOrCancel(sqlCommand);
+
+                    rowsAffected = 0;
+
+                    // See that we can still use the command object for running queries.
+                    asyncResult = sqlCommand.BeginExecuteReader(CommandBehavior.Default);
+                    using (SqlDataReader sqlDataReader = sqlCommand.EndExecuteReader(asyncResult))
+                    {
+                        while (sqlDataReader.Read())
+                        {
+                            rowsAffected++;
+                            VerifyData(sqlDataReader, values);
+                        }
+                    }
+
+                    Assert.True(rowsAffected == numberOfRows, "Unexpected number of rows affected as returned by EndExecuteReader.");
+
+                    // Verify the state of the sql command object.
+                    VerifySqlCommandStateAfterCompletionOrCancel(sqlCommand);
+                };
+            }
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(AEConnectionStringProviderWithCancellationTime))]
+        public void TestSqlCommandCancellationToken(string connection, int initalValue, int cancellationTime)
+        {
+            CleanUpTable(connection, tableName);
+
+            IList<object> values = GetValues(dataHint: 59);
+            int numberOfRows = 10;
+
+            // Insert a bunch of rows in to the table.
+            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
+
+            Assert.True(rowsAffected == numberOfRows, "number of rows affected is unexpected.");
+
+            using (SqlConnection sqlConnection = new SqlConnection(connection))
+            {
+                sqlConnection.Open();
+                using (SqlCommand sqlCommand = new SqlCommand($@"SELECT CustomerId, FirstName, LastName FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
+                    connection: sqlConnection,
+                    transaction: null,
+                    columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
+                {
+                    sqlCommand.Parameters.AddWithValue(@"CustomerId", values[0]);
+                    sqlCommand.Parameters.AddWithValue(@"FirstName", values[1]);
+
+                    // Simulate a sleep during TryFetchInputParameterEncryptionInfo.
+                    TestCancellationToken(CommandHelper.s_sleepDuringTryFetchInputParameterEncryptionInfo,
+                        sqlCommand,
+                        numberOfRows,
+                        values,
+                        commandType: initalValue,
+                        cancelAfter: cancellationTime);
+
+                    TestCancellationToken(CommandHelper.s_sleepAfterReadDescribeEncryptionParameterResults,
+                        sqlCommand,
+                        numberOfRows,
+                        values,
+                        commandType: initalValue,
+                        cancelAfter: cancellationTime);
+
+                    TestCancellationToken(CommandHelper.s_sleepDuringRunExecuteReaderTdsForSpDescribeParameterEncryption,
+                       sqlCommand,
+                       numberOfRows,
+                       values,
+                       commandType: initalValue,
+                       cancelAfter: cancellationTime);
+                }
+            }
+        }
+
         private SqlDataAdapter CreateSqlDataAdapter(SqlConnection sqlConnection)
         {
             // Create a SqlDataAdapter.
@@ -2582,19 +2913,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.True(sqlCommand != null, "sqlCommand should not be null.");
 
             string.Format(@"SELECT * FROM {0} WHERE FirstName = @FirstName AND CustomerId = @CustomerId", ((TestCommandCancelParams)cancelCommandTestParamsObject).TableName);
-            try
+            using (SqlDataReader reader = sqlCommand.ExecuteReader())
             {
-                using(SqlDataReader reader = sqlCommand.ExecuteReader())
+                while (reader.Read())
                 {
-                    while (reader.Read())
-                    { }
-                    reader.Close();
+                    Assert.Throws<InvalidOperationException>(() => sqlCommand.ExecuteReader());
                 }
-            }
-            catch (Exception ex)
-            {
-                var test = ex.GetType();
-                Assert.True(ex is InvalidOperationException);
             }
         }
 
@@ -2615,6 +2939,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.True(cancelCommandTestParamsObject != null, @"cancelCommandTestParamsObject should not be null.");
             SqlCommand sqlCommand = ((TestCommandCancelParams)cancelCommandTestParamsObject).SqlCommand as SqlCommand;
             Assert.True(sqlCommand != null, "sqlCommand should not be null.");
+
+            Thread.Sleep(millisecondsTimeout: 500);
 
             // Repeatedly cancel.
             for (int i = 0; i < ((TestCommandCancelParams)cancelCommandTestParamsObject).NumberofTimesToRunCancel; i++)

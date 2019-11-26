@@ -124,7 +124,7 @@
     <value>此具有 Count={2} 的 {1} 有無效的索引 {0}。</value>
   </data>
   <data name="ADP_CollectionIndexString" xml:space="preserve">
-    <value>此 {3} 沒有包含具有 {0} 的 {1} '{2}'。</value>
+    <value>此 {3} 未包含具有 {1} '{2}' 的 {0}。</value>
   </data>
   <data name="ADP_CollectionInvalidType" xml:space="preserve">
     <value>{0} 只接受非 Null 的 {1} 型別物件，不接受 {2} 物件。</value>
@@ -1948,7 +1948,7 @@
     <value>已經開啟一個與這個命令相關的 SqlResultSet，必須先將它關閉。</value>
   </data>
   <data name="ADP_OpenReaderExists" xml:space="preserve">
-    <value>已經開啟一個與這個 Command 相關的 DataReader，必須先將它關閉。</value>
+    <value>已經開啟與這個 {0} 建立關聯的 DataReader，必須先將它關閉。</value>
   </data>
   <data name="ADP_DeriveParametersNotSupported" xml:space="preserve">
     <value>{0} DeriveParameters 只支援 CommandType.StoredProcedure，不支援 CommandType.{1}。</value>
@@ -2818,7 +2818,7 @@
     <value>指定的 ColumnName '{0}' 欲任何資料來源的資料行不相符。</value>
   </data>
   <data name="SQL_BulkLoadStringTooLong" xml:space="preserve">
-    <value>String 或 binary 資料會被截斷。</value>
+    <value>資料表 '{0}'、資料行 '{1}' 中的字串或二進位資料會截斷。截斷的值: '{2}'。</value>
   </data>
   <data name="SQL_BulkLoadInvalidTimeout" xml:space="preserve">
     <value>Timeout 值 '{0}' 小於 0。</value>
@@ -4321,7 +4321,7 @@
     <value>執行查詢需要 enclave 計算，但應用程式組態沒有 enclave 提供者區段。</value>
   </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
-    <value>找不到 enclave 類型為 '{0}' 的 enclave 提供者。請在應用程式組態中指定提供者。</value>
+    <value>找不到記憶體保護區類型 '{0}' 和證明通訊協定 '{1}' 的記憶體保護區提供者。請在連接字串中指定正確的證明通訊協定。 </value>
   </data>
   <data name="TCE_NullEnclaveSessionReturnedFromProvider" xml:space="preserve">
     <value>無法與 enclave 通訊。從 enclave 提供者接收到 null enclave 工作階段資訊。enclave 類型為 '{0}'，enclave 證明 URL 為 '{1}'。</value>
@@ -4442,5 +4442,80 @@
   </data>
   <data name="SQL_Timeout_Execution" xml:space="preserve">
     <value>執行逾時到期。在作業完成之前超過逾時等待的時間，或是伺服器未回應。</value>
+  </data>
+  <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
+    <value>驗證證明權杖失敗。該權杖簽章與使用從位於 '{0}' 的證明公開金鑰端點擷取而來之公開金鑰計算所得的簽章不符。請檢查該端點的 DNS 對應。若其正確，請連絡客戶支援服務。</value>
+  </data>
+  <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
+    <value>初始要求失敗後，重試下載 HGS 根憑證的下載時發生內部錯誤。請連絡客戶支援服務。</value>
+  </data>
+  <data name="EnclaveSessionInvalidationFailed" xml:space="preserve">
+    <value>內部錯誤。因為快取中沒有要求的記憶體保護區工作階段，所以無法使該工作階段失效。請連絡客戶支援服務。</value>
+  </data>
+  <data name="ExpiredAttestationToken" xml:space="preserve">
+    <value>驗證證明權杖失敗。從 SQL Server 收到的權杖已過期。請連絡客戶支援服務。</value>
+  </data>
+  <data name="FailToCreateEnclaveSession" xml:space="preserve">
+    <value>因為證明伺服器在忙，所以無法建立記憶體保護區工作階段。</value>
+  </data>
+  <data name="FailToParseAttestationInfo" xml:space="preserve">
+    <value>驗證證明資訊失敗。證明資訊的格式無效。請連絡客戶支援服務。錯誤詳細資料: '{0}'。</value>
+  </data>
+  <data name="FailToParseAttestationToken" xml:space="preserve">
+    <value>驗證證明權杖失敗。權杖的格式無效。請連絡客戶支援服務。錯誤詳細資料: '{0}'。</value>
+  </data>
+  <data name="GetAttestationSigningCertificateFailedInvalidCertificate" xml:space="preserve">
+    <value>證明服務為證明 URL '{0}' 傳回了過期的 HGS 根憑證。請檢查為您 HGS 執行個體設定的 HGS 根憑證。</value>
+  </data>
+  <data name="GetAttestationSigningCertificateRequestFailedFormat" xml:space="preserve">
+    <value>為證明 URL '{0}' 取得的 HGS 根憑證格式無效。請確認證明 URL 正確，而且 HGS 伺服器在線上並已完全初始化。如需詳細資訊，請連絡客戶支援服務。錯誤詳細資料: '{1}'。</value>
+  </data>
+  <data name="GetAttestationTokenSigningKeysFailed" xml:space="preserve">
+    <value>驗證證明權杖失敗。無法從證明公開金鑰端點取得公開金鑰，或擷取到了無效格式的金鑰。錯誤詳細資料: '{0}'。</value>
+  </data>
+  <data name="GetSharedSecretFailed" xml:space="preserve">
+    <value>驗證記憶體保護區之 Diffie-hellman 的金鑰失敗。請連絡客戶支援服務。</value>
+  </data>
+  <data name="InvalidArgumentToBase64UrlDecoder" xml:space="preserve">
+    <value>因為在解碼從 SQL Server 取得之記憶體保護區的公開金鑰時發生錯誤，導致驗證證明權杖失敗。請連絡客戶支援服務。</value>
+  </data>
+  <data name="InvalidArgumentToSHA256" xml:space="preserve">
+    <value>因為在計算從 SQL Server 取得之記憶體保護區公開金鑰的雜湊時發生錯誤，所以證明權杖的驗證失敗。請連絡客戶支援服務。</value>
+  </data>
+  <data name="InvalidAttestationToken" xml:space="preserve">
+    <value>驗證簽章時，驗證證明權杖失敗。例外狀況: '{0}'。</value>
+  </data>
+  <data name="InvalidClaimInAttestationToken" xml:space="preserve">
+    <value>驗證證明權杖失敗。權杖中的宣告 '{0}' 包含無效的 '{1}' 值。請檢查證明原則。若該原則正確，請連絡客戶支援服務。</value>
+  </data>
+  <data name="MissingClaimInAttestationToken" xml:space="preserve">
+    <value>驗證證明權杖失敗。權杖中缺少宣告 '{0}'。請檢查證明原則。若該原則正確，請連絡客戶支援服務。</value>
+  </data>
+  <data name="VerifyEnclaveDebuggable" xml:space="preserve">
+    <value>無法檢查記憶體保護區是否在生產模式下執行。請連絡客戶支援服務。</value>
+  </data>
+  <data name="VerifyEnclavePolicyFailedFormat" xml:space="preserve">
+    <value>因為屬性 '{0}' 上原則的應有值與實際值不同，所以無法驗證記憶體保護區原則。實際: '{1}'，應為: '{2}'。</value>
+  </data>
+  <data name="VerifyEnclaveReportFailed" xml:space="preserve">
+    <value>驗證記憶體保護區報表的簽章失敗。報表的簽章與使用 HGS 根憑證計算所得的簽章不符。請檢查端點的 DNS 對應。若其正確，請連絡客戶支援服務。</value>
+  </data>
+  <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
+    <value>從 SQL Server 收到的記憶體保護區報表的格式不正確。請連絡客戶支援服務。</value>
+  </data>
+  <data name="VerifyHealthCertificateChainFormat" xml:space="preserve">
+    <value>無法在記憶體保護區主機的健康狀態報表與證明 URL '{0}' 的 HGS 根憑證之間建立信任鏈結。狀態: '{1}'。請確認證明 URL 與 SQL Server 電腦上設定的 URL 相符。如果用戶端和 SQL Server 都使用相同的證明服務，請連絡客戶支援服務。</value>
+  </data>
+  <data name="TCE_DbConnectionString_AttestationProtocol" xml:space="preserve">
+    <value>為證明通訊協定的對應記憶體保護區證明服務指定證明通訊協定。</value>
+  </data>
+  <data name="TCE_EnclaveTypeNotSupported" xml:space="preserve">
+    <value>不支援從伺服器傳回的記憶體保護區類型 '{0}'。</value>
+  </data>
+  <data name="TCE_AttestationProtocolNotSupportEnclaveType" xml:space="preserve">
+    <value>無法將連線初始化。證明通訊協定 '{0}' 不支援記憶體保護區類型 '{1}'。</value>
+  </data>
+  <data name="TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage" xml:space="preserve">
+    <value>產生記憶體保護區套件時發生錯誤。未在連接字串中指定證明通訊協定，但查詢需要記憶體保護區計算。</value>
   </data>
 </root>
