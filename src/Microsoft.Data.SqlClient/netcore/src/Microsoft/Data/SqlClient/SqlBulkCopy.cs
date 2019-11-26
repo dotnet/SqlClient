@@ -567,6 +567,12 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.BulkLoadNoCollation();
             }
 
+            // Throw if there is a transaction but UseInternalTransaction is set
+            if (_connection.HasLocalTransaction && IsCopyOption(SqlBulkCopyOptions.UseInternalTransaction))
+            {
+                throw SQL.BulkLoadExistingTransaction();
+            }
+
             string[] parts = MultipartIdentifier.ParseMultipartIdentifier(this.DestinationTableName, "[\"", "]\"", SR.SQL_BulkCopyDestinationTableName, true);
             updateBulkCommandText.AppendFormat("insert bulk {0} (", ADP.BuildMultiPartName(parts));
             int nmatched = 0;  // Number of columns that match and are accepted

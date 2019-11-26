@@ -662,14 +662,7 @@ namespace Microsoft.Data.SqlClient
 
             Debug.Assert((internalResults != null), "Where are the results from the initial query?");
 
-            string[] parts = MultipartIdentifier.ParseMultipartIdentifier(this.DestinationTableName, "[\"", "]\"", Strings.SQL_BulkCopyDestinationTableName, true);
-            updateBulkCommandText.AppendFormat("insert bulk {0} (", ADP.BuildMultiPartName(parts));
-            int nmatched = 0;               // number of columns that match and are accepted
-            int nrejected = 0;              // number of columns that match but were rejected
-            bool rejectColumn;            // true if a column is rejected because of an excluded type
-
             bool isInTransaction;
-
             if (_parser.IsYukonOrNewer)
             {
                 isInTransaction = _connection.HasLocalTransaction;
@@ -679,11 +672,17 @@ namespace Microsoft.Data.SqlClient
                 isInTransaction = (bool)(0 < (SqlInt32)(internalResults[TranCountResultId][TranCountRowId][TranCountValueId]));
             }
 
-            // Throw if there is a transaction but no flag is set
-            if (isInTransaction && null == _internalTransaction && (_connection.Parser != null && _connection.Parser.CurrentTransaction != null && _connection.Parser.CurrentTransaction.IsLocal))
+            // Throw if there is a transaction but UseInternalTransaction is set
+            if (isInTransaction && IsCopyOption(SqlBulkCopyOptions.UseInternalTransaction))
             {
                 throw SQL.BulkLoadExistingTransaction();
             }
+
+            string[] parts = MultipartIdentifier.ParseMultipartIdentifier(this.DestinationTableName, "[\"", "]\"", Strings.SQL_BulkCopyDestinationTableName, true);
+            updateBulkCommandText.AppendFormat("insert bulk {0} (", ADP.BuildMultiPartName(parts));
+            int nmatched = 0;               // number of columns that match and are accepted
+            int nrejected = 0;              // number of columns that match but were rejected
+            bool rejectColumn;            // true if a column is rejected because of an excluded type
 
             // loop over the metadata for each column
             //
@@ -1101,7 +1100,7 @@ namespace Microsoft.Data.SqlClient
                             {
                                 Debug.Assert(!(value is INullable) || !((INullable)value).IsNull, "IsDBNull returned false, but GetValue returned a null INullable");
                             }
-#endif                            
+#endif
                             return value;
                         }
                     }
@@ -2725,12 +2724,6 @@ namespace Microsoft.Data.SqlClient
 
                     if (IsCopyOption(SqlBulkCopyOptions.UseInternalTransaction))
                     {
-                        // prevent BeginTransaction() if we already have one
-                        if (internalConnection.HasLocalTransactionFromAPI || internalConnection.HasLocalTransaction)
-                        {
-                            throw SQL.BulkLoadExistingTransaction();
-                        }
-
                         //internal trasaction is started prior to each batch if the Option is set.
                         internalConnection.ThreadHasParserLockForClose = true;     // In case of error, tell the connection we already have the parser lock
                         try
