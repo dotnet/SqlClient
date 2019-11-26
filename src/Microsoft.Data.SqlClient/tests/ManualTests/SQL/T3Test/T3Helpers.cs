@@ -10,6 +10,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     /// Helper methods used in the Test methods to reduce code bloat.
     /// </summary>
     /// <remarks>
+    /// T3 = Transaction Free
     /// Related to issue:
     /// https://github.com/dotnet/SqlClient/issues/28
     /// </remarks>
@@ -113,29 +114,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void RollbackTransaction(SqlConnection connection, Action<SqlCommand> callback = null)
         {
             ExecuteNonQuery(connection, $"rollback transaction;", callback);
-        }
-
-        public static DataTable BulkValues(string table, int count = 100, Action<DataTable> callback = null)
-        {
-            DataTable dt = new DataTable(table);
-            DataColumn col = dt.Columns.Add("Value", typeof(long));
-            col.AllowDBNull = false;
-            for (int it = 0; it < count; ++it)
-            {
-                dt.Rows.Add(it);
-            }
-            callback?.Invoke(dt);
-            return dt;
-        }
-
-        public static void BulkPrepare(SqlBulkCopy bulkCopy, DataTable dt, int batch = 0)
-        {
-            bulkCopy.DestinationTableName = dt.TableName;
-            bulkCopy.BatchSize = batch;
-            foreach (DataColumn col in dt.Columns)
-            {
-                bulkCopy.ColumnMappings.Add(col.ColumnName, col.ColumnName);
-            }
         }
     }
 }

@@ -131,6 +131,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         Assert.Equal(0, T3.CountTable(connection, table)); // verify row count = 0
                     }
 
+                    T3.PurgeTable(connection, table);
+
                     Assert.Throws<InvalidProgramException>(new Action(() =>
                     {
                         using (SqlTransaction transaction = connection.BeginTransaction())

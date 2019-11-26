@@ -31,28 +31,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             conn3.Open();
                             // Start a local transaction on the wrong connection.
                             SqlTransaction myTrans = conn3.BeginTransaction();
-
-                            string exceptionMsg = SystemDataResourceManager.Instance.ADP_TransactionConnectionMismatch;
-                            DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(delegate
+                            using (SqlBulkCopy bulkcopy = new SqlBulkCopy(dstConn, SqlBulkCopyOptions.Default, myTrans))
                             {
-                                using (SqlBulkCopy bulkcopy = new SqlBulkCopy(dstConn, SqlBulkCopyOptions.Default, myTrans))
-                                {
-                                    SqlBulkCopyColumnMappingCollection ColumnMappings = bulkcopy.ColumnMappings;
-                                    bulkcopy.DestinationTableName = dstTable;
+                                SqlBulkCopyColumnMappingCollection ColumnMappings = bulkcopy.ColumnMappings;
+                                bulkcopy.DestinationTableName = dstTable;
 
-                                    bulkcopy.WriteToServer(reader);
-                                }
-                            }, exceptionMessage: exceptionMsg);
+                                string exceptionMsg = SystemDataResourceManager.Instance.ADP_TransactionConnectionMismatch;
+                                DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => bulkcopy.WriteToServer(reader), exceptionMessage: exceptionMsg);
 
-                            using (SqlCommand myCmd = dstConn.CreateCommand())
-                            {
+                                SqlCommand myCmd = dstConn.CreateCommand();
                                 myCmd.CommandText = "select * from " + dstTable;
-
-                                DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() =>
-                                {
-                                    myCmd.Transaction = myTrans;
-                                    myCmd.ExecuteReader();
-                                }, exceptionMessage: exceptionMsg);
+                                // ///// The following 2-lines test can no longer work
+                                // myCmd.Transaction = myTrans;
+                                // DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => myCmd.ExecuteReader(), exceptionMessage: exceptionMsg);
+                                // ///// So it is replaced with the following as now validation is done on assignment
+                                DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => myCmd.Transaction = myTrans, exceptionMessage: exceptionMsg);
                             }
                         }
                     }

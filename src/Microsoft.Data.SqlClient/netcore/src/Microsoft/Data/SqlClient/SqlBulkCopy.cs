@@ -198,6 +198,7 @@ namespace Microsoft.Data.SqlClient
 
         private SqlConnection _connection;
         private SqlTransaction _internalTransaction;
+        private SqlTransaction _externalTransaction;
 
         private ValueSourceType _rowSourceType = ValueSourceType.Unspecified;
         private DataRow _currentRow;
@@ -251,38 +252,15 @@ namespace Microsoft.Data.SqlClient
             : this(connection)
         {
             _copyOptions = copyOptions;
-
-            // if user decides to provide arguments, we validate them
-            // there's always the externalTransaction'less (2-arg) constructor for late-validation
-            if (IsCopyOption(SqlBulkCopyOptions.UseInternalTransaction))
+            if (externalTransaction != null && IsCopyOption(SqlBulkCopyOptions.UseInternalTransaction))
             {
-                if (null != externalTransaction)
-                {
-                    throw SQL.BulkLoadConflictingTransactionOption();
-                }
+                throw SQL.BulkLoadConflictingTransactionOption();
             }
-            else
+
+            if (!IsCopyOption(SqlBulkCopyOptions.UseInternalTransaction))
             {
-                if (null != externalTransaction)
-                {
-                    if (externalTransaction.IsZombied)
-                    {
-                        throw ADP.TransactionZombied(externalTransaction);
-                    }
-
-                    if (externalTransaction.Connection != connection)
-                    {
-                        throw ADP.TransactionConnectionMismatch();
-                    }
-                }
+                _externalTransaction = externalTransaction;
             }
-        }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/ctor[@name="SqlConnectionAndSqlBulkCopyOptionParameters"]/*'/>
-        public SqlBulkCopy(SqlConnection connection, SqlBulkCopyOptions copyOptions)
-            : this(connection)
-        {
-            _copyOptions = copyOptions;
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/ctor[@name="ConnectionStringParameter"]/*'/>
@@ -292,7 +270,6 @@ namespace Microsoft.Data.SqlClient
             {
                 throw ADP.ArgumentNull(nameof(connectionString));
             }
-
             _connection = new SqlConnection(connectionString);
             _columnMappings = new SqlBulkCopyColumnMappingCollection();
             _ownConnection = true;
@@ -567,17 +544,20 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.BulkLoadNoCollation();
             }
 
-            // Throw if there is a transaction but UseInternalTransaction is set
-            if (_connection.HasLocalTransaction && IsCopyOption(SqlBulkCopyOptions.UseInternalTransaction))
-            {
-                throw SQL.BulkLoadExistingTransaction();
-            }
-
             string[] parts = MultipartIdentifier.ParseMultipartIdentifier(this.DestinationTableName, "[\"", "]\"", SR.SQL_BulkCopyDestinationTableName, true);
             updateBulkCommandText.AppendFormat("insert bulk {0} (", ADP.BuildMultiPartName(parts));
             int nmatched = 0;  // Number of columns that match and are accepted
             int nrejected = 0; // Number of columns that match but were rejected
             bool rejectColumn; // True if a column is rejected because of an excluded type
+
+            bool isInTransaction;
+
+            isInTransaction = _connection.HasLocalTransaction;
+            // Throw if there is a transaction but no flag is set
+            if (isInTransaction && null == _externalTransaction && null == _internalTransaction && (_connection.Parser != null && _connection.Parser.CurrentTransaction != null && _connection.Parser.CurrentTransaction.IsLocal))
+            {
+                throw SQL.BulkLoadExistingTransaction();
+            }
 
             // Loop over the metadata for each column
             _SqlMetaDataSet metaDataSet = internalResults[MetaDataResultId].MetaData;
@@ -1277,6 +1257,14 @@ namespace Microsoft.Data.SqlClient
 
             // Close any non-MARS dead readers, if applicable, and then throw if still busy.
             _connection.ValidateConnectionForExecute(method, null);
+
+            // If we have a transaction, check to ensure that the active
+            // connection property matches the connection associated with
+            // the transaction.
+            if (null != _externalTransaction && _connection != _externalTransaction.Connection)
+            {
+                throw ADP.TransactionConnectionMismatch();
+            }
         }
 
         // Runs the _parser until it is done and ensures that ThreadHasParserLockForClose is correctly set and unset
@@ -2447,23 +2435,15 @@ namespace Microsoft.Data.SqlClient
         private Task CopyBatchesAsync(BulkCopySimpleResultSet internalResults, string updateBulkCommandText, CancellationToken cts, TaskCompletionSource<object> source = null)
         {
             Debug.Assert(source == null || !source.Task.IsCompleted, "Called into CopyBatchesAsync with a completed task!");
-
             try
             {
                 while (_hasMoreRowToCopy)
                 {
-                    // pre->before every batch: Transaction, BulkCmd and metadata are done.
+                    //pre->before every batch: Transaction, BulkCmd and metadata are done.
                     SqlInternalConnectionTds internalConnection = _connection.GetOpenTdsConnection();
 
                     if (IsCopyOption(SqlBulkCopyOptions.UseInternalTransaction))
-                    {
-                        // prevent BeginTransaction() if we already have one
-                        if (internalConnection.HasLocalTransactionFromAPI || internalConnection.HasLocalTransaction)
-                        {
-                            throw SQL.BulkLoadExistingTransaction();
-                        }
-
-                        // internal transaction is started prior to each batch if the Option is set.
+                    { //internal transaction is started prior to each batch if the Option is set.
                         internalConnection.ThreadHasParserLockForClose = true;     // In case of error, tell the connection we already have the parser lock
                         try
                         {
