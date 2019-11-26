@@ -15,6 +15,33 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         private ColumnEncryptionKey columnEncryptionKey;
         private SqlColumnEncryptionCertificateStoreProvider certStoreProvider = new SqlColumnEncryptionCertificateStoreProvider();
         protected List<DbObject> databaseObjects = new List<DbObject>();
+        private string _tabIntSource = "TabIntSource";
+        private string _tabIntSourceDirect = "TabIntSourceDirect";
+        private string _tabIntTargetDirect = "TabIntTargetDirect";
+        private string _tabDatetime2Source = "TabDatetime2Source";
+        private string _tabDatetime2Target = "TabDatetime2Target";
+        private string _tabDecimalSource = "TabDecimalSource";
+        private string _tabDecimalTarget = "TabDecimalTarget";
+        private string _tabVarCharSmallSource = "TabVarCharSmallSource";
+        private string _tabVarCharTarget = "TabVarCharTarget";
+        private string _tabVarCharMaxSource = "TabVarCharMaxSource";
+        private string _tabVarCharMaxTarget = "TabVarCharMaxTarget";
+        private string _tabNVarCharSmallSource = "TabNVarCharSmallSource";
+        private string _tabNVarCharSmallTarget = "TabNVarCharSmallTarget";
+        private string _tabNVarCharMaxSource = "TabNVarCharMaxSource";
+        private string _tabNVarCharTarget = "TabNVarCharTarget";
+        private string _tabVarBinaryMaxSource = "TabVarBinaryMaxSource";
+        private string _tabVarBinaryTarget = "TabVarBinaryTarget";
+        private string _tabBinaryMaxSource = "TabBinaryMaxSource";
+        private string _tabBinaryTarget = "TabBinaryTarget";
+        private string _tabSmallBinarySource = "TabSmallBinarySource";
+        private string _tabSmallBinaryTarget = "TabSmallBinaryTarget";
+        private string _tabSmallBinaryMaxTarget = "TabSmallBinaryMaxTarget";
+        private string _tabSmallCharSource = "TabSmallCharSource";
+        private string _tabSmallCharTarget = "TabSmallCharTarget";
+        private string _tabSmallCharMaxTarget = "TabSmallCharMaxTarget";
+        private string _tabTinyIntTarget = "TabTinyIntTarget";
+
 
         public SqlBulkCopyTruncation()
         {
@@ -38,6 +65,35 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 }
             }
 
+            // Define unique name for each table on each test run.
+            _tabBinaryMaxSource += "-" + Guid.NewGuid().ToString();
+            _tabBinaryTarget += "-" + Guid.NewGuid().ToString();
+            _tabDatetime2Source += "-" + Guid.NewGuid().ToString();
+            _tabDatetime2Target += "-" + Guid.NewGuid().ToString();
+            _tabDecimalSource += "-" + Guid.NewGuid().ToString();
+            _tabDecimalTarget += "-" + Guid.NewGuid().ToString();
+            _tabIntSource += "-" + Guid.NewGuid().ToString();
+            _tabIntSourceDirect += "-" + Guid.NewGuid().ToString();
+            _tabIntTargetDirect += "-" + Guid.NewGuid().ToString();
+            _tabNVarCharMaxSource += "-" + Guid.NewGuid().ToString();
+            _tabNVarCharSmallSource += "-" + Guid.NewGuid().ToString();
+            _tabNVarCharSmallTarget += "-" + Guid.NewGuid().ToString();
+            _tabNVarCharTarget += "-" + Guid.NewGuid().ToString();
+            _tabSmallBinaryMaxTarget += "-" + Guid.NewGuid().ToString();
+            _tabSmallBinarySource += "-" + Guid.NewGuid().ToString();
+            _tabSmallBinaryTarget += "-" + Guid.NewGuid().ToString();
+            _tabSmallCharMaxTarget += "-" + Guid.NewGuid().ToString();
+            _tabSmallCharSource += "-" + Guid.NewGuid().ToString();
+            _tabSmallCharTarget += "-" + Guid.NewGuid().ToString();
+            _tabVarBinaryMaxSource += "-" + Guid.NewGuid().ToString();
+            _tabVarBinaryTarget += "-" + Guid.NewGuid().ToString();
+            _tabVarCharMaxSource += "-" + Guid.NewGuid().ToString();
+            _tabVarCharMaxTarget += "-" + Guid.NewGuid().ToString();
+            _tabVarCharSmallSource += "-" + Guid.NewGuid().ToString();
+            _tabVarCharTarget += "-" + Guid.NewGuid().ToString();
+            _tabTinyIntTarget += "-" + Guid.NewGuid().ToString();
+
+
             //Destroy any existing table
             Dispose();
 
@@ -52,7 +108,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void BulkCopyTestsInt(string connectionString)
         {
-            Assert.Throws<InvalidOperationException>(() => DoBulkCopy("TabIntSource", "TabTinyIntTarget", connectionString));
+            Assert.Throws<InvalidOperationException>(() => DoBulkCopy(_tabIntSource,_tabTinyIntTarget, connectionString));
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
@@ -62,12 +118,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 connection.Open();
-                SilentRunCommand("TRUNCATE TABLE TabIntTargetDirect", connection);
+                SilentRunCommand($@"TRUNCATE TABLE [{_tabIntTargetDirect}]", connection);
             }
 
-            DoBulkCopyDirect("TabIntSourceDirect", "TabIntTargetDirect", connectionString, true, true);
+            DoBulkCopyDirect(_tabIntSourceDirect,_tabIntTargetDirect, connectionString, true, true);
 
-            VerifyTablesEqual("TabIntSourceDirect", "TabIntTargetDirect", connectionString);
+            VerifyTablesEqual(_tabIntSourceDirect, _tabIntTargetDirect, connectionString);
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
@@ -77,7 +133,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             // Test case when source is enabled and target are disabled
             // Expected to fail with casting error (client will attempt to cast int to varbinary)
-            Assert.Throws<InvalidOperationException>(() => { DoBulkCopyDirect("TabIntSourceDirect", "TabIntTargetDirect", connectionString, true, false); });
+            Assert.Throws<InvalidOperationException>(() => { DoBulkCopyDirect(_tabIntSourceDirect, _tabIntTargetDirect, connectionString, true, false); });
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
@@ -89,22 +145,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             {
                 connection.Open();
 
-                SilentRunCommand("TRUNCATE TABLE [dbo].[TabIntTargetDirect]", connection);
+                SilentRunCommand($@"TRUNCATE TABLE [dbo].[{_tabIntTargetDirect}]", connection);
             }
 
-            Assert.Throws<InvalidOperationException>(() => { DoBulkCopyDirect("TabIntSourceDirect", "TabIntTargetDirect", connectionString, false, true); });
+            Assert.Throws<InvalidOperationException>(() => { DoBulkCopyDirect(_tabIntSourceDirect, _tabIntTargetDirect, connectionString, false, true); });
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void BulkCopyDatetime2Tests(string connectionString)
         {
-            DoBulkCopy("TabDatetime2Source", "TabDatetime2Target", connectionString);
+            DoBulkCopy(_tabDatetime2Source, _tabDatetime2Target, connectionString);
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 connection.Open();
 
-                using (SqlCommand cmd = new SqlCommand("SELECT [c2] from [dbo].[TabDatetime2Target]", connection))
+                using (SqlCommand cmd = new SqlCommand($@"SELECT [c2] from [dbo].[{_tabDatetime2Target}]", connection))
                 {
                     // Read the target table and verify the string was truncated indeed!
                     using (SqlDataReader reader = cmd.ExecuteReader())
@@ -135,17 +191,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void BulkCopyDecimal(string connectionString)
         {
-            Assert.Throws<InvalidOperationException>(() => DoBulkCopy("TabDecimalSource", "TabDecimalTarget", connectionString));
+            Assert.Throws<InvalidOperationException>(() => DoBulkCopy(_tabDecimalSource, _tabDecimalTarget, connectionString));
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void BulkCopyVarchar(string connectionString)
         {
-            DoBulkCopy("TabVarCharSmallSource", "TabVarCharTarget", connectionString);
+            DoBulkCopy(_tabVarCharSmallSource,_tabVarCharTarget, connectionString);
 
             using (SqlConnection connection = new SqlConnection(connectionString))
-            using (SqlCommand cmd = new SqlCommand("SELECT [c2] from [dbo].[TabVarCharTarget]", connection))
+            using (SqlCommand cmd = new SqlCommand($@"SELECT [c2] from [dbo].[{_tabVarCharTarget}]", connection))
             {
                 connection.Open();
                 using (SqlDataReader reader = cmd.ExecuteReader())
@@ -162,10 +218,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void BulkCopyVarcharMax(string connectionString)
         {
-            DoBulkCopy("TabVarCharMaxSource", "TabVarCharMaxTarget", connectionString);
+            DoBulkCopy(_tabVarCharMaxSource,_tabVarCharMaxTarget, connectionString);
 
             using (SqlConnection connection = new SqlConnection(connectionString))
-            using (SqlCommand cmd = new SqlCommand("SELECT [c2] from [TabVarCharMaxTarget]", connection, null, SqlCommandColumnEncryptionSetting.Enabled))
+            using (SqlCommand cmd = new SqlCommand($@"SELECT [c2] from [{_tabVarCharMaxTarget}]", connection, null, SqlCommandColumnEncryptionSetting.Enabled))
             {
                 connection.Open();
                 using (SqlDataReader reader = cmd.ExecuteReader())
@@ -183,7 +239,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public void BulkCopyNVarchar(string connectionString)
         {
             // Will fail (NVarchars are not truncated)!
-            Assert.Throws<InvalidOperationException>(() => DoBulkCopy("TabNVarCharMaxSource", "TabNVarCharTarget", connectionString));
+            Assert.Throws<InvalidOperationException>(() => DoBulkCopy(_tabNVarCharMaxSource, _tabNVarCharTarget, connectionString));
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
@@ -191,7 +247,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public void BulkCopyNVarcharMax(string connectionString)
         {
             // Will fail (NVarchars are not truncated)!
-            Assert.Throws<InvalidOperationException>(() => DoBulkCopy("TabNVarCharMaxSource", "TabNVarCharTarget", connectionString));
+            Assert.Throws<InvalidOperationException>(() => DoBulkCopy(_tabNVarCharMaxSource,_tabNVarCharTarget, connectionString));
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
@@ -199,14 +255,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public void BulkCopyBinaryMax(string connectionString)
         {
             // Will fail (NVarchars are not truncated)!
-            DoBulkCopy("TabBinaryMaxSource", "TabBinaryTarget", connectionString);
+            DoBulkCopy(_tabBinaryMaxSource, _tabBinaryTarget, connectionString);
 
             // Verify the target column has (infact) the truncated value
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 connection.Open();
 
-                using (SqlCommand cmd = new SqlCommand("SELECT c2 from TabBinaryTarget", connection, null, SqlCommandColumnEncryptionSetting.Enabled))
+                using (SqlCommand cmd = new SqlCommand($@"SELECT c2 from [{_tabBinaryTarget}]", connection, null, SqlCommandColumnEncryptionSetting.Enabled))
                 {
                     using (SqlDataReader reader = cmd.ExecuteReader())
                     {
@@ -230,14 +286,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public void BulkCopySmallChar(string connectionString)
         {
             // should succeed!
-            DoBulkCopy("TabSmallCharSource", "TabSmallCharTarget", connectionString);
+            DoBulkCopy($"{_tabSmallCharSource}", $"{_tabSmallCharTarget}", connectionString);
 
             // Verify the truncated value
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 conn.Open();
 
-                using (SqlCommand cmd = new SqlCommand("SELECT c2 from TabSmallCharTarget", conn))
+                using (SqlCommand cmd = new SqlCommand($@"SELECT c2 from [{_tabSmallCharTarget}]", conn))
                 {
                     using (SqlDataReader reader = cmd.ExecuteReader())
                     {
@@ -251,13 +307,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 }
             }
 
-            DoBulkCopy("TabSmallCharSource", "TabSmallCharMaxTarget", connectionString);
+            DoBulkCopy($@"{_tabSmallCharSource}", $@"{_tabSmallCharMaxTarget}", connectionString);
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 conn.Open();
 
-                using (SqlCommand cmd = new SqlCommand("SELECT c2 from TabSmallCharMaxTarget", conn))
+                using (SqlCommand cmd = new SqlCommand($@"SELECT c2 from [{_tabSmallCharMaxTarget}]", conn))
                 {
                     using (SqlDataReader reader = cmd.ExecuteReader())
                     {
@@ -347,8 +403,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 {
                     connTarget.Open();
 
-                    using (SqlCommand cmdSource = new SqlCommand(@"SELECT [c1], [c2] FROM [TabIntSourceDirect] ORDER BY c1", connSource))
-                    using (SqlCommand cmdTarget = new SqlCommand(@"SELECT [c1], [c2] FROM [TabIntTargetDirect] ORDER BY c1", connTarget))
+                    using (SqlCommand cmdSource = new SqlCommand($@"SELECT [c1], [c2] FROM [{_tabIntSourceDirect}] ORDER BY c1", connSource))
+                    using (SqlCommand cmdTarget = new SqlCommand($@"SELECT [c1], [c2] FROM [{_tabIntSourceDirect}] ORDER BY c1", connTarget))
                     {
                         using (SqlDataReader sourceReader = cmdSource.ExecuteReader())
                         using (SqlDataReader targetReader = cmdTarget.ExecuteReader())
@@ -375,10 +431,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     connection.Open();
 
                     //int
-                    ExecuteQuery(connection, "INSERT INTO [dbo].[TabIntSource] ([c1],[c2]) VALUES (1,300);");
+                    ExecuteQuery(connection, $@"INSERT INTO [dbo].[{_tabIntSource}] ([c1],[c2]) VALUES (1,300);");
 
                     //TabIntSourceDirect
-                    using (SqlCommand cmd = new SqlCommand($@"INSERT INTO [dbo].[TabIntSourceDirect] ([c1],[c2]) VALUES (@c1, @c2);",
+                    using (SqlCommand cmd = new SqlCommand($@"INSERT INTO [dbo].[{_tabIntSourceDirect}] ([c1],[c2]) VALUES (@c1, @c2);",
                         connection: connection,
                         transaction: null,
                         columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
@@ -401,34 +457,34 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     }
 
                     // Datetime2(6)
-                    ExecuteQuery(connection, @"INSERT INTO [dbo].[TabDatetime2Source] ([c1],[c2])   VALUES (1, '1968-10-23 12:45:37.123456');");
+                    ExecuteQuery(connection, $@"INSERT INTO [dbo].[{_tabDatetime2Source}] ([c1],[c2])   VALUES (1, '1968-10-23 12:45:37.123456');");
 
                     // Decimal(10,4)
-                    ExecuteQuery(connection, @"INSERT INTO [dbo].[TabDecimalSource] ([c1],[c2])  VALUES (1,12345.6789);");
+                    ExecuteQuery(connection, $@"INSERT INTO [dbo].[{_tabDecimalSource}] ([c1],[c2])  VALUES (1,12345.6789);");
 
                     // Varchar(10)
-                    ExecuteQuery(connection, @"INSERT INTO [TabVarCharSmallSource]  ([c1],[c2])  VALUES (1,'abcdefghij');");
+                    ExecuteQuery(connection, $@"INSERT INTO [dbo].[{_tabVarCharSmallSource}]  ([c1],[c2])  VALUES (1,'abcdefghij');");
 
                     // Varchar(max)
-                    ExecuteQuery(connection, string.Format(@"INSERT INTO [TabVarCharMaxSource] ([c1],[c2])  VALUES (1,'{0}');", new string('a', 8003))); // 8003 is above the max fixedlen permissible size of 8000
+                    ExecuteQuery(connection, $@"INSERT INTO [dbo].[{_tabVarCharMaxSource}] ([c1],[c2])  VALUES (1,'{new string('a', 8003)}');"); // 8003 is above the max fixedlen permissible size of 8000
 
                     // NVarchar(10)
-                    ExecuteQuery(connection, string.Format(@"INSERT INTO [TabNVarCharSmallSource] ([c1],[c2])  VALUES (1,N'{0}');", new string('a', 10)));
+                    ExecuteQuery(connection, $@"INSERT INTO [dbo].[{_tabNVarCharSmallSource}] ([c1],[c2])  VALUES (1,N'{new string('a', 10)}');");
 
                     // NVarchar(max)
-                    ExecuteQuery(connection, string.Format(@"INSERT INTO [TabNVarCharMaxSource] ([c1],[c2])  VALUES (1,N'{0}');", new string('a', 4003))); // 4003 is above the max fixedlen permissible size of 4000
+                    ExecuteQuery(connection, $@"INSERT INTO [dbo].[{_tabNVarCharMaxSource}] ([c1],[c2])  VALUES (1,N'{new string('a', 4003)}');"); // 4003 is above the max fixedlen permissible size of 4000
 
                     // varbinary(max);
-                    ExecuteQuery(connection, string.Format(@"INSERT INTO [TabVarBinaryMaxSource] ([c1],[c2])  VALUES (1, 0x{0});", new string('e', 16004))); // this will bring varbinary size of 8002, above the fixedlen permissible size of 8000
+                    ExecuteQuery(connection, $@"INSERT INTO [dbo].[{_tabVarBinaryMaxSource}] ([c1],[c2])  VALUES (1, 0x{new string('e', 16004)});"); // this will bring varbinary size of 8002, above the fixedlen permissible size of 8000
 
                     // binary(7000)TabBinaryMaxSource
-                    ExecuteQuery(connection, string.Format(@"INSERT INTO [TabBinaryMaxSource] ([c1],[c2])  VALUES (1, 0x{0});", new string('e', 14000))); // size of 7000
+                    ExecuteQuery(connection, $@"INSERT INTO [dbo].[{_tabBinaryMaxSource}] ([c1],[c2])  VALUES (1, 0x{new string('e', 14000)});"); // size of 7000
 
                     // binary (3000)
-                    ExecuteQuery(connection, string.Format(@"INSERT INTO [TabSmallBinarySource] ([c1],[c2])  VALUES (1, 0x{0});", new string('e', 6000))); // size of 3000
+                    ExecuteQuery(connection, $@"INSERT INTO [{_tabSmallBinarySource}] ([c1],[c2])  VALUES (1, 0x{new string('e', 6000)});"); // size of 3000
 
                     // char(8000)
-                    ExecuteQuery(connection, string.Format(@"INSERT INTO [TabSmallCharSource] ([c1],[c2])  VALUES (1, '{0}');", new string('a', 8000))); // size of 8000     
+                    ExecuteQuery(connection, $@"INSERT INTO [{_tabSmallCharSource}] ([c1],[c2])  VALUES (1, '{new string('a', 8000)}');");// size of 8000     
                 }
             }
         }
@@ -441,81 +497,68 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 {
                     connection.Open();
                     // int -> tinyint
-                    ExecuteQuery(connection, @"CREATE TABLE [TabIntSource] ([c1] [int] PRIMARY KEY, [c2] [int]);");
+                    ExecuteQuery(connection, $@"CREATE TABLE [dbo].[{_tabIntSource}] ([c1] [int] PRIMARY KEY, [c2] [int]);");
 
-                    ExecuteQuery(connection, $@"CREATE TABLE [dbo].[TabTinyIntTarget] ([c1] [int] PRIMARY KEY, [c2] [TINYINT] ENCRYPTED WITH (COLUMN_ENCRYPTION_KEY=[{columnEncryptionKey.Name}], ENCRYPTION_TYPE  = RANDOMIZED, algorithm='{ColumnEncryptionAlgorithmName}'));");
+                    ExecuteQuery(connection, $@"CREATE TABLE [dbo].[{_tabTinyIntTarget}] ([c1] [int] PRIMARY KEY, [c2] [TINYINT] ENCRYPTED WITH (COLUMN_ENCRYPTION_KEY=[{columnEncryptionKey.Name}], ENCRYPTION_TYPE  = RANDOMIZED, algorithm='{ColumnEncryptionAlgorithmName}'));");
 
                     // Tables for direct insert using bulk copy
-                    ExecuteQuery(connection, $@"CREATE TABLE [dbo].[TabIntSourceDirect] ([c1] [int] PRIMARY KEY, [c2] [int] ENCRYPTED WITH (column_encryption_key = [{columnEncryptionKey.Name}], encryption_type = RANDOMIZED, algorithm='{ColumnEncryptionAlgorithmName}'));");
+                    ExecuteQuery(connection, $@"CREATE TABLE [dbo].[{_tabIntSourceDirect}] ([c1] [int] PRIMARY KEY, [c2] [int] ENCRYPTED WITH (column_encryption_key = [{columnEncryptionKey.Name}], encryption_type = RANDOMIZED, algorithm='{ColumnEncryptionAlgorithmName}'));");
 
-                    ExecuteQuery(connection, $@"CREATE TABLE [dbo].[TabIntTargetDirect] ([c1] [int] PRIMARY KEY, [c2] [int] ENCRYPTED WITH (column_encryption_key = [{columnEncryptionKey.Name}], encryption_type = RANDOMIZED, algorithm='{ColumnEncryptionAlgorithmName}'));");
+                    ExecuteQuery(connection, $@"CREATE TABLE [dbo].[{_tabIntTargetDirect}] ([c1] [int] PRIMARY KEY, [c2] [int] ENCRYPTED WITH (column_encryption_key = [{columnEncryptionKey.Name}], encryption_type = RANDOMIZED, algorithm='{ColumnEncryptionAlgorithmName}'));");
 
                     // Datetime2(6)->Datetime2(2)
-                    ExecuteQuery(connection, @"CREATE TABLE [dbo].[TabDatetime2Source]([c1] [int]  PRIMARY KEY, [c2] datetime2(6));");
+                    ExecuteQuery(connection, $@"CREATE TABLE [dbo].[{_tabDatetime2Source}]([c1] [int]  PRIMARY KEY, [c2] datetime2(6));");
 
-                    ExecuteQuery(connection, $@"CREATE TABLE [dbo].[TabDatetime2Target]([c1] [INT]  PRIMARY KEY, [c2] datetime2(2) encrypted with (column_encryption_key=[{columnEncryptionKey.Name}], encryption_type=randomized, algorithm='{ColumnEncryptionAlgorithmName}'))");
+                    ExecuteQuery(connection, $@"CREATE TABLE [dbo].[{_tabDatetime2Target}]([c1] [INT]  PRIMARY KEY, [c2] datetime2(2) encrypted with (column_encryption_key=[{columnEncryptionKey.Name}], encryption_type=randomized, algorithm='{ColumnEncryptionAlgorithmName}'))");
 
                     // Decimal(10, 4) -> Decimal (5,2) (tests scale and precision)
-                    ExecuteQuery(connection, @"CREATE TABLE [dbo].[TabDecimalSource] ([c1] [int]  PRIMARY KEY, [c2] [decimal](10,4));");
+                    ExecuteQuery(connection, $@"CREATE TABLE [dbo].[{_tabDecimalSource}] ([c1] [int]  PRIMARY KEY, [c2] [decimal](10,4));");
 
-                    ExecuteQuery(connection, $@"CREATE TABLE [dbo].[TabDecimalTarget] ([c1] [int]  PRIMARY KEY, [c2] [decimal](5,2) encrypted with (column_encryption_key=[{columnEncryptionKey.Name}], encryption_type=randomized, algorithm='{ColumnEncryptionAlgorithmName}'));");
+                    ExecuteQuery(connection, $@"CREATE TABLE [dbo].[{_tabDecimalTarget}] ([c1] [int]  PRIMARY KEY, [c2] [decimal](5,2) encrypted with (column_encryption_key=[{columnEncryptionKey.Name}], encryption_type=randomized, algorithm='{ColumnEncryptionAlgorithmName}'));");
 
                     // varchar(10)->varchar(2)
-                    ExecuteQuery(connection, @"CREATE TABLE [dbo].[TabVarCharSmallSource] ([c1] [int]  PRIMARY KEY, [c2] [VARCHAR](10));");
+                    ExecuteQuery(connection, $@"CREATE TABLE [dbo].[{_tabVarCharSmallSource}] ([c1] [int]  PRIMARY KEY, [c2] [VARCHAR](10));");
 
-                    ExecuteQuery(connection, $@"CREATE TABLE [dbo].[TabVarCharTarget] ([c1] [int] PRIMARY KEY, [c2] [VARCHAR](2) COLLATE Latin1_General_BIN2  encrypted with (column_encryption_key=[{columnEncryptionKey.Name}], encryption_type=randomized, algorithm='{ColumnEncryptionAlgorithmName}'))");
+                    ExecuteQuery(connection, $@"CREATE TABLE [dbo].[{_tabVarCharTarget}] ([c1] [int] PRIMARY KEY, [c2] [VARCHAR](2) COLLATE Latin1_General_BIN2  encrypted with (column_encryption_key=[{columnEncryptionKey.Name}], encryption_type=randomized, algorithm='{ColumnEncryptionAlgorithmName}'))");
 
                     // varchar(max)->varchar(7000)
-                    ExecuteQuery(connection, @"CREATE TABLE [dbo].[TabVarCharMaxSource]([c1] int primary key, [c2] [varchar](max))");
+                    ExecuteQuery(connection, $@"CREATE TABLE [dbo].[{_tabVarCharMaxSource}]([c1] int primary key, [c2] [varchar](max))");
 
-                    ExecuteQuery(connection,
-                        string.Format("CREATE TABLE [dbo].[TabVarCharMaxTarget]([c1] [int] primary key, [c2] [varchar](7000) encrypted with (column_encryption_key=[{0}], encryption_type=randomized, algorithm='{1}'))", columnEncryptionKey.Name, ColumnEncryptionAlgorithmName));
+                    ExecuteQuery(connection, $@"CREATE TABLE [dbo].[{_tabVarCharMaxTarget}] ([c1] [int] primary key, [c2] [varchar](7000) encrypted with (column_encryption_key=[{columnEncryptionKey.Name}], encryption_type=randomized, algorithm='{ColumnEncryptionAlgorithmName}'))");
 
                     // nvarchar(10)->nvarchar(2)
-                    ExecuteQuery(connection,
-                        "CREATE TABLE [TabNVarCharSmallSource](c1 int primary key, c2 nvarchar(10))");
+                    ExecuteQuery(connection, $@"CREATE TABLE [dbo].[{_tabNVarCharSmallSource}] (c1 int primary key, c2 nvarchar(10))");
 
-                    ExecuteQuery(connection,
-                        string.Format("CREATE TABLE [TabNVarCharSmallTarget](c1 int primary key, c2 nvarchar(2) encrypted with (column_encryption_key=[{0}], encryption_type=randomized, algorithm='{1}'))", columnEncryptionKey.Name, ColumnEncryptionAlgorithmName));
+                    ExecuteQuery(connection, $@"CREATE TABLE [dbo].[{_tabNVarCharSmallTarget}](c1 int primary key, c2 nvarchar(2) encrypted with (column_encryption_key=[{columnEncryptionKey.Name}], encryption_type=randomized, algorithm='{ColumnEncryptionAlgorithmName}'))");
 
                     // nvarchar(max)->nvarchar(4000)
-                    ExecuteQuery(connection, @"CREATE TABLE [dbo].[TabNVarCharMaxSource] ([c1] int primary key, [c2] [nvarchar](max))");
+                    ExecuteQuery(connection, $@"CREATE TABLE [dbo].[{_tabNVarCharMaxSource}] ([c1] int primary key, [c2] [nvarchar](max))");
 
-                    ExecuteQuery(connection, $@"CREATE TABLE [dbo].[TabNVarCharTarget]([c1] int primary key, [c2] [nvarchar](4000) encrypted with (column_encryption_key=[{columnEncryptionKey.Name}], encryption_type=randomized, algorithm='{ColumnEncryptionAlgorithmName}'))");
+                    ExecuteQuery(connection, $@"CREATE TABLE [dbo].[{_tabNVarCharTarget}] ([c1] int primary key, [c2] [nvarchar](4000) encrypted with (column_encryption_key=[{columnEncryptionKey.Name}], encryption_type=randomized, algorithm='{ColumnEncryptionAlgorithmName}'))");
 
                     // varbinary(max)->varbinary(3000)
-                    ExecuteQuery(connection,
-                        "CREATE TABLE [TabVarBinaryMaxSource](c1 int primary key, c2 varbinary(max))");
+                    ExecuteQuery(connection, $@"CREATE TABLE [dbo].[{_tabVarBinaryMaxSource}] (c1 int primary key, c2 varbinary(max))");
 
-                    ExecuteQuery(connection,
-                        string.Format("CREATE TABLE [TabVarBinaryTarget](c1 int primary key, c2 varbinary(3000) encrypted with (column_encryption_key=[{0}], encryption_type=randomized, algorithm='{1}'))", columnEncryptionKey.Name, ColumnEncryptionAlgorithmName));
+                    ExecuteQuery(connection, $@"CREATE TABLE [dbo].[{_tabVarBinaryTarget}] (c1 int primary key, c2 varbinary(3000) encrypted with (column_encryption_key=[{columnEncryptionKey.Name}], encryption_type=randomized, algorithm='{ColumnEncryptionAlgorithmName}'))");
 
                     // binary(7000) -> binary (3000)
-                    ExecuteQuery(connection,
-                        "CREATE TABLE [TabBinaryMaxSource](c1 int primary key, c2 binary(7000))");
+                    ExecuteQuery(connection, $@"CREATE TABLE [dbo].[{_tabBinaryMaxSource}](c1 int primary key, c2 binary(7000))");
 
-                    ExecuteQuery(connection,
-                        string.Format("CREATE TABLE [TabBinaryTarget](c1 int primary key, c2 binary(3000) encrypted with (column_encryption_key=[{0}], encryption_type=randomized, algorithm='{1}'))", columnEncryptionKey.Name, ColumnEncryptionAlgorithmName));
+                    ExecuteQuery(connection, $@"CREATE TABLE [dbo].[{_tabBinaryTarget}](c1 int primary key, c2 binary(3000) encrypted with (column_encryption_key=[{columnEncryptionKey.Name}], encryption_type=randomized, algorithm='{ColumnEncryptionAlgorithmName}'))");
 
                     // binary(3000)-> binary(8000) and varbinary(max)
-                    ExecuteQuery(connection,
-                        "CREATE TABLE [TabSmallBinarySource](c1 int primary key, c2 binary(3000))");
+                    ExecuteQuery(connection, $@"CREATE TABLE [dbo].[{_tabSmallBinarySource}] (c1 int primary key, c2 binary(3000))");
 
-                    ExecuteQuery(connection,
-                        string.Format("CREATE TABLE [TabSmallBinaryTarget](c1 int primary key, c2 binary(8000) encrypted with (column_encryption_key=[{0}], encryption_type=randomized, algorithm='{1}'))", columnEncryptionKey.Name, ColumnEncryptionAlgorithmName));
+                    ExecuteQuery(connection, $@"CREATE TABLE [dbo].[{_tabSmallBinaryTarget}] (c1 int primary key, c2 binary(8000) encrypted with (column_encryption_key=[{columnEncryptionKey.Name}], encryption_type=randomized, algorithm='{ColumnEncryptionAlgorithmName}'))");
 
-                    ExecuteQuery(connection,
-                        string.Format("CREATE TABLE [TabSmallBinaryMaxTarget](c1 int primary key, c2 varbinary(max) encrypted with (column_encryption_key=[{0}], encryption_type=randomized, algorithm='{1}'))", columnEncryptionKey.Name, ColumnEncryptionAlgorithmName));
+                    ExecuteQuery(connection, $@"CREATE TABLE [dbo].[{_tabSmallBinaryMaxTarget}](c1 int primary key, c2 varbinary(max) encrypted with (column_encryption_key=[{columnEncryptionKey.Name}], encryption_type=randomized, algorithm='{ColumnEncryptionAlgorithmName}'))");
 
                     // char(8000)->char(3000) and varchar(max)
-                    ExecuteQuery(connection,
-                        "CREATE TABLE [TabSmallCharSource](c1 int primary key, c2 char(8000))");
+                    ExecuteQuery(connection, $@"CREATE TABLE [dbo].[{_tabSmallCharSource}](c1 int primary key, c2 char(8000))");
 
-                    ExecuteQuery(connection,
-                        string.Format("CREATE TABLE [TabSmallCharTarget](c1 int primary key, c2 char(3000) encrypted with (column_encryption_key=[{0}], encryption_type=randomized, algorithm='{1}'))", columnEncryptionKey.Name, ColumnEncryptionAlgorithmName));
+                    ExecuteQuery(connection, $@"CREATE TABLE [dbo].[{_tabSmallCharTarget}] (c1 int primary key, c2 char(3000) encrypted with (column_encryption_key=[{columnEncryptionKey.Name}], encryption_type=randomized, algorithm='{ColumnEncryptionAlgorithmName}'))");
 
-                    ExecuteQuery(connection,
-                        string.Format("CREATE TABLE [TabSmallCharMaxTarget](c1 int primary key, c2 varchar(max) encrypted with (column_encryption_key=[{0}], encryption_type=randomized, algorithm='{1}'))", columnEncryptionKey.Name, ColumnEncryptionAlgorithmName));
+                    ExecuteQuery(connection, $@"CREATE TABLE [dbo].[{_tabSmallCharMaxTarget}] (c1 int primary key, c2 varchar(max) encrypted with (column_encryption_key=[{columnEncryptionKey.Name}], encryption_type=randomized, algorithm='{ColumnEncryptionAlgorithmName}'))");
                 }
             }
         }
@@ -541,57 +584,55 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 {
                     sqlConnection.Open();
 
-                    SilentRunCommand("DROP TABLE TabIntSource", sqlConnection);
+                    SilentRunCommand($@"DROP TABLE [{_tabIntSource}]", sqlConnection);
 
-                    SilentRunCommand("DROP TABLE TabIntSourceDirect", sqlConnection);
+                    SilentRunCommand($@"DROP TABLE [{_tabIntSourceDirect}]", sqlConnection);
 
-                    SilentRunCommand("DROP TABLE TabIntTargetDirect", sqlConnection);
+                    SilentRunCommand($@"DROP TABLE [{_tabIntTargetDirect}]", sqlConnection);
 
-                    SilentRunCommand("DROP TABLE TabTinyIntTarget", sqlConnection);
+                    SilentRunCommand($@"DROP TABLE [{_tabBinaryTarget}]", sqlConnection);
 
-                    SilentRunCommand("DROP TABLE TabVarCharSmallSource", sqlConnection);
+                    SilentRunCommand($@"DROP TABLE [{_tabVarCharSmallSource}]", sqlConnection);
 
-                    SilentRunCommand("DROP TABLE TabVarCharTarget", sqlConnection);
+                    SilentRunCommand($@"DROP TABLE [{_tabVarCharTarget}]", sqlConnection);
 
-                    SilentRunCommand("DROP TABLE TabDecimalSource", sqlConnection);
+                    SilentRunCommand($@"DROP TABLE [{_tabDecimalSource}]", sqlConnection);
 
-                    SilentRunCommand("DROP TABLE TabDecimalTarget", sqlConnection);
+                    SilentRunCommand($@"DROP TABLE [{_tabDecimalTarget}]", sqlConnection);
 
-                    SilentRunCommand("DROP TABLE TabDatetime2Source", sqlConnection);
+                    SilentRunCommand($@"DROP TABLE [{_tabDatetime2Source}]", sqlConnection);
 
-                    SilentRunCommand("DROP TABLE TabDatetime2Target", sqlConnection);
+                    SilentRunCommand($@"DROP TABLE [{_tabDatetime2Target}]", sqlConnection);
 
-                    SilentRunCommand("DROP TABLE TabNVarCharTarget", sqlConnection);
+                    SilentRunCommand($@"DROP TABLE [{_tabNVarCharTarget}]", sqlConnection);
 
-                    SilentRunCommand("DROP TABLE TabNVarCharMaxSource", sqlConnection);
+                    SilentRunCommand($@"DROP TABLE [{_tabNVarCharMaxSource}]", sqlConnection);
 
-                    SilentRunCommand("DROP TABLE TabVarCharMaxSource", sqlConnection);
+                    SilentRunCommand($@"DROP TABLE [{_tabVarCharMaxSource}]", sqlConnection);
 
-                    SilentRunCommand("DROP TABLE TabVarCharMaxTarget", sqlConnection);
+                    SilentRunCommand($@"DROP TABLE [{_tabVarCharMaxTarget}]", sqlConnection);
 
-                    SilentRunCommand("DROP TABLE TabNVarCharSmallSource", sqlConnection);
+                    SilentRunCommand($@"DROP TABLE [{_tabNVarCharSmallTarget}]", sqlConnection);
 
-                    SilentRunCommand("DROP TABLE TabNVarCharSmallTarget", sqlConnection);
+                    SilentRunCommand($@"DROP TABLE [{_tabVarBinaryMaxSource}]", sqlConnection);
 
-                    SilentRunCommand("DROP TABLE TabVarBinaryMaxSource", sqlConnection);
+                    SilentRunCommand($@"DROP TABLE [{_tabVarBinaryTarget}]", sqlConnection);
 
-                    SilentRunCommand("DROP TABLE TabVarBinaryTarget", sqlConnection);
+                    SilentRunCommand($@"DROP TABLE [{_tabBinaryMaxSource}]", sqlConnection);
 
-                    SilentRunCommand("DROP TABLE TabBinaryMaxSource", sqlConnection);
+                    SilentRunCommand($@"DROP TABLE [{_tabSmallBinarySource}]", sqlConnection);
 
-                    SilentRunCommand("DROP TABLE TabBinaryTarget", sqlConnection);
+                    SilentRunCommand($@"DROP TABLE [{_tabSmallBinaryTarget}]", sqlConnection);
 
-                    SilentRunCommand("DROP TABLE TabSmallBinarySource", sqlConnection);
+                    SilentRunCommand($@"DROP TABLE [{_tabSmallBinaryMaxTarget}]", sqlConnection);
 
-                    SilentRunCommand("DROP TABLE TabSmallBinaryTarget", sqlConnection);
+                    SilentRunCommand($@"DROP TABLE [{_tabSmallCharSource}]", sqlConnection);
 
-                    SilentRunCommand("DROP TABLE TabSmallBinaryMaxTarget", sqlConnection);
+                    SilentRunCommand($@"DROP TABLE [{_tabSmallCharTarget}]", sqlConnection);
 
-                    SilentRunCommand("DROP TABLE TabSmallCharSource", sqlConnection);
+                    SilentRunCommand($@"DROP TABLE [{_tabSmallCharMaxTarget}]", sqlConnection);
 
-                    SilentRunCommand("DROP TABLE TabSmallCharTarget", sqlConnection);
-
-                    SilentRunCommand("DROP TABLE TabSmallCharMaxTarget", sqlConnection);
+                    SilentRunCommand($@"DROP TABLE[{_tabTinyIntTarget}]", sqlConnection);
                 }
             }
         }
