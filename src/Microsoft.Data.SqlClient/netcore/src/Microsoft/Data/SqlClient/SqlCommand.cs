@@ -3475,7 +3475,6 @@ namespace Microsoft.Data.SqlClient
             describeParameterEncryptionRequest.rpcName = "sp_describe_parameter_encryption";
 
             // Prepare @tsql parameter
-            SqlParameter sqlParam;
             string text;
 
             // In BatchRPCMode, The actual T-SQL query is in the first parameter and not present as the rpcName, as is the case with non-BatchRPCMode.
@@ -3484,7 +3483,11 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(originalRpcRequest.systemParamCount > 0,
                     "originalRpcRequest didn't have at-least 1 parameter in BatchRPCMode, in PrepareDescribeParameterEncryptionRequest.");
                 text = (string)originalRpcRequest.systemParams[0].Value;
-                sqlParam = GetSqlParameterWithQueryText(text);
+                //@tsql
+                SqlParameter tsqlParam = describeParameterEncryptionRequest.systemParams[0];
+                tsqlParam.SqlDbType = ((text.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
+                tsqlParam.Value = text;
+                tsqlParam.Size = text.Length;
             }
             else
             {
@@ -3493,17 +3496,19 @@ namespace Microsoft.Data.SqlClient
                 {
                     // For stored procedures, we need to prepare @tsql in the following format
                     // N'EXEC sp_name @param1=@param1, @param1=@param2, ..., @paramN=@paramN'
-                    sqlParam = BuildStoredProcedureStatementForColumnEncryption(text, originalRpcRequest.userParams);
+                    describeParameterEncryptionRequest.systemParams[0] = BuildStoredProcedureStatementForColumnEncryption(text, originalRpcRequest.userParams);
                 }
                 else
                 {
-                    sqlParam = GetSqlParameterWithQueryText(text);
+                    //@tsql
+                    SqlParameter tsqlParam = describeParameterEncryptionRequest.systemParams[0];
+                    tsqlParam.SqlDbType = ((text.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
+                    tsqlParam.Value = text;
+                    tsqlParam.Size = text.Length;
                 }
             }
 
             Debug.Assert(text != null, "@tsql parameter is null in PrepareDescribeParameterEncryptionRequest.");
-
-            describeParameterEncryptionRequest.systemParams[0] = sqlParam;
             string parameterList = null;
 
             // In BatchRPCMode, the input parameters start at parameters[1]. parameters[0] is the T-SQL statement. rpcName is sp_executesql.
@@ -3570,22 +3575,19 @@ namespace Microsoft.Data.SqlClient
                 parameterList = BuildParamList(tdsParser, tempCollection, includeReturnValue: true);
             }
 
-            sqlParam = new SqlParameter(null, ((parameterList.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText, parameterList.Length);
-            sqlParam.Value = parameterList;
-            describeParameterEncryptionRequest.systemParams[1] = sqlParam;
-            describeParameterEncryptionRequest.systemParamCount = 2;
+            //@parameters
+            
+            SqlParameter paramsParam = describeParameterEncryptionRequest.systemParams[1];
+            paramsParam.SqlDbType = ((parameterList.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
+            paramsParam.Size = parameterList.Length;
+            paramsParam.Value = parameterList;
 
             if (attestationParameters != null)
             {
-                var attestationParametersParam = new SqlParameter(null, SqlDbType.VarBinary)
-                {
-                    Direction = ParameterDirection.Input,
-                    Size = attestationParameters.Length,
-                    Value = attestationParameters
-                };
-
-                describeParameterEncryptionRequest.systemParams[2] = attestationParametersParam;
-                describeParameterEncryptionRequest.systemParamCount = 3;
+                SqlParameter attestationParametersParam = describeParameterEncryptionRequest.systemParams[2];
+                attestationParametersParam.Direction = ParameterDirection.Input;
+                attestationParametersParam.Size = attestationParameters.Length;
+                attestationParametersParam.Value = attestationParameters;
             }
         }
 
