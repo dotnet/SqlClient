@@ -149,7 +149,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public void TestEncryptDecryptWithCSP(string connectionString)
         {
             string providerName = @"Microsoft Enhanced RSA and AES Cryptographic Provider";
-            string keyIdentifier = "BasicCMK";
+            string keyIdentifier = DataTestUtility.GetUniqueNameForSqlServer("CSP");
 
             try
             {
