@@ -17,14 +17,14 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         public void EmptyCertificateThumbprint()
         {
             string dummyPath = string.Format("CurrentUser/My/");
-            string expectedMessage = string.Format("Empty certificate thumbprint specified in certificate path '{0}'.\r\nParameter name: masterKeyPath", dummyPath);
+            string expectedMessage = string.Format(@"Empty certificate thumbprint specified in certificate path '{0}'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?", dummyPath);
 
             ArgumentException e = Assert.Throws<ArgumentException>(() => ExceptionCertFixture.certStoreProvider.EncryptColumnEncryptionKey(dummyPath, masterKeyEncAlgo, ExceptionCertFixture.encryptedCek));
-            Assert.Contains(expectedMessage, e.Message);
+            Assert.Matches(expectedMessage, e.Message);
 
-            expectedMessage = string.Format("Internal error. Empty certificate thumbprint specified in certificate path '{0}'.\r\nParameter name: masterKeyPath", dummyPath);
+            expectedMessage = string.Format(@"Internal error. Empty certificate thumbprint specified in certificate path '{0}'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?", dummyPath);
             e = Assert.Throws<ArgumentException>(() => ExceptionCertFixture.certStoreProvider.DecryptColumnEncryptionKey(dummyPath, masterKeyEncAlgo, ExceptionCertFixture.encryptedCek));
-            Assert.Contains(expectedMessage, e.Message);
+            Assert.Matches(expectedMessage, e.Message);
         }
 
         [Fact]
@@ -32,13 +32,13 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         public void CertificateNotFound()
         {
             string dummyPath = string.Format("CurrentUser/My/JunkThumbprint");
-            string expectedMessage = string.Format("Certificate with thumbprint 'JunkThumbprint' not found in certificate store 'My' in certificate location 'CurrentUser'.\r\nParameter name: masterKeyPath");
+            string expectedMessage = string.Format(@"Certificate with thumbprint 'JunkThumbprint' not found in certificate store 'My' in certificate location 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?");
             ArgumentException e = Assert.Throws<ArgumentException>(() => ExceptionCertFixture.certStoreProvider.EncryptColumnEncryptionKey(dummyPath, masterKeyEncAlgo, ExceptionCertFixture.encryptedCek));
-            Assert.Contains(expectedMessage, e.Message);
+            Assert.Matches(expectedMessage, e.Message);
 
-            expectedMessage = string.Format("Certificate with thumbprint 'JunkThumbprint' not found in certificate store 'My' in certificate location 'CurrentUser'. Verify the certificate path in the column master key definition in the database is correct, and the certificate has been imported correctly into the certificate location/store.\r\nParameter name: masterKeyPath");
+            expectedMessage = string.Format(@"Certificate with thumbprint 'JunkThumbprint' not found in certificate store 'My' in certificate location 'CurrentUser'. Verify the certificate path in the column master key definition in the database is correct, and the certificate has been imported correctly into the certificate location/store.\s+\(?Parameter (name: )?'?masterKeyPath('\))?");
             e = Assert.Throws<ArgumentException>(() => ExceptionCertFixture.certStoreProvider.DecryptColumnEncryptionKey(dummyPath, masterKeyEncAlgo, ExceptionCertFixture.encryptedCek));
-            Assert.Contains(expectedMessage, e.Message);
+            Assert.Matches(expectedMessage, e.Message);
         }
 
 #if NET46
