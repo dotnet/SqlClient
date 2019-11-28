@@ -18,63 +18,146 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             this._fixture = fixture;
             this.tableNames = fixture.sqlBulkTruncationTableNames;
-
-            PopulateTables();
-
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void BulkCopyTestsInt(string connectionString)
         {
+            PopulateTable("TabIntSource", "1, 300", connectionString);
+
             Assert.Throws<InvalidOperationException>(() => DoBulkCopy(tableNames["TabIntSource"], tableNames["TabTinyIntTarget"], connectionString));
+
+            //Truncate removes the data but not the table.
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntTargetDirect"]}]", connection);
+                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntSource"]}]", connection);
+            }
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void DirectInsertTest1(string connectionString)
         {
+
+            //Populate table TabIntSourceDirect with parameters @c1,@c2
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 connection.Open();
-                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntTargetDirect"]}]", connection);
+                using (SqlCommand cmd = new SqlCommand($@"INSERT INTO [{tableNames["TabIntSourceDirect"]}] VALUES (@c1, @c2)", connection))
+                {
+                    SqlParameter paramC1 = cmd.Parameters.AddWithValue(@"@c1", 1);
+
+                    SqlParameter paramC2 = cmd.CreateParameter();
+                    paramC2.ParameterName = @"@c2";
+                    paramC2.DbType = DbType.Int32;
+                    paramC2.Direction = ParameterDirection.Input;
+                    paramC2.Precision = 3;
+                    paramC2.Value = -500;
+                    cmd.Parameters.Add(paramC2);
+
+                    cmd.ExecuteNonQuery();
+                }
             }
 
             DoBulkCopyDirect(tableNames["TabIntSourceDirect"], tableNames["TabIntTargetDirect"], connectionString, true, true);
 
             VerifyTablesEqual(tableNames["TabIntSourceDirect"], tableNames["TabIntTargetDirect"], connectionString);
+
+            //Truncate populated tables.
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntSourceDirect"]}]", connection);
+                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntTargetDirect"]}]", connection);
+
+            }
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void DirectInsertTest2(String connectionString)
         {
+            //Populate table TabIntSourceDirect with parameters @c1,@c2
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                using (SqlCommand cmd = new SqlCommand($@"INSERT INTO [{tableNames["TabIntSourceDirect"]}] VALUES (@c1, @c2)", connection))
+                {
+                    SqlParameter paramC1 = cmd.Parameters.AddWithValue(@"@c1", 1);
+
+                    SqlParameter paramC2 = cmd.CreateParameter();
+                    paramC2.ParameterName = @"@c2";
+                    paramC2.DbType = DbType.Int32;
+                    paramC2.Direction = ParameterDirection.Input;
+                    paramC2.Precision = 3;
+                    paramC2.Value = -500;
+                    cmd.Parameters.Add(paramC2);
+
+                    cmd.ExecuteNonQuery();
+                }
+            }
 
             // Test case when source is enabled and target are disabled
             // Expected to fail with casting error (client will attempt to cast int to varbinary)
             Assert.Throws<InvalidOperationException>(() => { DoBulkCopyDirect(tableNames["TabIntSourceDirect"], tableNames["TabIntTargetDirect"], connectionString, true, false); });
+
+            //Truncate populated tables.
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntSourceDirect"]}]", connection);
+                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntTargetDirect"]}]", connection);
+
+            }
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void DirectInsertTest3(string connectionString)
         {
-            // Clean up target table (just in case)
+            //Populate table TabIntSourceDirect with parameters @c1,@c2
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 connection.Open();
+                using (SqlCommand cmd = new SqlCommand($@"INSERT INTO [{tableNames["TabIntSourceDirect"]}] VALUES (@c1, @c2)", connection))
+                {
+                    SqlParameter paramC1 = cmd.Parameters.AddWithValue(@"@c1", 1);
 
-                SilentRunCommand($@"TRUNCATE TABLE [dbo].[{tableNames["TabIntTargetDirect"]}]", connection);
+                    SqlParameter paramC2 = cmd.CreateParameter();
+                    paramC2.ParameterName = @"@c2";
+                    paramC2.DbType = DbType.Int32;
+                    paramC2.Direction = ParameterDirection.Input;
+                    paramC2.Precision = 3;
+                    paramC2.Value = -500;
+                    cmd.Parameters.Add(paramC2);
+
+                    cmd.ExecuteNonQuery();
+                }
             }
 
             Assert.Throws<InvalidOperationException>(() => { DoBulkCopyDirect(tableNames["TabIntSourceDirect"], tableNames["TabIntTargetDirect"], connectionString, false, true); });
+
+            //Truncate populated tables.
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntSourceDirect"]}]", connection);
+                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntTargetDirect"]}]", connection);
+
+            }
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void BulkCopyDatetime2Tests(string connectionString)
         {
+            PopulateTable("TabDatetime2Source", @"1, '1968-10-23 12:45:37.123456'", connectionString);
+
             DoBulkCopy(tableNames["TabDatetime2Source"], tableNames["TabDatetime2Target"], connectionString);
+
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 connection.Open();
@@ -102,6 +185,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                             Assert.True(millisec.Equals("12:45:37.1200000"), "Unexpected milliseconds");
                         }
                     }
+
+                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabDatetime2Source"]}]", connection);
                 }
             }
         }
@@ -110,13 +195,25 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void BulkCopyDecimal(string connectionString)
         {
+            PopulateTable("TabDecimalSource", "1,12345.6789", connectionString);
+
             Assert.Throws<InvalidOperationException>(() => DoBulkCopy(tableNames["TabDecimalSource"], tableNames["TabDecimalTarget"], connectionString));
+
+            //Truncate tables for next try
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabDecimalSource"]}]", connection);
+                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabDecimalTarget"]}]", connection);
+            }
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void BulkCopyVarchar(string connectionString)
         {
+            PopulateTable("TabVarCharSmallSource", @"1,'abcdefghij'", connectionString);
+
             DoBulkCopy(tableNames["TabVarCharSmallSource"], tableNames["TabVarCharTarget"], connectionString);
 
             using (SqlConnection connection = new SqlConnection(connectionString))
@@ -130,6 +227,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         Assert.True(reader.GetString(0).Equals("ab"), "String was not truncated as expected!");
                     }
                 }
+
+                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabVarCharTarget"]}]", connection);
+                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabVarCharSmallSource"]}]", connection);
             }
         }
 
@@ -137,7 +237,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void BulkCopyVarcharMax(string connectionString)
         {
-            DoBulkCopy(tableNames["TabVarCharMaxSource"],tableNames["TabVarCharMaxTarget"], connectionString);
+            PopulateTable("TabVarCharMaxSource", $"1,'{new string('a', 8003)}'", connectionString);
+
+            DoBulkCopy(tableNames["TabVarCharMaxSource"], tableNames["TabVarCharMaxTarget"], connectionString);
 
             using (SqlConnection connection = new SqlConnection(connectionString))
             using (SqlCommand cmd = new SqlCommand($@"SELECT [c2] from [{tableNames["TabVarCharMaxTarget"]}]", connection, null, SqlCommandColumnEncryptionSetting.Enabled))
@@ -150,6 +252,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         Assert.True(reader.GetString(0).Equals(new string('a', 7000)), "String was not truncated as expected!");
                     }
                 }
+
+                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabVarCharMaxSource"]}]", connection);
+                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabVarCharMaxTarget"]}]", connection);
             }
         }
 
@@ -157,22 +262,42 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void BulkCopyNVarchar(string connectionString)
         {
+            PopulateTable("TabNVarCharMaxSource", $"1, N'{new string('a', 4003)}'", connectionString);
+
             // Will fail (NVarchars are not truncated)!
             Assert.Throws<InvalidOperationException>(() => DoBulkCopy(tableNames["TabNVarCharMaxSource"], tableNames["TabNVarCharTarget"], connectionString));
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabNVarCharMaxSource"]}]", connection);
+                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabNVarCharTarget"]}]", connection);
+            }
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void BulkCopyNVarcharMax(string connectionString)
         {
+            PopulateTable("TabNVarCharMaxSource", $"1,N'{new string('a', 4003)}'", connectionString);
+
             // Will fail (NVarchars are not truncated)!
             Assert.Throws<InvalidOperationException>(() => DoBulkCopy(tableNames["TabNVarCharMaxSource"], tableNames["TabNVarCharTarget"], connectionString));
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabNVarCharMaxSource"]}]", connection);
+                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabNVarCharTarget"]}]", connection);
+            }
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void BulkCopyBinaryMax(string connectionString)
         {
+            PopulateTable("TabBinaryMaxSource", $"1, 0x{new string('e', 14000)}", connectionString);
+
             // Will fail (NVarchars are not truncated)!
             DoBulkCopy(tableNames["TabBinaryMaxSource"], tableNames["TabBinaryTarget"], connectionString);
 
@@ -196,6 +321,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                             }
                         }
                     }
+                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabBinaryMaxSource"]}]", connection);
+                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabBinaryTarget"]}]", connection);
                 }
             }
         }
@@ -204,15 +331,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void BulkCopySmallChar(string connectionString)
         {
+            PopulateTable("TabSmallCharSource", $"1, '{new string('a', 8000)}'", connectionString);
+
             // should succeed!
             DoBulkCopy($"{tableNames["TabSmallCharSource"]}", $"{tableNames["TabSmallCharTarget"]}", connectionString);
 
             // Verify the truncated value
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection connection = new SqlConnection(connectionString))
             {
-                conn.Open();
+                connection.Open();
 
-                using (SqlCommand cmd = new SqlCommand($"SELECT [c2] from [{tableNames["TabSmallCharTarget"]}]", conn))
+                using (SqlCommand cmd = new SqlCommand($"SELECT [c2] from [{tableNames["TabSmallCharTarget"]}]", connection))
                 {
                     using (SqlDataReader reader = cmd.ExecuteReader())
                     {
@@ -222,6 +351,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                             Assert.True(columnValue.Equals(new string('a', 3000)), "Unexpected value read");
                         }
                     }
+                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabBinaryMaxSource"]}]", connection);
+                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabBinaryTarget"]}]", connection);
                 }
             }
 
@@ -356,72 +487,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        internal void PopulateTables()
+        internal void PopulateTable(string tableName, string valueS, string connectionString)
         {
-            foreach(string connString  in DataTestUtility.AEConnStrings)
+            using (SqlConnection connection = new SqlConnection(connectionString))
             {
-                using(SqlConnection connection = new SqlConnection(connString))
-                {
-                    connection.Open();
-
-                    ExecuteQuery(connection, $"INSERT INTO [{tableNames["TabIntSource"]}] ([c1],[c2]) VALUES(2, 300)");
-
-                    using(SqlCommand cmd = new SqlCommand($@"INSERT INTO [{tableNames["TabIntSourceDirect"]}] VALUES (1, @c2)", connection))
-                    {
-                        SqlParameter paramC2 = cmd.CreateParameter();
-                        paramC2.ParameterName = @"@c2";
-                        paramC2.DbType = DbType.Int32;
-                        paramC2.Direction = ParameterDirection.Input;
-                        paramC2.Precision = 3;
-                        paramC2.Value = -500;
-                        cmd.Parameters.Add(paramC2);
-
-                        cmd.ExecuteNonQuery();
-                    }
-
-                    // Datetime2(6)
-                    ExecuteQuery(connection,
-                        $@"INSERT INTO [{tableNames["TabDatetime2Source"]}] VALUES (1, '1968-10-23 12:45:37.123456')");
-
-                    // Decimal(10,4)
-                    ExecuteQuery(connection,
-                        $@"INSERT INTO [{tableNames["TabDecimalSource"]}] VALUES (1,12345.6789)");
-
-                    // Varchar(10)
-                    ExecuteQuery(connection,
-                        $@"INSERT INTO [{tableNames["TabVarCharSmallSource"]}] VALUES (1,'abcdefghij')");
-
-                    // Varchar(max)
-                    ExecuteQuery(connection,
-                        $@"INSERT INTO [{tableNames["TabVarCharMaxSource"]}] VALUES (1,'{new string('a', 8003)}')"); // 8003 is above the max fixedlen permissible size of 8000
-
-                    // NVarchar(10)
-                    ExecuteQuery(connection,
-                        $@"INSERT INTO [{tableNames["TabNVarCharSmallSource"]}] VALUES (1,N'{new string('a', 10)}')");
-
-                    // NVarchar(max)
-                    ExecuteQuery(connection,
-                       $@"INSERT INTO [{tableNames["TabNVarCharMaxSource"]}] VALUES (1,N'{new string('a', 4003)}')"); // 4003 is above the max fixedlen permissible size of 4000
-
-                    // varbinary(max)
-                    ExecuteQuery(connection,
-                        $@"INSERT INTO [{tableNames["TabVarBinaryMaxSource"]}] VALUES (1, 0x{new string('e', 16004)})"); // this will bring varbinary size of 8002, above the fixedlen permissible size of 8000
-
-                    // binary(7000)TabBinaryMaxSource
-                    ExecuteQuery(connection,
-                        $@"INSERT INTO [{tableNames["TabBinaryMaxSource"]}] VALUES (1, 0x{new string('e', 14000)})"); // size of 7000
-
-                    // binary (3000)
-                    ExecuteQuery(connection,
-                        $@"INSERT INTO [{tableNames["TabSmallBinarySource"]}] VALUES (1, 0x{new string('e', 6000)})"); // size of 3000
-
-                    // char(8000)
-                    ExecuteQuery(connection,
-                        $@"INSERT INTO [{tableNames["TabSmallCharSource"]}] VALUES (1, '{new string('a', 8000)}')"); // size of 8000  
-                }
+                connection.Open();
+                ExecuteQuery(connection, $@"INSERT INTO [{tableNames[tableName]}] values ({valueS})");
             }
         }
-
+        
         public void Dispose()
         {
             foreach (string connection in DataTestUtility.AEConnStringsSetup)
