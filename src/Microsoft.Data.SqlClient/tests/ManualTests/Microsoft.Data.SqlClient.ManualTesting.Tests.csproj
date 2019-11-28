@@ -165,9 +165,7 @@
     <Compile Include="SQL\RandomStressTest\RandomStressTest.cs" />
     <Compile Include="SQL\SplitPacketTest\SplitPacketTest.cs" />
     <Compile Include="SQL\SqlNotificationTest\SqlNotificationTest.cs" />
-    <Compile Include="SQL\T3Test\SqlCommandTest.cs" />
-    <Compile Include="SQL\T3Test\SqlTransactionTest.cs" />
-    <Compile Include="SQL\T3Test\T3Helpers.cs" />
+    <Compile Include="SQL\TransactionTest\TransactionInferenceTest.cs" />
     <Compile Include="SQL\TransactionTest\TransactionTest.cs" />
     <Compile Include="SQL\TransactionTest\TransactionEnlistmentTest.cs" />
     <Compile Include="SQL\UdtTest\SqlServerTypesTest.cs" />
