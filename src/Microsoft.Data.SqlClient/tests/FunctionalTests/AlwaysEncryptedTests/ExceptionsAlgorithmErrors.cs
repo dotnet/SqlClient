@@ -24,7 +24,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         public void TestNullCEK()
         {
             TargetInvocationException e = Assert.Throws<TargetInvocationException>(() => sqlColumnEncryptionKeyConstructor.Invoke(new object[] { new byte[] { } }));
-            string expectedMessage = @"Internal error. Column encryption key cannot be null.\s\(?Parameter (name: )?'?encryptionKey('\))?";
+            string expectedMessage = @"Internal error. Column encryption key cannot be null.\s+\(?Parameter (name: )?'?encryptionKey('\))?";
             Assert.Matches(expectedMessage, e.InnerException.Message);
             e = Assert.Throws<TargetInvocationException>(() => sqlColumnEncryptionKeyConstructor.Invoke(new object[] { null }));
             Assert.Matches(expectedMessage, e.InnerException.Message);
@@ -41,7 +41,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             }
             TargetInvocationException e = Assert.Throws<TargetInvocationException>(() =>
                 Utility.EncryptDataUsingAED(new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, key, Utility.CColumnEncryptionType.Deterministic));
-            string expectedMessage = @"The column encryption key has been successfully decrypted but it's length: 48 does not match the length: 32 for algorithm 'AEAD_AES_256_CBC_HMAC_SHA256'. Verify the encrypted value of the column encryption key in the database.\s\(?Parameter (name: )?'?encryptionKey('\))?";
+            string expectedMessage = @"The column encryption key has been successfully decrypted but it's length: 48 does not match the length: 32 for algorithm 'AEAD_AES_256_CBC_HMAC_SHA256'. Verify the encrypted value of the column encryption key in the database.\s+\(?Parameter (name: )?'?encryptionKey('\))?";
             Assert.Matches(expectedMessage, e.InnerException.Message);
         }
 
@@ -54,7 +54,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             byte[] plainText = Encoding.Unicode.GetBytes("HelloWorld");
             byte[] cipherText = Utility.EncryptDataUsingAED(plainText, CertFixture.cek, Utility.CColumnEncryptionType.Deterministic);
 
-            string expectedMessage = @"Encryption type '3' specified for the column in the database is either invalid or corrupted. Valid encryption types for algorithm 'AEAD_AES_256_CBC_HMAC_SHA256' are: 'Deterministic', 'Randomized'.\s\(?Parameter (name: )?'?encryptionType('\))?";
+            string expectedMessage = @"Encryption type '3' specified for the column in the database is either invalid or corrupted. Valid encryption types for algorithm 'AEAD_AES_256_CBC_HMAC_SHA256' are: 'Deterministic', 'Randomized'.\s+\(?Parameter (name: )?'?encryptionType('\))?";
             TargetInvocationException e = Assert.Throws<TargetInvocationException>(() => Utility.DecryptWithKey(cipherText, cipherMD, "testsrv"));
             Assert.Matches(expectedMessage, e.InnerException.Message);
 
@@ -67,7 +67,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         public void TestInvalidCipherText()
         {
             // Attempt to decrypt 53 random bytes
-            string expectedMessage = @"Specified ciphertext has an invalid size of 53 bytes, which is below the minimum 65 bytes required for decryption.\s\(?Parameter (name: )?'?cipherText('\))?";
+            string expectedMessage = @"Specified ciphertext has an invalid size of 53 bytes, which is below the minimum 65 bytes required for decryption.\s+\(?Parameter (name: )?'?cipherText('\))?";
             byte[] cipherText = Utility.GenerateRandomBytes(53); // minimum length is 65
             TargetInvocationException e = Assert.Throws<TargetInvocationException>(() => Utility.DecryptDataUsingAED(cipherText, CertFixture.cek, Utility.CColumnEncryptionType.Deterministic));
             Assert.Matches(expectedMessage, e.InnerException.Message);
@@ -77,7 +77,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         [PlatformSpecific(TestPlatforms.Windows)]
         public void TestInvalidAlgorithmVersion()
         {
-            string expectedMessage = @"The specified ciphertext's encryption algorithm version '40' does not match the expected encryption algorithm version '01'.\s\(?Parameter (name: )?'?cipherText('\))?";
+            string expectedMessage = @"The specified ciphertext's encryption algorithm version '40' does not match the expected encryption algorithm version '01'.\s+\(?Parameter (name: )?'?cipherText('\))?";
             byte[] plainText = Encoding.Unicode.GetBytes("Hello World");
             byte[] cipherText = Utility.EncryptDataUsingAED(plainText, CertFixture.cek, Utility.CColumnEncryptionType.Deterministic);
             // Put a version number of 0x10
@@ -90,7 +90,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         [PlatformSpecific(TestPlatforms.Windows)]
         public void TestInvalidAuthenticationTag()
         {
-            string expectedMessage = @"Specified ciphertext has an invalid authentication tag.\s\(?Parameter (name: )?'?cipherText('\))?";
+            string expectedMessage = @"Specified ciphertext has an invalid authentication tag.\s+\(?Parameter (name: )?'?cipherText('\))?";
             byte[] plainText = Encoding.Unicode.GetBytes("Hello World");
             byte[] cipherText = Utility.EncryptDataUsingAED(plainText, CertFixture.cek, Utility.CColumnEncryptionType.Deterministic);
             // Zero out 4 bytes of authentication tag
@@ -123,7 +123,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         [PlatformSpecific(TestPlatforms.Windows)]
         public void TestUnknownEncryptionAlgorithmId()
         {
-            string errorMessage = @"Encryption algorithm id '3' for the column in the database is either invalid or corrupted. Valid encryption algorithm ids are: '1', '2'.\s\(?Parameter (name: )?'?cipherAlgorithmId('\))?";
+            string errorMessage = @"Encryption algorithm id '3' for the column in the database is either invalid or corrupted. Valid encryption algorithm ids are: '1', '2'.\s+\(?Parameter (name: )?'?cipherAlgorithmId('\))?";
             Object cipherMD = Utility.GetSqlCipherMetadata(0, 3, null, 1, 0x01);
             Utility.AddEncryptionKeyToCipherMD(cipherMD, CertFixture.encryptedCek, 0, 0, 0, new byte[] { 0x01, 0x02, 0x03 }, CertFixture.certificatePath, "MSSQL_CERTIFICATE_STORE", "RSA_OAEP");
             byte[] plainText = Encoding.Unicode.GetBytes("HelloWorld");
@@ -179,8 +179,8 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
             // Pass a garbled encrypted CEK
             string[] errorMessages = {
-                string.Format(@"Failed to decrypt a column encryption key using key store provider: 'MSSQL_CERTIFICATE_STORE'. The last 10 bytes of the encrypted column encryption key are: '{0}'.\r\nSpecified encrypted column encryption key contains an invalid encryption algorithm version '00'. Expected version is '01'.\s\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?", BitConverter.ToString(corruptedCek,corruptedCek.Length-10,10)),
-                string.Format(@"Specified encrypted column encryption key signature does not match the signature computed with the column master key (certificate) in 'CurrentUser/My/{0}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.\s\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?", CertFixture.thumbprint)
+                string.Format(@"Failed to decrypt a column encryption key using key store provider: 'MSSQL_CERTIFICATE_STORE'. The last 10 bytes of the encrypted column encryption key are: '{0}'.\r\nSpecified encrypted column encryption key contains an invalid encryption algorithm version '00'. Expected version is '01'.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?", BitConverter.ToString(corruptedCek,corruptedCek.Length-10,10)),
+                string.Format(@"Specified encrypted column encryption key signature does not match the signature computed with the column master key (certificate) in 'CurrentUser/My/{0}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?", CertFixture.thumbprint)
             };
 
             Object cipherMD = Utility.GetSqlCipherMetadata(0, 1, null, 1, 0x01);
