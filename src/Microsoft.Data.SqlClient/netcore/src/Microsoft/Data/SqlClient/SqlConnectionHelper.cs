@@ -237,6 +237,7 @@ namespace Microsoft.Data.SqlClient
             }
             else if (ConnectionState.Open == originalState && ConnectionState.Closed == currentState)
             {
+                ADP.TimerCurrent(out _statistics._closeTimestamp);
                 OnStateChange(DbConnectionInternal.StateChangeClosed);
             }
             else

@@ -218,6 +218,8 @@ namespace Microsoft.Data.SqlClient
             {
                 _connectionTime = long.MaxValue;
             }
+            ADP.TimerCurrent(out _openTimestamp);
+            ADP.TimerCurrent(out _closeTimestamp);
         }
 
         // We subclass Dictionary to provide our own implementation of GetEnumerator, CopyTo, Keys.CopyTo,

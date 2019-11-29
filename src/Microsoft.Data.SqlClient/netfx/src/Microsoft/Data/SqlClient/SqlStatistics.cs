@@ -215,6 +215,8 @@ namespace Microsoft.Data.SqlClient
             {
                 _connectionTime = long.MaxValue;
             }
+            ADP.TimerCurrent(out _openTimestamp);
+            ADP.TimerCurrent(out _closeTimestamp);
         }
     }
 }
