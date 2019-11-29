@@ -4,6 +4,8 @@
 
 using System;
 using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -19,6 +21,47 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(bytes.Length >= 16, "not enough bytes to set guid");
             return new Guid(bytes);
+        }
+
+        private sealed partial class TdsOutputStream
+        {
+            public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+                => WriteAsync(new ReadOnlyMemory<byte>(buffer, offset, count), cancellationToken).AsTask();
+
+            public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken)
+            {
+                Debug.Assert(_parser._asyncWrite);
+                ReadOnlySpan<byte> span = buffer.Span;
+
+                StripPreamble(ref span);
+
+                ValueTask task = default;
+                if (span.Length > 0)
+                {
+                    _parser.WriteInt(span.Length, _stateObj); // write length of chunk
+                    task = new ValueTask(_stateObj.WriteByteSpan(span, canAccumulate: false));
+                }
+
+                return task;
+            }
+
+            private void StripPreamble(ref ReadOnlySpan<byte> buffer)
+            {
+                if (_preambleToStrip != null && buffer.Length >= _preambleToStrip.Length)
+                {
+                    for (int idx = 0; idx < _preambleToStrip.Length; idx++)
+                    {
+                        if (_preambleToStrip[idx] != buffer[idx])
+                        {
+                            _preambleToStrip = null;
+                            return;
+                        }
+                    }
+
+                    buffer = buffer.Slice(_preambleToStrip.Length);
+                }
+                _preambleToStrip = null;
+            }
         }
     }
 }

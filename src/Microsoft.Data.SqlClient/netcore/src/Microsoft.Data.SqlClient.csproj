@@ -2,7 +2,7 @@
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
     <TargetFrameworks>netcoreapp2.1;netstandard2.0</TargetFrameworks>
-    <LangVersion>7.2</LangVersion>
+    <LangVersion>8</LangVersion>
     <GeneratePlatformNotSupportedAssemblyMessage Condition="'$(OSGroup)' == 'AnyOS'">SR.PlatformNotSupported_DataSqlClient</GeneratePlatformNotSupportedAssemblyMessage>
     <OSGroup Condition="'$(OSGroup)' == ''">Windows_NT</OSGroup>
     <IsPartialFacadeAssembly Condition="'$(TargetsNetFx)' == 'true'">true</IsPartialFacadeAssembly>
@@ -45,6 +45,7 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIPacket.NetCoreApp.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SNI\SslOverTdsStream.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\AzureAttestationBasedEnclaveProvider.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProvider.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProviderBase.NetCoreApp.cs" />
@@ -57,6 +58,7 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.NetStandard.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.NetStandard.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIPacket.NetStandard.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SNI\SslOverTdsStream.NetStandard.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(IsPartialFacadeAssembly)' != 'true' AND '$(OSGroup)' != 'AnyOS'">    
     <Compile Include="Microsoft\Data\SqlClient\Server\ITypedGetters.cs" />

@@ -5,6 +5,8 @@
 using System;
 using System.Buffers;
 using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -36,6 +38,26 @@ namespace Microsoft.Data.SqlClient
             Guid retval = new Guid(temp);
             ArrayPool<byte>.Shared.Return(temp);
             return retval;
+        }
+
+        private sealed partial class TdsOutputStream
+        {
+            public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+            {
+                Debug.Assert(_parser._asyncWrite);
+                ValidateWriteParameters(buffer, offset, count);
+
+                StripPreamble(buffer, ref offset, ref count);
+
+                Task task = null;
+                if (count > 0)
+                {
+                    _parser.WriteInt(count, _stateObj); // write length of chunk
+                    task = _stateObj.WriteByteArray(buffer, count, offset, canAccumulate: false);
+                }
+
+                return task ?? Task.CompletedTask;
+            }
         }
     }
 }

@@ -18,8 +18,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="callback">Completion callback</param>
         public void ReadFromStreamAsync(Stream stream, SNIAsyncCallback callback)
         {
-            // Treat local function as a static and pass all params otherwise as async will allocate
-            async Task ReadFromStreamAsync(SNIPacket packet, SNIAsyncCallback cb, ValueTask<int> valueTask)
+            static async Task ReadFromStreamAsync(SNIPacket packet, SNIAsyncCallback callback, ValueTask<int> valueTask)
             {
                 bool error = false;
                 try
@@ -42,10 +41,18 @@ namespace Microsoft.Data.SqlClient.SNI
                     packet.Release();
                 }
 
-                cb(packet, error ? TdsEnums.SNI_ERROR : TdsEnums.SNI_SUCCESS);
+                callback(packet, error ? TdsEnums.SNI_ERROR : TdsEnums.SNI_SUCCESS);
             }
 
-            ValueTask<int> vt = stream.ReadAsync(new Memory<byte>(_data, 0, _capacity), CancellationToken.None);
+            ValueTask<int> vt;
+            try
+            {
+                vt = stream.ReadAsync(new Memory<byte>(_data, 0, _capacity), CancellationToken.None);
+            } 
+            catch (Exception ex)
+            {
+                vt = new ValueTask<int>(Task.FromException<int>(ex));
+            }
 
             if (vt.IsCompletedSuccessfully)
             {
@@ -78,8 +85,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="disposeAfterWriteAsync"></param>
         public void WriteToStreamAsync(Stream stream, SNIAsyncCallback callback, SNIProviders provider, bool disposeAfterWriteAsync = false)
         {
-            // Treat local function as a static and pass all params otherwise as async will allocate
-            async Task WriteToStreamAsync(SNIPacket packet, SNIAsyncCallback cb, SNIProviders providers, bool disposeAfter, ValueTask valueTask)
+            static async Task WriteToStreamAsync(SNIPacket packet, SNIAsyncCallback callback, SNIProviders provider, bool disposeAfterWriteAsync, ValueTask valueTask)
             {
                 uint status = TdsEnums.SNI_SUCCESS;
                 try
@@ -88,19 +94,27 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
                 catch (Exception e)
                 {
-                    SNILoadHandle.SingletonInstance.LastError = new SNIError(providers, SNICommon.InternalExceptionError, e);
+                    SNILoadHandle.SingletonInstance.LastError = new SNIError(provider, SNICommon.InternalExceptionError, e);
                     status = TdsEnums.SNI_ERROR;
                 }
 
-                cb(packet, status);
+                callback(packet, status);
 
-                if (disposeAfter)
+                if (disposeAfterWriteAsync)
                 {
                     packet.Dispose();
                 }
             }
 
-            ValueTask vt = stream.WriteAsync(new Memory<byte>(_data, 0, _length), CancellationToken.None);
+            ValueTask vt;
+            try
+            {
+                vt = stream.WriteAsync(new Memory<byte>(_data, 0, _length), CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                vt = new ValueTask(Task.FromException(ex));
+            }
 
             if (vt.IsCompletedSuccessfully)
             {

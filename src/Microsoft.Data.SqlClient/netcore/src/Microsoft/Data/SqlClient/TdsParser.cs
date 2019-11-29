@@ -10870,7 +10870,7 @@ namespace Microsoft.Data.SqlClient
             return null;
         }
 
-        private sealed class TdsOutputStream : Stream
+        private sealed partial class TdsOutputStream : Stream
         {
             private TdsParser _parser;
             private TdsParserStateObject _stateObj;
@@ -10966,23 +10966,6 @@ namespace Microsoft.Data.SqlClient
                     _parser.WriteInt(count, _stateObj); // write length of chunk
                     _stateObj.WriteByteArray(buffer, count, offset);
                 }
-            }
-
-            public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
-            {
-                Debug.Assert(_parser._asyncWrite);
-                ValidateWriteParameters(buffer, offset, count);
-
-                StripPreamble(buffer, ref offset, ref count);
-
-                Task task = null;
-                if (count > 0)
-                {
-                    _parser.WriteInt(count, _stateObj); // write length of chunk
-                    task = _stateObj.WriteByteArray(buffer, count, offset, canAccumulate: false);
-                }
-
-                return task ?? Task.CompletedTask;
             }
 
             internal static void ValidateWriteParameters(byte[] buffer, int offset, int count)
