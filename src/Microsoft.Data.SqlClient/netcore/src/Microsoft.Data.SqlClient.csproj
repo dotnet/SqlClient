@@ -2,7 +2,7 @@
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
     <TargetFrameworks>netcoreapp2.1;netstandard2.0</TargetFrameworks>
-    <LangVersion>8</LangVersion>
+    <LangVersion>7.2</LangVersion>
     <GeneratePlatformNotSupportedAssemblyMessage Condition="'$(OSGroup)' == 'AnyOS'">SR.PlatformNotSupported_DataSqlClient</GeneratePlatformNotSupportedAssemblyMessage>
     <OSGroup Condition="'$(OSGroup)' == ''">Windows_NT</OSGroup>
     <IsPartialFacadeAssembly Condition="'$(TargetsNetFx)' == 'true'">true</IsPartialFacadeAssembly>

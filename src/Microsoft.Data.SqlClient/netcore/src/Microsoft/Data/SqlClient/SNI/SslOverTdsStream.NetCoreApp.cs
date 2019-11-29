@@ -152,7 +152,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 currentOffset += currentCount;
             }
 
-            static void CopyToBuffer(byte[] combinedBuffer, ReadOnlySpan<byte> span)
+            void CopyToBuffer(byte[] combinedBuffer, ReadOnlySpan<byte> span)
             {
                 for (int i = TdsEnums.HEADER_LEN; i < combinedBuffer.Length; i++)
                 {

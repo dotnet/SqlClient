@@ -18,7 +18,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="callback">Completion callback</param>
         public void ReadFromStreamAsync(Stream stream, SNIAsyncCallback callback)
         {
-            static async Task ReadFromStreamAsync(SNIPacket packet, SNIAsyncCallback callback, ValueTask<int> valueTask)
+            async Task ReadFromStreamAsync(SNIPacket packet, SNIAsyncCallback cb, ValueTask<int> valueTask)
             {
                 bool error = false;
                 try
@@ -41,7 +41,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     packet.Release();
                 }
 
-                callback(packet, error ? TdsEnums.SNI_ERROR : TdsEnums.SNI_SUCCESS);
+                cb(packet, error ? TdsEnums.SNI_ERROR : TdsEnums.SNI_SUCCESS);
             }
 
             ValueTask<int> vt;
@@ -85,7 +85,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="disposeAfterWriteAsync"></param>
         public void WriteToStreamAsync(Stream stream, SNIAsyncCallback callback, SNIProviders provider, bool disposeAfterWriteAsync = false)
         {
-            static async Task WriteToStreamAsync(SNIPacket packet, SNIAsyncCallback callback, SNIProviders provider, bool disposeAfterWriteAsync, ValueTask valueTask)
+            async Task WriteToStreamAsync(SNIPacket packet, SNIAsyncCallback cb, SNIProviders providers, bool dispose, ValueTask valueTask)
             {
                 uint status = TdsEnums.SNI_SUCCESS;
                 try
@@ -94,13 +94,13 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
                 catch (Exception e)
                 {
-                    SNILoadHandle.SingletonInstance.LastError = new SNIError(provider, SNICommon.InternalExceptionError, e);
+                    SNILoadHandle.SingletonInstance.LastError = new SNIError(providers, SNICommon.InternalExceptionError, e);
                     status = TdsEnums.SNI_ERROR;
                 }
 
-                callback(packet, status);
+                cb(packet, status);
 
-                if (disposeAfterWriteAsync)
+                if (dispose)
                 {
                     packet.Dispose();
                 }
