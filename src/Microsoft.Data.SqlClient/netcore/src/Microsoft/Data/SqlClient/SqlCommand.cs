@@ -3761,7 +3761,7 @@ namespace Microsoft.Data.SqlClient
 
                 Debug.Assert(rpc != null, "rpc should not be null here.");
 
-                int userParamCount = rpc.userParamCount;
+                int userParamCount = rpc.userParams?.Count ?? 0;
                 int recievedMetadataCount = 0;
                 if (!enclaveMetadataExists || ds.NextResult())
                 {
