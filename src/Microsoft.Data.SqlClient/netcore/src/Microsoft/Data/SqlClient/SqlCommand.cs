@@ -4726,84 +4726,52 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <summary>
-        /// IMPORTANT NOTE: This is created as a copy of OnDoneProc below for Transparent Column Encryption improvement
-        /// as there is not much time, to address regressions. Will revisit removing the duplication, when we have time again.
-        /// </summary>
         internal void OnDoneDescribeParameterEncryptionProc(TdsParserStateObject stateObj)
         {
             // called per rpc batch complete
             if (BatchRPCMode)
             {
-                // track the records affected for the just completed rpc batch
-                // _rowsAffected is cumulative for ExecuteNonQuery across all rpc batches
-                _sqlRPCParameterEncryptionReqArray[_currentlyExecutingDescribeParameterEncryptionRPC].cumulativeRecordsAffected = _rowsAffected;
-
-                _sqlRPCParameterEncryptionReqArray[_currentlyExecutingDescribeParameterEncryptionRPC].recordsAffected =
-                    (((0 < _currentlyExecutingDescribeParameterEncryptionRPC) && (0 <= _rowsAffected))
-                        ? (_rowsAffected - Math.Max(_sqlRPCParameterEncryptionReqArray[_currentlyExecutingDescribeParameterEncryptionRPC - 1].cumulativeRecordsAffected, 0))
-                        : _rowsAffected);
-
-                // track the error collection (not available from TdsParser after ExecuteNonQuery)
-                // and the which errors are associated with the just completed rpc batch
-                _sqlRPCParameterEncryptionReqArray[_currentlyExecutingDescribeParameterEncryptionRPC].errorsIndexStart =
-                    ((0 < _currentlyExecutingDescribeParameterEncryptionRPC)
-                        ? _sqlRPCParameterEncryptionReqArray[_currentlyExecutingDescribeParameterEncryptionRPC - 1].errorsIndexEnd
-                        : 0);
-                _sqlRPCParameterEncryptionReqArray[_currentlyExecutingDescribeParameterEncryptionRPC].errorsIndexEnd = stateObj.ErrorCount;
-                _sqlRPCParameterEncryptionReqArray[_currentlyExecutingDescribeParameterEncryptionRPC].errors = stateObj._errors;
-
-                // track the warning collection (not available from TdsParser after ExecuteNonQuery)
-                // and the which warnings are associated with the just completed rpc batch
-                _sqlRPCParameterEncryptionReqArray[_currentlyExecutingDescribeParameterEncryptionRPC].warningsIndexStart =
-                    ((0 < _currentlyExecutingDescribeParameterEncryptionRPC)
-                        ? _sqlRPCParameterEncryptionReqArray[_currentlyExecutingDescribeParameterEncryptionRPC - 1].warningsIndexEnd
-                        : 0);
-                _sqlRPCParameterEncryptionReqArray[_currentlyExecutingDescribeParameterEncryptionRPC].warningsIndexEnd = stateObj.WarningCount;
-                _sqlRPCParameterEncryptionReqArray[_currentlyExecutingDescribeParameterEncryptionRPC].warnings = stateObj._warnings;
-
+                OnDone(stateObj, _currentlyExecutingDescribeParameterEncryptionRPC, _sqlRPCParameterEncryptionReqArray, _rowsAffected);
                 _currentlyExecutingDescribeParameterEncryptionRPC++;
             }
         }
 
-        /// <summary>
-        /// IMPORTANT NOTE: There is a copy of this function above in OnDoneDescribeParameterEncryptionProc.
-        /// Please consider the changes being done in this function for the above function as well.
-        /// </summary>
         internal void OnDoneProc()
-        { // called per rpc batch complete
+        { 
+            // called per rpc batch complete
             if (BatchRPCMode)
             {
-                // track the records affected for the just completed rpc batch
-                // _rowsAffected is cumulative for ExecuteNonQuery across all rpc batches
-                _SqlRPCBatchArray[_currentlyExecutingBatch].cumulativeRecordsAffected = _rowsAffected;
-
-                _SqlRPCBatchArray[_currentlyExecutingBatch].recordsAffected =
-                    (((0 < _currentlyExecutingBatch) && (0 <= _rowsAffected))
-                        ? (_rowsAffected - Math.Max(_SqlRPCBatchArray[_currentlyExecutingBatch - 1].cumulativeRecordsAffected, 0))
-                        : _rowsAffected);
-
-                // track the error collection (not available from TdsParser after ExecuteNonQuery)
-                // and the which errors are associated with the just completed rpc batch
-                _SqlRPCBatchArray[_currentlyExecutingBatch].errorsIndexStart =
-                    ((0 < _currentlyExecutingBatch)
-                        ? _SqlRPCBatchArray[_currentlyExecutingBatch - 1].errorsIndexEnd
-                        : 0);
-                _SqlRPCBatchArray[_currentlyExecutingBatch].errorsIndexEnd = _stateObj.ErrorCount;
-                _SqlRPCBatchArray[_currentlyExecutingBatch].errors = _stateObj._errors;
-
-                // track the warning collection (not available from TdsParser after ExecuteNonQuery)
-                // and the which warnings are associated with the just completed rpc batch
-                _SqlRPCBatchArray[_currentlyExecutingBatch].warningsIndexStart =
-                    ((0 < _currentlyExecutingBatch)
-                        ? _SqlRPCBatchArray[_currentlyExecutingBatch - 1].warningsIndexEnd
-                        : 0);
-                _SqlRPCBatchArray[_currentlyExecutingBatch].warningsIndexEnd = _stateObj.WarningCount;
-                _SqlRPCBatchArray[_currentlyExecutingBatch].warnings = _stateObj._warnings;
-
+                OnDone(_stateObj, _currentlyExecutingBatch, _SqlRPCBatchArray, _rowsAffected);
                 _currentlyExecutingBatch++;
                 Debug.Assert(_parameterCollectionList.Count >= _currentlyExecutingBatch, "OnDoneProc: Too many DONEPROC events");
             }
+        }
+
+        private static void OnDone(TdsParserStateObject stateObj, int index, _SqlRPC[] array, int rowsAffected)
+        {
+            _SqlRPC current = array[index];
+            _SqlRPC previous = (index > 0) ? array[index - 1] : null;
+
+            // track the records affected for the just completed rpc batch
+            // _rowsAffected is cumulative for ExecuteNonQuery across all rpc batches
+            current.cumulativeRecordsAffected = rowsAffected;
+
+            current.recordsAffected =
+                (((previous != null) && (0 <= rowsAffected))
+                    ? (rowsAffected - Math.Max(previous.cumulativeRecordsAffected, 0))
+                    : rowsAffected);
+
+            // track the error collection (not available from TdsParser after ExecuteNonQuery)
+            // and the which errors are associated with the just completed rpc batch
+            current.errorsIndexStart = previous?.errorsIndexEnd ?? 0;
+            current.errorsIndexEnd = stateObj.ErrorCount;
+            current.errors = stateObj._errors;
+
+            // track the warning collection (not available from TdsParser after ExecuteNonQuery)
+            // and the which warnings are associated with the just completed rpc batch
+            current.warningsIndexStart = previous?.warningsIndexEnd ?? 0;
+            current.warningsIndexEnd = stateObj.WarningCount;
+            current.warnings = stateObj._warnings;
         }
 
         internal void OnReturnStatus(int status)
