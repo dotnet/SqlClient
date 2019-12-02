@@ -13,7 +13,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.TestFixtu
         private ColumnEncryptionKey columnEncryptionKey;
 
 
-        public BulkCopyTruncationTables(string tableName, ColumnEncryptionKey columnEncryptionKey1, ColumnEncryptionKey columnEncryptionKey2) : base(tableName)
+        public BulkCopyTruncationTables(string tableName, ColumnEncryptionKey columnEncryptionKey1) : base(tableName)
         {
             this.columnEncryptionKey = columnEncryptionKey1;
         }

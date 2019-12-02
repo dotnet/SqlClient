@@ -20,7 +20,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             this.tableNames = fixture.sqlBulkTruncationTableNames;
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE),nameof(DataTestUtility.EnclaveEnabled))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsEnclaveEnabledAndConnectionStringsProvided))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void BulkCopyTestsInt(string connectionString)
         {
@@ -37,11 +37,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE),nameof(DataTestUtility.EnclaveEnabled))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsEnclaveEnabledAndConnectionStringsProvided))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void DirectInsertTest1(string connectionString)
         {
-
             //Populate table TabIntSourceDirect with parameters @c1,@c2
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
@@ -76,7 +75,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE),nameof(DataTestUtility.EnclaveEnabled))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsEnclaveEnabledAndConnectionStringsProvided))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void DirectInsertTest2(String connectionString)
         {
@@ -110,11 +109,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 connection.Open();
                 SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntSourceDirect"]}]", connection);
                 SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntTargetDirect"]}]", connection);
-
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE),nameof(DataTestUtility.EnclaveEnabled))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsEnclaveEnabledAndConnectionStringsProvided))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void DirectInsertTest3(string connectionString)
         {
@@ -150,7 +148,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE),nameof(DataTestUtility.EnclaveEnabled))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsEnclaveEnabledAndConnectionStringsProvided))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void BulkCopyDatetime2Tests(string connectionString)
         {
@@ -191,7 +189,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE),nameof(DataTestUtility.EnclaveEnabled))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsEnclaveEnabledAndConnectionStringsProvided))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void BulkCopyDecimal(string connectionString)
         {
@@ -208,7 +206,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE),nameof(DataTestUtility.EnclaveEnabled))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsEnclaveEnabledAndConnectionStringsProvided))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void BulkCopyVarchar(string connectionString)
         {
@@ -233,7 +231,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE),nameof(DataTestUtility.EnclaveEnabled))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsEnclaveEnabledAndConnectionStringsProvided))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void BulkCopyVarcharMax(string connectionString)
         {
@@ -258,7 +256,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE),nameof(DataTestUtility.EnclaveEnabled))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsEnclaveEnabledAndConnectionStringsProvided))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void BulkCopyNVarchar(string connectionString)
         {
@@ -275,7 +273,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE),nameof(DataTestUtility.EnclaveEnabled))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsEnclaveEnabledAndConnectionStringsProvided))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void BulkCopyNVarcharMax(string connectionString)
         {
@@ -292,7 +290,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE),nameof(DataTestUtility.EnclaveEnabled))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsEnclaveEnabledAndConnectionStringsProvided))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void BulkCopyBinaryMax(string connectionString)
         {
@@ -327,7 +325,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE),nameof(DataTestUtility.EnclaveEnabled))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsEnclaveEnabledAndConnectionStringsProvided))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void BulkCopySmallChar(string connectionString)
         {
@@ -495,7 +493,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 ExecuteQuery(connection, $@"INSERT INTO [{tableNames[tableName]}] values ({valueS})");
             }
         }
-        
+
         public void Dispose()
         {
             foreach (string connection in DataTestUtility.AEConnStringsSetup)

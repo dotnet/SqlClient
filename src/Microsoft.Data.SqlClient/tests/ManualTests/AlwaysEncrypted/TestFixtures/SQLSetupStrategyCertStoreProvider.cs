@@ -29,8 +29,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             databaseObjects.AddRange(columnEncryptionKeys);
 
             List<Table> tables = CreateTables(columnEncryptionKeys);
-
-            Dictionary<string, string> truncationTableNames = sqlBulkTruncationTableNames;
             
             databaseObjects.AddRange(tables);
 

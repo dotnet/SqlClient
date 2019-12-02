@@ -127,107 +127,107 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             SqlNullValuesTable = new SqlNullValuesTable(GenerateUniqueName("SqlNullValuesTable"), columnEncryptionKeys[0]);
             tables.Add(SqlNullValuesTable);
 
-            TabNVarCharMaxSource = new BulkCopyTruncationTables(GenerateUniqueName("TabNVarCharMaxSource"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
+            TabNVarCharMaxSource = new BulkCopyTruncationTables(GenerateUniqueName("TabNVarCharMaxSource"), columnEncryptionKeys[0]);
             tables.Add(TabNVarCharMaxSource);
             sqlBulkTruncationTableNames.Add("TabNVarCharMaxSource", TabNVarCharMaxSource.Name);
 
-            TabNVarCharSmallSource = new BulkCopyTruncationTables(GenerateUniqueName("TabNVarCharSmallSource"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
+            TabNVarCharSmallSource = new BulkCopyTruncationTables(GenerateUniqueName("TabNVarCharSmallSource"), columnEncryptionKeys[0]);
             tables.Add(TabNVarCharSmallSource);
             sqlBulkTruncationTableNames.Add("TabNVarCharSmallSource", TabNVarCharSmallSource.Name);
 
-            TabNVarCharSmallTarget = new BulkCopyTruncationTables(GenerateUniqueName("TabNVarCharSmallTarget"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
+            TabNVarCharSmallTarget = new BulkCopyTruncationTables(GenerateUniqueName("TabNVarCharSmallTarget"), columnEncryptionKeys[0]);
             tables.Add(TabNVarCharSmallTarget);
             sqlBulkTruncationTableNames.Add("TabNVarCharSmallTarget", TabNVarCharSmallTarget.Name);
 
-            TabNVarCharTarget = new BulkCopyTruncationTables(GenerateUniqueName("TabNVarCharTarget"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
+            TabNVarCharTarget = new BulkCopyTruncationTables(GenerateUniqueName("TabNVarCharTarget"), columnEncryptionKeys[0]);
             tables.Add(TabNVarCharTarget);
             sqlBulkTruncationTableNames.Add("TabNVarCharTarget", TabNVarCharTarget.Name);
 
-            TabSmallBinaryMaxTarget = new BulkCopyTruncationTables(GenerateUniqueName("TabSmallBinaryMaxTarget"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
+            TabSmallBinaryMaxTarget = new BulkCopyTruncationTables(GenerateUniqueName("TabSmallBinaryMaxTarget"), columnEncryptionKeys[0]);
             tables.Add(TabSmallBinaryMaxTarget);
             sqlBulkTruncationTableNames.Add("TabSmallBinaryMaxTarget", TabSmallBinaryMaxTarget.Name);
 
-            TabSmallBinarySource = new BulkCopyTruncationTables(GenerateUniqueName("TabSmallBinarySource"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
+            TabSmallBinarySource = new BulkCopyTruncationTables(GenerateUniqueName("TabSmallBinarySource"), columnEncryptionKeys[0]);
             tables.Add(TabSmallBinarySource);
             sqlBulkTruncationTableNames.Add("TabSmallBinarySource", TabSmallBinarySource.Name);
 
-            TabSmallBinaryTarget = new BulkCopyTruncationTables(GenerateUniqueName("TabSmallBinaryTarget"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
+            TabSmallBinaryTarget = new BulkCopyTruncationTables(GenerateUniqueName("TabSmallBinaryTarget"), columnEncryptionKeys[0]);
             tables.Add(TabSmallBinaryTarget);
             sqlBulkTruncationTableNames.Add("TabSmallBinaryTarget", TabSmallBinaryTarget.Name);
 
-            TabSmallCharMaxTarget = new BulkCopyTruncationTables(GenerateUniqueName("TabSmallCharMaxTarget"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
+            TabSmallCharMaxTarget = new BulkCopyTruncationTables(GenerateUniqueName("TabSmallCharMaxTarget"), columnEncryptionKeys[0]);
             tables.Add(TabSmallCharMaxTarget);
             sqlBulkTruncationTableNames.Add("TabSmallCharMaxTarget", TabSmallCharMaxTarget.Name);
 
-            TabSmallCharSource = new BulkCopyTruncationTables(GenerateUniqueName("TabSmallCharSource"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
+            TabSmallCharSource = new BulkCopyTruncationTables(GenerateUniqueName("TabSmallCharSource"), columnEncryptionKeys[0]);
             tables.Add(TabSmallCharSource);
             sqlBulkTruncationTableNames.Add("TabSmallCharSource", TabSmallCharSource.Name);
 
-            TabSmallCharTarget = new BulkCopyTruncationTables(GenerateUniqueName("TabSmallCharTarget"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
+            TabSmallCharTarget = new BulkCopyTruncationTables(GenerateUniqueName("TabSmallCharTarget"), columnEncryptionKeys[0]);
             tables.Add(TabSmallCharTarget);
             sqlBulkTruncationTableNames.Add("TabSmallCharTarget", TabSmallCharTarget.Name);
 
-            TabTinyIntTarget = new BulkCopyTruncationTables(GenerateUniqueName("TabTinyIntTarget"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
+            TabTinyIntTarget = new BulkCopyTruncationTables(GenerateUniqueName("TabTinyIntTarget"), columnEncryptionKeys[0]);
             tables.Add(TabTinyIntTarget);
             sqlBulkTruncationTableNames.Add("TabTinyIntTarget", TabTinyIntTarget.Name);
 
-            TabVarBinaryMaxSource = new BulkCopyTruncationTables(GenerateUniqueName("TabVarBinaryMaxSource"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
+            TabVarBinaryMaxSource = new BulkCopyTruncationTables(GenerateUniqueName("TabVarBinaryMaxSource"), columnEncryptionKeys[0]);
             tables.Add(TabVarBinaryMaxSource);
             sqlBulkTruncationTableNames.Add("TabVarBinaryMaxSource", TabVarBinaryMaxSource.Name);
 
-            TabVarBinaryTarget = new BulkCopyTruncationTables(GenerateUniqueName("TabVarBinaryTarget"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
+            TabVarBinaryTarget = new BulkCopyTruncationTables(GenerateUniqueName("TabVarBinaryTarget"), columnEncryptionKeys[0]);
             tables.Add(TabVarBinaryTarget);
             sqlBulkTruncationTableNames.Add("TabVarBinaryTarget", TabVarBinaryTarget.Name);
 
-            TabVarCharMaxSource = new BulkCopyTruncationTables(GenerateUniqueName("TabVarCharMaxSource"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
+            TabVarCharMaxSource = new BulkCopyTruncationTables(GenerateUniqueName("TabVarCharMaxSource"), columnEncryptionKeys[0]);
             tables.Add(TabVarCharMaxSource);
             sqlBulkTruncationTableNames.Add("TabVarCharMaxSource", TabVarCharMaxSource.Name);
 
-            TabVarCharMaxTarget = new BulkCopyTruncationTables(GenerateUniqueName("TabVarCharMaxTarget"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
+            TabVarCharMaxTarget = new BulkCopyTruncationTables(GenerateUniqueName("TabVarCharMaxTarget"), columnEncryptionKeys[0]);
             tables.Add(TabVarCharMaxTarget);
             sqlBulkTruncationTableNames.Add("TabVarCharMaxTarget", TabVarCharMaxTarget.Name);
 
-            TabVarCharSmallSource = new BulkCopyTruncationTables(GenerateUniqueName("TabVarCharSmallSource"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
+            TabVarCharSmallSource = new BulkCopyTruncationTables(GenerateUniqueName("TabVarCharSmallSource"), columnEncryptionKeys[0]);
             tables.Add(TabVarCharSmallSource);
             sqlBulkTruncationTableNames.Add("TabVarCharSmallSource", TabVarCharSmallSource.Name);
 
-            TabVarCharTarget = new BulkCopyTruncationTables(GenerateUniqueName("TabVarCharTarget"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
+            TabVarCharTarget = new BulkCopyTruncationTables(GenerateUniqueName("TabVarCharTarget"), columnEncryptionKeys[0]);
             tables.Add(TabVarCharTarget);
             sqlBulkTruncationTableNames.Add("TabVarCharTarget", TabVarCharTarget.Name);
 
-            TabBinaryMaxSource = new BulkCopyTruncationTables(GenerateUniqueName("TabBinaryMaxSource"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
+            TabBinaryMaxSource = new BulkCopyTruncationTables(GenerateUniqueName("TabBinaryMaxSource"), columnEncryptionKeys[0]);
             tables.Add(TabBinaryMaxSource);
             sqlBulkTruncationTableNames.Add("TabBinaryMaxSource", TabBinaryMaxSource.Name);
 
-            TabBinaryTarget = new BulkCopyTruncationTables(GenerateUniqueName("TabBinaryTarget"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
+            TabBinaryTarget = new BulkCopyTruncationTables(GenerateUniqueName("TabBinaryTarget"), columnEncryptionKeys[0]);
             tables.Add(TabBinaryTarget);
             sqlBulkTruncationTableNames.Add("TabBinaryTarget", TabBinaryTarget.Name);
 
-            TabDatetime2Source = new BulkCopyTruncationTables(GenerateUniqueName("TabDatetime2Source"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
+            TabDatetime2Source = new BulkCopyTruncationTables(GenerateUniqueName("TabDatetime2Source"), columnEncryptionKeys[0]);
             tables.Add(TabDatetime2Source);
             sqlBulkTruncationTableNames.Add("TabDatetime2Source", TabDatetime2Source.Name);
 
-            TabDatetime2Target = new BulkCopyTruncationTables(GenerateUniqueName("TabDatetime2Target"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
+            TabDatetime2Target = new BulkCopyTruncationTables(GenerateUniqueName("TabDatetime2Target"), columnEncryptionKeys[0]);
             tables.Add(TabDatetime2Target);
             sqlBulkTruncationTableNames.Add("TabDatetime2Target", TabDatetime2Target.Name);
 
-            TabDecimalSource = new BulkCopyTruncationTables(GenerateUniqueName("TabDecimalSource"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
+            TabDecimalSource = new BulkCopyTruncationTables(GenerateUniqueName("TabDecimalSource"), columnEncryptionKeys[0]);
             tables.Add(TabDecimalSource);
             sqlBulkTruncationTableNames.Add("TabDecimalSource", TabDecimalSource.Name);
 
-            TabDecimalTarget = new BulkCopyTruncationTables(GenerateUniqueName("TabDecimalTarget"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
+            TabDecimalTarget = new BulkCopyTruncationTables(GenerateUniqueName("TabDecimalTarget"), columnEncryptionKeys[0]);
             tables.Add(TabDecimalTarget);
             sqlBulkTruncationTableNames.Add("TabDecimalTarget", TabDecimalTarget.Name);
 
-            TabIntSource = new BulkCopyTruncationTables(GenerateUniqueName("TabIntSource"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
+            TabIntSource = new BulkCopyTruncationTables(GenerateUniqueName("TabIntSource"), columnEncryptionKeys[0]);
             tables.Add(TabIntSource);
             sqlBulkTruncationTableNames.Add("TabIntSource", TabIntSource.Name);
 
-            TabIntSourceDirect = new BulkCopyTruncationTables(GenerateUniqueName("TabIntSourceDirect"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
+            TabIntSourceDirect = new BulkCopyTruncationTables(GenerateUniqueName("TabIntSourceDirect"), columnEncryptionKeys[0]);
             tables.Add(TabIntSourceDirect);
             sqlBulkTruncationTableNames.Add("TabIntSourceDirect", TabIntSourceDirect.Name);
 
-            TabIntTargetDirect = new BulkCopyTruncationTables(GenerateUniqueName("TabIntTargetDirect"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
+            TabIntTargetDirect = new BulkCopyTruncationTables(GenerateUniqueName("TabIntTargetDirect"), columnEncryptionKeys[0]);
             tables.Add(TabIntTargetDirect);
             sqlBulkTruncationTableNames.Add("TabIntTargetDirect", TabIntTargetDirect.Name);
 
@@ -247,8 +247,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     databaseObjects.ForEach(o => o.Drop(sqlConnection));
                 }
             }
-
-
         }
     }
 }
