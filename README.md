@@ -45,6 +45,22 @@ When referencing the native `SNI.dll` on Windows, the Microsoft Visual C++ Redis
 | Copyright Information | [COPYRIGHT.md](COPYRIGHT.md) |
 | | |
 
+## Our Featured Contributors
+
+Special thanks to everyone who has contributed to the project.
+We thank you for your continuous support in improving the SqlClient library!
+
+- Wraith ([@Wraith2](https://github.com/Wraith2))
+- Erik Ejlskov Jensen ([@ErikEJ](https://github.com/ErikEJ))
+- Stefán Jökull Sigurðarson ([@stebet](https://github.com/stebet))
+- Stephen Toub ([@stephentoub](https://github.com/stephentoub))
+- Shay Rojansky ([@roji](https://github.com/roji))
+- Rasmus Melchior Jacobsen ([@rmja](https://github.com/rmja))
+- Phillip Haydon ([@phillip-haydon](https://github.com/phillip-haydon))
+- Robin Sue ([@Suchiman](https://github.com/Suchiman))
+
+Up-to-date list of contributors: [Contributor Insights](https://github.com/dotnet/SqlClient/graphs/contributors)
+
 ## Release Notes
 
 All preview and stable driver release notes are available under [release-notes](release-notes).

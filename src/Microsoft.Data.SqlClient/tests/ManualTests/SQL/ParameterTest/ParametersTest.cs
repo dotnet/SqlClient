@@ -23,7 +23,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.False(((IList)opc).IsReadOnly, "FAILED: Expected collection to NOT be read only.");
             Assert.False(((IList)opc).IsFixedSize, "FAILED: Expected collection to NOT be fixed size.");
             Assert.False(((IList)opc).IsSynchronized, "FAILED: Expected collection to NOT be synchronized.");
-            DataTestUtility.AssertEqualsWithDescription("Object", ((IList)opc).SyncRoot.GetType().Name, "FAILED: Incorrect SyncRoot Name");
+            string expectedValue1 = "Object";
+            string expectedValue2 = "List`1";
+            string actualValue = ((IList)opc).SyncRoot.GetType().Name;
+            var msg = string.Format("{0}\nExpected: {1} or {2}\nActual: {3}", "FAILED: Incorrect SyncRoot Name", expectedValue1, expectedValue2, actualValue);
+            Assert.True(actualValue.Equals(expectedValue1) || actualValue.Equals(expectedValue2));
 
             {
                 string failValue;
