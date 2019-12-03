@@ -198,17 +198,8 @@ namespace Microsoft.Data.SqlClient.SNI
             ipAddresses = new IPAddress[] { serverIPv4, serverIPv6 };
             Socket[] sockets = new Socket[2];
 
-            CancellationTokenSource cts = new CancellationTokenSource();
+            CancellationTokenSource cts = null;
             
-            if (isInfiniteTimeout)
-            {
-                cts.CancelAfter(-1);
-            }
-            else
-            {
-                cts.CancelAfter(timeout);
-            }
-
             void Cancel()
             {
                 for (int i = 0; i < sockets.Length; ++i)
@@ -224,33 +215,45 @@ namespace Microsoft.Data.SqlClient.SNI
                     catch { }
                 }
             }
-            cts.Token.Register(Cancel);
+
+            if (!isInfiniteTimeout)
+            {
+                cts = new CancellationTokenSource(timeout);
+                cts.Token.Register(Cancel);
+            }
 
             Socket availableSocket = null;
-            for (int i = 0; i < sockets.Length; ++i)
+            try 
             {
-                try
+                for (int i = 0; i < sockets.Length; ++i)
                 {
-                    if (ipAddresses[i] != null)
+                    try
                     {
-                        sockets[i] = new Socket(ipAddresses[i].AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                        sockets[i].Connect(ipAddresses[i], port);
-                        if (sockets[i] != null) // sockets[i] can be null if cancel callback is executed during connect()
+                        if (ipAddresses[i] != null)
                         {
-                            if (sockets[i].Connected)
+                            sockets[i] = new Socket(ipAddresses[i].AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                            sockets[i].Connect(ipAddresses[i], port);
+                            if (sockets[i] != null) // sockets[i] can be null if cancel callback is executed during connect()
                             {
-                                availableSocket = sockets[i];
-                                break;
-                            }
-                            else
-                            {
-                                sockets[i].Dispose();
-                                sockets[i] = null;
+                                if (sockets[i].Connected)
+                                {
+                                    availableSocket = sockets[i];
+                                    break;
+                                }
+                                else
+                                {
+                                    sockets[i].Dispose();
+                                    sockets[i] = null;
+                                }
                             }
                         }
                     }
+                    catch { }
                 }
-                catch { }
+            }
+            finally
+            {
+                cts?.Dispose();
             }
 
             return availableSocket;
