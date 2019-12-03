@@ -83,7 +83,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 connection.Open();
-                using (SqlCommand cmd = new SqlCommand($@"INSERT INTO [{tableNames["TabIntSourceDirect"]}] VALUES (@c1, @c2)", connection))
+                using (SqlCommand cmd = new SqlCommand($@"INSERT INTO [{tableNames["TabIntSourceDirect"]}] ([c1],[c2]) VALUES (@c1, @c2)", connection, 
+                    null, 
+                    SqlCommandColumnEncryptionSetting.Enabled))
                 {
                     SqlParameter paramC1 = cmd.Parameters.AddWithValue(@"@c1", 1);
 
@@ -120,7 +122,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 connection.Open();
-                using (SqlCommand cmd = new SqlCommand($@"INSERT INTO [{tableNames["TabIntSourceDirect"]}] VALUES (@c1, @c2)", connection))
+                using (SqlCommand cmd = new SqlCommand($@"INSERT INTO [{tableNames["TabIntSourceDirect"]}] ([c1],[c2]) VALUES (@c1, @c2)", connection))
                 {
                     SqlParameter paramC1 = cmd.Parameters.AddWithValue(@"@c1", 1);
 
@@ -160,7 +162,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             {
                 connection.Open();
 
-                using (SqlCommand cmd = new SqlCommand($@"SELECT [c2] from [dbo].[{tableNames["TabDatetime2Target"]}]", connection))
+                using (SqlCommand cmd = new SqlCommand($@"SELECT [c2] from [dbo].[{tableNames["TabDatetime2Target"]}]", connection, 
+                    null, 
+                    SqlCommandColumnEncryptionSetting.Enabled))
                 {
                     // Read the target table and verify the string was truncated indeed!
                     using (SqlDataReader reader = cmd.ExecuteReader())
@@ -215,7 +219,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             DoBulkCopy(tableNames["TabVarCharSmallSource"], tableNames["TabVarCharTarget"], connectionString);
 
             using (SqlConnection connection = new SqlConnection(connectionString))
-            using (SqlCommand cmd = new SqlCommand($@"SELECT [c2] from [{tableNames["TabVarCharTarget"]}]", connection))
+            using (SqlCommand cmd = new SqlCommand($@"SELECT [c2] from [{tableNames["TabVarCharTarget"]}]", connection: connection,
+                transaction: null,
+                columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
             {
                 connection.Open();
                 using (SqlDataReader reader = cmd.ExecuteReader())
@@ -235,7 +241,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void BulkCopyVarcharMax(string connectionString)
         {
-            PopulateTable("TabVarCharMaxSource", $"1,'{new string('a', 8003)}'", connectionString);
+            PopulateTable("TabVarCharMaxSource", $@"1,'{new string('a', 8003)}'", connectionString);
 
             DoBulkCopy(tableNames["TabVarCharMaxSource"], tableNames["TabVarCharMaxTarget"], connectionString);
 
@@ -260,7 +266,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void BulkCopyNVarchar(string connectionString)
         {
-            PopulateTable("TabNVarCharMaxSource", $"1, N'{new string('a', 4003)}'", connectionString);
+            PopulateTable("TabNVarCharMaxSource", $@"1, N'{new string('a', 4003)}'", connectionString);
 
             // Will fail (NVarchars are not truncated)!
             Assert.Throws<InvalidOperationException>(() => DoBulkCopy(tableNames["TabNVarCharMaxSource"], tableNames["TabNVarCharTarget"], connectionString));
@@ -277,7 +283,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void BulkCopyNVarcharMax(string connectionString)
         {
-            PopulateTable("TabNVarCharMaxSource", $"1,N'{new string('a', 4003)}'", connectionString);
+            PopulateTable("TabNVarCharMaxSource", $@"1,N'{new string('a', 4003)}'", connectionString);
 
             // Will fail (NVarchars are not truncated)!
             Assert.Throws<InvalidOperationException>(() => DoBulkCopy(tableNames["TabNVarCharMaxSource"], tableNames["TabNVarCharTarget"], connectionString));
@@ -294,7 +300,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void BulkCopyBinaryMax(string connectionString)
         {
-            PopulateTable("TabBinaryMaxSource", $"1, 0x{new string('e', 14000)}", connectionString);
+            PopulateTable("TabBinaryMaxSource", $@"1, 0x{new string('e', 14000)}", connectionString);
 
             // Will fail (NVarchars are not truncated)!
             DoBulkCopy(tableNames["TabBinaryMaxSource"], tableNames["TabBinaryTarget"], connectionString);
@@ -329,17 +335,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void BulkCopySmallChar(string connectionString)
         {
-            PopulateTable("TabSmallCharSource", $"1, '{new string('a', 8000)}'", connectionString);
+            PopulateTable("TabSmallCharSource", $@"1, '{new string('a', 8000)}'", connectionString);
 
             // should succeed!
-            DoBulkCopy($"{tableNames["TabSmallCharSource"]}", $"{tableNames["TabSmallCharTarget"]}", connectionString);
+            DoBulkCopy($@"{tableNames["TabSmallCharSource"]}", $@"{tableNames["TabSmallCharTarget"]}", connectionString);
 
             // Verify the truncated value
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 connection.Open();
 
-                using (SqlCommand cmd = new SqlCommand($"SELECT [c2] from [{tableNames["TabSmallCharTarget"]}]", connection))
+                using (SqlCommand cmd = new SqlCommand($"SELECT [c2] from [{tableNames["TabSmallCharTarget"]}]", connection: connection,
+                    transaction: null,
+                    columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
                 {
                     using (SqlDataReader reader = cmd.ExecuteReader())
                     {
@@ -398,7 +406,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 {
                     bulkCopyConnection.Open();
                     connection.Open();
-                    using (SqlCommand cmd = new SqlCommand($"SELECT [c1], [c2] FROM [{sourceTable}]",
+                    using (SqlCommand cmd = new SqlCommand($@"SELECT [c1], [c2] FROM [{sourceTable}]",
                         connection: connection,
                         transaction: null,
                         columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
@@ -409,6 +417,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                             copy.EnableStreaming = true;
                             copy.DestinationTableName = "[" + targetTable + "]";
                             copy.WriteToServer(reader);
+                            copy.Close();
                         }
                     }
                 }
@@ -438,6 +447,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         copy.EnableStreaming = true;
                         copy.DestinationTableName = targetTable;
                         copy.WriteToServer(reader);
+                        copy.Close();
                     }
                 }
             }
