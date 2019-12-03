@@ -218,13 +218,13 @@ namespace Microsoft.Data.SqlClient.SNI
 
             if (!isInfiniteTimeout)
             {
-                cts = new CancellationTokenSource();
-                cts.CancelAfter(timeout);
+                cts = new CancellationTokenSource(timeout);
                 cts.Token.Register(Cancel);
             }
 
             Socket availableSocket = null;
-            try {
+            try 
+            {
                 for (int i = 0; i < sockets.Length; ++i)
                 {
                     try
@@ -251,7 +251,8 @@ namespace Microsoft.Data.SqlClient.SNI
                     catch { }
                 }
             }
-            finally{
+            finally
+            {
                 cts?.Dispose();
             }
 
