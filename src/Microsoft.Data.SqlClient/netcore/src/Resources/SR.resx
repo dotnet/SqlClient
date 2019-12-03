@@ -167,7 +167,7 @@
   </data>
   <data name="ADP_InvalidDataDirectory" xml:space="preserve">
     <value>The DataDirectory substitute is not a string.</value>
-  </data>  
+  </data>
   <data name="ADP_InvalidEnumerationValue" xml:space="preserve">
     <value>The {0} enumeration value, {1}, is invalid.</value>
   </data>
@@ -1850,5 +1850,8 @@
   </data>
   <data name="TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage" xml:space="preserve">
     <value>Error occured when generating enclave package. Attestation Protocol has not been specified in the connection string, but the query requires enclave computations.</value>
+  </data>
+  <data name="SQLUDT_InvalidSize" xml:space="preserve">
+    <value>UDT size must be less than {1}, size: {0}</value>
   </data>
 </root>
