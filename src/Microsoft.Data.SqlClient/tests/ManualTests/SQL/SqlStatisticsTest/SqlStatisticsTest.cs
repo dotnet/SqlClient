@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     IDictionary stats1 = connection.RetrieveStatistics();
 
                     // Ensure ConnectionTime is within a reasonable range
-                    Assert.True((long)stats1["ConnectionTime"] < DateTime.Now.Subtract(startTime).TotalMilliseconds + 1000 && (long)stats1["ConnectionTime"] > 0);
+                    Assert.True((long)stats1["ConnectionTime"] < DateTime.Now.Subtract(startTime).TotalMilliseconds + 1000, "Unexpected ConnectionTime: " + stats1["ConnectionTime"]);
                     clientConnectionId = connection.ClientConnectionId;
                     Assert.True(clientConnectionId != Guid.Empty);
 
@@ -53,7 +53,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             connection.RetrieveStatistics();
             connection.Close();
             IDictionary stats2 = connection.RetrieveStatistics();
-            Assert.True((long)stats2["ConnectionTime"] < DateTime.Now.Subtract(startTime).TotalMilliseconds + 1000 && (long)stats2["ConnectionTime"] > 0);
+            Assert.True((long)stats2["ConnectionTime"] < DateTime.Now.Subtract(startTime).TotalMilliseconds + 1000, "Unexpected ConnectionTime: " + stats2["ConnectionTime"]);
             // Ensure ClientConnectionId remains available even after the connection is closed
             Assert.True(connection.ClientConnectionId == clientConnectionId);
         }
@@ -63,7 +63,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (args.CurrentState == ConnectionState.Closed)
             {
                 System.Collections.IDictionary stats = ((SqlConnection)sender).RetrieveStatistics();
-                Assert.True((long)stats["ConnectionTime"] < DateTime.Now.Subtract(startTime).TotalMilliseconds + 1000 && (long)stats["ConnectionTime"] > 0);
+                Assert.True((long)stats["ConnectionTime"] < DateTime.Now.Subtract(startTime).TotalMilliseconds + 1000, "Unexpected ConnectionTime: " + stats["ConnectionTime"]);
                 Assert.True(((SqlConnection)sender).ClientConnectionId == clientConnectionId);
             }
         }
