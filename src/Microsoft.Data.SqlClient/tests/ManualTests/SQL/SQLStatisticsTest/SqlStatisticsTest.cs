@@ -3,12 +3,10 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
-using Xunit;
 using System.Collections;
+using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -17,7 +15,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static DateTime startTime = new DateTime();
         private static Guid clientConnectionId = Guid.Empty;
 
-        #region TestMethods
         [CheckConnStrSetupFact]
         public static void TestRetrieveStatistics()
         {
@@ -60,9 +57,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // Ensure ClientConnectionId remains available even after the connection is closed
             Assert.True(connection.ClientConnectionId == clientConnectionId);
         }
-        #endregion
 
-        #region UtilityMethodsClasses
         private static void HandleStateChange(object sender, StateChangeEventArgs args)
         {
             if (args.CurrentState == ConnectionState.Closed)
@@ -72,6 +67,5 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.True(((SqlConnection)sender).ClientConnectionId == clientConnectionId);
             }
         }
-        #endregion
     }
 }
