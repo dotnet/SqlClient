@@ -563,6 +563,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     Task reconnectTask = _currentReconnectionTask;
+                    // Connection closed but previously open should return the correct ClientConnectionId
                     DbConnectionClosedPreviouslyOpened innerConnectionClosed = (InnerConnection as DbConnectionClosedPreviouslyOpened);
                     if ((reconnectTask != null && !reconnectTask.IsCompleted) || null != innerConnectionClosed)
                     {

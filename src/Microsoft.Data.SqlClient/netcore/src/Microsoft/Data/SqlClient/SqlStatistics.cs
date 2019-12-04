@@ -210,16 +210,14 @@ namespace Microsoft.Data.SqlClient
         internal void UpdateStatistics()
         {
             // update connection time
-            if (_closeTimestamp >= _openTimestamp)
+            if (_closeTimestamp >= _openTimestamp && long.MaxValue > _closeTimestamp - _openTimestamp)
             {
-                SafeAdd(ref _connectionTime, _closeTimestamp - _openTimestamp);
+                _connectionTime = _closeTimestamp - _openTimestamp;
             }
             else
             {
                 _connectionTime = long.MaxValue;
             }
-            ADP.TimerCurrent(out _openTimestamp);
-            ADP.TimerCurrent(out _closeTimestamp);
         }
 
         // We subclass Dictionary to provide our own implementation of GetEnumerator, CopyTo, Keys.CopyTo,
