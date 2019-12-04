@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
+using System.Linq;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -32,6 +33,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 DataTable metaDataTypes = conn.GetSchema(DbMetaDataCollectionNames.DataTypes);
                 Assert.True(metaDataTypes != null && metaDataTypes.Rows.Count > 0);
+
+                var tinyintRow = metaDataTypes.Rows.OfType<DataRow>().Where(p => (string)p["TypeName"] == "tinyint");
+                foreach (var row in tinyintRow)
+                {
+                    Assert.True((String)row["TypeName"] == "tinyint" && (String)row["DataType"] == "System.Byte" && (bool)row["IsUnsigned"]);
+                }
             }
         }
 
