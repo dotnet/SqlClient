@@ -133,7 +133,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public void DirectInsertTest3(string connectionString)
         {
             //Populate table TabIntSourceDirect with parameters @c1,@c2
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = new SqlConnection(GetOpenConnectionString(connectionString,true)))
             {
                 connection.Open();
                 using (SqlCommand cmd = new SqlCommand($@"INSERT INTO [{tableNames["TabIntSourceDirect"]}] ([c1],[c2]) VALUES (@c1, @c2)", connection))
@@ -152,11 +152,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                     paramC1.Value = 4;
                     paramC2.Value = 32767;
+                    paramC2.Precision = 5;
                     cmd.ExecuteNonQuery();
 
                     paramC1.Value = 5;
                     paramC2.Value = 83717; // some random number
-                    cmd.ExecuteNonQuery();
+                    paramC2.Precision = 5;
+                   cmd.ExecuteNonQuery();
                 }
             }
 
@@ -176,7 +178,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public void DirectInsertTest4(string connectionString)
         {
             //Populate table TabIntSourceDirect with parameters @c1,@c2
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = new SqlConnection(GetOpenConnectionString(connectionString,true)))
             {
                 connection.Open();
                 using (SqlCommand cmd = new SqlCommand($@"INSERT INTO [{tableNames["TabIntSourceDirect"]}] ([c1],[c2]) VALUES (@c1, @c2)", connection))
@@ -198,6 +200,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             DoBulkCopyDirect(tableNames["TabIntSourceDirect"], tableNames["TabIntTargetDirect"], connectionString,false,false);
 
             VerifyTablesEqual(tableNames["TabIntSourceDirect"], tableNames["TabIntTargetDirect"],connectionString);
+
+            //Truncate populated tables.
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntSourceDirect"]}]", connection);
+                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntTargetDirect"]}]", connection);
+            }
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
@@ -448,7 +458,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             PopulateTable("TabSmallCharSource", $@"1, '{new string('a', 8000)}'", connectionString);
 
             // should succeed!
-            DoBulkCopy($@"{tableNames["TabSmallCharSource"]}", $@"{tableNames["TabSmallCharTarget"]}", connectionString);
+            DoBulkCopy($"{tableNames["TabSmallCharSource"]}", $"{tableNames["TabSmallCharTarget"]}", connectionString);
 
             // Verify the truncated value
             using (SqlConnection connection = new SqlConnection(GetOpenConnectionString(connectionString,true)))
@@ -465,14 +475,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                             Assert.True(columnValue.Equals(new string('a', 3000)), "Unexpected value read");
                         }
                     }
-                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabBinaryMaxSource"]}]", connection);
-                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabBinaryTarget"]}]", connection);
                 }
             }
 
-            DoBulkCopy($@"{tableNames["TabSmallCharSource"]}", $@"{tableNames["TabSmallCharMaxTarget"]}", connectionString);
+            DoBulkCopy($"{tableNames["TabSmallCharSource"]}", $"{tableNames["TabSmallCharMaxTarget"]}", connectionString);
 
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = new SqlConnection(GetOpenConnectionString(connectionString, true)))
             {
                 conn.Open();
                 using (SqlCommand cmd = new SqlCommand($"SELECT c2 from [{tableNames["TabSmallCharMaxTarget"]}]", conn))
@@ -481,10 +489,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     {
                         while (reader.Read())
                         {
-                            string columnValue = reader.GetString(0);
+                            var columnValue = reader.GetString(0);
                             Assert.True(columnValue.Equals(new string('a', 8000)), "Unexpected value read");
                         }
                     }
+                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabBinaryMaxSource"]}]", conn);
+                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabBinaryTarget"]}]", conn);
                 }
             }
         }
