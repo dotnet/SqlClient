@@ -49,8 +49,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public Table TabSmallCharSource { get; private set; }
         public Table TabSmallCharTarget { get; private set; }
 
-
-
         protected List<DbObject> databaseObjects = new List<DbObject>();
         public Dictionary<string, string> sqlBulkTruncationTableNames = new Dictionary<string, string>();
 

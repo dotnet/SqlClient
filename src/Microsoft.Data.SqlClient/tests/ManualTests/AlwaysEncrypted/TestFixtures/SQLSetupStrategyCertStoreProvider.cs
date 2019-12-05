@@ -11,7 +11,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     {
         public SqlColumnEncryptionCertificateStoreProvider CertStoreProvider;
         public CspColumnMasterKey CspColumnMasterKey;
-    
+
         public SQLSetupStrategyCertStoreProvider() : base()
         {
             CertStoreProvider = new SqlColumnEncryptionCertificateStoreProvider();

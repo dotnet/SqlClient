@@ -12,7 +12,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.TestFixtu
         private const string ColumnEncryptionAlgorithmName = @"AEAD_AES_256_CBC_HMAC_SHA_256";
         private ColumnEncryptionKey columnEncryptionKey;
 
-
         public BulkCopyTruncationTables(string tableName, ColumnEncryptionKey columnEncryptionKey1) : base(tableName)
         {
             this.columnEncryptionKey = columnEncryptionKey1;
@@ -20,7 +19,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.TestFixtu
 
         public override void Create(SqlConnection sqlConnection)
         {
-            string encryptionInfo = Name.Contains("Target") ? $" ENCRYPTED WITH (COLUMN_ENCRYPTION_KEY = [{ columnEncryptionKey.Name}], ENCRYPTION_TYPE = RANDOMIZED, ALGORITHM = '{ColumnEncryptionAlgorithmName}')" : "";
+            string encryptionInfo = Name.Contains("Target") ? $@" ENCRYPTED WITH (COLUMN_ENCRYPTION_KEY = [{ columnEncryptionKey.Name}], ENCRYPTION_TYPE = RANDOMIZED, ALGORITHM = '{ColumnEncryptionAlgorithmName}')" : "";
             string c2ColumnType = string.Empty;
 
             if (Name.StartsWith("AE-TabIntSource-") || Name.StartsWith("AE-TabIntSourceDirect-") || Name.StartsWith("AE-TabIntTargetDirect-"))
@@ -105,7 +104,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.TestFixtu
 
             if (Name.StartsWith("AE-TabBinaryMaxSource-"))
             {
-                c2ColumnType = " binary(7000)";
+                c2ColumnType = "binary(7000)";
             }
 
             if (Name.StartsWith("AE-TabBinaryTarget-") || Name.StartsWith("AE-TabSmallBinarySource-"))

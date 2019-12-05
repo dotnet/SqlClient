@@ -1,4 +1,8 @@
-﻿using System;
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Security.Cryptography.X509Certificates;
@@ -16,11 +20,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         public SqlBulkCopyTruncation(SQLSetupStrategyCertStoreProvider fixture)
         {
-            this._fixture = fixture;
-            this.tableNames = fixture.sqlBulkTruncationTableNames;
+            _fixture = fixture;
+            tableNames = fixture.sqlBulkTruncationTableNames;
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsEnclaveEnabledAndConnectionStringsProvided))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void BulkCopyTestsInt(string connectionString)
         {
@@ -37,15 +41,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsEnclaveEnabledAndConnectionStringsProvided))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void DirectInsertTest1(string connectionString)
         {
             //Populate table TabIntSourceDirect with parameters @c1,@c2
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = new SqlConnection(GetOpenConnectionString(connectionString, true)))
             {
                 connection.Open();
-                using (SqlCommand cmd = new SqlCommand($@"INSERT INTO [{tableNames["TabIntSourceDirect"]}] VALUES (@c1, @c2)", connection))
+                using (SqlCommand cmd = new SqlCommand($@"INSERT INTO [dbo].[{tableNames["TabIntSourceDirect"]}] VALUES (@c1, @c2)",
+                    connection,
+                    null,
+                    SqlCommandColumnEncryptionSetting.Enabled))
                 {
                     SqlParameter paramC1 = cmd.Parameters.AddWithValue(@"@c1", 1);
 
@@ -71,11 +78,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 connection.Open();
                 SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntSourceDirect"]}]", connection);
                 SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntTargetDirect"]}]", connection);
-
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsEnclaveEnabledAndConnectionStringsProvided))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void DirectInsertTest2(String connectionString)
         {
@@ -83,8 +89,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 connection.Open();
-                using (SqlCommand cmd = new SqlCommand($@"INSERT INTO [{tableNames["TabIntSourceDirect"]}] ([c1],[c2]) VALUES (@c1, @c2)", connection, 
-                    null, 
+                using (SqlCommand cmd = new SqlCommand($@"INSERT INTO [{tableNames["TabIntSourceDirect"]}] ([c1],[c2]) VALUES (@c1, @c2)", connection,
+                    null,
                     SqlCommandColumnEncryptionSetting.Enabled))
                 {
                     SqlParameter paramC1 = cmd.Parameters.AddWithValue(@"@c1", 1);
@@ -114,7 +120,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsEnclaveEnabledAndConnectionStringsProvided))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void DirectInsertTest3(string connectionString)
         {
@@ -138,7 +144,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 }
             }
 
-            Assert.Throws<InvalidOperationException>(() => { DoBulkCopyDirect(tableNames["TabIntSourceDirect"], tableNames["TabIntTargetDirect"], connectionString, false, true); });
+            Assert.Throws<InvalidOperationException>(() => { DoBulkCopyDirect(tableNames["TabIntSourceDirect"], tableNames["TabIntTargetDirect"], connectionString, true, false); });
 
             //Truncate populated tables.
             using (SqlConnection connection = new SqlConnection(connectionString))
@@ -146,11 +152,36 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 connection.Open();
                 SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntSourceDirect"]}]", connection);
                 SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntTargetDirect"]}]", connection);
-
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsEnclaveEnabledAndConnectionStringsProvided))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public void DirectInsertTest4(string connectionString)
+        {
+            //Populate table TabIntSourceDirect with parameters @c1,@c2
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                using (SqlCommand cmd = new SqlCommand($@"INSERT INTO [{tableNames["TabIntSourceDirect"]}] ([c1],[c2]) VALUES (@c1, @c2)", connection))
+                {
+                    SqlParameter paramC1 = cmd.Parameters.AddWithValue(@"@c1", 1);
+
+                    SqlParameter paramC2 = cmd.CreateParameter();
+                    paramC2.ParameterName = @"@c2";
+                    paramC2.DbType = DbType.Int32;
+                    paramC2.Direction = ParameterDirection.Input;
+                    paramC2.Precision = 3;
+                    paramC2.Value = -500;
+                    cmd.Parameters.Add(paramC2);
+
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            Assert.Throws<InvalidOperationException>(() => { DoBulkCopyDirect(tableNames["TabIntSourceDirect"], tableNames["TabIntTargetDirect"], connectionString, false, false); });
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void BulkCopyDatetime2Tests(string connectionString)
         {
@@ -161,9 +192,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 connection.Open();
+                SqlConnection.ClearPool(connection);
 
-                using (SqlCommand cmd = new SqlCommand($@"SELECT [c2] from [dbo].[{tableNames["TabDatetime2Target"]}]", connection, 
-                    null, 
+                using (SqlCommand cmd = new SqlCommand($@"SELECT [c2] from [dbo].[{tableNames["TabDatetime2Target"]}]", connection,
+                    null,
                     SqlCommandColumnEncryptionSetting.Enabled))
                 {
                     // Read the target table and verify the string was truncated indeed!
@@ -193,7 +225,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsEnclaveEnabledAndConnectionStringsProvided))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void BulkCopyDecimal(string connectionString)
         {
@@ -210,7 +242,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsEnclaveEnabledAndConnectionStringsProvided))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void BulkCopyVarchar(string connectionString)
         {
@@ -237,7 +269,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsEnclaveEnabledAndConnectionStringsProvided))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void BulkCopyVarcharMax(string connectionString)
         {
@@ -262,7 +294,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsEnclaveEnabledAndConnectionStringsProvided))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void BulkCopyNVarchar(string connectionString)
         {
@@ -279,7 +311,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsEnclaveEnabledAndConnectionStringsProvided))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void BulkCopyNVarcharMax(string connectionString)
         {
@@ -296,11 +328,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsEnclaveEnabledAndConnectionStringsProvided))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void BulkCopyBinaryMax(string connectionString)
         {
-            PopulateTable("TabBinaryMaxSource", $@"1, 0x{new string('e', 14000)}", connectionString);
+            PopulateTable("TabBinaryMaxSource", $"1, 0x{new string('e', 14000)}", connectionString);
 
             // Will fail (NVarchars are not truncated)!
             DoBulkCopy(tableNames["TabBinaryMaxSource"], tableNames["TabBinaryTarget"], connectionString);
@@ -331,7 +363,66 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsEnclaveEnabledAndConnectionStringsProvided))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public void BulkCopySmallBinary(string connectionString)
+        {
+            DoBulkCopy(tableNames["TabSmallBinarySource"], tableNames["TabSmallBinaryTarget"], connectionString);
+            // Verify its 8000            
+            using (SqlConnection conn = new SqlConnection(GetOpenConnectionString(connectionString, true)))
+            {
+                conn.Open();
+                using (SqlCommand cmd = new SqlCommand($"SELECT c2 from [{tableNames["TabSmallBinaryTarget"]}]", conn))
+                {
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            byte[] columnValue = (byte[])reader[0];
+                            int count = 0;
+                            foreach (byte b in columnValue)
+                            {
+                                // upto 3000 is as is and there after its padded
+                                if (count < 3000)
+                                {
+                                    Assert.True(b == 0xee, "Unexpected value in TabSmallBinaryTarget!");
+                                }
+                                else
+                                {
+                                    Assert.True(b == 0x00, "Unexpected value in TabSmallBinaryTarget!");
+                                }
+                                count++;
+                            }
+                        }
+                    }
+                }
+            }
+
+            DoBulkCopy(tableNames["TabSmallBinarySource"], tableNames["TabSmallBinaryMaxTarget"], connectionString);
+
+            // Verify its 3000
+            using (SqlConnection conn = new SqlConnection(GetOpenConnectionString(connectionString, true)))
+            {
+                conn.Open();
+                using (SqlCommand cmd = new SqlCommand($"SELECT c2 from [{tableNames["TabSmallBinaryMaxTarget"]}]", conn))
+                {
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            byte[] columnValue = (byte[])reader[0];
+                            Assert.True(3000 == columnValue.Length, "Unexpected length for varbinary TabSmallBinaryMaxTarget!");
+                            foreach (byte b in columnValue)
+                            {
+                                Assert.True(0xee == b, "unexpected element read!");
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void BulkCopySmallChar(string connectionString)
         {
@@ -367,12 +458,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 conn.Open();
-
                 using (SqlCommand cmd = new SqlCommand($"SELECT c2 from [{tableNames["TabSmallCharMaxTarget"]}]", conn))
                 {
                     using (SqlDataReader reader = cmd.ExecuteReader())
                     {
-
                         while (reader.Read())
                         {
                             string columnValue = reader.GetString(0);
@@ -400,22 +489,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         internal void DoBulkCopy(string sourceTable, string targetTable, string connectionString)
         {
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = new SqlConnection(GetOpenConnectionString(connectionString, true)))
             {
-                using (SqlConnection bulkCopyConnection = new SqlConnection(connectionString))
+                connection.Open();
+
+                using (SqlConnection bulkCopyConnection = new SqlConnection(GetOpenConnectionString(connectionString, true)))
                 {
                     bulkCopyConnection.Open();
-                    connection.Open();
-                    using (SqlCommand cmd = new SqlCommand($@"SELECT [c1], [c2] FROM [{sourceTable}]",
-                        connection: connection,
-                        transaction: null,
-                        columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
+                    using (SqlCommand cmd = new SqlCommand($"SELECT c1, c2 FROM [dbo].[{sourceTable}]", connection))
                     {
                         using (SqlDataReader reader = cmd.ExecuteReader())
                         {
                             SqlBulkCopy copy = new SqlBulkCopy(bulkCopyConnection);
                             copy.EnableStreaming = true;
-                            copy.DestinationTableName = "[" + targetTable + "]";
+                            copy.DestinationTableName = $"[dbo].[{targetTable}]";
                             copy.WriteToServer(reader);
                             copy.Close();
                         }
@@ -424,28 +511,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        internal void DoBulkCopyDirect(string sourceTable, string targetTable, string connectionString, bool isEnclaveActivatedOnTarget, bool isEnclaveActivatedOnSource)
+        internal void DoBulkCopyDirect(string sourceTable, string targetTable, string connectionString, bool isEncryptionEnabledOnSource, bool isEncryptionEnabledOnTarget)
         {
-            SqlConnectionStringBuilder trgBuilder = new SqlConnectionStringBuilder(connectionString);
-            trgBuilder.ColumnEncryptionSetting = isEnclaveActivatedOnTarget ? SqlConnectionColumnEncryptionSetting.Enabled : SqlConnectionColumnEncryptionSetting.Disabled;
-
-            SqlConnectionStringBuilder srcBuilder = new SqlConnectionStringBuilder(connectionString);
-            srcBuilder.ColumnEncryptionSetting = isEnclaveActivatedOnSource ? SqlConnectionColumnEncryptionSetting.Enabled : SqlConnectionColumnEncryptionSetting.Disabled;
-            if (isEnclaveActivatedOnSource is false)
-            {
-                srcBuilder.AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified;
-            }
-
-            using (SqlConnection connSource = new SqlConnection(srcBuilder.ToString()))
+            using (SqlConnection connSource = new SqlConnection(GetOpenConnectionString(connectionString, true)))
             {
                 connSource.Open();
-                using (SqlCommand cmd = new SqlCommand($"SELECT [c1], [c2] FROM [{sourceTable}]", connSource))
+                using (SqlCommand cmd = new SqlCommand($"SELECT [c1], [c2] FROM [dbo].[{sourceTable}]", connSource, null, SqlCommandColumnEncryptionSetting.Enabled))
                 {
                     using (SqlDataReader reader = cmd.ExecuteReader())
                     {
-                        SqlBulkCopy copy = new SqlBulkCopy(trgBuilder.ToString());
+                        SqlBulkCopy copy = new SqlBulkCopy(GetOpenConnectionString(connectionString, isEncryptionEnabledOnTarget));
                         copy.EnableStreaming = true;
-                        copy.DestinationTableName = targetTable;
+                        copy.DestinationTableName = $"[{targetTable}]";
                         copy.WriteToServer(reader);
                         copy.Close();
                     }
@@ -455,16 +532,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         internal void VerifyTablesEqual(string sourceTable, string targetTable, string connectionString)
         {
-            using (SqlConnection connSource = new SqlConnection(connectionString))
+            using (SqlConnection connSource = new SqlConnection(GetOpenConnectionString(connectionString, true)))
             {
                 connSource.Open();
 
-                using (SqlConnection connTarget = new SqlConnection(connectionString))
+                using (SqlConnection connTarget = new SqlConnection(GetOpenConnectionString(connectionString, true)))
                 {
                     connTarget.Open();
 
-                    using (SqlCommand cmdSource = new SqlCommand($"SELECT [c1], [c2] FROM [{tableNames["TabIntSourceDirect"]}] ORDER BY c1", connSource))
-                    using (SqlCommand cmdTarget = new SqlCommand($"SELECT [c1], [c2] FROM [{tableNames["TabIntSourceDirect"]}] ORDER BY c1", connTarget))
+                    using (SqlCommand cmdSource = new SqlCommand($"SELECT [c1], [c2] FROM [{tableNames["TabIntSourceDirect"]}] ORDER BY c1", connSource, null, SqlCommandColumnEncryptionSetting.Enabled))
+                    using (SqlCommand cmdTarget = new SqlCommand($"SELECT [c1], [c2] FROM [{tableNames["TabIntSourceDirect"]}] ORDER BY c1", connTarget, null, SqlCommandColumnEncryptionSetting.Enabled))
                     {
                         using (SqlDataReader sourceReader = cmdSource.ExecuteReader())
                         using (SqlDataReader targetReader = cmdTarget.ExecuteReader())
@@ -495,13 +572,29 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        internal void PopulateTable(string tableName, string valueS, string connectionString)
+        internal void PopulateTable(string tableName, string values, string connectionString)
         {
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 connection.Open();
-                ExecuteQuery(connection, $@"INSERT INTO [{tableNames[tableName]}] values ({valueS})");
+                ExecuteQuery(connection, $@"INSERT INTO [dbo].[{tableNames[tableName]}] values ({values})");
             }
+        }
+
+        public string GetOpenConnectionString(string connectionString, bool encryptionEnabled)
+        {
+            var builder = new SqlConnectionStringBuilder(connectionString);
+
+            if (encryptionEnabled)
+            {
+                builder.ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Enabled;
+            }
+            else
+            {
+                builder.ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Disabled;
+            }
+
+            return builder.ToString();
         }
 
         public void Dispose()

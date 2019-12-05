@@ -32,7 +32,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string AKVClientSecret = null;
         public static List<string> AEConnStrings = new List<string>();
         public static List<string> AEConnStringsSetup = new List<string>();
-        public static bool EnclaveEnabled = false;
+        public static readonly bool EnclaveEnabled = false;
         public static readonly bool SupportsIntegratedSecurity = false;
         public static readonly bool SupportsLocalDb = false;
         public static readonly bool SupportsFileStream = false;
