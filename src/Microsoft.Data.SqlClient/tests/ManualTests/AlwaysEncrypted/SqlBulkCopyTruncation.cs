@@ -81,7 +81,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
             finally
             {
-
                 //Truncate populated tables.
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
