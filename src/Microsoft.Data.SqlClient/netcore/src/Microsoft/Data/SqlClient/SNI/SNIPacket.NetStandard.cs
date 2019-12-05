@@ -45,7 +45,15 @@ namespace Microsoft.Data.SqlClient.SNI
                 cb(packet, error ? TdsEnums.SNI_ERROR : TdsEnums.SNI_SUCCESS);
             }
 
-            Task<int> t = stream.ReadAsync(_data, 0, _capacity, CancellationToken.None);
+            Task<int> t;
+            try
+            {
+                t = stream.ReadAsync(_data, 0, _capacity, CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                t = Task.FromException<int>(ex);
+            }
 
             if ((t.Status & TaskStatus.RanToCompletion) != 0)
             {
@@ -95,7 +103,15 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
             }
 
-            Task t = stream.WriteAsync(_data, 0, _length, CancellationToken.None);
+            Task t;
+            try
+            {
+                t = stream.WriteAsync(_data, 0, _length, CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                t = Task.FromException(ex);
+            }
 
             if ((t.Status & TaskStatus.RanToCompletion) != 0)
             {
