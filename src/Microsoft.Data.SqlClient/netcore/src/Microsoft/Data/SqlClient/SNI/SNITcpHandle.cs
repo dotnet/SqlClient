@@ -20,7 +20,7 @@ namespace Microsoft.Data.SqlClient.SNI
     /// <summary>
     /// TCP connection handle
     /// </summary>
-    internal class SNITCPHandle : SNIHandle
+    internal sealed class SNITCPHandle : SNIHandle
     {
         private readonly string _targetServer;
         private readonly object _callbackObject;
@@ -482,7 +482,7 @@ namespace Microsoft.Data.SqlClient.SNI
                         return TdsEnums.SNI_WAIT_TIMEOUT;
                     }
 
-                    packet = new SNIPacket(_bufferSize);
+                    packet = new SNIPacket(headerSize: 0, dataSize: _bufferSize);
                     packet.ReadFromStream(_stream);
 
                     if (packet.Length == 0)
@@ -553,7 +553,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error code</returns>
         public override uint ReceiveAsync(ref SNIPacket packet)
         {
-            packet = new SNIPacket(_bufferSize);
+            packet = new SNIPacket(headerSize: 0, dataSize: _bufferSize);
 
             try
             {
