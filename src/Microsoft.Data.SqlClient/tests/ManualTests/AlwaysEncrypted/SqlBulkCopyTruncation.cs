@@ -83,7 +83,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
-        public void DirectInsertTest2(String connectionString)
+        public void DirectInsertTest2(string connectionString)
         {
             //Populate table TabIntSourceDirect with parameters @c1,@c2
             using (SqlConnection connection = new SqlConnection(connectionString))
@@ -93,7 +93,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     null,
                     SqlCommandColumnEncryptionSetting.Enabled))
                 {
-                    SqlParameter paramC1 = cmd.Parameters.AddWithValue(@"@c1", 1);
+                    SqlParameter paramC1 = cmd.Parameters.AddWithValue(@"@c1", 2);
 
                     SqlParameter paramC2 = cmd.CreateParameter();
                     paramC2.ParameterName = @"@c2";
@@ -103,6 +103,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     paramC2.Value = -500;
                     cmd.Parameters.Add(paramC2);
 
+                    cmd.ExecuteNonQuery();
+
+                    paramC1.Value = 3;
+                    paramC2.Value = 32767;
+                    cmd.ExecuteNonQuery();
+
+                    paramC1.Value = 4;
+                    paramC2.Value = 83717; // some random number
                     cmd.ExecuteNonQuery();
                 }
             }
@@ -130,7 +138,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 connection.Open();
                 using (SqlCommand cmd = new SqlCommand($@"INSERT INTO [{tableNames["TabIntSourceDirect"]}] ([c1],[c2]) VALUES (@c1, @c2)", connection))
                 {
-                    SqlParameter paramC1 = cmd.Parameters.AddWithValue(@"@c1", 1);
+                    SqlParameter paramC1 = cmd.Parameters.AddWithValue(@"@c1", 3);
 
                     SqlParameter paramC2 = cmd.CreateParameter();
                     paramC2.ParameterName = @"@c2";
@@ -141,10 +149,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     cmd.Parameters.Add(paramC2);
 
                     cmd.ExecuteNonQuery();
+
+                    paramC1.Value = 4;
+                    paramC2.Value = 32767;
+                    cmd.ExecuteNonQuery();
+
+                    paramC1.Value = 5;
+                    paramC2.Value = 83717; // some random number
+                    cmd.ExecuteNonQuery();
                 }
             }
 
-            Assert.Throws<InvalidOperationException>(() => { DoBulkCopyDirect(tableNames["TabIntSourceDirect"], tableNames["TabIntTargetDirect"], connectionString, true, false); });
+            Assert.Throws<InvalidOperationException>(() => { DoBulkCopyDirect(tableNames["TabIntSourceDirect"], tableNames["TabIntTargetDirect"], connectionString, false, true); });
 
             //Truncate populated tables.
             using (SqlConnection connection = new SqlConnection(connectionString))
@@ -165,7 +181,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 connection.Open();
                 using (SqlCommand cmd = new SqlCommand($@"INSERT INTO [{tableNames["TabIntSourceDirect"]}] ([c1],[c2]) VALUES (@c1, @c2)", connection))
                 {
-                    SqlParameter paramC1 = cmd.Parameters.AddWithValue(@"@c1", 1);
+                    SqlParameter paramC1 = cmd.Parameters.AddWithValue(@"@c1", 4);
 
                     SqlParameter paramC2 = cmd.CreateParameter();
                     paramC2.ParameterName = @"@c2";
@@ -178,7 +194,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     cmd.ExecuteNonQuery();
                 }
             }
-            Assert.Throws<InvalidOperationException>(() => { DoBulkCopyDirect(tableNames["TabIntSourceDirect"], tableNames["TabIntTargetDirect"], connectionString, false, false); });
+            // Test case when source and target are disabled
+            DoBulkCopyDirect(tableNames["TabIntSourceDirect"], tableNames["TabIntTargetDirect"], connectionString,false,false);
+
+            VerifyTablesEqual(tableNames["TabIntSourceDirect"], tableNames["TabIntTargetDirect"],connectionString);
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
@@ -432,13 +451,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             DoBulkCopy($@"{tableNames["TabSmallCharSource"]}", $@"{tableNames["TabSmallCharTarget"]}", connectionString);
 
             // Verify the truncated value
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = new SqlConnection(GetOpenConnectionString(connectionString,true)))
             {
                 connection.Open();
 
-                using (SqlCommand cmd = new SqlCommand($"SELECT [c2] from [{tableNames["TabSmallCharTarget"]}]", connection: connection,
-                    transaction: null,
-                    columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
+                using (SqlCommand cmd = new SqlCommand($@"SELECT c2 from [{tableNames["TabSmallCharTarget"]}]",connection))
                 {
                     using (SqlDataReader reader = cmd.ExecuteReader())
                     {
@@ -513,18 +530,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         internal void DoBulkCopyDirect(string sourceTable, string targetTable, string connectionString, bool isEncryptionEnabledOnSource, bool isEncryptionEnabledOnTarget)
         {
-            using (SqlConnection connSource = new SqlConnection(GetOpenConnectionString(connectionString, true)))
+            using (SqlConnection connSource = new SqlConnection(GetOpenConnectionString(connectionString, isEncryptionEnabledOnSource)))
             {
                 connSource.Open();
-                using (SqlCommand cmd = new SqlCommand($"SELECT [c1], [c2] FROM [dbo].[{sourceTable}]", connSource, null, SqlCommandColumnEncryptionSetting.Enabled))
+                using (SqlCommand cmd = new SqlCommand($"SELECT c1, c2 FROM [dbo].[{sourceTable}]", connSource))
                 {
                     using (SqlDataReader reader = cmd.ExecuteReader())
                     {
-                        SqlBulkCopy copy = new SqlBulkCopy(GetOpenConnectionString(connectionString, isEncryptionEnabledOnTarget));
-                        copy.EnableStreaming = true;
-                        copy.DestinationTableName = $"[{targetTable}]";
-                        copy.WriteToServer(reader);
-                        copy.Close();
+                        while (reader.Read())
+                        {
+                            SqlBulkCopy copy = new SqlBulkCopy(GetOpenConnectionString(connectionString, isEncryptionEnabledOnTarget),SqlBulkCopyOptions.AllowEncryptedValueModifications);
+                            copy.EnableStreaming = true;
+                            copy.DestinationTableName = $"[{targetTable}]";
+                            copy.WriteToServer(reader);
+                            copy.Close();
+                        }
                     }
                 }
             }
@@ -540,8 +560,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 {
                     connTarget.Open();
 
-                    using (SqlCommand cmdSource = new SqlCommand($"SELECT [c1], [c2] FROM [{tableNames["TabIntSourceDirect"]}] ORDER BY c1", connSource, null, SqlCommandColumnEncryptionSetting.Enabled))
-                    using (SqlCommand cmdTarget = new SqlCommand($"SELECT [c1], [c2] FROM [{tableNames["TabIntSourceDirect"]}] ORDER BY c1", connTarget, null, SqlCommandColumnEncryptionSetting.Enabled))
+                    using (SqlCommand cmdSource = new SqlCommand($"SELECT [c1], [c2] FROM [{tableNames["TabIntSourceDirect"]}] ORDER BY c1", connSource))
+                    using (SqlCommand cmdTarget = new SqlCommand($"SELECT [c1], [c2] FROM [{tableNames["TabIntTargetDirect"]}] ORDER BY c1", connTarget))
                     {
                         using (SqlDataReader sourceReader = cmdSource.ExecuteReader())
                         using (SqlDataReader targetReader = cmdTarget.ExecuteReader())
