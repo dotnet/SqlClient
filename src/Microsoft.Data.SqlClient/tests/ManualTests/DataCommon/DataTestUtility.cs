@@ -152,11 +152,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return present;
         }
 
-        public static bool IsEnclaveEnabledAndConnectionStringsProvided()
-        {
-            return AreConnStringSetupForAE() && EnclaveEnabled;
-        }
-
         public static bool IsUdtTestDatabasePresent() => IsDatabasePresent(UdtTestDbName);
 
         public static bool AreConnStringsSetup()

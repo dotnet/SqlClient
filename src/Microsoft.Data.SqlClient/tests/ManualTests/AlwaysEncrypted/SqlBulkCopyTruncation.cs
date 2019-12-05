@@ -37,12 +37,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             finally
             {
                 //Truncate removes the data but not the table.
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntTargetDirect"]}]", connection);
-                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntSource"]}]", connection);
-                }
+                TruncateTables("TabTinyIntTarget", "TabIntSource", connectionString);
             }
         }
 
@@ -82,12 +77,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             finally
             {
                 //Truncate populated tables.
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntSourceDirect"]}]", connection);
-                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntTargetDirect"]}]", connection);
-                }
+                TruncateTables("TabIntSourceDirect", "TabIntTargetDirect", connectionString);
             }
         }
 
@@ -134,12 +124,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             finally
             {
                 //Truncate populated tables.
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntSourceDirect"]}]", connection);
-                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntTargetDirect"]}]", connection);
-                }
+                TruncateTables("TabIntSourceDirect", "TabIntTargetDirect", connectionString);
             }
         }
 
@@ -184,12 +169,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             finally
             {
                 //Truncate populated tables.
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntSourceDirect"]}]", connection);
-                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntTargetDirect"]}]", connection);
-                }
+                TruncateTables("TabIntSourceDirect", "TabIntTargetDirect", connectionString);
             }
         }
 
@@ -226,12 +206,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             finally
             {
                 //Truncate populated tables.
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntSourceDirect"]}]", connection);
-                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntTargetDirect"]}]", connection);
-                }
+                TruncateTables("TabIntSourceDirect", "TabIntTargetDirect", connectionString);
             }
         }
 
@@ -241,41 +216,46 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             PopulateTable("TabDatetime2Source", @"1, '1968-10-23 12:45:37.123456'", connectionString);
 
-            DoBulkCopy(tableNames["TabDatetime2Source"], tableNames["TabDatetime2Target"], connectionString);
-
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            try
             {
-                connection.Open();
-                SqlConnection.ClearPool(connection);
+                DoBulkCopy(tableNames["TabDatetime2Source"], tableNames["TabDatetime2Target"], connectionString);
 
-                using (SqlCommand cmd = new SqlCommand($@"SELECT [c2] from [dbo].[{tableNames["TabDatetime2Target"]}]", connection,
-                    null,
-                    SqlCommandColumnEncryptionSetting.Enabled))
+                using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                    // Read the target table and verify the string was truncated indeed!
-                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    connection.Open();
+                    SqlConnection.ClearPool(connection);
+
+                    using (SqlCommand cmd = new SqlCommand($@"SELECT [c2] from [dbo].[{tableNames["TabDatetime2Target"]}]", connection,
+                        null,
+                        SqlCommandColumnEncryptionSetting.Enabled))
                     {
-                        while (reader.Read())
+                        // Read the target table and verify the string was truncated indeed!
+                        using (SqlDataReader reader = cmd.ExecuteReader())
                         {
-                            DateTime datetime = reader.GetDateTime(0);
-                            TimeSpan timespan = datetime.TimeOfDay;
+                            while (reader.Read())
+                            {
+                                DateTime datetime = reader.GetDateTime(0);
+                                TimeSpan timespan = datetime.TimeOfDay;
 
-                            Assert.Equal(12, Convert.ToInt32(datetime.Hour));
-                            Assert.Equal(45, Convert.ToInt32(datetime.Minute));
-                            Assert.Equal(37, Convert.ToInt32(datetime.Second));
+                                Assert.Equal(12, Convert.ToInt32(datetime.Hour));
+                                Assert.Equal(45, Convert.ToInt32(datetime.Minute));
+                                Assert.Equal(37, Convert.ToInt32(datetime.Second));
 
-                            Assert.Equal(1968, Convert.ToInt32(datetime.Year));
-                            Assert.Equal(10, Convert.ToInt32(datetime.Month));
-                            Assert.Equal(23, Convert.ToInt32(datetime.Day));
+                                Assert.Equal(1968, Convert.ToInt32(datetime.Year));
+                                Assert.Equal(10, Convert.ToInt32(datetime.Month));
+                                Assert.Equal(23, Convert.ToInt32(datetime.Day));
 
-                            // To verify the milliseconds, we need to look at the timespan
-                            string millisec = timespan.ToString();
-                            Assert.True(millisec.Equals("12:45:37.1200000"), "Unexpected milliseconds");
+                                // To verify the milliseconds, we need to look at the timespan
+                                string millisec = timespan.ToString();
+                                Assert.True(millisec.Equals("12:45:37.1200000"), "Unexpected milliseconds");
+                            }
                         }
                     }
-
-                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabDatetime2Source"]}]", connection);
                 }
+            }
+            finally
+            {
+                TruncateTables("TabDatetime2Source", "TabDatetime2Target", connectionString);
             }
         }
 
@@ -292,12 +272,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             finally
             {
                 //Truncate tables for next try
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabDecimalSource"]}]", connection);
-                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabDecimalTarget"]}]", connection);
-                }
+                TruncateTables("TabDecimalSource", "TabDecimalTarget", connectionString);
             }
         }
 
@@ -307,22 +282,26 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             PopulateTable("TabVarCharSmallSource", @"1,'abcdefghij'", connectionString);
 
-            DoBulkCopy(tableNames["TabVarCharSmallSource"], tableNames["TabVarCharTarget"], connectionString);
-
-            using (SqlConnection connection = new SqlConnection(GetOpenConnectionString(connectionString, true)))
-            using (SqlCommand cmd = new SqlCommand($@"SELECT [c2] from [{tableNames["TabVarCharTarget"]}]", connection))
+            try
             {
-                connection.Open();
-                using (SqlDataReader reader = cmd.ExecuteReader())
+                DoBulkCopy(tableNames["TabVarCharSmallSource"], tableNames["TabVarCharTarget"], connectionString);
+
+                using (SqlConnection connection = new SqlConnection(GetOpenConnectionString(connectionString, true)))
+                using (SqlCommand cmd = new SqlCommand($@"SELECT [c2] from [{tableNames["TabVarCharTarget"]}]", connection))
                 {
-                    while (reader.Read())
+                    connection.Open();
+                    using (SqlDataReader reader = cmd.ExecuteReader())
                     {
-                        Assert.True(reader.GetString(0).Equals("ab"), "String was not truncated as expected!");
+                        while (reader.Read())
+                        {
+                            Assert.True(reader.GetString(0).Equals("ab"), "String was not truncated as expected!");
+                        }
                     }
                 }
-
-                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabVarCharTarget"]}]", connection);
-                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabVarCharSmallSource"]}]", connection);
+            }
+            finally
+            {
+                TruncateTables("TabVarCharTarget", "TabVarCharSmallSource", connectionString);
             }
         }
 
@@ -332,22 +311,26 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             PopulateTable("TabVarCharMaxSource", $@"1,'{new string('a', 8003)}'", connectionString);
 
-            DoBulkCopy(tableNames["TabVarCharMaxSource"], tableNames["TabVarCharMaxTarget"], connectionString);
-
-            using (SqlConnection connection = new SqlConnection(connectionString))
-            using (SqlCommand cmd = new SqlCommand($@"SELECT [c2] from [{tableNames["TabVarCharMaxTarget"]}]", connection, null, SqlCommandColumnEncryptionSetting.Enabled))
+            try
             {
-                connection.Open();
-                using (SqlDataReader reader = cmd.ExecuteReader())
+                DoBulkCopy(tableNames["TabVarCharMaxSource"], tableNames["TabVarCharMaxTarget"], connectionString);
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                using (SqlCommand cmd = new SqlCommand($@"SELECT [c2] from [{tableNames["TabVarCharMaxTarget"]}]", connection, null, SqlCommandColumnEncryptionSetting.Enabled))
                 {
-                    while (reader.Read())
+                    connection.Open();
+                    using (SqlDataReader reader = cmd.ExecuteReader())
                     {
-                        Assert.True(reader.GetString(0).Equals(new string('a', 7000)), "String was not truncated as expected!");
+                        while (reader.Read())
+                        {
+                            Assert.True(reader.GetString(0).Equals(new string('a', 7000)), "String was not truncated as expected!");
+                        }
                     }
                 }
-
-                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabVarCharMaxSource"]}]", connection);
-                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabVarCharMaxTarget"]}]", connection);
+            }
+            finally
+            {
+                TruncateTables("TabVarCharMaxSource", "TabVarCharMaxTarget", connectionString);
             }
         }
 
@@ -364,12 +347,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
             finally
             {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabNVarCharMaxSource"]}]", connection);
-                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabNVarCharTarget"]}]", connection);
-                }
+                TruncateTables("TabNVarCharMaxSource", "TabNVarCharTarget", connectionString);
             }
         }
 
@@ -386,12 +364,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
             finally
             {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabNVarCharMaxSource"]}]", connection);
-                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabNVarCharTarget"]}]", connection);
-                }
+                TruncateTables("TabNVarCharMaxSource", "TabNVarCharTarget", connectionString);
             }
         }
 
@@ -401,32 +374,37 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             PopulateTable("TabBinaryMaxSource", $"1, 0x{new string('e', 14000)}", connectionString);
 
-            // Will fail (NVarchars are not truncated)!
-            DoBulkCopy(tableNames["TabBinaryMaxSource"], tableNames["TabBinaryTarget"], connectionString);
-
-            // Verify the target column has (infact) the truncated value
-            using (SqlConnection connection = new SqlConnection(GetOpenConnectionString(connectionString, true)))
+            try
             {
-                connection.Open();
+                // Will fail (NVarchars are not truncated)!
+                DoBulkCopy(tableNames["TabBinaryMaxSource"], tableNames["TabBinaryTarget"], connectionString);
 
-                using (SqlCommand cmd = new SqlCommand($@"SELECT c2 from [{tableNames["TabBinaryTarget"]}]", connection))
+                // Verify the target column has (infact) the truncated value
+                using (SqlConnection connection = new SqlConnection(GetOpenConnectionString(connectionString, true)))
                 {
-                    using (SqlDataReader reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            byte[] columnValue = (byte[])reader[0];
-                            Assert.True(3000 == columnValue.Length, "Unexpected array length!");
+                    connection.Open();
 
-                            foreach (byte b in columnValue)
+                    using (SqlCommand cmd = new SqlCommand($@"SELECT c2 from [{tableNames["TabBinaryTarget"]}]", connection))
+                    {
+                        using (SqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
                             {
-                                Assert.Equal(0xee, b);
+                                byte[] columnValue = (byte[])reader[0];
+                                Assert.True(3000 == columnValue.Length, "Unexpected array length!");
+
+                                foreach (byte b in columnValue)
+                                {
+                                    Assert.Equal(0xee, b);
+                                }
                             }
                         }
                     }
-                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabBinaryMaxSource"]}]", connection);
-                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabBinaryTarget"]}]", connection);
                 }
+            }
+            finally
+            {
+                TruncateTables("TabBinaryMaxSource", "TabBinaryTarget", connectionString);
             }
         }
 
@@ -494,12 +472,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
             finally
             {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabSmallBinaryMaxTarget"]}]", connection);
-                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabSmallBinarySource"]}]", connection);
-                }
+                TruncateTables("TabSmallBinaryMaxTarget", "TabSmallBinarySource", connectionString);
             }
         }
 
@@ -509,44 +482,63 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             PopulateTable("TabSmallCharSource", $@"1, '{new string('a', 8000)}'", connectionString);
 
-            // should succeed!
-            DoBulkCopy($"{tableNames["TabSmallCharSource"]}", $"{tableNames["TabSmallCharTarget"]}", connectionString);
-
-            // Verify the truncated value
-            using (SqlConnection connection = new SqlConnection(GetOpenConnectionString(connectionString, true)))
+            try
             {
-                connection.Open();
+                // should succeed!
+                DoBulkCopy($"{tableNames["TabSmallCharSource"]}", $"{tableNames["TabSmallCharTarget"]}", connectionString);
 
-                using (SqlCommand cmd = new SqlCommand($@"SELECT c2 from [{tableNames["TabSmallCharTarget"]}]", connection))
+                // Verify the truncated value
+                using (SqlConnection connection = new SqlConnection(GetOpenConnectionString(connectionString, true)))
                 {
-                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    connection.Open();
+
+                    using (SqlCommand cmd = new SqlCommand($@"SELECT c2 from [{tableNames["TabSmallCharTarget"]}]", connection))
                     {
-                        while (reader.Read())
+                        using (SqlDataReader reader = cmd.ExecuteReader())
                         {
-                            string columnValue = reader.GetString(0);
-                            Assert.True(columnValue.Equals(new string('a', 3000)), "Unexpected value read");
+                            while (reader.Read())
+                            {
+                                string columnValue = reader.GetString(0);
+                                Assert.True(columnValue.Equals(new string('a', 3000)), "Unexpected value read");
+                            }
+                        }
+                    }
+                }
+
+                DoBulkCopy($"{tableNames["TabSmallCharSource"]}", $"{tableNames["TabSmallCharMaxTarget"]}", connectionString);
+
+                using (SqlConnection conn = new SqlConnection(GetOpenConnectionString(connectionString, true)))
+                {
+                    conn.Open();
+                    using (SqlCommand cmd = new SqlCommand($"SELECT c2 from [{tableNames["TabSmallCharMaxTarget"]}]", conn))
+                    {
+                        using (SqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                var columnValue = reader.GetString(0);
+                                Assert.True(columnValue.Equals(new string('a', 8000)), "Unexpected value read");
+                            }
                         }
                     }
                 }
             }
-
-            DoBulkCopy($"{tableNames["TabSmallCharSource"]}", $"{tableNames["TabSmallCharMaxTarget"]}", connectionString);
-
-            using (SqlConnection conn = new SqlConnection(GetOpenConnectionString(connectionString, true)))
+            finally
             {
-                conn.Open();
-                using (SqlCommand cmd = new SqlCommand($"SELECT c2 from [{tableNames["TabSmallCharMaxTarget"]}]", conn))
+                TruncateTables("TabBinaryMaxSource", "TabBinaryTarget", connectionString);
+            }
+        }
+
+        internal void TruncateTables(string sourceName, string targetName, string connectionString)
+        {
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                SilentRunCommand($@"TRUNCATE TABLE [{tableNames[sourceName]}]", connection);
+
+                if (!string.IsNullOrEmpty(targetName))
                 {
-                    using (SqlDataReader reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            var columnValue = reader.GetString(0);
-                            Assert.True(columnValue.Equals(new string('a', 8000)), "Unexpected value read");
-                        }
-                    }
-                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabBinaryMaxSource"]}]", conn);
-                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabBinaryTarget"]}]", conn);
+                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames[targetName]}]", connection);
                 }
             }
         }
@@ -579,11 +571,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     {
                         using (SqlDataReader reader = cmd.ExecuteReader())
                         {
-                            SqlBulkCopy copy = new SqlBulkCopy(bulkCopyConnection);
-                            copy.EnableStreaming = true;
-                            copy.DestinationTableName = $"[dbo].[{targetTable}]";
-                            copy.WriteToServer(reader);
-                            copy.Close();
+                            using (SqlBulkCopy copy = new SqlBulkCopy(bulkCopyConnection))
+                            {
+                                copy.EnableStreaming = true;
+                                copy.DestinationTableName = $"[dbo].[{targetTable}]";
+                                copy.WriteToServer(reader);
+                            }
                         }
                     }
                 }
@@ -601,11 +594,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     {
                         while (reader.Read())
                         {
-                            SqlBulkCopy copy = new SqlBulkCopy(GetOpenConnectionString(connectionString, isEncryptionEnabledOnTarget), SqlBulkCopyOptions.AllowEncryptedValueModifications);
-                            copy.EnableStreaming = true;
-                            copy.DestinationTableName = $"[{targetTable}]";
-                            copy.WriteToServer(reader);
-                            copy.Close();
+                            using (SqlBulkCopy copy = new SqlBulkCopy(GetOpenConnectionString(connectionString, isEncryptionEnabledOnTarget), SqlBulkCopyOptions.AllowEncryptedValueModifications))
+                            {
+                                copy.EnableStreaming = true;
+                                copy.DestinationTableName = $"[{targetTable}]";
+                                copy.WriteToServer(reader);
+                            }
                         }
                     }
                 }
