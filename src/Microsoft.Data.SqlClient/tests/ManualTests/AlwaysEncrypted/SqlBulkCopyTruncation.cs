@@ -30,14 +30,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             PopulateTable("TabIntSource", "1, 300", connectionString);
 
-            Assert.Throws<InvalidOperationException>(() => DoBulkCopy(tableNames["TabIntSource"], tableNames["TabTinyIntTarget"], connectionString));
-
-            //Truncate removes the data but not the table.
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            try
             {
-                connection.Open();
-                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntTargetDirect"]}]", connection);
-                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntSource"]}]", connection);
+                Assert.Throws<InvalidOperationException>(() => DoBulkCopy(tableNames["TabIntSource"], tableNames["TabTinyIntTarget"], connectionString));
+            }
+            finally
+            {
+                //Truncate removes the data but not the table.
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntTargetDirect"]}]", connection);
+                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntSource"]}]", connection);
+                }
             }
         }
 
@@ -45,39 +50,45 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void DirectInsertTest1(string connectionString)
         {
-            //Populate table TabIntSourceDirect with parameters @c1,@c2
-            using (SqlConnection connection = new SqlConnection(GetOpenConnectionString(connectionString, true)))
+            try
             {
-                connection.Open();
-                using (SqlCommand cmd = new SqlCommand($@"INSERT INTO [dbo].[{tableNames["TabIntSourceDirect"]}] VALUES (@c1, @c2)",
-                    connection,
-                    null,
-                    SqlCommandColumnEncryptionSetting.Enabled))
+                //Populate table TabIntSourceDirect with parameters @c1,@c2
+                using (SqlConnection connection = new SqlConnection(GetOpenConnectionString(connectionString, true)))
                 {
-                    SqlParameter paramC1 = cmd.Parameters.AddWithValue(@"@c1", 1);
+                    connection.Open();
+                    using (SqlCommand cmd = new SqlCommand($@"INSERT INTO [dbo].[{tableNames["TabIntSourceDirect"]}] VALUES (@c1, @c2)",
+                        connection,
+                        null,
+                        SqlCommandColumnEncryptionSetting.Enabled))
+                    {
+                        SqlParameter paramC1 = cmd.Parameters.AddWithValue(@"@c1", 1);
 
-                    SqlParameter paramC2 = cmd.CreateParameter();
-                    paramC2.ParameterName = @"@c2";
-                    paramC2.DbType = DbType.Int32;
-                    paramC2.Direction = ParameterDirection.Input;
-                    paramC2.Precision = 3;
-                    paramC2.Value = -500;
-                    cmd.Parameters.Add(paramC2);
+                        SqlParameter paramC2 = cmd.CreateParameter();
+                        paramC2.ParameterName = @"@c2";
+                        paramC2.DbType = DbType.Int32;
+                        paramC2.Direction = ParameterDirection.Input;
+                        paramC2.Precision = 3;
+                        paramC2.Value = -500;
+                        cmd.Parameters.Add(paramC2);
 
-                    cmd.ExecuteNonQuery();
+                        cmd.ExecuteNonQuery();
+                    }
                 }
+
+                DoBulkCopyDirect(tableNames["TabIntSourceDirect"], tableNames["TabIntTargetDirect"], connectionString, true, true);
+
+                VerifyTablesEqual(tableNames["TabIntSourceDirect"], tableNames["TabIntTargetDirect"], connectionString);
             }
-
-            DoBulkCopyDirect(tableNames["TabIntSourceDirect"], tableNames["TabIntTargetDirect"], connectionString, true, true);
-
-            VerifyTablesEqual(tableNames["TabIntSourceDirect"], tableNames["TabIntTargetDirect"], connectionString);
-
-            //Truncate populated tables.
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            finally
             {
-                connection.Open();
-                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntSourceDirect"]}]", connection);
-                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntTargetDirect"]}]", connection);
+
+                //Truncate populated tables.
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntSourceDirect"]}]", connection);
+                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntTargetDirect"]}]", connection);
+                }
             }
         }
 
@@ -85,46 +96,51 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void DirectInsertTest2(string connectionString)
         {
-            //Populate table TabIntSourceDirect with parameters @c1,@c2
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            try
             {
-                connection.Open();
-                using (SqlCommand cmd = new SqlCommand($@"INSERT INTO [{tableNames["TabIntSourceDirect"]}] ([c1],[c2]) VALUES (@c1, @c2)", connection,
-                    null,
-                    SqlCommandColumnEncryptionSetting.Enabled))
+                //Populate table TabIntSourceDirect with parameters @c1,@c2
+                using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                    SqlParameter paramC1 = cmd.Parameters.AddWithValue(@"@c1", 2);
+                    connection.Open();
+                    using (SqlCommand cmd = new SqlCommand($@"INSERT INTO [{tableNames["TabIntSourceDirect"]}] ([c1],[c2]) VALUES (@c1, @c2)", connection,
+                        null,
+                        SqlCommandColumnEncryptionSetting.Enabled))
+                    {
+                        SqlParameter paramC1 = cmd.Parameters.AddWithValue(@"@c1", 2);
 
-                    SqlParameter paramC2 = cmd.CreateParameter();
-                    paramC2.ParameterName = @"@c2";
-                    paramC2.DbType = DbType.Int32;
-                    paramC2.Direction = ParameterDirection.Input;
-                    paramC2.Precision = 3;
-                    paramC2.Value = -500;
-                    cmd.Parameters.Add(paramC2);
+                        SqlParameter paramC2 = cmd.CreateParameter();
+                        paramC2.ParameterName = @"@c2";
+                        paramC2.DbType = DbType.Int32;
+                        paramC2.Direction = ParameterDirection.Input;
+                        paramC2.Precision = 3;
+                        paramC2.Value = -500;
+                        cmd.Parameters.Add(paramC2);
 
-                    cmd.ExecuteNonQuery();
+                        cmd.ExecuteNonQuery();
 
-                    paramC1.Value = 3;
-                    paramC2.Value = 32767;
-                    cmd.ExecuteNonQuery();
+                        paramC1.Value = 3;
+                        paramC2.Value = 32767;
+                        cmd.ExecuteNonQuery();
 
-                    paramC1.Value = 4;
-                    paramC2.Value = 83717; // some random number
-                    cmd.ExecuteNonQuery();
+                        paramC1.Value = 4;
+                        paramC2.Value = 83717; // some random number
+                        cmd.ExecuteNonQuery();
+                    }
                 }
+
+                // Test case when source is enabled and target are disabled
+                // Expected to fail with casting error (client will attempt to cast int to varbinary)
+                Assert.Throws<InvalidOperationException>(() => { DoBulkCopyDirect(tableNames["TabIntSourceDirect"], tableNames["TabIntTargetDirect"], connectionString, true, false); });
             }
-
-            // Test case when source is enabled and target are disabled
-            // Expected to fail with casting error (client will attempt to cast int to varbinary)
-            Assert.Throws<InvalidOperationException>(() => { DoBulkCopyDirect(tableNames["TabIntSourceDirect"], tableNames["TabIntTargetDirect"], connectionString, true, false); });
-
-            //Truncate populated tables.
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            finally
             {
-                connection.Open();
-                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntSourceDirect"]}]", connection);
-                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntTargetDirect"]}]", connection);
+                //Truncate populated tables.
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntSourceDirect"]}]", connection);
+                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntTargetDirect"]}]", connection);
+                }
             }
         }
 
@@ -132,44 +148,49 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void DirectInsertTest3(string connectionString)
         {
-            //Populate table TabIntSourceDirect with parameters @c1,@c2
-            using (SqlConnection connection = new SqlConnection(GetOpenConnectionString(connectionString,true)))
+            try
             {
-                connection.Open();
-                using (SqlCommand cmd = new SqlCommand($@"INSERT INTO [{tableNames["TabIntSourceDirect"]}] ([c1],[c2]) VALUES (@c1, @c2)", connection))
+                //Populate table TabIntSourceDirect with parameters @c1,@c2
+                using (SqlConnection connection = new SqlConnection(GetOpenConnectionString(connectionString, true)))
                 {
-                    SqlParameter paramC1 = cmd.Parameters.AddWithValue(@"@c1", 3);
+                    connection.Open();
+                    using (SqlCommand cmd = new SqlCommand($@"INSERT INTO [{tableNames["TabIntSourceDirect"]}] ([c1],[c2]) VALUES (@c1, @c2)", connection))
+                    {
+                        SqlParameter paramC1 = cmd.Parameters.AddWithValue(@"@c1", 3);
 
-                    SqlParameter paramC2 = cmd.CreateParameter();
-                    paramC2.ParameterName = @"@c2";
-                    paramC2.DbType = DbType.Int32;
-                    paramC2.Direction = ParameterDirection.Input;
-                    paramC2.Precision = 3;
-                    paramC2.Value = -500;
-                    cmd.Parameters.Add(paramC2);
+                        SqlParameter paramC2 = cmd.CreateParameter();
+                        paramC2.ParameterName = @"@c2";
+                        paramC2.DbType = DbType.Int32;
+                        paramC2.Direction = ParameterDirection.Input;
+                        paramC2.Precision = 3;
+                        paramC2.Value = -500;
+                        cmd.Parameters.Add(paramC2);
 
-                    cmd.ExecuteNonQuery();
+                        cmd.ExecuteNonQuery();
 
-                    paramC1.Value = 4;
-                    paramC2.Value = 32767;
-                    paramC2.Precision = 5;
-                    cmd.ExecuteNonQuery();
+                        paramC1.Value = 4;
+                        paramC2.Value = 32767;
+                        paramC2.Precision = 5;
+                        cmd.ExecuteNonQuery();
 
-                    paramC1.Value = 5;
-                    paramC2.Value = 83717; // some random number
-                    paramC2.Precision = 5;
-                   cmd.ExecuteNonQuery();
+                        paramC1.Value = 5;
+                        paramC2.Value = 83717; // some random number
+                        paramC2.Precision = 5;
+                        cmd.ExecuteNonQuery();
+                    }
                 }
+
+                Assert.Throws<InvalidOperationException>(() => { DoBulkCopyDirect(tableNames["TabIntSourceDirect"], tableNames["TabIntTargetDirect"], connectionString, false, true); });
             }
-
-            Assert.Throws<InvalidOperationException>(() => { DoBulkCopyDirect(tableNames["TabIntSourceDirect"], tableNames["TabIntTargetDirect"], connectionString, false, true); });
-
-            //Truncate populated tables.
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            finally
             {
-                connection.Open();
-                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntSourceDirect"]}]", connection);
-                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntTargetDirect"]}]", connection);
+                //Truncate populated tables.
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntSourceDirect"]}]", connection);
+                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntTargetDirect"]}]", connection);
+                }
             }
         }
 
@@ -177,36 +198,41 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void DirectInsertTest4(string connectionString)
         {
-            //Populate table TabIntSourceDirect with parameters @c1,@c2
-            using (SqlConnection connection = new SqlConnection(GetOpenConnectionString(connectionString,true)))
+            try
             {
-                connection.Open();
-                using (SqlCommand cmd = new SqlCommand($@"INSERT INTO [{tableNames["TabIntSourceDirect"]}] ([c1],[c2]) VALUES (@c1, @c2)", connection))
+                //Populate table TabIntSourceDirect with parameters @c1,@c2
+                using (SqlConnection connection = new SqlConnection(GetOpenConnectionString(connectionString, true)))
                 {
-                    SqlParameter paramC1 = cmd.Parameters.AddWithValue(@"@c1", 4);
+                    connection.Open();
+                    using (SqlCommand cmd = new SqlCommand($@"INSERT INTO [{tableNames["TabIntSourceDirect"]}] ([c1],[c2]) VALUES (@c1, @c2)", connection))
+                    {
+                        SqlParameter paramC1 = cmd.Parameters.AddWithValue(@"@c1", 4);
 
-                    SqlParameter paramC2 = cmd.CreateParameter();
-                    paramC2.ParameterName = @"@c2";
-                    paramC2.DbType = DbType.Int32;
-                    paramC2.Direction = ParameterDirection.Input;
-                    paramC2.Precision = 3;
-                    paramC2.Value = -500;
-                    cmd.Parameters.Add(paramC2);
+                        SqlParameter paramC2 = cmd.CreateParameter();
+                        paramC2.ParameterName = @"@c2";
+                        paramC2.DbType = DbType.Int32;
+                        paramC2.Direction = ParameterDirection.Input;
+                        paramC2.Precision = 3;
+                        paramC2.Value = -500;
+                        cmd.Parameters.Add(paramC2);
 
-                    cmd.ExecuteNonQuery();
+                        cmd.ExecuteNonQuery();
+                    }
                 }
+                // Test case when source and target are disabled
+                DoBulkCopyDirect(tableNames["TabIntSourceDirect"], tableNames["TabIntTargetDirect"], connectionString, false, false);
+
+                VerifyTablesEqual(tableNames["TabIntSourceDirect"], tableNames["TabIntTargetDirect"], connectionString);
             }
-            // Test case when source and target are disabled
-            DoBulkCopyDirect(tableNames["TabIntSourceDirect"], tableNames["TabIntTargetDirect"], connectionString,false,false);
-
-            VerifyTablesEqual(tableNames["TabIntSourceDirect"], tableNames["TabIntTargetDirect"],connectionString);
-
-            //Truncate populated tables.
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            finally
             {
-                connection.Open();
-                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntSourceDirect"]}]", connection);
-                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntTargetDirect"]}]", connection);
+                //Truncate populated tables.
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntSourceDirect"]}]", connection);
+                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabIntTargetDirect"]}]", connection);
+                }
             }
         }
 
@@ -260,14 +286,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             PopulateTable("TabDecimalSource", "1,12345.6789", connectionString);
 
-            Assert.Throws<InvalidOperationException>(() => DoBulkCopy(tableNames["TabDecimalSource"], tableNames["TabDecimalTarget"], connectionString));
-
-            //Truncate tables for next try
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            try
             {
-                connection.Open();
-                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabDecimalSource"]}]", connection);
-                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabDecimalTarget"]}]", connection);
+                Assert.Throws<InvalidOperationException>(() => DoBulkCopy(tableNames["TabDecimalSource"], tableNames["TabDecimalTarget"], connectionString));
+            }
+            finally
+            {
+                //Truncate tables for next try
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabDecimalSource"]}]", connection);
+                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabDecimalTarget"]}]", connection);
+                }
             }
         }
 
@@ -279,10 +310,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             DoBulkCopy(tableNames["TabVarCharSmallSource"], tableNames["TabVarCharTarget"], connectionString);
 
-            using (SqlConnection connection = new SqlConnection(connectionString))
-            using (SqlCommand cmd = new SqlCommand($@"SELECT [c2] from [{tableNames["TabVarCharTarget"]}]", connection: connection,
-                transaction: null,
-                columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
+            using (SqlConnection connection = new SqlConnection(GetOpenConnectionString(connectionString, true)))
+            using (SqlCommand cmd = new SqlCommand($@"SELECT [c2] from [{tableNames["TabVarCharTarget"]}]", connection))
             {
                 connection.Open();
                 using (SqlDataReader reader = cmd.ExecuteReader())
@@ -329,14 +358,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             PopulateTable("TabNVarCharMaxSource", $@"1, N'{new string('a', 4003)}'", connectionString);
 
-            // Will fail (NVarchars are not truncated)!
-            Assert.Throws<InvalidOperationException>(() => DoBulkCopy(tableNames["TabNVarCharMaxSource"], tableNames["TabNVarCharTarget"], connectionString));
-
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            try
             {
-                connection.Open();
-                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabNVarCharMaxSource"]}]", connection);
-                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabNVarCharTarget"]}]", connection);
+                // Will fail (NVarchars are not truncated)!
+                Assert.Throws<InvalidOperationException>(() => DoBulkCopy(tableNames["TabNVarCharMaxSource"], tableNames["TabNVarCharTarget"], connectionString));
+            }
+            finally
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabNVarCharMaxSource"]}]", connection);
+                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabNVarCharTarget"]}]", connection);
+                }
             }
         }
 
@@ -346,14 +380,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             PopulateTable("TabNVarCharMaxSource", $@"1,N'{new string('a', 4003)}'", connectionString);
 
-            // Will fail (NVarchars are not truncated)!
-            Assert.Throws<InvalidOperationException>(() => DoBulkCopy(tableNames["TabNVarCharMaxSource"], tableNames["TabNVarCharTarget"], connectionString));
-
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            try
             {
-                connection.Open();
-                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabNVarCharMaxSource"]}]", connection);
-                SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabNVarCharTarget"]}]", connection);
+                // Will fail (NVarchars are not truncated)!
+                Assert.Throws<InvalidOperationException>(() => DoBulkCopy(tableNames["TabNVarCharMaxSource"], tableNames["TabNVarCharTarget"], connectionString));
+            }
+            finally
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabNVarCharMaxSource"]}]", connection);
+                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabNVarCharTarget"]}]", connection);
+                }
             }
         }
 
@@ -367,11 +406,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             DoBulkCopy(tableNames["TabBinaryMaxSource"], tableNames["TabBinaryTarget"], connectionString);
 
             // Verify the target column has (infact) the truncated value
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = new SqlConnection(GetOpenConnectionString(connectionString, true)))
             {
                 connection.Open();
 
-                using (SqlCommand cmd = new SqlCommand($@"SELECT c2 from [{tableNames["TabBinaryTarget"]}]", connection, null, SqlCommandColumnEncryptionSetting.Enabled))
+                using (SqlCommand cmd = new SqlCommand($@"SELECT c2 from [{tableNames["TabBinaryTarget"]}]", connection))
                 {
                     using (SqlDataReader reader = cmd.ExecuteReader())
                     {
@@ -396,57 +435,71 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void BulkCopySmallBinary(string connectionString)
         {
-            DoBulkCopy(tableNames["TabSmallBinarySource"], tableNames["TabSmallBinaryTarget"], connectionString);
-            // Verify its 8000            
-            using (SqlConnection conn = new SqlConnection(GetOpenConnectionString(connectionString, true)))
+            PopulateTable("TabSmallBinarySource", $"1, 0X{new string('e', 6000)}", connectionString);
+
+            try
             {
-                conn.Open();
-                using (SqlCommand cmd = new SqlCommand($"SELECT c2 from [{tableNames["TabSmallBinaryTarget"]}]", conn))
+                DoBulkCopy(tableNames["TabSmallBinarySource"], tableNames["TabSmallBinaryTarget"], connectionString);
+                // Verify its 8000            
+                using (SqlConnection conn = new SqlConnection(GetOpenConnectionString(connectionString, true)))
                 {
-                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    conn.Open();
+                    using (SqlCommand cmd = new SqlCommand($"SELECT c2 from [{tableNames["TabSmallBinaryTarget"]}]", conn))
                     {
-                        while (reader.Read())
+                        using (SqlDataReader reader = cmd.ExecuteReader())
                         {
-                            byte[] columnValue = (byte[])reader[0];
-                            int count = 0;
-                            foreach (byte b in columnValue)
+                            while (reader.Read())
                             {
-                                // upto 3000 is as is and there after its padded
-                                if (count < 3000)
+                                byte[] columnValue = (byte[])reader[0];
+                                int count = 0;
+                                foreach (byte b in columnValue)
                                 {
-                                    Assert.True(b == 0xee, "Unexpected value in TabSmallBinaryTarget!");
+                                    // upto 3000 is as is and there after its padded
+                                    if (count < 3000)
+                                    {
+                                        Assert.True(b == 0xee, "Unexpected value in TabSmallBinaryTarget!");
+                                    }
+                                    else
+                                    {
+                                        Assert.True(b == 0x00, "Unexpected value in TabSmallBinaryTarget!");
+                                    }
+                                    count++;
                                 }
-                                else
+                            }
+                        }
+                    }
+                }
+
+                DoBulkCopy(tableNames["TabSmallBinarySource"], tableNames["TabSmallBinaryMaxTarget"], connectionString);
+
+                // Verify its 3000
+                using (SqlConnection conn = new SqlConnection(GetOpenConnectionString(connectionString, true)))
+                {
+                    conn.Open();
+                    using (SqlCommand cmd = new SqlCommand($"SELECT c2 from [{tableNames["TabSmallBinaryMaxTarget"]}]", conn))
+                    {
+                        using (SqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                byte[] columnValue = (byte[])reader[0];
+                                Assert.True(3000 == columnValue.Length, "Unexpected length for varbinary TabSmallBinaryMaxTarget!");
+                                foreach (byte b in columnValue)
                                 {
-                                    Assert.True(b == 0x00, "Unexpected value in TabSmallBinaryTarget!");
+                                    Assert.True(0xee == b, "unexpected element read!");
                                 }
-                                count++;
                             }
                         }
                     }
                 }
             }
-
-            DoBulkCopy(tableNames["TabSmallBinarySource"], tableNames["TabSmallBinaryMaxTarget"], connectionString);
-
-            // Verify its 3000
-            using (SqlConnection conn = new SqlConnection(GetOpenConnectionString(connectionString, true)))
+            finally
             {
-                conn.Open();
-                using (SqlCommand cmd = new SqlCommand($"SELECT c2 from [{tableNames["TabSmallBinaryMaxTarget"]}]", conn))
+                using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                    using (SqlDataReader reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            byte[] columnValue = (byte[])reader[0];
-                            Assert.True(3000 == columnValue.Length, "Unexpected length for varbinary TabSmallBinaryMaxTarget!");
-                            foreach (byte b in columnValue)
-                            {
-                                Assert.True(0xee == b, "unexpected element read!");
-                            }
-                        }
-                    }
+                    connection.Open();
+                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabSmallBinaryMaxTarget"]}]", connection);
+                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames["TabSmallBinarySource"]}]", connection);
                 }
             }
         }
@@ -461,11 +514,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             DoBulkCopy($"{tableNames["TabSmallCharSource"]}", $"{tableNames["TabSmallCharTarget"]}", connectionString);
 
             // Verify the truncated value
-            using (SqlConnection connection = new SqlConnection(GetOpenConnectionString(connectionString,true)))
+            using (SqlConnection connection = new SqlConnection(GetOpenConnectionString(connectionString, true)))
             {
                 connection.Open();
 
-                using (SqlCommand cmd = new SqlCommand($@"SELECT c2 from [{tableNames["TabSmallCharTarget"]}]",connection))
+                using (SqlCommand cmd = new SqlCommand($@"SELECT c2 from [{tableNames["TabSmallCharTarget"]}]", connection))
                 {
                     using (SqlDataReader reader = cmd.ExecuteReader())
                     {
@@ -549,7 +602,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     {
                         while (reader.Read())
                         {
-                            SqlBulkCopy copy = new SqlBulkCopy(GetOpenConnectionString(connectionString, isEncryptionEnabledOnTarget),SqlBulkCopyOptions.AllowEncryptedValueModifications);
+                            SqlBulkCopy copy = new SqlBulkCopy(GetOpenConnectionString(connectionString, isEncryptionEnabledOnTarget), SqlBulkCopyOptions.AllowEncryptedValueModifications);
                             copy.EnableStreaming = true;
                             copy.DestinationTableName = $"[{targetTable}]";
                             copy.WriteToServer(reader);

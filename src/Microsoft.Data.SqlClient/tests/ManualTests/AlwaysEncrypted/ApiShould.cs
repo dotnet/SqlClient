@@ -1809,7 +1809,46 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     }
                 }
             }
+        }
 
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public void TestExecuteXmlReader(string connection)
+        {
+            CleanUpTable(connection, tableName);
+
+            IList<object> values = GetValues(dataHint: 60);
+            int numberOfRows = 10;
+
+            // Insert a bunch of rows in to the table.	
+            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
+            Assert.True(rowsAffected == numberOfRows, "number of rows affected is unexpected.");
+
+            using (SqlConnection sqlConnection = new SqlConnection(connection))
+            {
+                sqlConnection.Open();
+
+                // select the set of rows that were inserted just now.	
+                using (SqlCommand sqlCommand = new SqlCommand($"SELECT LastName FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId FOR XML AUTO;", sqlConnection, transaction: null, columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
+                {
+                    if (DataTestUtility.EnclaveEnabled)
+                    {
+                        //Increase Time out for enclave-enabled server.	
+                        sqlCommand.CommandTimeout = 90;
+                    }
+                    sqlCommand.Parameters.Add(@"CustomerId", SqlDbType.Int);
+                    sqlCommand.Parameters.Add(@"FirstName", SqlDbType.NVarChar, ((string)values[1]).Length);
+
+                    sqlCommand.Parameters[0].Value = values[0];
+                    sqlCommand.Parameters[1].Value = values[1];
+
+                    sqlCommand.Prepare();
+                    rowsAffected = 0;
+
+                    var ex = Assert.Throws<SqlException>(() => sqlCommand.ExecuteXmlReader());
+                    Assert.Equal($"'FOR XML' clause is unsupported for encrypted columns.{Environment.NewLine}Statement(s) could not be prepared.", ex.Message);
+                }
+            }
         }
 
         [ActiveIssue("10620")] // Randomly hangs the process.
