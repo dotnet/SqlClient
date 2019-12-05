@@ -202,7 +202,7 @@ it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to c
 			<remarks>
 				<format type="text/markdown"><![CDATA[
 
-## remarks
+## Remarks
 You can obtain detailed information about all the bulk copy options in the <xref:Microsoft.Data.SqlClient.SqlBulkCopyOptions> topic. 
 
 ## Examples
@@ -279,11 +279,9 @@ it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to c
 If the operation does time out, the transaction is not committed and all copied rows are removed from the destination table.  
 
 ## Examples  
-The following console application demonstrates how to modify the time-out to 60 seconds when bulk loading data.  
-
+The following console application demonstrates how to modify the time-out to 60 seconds when bulk loading data.
 In this example, the source data is first read from a SQL Server table to a <xref:Microsoft.Data.SqlClient.SqlDataReader> instance.
-The source data does not have to be located on SQL Server; you can use any data source that can be read to an <xref:System.Data.IDataReader> or loaded to a
-<xref:System.Data.DataTable>.
+The source data does not have to be located on SQL Server; you can use any data source that can be read to an <xref:System.Data.IDataReader> or loaded to a <xref:System.Data.DataTable>.
 
 > [!IMPORTANT]
 > This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md).
@@ -302,17 +300,14 @@ Transact-SQL `INSERT … SELECT` statement to copy the data.
 				<format type="text/markdown"><![CDATA[
 
 ## Remarks
-After you call a <xref:Microsoft.Data.SqlClient.SqlBulkCopy.Close> on the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> object, no other operation will succeed. Calls to the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer%2A> method will throw an <xref:System.InvalidOperationException>.
-
-Calling the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.Close> method from the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.SqlRowsCopied> event causes an <xref:System.InvalidOperationException> to be thrown.
-
+After you call a <xref:Microsoft.Data.SqlClient.SqlBulkCopy.Close> on the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> object, no other operation will succeed. Calls to the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer%2A> method will throw an <xref:System.InvalidOperationException>. Calling the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.Close> method from the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.SqlRowsCopied> event causes an <xref:System.InvalidOperationException> to be thrown.
 Note that open <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instances are closed implicitly at the end of a `using` block.
 
 ## Examples
 The following example uses the same <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instance to add sales orders and their associated details to two destination tables. Because the **AdventureWorks** sales order tables are large, the sample reads only orders placed by a certain account number and bulk copies those orders and details to the destination tables. The <xref:Microsoft.Data.SqlClient.SqlBulkCopy.Close> method is used only after both bulk copy operations are complete.
 
 > [!IMPORTANT]
->  This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md). This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md). This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 
 [!code-csharp[SqlBulkCopy.OrdersDetails#1](~/../sqlclient/doc/samples/SqlBulkCopy_OrdersDetails.cs#1)]
 ]]></format>
@@ -534,7 +529,6 @@ the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> object's `Finalize` method.
 			</summary>
 			<remarks>
 				<format type="text/markdown"><![CDATA[
-
 ## Remarks
 The copy operation starts at the next available row in the reader. Most of the time, the reader was just returned by <xref:System.Data.IDbCommand.ExecuteReader> or a similar call,
 so the next available row is the first row. To process multiple results, call <xref:System.Data.IDataReader.NextResult> on the data reader and call
