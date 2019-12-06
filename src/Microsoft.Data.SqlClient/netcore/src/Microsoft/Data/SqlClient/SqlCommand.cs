@@ -3819,7 +3819,7 @@ namespace Microsoft.Data.SqlClient
                                     // since for non-BatchRPCMode mode, paramoptions gets thrown away and reconstructed in BuildExecuteSql.
                                     int options = (int)(rpc.userParamMap[index] >> 32);
                                     options |= TdsEnums.RPC_PARAM_ENCRYPTED;
-                                    rpc.userParamMap[index] =  ((((long)options) << 32) | (long)index);
+                                    rpc.userParamMap[index] = ((((long)options) << 32) | (long)index);
                                 }
 
                                 break;
@@ -5127,10 +5127,7 @@ namespace Microsoft.Data.SqlClient
                     byte options = 0;
 
                     // set output bit
-                    if (
-                        parameter.Direction == ParameterDirection.InputOutput ||
-                        parameter.Direction == ParameterDirection.Output
-                    )
+                    if (parameter.Direction == ParameterDirection.InputOutput || parameter.Direction == ParameterDirection.Output)
                     {
                         options = TdsEnums.RPC_PARAM_BYREF;
                     }
@@ -5205,7 +5202,6 @@ namespace Microsoft.Data.SqlClient
             return rpc;
         }
 
-
         //
         // returns true if the parameter is not a return value
         // and it's value is not DBNull (for a nullable parameter)
@@ -5252,8 +5248,6 @@ namespace Microsoft.Data.SqlClient
             return (null != parameters) ? parameters.Count : 0;
         }
 
-
-
         //
         // build the RPC record header for this stored proc and add parameters
         //
@@ -5268,12 +5262,6 @@ namespace Microsoft.Data.SqlClient
 
             SetUpRPCParameters(rpc, inSchema, parameters);
         }
-
-        //
-        // build the RPC record header for sp_unprepare
-        //
-        // prototype for sp_unprepare is:
-        // sp_unprepare(@handle)
 
         // build the RPC record header for sp_execute
         //
