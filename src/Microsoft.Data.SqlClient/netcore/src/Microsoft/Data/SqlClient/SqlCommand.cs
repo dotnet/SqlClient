@@ -71,6 +71,8 @@ namespace Microsoft.Data.SqlClient
         private static readonly DiagnosticListener _diagnosticListener = new DiagnosticListener(SqlClientDiagnosticListenerExtensions.DiagnosticListenerName);
         private bool _parentOperationStarted = false;
 
+        internal static readonly Action<object> s_cancelIgnoreFailure = CancelIgnoreFailureCallback;
+
         // Prepare
         // Against 7.0 Serve a prepare/unprepare requires an extra roundtrip to the server.
         //
@@ -2160,7 +2162,7 @@ namespace Microsoft.Data.SqlClient
                     source.SetCanceled();
                     return source.Task;
                 }
-                registration = cancellationToken.Register(s => ((SqlCommand)s).CancelIgnoreFailure(), this);
+                registration = cancellationToken.Register(s_cancelIgnoreFailure, this);
             }
 
             Task<int> returnedTask = source.Task;
@@ -2248,7 +2250,7 @@ namespace Microsoft.Data.SqlClient
                     source.SetCanceled();
                     return source.Task;
                 }
-                registration = cancellationToken.Register(s => ((SqlCommand)s).CancelIgnoreFailure(), this);
+                registration = cancellationToken.Register(s_cancelIgnoreFailure, this);
             }
 
             Task<SqlDataReader> returnedTask = source.Task;
@@ -2396,7 +2398,7 @@ namespace Microsoft.Data.SqlClient
                     source.SetCanceled();
                     return source.Task;
                 }
-                registration = cancellationToken.Register(s => ((SqlCommand)s).CancelIgnoreFailure(), this);
+                registration = cancellationToken.Register(s_cancelIgnoreFailure, this);
             }
 
             Task<XmlReader> returnedTask = source.Task;
@@ -5970,6 +5972,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 #endif
+        internal static void CancelIgnoreFailureCallback(object state)
+        {
+            SqlCommand command = (SqlCommand)state;
+            command.CancelIgnoreFailure();
+        }
 
         internal void CancelIgnoreFailure()
         {

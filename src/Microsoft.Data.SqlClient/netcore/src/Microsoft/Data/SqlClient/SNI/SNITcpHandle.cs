@@ -20,7 +20,7 @@ namespace Microsoft.Data.SqlClient.SNI
     /// <summary>
     /// TCP connection handle
     /// </summary>
-    internal class SNITCPHandle : SNIHandle
+    internal sealed class SNITCPHandle : SNIHandle
     {
         private readonly string _targetServer;
         private readonly object _callbackObject;
@@ -144,7 +144,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
                 else
                 {
-                    _socket = Connect(serverName, port, ts);
+                    _socket = Connect(serverName, port, ts, isInfiniteTimeOut);
                 }
 
                 if (_socket == null || !_socket.Connected)
@@ -179,7 +179,7 @@ namespace Microsoft.Data.SqlClient.SNI
             _status = TdsEnums.SNI_SUCCESS;
         }
 
-        private static Socket Connect(string serverName, int port, TimeSpan timeout)
+        private static Socket Connect(string serverName, int port, TimeSpan timeout, bool isInfiniteTimeout)
         {
             IPAddress[] ipAddresses = Dns.GetHostAddresses(serverName);
             IPAddress serverIPv4 = null;
@@ -198,8 +198,8 @@ namespace Microsoft.Data.SqlClient.SNI
             ipAddresses = new IPAddress[] { serverIPv4, serverIPv6 };
             Socket[] sockets = new Socket[2];
 
-            CancellationTokenSource cts = new CancellationTokenSource();
-            cts.CancelAfter(timeout);
+            CancellationTokenSource cts = null;
+            
             void Cancel()
             {
                 for (int i = 0; i < sockets.Length; ++i)
@@ -215,33 +215,45 @@ namespace Microsoft.Data.SqlClient.SNI
                     catch { }
                 }
             }
-            cts.Token.Register(Cancel);
+
+            if (!isInfiniteTimeout)
+            {
+                cts = new CancellationTokenSource(timeout);
+                cts.Token.Register(Cancel);
+            }
 
             Socket availableSocket = null;
-            for (int i = 0; i < sockets.Length; ++i)
+            try 
             {
-                try
+                for (int i = 0; i < sockets.Length; ++i)
                 {
-                    if (ipAddresses[i] != null)
+                    try
                     {
-                        sockets[i] = new Socket(ipAddresses[i].AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                        sockets[i].Connect(ipAddresses[i], port);
-                        if (sockets[i] != null) // sockets[i] can be null if cancel callback is executed during connect()
+                        if (ipAddresses[i] != null)
                         {
-                            if (sockets[i].Connected)
+                            sockets[i] = new Socket(ipAddresses[i].AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                            sockets[i].Connect(ipAddresses[i], port);
+                            if (sockets[i] != null) // sockets[i] can be null if cancel callback is executed during connect()
                             {
-                                availableSocket = sockets[i];
-                                break;
-                            }
-                            else
-                            {
-                                sockets[i].Dispose();
-                                sockets[i] = null;
+                                if (sockets[i].Connected)
+                                {
+                                    availableSocket = sockets[i];
+                                    break;
+                                }
+                                else
+                                {
+                                    sockets[i].Dispose();
+                                    sockets[i] = null;
+                                }
                             }
                         }
                     }
+                    catch { }
                 }
-                catch { }
+            }
+            finally
+            {
+                cts?.Dispose();
             }
 
             return availableSocket;
@@ -470,7 +482,7 @@ namespace Microsoft.Data.SqlClient.SNI
                         return TdsEnums.SNI_WAIT_TIMEOUT;
                     }
 
-                    packet = new SNIPacket(_bufferSize);
+                    packet = new SNIPacket(headerSize: 0, dataSize: _bufferSize);
                     packet.ReadFromStream(_stream);
 
                     if (packet.Length == 0)
@@ -541,7 +553,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error code</returns>
         public override uint ReceiveAsync(ref SNIPacket packet)
         {
-            packet = new SNIPacket(_bufferSize);
+            packet = new SNIPacket(headerSize: 0, dataSize: _bufferSize);
 
             try
             {

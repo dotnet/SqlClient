@@ -792,7 +792,9 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     Task reconnectTask = _currentReconnectionTask;
-                    if (reconnectTask != null && !reconnectTask.IsCompleted)
+                    // Connection closed but previously open should return the correct ClientConnectionId
+                    DbConnectionClosedPreviouslyOpened innerConnectionClosed = (InnerConnection as DbConnectionClosedPreviouslyOpened);
+                    if ((reconnectTask != null && !reconnectTask.IsCompleted) || null != innerConnectionClosed)
                     {
                         return _originalConnectionId;
                     }
@@ -1253,6 +1255,7 @@ namespace Microsoft.Data.SqlClient
             // The SqlInternalConnectionTds is set to OpenBusy during close, once this happens the cast below will fail and 
             // the command will no longer be cancelable.  It might be desirable to be able to cancel the close opperation, but this is
             // outside of the scope of Whidbey RTM.  See (SqlCommand::Cancel) for other lock.
+            _originalConnectionId = ClientConnectionId;
             InnerConnection.CloseConnection(this, ConnectionFactory);
         }
 

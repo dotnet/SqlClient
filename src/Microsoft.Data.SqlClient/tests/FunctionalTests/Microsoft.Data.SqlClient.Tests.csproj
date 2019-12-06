@@ -66,6 +66,9 @@
   <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.1'">
     <PackageReference Include="System.Data.Odbc" Version="4.5.0" />
   </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.0'">
+    <PackageReference Include="System.Data.Odbc" Version="4.6.0" />
+  </ItemGroup>
    <ItemGroup>
     <Reference Include="System.Transactions" />
   </ItemGroup>

@@ -210,9 +210,9 @@ namespace Microsoft.Data.SqlClient
         internal void UpdateStatistics()
         {
             // update connection time
-            if (_closeTimestamp >= _openTimestamp)
+            if (_closeTimestamp >= _openTimestamp && long.MaxValue > _closeTimestamp - _openTimestamp)
             {
-                SafeAdd(ref _connectionTime, _closeTimestamp - _openTimestamp);
+                _connectionTime = _closeTimestamp - _openTimestamp;
             }
             else
             {

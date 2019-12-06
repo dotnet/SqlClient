@@ -10,8 +10,8 @@
 
 namespace System {
     using System;
-    
-    
+
+
     /// <summary>
     ///   A strongly-typed resource class, for looking up localized strings, etc.
     /// </summary>
@@ -4071,6 +4071,15 @@ namespace System {
         internal static string SQLROR_UnexpectedRoutingInfo {
             get {
                 return ResourceManager.GetString("SQLROR_UnexpectedRoutingInfo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to UDT size must be less than {1}, size: {0}.
+        /// </summary>
+        internal static string SQLUDT_InvalidSize {
+            get {
+                return ResourceManager.GetString("SQLUDT_InvalidSize", resourceCulture);
             }
         }
         
