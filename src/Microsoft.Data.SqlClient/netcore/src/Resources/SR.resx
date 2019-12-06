@@ -1877,6 +1877,7 @@
   </data>
   <data name="SQLCR_InvalidRetryStrategy" xml:space="preserve">
     <value>Invalid RetryStrategy value (should be "None", "FixedInterval","Incremental", "ExponentialBackoff").</value>
+  </data>
   <data name="SQLUDT_InvalidSize" xml:space="preserve">
     <value>UDT size must be less than {1}, size: {0}</value>
   </data>

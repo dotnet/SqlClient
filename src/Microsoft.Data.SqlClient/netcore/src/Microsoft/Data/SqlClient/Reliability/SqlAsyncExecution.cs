@@ -125,7 +125,7 @@ namespace Microsoft.Data.SqlClient.Reliability
             Exception lastError = runningTask.Exception.InnerException;
 
 #pragma warning disable 0618
-            if (lastError is RetryLimitExceededException)
+            if (lastError is SqlRetryLimitExceededException)
 #pragma warning restore 0618
             {
                 // This is here for backwards compatibility only. The correct way to force a stop is by using cancelation tokens.
