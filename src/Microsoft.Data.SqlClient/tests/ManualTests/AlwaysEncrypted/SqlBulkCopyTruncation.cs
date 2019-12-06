@@ -134,7 +134,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             try
             {
-                //Populate table TabIntSourceDirect with parameters @c1,@c2
+                //Populate table TabIntSourceDirect with parameters @c1,@c2 as Integers.
                 using (SqlConnection connection = new SqlConnection(GetOpenConnectionString(connectionString, true)))
                 {
                     connection.Open();
