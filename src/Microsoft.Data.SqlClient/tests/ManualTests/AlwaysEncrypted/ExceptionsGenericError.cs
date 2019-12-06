@@ -4,13 +4,14 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
-    public class ExceptionsGenericErrors : IClassFixture<ExceptionGenericErrorFixture> {
-
+    public class ExceptionsGenericErrors : IClassFixture<ExceptionGenericErrorFixture>
+    {
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.IsNotAzureServer), Skip = "ActiveIssue 10036")]
         [ClassData(typeof(AEConnectionStringProvider))]
-        public void TestCommandOptionWithNoTceFeature (string connectionString) {
+        public void TestCommandOptionWithNoTceFeature(string connectionString)
+        {
             SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder(connectionString);
-            CertificateUtility.ChangeServerTceSetting (false, sb); // disable TCE on engine.
+            CertificateUtility.ChangeServerTceSetting(false, sb); // disable TCE on engine.
             using (SqlConnection conn = CertificateUtility.GetOpenConnection(false, sb, fSuppressAttestation: true))
             {
                 using (SqlCommand cmd = new SqlCommand(ExceptionGenericErrorFixture.encryptedProcedureName, conn, null, SqlCommandColumnEncryptionSetting.Enabled))
@@ -23,12 +24,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 }
             }
             // Turn on TCE now
-            CertificateUtility.ChangeServerTceSetting (true, sb); // enable tce
+            CertificateUtility.ChangeServerTceSetting(true, sb); // enable tce
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.IsNotAzureServer))]
         [ClassData(typeof(AEConnectionStringProvider))]
-        public void TestDataAdapterAndEncrytionSetting (string connectionString) {
+        public void TestDataAdapterAndEncrytionSetting(string connectionString)
+        {
             SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder(connectionString);
             // Create a new SqlCommand for select and delete
             using (SqlConnection conn = CertificateUtility.GetOpenConnection(false, sb))
@@ -56,7 +58,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     rowInserted["c1"] = 5;
                     table.Rows.Add(rowInserted);
                     adapter.UpdateBatchSize = 0; // remove batch size limit
-                                                    // run batch update
+                                                 // run batch update
 
                     string expectedErrorMessage = "SqlCommandColumnEncryptionSetting should be identical on all commands (SelectCommand, InsertCommand, UpdateCommand, DeleteCommand) when doing batch updates.";
                     InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => adapter.Update(dataset));
@@ -67,7 +69,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.IsNotAzureServer))]
         [ClassData(typeof(AEConnectionStringProvider))]
-        public void TestInvalidForceColumnEncryptionSetting(string connectionString) {
+        public void TestInvalidForceColumnEncryptionSetting(string connectionString)
+        {
             SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder(connectionString);
             using (SqlConnection conn = CertificateUtility.GetOpenConnection(false, sb))
             {
@@ -85,7 +88,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.IsNotAzureServer))]
         [ClassData(typeof(AEConnectionStringProvider))]
-        public void TestParamUnexpectedEncryptionMD(string connectionString) {
+        public void TestParamUnexpectedEncryptionMD(string connectionString)
+        {
             SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder(connectionString);
             using (SqlConnection conn = CertificateUtility.GetOpenConnection(true, sb))
             {

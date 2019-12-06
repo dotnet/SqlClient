@@ -12,7 +12,7 @@ using Xunit;
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     [PlatformSpecific(TestPlatforms.Windows)]
-    public class SqlBulkCopyTruncation : IClassFixture<SQLSetupStrategyCertStoreProvider>, IDisposable
+    public class SqlBulkCopyTruncation : IClassFixture<SQLSetupStrategyCertStoreProvider>
     {
         private SQLSetupStrategyCertStoreProvider _fixture;
 
@@ -671,21 +671,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
 
             return builder.ToString();
-        }
-
-        public void Dispose()
-        {
-            foreach (string connection in DataTestUtility.AEConnStringsSetup)
-            {
-                using (SqlConnection sqlConnection = new SqlConnection(connection))
-                {
-                    sqlConnection.Open();
-                    foreach (string val in tableNames.Values)
-                    {
-                        Table.DeleteData(val, sqlConnection);
-                    }
-                }
-            }
         }
     }
 }

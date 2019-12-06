@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     /// TODO: These tests are marked as Windows only for now but should be run for all platforms once the Master Key is accessible to this app from Azure Key Vault.
     /// </summary>
     [PlatformSpecific(TestPlatforms.Windows)]
-    public class BulkCopyAE : IClassFixture<SQLSetupStrategyCertStoreProvider>, IDisposable
+    public class BulkCopyAE : IClassFixture<SQLSetupStrategyCertStoreProvider>
     {
         private SQLSetupStrategyCertStoreProvider fixture;
 
@@ -62,18 +62,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 SqlDataReader reader = command.ExecuteReader();
                 reader.Read();
                 Assert.Equal(result, reader.GetString(0));
-            }
-        }
-
-        public void Dispose()
-        {
-            foreach (string connection in DataTestUtility.AEConnStringsSetup)
-            {
-                using (SqlConnection sqlConnection = new SqlConnection(connection))
-                {
-                    sqlConnection.Open();
-                    Table.DeleteData(fixture.BulkCopyAETestTable.Name, sqlConnection);
-                }
             }
         }
     }

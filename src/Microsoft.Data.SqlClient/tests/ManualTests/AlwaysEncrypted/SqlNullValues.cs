@@ -13,7 +13,7 @@ using Xunit;
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     [PlatformSpecific(TestPlatforms.Windows)]
-    public class SqlNullValuesTests : IClassFixture<SQLSetupStrategyCertStoreProvider>, IDisposable
+    public class SqlNullValuesTests : IClassFixture<SQLSetupStrategyCertStoreProvider>
     {
         private SQLSetupStrategyCertStoreProvider fixture;
         private readonly string tableName;
@@ -151,20 +151,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                             Assert.True(param.Value is System.Data.SqlTypes.SqlBinary, "Unexpected Return value");
                         }
                         break;
-                }
-            }
-        }
-
-        public void Dispose()
-        {
-            foreach (string connStrAE in DataTestUtility.AEConnStringsSetup)
-            {
-                using (SqlConnection sqlConnection = new SqlConnection(connStrAE))
-                {
-                    sqlConnection.Open();
-                    Table.DeleteData(fixture.SqlNullValuesTable.Name, sqlConnection);
-                    DataTestUtility.DropFunction(sqlConnection, UdfName);
-                    DataTestUtility.DropFunction(sqlConnection, UdfNameNotNull);
                 }
             }
         }
