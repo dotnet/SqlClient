@@ -21,7 +21,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     /// TODO: These tests are marked as Windows only for now but should be run for all platforms once the Master Key is accessible to this app from Azure Key Vault.
     /// </summary>
     [PlatformSpecific(TestPlatforms.Windows)]
-    public class ApiShould : IClassFixture<SQLSetupStrategyCertStoreProvider>
+    public class ApiShould : IClassFixture<SQLSetupStrategyCertStoreProvider>, IDisposable
     {
         private SQLSetupStrategyCertStoreProvider fixture;
 
@@ -2675,6 +2675,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             for (int i = 0; i < ((TestCommandCancelParams)cancelCommandTestParamsObject).NumberofTimesToRunCancel; i++)
             {
                 sqlCommand.Cancel();
+            }
+        }
+
+        public void Dispose()
+        {
+            foreach (string connection in DataTestUtility.AEConnStringsSetup)
+            {
+                using (SqlConnection sqlConnection = new SqlConnection(connection))
+                {
+                    sqlConnection.Open();
+
+                    Table.DeleteData(fixture.ApiTestTable.Name, sqlConnection);
+                }
             }
         }
     }

@@ -12,7 +12,7 @@ using Xunit;
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     [PlatformSpecific(TestPlatforms.Windows)]
-    public class End2EndSmokeTests : IClassFixture<SQLSetupStrategyCertStoreProvider>
+    public class End2EndSmokeTests : IClassFixture<SQLSetupStrategyCertStoreProvider>, IDisposable
     {
         private SQLSetupStrategyCertStoreProvider fixture;
 
@@ -196,6 +196,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 }
 
                 columnsRead++;
+            }
+        }
+
+        public void Dispose()
+        {
+            foreach (string connStrAE in DataTestUtility.AEConnStringsSetup)
+            {
+                using (SqlConnection sqlConnection = new SqlConnection(connStrAE))
+                {
+                    sqlConnection.Open();
+                    Table.DeleteData(fixture.End2EndSmokeTable.Name, sqlConnection);
+                }
             }
         }
     }
