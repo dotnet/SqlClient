@@ -54,7 +54,7 @@ namespace Microsoft.Data.SqlClient
             long dummyCustomDataLength;
             try
             {
-                GetEnclaveSession(attestationProtocol, enclaveType, serverName, enclaveAttestationUrl, generateCustomData: false, out sqlEnclaveSession, out counter, out dummyCustomData, out dummyCustomDataLength, throwIfNull: true);
+                GetEnclaveSession(attestationProtocol, enclaveType, serverName, enclaveAttestationUrl, false, out sqlEnclaveSession, out counter, out dummyCustomData, out dummyCustomDataLength, throwIfNull: true);
             }
             catch (Exception e)
             {
@@ -176,7 +176,7 @@ namespace Microsoft.Data.SqlClient
                 SqlEnclaveSession sqlEnclaveSession = null;
                 byte[] dummyCustomData = null;
                 long dummyCustomDataLength;
-                sqlColumnEncryptionEnclaveProvider.GetEnclaveSession(serverName, attestationUrl, generateCustomData: false, out sqlEnclaveSession, out counter, out dummyCustomData, out dummyCustomDataLength);
+                sqlColumnEncryptionEnclaveProvider.GetEnclaveSession(serverName, attestationUrl, false, out sqlEnclaveSession, out counter, out dummyCustomData, out dummyCustomDataLength);
 
                 if (sqlEnclaveSession != null)
                 {
