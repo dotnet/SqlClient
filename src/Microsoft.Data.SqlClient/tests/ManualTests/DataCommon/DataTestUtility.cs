@@ -459,6 +459,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         connection.Open();
                         command.CommandText = sql;
                         command.ExecuteNonQuery();
+                        break;
                     }
                 }
                 catch (Exception)
