@@ -72,10 +72,10 @@ namespace Microsoft.Data.SqlClient.Reliability
             // the code that calls the method, and hence should not be considered transient. Nevertheless, as this is
             // a general purpose transient error detection library, we cannot guarantee that other libraries or user
             // code will follow the design guidelines.
-            Task<TResult> task=null;
+            Task<TResult> task;
             try
             {
-                task = this.taskFunc();
+                task = this.taskFunc.Invoke();
             }
             catch (Exception ex)
             {
@@ -123,6 +123,27 @@ namespace Microsoft.Data.SqlClient.Reliability
             TimeSpan delay = TimeSpan.Zero;
             // should assert that it contain only 1 exception?
             Exception lastError = runningTask.Exception.InnerException;
+
+#pragma warning disable 0618
+            if (lastError is RetryLimitExceededException)
+#pragma warning restore 0618
+            {
+                // This is here for backwards compatibility only. The correct way to force a stop is by using cancelation tokens.
+                // The user code can throw a RetryLimitExceededException to force the exit from the retry loop.
+                // The RetryLimitExceeded exception can have an inner exception attached to it. This is the exception
+                // which we will have to throw up the stack so that callers can handle it.
+                var tcs = new TaskCompletionSource<TResult>();
+                if (lastError.InnerException != null)
+                {
+                    tcs.TrySetException(lastError.InnerException);
+                }
+                else
+                {
+                    tcs.TrySetCanceled();
+                }
+
+                return tcs.Task;
+            }
 
             if (!(this.isTransient(lastError) && this.shouldRetry(this.retryCount++, lastError, out delay)))
             {

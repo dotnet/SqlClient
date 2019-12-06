@@ -1063,7 +1063,7 @@ namespace Microsoft.Data.SqlClient
 
                 bool completed;
 
-                completed = (_retryPolicy != null) ? _retryPolicy.ExecuteAction<bool>(() => { return TryOpen(null).Result; }) : TryOpen(null).Result;
+                completed = (_retryPolicy != null) ? _retryPolicy.ExecuteAction<bool>(() => { return TryOpen(null); }) : TryOpen(null);
 
                 if (!completed)
                 {
@@ -1345,16 +1345,8 @@ namespace Microsoft.Data.SqlClient
 
                 try
                 {
-                    if (RetryPolicy != null)
-                    {
-                        completed = _retryPolicy.ExecuteAction<bool>(() => { return TryOpen(null).Result; });
-                    }
-                    else
-                    {
-                        completed = TryOpen(completion).Result;
-                    }
-                    // execute async not working for now
-                    //completed = _retryPolicy.ExecuteAsync(() => { return TryOpen(completion); }).Result;
+                    //completed = (_retryPolicy != null) ? _retryPolicy.ExecuteAsync<bool>(() => { return Task.FromResult<bool>(TryOpen(completion)); }).Result : TryOpen(completion);
+                    completed = (_retryPolicy != null) ? _retryPolicy.ExecuteAction<bool>(() => { return TryOpen(null); }) : TryOpen(completion);
                 }
                 catch (Exception e)
                 {
@@ -1455,7 +1447,7 @@ namespace Microsoft.Data.SqlClient
                             // protect continuation from races with close and cancel
                             lock (_parent.InnerConnection)
                             {
-                                result = _parent.TryOpen(_retry).Result;
+                                result = _parent.TryOpen(_retry);
                             }
                             if (result)
                             {
@@ -1501,7 +1493,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private Task<bool> TryOpen(TaskCompletionSource<DbConnectionInternal> retry)
+        private bool TryOpen(TaskCompletionSource<DbConnectionInternal> retry)
         {
             SqlConnectionString connectionOptions = (SqlConnectionString)ConnectionOptions;
 
@@ -1528,14 +1520,14 @@ namespace Microsoft.Data.SqlClient
             {
                 if (!InnerConnection.TryReplaceConnection(this, ConnectionFactory, retry, UserConnectionOptions))
                 {
-                    return Task.FromResult<bool>(false);
+                    return false;
                 }
             }
             else
             {
                 if (!InnerConnection.TryOpenConnection(this, ConnectionFactory, retry, UserConnectionOptions))
                 {
-                    return Task.FromResult<bool>(false);
+                    return false;
                 }
             }
             // does not require GC.KeepAlive(this) because of ReRegisterForFinalize below.
@@ -1564,7 +1556,7 @@ namespace Microsoft.Data.SqlClient
                 _statistics = null; // in case of previous Open/Close/reset_CollectStats sequence
             }
 
-            return Task.FromResult<bool>(true);
+            return true;
         }
 
 

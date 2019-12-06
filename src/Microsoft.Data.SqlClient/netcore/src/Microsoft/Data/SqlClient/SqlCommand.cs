@@ -133,8 +133,6 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/SqlRetryPolicy/*'/>
         public SqlRetryPolicy RetryPolicy => Connection.RetryPolicy;
 
-        internal SqlRetryPolicy _retryPolicy = null;
-
         /// <summary>
         /// Return if column encryption setting is enabled.
         /// The order in the below if is important since _activeConnection.Parser can throw if the 
