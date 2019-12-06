@@ -9095,88 +9095,89 @@ namespace Microsoft.Data.SqlClient
                             maxsize = 1;
                     }
 
-                    WriteParameterVarLen(mt, maxsize, false /*IsNull*/, stateObj);
-                }
-            }
-            else
-            {
-                // If type timestamp - treat as fixed type and always send over timestamp length, which is 8.
-                // For fixed types, we either send null or fixed length for type length.  We want to match that
-                // behavior for timestamps.  However, in the case of null, we still must send 8 because if we
-                // send null we will not receive a output val.  You can send null for fixed types and still
-                // receive a output value, but not for variable types.  So, always send 8 for timestamp because
-                // while the user sees it as a fixed type, we are actually representing it as a bigbinary which
-                // is variable.
-                if (mt.SqlDbType == SqlDbType.Timestamp)
-                {
-                    WriteParameterVarLen(mt, TdsEnums.TEXT_TIME_STAMP_LEN, false, stateObj);
-                }
-                else if (mt.SqlDbType == SqlDbType.Udt)
-                {
-                    byte[] udtVal = null;
-                    Format format = Format.Native;
-
-                    Debug.Assert(_isYukon, "Invalid DataType UDT for non-Yukon or later server!");
-
-                    if (!isNull)
-                    {
-                        // When writing UDT parameter values to the TDS stream, allow sending byte[] or SqlBytes
-                        // directly to the server and not rejected as invalid. This allows users to handle
-                        // serialization and deserialization logic without having to have SqlClient be aware of
-                        // the types and without using inefficient text representations.
-                        if (value is byte[] rawBytes)
-                        {
-                            udtVal = rawBytes;
-                        }
-                        else if (value is SqlBytes sqlBytes)
-                        {
-                            switch (sqlBytes.Storage)
-                            {
-                                case StorageState.Buffer:
-                                    // use the buffer directly, the only way to create it is with the correctly sized byte array
-                                    udtVal = sqlBytes.Buffer;
-                                    break;
-                                case StorageState.Stream:
-                                case StorageState.UnmanagedBuffer:
-                                    // allocate a new byte array to store the data
-                                    udtVal = sqlBytes.Value;
-                                    break;
+                                    WriteParameterVarLen(mt, maxsize, false /*IsNull*/, stateObj);
+                                }
                             }
-                        }
-                        else
-                        {
-                            udtVal = _connHandler.Connection.GetBytes(value, out format, out maxsize);
-                        }
+                            else
+                            {
+                                // If type timestamp - treat as fixed type and always send over timestamp length, which is 8.
+                                // For fixed types, we either send null or fixed length for type length.  We want to match that
+                                // behavior for timestamps.  However, in the case of null, we still must send 8 because if we
+                                // send null we will not receive a output val.  You can send null for fixed types and still
+                                // receive a output value, but not for variable types.  So, always send 8 for timestamp because
+                                // while the user sees it as a fixed type, we are actually representing it as a bigbinary which
+                                // is variable.
+                                if (mt.SqlDbType == SqlDbType.Timestamp)
+                                {
+                                    WriteParameterVarLen(mt, TdsEnums.TEXT_TIME_STAMP_LEN, false, stateObj);
+                                }
+                                else if (mt.SqlDbType == SqlDbType.Udt)
+                                {
+                                    Debug.Assert(_isYukon, "Invalid DataType UDT for non-Yukon or later server!");
+
+                                    int maxSupportedSize = IsKatmaiOrNewer ? int.MaxValue : short.MaxValue;
+                                    byte[] udtVal = null;
+                                    Format format = Format.Native;
+
+                                    if (string.IsNullOrEmpty(param.UdtTypeName))
+                                    {
+                                        throw SQL.MustSetUdtTypeNameForUdtParams();
+                                    }
+
+                                    if (!isNull)
+                                    {
+                                        // When writing UDT parameter values to the TDS stream, allow sending byte[] or SqlBytes
+                                        // directly to the server and not reject them as invalid. This allows users to handle
+                                        // serialization and deserialization logic without having to have SqlClient be aware of
+                                        // the types and without using inefficient text representations.
+                                        if (value is byte[] rawBytes)
+                                        {
+                                            udtVal = rawBytes;
+                                        }
+                                        else if (value is SqlBytes sqlBytes)
+                                        {
+                                            switch (sqlBytes.Storage)
+                                            {
+                                                case StorageState.Buffer:
+                                                    // use the buffer directly, the only way to create it is with the correctly sized byte array
+                                                    udtVal = sqlBytes.Buffer;
+                                                    break;
+                                                case StorageState.Stream:
+                                                case StorageState.UnmanagedBuffer:
+                                                    // allocate a new byte array to store the data
+                                                    udtVal = sqlBytes.Value;
+                                                    break;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            udtVal = _connHandler.Connection.GetBytes(value, out format, out maxsize);
+                                        }
 
                         Debug.Assert(null != udtVal, "GetBytes returned null instance. Make sure that it always returns non-null value");
                         size = udtVal.Length;
 
-                        //it may be legitimate, but we dont support it yet
-                        if (size < 0 || (size >= ushort.MaxValue && maxsize != -1))
-                            throw new IndexOutOfRangeException();
-                    }
+                                        if (size >= maxSupportedSize && maxsize != -1)
+                                        {
+                                            throw SQL.UDTInvalidSize(maxsize, maxSupportedSize);
+                                        }
+                                    }
 
-                    //if this is NULL value, write special null value
-                    byte[] lenBytes = BitConverter.GetBytes((long)size);
-
-                    if (string.IsNullOrEmpty(param.UdtTypeName))
-                        throw SQL.MustSetUdtTypeNameForUdtParams();
-
-                    // Split the input name. TypeName is returned as single 3 part name during DeriveParameters.
-                    // NOTE: ParseUdtTypeName throws if format is incorrect
-                    string[] names = SqlParameter.ParseTypeName(param.UdtTypeName, true /* is UdtTypeName */);
-                    if (!string.IsNullOrEmpty(names[0]) && TdsEnums.MAX_SERVERNAME < names[0].Length)
-                    {
-                        throw ADP.ArgumentOutOfRange(nameof(names));
-                    }
-                    if (!string.IsNullOrEmpty(names[1]) && TdsEnums.MAX_SERVERNAME < names[names.Length - 2].Length)
-                    {
-                        throw ADP.ArgumentOutOfRange(nameof(names));
-                    }
-                    if (TdsEnums.MAX_SERVERNAME < names[2].Length)
-                    {
-                        throw ADP.ArgumentOutOfRange(nameof(names));
-                    }
+                                    // Split the input name. TypeName is returned as single 3 part name during DeriveParameters.
+                                    // NOTE: ParseUdtTypeName throws if format is incorrect
+                                    string[] names = SqlParameter.ParseTypeName(param.UdtTypeName, isUdtTypeName: true);
+                                    if (!string.IsNullOrEmpty(names[0]) && TdsEnums.MAX_SERVERNAME < names[0].Length)
+                                    {
+                                        throw ADP.ArgumentOutOfRange(nameof(names));
+                                    }
+                                    if (!string.IsNullOrEmpty(names[1]) && TdsEnums.MAX_SERVERNAME < names[names.Length - 2].Length)
+                                    {
+                                        throw ADP.ArgumentOutOfRange(nameof(names));
+                                    }
+                                    if (TdsEnums.MAX_SERVERNAME < names[2].Length)
+                                    {
+                                        throw ADP.ArgumentOutOfRange(nameof(names));
+                                    }
 
                     WriteUDTMetaData(value, names[0], names[1], names[2], stateObj);
 
