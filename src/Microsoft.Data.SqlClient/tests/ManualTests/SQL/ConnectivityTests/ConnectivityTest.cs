@@ -238,7 +238,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (SqlConnection conn = new SqlConnection(builder.ConnectionString))
             {
                 conn.Open();
-                InternalConnectionWrapper wrapper = new InternalConnectionWrapper(conn, true);
+                InternalConnectionWrapper wrapper = new InternalConnectionWrapper(conn, true, builder.ConnectionString);
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = "SELECT TOP 1 * FROM dbo.Employees";
@@ -251,7 +251,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (SqlConnection conn = new SqlConnection(builder.ConnectionString))
             {
                 conn.Open();
-                InternalConnectionWrapper wrapper = new InternalConnectionWrapper(conn, true);
+                InternalConnectionWrapper wrapper = new InternalConnectionWrapper(conn, true, builder.ConnectionString);
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = "SELECT TOP 1 * FROM dbo.Employees";
