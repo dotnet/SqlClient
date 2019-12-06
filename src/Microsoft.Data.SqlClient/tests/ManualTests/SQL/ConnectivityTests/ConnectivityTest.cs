@@ -228,20 +228,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [PlatformSpecific(TestPlatforms.AnyUnix)]
-        public static void ConnectionResiliencyTestUnix()
-        {
-            ConnectionResiliencyTest(typeof(AggregateException));
-        }
-
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [PlatformSpecific(TestPlatforms.Windows)]
-        public static void ConnectionResiliencyTestWindows()
-        {
-            ConnectionResiliencyTest(typeof(SqlException));
-        }
-
-        private static void ConnectionResiliencyTest(Type ExecuteExceptionType)
+        public static void ConnectionResiliencyTest()
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
             builder.ConnectRetryCount = 0;
@@ -256,7 +243,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     cmd.CommandText = "SELECT TOP 1 * FROM dbo.Employees";
                     wrapper.KillConnectionByTSql();
-                    Assert.Throws(ExecuteExceptionType, () => cmd.ExecuteReader());
+                    bool cmdSuccess = false;
+                    try
+                    {
+                        cmd.ExecuteScalar();
+                        cmdSuccess = true;
+                    }
+                    // Windows always throws SqlException. Unix sometimes throws AggregateException against Azure SQL DB.
+                    catch (Exception ex) when (ex is SqlException || ex is AggregateException) { }
+                    Assert.False(cmdSuccess);
                 }
             }
 
