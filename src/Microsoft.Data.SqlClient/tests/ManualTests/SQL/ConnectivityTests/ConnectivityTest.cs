@@ -235,21 +235,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             builder.ConnectRetryInterval = 5;
 
             // No connection resiliency
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection conn = new SqlConnection(builder.ConnectionString))
             {
                 conn.Open();
                 InternalConnectionWrapper wrapper = new InternalConnectionWrapper(conn, true);
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
+                    cmd.CommandText = "SELECT TOP 1 * FROM dbo.Employees";
                     wrapper.KillConnectionByTSql();
-                    using (SqlDataReader reader = cmd.ExecuteReader())
-                    while (reader.Read())
-                    { }
+                    Assert.Throws<SqlException>(() => cmd.ExecuteReader());
                 }
             }
 
             builder.ConnectRetryCount = 2;
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection conn = new SqlConnection(builder.ConnectionString))
             {
                 conn.Open();
                 InternalConnectionWrapper wrapper = new InternalConnectionWrapper(conn, true);
