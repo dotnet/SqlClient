@@ -986,6 +986,7 @@ namespace Microsoft.Data.Common
         internal static readonly bool TransparentNetworkIPResolution = LocalAppContextSwitches.DisableTNIRByDefault ? false : true;
         internal const int MaxPoolSize = 100;
         internal const int MinPoolSize = 0;
+        internal const int PoolIdleTimeout = -1;
         internal const string NetworkLibrary = "";
         internal const int PacketSize = 8000;
         internal const string Password = "";
@@ -1092,6 +1093,7 @@ namespace Microsoft.Data.Common
         internal const string MaxPoolSize = "Max Pool Size";
         internal const string Pooling = "Pooling";
         internal const string MinPoolSize = "Min Pool Size";
+        internal const string PoolIdleTimeout = "Pool Idle Timeout";
     }
 
     internal static class DbConnectionStringSynonyms

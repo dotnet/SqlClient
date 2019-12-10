@@ -39,6 +39,7 @@ namespace Microsoft.Data.SqlClient
             Pooling,
             MinPoolSize,
             MaxPoolSize,
+            PoolIdleTimeout,
             PoolBlockingPeriod,
 
             AsynchronousProcessing,
@@ -112,6 +113,7 @@ namespace Microsoft.Data.SqlClient
         private int _loadBalanceTimeout = DbConnectionStringDefaults.LoadBalanceTimeout;
         private int _maxPoolSize = DbConnectionStringDefaults.MaxPoolSize;
         private int _minPoolSize = DbConnectionStringDefaults.MinPoolSize;
+        private int _poolIdleTimeout = DbConnectionStringDefaults.PoolIdleTimeout;
         private int _packetSize = DbConnectionStringDefaults.PacketSize;
         private int _connectRetryCount = DbConnectionStringDefaults.ConnectRetryCount;
         private int _connectRetryInterval = DbConnectionStringDefaults.ConnectRetryInterval;
@@ -161,6 +163,7 @@ namespace Microsoft.Data.SqlClient
             validKeywords[(int)Keywords.LoadBalanceTimeout] = DbConnectionStringKeywords.LoadBalanceTimeout;
             validKeywords[(int)Keywords.MaxPoolSize] = DbConnectionStringKeywords.MaxPoolSize;
             validKeywords[(int)Keywords.MinPoolSize] = DbConnectionStringKeywords.MinPoolSize;
+            validKeywords[(int)Keywords.PoolIdleTimeout] = DbConnectionStringKeywords.PoolIdleTimeout;
             validKeywords[(int)Keywords.MultipleActiveResultSets] = DbConnectionStringKeywords.MultipleActiveResultSets;
             validKeywords[(int)Keywords.MultiSubnetFailover] = DbConnectionStringKeywords.MultiSubnetFailover;
             validKeywords[(int)Keywords.TransparentNetworkIPResolution] = DbConnectionStringKeywords.TransparentNetworkIPResolution;
@@ -208,6 +211,7 @@ namespace Microsoft.Data.SqlClient
             hash.Add(DbConnectionStringKeywords.MultipleActiveResultSets, Keywords.MultipleActiveResultSets);
             hash.Add(DbConnectionStringKeywords.MaxPoolSize, Keywords.MaxPoolSize);
             hash.Add(DbConnectionStringKeywords.MinPoolSize, Keywords.MinPoolSize);
+            hash.Add(DbConnectionStringKeywords.PoolIdleTimeout, Keywords.PoolIdleTimeout);
             hash.Add(DbConnectionStringKeywords.MultiSubnetFailover, Keywords.MultiSubnetFailover);
             hash.Add(DbConnectionStringKeywords.TransparentNetworkIPResolution, Keywords.TransparentNetworkIPResolution);
             //          hash.Add(DbConnectionStringKeywords.NamedConnection,					Keywords.NamedConnection);
@@ -339,6 +343,9 @@ namespace Microsoft.Data.SqlClient
                             break;
                         case Keywords.MinPoolSize:
                             MinPoolSize = ConvertToInt32(value);
+                            break;
+                        case Keywords.PoolIdleTimeout:
+                            PoolIdleTimeout = ConvertToInt32(value);
                             break;
                         case Keywords.PacketSize:
                             PacketSize = ConvertToInt32(value);
@@ -881,6 +888,21 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/PoolIdleTimeout/*' />
+        public int PoolIdleTimeout
+        {
+            get { return _poolIdleTimeout; }
+            set
+            {
+                if (value < 0)
+                {
+                    throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.PoolIdleTimeout);
+                }
+                SetValue(DbConnectionStringKeywords.PoolIdleTimeout, value);
+                _poolIdleTimeout = value;
+            }
+        }
+
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/MultipleActiveResultSets/*' />
         [DisplayName(DbConnectionStringKeywords.MultipleActiveResultSets)]
         [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Advanced)]
@@ -1288,6 +1310,8 @@ namespace Microsoft.Data.SqlClient
                     return MaxPoolSize;
                 case Keywords.MinPoolSize:
                     return MinPoolSize;
+                case Keywords.PoolIdleTimeout:
+                    return PoolIdleTimeout;
                 case Keywords.MultiSubnetFailover:
                     return MultiSubnetFailover;
                 case Keywords.TransparentNetworkIPResolution:
@@ -1460,6 +1484,9 @@ namespace Microsoft.Data.SqlClient
                     break;
                 case Keywords.MinPoolSize:
                     _minPoolSize = DbConnectionStringDefaults.MinPoolSize;
+                    break;
+                case Keywords.PoolIdleTimeout:
+                    _poolIdleTimeout = DbConnectionStringDefaults.PoolIdleTimeout;
                     break;
                 case Keywords.MultiSubnetFailover:
                     _multiSubnetFailover = DbConnectionStringDefaults.MultiSubnetFailover;

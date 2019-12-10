@@ -2162,6 +2162,7 @@ namespace Microsoft.Data.Common
         internal const int DecimalMaxPrecision28 = 28;  // there are some cases in Odbc where we need that ...
         internal const int DefaultCommandTimeout = 30;
         internal const int DefaultConnectionTimeout = DbConnectionStringDefaults.ConnectTimeout;
+        internal const int DefaultPoolIdleTimeout = DbConnectionStringDefaults.PoolIdleTimeout;
         internal const float FailoverTimeoutStep = 0.08F;    // fraction of timeout to use for fast failover connections
         internal const float FailoverTimeoutStepForTnir = 0.125F; // Fraction of timeout to use in case of Transparent Network IP resolution.
         internal const int MinimumTimeoutForTnirMs = 500; // The first login attempt in  Transparent network IP Resolution 
