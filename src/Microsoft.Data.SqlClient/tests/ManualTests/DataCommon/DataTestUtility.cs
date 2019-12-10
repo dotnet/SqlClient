@@ -11,6 +11,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Xunit;
@@ -445,14 +446,31 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return prefix + path;
         }
 
-        public static void RunNonQuery(string connectionString, string sql)
+        public static void RunNonQuery(string connectionString, string sql, int numberOfRetries = 0)
         {
-            using (SqlConnection connection = new SqlConnection(connectionString))
-            using (SqlCommand command = connection.CreateCommand())
+            int retries = 0;
+            while (true)
             {
-                connection.Open();
-                command.CommandText = sql;
-                command.ExecuteNonQuery();
+                try
+                {
+                    using (SqlConnection connection = new SqlConnection(connectionString))
+                    using (SqlCommand command = connection.CreateCommand())
+                    {
+                        connection.Open();
+                        command.CommandText = sql;
+                        command.ExecuteNonQuery();
+                        break;
+                    }
+                }
+                catch (Exception)
+                {
+                    if (retries >= numberOfRetries)
+                    {
+                        throw;
+                    }
+                    retries++;
+                    Thread.Sleep(1000);
+                }
             }
         }
 

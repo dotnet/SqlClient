@@ -5,6 +5,7 @@
 using System;
 using System.Linq;
 using System.Security;
+using System.Threading;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -152,7 +153,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     SecureString newPassword = new SecureString();
                     "newPassword".ToCharArray().ToList().ForEach(x => newPassword.AppendChar(x));
                     newPassword.MakeReadOnly();
-                    SqlConnection.ChangePassword(sqlConnectionStringBuilder.ConnectionString, credential, newPassword);
+                    int numberOfRetries = 0;
+                    while (true) // ChangePassword produces an intermittent server error during test runs so retry on failure
+                    {
+                        try
+                        {
+                            SqlConnection.ChangePassword(sqlConnectionStringBuilder.ConnectionString, credential, newPassword);
+                            break;
+                        }
+                        catch (SqlException)
+                        {
+                            if (numberOfRetries >= 4)
+                            {
+                                throw;
+                            }
+                            numberOfRetries++;
+                            Thread.Sleep(1000);
+                        }
+                    }
                     using (SqlConnection conn5 = new SqlConnection(sqlConnectionStringBuilder.ConnectionString, new SqlCredential(user, password)))
                     {
                         Assert.Throws<SqlException>(() => conn5.Open());
