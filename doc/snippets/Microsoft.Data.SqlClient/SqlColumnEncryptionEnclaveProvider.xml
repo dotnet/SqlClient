@@ -29,7 +29,7 @@ the enclave attestation protocol as well as the logic for creating and caching e
             <remarks>To be added.</remarks>
         </CreateEnclaveSession>
         <GetAttestationParameters>
-            <param name="attestUrl">The endpoint of an attestation service for attesting the enclave.</param>
+            <param name="attestationUrl">The endpoint of an attestation service for attesting the enclave.</param>
             <param name="customData">A set of extra data needed for attestating the enclave.</param>
             <param name="customDataLength">The length of the extra data needed for attestating the enclave.</param>
             <summary>Gets the information that SqlClient subsequently uses to initiate the process of attesting the enclave and to establish a secure session with the enclave.</summary>

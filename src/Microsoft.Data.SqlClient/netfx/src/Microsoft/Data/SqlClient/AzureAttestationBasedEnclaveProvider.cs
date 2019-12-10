@@ -72,14 +72,14 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Gets the information that SqlClient subsequently uses to initiate the process of attesting the enclave and to establish a secure session with the enclave.
-        public override SqlEnclaveAttestationParameters GetAttestationParameters(string attestUrl, byte[] customData, long customDataLength)
+        public override SqlEnclaveAttestationParameters GetAttestationParameters(string attestationUrl, byte[] customData, long customDataLength)
         {
             ECDiffieHellmanCng clientDHKey = new ECDiffieHellmanCng(DiffieHellmanKeySize);
             clientDHKey.KeyDerivationFunction = ECDiffieHellmanKeyDerivationFunction.Hash;
             clientDHKey.HashAlgorithm = CngAlgorithm.Sha256;
             byte[] nonce = customData;
             int nonceLength = Convert.ToInt32(customDataLength);
-            byte[] attestationParam = PrepareAttestationParameters(attestUrl, nonce, nonceLength);
+            byte[] attestationParam = PrepareAttestationParameters(attestationUrl, nonce, nonceLength);
             return new SqlEnclaveAttestationParameters(AzureBasedAttestationProtocolId, attestationParam, clientDHKey);
         }
 

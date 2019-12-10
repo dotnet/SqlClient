@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClient
         public abstract void GetEnclaveSession(string serverName, string attestationUrl, bool generateCustomData, out SqlEnclaveSession sqlEnclaveSession, out long counter, out byte[] customData, out long customDataLength);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionEnclaveProvider.xml' path='docs/members[@name="SqlColumnEncryptionEnclaveProvider"]/GetAttestationParameters/*'/>
-        public abstract SqlEnclaveAttestationParameters GetAttestationParameters(string attestUrl, byte[] customData, long customDataLength);
+        public abstract SqlEnclaveAttestationParameters GetAttestationParameters(string attestationUrl, byte[] customData, long customDataLength);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionEnclaveProvider.xml' path='docs/members[@name="SqlColumnEncryptionEnclaveProvider"]/CreateEnclaveSession/*'/>
         public abstract void CreateEnclaveSession(byte[] enclaveAttestationInfo, ECDiffieHellmanCng clientDiffieHellmanKey, string attestationUrl, string servername, byte[] customData, long customDataLength, out SqlEnclaveSession sqlEnclaveSession, out long counter);
