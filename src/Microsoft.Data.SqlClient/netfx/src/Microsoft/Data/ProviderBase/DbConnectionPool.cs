@@ -1224,7 +1224,8 @@ namespace Microsoft.Data.ProviderBase
                             Microsoft.Data.SqlClient.TdsParser.ReliabilitySection tdsReliabilitySection = new Microsoft.Data.SqlClient.TdsParser.ReliabilitySection();
 
                             RuntimeHelpers.PrepareConstrainedRegions();
-                            try {
+                            try
+                            {
                                 tdsReliabilitySection.Start();
 #else
                             {
@@ -1236,7 +1237,8 @@ namespace Microsoft.Data.ProviderBase
                                 timeout = !TryGetConnection(next.Owner, delay, allowCreate, onlyOneCheckConnection, next.UserOptions, out connection);
                             }
 #if DEBUG
-                            finally {
+                            finally
+                            {
                                 tdsReliabilitySection.Stop();
                             }
 #endif //DEBUG
