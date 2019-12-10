@@ -511,7 +511,7 @@ namespace Microsoft.Data.ProviderBase
 
             _poolIdleTimeout = _connectionPoolGroupOptions.PoolIdleTimeout;
 
-            if (_poolIdleTimeout != -1)
+            if (_poolIdleTimeout > -1)
             {
                 // Use PoolIdleTimout (in seconds) to create _cleanupWait timer
                 _cleanupWait = _poolIdleTimeout * 1000;
