@@ -17,6 +17,9 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("WSID = myworkstation")]
         [InlineData("Application Name = .Net Tests")]
         [InlineData("Pooling = false")]
+        [InlineData("Pool Idle Timeout = 5")]
+        [InlineData("Authentication = ActiveDirectoryPassword ")]
+        [InlineData("Authentication = Active Directory Password ")]
         public void ConnectionStringTests(string connectionString)
         {
             ExecuteConnectionStringTests(connectionString);

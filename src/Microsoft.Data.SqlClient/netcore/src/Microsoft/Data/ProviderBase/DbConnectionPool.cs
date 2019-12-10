@@ -344,6 +344,7 @@ namespace Microsoft.Data.ProviderBase
         private static readonly Random s_random = new Random(5101977); // Value obtained from Dave Driver
 
         private readonly int _cleanupWait;
+        private readonly int _poolIdleTimeout;
         private readonly DbConnectionPoolIdentity _identity;
 
         private readonly DbConnectionFactory _connectionFactory;
@@ -399,16 +400,26 @@ namespace Microsoft.Data.ProviderBase
 
             _state = State.Initializing;
 
-            lock (s_random)
-            { // Random.Next is not thread-safe
-                _cleanupWait = s_random.Next(12, 24) * 10 * 1000; // 2-4 minutes in 10 sec intervals
-            }
-
             _connectionFactory = connectionFactory;
             _connectionPoolGroup = connectionPoolGroup;
             _connectionPoolGroupOptions = connectionPoolGroup.PoolGroupOptions;
             _connectionPoolProviderInfo = connectionPoolProviderInfo;
             _identity = identity;
+
+            _poolIdleTimeout = _connectionPoolGroupOptions.PoolIdleTimeout;
+
+            if (_poolIdleTimeout != -1)
+            {
+                // Use PoolIdleTimout (in seconds) to create _cleanupWait timer
+                _cleanupWait = _poolIdleTimeout * 1000;
+            }
+            else
+            {
+                lock (s_random)
+                { // Random.Next is not thread-safe
+                    _cleanupWait = s_random.Next(12, 24) * 10 * 1000; // 2-4 minutes in 10 sec intervals
+                }
+            }
 
             _waitHandles = new PoolWaitHandles();
 

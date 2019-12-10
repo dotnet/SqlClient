@@ -35,6 +35,7 @@ namespace Microsoft.Data.SqlClient
             internal const bool MARS = false;
             internal const int Max_Pool_Size = 100;
             internal const int Min_Pool_Size = 0;
+            internal const int Pool_Idle_Timeout = ADP.DefaultPoolIdleTimeout;
             internal const bool MultiSubnetFailover = DbConnectionStringDefaults.MultiSubnetFailover;
             internal const int Packet_Size = 8000;
             internal const string Password = "";
@@ -81,6 +82,7 @@ namespace Microsoft.Data.SqlClient
             internal const string MARS = "multipleactiveresultsets";
             internal const string Max_Pool_Size = "max pool size";
             internal const string Min_Pool_Size = "min pool size";
+            internal const string Pool_Idle_Timeout = "pool idle timeout";
             internal const string MultiSubnetFailover = "multisubnetfailover";
             internal const string Network_Library = "network library";
             internal const string Packet_Size = "packet size";
@@ -196,6 +198,7 @@ namespace Microsoft.Data.SqlClient
         private readonly int _loadBalanceTimeout;
         private readonly int _maxPoolSize;
         private readonly int _minPoolSize;
+        private readonly int _poolIdleTimeout;
         private readonly int _packetSize;
         private readonly int _connectRetryCount;
         private readonly int _connectRetryInterval;
@@ -251,6 +254,7 @@ namespace Microsoft.Data.SqlClient
             _loadBalanceTimeout = ConvertValueToInt32(KEY.Load_Balance_Timeout, DEFAULT.Load_Balance_Timeout);
             _maxPoolSize = ConvertValueToInt32(KEY.Max_Pool_Size, DEFAULT.Max_Pool_Size);
             _minPoolSize = ConvertValueToInt32(KEY.Min_Pool_Size, DEFAULT.Min_Pool_Size);
+            _poolIdleTimeout = ConvertValueToInt32(KEY.Pool_Idle_Timeout, DEFAULT.Pool_Idle_Timeout);
             _packetSize = ConvertValueToInt32(KEY.Packet_Size, DEFAULT.Packet_Size);
             _connectRetryCount = ConvertValueToInt32(KEY.Connect_Retry_Count, DEFAULT.Connect_Retry_Count);
             _connectRetryInterval = ConvertValueToInt32(KEY.Connect_Retry_Interval, DEFAULT.Connect_Retry_Interval);
@@ -302,12 +306,15 @@ namespace Microsoft.Data.SqlClient
             {
                 throw ADP.InvalidMinMaxPoolSizeValues();
             }
+            if (_poolIdleTimeout < -1)
+            {
+                throw ADP.InvalidConnectionOptionValue(KEY.Pool_Idle_Timeout);
+            }
 
             if ((_packetSize < TdsEnums.MIN_PACKET_SIZE) || (TdsEnums.MAX_PACKET_SIZE < _packetSize))
             {
                 throw SQL.InvalidPacketSizeValue();
             }
-
 
             ValidateValueLength(_applicationName, TdsEnums.MAXLEN_APPNAME, KEY.Application_Name);
             ValidateValueLength(_currentLanguage, TdsEnums.MAXLEN_LANGUAGE, KEY.Current_Language);
@@ -479,6 +486,7 @@ namespace Microsoft.Data.SqlClient
 #endif
             _maxPoolSize = connectionOptions._maxPoolSize;
             _minPoolSize = connectionOptions._minPoolSize;
+            _poolIdleTimeout = connectionOptions._poolIdleTimeout;
             _multiSubnetFailover = connectionOptions._multiSubnetFailover;
             _packetSize = connectionOptions._packetSize;
             _applicationName = connectionOptions._applicationName;
@@ -531,6 +539,7 @@ namespace Microsoft.Data.SqlClient
         internal int LoadBalanceTimeout { get { return _loadBalanceTimeout; } }
         internal int MaxPoolSize { get { return _maxPoolSize; } }
         internal int MinPoolSize { get { return _minPoolSize; } }
+        internal int PoolIdleTimeout { get { return _poolIdleTimeout; } }
         internal int PacketSize { get { return _packetSize; } }
         internal int ConnectRetryCount { get { return _connectRetryCount; } }
         internal int ConnectRetryInterval { get { return _connectRetryInterval; } }
@@ -566,7 +575,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (null != _expandedAttachDBFilename)
             {
-                return  ExpandAttachDbFileName(_expandedAttachDBFilename);
+                return ExpandAttachDbFileName(_expandedAttachDBFilename);
             }
             else
             {
@@ -629,6 +638,7 @@ namespace Microsoft.Data.SqlClient
                     { KEY.MARS, KEY.MARS },
                     { KEY.Max_Pool_Size, KEY.Max_Pool_Size },
                     { KEY.Min_Pool_Size, KEY.Min_Pool_Size },
+                    { KEY.Pool_Idle_Timeout, KEY.Pool_Idle_Timeout },
                     { KEY.MultiSubnetFailover, KEY.MultiSubnetFailover },
                     { KEY.Network_Library, KEY.Network_Library },
                     { KEY.Packet_Size, KEY.Packet_Size },
@@ -843,7 +853,7 @@ namespace Microsoft.Data.SqlClient
             }
             catch (FormatException e)
             {
-                 throw ADP.InvalidConnectionOptionValue(KEY.AttestationProtocol, e);
+                throw ADP.InvalidConnectionOptionValue(KEY.AttestationProtocol, e);
             }
             catch (OverflowException e)
             {

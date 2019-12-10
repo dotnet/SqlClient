@@ -630,6 +630,7 @@ namespace Microsoft.Data.Common
         internal const bool MultiSubnetFailover = false;
         internal const int MaxPoolSize = 100;
         internal const int MinPoolSize = 0;
+        internal const int PoolIdleTimeout = -1;
         internal const int PacketSize = 8000;
         internal const string Password = "";
         internal const bool PersistSecurityInfo = false;
@@ -698,6 +699,7 @@ namespace Microsoft.Data.Common
         internal const string MaxPoolSize = "Max Pool Size";
         internal const string Pooling = "Pooling";
         internal const string MinPoolSize = "Min Pool Size";
+        internal const string PoolIdleTimeout = "Pool Idle Timeout";
 #if netcoreapp
         internal const string PoolBlockingPeriod = "PoolBlockingPeriod";
 #endif

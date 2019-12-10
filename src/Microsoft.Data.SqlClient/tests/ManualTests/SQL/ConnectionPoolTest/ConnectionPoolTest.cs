@@ -32,6 +32,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             BasicConnectionPoolingTest(tcpConnectionString);
             ClearAllPoolsTest(tcpConnectionString);
             ReclaimEmancipatedOnOpenTest(tcpConnectionString);
+            PoolIdleTimeoutTest(tcpConnectionString);
 
             if (DataTestUtility.IsUsingManagedSNI())
             {
@@ -178,7 +179,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 tasks[i] = Task.Factory.StartNew<InternalConnectionWrapper>(taskFunction);
             }
 
-
             bool taskWithLiveConnection = false;
             bool taskWithNewConnection = false;
             bool taskWithCorrectException = false;
@@ -217,6 +217,35 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             waitAllTask.Wait();
             Assert.True(taskWithLiveConnection && taskWithNewConnection && taskWithCorrectException, string.Format("Tasks didn't finish as expected.\nTask with live connection: {0}\nTask with new connection: {1}\nTask with correct exception: {2}\n", taskWithLiveConnection, taskWithNewConnection, taskWithCorrectException));
+        }
+
+        private static void PoolIdleTimeoutTest(string connectionString)
+        {
+            string newConnectionString = (new SqlConnectionStringBuilder(connectionString) { PoolIdleTimeout = 1 }).ConnectionString;
+            SqlConnection.ClearAllPools();
+
+            SqlConnection connection1 = new SqlConnection(newConnectionString);
+            connection1.Open();
+
+            ConnectionPoolWrapper connectionPool = new ConnectionPoolWrapper(connection1);
+            connection1.Close();
+
+            Assert.True(connectionPool.FreeConnectionCount == 1);
+
+            // This connection should reuse the same closed connection from pool
+            SqlConnection connection2 = new SqlConnection(newConnectionString);
+            connection2.Open();
+
+            Assert.True(connectionPool.FreeConnectionCount == 0);
+            connection2.Close();
+
+            Assert.True(connectionPool.FreeConnectionCount == 1);
+
+            // Sleep for 3 seconds, the connection should be removed from pool.
+            Thread.Sleep(3000);
+
+            Assert.False(connectionPool.ContainsConnection(connection2));
+            Assert.True(connectionPool.FreeConnectionCount == 0);
         }
 
         private static InternalConnectionWrapper ReplacementConnectionUsesSemaphoreTask(string connectionString, Barrier syncBarrier)

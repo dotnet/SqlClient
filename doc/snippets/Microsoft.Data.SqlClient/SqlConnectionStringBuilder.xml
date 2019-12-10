@@ -585,13 +585,24 @@ False
             <format type="text/markdown"><![CDATA[  
   
 ## Remarks  
- When connection pooling is enabled and  a timeout error or other login error occurs, an exception will be thrown and subsequent connection attempts will fail for the next five seconds, the "blocking period". If the application attempts to connect within the blocking period, the first exception will be thrown again. Subsequent failures after a blocking period ends will result in a new blocking period that is twice as long as the previous blocking period, up to a maximum of one minute.  
+ When connection pooling is enabled and a timeout error or other login error occurs, an exception will be thrown and subsequent connection attempts will fail for the next five seconds, the "blocking period". If the application attempts to connect within the blocking period, the first exception will be thrown again. Subsequent failures after a blocking period ends will result in a new blocking period that is twice as long as the previous blocking period, up to a maximum of one minute.  
   
  Attempting to connect to Azure SQL databases can fail with transient errors which are typically recovered within a few seconds. However, with the connection pool blocking period behavior, you may not be able to reach your database for extensive periods even though the database is  available. This is especially problematic for apps that need to render fast. The **PoolBlockingPeriod** enables you to select the blocking period best suited for your app. See the <xref:Microsoft.Data.SqlClient.PoolBlockingPeriod> enumeration for available settings.  
   
  ]]></format>
             </remarks>
         </PoolBlockingPeriod>
+        <PoolIdleTimeout>
+            <summary>Gets or sets the maximum length of time (in seconds) a connection can be idle in the pool before it is automatically closed.</summary>
+            <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.PoolIdleTimeout" /> property, or randomly generated value between 4-8 minutes if no value has been supplied.</value>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+ This property corresponds to the "Pool Idle Timeout" or "pool idle timeout" keys within the connection string.
+]]></format>
+            </remarks>
+        </PoolIdleTimeout>
         <Pooling>
             <summary>Gets or sets a Boolean value that indicates whether the connection will be pooled or explicitly opened every time that the connection is requested.</summary>
             <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Pooling" /> property, or <see langword="true" /> if none has been supplied.</value>
