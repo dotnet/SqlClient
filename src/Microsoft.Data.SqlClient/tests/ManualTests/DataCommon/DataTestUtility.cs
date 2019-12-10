@@ -170,7 +170,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return !string.IsNullOrEmpty(AADPasswordConnectionString);
         }
 
-        public static bool IsNotAzureServer() 
+        public static bool IsNotAzureServer()
         {
             return AreConnStringsSetup() ? !DataTestUtility.IsAzureSqlServer(new SqlConnectionStringBuilder((DataTestUtility.TCPConnectionString)).DataSource) : true;
         }
