@@ -894,7 +894,7 @@ namespace Microsoft.Data.SqlClient
             get { return _poolIdleTimeout; }
             set
             {
-                if (value < 0)
+                if (value < -1)
                 {
                     throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.PoolIdleTimeout);
                 }

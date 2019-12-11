@@ -327,7 +327,9 @@ namespace Microsoft.Data.SqlClient
                             AttestationProtocol = ConvertToAttestationProtocol(keyword, value);
                             break;
 #if netcoreapp
-                        case Keywords.PoolBlockingPeriod: PoolBlockingPeriod = ConvertToPoolBlockingPeriod(keyword, value); break;
+                        case Keywords.PoolBlockingPeriod:
+                            PoolBlockingPeriod = ConvertToPoolBlockingPeriod(keyword, value);
+                            break;
 #endif
                         case Keywords.Encrypt:
                             Encrypt = ConvertToBoolean(value);
@@ -658,7 +660,7 @@ namespace Microsoft.Data.SqlClient
             get { return _poolIdleTimeout; }
             set
             {
-                if (value < 0)
+                if (value < -1)
                 {
                     throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.PoolIdleTimeout);
                 }
@@ -915,7 +917,8 @@ namespace Microsoft.Data.SqlClient
                 case Keywords.AttachDBFilename:
                     return AttachDBFilename;
 #if netcoreapp
-                case Keywords.PoolBlockingPeriod: return PoolBlockingPeriod;
+                case Keywords.PoolBlockingPeriod:
+                    return PoolBlockingPeriod;
 #endif
                 case Keywords.ConnectTimeout:
                     return ConnectTimeout;
