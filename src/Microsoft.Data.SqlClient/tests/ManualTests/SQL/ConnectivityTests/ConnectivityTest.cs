@@ -207,9 +207,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 DataTestUtility.RunNonQuery(s_dbConnectionString, s_createTableCmd);
 
                 // Kill all the connections and set Database to SINGLE_USER Mode.
-                DataTestUtility.RunNonQuery(s_connectionString, s_alterDatabaseSingleCmd);
+                DataTestUtility.RunNonQuery(s_connectionString, s_alterDatabaseSingleCmd, 4);
                 // Set Database back to MULTI_USER Mode
-                DataTestUtility.RunNonQuery(s_connectionString, s_alterDatabaseMultiCmd);
+                DataTestUtility.RunNonQuery(s_connectionString, s_alterDatabaseMultiCmd, 4);
 
                 // Execute SELECT statement.
                 DataTestUtility.RunNonQuery(s_dbConnectionString, s_selectTableCmd);
@@ -222,8 +222,58 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             finally
             {
                 // Kill all the connections, set Database to SINGLE_USER Mode and drop Database
-                DataTestUtility.RunNonQuery(s_connectionString, s_alterDatabaseSingleCmd);
-                DataTestUtility.RunNonQuery(s_connectionString, s_dropDatabaseCmd);
+                DataTestUtility.RunNonQuery(s_connectionString, s_alterDatabaseSingleCmd, 4);
+                DataTestUtility.RunNonQuery(s_connectionString, s_dropDatabaseCmd, 4);
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void ConnectionResiliencyTest()
+        {
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
+            builder.ConnectRetryCount = 0;
+            builder.ConnectRetryInterval = 5;
+
+            // No connection resiliency
+            using (SqlConnection conn = new SqlConnection(builder.ConnectionString))
+            {
+                conn.Open();
+                InternalConnectionWrapper wrapper = new InternalConnectionWrapper(conn, true, builder.ConnectionString);
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = "SELECT TOP 1 * FROM dbo.Employees";
+                    wrapper.KillConnectionByTSql();
+                    bool cmdSuccess = false;
+                    try
+                    {
+                        cmd.ExecuteScalar();
+                        cmdSuccess = true;
+                    }
+                    // Windows always throws SqlException. Unix sometimes throws AggregateException against Azure SQL DB.
+                    catch (Exception ex) when (ex is SqlException || ex is AggregateException) { }
+                    Assert.False(cmdSuccess);
+                }
+            }
+
+            builder.ConnectRetryCount = 2;
+            using (SqlConnection conn = new SqlConnection(builder.ConnectionString))
+            {
+                conn.Open();
+                InternalConnectionWrapper wrapper = new InternalConnectionWrapper(conn, true, builder.ConnectionString);
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = "SELECT TOP 1 * FROM dbo.Employees";
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                        while (reader.Read())
+                        { }
+
+                    wrapper.KillConnectionByTSql();
+
+                    // Connection resiliency should reconnect transparently
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                        while (reader.Read())
+                        { }
+                }
             }
         }
     }

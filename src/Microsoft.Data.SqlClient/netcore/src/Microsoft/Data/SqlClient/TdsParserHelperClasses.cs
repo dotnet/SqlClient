@@ -768,8 +768,14 @@ namespace Microsoft.Data.SqlClient
         internal string rpcName;
         internal ushort ProcID;       // Used instead of name
         internal ushort options;
-        internal SqlParameter[] parameters;
-        internal byte[] paramoptions;
+
+        internal SqlParameter[] systemParams;
+        internal byte[] systemParamOptions;
+        internal int systemParamCount;
+
+        internal SqlParameterCollection userParams;
+        internal long[] userParamMap;
+        internal int userParamCount;
 
         internal int? recordsAffected;
         internal int cumulativeRecordsAffected;
@@ -789,13 +795,33 @@ namespace Microsoft.Data.SqlClient
             if (TdsEnums.RPC_PROCID_EXECUTESQL == ProcID)
             {
                 // Param 0 is the actual sql executing
-                return (string)parameters[0].Value;
+                return (string)systemParams[0].Value;
             }
             else
             {
                 return rpcName;
             }
         }
+
+        internal SqlParameter GetParameterByIndex(int index, out byte options)
+        {
+            options = 0;
+            SqlParameter retval = null;
+            if (index < systemParamCount)
+            {
+                retval = systemParams[index];
+                options = systemParamOptions[index];
+            }
+            else
+            {
+                long data = userParamMap[index - systemParamCount];
+                int paramIndex = (int)(data & int.MaxValue);
+                options = (byte)((data >> 32) & 0xFF);
+                retval = userParams[paramIndex];
+            }
+            return retval;
+        }
+
     }
 
     internal sealed class SqlReturnValue : SqlMetaDataPriv
