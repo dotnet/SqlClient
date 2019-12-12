@@ -69,7 +69,7 @@ namespace Microsoft.Data.SqlClient
         /// <param name="customData">A set of extra data needed for attestating the enclave.</param>
         /// <param name="customDataLength">The length of the extra data needed for attestating the enclave.</param>
         internal void CreateEnclaveSession(SqlConnectionAttestationProtocol attestationProtocol, string enclaveType, string serverName, string attestationUrl,
-            byte[] attestationInfo, SqlEnclaveAttestationParameters attestationParameters, byte[] customData, long customDataLength)
+            byte[] attestationInfo, SqlEnclaveAttestationParameters attestationParameters, byte[] customData, int customDataLength)
         {
 
             lock (_lock)
@@ -78,7 +78,7 @@ namespace Microsoft.Data.SqlClient
                 long counter;
                 SqlEnclaveSession sqlEnclaveSession = null;
                 byte[] dummyCustomData = null;
-                long dummyCustomDataLength;
+                int dummyCustomDataLength;
 
                 sqlColumnEncryptionEnclaveProvider.GetEnclaveSession(serverName, attestationUrl, false, out sqlEnclaveSession, out counter, out dummyCustomData, out dummyCustomDataLength);
 
@@ -112,7 +112,7 @@ namespace Microsoft.Data.SqlClient
             SqlEnclaveSession sqlEnclaveSession = null;
             long counter;
             byte[] dummyCustomData = null;
-            long dummyCustomDataLength;
+            int dummyCustomDataLength;
 
             try
             {
@@ -140,7 +140,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         
-        internal SqlEnclaveAttestationParameters GetAttestationParameters(SqlConnectionAttestationProtocol attestationProtocol, string enclaveType, string attestationUrl, byte[] customData, long customDataLength)
+        internal SqlEnclaveAttestationParameters GetAttestationParameters(SqlConnectionAttestationProtocol attestationProtocol, string enclaveType, string attestationUrl, byte[] customData, int customDataLength)
         {
             SqlColumnEncryptionEnclaveProvider sqlColumnEncryptionEnclaveProvider = GetEnclaveProvider(attestationProtocol, enclaveType);
             return sqlColumnEncryptionEnclaveProvider.GetAttestationParameters(attestationUrl, customData, customDataLength);
@@ -194,13 +194,13 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal void GetEnclaveSession(SqlConnectionAttestationProtocol attestationProtocol, string enclaveType, string serverName, string enclaveAttestationUrl, bool generateCustomData, out SqlEnclaveSession sqlEnclaveSession, out byte[] customData, out long customDataLength)
+        internal void GetEnclaveSession(SqlConnectionAttestationProtocol attestationProtocol, string enclaveType, string serverName, string enclaveAttestationUrl, bool generateCustomData, out SqlEnclaveSession sqlEnclaveSession, out byte[] customData, out int customDataLength)
         {
             long counter;
             GetEnclaveSession(attestationProtocol, enclaveType, serverName, enclaveAttestationUrl, generateCustomData, out sqlEnclaveSession, out counter, out customData, out customDataLength, throwIfNull: false);
         }
 
-        private void GetEnclaveSession(SqlConnectionAttestationProtocol attestationProtocol, string enclaveType, string serverName, string enclaveAttestationUrl, bool generateCustomData, out SqlEnclaveSession sqlEnclaveSession, out long counter, out byte[] customData, out long customDataLength, bool throwIfNull)
+        private void GetEnclaveSession(SqlConnectionAttestationProtocol attestationProtocol, string enclaveType, string serverName, string enclaveAttestationUrl, bool generateCustomData, out SqlEnclaveSession sqlEnclaveSession, out long counter, out byte[] customData, out int customDataLength, bool throwIfNull)
         {
             SqlColumnEncryptionEnclaveProvider sqlColumnEncryptionEnclaveProvider = GetEnclaveProvider(attestationProtocol, enclaveType);
             sqlColumnEncryptionEnclaveProvider.GetEnclaveSession(serverName, enclaveAttestationUrl, generateCustomData, out sqlEnclaveSession, out counter, out customData, out customDataLength);

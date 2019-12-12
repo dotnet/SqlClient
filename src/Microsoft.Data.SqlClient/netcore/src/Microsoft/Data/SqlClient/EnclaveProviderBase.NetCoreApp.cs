@@ -91,7 +91,7 @@ namespace Microsoft.Data.SqlClient
 
         #region Public methods
         // Helper method to get the enclave session from the cache if present
-        protected void GetEnclaveSessionHelper(string servername, string attestationUrl, bool shouldGenerateNonce, out SqlEnclaveSession sqlEnclaveSession, out long counter, out byte[] customData, out long customDataLength)
+        protected void GetEnclaveSessionHelper(string servername, string attestationUrl, bool shouldGenerateNonce, out SqlEnclaveSession sqlEnclaveSession, out long counter, out byte[] customData, out int customDataLength)
         {
             customData = null;
             customDataLength = 0;
@@ -160,7 +160,7 @@ namespace Microsoft.Data.SqlClient
                             byte[] nonce = new byte[NonceSize];
                             rng.GetBytes(nonce);
                             customData = nonce;
-                            customDataLength = Convert.ToInt64(nonce.Length);
+                            customDataLength = nonce.Length;
                         }
                     }
 

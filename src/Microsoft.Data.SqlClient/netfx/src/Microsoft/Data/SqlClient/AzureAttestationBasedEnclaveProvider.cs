@@ -66,26 +66,24 @@ namespace Microsoft.Data.SqlClient
 
         // When overridden in a derived class, looks up an existing enclave session information in the enclave session cache.
         // If the enclave provider doesn't implement enclave session caching, this method is expected to return null in the sqlEnclaveSession parameter.
-        public override void GetEnclaveSession(string servername, string attestationUrl, bool generateCustomData, out SqlEnclaveSession sqlEnclaveSession, out long counter, out byte[] customData, out long customDataLength)
+        public override void GetEnclaveSession(string servername, string attestationUrl, bool generateCustomData, out SqlEnclaveSession sqlEnclaveSession, out long counter, out byte[] customData, out int customDataLength)
         {
             GetEnclaveSessionHelper(servername, attestationUrl, generateCustomData, out sqlEnclaveSession, out counter, out customData, out customDataLength);
         }
 
         // Gets the information that SqlClient subsequently uses to initiate the process of attesting the enclave and to establish a secure session with the enclave.
-        public override SqlEnclaveAttestationParameters GetAttestationParameters(string attestationUrl, byte[] customData, long customDataLength)
+        public override SqlEnclaveAttestationParameters GetAttestationParameters(string attestationUrl, byte[] customData, int customDataLength)
         {
             ECDiffieHellmanCng clientDHKey = new ECDiffieHellmanCng(DiffieHellmanKeySize);
             clientDHKey.KeyDerivationFunction = ECDiffieHellmanKeyDerivationFunction.Hash;
             clientDHKey.HashAlgorithm = CngAlgorithm.Sha256;
-            byte[] nonce = customData;
-            int nonceLength = Convert.ToInt32(customDataLength);
-            byte[] attestationParam = PrepareAttestationParameters(attestationUrl, nonce, nonceLength);
+            byte[] attestationParam = PrepareAttestationParameters(attestationUrl, customData, customDataLength);
             return new SqlEnclaveAttestationParameters(AzureBasedAttestationProtocolId, attestationParam, clientDHKey);
         }
 
 
         // When overridden in a derived class, performs enclave attestation, generates a symmetric key for the session, creates a an enclave session and stores the session information in the cache.
-        public override void CreateEnclaveSession(byte[] attestationInfo, ECDiffieHellmanCng clientDHKey, string attestationUrl, string servername, byte[] customData, long customDataLength, out SqlEnclaveSession sqlEnclaveSession, out long counter)
+        public override void CreateEnclaveSession(byte[] attestationInfo, ECDiffieHellmanCng clientDHKey, string attestationUrl, string servername, byte[] customData, int customDataLength, out SqlEnclaveSession sqlEnclaveSession, out long counter)
         {
             sqlEnclaveSession = null;
             counter = 0;

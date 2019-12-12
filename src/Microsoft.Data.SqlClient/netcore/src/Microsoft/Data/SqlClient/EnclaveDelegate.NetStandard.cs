@@ -30,12 +30,12 @@ namespace Microsoft.Data.SqlClient
         /// <param name="customData">A set of extra data needed for attestating the enclave.</param>
         /// <param name="customDataLength">The length of the extra data needed for attestating the enclave.</param>
         internal void CreateEnclaveSession(SqlConnectionAttestationProtocol attestationProtocol, string enclaveType, string serverName, string attestationUrl,
-            byte[] attestationInfo, SqlEnclaveAttestationParameters attestationParameters, byte[] customData, long customDataLength)
+            byte[] attestationInfo, SqlEnclaveAttestationParameters attestationParameters, byte[] customData, int customDataLength)
         {
             throw new PlatformNotSupportedException();
         }
 
-        internal void GetEnclaveSession(SqlConnectionAttestationProtocol attestationProtocol, string enclaveType, string serverName, string enclaveAttestationUrl, bool generateCustomData, out SqlEnclaveSession sqlEnclaveSession, out byte[] customData, out long customDataLength)
+        internal void GetEnclaveSession(SqlConnectionAttestationProtocol attestationProtocol, string enclaveType, string serverName, string enclaveAttestationUrl, bool generateCustomData, out SqlEnclaveSession sqlEnclaveSession, out byte[] customData, out int customDataLength)
         {
             throw new PlatformNotSupportedException();
         }
@@ -50,7 +50,7 @@ namespace Microsoft.Data.SqlClient
             throw new PlatformNotSupportedException();
         }
 
-        internal SqlEnclaveAttestationParameters GetAttestationParameters(SqlConnectionAttestationProtocol attestationProtocol, string enclaveType, string attestationUrl, byte[] customData, long customDataLength)
+        internal SqlEnclaveAttestationParameters GetAttestationParameters(SqlConnectionAttestationProtocol attestationProtocol, string enclaveType, string attestationUrl, byte[] customData, int customDataLength)
         {
             throw new PlatformNotSupportedException();
         }

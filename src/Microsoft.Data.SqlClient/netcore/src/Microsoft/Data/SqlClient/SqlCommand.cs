@@ -116,7 +116,7 @@ namespace Microsoft.Data.SqlClient
         internal EnclavePackage enclavePackage = null;
         private SqlEnclaveAttestationParameters enclaveAttestationParameters = null;
         private byte[] customData = null;
-        private long customDataLength = 0;
+        private int customDataLength = 0;
 
         // Last TaskCompletionSource for reconnect task - use for cancellation only
         private TaskCompletionSource<object> _reconnectionCompletionSource = null;
