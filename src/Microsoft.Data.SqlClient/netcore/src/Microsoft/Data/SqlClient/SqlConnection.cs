@@ -1325,7 +1325,7 @@ namespace Microsoft.Data.SqlClient
                 if (s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlAfterOpenConnection) ||
                     s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlErrorOpenConnection))
                 {
-                     result.Task.ContinueWith((t) =>
+                    result.Task.ContinueWith((t) =>
                     {
                         if (t.Exception != null)
                         {
@@ -1344,11 +1344,11 @@ namespace Microsoft.Data.SqlClient
                     return result.Task;
                 }
 
-                bool completed=false;
+                bool completed = false;
 
                 try
                 {
-                    //completed = (_retryPolicy != null) ? _retryPolicy.ExecuteAsync<bool>(() => { return Task.FromResult<bool>(TryOpen(completion)); }).Result : TryOpen(completion);
+                    // This works but synchronously
                     completed = (_retryPolicy != null) ? _retryPolicy.ExecuteAction<bool>(() => { return TryOpen(null); }) : TryOpen(completion);
                 }
                 catch (Exception e)

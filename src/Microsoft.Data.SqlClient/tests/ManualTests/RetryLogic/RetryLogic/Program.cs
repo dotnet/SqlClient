@@ -12,14 +12,14 @@ namespace RetryLogicCore
         static async Task Main(string[] args)
         {
             SqlConnection cnn = null;
-            SqlCommand cmd = null;
+            //SqlCommand cmd = null;
 
             while (true)
             {
                 using (cnn = new SqlConnection("Server=tcp:localhost,11433;Initial Catalog=test;Integrated Security=SSPI;Connection Timeout=10;" +
                     "RetryStrategy=FixedInterval; RetryCount=3; RetryInterval=8; RetryIncrement=8;RetriableErrors=+208,10061+;"))
                 {
-                    cnn.RetryPolicy.Retrying += RetryPolicy_Retrying;
+                    if (cnn.RetryPolicy != null) cnn.RetryPolicy.Retrying += RetryPolicy_Retrying;
                     cnn.StateChange += Cnn_StateChange;
 
                     try
@@ -27,22 +27,22 @@ namespace RetryLogicCore
                         await cnn.OpenAsync();
                         //cnn.Open();
 
-                        cmd = new SqlCommand("SELECT TOP 5 * FROM syscolumns sc1 CROSS JOIN syscolumns sc2;", cnn);
+                        //cmd = new SqlCommand("SELECT TOP 5 * FROM syscolumns sc1 CROSS JOIN syscolumns sc2;", cnn);
 
-                        //SqlDataReader dr = await cmd.ExecuteReaderAsync();
-                        SqlDataReader dr = cmd.ExecuteReader();
+                        ////SqlDataReader dr = await cmd.ExecuteReaderAsync();
+                        //SqlDataReader dr = cmd.ExecuteReader();
 
-                        Console.WriteLine("[{0}] -- Begin Query Results \n", DateTime.Now.ToUniversalTime());
-                        while (dr.Read())
-                        {
-                            Console.WriteLine(dr[0]);
-                        }
-                        dr.Close();
-                        Console.WriteLine("\n[{0}] -- End Query Results \n", DateTime.Now.ToUniversalTime());
+                        //Console.WriteLine("[{0}] -- Begin Query Results \n", DateTime.Now.ToUniversalTime());
+                        //while (dr.Read())
+                        //{
+                        //    Console.WriteLine(dr[0]);
+                        //}
+                        //dr.Close();
+                        //Console.WriteLine("\n[{0}] -- End Query Results \n", DateTime.Now.ToUniversalTime());
 
-                        cmd = new SqlCommand("INSERT INTO mytablettt VALUES (1,'aaaaa')", cnn);
-                        cmd.ExecuteNonQuery();
-                        //await cmd.ExecuteNonQueryAsync();
+                        //cmd = new SqlCommand("INSERT INTO mytablettt VALUES (1,'aaaaa')", cnn);
+                        //cmd.ExecuteNonQuery();
+                        ////await cmd.ExecuteNonQueryAsync();
 
                     }
                     catch (SqlException e)
