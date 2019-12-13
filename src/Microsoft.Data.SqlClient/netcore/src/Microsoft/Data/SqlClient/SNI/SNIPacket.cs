@@ -6,13 +6,15 @@ using System;
 using System.Buffers;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClient.SNI
 {
     /// <summary>
     /// SNI Packet
     /// </summary>
-    internal sealed partial class SNIPacket
+    internal sealed class SNIPacket
     {
         private int _dataLength; // the length of the data in the data segment, advanced by Append-ing data, does not include smux header length
         private int _dataCapacity; // the total capacity requested, if the array is rented this may be less than the _data.Length, does not include smux header length
@@ -186,12 +188,79 @@ namespace Microsoft.Data.SqlClient.SNI
         }
 
         /// <summary>
+        /// Read data from a stream asynchronously
+        /// </summary>
+        /// <param name="stream">Stream to read from</param>
+        /// <param name="callback">Completion callback</param>
+        public void ReadFromStreamAsync(Stream stream, SNIAsyncCallback callback)
+        {
+            bool error = false;
+
+            stream.ReadAsync(_data, 0, _dataCapacity, CancellationToken.None).ContinueWith(t =>
+            {
+                Exception e = t.Exception?.InnerException;
+                if (e != null)
+                {
+                    SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.TCP_PROV, SNICommon.InternalExceptionError, e);
+                    error = true;
+                }
+                else
+                {
+                    _dataLength = t.Result;
+
+                    if (_dataLength == 0)
+                    {
+                        SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.TCP_PROV, 0, SNICommon.ConnTerminatedError, string.Empty);
+                        error = true;
+                    }
+                }
+
+                if (error)
+                {
+                    Release();
+                }
+
+                callback(this, error ? TdsEnums.SNI_ERROR : TdsEnums.SNI_SUCCESS);
+            },
+            CancellationToken.None,
+            TaskContinuationOptions.DenyChildAttach,
+            TaskScheduler.Default);
+        }
+
+        /// <summary>
         /// Write data to a stream synchronously
         /// </summary>
         /// <param name="stream">Stream to write to</param>
         public void WriteToStream(Stream stream)
         {
             stream.Write(_data, _headerLength, _dataLength);
+        }
+
+        /// <summary>
+        /// Write data to a stream asynchronously
+        /// </summary>
+        /// <param name="stream">Stream to write to</param>
+        /// <param name="callback">SNI Asynchronous Callback</param>
+        /// <param name="provider">SNI provider identifier</param>
+        /// <param name="disposeAfterWriteAsync">Bool flag to decide whether or not to dispose after Write Async operation</param>
+        public async void WriteToStreamAsync(Stream stream, SNIAsyncCallback callback, SNIProviders provider, bool disposeAfterWriteAsync = false)
+        {
+            uint status = TdsEnums.SNI_SUCCESS;
+            try
+            {
+                await stream.WriteAsync(_data, 0, _dataLength, CancellationToken.None).ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                SNILoadHandle.SingletonInstance.LastError = new SNIError(provider, SNICommon.InternalExceptionError, e);
+                status = TdsEnums.SNI_ERROR;
+            }
+            callback(this, status);
+
+            if (disposeAfterWriteAsync)
+            {
+                Dispose();
+            }
         }
 
         /// <summary>
