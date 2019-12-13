@@ -37,7 +37,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             finally
             {
                 //Truncate removes the data but not the table.
-                TruncateTables("TabTinyIntTarget", "TabIntSource", connectionString);
+                TruncateTables("TabIntSource", "TabTinyIntTarget", connectionString);
             }
         }
 
@@ -301,7 +301,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
             finally
             {
-                TruncateTables("TabVarCharTarget", "TabVarCharSmallSource", connectionString);
+                TruncateTables("TabVarCharSmallSource", "TabVarCharTarget", connectionString);
             }
         }
 
@@ -472,7 +472,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
             finally
             {
-                TruncateTables("TabSmallBinaryMaxTarget", "TabSmallBinarySource", connectionString);
+                TruncateTables("TabSmallBinarySource", "TabSmallBinaryTarget", connectionString);
+                TruncateTables("TabSmallBinaryMaxTarget", "", connectionString);
             }
         }
 
@@ -525,7 +526,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
             finally
             {
-                TruncateTables("TabBinaryMaxSource", "TabBinaryTarget", connectionString);
+                TruncateTables("TabSmallCharSource", "TabSmallCharTarget", connectionString);
+                TruncateTables("TabSmallCharMaxTarget", "", connectionString);
             }
         }
 
@@ -534,7 +536,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 connection.Open();
-                SilentRunCommand($@"TRUNCATE TABLE [{tableNames[sourceName]}]", connection);
+                if (!string.IsNullOrEmpty(sourceName))
+                {
+                    SilentRunCommand($@"TRUNCATE TABLE [{tableNames[sourceName]}]", connection);
+                }
 
                 if (!string.IsNullOrEmpty(targetName))
                 {
