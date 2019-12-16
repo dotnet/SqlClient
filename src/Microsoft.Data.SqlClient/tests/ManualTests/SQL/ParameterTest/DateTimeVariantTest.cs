@@ -4,6 +4,7 @@
 
 using System;
 using System.Data;
+using System.Data.SqlTypes;
 using Microsoft.Data.SqlClient.Server;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -418,7 +419,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     if (paramValue.GetType() == typeof(System.DateTimeOffset))
                     {
                         DateTime dt = ((System.DateTimeOffset)paramValue).UtcDateTime;
-                        value = dt.ToShortDateString() + " " + dt.TimeOfDay;
+                        value = dt.ToString("M/d/yyyy") + " " + dt.TimeOfDay;
                     }
                     else if (paramValue.GetType() == typeof(System.TimeSpan))
                     {
@@ -426,7 +427,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                     else
                     {
-                        value = ((System.DateTime)paramValue).ToShortDateString() + " " + ((System.DateTime)paramValue).TimeOfDay;
+                        value = ((System.DateTime)paramValue).ToString("M/d/yyyy") + " " + ((System.DateTime)paramValue).TimeOfDay;
                     }
                     xsql(conn, string.Format("insert into {0} values(CAST('{1}' AS {2}))", InputTableName, value, expectedBaseTypeName));
                     xsql(conn, string.Format("create proc {0} (@P {1} READONLY) as begin insert into {2} select * from @P; end", ProcName, tvpTypeName, OutputTableName));
@@ -506,7 +507,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     if (paramValue.GetType() == typeof(System.DateTimeOffset))
                     {
                         DateTime dt = ((System.DateTimeOffset)paramValue).UtcDateTime;
-                        value = dt.ToShortDateString() + " " + dt.TimeOfDay;
+                        value = dt.ToString("M/d/yyyy") + " " + dt.TimeOfDay;
                     }
                     else if (paramValue.GetType() == typeof(System.TimeSpan))
                     {
@@ -514,7 +515,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                     else
                     {
-                        value = ((System.DateTime)paramValue).ToShortDateString() + " " + ((System.DateTime)paramValue).TimeOfDay;
+                        value = ((System.DateTime)paramValue).ToString("M/d/yyyy") + " " + ((System.DateTime)paramValue).TimeOfDay;
                     }
                     xsql(conn, string.Format("insert into {0} values(CAST('{1}' AS {2}))", InputTableName, value, expectedBaseTypeName));
                     xsql(conn, string.Format("create proc {0} (@P {1} READONLY) as begin insert into {2} select * from @P; end", ProcName, tvpTypeName, OutputTableName));
@@ -587,7 +588,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     if (paramValue.GetType() == typeof(System.DateTimeOffset))
                     {
                         DateTime dt = ((System.DateTimeOffset)paramValue).UtcDateTime;
-                        value = dt.ToShortDateString() + " " + dt.TimeOfDay;
+                        value = dt.ToString("M/d/yyyy") + " " + dt.TimeOfDay;
                     }
                     else if (paramValue.GetType() == typeof(System.TimeSpan))
                     {
@@ -595,7 +596,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                     else
                     {
-                        value = ((System.DateTime)paramValue).ToShortDateString() + " " + ((System.DateTime)paramValue).TimeOfDay;
+                        value = ((System.DateTime)paramValue).ToString("M/d/yyyy") + " " + ((System.DateTime)paramValue).TimeOfDay;
                     }
                     xsql(conn, string.Format("create table {0} (f1 {1})", inputTable, expectedBaseTypeName));
                     xsql(conn, string.Format("insert into {0}(f1) values('{1}');", inputTable, value));
@@ -650,7 +651,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     if (paramValue.GetType() == typeof(System.DateTimeOffset))
                     {
                         DateTime dt = ((System.DateTimeOffset)paramValue).UtcDateTime;
-                        value = dt.ToShortDateString() + " " + dt.TimeOfDay;
+                        value = dt.ToString("M/d/yyyy") + " " + dt.TimeOfDay;
                     }
                     else if (paramValue.GetType() == typeof(System.TimeSpan))
                     {
@@ -658,7 +659,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                     else
                     {
-                        value = ((System.DateTime)paramValue).ToShortDateString() + " " + ((System.DateTime)paramValue).TimeOfDay;
+                        value = ((System.DateTime)paramValue).ToString("M/d/yyyy") + " " + ((System.DateTime)paramValue).TimeOfDay;
                     }
                     xsql(conn, string.Format("create table {0} (f1 sql_variant)", inputTable));
                     xsql(conn, string.Format("insert into {0}(f1) values(CAST('{1}' AS {2}));", inputTable, value, expectedBaseTypeName));
@@ -715,7 +716,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     if (paramValue.GetType() == typeof(System.DateTimeOffset))
                     {
                         DateTime dt = ((System.DateTimeOffset)paramValue).UtcDateTime;
-                        value = dt.ToShortDateString() + " " + dt.TimeOfDay;
+                        value = dt.ToString("M/d/yyyy") + " " + dt.TimeOfDay;
                     }
                     else if (paramValue.GetType() == typeof(System.TimeSpan))
                     {
@@ -723,7 +724,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                     else
                     {
-                        value = ((System.DateTime)paramValue).ToShortDateString() + " " + ((System.DateTime)paramValue).TimeOfDay;
+                        value = ((System.DateTime)paramValue).ToString("M/d/yyyy") + " " + ((System.DateTime)paramValue).TimeOfDay;
                     }
                     xsql(conn, string.Format("insert into {0}(f1) values(CAST('{1}' AS {2}));", bulkCopySrcTableName, value, expectedBaseTypeName));
 
@@ -798,7 +799,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     if (paramValue.GetType() == typeof(System.DateTimeOffset))
                     {
                         DateTime dt = ((System.DateTimeOffset)paramValue).UtcDateTime;
-                        value = dt.ToShortDateString() + " " + dt.TimeOfDay;
+                        value = dt.ToString("M/d/yyyy") + " " + dt.TimeOfDay;
                     }
                     else if (paramValue.GetType() == typeof(System.TimeSpan))
                     {
@@ -806,7 +807,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                     else
                     {
-                        value = ((System.DateTime)paramValue).ToShortDateString() + " " + ((System.DateTime)paramValue).TimeOfDay;
+                        value = ((System.DateTime)paramValue).ToString("M/d/yyyy") + " " + ((System.DateTime)paramValue).TimeOfDay;
                     }
                     xsql(conn, string.Format("insert into {0}(f1) values(CAST('{1}' AS {2}));", bulkCopySrcTableName, value, expectedBaseTypeName));
 
@@ -1166,14 +1167,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 if (IsValueCorrectForType(expectedBaseTypeName, expectedValue, actualValue))
                 {
                     ErrorMessage = string.Format("[EXPECTED ERROR]: VALUE MISMATCH - [Actual = {0}] [Expected = {1}]",
-                    actualValue.ToString(),
-                    expectedValue.ToString());
+                    GetValueString(actualValue),
+                    GetValueString(expectedValue));
                 }
                 else
                 {
                     ErrorMessage = string.Format(">>> ERROR: VALUE MISMATCH!!! [Actual = {0}] [Expected = {1}]",
-                    actualValue.ToString(),
-                    expectedValue.ToString());
+                    GetValueString(actualValue),
+                    GetValueString(expectedValue));
                 }
                 LogMessage(tag, ErrorMessage);
             }
@@ -1211,14 +1212,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 if (IsValueCorrectForType(expectedBaseTypeName, expectedValue, actualValue))
                 {
                     ErrorMessage = string.Format("[EXPECTED ERROR]: VALUE MISMATCH - [Actual = {0}] [Expected = {1}]",
-                    actualValue.ToString(),
-                    expectedValue.ToString());
+                    GetValueString(actualValue),
+                    GetValueString(expectedValue));
                 }
                 else
                 {
                     ErrorMessage = string.Format(">>> ERROR: VALUE MISMATCH!!! [Actual = {0}] [Expected = {1}]",
-                    actualValue.ToString(),
-                    expectedValue.ToString());
+                    GetValueString(actualValue),
+                    GetValueString(expectedValue));
                 }
                 LogMessage(tag, ErrorMessage);
             }
@@ -1229,7 +1230,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             switch (expectedBaseTypeName)
             {
                 case "date":
-                    if (((System.DateTime)expectedValue).ToShortDateString().Equals(((System.DateTime)actualValue).ToShortDateString()))
+                    if (((System.DateTime)expectedValue).ToString("M/d/yyyy").Equals(((System.DateTime)actualValue).ToString("M/d/yyyy")))
                         return true;
                     else
                         return false;
@@ -1281,7 +1282,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (paramValue.GetType() == typeof(System.DateTimeOffset))
             {
                 System.DateTimeOffset dt = (System.DateTimeOffset)paramValue;
-                value = dt.DateTime.ToShortDateString() + " " + dt.DateTime.TimeOfDay + " " + dt.Offset;
+                value = dt.DateTime.ToString("M/d/yyyy") + " " + dt.DateTime.TimeOfDay + " " + dt.Offset;
             }
             else if (paramValue.GetType() == typeof(System.TimeSpan))
             {
@@ -1289,7 +1290,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             else
             {
-                value = ((System.DateTime)paramValue).ToShortDateString() + " " + ((System.DateTime)paramValue).TimeOfDay;
+                value = ((System.DateTime)paramValue).ToString("M/d/yyyy") + " " + ((System.DateTime)paramValue).TimeOfDay;
             }
 
             Console.WriteLine(string.Format("------------------------------ {0} [type: {1} value:{2}] ------------------------------", tag, expectedBaseTypeName, value));
@@ -1321,6 +1322,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Console.WriteLine(string.Format("Value       => Expected : Actual == {0} : {1}", ((DateTimeOffset)expectedValue).Ticks.ToString(), ((DateTimeOffset)actualValue).Ticks.ToString()));
             else if (expectedTypeName == "System.DateTime")
                 Console.WriteLine(string.Format("Value       => Expected : Actual == {0} : {1}", ((DateTime)expectedValue).Ticks.ToString(), ((DateTime)actualValue).Ticks.ToString()));
+        }
+
+        internal static string GetValueString(object paramValue)
+        {
+            if (paramValue.GetType() == typeof(DateTimeOffset))
+            {
+                return ((DateTimeOffset)paramValue).ToString("M/d/yyyy hh:mm:ss tt zzz");
+            }
+            else if (paramValue.GetType() == typeof(DateTime))
+            {
+                return ((DateTime)paramValue).ToString("M/d/yyyy hh:mm:ss tt");
+            }
+            else if (paramValue.GetType() == typeof(SqlDateTime))
+            {
+                return ((SqlDateTime)paramValue).Value.ToString("M/d/yyyy hh:mm:ss tt");
+            }
+
+            return paramValue.ToString();
         }
     }
 }
