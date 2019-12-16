@@ -101,9 +101,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string outputPath = "SqlParameterTest.out";
 #if DEBUG
-            string baselinePath = "SqlParameterTest_DebugMode.bsl";
+            string baselinePath = DataTestUtility.IsNotAzureServer() ? "SqlParameterTest_DebugMode.bsl" : "SqlParameterTest_DebugMode_Azure.bsl";
 #else
-            string baselinePath = "SqlParameterTest_ReleaseMode.bsl";
+            string baselinePath = DataTestUtility.IsNotAzureServer() ? "SqlParameterTest_ReleaseMode.bsl" : "SqlParameterTest_ReleaseMode_Azure.bsl";
 #endif
 
             var fstream = new FileStream(outputPath, FileMode.Create, FileAccess.Write, FileShare.Read);
