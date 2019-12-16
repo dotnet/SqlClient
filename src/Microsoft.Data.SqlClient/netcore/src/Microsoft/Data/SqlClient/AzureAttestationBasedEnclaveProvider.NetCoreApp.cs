@@ -66,35 +66,35 @@ namespace Microsoft.Data.SqlClient
         #region Public methods
         // When overridden in a derived class, looks up an existing enclave session information in the enclave session cache.
         // If the enclave provider doesn't implement enclave session caching, this method is expected to return null in the sqlEnclaveSession parameter.
-        public override void GetEnclaveSession(string servername, string attestationUrl, out SqlEnclaveSession sqlEnclaveSession, out long counter)
+        public override void GetEnclaveSession(string servername, string attestationUrl, bool generateCustomData, out SqlEnclaveSession sqlEnclaveSession, out long counter, out byte[] customData, out int customDataLength)
         {
-            GetEnclaveSessionHelper(servername, attestationUrl, true, out sqlEnclaveSession, out counter);
+            GetEnclaveSessionHelper(servername, attestationUrl, generateCustomData, out sqlEnclaveSession, out counter, out customData, out customDataLength);
         }
 
         // Gets the information that SqlClient subsequently uses to initiate the process of attesting the enclave and to establish a secure session with the enclave.
-        public override SqlEnclaveAttestationParameters GetAttestationParameters()
+        public override SqlEnclaveAttestationParameters GetAttestationParameters(string attestationUrl, byte[] customData, int customDataLength)
         {
             ECDiffieHellmanCng clientDHKey = new ECDiffieHellmanCng(DiffieHellmanKeySize);
             clientDHKey.KeyDerivationFunction = ECDiffieHellmanKeyDerivationFunction.Hash;
             clientDHKey.HashAlgorithm = CngAlgorithm.Sha256;
-            byte[] attestationParam = PrepareAttestationParameters();
+            byte[] attestationParam = PrepareAttestationParameters(attestationUrl, customData, customDataLength);
             return new SqlEnclaveAttestationParameters(AzureBasedAttestationProtocolId, attestationParam, clientDHKey);
         }
 
         // When overridden in a derived class, performs enclave attestation, generates a symmetric key for the session, creates a an enclave session and stores the session information in the cache.
-        public override void CreateEnclaveSession(byte[] attestationInfo, ECDiffieHellmanCng clientDHKey, string attestationUrl, string servername, out SqlEnclaveSession sqlEnclaveSession, out long counter)
+        public override void CreateEnclaveSession(byte[] attestationInfo, ECDiffieHellmanCng clientDHKey, string attestationUrl, string servername, byte[] customData, int customDataLength, out SqlEnclaveSession sqlEnclaveSession, out long counter)
         {
             sqlEnclaveSession = null;
             counter = 0;
             try
             {
-                AttestationInfoCacheItem attestationInfoCacheItem = AttestationInfoCache.Remove(Thread.CurrentThread.ManagedThreadId.ToString()) as AttestationInfoCacheItem;
+                ThreadRetryCache.Remove(Thread.CurrentThread.ManagedThreadId.ToString());
                 sqlEnclaveSession = GetEnclaveSessionFromCache(servername, attestationUrl, out counter);
                 if (sqlEnclaveSession == null)
                 {
-                    if (attestationInfoCacheItem != null)
+                    if (!string.IsNullOrEmpty(attestationUrl) && customData != null && customDataLength > 0)
                     {
-                        byte[] nonce = attestationInfoCacheItem.AttestNonce;
+                        byte[] nonce = customData;
 
                         IdentityModelEventSource.ShowPII = true;
 
@@ -241,19 +241,18 @@ namespace Microsoft.Data.SqlClient
         // Attestation Url
         // Size of nonce
         // Nonce value
-        internal byte[] PrepareAttestationParameters()
+        internal byte[] PrepareAttestationParameters(string attestationUrl, byte[] attestNonce, int attestNonceLength)
         {
-            AttestationInfoCacheItem attestationInfoCacheItem = AttestationInfoCache[Thread.CurrentThread.ManagedThreadId.ToString()] as AttestationInfoCacheItem;
-            if (attestationInfoCacheItem != null)
+            if (!string.IsNullOrEmpty(attestationUrl) && attestNonce != null && attestNonceLength > 0)
             {
                 // In c# strings are not null terminated, so adding the null termination before serializing it
-                string attestationUrlLocal = attestationInfoCacheItem.AttestationUrl + char.MinValue;
+                string attestationUrlLocal = attestationUrl + char.MinValue;
                 byte[] serializedAttestationUrl = Encoding.Unicode.GetBytes(attestationUrlLocal);
                 byte[] serializedAttestationUrlLength = BitConverter.GetBytes(serializedAttestationUrl.Length);
 
                 // serializing nonce
-                byte[] serializedNonce = attestationInfoCacheItem.AttestNonce;
-                byte[] serializedNonceLength = BitConverter.GetBytes(attestationInfoCacheItem.AttestNonce.Length);
+                byte[] serializedNonce = attestNonce;
+                byte[] serializedNonceLength = BitConverter.GetBytes(attestNonceLength);
 
                 // Computing the total length of the data
                 int totalDataSize = serializedAttestationUrl.Length + serializedAttestationUrlLength.Length + serializedNonce.Length + serializedNonceLength.Length;

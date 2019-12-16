@@ -115,6 +115,8 @@ namespace Microsoft.Data.SqlClient
         private bool requiresEnclaveComputations = false;
         internal EnclavePackage enclavePackage = null;
         private SqlEnclaveAttestationParameters enclaveAttestationParameters = null;
+        private byte[] customData = null;
+        private int customDataLength = 0;
 
         // Last TaskCompletionSource for reconnect task - use for cancellation only
         private TaskCompletionSource<object> _reconnectionCompletionSource = null;
@@ -2997,6 +2999,8 @@ namespace Microsoft.Data.SqlClient
             enclavePackage = null;
             requiresEnclaveComputations = false;
             enclaveAttestationParameters = null;
+            customData = null;
+            customDataLength = 0;
         }
 
         /// <summary>
@@ -3356,10 +3360,10 @@ namespace Microsoft.Data.SqlClient
                 string dataSource = this._activeConnection.DataSource;
                 string enclaveAttestationUrl = this._activeConnection.EnclaveAttestationUrl;
                 SqlEnclaveSession sqlEnclaveSession = null;
-                EnclaveDelegate.Instance.GetEnclaveSession(attestationProtocol, enclaveType, dataSource, enclaveAttestationUrl, out sqlEnclaveSession);
+                EnclaveDelegate.Instance.GetEnclaveSession(attestationProtocol, enclaveType, dataSource, enclaveAttestationUrl, true, out sqlEnclaveSession, out customData, out customDataLength);
                 if (sqlEnclaveSession == null)
                 {
-                    enclaveAttestationParameters = EnclaveDelegate.Instance.GetAttestationParameters(attestationProtocol, enclaveType);
+                    enclaveAttestationParameters = EnclaveDelegate.Instance.GetAttestationParameters(attestationProtocol, enclaveType, enclaveAttestationUrl, customData, customDataLength);
                     serializedAttestatationParameters = EnclaveDelegate.Instance.GetSerializedAttestationParameters(enclaveAttestationParameters, enclaveType);
                 }
             }
@@ -3879,7 +3883,7 @@ namespace Microsoft.Data.SqlClient
                         string dataSource = this._activeConnection.DataSource;
                         string enclaveAttestationUrl = this._activeConnection.EnclaveAttestationUrl;
 
-                        EnclaveDelegate.Instance.CreateEnclaveSession(attestationProtocol, enclaveType, dataSource, enclaveAttestationUrl, attestationInfo, enclaveAttestationParameters);
+                        EnclaveDelegate.Instance.CreateEnclaveSession(attestationProtocol, enclaveType, dataSource, enclaveAttestationUrl, attestationInfo, enclaveAttestationParameters, customData, customDataLength);
                         enclaveAttestationParameters = null;
                         attestationInfoRead = true;
                     }
