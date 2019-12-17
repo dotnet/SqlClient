@@ -1306,6 +1306,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 e.Message.Equals("Unable to cast object of type 'System.TimeSpan' to type 'System.DateTime'."))
                 ExceptionMessage = string.Format(">>> EXCEPTION: [{0}] {1}", e.GetType(), "Specified cast is not valid.");
 
+            if (e is ArgumentOutOfRangeException &&
+                e.Message.Equals("The added or subtracted value results in an un-representable DateTime. (Parameter 'value')"))
+            {
+                ExceptionMessage = string.Format(">>> EXCEPTION: [{0}] {1}", e.GetType(), "The added or subtracted value results in an un-representable DateTime.\nParameter name: value");
+            }
+
             LogMessage(tag, ExceptionMessage);
         }
 
