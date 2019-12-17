@@ -4,7 +4,6 @@
 
 using System;
 using System.Data;
-using System.Data.SqlTypes;
 using Microsoft.Data.SqlClient.Server;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -1167,14 +1166,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 if (IsValueCorrectForType(expectedBaseTypeName, expectedValue, actualValue))
                 {
                     ErrorMessage = string.Format("[EXPECTED ERROR]: VALUE MISMATCH - [Actual = {0}] [Expected = {1}]",
-                    GetValueString(actualValue),
-                    GetValueString(expectedValue));
+                    DataTestUtility.GetValueString(actualValue),
+                    DataTestUtility.GetValueString(expectedValue));
                 }
                 else
                 {
                     ErrorMessage = string.Format(">>> ERROR: VALUE MISMATCH!!! [Actual = {0}] [Expected = {1}]",
-                    GetValueString(actualValue),
-                    GetValueString(expectedValue));
+                    DataTestUtility.GetValueString(actualValue),
+                    DataTestUtility.GetValueString(expectedValue));
                 }
                 LogMessage(tag, ErrorMessage);
             }
@@ -1212,14 +1211,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 if (IsValueCorrectForType(expectedBaseTypeName, expectedValue, actualValue))
                 {
                     ErrorMessage = string.Format("[EXPECTED ERROR]: VALUE MISMATCH - [Actual = {0}] [Expected = {1}]",
-                    GetValueString(actualValue),
-                    GetValueString(expectedValue));
+                    DataTestUtility.GetValueString(actualValue),
+                    DataTestUtility.GetValueString(expectedValue));
                 }
                 else
                 {
                     ErrorMessage = string.Format(">>> ERROR: VALUE MISMATCH!!! [Actual = {0}] [Expected = {1}]",
-                    GetValueString(actualValue),
-                    GetValueString(expectedValue));
+                    DataTestUtility.GetValueString(actualValue),
+                    DataTestUtility.GetValueString(expectedValue));
                 }
                 LogMessage(tag, ErrorMessage);
             }
@@ -1328,24 +1327,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Console.WriteLine(string.Format("Value       => Expected : Actual == {0} : {1}", ((DateTimeOffset)expectedValue).Ticks.ToString(), ((DateTimeOffset)actualValue).Ticks.ToString()));
             else if (expectedTypeName == "System.DateTime")
                 Console.WriteLine(string.Format("Value       => Expected : Actual == {0} : {1}", ((DateTime)expectedValue).Ticks.ToString(), ((DateTime)actualValue).Ticks.ToString()));
-        }
-
-        internal static string GetValueString(object paramValue)
-        {
-            if (paramValue.GetType() == typeof(DateTimeOffset))
-            {
-                return ((DateTimeOffset)paramValue).ToString("M/d/yyyy hh:mm:ss tt zzz");
-            }
-            else if (paramValue.GetType() == typeof(DateTime))
-            {
-                return ((DateTime)paramValue).ToString("M/d/yyyy hh:mm:ss tt");
-            }
-            else if (paramValue.GetType() == typeof(SqlDateTime))
-            {
-                return ((SqlDateTime)paramValue).Value.ToString("M/d/yyyy hh:mm:ss tt");
-            }
-
-            return paramValue.ToString();
         }
     }
 }

@@ -916,11 +916,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                     catch (OverflowException oe)
                     {
-                        Console.WriteLine("Failed Row[{0}]Col[{1}] = {2}: {3}", rowOrd, colOrd, DateTimeVariantTest.GetValueString(row[colOrd]), oe.Message);
+                        Console.WriteLine("Failed Row[{0}]Col[{1}] = {2}: {3}", rowOrd, colOrd, DataTestUtility.GetValueString(row[colOrd]), oe.Message);
                     }
                     catch (ArgumentException ae)
                     {
-                        Console.WriteLine("Failed Row[{0}]Col[{1}] = {2}: {3}", rowOrd, colOrd, DateTimeVariantTest.GetValueString(row[colOrd]), ae.Message);
+                        Console.WriteLine("Failed Row[{0}]Col[{1}] = {2}: {3}", rowOrd, colOrd, DataTestUtility.GetValueString(row[colOrd]), ae.Message);
                     }
                 }
             }
@@ -1338,7 +1338,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 result = "(null)";
             }
-            Console.WriteLine("Mismatch: Source = {0}, result = {1}, metadata={2}", DateTimeVariantTest.GetValueString(source), DateTimeVariantTest.GetValueString(result), perm.ToString());
+            Console.WriteLine("Mismatch: Source = {0}, result = {1}, metadata={2}", DataTestUtility.GetValueString(source), DataTestUtility.GetValueString(result), perm.ToString());
         }
 
         private void VerifyColumnBoundaries(SqlDataReader rdr, IList<StePermutation> fieldMetaData, object[][] values, DataTable dt)
@@ -1399,7 +1399,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     for (int i = 0; i < colCount; i++)
                     {
-                        Console.Write("{0}  ", DateTimeVariantTest.GetValueString(rdr.GetValue(i)));
+                        Console.Write("{0}  ", DataTestUtility.GetValueString(rdr.GetValue(i)));
                     }
                     Console.WriteLine();
                 }
