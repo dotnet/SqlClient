@@ -146,6 +146,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
         public override uint Receive(out SNIPacket packet, int timeout)
         {
+            SNIPacket errorPacket;
             lock (this)
             {
                 packet = null;
@@ -156,17 +157,23 @@ namespace Microsoft.Data.SqlClient.SNI
 
                     if (packet.Length == 0)
                     {
+                        errorPacket = packet;
+                        packet = null;
                         var e = new Win32Exception();
-                        return ReportErrorAndReleasePacket(packet, (uint)e.NativeErrorCode, 0, e.Message);
+                        return ReportErrorAndReleasePacket(errorPacket, (uint)e.NativeErrorCode, 0, e.Message);
                     }
                 }
                 catch (ObjectDisposedException ode)
                 {
-                    return ReportErrorAndReleasePacket(packet, ode);
+                    errorPacket = packet;
+                    packet = null;
+                    return ReportErrorAndReleasePacket(errorPacket, ode);
                 }
                 catch (IOException ioe)
                 {
-                    return ReportErrorAndReleasePacket(packet, ioe);
+                    errorPacket = packet;
+                    packet = null;
+                    return ReportErrorAndReleasePacket(errorPacket, ioe);
                 }
 
                 return TdsEnums.SNI_SUCCESS;
@@ -175,6 +182,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
         public override uint ReceiveAsync(ref SNIPacket packet)
         {
+            SNIPacket errorPacket;
             packet = new SNIPacket(headerSize: 0, dataSize: _bufferSize);
             
             try
@@ -184,11 +192,15 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             catch (ObjectDisposedException ode)
             {
-                return ReportErrorAndReleasePacket(packet, ode);
+                errorPacket = packet;
+                packet = null;
+                return ReportErrorAndReleasePacket(errorPacket, ode);
             }
             catch (IOException ioe)
             {
-                return ReportErrorAndReleasePacket(packet, ioe);
+                errorPacket = packet;
+                packet = null;
+                return ReportErrorAndReleasePacket(errorPacket, ioe);
             }
         }
 

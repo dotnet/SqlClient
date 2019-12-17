@@ -462,6 +462,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error code</returns>
         public override uint Receive(out SNIPacket packet, int timeoutInMilliseconds)
         {
+            SNIPacket errorPacket;
             lock (this)
             {
                 packet = null;
@@ -487,24 +488,32 @@ namespace Microsoft.Data.SqlClient.SNI
 
                     if (packet.Length == 0)
                     {
+                        errorPacket = packet;
+                        packet = null;
                         var e = new Win32Exception();
-                        return ReportErrorAndReleasePacket(packet, (uint)e.NativeErrorCode, 0, e.Message);
+                        return ReportErrorAndReleasePacket(errorPacket, (uint)e.NativeErrorCode, 0, e.Message);
                     }
 
                     return TdsEnums.SNI_SUCCESS;
                 }
                 catch (ObjectDisposedException ode)
                 {
-                    return ReportErrorAndReleasePacket(packet, ode);
+                    errorPacket = packet;
+                    packet = null;
+                    return ReportErrorAndReleasePacket(errorPacket, ode);
                 }
                 catch (SocketException se)
                 {
-                    return ReportErrorAndReleasePacket(packet, se);
+                    errorPacket = packet;
+                    packet = null;
+                    return ReportErrorAndReleasePacket(errorPacket, se);
                 }
                 catch (IOException ioe)
                 {
-                    uint errorCode = ReportErrorAndReleasePacket(packet, ioe);
-                    if (ioe.InnerException is SocketException && ((SocketException)(ioe.InnerException)).SocketErrorCode == SocketError.TimedOut)
+                    errorPacket = packet;
+                    packet = null;
+                    uint errorCode = ReportErrorAndReleasePacket(errorPacket, ioe);
+                    if (ioe.InnerException is SocketException socketException && socketException.SocketErrorCode == SocketError.TimedOut)
                     {
                         errorCode = TdsEnums.SNI_WAIT_TIMEOUT;
                     }
@@ -553,6 +562,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error code</returns>
         public override uint ReceiveAsync(ref SNIPacket packet)
         {
+            SNIPacket errorPacket;
             packet = new SNIPacket(headerSize: 0, dataSize: _bufferSize);
 
             try
@@ -562,7 +572,9 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             catch (Exception e) when (e is ObjectDisposedException || e is SocketException || e is IOException)
             {
-                return ReportErrorAndReleasePacket(packet, e);
+                errorPacket = packet;
+                packet = null;
+                return ReportErrorAndReleasePacket(errorPacket, e);
             }
         }
 

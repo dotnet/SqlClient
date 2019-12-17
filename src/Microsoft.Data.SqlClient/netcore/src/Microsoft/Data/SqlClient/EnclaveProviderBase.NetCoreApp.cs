@@ -20,10 +20,9 @@ using System.Threading;
 // In case if the enclave session is cached and validate(not expired), GetEnclaveSession API returns the SqlEnclaveSession.
 // In case if the enclave session is not cached then driver end up calling GetAttestationParameters and CreateEnclaveSession.
 // Note: When we have non-enclave query, then in those cases we never call CreateEnclaveSession. This is one of main pivot point for designing the below locking model.
-// As per current API design driver passes attestation url and the server name during GetEnclaveSession but not in GetAttestationParameters.
-// In order to create the attestation parameter enclave provider needs to know the attestation url. To overcome this limitation we added a AttestationInfoCache memory cache
-// which save the attestation url and nonce with current thread as the lookup key.
-// Later we use the AttestationInfoCache object to retrieve the attestation url in GetAttestationParameters which we saved during CreateEnclaveSession call.
+// After the change to the API design, driver passes attestation url and servername during GetEnclaveSession and GetAttestationParameters. The extra correlation ID, such as nonce,
+// will be generated during GetEnclaveSession on demand and be passed back to driver as customData and customDataLength. Later, GetAttestationParameters and CreateEnclaveSession 
+// use the customData and customDataLength to do the attestation. 
 
 // 2. In case during application start, if app spins of multiple threads at the same time (during stress test or benchmarking) where DB connection is Always encrypted enabled,
 // then with the existing design we end up creating multiple enclave session. Each enclave session adds an extra memory overhead to the system and also it generates multiple calls to attestation
@@ -71,7 +70,7 @@ namespace Microsoft.Data.SqlClient
     {
         #region Constants
         private const int NonceSize = 256;
-        private const int AttestationInfoCacheTimeoutInMinutes = 10;
+        private const int ThreadRetryCacheTimeoutInMinutes = 10;
         private const int LockTimeoutMaxInMilliseconds = 15 * 1000; // 15 seconds
         #endregion
 
@@ -86,28 +85,18 @@ namespace Microsoft.Data.SqlClient
 
         private static readonly Object lockUpdateSessionLock = new Object();
 
-        internal class AttestationInfoCacheItem
-        {
-            public string AttestationUrl { get; private set; }
-
-            public byte[] AttestNonce { get; private set; }
-
-            public AttestationInfoCacheItem(string attestationUri, byte[] nonce)
-            {
-                AttestationUrl = attestationUri;
-                AttestNonce = nonce;
-            }
-        }
-
         // It is used to save the attestation url and nonce value across API calls
-        protected static readonly MemoryCache AttestationInfoCache = new MemoryCache("AttestationInfoCache");
+        protected static readonly MemoryCache ThreadRetryCache = new MemoryCache("ThreadRetryCache");
         #endregion
 
         #region Public methods
         // Helper method to get the enclave session from the cache if present
-        protected void GetEnclaveSessionHelper(string servername, string attestationUrl, bool shouldGenerateNonce, out SqlEnclaveSession sqlEnclaveSession, out long counter)
+        protected void GetEnclaveSessionHelper(string servername, string attestationUrl, bool shouldGenerateNonce, out SqlEnclaveSession sqlEnclaveSession, out long counter, out byte[] customData, out int customDataLength)
         {
+            customData = null;
+            customDataLength = 0;
             sqlEnclaveSession = SessionCache.GetEnclaveSession(servername, attestationUrl, out counter);
+
             if (sqlEnclaveSession == null)
             {
                 bool sessionCacheLockTaken = false;
@@ -115,8 +104,8 @@ namespace Microsoft.Data.SqlClient
 
                 // In case if on some thread we are running SQL workload which don't require attestation, then in those cases we don't want same thread to wait for event to be signaled.
                 // hence skipping it
-                AttestationInfoCacheItem attestationInfoCacheItem = AttestationInfoCache[Thread.CurrentThread.ManagedThreadId.ToString()] as AttestationInfoCacheItem;
-                if (attestationInfoCacheItem != null)
+                string retryThreadID = ThreadRetryCache[Thread.CurrentThread.ManagedThreadId.ToString()] as string;
+                if (!string.IsNullOrEmpty(retryThreadID))
                 {
                     sameThreadRetry = true;
                 }
@@ -162,23 +151,25 @@ namespace Microsoft.Data.SqlClient
 
                 if (sqlEnclaveSession == null)
                 {
-                    if (!sameThreadRetry)
+                    if (shouldGenerateNonce)
                     {
-                        // Client decides to initiate the process of attesting the enclave and to establish a secure session with the enclave.
-                        // To ensure that server send new attestation request instead of replaying / re-sending the old token, we will create a nonce for current attestation request.
-                        byte[] nonce = new byte[NonceSize];
-                        if (shouldGenerateNonce)
+                        using (RandomNumberGenerator rng = new RNGCryptoServiceProvider())
                         {
-                            using (RandomNumberGenerator rng = new RNGCryptoServiceProvider())
-                            {
-                                rng.GetBytes(nonce);
-                            }
+                            // Client decides to initiate the process of attesting the enclave and to establish a secure session with the enclave.
+                            // To ensure that server send new attestation request instead of replaying / re-sending the old token, we will create a nonce for current attestation request.
+                            byte[] nonce = new byte[NonceSize];
+                            rng.GetBytes(nonce);
+                            customData = nonce;
+                            customDataLength = nonce.Length;
                         }
-
-                        attestationInfoCacheItem = new AttestationInfoCacheItem(attestationUrl, nonce);
                     }
 
-                    AttestationInfoCache.Set(Thread.CurrentThread.ManagedThreadId.ToString(), attestationInfoCacheItem, DateTime.UtcNow.AddMinutes(AttestationInfoCacheTimeoutInMinutes));
+                    if (!sameThreadRetry)
+                    {
+                        retryThreadID = Thread.CurrentThread.ManagedThreadId.ToString();
+                    }
+
+                    ThreadRetryCache.Set(Thread.CurrentThread.ManagedThreadId.ToString(), retryThreadID, DateTime.UtcNow.AddMinutes(ThreadRetryCacheTimeoutInMinutes));
                 }
             }
         }
