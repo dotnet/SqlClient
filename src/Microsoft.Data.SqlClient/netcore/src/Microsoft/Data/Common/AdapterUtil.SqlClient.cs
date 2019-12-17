@@ -703,7 +703,7 @@ namespace Microsoft.Data.Common
 
         internal static void IsNullOrSqlType(object value, out bool isNull, out bool isSqlType)
         {
-            if ((value == null) || (value == DBNull.Value))
+            if ((value == null) || (value is DBNull))
             {
                 isNull = true;
                 isSqlType = false;

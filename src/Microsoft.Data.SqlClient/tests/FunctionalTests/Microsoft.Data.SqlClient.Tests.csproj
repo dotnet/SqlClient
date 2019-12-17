@@ -9,6 +9,7 @@
     <OutputPath>$(BinFolder)$(Configuration).FunctionalTests</OutputPath>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="..\..\..\ValueTypeConverterTests.cs" Link="ValueTypeConverterTests.cs" />
     <Compile Include="AlwaysEncryptedTests\ConnectionStringBuilderShould.cs" />
     <Compile Include="AlwaysEncryptedTests\DummyKeyStoreProvider.cs" />
     <Compile Include="AlwaysEncryptedTests\ExceptionRegisterKeyStoreProvider.cs" />
