@@ -11,6 +11,8 @@ using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Threading;
+using System.Globalization;
 using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.SqlClient.Server;
@@ -39,13 +41,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         // data value and server consts
         private string _connStr;
 
-        [ActiveIssue(27858)]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void TestMain()
         {
-            //Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US"); // To keep things consistent since we output dates as strings
-            // The above doesn't fully fix dates on Linux. Dates are still formatted like mm/dd/yy instead of mm/dd/yyyy.
-            // Need to figure out a solution for this test since it is valuable in testing the async paths among many.
+            Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US"); // To keep things consistent since we output dates as strings
+
             // This test is additionally affected by #26, where a Cancel throws SqlException instead of InvalidOperationException on Linux.
             Assert.True(RunTestCoreAndCompareWithBaseline());
         }
@@ -101,9 +101,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string outputPath = "SqlParameterTest.out";
 #if DEBUG
-            string baselinePath = "SqlParameterTest_DebugMode.bsl";
+            string baselinePath = DataTestUtility.IsNotAzureServer() ? "SqlParameterTest_DebugMode.bsl" : "SqlParameterTest_DebugMode_Azure.bsl";
 #else
-            string baselinePath = "SqlParameterTest_ReleaseMode.bsl";
+            string baselinePath = DataTestUtility.IsNotAzureServer() ? "SqlParameterTest_ReleaseMode.bsl" : "SqlParameterTest_ReleaseMode_Azure.bsl";
 #endif
 
             var fstream = new FileStream(outputPath, FileMode.Create, FileAccess.Write, FileShare.Read);
@@ -916,11 +916,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                     catch (OverflowException oe)
                     {
-                        Console.WriteLine("Failed Row[{0}]Col[{1}] = {2}: {3}", rowOrd, colOrd, row[colOrd], oe.Message);
+                        Console.WriteLine("Failed Row[{0}]Col[{1}] = {2}: {3}", rowOrd, colOrd, DataTestUtility.GetValueString(row[colOrd]), oe.Message);
                     }
                     catch (ArgumentException ae)
                     {
-                        Console.WriteLine("Failed Row[{0}]Col[{1}] = {2}: {3}", rowOrd, colOrd, row[colOrd], ae.Message);
+                        Console.WriteLine("Failed Row[{0}]Col[{1}] = {2}: {3}", rowOrd, colOrd, DataTestUtility.GetValueString(row[colOrd]), ae.Message);
                     }
                 }
             }
@@ -1338,7 +1338,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 result = "(null)";
             }
-            Console.WriteLine("Mismatch: Source = {0}, result = {1}, metadata={2}", source, result, perm.ToString());
+            Console.WriteLine("Mismatch: Source = {0}, result = {1}, metadata={2}", DataTestUtility.GetValueString(source), DataTestUtility.GetValueString(result), perm.ToString());
         }
 
         private void VerifyColumnBoundaries(SqlDataReader rdr, IList<StePermutation> fieldMetaData, object[][] values, DataTable dt)
@@ -1399,7 +1399,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     for (int i = 0; i < colCount; i++)
                     {
-                        Console.Write("{0}  ", rdr.GetValue(i));
+                        Console.Write("{0}  ", DataTestUtility.GetValueString(rdr.GetValue(i)));
                     }
                     Console.WriteLine();
                 }

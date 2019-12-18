@@ -6,6 +6,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.SqlTypes;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -499,6 +500,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 cmd.ExecuteNonQuery();
             }
+        }
+
+        public static string GetValueString(object paramValue)
+        {
+            if (paramValue.GetType() == typeof(DateTimeOffset))
+            {
+                return ((DateTimeOffset)paramValue).ToString("M/d/yyyy hh:mm:ss tt zzz");
+            }
+            else if (paramValue.GetType() == typeof(DateTime))
+            {
+                return ((DateTime)paramValue).ToString("M/d/yyyy hh:mm:ss tt");
+            }
+            else if (paramValue.GetType() == typeof(SqlDateTime))
+            {
+                return ((SqlDateTime)paramValue).Value.ToString("M/d/yyyy hh:mm:ss tt");
+            }
+
+            return paramValue.ToString();
         }
     }
 }

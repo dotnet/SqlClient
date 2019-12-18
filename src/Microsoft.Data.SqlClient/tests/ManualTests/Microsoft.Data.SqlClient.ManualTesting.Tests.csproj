@@ -195,9 +195,17 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>SqlParameterTest_DebugMode.bsl</Link>
     </Content>
+    <Content Include="SQL\ParameterTest\SqlParameterTest_DebugMode_Azure.bsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SqlParameterTest_DebugMode_Azure.bsl</Link>
+    </Content>
     <Content Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode.bsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>SqlParameterTest_ReleaseMode.bsl</Link>
+    </Content>
+    <Content Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode_Azure.bsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SqlParameterTest_ReleaseMode_Azure.bsl</Link>
     </Content>
     <Content Include="AlwaysEncrypted\TestFixtures\Setup\TCECryptoNativeBaseline.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -211,7 +219,9 @@
   <ItemGroup>
     <None Include="ProviderAgnostic\MultipleResultsTest\MultipleResultsTest.bsl" />
     <None Include="SQL\ParameterTest\SqlParameterTest_DebugMode.bsl" />
+    <None Include="SQL\ParameterTest\SqlParameterTest_DebugMode_Azure.bsl" />
     <None Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode.bsl" />
+    <None Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode_Azure.bsl" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)' == 'netcoreapp' OR '$(TargetGroup)' == 'netfx'">
     <Compile Include="SQL\ConnectionPoolTest\PoolBlockPeriodTest.netcoreapp.cs" />
