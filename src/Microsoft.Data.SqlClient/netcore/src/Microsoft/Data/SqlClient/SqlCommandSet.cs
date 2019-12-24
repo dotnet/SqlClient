@@ -153,9 +153,9 @@ namespace Microsoft.Data.SqlClient
                     if (null != byteValues)
                     {
                         int offset = p.Offset;
-                        int size = p.GetActualSize();
+                        int size = p.Size;
                         int countOfBytes = byteValues.Length - offset;
-                        if ((0 != size) && (size < countOfBytes))
+                        if ((size > 0) && (size < countOfBytes))
                         {
                             countOfBytes = size;
                         }
