@@ -32,31 +32,31 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
       <group targetFramework="net46">
         <dependency id="System.Data.Common" version="4.3.0" />
         <dependency id="Microsoft.Data.SqlClient.sni" version="1.1.0" />
-        <dependency id="Microsoft.Identity.Client" version="4.7.1" />
+        <dependency id="Microsoft.Identity.Client" version="3.0.8" />
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="5.5.0" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="5.5.0" />
       </group>
       <group targetFramework="netcoreapp2.1">
-        <dependency id="Microsoft.Win32.Registry" version="4.7.0" exclude="Compile" />
+        <dependency id="Microsoft.Win32.Registry" version="4.5.0" exclude="Compile" />
         <dependency id="runtime.native.System.Data.SqlClient.sni" version="4.4.0" exclude="Compile" />
-        <dependency id="System.Security.Principal.Windows" version="4.7.0" exclude="Compile" />
+        <dependency id="System.Security.Principal.Windows" version="4.5.0" exclude="Compile" />
         <dependency id="System.Text.Encoding.CodePages" version="4.5.0" exclude="Compile" />
         <dependency id="System.Configuration.ConfigurationManager" version="4.5.0" exclude="Compile" />
         <dependency id="System.Runtime.Caching" version="4.5.0" exclude="Compile" />
-        <dependency id="Microsoft.Identity.Client" version="4.7.1" exclude="Compile"/>
+        <dependency id="Microsoft.Identity.Client" version="3.0.8" exclude="Compile"/>
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="5.5.0" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="5.5.0" />
       </group>
       <group targetFramework="netstandard2.0">
-        <dependency id="Microsoft.Win32.Registry" version="4.7.0" exclude="Compile" />
+        <dependency id="Microsoft.Win32.Registry" version="4.5.0" exclude="Compile" />
         <dependency id="runtime.native.System.Data.SqlClient.sni" version="4.4.0" exclude="Compile" />
         <dependency id="System.Buffers" version="4.4.0" exclude="Compile" />
         <dependency id="System.Diagnostics.DiagnosticSource" version="4.5.0" exclude="Compile" />
-        <dependency id="System.Memory" version="4.5.3" exclude="Compile" />
-        <dependency id="System.Security.Principal.Windows" version="4.7.0" exclude="Compile" />
+        <dependency id="System.Memory" version="4.5.1" exclude="Compile" />
+        <dependency id="System.Security.Principal.Windows" version="4.5.0" exclude="Compile" />
         <dependency id="System.Text.Encoding.CodePages" version="4.5.0" exclude="Compile" />
         <dependency id="System.Configuration.ConfigurationManager" version="4.5.0" exclude="Compile" />
-        <dependency id="Microsoft.Identity.Client" version="4.7.1" exclude="Compile"/>
+        <dependency id="Microsoft.Identity.Client" version="3.0.8" exclude="Compile"/>
       </group>
     </dependencies>
     <frameworkAssemblies>
