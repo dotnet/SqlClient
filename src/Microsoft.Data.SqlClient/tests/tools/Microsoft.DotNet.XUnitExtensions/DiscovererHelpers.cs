@@ -14,9 +14,9 @@ namespace Microsoft.DotNet.XUnitExtensions
                 (platforms.HasFlag(TestPlatforms.OSX) && RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) ||
                 (platforms.HasFlag(TestPlatforms.Windows) && RuntimeInformation.IsOSPlatform(OSPlatform.Windows));
 #else
-                (platforms.HasFlag(TestPlatforms.Windows) && (int)Environment.OSVersion.Platform == 2) ||
-                (platforms.HasFlag(TestPlatforms.Linux) && (int)Environment.OSVersion.Platform==4) ||
-                (platforms.HasFlag(TestPlatforms.OSX) && (int)Environment.OSVersion.Platform == 6);
+                (platforms.HasFlag(TestPlatforms.Windows) && (int)Environment.OSVersion.Platform==2) ||
+                (platforms.HasFlag(TestPlatforms.Linux) && (int)Environment.OSVersion.Platform == 4) ||
+                (platforms.HasFlag(TestPlatforms.OSX) && (int) Environment.OSVersion.Platform==6);
 #endif
     }
 }

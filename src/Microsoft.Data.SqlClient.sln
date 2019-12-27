@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 15
-VisualStudioVersion = 15.0.27004.2010
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29613.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Data.SqlClient", "Microsoft.Data.SqlClient\netfx\src\Microsoft.Data.SqlClient.csproj", "{407890AC-9876-4FEF-A6F1-F36A876BAADE}"
 EndProject
@@ -47,6 +47,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider", "Microsoft.Data.SqlClient\add-ons\AzureKeyVaultProvider\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj", "{9073ABEF-92E0-4702-BB23-2C99CEF9BDD7}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "add-ons", "add-ons", "{C9726AED-D6A3-4AAC-BA04-92DD1F079594}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.DotNet.XUnitExtensions", "Microsoft.Data.SqlClient\tests\tools\Microsoft.DotNet.XUnitExtensions\Microsoft.DotNet.XUnitExtensions.csproj", "{FDA6971D-9F57-4DA4-B10A-261C91684CFC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -591,6 +593,42 @@ Global
 		{9073ABEF-92E0-4702-BB23-2C99CEF9BDD7}.Release|x64.Build.0 = Release|Any CPU
 		{9073ABEF-92E0-4702-BB23-2C99CEF9BDD7}.Release|x86.ActiveCfg = Release|Any CPU
 		{9073ABEF-92E0-4702-BB23-2C99CEF9BDD7}.Release|x86.Build.0 = Release|Any CPU
+		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.Debug|x64.Build.0 = Debug|Any CPU
+		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.Debug|x86.Build.0 = Debug|Any CPU
+		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.net46-Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.net46-Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.net46-Debug|x64.ActiveCfg = Debug|Any CPU
+		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.net46-Debug|x64.Build.0 = Debug|Any CPU
+		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.net46-Debug|x86.ActiveCfg = Debug|Any CPU
+		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.net46-Debug|x86.Build.0 = Debug|Any CPU
+		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.net46-Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.net46-Release|Any CPU.Build.0 = Release|Any CPU
+		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.net46-Release|x64.ActiveCfg = Release|Any CPU
+		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.net46-Release|x64.Build.0 = Release|Any CPU
+		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.net46-Release|x86.ActiveCfg = Release|Any CPU
+		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.net46-Release|x86.Build.0 = Release|Any CPU
+		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.netcoreapp2.1-Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.netcoreapp2.1-Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.netcoreapp2.1-Debug|x64.ActiveCfg = Debug|Any CPU
+		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.netcoreapp2.1-Debug|x64.Build.0 = Debug|Any CPU
+		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.netcoreapp2.1-Debug|x86.ActiveCfg = Debug|Any CPU
+		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.netcoreapp2.1-Debug|x86.Build.0 = Debug|Any CPU
+		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.netcoreapp2.1-Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.netcoreapp2.1-Release|Any CPU.Build.0 = Release|Any CPU
+		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.netcoreapp2.1-Release|x64.ActiveCfg = Release|Any CPU
+		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.netcoreapp2.1-Release|x64.Build.0 = Release|Any CPU
+		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.netcoreapp2.1-Release|x86.ActiveCfg = Release|Any CPU
+		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.netcoreapp2.1-Release|x86.Build.0 = Release|Any CPU
+		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.Release|x64.ActiveCfg = Release|Any CPU
+		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.Release|x64.Build.0 = Release|Any CPU
+		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.Release|x86.ActiveCfg = Release|Any CPU
+		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -613,6 +651,7 @@ Global
 		{771F3F1E-7A68-4A9D-ADA8-A24F1D5BE71D} = {3FDD425C-FE01-4B56-863E-1FCDD0677CF5}
 		{412BCCC8-19F6-489A-B594-E9A506816155} = {771F3F1E-7A68-4A9D-ADA8-A24F1D5BE71D}
 		{9073ABEF-92E0-4702-BB23-2C99CEF9BDD7} = {C9726AED-D6A3-4AAC-BA04-92DD1F079594}
+		{FDA6971D-9F57-4DA4-B10A-261C91684CFC} = {0CC4817A-12F3-4357-912C-09315FAAD008}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {01D48116-37A2-4D33-B9EC-94793C702431}
