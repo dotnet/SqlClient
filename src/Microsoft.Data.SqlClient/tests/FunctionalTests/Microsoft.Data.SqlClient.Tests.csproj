@@ -78,10 +78,10 @@
     <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.1'">
-    <PackageReference Include="System.Data.Odbc" Version="4.7.0" />
+    <PackageReference Include="System.Data.Odbc" Version="4.5.0" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.0'">
-    <PackageReference Include="System.Data.Odbc" Version="4.7.0" />
+    <PackageReference Include="System.Data.Odbc" Version="4.6.0" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System.Transactions" />
@@ -107,7 +107,6 @@
     </ProjectReference>
     <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
     <ProjectReference Condition="'$(TargetGroup)'=='netfx'" Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
-    <ProjectReference Include="..\tools\Microsoft.DotNet.XUnitExtensions\Microsoft.DotNet.XUnitExtensions.csproj" />
     <!-- <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="$(CommonTestPath)\System\Diagnostics\RemoteExecutorConsoleApp\RemoteExecutorConsoleApp.csproj"> -->
     <!-- <Project>{69e46a6f-9966-45a5-8945-2559fe337827}</Project> -->
     <!-- <Name>RemoteExecutorConsoleApp</Name> -->

@@ -269,7 +269,6 @@
     <Reference Include="System.Reflection" />
     <Reference Include="System.Reflection.Extensions" />
     <Reference Include="System.Reflection.Primitives" />
-    <Reference Include="System.Xml.Linq" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
