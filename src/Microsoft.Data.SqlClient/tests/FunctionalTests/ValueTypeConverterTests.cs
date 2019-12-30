@@ -15,7 +15,7 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             object test = 0m;
 
-            decimal converted = ValueTypeConverter<object, decimal>.Convert(ref test);
+            decimal converted = ValueTypeConverter.Convert<object, decimal>(test);
 
             Assert.Equal(test, converted);
         }
@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             decimal test = 0m;
 
-            decimal converted = ValueTypeConverter<decimal, decimal>.Convert(ref test);
+            decimal converted = ValueTypeConverter.Convert<decimal, decimal>(test);
 
             Assert.Equal(test, converted);
         }
@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             SqlDecimal test = 0m;
 
-            decimal converted = ValueTypeConverter<SqlDecimal, decimal>.Convert(ref test);
+            decimal converted = ValueTypeConverter.Convert<SqlDecimal, decimal>(test);
 
             Assert.Equal(test, converted);
         }

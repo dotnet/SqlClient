@@ -8,37 +8,9 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <summary>
-    /// Delegate representing a converter to pass in by reference.
-    /// </summary>
-    /// <typeparam name="TIn"></typeparam>
-    /// <typeparam name="TOut"></typeparam>
-    /// <param name="input"></param>
-    /// <returns></returns>
-    public delegate TOut RefConverter<TIn, TOut>(ref TIn input);
-
-    /// <summary>
-    /// Converts value types from a generic to the desired, underlying type without boxing.
-    /// </summary>
-    /// <typeparam name="TIn"></typeparam>
-    /// <typeparam name="TOut"></typeparam>
-    public static class ValueTypeConverter<TIn, TOut>
+    internal static class ValueTypeConverter
     {
-        /// <summary>
-        /// Converts the value to the TOut type
-        /// </summary>
-        public static readonly RefConverter<TIn, TOut> Convert;
-
-        static ValueTypeConverter()
-        {
-            var paramExpr = Expression.Parameter(typeof(TIn).MakeByRefType(), "input");
-
-            var lambda = typeof(TIn) != typeof(TOut)
-                ? Expression.Lambda<RefConverter<TIn, TOut>>(Expression.Convert(paramExpr, typeof(TOut)), paramExpr)
-                : Expression.Lambda<RefConverter<TIn, TOut>>(paramExpr, paramExpr)
-            ;
-
-            Convert = lambda.Compile();
-        }
+        // This leverages the same assumptions in SqlBuffer that the JIT will optimize out the boxing / unboxing when TIn == TOut
+        public static TOut Convert<TIn, TOut>(TIn value) => (TOut)(object)value;
     }
 }

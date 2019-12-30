@@ -9,6 +9,7 @@
     <OutputPath>$(BinFolder)$(Configuration).FunctionalTests</OutputPath>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="..\..\netcore\src\Microsoft\Data\SqlClient\ValueTypeConverter.cs" Link="ValueTypeConverter.cs" />
     <Compile Include="AlwaysEncryptedTests\ConnectionStringBuilderShould.cs" />
     <Compile Include="AlwaysEncryptedTests\DummyKeyStoreProvider.cs" />
     <Compile Include="AlwaysEncryptedTests\ExceptionRegisterKeyStoreProvider.cs" />

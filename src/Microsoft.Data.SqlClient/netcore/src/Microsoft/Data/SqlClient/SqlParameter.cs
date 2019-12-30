@@ -107,7 +107,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <summary>
         /// Indicates if the parameter encryption metadata received by sp_describe_parameter_encryption.
-        /// For unencrypted parameters, the encryption metadata should still be sent (and will indicate 
+        /// For unencrypted parameters, the encryption metadata should still be sent (and will indicate
         /// that no encryption is needed).
         /// </summary>
         internal bool HasReceivedMetadata { get; set; }
@@ -407,7 +407,7 @@ namespace Microsoft.Data.SqlClient
             long actualLen = GetActualSize();
             long maxLen = this.Size;
 
-            // GetActualSize returns bytes length, but smi expects char length for 
+            // GetActualSize returns bytes length, but smi expects char length for
             //  character types, so adjust
             if (!mt.IsLong)
             {
@@ -998,12 +998,12 @@ namespace Microsoft.Data.SqlClient
 
         internal static object CoerceValue(object value, MetaType destinationType, out bool coercedToDataFeed, out bool typeChanged, bool allowStreaming = true)
         {
-            typeChanged = CoerceValueIfNeeded(ref value, destinationType, out var objValue, out coercedToDataFeed, allowStreaming);
+            typeChanged = CoerceValueIfNeeded(value, destinationType, out var objValue, out coercedToDataFeed, allowStreaming);
 
             return typeChanged ? objValue : value;
         }
 
-        internal static bool CoerceValueIfNeeded<T>(ref T value, MetaType destinationType, out object objValue, out bool coercedToDataFeed, bool allowStreaming = true)
+        internal static bool CoerceValueIfNeeded<T>(T value, MetaType destinationType, out object objValue, out bool coercedToDataFeed, bool allowStreaming = true)
         {
             Debug.Assert(!(value is DataFeed), "Value provided should not already be a data feed");
             Debug.Assert(!ADP.IsNull(value), "Value provided should not be null");
@@ -1031,7 +1031,7 @@ namespace Microsoft.Data.SqlClient
                     // For Xml data, destination Type is always string
                     if (typeof(SqlXml) == currentType)
                     {
-                        var xmlValue = ValueTypeConverter<T, SqlXml>.Convert(ref value);
+                        var xmlValue = ValueTypeConverter.Convert<T, SqlXml>(value);
                         objValue = MetaType.GetStringFromXml(xmlValue.CreateReader());
                     }
                     else if (typeof(SqlString) == currentType)
@@ -1052,12 +1052,12 @@ namespace Microsoft.Data.SqlClient
                     }
                     else if (typeof(char[]) == currentType)
                     {
-                        var charArrayValue = ValueTypeConverter<T, char[]>.Convert(ref value);
+                        var charArrayValue = ValueTypeConverter.Convert<T, char[]>(value);
                         objValue = new string(charArrayValue);
                     }
                     else if (typeof(SqlChars) == currentType)
                     {
-                        var sqlCharsValue = ValueTypeConverter<T, SqlChars>.Convert(ref value);
+                        var sqlCharsValue = ValueTypeConverter.Convert<T, SqlChars>(value);
                         objValue = new string(sqlCharsValue.Value);
                     }
                     else if (value is TextReader tr && allowStreaming)
@@ -1072,7 +1072,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if ((DbType.Currency == destinationType.DbType) && (typeof(string) == currentType))
                 {
-                    objValue = decimal.Parse(ValueTypeConverter<T, string>.Convert(ref value), NumberStyles.Currency, (IFormatProvider)null);
+                    objValue = decimal.Parse(ValueTypeConverter.Convert<T, string>(value), NumberStyles.Currency, (IFormatProvider)null);
                 }
                 else if ((typeof(SqlBytes) == currentType) && (typeof(byte[]) == destinationType.ClassType))
                 {
@@ -1080,15 +1080,15 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if ((typeof(string) == currentType) && (SqlDbType.Time == destinationType.SqlDbType))
                 {
-                    objValue = TimeSpan.Parse(ValueTypeConverter<T, string>.Convert(ref value));
+                    objValue = TimeSpan.Parse(ValueTypeConverter.Convert<T, string>(value));
                 }
                 else if ((typeof(string) == currentType) && (SqlDbType.DateTimeOffset == destinationType.SqlDbType))
                 {
-                    objValue = DateTimeOffset.Parse(ValueTypeConverter<T, string>.Convert(ref value), (IFormatProvider)null);
+                    objValue = DateTimeOffset.Parse(ValueTypeConverter.Convert<T, string>(value), (IFormatProvider)null);
                 }
                 else if ((typeof(DateTime) == currentType) && (SqlDbType.DateTimeOffset == destinationType.SqlDbType))
                 {
-                    objValue = new DateTimeOffset(ValueTypeConverter<T, DateTime>.Convert(ref value));
+                    objValue = new DateTimeOffset(ValueTypeConverter.Convert<T, DateTime>(value));
                 }
                 else if (TdsEnums.SQLTABLE == destinationType.TDSType && (
                             value is DataTable ||
