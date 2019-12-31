@@ -4,9 +4,9 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using Xunit;
 using Xunit.Abstractions;
 using Xunit.Sdk;
-using Xunit;
 
 namespace Microsoft.DotNet.XUnitExtensions
 {

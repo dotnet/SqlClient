@@ -23,7 +23,8 @@ namespace Microsoft.DotNet.XUnitExtensions
             Type calleeType = null;
             string[] conditionMemberNames = null;
 
-            if (CheckInputToSkipExecution(conditionArguments, ref calleeType, ref conditionMemberNames, testMethod)) return null;
+            if (CheckInputToSkipExecution(conditionArguments, ref calleeType, ref conditionMemberNames, testMethod))
+                return null;
 
             MethodInfo testMethodInfo = testMethod.Method.ToRuntimeMethod();
             Type testMethodDeclaringType = testMethodInfo.DeclaringType;
@@ -120,7 +121,7 @@ namespace Microsoft.DotNet.XUnitExtensions
                 $"The conditional method needs to be a static method or property on the type {type} or any ancestor, " +
                 "of any visibility, accepting zero arguments, and having a return type of Boolean.";
         }
-        
+
         internal static MethodInfo LookupConditionalMethod(Type t, string name)
         {
             if (t == null || name == null)
@@ -144,7 +145,8 @@ namespace Microsoft.DotNet.XUnitExtensions
             // A null or empty list of conditionArguments is treated as "no conditions".
             // and the test cases will be executed.
             // Example: [ConditionalClass()]
-            if (conditionArguments == null || conditionArguments.Length == 0) return true;
+            if (conditionArguments == null || conditionArguments.Length == 0)
+                return true;
 
             calleeType = conditionArguments[0] as Type;
             if (calleeType != null)
@@ -161,14 +163,16 @@ namespace Microsoft.DotNet.XUnitExtensions
             else
             {
                 // For [ConditionalClass], unable to get the Type info. All test cases will be executed.
-                if (testMethod == null) return true;
+                if (testMethod == null)
+                    return true;
 
                 // [ConditionalFact("MethodName")]
                 conditionMemberNames = conditionArguments[0] as string[];
             }
 
             // [ConditionalFact((string[]) null)]
-            if (conditionMemberNames == null || conditionMemberNames.Count() == 0) return true;
+            if (conditionMemberNames == null || conditionMemberNames.Count() == 0)
+                return true;
 
             return false;
         }

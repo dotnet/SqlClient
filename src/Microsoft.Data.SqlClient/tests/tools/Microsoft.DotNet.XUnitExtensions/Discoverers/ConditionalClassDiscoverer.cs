@@ -50,7 +50,8 @@ namespace Microsoft.DotNet.XUnitExtensions
             foreach (string entry in conditionMemberNames)
             {
                 // Null condition member names are silently tolerated.
-                if (string.IsNullOrWhiteSpace(entry)) continue;
+                if (string.IsNullOrWhiteSpace(entry))
+                    continue;
 
                 MethodInfo conditionMethodInfo = ConditionalTestDiscoverer.LookupConditionalMethod(calleeType, entry);
                 if (conditionMethodInfo == null)
@@ -59,7 +60,8 @@ namespace Microsoft.DotNet.XUnitExtensions
                 }
 
                 // If one of the conditions is false, then return the category failing trait.
-                if (!(bool)conditionMethodInfo.Invoke(null, null)) return false;
+                if (!(bool)conditionMethodInfo.Invoke(null, null))
+                    return false;
             }
 
             return true;
