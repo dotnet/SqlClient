@@ -137,7 +137,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Enum for specifying SqlDataReader.Get method used
-        private enum ValueMethod : byte
+        // TODO -- should this be Flags?
+        private enum ValueMethod
         {
             GetValue,
             SqlTypeSqlDecimal,
@@ -145,7 +146,19 @@ namespace Microsoft.Data.SqlClient
             SqlTypeSqlSingle,
             DataFeedStream,
             DataFeedText,
-            DataFeedXml
+            DataFeedXml,
+            GetInt32,
+            GetString,
+            GetDouble,
+            GetDecimal,
+            GetInt16,
+            GetInt64,
+            GetChar,
+            GetByte,
+            GetBoolean,
+            GetDateTime,
+            GetGuid,
+            GetFloat
         }
 
         // Used to hold column metadata for SqlDataReader case
@@ -538,6 +551,9 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(internalResults != null, "Where are the results from the initial query?");
 
             StringBuilder updateBulkCommandText = new StringBuilder();
+
+            bool isDataReader = _rowSourceType == ValueSourceType.IDataReader
+                || _rowSourceType == ValueSourceType.DbDataReader;
 
             if (0 == internalResults[CollationResultId].Count)
             {
@@ -960,42 +976,45 @@ namespace Microsoft.Data.SqlClient
                         }
                         else
                         {
-                            var fieldType = r.GetFieldType(sourceOrdinal);
-
-                            var typeCode = fieldType != null && !r.IsDBNull(sourceOrdinal)
-                                ? Type.GetTypeCode(fieldType) //TODO can be optimized out
-                                : TypeCode.Empty;
-
-                            switch (typeCode)
+                            if (_currentRowMetadata[sourceOrdinal].Method == ValueMethod.GetValue || r.IsDBNull(sourceOrdinal))
                             {
-                                case TypeCode.Int32:
-                                    return WriteValueAsync(r.GetInt32(sourceOrdinal), destRowIndex, isSqlType, isDataFeed, isNull);
-                                case TypeCode.String:
-                                    return WriteValueAsync(r.GetString(sourceOrdinal), destRowIndex, isSqlType, isDataFeed, isNull);
-                                case TypeCode.Double:
-                                    return WriteValueAsync(r.GetDouble(sourceOrdinal), destRowIndex, isSqlType, isDataFeed, isNull);
-                                case TypeCode.Decimal:
-                                    return WriteValueAsync(r.GetDecimal(sourceOrdinal), destRowIndex, isSqlType, isDataFeed, isNull);
-                                case TypeCode.Int16:
-                                    return WriteValueAsync(r.GetInt16(sourceOrdinal), destRowIndex, isSqlType, isDataFeed, isNull);
-                                case TypeCode.Int64:
-                                    return WriteValueAsync(r.GetInt64(sourceOrdinal), destRowIndex, isSqlType, isDataFeed, isNull);
-                                case TypeCode.Char:
-                                    return WriteValueAsync(r.GetChar(sourceOrdinal), destRowIndex, isSqlType, isDataFeed, isNull);
-                                case TypeCode.Byte:
-                                    return WriteValueAsync(r.GetByte(sourceOrdinal), destRowIndex, isSqlType, isDataFeed, isNull);
-                                case TypeCode.Boolean:
-                                    return WriteValueAsync(r.GetBoolean(sourceOrdinal), destRowIndex, isSqlType, isDataFeed, isNull);
-                                case TypeCode.DateTime:
-                                    return WriteValueAsync(r.GetDateTime(sourceOrdinal), destRowIndex, isSqlType, isDataFeed, isNull);
-                                case TypeCode.Object when fieldType == typeof(Guid):
-                                    return WriteValueAsync(r.GetGuid(sourceOrdinal), destRowIndex, isSqlType, isDataFeed, isNull);
-                                case TypeCode.Object when fieldType == typeof(float):
-                                    return WriteValueAsync(r.GetFloat(sourceOrdinal), destRowIndex, isSqlType, isDataFeed, isNull);
-                                default:
-                                    object columnValue = r.GetValue(sourceOrdinal);
-                                    ADP.IsNullOrSqlType(columnValue, out isNull, out isSqlType);
-                                    return WriteValueAsync(columnValue, destRowIndex, isSqlType, isDataFeed, isNull);
+                                object columnValue = r.GetValue(sourceOrdinal);
+                                ADP.IsNullOrSqlType(columnValue, out isNull, out isSqlType);
+                                return WriteValueAsync(columnValue, destRowIndex, isSqlType, isDataFeed, isNull);
+                            }
+                            else
+                            {
+                                switch (_currentRowMetadata[sourceOrdinal].Method)
+                                {
+                                    case ValueMethod.GetInt32:
+                                        return WriteValueAsync(r.GetInt32(sourceOrdinal), destRowIndex, isSqlType, isDataFeed, isNull);
+                                    case ValueMethod.GetString:
+                                        return WriteValueAsync(r.GetString(sourceOrdinal), destRowIndex, isSqlType, isDataFeed, isNull);
+                                    case ValueMethod.GetDouble:
+                                        return WriteValueAsync(r.GetDouble(sourceOrdinal), destRowIndex, isSqlType, isDataFeed, isNull);
+                                    case ValueMethod.GetDecimal:
+                                        return WriteValueAsync(r.GetDecimal(sourceOrdinal), destRowIndex, isSqlType, isDataFeed, isNull);
+                                    case ValueMethod.GetInt16:
+                                        return WriteValueAsync(r.GetInt16(sourceOrdinal), destRowIndex, isSqlType, isDataFeed, isNull);
+                                    case ValueMethod.GetInt64:
+                                        return WriteValueAsync(r.GetInt64(sourceOrdinal), destRowIndex, isSqlType, isDataFeed, isNull);
+                                    case ValueMethod.GetChar:
+                                        return WriteValueAsync(r.GetChar(sourceOrdinal), destRowIndex, isSqlType, isDataFeed, isNull);
+                                    case ValueMethod.GetByte:
+                                        return WriteValueAsync(r.GetByte(sourceOrdinal), destRowIndex, isSqlType, isDataFeed, isNull);
+                                    case ValueMethod.GetBoolean:
+                                        return WriteValueAsync(r.GetBoolean(sourceOrdinal), destRowIndex, isSqlType, isDataFeed, isNull);
+                                    case ValueMethod.GetDateTime:
+                                        return WriteValueAsync(r.GetDateTime(sourceOrdinal), destRowIndex, isSqlType, isDataFeed, isNull);
+                                    case ValueMethod.GetGuid:
+                                        return WriteValueAsync(r.GetGuid(sourceOrdinal), destRowIndex, isSqlType, isDataFeed, isNull);
+                                    case ValueMethod.GetFloat:
+                                        return WriteValueAsync(r.GetFloat(sourceOrdinal), destRowIndex, isSqlType, isDataFeed, isNull);
+                                    default:
+                                        object columnValue = r.GetValue(sourceOrdinal);
+                                        ADP.IsNullOrSqlType(columnValue, out isNull, out isSqlType);
+                                        return WriteValueAsync(columnValue, destRowIndex, isSqlType, isDataFeed, isNull);
+                                }
                             }
                         }
                     }
@@ -1275,8 +1294,69 @@ namespace Microsoft.Data.SqlClient
                     method = ValueMethod.GetValue;
                 }
             }
+            else if (_rowSourceType == ValueSourceType.IDataReader)
+            {
+                isSqlType = false;
+                isDataFeed = false;
+
+                Type t = ((IDataReader)_rowSource).GetFieldType(ordinal);
+                
+                if (t == typeof(bool))
+                {
+                    method = ValueMethod.GetBoolean;
+                }
+                else if (t == typeof(byte))
+                {
+                    method = ValueMethod.GetByte;
+                }
+                else if (t == typeof(char))
+                {
+                    method = ValueMethod.GetChar;
+                }
+                else if (t == typeof(DateTime))
+                {
+                    method = ValueMethod.GetDateTime;
+                }
+                else if (t == typeof(decimal))
+                {
+                    method = ValueMethod.GetDecimal;
+                }
+                else if (t == typeof(double))
+                {
+                    method = ValueMethod.GetDouble;
+                }
+                else if (t == typeof(float))
+                {
+                    method = ValueMethod.GetFloat;
+                }
+                else if (t == typeof(Guid))
+                {
+                    method = ValueMethod.GetGuid;
+                }
+                else if (t == typeof(short))
+                {
+                    method = ValueMethod.GetInt16;
+                }
+                else if (t == typeof(int))
+                {
+                    method = ValueMethod.GetInt32;
+                }
+                else if (t == typeof(long))
+                {
+                    method = ValueMethod.GetInt64;
+                }
+                else if (t == typeof(string))
+                {
+                    method = ValueMethod.GetString;
+                }
+                else
+                {
+                    method = ValueMethod.GetValue;
+                }
+            }
             else
             {
+                
                 isSqlType = false;
                 isDataFeed = false;
                 method = ValueMethod.GetValue;
