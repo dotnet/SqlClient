@@ -53,7 +53,7 @@ namespace Microsoft.DotNet.XUnitExtensions
 
             return skipReason != null ?
                         (IEnumerable<IXunitTestCase>)skippedTestCase
-                        : new [] { new SkippedFactTestCase(DiagnosticMessageSink, discoveryOptions.MethodDisplayOrDefault(), discoveryOptions.MethodDisplayOptionsOrDefault(), testMethod, dataRow) }; // Test case skippable at runtime.
+                        : new[] { new SkippedFactTestCase(DiagnosticMessageSink, discoveryOptions.MethodDisplayOrDefault(), discoveryOptions.MethodDisplayOptionsOrDefault(), testMethod, dataRow) }; // Test case skippable at runtime.
         }
     }
 }

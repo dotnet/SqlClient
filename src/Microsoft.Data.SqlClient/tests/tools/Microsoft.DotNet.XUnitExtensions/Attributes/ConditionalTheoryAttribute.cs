@@ -11,7 +11,7 @@ namespace Xunit
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
     public sealed class ConditionalTheoryAttribute : TheoryAttribute
     {
-        public Type     CalleeType { get; private set; }
+        public Type CalleeType { get; private set; }
         public string[] ConditionMemberNames { get; private set; }
 
         public ConditionalTheoryAttribute(Type calleeType, params string[] conditionMemberNames)

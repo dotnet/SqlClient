@@ -5,7 +5,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime.InteropServices;
 using Xunit;
 using Xunit.Abstractions;
 using Xunit.Sdk;
@@ -31,7 +30,7 @@ namespace Microsoft.DotNet.XUnitExtensions
             string issue = ctorArgs.First().ToString();
             TestPlatforms platforms = TestPlatforms.Any;
             TargetFrameworkMonikers frameworks = (TargetFrameworkMonikers)0;
-            
+
             foreach (object arg in ctorArgs.Skip(1)) // First argument is the issue number.
             {
                 if (arg is TestPlatforms)
@@ -43,7 +42,7 @@ namespace Microsoft.DotNet.XUnitExtensions
                     frameworks = (TargetFrameworkMonikers)arg;
                 }
             }
-        
+
             if (DiscovererHelpers.TestPlatformApplies(platforms))
             {
                 if (frameworks.HasFlag(TargetFrameworkMonikers.Netcoreapp))
