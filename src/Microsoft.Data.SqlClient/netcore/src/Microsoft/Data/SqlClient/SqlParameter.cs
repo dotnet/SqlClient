@@ -1031,7 +1031,7 @@ namespace Microsoft.Data.SqlClient
                     // For Xml data, destination Type is always string
                     if (typeof(SqlXml) == currentType)
                     {
-                        var xmlValue = ValueTypeConverter.Convert<T, SqlXml>(value);
+                        var xmlValue = GenericConverter.Convert<T, SqlXml>(value);
                         objValue = MetaType.GetStringFromXml(xmlValue.CreateReader());
                     }
                     else if (typeof(SqlString) == currentType)
@@ -1052,12 +1052,12 @@ namespace Microsoft.Data.SqlClient
                     }
                     else if (typeof(char[]) == currentType)
                     {
-                        var charArrayValue = ValueTypeConverter.Convert<T, char[]>(value);
+                        var charArrayValue = GenericConverter.Convert<T, char[]>(value);
                         objValue = new string(charArrayValue);
                     }
                     else if (typeof(SqlChars) == currentType)
                     {
-                        var sqlCharsValue = ValueTypeConverter.Convert<T, SqlChars>(value);
+                        var sqlCharsValue = GenericConverter.Convert<T, SqlChars>(value);
                         objValue = new string(sqlCharsValue.Value);
                     }
                     else if (value is TextReader tr && allowStreaming)
@@ -1072,7 +1072,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if ((DbType.Currency == destinationType.DbType) && (typeof(string) == currentType))
                 {
-                    objValue = decimal.Parse(ValueTypeConverter.Convert<T, string>(value), NumberStyles.Currency, (IFormatProvider)null);
+                    objValue = decimal.Parse(GenericConverter.Convert<T, string>(value), NumberStyles.Currency, (IFormatProvider)null);
                 }
                 else if ((typeof(SqlBytes) == currentType) && (typeof(byte[]) == destinationType.ClassType))
                 {
@@ -1080,15 +1080,15 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if ((typeof(string) == currentType) && (SqlDbType.Time == destinationType.SqlDbType))
                 {
-                    objValue = TimeSpan.Parse(ValueTypeConverter.Convert<T, string>(value));
+                    objValue = TimeSpan.Parse(GenericConverter.Convert<T, string>(value));
                 }
                 else if ((typeof(string) == currentType) && (SqlDbType.DateTimeOffset == destinationType.SqlDbType))
                 {
-                    objValue = DateTimeOffset.Parse(ValueTypeConverter.Convert<T, string>(value), (IFormatProvider)null);
+                    objValue = DateTimeOffset.Parse(GenericConverter.Convert<T, string>(value), (IFormatProvider)null);
                 }
                 else if ((typeof(DateTime) == currentType) && (SqlDbType.DateTimeOffset == destinationType.SqlDbType))
                 {
-                    objValue = new DateTimeOffset(ValueTypeConverter.Convert<T, DateTime>(value));
+                    objValue = new DateTimeOffset(GenericConverter.Convert<T, DateTime>(value));
                 }
                 else if (TdsEnums.SQLTABLE == destinationType.TDSType && (
                             value is DataTable ||

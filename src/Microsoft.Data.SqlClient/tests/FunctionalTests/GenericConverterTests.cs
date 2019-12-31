@@ -8,14 +8,14 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
 {
-    public class ValueTypeConverterTests
+    public class GenericConverterTests
     {
         [Fact]
         public void ObjectConversionSuccessful()
         {
             object test = 0m;
 
-            decimal converted = ValueTypeConverter.Convert<object, decimal>(test);
+            decimal converted = GenericConverter.Convert<object, decimal>(test);
 
             Assert.Equal(test, converted);
         }
@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             decimal test = 0m;
 
-            decimal converted = ValueTypeConverter.Convert<decimal, decimal>(test);
+            decimal converted = GenericConverter.Convert<decimal, decimal>(test);
 
             Assert.Equal(test, converted);
         }
@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             SqlDecimal test = 0m;
 
-            decimal converted = ValueTypeConverter.Convert<SqlDecimal, decimal>(test);
+            decimal converted = GenericConverter.Convert<SqlDecimal, decimal>(test);
 
             Assert.Equal(test, converted);
         }

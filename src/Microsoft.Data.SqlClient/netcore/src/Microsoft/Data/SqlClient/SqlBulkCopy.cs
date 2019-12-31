@@ -1496,11 +1496,11 @@ namespace Microsoft.Data.SqlClient
                     case TdsEnums.SQLDECIMALN:
                         if (typeof(T) == typeof(decimal))
                         {
-                            decValue = new SqlDecimal(ValueTypeConverter.Convert<T, decimal>(value));
+                            decValue = new SqlDecimal(GenericConverter.Convert<T, decimal>(value));
                         }
                         else if (typeof(T) == typeof(SqlDecimal))
                         {
-                            decValue = ValueTypeConverter.Convert<T, SqlDecimal>(value);
+                            decValue = GenericConverter.Convert<T, SqlDecimal>(value);
                         }
                         else
                         {
@@ -1571,8 +1571,8 @@ namespace Microsoft.Data.SqlClient
                             string str = typeChanged
                                 ? (string)objValue
                                 : isSqlType
-                                    ? ValueTypeConverter.Convert<T, SqlString>(value).Value
-                                    : ValueTypeConverter.Convert<T, string>(value)
+                                    ? GenericConverter.Convert<T, SqlString>(value).Value
+                                    : GenericConverter.Convert<T, string>(value)
                             ;
 
                             int maxStringLength = length / 2;
@@ -2244,11 +2244,11 @@ namespace Microsoft.Data.SqlClient
 
                 if (variantInternalType == SqlBuffer.StorageType.DateTime2 && value is DateTime)
                 {
-                    _parser.WriteSqlVariantDateTime2(ValueTypeConverter.Convert<T, DateTime>(value), _stateObj);
+                    _parser.WriteSqlVariantDateTime2(GenericConverter.Convert<T, DateTime>(value), _stateObj);
                 }
                 else if (variantInternalType == SqlBuffer.StorageType.Date && value is DateTime d)
                 {
-                    _parser.WriteSqlVariantDate(ValueTypeConverter.Convert<T, DateTime>(value), _stateObj);
+                    _parser.WriteSqlVariantDate(GenericConverter.Convert<T, DateTime>(value), _stateObj);
                 }
                 else
                 {

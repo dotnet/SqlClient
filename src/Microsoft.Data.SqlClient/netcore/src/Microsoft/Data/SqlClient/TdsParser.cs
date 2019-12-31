@@ -6443,44 +6443,44 @@ namespace Microsoft.Data.SqlClient
 
             if (metatype.IsAnsiType && value is string)
             {
-                length = GetEncodingCharLength(ValueTypeConverter.Convert<T, string>(value), length, 0, _defaultEncoding);
+                length = GetEncodingCharLength(GenericConverter.Convert<T, string>(value), length, 0, _defaultEncoding);
             }
 
             switch (metatype.TDSType)
             {
                 case TdsEnums.SQLFLT4:
                     WriteSqlVariantHeader(6, metatype.TDSType, metatype.PropBytes, stateObj);
-                    WriteFloat(ValueTypeConverter.Convert<T, float>(value), stateObj);
+                    WriteFloat(GenericConverter.Convert<T, float>(value), stateObj);
                     break;
 
                 case TdsEnums.SQLFLT8:
                     WriteSqlVariantHeader(10, metatype.TDSType, metatype.PropBytes, stateObj);
-                    WriteDouble(ValueTypeConverter.Convert<T, double>(value), stateObj);
+                    WriteDouble(GenericConverter.Convert<T, double>(value), stateObj);
                     break;
 
                 case TdsEnums.SQLINT8:
                     WriteSqlVariantHeader(10, metatype.TDSType, metatype.PropBytes, stateObj);
-                    WriteLong(ValueTypeConverter.Convert<T, long>(value), stateObj);
+                    WriteLong(GenericConverter.Convert<T, long>(value), stateObj);
                     break;
 
                 case TdsEnums.SQLINT4:
                     WriteSqlVariantHeader(6, metatype.TDSType, metatype.PropBytes, stateObj);
-                    WriteInt(ValueTypeConverter.Convert<T, int>(value), stateObj);
+                    WriteInt(GenericConverter.Convert<T, int>(value), stateObj);
                     break;
 
                 case TdsEnums.SQLINT2:
                     WriteSqlVariantHeader(4, metatype.TDSType, metatype.PropBytes, stateObj);
-                    WriteShort(ValueTypeConverter.Convert<T, short>(value), stateObj);
+                    WriteShort(GenericConverter.Convert<T, short>(value), stateObj);
                     break;
 
                 case TdsEnums.SQLINT1:
                     WriteSqlVariantHeader(3, metatype.TDSType, metatype.PropBytes, stateObj);
-                    stateObj.WriteByte(ValueTypeConverter.Convert<T, byte>(value));
+                    stateObj.WriteByte(GenericConverter.Convert<T, byte>(value));
                     break;
 
                 case TdsEnums.SQLBIT:
                     WriteSqlVariantHeader(3, metatype.TDSType, metatype.PropBytes, stateObj);
-                    if (ValueTypeConverter.Convert<T, bool>(value))
+                    if (GenericConverter.Convert<T, bool>(value))
                         stateObj.WriteByte(1);
                     else
                         stateObj.WriteByte(0);
@@ -6489,7 +6489,7 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.SQLBIGVARBINARY:
                     {
-                        byte[] b = ValueTypeConverter.Convert<T, byte[]>(value);
+                        byte[] b = GenericConverter.Convert<T, byte[]>(value);
 
                         length = b.Length;
                         WriteSqlVariantHeader(4 + length, metatype.TDSType, metatype.PropBytes, stateObj);
@@ -6499,7 +6499,7 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.SQLBIGVARCHAR:
                     {
-                        string s = ValueTypeConverter.Convert<T, string>(value);
+                        string s = GenericConverter.Convert<T, string>(value);
 
                         length = s.Length;
                         WriteSqlVariantHeader(9 + length, metatype.TDSType, metatype.PropBytes, stateObj);
@@ -6511,7 +6511,7 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.SQLUNIQUEID:
                     {
-                        Guid guid = ValueTypeConverter.Convert<T, Guid>(value);
+                        Guid guid = GenericConverter.Convert<T, Guid>(value);
                         Span<byte> b = stackalloc byte[16];
                         FillGuidBytes(guid, b);
 
@@ -6524,7 +6524,7 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.SQLNVARCHAR:
                     {
-                        string s = ValueTypeConverter.Convert<T, string>(value);
+                        string s = GenericConverter.Convert<T, string>(value);
 
                         length = s.Length * 2;
                         WriteSqlVariantHeader(9 + length, metatype.TDSType, metatype.PropBytes, stateObj);
@@ -6539,7 +6539,7 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.SQLDATETIME:
                     {
-                        TdsDateTime dt = MetaType.FromDateTime(ValueTypeConverter.Convert<T, DateTime>(value), 8);
+                        TdsDateTime dt = MetaType.FromDateTime(GenericConverter.Convert<T, DateTime>(value), 8);
 
                         WriteSqlVariantHeader(10, metatype.TDSType, metatype.PropBytes, stateObj);
                         WriteInt(dt.days, stateObj);
@@ -6550,7 +6550,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLMONEY:
                     {
                         WriteSqlVariantHeader(10, metatype.TDSType, metatype.PropBytes, stateObj);
-                        WriteCurrency(ValueTypeConverter.Convert<T, decimal>(value), 8, stateObj);
+                        WriteCurrency(GenericConverter.Convert<T, decimal>(value), 8, stateObj);
                         break;
                     }
 
@@ -6558,7 +6558,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         WriteSqlVariantHeader(21, metatype.TDSType, metatype.PropBytes, stateObj);
                         stateObj.WriteByte(metatype.Precision); //propbytes: precision
-                        var decValue = ValueTypeConverter.Convert<T, decimal>(value);
+                        var decValue = GenericConverter.Convert<T, decimal>(value);
                         stateObj.WriteByte((byte)((decimal.GetBits(decValue)[3] & 0x00ff0000) >> 0x10)); // propbytes: scale
                         WriteDecimal(ref decValue, stateObj);
                         break;
@@ -6567,13 +6567,13 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLTIME:
                     WriteSqlVariantHeader(8, metatype.TDSType, metatype.PropBytes, stateObj);
                     stateObj.WriteByte(metatype.Scale); //propbytes: scale
-                    WriteTime(ValueTypeConverter.Convert<T, TimeSpan>(value), metatype.Scale, 5, stateObj);
+                    WriteTime(GenericConverter.Convert<T, TimeSpan>(value), metatype.Scale, 5, stateObj);
                     break;
 
                 case TdsEnums.SQLDATETIMEOFFSET:
                     WriteSqlVariantHeader(13, metatype.TDSType, metatype.PropBytes, stateObj);
                     stateObj.WriteByte(metatype.Scale); //propbytes: scale
-                    WriteDateTimeOffset(ValueTypeConverter.Convert<T, DateTimeOffset>(value), metatype.Scale, 10, stateObj);
+                    WriteDateTimeOffset(GenericConverter.Convert<T, DateTimeOffset>(value), metatype.Scale, 10, stateObj);
                     break;
 
                 default:
@@ -10146,8 +10146,8 @@ namespace Microsoft.Data.SqlClient
                     // to report the size of data to be copied out (for serialization). If we underreport the
                     // size, truncation will happen for us!
                     actualLengthInBytes = (isSqlType)
-                        ? ValueTypeConverter.Convert<T, SqlBinary>(value).Length
-                        : ValueTypeConverter.Convert<T, byte[]>(value).Length;
+                        ? GenericConverter.Convert<T, SqlBinary>(value).Length
+                        : GenericConverter.Convert<T, byte[]>(value).Length;
 
                     if (metadata.baseTI.length > 0 &&
                         actualLengthInBytes > metadata.baseTI.length)
@@ -10169,8 +10169,8 @@ namespace Microsoft.Data.SqlClient
                     }
 
                     string stringValue = (isSqlType)
-                        ? ValueTypeConverter.Convert<T, SqlString>(value).Value
-                        : ValueTypeConverter.Convert<T, string>(value);
+                        ? GenericConverter.Convert<T, SqlString>(value).Value
+                        : GenericConverter.Convert<T, string>(value);
 
                     actualLengthInBytes = _defaultEncoding.GetByteCount(stringValue);
 
@@ -10186,8 +10186,8 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLNVARCHAR:
                 case TdsEnums.SQLNTEXT:
                     actualLengthInBytes = (isSqlType
-                        ? ValueTypeConverter.Convert<T, SqlString>(value).Value.Length
-                        : ValueTypeConverter.Convert<T, string>(value).Length)
+                        ? GenericConverter.Convert<T, SqlString>(value).Value.Length
+                        : GenericConverter.Convert<T, string>(value).Length)
                         * 2;
 
                     if (metadata.baseTI.length > 0 &&
@@ -10300,8 +10300,8 @@ namespace Microsoft.Data.SqlClient
                         case TdsEnums.SQLIMAGE:
                         case TdsEnums.SQLUDT:
                             ccb = (isSqlType)
-                                ? ValueTypeConverter.Convert<T, SqlBinary>(value).Length
-                                : ValueTypeConverter.Convert<T, byte[]>(value).Length;
+                                ? GenericConverter.Convert<T, SqlBinary>(value).Length
+                                : GenericConverter.Convert<T, byte[]>(value).Length;
                             break;
                         case TdsEnums.SQLUNIQUEID:
                             ccb = GUID_SIZE;
@@ -10317,11 +10317,11 @@ namespace Microsoft.Data.SqlClient
                             string stringValue = null;
                             if (isSqlType)
                             {
-                                stringValue = ValueTypeConverter.Convert<T, SqlString>(value).Value;
+                                stringValue = GenericConverter.Convert<T, SqlString>(value).Value;
                             }
                             else
                             {
-                                stringValue = ValueTypeConverter.Convert<T, string>(value);
+                                stringValue = GenericConverter.Convert<T, string>(value);
                             }
 
                             ccb = stringValue.Length;
@@ -10331,8 +10331,8 @@ namespace Microsoft.Data.SqlClient
                         case TdsEnums.SQLNVARCHAR:
                         case TdsEnums.SQLNTEXT:
                             ccb = (isSqlType
-                                    ? ValueTypeConverter.Convert<T, SqlString>(value).Value.Length
-                                    : ValueTypeConverter.Convert<T, string>(value).Length
+                                    ? GenericConverter.Convert<T, SqlString>(value).Value.Length
+                                    : GenericConverter.Convert<T, string>(value).Length
                                 ) * 2;
                             break;
                         case TdsEnums.SQLXMLTYPE:
@@ -10342,8 +10342,8 @@ namespace Microsoft.Data.SqlClient
                                 objValue = MetaType.GetStringFromXml(xr);
                             }
                             ccb = (isSqlType
-                                    ? ValueTypeConverter.Convert<T, SqlString>(value).Value.Length
-                                    : ValueTypeConverter.Convert<T, string>(value).Length
+                                    ? GenericConverter.Convert<T, SqlString>(value).Value.Length
+                                    : GenericConverter.Convert<T, string>(value).Length
                                 ) * 2;
                             break;
 
@@ -10411,7 +10411,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     WriteShort(ccb, stateObj);
-                    internalWriteTask = stateObj.WriteByteArray(ValueTypeConverter.Convert<T, byte[]>(value), ccb, 0);
+                    internalWriteTask = stateObj.WriteByteArray(GenericConverter.Convert<T, byte[]>(value), ccb, 0);
                 }
 
 #if DEBUG
@@ -10744,11 +10744,11 @@ namespace Microsoft.Data.SqlClient
             {
                 case TdsEnums.SQLFLTN:
                     if (type.FixedLength == 4)
-                        WriteFloat(ValueTypeConverter.Convert<T, SqlSingle>(value).Value, stateObj);
+                        WriteFloat(GenericConverter.Convert<T, SqlSingle>(value).Value, stateObj);
                     else
                     {
                         Debug.Assert(type.FixedLength == 8, "Invalid length for SqlDouble type!");
-                        WriteDouble(ValueTypeConverter.Convert<T, SqlDouble>(value).Value, stateObj);
+                        WriteDouble(GenericConverter.Convert<T, SqlDouble>(value).Value, stateObj);
                     }
 
                     break;
@@ -10764,12 +10764,12 @@ namespace Microsoft.Data.SqlClient
 
                         if (value is SqlBinary)
                         {
-                            return stateObj.WriteByteArray(ValueTypeConverter.Convert<T, SqlBinary>(value).Value, actualLength, offset, canAccumulate: false);
+                            return stateObj.WriteByteArray(GenericConverter.Convert<T, SqlBinary>(value).Value, actualLength, offset, canAccumulate: false);
                         }
                         else
                         {
                             Debug.Assert(value is SqlBytes);
-                            return stateObj.WriteByteArray(ValueTypeConverter.Convert<T, SqlBytes>(value).Value, actualLength, offset, canAccumulate: false);
+                            return stateObj.WriteByteArray(GenericConverter.Convert<T, SqlBytes>(value).Value, actualLength, offset, canAccumulate: false);
                         }
                     }
 
@@ -10777,7 +10777,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         Debug.Assert(actualLength == 16, "Invalid length for guid type in com+ object");
                         Span<byte> b = stackalloc byte[16];
-                        SqlGuid sqlGuid = ValueTypeConverter.Convert<T, SqlGuid>(value);
+                        SqlGuid sqlGuid = GenericConverter.Convert<T, SqlGuid>(value);
 
                         if (sqlGuid.IsNull)
                         {
@@ -10795,7 +10795,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLBITN:
                     {
                         Debug.Assert(type.FixedLength == 1, "Invalid length for SqlBoolean type");
-                        if (ValueTypeConverter.Convert<T, SqlBoolean>(value).Value == true)
+                        if (GenericConverter.Convert<T, SqlBoolean>(value).Value == true)
                             stateObj.WriteByte(1);
                         else
                             stateObj.WriteByte(0);
@@ -10805,17 +10805,17 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.SQLINTN:
                     if (type.FixedLength == 1)
-                        stateObj.WriteByte(ValueTypeConverter.Convert<T, SqlByte>(value).Value);
+                        stateObj.WriteByte(GenericConverter.Convert<T, SqlByte>(value).Value);
                     else
                         if (type.FixedLength == 2)
-                        WriteShort(ValueTypeConverter.Convert<T, SqlInt16>(value).Value, stateObj);
+                        WriteShort(GenericConverter.Convert<T, SqlInt16>(value).Value, stateObj);
                     else
                             if (type.FixedLength == 4)
-                        WriteInt(ValueTypeConverter.Convert<T, SqlInt32>(value).Value, stateObj);
+                        WriteInt(GenericConverter.Convert<T, SqlInt32>(value).Value, stateObj);
                     else
                     {
                         Debug.Assert(type.FixedLength == 8, "invalid length for SqlIntN type:  " + type.FixedLength.ToString(CultureInfo.InvariantCulture));
-                        WriteLong(ValueTypeConverter.Convert<T, SqlInt64>(value).Value, stateObj);
+                        WriteLong(GenericConverter.Convert<T, SqlInt64>(value).Value, stateObj);
                     }
 
                     break;
@@ -10829,14 +10829,14 @@ namespace Microsoft.Data.SqlClient
                     }
                     if (value is SqlChars)
                     {
-                        string sch = new string(ValueTypeConverter.Convert<T, SqlChars>(value).Value);
+                        string sch = new string(GenericConverter.Convert<T, SqlChars>(value).Value);
 
                         return WriteEncodingChar(sch, actualLength, offset, _defaultEncoding, stateObj, canAccumulate: false);
                     }
                     else
                     {
                         Debug.Assert(value is SqlString);
-                        return WriteEncodingChar(ValueTypeConverter.Convert<T, SqlString>(value).Value, actualLength, offset, _defaultEncoding, stateObj, canAccumulate: false);
+                        return WriteEncodingChar(GenericConverter.Convert<T, SqlString>(value).Value, actualLength, offset, _defaultEncoding, stateObj, canAccumulate: false);
                     }
 
 
@@ -10865,21 +10865,21 @@ namespace Microsoft.Data.SqlClient
 
                     if (value is SqlChars)
                     {
-                        return WriteCharArray(ValueTypeConverter.Convert<T, SqlChars>(value).Value, actualLength, offset, stateObj, canAccumulate: false);
+                        return WriteCharArray(GenericConverter.Convert<T, SqlChars>(value).Value, actualLength, offset, stateObj, canAccumulate: false);
                     }
                     else
                     {
                         Debug.Assert(value is SqlString);
-                        return WriteString(ValueTypeConverter.Convert<T, SqlString>(value).Value, actualLength, offset, stateObj, canAccumulate: false);
+                        return WriteString(GenericConverter.Convert<T, SqlString>(value).Value, actualLength, offset, stateObj, canAccumulate: false);
                     }
 
                 case TdsEnums.SQLNUMERICN:
                     Debug.Assert(type.FixedLength <= 17, "Decimal length cannot be greater than 17 bytes");
-                    WriteSqlDecimal(ValueTypeConverter.Convert<T, SqlDecimal>(value), stateObj);
+                    WriteSqlDecimal(GenericConverter.Convert<T, SqlDecimal>(value), stateObj);
                     break;
 
                 case TdsEnums.SQLDATETIMN:
-                    SqlDateTime dt = ValueTypeConverter.Convert<T, SqlDateTime>(value);
+                    SqlDateTime dt = GenericConverter.Convert<T, SqlDateTime>(value);
 
                     if (type.FixedLength == 4)
                     {
@@ -10899,7 +10899,7 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.SQLMONEYN:
                     {
-                        WriteSqlMoney(ValueTypeConverter.Convert<T, SqlMoney>(value), type.FixedLength, stateObj);
+                        WriteSqlMoney(GenericConverter.Convert<T, SqlMoney>(value), type.FixedLength, stateObj);
                         break;
                     }
 
@@ -11386,11 +11386,11 @@ namespace Microsoft.Data.SqlClient
             {
                 case TdsEnums.SQLFLTN:
                     if (type.FixedLength == 4)
-                        WriteFloat(ValueTypeConverter.Convert<T, float>(value), stateObj);
+                        WriteFloat(GenericConverter.Convert<T, float>(value), stateObj);
                     else
                     {
                         Debug.Assert(type.FixedLength == 8, "Invalid length for SqlDouble type!");
-                        WriteDouble(ValueTypeConverter.Convert<T, double>(value), stateObj);
+                        WriteDouble(GenericConverter.Convert<T, double>(value), stateObj);
                     }
 
                     break;
@@ -11407,7 +11407,7 @@ namespace Microsoft.Data.SqlClient
                         if (isDataFeed)
                         {
                             Debug.Assert(type.IsPlp, "Stream assigned to non-PLP was not converted!");
-                            return NullIfCompletedWriteTask(WriteStreamFeed(ValueTypeConverter.Convert<T, StreamDataFeed>(value), stateObj, paramSize));
+                            return NullIfCompletedWriteTask(WriteStreamFeed(GenericConverter.Convert<T, StreamDataFeed>(value), stateObj, paramSize));
                         }
                         else
                         {
@@ -11415,7 +11415,7 @@ namespace Microsoft.Data.SqlClient
                             {
                                 WriteInt(actualLength, stateObj);               // chunk length
                             }
-                            return stateObj.WriteByteArray(ValueTypeConverter.Convert<T, byte[]>(value), actualLength, offset, canAccumulate: false);
+                            return stateObj.WriteByteArray(GenericConverter.Convert<T, byte[]>(value), actualLength, offset, canAccumulate: false);
                         }
                     }
 
@@ -11423,7 +11423,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         Debug.Assert(actualLength == 16, "Invalid length for guid type in com+ object");
                         Span<byte> b = stackalloc byte[16];
-                        FillGuidBytes(ValueTypeConverter.Convert<T, Guid>(value), b);
+                        FillGuidBytes(GenericConverter.Convert<T, Guid>(value), b);
                         stateObj.WriteByteSpan(b);
                         break;
                     }
@@ -11431,7 +11431,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLBITN:
                     {
                         Debug.Assert(type.FixedLength == 1, "Invalid length for SqlBoolean type");
-                        if (ValueTypeConverter.Convert<T, bool>(value) == true)
+                        if (GenericConverter.Convert<T, bool>(value) == true)
                             stateObj.WriteByte(1);
                         else
                             stateObj.WriteByte(0);
@@ -11441,15 +11441,15 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.SQLINTN:
                     if (type.FixedLength == 1)
-                        stateObj.WriteByte(ValueTypeConverter.Convert<T, byte>(value));
+                        stateObj.WriteByte(GenericConverter.Convert<T, byte>(value));
                     else if (type.FixedLength == 2)
-                        WriteShort(ValueTypeConverter.Convert<T, short>(value), stateObj);
+                        WriteShort(GenericConverter.Convert<T, short>(value), stateObj);
                     else if (type.FixedLength == 4)
-                        WriteInt(ValueTypeConverter.Convert<T, int>(value), stateObj);
+                        WriteInt(GenericConverter.Convert<T, int>(value), stateObj);
                     else
                     {
                         Debug.Assert(type.FixedLength == 8, "invalid length for SqlIntN type:  " + type.FixedLength.ToString(CultureInfo.InvariantCulture));
-                        WriteLong(ValueTypeConverter.Convert<T, long>(value), stateObj);
+                        WriteLong(GenericConverter.Convert<T, long>(value), stateObj);
                     }
 
                     break;
@@ -11467,7 +11467,7 @@ namespace Microsoft.Data.SqlClient
                             TextDataFeed tdf = value as TextDataFeed;
                             if (tdf == null)
                             {
-                                return NullIfCompletedWriteTask(WriteXmlFeed(ValueTypeConverter.Convert<T, XmlDataFeed>(value), stateObj, needBom: true, encoding: _defaultEncoding, size: paramSize));
+                                return NullIfCompletedWriteTask(WriteXmlFeed(GenericConverter.Convert<T, XmlDataFeed>(value), stateObj, needBom: true, encoding: _defaultEncoding, size: paramSize));
                             }
                             else
                             {
@@ -11482,11 +11482,11 @@ namespace Microsoft.Data.SqlClient
                             }
                             if (value is byte[])
                             { // If LazyMat non-filled blob, send cookie rather than value
-                                return stateObj.WriteByteArray(ValueTypeConverter.Convert<T, byte[]>(value), actualLength, 0, canAccumulate: false);
+                                return stateObj.WriteByteArray(GenericConverter.Convert<T, byte[]>(value), actualLength, 0, canAccumulate: false);
                             }
                             else
                             {
-                                return WriteEncodingChar(ValueTypeConverter.Convert<T, string>(value), actualLength, offset, _defaultEncoding, stateObj, canAccumulate: false);
+                                return WriteEncodingChar(GenericConverter.Convert<T, string>(value), actualLength, offset, _defaultEncoding, stateObj, canAccumulate: false);
                             }
                         }
                     }
@@ -11504,7 +11504,7 @@ namespace Microsoft.Data.SqlClient
                             TextDataFeed tdf = value as TextDataFeed;
                             if (tdf == null)
                             {
-                                return NullIfCompletedWriteTask(WriteXmlFeed(ValueTypeConverter.Convert<T, XmlDataFeed>(value), stateObj, IsBOMNeeded(type, value), Encoding.Unicode, paramSize));
+                                return NullIfCompletedWriteTask(WriteXmlFeed(GenericConverter.Convert<T, XmlDataFeed>(value), stateObj, IsBOMNeeded(type, value), Encoding.Unicode, paramSize));
                             }
                             else
                             {
@@ -11527,26 +11527,26 @@ namespace Microsoft.Data.SqlClient
                             }
                             if (value is byte[])
                             { // If LazyMat non-filled blob, send cookie rather than value
-                                return stateObj.WriteByteArray(ValueTypeConverter.Convert<T, byte[]>(value), actualLength, 0, canAccumulate: false);
+                                return stateObj.WriteByteArray(GenericConverter.Convert<T, byte[]>(value), actualLength, 0, canAccumulate: false);
                             }
                             else
                             {
                                 // convert to cchars instead of cbytes
                                 actualLength >>= 1;
-                                return WriteString(ValueTypeConverter.Convert<T, string>(value), actualLength, offset, stateObj, canAccumulate: false);
+                                return WriteString(GenericConverter.Convert<T, string>(value), actualLength, offset, stateObj, canAccumulate: false);
                             }
                         }
                     }
                 case TdsEnums.SQLNUMERICN:
                     Debug.Assert(type.FixedLength <= 17, "Decimal length cannot be greater than 17 bytes");
-                    var d = ValueTypeConverter.Convert<T, decimal>(value);
+                    var d = GenericConverter.Convert<T, decimal>(value);
                     WriteDecimal(ref d, stateObj);
                     break;
 
                 case TdsEnums.SQLDATETIMN:
                     Debug.Assert(type.FixedLength <= 0xff, "Invalid Fixed Length");
 
-                    TdsDateTime dt = MetaType.FromDateTime(ValueTypeConverter.Convert<T, DateTime>(value), (byte)type.FixedLength);
+                    TdsDateTime dt = MetaType.FromDateTime(GenericConverter.Convert<T, DateTime>(value), (byte)type.FixedLength);
 
                     if (type.FixedLength == 4)
                     {
@@ -11566,13 +11566,13 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.SQLMONEYN:
                     {
-                        WriteCurrency(ValueTypeConverter.Convert<T, decimal>(value), type.FixedLength, stateObj);
+                        WriteCurrency(GenericConverter.Convert<T, decimal>(value), type.FixedLength, stateObj);
                         break;
                     }
 
                 case TdsEnums.SQLDATE:
                     {
-                        WriteDate(ValueTypeConverter.Convert<T, DateTime>(value), stateObj);
+                        WriteDate(GenericConverter.Convert<T, DateTime>(value), stateObj);
                         break;
                     }
 
@@ -11581,7 +11581,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         throw SQL.TimeScaleValueOutOfRange(scale);
                     }
-                    WriteTime(ValueTypeConverter.Convert<T, TimeSpan>(value), scale, actualLength, stateObj);
+                    WriteTime(GenericConverter.Convert<T, TimeSpan>(value), scale, actualLength, stateObj);
                     break;
 
                 case TdsEnums.SQLDATETIME2:
@@ -11589,11 +11589,11 @@ namespace Microsoft.Data.SqlClient
                     {
                         throw SQL.TimeScaleValueOutOfRange(scale);
                     }
-                    WriteDateTime2(ValueTypeConverter.Convert<T, DateTime>(value), scale, actualLength, stateObj);
+                    WriteDateTime2(GenericConverter.Convert<T, DateTime>(value), scale, actualLength, stateObj);
                     break;
 
                 case TdsEnums.SQLDATETIMEOFFSET:
-                    WriteDateTimeOffset(ValueTypeConverter.Convert<T, DateTimeOffset>(value), scale, actualLength, stateObj);
+                    WriteDateTimeOffset(GenericConverter.Convert<T, DateTimeOffset>(value), scale, actualLength, stateObj);
                     break;
 
                 default:
@@ -11854,12 +11854,12 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLFLTN:
                     if (type.FixedLength == 4)
                     {
-                        return SerializeFloat(ValueTypeConverter.Convert<T, SqlSingle>(value).Value);
+                        return SerializeFloat(GenericConverter.Convert<T, SqlSingle>(value).Value);
                     }
                     else
                     {
                         Debug.Assert(type.FixedLength == 8, "Invalid length for SqlDouble type!");
-                        return SerializeDouble(ValueTypeConverter.Convert<T, SqlDouble>(value).Value);
+                        return SerializeDouble(GenericConverter.Convert<T, SqlDouble>(value).Value);
                     }
 
                 case TdsEnums.SQLBIGBINARY:
@@ -11870,12 +11870,12 @@ namespace Microsoft.Data.SqlClient
 
                         if (typeof(T) == typeof(SqlBinary))
                         {
-                            Buffer.BlockCopy(ValueTypeConverter.Convert<T, SqlBinary>(value).Value, offset, b, 0, actualLength);
+                            Buffer.BlockCopy(GenericConverter.Convert<T, SqlBinary>(value).Value, offset, b, 0, actualLength);
                         }
                         else
                         {
                             Debug.Assert(value is SqlBytes);
-                            Buffer.BlockCopy(ValueTypeConverter.Convert<T, SqlBytes>(value).Value, offset, b, 0, actualLength);
+                            Buffer.BlockCopy(GenericConverter.Convert<T, SqlBytes>(value).Value, offset, b, 0, actualLength);
                         }
 
                         return b;
@@ -11883,7 +11883,7 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.SQLUNIQUEID:
                     {
-                        byte[] b = ValueTypeConverter.Convert<T, SqlGuid>(value).ToByteArray();
+                        byte[] b = GenericConverter.Convert<T, SqlGuid>(value).ToByteArray();
 
                         Debug.Assert((actualLength == b.Length) && (actualLength == 16), "Invalid length for guid type in com+ object");
                         return b;
@@ -11894,23 +11894,23 @@ namespace Microsoft.Data.SqlClient
                         Debug.Assert(type.FixedLength == 1, "Invalid length for SqlBoolean type");
 
                         // We normalize to allow conversion across data types. BIT is serialized into a BIGINT.
-                        return SerializeLong(ValueTypeConverter.Convert<T, SqlBoolean>(value).Value == true ? 1 : 0, stateObj);
+                        return SerializeLong(GenericConverter.Convert<T, SqlBoolean>(value).Value == true ? 1 : 0, stateObj);
                     }
 
                 case TdsEnums.SQLINTN:
                     // We normalize to allow conversion across data types. All data types below are serialized into a BIGINT.
                     if (type.FixedLength == 1)
-                        return SerializeLong(ValueTypeConverter.Convert<T, SqlByte>(value).Value, stateObj);
+                        return SerializeLong(GenericConverter.Convert<T, SqlByte>(value).Value, stateObj);
 
                     if (type.FixedLength == 2)
-                        return SerializeLong(ValueTypeConverter.Convert<T, SqlInt16>(value).Value, stateObj);
+                        return SerializeLong(GenericConverter.Convert<T, SqlInt16>(value).Value, stateObj);
 
                     if (type.FixedLength == 4)
-                        return SerializeLong(ValueTypeConverter.Convert<T, SqlInt32>(value).Value, stateObj);
+                        return SerializeLong(GenericConverter.Convert<T, SqlInt32>(value).Value, stateObj);
                     else
                     {
                         Debug.Assert(type.FixedLength == 8, "invalid length for SqlIntN type:  " + type.FixedLength.ToString(CultureInfo.InvariantCulture));
-                        return SerializeLong(ValueTypeConverter.Convert<T, SqlInt64>(value).Value, stateObj);
+                        return SerializeLong(GenericConverter.Convert<T, SqlInt64>(value).Value, stateObj);
                     }
 
                 case TdsEnums.SQLBIGCHAR:
@@ -11918,13 +11918,13 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLTEXT:
                     if (value is SqlChars)
                     {
-                        String sch = new String(ValueTypeConverter.Convert<T, SqlChars>(value).Value);
+                        String sch = new String(GenericConverter.Convert<T, SqlChars>(value).Value);
                         return SerializeEncodingChar(sch, actualLength, offset, _defaultEncoding);
                     }
                     else
                     {
                         Debug.Assert(value is SqlString);
-                        return SerializeEncodingChar(ValueTypeConverter.Convert<T, SqlString>(value).Value, actualLength, offset, _defaultEncoding);
+                        return SerializeEncodingChar(GenericConverter.Convert<T, SqlString>(value).Value, actualLength, offset, _defaultEncoding);
                     }
 
 
@@ -11939,20 +11939,20 @@ namespace Microsoft.Data.SqlClient
 
                     if (value is SqlChars)
                     {
-                        return SerializeCharArray(ValueTypeConverter.Convert<T, SqlChars>(value).Value, actualLength, offset);
+                        return SerializeCharArray(GenericConverter.Convert<T, SqlChars>(value).Value, actualLength, offset);
                     }
                     else
                     {
                         Debug.Assert(value is SqlString);
-                        return SerializeString(ValueTypeConverter.Convert<T, SqlString>(value).Value, actualLength, offset);
+                        return SerializeString(GenericConverter.Convert<T, SqlString>(value).Value, actualLength, offset);
                     }
 
                 case TdsEnums.SQLNUMERICN:
                     Debug.Assert(type.FixedLength <= 17, "Decimal length cannot be greater than 17 bytes");
-                    return SerializeSqlDecimal(ValueTypeConverter.Convert<T, SqlDecimal>(value), stateObj);
+                    return SerializeSqlDecimal(GenericConverter.Convert<T, SqlDecimal>(value), stateObj);
 
                 case TdsEnums.SQLDATETIMN:
-                    SqlDateTime dt = ValueTypeConverter.Convert<T, SqlDateTime>(value);
+                    SqlDateTime dt = GenericConverter.Convert<T, SqlDateTime>(value);
 
                     if (type.FixedLength == 4)
                     {
@@ -11998,7 +11998,7 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.SQLMONEYN:
                     {
-                        return SerializeSqlMoney(ValueTypeConverter.Convert<T, SqlMoney>(value), type.FixedLength, stateObj);
+                        return SerializeSqlMoney(GenericConverter.Convert<T, SqlMoney>(value), type.FixedLength, stateObj);
                     }
 
                 default:
