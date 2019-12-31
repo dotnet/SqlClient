@@ -3,7 +3,6 @@
     <TargetFrameworks>netcoreapp2.1;net46</TargetFrameworks>
     <AssemblyName>Microsoft.DotNet.XUnitExtensions</AssemblyName>
     <IsPackable>true</IsPackable>
-    <ExcludeFromSourceBuild>true</ExcludeFromSourceBuild>
   </PropertyGroup>
 
   <ItemGroup>
