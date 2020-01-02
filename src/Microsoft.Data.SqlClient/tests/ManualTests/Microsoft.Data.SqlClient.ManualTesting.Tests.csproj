@@ -234,7 +234,9 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\add-ons\AzureKeyVaultProvider\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
-    <ProjectReference Include="..\tools\Microsoft.DotNet.XUnitExtensions\Microsoft.DotNet.XUnitExtensions.csproj" />
+    <ProjectReference Include="..\tools\Microsoft.DotNet.XUnitExtensions\Microsoft.DotNet.XUnitExtensions.csproj">
+      <Name>Microsoft.DotNet.XUnitExtensions</Name>
+    </ProjectReference>
     <ProjectReference Include="SQL\UdtTest\UDTs\Address\Address.csproj">
       <Name>Address</Name>
     </ProjectReference>
