@@ -6394,7 +6394,7 @@ namespace Microsoft.Data.SqlClient
                         stateObj.WriteByte(mt.Precision); //propbytes: precision
                         stateObj.WriteByte((byte)((decimal.GetBits((decimal)value)[3] & 0x00ff0000) >> 0x10)); // propbytes: scale
                         var d = (decimal)value;
-                        WriteDecimal(ref d, stateObj);
+                        WriteDecimal(d, stateObj);
                         break;
                     }
 
@@ -6429,10 +6429,10 @@ namespace Microsoft.Data.SqlClient
         // Therefore the sql_variant value must not include the MaxLength. This is the major difference
         // between this method and WriteSqlVariantValue above.
         //
-        internal Task WriteSqlVariantDataRowValue<T>(T value, TdsParserStateObject stateObj, bool canAccumulate = true)
+        internal Task WriteSqlVariantDataRowValue<T>(T value, bool isNull, TdsParserStateObject stateObj, bool canAccumulate = true)
         {
             // handle null values
-            if ((null == value) || typeof(T) == typeof(DBNull))
+            if (isNull)
             {
                 WriteInt(TdsEnums.FIXEDNULL, stateObj);
                 return null;
@@ -6441,7 +6441,7 @@ namespace Microsoft.Data.SqlClient
             MetaType metatype = MetaType.GetMetaTypeFromValue(value);
             int length = 0;
 
-            if (metatype.IsAnsiType && value is string)
+            if (metatype.IsAnsiType)
             {
                 length = GetEncodingCharLength(GenericConverter.Convert<T, string>(value), length, 0, _defaultEncoding);
             }
@@ -6560,7 +6560,7 @@ namespace Microsoft.Data.SqlClient
                         stateObj.WriteByte(metatype.Precision); //propbytes: precision
                         var decValue = GenericConverter.Convert<T, decimal>(value);
                         stateObj.WriteByte((byte)((decimal.GetBits(decValue)[3] & 0x00ff0000) >> 0x10)); // propbytes: scale
-                        WriteDecimal(ref decValue, stateObj);
+                        WriteDecimal(decValue, stateObj);
                         break;
                     }
 
@@ -6994,7 +6994,7 @@ namespace Microsoft.Data.SqlClient
             return bytes;
         }
 
-        private void WriteDecimal(ref decimal value, TdsParserStateObject stateObj)
+        private void WriteDecimal(decimal value, TdsParserStateObject stateObj)
         {
             stateObj._decimalBits = decimal.GetBits(value);
             Debug.Assert(null != stateObj._decimalBits, "decimalBits should be filled in at TdsExecuteRPC time");
@@ -11539,8 +11539,7 @@ namespace Microsoft.Data.SqlClient
                     }
                 case TdsEnums.SQLNUMERICN:
                     Debug.Assert(type.FixedLength <= 17, "Decimal length cannot be greater than 17 bytes");
-                    var d = GenericConverter.Convert<T, decimal>(value);
-                    WriteDecimal(ref d, stateObj);
+                    WriteDecimal(GenericConverter.Convert<T, decimal>(value), stateObj);
                     break;
 
                 case TdsEnums.SQLDATETIMN:
@@ -11868,7 +11867,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         byte[] b = new byte[actualLength];
 
-                        if (typeof(T) == typeof(SqlBinary))
+                        if (value is SqlBinary)
                         {
                             Buffer.BlockCopy(GenericConverter.Convert<T, SqlBinary>(value).Value, offset, b, 0, actualLength);
                         }

@@ -552,9 +552,6 @@ namespace Microsoft.Data.SqlClient
 
             StringBuilder updateBulkCommandText = new StringBuilder();
 
-            bool isDataReader = _rowSourceType == ValueSourceType.IDataReader
-                || _rowSourceType == ValueSourceType.DbDataReader;
-
             if (0 == internalResults[CollationResultId].Count)
             {
                 throw SQL.BulkLoadNoCollation();
@@ -892,25 +889,21 @@ namespace Microsoft.Data.SqlClient
                         if (_DbDataReaderRowSource.IsDBNull(sourceOrdinal))
                         {
                             isNull = true;
-                            var dbnull = DBNull.Value;
-                            return WriteValueAsync(dbnull, destRowIndex, isSqlType, isDataFeed, isNull);
+                            return WriteValueAsync(DBNull.Value, destRowIndex, isSqlType, isDataFeed, isNull);
                         }
                         else
                         {
                             switch (_currentRowMetadata[destRowIndex].Method)
                             {
                                 case ValueMethod.DataFeedStream:
-                                    var stream = new StreamDataFeed(_DbDataReaderRowSource.GetStream(sourceOrdinal));
-                                    return WriteValueAsync(stream, destRowIndex, isSqlType, isDataFeed, isNull);
+                                    return WriteValueAsync(new StreamDataFeed(_DbDataReaderRowSource.GetStream(sourceOrdinal)), destRowIndex, isSqlType, isDataFeed, isNull);
                                 case ValueMethod.DataFeedText:
-                                    var text = new TextDataFeed(_DbDataReaderRowSource.GetTextReader(sourceOrdinal));
-                                    return WriteValueAsync(text, destRowIndex, isSqlType, isDataFeed, isNull);
+                                    return WriteValueAsync(new TextDataFeed(_DbDataReaderRowSource.GetTextReader(sourceOrdinal)), destRowIndex, isSqlType, isDataFeed, isNull);
                                 case ValueMethod.DataFeedXml:
                                     // Only SqlDataReader supports an XmlReader
                                     // There is no GetXmlReader on DbDataReader, however if GetValue returns XmlReader we will read it as stream if it is assigned to XML field
                                     Debug.Assert(_SqlDataReaderRowSource != null, "Should not be reading row as an XmlReader if bulk copy source is not a SqlDataReader");
-                                    var xml = new XmlDataFeed(_SqlDataReaderRowSource.GetXmlReader(sourceOrdinal));
-                                    return WriteValueAsync(xml, destRowIndex, isSqlType, isDataFeed, isNull);
+                                    return WriteValueAsync(new XmlDataFeed(_SqlDataReaderRowSource.GetXmlReader(sourceOrdinal)), destRowIndex, isSqlType, isDataFeed, isNull);
                                 default:
                                     Debug.Fail($"Current column is marked as being a DataFeed, but no DataFeed compatible method was provided. Method: {_currentRowMetadata[destRowIndex].Method}");
                                     isDataFeed = false;
@@ -1047,8 +1040,7 @@ namespace Microsoft.Data.SqlClient
                                             if (!float.IsNaN(f))
                                             {
                                                 isSqlType = true;
-                                                var sqlDec = new SqlDecimal(f);
-                                                return WriteValueAsync(sqlDec, destRowIndex, isSqlType, isDataFeed, isNull);
+                                                return WriteValueAsync(new SqlDecimal(f), destRowIndex, isSqlType, isDataFeed, isNull);
                                             }
                                             else
                                             {
@@ -1069,8 +1061,7 @@ namespace Microsoft.Data.SqlClient
                                             if (!double.IsNaN(d))
                                             {
                                                 isSqlType = true;
-                                                var sqlValue = new SqlDecimal(d);
-                                                return WriteValueAsync(sqlValue, destRowIndex, isSqlType, isDataFeed, isNull);
+                                                return WriteValueAsync(new SqlDecimal(d), destRowIndex, isSqlType, isDataFeed, isNull);
                                             }
                                             else
                                             {
@@ -2322,17 +2313,17 @@ namespace Microsoft.Data.SqlClient
                     variantInternalType = _SqlDataReaderRowSource.GetVariantInternalStorageType(_sortedColumnMappings[col]._sourceColumnOrdinal);
                 }
 
-                if (variantInternalType == SqlBuffer.StorageType.DateTime2 && value is DateTime)
+                if (variantInternalType == SqlBuffer.StorageType.DateTime2)
                 {
                     _parser.WriteSqlVariantDateTime2(GenericConverter.Convert<T, DateTime>(value), _stateObj);
                 }
-                else if (variantInternalType == SqlBuffer.StorageType.Date && value is DateTime d)
+                else if (variantInternalType == SqlBuffer.StorageType.Date)
                 {
                     _parser.WriteSqlVariantDate(GenericConverter.Convert<T, DateTime>(value), _stateObj);
                 }
                 else
                 {
-                    writeTask = _parser.WriteSqlVariantDataRowValue(value, _stateObj); //returns Task/Null
+                    writeTask = _parser.WriteSqlVariantDataRowValue(value, isNull, _stateObj); //returns Task/Null
                 }
             }
 
