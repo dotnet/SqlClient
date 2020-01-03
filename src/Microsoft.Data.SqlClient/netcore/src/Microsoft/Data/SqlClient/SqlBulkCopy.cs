@@ -136,29 +136,29 @@ namespace Microsoft.Data.SqlClient
             DbDataReader
         }
 
-        // Enum for specifying SqlDataReader.Get method used
-        // TODO -- should this be Flags?
+        // Enum for specifying SqlDataReader.Get / IDataReader Get method used
+        [Flags]
         private enum ValueMethod
         {
-            GetValue,
-            SqlTypeSqlDecimal,
-            SqlTypeSqlDouble,
-            SqlTypeSqlSingle,
-            DataFeedStream,
-            DataFeedText,
-            DataFeedXml,
-            GetInt32,
-            GetString,
-            GetDouble,
-            GetDecimal,
-            GetInt16,
-            GetInt64,
-            GetChar,
-            GetByte,
-            GetBoolean,
-            GetDateTime,
-            GetGuid,
-            GetFloat
+            GetValue = 0,
+            SqlTypeSqlDecimal = 1,
+            SqlTypeSqlDouble = 1 << 1,
+            SqlTypeSqlSingle = 1 << 2,
+            DataFeedStream = 1 << 3,
+            DataFeedText = 1 << 4,
+            DataFeedXml = 1 << 5,
+            GetInt32 = 1 << 6,
+            GetString = 1 << 7,
+            GetDouble = 1 << 8,
+            GetDecimal = 1 << 9,
+            GetInt16 = 1 << 10,
+            GetInt64 = 1 << 11,
+            GetChar = 1 << 12,
+            GetByte = 1 << 13,
+            GetBoolean = 1 << 14,
+            GetDateTime = 1 << 15,
+            GetGuid = 1 << 16,
+            GetFloat = 1 << 17
         }
 
         // Used to hold column metadata for SqlDataReader case
@@ -869,8 +869,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // Unified method to read a value from the current row
-        private Task ReadWriteValueGenericAsync(int destRowIndex)
+        // Reads a cell and then writes it.
+        // Read may block at this moment since there is no getValueAsync or DownStream async at this moment.
+        // When _isAsyncBulkCopy == true: Write will return Task (when async method runs asynchronously) or Null (when async call actually ran synchronously) for performance.
+        // When _isAsyncBulkCopy == false: Writes are purely sync. This method return null at the end.
+        private Task ReadWriteColumnValueAsync(int destRowIndex)
         {
             _SqlMetaData metadata = _sortedColumnMappings[destRowIndex]._metadata;
             int sourceOrdinal = _sortedColumnMappings[destRowIndex]._sourceColumnOrdinal;
@@ -2250,17 +2253,6 @@ namespace Microsoft.Data.SqlClient
                 internalConnection._parserLock.Wait(canReleaseFromAnyThread: semaphoreLock);
             }
             return eventArgs.Abort;
-        }
-
-        // Reads a cell and then writes it.
-        // Read may block at this moment since there is no getValueAsync or DownStream async at this moment.
-        // When _isAsyncBulkCopy == true: Write will return Task (when async method runs asynchronously) or Null (when async call actually ran synchronously) for performance.
-        // When _isAsyncBulkCopy == false: Writes are purely sync. This method return null at the end.
-        private Task ReadWriteColumnValueAsync(int col)
-        {
-            var writeTask = ReadWriteValueGenericAsync(col); //this will return Task/null in future: as rTask
-
-            return writeTask;
         }
 
         private Task WriteValueAsync<T>(T value, int col, bool isSqlType, bool isDataFeed, bool isNull)
