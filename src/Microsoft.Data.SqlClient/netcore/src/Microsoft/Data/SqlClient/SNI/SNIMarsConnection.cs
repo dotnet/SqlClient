@@ -115,7 +115,7 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 lock (this)
                 {
-                    return _lowerHandle.SendAsync(packet, false, callback);
+                    return _lowerHandle.SendAsync(packet, callback);
                 }
             }
             finally
@@ -136,7 +136,7 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 if (packet != null)
                 {
-                    packet.Release();
+                    ReturnPacket(packet);
                     packet = null;
                 }
 
@@ -188,7 +188,8 @@ namespace Microsoft.Data.SqlClient.SNI
                     handle.HandleReceiveError(packet);
                 }
             }
-            packet?.Release();
+            Debug.Assert(!packet.IsInvalid, "packet was returned by MarsConnection child, child sessions should not release the packet");
+            ReturnPacket(packet);
         }
 
         /// <summary>
@@ -257,9 +258,9 @@ namespace Microsoft.Data.SqlClient.SNI
 
                             _currentHeader.Read(_headerBytes);
 
-                            _dataBytesLeft = (int)_currentHeader.length;
-                            _currentPacket = new SNIPacket(headerSize: 0, dataSize: (int)_currentHeader.length);
-                        }
+                        _dataBytesLeft = (int)_currentHeader.length;
+                        _currentPacket = _lowerHandle.RentPacket(headerSize: 0, dataSize: (int)_currentHeader.length);
+                    }
 
                         currentHeader = _currentHeader;
                         currentPacket = _currentPacket;
@@ -312,17 +313,22 @@ namespace Microsoft.Data.SqlClient.SNI
                         currentSession.HandleReceiveComplete(currentPacket, currentHeader);
                     }
 
-                    if (_currentHeader.flags == (byte)SNISMUXFlags.SMUX_ACK)
+                if (_currentHeader.flags == (byte)SNISMUXFlags.SMUX_ACK)
+                {
+                    try
                     {
-                        try
-                        {
-                            currentSession.HandleAck(currentHeader.highwater);
-                        }
-                        catch (Exception e)
-                        {
-                            SNICommon.ReportSNIError(SNIProviders.SMUX_PROV, SNICommon.InternalExceptionError, e);
-                        }
+                        currentSession.HandleAck(currentHeader.highwater);
                     }
+                    catch (Exception e)
+                    {
+                        SNICommon.ReportSNIError(SNIProviders.SMUX_PROV, SNICommon.InternalExceptionError, e);
+                    }
+
+                    Debug.Assert(_currentPacket == currentPacket, "current and _current are not the same");
+                    ReturnPacket(currentPacket);
+                    currentPacket = null;
+                    _currentPacket = null;
+                }
 
                     lock (this)
                     {
