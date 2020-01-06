@@ -7,7 +7,6 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Configuration;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
@@ -28,22 +27,6 @@ namespace Microsoft.Data.SqlClient
     /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/SqlConnection/*' />
     public sealed partial class SqlConnection : DbConnection, ICloneable
     {
-        static SqlConnection()
-        {
-            SqlColumnEncryptionEnclaveProviderConfigurationSection sqlColumnEncryptionEnclaveProviderConfigurationSection = null;
-            try
-            {
-                sqlColumnEncryptionEnclaveProviderConfigurationSection = (SqlColumnEncryptionEnclaveProviderConfigurationSection)ConfigurationManager.GetSection("SqlColumnEncryptionEnclaveProviders");
-            }
-            catch (ConfigurationErrorsException e)
-            {
-                throw SQL.CannotGetSqlColumnEncryptionEnclaveProviderConfig(e);
-            }
-
-            sqlColumnEncryptionEnclaveProviderConfigurationManager = new SqlColumnEncryptionEnclaveProviderConfigurationManager(sqlColumnEncryptionEnclaveProviderConfigurationSection);
-        }
-
-        static internal readonly SqlColumnEncryptionEnclaveProviderConfigurationManager sqlColumnEncryptionEnclaveProviderConfigurationManager;
 
         private bool _AsyncCommandInProgress;
 
@@ -292,6 +275,18 @@ namespace Microsoft.Data.SqlClient
         /// Get enclave attestation url to be used with enclave based Always Encrypted
         /// </summary>
         internal string EnclaveAttestationUrl => ((SqlConnectionString)ConnectionOptions).EnclaveAttestationUrl;
+
+        /// <summary>
+        /// Get attestation protocol
+        /// </summary>
+        internal SqlConnectionAttestationProtocol AttestationProtocol
+        {
+            get
+            {
+                SqlConnectionString opt = (SqlConnectionString)ConnectionOptions;
+                return opt.AttestationProtocol;
+            }
+        }
 
         // This method will be called once connection string is set or changed. 
         private void CacheConnectionStringProperties()
@@ -568,7 +563,9 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     Task reconnectTask = _currentReconnectionTask;
-                    if (reconnectTask != null && !reconnectTask.IsCompleted)
+                    // Connection closed but previously open should return the correct ClientConnectionId
+                    DbConnectionClosedPreviouslyOpened innerConnectionClosed = (InnerConnection as DbConnectionClosedPreviouslyOpened);
+                    if ((reconnectTask != null && !reconnectTask.IsCompleted) || null != innerConnectionClosed)
                     {
                         return _originalConnectionId;
                     }
@@ -861,6 +858,7 @@ namespace Microsoft.Data.SqlClient
             // The SqlInternalConnectionTds is set to OpenBusy during close, once this happens the cast below will fail and 
             // the command will no longer be cancelable.  It might be desirable to be able to cancel the close operation, but this is
             // outside of the scope of Whidbey RTM.  See (SqlCommand::Cancel) for other lock.
+            _originalConnectionId = ClientConnectionId;
             InnerConnection.CloseConnection(this, ConnectionFactory);
         }
 
@@ -1141,7 +1139,7 @@ namespace Microsoft.Data.SqlClient
                                             {
                                             }
                                             // use Task.Factory.StartNew with state overload instead of Task.Run to avoid anonymous closure context capture in method scope and avoid the unneeded allocation
-                                            runningReconnect = Task.Factory.StartNew(state => ReconnectAsync((int)state), timeout, CancellationToken.None, TaskCreationOptions.DenyChildAttach, TaskScheduler.Default);
+                                            runningReconnect = Task.Factory.StartNew(state => ReconnectAsync((int)state), timeout, CancellationToken.None, TaskCreationOptions.DenyChildAttach, TaskScheduler.Default).Unwrap();
                                             // if current reconnect is not null, somebody already started reconnection task - some kind of race condition
                                             Debug.Assert(_currentReconnectionTask == null, "Duplicate reconnection tasks detected");
                                             _currentReconnectionTask = runningReconnect;
@@ -1166,7 +1164,7 @@ namespace Microsoft.Data.SqlClient
                                 OnError(SQL.CR_UnrecoverableServer(ClientConnectionId), true, null);
                             }
                         } // ValidateSNIConnection
-                    } // sessionRecoverySupported                  
+                    } // sessionRecoverySupported
                 } // connectRetryCount>0
             }
             else

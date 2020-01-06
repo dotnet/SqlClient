@@ -739,6 +739,12 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Argument(System.SRHelper.GetString(SR.SQLUDT_InvalidSqlType, typeName));
         }
+
+        internal static Exception UDTInvalidSize(int maxSize, int maxSupportedSize)
+        {
+            throw ADP.ArgumentOutOfRange(System.SRHelper.GetString(SR.SQLUDT_InvalidSize, maxSize, maxSupportedSize));
+        }
+
         internal static Exception InvalidSqlDbTypeForConstructor(SqlDbType type)
         {
             return ADP.Argument(System.SRHelper.GetString(SR.SqlMetaData_InvalidSqlDbTypeForConstructorFormat, type.ToString()));
@@ -822,9 +828,9 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_BulkLoadNonMatchingColumnName, columnName), e);
         }
-        internal static Exception BulkLoadStringTooLong()
+        internal static Exception BulkLoadStringTooLong(string tableName, string columnName, string truncatedValue)
         {
-            return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_BulkLoadStringTooLong));
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_BulkLoadStringTooLong, tableName, columnName, truncatedValue));
         }
         internal static Exception BulkLoadInvalidVariantValue()
         {
@@ -1670,6 +1676,26 @@ namespace Microsoft.Data.SqlClient
         internal static Exception NullEnclavePackageForEnclaveBasedQuery(string enclaveType, string enclaveAttestationUrl)
         {
             return ADP.Argument(System.SRHelper.GetString(SR.TCE_NullEnclavePackageForEnclaveBasedQuery, enclaveType, enclaveAttestationUrl));
+        }
+
+        internal static Exception EnclaveProviderNotFound(string enclaveType, string attestationProtocol)
+        {
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.TCE_EnclaveProviderNotFound, enclaveType, attestationProtocol));
+        }
+
+        internal static Exception EnclaveTypeNotSupported(string enclaveType)
+        {
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.TCE_EnclaveTypeNotSupported, enclaveType));
+        }
+
+        internal static Exception AttestationProtocolNotSupportEnclaveType(string attestationProtocolStr, string enclaveType)
+        {
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.TCE_AttestationProtocolNotSupportEnclaveType, attestationProtocolStr, enclaveType));
+        }
+
+        internal static Exception AttestationProtocolNotSpecifiedForGeneratingEnclavePackage()
+        {
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage));
         }
 
         #endregion Always Encrypted - Client side query processing errors

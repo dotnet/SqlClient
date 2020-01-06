@@ -11,7 +11,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsUTF8Supported))]
         public static void CheckSupportUtf8ConnectionProperty()
         {
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand command = new SqlCommand())
             {
                 command.Connection = connection;

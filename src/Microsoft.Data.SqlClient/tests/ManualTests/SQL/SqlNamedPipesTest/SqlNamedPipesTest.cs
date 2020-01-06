@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [PlatformSpecific(TestPlatforms.Windows)] // Named pipes with the given input strings are not supported on Unix
         public static void ValidConnStringTest()
         {
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.NpConnStr);
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.NPConnectionString);
             builder.ConnectTimeout = 5;
 
             OpenGoodConnection(builder.ConnectionString);

@@ -30,7 +30,7 @@
 ## Examples  
  The following example uses the <xref:Microsoft.Data.SqlClient.SqlCommand>, <xref:Microsoft.Data.SqlClient.SqlDataAdapter>, and <xref:Microsoft.Data.SqlClient.SqlConnection> to select records from a database and populate a <xref:System.Data.DataSet> with the selected rows. The filled <xref:System.Data.DataSet> is then returned. To accomplish this, the method is passed an initialized <xref:System.Data.DataSet>, a connection string, and a query string that is a Transact-SQL SELECT statement.  
   
- [!code-csharp[SqlDataAdapter_SelectCommand Example#1](~/sqlclient/doc/samples/SqlDataAdapter_SelectCommand.cs#1)]
+ [!code-csharp[SqlDataAdapter_SelectCommand Example#1](~/../sqlclient/doc/samples/SqlDataAdapter_SelectCommand.cs#1)]
   
  ]]></format>
             </remarks>
@@ -58,7 +58,7 @@
 ## Examples  
  The following example creates a <xref:Microsoft.Data.SqlClient.SqlDataAdapter> and sets some of its properties.  
   
- [!code-csharp[SqlDataAdapter.SqlDataAdapter Example#1](~/sqlclient/doc/samples/SqlDataAdapter_SqlDataAdapter.cs#1)]
+ [!code-csharp[SqlDataAdapter.SqlDataAdapter Example#1](~/../sqlclient/doc/samples/SqlDataAdapter_SqlDataAdapter.cs#1)]
   
  ]]></format>
             </remarks>
@@ -88,7 +88,7 @@
 ## Examples  
  The following example creates a <xref:Microsoft.Data.SqlClient.SqlDataAdapter> and sets some of its properties.  
   
- [!code-csharp[SqlDataAdapter_SqlDataAdapter1 Example#1](~/sqlclient/doc/samples/SqlDataAdapter_SqlDataAdapter1.cs#1)]
+ [!code-csharp[SqlDataAdapter_SqlDataAdapter1 Example#1](~/../sqlclient/doc/samples/SqlDataAdapter_SqlDataAdapter1.cs#1)]
   
  ]]></format>
             </remarks>
@@ -117,7 +117,7 @@
 ## Examples  
  The following example creates a <xref:Microsoft.Data.SqlClient.SqlDataAdapter> and sets some of its properties.  
   
- [!code-csharp[SqlDataAdapter_SqlDataAdapter3 Example#1](~/sqlclient/doc/samples/SqlDataAdapter_SqlDataAdapter3.cs#1)]
+ [!code-csharp[SqlDataAdapter_SqlDataAdapter3 Example#1](~/../sqlclient/doc/samples/SqlDataAdapter_SqlDataAdapter3.cs#1)]
   
  ]]></format>
             </remarks>
@@ -146,7 +146,7 @@
 ## Examples  
  The following example creates a <xref:Microsoft.Data.SqlClient.SqlDataAdapter> and sets some of its properties.  
   
- [!code-csharp[SqlDataAdapter_SqlDataAdapter2 Example#1](~/sqlclient/doc/samples/SqlDataAdapter_SqlDataAdapter2.cs#1)]
+ [!code-csharp[SqlDataAdapter_SqlDataAdapter2 Example#1](~/../sqlclient/doc/samples/SqlDataAdapter_SqlDataAdapter2.cs#1)]
   
  ]]></format>
             </remarks>
@@ -197,7 +197,7 @@
 ## Examples  
  The following example creates a <xref:Microsoft.Data.SqlClient.SqlDataAdapter> and sets the <xref:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand%2A>, <xref:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand%2A>, <xref:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand%2A>, and <xref:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand%2A> properties. It assumes you have already created a <xref:Microsoft.Data.SqlClient.SqlConnection> object.  
   
- [!code-csharp[SqlDataAdapter#1](~/sqlclient/doc/samples/SqlDataAdapter.cs#1)]
+ [!code-csharp[SqlDataAdapter#1](~/../sqlclient/doc/samples/SqlDataAdapter.cs#1)]
   
  ]]></format>
             </remarks>
@@ -251,7 +251,7 @@
 ## Examples  
  The following example creates a <xref:Microsoft.Data.SqlClient.SqlDataAdapter> and sets the <xref:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand%2A>, <xref:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand%2A>, <xref:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand%2A>, and <xref:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand%2A> properties. It assumes you have already created a <xref:Microsoft.Data.SqlClient.SqlConnection> object.  
   
- [!code-csharp[SqlDataAdapter#1](~/sqlclient/doc/samples/SqlDataAdapter.cs#1)]
+ [!code-csharp[SqlDataAdapter#1](~/../sqlclient/doc/samples/SqlDataAdapter.cs#1)]
   
  ]]></format>
             </remarks>
@@ -301,7 +301,7 @@
   
  event args: (command=Microsoft.Data.SqlClient.SqlCommand commandType=2 recordsAffected=1 row=System.Data.DataRow[37] status=0)  
   
- [!code-csharp[SqlDataAdapter_RowUpdated Example#1](~/sqlclient/doc/samples/SqlDataAdapter_RowUpdated.cs#1)]
+ [!code-csharp[SqlDataAdapter_RowUpdated Example#1](~/../sqlclient/doc/samples/SqlDataAdapter_RowUpdated.cs#1)]
   
  ]]></format>
             </remarks>
@@ -341,7 +341,7 @@
   
  event args: (command=Microsoft.Data.SqlClient.SqlCommand commandType=2 recordsAffected=1 row=System.Data.DataRow[37] status=0)  
   
- [!code-csharp[SqlDataAdapter_RowUpdated Example#1](~/sqlclient/doc/samples/SqlDataAdapter_RowUpdated.cs#1)]
+ [!code-csharp[SqlDataAdapter_RowUpdated Example#1](~/../sqlclient/doc/samples/SqlDataAdapter_RowUpdated.cs#1)]
   
  ]]></format>
             </remarks>
@@ -362,7 +362,7 @@
 ## Examples  
  The following example creates a <xref:Microsoft.Data.SqlClient.SqlDataAdapter> and sets the <xref:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand%2A>, <xref:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand%2A>, <xref:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand%2A>, and <xref:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand%2A> properties. It assumes you have already created a <xref:Microsoft.Data.SqlClient.SqlConnection> object.  
   
- [!code-csharp[SqlDataAdapter#1](~/sqlclient/doc/samples/SqlDataAdapter.cs#1)]
+ [!code-csharp[SqlDataAdapter#1](~/../sqlclient/doc/samples/SqlDataAdapter.cs#1)]
   
  ]]></format>
             </remarks>
@@ -492,7 +492,7 @@
 ## Examples  
  The following example creates a <xref:Microsoft.Data.SqlClient.SqlDataAdapter> and sets the <xref:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand%2A>, <xref:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand%2A>, <xref:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand%2A> and <xref:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand%2A> properties. It assumes you have already created a <xref:Microsoft.Data.SqlClient.SqlConnection> object.  
   
- [!code-csharp[SqlDataAdapter#1](~/sqlclient/doc/samples/SqlDataAdapter.cs#1)]
+ [!code-csharp[SqlDataAdapter#1](~/../sqlclient/doc/samples/SqlDataAdapter.cs#1)]
   
  ]]></format>
             </remarks>

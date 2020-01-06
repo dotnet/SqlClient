@@ -125,6 +125,8 @@ namespace Microsoft.Data.SqlClient
         private bool requiresEnclaveComputations = false;
         internal EnclaveDelegate.EnclavePackage enclavePackage = null;
         private SqlEnclaveAttestationParameters enclaveAttestationParameters = null;
+        private byte[] customData = null;
+        private int customDataLength = 0;
 
         // Last TaskCompletionSource for reconnect task - use for cancellation only
         TaskCompletionSource<object> _reconnectionCompletionSource = null;
@@ -537,8 +539,8 @@ namespace Microsoft.Data.SqlClient
                             {
                                 tdsReliabilitySection.Start();
 #endif //DEBUG
-                            // cleanup
-                            Unprepare();
+                                // cleanup
+                                Unprepare();
 #if DEBUG
                             }
                             finally
@@ -2697,7 +2699,7 @@ namespace Microsoft.Data.SqlClient
                                 ReliablePutStateObject();
                             }
 
-                            bool shouldRetry = e is EnclaveDelegate.RetriableEnclaveQueryExecutionException;
+                            bool shouldRetry = e is EnclaveDelegate.RetryableEnclaveQueryExecutionException;
 
                             // Check if we have an error indicating that we can retry.
                             if (e is SqlException)
@@ -2733,7 +2735,7 @@ namespace Microsoft.Data.SqlClient
 
                                 if (ShouldUseEnclaveBasedWorkflow && this.enclavePackage != null)
                                 {
-                                    EnclaveDelegate.Instance.InvalidateEnclaveSession(this._activeConnection.Parser.EnclaveType, this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this.enclavePackage.EnclaveSession);
+                                    EnclaveDelegate.Instance.InvalidateEnclaveSession(this._activeConnection.AttestationProtocol, this._activeConnection.Parser.EnclaveType, this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this.enclavePackage.EnclaveSession);
                                 }
 
                                 try
@@ -3874,6 +3876,8 @@ namespace Microsoft.Data.SqlClient
             enclavePackage = null;
             requiresEnclaveComputations = false;
             enclaveAttestationParameters = null;
+            customData = null;
+            customDataLength = 0;
         }
 
         /// <summary>
@@ -4042,24 +4046,24 @@ namespace Microsoft.Data.SqlClient
                                     {
                                         tdsReliabilitySectionAsync.Start();
 #endif //DEBUG
-                                    // Check for any exceptions on network write, before reading.
-                                    CheckThrowSNIException();
+                                        // Check for any exceptions on network write, before reading.
+                                        CheckThrowSNIException();
 
-                                    // If it is async, then TryFetchInputParameterEncryptionInfo-> RunExecuteReaderTds would have incremented the async count.
-                                    // Decrement it when we are about to complete async execute reader.
-                                    SqlInternalConnectionTds internalConnectionTds = _activeConnection.GetOpenTdsConnection();
-                                    if (internalConnectionTds != null)
-                                    {
-                                        internalConnectionTds.DecrementAsyncCount();
-                                        decrementAsyncCountInFinallyBlockAsync = false;
-                                    }
+                                        // If it is async, then TryFetchInputParameterEncryptionInfo-> RunExecuteReaderTds would have incremented the async count.
+                                        // Decrement it when we are about to complete async execute reader.
+                                        SqlInternalConnectionTds internalConnectionTds = _activeConnection.GetOpenTdsConnection();
+                                        if (internalConnectionTds != null)
+                                        {
+                                            internalConnectionTds.DecrementAsyncCount();
+                                            decrementAsyncCountInFinallyBlockAsync = false;
+                                        }
 
-                                    // Complete executereader.
-                                    describeParameterEncryptionDataReader = CompleteAsyncExecuteReader(forDescribeParameterEncryption: true);
-                                    Debug.Assert(null == _stateObj, "non-null state object in PrepareForTransparentEncryption.");
+                                        // Complete executereader.
+                                        describeParameterEncryptionDataReader = CompleteAsyncExecuteReader(forDescribeParameterEncryption: true);
+                                        Debug.Assert(null == _stateObj, "non-null state object in PrepareForTransparentEncryption.");
 
-                                    // Read the results of describe parameter encryption.
-                                    ReadDescribeEncryptionParameterResults(describeParameterEncryptionDataReader, describeParameterEncryptionRpcOriginalRpcMap);
+                                        // Read the results of describe parameter encryption.
+                                        ReadDescribeEncryptionParameterResults(describeParameterEncryptionDataReader, describeParameterEncryptionRpcOriginalRpcMap);
 
 #if DEBUG
                                         // Failpoint to force the thread to halt to simulate cancellation of SqlCommand.
@@ -4127,24 +4131,24 @@ namespace Microsoft.Data.SqlClient
                                             tdsReliabilitySectionAsync.Start();
 #endif //DEBUG
 
-                                        // Check for any exceptions on network write, before reading.
-                                        CheckThrowSNIException();
+                                            // Check for any exceptions on network write, before reading.
+                                            CheckThrowSNIException();
 
-                                        // If it is async, then TryFetchInputParameterEncryptionInfo-> RunExecuteReaderTds would have incremented the async count.
-                                        // Decrement it when we are about to complete async execute reader.
-                                        SqlInternalConnectionTds internalConnectionTds = _activeConnection.GetOpenTdsConnection();
-                                        if (internalConnectionTds != null)
-                                        {
-                                            internalConnectionTds.DecrementAsyncCount();
-                                            decrementAsyncCountInFinallyBlockAsync = false;
-                                        }
+                                            // If it is async, then TryFetchInputParameterEncryptionInfo-> RunExecuteReaderTds would have incremented the async count.
+                                            // Decrement it when we are about to complete async execute reader.
+                                            SqlInternalConnectionTds internalConnectionTds = _activeConnection.GetOpenTdsConnection();
+                                            if (internalConnectionTds != null)
+                                            {
+                                                internalConnectionTds.DecrementAsyncCount();
+                                                decrementAsyncCountInFinallyBlockAsync = false;
+                                            }
 
-                                        // Complete executereader.
-                                        describeParameterEncryptionDataReader = CompleteAsyncExecuteReader(forDescribeParameterEncryption: true);
-                                        Debug.Assert(null == _stateObj, "non-null state object in PrepareForTransparentEncryption.");
+                                            // Complete executereader.
+                                            describeParameterEncryptionDataReader = CompleteAsyncExecuteReader(forDescribeParameterEncryption: true);
+                                            Debug.Assert(null == _stateObj, "non-null state object in PrepareForTransparentEncryption.");
 
-                                        // Read the results of describe parameter encryption.
-                                        ReadDescribeEncryptionParameterResults(describeParameterEncryptionDataReader, describeParameterEncryptionRpcOriginalRpcMap);
+                                            // Read the results of describe parameter encryption.
+                                            ReadDescribeEncryptionParameterResults(describeParameterEncryptionDataReader, describeParameterEncryptionRpcOriginalRpcMap);
 #if DEBUG
                                             // Failpoint to force the thread to halt to simulate cancellation of SqlCommand.
                                             if (_sleepAfterReadDescribeEncryptionParameterResults)
@@ -4274,14 +4278,15 @@ namespace Microsoft.Data.SqlClient
 
             if (ShouldUseEnclaveBasedWorkflow)
             {
+                SqlConnectionAttestationProtocol attestationProtocol = this._activeConnection.AttestationProtocol;
                 string enclaveType = this._activeConnection.Parser.EnclaveType;
                 string dataSource = this._activeConnection.DataSource;
                 string enclaveAttestationUrl = this._activeConnection.EnclaveAttestationUrl;
                 SqlEnclaveSession sqlEnclaveSession = null;
-                EnclaveDelegate.Instance.GetEnclaveSession(enclaveType, dataSource, enclaveAttestationUrl, out sqlEnclaveSession);
+                EnclaveDelegate.Instance.GetEnclaveSession(attestationProtocol, enclaveType, dataSource, enclaveAttestationUrl, true, out sqlEnclaveSession, out customData, out customDataLength);
                 if (sqlEnclaveSession == null)
                 {
-                    this.enclaveAttestationParameters = EnclaveDelegate.Instance.GetAttestationParameters(enclaveType, dataSource, enclaveAttestationUrl);
+                    this.enclaveAttestationParameters = EnclaveDelegate.Instance.GetAttestationParameters(attestationProtocol, enclaveType, enclaveAttestationUrl, customData, customDataLength);
                     serializedAttestatationParameters = EnclaveDelegate.Instance.GetSerializedAttestationParameters(this.enclaveAttestationParameters, enclaveType);
                 }
             }
@@ -4805,11 +4810,12 @@ namespace Microsoft.Data.SqlClient
                         byte[] attestationInfo = new byte[attestationInfoLength];
                         ds.GetBytes((int)DescribeParameterEncryptionResultSet3.AttestationInfo, 0, attestationInfo, 0, attestationInfoLength);
 
+                        SqlConnectionAttestationProtocol attestationProtocol = this._activeConnection.AttestationProtocol;
                         string enclaveType = this._activeConnection.Parser.EnclaveType;
                         string dataSource = this._activeConnection.DataSource;
                         string enclaveAttestationUrl = this._activeConnection.EnclaveAttestationUrl;
 
-                        EnclaveDelegate.Instance.CreateEnclaveSession(enclaveType, dataSource, enclaveAttestationUrl, attestationInfo, enclaveAttestationParameters);
+                        EnclaveDelegate.Instance.CreateEnclaveSession(attestationProtocol, enclaveType, dataSource, enclaveAttestationUrl, attestationInfo, enclaveAttestationParameters, customData, customDataLength);
                         enclaveAttestationParameters = null;
                         attestationInfoRead = true;
                     }
@@ -4930,7 +4936,7 @@ namespace Microsoft.Data.SqlClient
                                 describeParameterEncryptionRequest: false, describeParameterEncryptionTask: returnTask);
                         }
 
-                        catch (EnclaveDelegate.RetriableEnclaveQueryExecutionException)
+                        catch (EnclaveDelegate.RetryableEnclaveQueryExecutionException)
                         {
                             if (inRetry || async)
                             {
@@ -4943,7 +4949,8 @@ namespace Microsoft.Data.SqlClient
 
                             if (ShouldUseEnclaveBasedWorkflow && this.enclavePackage != null)
                             {
-                                EnclaveDelegate.Instance.InvalidateEnclaveSession(this._activeConnection.Parser.EnclaveType, this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this.enclavePackage.EnclaveSession);
+                                EnclaveDelegate.Instance.InvalidateEnclaveSession(this._activeConnection.AttestationProtocol, this._activeConnection.Parser.EnclaveType,
+                                    this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this.enclavePackage.EnclaveSession);
                             }
 
                             return RunExecuteReader(cmdBehavior, runBehavior, returnStream, method, null, TdsParserStaticMethods.GetRemainingTimeout(timeout, firstAttemptStart), out task, out usedCache, async, inRetry: true);
@@ -4985,7 +4992,8 @@ namespace Microsoft.Data.SqlClient
 
                                 if (ShouldUseEnclaveBasedWorkflow && this.enclavePackage != null)
                                 {
-                                    EnclaveDelegate.Instance.InvalidateEnclaveSession(this._activeConnection.Parser.EnclaveType, this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this.enclavePackage.EnclaveSession);
+                                    EnclaveDelegate.Instance.InvalidateEnclaveSession(this._activeConnection.AttestationProtocol, this._activeConnection.Parser.EnclaveType,
+                                        this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this.enclavePackage.EnclaveSession);
                                 }
 
                                 return RunExecuteReader(cmdBehavior, runBehavior, returnStream, method, null, TdsParserStaticMethods.GetRemainingTimeout(timeout, firstAttemptStart), out task, out usedCache, async, inRetry: true);
@@ -5120,13 +5128,19 @@ namespace Microsoft.Data.SqlClient
             if (string.IsNullOrWhiteSpace(enclaveType))
                 throw SQL.EnclaveTypeNullForEnclaveBasedQuery();
 
+            SqlConnectionAttestationProtocol attestationProtocol = this._activeConnection.AttestationProtocol;
+            if (attestationProtocol == SqlConnectionAttestationProtocol.NotSpecified)
+            {
+                throw SQL.AttestationProtocolNotSpecifiedForGeneratingEnclavePackage();
+            }
+
             try
             {
-                this.enclavePackage = EnclaveDelegate.Instance.GenerateEnclavePackage(keysToBeSentToEnclave,
+                this.enclavePackage = EnclaveDelegate.Instance.GenerateEnclavePackage(attestationProtocol, keysToBeSentToEnclave,
                     this.CommandText, enclaveType, this._activeConnection.DataSource,
                     this._activeConnection.EnclaveAttestationUrl);
             }
-            catch (EnclaveDelegate.RetriableEnclaveQueryExecutionException)
+            catch (EnclaveDelegate.RetryableEnclaveQueryExecutionException)
             {
                 throw;
             }
@@ -7523,5 +7537,3 @@ namespace Microsoft.Data.SqlClient
 #endif
     }
 }
-
-

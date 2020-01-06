@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient.SNI
     /// <summary>
     /// Named Pipe connection handle
     /// </summary>
-    internal class SNINpHandle : SNIHandle
+    internal sealed class SNINpHandle : SNIHandle
     {
         internal const string DefaultPipePath = @"sql\query"; // e.g. \\HOSTNAME\pipe\sql\query
         private const int MAX_PIPE_INSTANCES = 255;
@@ -28,6 +28,7 @@ namespace Microsoft.Data.SqlClient.SNI
         private Stream _stream;
         private NamedPipeClientStream _pipeStream;
         private SslOverTdsStream _sslOverTdsStream;
+
         private SslStream _sslStream;
         private SNIAsyncCallback _receiveCallback;
         private SNIAsyncCallback _sendCallback;
@@ -148,27 +149,34 @@ namespace Microsoft.Data.SqlClient.SNI
 
         public override uint Receive(out SNIPacket packet, int timeout)
         {
+            SNIPacket errorPacket;
             lock (this)
             {
                 packet = null;
                 try
                 {
-                    packet = new SNIPacket(_bufferSize);
+                    packet = new SNIPacket(headerSize: 0, dataSize: _bufferSize);
                     packet.ReadFromStream(_stream);
 
                     if (packet.Length == 0)
                     {
+                        errorPacket = packet;
+                        packet = null;
                         var e = new Win32Exception();
-                        return ReportErrorAndReleasePacket(packet, (uint)e.NativeErrorCode, 0, e.Message);
+                        return ReportErrorAndReleasePacket(errorPacket, (uint)e.NativeErrorCode, 0, e.Message);
                     }
                 }
                 catch (ObjectDisposedException ode)
                 {
-                    return ReportErrorAndReleasePacket(packet, ode);
+                    errorPacket = packet;
+                    packet = null;
+                    return ReportErrorAndReleasePacket(errorPacket, ode);
                 }
                 catch (IOException ioe)
                 {
-                    return ReportErrorAndReleasePacket(packet, ioe);
+                    errorPacket = packet;
+                    packet = null;
+                    return ReportErrorAndReleasePacket(errorPacket, ioe);
                 }
 
                 return TdsEnums.SNI_SUCCESS;
@@ -177,8 +185,9 @@ namespace Microsoft.Data.SqlClient.SNI
 
         public override uint ReceiveAsync(ref SNIPacket packet)
         {
-            packet = new SNIPacket(_bufferSize);
-
+            SNIPacket errorPacket;
+            packet = new SNIPacket(headerSize: 0, dataSize: _bufferSize);
+            
             try
             {
                 packet.ReadFromStreamAsync(_stream, _receiveCallback);
@@ -186,11 +195,15 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             catch (ObjectDisposedException ode)
             {
-                return ReportErrorAndReleasePacket(packet, ode);
+                errorPacket = packet;
+                packet = null;
+                return ReportErrorAndReleasePacket(errorPacket, ode);
             }
             catch (IOException ioe)
             {
-                return ReportErrorAndReleasePacket(packet, ioe);
+                errorPacket = packet;
+                packet = null;
+                return ReportErrorAndReleasePacket(errorPacket, ioe);
             }
         }
 

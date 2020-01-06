@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -20,13 +21,36 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Create a new enclave session
         /// </summary>
+        /// <param name="attestationProtocol">attestation protocol</param>
         /// <param name="enclaveType">enclave type</param>
         /// <param name="serverName">servername</param>
         /// <param name="attestationUrl">attestation url for attestation service endpoint</param>
         /// <param name="attestationInfo">attestation info from SQL Server</param>
         /// <param name="attestationParameters">attestation parameters</param>
-        internal void CreateEnclaveSession(string enclaveType, string serverName, string attestationUrl,
-            byte[] attestationInfo, SqlEnclaveAttestationParameters attestationParameters)
+        /// <param name="customData">A set of extra data needed for attestating the enclave.</param>
+        /// <param name="customDataLength">The length of the extra data needed for attestating the enclave.</param>
+        internal void CreateEnclaveSession(SqlConnectionAttestationProtocol attestationProtocol, string enclaveType, string serverName, string attestationUrl,
+            byte[] attestationInfo, SqlEnclaveAttestationParameters attestationParameters, byte[] customData, int customDataLength)
+        {
+            throw new PlatformNotSupportedException();
+        }
+
+        internal void GetEnclaveSession(SqlConnectionAttestationProtocol attestationProtocol, string enclaveType, string serverName, string enclaveAttestationUrl, bool generateCustomData, out SqlEnclaveSession sqlEnclaveSession, out byte[] customData, out int customDataLength)
+        {
+            throw new PlatformNotSupportedException();
+        }
+
+        internal EnclavePackage GenerateEnclavePackage(SqlConnectionAttestationProtocol attestationProtocol, Dictionary<int, SqlTceCipherInfoEntry> keysTobeSentToEnclave, string queryText, string enclaveType, string serverName, string enclaveAttestationUrl)
+        {
+            throw new PlatformNotSupportedException();
+        }
+
+        internal void InvalidateEnclaveSession(SqlConnectionAttestationProtocol attestationProtocol, string enclaveType, string serverName, string EnclaveAttestationUrl, SqlEnclaveSession enclaveSession)
+        {
+            throw new PlatformNotSupportedException();
+        }
+
+        internal SqlEnclaveAttestationParameters GetAttestationParameters(SqlConnectionAttestationProtocol attestationProtocol, string enclaveType, string attestationUrl, byte[] customData, int customDataLength)
         {
             throw new PlatformNotSupportedException();
         }

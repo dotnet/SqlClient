@@ -1,0 +1,16 @@
+{
+    "TCPConnectionString": "Data Source=tcp:localhost;Database=Northwind;Integrated Security=true;",
+    "NPConnectionString": "Data Source=np:localhost;Database=Northwind;Integrated Security=true;",
+    "TCPConnectionStringHGSVBS": "",
+    "TCPConnectionStringAASVBS": "",
+    "TCPConnectionStringAASSGX": "",
+    "EnclaveEnabled": false,
+    "AADAccessToken": "",
+    "AADPasswordConnectionString": "",
+    "AzureKeyVaultURL": "",
+    "AzureKeyVaultClientId": "",
+    "AzureKeyVaultClientSecret": "",
+    "SupportsIntegratedSecurity": true,
+    "SupportsLocalDb": false,
+    "SupportsFileStream": false
+}

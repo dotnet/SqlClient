@@ -288,11 +288,14 @@ namespace Microsoft.Data.SqlClient
         // TODO: I will make this internal to use Reflection.
 #if DEBUG
         internal static bool _setAlwaysTaskOnWrite = false; //when set and in DEBUG mode, TdsParser::WriteBulkCopyValue will always return a task 
-        internal static bool SetAlwaysTaskOnWrite {
-            set {
+        internal static bool SetAlwaysTaskOnWrite
+        {
+            set
+            {
                 _setAlwaysTaskOnWrite = value;
             }
-            get{
+            get
+            {
                 return _setAlwaysTaskOnWrite;
             }
         }
@@ -1072,7 +1075,8 @@ namespace Microsoft.Data.SqlClient
                                 isNull = (columnAsINullable != null) && columnAsINullable.IsNull;
                             }
 #if DEBUG
-                            else if (!isNull) {
+                            else if (!isNull)
+                            {
                                 Debug.Assert(!(value is INullable) || !((INullable)value).IsNull, "IsDBNull returned false, but GetValue returned a null INullable");
                             }
 #endif                            
@@ -1669,11 +1673,22 @@ namespace Microsoft.Data.SqlClient
                         mt = MetaType.GetMetaTypeFromSqlDbType(type.SqlDbType, false);
                         value = SqlParameter.CoerceValue(value, mt, out coercedToDataFeed, out typeChanged, false);
                         if (!coercedToDataFeed)
-                        { // We do not need to test for TextDataFeed as it is only assigned to (N)VARCHAR(MAX)
-                            int len = ((isSqlType) && (!typeChanged)) ? ((SqlString)value).Value.Length : ((string)value).Length;
-                            if (len > length / 2)
+                        {   // We do not need to test for TextDataFeed as it is only assigned to (N)VARCHAR(MAX)
+                            string str = ((isSqlType) && (!typeChanged)) ? ((SqlString)value).Value : ((string)value);
+                            int maxStringLength = length / 2;
+                            if (str.Length > maxStringLength)
                             {
-                                throw SQL.BulkLoadStringTooLong();
+                                if (metadata.isEncrypted)
+                                {
+                                    str = "<encrypted>";
+                                }
+                                else
+                                {
+                                    // We truncate to at most 100 characters to match SQL Servers behavior as described in
+                                    // https://blogs.msdn.microsoft.com/sql_server_team/string-or-binary-data-would-be-truncated-replacing-the-infamous-error-8152/
+                                    str = str.Remove(Math.Min(maxStringLength, 100));
+                                }
+                                throw SQL.BulkLoadStringTooLong(_destinationTableName, metadata.column, str);
                             }
                         }
                         break;
@@ -2140,7 +2155,8 @@ namespace Microsoft.Data.SqlClient
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
-                try {
+                try
+                {
                     tdsReliabilitySection.Start();
 #else   // !DEBUG
                 {
@@ -2177,7 +2193,8 @@ namespace Microsoft.Data.SqlClient
                 }
 
 #if DEBUG
-                finally {
+                finally
+                {
                     tdsReliabilitySection.Stop();
                 }
 #endif //DEBUG
@@ -2885,24 +2902,26 @@ namespace Microsoft.Data.SqlClient
 #if DEBUG
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
                 RuntimeHelpers.PrepareConstrainedRegions();
-                try {
+                try
+                {
                     tdsReliabilitySection.Start();
 #endif //DEBUG
-                if ((cleanupParser) && (_parser != null) && (_stateObj != null))
-                {
-                    _parser._asyncWrite = false;
-                    Task task = _parser.WriteBulkCopyDone(_stateObj);
-                    Debug.Assert(task == null, "Write should not pend when error occurs");
-                    RunParser();
-                }
+                    if ((cleanupParser) && (_parser != null) && (_stateObj != null))
+                    {
+                        _parser._asyncWrite = false;
+                        Task task = _parser.WriteBulkCopyDone(_stateObj);
+                        Debug.Assert(task == null, "Write should not pend when error occurs");
+                        RunParser();
+                    }
 
-                if (_stateObj != null)
-                {
-                    CleanUpStateObjectOnError();
-                }
+                    if (_stateObj != null)
+                    {
+                        CleanUpStateObject();
+                    }
 #if DEBUG
                 }
-                finally {
+                finally
+                {
                     tdsReliabilitySection.Stop();
                 }
 #endif //DEBUG
@@ -2928,7 +2947,7 @@ namespace Microsoft.Data.SqlClient
 
         //Cleans the stateobj. Used in a number of places, specially in  exceptions
         //
-        private void CleanUpStateObjectOnError()
+        private void CleanUpStateObject(bool isCancelRequested = true)
         {
             if (_stateObj != null)
             {
@@ -2938,7 +2957,7 @@ namespace Microsoft.Data.SqlClient
                     _stateObj.ResetBuffer();
                     _stateObj.ResetPacketCounters();
                     //If _parser is closed, sending attention will raise debug assertion, so we avoid it but not calling CancelRequest;
-                    if (_parser.State == TdsParserState.OpenNotLoggedIn || _parser.State == TdsParserState.OpenLoggedIn)
+                    if (isCancelRequested && (_parser.State == TdsParserState.OpenNotLoggedIn || _parser.State == TdsParserState.OpenLoggedIn))
                     {
                         _stateObj.CancelRequest();
                     }
@@ -3000,13 +3019,12 @@ namespace Microsoft.Data.SqlClient
                             _localColumnMappings = null;
                             try
                             {
-                                CleanUpStateObjectOnError();
+                                CleanUpStateObject();
                             }
                             finally
                             {
                                 source.SetCanceled();
                             }
-
                         }
                         else if (task.Exception != null)
                         {
@@ -3017,7 +3035,7 @@ namespace Microsoft.Data.SqlClient
                             _localColumnMappings = null;
                             try
                             {
-                                CleanUpStateObjectOnError();
+                                CleanUpStateObject(isCancelRequested: false);
                             }
                             finally
                             {
@@ -3043,11 +3061,11 @@ namespace Microsoft.Data.SqlClient
 
                     try
                     {
-                        CleanUpStateObjectOnError();
+                        CleanUpStateObject(isCancelRequested: false);
                     }
                     catch (Exception cleanupEx)
                     {
-                        Debug.Fail("Unexpected exception during CleanUpstateObjectOnError (ignored)", cleanupEx.ToString());
+                        Debug.Fail($"Unexpected exception during {nameof(CleanUpStateObject)} (ignored)", cleanupEx.ToString());
                     }
 
                     if (source != null)
@@ -3062,11 +3080,11 @@ namespace Microsoft.Data.SqlClient
 
                 try
                 {
-                    CleanUpStateObjectOnError();
+                    CleanUpStateObject();
                 }
                 catch (Exception cleanupEx)
                 {
-                    Debug.Fail("Unexpected exception during CleanUpstateObjectOnError (ignored)", cleanupEx.ToString());
+                    Debug.Fail($"Unexpected exception during {nameof(CleanUpStateObject)} (ignored)", cleanupEx.ToString());
                 }
 
                 if (source != null)

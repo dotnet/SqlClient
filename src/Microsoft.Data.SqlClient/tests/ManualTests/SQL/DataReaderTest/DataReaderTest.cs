@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [CheckConnStrSetupFact]
         public static void LoadReaderIntoDataTableToTestGetSchemaTable()
         {
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 connection.Open();
                 var dt = new DataTable();
@@ -36,8 +36,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [CheckConnStrSetupFact]
         public static void MultiQuerySchema()
         {
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr);
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TcpConnStr))
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
+            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 connection.Open();
 
@@ -102,7 +102,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string createStatementFormat = createBuilder.ToString();
 
             // add a row with nulls only
-            using (SqlConnection con = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection con = new SqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand cmd = con.CreateCommand())
             {
                 try

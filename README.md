@@ -4,9 +4,9 @@
 
 # Microsoft SqlClient Data Provider for SQL Server
 
-Welcome to the home of Microsoft ADO.NET driver for SQL Server aka the Microsoft.Data.SqlClient GitHub repository.
+Welcome to the home of the Microsoft ADO.NET driver for SQL Server aka the Microsoft.Data.SqlClient GitHub repository.
 
-Microsoft.Data.SqlClient is a data provider for Microsoft Sql Server. Now in General Availability, it is a union of the two System.Data.SqlClient components which live independently in .NET Framework and .NET Core. Going forward, support for new SQL Server features will be implemented in Microsoft.Data.SqlClient.
+Microsoft.Data.SqlClient is a data provider for Microsoft SQL Server and Azure SQL Database. Now in General Availability, it is a union of the two System.Data.SqlClient components which live independently in .NET Framework and .NET Core. Going forward, support for new SQL Server features will be implemented in Microsoft.Data.SqlClient.
 
 ## Supportability
 
@@ -24,9 +24,13 @@ The Microsoft.Data.SqlClient NuGet package is available on [NuGet.org](https://w
 
 ## SNI Package References
 
-For the .NET Framework driver on Windows, a package reference to [Microsoft.Data.SqlClient.SNI](https://www.nuget.org/packages/Microsoft.Data.SqlClient.SNI/) loads `x64` and `x86` platform specific `SNI.dll` libraries into the client's build directories.
+For the .NET Framework driver on Windows, a package reference to [Microsoft.Data.SqlClient.SNI](https://www.nuget.org/packages/Microsoft.Data.SqlClient.SNI/) loads `x64` and `x86` native `SNI.dll` libraries into the client's build directories.
 
-For the .NET Core driver on Windows, a package reference to [runtime.native.System.Data.SqlClient.sni](https://www.nuget.org/packages/runtime.native.System.Data.SqlClient.sni/) loads `arm64`, `x64` and `x86` platform specific `SNI.dll` libraries into the client's build directories.
+For the .NET Core driver on Windows, a package reference to [runtime.native.System.Data.SqlClient.sni](https://www.nuget.org/packages/runtime.native.System.Data.SqlClient.sni/) loads `arm64`, `x64` and `x86` native `SNI.dll` libraries into the client's build directories.
+
+**Note**
+When referencing the native `SNI.dll` on Windows, the Microsoft Visual C++ Redistributable is required to be installed: [The latest supported Visual C++ downloads](https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads)
+
 
 ## Helpful Links
 
@@ -36,13 +40,34 @@ For the .NET Core driver on Windows, a package reference to [runtime.native.Syst
 | Guidelines for building the driver | [BUILDGUIDE.md](BUILDGUIDE.md) |
 | Guidelines for Contributors | [CONTRIBUTING.md](CONTRIBUTING.md) |
 | Changelog for all driver releases | [CHANGELOG.md](CHANGELOG.md) |
+| Support Policy | [SUPPORT.md](SUPPORT.md) |
 | Code of Conduct | [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) |
 | Copyright Information | [COPYRIGHT.md](COPYRIGHT.md) |
 | | |
 
+## Our Featured Contributors
+
+Special thanks to everyone who has contributed to the project.
+We thank you for your continuous support in improving the SqlClient library!
+
+- Wraith ([@Wraith2](https://github.com/Wraith2))
+- Erik Ejlskov Jensen ([@ErikEJ](https://github.com/ErikEJ))
+- Stefán Jökull Sigurðarson ([@stebet](https://github.com/stebet))
+- Stephen Toub ([@stephentoub](https://github.com/stephentoub))
+- Shay Rojansky ([@roji](https://github.com/roji))
+- Rasmus Melchior Jacobsen ([@rmja](https://github.com/rmja))
+- Phillip Haydon ([@phillip-haydon](https://github.com/phillip-haydon))
+- Robin Sue ([@Suchiman](https://github.com/Suchiman))
+
+Up-to-date list of contributors: [Contributor Insights](https://github.com/dotnet/SqlClient/graphs/contributors)
+
 ## Release Notes
 
 All preview and stable driver release notes are available under [release-notes](release-notes).
+
+## Porting from System.Data.SqlClient
+
+Refer to [porting-cheat-sheet.md](porting-cheat-sheet.md) for a safe porting experience from System.Data.SqlClient to Microsoft.Data.SqlClient and share your experience with us by advancing this guide for future developers.
 
 ## Still have questions?
 

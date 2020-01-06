@@ -11,8 +11,9 @@ The Microsoft.Data.SqlClient roadmap communicates project priorities for evolvin
 
 | Milestone                 | Release Date | Project Board |
 |---------------------------|--------------|---------------|
-| Microsoft.Data.SqlClient 1.0 (servicing) | As needed (see also [releases](https://github.com/dotnet/sqlclient/blob/master/release-notes/1.0)) | [SqlClient 1.0.0](https://github.com/dotnet/SqlClient/projects/3)|
-| Microsoft.Data.SqlClient 1.1 | GA (General Availability) scheduled for November 2019 | [SqlClient 1.1.0](https://github.com/dotnet/SqlClient/projects/4)|
+| Microsoft.Data.SqlClient v1.0 (servicing) | As needed (see also [1.0 releases](https://github.com/dotnet/sqlclient/blob/master/release-notes/1.0)) | Closed |
+| Microsoft.Data.SqlClient v1.1 (servicing) | As needed (see also [1.1 releases](https://github.com/dotnet/sqlclient/blob/master/release-notes/1.1)) | Closed |
+| Microsoft.Data.SqlClient v2.0 | GA (General Availability) estimated for May 2020 | [SqlClient 2.0.0](https://github.com/dotnet/SqlClient/projects/5) |
 
 > Note: Dates are calendar year (as opposed to fiscal year).
 

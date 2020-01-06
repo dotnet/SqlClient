@@ -9,7 +9,7 @@
 ## Examples  
 The following example shows an aggregate function that returns a list of files in the specified directory path.  
 
-[!code-csharp[SqlFunctionAttribute Sample#1](~/sqlclient/doc/samples/SqlFunctionAttribute.cs#1)]
+[!code-csharp[SqlFunctionAttribute Sample#1](~/../sqlclient/doc/samples/SqlFunctionAttribute.cs#1)]
 
 ]]></format>
             </remarks>
@@ -87,7 +87,7 @@ This attribute is used only by Microsoft Visual Studio to automatically register
 Thee following example specifies that the user-defined function is referenced using the name `sp_scalarFunc`.  
 
 ## Examples  
-[!code-csharp[SqlFunction#10](~/sqlclient/doc/samples/SqlFunction.cs#10)]
+[!code-csharp[SqlFunction#10](~/../sqlclient/doc/samples/SqlFunction.cs#10)]
 ]]></format>
             </remarks>
         </Name>
@@ -116,7 +116,7 @@ This attribute is used only by Microsoft Visual Studio to automatically register
 The following example specifies that the user-defined function is referenced using the name `sp_tableFunc`. The `TableDefinition` property has the value `letter nchar(1)`.  
 
 ## Examples  
-[!code-csharp[SqlFunction#11](~/sqlclient/doc/samples/SqlFunction.cs#11)]
+[!code-csharp[SqlFunction#11](~/../sqlclient/doc/samples/SqlFunction.cs#11)]
 
 ]]></format>
             </remarks>

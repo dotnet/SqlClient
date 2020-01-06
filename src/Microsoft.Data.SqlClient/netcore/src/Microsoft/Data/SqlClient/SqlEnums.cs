@@ -278,6 +278,7 @@ namespace Microsoft.Data.SqlClient
                 case DbType.Currency:
                     return s_metaMoney;
                 case DbType.Date:
+                    return s_metaDate;
                 case DbType.DateTime:
                     return s_metaDateTime;
                 case DbType.Decimal:
@@ -301,7 +302,7 @@ namespace Microsoft.Data.SqlClient
                 case DbType.StringFixedLength:
                     return s_metaNChar;
                 case DbType.Time:
-                    return s_metaDateTime;
+                    return MetaTime;
                 case DbType.Xml:
                     return MetaXml;
                 case DbType.DateTime2:

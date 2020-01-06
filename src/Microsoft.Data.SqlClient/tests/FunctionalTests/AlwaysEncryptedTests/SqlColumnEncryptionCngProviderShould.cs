@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         {
             var provider = new SqlColumnEncryptionCngProvider();
             Exception ex = Assert.Throws(exceptionType, () => provider.DecryptColumnEncryptionKey(masterKeyPath, encryptionAlgorithm, bytes));
-            Assert.Equal(errorMsg, ex.Message);
+            Assert.Matches(errorMsg, ex.Message);
         }
 
         [Theory]
@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         {
             var provider = new SqlColumnEncryptionCngProvider();
             Exception ex = Assert.Throws(exceptionType, () => provider.EncryptColumnEncryptionKey(masterKeyPath, encryptionAlgorithm, bytes));
-            Assert.Equal(errorMsg, ex.Message);
+            Assert.Matches(errorMsg, ex.Message);
         }
 
         [Fact]
@@ -84,21 +84,21 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
         public class InvalidDecryptionParameters : DataAttribute
         {
-            private const string TCE_NullCngPath = "Internal error. Column master key path cannot be null. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: <CNG Provider Name>/<Key Identifier>.\r\nParameter name: masterKeyPath";
-            private const string TCE_EmptyCngPath = "Internal error. Invalid column master key path: ''. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: <CNG Provider Name>/<Key Identifier>.\r\nParameter name: masterKeyPath";
-            private const string TCE_NullEncryptedColumnEncryptionKey = "Internal error. Encrypted column encryption key cannot be null.\r\nParameter name: encryptedColumnEncryptionKey";
-            private const string TCE_EmptyEncryptedColumnEncryptionKey = "Internal error. Empty encrypted column encryption key specified.\r\nParameter name: encryptedColumnEncryptionKey";
-            private const string TCE_NullKeyEncryptionAlgorithm = "Internal error. Key encryption algorithm cannot be null.\r\nParameter name: encryptionAlgorithm";
-            private const string TCE_InvalidKeyEncryptionAlgorithm = "Internal error. Invalid key encryption algorithm specified: ''. Expected value: 'RSA_OAEP'.\r\nParameter name: encryptionAlgorithm";
-            private const string TCE_InvalidCngPath = "Internal error. Invalid column master key path: 'KeyName'. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: <CNG Provider Name>/<Key Identifier>.\r\nParameter name: masterKeyPath";
-            private const string TCE_EmptyCngName = "Internal error. Empty Microsoft Cryptography API: Next Generation (CNG) provider name specified in column master key path: '/KeyName'. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: <CNG Provider Name>/<Key Identifier>.\r\nParameter name: masterKeyPath";
-            private const string TCE_EmptyCngKeyId = "Internal error. Empty key identifier specified in column master key path: 'MSSQL_CNG_STORE/'. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: <CNG Provider Name>/<Key Identifier>.\r\nParameter name: masterKeyPath";
-            private const string TCE_InvalidCngKey = "Internal error. An error occurred while opening the Microsoft Cryptography API: Next Generation (CNG) key: 'MSSQL_CNG_STORE/KeyName'. Verify that the CNG provider name 'MSSQL_CNG_STORE' is valid, installed on the machine, and the key 'KeyName' exists.\r\nParameter name: masterKeyPath";
-            private const string TCE_InvalidAlgorithmVersion = "Specified encrypted column encryption key contains an invalid encryption algorithm version '02'. Expected version is '01'.\r\nParameter name: encryptedColumnEncryptionKey";
-            private const string TCE_InvalidCiphertextLengthInEncryptedCEK = "The specified encrypted column encryption key's ciphertext length: 128 does not match the ciphertext length: 256 when using column master key (asymmetric key) in 'Microsoft Software Key Storage Provider/KeyName'. The encrypted column encryption key may be corrupt, or the specified Microsoft Cryptography API: Next Generation (CNG) provider path may be incorrect.\r\nParameter name: encryptedColumnEncryptionKey";
-            private const string TCE_InvalidSignatureInEncryptedCEK = "The specified encrypted column encryption key's signature length: 128 does not match the signature length: 256 when using column master key (asymmetric key) in 'Microsoft Software Key Storage Provider/KeyName'. The encrypted column encryption key may be corrupt, or the specified Microsoft Cryptography API: Next Generation (CNG) provider path may be incorrect.\r\nParameter name: encryptedColumnEncryptionKey";
-            private const string TCE_InvalidSignature = "The specified encrypted column encryption key signature does not match the signature computed with the column master key (asymmetric key) in 'Microsoft Software Key Storage Provider/KeyName'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.\r\nParameter name: encryptedColumnEncryptionKey";
-            private const string TCE_InvalidCngKeyId = "Internal error. An error occurred while opening the Microsoft Cryptography API: Next Generation (CNG) key: 'Microsoft Software Key Storage Provider/ASKLSAVASLDJAS'. Verify that the CNG provider name 'Microsoft Software Key Storage Provider' is valid, installed on the machine, and the key 'ASKLSAVASLDJAS' exists.\r\nParameter name: masterKeyPath";
+            private const string TCE_NullCngPath = @"Internal error. Column master key path cannot be null. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation \(CNG\) provider: <CNG Provider Name>\/<Key Identifier>.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_EmptyCngPath = @"Internal error. Invalid column master key path: ''. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation \(CNG\) provider: <CNG Provider Name>\/<Key Identifier>.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_NullEncryptedColumnEncryptionKey = @"Internal error. Encrypted column encryption key cannot be null.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
+            private const string TCE_EmptyEncryptedColumnEncryptionKey = @"Internal error. Empty encrypted column encryption key specified.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
+            private const string TCE_NullKeyEncryptionAlgorithm = @"Internal error. Key encryption algorithm cannot be null.\s+\(?Parameter (name: )?'?encryptionAlgorithm('\))?";
+            private const string TCE_InvalidKeyEncryptionAlgorithm = @"Internal error. Invalid key encryption algorithm specified: ''. Expected value: 'RSA_OAEP'.\s+\(?Parameter (name: )?'?encryptionAlgorithm('\))?";
+            private const string TCE_InvalidCngPath = @"Internal error. Invalid column master key path: 'KeyName'. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation \(CNG\) provider: <CNG Provider Name>\/<Key Identifier>.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_EmptyCngName = @"Internal error. Empty Microsoft Cryptography API: Next Generation \(CNG\) provider name specified in column master key path: '/KeyName'. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation \(CNG\) provider: <CNG Provider Name>\/<Key Identifier>.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_EmptyCngKeyId = @"Internal error. Empty key identifier specified in column master key path: 'MSSQL_CNG_STORE/'. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation \(CNG\) provider: <CNG Provider Name>\/<Key Identifier>.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_InvalidCngKey = @"Internal error. An error occurred while opening the Microsoft Cryptography API: Next Generation \(CNG\) key: 'MSSQL_CNG_STORE/KeyName'. Verify that the CNG provider name 'MSSQL_CNG_STORE' is valid, installed on the machine, and the key 'KeyName' exists.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_InvalidAlgorithmVersion = @"Specified encrypted column encryption key contains an invalid encryption algorithm version '02'. Expected version is '01'.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
+            private const string TCE_InvalidCiphertextLengthInEncryptedCEK = @"The specified encrypted column encryption key's ciphertext length: 128 does not match the ciphertext length: 256 when using column master key \(asymmetric key\) in 'Microsoft Software Key Storage Provider/KeyName'. The encrypted column encryption key may be corrupt, or the specified Microsoft Cryptography API: Next Generation \(CNG\) provider path may be incorrect.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
+            private const string TCE_InvalidSignatureInEncryptedCEK = @"The specified encrypted column encryption key's signature length: 128 does not match the signature length: 256 when using column master key \(asymmetric key\) in 'Microsoft Software Key Storage Provider/KeyName'. The encrypted column encryption key may be corrupt, or the specified Microsoft Cryptography API: Next Generation \(CNG\) provider path may be incorrect.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
+            private const string TCE_InvalidSignature = @"The specified encrypted column encryption key signature does not match the signature computed with the column master key \(asymmetric key\) in 'Microsoft Software Key Storage Provider/KeyName'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
+            private const string TCE_InvalidCngKeyId = @"Internal error. An error occurred while opening the Microsoft Cryptography API: Next Generation \(CNG\) key: 'Microsoft Software Key Storage Provider/ASKLSAVASLDJAS'. Verify that the CNG provider name 'Microsoft Software Key Storage Provider' is valid, installed on the machine, and the key 'ASKLSAVASLDJAS' exists.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
 
             public override IEnumerable<Object[]> GetData(MethodInfo testMethod)
             {
@@ -122,17 +122,17 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
         public class InvalidEncryptionParameters : DataAttribute
         {
-            private const string TCE_NullCertificatePath = "Column master key path cannot be null. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: <CNG Provider Name>/<Key Identifier>.\r\nParameter name: masterKeyPath";
-            private const string TCE_EmptyCertificatePath = "Invalid column master key path: ''. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: <CNG Provider Name>/<Key Identifier>.\r\nParameter name: masterKeyPath";
-            private const string TCE_NullEncryptedColumnEncryptionKey = "Column encryption key cannot be null.\r\nParameter name: columnEncryptionKey";
-            private const string TCE_EmptyEncryptedColumnEncryptionKey = "Empty column encryption key specified.\r\nParameter name: columnEncryptionKey";
-            private const string TCE_NullKeyEncryptionAlgorithm = "Key encryption algorithm cannot be null.\r\nParameter name: encryptionAlgorithm";
-            private const string TCE_InvalidKeyEncryptionAlgorithm = "Invalid key encryption algorithm specified: ''. Expected value: 'RSA_OAEP'.\r\nParameter name: encryptionAlgorithm";
-            private const string TCE_InvalidCngPath = "Invalid column master key path: 'KeyName'. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: <CNG Provider Name>/<Key Identifier>.\r\nParameter name: masterKeyPath";
-            private const string TCE_EmptyCngName = "Empty Microsoft Cryptography API: Next Generation (CNG) provider name specified in column master key path: '/KeyName'. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: <CNG Provider Name>/<Key Identifier>.\r\nParameter name: masterKeyPath";
-            private const string TCE_EmptyCngKeyId = "Empty key identifier specified in column master key path: 'MSSQL_CNG_STORE/'. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: <CNG Provider Name>/<Key Identifier>.\r\nParameter name: masterKeyPath";
-            private const string TCE_InvalidCngKey = "An error occurred while opening the Microsoft Cryptography API: Next Generation (CNG) key: 'MSSQL_CNG_STORE/KeyName'. Verify that the CNG provider name 'MSSQL_CNG_STORE' is valid, installed on the machine, and the key 'KeyName' exists.\r\nParameter name: masterKeyPath";
-            private const string TCE_InvalidCngKeyId = "An error occurred while opening the Microsoft Cryptography API: Next Generation (CNG) key: 'Microsoft Software Key Storage Provider/ASKLSAVASLDJAS'. Verify that the CNG provider name 'Microsoft Software Key Storage Provider' is valid, installed on the machine, and the key 'ASKLSAVASLDJAS' exists.\r\nParameter name: masterKeyPath";
+            private const string TCE_NullCertificatePath = @"Column master key path cannot be null. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation \(CNG\) provider: <CNG Provider Name>\/<Key Identifier>.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_EmptyCertificatePath = @"Invalid column master key path: ''. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation \(CNG\) provider: <CNG Provider Name>\/<Key Identifier>.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_NullEncryptedColumnEncryptionKey = @"Column encryption key cannot be null.\s+\(?Parameter (name: )?'?columnEncryptionKey('\))?";
+            private const string TCE_EmptyEncryptedColumnEncryptionKey = @"Empty column encryption key specified.\s+\(?Parameter (name: )?'?columnEncryptionKey('\))?";
+            private const string TCE_NullKeyEncryptionAlgorithm = @"Key encryption algorithm cannot be null.\s+\(?Parameter (name: )?'?encryptionAlgorithm('\))?";
+            private const string TCE_InvalidKeyEncryptionAlgorithm = @"Invalid key encryption algorithm specified: ''. Expected value: 'RSA_OAEP'.\s+\(?Parameter (name: )?'?encryptionAlgorithm('\))?";
+            private const string TCE_InvalidCngPath = @"Invalid column master key path: 'KeyName'. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation \(CNG\) provider: <CNG Provider Name>\/<Key Identifier>.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_EmptyCngName = @"Empty Microsoft Cryptography API: Next Generation \(CNG\) provider name specified in column master key path: '/KeyName'. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation \(CNG\) provider: <CNG Provider Name>\/<Key Identifier>.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_EmptyCngKeyId = @"Empty key identifier specified in column master key path: 'MSSQL_CNG_STORE/'. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation \(CNG\) provider: <CNG Provider Name>\/<Key Identifier>.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_InvalidCngKey = @"An error occurred while opening the Microsoft Cryptography API: Next Generation \(CNG\) key: 'MSSQL_CNG_STORE/KeyName'. Verify that the CNG provider name 'MSSQL_CNG_STORE' is valid, installed on the machine, and the key 'KeyName' exists.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_InvalidCngKeyId = @"An error occurred while opening the Microsoft Cryptography API: Next Generation \(CNG\) key: 'Microsoft Software Key Storage Provider/ASKLSAVASLDJAS'. Verify that the CNG provider name 'Microsoft Software Key Storage Provider' is valid, installed on the machine, and the key 'ASKLSAVASLDJAS' exists.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
             public override IEnumerable<Object[]> GetData(MethodInfo testMethod)
             {
                 yield return new Object[] { TCE_NullCertificatePath, typeof(ArgumentNullException), null, ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
@@ -176,7 +176,8 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
         public void Dispose()
         {
-            RemoveKeyFromCng(providerName, containerName);
+            // Do Not remove Key for concurrency.
+            // RemoveKeyFromCng(providerName, containerName);
         }
 
         public static void AddKeyToCng(string providerName, string containerName)
@@ -184,12 +185,16 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             CngKeyCreationParameters keyParams = new CngKeyCreationParameters();
 
             keyParams.Provider = new CngProvider(providerName);
-            keyParams.KeyCreationOptions = CngKeyCreationOptions.OverwriteExistingKey;
+            keyParams.KeyCreationOptions = CngKeyCreationOptions.None;
 
             CngProperty keySizeProperty = new CngProperty("Length", BitConverter.GetBytes(2048), CngPropertyOptions.None);
             keyParams.Parameters.Add(keySizeProperty);
 
-            CngKey mycngKey = CngKey.Create(CngAlgorithm.Rsa, containerName, keyParams);
+            // Add Cng Key only if not exists.
+            if (!CngKey.Exists(containerName))
+            {
+                CngKey mycngKey = CngKey.Create(CngAlgorithm.Rsa, containerName, keyParams);
+            }
         }
 
         public static void RemoveKeyFromCng(string providerName, string containerName)

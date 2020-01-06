@@ -1518,10 +1518,21 @@ namespace Microsoft.Data.SqlClient
                         value = SqlParameter.CoerceValue(value, mt, out coercedToDataFeed, out typeChanged, false);
                         if (!coercedToDataFeed)
                         {   // We do not need to test for TextDataFeed as it is only assigned to (N)VARCHAR(MAX)
-                            int len = ((isSqlType) && (!typeChanged)) ? ((SqlString)value).Value.Length : ((string)value).Length;
-                            if (len > length / 2)
+                            string str = ((isSqlType) && (!typeChanged)) ? ((SqlString)value).Value : ((string)value);
+                            int maxStringLength = length / 2;
+                            if (str.Length > maxStringLength)
                             {
-                                throw SQL.BulkLoadStringTooLong();
+                                if (metadata.isEncrypted)
+                                {
+                                    str = "<encrypted>";
+                                }
+                                else
+                                {
+                                    // We truncate to at most 100 characters to match SQL Servers behavior as described in
+                                    // https://blogs.msdn.microsoft.com/sql_server_team/string-or-binary-data-would-be-truncated-replacing-the-infamous-error-8152/
+                                    str = str.Remove(Math.Min(maxStringLength, 100));
+                                }
+                                throw SQL.BulkLoadStringTooLong(_destinationTableName, metadata.column, str);
                             }
                         }
                         break;
@@ -2638,7 +2649,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (_stateObj != null)
                 {
-                    CleanUpStateObjectOnError();
+                    CleanUpStateObject();
                 }
             }
             catch (OutOfMemoryException)
@@ -2661,7 +2672,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Cleans the stateobj. Used in a number of places, specially in  exceptions.
-        private void CleanUpStateObjectOnError()
+        private void CleanUpStateObject(bool isCancelRequested = true)
         {
             if (_stateObj != null)
             {
@@ -2671,7 +2682,7 @@ namespace Microsoft.Data.SqlClient
                     _stateObj.ResetBuffer();
                     _stateObj.ResetPacketCounters();
                     // If _parser is closed, sending attention will raise debug assertion, so we avoid it (but not calling CancelRequest).
-                    if (_parser.State == TdsParserState.OpenNotLoggedIn || _parser.State == TdsParserState.OpenLoggedIn)
+                    if (isCancelRequested && (_parser.State == TdsParserState.OpenNotLoggedIn || _parser.State == TdsParserState.OpenLoggedIn))
                     {
                         _stateObj.CancelRequest();
                     }
@@ -2732,7 +2743,7 @@ namespace Microsoft.Data.SqlClient
                                 _localColumnMappings = null;
                                 try
                                 {
-                                    CleanUpStateObjectOnError();
+                                    CleanUpStateObject();
                                 }
                                 finally
                                 {
@@ -2748,7 +2759,7 @@ namespace Microsoft.Data.SqlClient
                                 _localColumnMappings = null;
                                 try
                                 {
-                                    CleanUpStateObjectOnError();
+                                    CleanUpStateObject(isCancelRequested: false);
                                 }
                                 finally
                                 {
@@ -2775,11 +2786,11 @@ namespace Microsoft.Data.SqlClient
 
                     try
                     {
-                        CleanUpStateObjectOnError();
+                        CleanUpStateObject(isCancelRequested: false);
                     }
                     catch (Exception cleanupEx)
                     {
-                        Debug.Fail("Unexpected exception during CleanUpstateObjectOnError (ignored)", cleanupEx.ToString());
+                        Debug.Fail($"Unexpected exception during {nameof(CleanUpStateObject)} (ignored)", cleanupEx.ToString());
                     }
 
                     if (source != null)
@@ -2794,11 +2805,11 @@ namespace Microsoft.Data.SqlClient
 
                 try
                 {
-                    CleanUpStateObjectOnError();
+                    CleanUpStateObject();
                 }
                 catch (Exception cleanupEx)
                 {
-                    Debug.Fail("Unexpected exception during CleanUpstateObjectOnError (ignored)", cleanupEx.ToString());
+                    Debug.Fail($"Unexpected exception during {nameof(CleanUpStateObject)} (ignored)", cleanupEx.ToString());
                 }
 
                 if (source != null)

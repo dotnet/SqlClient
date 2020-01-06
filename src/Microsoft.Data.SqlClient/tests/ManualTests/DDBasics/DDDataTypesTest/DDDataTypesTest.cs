@@ -21,7 +21,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string insertParamStr = "INSERT " + tempTable + " VALUES(@x)";
             string queryStr = "select * from " + tempTable;
 
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 conn.Open();
 
@@ -86,7 +86,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string insertParamStr = "INSERT " + tempTable + " VALUES(@x, @y, @z)";
             string queryStr = "select * from " + tempTable;
 
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 conn.Open();
 

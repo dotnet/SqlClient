@@ -55,6 +55,7 @@ namespace Microsoft.Data.SqlClient
             internal static readonly SqlAuthenticationMethod Authentication = SqlAuthenticationMethod.NotSpecified;
             internal static readonly SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Disabled;
             internal const string EnclaveAttestationUrl = "";
+            internal static readonly SqlConnectionAttestationProtocol AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified;
 #if ADONET_CERT_AUTH
             internal const  string Certificate            = "";
 #endif
@@ -71,6 +72,7 @@ namespace Microsoft.Data.SqlClient
             internal const string PoolBlockingPeriod = "poolblockingperiod";
             internal const string ColumnEncryptionSetting = "column encryption setting";
             internal const string EnclaveAttestationUrl = "enclave attestation url";
+            internal const string AttestationProtocol = "attestation protocol";
             internal const string Connect_Timeout = "connect timeout";
             internal const string Connection_Reset = "connection reset";
             internal const string Context_Connection = "context connection";
@@ -215,6 +217,7 @@ namespace Microsoft.Data.SqlClient
         private readonly SqlAuthenticationMethod _authType;
         private readonly SqlConnectionColumnEncryptionSetting _columnEncryptionSetting;
         private readonly string _enclaveAttestationUrl;
+        private readonly SqlConnectionAttestationProtocol _attestationProtocol;
 
         private readonly int _connectTimeout;
         private readonly int _loadBalanceTimeout;
@@ -298,6 +301,7 @@ namespace Microsoft.Data.SqlClient
             _authType = ConvertValueToAuthenticationType();
             _columnEncryptionSetting = ConvertValueToColumnEncryptionSetting();
             _enclaveAttestationUrl = ConvertValueToString(KEY.EnclaveAttestationUrl, DEFAULT.EnclaveAttestationUrl);
+            _attestationProtocol = ConvertValueToAttestationProtocol();
 
 #if ADONET_CERT_AUTH            
             _certificate = ConvertValueToString(KEY.Certificate,         DEFAULT.Certificate);
@@ -605,6 +609,7 @@ namespace Microsoft.Data.SqlClient
             _authType = connectionOptions._authType;
             _columnEncryptionSetting = connectionOptions._columnEncryptionSetting;
             _enclaveAttestationUrl = connectionOptions._enclaveAttestationUrl;
+            _attestationProtocol = connectionOptions._attestationProtocol;
 #if ADONET_CERT_AUTH            
             _certificate              = connectionOptions._certificate;
 #endif
@@ -631,8 +636,8 @@ namespace Microsoft.Data.SqlClient
         internal bool TransparentNetworkIPResolution { get { return _transparentNetworkIPResolution; } }
         internal SqlAuthenticationMethod Authentication { get { return _authType; } }
         internal SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting { get { return _columnEncryptionSetting; } }
-
         internal string EnclaveAttestationUrl { get { return _enclaveAttestationUrl; } }
+        internal SqlConnectionAttestationProtocol AttestationProtocol { get { return _attestationProtocol; } }
 #if ADONET_CERT_AUTH        
         internal string Certificate { get { return _certificate; } }
         internal bool UsesCertificate { get { return _authType == SqlClient.SqlAuthenticationMethod.SqlCertificate; } }
@@ -764,6 +769,7 @@ namespace Microsoft.Data.SqlClient
                 hash.Add(KEY.Type_System_Version, KEY.Type_System_Version);
                 hash.Add(KEY.ColumnEncryptionSetting, KEY.ColumnEncryptionSetting);
                 hash.Add(KEY.EnclaveAttestationUrl, KEY.EnclaveAttestationUrl);
+                hash.Add(KEY.AttestationProtocol, KEY.AttestationProtocol);
                 hash.Add(KEY.User_ID, KEY.User_ID);
                 hash.Add(KEY.User_Instance, KEY.User_Instance);
                 hash.Add(KEY.Workstation_Id, KEY.Workstation_Id);
@@ -990,6 +996,30 @@ namespace Microsoft.Data.SqlClient
             catch (OverflowException e)
             {
                 throw ADP.InvalidConnectionOptionValue(KEY.ColumnEncryptionSetting, e);
+            }
+        }
+
+        internal SqlConnectionAttestationProtocol ConvertValueToAttestationProtocol()
+        {
+            object value = base.Parsetable[KEY.AttestationProtocol];
+
+            string valStr = value as string;
+            if (valStr == null)
+            {
+                return DEFAULT.AttestationProtocol;
+            }
+
+            try
+            {
+                return DbConnectionStringBuilderUtil.ConvertToAttestationProtocol(KEY.AttestationProtocol, valStr);
+            }
+            catch (FormatException e)
+            {
+                 throw ADP.InvalidConnectionOptionValue(KEY.AttestationProtocol, e);
+            }
+            catch (OverflowException e)
+            {
+                throw ADP.InvalidConnectionOptionValue(KEY.AttestationProtocol, e);
             }
         }
 

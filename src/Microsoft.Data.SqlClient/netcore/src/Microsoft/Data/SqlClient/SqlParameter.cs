@@ -330,11 +330,7 @@ namespace Microsoft.Data.SqlClient
             set
             {
                 MetaType metatype = _metaType;
-                if ((null == metatype) || (metatype.DbType != value) ||
-                        // Two special datetime cases for backward compat
-                        // DbType.Date and DbType.Time should always be treated as setting DbType.DateTime instead
-                        value == DbType.Date ||
-                        value == DbType.Time)
+                if ((null == metatype) || (metatype.DbType != value))
                 {
                     PropertyTypeChanging();
                     _metaType = MetaType.GetMetaTypeFromDbType(value);

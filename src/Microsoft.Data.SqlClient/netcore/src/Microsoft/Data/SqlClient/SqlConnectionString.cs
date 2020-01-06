@@ -5,6 +5,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Net;
+using System.Net.NetworkInformation;
 using System.Threading;
 using Microsoft.Data.Common;
 
@@ -48,6 +50,7 @@ namespace Microsoft.Data.SqlClient
             internal static readonly SqlAuthenticationMethod Authentication = SqlAuthenticationMethod.NotSpecified;
             internal const SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Disabled;
             internal const string EnclaveAttestationUrl = "";
+            internal static readonly SqlConnectionAttestationProtocol AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified;
         }
 
         // SqlConnection ConnectionString Options
@@ -63,6 +66,7 @@ namespace Microsoft.Data.SqlClient
 #endif
             internal const string ColumnEncryptionSetting = "column encryption setting";
             internal const string EnclaveAttestationUrl = "enclave attestation url";
+            internal const string AttestationProtocol = "attestation protocol";
             internal const string Connect_Timeout = "connect timeout";
             internal const string Connection_Reset = "connection reset";
             internal const string Context_Connection = "context connection";
@@ -186,6 +190,7 @@ namespace Microsoft.Data.SqlClient
         private readonly SqlAuthenticationMethod _authType;
         private readonly SqlConnectionColumnEncryptionSetting _columnEncryptionSetting;
         private readonly string _enclaveAttestationUrl;
+        private readonly SqlConnectionAttestationProtocol _attestationProtocol;
 
         private readonly int _connectTimeout;
         private readonly int _loadBalanceTimeout;
@@ -214,6 +219,8 @@ namespace Microsoft.Data.SqlClient
         private readonly Version _typeSystemAssemblyVersion;
         private static readonly Version constTypeSystemAsmVersion10 = new Version("10.0.0.0");
         private static readonly Version constTypeSystemAsmVersion11 = new Version("11.0.0.0");
+
+        private readonly string _expandedAttachDBFilename; // expanded during construction so that CreatePermissionSet & Expand are consistent
 
         internal SqlConnectionString(string connectionString) : base(connectionString, GetParseSynonyms())
         {
@@ -261,6 +268,7 @@ namespace Microsoft.Data.SqlClient
             _authType = ConvertValueToAuthenticationType();
             _columnEncryptionSetting = ConvertValueToColumnEncryptionSetting();
             _enclaveAttestationUrl = ConvertValueToString(KEY.EnclaveAttestationUrl, DEFAULT.EnclaveAttestationUrl);
+            _attestationProtocol = ConvertValueToAttestationProtocol();
 
             // Temporary string - this value is stored internally as an enum.
             string typeSystemVersionString = ConvertValueToString(KEY.Type_System_Version, null);
@@ -328,7 +336,24 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            if (0 <= _attachDBFileName.IndexOf('|'))
+            // expand during construction so that CreatePermissionSet and Expand are consistent
+            _expandedAttachDBFilename = ExpandDataDirectory(KEY.AttachDBFilename, _attachDBFileName);
+            if (null != _expandedAttachDBFilename)
+            {
+                if (0 <= _expandedAttachDBFilename.IndexOf('|'))
+                {
+                    throw ADP.InvalidConnectionOptionValue(KEY.AttachDBFilename);
+                }
+                ValidateValueLength(_expandedAttachDBFilename, TdsEnums.MAXLEN_ATTACHDBFILE, KEY.AttachDBFilename);
+                if (_localDBInstance == null)
+                {
+                    // fail fast to verify LocalHost when using |DataDirectory|
+                    // still must check again at connect time
+                    string host = _dataSource;
+                    VerifyLocalHostAndFixup(ref host, true, false /*don't fix-up*/);
+                }
+            }
+            else if (0 <= _attachDBFileName.IndexOf('|'))
             {
                 throw ADP.InvalidConnectionOptionValue(KEY.AttachDBFilename);
             }
@@ -336,7 +361,6 @@ namespace Microsoft.Data.SqlClient
             {
                 ValidateValueLength(_attachDBFileName, TdsEnums.MAXLEN_ATTACHDBFILE, KEY.AttachDBFilename);
             }
-
             _typeSystemAssemblyVersion = constTypeSystemAsmVersion10;
 
             if (true == _userInstance && !string.IsNullOrEmpty(_failoverPartner))
@@ -467,6 +491,7 @@ namespace Microsoft.Data.SqlClient
             _password = connectionOptions._password;
             _userID = connectionOptions._userID;
             _workstationId = connectionOptions._workstationId;
+            _expandedAttachDBFilename = connectionOptions._expandedAttachDBFilename;
             _typeSystemVersion = connectionOptions._typeSystemVersion;
             _transactionBinding = connectionOptions._transactionBinding;
             _applicationIntent = connectionOptions._applicationIntent;
@@ -475,6 +500,7 @@ namespace Microsoft.Data.SqlClient
             _authType = connectionOptions._authType;
             _columnEncryptionSetting = connectionOptions._columnEncryptionSetting;
             _enclaveAttestationUrl = connectionOptions._enclaveAttestationUrl;
+            _attestationProtocol = connectionOptions._attestationProtocol;
 
             ValidateValueLength(_dataSource, TdsEnums.MAXLEN_SERVERNAME, KEY.Data_Source);
         }
@@ -495,6 +521,7 @@ namespace Microsoft.Data.SqlClient
         internal SqlAuthenticationMethod Authentication { get { return _authType; } }
         internal SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting { get { return _columnEncryptionSetting; } }
         internal string EnclaveAttestationUrl { get { return _enclaveAttestationUrl; } }
+        internal SqlConnectionAttestationProtocol AttestationProtocol { get { return _attestationProtocol; } }
         internal bool PersistSecurityInfo { get { return _persistSecurityInfo; } }
         internal bool Pooling { get { return _pooling; } }
         internal bool Replication { get { return _replication; } }
@@ -524,6 +551,52 @@ namespace Microsoft.Data.SqlClient
         internal Version TypeSystemAssemblyVersion { get { return _typeSystemAssemblyVersion; } }
 
         internal TransactionBindingEnum TransactionBinding { get { return _transactionBinding; } }
+
+        internal bool EnforceLocalHost
+        {
+            get
+            {
+                // so tdsparser.connect can determine if SqlConnection.UserConnectionOptions
+                // needs to enfoce local host after datasource alias lookup
+                return (null != _expandedAttachDBFilename) && (null == _localDBInstance);
+            }
+        }
+
+        protected internal override string Expand()
+        {
+            if (null != _expandedAttachDBFilename)
+            {
+                return  ExpandAttachDbFileName(_expandedAttachDBFilename);
+            }
+            else
+            {
+                return base.Expand();
+            }
+        }
+
+        private static bool CompareHostName(ref string host, string name, bool fixup)
+        {
+            // same computer name or same computer name + "\named instance"
+            bool equal = false;
+
+            if (host.Equals(name, StringComparison.OrdinalIgnoreCase))
+            {
+                if (fixup)
+                {
+                    host = ".";
+                }
+                equal = true;
+            }
+            else if (host.StartsWith(name + @"\", StringComparison.OrdinalIgnoreCase))
+            {
+                if (fixup)
+                {
+                    host = "." + host.Substring(name.Length);
+                }
+                equal = true;
+            }
+            return equal;
+        }
 
         // This dictionary is meant to be read-only translation of parsed string
         // keywords/synonyms to a known keyword string.
@@ -568,6 +641,7 @@ namespace Microsoft.Data.SqlClient
                     { KEY.Type_System_Version, KEY.Type_System_Version },
                     { KEY.ColumnEncryptionSetting, KEY.ColumnEncryptionSetting },
                     { KEY.EnclaveAttestationUrl, KEY.EnclaveAttestationUrl },
+                    { KEY.AttestationProtocol, KEY.AttestationProtocol},
                     { KEY.User_ID, KEY.User_ID },
                     { KEY.User_Instance, KEY.User_Instance },
                     { KEY.Workstation_Id, KEY.Workstation_Id },
@@ -629,6 +703,49 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        internal static void VerifyLocalHostAndFixup(ref string host, bool enforceLocalHost, bool fixup)
+        {
+            if (string.IsNullOrEmpty(host))
+            {
+                if (fixup)
+                {
+                    host = ".";
+                }
+            }
+            else if (!CompareHostName(ref host, @".", fixup) &&
+                     !CompareHostName(ref host, @"(local)", fixup))
+            {
+                // Fix-up completed in CompareHostName if return value true.
+                string name = GetComputerNameDnsFullyQualified(); // i.e, machine.location.corp.company.com
+                if (!CompareHostName(ref host, name, fixup))
+                {
+                    int separatorPos = name.IndexOf('.'); // to compare just 'machine' part
+                    if ((separatorPos <= 0) || !CompareHostName(ref host, name.Substring(0, separatorPos), fixup))
+                    {
+                        if (enforceLocalHost)
+                        {
+                            throw ADP.InvalidConnectionOptionValue(KEY.AttachDBFilename);
+                        }
+                    }
+                }
+            }
+        }
+
+        private static string GetComputerNameDnsFullyQualified()
+        {
+            try
+            {
+                var domainName = "." + IPGlobalProperties.GetIPGlobalProperties().DomainName;
+                var hostName = Dns.GetHostName();
+                if (domainName != "." && !hostName.EndsWith(domainName))
+                    hostName += domainName;
+                return hostName;
+            }
+            catch (System.Net.Sockets.SocketException)
+            {
+                return Environment.MachineName;
+            }
+        }
 
         internal ApplicationIntent ConvertValueToApplicationIntent()
         {
@@ -706,6 +823,31 @@ namespace Microsoft.Data.SqlClient
             catch (OverflowException e)
             {
                 throw ADP.InvalidConnectionOptionValue(KEY.ColumnEncryptionSetting, e);
+            }
+        }
+
+        /// <summary>
+        /// Convert the value to SqlConnectionAttestationProtocol
+        /// </summary>
+        /// <returns></returns>
+        internal SqlConnectionAttestationProtocol ConvertValueToAttestationProtocol()
+        {
+            if (!TryGetParsetableValue(KEY.AttestationProtocol, out string value))
+            {
+                return DEFAULT.AttestationProtocol;
+            }
+
+            try
+            {
+                return DbConnectionStringBuilderUtil.ConvertToAttestationProtocol(KEY.AttestationProtocol, value);
+            }
+            catch (FormatException e)
+            {
+                 throw ADP.InvalidConnectionOptionValue(KEY.AttestationProtocol, e);
+            }
+            catch (OverflowException e)
+            {
+                throw ADP.InvalidConnectionOptionValue(KEY.AttestationProtocol, e);
             }
         }
     }

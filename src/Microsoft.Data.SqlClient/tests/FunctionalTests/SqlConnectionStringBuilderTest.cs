@@ -48,6 +48,45 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Throws<ArgumentException>(() => builder["RandomKeyword"]);
         }
 
+        [Theory]
+        [InlineData(@"C:\test\attach.mdf", "AttachDbFilename=C:\\test\\attach.mdf")]
+        [InlineData(@"C:\test\attach.mdf;", "AttachDbFilename=\"C:\\test\\attach.mdf;\"")]
+        public void ConnectionString_AttachDbFileName_Plain(string value, string expected)
+        {
+            var builder = new SqlConnectionStringBuilder();
+            builder.AttachDBFilename = value;
+            Assert.Equal(expected, builder.ConnectionString);
+        }
+
+        [Theory]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        [InlineData(@"|DataDirectory|\attach.mdf",
+                    @"AttachDbFilename=|DataDirectory|\attach.mdf",
+                    @"C:\test\")]
+        [InlineData(@"|DataDirectory|\attach.mdf",
+                    @"AttachDbFilename=|DataDirectory|\attach.mdf",
+                    @"C:\test")]
+        [InlineData(@"|DataDirectory|attach.mdf",
+                    @"AttachDbFilename=|DataDirectory|attach.mdf",
+                    @"C:\test")]
+        [InlineData(@"|DataDirectory|attach.mdf",
+                    @"AttachDbFilename=|DataDirectory|attach.mdf",
+                    @"C:\test\")]
+        [InlineData(@"  |DataDirectory|attach.mdf",
+                    "AttachDbFilename=\"  |DataDirectory|attach.mdf\"",
+                    @"C:\test\")]
+        [InlineData(@"|DataDirectory|attach.mdf  ",
+                    "AttachDbFilename=\"|DataDirectory|attach.mdf  \"",
+                    @"C:\test\")]
+        public void ConnectionStringBuilder_AttachDbFileName_DataDirectory(string value, string expected, string dataDirectory)
+        {
+            AppDomain.CurrentDomain.SetData("DataDirectory", dataDirectory);
+
+            var builder = new SqlConnectionStringBuilder();
+            builder.AttachDBFilename = value;
+            Assert.Equal(expected, builder.ConnectionString);
+        }
+
         private void ExecuteConnectionStringTests(string connectionString)
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectionString);

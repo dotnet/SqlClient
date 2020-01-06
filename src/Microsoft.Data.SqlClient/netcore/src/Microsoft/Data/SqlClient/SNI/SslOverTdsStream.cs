@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Buffers;
 using System.IO;
 using System.IO.Pipes;
 using System.Threading;
@@ -90,10 +91,14 @@ namespace Microsoft.Data.SqlClient.SNI
         private async Task<int> ReadInternal(byte[] buffer, int offset, int count, CancellationToken token, bool async)
         {
             int readBytes = 0;
-            byte[] packetData = new byte[count < TdsEnums.HEADER_LEN ? TdsEnums.HEADER_LEN : count];
-
+            byte[] packetData = null;
+            byte[] readTarget = buffer;
+            int readOffset = offset;
             if (_encapsulate)
             {
+                packetData = ArrayPool<byte>.Shared.Rent(count < TdsEnums.HEADER_LEN ? TdsEnums.HEADER_LEN : count);
+                readTarget = packetData;
+                readOffset = 0;
                 if (_packetBytes == 0)
                 {
                     // Account for split packets
@@ -115,15 +120,18 @@ namespace Microsoft.Data.SqlClient.SNI
             }
 
             readBytes = async ?
-                await _stream.ReadAsync(packetData, 0, count, token).ConfigureAwait(false) :
-                _stream.Read(packetData, 0, count);
+                await _stream.ReadAsync(readTarget, readOffset, count, token).ConfigureAwait(false) :
+                _stream.Read(readTarget, readOffset, count);
 
             if (_encapsulate)
             {
                 _packetBytes -= readBytes;
             }
-
-            Buffer.BlockCopy(packetData, 0, buffer, offset, readBytes);
+            if (packetData != null)
+            {
+                Buffer.BlockCopy(packetData, 0, buffer, offset, readBytes);
+                ArrayPool<byte>.Shared.Return(packetData, clearArray: true);
+            }
             return readBytes;
         }
 
@@ -154,11 +162,12 @@ namespace Microsoft.Data.SqlClient.SNI
                     count -= currentCount;
 
                     // Prepend buffer data with TDS prelogin header
-                    byte[] combinedBuffer = new byte[TdsEnums.HEADER_LEN + currentCount];
+                    int combinedLength = TdsEnums.HEADER_LEN + currentCount;
+                    byte[] combinedBuffer = ArrayPool<byte>.Shared.Rent(combinedLength);
 
                     // We can only send 4088 bytes in one packet. Header[1] is set to 1 if this is a 
                     // partial packet (whether or not count != 0).
-                    // 
+                    combinedBuffer[7] = 0; // touch this first for the jit bounds check
                     combinedBuffer[0] = PRELOGIN_PACKET_TYPE;
                     combinedBuffer[1] = (byte)(count > 0 ? 0 : 1);
                     combinedBuffer[2] = (byte)((currentCount + TdsEnums.HEADER_LEN) / 0x100);
@@ -166,21 +175,20 @@ namespace Microsoft.Data.SqlClient.SNI
                     combinedBuffer[4] = 0;
                     combinedBuffer[5] = 0;
                     combinedBuffer[6] = 0;
-                    combinedBuffer[7] = 0;
 
-                    for (int i = TdsEnums.HEADER_LEN; i < combinedBuffer.Length; i++)
-                    {
-                        combinedBuffer[i] = buffer[currentOffset + (i - TdsEnums.HEADER_LEN)];
-                    }
+                    Array.Copy(buffer, currentOffset, combinedBuffer, TdsEnums.HEADER_LEN, (combinedLength - TdsEnums.HEADER_LEN));
 
                     if (async)
                     {
-                        await _stream.WriteAsync(combinedBuffer, 0, combinedBuffer.Length, token).ConfigureAwait(false);
+                        await _stream.WriteAsync(combinedBuffer, 0, combinedLength, token).ConfigureAwait(false);
                     }
                     else
                     {
-                        _stream.Write(combinedBuffer, 0, combinedBuffer.Length);
+                        _stream.Write(combinedBuffer, 0, combinedLength);
                     }
+
+                    Array.Clear(combinedBuffer, 0, combinedLength);
+                    ArrayPool<byte>.Shared.Return(combinedBuffer);
                 }
                 else
                 {

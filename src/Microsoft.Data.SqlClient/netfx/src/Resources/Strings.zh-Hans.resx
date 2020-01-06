@@ -124,7 +124,7 @@
     <value>此 {1} 的 Count={2} 的索引 {0} 无效。</value>
   </data>
   <data name="ADP_CollectionIndexString" xml:space="preserve">
-    <value>此 {3} 中未包含带有 {1}“{2}”的 {0}。</value>
+    <value>此 {3} 未包含带有 {1}“{2}”的 {0}。</value>
   </data>
   <data name="ADP_CollectionInvalidType" xml:space="preserve">
     <value>{0} 只接受非空的 {1} 类型对象，不接受 {2} 对象。</value>
@@ -1948,7 +1948,7 @@
     <value>已有一个打开的 SqlResultSet 与必须先关闭的此命令相关联。</value>
   </data>
   <data name="ADP_OpenReaderExists" xml:space="preserve">
-    <value>已有打开的与此 Command 相关联的 DataReader，必须首先将它关闭。</value>
+    <value>已有打开的与此 {0} 相关联的 DataReader，必须首先将它关闭。</value>
   </data>
   <data name="ADP_DeriveParametersNotSupported" xml:space="preserve">
     <value>{0} DeriveParameters 仅支持 CommandType.StoredProcedure，不支持 CommandType.{1}。</value>
@@ -2818,7 +2818,7 @@
     <value>给定的 ColumnName“{0}”与数据源中的任意列均不匹配。</value>
   </data>
   <data name="SQL_BulkLoadStringTooLong" xml:space="preserve">
-    <value>String 或 binary 数据将被截断。</value>
+    <value>将在表“{0}”的列“{1}”中截断字符串或二进制数据。截断的值:“{2}”。</value>
   </data>
   <data name="SQL_BulkLoadInvalidTimeout" xml:space="preserve">
     <value>Timeout 值“{0}”小于 0。</value>
@@ -4321,7 +4321,7 @@
     <value>需要 enclave 计算才可执行查询，但应用程序配置缺少 enclave 提供程序节。</value>
   </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
-    <value>找不到 enclave 类型“{0}”的 enclave 提供程序。请在应用程序配置中指定提供程序。</value>
+    <value>未找到 enclave 类型“{0}”和证明协议“{1}”的 enclave 提供程序。请在连接字符串中指定正确的证明协议。</value>
   </data>
   <data name="TCE_NullEnclaveSessionReturnedFromProvider" xml:space="preserve">
     <value>无法与 enclave 通信。接收自 enclave 提供程序的 enclave 会话信息为 null。Enclave 类型为“{0}”，enclave 证明 URL 为“{1}”。</value>
@@ -4442,5 +4442,80 @@
   </data>
   <data name="SQL_Timeout_Execution" xml:space="preserve">
     <value>执行超时已过期。完成操作之前已超时或服务器未响应。 </value>
+  </data>
+  <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
+    <value>无法验证证明令牌。令牌签名与使用从“{0}”处的证明公钥终结点检索的公钥计算的签名不一致。请验证终结点的 DNS 映射。如果正确，请联系客户支持服务。</value>
+  </data>
+  <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
+    <value>初始请求失败后，重试下载 HGS 根证书时出现内部错误。请联系客户支持服务。</value>
+  </data>
+  <data name="EnclaveSessionInvalidationFailed" xml:space="preserve">
+    <value>内部错误。无法让所请求的 enclave 会话无效，因为它在缓存中不存在。请联系客户支持服务。</value>
+  </data>
+  <data name="ExpiredAttestationToken" xml:space="preserve">
+    <value>无法验证证明令牌。从 SQL Server 收到的令牌已到期。请联系客户支持服务。</value>
+  </data>
+  <data name="FailToCreateEnclaveSession" xml:space="preserve">
+    <value>无法创建 enclave 会话，因为认证服务器正忙。</value>
+  </data>
+  <data name="FailToParseAttestationInfo" xml:space="preserve">
+    <value>无法验证证明信息。证明信息的格式无效。请联系客户支持服务。错误详细信息:“{0}”。</value>
+  </data>
+  <data name="FailToParseAttestationToken" xml:space="preserve">
+    <value>无法验证证明令牌。令牌的格式无效。请联系客户支持服务。错误详细信息:“{0}”。</value>
+  </data>
+  <data name="GetAttestationSigningCertificateFailedInvalidCertificate" xml:space="preserve">
+    <value>证明服务为证明 URL“{0}”返回的 HGS 根证书已到期。请检查为你的 HGS 实例配置的 HGS 根证书。</value>
+  </data>
+  <data name="GetAttestationSigningCertificateRequestFailedFormat" xml:space="preserve">
+    <value>为证明 URL“{0}”获取的 HGS 根证书的格式无效。请验证证明 URL 是否正确，且 HGS 服务器是否处于联机状态且已完全初始化。有关详细信息，请联系客户支持服务。错误详细信息:“{1}”。</value>
+  </data>
+  <data name="GetAttestationTokenSigningKeysFailed" xml:space="preserve">
+    <value>无法验证证明令牌。无法从证明公钥终结点检索公钥，或检索到的密钥的格式无效。错误详细信息:“{0}”。</value>
+  </data>
+  <data name="GetSharedSecretFailed" xml:space="preserve">
+    <value>无法验证 enclave 的 Diffie-hellman 密钥的签名。请联系客户支持服务。</value>
+  </data>
+  <data name="InvalidArgumentToBase64UrlDecoder" xml:space="preserve">
+    <value>无法验证证明令牌，因为解码从 SQL Server 获取的 enclave 公钥时出错。请联系客户支持服务。</value>
+  </data>
+  <data name="InvalidArgumentToSHA256" xml:space="preserve">
+    <value>无法验证证明令牌，因为计算从 SQL Server 获取的 enclave 公钥的哈希时出错。请联系客户支持服务。</value>
+  </data>
+  <data name="InvalidAttestationToken" xml:space="preserve">
+    <value>无法在签名验证期间验证证明令牌。异常:“{0}”。</value>
+  </data>
+  <data name="InvalidClaimInAttestationToken" xml:space="preserve">
+    <value>无法验证证明令牌。令牌中的声明“{0}”有无效的“{1}” 值。请验证证明策略。如果策略正确，请联系客户支持服务。</value>
+  </data>
+  <data name="MissingClaimInAttestationToken" xml:space="preserve">
+    <value>无法验证证明令牌。令牌中缺少声明“{0}”。请验证证明策略。如果策略正确，请联系客户支持服务。</value>
+  </data>
+  <data name="VerifyEnclaveDebuggable" xml:space="preserve">
+    <value>无法检查 enclave 是否在生产模式下运行。请联系客户支持服务。</value>
+  </data>
+  <data name="VerifyEnclavePolicyFailedFormat" xml:space="preserve">
+    <value>无法验证 enclave 策略，因为属性“{0}”上策略的预期值和实际值不一致。实际值:“{1}”，预期值:“{2}”。</value>
+  </data>
+  <data name="VerifyEnclaveReportFailed" xml:space="preserve">
+    <value>无法验证 enclave 报告的签名。报告签名与使用 HGS 根证书计算出的签名不一致。请验证终结点的 DNS 映射。如果正确，请联系客户支持服务。</value>
+  </data>
+  <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
+    <value>从 SQL Server 收到的 enclave 报告的格式不正确。请联系客户支持服务。</value>
+  </data>
+  <data name="VerifyHealthCertificateChainFormat" xml:space="preserve">
+    <value>无法在 enclave 主机的运行状况报告和证明 URL“{0}”的 HGS 根证书之间生成信任链，状态为“{1}”。请验证证明 URL 是否与 SQL Server 计算机上配置的 URL 一致。如果客户端和 SQL Server 使用的证明服务相同，请联系客户支持服务。</value>
+  </data>
+  <data name="TCE_DbConnectionString_AttestationProtocol" xml:space="preserve">
+    <value>为其相应的 enclave 证明服务指定证明协议。</value>
+  </data>
+  <data name="TCE_EnclaveTypeNotSupported" xml:space="preserve">
+    <value>不支持从服务器返回的 enclave 类型“{0}”。</value>
+  </data>
+  <data name="TCE_AttestationProtocolNotSupportEnclaveType" xml:space="preserve">
+    <value>未能初始化连接。证明协议“{0}”不支持 enclave 类型“{1}”。</value>
+  </data>
+  <data name="TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage" xml:space="preserve">
+    <value>生成 enclave 包时出错。未在连接字符串中指定证明协议，但该查询需要 enclave 计算。</value>
   </data>
 </root>

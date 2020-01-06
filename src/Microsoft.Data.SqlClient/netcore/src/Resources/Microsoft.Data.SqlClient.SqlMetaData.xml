@@ -801,7 +801,7 @@
 <ProviderDbType>20</ProviderDbType>
 <ColumnSize>3</ColumnSize>
 <CreateFormat>tinyint</CreateFormat>
-<DataType>System.SByte</DataType>
+<DataType>System.Byte</DataType>
 <IsAutoIncrementable>true</IsAutoIncrementable>
 <IsBestMatch>true</IsBestMatch>
 <IsCaseSensitive>false</IsCaseSensitive>

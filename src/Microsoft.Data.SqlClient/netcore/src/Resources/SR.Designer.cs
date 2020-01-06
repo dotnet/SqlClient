@@ -10,8 +10,8 @@
 
 namespace System {
     using System;
-    
-    
+
+
     /// <summary>
     ///   A strongly-typed resource class, for looking up localized strings, etc.
     /// </summary>
@@ -97,7 +97,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to An {0} with {1} &apos;{2}&apos; is not contained by this {3}..
+        ///   Looks up a localized string similar to A {0} with {1} &apos;{2}&apos; is not contained by this {3}..
         /// </summary>
         internal static string ADP_CollectionIndexString {
             get {
@@ -336,6 +336,15 @@ namespace System {
         internal static string ADP_InvalidConnectionOptionValueLength {
             get {
                 return ResourceManager.GetString("ADP_InvalidConnectionOptionValueLength", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The DataDirectory substitute is not a string..
+        /// </summary>
+        internal static string ADP_InvalidDataDirectory {
+            get {
+                return ResourceManager.GetString("ADP_InvalidDataDirectory", resourceCulture);
             }
         }
         
@@ -646,7 +655,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to There is already an open DataReader associated with this Command which must be closed first..
+        ///   Looks up a localized string similar to There is already an open DataReader associated with this {0} which must be closed first..
         /// </summary>
         internal static string ADP_OpenReaderExists {
             get {
@@ -880,6 +889,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The validation of an attestation token failed. The token signature does not match the signature computed using a public key retrieved from the attestation public key endpoint at &apos;{0}&apos;. Verify the DNS mapping for the endpoint. If correct, contact Customer Support Services..
+        /// </summary>
+        internal static string AttestationTokenSignatureValidationFailed {
+            get {
+                return ResourceManager.GetString("AttestationTokenSignatureValidationFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to .database.chinacloudapi.cn.
         /// </summary>
         internal static string AZURESQL_ChinaEndpoint {
@@ -925,11 +943,101 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Internal error occurred when retrying the download of the HGS root certificate after the initial request failed. Contact Customer Support Services..
+        /// </summary>
+        internal static string EnclaveRetrySleepInSecondsValueException {
+            get {
+                return ResourceManager.GetString("EnclaveRetrySleepInSecondsValueException", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Internal error. Unable to invalidate the requested enclave session, because it does not exist in the cache. Contact Customer Support Services..
+        /// </summary>
+        internal static string EnclaveSessionInvalidationFailed {
+            get {
+                return ResourceManager.GetString("EnclaveSessionInvalidationFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to {0} returned {1}..
         /// </summary>
         internal static string event_OperationReturnedSomething {
             get {
                 return ResourceManager.GetString("event_OperationReturnedSomething", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The validation of an attestation token failed. The token received from SQL Server is expired. Contact Customer Support Services..
+        /// </summary>
+        internal static string ExpiredAttestationToken {
+            get {
+                return ResourceManager.GetString("ExpiredAttestationToken", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to create enclave session as attestation server is busy..
+        /// </summary>
+        internal static string FailToCreateEnclaveSession {
+            get {
+                return ResourceManager.GetString("FailToCreateEnclaveSession", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The validation of an attestation information failed. The attestation information has an invalid format. Contact Customer Support Services. Error details: &apos;{0}&apos;..
+        /// </summary>
+        internal static string FailToParseAttestationInfo {
+            get {
+                return ResourceManager.GetString("FailToParseAttestationInfo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The validation of an attestation token failed. The token has an invalid format. Contact Customer Support Services. Error details: &apos;{0}&apos;..
+        /// </summary>
+        internal static string FailToParseAttestationToken {
+            get {
+                return ResourceManager.GetString("FailToParseAttestationToken", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The attestation service returned an expired HGS root certificate for attestation URL &apos;{0}&apos;. Check the HGS root certificate configured for your HGS instance..
+        /// </summary>
+        internal static string GetAttestationSigningCertificateFailedInvalidCertificate {
+            get {
+                return ResourceManager.GetString("GetAttestationSigningCertificateFailedInvalidCertificate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The obtained HGS root certificate for attestation URL &apos;{0}&apos; has an invalid format. Verify the attestation URL is correct and the HGS server is online and fully initialized. For more information contact Customer Support Services. Error details: &apos;{1}&apos;..
+        /// </summary>
+        internal static string GetAttestationSigningCertificateRequestFailedFormat {
+            get {
+                return ResourceManager.GetString("GetAttestationSigningCertificateRequestFailedFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The validation of an attestation token failed. Cannot retrieve a public key from the attestation public key endpoint, or the retrieved key has an invalid format. Error details: &apos;{0}&apos;..
+        /// </summary>
+        internal static string GetAttestationTokenSigningKeysFailed {
+            get {
+                return ResourceManager.GetString("GetAttestationTokenSigningKeysFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Signature verification of the enclave&apos;s Diffie-Hellman key failed. Contact Customer Support Services..
+        /// </summary>
+        internal static string GetSharedSecretFailed {
+            get {
+                return ResourceManager.GetString("GetSharedSecretFailed", resourceCulture);
             }
         }
         
@@ -948,6 +1056,42 @@ namespace System {
         internal static string IEnumerableOfSqlDataRecordHasNoRows {
             get {
                 return ResourceManager.GetString("IEnumerableOfSqlDataRecordHasNoRows", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The validation of an attestation token failed due to an error while decoding the enclave public key obtained from SQL Server. Contact Customer Support Services..
+        /// </summary>
+        internal static string InvalidArgumentToBase64UrlDecoder {
+            get {
+                return ResourceManager.GetString("InvalidArgumentToBase64UrlDecoder", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The validation of an attestation token failed due to an error while computing a hash of the enclave public key obtained from SQL Server. Contact Customer Support Services..
+        /// </summary>
+        internal static string InvalidArgumentToSHA256 {
+            get {
+                return ResourceManager.GetString("InvalidArgumentToSHA256", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The validation of the attestation token has failed during signature validation. Exception: &apos;{0}&apos;..
+        /// </summary>
+        internal static string InvalidAttestationToken {
+            get {
+                return ResourceManager.GetString("InvalidAttestationToken", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The validation of an attestation token failed. Claim &apos;{0}&apos; in the token has an invalid value of &apos;{1}&apos;. Verify the attestation policy. If the policy is correct, contact Customer Support Services..
+        /// </summary>
+        internal static string InvalidClaimInAttestationToken {
+            get {
+                return ResourceManager.GetString("InvalidClaimInAttestationToken", resourceCulture);
             }
         }
         
@@ -1137,6 +1281,15 @@ namespace System {
         internal static string MDF_UnsupportedVersion {
             get {
                 return ResourceManager.GetString("MDF_UnsupportedVersion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The validation of the attestation token failed. Claim &apos;{0}&apos; is missing in the token. Verify the attestation policy. If the policy is correct, contact Customer Support Services..
+        /// </summary>
+        internal static string MissingClaimInAttestationToken {
+            get {
+                return ResourceManager.GetString("MissingClaimInAttestationToken", resourceCulture);
             }
         }
         
@@ -2131,7 +2284,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to String or binary data would be truncated..
+        ///   Looks up a localized string similar to String or binary data would be truncated in table &apos;{0}&apos;, column &apos;{1}&apos;. Truncated value: &apos;{2}&apos;..
         /// </summary>
         internal static string SQL_BulkLoadStringTooLong {
             get {
@@ -3841,6 +3994,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to UDT size must be less than {1}, size: {0}.
+        /// </summary>
+        internal static string SQLUDT_InvalidSize {
+            get {
+                return ResourceManager.GetString("SQLUDT_InvalidSize", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Specified type is not registered on the target server. {0}..
         /// </summary>
         internal static string SQLUDT_InvalidSqlType {
@@ -3918,6 +4080,24 @@ namespace System {
         internal static string TCE_AttestationInfoNotReturnedFromSQLServer {
             get {
                 return ResourceManager.GetString("TCE_AttestationInfoNotReturnedFromSQLServer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Error occured when generating enclave package. Attestation Protocol has not been specified in the connection string, but the query requires enclave computations..
+        /// </summary>
+        internal static string TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage {
+            get {
+                return ResourceManager.GetString("TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to initialize connection. The attestation protocol &apos;{0}&apos; does not support the enclave type &apos;{1}&apos;..
+        /// </summary>
+        internal static string TCE_AttestationProtocolNotSupportEnclaveType {
+            get {
+                return ResourceManager.GetString("TCE_AttestationProtocolNotSupportEnclaveType", resourceCulture);
             }
         }
         
@@ -4026,6 +4206,15 @@ namespace System {
         internal static string TCE_ColumnMasterKeySignatureVerificationFailed {
             get {
                 return ResourceManager.GetString("TCE_ColumnMasterKeySignatureVerificationFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Specifies an attestation protocol for its corresponding enclave attestation service..
+        /// </summary>
+        internal static string TCE_DbConnectionString_AttestationProtocol {
+            get {
+                return ResourceManager.GetString("TCE_DbConnectionString_AttestationProtocol", resourceCulture);
             }
         }
         
@@ -4183,7 +4372,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to No enclave provider found for enclave type &apos;{0}&apos;. Please specify the provider in the application configuration..
+        ///   Looks up a localized string similar to No enclave provider found for enclave type &apos;{0}&apos; and attestation protocol &apos;{1}&apos;. Please specify the correct attestation protocol in the connection string..
         /// </summary>
         internal static string TCE_EnclaveProviderNotFound {
             get {
@@ -4206,6 +4395,15 @@ namespace System {
         internal static string TCE_EnclaveTypeNotReturned {
             get {
                 return ResourceManager.GetString("TCE_EnclaveTypeNotReturned", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The enclave type &apos;{0}&apos; returned from the server is not supported..
+        /// </summary>
+        internal static string TCE_EnclaveTypeNotSupported {
+            get {
+                return ResourceManager.GetString("TCE_EnclaveTypeNotSupported", resourceCulture);
             }
         }
         
@@ -5025,6 +5223,51 @@ namespace System {
         internal static string TCE_UntrustedKeyPath {
             get {
                 return ResourceManager.GetString("TCE_UntrustedKeyPath", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to check if the enclave is running in the production mode. Contact Customer Support Services..
+        /// </summary>
+        internal static string VerifyEnclaveDebuggable {
+            get {
+                return ResourceManager.GetString("VerifyEnclaveDebuggable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Could not verify enclave policy due to a difference between the expected and actual values of the policy on property &apos;{0}&apos;. Actual: &apos;{1}&apos;, Expected: &apos;{2}&apos;..
+        /// </summary>
+        internal static string VerifyEnclavePolicyFailedFormat {
+            get {
+                return ResourceManager.GetString("VerifyEnclavePolicyFailedFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Signature verification of the enclave report failed. The report signature does not match the signature computed using the HGS root certificate. Verify the DNS mapping for the endpoint. If correct, contact Customer Support Services..
+        /// </summary>
+        internal static string VerifyEnclaveReportFailed {
+            get {
+                return ResourceManager.GetString("VerifyEnclaveReportFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The enclave report received from SQL Server is not in the correct format. Contact Customer Support Services..
+        /// </summary>
+        internal static string VerifyEnclaveReportFormatFailed {
+            get {
+                return ResourceManager.GetString("VerifyEnclaveReportFormatFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to build a chain of trust between the enclave host&apos;s health report and the HGS root certificate for attestation URL &apos;{0}&apos; with status: &apos;{1}&apos;. Verify the attestation URL matches the URL configured on the SQL Server machine. If both the client and SQL Server use the same attestation service, contact Customer Support Services..
+        /// </summary>
+        internal static string VerifyHealthCertificateChainFormat {
+            get {
+                return ResourceManager.GetString("VerifyHealthCertificateChainFormat", resourceCulture);
             }
         }
     }

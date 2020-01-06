@@ -5,7 +5,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class SqlCommandCompletedTest
     {
-        private static readonly string s_connStr = (new SqlConnectionStringBuilder(DataTestUtility.TcpConnStr) { PacketSize = 512 }).ConnectionString;
+        private static readonly string s_connStr = (new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { PacketSize = 512 }).ConnectionString;
         private static int completedHandlerExecuted = 0;
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]

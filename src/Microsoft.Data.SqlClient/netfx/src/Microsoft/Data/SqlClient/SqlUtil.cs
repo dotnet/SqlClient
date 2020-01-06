@@ -728,10 +728,10 @@ namespace Microsoft.Data.SqlClient
         //
         // SQL.SqlDelegatedTransaction
         //
-        static internal Exception CannotCompleteDelegatedTransactionWithOpenResults(SqlInternalConnectionTds internalConnection)
+        static internal Exception CannotCompleteDelegatedTransactionWithOpenResults(SqlInternalConnectionTds internalConnection, bool marsOn)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(TdsEnums.TIMEOUT_EXPIRED, (byte)0x00, TdsEnums.MIN_ERROR_CLASS, null, (StringsHelper.GetString(Strings.ADP_OpenReaderExists)), "", 0, TdsEnums.SNI_WAIT_TIMEOUT));
+            errors.Add(new SqlError(TdsEnums.TIMEOUT_EXPIRED, (byte)0x00, TdsEnums.MIN_ERROR_CLASS, null, (StringsHelper.GetString(Strings.ADP_OpenReaderExists, marsOn? ADP.Command : ADP.Connection)), "", 0, TdsEnums.SNI_WAIT_TIMEOUT));
             return SqlException.CreateException(errors, null, internalConnection);
         }
         static internal SysTx.TransactionPromotionException PromotionFailed(Exception inner)
@@ -975,9 +975,9 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_BulkLoadNonMatchingColumnName, columnName), e);
         }
-        static internal Exception BulkLoadStringTooLong()
+        static internal Exception BulkLoadStringTooLong(string tableName, string columnName, string truncatedValue)
         {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_BulkLoadStringTooLong));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_BulkLoadStringTooLong, tableName, columnName, truncatedValue));
         }
         static internal Exception BulkLoadInvalidVariantValue()
         {
@@ -1592,9 +1592,14 @@ namespace Microsoft.Data.SqlClient
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_EnclaveProvidersNotConfiguredForEnclaveBasedQuery));
         }
 
-        static internal Exception EnclaveProviderNotFound(string enclaveType)
+        static internal Exception EnclaveProviderNotFound(string enclaveType, string attestationProtocol)
         {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_EnclaveProviderNotFound, enclaveType));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_EnclaveProviderNotFound, enclaveType, attestationProtocol));
+        }
+
+        static internal Exception AttestationProtocolNotSpecifiedForGeneratingEnclavePackage()
+        {
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage));
         }
 
         static internal Exception NullEnclaveSessionReturnedFromProvider(string enclaveType, string attestationUrl)
@@ -1728,6 +1733,16 @@ namespace Microsoft.Data.SqlClient
         static internal Exception EnclaveTypeNotReturned()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_EnclaveTypeNotReturned));
+        }
+
+        static internal Exception EnclaveTypeNotSupported(string enclaveType)
+        {
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_EnclaveTypeNotSupported, enclaveType));
+        }
+
+        static internal Exception AttestationProtocolNotSupportEnclaveType(string attestationProtocolStr, string enclaveType)
+        {
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_AttestationProtocolNotSupportEnclaveType, attestationProtocolStr, enclaveType));
         }
 
         //

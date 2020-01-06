@@ -4,7 +4,7 @@
     <AssemblyFileVersion Condition="'$(AssemblyFileVersion)' == ''">1.0.0.0</AssemblyFileVersion>
     <AssemblyVersion>$(AssemblyFileVersion)</AssemblyVersion>
     <MicrosoftDotNetGenAPIPackageVersion>1.0.0-beta.18578.2</MicrosoftDotNetGenAPIPackageVersion>
-    <NugetPackageVersion Condition="'$(NugetPackageVersion)' == ''">1.1.0-dev</NugetPackageVersion>
+    <NugetPackageVersion Condition="'$(NugetPackageVersion)' == ''">2.0.0-dev</NugetPackageVersion>
     <Version>$(NugetPackageVersion)</Version>
   </PropertyGroup>
 </Project>

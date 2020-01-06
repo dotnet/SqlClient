@@ -415,11 +415,11 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionEnclaveProvider.xml' path='docs/members[@name="SqlColumnEncryptionEnclaveProvider"]/ctor/*'/>
         protected SqlColumnEncryptionEnclaveProvider() { }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionEnclaveProvider.xml' path='docs/members[@name="SqlColumnEncryptionEnclaveProvider"]/CreateEnclaveSession/*'/>
-        public abstract void CreateEnclaveSession(byte[] enclaveAttestationInfo, System.Security.Cryptography.ECDiffieHellmanCng clientDiffieHellmanKey, string attestationUrl, string servername, out Microsoft.Data.SqlClient.SqlEnclaveSession sqlEnclaveSession, out long counter);
+        public abstract void CreateEnclaveSession(byte[] enclaveAttestationInfo, System.Security.Cryptography.ECDiffieHellmanCng clientDiffieHellmanKey, string attestationUrl, string servername, byte[] customData, int customDataLength, out Microsoft.Data.SqlClient.SqlEnclaveSession sqlEnclaveSession, out long counter);
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionEnclaveProvider.xml' path='docs/members[@name="SqlColumnEncryptionEnclaveProvider"]/GetAttestationParameters/*'/>
-        public abstract Microsoft.Data.SqlClient.SqlEnclaveAttestationParameters GetAttestationParameters();
+        public abstract Microsoft.Data.SqlClient.SqlEnclaveAttestationParameters GetAttestationParameters(string attestationUrl, byte[] customData, int customDataLength);
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionEnclaveProvider.xml' path='docs/members[@name="SqlColumnEncryptionEnclaveProvider"]/GetEnclaveSession/*'/>
-        public abstract void GetEnclaveSession(string serverName, string attestationUrl, out Microsoft.Data.SqlClient.SqlEnclaveSession sqlEnclaveSession, out long counter);
+        public abstract void GetEnclaveSession(string serverName, string attestationUrl, bool generateCustomData, out Microsoft.Data.SqlClient.SqlEnclaveSession sqlEnclaveSession, out long counter, out byte[] customData, out int customDataLength);
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionEnclaveProvider.xml' path='docs/members[@name="SqlColumnEncryptionEnclaveProvider"]/InvalidateEnclaveSession/*'/>
         public abstract void InvalidateEnclaveSession(string serverName, string enclaveAttestationUrl, Microsoft.Data.SqlClient.SqlEnclaveSession enclaveSession);
     }
@@ -786,6 +786,20 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionColumnEncryptionSetting.xml' path='docs/members[@name="SqlConnectionColumnEncryptionSetting"]/Enabled/*'/>
         Enabled = 1,
     }
+
+    /// <include file='..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/SqlConnectionAttestationProtocol/*' />
+    public enum SqlConnectionAttestationProtocol
+    {
+        /// <include file='..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/NotSpecified/*' />
+        NotSpecified = 0,
+
+        /// <include file='..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/AAS/*' />
+        AAS = 1,
+
+        /// <include file='..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/HGS/*' />
+        HGS = 3
+    }
+
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/SqlConnectionStringBuilder/*'/>
     [System.ComponentModel.DefaultPropertyAttribute("DataSource")]
     public sealed partial class SqlConnectionStringBuilder : System.Data.Common.DbConnectionStringBuilder
@@ -853,6 +867,11 @@ namespace Microsoft.Data.SqlClient
         [System.ComponentModel.DisplayNameAttribute("Enclave Attestation Url")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public string EnclaveAttestationUrl { get { throw null; } set { } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/AttestationProtocol/*'/>
+        [System.ComponentModel.DisplayNameAttribute("Attestation Protocol")]
+        [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
+        public Microsoft.Data.SqlClient.SqlConnectionAttestationProtocol AttestationProtocol {get { throw null; } set { } }
+
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Encrypt/*'/>
         [System.ComponentModel.DisplayNameAttribute("Encrypt")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]

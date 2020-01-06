@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [CheckConnStrSetupFact]
         public static void GetSchemaTableTest()
         {
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand cmd = new SqlCommand("select hierarchyid::Parse('/1/') as col0", conn))
             {
                 conn.Open();
@@ -44,7 +44,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [CheckConnStrSetupFact]
         public static void GetValueTestThrowsExceptionOnNetCore()
         {
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand cmd = new SqlCommand("select hierarchyid::Parse('/1/') as col0", conn))
             {
                 conn.Open();
@@ -63,7 +63,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [CheckConnStrSetupFact]
         public static void GetValueTest()
         {
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand cmd = new SqlCommand("select hierarchyid::Parse('/1/') as col0", conn))
             {
                 conn.Open();
@@ -79,7 +79,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [CheckConnStrSetupFact]
         public static void TestUdtZeroByte()
         {
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 connection.Open();
                 SqlCommand command = connection.CreateCommand();
@@ -109,7 +109,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void TestUdtSqlDataReaderGetSqlBytes(CommandBehavior behavior)
         {
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 connection.Open();
                 SqlCommand command = connection.CreateCommand();
@@ -152,7 +152,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void TestUdtSqlDataReaderGetBytes(CommandBehavior behavior)
         {
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 connection.Open();
                 SqlCommand command = connection.CreateCommand();
@@ -208,7 +208,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void TestUdtSqlDataReaderGetStream(CommandBehavior behavior)
         {
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 connection.Open();
                 SqlCommand command = connection.CreateCommand();
@@ -261,7 +261,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [CheckConnStrSetupFact]
         public static void TestUdtSchemaMetadata()
         {
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 connection.Open();
                 SqlCommand command = connection.CreateCommand();
@@ -303,7 +303,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SqlBytes geometrySqlBytes = null;
             string actualtPointValue = null;
 
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 connection.Open();
 
@@ -337,7 +337,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             byte[] geometryBytes = null;
             string actualtPointValue = null;
 
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TcpConnStr))
+            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 connection.Open();
 
