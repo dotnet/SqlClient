@@ -45,8 +45,8 @@ namespace Microsoft.Data.ProviderBase
 
         internal static DbConnectionPoolIdentity GetCurrentManaged()
         {
-            string sidString = (!string.IsNullOrWhiteSpace(System.Environment.UserDomainName) ? System.Environment.UserDomainName + "\\" : "")
-                                + System.Environment.UserName;
+            string domainString = System.Environment.UserDomainName;
+            string sidString = (!string.IsNullOrWhiteSpace(domainString) ? domainString + "\\" : "") + System.Environment.UserName;
             bool isNetwork = false;
             bool isRestricted = false;
             return new DbConnectionPoolIdentity(sidString, isRestricted, isNetwork);
