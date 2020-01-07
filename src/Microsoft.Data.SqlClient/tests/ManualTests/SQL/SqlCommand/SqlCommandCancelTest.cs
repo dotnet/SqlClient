@@ -125,21 +125,23 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (SqlConnection con = new SqlConnection(constr))
             {
                 con.Open();
-                var command = con.CreateCommand();
-                command.CommandText = "select * from orders; waitfor delay '00:00:08'; select * from customers";
+                using (var command = con.CreateCommand())
+                {
+                    command.CommandText = "select * from orders; waitfor delay '00:00:08'; select * from customers";
 
-                Barrier threadsReady = new Barrier(2);
-                object state = new Tuple<bool, SqlCommand, Barrier>(async, command, threadsReady);
+                    Barrier threadsReady = new Barrier(2);
+                    object state = new Tuple<bool, SqlCommand, Barrier>(async, command, threadsReady);
 
-                Task[] tasks = new Task[2];
-                tasks[0] = new Task(ExecuteCommandCancelExpected, state);
-                tasks[1] = new Task(CancelSharedCommand, state);
-                tasks[0].Start();
-                tasks[1].Start();
+                    Task[] tasks = new Task[2];
+                    tasks[0] = new Task(ExecuteCommandCancelExpected, state);
+                    tasks[1] = new Task(CancelSharedCommand, state);
+                    tasks[0].Start();
+                    tasks[1].Start();
 
-                Task.WaitAll(tasks, 15 * 1000);
+                    Task.WaitAll(tasks, 15 * 1000);
 
-                SqlCommandCancelTest.VerifyConnection(command);
+                    SqlCommandCancelTest.VerifyConnection(command);
+                }
             }
         }
 
@@ -148,14 +150,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (SqlConnection con = new SqlConnection(constr))
             {
                 con.Open();
-                SqlCommand cmd = con.CreateCommand();
-                cmd.CommandTimeout = 1;
-                cmd.CommandText = "WAITFOR DELAY '00:00:30';select * from Customers";
+                using (SqlCommand cmd = con.CreateCommand())
+                {
+                    cmd.CommandTimeout = 1;
+                    cmd.CommandText = "WAITFOR DELAY '00:00:30';select * from Customers";
 
-                string errorMessage = SystemDataResourceManager.Instance.SQL_Timeout_Execution;
-                DataTestUtility.ExpectFailure<SqlException>(() => cmd.ExecuteReader(), new string[] { errorMessage });
+                    string errorMessage = SystemDataResourceManager.Instance.SQL_Timeout_Execution;
+                    DataTestUtility.ExpectFailure<SqlException>(() => cmd.ExecuteReader(), new string[] { errorMessage });
 
-                VerifyConnection(cmd);
+                    VerifyConnection(cmd);
+                }
             }
         }
 
@@ -253,33 +257,38 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     // Start the command
                     conn.Open();
-                    SqlCommand cmd = new SqlCommand("SELECT @p", conn);
-                    cmd.Parameters.AddWithValue("p", new byte[20000]);
-                    SqlDataReader reader = cmd.ExecuteReader();
-                    reader.Read();
+                    using (SqlCommand cmd = new SqlCommand("SELECT @p", conn))
+                    {
+                        cmd.Parameters.AddWithValue("p", new byte[20000]);
+                        using (SqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            reader.Read();
 
-                    // Tweak the timeout to 1ms, stop the proxy from proxying and then try GetValue (which should timeout)
-                    reader.SetDefaultTimeout(1);
-                    proxy.PauseCopying();
-                    string errorMessage = SystemDataResourceManager.Instance.SQL_Timeout_Execution;
-                    Exception exception = Assert.Throws<SqlException>(() => reader.GetValue(0));
-                    Assert.Contains(errorMessage, exception.Message);
+                            // Tweak the timeout to 1ms, stop the proxy from proxying and then try GetValue (which should timeout)
+                            reader.SetDefaultTimeout(1);
+                            proxy.PauseCopying();
+                            string errorMessage = SystemDataResourceManager.Instance.SQL_Timeout_Execution;
+                            Exception exception = Assert.Throws<SqlException>(() => reader.GetValue(0));
+                            Assert.Contains(errorMessage, exception.Message);
 
-                    // Return everything to normal and close
-                    proxy.ResumeCopying();
-                    reader.SetDefaultTimeout(30000);
-                    reader.Dispose();
+                            // Return everything to normal and close
+                            proxy.ResumeCopying();
+                            reader.SetDefaultTimeout(30000);
+                            reader.Dispose();
+                        }
+                    }
                 }
-
-                proxy.Stop();
             }
             catch
             {
                 // In case of error, stop the proxy and dump its logs (hopefully this will help with debugging
                 proxy.Stop();
                 Console.WriteLine(proxy.GetServerEventLog());
-                Assert.True(false, "Error while reading through proxy");
                 throw;
+            }
+            finally
+            {
+                proxy.Stop();
             }
         }
 
@@ -330,7 +339,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Exception exception = null;
                 try
                 {
-                    await cmd.ExecuteNonQueryAsync(new CancellationTokenSource(1000).Token);
+                    await cmd.ExecuteNonQueryAsync(new CancellationTokenSource(2000).Token);
                 }
                 catch (Exception ex)
                 {
