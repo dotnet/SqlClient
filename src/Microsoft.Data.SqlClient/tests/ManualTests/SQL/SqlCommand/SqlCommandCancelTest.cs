@@ -20,6 +20,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void PlainCancelTest()
         {
             PlainCancel(tcp_connStr);
+        }
+
+        [CheckConnStrSetupFact]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public static void PlainCancelTestNP()
+        {
             PlainCancel(np_connStr);
         }
 
@@ -27,6 +33,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void PlainMARSCancelTest()
         {
             PlainCancel((new SqlConnectionStringBuilder(tcp_connStr) { MultipleActiveResultSets = true }).ConnectionString);
+        }
+
+        [CheckConnStrSetupFact]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public static void PlainMARSCancelTestNP()
+        {
             PlainCancel((new SqlConnectionStringBuilder(np_connStr) { MultipleActiveResultSets = true }).ConnectionString);
         }
 
@@ -34,6 +46,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void PlainCancelTestAsync()
         {
             PlainCancelAsync(tcp_connStr);
+        }
+
+        [CheckConnStrSetupFact]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public static void PlainCancelTestAsyncNP()
+        {
             PlainCancelAsync(np_connStr);
         }
 
@@ -41,6 +59,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void PlainMARSCancelTestAsync()
         {
             PlainCancelAsync((new SqlConnectionStringBuilder(tcp_connStr) { MultipleActiveResultSets = true }).ConnectionString);
+        }
+
+        [CheckConnStrSetupFact]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public static void PlainMARSCancelTestAsyncNP()
+        {
             PlainCancelAsync((new SqlConnectionStringBuilder(np_connStr) { MultipleActiveResultSets = true }).ConnectionString);
         }
 
@@ -98,6 +122,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void MultiThreadedCancel_NonAsync()
         {
             MultiThreadedCancel(tcp_connStr, false);
+        }
+
+        [CheckConnStrSetupFact]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public static void MultiThreadedCancel_NonAsyncNP()
+        {
             MultiThreadedCancel(np_connStr, false);
         }
 
@@ -105,6 +135,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void MultiThreadedCancel_Async()
         {
             MultiThreadedCancel(tcp_connStr, true);
+        }
+
+        [CheckConnStrSetupFact]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public static void MultiThreadedCancel_AsyncNP()
+        {
             MultiThreadedCancel(np_connStr, true);
         }
 
@@ -112,6 +148,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void TimeoutCancel()
         {
             TimeoutCancel(tcp_connStr);
+        }
+
+        [CheckConnStrSetupFact]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public static void TimeoutCancelNP()
+        {
             TimeoutCancel(np_connStr);
         }
 
@@ -119,6 +161,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void CancelAndDisposePreparedCommand()
         {
             CancelAndDisposePreparedCommand(tcp_connStr);
+        }
+
+        [CheckConnStrSetupFact]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public static void CancelAndDisposePreparedCommandNP()
+        {
             CancelAndDisposePreparedCommand(np_connStr);
         }
 
@@ -127,6 +175,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void TimeOutDuringRead()
         {
             TimeOutDuringRead(tcp_connStr);
+        }
+
+        [ActiveIssue(5541)]
+        [CheckConnStrSetupFact]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public static void TimeOutDuringReadNP()
+        {
             TimeOutDuringRead(np_connStr);
         }
 
@@ -134,6 +189,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void CancelDoesNotWait()
         {
             CancelDoesNotWait(tcp_connStr);
+        }
+
+        [CheckConnStrSetupFact]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public static void CancelDoesNotWaitNP()
+        {
             CancelDoesNotWait(np_connStr);
         }
 
@@ -141,6 +202,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void AsyncCancelDoesNotWait()
         {
             AsyncCancelDoesNotWait(tcp_connStr).Wait();
+        }
+
+        [CheckConnStrSetupFact]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public static void AsyncCancelDoesNotWaitNP()
+        {
             AsyncCancelDoesNotWait(np_connStr).Wait();
         }
 
