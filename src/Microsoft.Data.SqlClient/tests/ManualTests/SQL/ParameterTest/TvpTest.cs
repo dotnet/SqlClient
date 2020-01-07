@@ -41,6 +41,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         // data value and server consts
         private string _connStr;
 
+        [ActiveIssue(5531)]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void TestMain()
         {
