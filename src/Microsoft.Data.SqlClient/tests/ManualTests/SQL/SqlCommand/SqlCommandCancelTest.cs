@@ -13,30 +13,35 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public static class SqlCommandCancelTest
     {
         // Shrink the packet size - this should make timeouts more likely
-        private static readonly string s_connStr = (new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { PacketSize = 512 }).ConnectionString;
+        private static readonly string tcp_connStr = (new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { PacketSize = 512 }).ConnectionString;
+        private static readonly string np_connStr = (new SqlConnectionStringBuilder(DataTestUtility.NPConnectionString) { PacketSize = 512 }).ConnectionString;
 
         [CheckConnStrSetupFact]
         public static void PlainCancelTest()
         {
-            PlainCancel(s_connStr);
+            PlainCancel(tcp_connStr);
+            PlainCancel(np_connStr);
         }
 
         [CheckConnStrSetupFact]
         public static void PlainMARSCancelTest()
         {
-            PlainCancel((new SqlConnectionStringBuilder(s_connStr) { MultipleActiveResultSets = true }).ConnectionString);
+            PlainCancel((new SqlConnectionStringBuilder(tcp_connStr) { MultipleActiveResultSets = true }).ConnectionString);
+            PlainCancel((new SqlConnectionStringBuilder(np_connStr) { MultipleActiveResultSets = true }).ConnectionString);
         }
 
         [CheckConnStrSetupFact]
         public static void PlainCancelTestAsync()
         {
-            PlainCancelAsync(s_connStr);
+            PlainCancelAsync(tcp_connStr);
+            PlainCancelAsync(np_connStr);
         }
 
         [CheckConnStrSetupFact]
         public static void PlainMARSCancelTestAsync()
         {
-            PlainCancelAsync((new SqlConnectionStringBuilder(s_connStr) { MultipleActiveResultSets = true }).ConnectionString);
+            PlainCancelAsync((new SqlConnectionStringBuilder(tcp_connStr) { MultipleActiveResultSets = true }).ConnectionString);
+            PlainCancelAsync((new SqlConnectionStringBuilder(np_connStr) { MultipleActiveResultSets = true }).ConnectionString);
         }
 
         private static void PlainCancel(string connString)
@@ -92,32 +97,51 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [CheckConnStrSetupFact]
         public static void MultiThreadedCancel_NonAsync()
         {
-            MultiThreadedCancel(s_connStr, false);
+            MultiThreadedCancel(tcp_connStr, false);
+            MultiThreadedCancel(np_connStr, false);
         }
 
         [CheckConnStrSetupFact]
         public static void MultiThreadedCancel_Async()
         {
-            MultiThreadedCancel(s_connStr, true);
+            MultiThreadedCancel(tcp_connStr, true);
+            MultiThreadedCancel(np_connStr, true);
         }
 
         [CheckConnStrSetupFact]
         public static void TimeoutCancel()
         {
-            TimeoutCancel(s_connStr);
+            TimeoutCancel(tcp_connStr);
+            TimeoutCancel(np_connStr);
         }
 
         [CheckConnStrSetupFact]
         public static void CancelAndDisposePreparedCommand()
         {
-            CancelAndDisposePreparedCommand(s_connStr);
+            CancelAndDisposePreparedCommand(tcp_connStr);
+            CancelAndDisposePreparedCommand(np_connStr);
         }
 
         [ActiveIssue(5541)]
         [CheckConnStrSetupFact]
         public static void TimeOutDuringRead()
         {
-            TimeOutDuringRead(s_connStr);
+            TimeOutDuringRead(tcp_connStr);
+            TimeOutDuringRead(np_connStr);
+        }
+
+        [CheckConnStrSetupFact]
+        public static void CancelDoesNotWait()
+        {
+            CancelDoesNotWait(tcp_connStr);
+            CancelDoesNotWait(np_connStr);
+        }
+
+        [CheckConnStrSetupFact]
+        public static void AsyncCancelDoesNotWait()
+        {
+            AsyncCancelDoesNotWait(tcp_connStr).Wait();
+            AsyncCancelDoesNotWait(np_connStr).Wait();
         }
 
         private static void MultiThreadedCancel(string constr, bool async)
@@ -153,14 +177,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using (SqlCommand cmd = con.CreateCommand())
                 {
                     cmd.CommandTimeout = 1;
-                    cmd.CommandText = "WAITFOR DELAY '00:00:30';select * from Customers";
+                    cmd.CommandText = "WAITFOR DELAY '00:00:20';select * from Customers";
 
                     string errorMessage = SystemDataResourceManager.Instance.SQL_Timeout_Execution;
-                    DataTestUtility.ExpectFailure<SqlException>(() => cmd.ExecuteReader(), new string[] { errorMessage });
+                    DataTestUtility.ExpectFailure<SqlException>(() => ExecuteReaderOnCmd(cmd), new string[] { errorMessage });
 
                     VerifyConnection(cmd);
                 }
             }
+        }
+
+        private static void ExecuteReaderOnCmd(SqlCommand cmd)
+        {
+            using (SqlDataReader reader = cmd.ExecuteReader())
+            { }
         }
 
         //InvalidOperationException from connection.Dispose if that connection has prepared command cancelled during reading of data
@@ -292,18 +322,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [CheckConnStrSetupFact]
-        public static void CancelDoesNotWait()
+        private static void CancelDoesNotWait(string connStr)
         {
             const int delaySeconds = 30;
             const int cancelSeconds = 1;
 
-            using (SqlConnection conn = new SqlConnection(s_connStr))
+            using (SqlConnection conn = new SqlConnection(connStr))
             using (var cmd = new SqlCommand($"WAITFOR DELAY '00:00:{delaySeconds:D2}'", conn))
             {
                 conn.Open();
 
-                Task.Delay(TimeSpan.FromSeconds(cancelSeconds * 2))
+                // Cancel after 2 seconds as sometimes total time elapsed can be .99 in case of 1 second that causes random failures
+                Task.Delay(TimeSpan.FromSeconds(cancelSeconds + 1))
                     .ContinueWith(t => cmd.Cancel());
 
                 DateTime started = DateTime.UtcNow;
@@ -324,13 +354,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [CheckConnStrSetupFact]
-        public static async Task AsyncCancelDoesNotWait()
+        private static async Task AsyncCancelDoesNotWait(string connStr)
         {
             const int delaySeconds = 30;
             const int cancelSeconds = 1;
 
-            using (SqlConnection conn = new SqlConnection(s_connStr))
+            using (SqlConnection conn = new SqlConnection(connStr))
             using (var cmd = new SqlCommand($"WAITFOR DELAY '00:00:{delaySeconds:D2}'", conn))
             {
                 await conn.OpenAsync();
@@ -339,6 +368,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Exception exception = null;
                 try
                 {
+                    // Cancel after 2 seconds as sometimes total time elapsed can be .99 in case of 1 second that causes random failures
                     await cmd.ExecuteNonQueryAsync(new CancellationTokenSource(2000).Token);
                 }
                 catch (Exception ex)
