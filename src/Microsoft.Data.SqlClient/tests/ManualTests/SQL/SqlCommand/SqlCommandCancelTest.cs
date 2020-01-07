@@ -303,7 +303,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 conn.Open();
 
-                Task.Delay(TimeSpan.FromSeconds(cancelSeconds))
+                Task.Delay(TimeSpan.FromSeconds(cancelSeconds * 2))
                     .ContinueWith(t => cmd.Cancel());
 
                 DateTime started = DateTime.UtcNow;
