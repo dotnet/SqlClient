@@ -228,9 +228,21 @@ namespace Microsoft.Data.SqlClient
 
                 if (StorageType.Decimal == _type)
                 {
-                    if (_value._numericInfo.data4 != 0 || _value._numericInfo.scale > 28)
+                    if (_value._numericInfo.scale > 28)
                     {
                         throw new OverflowException(SQLResource.ConversionOverflowMessage);
+                    }
+                    else if(_value._numericInfo.data4 != 0)
+                    {
+                        var sqlDecimal = new SqlDecimal(_value._numericInfo.precision,
+                                                        _value._numericInfo.scale,
+                                                        _value._numericInfo.positive,
+                                                        _value._numericInfo.data1,
+                                                        _value._numericInfo.data2,
+                                                        _value._numericInfo.data3,
+                                                        _value._numericInfo.data4
+                                                        );
+                        return Convert.ToDecimal(sqlDecimal.ToString()); // rounds to value allowable by decimal
                     }
                     return new decimal(_value._numericInfo.data1, _value._numericInfo.data2, _value._numericInfo.data3, !_value._numericInfo.positive, _value._numericInfo.scale);
                 }
