@@ -5,7 +5,7 @@
     <TargetGroup Condition="$(TargetFramework.StartsWith('net4'))">netfx</TargetGroup>
     <Configurations>Debug;Release;net46-Release;net46-Debug;netcoreapp2.1-Debug;netcoreapp2.1-Release</Configurations>
     <Platforms>AnyCPU;x86;x64</Platforms>
-    <IntermediateOutputPath>$(ObjFolder)$(Configuration).FunctionalTests</IntermediateOutputPath>  
+    <IntermediateOutputPath>$(ObjFolder)$(Configuration).FunctionalTests</IntermediateOutputPath>
     <OutputPath>$(BinFolder)$(Configuration).FunctionalTests</OutputPath>
   </PropertyGroup>
   <ItemGroup>
@@ -35,7 +35,7 @@
     <Compile Include="BaseProviderAsyncTest\MockCommand.cs" />
     <Compile Include="BaseProviderAsyncTest\MockConnection.cs" />
     <Compile Include="BaseProviderAsyncTest\MockDataReader.cs" />
-    <Compile Include="SqlCredentialTest.cs" />   
+    <Compile Include="SqlCredentialTest.cs" />
     <Compile Include="SqlDataRecordTest.cs" />
     <Compile Include="SqlParameterTest.cs" />
     <Compile Include="SqlClientFactoryTest.cs" />
@@ -51,15 +51,6 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.9.0" />
-    <PackageReference Include="xunit" Version="2.3.1" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.3.1">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.xunit.netcore.extensions" Version="2.2.0-preview1-03110-01" />
-    <PackageReference Include="System.Text.RegularExpressions" Version="4.3.0" />
-    <PackageReference Include="microsoft.dotnet.buildtools.testsuite" Version="2.2.0-preview1-03110-01" />
-    <PackageReference Include="System.Linq.Expressions" Version="4.3.0" />
     <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="4.5.1" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
   </ItemGroup>
@@ -69,7 +60,7 @@
   <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.0'">
     <PackageReference Include="System.Data.Odbc" Version="4.6.0" />
   </ItemGroup>
-   <ItemGroup>
+  <ItemGroup>
     <Reference Include="System.Transactions" />
   </ItemGroup>
   <ItemGroup>
@@ -88,11 +79,14 @@
     <ProjectReference Include="$(TestsPath)tools\CoreFx.Private.TestUtilities\CoreFx.Private.TestUtilities.csproj">
       <Name>CoreFx.Private.TestUtilities</Name>
     </ProjectReference>
+    <ProjectReference Include="$(TestsPath)tools\Microsoft.DotNet.XUnitExtensions\Microsoft.DotNet.XUnitExtensions.csproj">
+      <Name>Microsoft.DotNet.XUnitExtensions</Name>
+    </ProjectReference>
     <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
     <ProjectReference Condition="'$(TargetGroup)'=='netfx'" Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
     <!-- <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="$(CommonTestPath)\System\Diagnostics\RemoteExecutorConsoleApp\RemoteExecutorConsoleApp.csproj"> -->
-      <!-- <Project>{69e46a6f-9966-45a5-8945-2559fe337827}</Project> -->
-      <!-- <Name>RemoteExecutorConsoleApp</Name> -->
+    <!-- <Project>{69e46a6f-9966-45a5-8945-2559fe337827}</Project> -->
+    <!-- <Name>RemoteExecutorConsoleApp</Name> -->
     <!-- </ProjectReference > -->
   </ItemGroup>
   <ItemGroup>
