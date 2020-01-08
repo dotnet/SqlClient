@@ -121,7 +121,7 @@ namespace Microsoft.Data.SqlClient
         // cached metadata
         private _SqlMetaDataSet _cachedMetaData;
 
-        private Dictionary<int, SqlTceCipherInfoEntry> keysToBeSentToEnclave = new Dictionary<int, SqlTceCipherInfoEntry>();
+        private Dictionary<int, SqlTceCipherInfoEntry> keysToBeSentToEnclave;
         private bool requiresEnclaveComputations = false;
         internal EnclaveDelegate.EnclavePackage enclavePackage = null;
         private SqlEnclaveAttestationParameters enclaveAttestationParameters = null;
@@ -3872,7 +3872,10 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            keysToBeSentToEnclave.Clear();
+            if (keysToBeSentToEnclave != null)
+            {
+                keysToBeSentToEnclave.Clear();
+            }
             enclavePackage = null;
             requiresEnclaveComputations = false;
             enclaveAttestationParameters = null;
@@ -4666,9 +4669,14 @@ namespace Microsoft.Data.SqlClient
                             throw SQL.InvalidEncryptionKeyOrdinalEnclaveMetadata(requestedKey, columnEncryptionKeyTable.Count);
                         }
 
-                        if (!keysToBeSentToEnclave.ContainsKey(currentOrdinal))
+                        if (keysToBeSentToEnclave == null)
                         {
-                            this.keysToBeSentToEnclave.Add(currentOrdinal, cipherInfo);
+                            keysToBeSentToEnclave = new Dictionary<int, SqlTceCipherInfoEntry>();
+                            keysToBeSentToEnclave.Add(currentOrdinal, cipherInfo);
+                        }
+                        else if (!keysToBeSentToEnclave.ContainsKey(currentOrdinal))
+                        {
+                            keysToBeSentToEnclave.Add(currentOrdinal, cipherInfo);
                         }
 
                         requiresEnclaveComputations = true;
