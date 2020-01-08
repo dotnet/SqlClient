@@ -41,6 +41,11 @@ namespace Microsoft.Data.SqlClient.SNI
         public int DataLeft => (_dataLength - _dataOffset);
 
         /// <summary>
+        /// Indicates that the packet should be sent out of band bypassing the normal send-recieve lock
+        /// </summary>
+        public bool IsOutOfBand { get; set; }
+
+        /// <summary>
         /// Length of data
         /// </summary>
         public int Length => _dataLength;

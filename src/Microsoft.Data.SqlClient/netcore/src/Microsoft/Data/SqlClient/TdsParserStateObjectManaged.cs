@@ -137,6 +137,7 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             PacketHandle packetHandle = GetResetWritePacket(TdsEnums.HEADER_LEN);
             SetPacketData(packetHandle, SQL.AttentionHeader, TdsEnums.HEADER_LEN);
+            packetHandle.ManagedPacket.IsOutOfBand = true;
             return packetHandle;
         }
 

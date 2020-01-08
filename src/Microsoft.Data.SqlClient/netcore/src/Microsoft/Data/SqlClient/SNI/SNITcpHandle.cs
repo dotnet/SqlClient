@@ -24,6 +24,7 @@ namespace Microsoft.Data.SqlClient.SNI
     {
         private readonly string _targetServer;
         private readonly object _callbackObject;
+        private readonly object _sendSync;
         private readonly Socket _socket;
         private NetworkStream _tcpStream;
 
@@ -104,6 +105,7 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             _callbackObject = callbackObject;
             _targetServer = serverName;
+            _sendSync = new object();
 
             try
             {
@@ -432,24 +434,52 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error code</returns>
         public override uint Send(SNIPacket packet)
         {
-            lock (this)
+            bool releaseLock = false;
+            try
             {
-                try
+                // is the packet is marked out out-of-band (attention packets only) it must be
+                // sent immediately even if a send of recieve operation is already in progress
+                // because out of band packets are used to cancel ongoing operations
+                // so try to take the lock if possible but continue even if it can't be taken
+                if (packet.IsOutOfBand)
                 {
-                    packet.WriteToStream(_stream);
-                    return TdsEnums.SNI_SUCCESS;
+                    Monitor.TryEnter(this, ref releaseLock);
                 }
-                catch (ObjectDisposedException ode)
+                else
                 {
-                    return ReportTcpSNIError(ode);
+                    Monitor.Enter(this);
+                    releaseLock = true;
                 }
-                catch (SocketException se)
+
+                // this lock ensures that two packets are not being written to the transport at the same time
+                // so that sending a standard and an out-of-band packet are both written atomically no data is 
+                // interleaved
+                lock (_sendSync)
                 {
-                    return ReportTcpSNIError(se);
+                    try
+                    {
+                        packet.WriteToStream(_stream);
+                        return TdsEnums.SNI_SUCCESS;
+                    }
+                    catch (ObjectDisposedException ode)
+                    {
+                        return ReportTcpSNIError(ode);
+                    }
+                    catch (SocketException se)
+                    {
+                        return ReportTcpSNIError(se);
+                    }
+                    catch (IOException ioe)
+                    {
+                        return ReportTcpSNIError(ioe);
+                    }
                 }
-                catch (IOException ioe)
+            }
+            finally
+            {
+                if (releaseLock)
                 {
-                    return ReportTcpSNIError(ioe);
+                    Monitor.Exit(this);
                 }
             }
         }
