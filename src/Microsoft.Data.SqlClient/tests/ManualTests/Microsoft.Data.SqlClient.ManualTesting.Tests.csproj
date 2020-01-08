@@ -113,6 +113,7 @@
     <Compile Include="SQL\MirroringTest\ConnectionOnMirroringTest.cs" />
     <Compile Include="SQL\ParallelTransactionsTest\ParallelTransactionsTest.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\CopyWidenNullInexactNumerics.cs" />
+    <Compile Include="SQL\SqlCommand\SqlCommandSetTest.cs" />
     <Compile Include="SQL\SqlCredentialTest\SqlCredentialTest.cs" />
     <Compile Include="SQL\SqlSchemaInfoTest\SqlSchemaInfoTest.cs" />
     <Compile Include="SQL\SqlStatisticsTest\SqlStatisticsTest.cs" />
