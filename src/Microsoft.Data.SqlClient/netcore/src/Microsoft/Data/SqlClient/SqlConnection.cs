@@ -27,6 +27,12 @@ namespace Microsoft.Data.SqlClient
     /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/SqlConnection/*' />
     public sealed partial class SqlConnection : DbConnection, ICloneable
     {
+        private enum CultureCheckState : uint
+        {
+            Unknown = 0,
+            Standard = 1,
+            Invariant = 2
+        }
 
         private bool _AsyncCommandInProgress;
 
@@ -72,7 +78,9 @@ namespace Microsoft.Data.SqlClient
                 };
 
         // Lock to control setting of _CustomColumnEncryptionKeyStoreProviders
-        private static readonly Object _CustomColumnEncryptionKeyProvidersLock = new Object();
+        private static readonly object _CustomColumnEncryptionKeyProvidersLock = new object();
+        // statuc of invariant culture environment check
+        private static CultureCheckState _cultureCheckState;
 
         /// <summary>
         /// Custom provider list should be provided by the user. We shallow copy the user supplied dictionary into a ReadOnlyDictionary.
@@ -1408,13 +1416,22 @@ namespace Microsoft.Data.SqlClient
         {
             SqlConnectionString connectionOptions = (SqlConnectionString)ConnectionOptions;
 
-            // .NET Core 2.0 and up supports a Globalization Invariant Mode to reduce the size of
-            // required libraries for applications which don't need globalization support. SqlClient
-            // requires those libraries for core functionality and will throw exceptions later if they
-            // are not present. Throwing on open with a meaningful message helps identify the issue.
-            if (CultureInfo.GetCultureInfo("en-US").EnglishName.Contains("Invariant"))
+            CultureCheckState cultureCheckState = _cultureCheckState;
+            if (cultureCheckState != CultureCheckState.Standard)
             {
-                throw SQL.GlobalizationInvariantModeNotSupported();
+                // .NET Core 2.0 and up supports a Globalization Invariant Mode to reduce the size of
+                // required libraries for applications which don't need globalization support. SqlClient
+                // requires those libraries for core functionality and will throw exceptions later if they
+                // are not present. Throwing on open with a meaningful message helps identify the issue.
+                if (cultureCheckState == CultureCheckState.Unknown)
+                {
+                    cultureCheckState = CultureInfo.GetCultureInfo("en-US").EnglishName.Contains("Invariant") ? CultureCheckState.Invariant : CultureCheckState.Standard;
+                    _cultureCheckState = cultureCheckState;
+                }
+                if (cultureCheckState == CultureCheckState.Invariant)
+                {
+                    throw SQL.GlobalizationInvariantModeNotSupported();
+                }
             }
 
             _applyTransientFaultHandling = (retry == null && connectionOptions != null && connectionOptions.ConnectRetryCount > 0);
