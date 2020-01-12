@@ -1758,7 +1758,7 @@ namespace Microsoft.Data.SqlClient
         // PREPARED COMMAND METHODS
         ////////////////////////////////////////////////////////////////////////////////////////
 
-        protected override object ObtainAdditionalLocksForClose()
+        protected override bool ObtainAdditionalLocksForClose()
         {
             bool obtainParserLock = !ThreadHasParserLockForClose;
             Debug.Assert(obtainParserLock || _parserLock.ThreadMayHaveLock(), "Thread claims to have lock, but lock is not taken");
@@ -1770,10 +1770,9 @@ namespace Microsoft.Data.SqlClient
             return obtainParserLock;
         }
 
-        protected override void ReleaseAdditionalLocksForClose(object lockToken)
+        protected override void ReleaseAdditionalLocksForClose(bool lockToken)
         {
-            Debug.Assert(lockToken is bool, "Lock token should be boolean");
-            if ((bool)lockToken)
+            if (lockToken)
             {
                 ThreadHasParserLockForClose = false;
                 _parserLock.Release();

@@ -203,12 +203,12 @@ namespace Microsoft.Data.ProviderBase
             // By default, there is no preparation required
         }
 
-        virtual protected object ObtainAdditionalLocksForClose()
+        virtual protected bool ObtainAdditionalLocksForClose()
         {
-            return null; // no additional locks in default implementation
+            return false; // no additional locks in default implementation
         }
 
-        virtual protected void ReleaseAdditionalLocksForClose(object lockToken)
+        virtual protected void ReleaseAdditionalLocksForClose(bool lockToken)
         {
             // no additional locks in default implementation
         }
