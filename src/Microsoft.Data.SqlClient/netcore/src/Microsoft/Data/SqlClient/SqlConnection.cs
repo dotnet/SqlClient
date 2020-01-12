@@ -90,6 +90,8 @@ namespace Microsoft.Data.SqlClient
                 capacity: 1,
                 comparer: StringComparer.OrdinalIgnoreCase);
 
+        private static readonly Action<object> s_openAsyncCancel = OpenAsyncCancel;
+
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionKeyCacheTtl/*' />
         public static TimeSpan ColumnEncryptionKeyCacheTtl { get; set; } = TimeSpan.FromHours(2);
 
@@ -1281,7 +1283,7 @@ namespace Microsoft.Data.SqlClient
                     CancellationTokenRegistration registration = new CancellationTokenRegistration();
                     if (cancellationToken.CanBeCanceled)
                     {
-                        registration = cancellationToken.Register(s => ((TaskCompletionSource<DbConnectionInternal>)s).TrySetCanceled(), completion);
+                        registration = cancellationToken.Register(s_openAsyncCancel, completion);
                     }
                     OpenAsyncRetry retry = new OpenAsyncRetry(this, completion, result, registration);
                     _currentCompletion = new Tuple<TaskCompletionSource<DbConnectionInternal>, Task>(completion, result.Task);
@@ -1300,6 +1302,11 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlStatistics.StopTimer(statistics);
             }
+        }
+
+        private static void OpenAsyncCancel(object state)
+        {
+            ((TaskCompletionSource<DbConnectionInternal>)state).TrySetCanceled();
         }
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchema2/*' />
