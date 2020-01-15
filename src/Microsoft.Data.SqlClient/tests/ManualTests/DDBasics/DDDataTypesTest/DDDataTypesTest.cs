@@ -79,9 +79,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string tempTable = "max_" + Guid.NewGuid().ToString().Replace('-', '_');
             string initStr = "create table " + tempTable + " (col1 varchar(max), col2 nvarchar(max), col3 varbinary(max))";
 
-            string insertNormStr = "INSERT " + tempTable + " VALUES('ASCIASCIASCIASCIASCIASCIThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first row', ";
-            insertNormStr += "N'This is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first row', ";
-            insertNormStr += "0x010100110011000111000111000011110000111100001111000001111100000111110000011111000001111100000111110000011111000001111100000111110000011111)";
+            string varcharVal = "ASCIASCIASCIASCIASCIASCIThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first row";
+            string nvarcharVal = "This is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first row";
+            string varbinaryVal = "010100110011000111000111000011110000111100001111000001111100000111110000011111000001111100000111110000011111000001111100000111110000011111";
+
+            string varcharVal2 = "This is second row ANSI value";
+            string bigNVarchar = "second line, Insert big, Insert Big, This is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second row";
+            for (int i = 0; i < 25; i++)
+            {
+                bigNVarchar += "This is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second row";
+            }
+            string varbinaryVal2 = "ADAD";
+
+            string insertNormStr = "INSERT " + tempTable + $" VALUES('{varcharVal}', ";
+            insertNormStr += $"N'{nvarcharVal}', ";
+            insertNormStr += $"0x{varbinaryVal})";
 
             string insertParamStr = "INSERT " + tempTable + " VALUES(@x, @y, @z)";
             string queryStr = "select * from " + tempTable;
@@ -105,31 +117,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     cmd2.Parameters.Add("@x", SqlDbType.VarChar);
                     cmd2.Parameters.Add("@y", SqlDbType.NVarChar);
                     cmd2.Parameters.Add("@z", SqlDbType.VarBinary);
-                    cmd2.Parameters[1].Value = "second line, Insert big, Insert Big, This is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second row";
-                    cmd2.Parameters[1].Value += "This is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second row";
-                    cmd2.Parameters[1].Value += "This is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second row";
-                    cmd2.Parameters[1].Value += "This is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second row";
-                    cmd2.Parameters[1].Value += "This is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second row";
-                    cmd2.Parameters[1].Value += "This is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second row";
-                    cmd2.Parameters[1].Value += "This is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second row";
-                    cmd2.Parameters[1].Value += "This is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second row";
-                    cmd2.Parameters[1].Value += "This is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second row";
-                    cmd2.Parameters[1].Value += "This is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second row";
-                    cmd2.Parameters[1].Value += "This is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second row";
-                    cmd2.Parameters[1].Value += "This is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second row";
-                    cmd2.Parameters[1].Value += "This is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second row";
-                    cmd2.Parameters[1].Value += "This is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second row";
-                    cmd2.Parameters[1].Value += "This is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second row";
-                    cmd2.Parameters[1].Value += "This is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second row";
-                    cmd2.Parameters[1].Value += "This is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second row";
-                    cmd2.Parameters[1].Value += "This is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second row";
-                    cmd2.Parameters[1].Value += "This is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second row";
-                    cmd2.Parameters[1].Value += "This is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second row";
-                    cmd2.Parameters[1].Value += "This is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second row";
-                    cmd2.Parameters[1].Value += "This is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second row";
-                    cmd2.Parameters[1].Value += "This is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second row";
-                    cmd2.Parameters[1].Value += "This is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second row";
-                    cmd2.Parameters[1].Value += "This is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second row";
+                    cmd2.Parameters[1].Value = bigNVarchar;
 
                     byte[] bytes = new byte[2];
 
@@ -138,7 +126,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         bytes[i] = 0xad;
                     }
                     cmd2.Parameters[2].Value = bytes;
-                    cmd2.Parameters[0].Value = "This is second row ANSI value";
+                    cmd2.Parameters[0].Value = varcharVal2;
                     cmd2.ExecuteNonQuery();
 
                     cmd.CommandText = queryStr;
@@ -150,15 +138,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         {
                             new string[]
                             {
-                                "ASCIASCIASCIASCIASCIASCIThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first row",
-                                "This is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first rowThis is the first row",
-                                "010100110011000111000111000011110000111100001111000001111100000111110000011111000001111100000111110000011111000001111100000111110000011111"
+                                varcharVal,
+                                nvarcharVal,
+                                varbinaryVal
                             },
                             new string[]
                             {
-                                "This is second row ANSI value",
-                                "second line, Insert big, Insert Big, This is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second rowThis is the second row",
-                                "ADAD"
+                                varcharVal2,
+                                bigNVarchar,
+                                varbinaryVal2
                             }
                         };
 
@@ -168,14 +156,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                             char[] stringResult = reader.GetSqlChars(0).Value;
                             DataTestUtility.AssertEqualsWithDescription(expectedValues[currentValue][0], new string(stringResult, 0, stringResult.Length), "FAILED: Did not receive expected data");
+
                             stringResult = reader.GetSqlChars(1).Value;
                             DataTestUtility.AssertEqualsWithDescription(expectedValues[currentValue][1], new string(stringResult, 0, stringResult.Length), "FAILED: Did not receive expected data");
 
                             byte[] bb = reader.GetSqlBytes(2).Value;
                             char[] cc = new char[bb.Length * 2];
                             ConvertBinaryToChar(bb, cc);
+                            DataTestUtility.AssertEqualsWithDescription(expectedValues[currentValue][2], new String(cc, 0, cc.Length), "FAILED: Did not receive expected data");
 
-                            DataTestUtility.AssertEqualsWithDescription(expectedValues[currentValue][2], new string(cc, 0, cc.Length), "FAILED: Did not receive expected data");
                             currentValue++;
                         }
                     }

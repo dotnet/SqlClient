@@ -32,6 +32,28 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
             }
         }
+        [CheckConnStrSetupFact]
+        public static void UnicodeTest()
+        {
+            string hex = "0x0bdc";
+            byte[] b = Encoding.Unicode.GetBytes("\u0dbc");
+            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                connection.Open();
+                using (SqlCommand command = connection.CreateCommand())
+                {
+                    command.CommandText = $"SELECT CONVERT(NVARCHAR(4000), {hex}), CONVERT(NVARCHAR(MAX), {hex})";
+                    using (SqlDataReader reader = command.ExecuteReader())
+                    {
+                        reader.Read();
+                        var v1 = reader.GetValue(0);
+                        var v2 = reader.GetValue(1);
+                        Assert.Equal(v1, v2);
+                        Assert.Equal(v1, Encoding.Unicode.GetString(b));
+                    }
+                }
+            }
+        }
 
         [CheckConnStrSetupFact]
         public static void MultiQuerySchema()
