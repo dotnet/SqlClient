@@ -34,6 +34,7 @@ using Microsoft.Data.SqlClient.Server;
 
 namespace Microsoft.Data.SqlClient
 {
+    using global::SqlClient.Microsoft.Data.SqlClient;
     using Microsoft.Data.Common;
 
     /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/SqlConnection/*' />
@@ -1102,9 +1103,7 @@ namespace Microsoft.Data.SqlClient
         [SuppressMessage("Microsoft.Reliability", "CA2004:RemoveCallsToGCKeepAlive")]
         override protected DbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
         {
-            IntPtr hscp;
-
-            Bid.ScopeEnter(out hscp, "<prov.SqlConnection.BeginDbTransaction|API> %d#, isolationLevel=%d{ds.IsolationLevel}", ObjectID, (int)isolationLevel);
+            SqlClientEventSource.Log.ScopeEnter($"<prov.SqlConnection.BeginDbTransaction|API> {ObjectID}#, isolationLevel={(int)isolationLevel}");
             try
             {
 
@@ -1120,7 +1119,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                Bid.ScopeLeave(ref hscp);
+                SqlClientEventSource.Log.ScopeLeave();
             }
         }
 
@@ -1129,10 +1128,8 @@ namespace Microsoft.Data.SqlClient
         {
             WaitForPendingReconnection();
             SqlStatistics statistics = null;
-            IntPtr hscp;
             string xactName = ADP.IsEmpty(transactionName) ? "None" : transactionName;
-            Bid.ScopeEnter(out hscp, "<sc.SqlConnection.BeginTransaction|API> %d#, iso=%d{ds.IsolationLevel}, transactionName='%ls'\n", ObjectID, (int)iso,
-                        xactName);
+            SqlClientEventSource.Log.ScopeEnter($"<sc.SqlConnection.BeginTransaction|API> {ObjectID}#, iso={(int)iso}, transactionName='{xactName}'\n");
 
             try
             {
@@ -1160,7 +1157,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                Bid.ScopeLeave(ref hscp);
+                SqlClientEventSource.Log.ScopeLeave();
                 SqlStatistics.StopTimer(statistics);
             }
         }
@@ -1170,7 +1167,7 @@ namespace Microsoft.Data.SqlClient
         {
             SqlStatistics statistics = null;
             RepairInnerConnection();
-            Bid.CorrelationTrace("<sc.SqlConnection.ChangeDatabase|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
+            SqlClientEventSource.Log.CorrelationTrace($"<sc.SqlConnection.ChangeDatabase|API|Correlation> ObjectID{ObjectID}#, ActivityID %ls\n");
             TdsParser bestEffortCleanupTarget = null;
             RuntimeHelpers.PrepareConstrainedRegions();
             try
@@ -1179,7 +1176,8 @@ namespace Microsoft.Data.SqlClient
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
-                try {
+                try
+                {
                     tdsReliabilitySection.Start();
 #else
                 {
@@ -1189,7 +1187,8 @@ namespace Microsoft.Data.SqlClient
                     InnerConnection.ChangeDatabase(database);
                 }
 #if DEBUG
-                finally {
+                finally
+                {
                     tdsReliabilitySection.Stop();
                 }
 #endif //DEBUG
@@ -1244,7 +1243,6 @@ namespace Microsoft.Data.SqlClient
         object ICloneable.Clone()
         {
             SqlConnection clone = new SqlConnection(this);
-            Bid.Trace("<sc.SqlConnection.Clone|API> %d#, clone=%d#\n", ObjectID, clone.ObjectID);
             return clone;
         }
 
@@ -1262,9 +1260,8 @@ namespace Microsoft.Data.SqlClient
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Close/*' />
         override public void Close()
         {
-            IntPtr hscp;
-            Bid.ScopeEnter(out hscp, "<sc.SqlConnection.Close|API> %d#", ObjectID);
-            Bid.CorrelationTrace("<sc.SqlConnection.Close|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
+            SqlClientEventSource.Log.ScopeEnter($"<sc.SqlConnection.Close|API> {ObjectID}#");
+            SqlClientEventSource.Log.CorrelationTrace($"<sc.SqlConnection.Close|API|Correlation> ObjectID{ObjectID}#, ActivityID %ls\n");
             try
             {
                 SqlStatistics statistics = null;
@@ -1277,7 +1274,8 @@ namespace Microsoft.Data.SqlClient
                     TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                     RuntimeHelpers.PrepareConstrainedRegions();
-                    try {
+                    try
+                    {
                         tdsReliabilitySection.Start();
 #else
                     {
@@ -1309,7 +1307,8 @@ namespace Microsoft.Data.SqlClient
                         }
                     }
 #if DEBUG
-                    finally {
+                    finally
+                    {
                         tdsReliabilitySection.Stop();
                     }
 #endif //DEBUG
@@ -1344,7 +1343,7 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlDebugContext sdc = _sdc;
                 _sdc = null;
-                Bid.ScopeLeave(ref hscp);
+                SqlClientEventSource.Log.ScopeLeave();
                 if (sdc != null)
                 {
                     sdc.Dispose();
@@ -1397,9 +1396,8 @@ namespace Microsoft.Data.SqlClient
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Open/*' />
         override public void Open()
         {
-            IntPtr hscp;
-            Bid.ScopeEnter(out hscp, "<sc.SqlConnection.Open|API> %d#", ObjectID);
-            Bid.CorrelationTrace("<sc.SqlConnection.Open|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
+            SqlClientEventSource.Log.ScopeEnter($"<sc.SqlConnection.Open|API|Correlation> ObjectID: {ObjectID}, ActivityID %ls\n");
+            SqlClientEventSource.Log.CorrelationTrace($"<sc.SqlConnection.Open|API|Correlation> ObjectID{ObjectID}#, ActivityID %ls\n");
 
             try
             {
@@ -1433,7 +1431,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                Bid.ScopeLeave(ref hscp);
+                SqlClientEventSource.Log.ScopeLeave();
             }
         }
 
@@ -1467,7 +1465,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (ctoken.IsCancellationRequested)
                     {
-                        Bid.Trace("<sc.SqlConnection.ReconnectAsync|INFO> Orginal ClientConnectionID %ls - reconnection cancelled\n", _originalConnectionId.ToString());
+                        SqlClientEventSource.Log.Trace($"<sc.SqlConnection.ReconnectAsync|INFO> Orginal ClientConnectionID: {_originalConnectionId.ToString()} - reconnection cancelled.\n");
                         return;
                     }
                     try
@@ -1488,15 +1486,15 @@ namespace Microsoft.Data.SqlClient
                             _impersonateIdentity = null;
                             ForceNewConnection = false;
                         }
-                        Bid.Trace("<sc.SqlConnection.ReconnectIfNeeded|INFO> Reconnection suceeded.  ClientConnectionID %ls -> %ls \n", _originalConnectionId.ToString(), ClientConnectionId.ToString());
+                        SqlClientEventSource.Log.Trace($"<sc.SqlConnection.ReconnectIfNeeded|INFO> Reconnection suceeded.  ClientConnectionID {_originalConnectionId.ToString()} -> {ClientConnectionId.ToString()} \n");
                         return;
                     }
                     catch (SqlException e)
                     {
-                        Bid.Trace("<sc.SqlConnection.ReconnectAsyncINFO> Orginal ClientConnectionID %ls - reconnection attempt failed error %ls\n", _originalConnectionId.ToString(), e.Message);
+                        SqlClientEventSource.Log.Trace($"<sc.SqlConnection.ReconnectAsyncINFO> Orginal ClientConnectionID {_originalConnectionId} - reconnection attempt failed error {e.Message}\n");
                         if (attempt == retryCount - 1)
                         {
-                            Bid.Trace("<sc.SqlConnection.ReconnectAsync|INFO> Orginal ClientConnectionID %ls - give up reconnection\n", _originalConnectionId.ToString());
+                            SqlClientEventSource.Log.Trace($"<sc.SqlConnection.ReconnectAsync|INFO> Orginal ClientConnectionID {_originalConnectionId.ToString()} - give up reconnection\n");
                             throw SQL.CR_AllAttemptsFailed(e, _originalConnectionId);
                         }
                         if (timeout > 0 && ADP.TimerRemaining(commandTimeoutExpiration) < ADP.TimerFromSeconds(ConnectRetryInterval))
@@ -1562,7 +1560,7 @@ namespace Microsoft.Data.SqlClient
                                         if (cData._unrecoverableStatesCount == 0)
                                         { // could change since the first check, but now is stable since connection is know to be broken
                                             _originalConnectionId = ClientConnectionId;
-                                            Bid.Trace("<sc.SqlConnection.ReconnectIfNeeded|INFO> Connection ClientConnectionID %ls is invalid, reconnecting\n", _originalConnectionId.ToString());
+                                            SqlClientEventSource.Log.Trace($"<sc.SqlConnection.ReconnectIfNeeded|INFO> Connection ClientConnectionID {_originalConnectionId.ToString()} is invalid, reconnecting\n");
                                             _recoverySessionData = cData;
                                             if (beforeDisconnect != null)
                                             {
@@ -1654,9 +1652,8 @@ namespace Microsoft.Data.SqlClient
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsync/*' />
         public override Task OpenAsync(CancellationToken cancellationToken)
         {
-            IntPtr hscp;
-            Bid.ScopeEnter(out hscp, "<sc.SqlConnection.OpenAsync|API> %d#", ObjectID);
-            Bid.CorrelationTrace("<sc.SqlConnection.OpenAsync|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
+            SqlClientEventSource.Log.Trace($"<sc.SqlConnection.OpenAsync|API> {ObjectID}#");
+            SqlClientEventSource.Log.CorrelationTrace($"<sc.SqlConnection.OpenAsync|API|Correlation> ObjectID{ObjectID}#, ActivityID %ls\n");
             try
             {
 
@@ -1733,7 +1730,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                Bid.ScopeLeave(ref hscp);
+                SqlClientEventSource.Log.ScopeLeave();
             }
         }
 
@@ -1754,7 +1751,7 @@ namespace Microsoft.Data.SqlClient
 
             internal void Retry(Task<DbConnectionInternal> retryTask)
             {
-                Bid.Trace("<sc.SqlConnection.OpenAsyncRetry|Info> %d#\n", _parent.ObjectID);
+                SqlClientEventSource.Log.Trace($"<sc.SqlConnection.OpenAsyncRetry|Info> {_parent.ObjectID}#\n");
                 _registration.Dispose();
                 try
                 {
@@ -1867,7 +1864,8 @@ namespace Microsoft.Data.SqlClient
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
-                try {
+                try
+                {
                     tdsReliabilitySection.Start();
 #else
                 {
@@ -1921,7 +1919,8 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
 #if DEBUG
-                finally {
+                finally
+                {
                     tdsReliabilitySection.Stop();
                 }
 #endif //DEBUG
@@ -2099,7 +2098,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (capturedCloseCount == _closeCount)
                         {
-                            Bid.Trace("<sc.SqlConnection.OnError|INFO> %d#, Connection broken.\n", ObjectID);
+                            SqlClientEventSource.Log.Trace($"<sc.SqlConnection.OnError|INFO> {ObjectID}#, Connection broken.\n");
                             Close();
                         }
                     };
@@ -2108,7 +2107,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    Bid.Trace("<sc.SqlConnection.OnError|INFO> %d#, Connection broken.\n", ObjectID);
+                    SqlClientEventSource.Log.Trace($"<sc.SqlConnection.OnError|INFO> {ObjectID}#, Connection broken.\n");
                     Close();
                 }
             }
@@ -2213,11 +2212,11 @@ namespace Microsoft.Data.SqlClient
 
         internal void OnInfoMessage(SqlInfoMessageEventArgs imevent, out bool notified)
         {
-            if (Bid.TraceOn)
-            {
-                Debug.Assert(null != imevent, "null SqlInfoMessageEventArgs");
-                Bid.Trace("<sc.SqlConnection.OnInfoMessage|API|INFO> %d#, Message='%ls'\n", ObjectID, ((null != imevent) ? imevent.Message : ""));
-            }
+
+            Debug.Assert(null != imevent, "null SqlInfoMessageEventArgs");
+            var imeventValue = (null != imevent) ? imevent.Message : "";
+            SqlClientEventSource.Log.Trace($"<sc.SqlConnection.OnInfoMessage|API|INFO> {ObjectID}#, Message='{imeventValue}'\n");
+
             SqlInfoMessageEventHandler handler = (SqlInfoMessageEventHandler)Events[EventInfoMessage];
             if (null != handler)
             {
@@ -2430,9 +2429,8 @@ namespace Microsoft.Data.SqlClient
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ChangePasswordConnectionStringNewPassword/*' />
         public static void ChangePassword(string connectionString, string newPassword)
         {
-            IntPtr hscp;
-            Bid.ScopeEnter(out hscp, "<sc.SqlConnection.ChangePassword|API>");
-            Bid.CorrelationTrace("<sc.SqlConnection.ChangePassword|API|Correlation> ActivityID %ls\n");
+            SqlClientEventSource.Log.ScopeEnter("<sc.SqlConnection.ChangePassword|API>");
+            SqlClientEventSource.Log.CorrelationTrace("<sc.SqlConnection.ChangePassword|API|Correlation> ActivityID %ls\n");
             try
             {
                 if (ADP.IsEmpty(connectionString))
@@ -2471,16 +2469,15 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                Bid.ScopeLeave(ref hscp);
+                SqlClientEventSource.Log.ScopeLeave();
             }
         }
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='/docs/members[@name="SqlConnection"]/ChangePasswordConnectionStringCredentialNewSecurePassword/*' />
         public static void ChangePassword(string connectionString, SqlCredential credential, SecureString newSecurePassword)
         {
-            IntPtr hscp;
-            Bid.ScopeEnter(out hscp, "<sc.SqlConnection.ChangePassword|API>");
-            Bid.CorrelationTrace("<sc.SqlConnection.ChangePassword|API|Correlation> ActivityID %ls\n");
+            SqlClientEventSource.Log.ScopeEnter("<sc.SqlConnection.ChangePassword|API>");
+            SqlClientEventSource.Log.CorrelationTrace("<sc.SqlConnection.ChangePassword|API|Correlation> ActivityID %ls\n");
             try
             {
                 if (ADP.IsEmpty(connectionString))
@@ -2542,7 +2539,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                Bid.ScopeLeave(ref hscp);
+                SqlClientEventSource.Log.ScopeLeave();
             }
         }
 
@@ -2648,16 +2645,13 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(TypeSystemAssemblyVersion != null, "TypeSystemAssembly should be set !");
             if (string.Compare(asmRef.Name, "Microsoft.SqlServer.Types", StringComparison.OrdinalIgnoreCase) == 0)
             {
-                if (Bid.TraceOn)
+                if (asmRef.Version != TypeSystemAssemblyVersion)
                 {
-                    if (asmRef.Version != TypeSystemAssemblyVersion)
-                    {
-                        Bid.Trace("<sc.SqlConnection.ResolveTypeAssembly> SQL CLR type version change: Server sent %ls, client will instantiate %ls",
-                            asmRef.Version.ToString(), TypeSystemAssemblyVersion.ToString());
-                    }
+                    SqlClientEventSource.Log.Trace($"<sc.SqlConnection.ResolveTypeAssembly> SQL CLR type version change: Server sent {asmRef.Version.ToString()}, client will instantiate {TypeSystemAssemblyVersion.ToString()}");
                 }
                 asmRef.Version = TypeSystemAssemblyVersion;
             }
+
             try
             {
                 return Assembly.Load(asmRef);
