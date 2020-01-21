@@ -25,7 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Improved performance of Managed SNI RPC Parameter Usage [#209](https://github.com/dotnet/SqlClient/pull/209) - Ported [dotnet/corefx#34049](https://github.com/dotnet/corefx/pull/34049)
 - Changed enclave key map to be lazy initialized [#372](https://github.com/dotnet/SqlClient/pull/372)
 - Changed `Recieve()` and `ReceiveAsync()` implementation to receive null packets on failure [#350](https://github.com/dotnet/SqlClient/pull/350)
-- Changed `EnclaveProviderBase` caching implementation to support Async Scenarios [#346](https://github.com/dotnet/SqlClient/pull/346)
+- Changed `EnclaveProviderBase` caching implementation to support Async Scenarios  _(Introduces breaking changes)_ [#346](https://github.com/dotnet/SqlClient/pull/346)
 
 
 ## [Stable Release 1.1.0] - 2019-11-20
