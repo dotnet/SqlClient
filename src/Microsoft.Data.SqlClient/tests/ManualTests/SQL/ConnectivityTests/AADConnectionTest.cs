@@ -11,13 +11,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         private static void ConnectAndDisconnect(string connectionString, SqlCredential credential = null)
         {
-            SqlConnection conn = new SqlConnection(connectionString);
-            if (credential != null)
+            using (SqlConnection conn = new SqlConnection(connectionString))
             {
-                conn.Credential = credential;
+                if (credential != null)
+                {
+                    conn.Credential = credential;
+                }
+                conn.Open();
             }
-            conn.Open();
-            conn.Close();
         }
 
         private static string RemoveKeysInConnStr(string connStr, string[] keysToRemove)
@@ -218,15 +219,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using (SqlConnection conn = new SqlConnection(DataTestUtility.AADPasswordConnectionString))
                 {
                     conn.Open();
-                    SqlCommand sqlCommand = new SqlCommand
+                    using (SqlCommand sqlCommand = new SqlCommand
                     (
                         cmdText: $"SELECT SUSER_SNAME();",
                         connection: conn,
                         transaction: null
-                    );
-                    string customerId = (string)sqlCommand.ExecuteScalar();
-                    string expected = RetrieveValueFromConnStr(DataTestUtility.AADPasswordConnectionString, "User ID");
-                    Assert.Equal(expected, customerId);
+                    ))
+                    {
+
+                        string customerId = (string)sqlCommand.ExecuteScalar();
+                        string expected = RetrieveValueFromConnStr(DataTestUtility.AADPasswordConnectionString, "User ID");
+                        Assert.Equal(expected, customerId);
+                    }
                 }
             }
             catch (SqlException e)
@@ -286,7 +290,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
-        [ActiveIssue(9417)]
         public static void EmptyCredInConnStrAADPassword()
         {
             // connection fails with expected error message.
@@ -294,7 +297,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, removeKeys) + "User ID=; Password=;";
             AggregateException e = Assert.Throws<AggregateException>(() => ConnectAndDisconnect(connStr));
 
-            string expectedMessage = "Unsupported User Type 'Unknown'";
+            string expectedMessage = "Could not identify the user logged into the OS";
             Assert.Contains(expectedMessage, e.InnerException.InnerException.InnerException.Message);
         }
 
