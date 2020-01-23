@@ -8,7 +8,7 @@
           BeforeTargets="CoreCompile">
     <PropertyGroup>
       <ThisAssemblyCsContents>
-[assembly: System.CLSCompliantAttribute(true)]
+[assembly: System.CLSCompliant(true)]
 namespace System
 {
 internal static class ThisAssembly

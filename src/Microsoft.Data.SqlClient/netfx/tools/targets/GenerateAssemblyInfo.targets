@@ -13,7 +13,7 @@
             <AssemblyInfo Include="using System.Runtime.InteropServices%3B" />
             <AssemblyInfo Include="using System.Runtime.Versioning%3B%0A" />
 
-            <AssemblyInfo Include="[assembly: System.CLSCompliantAttribute(true)]" />
+            <AssemblyInfo Include="[assembly: System.CLSCompliant(true)]" />
             <AssemblyInfo Include="[assembly: System.Runtime.InteropServices.ComVisibleAttribute(false)]" />
             <AssemblyInfo Include="[assembly: System.Runtime.Versioning.TargetFrameworkAttribute(&quot;.NETFramework,Version=$(TargetFrameworkVersion)&quot;)]" />
             <AssemblyInfo Include="[assembly: System.Resources.SatelliteContractVersion(&quot;$(AssemblyVersion)&quot;)]" />
