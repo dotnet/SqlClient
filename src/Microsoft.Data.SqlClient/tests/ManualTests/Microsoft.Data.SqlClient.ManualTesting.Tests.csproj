@@ -229,8 +229,10 @@
     <Compile Include="SQL\SqlFileStreamTest\SqlFileStreamTest.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="System.Transactions" />
     <Reference Include="System.Runtime.Caching" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetGroup)' == 'netfx' ">
+    <Reference Include="System.Transactions" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\add-ons\AzureKeyVaultProvider\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
