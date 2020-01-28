@@ -228,7 +228,7 @@
     <Compile Include="SQL\ConnectionPoolTest\PoolBlockPeriodTest.netcoreapp.cs" />
     <Compile Include="SQL\SqlFileStreamTest\SqlFileStreamTest.cs" />
   </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.1'">
+  <ItemGroup>
     <Reference Include="System.Transactions" />
   </ItemGroup>
   <ItemGroup>
