@@ -30,8 +30,6 @@ namespace Microsoft.Data.ProviderBase
             ShuttingDown,
         }
 
-        internal const Bid.ApiGroup PoolerTracePoints = Bid.ApiGroup.Pooling;
-
         // This class is a way to stash our cloned Tx key for later disposal when it's no longer needed.
         // We can't get at the key in the dictionary without enumerating entries, so we stash an extra
         // copy as part of the value.
@@ -84,7 +82,7 @@ namespace Microsoft.Data.ProviderBase
                 _pool = pool;
                 _transactedCxns = new Dictionary<SysTx.Transaction, TransactedConnectionList>();
 
-                Bid.PoolerTrace("<prov.DbConnectionPool.TransactedConnectionPool.TransactedConnectionPool|RES|CPOOL> %d#, Constructed for connection pool %d#\n", ObjectID, _pool.ObjectID);
+                SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.TransactedConnectionPool.TransactedConnectionPool|RES|CPOOL> {ObjectID}#, Constructed for connection pool {_pool.ObjectID}#\n");
             }
 
             internal int ObjectID
@@ -143,7 +141,7 @@ namespace Microsoft.Data.ProviderBase
 
                 if (null != transactedObject)
                 {
-                    Bid.PoolerTrace("<prov.DbConnectionPool.TransactedConnectionPool.GetTransactedObject|RES|CPOOL> %d#, Transaction %d#, Connection %d#, Popped.\n", ObjectID, transaction.GetHashCode(), transactedObject.ObjectID);
+                    SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.TransactedConnectionPool.GetTransactedObject|RES|CPOOL> { ObjectID}#, Transaction {transaction.GetHashCode()}#, Connection {transactedObject.ObjectID}#, Popped.\n");
                 }
                 return transactedObject;
             }
@@ -170,7 +168,7 @@ namespace Microsoft.Data.ProviderBase
                         lock (connections)
                         {
                             Debug.Assert(0 > connections.IndexOf(transactedObject), "adding to pool a second time?");
-                            Bid.PoolerTrace("<prov.DbConnectionPool.TransactedConnectionPool.PutTransactedObject|RES|CPOOL> %d#, Transaction %d#, Connection %d#, Pushing.\n", ObjectID, transaction.GetHashCode(), transactedObject.ObjectID);
+                            SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.TransactedConnectionPool.PutTransactedObject|RES|CPOOL> {ObjectID}#, Transaction {transaction.GetHashCode()}#, Connection {transactedObject.ObjectID}#, Pushing.\n");
 
                             connections.Add(transactedObject);
                         }
@@ -206,14 +204,14 @@ namespace Microsoft.Data.ProviderBase
                                 lock (connections)
                                 {
                                     Debug.Assert(0 > connections.IndexOf(transactedObject), "adding to pool a second time?");
-                                    Bid.PoolerTrace("<prov.DbConnectionPool.TransactedConnectionPool.PutTransactedObject|RES|CPOOL> %d#, Transaction %d#, Connection %d#, Pushing.\n", ObjectID, transaction.GetHashCode(), transactedObject.ObjectID);
+                                    SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.TransactedConnectionPool.PutTransactedObject|RES|CPOOL> {ObjectID}#, Transaction {transaction.GetHashCode()}#, Connection {transactedObject.ObjectID}#, Pushing.\n");
 
                                     connections.Add(transactedObject);
                                 }
                             }
                             else
                             {
-                                Bid.PoolerTrace("<prov.DbConnectionPool.TransactedConnectionPool.PutTransactedObject|RES|CPOOL> %d#, Transaction %d#, Connection %d#, Adding List to transacted pool.\n", ObjectID, transaction.GetHashCode(), transactedObject.ObjectID);
+                                SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.TransactedConnectionPool.PutTransactedObject|RES|CPOOL> {ObjectID}#, Transaction {transaction.GetHashCode()}#, Connection {transactedObject.ObjectID}#, Adding List to transacted pool.\n");
 
                                 // add the connection/transacted object to the list
                                 newConnections.Add(transactedObject);
@@ -241,7 +239,7 @@ namespace Microsoft.Data.ProviderBase
                             }
                         }
                     }
-                    Bid.PoolerTrace("<prov.DbConnectionPool.TransactedConnectionPool.PutTransactedObject|RES|CPOOL> %d#, Transaction %d#, Connection %d#, Added.\n", ObjectID, transaction.GetHashCode(), transactedObject.ObjectID);
+                    SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.TransactedConnectionPool.PutTransactedObject|RES|CPOOL> {ObjectID}#, Transaction {transaction.GetHashCode()}#, Connection {transactedObject.ObjectID}#, Added.\n");
                 }
 
                 Pool.PerformanceCounters.NumberOfFreeConnections.Increment();
@@ -250,7 +248,7 @@ namespace Microsoft.Data.ProviderBase
 
             internal void TransactionEnded(SysTx.Transaction transaction, DbConnectionInternal transactedObject)
             {
-                Bid.PoolerTrace("<prov.DbConnectionPool.TransactedConnectionPool.TransactionEnded|RES|CPOOL> %d#, Transaction %d#, Connection %d#, Transaction Completed\n", ObjectID, transaction.GetHashCode(), transactedObject.ObjectID);
+                SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.TransactedConnectionPool.TransactionEnded|RES|CPOOL> {ObjectID}#, Transaction {transaction.GetHashCode()}#, Connection {transactedObject.ObjectID}#, Transaction Completed\n");
 
                 TransactedConnectionList connections;
                 int entry = -1;
@@ -285,7 +283,7 @@ namespace Microsoft.Data.ProviderBase
                             // safely remove the list from the transacted pool.
                             if (0 >= connections.Count)
                             {
-                                Bid.PoolerTrace("<prov.DbConnectionPool.TransactedConnectionPool.TransactionEnded|RES|CPOOL> %d#, Transaction %d#, Removing List from transacted pool.\n", ObjectID, transaction.GetHashCode());
+                                SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.TransactedConnectionPool.TransactionEnded|RES|CPOOL> {ObjectID}#, Transaction {transaction.GetHashCode()}#, Removing List from transacted pool.\n");
                                 _transactedCxns.Remove(transaction);
 
                                 // we really need to dispose our connection list; it may have 
@@ -302,7 +300,7 @@ namespace Microsoft.Data.ProviderBase
                     else
                     {
                         //Debug.Assert ( false, "TransactionCompletedEvent fired before PutTransactedObject put the connection in the transacted pool." );
-                        Bid.PoolerTrace("<prov.DbConnectionPool.TransactedConnectionPool.TransactionEnded|RES|CPOOL> %d#, Transaction %d#, Connection %d#, Transacted pool not yet created prior to transaction completing. Connection may be leaked.\n", ObjectID, transaction.GetHashCode(), transactedObject.ObjectID);
+                        SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.TransactedConnectionPool.TransactionEnded|RES|CPOOL> {ObjectID}#, Transaction {transaction.GetHashCode()}#, Connection {transactedObject.ObjectID}#, Transacted pool not yet created prior to transaction completing. Connection may be leaked.\n");
                     }
                 }
 
@@ -530,7 +528,7 @@ namespace Microsoft.Data.ProviderBase
             _poolCreateRequest = new WaitCallback(PoolCreateRequest); // used by CleanupCallback
             _state = State.Running;
 
-            Bid.PoolerTrace("<prov.DbConnectionPool.DbConnectionPool|RES|CPOOL> %d#, Constructed.\n", ObjectID);
+            SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.DbConnectionPool|RES|CPOOL> {ObjectID}#, Constructed.\n");
 
             //_cleanupTimer & QueuePoolCreateRequest is delayed until DbConnectionPoolGroup calls
             // StartBackgroundCallbacks after pool is actually in the collection
@@ -679,7 +677,7 @@ namespace Microsoft.Data.ProviderBase
             // With this logic, objects are pruned from the pool if unused for
             // at least one period but not more than two periods.
 
-            Bid.PoolerTrace("<prov.DbConnectionPool.CleanupCallback|RES|INFO|CPOOL> %d#\n", ObjectID);
+            SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.CleanupCallback|RES|INFO|CPOOL> {ObjectID}#\n");
 
             // Destroy free objects that put us above MinPoolSize from old stack.
             while (Count > MinPoolSize)
@@ -754,7 +752,7 @@ namespace Microsoft.Data.ProviderBase
 
                     Debug.Assert(obj != null, "null connection is not expected");
 
-                    Bid.PoolerTrace("<prov.DbConnectionPool.CleanupCallback|RES|INFO|CPOOL> %d#, ChangeStacks=%d#\n", ObjectID, obj.ObjectID);
+                    SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.CleanupCallback|RES|INFO|CPOOL> {ObjectID}#, ChangeStacks={obj.ObjectID}#\n");
 
                     Debug.Assert(!obj.IsEmancipated, "pooled object not in pool");
                     Debug.Assert(obj.CanBePooled, "pooled object is not poolable");
@@ -770,7 +768,7 @@ namespace Microsoft.Data.ProviderBase
 
         internal void Clear()
         {
-            Bid.PoolerTrace("<prov.DbConnectionPool.Clear|RES|CPOOL> %d#, Clearing.\n", ObjectID);
+            SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.Clear|RES|CPOOL> {ObjectID}#, Clearing.\n");
 
             DbConnectionInternal obj;
 
@@ -808,7 +806,7 @@ namespace Microsoft.Data.ProviderBase
             // it's been doomed, will cause it to be disposed of as well)
             ReclaimEmancipatedObjects();
 
-            Bid.PoolerTrace("<prov.DbConnectionPool.Clear|RES|CPOOL> %d#, Cleared.\n", ObjectID);
+            SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.Clear|RES|CPOOL> {ObjectID}#, Cleared.\n");
         }
 
         private Timer CreateCleanupTimer()
@@ -898,7 +896,7 @@ namespace Microsoft.Data.ProviderBase
                         }
                     }
                 }
-                Bid.PoolerTrace("<prov.DbConnectionPool.CreateObject|RES|CPOOL> %d#, Connection %d#, Added to pool.\n", ObjectID, newObj.ObjectID);
+                SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.CreateObject|RES|CPOOL> {ObjectID}#, Connection {newObj.ObjectID}#, Added to pool.\n");
 
                 // Reset the error wait:
                 _errorWait = ERROR_WAIT_DEFAULT;
@@ -959,7 +957,7 @@ namespace Microsoft.Data.ProviderBase
 
         private void DeactivateObject(DbConnectionInternal obj)
         {
-            Bid.PoolerTrace("<prov.DbConnectionPool.DeactivateObject|RES|CPOOL> %d#, Connection %d#, Deactivating.\n", ObjectID, obj.ObjectID);
+            SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.DeactivateObject|RES|CPOOL> {ObjectID}#, Connection {obj.ObjectID}#, Deactivating.\n");
 
             obj.DeactivateConnection(); // we presume this operation is safe outside of a lock...
 
@@ -1100,11 +1098,11 @@ namespace Microsoft.Data.ProviderBase
             // again.
             if (obj.IsTxRootWaitingForTxEnd)
             {
-                Bid.PoolerTrace("<prov.DbConnectionPool.DestroyObject|RES|CPOOL> %d#, Connection %d#, Has Delegated Transaction, waiting to Dispose.\n", ObjectID, obj.ObjectID);
+                SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.DestroyObject|RES|CPOOL> {ObjectID}#, Connection {obj.ObjectID}#, Has Delegated Transaction, waiting to Dispose.\n");
             }
             else
             {
-                Bid.PoolerTrace("<prov.DbConnectionPool.DestroyObject|RES|CPOOL> %d#, Connection %d#, Removing from pool.\n", ObjectID, obj.ObjectID);
+                SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.DestroyObject|RES|CPOOL> {ObjectID}#, Connection {obj.ObjectID}#, Removing from pool.\n");
 
                 bool removed = false;
                 lock (_objectList)
@@ -1116,19 +1114,19 @@ namespace Microsoft.Data.ProviderBase
 
                 if (removed)
                 {
-                    Bid.PoolerTrace("<prov.DbConnectionPool.DestroyObject|RES|CPOOL> %d#, Connection %d#, Removed from pool.\n", ObjectID, obj.ObjectID);
+                    SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.DestroyObject|RES|CPOOL> {ObjectID}#, Connection {obj.ObjectID}#, Removed from pool.\n");
                     PerformanceCounters.NumberOfPooledConnections.Decrement();
                 }
                 obj.Dispose();
 
-                Bid.PoolerTrace("<prov.DbConnectionPool.DestroyObject|RES|CPOOL> %d#, Connection %d#, Disposed.\n", ObjectID, obj.ObjectID);
+                SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.DestroyObject|RES|CPOOL> {ObjectID}#, Connection {obj.ObjectID}#, Disposed.\n");
                 PerformanceCounters.HardDisconnectsPerSecond.Increment();
             }
         }
 
         private void ErrorCallback(Object state)
         {
-            Bid.PoolerTrace("<prov.DbConnectionPool.ErrorCallback|RES|CPOOL> %d#, Resetting Error handling.\n", ObjectID);
+            SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.ErrorCallback|RES|CPOOL> {ObjectID}#, Resetting Error handling.\n");
 
             _errorOccurred = false;
             _waitHandles.ErrorEvent.Reset();
@@ -1212,7 +1210,8 @@ namespace Microsoft.Data.ProviderBase
                             Microsoft.Data.SqlClient.TdsParser.ReliabilitySection tdsReliabilitySection = new Microsoft.Data.SqlClient.TdsParser.ReliabilitySection();
 
                             RuntimeHelpers.PrepareConstrainedRegions();
-                            try {
+                            try
+                            {
                                 tdsReliabilitySection.Start();
 #else
                             {
@@ -1224,7 +1223,8 @@ namespace Microsoft.Data.ProviderBase
                                 timeout = !TryGetConnection(next.Owner, delay, allowCreate, onlyOneCheckConnection, next.UserOptions, out connection);
                             }
 #if DEBUG
-                            finally {
+                            finally
+                            {
                                 tdsReliabilitySection.Stop();
                             }
 #endif //DEBUG
@@ -1301,7 +1301,7 @@ namespace Microsoft.Data.ProviderBase
 
             if (_state != State.Running)
             {
-                Bid.PoolerTrace("<prov.DbConnectionPool.GetConnection|RES|CPOOL> %d#, DbConnectionInternal State != Running.\n", ObjectID);
+                SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.GetConnection|RES|CPOOL> {ObjectID}#, DbConnectionInternal State != Running.\n");
                 connection = null;
                 return true;
             }
@@ -1347,7 +1347,7 @@ namespace Microsoft.Data.ProviderBase
 
             PerformanceCounters.SoftConnectsPerSecond.Increment();
 
-            Bid.PoolerTrace("<prov.DbConnectionPool.GetConnection|RES|CPOOL> %d#, Getting connection.\n", ObjectID);
+            SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.GetConnection|RES|CPOOL> {ObjectID}#, Getting connection.\n");
 
             // If automatic transaction enlistment is required, then we try to
             // get the connection from the transacted connection pool first.
@@ -1400,19 +1400,19 @@ namespace Microsoft.Data.ProviderBase
                         switch (waitResult)
                         {
                             case WAIT_TIMEOUT:
-                                Bid.PoolerTrace("<prov.DbConnectionPool.GetConnection|RES|CPOOL> %d#, Wait timed out.\n", ObjectID);
+                                SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.GetConnection|RES|CPOOL> {ObjectID}#, Wait timed out.\n");
                                 Interlocked.Decrement(ref _waitCount);
                                 connection = null;
                                 return false;
 
                             case ERROR_HANDLE:
                                 // Throw the error that PoolCreateRequest stashed.
-                                Bid.PoolerTrace("<prov.DbConnectionPool.GetConnection|RES|CPOOL> %d#, Errors are set.\n", ObjectID);
+                                SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.GetConnection|RES|CPOOL> {ObjectID}#, Errors are set.\n");
                                 Interlocked.Decrement(ref _waitCount);
                                 throw TryCloneCachedException();
 
                             case CREATION_HANDLE:
-                                Bid.PoolerTrace("<prov.DbConnectionPool.GetConnection|RES|CPOOL> %d#, Creating new connection.\n", ObjectID);
+                                SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.GetConnection|RES|CPOOL> {ObjectID}#, Creating new connection.\n");
 
                                 try
                                 {
@@ -1466,7 +1466,7 @@ namespace Microsoft.Data.ProviderBase
 
                                 if ((obj != null) && (!obj.IsConnectionAlive()))
                                 {
-                                    Bid.PoolerTrace("<prov.DbConnectionPool.GetConnection|RES|CPOOL> %d#, Connection %d#, found dead and removed.\n", ObjectID, obj.ObjectID);
+                                    SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.GetConnection|RES|CPOOL> {ObjectID}#, Connection {obj.ObjectID}#, found dead and removed.\n");
                                     DestroyObject(obj);
                                     obj = null;     // Setting to null in case creating a new object fails
 
@@ -1477,7 +1477,7 @@ namespace Microsoft.Data.ProviderBase
                                             RuntimeHelpers.PrepareConstrainedRegions();
                                             try
                                             {
-                                                Bid.PoolerTrace("<prov.DbConnectionPool.GetConnection|RES|CPOOL> %d#, Creating new connection.\n", ObjectID);
+                                                SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.GetConnection|RES|CPOOL> {ObjectID}#, Creating new connection.\n");
                                                 obj = UserCreateRequest(owningObject, userOptions);
                                             }
                                             finally
@@ -1488,7 +1488,7 @@ namespace Microsoft.Data.ProviderBase
                                         else
                                         {
                                             // Timeout waiting for creation semaphore - return null
-                                            Bid.PoolerTrace("<prov.DbConnectionPool.GetConnection|RES|CPOOL> %d#, Wait timed out.\n", ObjectID);
+                                            SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.GetConnection|RES|CPOOL> {ObjectID}#, Wait timed out.\n");
                                             connection = null;
                                             return false;
                                         }
@@ -1498,24 +1498,24 @@ namespace Microsoft.Data.ProviderBase
 
                             case WAIT_FAILED:
                                 Debug.Assert(waitForMultipleObjectsExHR != 0, "WaitForMultipleObjectsEx failed but waitForMultipleObjectsExHR remained 0");
-                                Bid.PoolerTrace("<prov.DbConnectionPool.GetConnection|RES|CPOOL> %d#, Wait failed.\n", ObjectID);
+                                SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.GetConnection|RES|CPOOL> {ObjectID}#, Wait failed.\n");
                                 Interlocked.Decrement(ref _waitCount);
                                 Marshal.ThrowExceptionForHR(waitForMultipleObjectsExHR);
                                 goto default; // if ThrowExceptionForHR didn't throw for some reason
                             case (WAIT_ABANDONED + SEMAPHORE_HANDLE):
-                                Bid.PoolerTrace("<prov.DbConnectionPool.GetConnection|RES|CPOOL> %d#, Semaphore handle abandonded.\n", ObjectID);
+                                SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.GetConnection|RES|CPOOL> {ObjectID}#, Semaphore handle abandonded.\n");
                                 Interlocked.Decrement(ref _waitCount);
                                 throw new AbandonedMutexException(SEMAPHORE_HANDLE, _waitHandles.PoolSemaphore);
                             case (WAIT_ABANDONED + ERROR_HANDLE):
-                                Bid.PoolerTrace("<prov.DbConnectionPool.GetConnection|RES|CPOOL> %d#, Error handle abandonded.\n", ObjectID);
+                                SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.GetConnection|RES|CPOOL> {ObjectID}#, Error handle abandonded.\n");
                                 Interlocked.Decrement(ref _waitCount);
                                 throw new AbandonedMutexException(ERROR_HANDLE, _waitHandles.ErrorEvent);
                             case (WAIT_ABANDONED + CREATION_HANDLE):
-                                Bid.PoolerTrace("<prov.DbConnectionPool.GetConnection|RES|CPOOL> %d#, Creation handle abandoned.\n", ObjectID);
+                                SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.GetConnection|RES|CPOOL> {ObjectID}#, Creation handle abandoned.\n");
                                 Interlocked.Decrement(ref _waitCount);
                                 throw new AbandonedMutexException(CREATION_HANDLE, _waitHandles.CreationSemaphore);
                             default:
-                                Bid.PoolerTrace("<prov.DbConnectionPool.GetConnection|RES|CPOOL> %d#, WaitForMultipleObjects=%d\n", ObjectID, waitResult);
+                                SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.GetConnection|RES|CPOOL> {ObjectID}#, WaitForMultipleObjects={waitResult}\n");
                                 Interlocked.Decrement(ref _waitCount);
                                 throw ADP.InternalError(ADP.InternalErrorCode.UnexpectedWaitAnyResult);
                         }
@@ -1580,7 +1580,7 @@ namespace Microsoft.Data.ProviderBase
         internal DbConnectionInternal ReplaceConnection(DbConnection owningObject, DbConnectionOptions userOptions, DbConnectionInternal oldConnection)
         {
             PerformanceCounters.SoftConnectsPerSecond.Increment();
-            Bid.PoolerTrace("<prov.DbConnectionPool.ReplaceConnection|RES|CPOOL> %d#, replacing connection.\n", ObjectID);
+            SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.ReplaceConnection|RES|CPOOL> {ObjectID}#, replacing connection.\n");
 
             DbConnectionInternal newConnection = UserCreateRequest(owningObject, userOptions, oldConnection);
 
@@ -1623,7 +1623,7 @@ namespace Microsoft.Data.ProviderBase
 
             if (null != obj)
             {
-                Bid.PoolerTrace("<prov.DbConnectionPool.GetFromGeneralPool|RES|CPOOL> %d#, Connection %d#, Popped from general pool.\n", ObjectID, obj.ObjectID);
+                SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.GetFromGeneralPool|RES|CPOOL> {ObjectID}#, Connection {obj.ObjectID}#, Popped from general pool.\n");
                 PerformanceCounters.NumberOfFreeConnections.Decrement();
             }
             return (obj);
@@ -1640,7 +1640,7 @@ namespace Microsoft.Data.ProviderBase
 
                 if (null != obj)
                 {
-                    Bid.PoolerTrace("<prov.DbConnectionPool.GetFromTransactedPool|RES|CPOOL> %d#, Connection %d#, Popped from transacted pool.\n", ObjectID, obj.ObjectID);
+                    SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.GetFromTransactedPool|RES|CPOOL> {ObjectID}#, Connection {obj.ObjectID}#, Popped from transacted pool.\n");
                     PerformanceCounters.NumberOfFreeConnections.Decrement();
 
                     if (obj.IsTransactionRoot)
@@ -1651,14 +1651,14 @@ namespace Microsoft.Data.ProviderBase
                         }
                         catch
                         {
-                            Bid.PoolerTrace("<prov.DbConnectionPool.GetFromTransactedPool|RES|CPOOL> %d#, Connection %d#, found dead and removed.\n", ObjectID, obj.ObjectID);
+                            SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.GetFromTransactedPool|RES|CPOOL> {ObjectID}#, Connection {obj.ObjectID}#, found dead and removed.\n");
                             DestroyObject(obj);
                             throw;
                         }
                     }
                     else if (!obj.IsConnectionAlive())
                     {
-                        Bid.PoolerTrace("<prov.DbConnectionPool.GetFromTransactedPool|RES|CPOOL> %d#, Connection %d#, found dead and removed.\n", ObjectID, obj.ObjectID);
+                        SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.GetFromTransactedPool|RES|CPOOL> {ObjectID}#, Connection {obj.ObjectID}#, found dead and removed.\n");
                         DestroyObject(obj);
                         obj = null;
                     }
@@ -1674,9 +1674,8 @@ namespace Microsoft.Data.ProviderBase
             // called by pooler to ensure pool requests are currently being satisfied -
             // creation mutex has not been obtained
 
-            IntPtr hscp;
 
-            Bid.PoolerScopeEnter(out hscp, "<prov.DbConnectionPool.PoolCreateRequest|RES|INFO|CPOOL> %d#\n", ObjectID);
+            var scopeID = SqlClientEventSource._log.PoolerScopeEnter($"<prov.DbConnectionPool.PoolCreateRequest|RES|INFO|CPOOL> {ObjectID}#\n");
 
             try
             {
@@ -1762,7 +1761,7 @@ namespace Microsoft.Data.ProviderBase
                                 else
                                 {
                                     // trace waitResult and ignore the failure
-                                    Bid.PoolerTrace("<prov.DbConnectionPool.PoolCreateRequest|RES|CPOOL> %d#, PoolCreateRequest called WaitForSingleObject failed %d", ObjectID, waitResult);
+                                    SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.PoolCreateRequest|RES|CPOOL> {ObjectID}#, PoolCreateRequest called WaitForSingleObject failed {waitResult}");
                                 }
                             }
                             catch (Exception e)
@@ -1776,7 +1775,7 @@ namespace Microsoft.Data.ProviderBase
                                 // Now that CreateObject can throw, we need to catch the exception and discard it.
                                 // There is no further action we can take beyond tracing.  The error will be 
                                 // thrown to the user the next time they request a connection.
-                                Bid.PoolerTrace("<prov.DbConnectionPool.PoolCreateRequest|RES|CPOOL> %d#, PoolCreateRequest called CreateConnection which threw an exception: %ls", ObjectID, e);
+                                SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.PoolCreateRequest|RES|CPOOL> {ObjectID}#, PoolCreateRequest called CreateConnection which threw an exception: {e}");
                             }
                             finally
                             {
@@ -1796,7 +1795,7 @@ namespace Microsoft.Data.ProviderBase
             }
             finally
             {
-                Bid.ScopeLeave(ref hscp);
+                SqlClientEventSource._log.ScopeLeave(scopeID);
             }
         }
 
@@ -1810,7 +1809,7 @@ namespace Microsoft.Data.ProviderBase
             // against checked bits.
             // Debug.Assert(obj.CanBePooled,    "non-poolable object in pool");
 
-            Bid.PoolerTrace("<prov.DbConnectionPool.PutNewObject|RES|CPOOL> %d#, Connection %d#, Pushing to general pool.\n", ObjectID, obj.ObjectID);
+            SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.PutNewObject|RES|CPOOL> {ObjectID}#, Connection {obj.ObjectID}#, Pushing to general pool.\n");
 
             _stackNew.Push(obj);
             _waitHandles.PoolSemaphore.Release(1);
@@ -1860,7 +1859,7 @@ namespace Microsoft.Data.ProviderBase
             // that is using the connection, and that all pre-push logic has been
             // done and all transactions are ended.
 
-            Bid.PoolerTrace("<prov.DbConnectionPool.PutObjectFromTransactedPool|RES|CPOOL> %d#, Connection %d#, Transaction has ended.\n", ObjectID, obj.ObjectID);
+            SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.PutObjectFromTransactedPool|RES|CPOOL> {ObjectID}#, Connection {obj.ObjectID}#, Transaction has ended.\n");
 
             if (_state == State.Running && obj.CanBePooled)
             {
@@ -1886,7 +1885,7 @@ namespace Microsoft.Data.ProviderBase
         {
             bool emancipatedObjectFound = false;
 
-            Bid.PoolerTrace("<prov.DbConnectionPool.ReclaimEmancipatedObjects|RES|CPOOL> %d#\n", ObjectID);
+            SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.ReclaimEmancipatedObjects|RES|CPOOL> {ObjectID}#\n");
 
             List<DbConnectionInternal> reclaimedObjects = new List<DbConnectionInternal>();
             int count;
@@ -1940,7 +1939,7 @@ namespace Microsoft.Data.ProviderBase
             {
                 DbConnectionInternal obj = reclaimedObjects[i];
 
-                Bid.PoolerTrace("<prov.DbConnectionPool.ReclaimEmancipatedObjects|RES|CPOOL> %d#, Connection %d#, Reclaiming.\n", ObjectID, obj.ObjectID);
+                SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.ReclaimEmancipatedObjects|RES|CPOOL> {ObjectID}#, Connection {obj.ObjectID}#, Reclaiming.\n");
                 PerformanceCounters.NumberOfReclaimedConnections.Increment();
 
                 emancipatedObjectFound = true;
@@ -1953,7 +1952,7 @@ namespace Microsoft.Data.ProviderBase
 
         internal void Startup()
         {
-            Bid.PoolerTrace("<prov.DbConnectionPool.Startup|RES|INFO|CPOOL> %d#, CleanupWait=%d\n", ObjectID, _cleanupWait);
+            SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.Startup|RES|INFO|CPOOL> {ObjectID}#, CleanupWait={_cleanupWait}\n");
 
             _cleanupTimer = CreateCleanupTimer();
             if (NeedToReplenish)
@@ -1964,7 +1963,7 @@ namespace Microsoft.Data.ProviderBase
 
         internal void Shutdown()
         {
-            Bid.PoolerTrace("<prov.DbConnectionPool.Shutdown|RES|INFO|CPOOL> %d#\n", ObjectID);
+            SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.Shutdown|RES|INFO|CPOOL> {ObjectID}#\n");
 
             _state = State.ShuttingDown;
 
@@ -1987,7 +1986,7 @@ namespace Microsoft.Data.ProviderBase
             Debug.Assert(null != transactedObject, "null transactedObject?");
             // Note: connection may still be associated with transaction due to Explicit Unbinding requirement.
 
-            Bid.PoolerTrace("<prov.DbConnectionPool.TransactionEnded|RES|CPOOL> %d#, Transaction %d#, Connection %d#, Transaction Completed\n", ObjectID, transaction.GetHashCode(), transactedObject.ObjectID);
+            SqlClientEventSource._log.PoolerTrace($"<prov.DbConnectionPool.TransactionEnded|RES|CPOOL> {ObjectID}#, Transaction {transaction.GetHashCode()}#, Connection {transactedObject.ObjectID}#, Transaction Completed\n");
 
             // called by the internal connection when it get's told that the
             // transaction is completed.  We tell the transacted pool to remove

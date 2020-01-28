@@ -229,7 +229,6 @@
     <Compile Include="Microsoft\Data\SqlTypes\SqlStreamChars.cs" />
     <Compile Include="Microsoft\Data\DataException.cs" />
     <Compile Include="Microsoft\Data\Common\NativeMethods.cs" />
-    <Compile Include="Microsoft\Data\Common\System.Data_BID.cs" />
     <Compile Include="Microsoft\Data\Common\GreenMethods.cs" />
     <Compile Include="Microsoft\Data\Common\SQLResource.cs" />
     <Compile Include="Misc\ExternDll.cs" />
@@ -304,8 +303,6 @@
     <Compile Include="Microsoft\Data\Sql\SqlGenericUtil.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\sqlnorm.cs" />
     <Compile Include="Microsoft\Data\Sql\SqlNotificationRequest.cs" />
-    <Compile Include="BID\INC\CS\BidPrivateBase.cs" />
-    <None Include="BID\INC\CS\AssemblyTemplate_BID.cs" />
     <Compile Include="Microsoft\Data\SqlClient\DataClassification\SensitivityClassification.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\FieldNameLookup.cs" />
     <Compile Include="Microsoft\Data\OperationAbortedException.cs" />

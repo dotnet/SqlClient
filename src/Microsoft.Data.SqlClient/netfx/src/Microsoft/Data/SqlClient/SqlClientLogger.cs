@@ -17,13 +17,13 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientLogger.xml' path='docs/members[@name="SqlClientLogger"]/LogInfo/*'/>
         public void LogInfo(string type, string method, string message)
         {
-            Bid.Trace($"<sc|{type}|{method}|{LogLevel.Info}>{message}\n");
+            SqlClientEventSource._log.Trace($"<sc|{type}|{method}|{LogLevel.Info}>{message}\n");
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientLogger.xml' path='docs/members[@name="SqlClientLogger"]/LogError/*'/>
         public void LogError(string type, string method, string message)
         {
-            Bid.Trace($"<sc|{type}|{method}|{LogLevel.Error}>{message}\n");
+            SqlClientEventSource._log.Trace($"<sc|{type}|{method}|{LogLevel.Error}>{message}\n");
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientLogger.xml' path='docs/members[@name="SqlClientLogger"]/LogAssert/*'/>
@@ -33,8 +33,5 @@ namespace Microsoft.Data.SqlClient
                 LogError(type, method, message);
             return value;
         }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientLogger.xml' path='docs/members[@name="SqlClientLogger"]/IsLoggingEnabled/*'/>
-        public bool IsLoggingEnabled => Bid.TraceOn;
     }
 }

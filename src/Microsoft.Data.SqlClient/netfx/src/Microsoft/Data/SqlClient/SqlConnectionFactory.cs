@@ -192,7 +192,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         connectionTimeout *= 10;
                     }
-                    Bid.Trace($"<sc.SqlConnectionFactory.CreateConnectionPoolGroupOptions>Set connection pool CreateTimeout={connectionTimeout} when AD Interactive is in use.\n");
+                   SqlClientEventSource._log.Trace($"<sc.SqlConnectionFactory.CreateConnectionPoolGroupOptions>Set connection pool CreateTimeout={connectionTimeout} when AD Interactive is in use.\n");
                 }
 
                 poolingOptions = new DbConnectionPoolGroupOptions(

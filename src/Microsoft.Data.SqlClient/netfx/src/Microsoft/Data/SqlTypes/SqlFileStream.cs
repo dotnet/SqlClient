@@ -12,6 +12,7 @@ using Microsoft.Win32.SafeHandles;
 using System.Diagnostics;
 using System.Runtime.Versioning;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data.SqlTypes
 {
@@ -65,8 +66,7 @@ namespace Microsoft.Data.SqlTypes
             )
         {
 
-            IntPtr hscp;
-            Bid.ScopeEnter(out hscp, "<sc.SqlFileStream.ctor|API> %d# access=%d options=%d path='%ls' ", ObjectID, (int)access, (int)options, path);
+            var scopeID = SqlClientEventSource._log.ScopeEnter($"<sc.SqlFileStream.ctor|API> { ObjectID}# access={(int)access} options={(int)options} path='{path}'");
 
             try
             {
@@ -92,7 +92,7 @@ namespace Microsoft.Data.SqlTypes
             }
             finally
             {
-                Bid.ScopeLeave(ref hscp);
+                SqlClientEventSource._log.ScopeLeave(scopeID);
             }
         }
 
@@ -715,8 +715,8 @@ namespace Microsoft.Data.SqlTypes
                 UnsafeNativeMethods.SetErrorModeWrapper(UnsafeNativeMethods.SEM_FAILCRITICALERRORS, out oldMode);
                 try
                 {
-                    Bid.Trace("<sc.SqlFileStream.OpenSqlFileStream|ADV> %d#, desiredAccess=0x%08x, allocationSize=%I64d, fileAttributes=0x%08x, shareAccess=0x%08x, dwCreateDisposition=0x%08x, createOptions=0x%08x\n",
-                        ObjectID, (int)nDesiredAccess, allocationSize, 0, (int)shareAccess, dwCreateDisposition, dwCreateOptions);
+                    SqlClientEventSource._log.Trace($"<sc.SqlFileStream.OpenSqlFileStream|ADV> {ObjectID}#, desiredAccess=0x{(int)nDesiredAccess}, allocationSize={allocationSize}, " +
+                        $"fileAttributes=0x%{0}, shareAccess=0x{(int)shareAccess}, dwCreateDisposition=0x{dwCreateDisposition}, createOptions=0x{ dwCreateOptions}\n");
 
                     retval = UnsafeNativeMethods.NtCreateFile(out hFile, nDesiredAccess,
                         ref oa, out ioStatusBlock, ref allocationSize,

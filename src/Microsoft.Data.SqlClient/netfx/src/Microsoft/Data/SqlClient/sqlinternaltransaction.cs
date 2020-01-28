@@ -53,11 +53,8 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlInternalTransaction(SqlInternalConnection innerConnection, TransactionType type, SqlTransaction outerTransaction, long transactionId)
         {
-            Bid.PoolerTrace("<sc.SqlInternalTransaction.ctor|RES|CPOOL> %d#, Created for connection %d#, outer transaction %d#, Type %d\n",
-                        ObjectID,
-                        innerConnection.ObjectID,
-                        (null != outerTransaction) ? outerTransaction.ObjectID : -1,
-                        (int)type);
+            var outerTransactionObjectId = (null != outerTransaction) ? outerTransaction.ObjectID : -1;
+            SqlClientEventSource._log.PoolerTrace($"<sc.SqlInternalTransaction.ctor|RES|CPOOL> {ObjectID}#, Created for connection {innerConnection.ObjectID}#, outer transaction {outerTransactionObjectId}#, Type {(int)type}\n");
 
             _innerConnection = innerConnection;
             _transactionType = type;
@@ -273,7 +270,7 @@ namespace Microsoft.Data.SqlClient
 
             Debug.Assert(innerConnection != null, "How can we be here if the connection is null?");
 
-            Bid.PoolerTrace("<sc.SqlInteralTransaction.CloseFromConnection|RES|CPOOL> %d#, Closing\n", ObjectID);
+            SqlClientEventSource._log.PoolerTrace($"<sc.SqlInteralTransaction.CloseFromConnection|RES|CPOOL> {ObjectID}#, Closing\n");
             bool processFinallyBlock = true;
             try
             {
@@ -300,8 +297,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void Commit()
         {
-            IntPtr hscp;
-            Bid.ScopeEnter(out hscp, "<sc.SqlInternalTransaction.Commit|API> %d#", ObjectID);
+            var scopeID = SqlClientEventSource._log.ScopeEnter($"<sc.SqlInternalTransaction.Commit|API> {ObjectID}#");
 
             if (_innerConnection.IsLockedForBulkCopy)
             {
@@ -346,7 +342,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                Bid.ScopeLeave(ref hscp);
+                SqlClientEventSource._log.ScopeLeave(scopeID);
             }
         }
 
@@ -375,7 +371,7 @@ namespace Microsoft.Data.SqlClient
 
         private /*protected override*/ void Dispose(bool disposing)
         {
-            Bid.PoolerTrace("<sc.SqlInteralTransaction.Dispose|RES|CPOOL> %d#, Disposing\n", ObjectID);
+            SqlClientEventSource._log.PoolerTrace($"<sc.SqlInteralTransaction.Dispose|RES|CPOOL> {ObjectID}#, Disposing\n");
             if (disposing)
             {
                 if (null != _innerConnection)
@@ -430,8 +426,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void Rollback()
         {
-            IntPtr hscp;
-            Bid.ScopeEnter(out hscp, "<sc.SqlInternalTransaction.Rollback|API> %d#", ObjectID);
+            var scopeID = SqlClientEventSource._log.ScopeEnter($"<sc.SqlInternalTransaction.Rollback|API> {ObjectID}#");
 
             if (_innerConnection.IsLockedForBulkCopy)
             {
@@ -472,14 +467,13 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                Bid.ScopeLeave(ref hscp);
+                SqlClientEventSource._log.ScopeLeave(scopeID);
             }
         }
 
         internal void Rollback(string transactionName)
         {
-            IntPtr hscp;
-            Bid.ScopeEnter(out hscp, "<sc.SqlInternalTransaction.Rollback|API> %d#, transactionName='%ls'", ObjectID, transactionName);
+            var scopeID = SqlClientEventSource._log.ScopeEnter($"<sc.SqlInternalTransaction.Rollback|API> {ObjectID}#, transactionName='{transactionName}'");
 
             if (_innerConnection.IsLockedForBulkCopy)
             {
@@ -522,14 +516,13 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                Bid.ScopeLeave(ref hscp);
+                SqlClientEventSource._log.ScopeLeave(scopeID);
             }
         }
 
         internal void Save(string savePointName)
         {
-            IntPtr hscp;
-            Bid.ScopeEnter(out hscp, "<sc.SqlInternalTransaction.Save|API> %d#, savePointName='%ls'", ObjectID, savePointName);
+            var scopeID = SqlClientEventSource._log.ScopeEnter($"<sc.SqlInternalTransaction.Save|API> {ObjectID}#, savePointName='{savePointName}'");
 
             _innerConnection.ValidateConnectionForExecute(null);
 
@@ -561,7 +554,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                Bid.ScopeLeave(ref hscp);
+                SqlClientEventSource._log.ScopeLeave(scopeID);
             }
         }
 

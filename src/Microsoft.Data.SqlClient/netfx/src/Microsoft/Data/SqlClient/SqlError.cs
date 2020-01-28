@@ -41,9 +41,7 @@ namespace Microsoft.Data.SqlClient
             this.lineNumber = lineNumber;
             if (errorClass != 0)
             {
-                Bid.Trace("<sc.SqlError.SqlError|ERR> infoNumber=%d, errorState=%d, errorClass=%d, errorMessage='%ls', procedure='%ls', lineNumber=%d\n",
-                    infoNumber, (int)errorState, (int)errorClass, errorMessage,
-                    procedure == null ? "None" : procedure, (int)lineNumber);
+                SqlClientEventSource._log.Trace($"<sc.SqlError.SqlError|ERR> infoNumber={infoNumber}, errorState={(int)errorState}, errorClass={(int)errorClass}, errorMessage='{errorMessage}', procedure='{procedure ?? "None"}', lineNumber={(int)lineNumber}\n");
             }
             this.win32ErrorCode = 0;
         }

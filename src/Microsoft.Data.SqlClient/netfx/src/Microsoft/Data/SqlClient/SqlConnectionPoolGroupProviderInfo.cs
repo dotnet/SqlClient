@@ -55,7 +55,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else if (_alias != server)
                     {
-                        Bid.Trace("<sc.SqlConnectionPoolGroupProviderInfo|INFO> alias change detected. Clearing PoolGroup\n");
+                        SqlClientEventSource._log.Trace($"<sc.SqlConnectionPoolGroupProviderInfo|INFO> alias change detected. Clearing PoolGroup\n");
                         base.PoolGroup.Clear();
                         _alias = server;
                     }
@@ -99,7 +99,7 @@ namespace Microsoft.Data.SqlClient
             if (UseFailoverPartner != actualUseFailoverPartner)
             {
                 // TODO: will connections in progress somehow be active for two different datasources?
-                Bid.Trace("<sc.SqlConnectionPoolGroupProviderInfo|INFO> Failover detected. failover partner='%ls'. Clearing PoolGroup\n", actualFailoverPartner);
+                SqlClientEventSource._log.Trace($"<sc.SqlConnectionPoolGroupProviderInfo|INFO> Failover detected. failover partner='{actualFailoverPartner}'. Clearing PoolGroup\n");
                 base.PoolGroup.Clear();
                 _useFailoverPartner = actualUseFailoverPartner;
             }

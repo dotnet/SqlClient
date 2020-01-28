@@ -77,18 +77,12 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (_sqlAuthLogger.IsLoggingEnabled)
-                {
-                    _sqlAuthLogger.LogInfo(_typeName, "GetCachedToken", $"Retrieved cached token {GetTokenHash(_token)}.");
-                }
+                _sqlAuthLogger.LogInfo(_typeName, "GetCachedToken", $"Retrieved cached token {GetTokenHash(_token)}.");
                 return _token;
             }
             set
             {
-                if (_sqlAuthLogger.IsLoggingEnabled)
-                {
-                    _sqlAuthLogger.LogInfo(_typeName, "SetCachedToken", $"CachedToken changed from {GetTokenHash(_token)} to {GetTokenHash(value)}.");
-                }
+                _sqlAuthLogger.LogInfo(_typeName, "SetCachedToken", $"CachedToken changed from {GetTokenHash(_token)} to {GetTokenHash(value)}.");
                 _token = value;
             }
         }

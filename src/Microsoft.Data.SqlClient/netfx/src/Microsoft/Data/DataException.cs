@@ -7,6 +7,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
 using System.Globalization;
+using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data
 {
@@ -22,27 +23,22 @@ namespace Microsoft.Data
         // The resource Data.txt will ensure proper string text based on the appropriate
         // locale.
 
-        [BidMethod] // this method accepts BID format as an argument, this attribute allows FXCopBid rule to validate calls to it
         static private void TraceException(
-                string trace,
-                [BidArgumentType(typeof(String))] Exception e)
+                string trace, Exception e)
         {
             Debug.Assert(null != e, "TraceException: null Exception");
             if (null != e)
             {
-                Bid.Trace(trace, e.Message);
-                if (Bid.AdvancedOn)
+                SqlClientEventSource._log.Trace(e.Message);
+                try
                 {
-                    try
-                    {
-                        Bid.Trace(", StackTrace='%ls'", Environment.StackTrace);
-                    }
-                    catch (System.Security.SecurityException)
-                    {
-                        // if you don't have permission - you don't get the stack trace
-                    }
+                    SqlClientEventSource._log.Trace($", StackTrace='{Environment.StackTrace}'");
                 }
-                Bid.Trace("\n");
+                catch (System.Security.SecurityException)
+                {
+                    // if you don't have permission - you don't get the stack trace
+                }
+                SqlClientEventSource._log.Trace("\n");
             }
         }
 
@@ -1168,11 +1164,12 @@ namespace Microsoft.Data
         static public Exception InvalidRemotingFormat(SerializationFormat mode)
         {
 #if DEBUG
-            switch(mode) {
-            case SerializationFormat.Xml:
-            case SerializationFormat.Binary:
-                Debug.Assert(false, "valid SerializationFormat " + mode.ToString());
-                break;
+            switch (mode)
+            {
+                case SerializationFormat.Xml:
+                case SerializationFormat.Binary:
+                    Debug.Assert(false, "valid SerializationFormat " + mode.ToString());
+                    break;
             }
 #endif
             return _InvalidEnumArgumentException<SerializationFormat>(mode);

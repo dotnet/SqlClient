@@ -129,7 +129,7 @@ namespace Microsoft.Data.SqlClient
         internal void Append(SqlCommand command)
         {
             ADP.CheckArgumentNull(command, "command");
-            Bid.Trace("<sc.SqlCommandSet.Append|API> %d#, command=%d, parameterCount=%d\n", ObjectID, command.ObjectID, command.Parameters.Count);
+            SqlClientEventSource._log.Trace($"<sc.SqlCommandSet.Append|API> {ObjectID}#, command={command.ObjectID}, parameterCount={command.Parameters.Count}\n");
 
             string cmdText = command.CommandText;
             if (ADP.IsEmpty(cmdText))
@@ -264,7 +264,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void Clear()
         {
-            Bid.Trace("<sc.SqlCommandSet.Clear|API> %d#\n", ObjectID);
+            SqlClientEventSource._log.Trace($"<sc.SqlCommandSet.Clear|API> {ObjectID}#\n");
             DbCommand batchCommand = BatchCommand;
             if (null != batchCommand)
             {
@@ -280,7 +280,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void Dispose()
         {
-            Bid.Trace("<sc.SqlCommandSet.Dispose|API> %d#\n", ObjectID);
+            SqlClientEventSource._log.Trace($"<sc.SqlCommandSet.Dispose|API> {ObjectID}#\n");
             SqlCommand command = _batchCommand;
             _commandList = null;
             _batchCommand = null;
@@ -295,8 +295,7 @@ namespace Microsoft.Data.SqlClient
         {
             SqlConnection.ExecutePermission.Demand();
 
-            IntPtr hscp;
-            Bid.ScopeEnter(out hscp, "<sc.SqlCommandSet.ExecuteNonQuery|API> %d#", ObjectID);
+            var scopeID = SqlClientEventSource._log.ScopeEnter($"<sc.SqlCommandSet.ExecuteNonQuery|API> {ObjectID}#");
             try
             {
                 if (Connection.IsContextConnection)
@@ -316,7 +315,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                Bid.ScopeLeave(ref hscp);
+                SqlClientEventSource._log.ScopeLeave(scopeID);
             }
         }
 

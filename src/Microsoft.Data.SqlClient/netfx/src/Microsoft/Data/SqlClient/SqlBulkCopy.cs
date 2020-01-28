@@ -593,9 +593,8 @@ namespace Microsoft.Data.SqlClient
         private Task<BulkCopySimpleResultSet> CreateAndExecuteInitialQueryAsync(out BulkCopySimpleResultSet result)
         {
             string TDSCommand = CreateInitialQuery();
-
-            Bid.Trace("<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|INFO> Initial Query: '%ls' \n", TDSCommand);
-            Bid.CorrelationTrace("<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|Info|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
+            SqlClientEventSource._log.Trace($"<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|INFO> Initial Query: '{TDSCommand}' \n");
+            SqlClientEventSource._log.CorrelationTrace($"<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|Info|Correlation> ObjectID{ObjectID}#, ActivityID %ls\n");
 
             Task executeTask = _parser.TdsExecuteSQLBatch(TDSCommand, this.BulkCopyTimeout, null, _stateObj, sync: !_isAsyncBulkCopy, callerHasConnectionLock: true);
 
@@ -886,7 +885,7 @@ namespace Microsoft.Data.SqlClient
         //
         private Task SubmitUpdateBulkCommand(string TDSCommand)
         {
-            Bid.CorrelationTrace("<sc.SqlBulkCopy.SubmitUpdateBulkCommand|Info|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
+            SqlClientEventSource._log.CorrelationTrace($"<sc.SqlBulkCopy.SubmitUpdateBulkCommand|Info|Correlation> ObjectID{ObjectID}#, ActivityID %ls\n");
 
             Task executeTask = _parser.TdsExecuteSQLBatch(TDSCommand, this.BulkCopyTimeout, null, _stateObj, sync: !_isAsyncBulkCopy, callerHasConnectionLock: true);
 
@@ -2517,7 +2516,7 @@ namespace Microsoft.Data.SqlClient
                             // it's also the user's chance to cause an exception ...
                             _stateObj.BcpLock = true;
                             abortOperation = FireRowsCopiedEvent(_rowsCopied);
-                            Bid.Trace("<sc.SqlBulkCopy.WriteToServerInternal|INFO> \n");
+                            SqlClientEventSource._log.Trace("<sc.SqlBulkCopy.WriteToServerInternal|INFO> \n");
 
                             // just in case some pathological person closes the target connection ...
                             if (ConnectionState.Open != _connection.State)
