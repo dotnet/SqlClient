@@ -289,8 +289,23 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Contains(expectedMessage, e.InnerException.InnerException.InnerException.Message);
         }
 
+        [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp)]
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
-        public static void EmptyCredInConnStrAADPassword()
+        public static void EmptyCredInConnStrAADPasswordNetFx()
+        {
+            // connection fails with expected error message.
+            string[] removeKeys = { "User ID", "Password", "UID", "PWD" };
+            string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, removeKeys) + "User ID=; Password=;";
+            AggregateException e = Assert.Throws<AggregateException>(() => ConnectAndDisconnect(connStr));
+
+            string expectedMessage = " Failed to get user name";
+
+            Assert.Contains(expectedMessage, e.InnerException.InnerException.InnerException.Message);
+        }
+
+        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
+        [ConditionalFact(nameof(IsAADConnStringsSetup))]
+        public static void EmptyCredInConnStrAADPasswordNetCore()
         {
             // connection fails with expected error message.
             string[] removeKeys = { "User ID", "Password", "UID", "PWD" };
@@ -298,6 +313,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             AggregateException e = Assert.Throws<AggregateException>(() => ConnectAndDisconnect(connStr));
 
             string expectedMessage = "Could not identify the user logged into the OS";
+
             Assert.Contains(expectedMessage, e.InnerException.InnerException.InnerException.Message);
         }
 
