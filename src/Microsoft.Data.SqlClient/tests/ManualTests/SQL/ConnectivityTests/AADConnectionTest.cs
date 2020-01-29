@@ -84,7 +84,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void InvalidAccessTokenTest()
         {
             // Remove cred info and add invalid token
-            string[] credKeys = { "User ID", "Password", "Authentication" };
+            string[] credKeys = { "User ID", "Password", "UID", "PWD", "Authentication" };
             string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys);
 
             using (SqlConnection connection = new SqlConnection(connStr))
@@ -101,7 +101,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void AccessTokenWithAuthType()
         {
             // Remove cred info and add invalid token
-            string[] credKeys = { "User ID", "Password" };
+            string[] credKeys = { "User ID", "Password", "UID", "PWD" };
             string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys);
 
             using (SqlConnection connection = new SqlConnection(connStr))
@@ -135,7 +135,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void AccessTokenTestWithEmptyToken()
         {
             // Remove cred info and add invalid token
-            string[] credKeys = { "User ID", "Password", "Authentication" };
+            string[] credKeys = { "User ID", "Password", "UID", "PWD", "Authentication" };
             string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys);
 
             using (SqlConnection connection = new SqlConnection(connStr))
@@ -152,7 +152,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void AccessTokenTestWithIntegratedSecurityTrue()
         {
             // Remove cred info and add invalid token
-            string[] credKeys = { "User ID", "Password", "Authentication" };
+            string[] credKeys = { "User ID", "Password", "UID", "PWD", "Authentication" };
             string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) + "Integrated Security=True;";
 
             using (SqlConnection connection = new SqlConnection(connStr))
@@ -191,7 +191,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAADConnStringsSetup))]
         public static void AADPasswordWithWrongPassword()
         {
-            string[] credKeys = { "Password" };
+            string[] credKeys = { "Password", "PWD" };
             string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) + "Password=TestPassword;";
 
             AggregateException e = Assert.Throws<AggregateException>(() => ConnectAndDisconnect(connStr));
@@ -281,7 +281,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void EmptyPasswordInConnStrAADPassword()
         {
             // connection fails with expected error message.
-            string[] pwdKey = { "Password" };
+            string[] pwdKey = { "Password", "PWD" };
             string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, pwdKey) + "Password=;";
             AggregateException e = Assert.Throws<AggregateException>(() => ConnectAndDisconnect(connStr));
 
@@ -293,7 +293,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void EmptyCredInConnStrAADPassword()
         {
             // connection fails with expected error message.
-            string[] removeKeys = { "User ID", "Password" };
+            string[] removeKeys = { "User ID", "Password", "UID", "PWD" };
             string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, removeKeys) + "User ID=; Password=;";
             AggregateException e = Assert.Throws<AggregateException>(() => ConnectAndDisconnect(connStr));
 
@@ -305,7 +305,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void AADPasswordWithInvalidUser()
         {
             // connection fails with expected error message.
-            string[] removeKeys = { "User ID" };
+            string[] removeKeys = { "User ID", "UID" };
             string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, removeKeys) + "User ID=testdotnet@microsoft.com";
             AggregateException e = Assert.Throws<AggregateException>(() => ConnectAndDisconnect(connStr));
 
@@ -320,7 +320,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ConnectAndDisconnect(DataTestUtility.AADPasswordConnectionString);
 
             // connection fails with expected error message.
-            string[] credKeys = { "User ID", "Password" };
+            string[] credKeys = { "User ID", "Password", "UID", "PWD" };
             string connStrWithNoCred = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys);
             InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => ConnectAndDisconnect(connStrWithNoCred));
 
