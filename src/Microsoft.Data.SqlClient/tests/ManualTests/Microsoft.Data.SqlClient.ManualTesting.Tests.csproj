@@ -228,7 +228,9 @@
     <Compile Include="SQL\ConnectionPoolTest\PoolBlockPeriodTest.netcoreapp.cs" />
     <Compile Include="SQL\SqlFileStreamTest\SqlFileStreamTest.cs" />
   </ItemGroup>
-  <ItemGroup>
+
+
+  <ItemGroup Condition=" '$(TargetGroup)' == 'netfx' ">
     <Reference Include="System.Transactions" />
   </ItemGroup>
   <ItemGroup>
