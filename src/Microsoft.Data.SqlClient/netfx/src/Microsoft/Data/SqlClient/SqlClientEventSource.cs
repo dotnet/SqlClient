@@ -44,13 +44,12 @@ namespace Microsoft.Data.SqlClient
             internal const EventKeywords StringPrintOut = (EventKeywords)0x1000;    // Integer 4096
         }
 
+        [NonEvent]
+        internal bool IsTraceEnabled() => _log.IsEnabled(EventLevel.Informational, Keywords.Trace);
+
         [Event(TraceEventId, Level = EventLevel.Informational, Keywords = Keywords.Trace)]
         internal void Trace(string message)
         {
-            if (!_log.IsEnabled(EventLevel.Informational, Keywords.Trace))
-            {
-                return;
-            }
             WriteEvent(TraceEventId, message);
         }
 

@@ -7,7 +7,7 @@ namespace Microsoft.Data.ProviderBase
     using System.Collections.Concurrent;
     using System.Diagnostics;
     using Microsoft.Data.Common;
-    using Microsoft.Data.SqlClient;
+    using static Microsoft.Data.SqlClient.SqlClientEventSource;
 
     // set_ConnectionString calls DbConnectionFactory.GetConnectionPoolGroup
     // when not found a new pool entry is created and potentially added
@@ -272,7 +272,11 @@ namespace Microsoft.Data.ProviderBase
             if (PoolGroupStateIdle == _state)
             {
                 _state = PoolGroupStateActive;
-                SqlClientEventSource._log.Trace($"<prov.DbConnectionPoolGroup.ClearInternal|RES|INFO|CPOOL> {ObjectID}#, Active\n");
+
+                if (_log.IsTraceEnabled())
+                {
+                    _log.Trace($"<prov.DbConnectionPoolGroup.ClearInternal|RES|INFO|CPOOL> {ObjectID}#, Active");
+                }
             }
             return (PoolGroupStateActive == _state);
         }
@@ -334,14 +338,23 @@ namespace Microsoft.Data.ProviderBase
                     if (PoolGroupStateActive == _state)
                     {
                         _state = PoolGroupStateIdle;
-                        SqlClientEventSource._log.Trace($"<prov.DbConnectionPoolGroup.ClearInternal|RES|INFO|CPOOL> {ObjectID}#, Idle\n");
+
+                        if (_log.IsTraceEnabled())
+                        {
+                            _log.Trace($"<prov.DbConnectionPoolGroup.ClearInternal|RES|INFO|CPOOL> {ObjectID}#, Idle");
+                        }
                     }
                     else if (PoolGroupStateIdle == _state)
                     {
                         _state = PoolGroupStateDisabled;
-                        SqlClientEventSource._log.Trace($"<prov.DbConnectionPoolGroup.ReadyToRemove|RES|INFO|CPOOL> {ObjectID}#, Disabled\n");
+
+                        if (_log.IsTraceEnabled())
+                        {
+                            _log.Trace($"<prov.DbConnectionPoolGroup.ReadyToRemove|RES|INFO|CPOOL> {ObjectID}#, Disabled");
+                        }
                     }
                 }
+
                 return (PoolGroupStateDisabled == _state);
             }
         }

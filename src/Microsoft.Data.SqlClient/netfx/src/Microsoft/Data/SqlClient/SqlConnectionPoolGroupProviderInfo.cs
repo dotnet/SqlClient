@@ -4,6 +4,7 @@
 
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
+using static Microsoft.Data.SqlClient.SqlClientEventSource;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -55,7 +56,11 @@ namespace Microsoft.Data.SqlClient
                     }
                     else if (_alias != server)
                     {
-                        SqlClientEventSource._log.Trace($"<sc.SqlConnectionPoolGroupProviderInfo|INFO> alias change detected. Clearing PoolGroup\n");
+                        if (_log.IsTraceEnabled())
+                        {
+                            _log.Trace($"<sc.SqlConnectionPoolGroupProviderInfo|INFO> alias change detected. Clearing PoolGroup");
+                        }
+
                         base.PoolGroup.Clear();
                         _alias = server;
                     }
@@ -99,7 +104,11 @@ namespace Microsoft.Data.SqlClient
             if (UseFailoverPartner != actualUseFailoverPartner)
             {
                 // TODO: will connections in progress somehow be active for two different datasources?
-                SqlClientEventSource._log.Trace($"<sc.SqlConnectionPoolGroupProviderInfo|INFO> Failover detected. failover partner='{actualFailoverPartner}'. Clearing PoolGroup\n");
+                if (_log.IsTraceEnabled())
+                {
+                    _log.Trace($"<sc.SqlConnectionPoolGroupProviderInfo|INFO> Failover detected. failover partner='{actualFailoverPartner}'. Clearing PoolGroup");
+                }
+
                 base.PoolGroup.Clear();
                 _useFailoverPartner = actualUseFailoverPartner;
             }

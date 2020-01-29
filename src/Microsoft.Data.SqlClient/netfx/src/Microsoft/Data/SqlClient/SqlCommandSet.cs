@@ -10,6 +10,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.Data.Common;
+using static Microsoft.Data.SqlClient.SqlClientEventSource;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -129,7 +130,10 @@ namespace Microsoft.Data.SqlClient
         internal void Append(SqlCommand command)
         {
             ADP.CheckArgumentNull(command, "command");
-            SqlClientEventSource._log.Trace($"<sc.SqlCommandSet.Append|API> {ObjectID}#, command={command.ObjectID}, parameterCount={command.Parameters.Count}\n");
+            if (_log.IsTraceEnabled())
+            {
+                _log.Trace($"<sc.SqlCommandSet.Append|API> {ObjectID}#, command={command.ObjectID}, parameterCount={command.Parameters.Count}");
+            }
 
             string cmdText = command.CommandText;
             if (ADP.IsEmpty(cmdText))
@@ -264,7 +268,11 @@ namespace Microsoft.Data.SqlClient
 
         internal void Clear()
         {
-            SqlClientEventSource._log.Trace($"<sc.SqlCommandSet.Clear|API> {ObjectID}#\n");
+            if (_log.IsTraceEnabled())
+            {
+                _log.Trace($"<sc.SqlCommandSet.Clear|API> {ObjectID}#");
+            }
+
             DbCommand batchCommand = BatchCommand;
             if (null != batchCommand)
             {
@@ -280,7 +288,11 @@ namespace Microsoft.Data.SqlClient
 
         internal void Dispose()
         {
-            SqlClientEventSource._log.Trace($"<sc.SqlCommandSet.Dispose|API> {ObjectID}#\n");
+            if (_log.IsTraceEnabled())
+            {
+                _log.Trace($"<sc.SqlCommandSet.Dispose|API> {ObjectID}#");
+            }
+
             SqlCommand command = _batchCommand;
             _commandList = null;
             _batchCommand = null;
@@ -295,7 +307,7 @@ namespace Microsoft.Data.SqlClient
         {
             SqlConnection.ExecutePermission.Demand();
 
-            var scopeID = SqlClientEventSource._log.ScopeEnter($"<sc.SqlCommandSet.ExecuteNonQuery|API> {ObjectID}#");
+            var scopeID = _log.ScopeEnter($"<sc.SqlCommandSet.ExecuteNonQuery|API> {ObjectID}#");
             try
             {
                 if (Connection.IsContextConnection)
@@ -315,7 +327,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource._log.ScopeLeave(scopeID);
+                _log.ScopeLeave(scopeID);
             }
         }
 

@@ -9,7 +9,9 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.ConstrainedExecution;
 using Microsoft.Data.Common;
+using static Microsoft.Data.SqlClient.SqlClientEventSource;
 using Microsoft.Data.ProviderBase;
+
 using SysTx = System.Transactions;
 
 namespace Microsoft.Data.SqlClient
@@ -313,7 +315,7 @@ namespace Microsoft.Data.SqlClient
 
         override protected void Deactivate()
         {
-            SqlClientEventSource._log.Trace($"<sc.SqlInternalConnection.Deactivate|ADV> {ObjectID}# deactivating\n");
+            _log.Trace($"<sc.SqlInternalConnection.Deactivate|ADV> {ObjectID}# deactivating\n");
             TdsParser bestEffortCleanupTarget = null;
             RuntimeHelpers.PrepareConstrainedRegions();
             try
@@ -436,13 +438,13 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(null != tx, "null transaction?");
 
-            SqlClientEventSource._log.Trace($"<sc.SqlInternalConnection.EnlistNonNull|ADV> {ObjectID}#, transaction {tx.GetHashCode()}#.\n");
+            _log.Trace($"<sc.SqlInternalConnection.EnlistNonNull|ADV> {ObjectID}#, transaction {tx.GetHashCode()}#.\n");
 
             bool hasDelegatedTransaction = false;
 
             if (IsYukonOrNewer)
             {
-                SqlClientEventSource._log.Trace($"<sc.SqlInternalConnection.EnlistNonNull|ADV> {ObjectID}#, attempting to delegate\n");
+                _log.Trace($"<sc.SqlInternalConnection.EnlistNonNull|ADV> {ObjectID}#, attempting to delegate\n");
 
                 // Promotable transactions are only supported on Yukon
                 // servers or newer.
@@ -518,7 +520,7 @@ namespace Microsoft.Data.SqlClient
                             transactionId = CurrentTransaction.TransactionId;
                             transactionObjectID = CurrentTransaction.ObjectID;
                         }
-                        SqlClientEventSource._log.Trace($"<sc.SqlInternalConnection.EnlistNonNull|ADV> {ObjectID}#, delegated to transaction {transactionObjectID}# with transactionId=0x{transactionId}\n");
+                        _log.Trace($"<sc.SqlInternalConnection.EnlistNonNull|ADV> {ObjectID}#, delegated to transaction {transactionObjectID}# with transactionId=0x{transactionId}\n");
                     }
                 }
                 catch (SqlException e)
@@ -551,7 +553,7 @@ namespace Microsoft.Data.SqlClient
 
             if (!hasDelegatedTransaction)
             {
-                SqlClientEventSource._log.Trace($"<sc.SqlInternalConnection.EnlistNonNull|ADV> {ObjectID}#, delegation not possible, enlisting.\n");
+                _log.Trace($"<sc.SqlInternalConnection.EnlistNonNull|ADV> {ObjectID}#, delegation not possible, enlisting.\n");
 
                 byte[] cookie = null;
 
@@ -591,7 +593,7 @@ namespace Microsoft.Data.SqlClient
                     transactionId = CurrentTransaction.TransactionId;
                     transactionObjectID = CurrentTransaction.ObjectID;
                 }
-                SqlClientEventSource._log.Trace($"<sc.SqlInternalConnection.EnlistNonNull|ADV> {ObjectID}#, enlisted with transaction {transactionObjectID}# with transactionId=0x{transactionId}\n");
+                _log.Trace($"<sc.SqlInternalConnection.EnlistNonNull|ADV> {ObjectID}#, enlisted with transaction {transactionObjectID}# with transactionId=0x{transactionId}\n");
             }
 
             EnlistedTransaction = tx; // Tell the base class about our enlistment
@@ -615,7 +617,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void EnlistNull()
         {
-            SqlClientEventSource._log.Trace($"<sc.SqlInternalConnection.EnlistNull|ADV> {ObjectID}#, unenlisting.\n");
+            _log.Trace($"<sc.SqlInternalConnection.EnlistNull|ADV> {ObjectID}#, unenlisting.\n");
 
             // We were in a transaction, but now we are not - so send
             // message to server with empty transaction - confirmed proper
@@ -634,7 +636,7 @@ namespace Microsoft.Data.SqlClient
             _isEnlistedInTransaction = false;
             EnlistedTransaction = null; // Tell the base class about our enlistment
 
-            SqlClientEventSource._log.Trace($"<sc.SqlInternalConnection.EnlistNull|ADV> {ObjectID}#, unenlisted.\n");
+            _log.Trace($"<sc.SqlInternalConnection.EnlistNull|ADV> {ObjectID}#, unenlisted.\n");
 
             // The EnlistTransaction above will return an TransactionEnded event, 
             // which causes the TdsParser or SmiEventSink should to clear the

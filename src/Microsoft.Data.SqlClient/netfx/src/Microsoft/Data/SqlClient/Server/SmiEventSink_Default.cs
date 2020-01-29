@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Diagnostics;
+using static Microsoft.Data.SqlClient.SqlClientEventSource;
 
 namespace Microsoft.Data.SqlClient.Server
 {
@@ -266,12 +267,13 @@ namespace Microsoft.Data.SqlClient.Server
         // Called for messages and errors (ERROR and INFO tokens)
         internal override void MessagePosted(int number, byte state, byte errorClass, string server, string message, string procedure, int lineNumber)
         {
-            var serverValue = (null != server) ? server : "<null>";
-            var messageBody = (null != message) ? message : "<null>";
-            var proc = (null != procedure) ? procedure : "<null>";
             if (null == _parent)
             {
-                SqlClientEventSource._log.Trace($"<sc.SmiEventSink_Default.MessagePosted|ADV> {0}#, number={number} state={state} errorClass={errorClass} server='{serverValue}' message='{messageBody}' procedure='{proc}' linenumber={lineNumber}.\n");
+                if (_log.IsTraceEnabled())
+                {
+                    _log.Trace($"<sc.SmiEventSink_Default.MessagePosted|ADV> {0}#, number={number} state={state} errorClass={errorClass} server='{server ?? "<null>"}' message='{message ?? "<null>"}' procedure='{procedure ?? "<null>"}' linenumber={lineNumber}.");
+                }
+
                 SqlError error = new SqlError(number, state, errorClass, server, message, procedure, lineNumber);
 
                 if (error.Class < TdsEnums.MIN_ERROR_CLASS)

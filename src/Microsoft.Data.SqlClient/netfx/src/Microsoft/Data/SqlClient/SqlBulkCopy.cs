@@ -15,6 +15,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using Microsoft.Data.Common;
+using static Microsoft.Data.SqlClient.SqlClientEventSource;
 
 // todo list:
 // * An ID column need to be ignored - even if there is an association
@@ -593,8 +594,16 @@ namespace Microsoft.Data.SqlClient
         private Task<BulkCopySimpleResultSet> CreateAndExecuteInitialQueryAsync(out BulkCopySimpleResultSet result)
         {
             string TDSCommand = CreateInitialQuery();
-            SqlClientEventSource._log.Trace($"<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|INFO> Initial Query: '{TDSCommand}' \n");
-            SqlClientEventSource._log.CorrelationTrace($"<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|Info|Correlation> ObjectID{ObjectID}#, ActivityID %ls\n");
+
+            if (_log.IsTraceEnabled())
+            {
+                if (_log.IsTraceEnabled())
+                {
+                    _log.Trace($"<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|INFO> Initial Query: '{TDSCommand}'");
+                }
+            }
+
+            _log.CorrelationTrace($"<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|Info|Correlation> ObjectID{ObjectID}#, ActivityID %ls");
 
             Task executeTask = _parser.TdsExecuteSQLBatch(TDSCommand, this.BulkCopyTimeout, null, _stateObj, sync: !_isAsyncBulkCopy, callerHasConnectionLock: true);
 
@@ -885,7 +894,7 @@ namespace Microsoft.Data.SqlClient
         //
         private Task SubmitUpdateBulkCommand(string TDSCommand)
         {
-            SqlClientEventSource._log.CorrelationTrace($"<sc.SqlBulkCopy.SubmitUpdateBulkCommand|Info|Correlation> ObjectID{ObjectID}#, ActivityID %ls\n");
+            _log.CorrelationTrace($"<sc.SqlBulkCopy.SubmitUpdateBulkCommand|Info|Correlation> ObjectID{ObjectID}#, ActivityID %ls\n");
 
             Task executeTask = _parser.TdsExecuteSQLBatch(TDSCommand, this.BulkCopyTimeout, null, _stateObj, sync: !_isAsyncBulkCopy, callerHasConnectionLock: true);
 
@@ -2516,7 +2525,11 @@ namespace Microsoft.Data.SqlClient
                             // it's also the user's chance to cause an exception ...
                             _stateObj.BcpLock = true;
                             abortOperation = FireRowsCopiedEvent(_rowsCopied);
-                            SqlClientEventSource._log.Trace("<sc.SqlBulkCopy.WriteToServerInternal|INFO> \n");
+
+                            if (_log.IsTraceEnabled())
+                            {
+                                _log.Trace("<sc.SqlBulkCopy.WriteToServerInternal|INFO>");
+                            }
 
                             // just in case some pathological person closes the target connection ...
                             if (ConnectionState.Open != _connection.State)

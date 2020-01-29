@@ -12,7 +12,7 @@ namespace Microsoft.Data.Common
     using System.Diagnostics;
     using System.Linq;
     using System.Text;
-    using Microsoft.Data.SqlClient;
+    using static Microsoft.Data.SqlClient.SqlClientEventSource;
 
     [Serializable] // MDAC 83147
     internal sealed class DBConnectionString
@@ -470,7 +470,10 @@ namespace Microsoft.Data.Common
         private static string[] ParseRestrictions(string restrictions, Hashtable synonyms)
         {
 #if DEBUG
-            SqlClientEventSource._log.Trace($"<comm.DBConnectionString|INFO|ADV> Restrictions='{restrictions}'\n");
+            if (_log.IsTraceEnabled())
+            {
+                _log.Trace($"<comm.DBConnectionString|INFO|ADV> Restrictions='{restrictions}'");
+            }
 #endif
             List<string> restrictionValues = new List<string>();
             StringBuilder buffer = new StringBuilder(restrictions.Length);
@@ -486,7 +489,10 @@ namespace Microsoft.Data.Common
                 if (!ADP.IsEmpty(keyname))
                 {
 #if DEBUG
-                    SqlClientEventSource._log.Trace($"<comm.DBConnectionString|INFO|ADV> KeyName='{keyname}'\n");
+                    if (_log.IsTraceEnabled())
+                    {
+                        _log.Trace($"<comm.DBConnectionString|INFO|ADV> KeyName='{keyname}'");
+                    }
 #endif
                     string realkeyname = ((null != synonyms) ? (string)synonyms[keyname] : keyname); // MDAC 85144
                     if (ADP.IsEmpty(realkeyname))

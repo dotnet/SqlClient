@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Data.Common;
+using static Microsoft.Data.SqlClient.SqlClientEventSource;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -37,7 +38,10 @@ namespace Microsoft.Data.SqlClient
             _freeStateObjects = new TdsParserStateObject[MaxInactiveCount];
             _freeStateObjectCount = 0;
 
-            SqlClientEventSource._log.Trace($"<sc.TdsParserSessionPool.ctor|ADV> {ObjectID}# created session pool for parser {parser.ObjectID}\n");
+            if (_log.IsTraceEnabled())
+            {
+                _log.Trace($"<sc.TdsParserSessionPool.ctor|ADV> {ObjectID}# created session pool for parser {parser.ObjectID}");
+            }
         }
 
         private bool IsDisposed
@@ -62,7 +66,7 @@ namespace Microsoft.Data.SqlClient
             // cache to make sure they're cleaned up and then we dispose of
             // sessions that are past what we want to keep around.
 
-            var scopeID = SqlClientEventSource._log.ScopeEnter($"<sc.TdsParserSessionPool.Deactivate|ADV> {ObjectID}# deactivating cachedCount={_cachedCount}\n");
+            var scopeID = _log.ScopeEnter($"<sc.TdsParserSessionPool.Deactivate|ADV> {ObjectID}# deactivating cachedCount={_cachedCount}\n");
 
             try
             {
@@ -83,7 +87,10 @@ namespace Microsoft.Data.SqlClient
                             {
                                 // TODO: consider adding a performance counter for the number of sessions we reclaim
 
-                                SqlClientEventSource._log.Trace($"<sc.TdsParserSessionPool.Deactivate|ADV> {ObjectID}# reclaiming session {session.ObjectID}\n");
+                                if (_log.IsTraceEnabled())
+                                {
+                                    _log.Trace($"<sc.TdsParserSessionPool.Deactivate|ADV> {ObjectID}# reclaiming session {session.ObjectID}");
+                                }
 
                                 PutSession(session);
                             }
@@ -95,7 +102,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource._log.ScopeLeave(scopeID);
+                _log.ScopeLeave(scopeID);
             }
         }
 
@@ -118,7 +125,10 @@ namespace Microsoft.Data.SqlClient
 
         internal void Dispose()
         {
-            SqlClientEventSource._log.Trace($"<sc.TdsParserSessionPool.Dispose|ADV> {ObjectID}# disposing cachedCount={_cachedCount}\n");
+            if (_log.IsTraceEnabled())
+            {
+                _log.Trace($"<sc.TdsParserSessionPool.Dispose|ADV> {ObjectID}# disposing cachedCount={_cachedCount}");
+            }
 
             lock (_cache)
             {
@@ -179,7 +189,10 @@ namespace Microsoft.Data.SqlClient
                     // No free objects, create a new one
                     session = _parser.CreateSession();
 
-                    SqlClientEventSource._log.Trace($"<sc.TdsParserSessionPool.CreateSession|ADV> {ObjectID}# adding session {session.ObjectID} to pool\n");
+                    if (_log.IsTraceEnabled())
+                    {
+                        _log.Trace($"<sc.TdsParserSessionPool.CreateSession|ADV> {ObjectID}# adding session {session.ObjectID} to pool");
+                    }
 
                     _cache.Add(session);
                     _cachedCount = _cache.Count;
@@ -188,7 +201,10 @@ namespace Microsoft.Data.SqlClient
                 session.Activate(owner);
             }
 
-            SqlClientEventSource._log.Trace($"<sc.TdsParserSessionPool.GetSession|ADV> {ObjectID}# using session {session.ObjectID}\n");
+            if (_log.IsTraceEnabled())
+            {
+                _log.Trace($"<sc.TdsParserSessionPool.GetSession|ADV> {ObjectID}# using session {session.ObjectID}");
+            }
 
             return session;
         }
@@ -211,7 +227,10 @@ namespace Microsoft.Data.SqlClient
                 else if ((okToReuse) && (_freeStateObjectCount < MaxInactiveCount))
                 {
                     // Session is good to re-use and our cache has space
-                    SqlClientEventSource._log.Trace($"<sc.TdsParserSessionPool.PutSession|ADV> {ObjectID}# keeping session {session.ObjectID} cachedCount={_cachedCount}\n");
+                    if (_log.IsTraceEnabled())
+                    {
+                        _log.Trace($"<sc.TdsParserSessionPool.PutSession|ADV> {ObjectID}# keeping session {session.ObjectID} cachedCount={_cachedCount}");
+                    }
 
                     Debug.Assert(!session._pendingData, "pending data on a pooled session?");
 
@@ -221,7 +240,10 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     // Either the session is bad, or we have no cache space - so dispose the session and remove it
-                    SqlClientEventSource._log.Trace($"<sc.TdsParserSessionPool.PutSession|ADV> {ObjectID}# disposing session {session.ObjectID} cachedCount={_cachedCount}\n");
+                    if (_log.IsTraceEnabled())
+                    {
+                        _log.Trace($"<sc.TdsParserSessionPool.PutSession|ADV> {ObjectID}# disposing session {session.ObjectID} cachedCount={_cachedCount}");
+                    }
 
                     bool removed = _cache.Remove(session);
                     Debug.Assert(removed, "session not in pool?");

@@ -12,7 +12,7 @@ using Microsoft.Win32.SafeHandles;
 using System.Diagnostics;
 using System.Runtime.Versioning;
 using Microsoft.Data.Common;
-using Microsoft.Data.SqlClient;
+using static Microsoft.Data.SqlClient.SqlClientEventSource;
 
 namespace Microsoft.Data.SqlTypes
 {
@@ -66,7 +66,7 @@ namespace Microsoft.Data.SqlTypes
             )
         {
 
-            var scopeID = SqlClientEventSource._log.ScopeEnter($"<sc.SqlFileStream.ctor|API> { ObjectID}# access={(int)access} options={(int)options} path='{path}'");
+            var scopeID = _log.ScopeEnter($"<sc.SqlFileStream.ctor|API> { ObjectID}# access={(int)access} options={(int)options} path='{path}'");
 
             try
             {
@@ -92,7 +92,7 @@ namespace Microsoft.Data.SqlTypes
             }
             finally
             {
-                SqlClientEventSource._log.ScopeLeave(scopeID);
+                _log.ScopeLeave(scopeID);
             }
         }
 
@@ -715,8 +715,11 @@ namespace Microsoft.Data.SqlTypes
                 UnsafeNativeMethods.SetErrorModeWrapper(UnsafeNativeMethods.SEM_FAILCRITICALERRORS, out oldMode);
                 try
                 {
-                    SqlClientEventSource._log.Trace($"<sc.SqlFileStream.OpenSqlFileStream|ADV> {ObjectID}#, desiredAccess=0x{(int)nDesiredAccess}, allocationSize={allocationSize}, " +
-                        $"fileAttributes=0x%{0}, shareAccess=0x{(int)shareAccess}, dwCreateDisposition=0x{dwCreateDisposition}, createOptions=0x{ dwCreateOptions}\n");
+                    if (_log.IsTraceEnabled())
+                    {
+                        _log.Trace($"<sc.SqlFileStream.OpenSqlFileStream|ADV> {ObjectID}#, desiredAccess=0x{(int)nDesiredAccess}, allocationSize={allocationSize}, " +
+                            $"fileAttributes=0x%{0}, shareAccess=0x{(int)shareAccess}, dwCreateDisposition=0x{dwCreateDisposition}, createOptions=0x{ dwCreateOptions}");
+                    }
 
                     retval = UnsafeNativeMethods.NtCreateFile(out hFile, nDesiredAccess,
                         ref oa, out ioStatusBlock, ref allocationSize,

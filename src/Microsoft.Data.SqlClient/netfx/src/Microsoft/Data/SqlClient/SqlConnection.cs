@@ -28,6 +28,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Server;
+using static Microsoft.Data.SqlClient.SqlClientEventSource;
 
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("System.Data.DataSetExtensions, PublicKey=" + Microsoft.Data.SqlClient.AssemblyRef.EcmaPublicKeyFull)] // DevDiv Bugs 92166
 
@@ -1102,7 +1103,7 @@ namespace Microsoft.Data.SqlClient
         [SuppressMessage("Microsoft.Reliability", "CA2004:RemoveCallsToGCKeepAlive")]
         override protected DbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
         {
-            var scopeID = SqlClientEventSource._log.ScopeEnter($"<prov.SqlConnection.BeginDbTransaction|API> {ObjectID}#, isolationLevel={(int)isolationLevel}");
+            var scopeID = _log.ScopeEnter($"<prov.SqlConnection.BeginDbTransaction|API> {ObjectID}#, isolationLevel={(int)isolationLevel}");
             try
             {
 
@@ -1118,7 +1119,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource._log.ScopeLeave(scopeID);
+                _log.ScopeLeave(scopeID);
             }
         }
 
@@ -1128,7 +1129,7 @@ namespace Microsoft.Data.SqlClient
             WaitForPendingReconnection();
             SqlStatistics statistics = null;
             string xactName = ADP.IsEmpty(transactionName) ? "None" : transactionName;
-            var scopeID = SqlClientEventSource._log.ScopeEnter($"<sc.SqlConnection.BeginTransaction|API> {ObjectID}#, iso={(int)iso}, transactionName='{xactName}'\n");
+            var scopeID = _log.ScopeEnter($"<sc.SqlConnection.BeginTransaction|API> {ObjectID}#, iso={(int)iso}, transactionName='{xactName}'\n");
 
             try
             {
@@ -1156,7 +1157,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource._log.ScopeLeave(scopeID);
+                _log.ScopeLeave(scopeID);
                 SqlStatistics.StopTimer(statistics);
             }
         }
@@ -1166,7 +1167,7 @@ namespace Microsoft.Data.SqlClient
         {
             SqlStatistics statistics = null;
             RepairInnerConnection();
-            SqlClientEventSource._log.CorrelationTrace($"<sc.SqlConnection.ChangeDatabase|API|Correlation> ObjectID{ObjectID}#, ActivityID {EventSource.GetGuid(typeof(SqlClientEventSource))}\n");
+            _log.CorrelationTrace($"<sc.SqlConnection.ChangeDatabase|API|Correlation> ObjectID{ObjectID}#, ActivityID {EventSource.GetGuid(typeof(SqlClientEventSource))}\n");
             TdsParser bestEffortCleanupTarget = null;
             RuntimeHelpers.PrepareConstrainedRegions();
             try
@@ -1259,8 +1260,8 @@ namespace Microsoft.Data.SqlClient
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Close/*' />
         override public void Close()
         {
-            var scopeID = SqlClientEventSource._log.ScopeEnter($"<sc.SqlConnection.Close|API> {ObjectID}#");
-            SqlClientEventSource._log.CorrelationTrace($"<sc.SqlConnection.Close|API|Correlation> ObjectID{ObjectID}#, ActivityID {EventSource.GetGuid(typeof(SqlClientEventSource))}\n");
+            var scopeID = _log.ScopeEnter($"<sc.SqlConnection.Close|API> {ObjectID}#");
+            _log.CorrelationTrace($"<sc.SqlConnection.Close|API|Correlation> ObjectID{ObjectID}#, ActivityID {EventSource.GetGuid(typeof(SqlClientEventSource))}\n");
             try
             {
                 SqlStatistics statistics = null;
@@ -1342,7 +1343,7 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlDebugContext sdc = _sdc;
                 _sdc = null;
-                SqlClientEventSource._log.ScopeLeave(scopeID);
+                _log.ScopeLeave(scopeID);
                 if (sdc != null)
                 {
                     sdc.Dispose();
@@ -1395,8 +1396,8 @@ namespace Microsoft.Data.SqlClient
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Open/*' />
         override public void Open()
         {
-            var scopeID = SqlClientEventSource._log.ScopeEnter($"<sc.SqlConnection.Open|API|Correlation> ObjectID: {ObjectID}, ActivityID {SqlClientEventSource._log.Guid}\n");
-            SqlClientEventSource._log.CorrelationTrace($"<sc.SqlConnection.Open|API|Correlation> ObjectID{ObjectID}#, ActivityID {EventSource.GetGuid(typeof(SqlClientEventSource))}\n");
+            var scopeID = _log.ScopeEnter($"<sc.SqlConnection.Open|API|Correlation> ObjectID: {ObjectID}, ActivityID {_log.Guid}\n");
+            _log.CorrelationTrace($"<sc.SqlConnection.Open|API|Correlation> ObjectID{ObjectID}#, ActivityID {EventSource.GetGuid(typeof(SqlClientEventSource))}\n");
 
             try
             {
@@ -1430,7 +1431,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource._log.ScopeLeave(scopeID);
+                _log.ScopeLeave(scopeID);
             }
         }
 
@@ -1464,7 +1465,10 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (ctoken.IsCancellationRequested)
                     {
-                        SqlClientEventSource._log.Trace($"<sc.SqlConnection.ReconnectAsync|INFO> Orginal ClientConnectionID: {_originalConnectionId.ToString()} - reconnection cancelled.\n");
+                        if (_log.IsTraceEnabled())
+                        {
+                            _log.Trace($"<sc.SqlConnection.ReconnectAsync|INFO> Orginal ClientConnectionID: {_originalConnectionId.ToString()} - reconnection cancelled.");
+                        }
                         return;
                     }
                     try
@@ -1485,15 +1489,27 @@ namespace Microsoft.Data.SqlClient
                             _impersonateIdentity = null;
                             ForceNewConnection = false;
                         }
-                        SqlClientEventSource._log.Trace($"<sc.SqlConnection.ReconnectIfNeeded|INFO> Reconnection suceeded.  ClientConnectionID {_originalConnectionId.ToString()} -> {ClientConnectionId.ToString()} \n");
+
+                        if (_log.IsTraceEnabled())
+                        {
+                            _log.Trace($"<sc.SqlConnection.ReconnectIfNeeded|INFO> Reconnection suceeded.  ClientConnectionID {_originalConnectionId.ToString()} -> {ClientConnectionId.ToString()}");
+                        }
                         return;
                     }
                     catch (SqlException e)
                     {
-                        SqlClientEventSource._log.Trace($"<sc.SqlConnection.ReconnectAsyncINFO> Orginal ClientConnectionID {_originalConnectionId} - reconnection attempt failed error {e.Message}\n");
+                        if (_log.IsTraceEnabled())
+                        {
+                            _log.Trace($"<sc.SqlConnection.ReconnectAsyncINFO> Orginal ClientConnectionID {_originalConnectionId} - reconnection attempt failed error {e.Message}");
+                        }
+
                         if (attempt == retryCount - 1)
                         {
-                            SqlClientEventSource._log.Trace($"<sc.SqlConnection.ReconnectAsync|INFO> Orginal ClientConnectionID {_originalConnectionId.ToString()} - give up reconnection\n");
+                            if (_log.IsTraceEnabled())
+                            {
+                                _log.Trace($"<sc.SqlConnection.ReconnectAsync|INFO> Orginal ClientConnectionID {_originalConnectionId.ToString()} - give up reconnection");
+                            }
+
                             throw SQL.CR_AllAttemptsFailed(e, _originalConnectionId);
                         }
                         if (timeout > 0 && ADP.TimerRemaining(commandTimeoutExpiration) < ADP.TimerFromSeconds(ConnectRetryInterval))
@@ -1559,7 +1575,11 @@ namespace Microsoft.Data.SqlClient
                                         if (cData._unrecoverableStatesCount == 0)
                                         { // could change since the first check, but now is stable since connection is know to be broken
                                             _originalConnectionId = ClientConnectionId;
-                                            SqlClientEventSource._log.Trace($"<sc.SqlConnection.ReconnectIfNeeded|INFO> Connection ClientConnectionID {_originalConnectionId.ToString()} is invalid, reconnecting\n");
+
+                                            if (_log.IsTraceEnabled())
+                                            {
+                                                _log.Trace($"<sc.SqlConnection.ReconnectIfNeeded|INFO> Connection ClientConnectionID {_originalConnectionId.ToString()} is invalid, reconnecting");
+                                            }
                                             _recoverySessionData = cData;
                                             if (beforeDisconnect != null)
                                             {
@@ -1651,8 +1671,8 @@ namespace Microsoft.Data.SqlClient
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsync/*' />
         public override Task OpenAsync(CancellationToken cancellationToken)
         {
-            var scopeID = SqlClientEventSource._log.PoolerScopeEnter($"<sc.SqlConnection.OpenAsync|API> {ObjectID}#");
-            SqlClientEventSource._log.CorrelationTrace($"<sc.SqlConnection.OpenAsync|API|Correlation> ObjectID{ObjectID}#, ActivityID {EventSource.GetGuid(typeof(SqlClientEventSource))}\n");
+            var scopeID = _log.PoolerScopeEnter($"<sc.SqlConnection.OpenAsync|API> {ObjectID}#");
+            _log.CorrelationTrace($"<sc.SqlConnection.OpenAsync|API|Correlation> ObjectID{ObjectID}#, ActivityID {EventSource.GetGuid(typeof(SqlClientEventSource))}\n");
             try
             {
 
@@ -1729,7 +1749,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource._log.ScopeLeave(scopeID);
+                _log.ScopeLeave(scopeID);
             }
         }
 
@@ -1750,7 +1770,10 @@ namespace Microsoft.Data.SqlClient
 
             internal void Retry(Task<DbConnectionInternal> retryTask)
             {
-                SqlClientEventSource._log.Trace($"<sc.SqlConnection.OpenAsyncRetry|Info> {_parent.ObjectID}#\n");
+                if (_log.IsTraceEnabled())
+                {
+                    _log.Trace($"<sc.SqlConnection.OpenAsyncRetry|Info> {_parent.ObjectID}#");
+                }
                 _registration.Dispose();
                 try
                 {
@@ -2097,7 +2120,11 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (capturedCloseCount == _closeCount)
                         {
-                            SqlClientEventSource._log.Trace($"<sc.SqlConnection.OnError|INFO> {ObjectID}#, Connection broken.\n");
+                            if (_log.IsTraceEnabled())
+                            {
+                                _log.Trace($"<sc.SqlConnection.OnError|INFO> {ObjectID}#, Connection broken.");
+                            }
+
                             Close();
                         }
                     };
@@ -2106,7 +2133,10 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    SqlClientEventSource._log.Trace($"<sc.SqlConnection.OnError|INFO> {ObjectID}#, Connection broken.\n");
+                    if (_log.IsTraceEnabled())
+                    {
+                        _log.Trace($"<sc.SqlConnection.OnError|INFO> {ObjectID}#, Connection broken.");
+                    }
                     Close();
                 }
             }
@@ -2214,7 +2244,11 @@ namespace Microsoft.Data.SqlClient
 
             Debug.Assert(null != imevent, "null SqlInfoMessageEventArgs");
             var imeventValue = (null != imevent) ? imevent.Message : "";
-            SqlClientEventSource._log.Trace($"<sc.SqlConnection.OnInfoMessage|API|INFO> {ObjectID}#, Message='{imeventValue}'\n");
+
+            if (_log.IsTraceEnabled())
+            {
+                _log.Trace($"<sc.SqlConnection.OnInfoMessage|API|INFO> {ObjectID}#, Message='{imeventValue}'");
+            }
 
             SqlInfoMessageEventHandler handler = (SqlInfoMessageEventHandler)Events[EventInfoMessage];
             if (null != handler)
@@ -2428,8 +2462,8 @@ namespace Microsoft.Data.SqlClient
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ChangePasswordConnectionStringNewPassword/*' />
         public static void ChangePassword(string connectionString, string newPassword)
         {
-            var scopeID = SqlClientEventSource._log.ScopeEnter("<sc.SqlConnection.ChangePassword|API>");
-            SqlClientEventSource._log.CorrelationTrace($"<sc.SqlConnection.ChangePassword|API|Correlation> ActivityID {EventSource.GetGuid(typeof(SqlClientEventSource))}\n");
+            var scopeID = _log.ScopeEnter("<sc.SqlConnection.ChangePassword|API>");
+            _log.CorrelationTrace($"<sc.SqlConnection.ChangePassword|API|Correlation> ActivityID {EventSource.GetGuid(typeof(SqlClientEventSource))}\n");
             try
             {
                 if (ADP.IsEmpty(connectionString))
@@ -2468,15 +2502,15 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource._log.ScopeLeave(scopeID);
+                _log.ScopeLeave(scopeID);
             }
         }
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='/docs/members[@name="SqlConnection"]/ChangePasswordConnectionStringCredentialNewSecurePassword/*' />
         public static void ChangePassword(string connectionString, SqlCredential credential, SecureString newSecurePassword)
         {
-            var scopeID = SqlClientEventSource._log.ScopeEnter("<sc.SqlConnection.ChangePassword|API>");
-            SqlClientEventSource._log.CorrelationTrace($"<sc.SqlConnection.ChangePassword|API|Correlation> ActivityID {EventSource.GetGuid(typeof(SqlClientEventSource))}\n");
+            var scopeID = _log.ScopeEnter("<sc.SqlConnection.ChangePassword|API>");
+            _log.CorrelationTrace($"<sc.SqlConnection.ChangePassword|API|Correlation> ActivityID {EventSource.GetGuid(typeof(SqlClientEventSource))}\n");
             try
             {
                 if (ADP.IsEmpty(connectionString))
@@ -2538,7 +2572,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource._log.ScopeLeave(scopeID);
+                _log.ScopeLeave(scopeID);
             }
         }
 
@@ -2644,9 +2678,9 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(TypeSystemAssemblyVersion != null, "TypeSystemAssembly should be set !");
             if (string.Compare(asmRef.Name, "Microsoft.SqlServer.Types", StringComparison.OrdinalIgnoreCase) == 0)
             {
-                if (asmRef.Version != TypeSystemAssemblyVersion)
+                if (asmRef.Version != TypeSystemAssemblyVersion && _log.IsTraceEnabled())
                 {
-                    SqlClientEventSource._log.Trace($"<sc.SqlConnection.ResolveTypeAssembly> SQL CLR type version change: Server sent {asmRef.Version.ToString()}, client will instantiate {TypeSystemAssemblyVersion.ToString()}");
+                    _log.Trace($"<sc.SqlConnection.ResolveTypeAssembly> SQL CLR type version change: Server sent {asmRef.Version.ToString()}, client will instantiate {TypeSystemAssemblyVersion.ToString()}");
                 }
                 asmRef.Version = TypeSystemAssemblyVersion;
             }

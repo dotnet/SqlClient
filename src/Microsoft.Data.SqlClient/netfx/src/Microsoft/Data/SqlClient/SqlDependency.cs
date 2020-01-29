@@ -18,6 +18,7 @@ using System.Xml;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.Sql;
+using static Microsoft.Data.SqlClient.SqlClientEventSource;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -316,7 +317,7 @@ namespace Microsoft.Data.SqlClient
         [System.Security.Permissions.HostProtectionAttribute(ExternalThreading = true)]
         public SqlDependency(SqlCommand command, string options, int timeout)
         {
-            var scopeID = SqlClientEventSource._log.NotificationsScopeEnter($"<sc.SqlDependency|DEP> {ObjectID}#, options: '{options}', timeout: '{timeout}'");
+            var scopeID = _log.NotificationsScopeEnter($"<sc.SqlDependency|DEP> {ObjectID}#, options: '{options}', timeout: '{timeout}'");
             try
             {
                 if (InOutOfProcHelper.InProc)
@@ -339,7 +340,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource._log.ScopeLeave(scopeID);
+                _log.ScopeLeave(scopeID);
             }
         }
 
@@ -436,7 +437,7 @@ namespace Microsoft.Data.SqlClient
             // EventHandlers to be fired when dependency is notified.
             add
             {
-                var scopeID = SqlClientEventSource._log.NotificationsScopeEnter($"<sc.SqlDependency.OnChange-Add|DEP> {ObjectID}#");
+                var scopeID = _log.NotificationsScopeEnter($"<sc.SqlDependency.OnChange-Add|DEP> {ObjectID}#");
                 try
                 {
                     if (null != value)
@@ -447,12 +448,12 @@ namespace Microsoft.Data.SqlClient
                         {
                             if (_dependencyFired)
                             { // If fired, fire the new event immediately.
-                                SqlClientEventSource._log.NotificationsTrace($"<sc.SqlDependency.OnChange-Add|DEP> Dependency already fired, firing new event.\n");
+                                _log.NotificationsTrace($"<sc.SqlDependency.OnChange-Add|DEP> Dependency already fired, firing new event.\n");
                                 sqlNotificationEvent = new SqlNotificationEventArgs(SqlNotificationType.Subscribe, SqlNotificationInfo.AlreadyChanged, SqlNotificationSource.Client);
                             }
                             else
                             {
-                                SqlClientEventSource._log.NotificationsTrace($"<sc.SqlDependency.OnChange-Add|DEP> Dependency has not fired, adding new event.\n");
+                                _log.NotificationsTrace($"<sc.SqlDependency.OnChange-Add|DEP> Dependency has not fired, adding new event.\n");
                                 EventContextPair pair = new EventContextPair(value, this);
                                 if (!_eventList.Contains(pair))
                                 {
@@ -473,12 +474,12 @@ namespace Microsoft.Data.SqlClient
                 }
                 finally
                 {
-                    SqlClientEventSource._log.ScopeLeave(scopeID);
+                    _log.ScopeLeave(scopeID);
                 }
             }
             remove
             {
-                var scopeID = SqlClientEventSource._log.NotificationsScopeEnter($"<sc.SqlDependency.OnChange-Remove|DEP> {ObjectID}#");
+                var scopeID = _log.NotificationsScopeEnter($"<sc.SqlDependency.OnChange-Remove|DEP> {ObjectID}#");
                 try
                 {
                     if (null != value)
@@ -496,7 +497,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 finally
                 {
-                    SqlClientEventSource._log.ScopeLeave(scopeID);
+                    _log.ScopeLeave(scopeID);
                 }
             }
         }
@@ -513,7 +514,7 @@ namespace Microsoft.Data.SqlClient
         {
             // Adds command to dependency collection so we automatically create the SqlNotificationsRequest object
             // and listen for a notification for the added commands.
-            var scopeID = SqlClientEventSource._log.NotificationsScopeEnter($"<sc.SqlDependency.AddCommandDependency|DEP> {ObjectID}#");
+            var scopeID = _log.NotificationsScopeEnter($"<sc.SqlDependency.AddCommandDependency|DEP> {ObjectID}#");
             try
             {
                 if (command == null)
@@ -525,7 +526,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource._log.ScopeLeave(scopeID);
+                _log.ScopeLeave(scopeID);
             }
         }
 
@@ -551,9 +552,9 @@ namespace Microsoft.Data.SqlClient
 
             if (nativeStorage == null)
             {
-                SqlClientEventSource._log.NotificationsTrace($"<sc.SqlDependency.ObtainProcessDispatcher|DEP> nativeStorage null, obtaining dispatcher AppDomain and creating ProcessDispatcher.\n");
+                _log.NotificationsTrace($"<sc.SqlDependency.ObtainProcessDispatcher|DEP> nativeStorage null, obtaining dispatcher AppDomain and creating ProcessDispatcher.\n");
 #if DEBUG       // Possibly expensive, limit to debug.
-                SqlClientEventSource._log.NotificationsTrace($"<sc.SqlDependency.ObtainProcessDispatcher|DEP> AppDomain.CurrentDomain.FriendlyName: {AppDomain.CurrentDomain.FriendlyName}\n");
+                _log.NotificationsTrace($"<sc.SqlDependency.ObtainProcessDispatcher|DEP> AppDomain.CurrentDomain.FriendlyName: {AppDomain.CurrentDomain.FriendlyName}\n");
 #endif
                 _AppDomain masterDomain = SNINativeMethodWrapper.GetDefaultAppDomain();
 
@@ -578,32 +579,32 @@ namespace Microsoft.Data.SqlClient
                         }
                         else
                         {
-                            SqlClientEventSource._log.NotificationsTrace($"<sc.SqlDependency.ObtainProcessDispatcher|DEP|ERR> ERROR - ObjectHandle.Unwrap returned null!\n");
+                            _log.NotificationsTrace($"<sc.SqlDependency.ObtainProcessDispatcher|DEP|ERR> ERROR - ObjectHandle.Unwrap returned null!\n");
                             throw ADP.InternalError(ADP.InternalErrorCode.SqlDependencyObtainProcessDispatcherFailureObjectHandle);
                         }
                     }
                     else
                     {
-                        SqlClientEventSource._log.NotificationsTrace("<sc.SqlDependency.ObtainProcessDispatcher|DEP|ERR> ERROR - AppDomain.CreateInstance returned null!\n");
+                        _log.NotificationsTrace("<sc.SqlDependency.ObtainProcessDispatcher|DEP|ERR> ERROR - AppDomain.CreateInstance returned null!\n");
                         throw ADP.InternalError(ADP.InternalErrorCode.SqlDependencyProcessDispatcherFailureCreateInstance);
                     }
                 }
                 else
                 {
-                    SqlClientEventSource._log.NotificationsTrace("<sc.SqlDependency.ObtainProcessDispatcher|DEP|ERR> ERROR - unable to obtain default AppDomain!\n");
+                    _log.NotificationsTrace("<sc.SqlDependency.ObtainProcessDispatcher|DEP|ERR> ERROR - unable to obtain default AppDomain!\n");
                     throw ADP.InternalError(ADP.InternalErrorCode.SqlDependencyProcessDispatcherFailureAppDomain);
                 }
             }
             else
             {
-                SqlClientEventSource._log.NotificationsTrace("<sc.SqlDependency.ObtainProcessDispatcher|DEP> nativeStorage not null, obtaining existing dispatcher AppDomain and ProcessDispatcher.\n");
+                _log.NotificationsTrace("<sc.SqlDependency.ObtainProcessDispatcher|DEP> nativeStorage not null, obtaining existing dispatcher AppDomain and ProcessDispatcher.\n");
 #if DEBUG       // Possibly expensive, limit to debug.
-                SqlClientEventSource._log.NotificationsTrace($"<sc.SqlDependency.ObtainProcessDispatcher|DEP> AppDomain.CurrentDomain.FriendlyName: {AppDomain.CurrentDomain.FriendlyName}\n");
+                _log.NotificationsTrace($"<sc.SqlDependency.ObtainProcessDispatcher|DEP> AppDomain.CurrentDomain.FriendlyName: {AppDomain.CurrentDomain.FriendlyName}\n");
 #endif
                 BinaryFormatter formatter = new BinaryFormatter();
                 MemoryStream stream = new MemoryStream(nativeStorage);
                 _processDispatcher = GetDeserializedObject(formatter, stream); // Deserialize and set for appdomain.
-                SqlClientEventSource._log.NotificationsTrace($"<sc.SqlDependency.ObtainProcessDispatcher|DEP> processDispatcher obtained, ID: {_processDispatcher.ObjectID}\n");
+                _log.NotificationsTrace($"<sc.SqlDependency.ObtainProcessDispatcher|DEP> processDispatcher obtained, ID: {_processDispatcher.ObjectID}\n");
             }
         }
 
@@ -650,7 +651,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static bool Start(string connectionString, string queue, bool useDefaults)
         {
-            var scopeID = SqlClientEventSource._log.NotificationsScopeEnter($"<sc.SqlDependency.Start|DEP> AppDomainKey: '{AppDomainKey}', queue: '{queue}'");
+            var scopeID = _log.NotificationsScopeEnter($"<sc.SqlDependency.Start|DEP> AppDomainKey: '{AppDomainKey}', queue: '{queue}'");
             try
             {
                 // The following code exists in Stop as well.  It exists here to demand permissions as high in the stack
@@ -723,7 +724,7 @@ namespace Microsoft.Data.SqlClient
                                                                                  SqlDependencyPerAppDomainDispatcher.SingletonInstance,
                                                                              out errorOccurred,
                                                                              out appDomainStart);
-                                SqlClientEventSource._log.NotificationsTrace($"<sc.SqlDependency.Start|DEP> Start (defaults) returned: '{result}', with service: '{service}', server: '{server}', database: '{database}'\n");
+                                _log.NotificationsTrace($"<sc.SqlDependency.Start|DEP> Start (defaults) returned: '{result}', with service: '{service}', server: '{server}', database: '{database}'\n");
                             }
                             finally
                             {
@@ -745,7 +746,7 @@ namespace Microsoft.Data.SqlClient
                                             }
 
                                             ADP.TraceExceptionWithoutRethrow(e); // Discard failure, but trace for now.
-                                            SqlClientEventSource._log.NotificationsTrace("<sc.SqlDependency.Start|DEP|ERR> Exception occurred from Stop() after duplicate was found on Start().\n");
+                                            _log.NotificationsTrace("<sc.SqlDependency.Start|DEP|ERR> Exception occurred from Stop() after duplicate was found on Start().\n");
                                         }
                                         throw SQL.SqlDependencyDuplicateStart();
                                     }
@@ -758,7 +759,7 @@ namespace Microsoft.Data.SqlClient
                                                               queue,
                                                               _appDomainKey,
                                                               SqlDependencyPerAppDomainDispatcher.SingletonInstance);
-                            SqlClientEventSource._log.NotificationsTrace($"<sc.SqlDependency.Start|DEP> Start (user provided queue) returned: '{result}'\n");
+                            _log.NotificationsTrace($"<sc.SqlDependency.Start|DEP> Start (user provided queue) returned: '{result}'\n");
                             // No need to call AddToServerDatabaseHash since if not using default queue user is required
                             // to provide options themselves.
                         }
@@ -772,7 +773,7 @@ namespace Microsoft.Data.SqlClient
 
                         ADP.TraceExceptionWithoutRethrow(e); // Discard failure, but trace for now.
 
-                        SqlClientEventSource._log.NotificationsTrace($"<sc.SqlDependency.Start|DEP|ERR> Exception occurred from _processDispatcher.Start(...), calling Invalidate(...).\n");
+                        _log.NotificationsTrace($"<sc.SqlDependency.Start|DEP|ERR> Exception occurred from _processDispatcher.Start(...), calling Invalidate(...).\n");
                         throw;
                     }
                 }
@@ -781,7 +782,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource._log.ScopeLeave(scopeID);
+                _log.ScopeLeave(scopeID);
             }
         }
 
@@ -801,7 +802,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static bool Stop(string connectionString, string queue, bool useDefaults, bool startFailed)
         {
-            var scopeID = SqlClientEventSource._log.NotificationsScopeEnter($"<sc.SqlDependency.Stop|DEP> AppDomainKey: '{AppDomainKey}', queue: '{queue}'");
+            var scopeID = _log.NotificationsScopeEnter($"<sc.SqlDependency.Stop|DEP> AppDomainKey: '{AppDomainKey}', queue: '{queue}'");
             try
             {
                 // The following code exists in Stop as well.  It exists here to demand permissions as high in the stack
@@ -911,7 +912,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource._log.ScopeLeave(scopeID);
+                _log.ScopeLeave(scopeID);
             }
         }
 
@@ -921,7 +922,7 @@ namespace Microsoft.Data.SqlClient
 
         private static bool AddToServerUserHash(string server, IdentityUserNamePair identityUser, DatabaseServicePair databaseService)
         {
-            var scopeID = SqlClientEventSource._log.NotificationsScopeEnter($"<sc.SqlDependency.AddToServerUserHash|DEP> server: '{server}', database: '{databaseService.Database}', service: '{databaseService.Service}'");
+            var scopeID = _log.NotificationsScopeEnter($"<sc.SqlDependency.AddToServerUserHash|DEP> server: '{server}', database: '{databaseService.Database}', service: '{databaseService.Service}'");
             try
             {
                 bool result = false;
@@ -932,7 +933,7 @@ namespace Microsoft.Data.SqlClient
 
                     if (!_serverUserHash.ContainsKey(server))
                     {
-                        SqlClientEventSource._log.NotificationsTrace("<sc.SqlDependency.AddToServerUserHash|DEP> Hash did not contain server, adding.\n");
+                        _log.NotificationsTrace("<sc.SqlDependency.AddToServerUserHash|DEP> Hash did not contain server, adding.\n");
                         identityDatabaseHash = new Dictionary<IdentityUserNamePair, List<DatabaseServicePair>>();
                         _serverUserHash.Add(server, identityDatabaseHash);
                     }
@@ -945,7 +946,7 @@ namespace Microsoft.Data.SqlClient
 
                     if (!identityDatabaseHash.ContainsKey(identityUser))
                     {
-                        SqlClientEventSource._log.NotificationsTrace("<sc.SqlDependency.AddToServerUserHash|DEP> Hash contained server but not user, adding user.\n");
+                        _log.NotificationsTrace("<sc.SqlDependency.AddToServerUserHash|DEP> Hash contained server but not user, adding user.\n");
                         databaseServiceList = new List<DatabaseServicePair>();
                         identityDatabaseHash.Add(identityUser, databaseServiceList);
                     }
@@ -956,13 +957,13 @@ namespace Microsoft.Data.SqlClient
 
                     if (!databaseServiceList.Contains(databaseService))
                     {
-                        SqlClientEventSource._log.NotificationsTrace("<sc.SqlDependency.AddToServerUserHash|DEP> Adding database.\n");
+                        _log.NotificationsTrace("<sc.SqlDependency.AddToServerUserHash|DEP> Adding database.\n");
                         databaseServiceList.Add(databaseService);
                         result = true;
                     }
                     else
                     {
-                        SqlClientEventSource._log.NotificationsTrace("<sc.SqlDependency.AddToServerUserHash|DEP|ERR> ERROR - hash already contained server, user, and database - we will throw!.\n");
+                        _log.NotificationsTrace("<sc.SqlDependency.AddToServerUserHash|DEP|ERR> ERROR - hash already contained server, user, and database - we will throw!.\n");
                     }
                 }
 
@@ -970,13 +971,13 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource._log.ScopeLeave(scopeID);
+                _log.ScopeLeave(scopeID);
             }
         }
 
         private static void RemoveFromServerUserHash(string server, IdentityUserNamePair identityUser, DatabaseServicePair databaseService)
         {
-            var scopeID = SqlClientEventSource._log.NotificationsScopeEnter($"<sc.SqlDependency.RemoveFromServerUserHash|DEP> server: '{server}', database: '{databaseService.Database}', service: '{databaseService.Service}'");
+            var scopeID = _log.NotificationsScopeEnter($"<sc.SqlDependency.RemoveFromServerUserHash|DEP> server: '{server}', database: '{databaseService.Database}', service: '{databaseService.Service}'");
             try
             {
                 lock (_serverUserHash)
@@ -996,43 +997,43 @@ namespace Microsoft.Data.SqlClient
                             int index = databaseServiceList.IndexOf(databaseService);
                             if (index >= 0)
                             {
-                                SqlClientEventSource._log.NotificationsTrace("<sc.SqlDependency.RemoveFromServerUserHash|DEP> Hash contained server, user, and database - removing database.\n");
+                                _log.NotificationsTrace("<sc.SqlDependency.RemoveFromServerUserHash|DEP> Hash contained server, user, and database - removing database.\n");
                                 databaseServiceList.RemoveAt(index);
 
                                 if (databaseServiceList.Count == 0)
                                 {
-                                    SqlClientEventSource._log.NotificationsTrace("<sc.SqlDependency.RemoveFromServerUserHash|DEP> databaseServiceList count 0, removing the list for this server and user.\n");
+                                    _log.NotificationsTrace("<sc.SqlDependency.RemoveFromServerUserHash|DEP> databaseServiceList count 0, removing the list for this server and user.\n");
                                     identityDatabaseHash.Remove(identityUser);
 
                                     if (identityDatabaseHash.Count == 0)
                                     {
-                                        SqlClientEventSource._log.NotificationsTrace("<sc.SqlDependency.RemoveFromServerUserHash|DEP> identityDatabaseHash count 0, removing the hash for this server.\n");
+                                        _log.NotificationsTrace("<sc.SqlDependency.RemoveFromServerUserHash|DEP> identityDatabaseHash count 0, removing the hash for this server.\n");
                                         _serverUserHash.Remove(server);
                                     }
                                 }
                             }
                             else
                             {
-                                SqlClientEventSource._log.NotificationsTrace("<sc.SqlDependency.RemoveFromServerUserHash|DEP|ERR> ERROR - hash contained server and user but not database!\n");
+                                _log.NotificationsTrace("<sc.SqlDependency.RemoveFromServerUserHash|DEP|ERR> ERROR - hash contained server and user but not database!\n");
                                 Debug.Assert(false, "Unexpected state - hash did not contain database!");
                             }
                         }
                         else
                         {
-                            SqlClientEventSource._log.NotificationsTrace("<sc.SqlDependency.RemoveFromServerUserHash|DEP|ERR> ERROR - hash contained server but not user!\n");
+                            _log.NotificationsTrace("<sc.SqlDependency.RemoveFromServerUserHash|DEP|ERR> ERROR - hash contained server but not user!\n");
                             Debug.Assert(false, "Unexpected state - hash did not contain user!");
                         }
                     }
                     else
                     {
-                        SqlClientEventSource._log.NotificationsTrace("<sc.SqlDependency.RemoveFromServerUserHash|DEP|ERR> ERROR - hash did not contain server!\n");
+                        _log.NotificationsTrace("<sc.SqlDependency.RemoveFromServerUserHash|DEP|ERR> ERROR - hash did not contain server!\n");
                         Debug.Assert(false, "Unexpected state - hash did not contain server!");
                     }
                 }
             }
             finally
             {
-                SqlClientEventSource._log.ScopeLeave(scopeID);
+                _log.ScopeLeave(scopeID);
             }
         }
 
@@ -1040,7 +1041,7 @@ namespace Microsoft.Data.SqlClient
         {
             // Server must be an exact match, but user and database only needs to match exactly if there is more than one 
             // for the given user or database passed.  That is ambiguious and we must fail.
-            var scopeID = SqlClientEventSource._log.NotificationsScopeEnter($"<sc.SqlDependency.GetDefaultComposedOptions|DEP> server: '{server}', failoverServer: '{failoverServer}', database: '{database}'");
+            var scopeID = _log.NotificationsScopeEnter($"<sc.SqlDependency.GetDefaultComposedOptions|DEP> server: '{server}', failoverServer: '{failoverServer}', database: '{database}'");
             try
             {
                 string result;
@@ -1051,17 +1052,17 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (0 == _serverUserHash.Count)
                         { // Special error for no calls to start.
-                            SqlClientEventSource._log.NotificationsTrace("<sc.SqlDependency.GetDefaultComposedOptions|DEP|ERR> ERROR - no start calls have been made, about to throw.\n");
+                            _log.NotificationsTrace("<sc.SqlDependency.GetDefaultComposedOptions|DEP|ERR> ERROR - no start calls have been made, about to throw.\n");
                             throw SQL.SqlDepDefaultOptionsButNoStart();
                         }
                         else if (!ADP.IsEmpty(failoverServer) && _serverUserHash.ContainsKey(failoverServer))
                         {
-                            SqlClientEventSource._log.NotificationsTrace("<sc.SqlDependency.GetDefaultComposedOptions|DEP> using failover server instead\n");
+                            _log.NotificationsTrace("<sc.SqlDependency.GetDefaultComposedOptions|DEP> using failover server instead\n");
                             server = failoverServer;
                         }
                         else
                         {
-                            SqlClientEventSource._log.NotificationsTrace("<sc.SqlDependency.GetDefaultComposedOptions|DEP|ERR> ERROR - not listening to this server, about to throw.\n");
+                            _log.NotificationsTrace("<sc.SqlDependency.GetDefaultComposedOptions|DEP|ERR> ERROR - not listening to this server, about to throw.\n");
                             throw SQL.SqlDependencyNoMatchingServerStart();
                         }
                     }
@@ -1074,7 +1075,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (identityDatabaseHash.Count > 1)
                         {
-                            SqlClientEventSource._log.NotificationsTrace("<sc.SqlDependency.GetDefaultComposedOptions|DEP|ERR> ERROR - not listening for this user, but listening to more than one other user, about to throw.\n");
+                            _log.NotificationsTrace("<sc.SqlDependency.GetDefaultComposedOptions|DEP|ERR> ERROR - not listening for this user, but listening to more than one other user, about to throw.\n");
                             throw SQL.SqlDependencyNoMatchingServerStart();
                         }
                         else
@@ -1120,19 +1121,19 @@ namespace Microsoft.Data.SqlClient
                         }
                         else
                         { // More than one database for given server, ambiguous - fail the default case!
-                            SqlClientEventSource._log.NotificationsTrace("<sc.SqlDependency.GetDefaultComposedOptions|DEP|ERR> ERROR - SqlDependency.Start called multiple times for this server/user, but no matching database.\n");
+                            _log.NotificationsTrace("<sc.SqlDependency.GetDefaultComposedOptions|DEP|ERR> ERROR - SqlDependency.Start called multiple times for this server/user, but no matching database.\n");
                             throw SQL.SqlDependencyNoMatchingServerDatabaseStart();
                         }
                     }
                 }
 
                 Debug.Assert(!ADP.IsEmpty(result), "GetDefaultComposedOptions should never return null or empty string!");
-                SqlClientEventSource._log.NotificationsTrace($"<sc.SqlDependency.GetDefaultComposedOptions|DEP> resulting options: '{result}'.\n");
+                _log.NotificationsTrace($"<sc.SqlDependency.GetDefaultComposedOptions|DEP> resulting options: '{result}'.\n");
                 return result;
             }
             finally
             {
-                SqlClientEventSource._log.ScopeLeave(scopeID);
+                _log.ScopeLeave(scopeID);
             }
         }
 
@@ -1144,7 +1145,7 @@ namespace Microsoft.Data.SqlClient
         // use this list for a reverse lookup based on server.
         internal void AddToServerList(string server)
         {
-            var scopeID = SqlClientEventSource._log.NotificationsScopeEnter($"<sc.SqlDependency.AddToServerList|DEP> {ObjectID}#, server: '{server}'");
+            var scopeID = _log.NotificationsScopeEnter($"<sc.SqlDependency.AddToServerList|DEP> {ObjectID}#, server: '{server}'");
             try
             {
                 lock (_serverList)
@@ -1152,7 +1153,7 @@ namespace Microsoft.Data.SqlClient
                     int index = _serverList.BinarySearch(server, StringComparer.OrdinalIgnoreCase);
                     if (0 > index)
                     { // If less than 0, item was not found in list.
-                        SqlClientEventSource._log.NotificationsTrace($"<sc.SqlDependency.AddToServerList|DEP> Server not present in hashtable, adding server: '{server}'.\n");
+                        _log.NotificationsTrace($"<sc.SqlDependency.AddToServerList|DEP> Server not present in hashtable, adding server: '{server}'.\n");
                         index = ~index; // BinarySearch returns the 2's compliment of where the item should be inserted to preserver a sorted list after insertion.
                         _serverList.Insert(index, server);
 
@@ -1161,7 +1162,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource._log.ScopeLeave(scopeID);
+                _log.ScopeLeave(scopeID);
             }
         }
 
@@ -1175,7 +1176,7 @@ namespace Microsoft.Data.SqlClient
 
         internal string ComputeHashAndAddToDispatcher(SqlCommand command)
         {
-            var scopeID = SqlClientEventSource._log.NotificationsScopeEnter($"<sc.SqlDependency.ComputeHashAndAddToDispatcher|DEP> {ObjectID}#, SqlCommand: {command.ObjectID}#");
+            var scopeID = _log.NotificationsScopeEnter($"<sc.SqlDependency.ComputeHashAndAddToDispatcher|DEP> {ObjectID}#, SqlCommand: {command.ObjectID}#");
             try
             {
                 // Create a string representing the concatenation of the connection string, command text and .ToString on all parameter values.
@@ -1190,18 +1191,18 @@ namespace Microsoft.Data.SqlClient
                 string commandHash = ComputeCommandHash(command.Connection.ConnectionString, command); // calculate the string representation of command
 
                 string idString = SqlDependencyPerAppDomainDispatcher.SingletonInstance.AddCommandEntry(commandHash, this); // Add to map.
-                SqlClientEventSource._log.NotificationsTrace($"<sc.SqlDependency.ComputeHashAndAddToDispatcher|DEP> computed id string: '{idString}'.\n");
+                _log.NotificationsTrace($"<sc.SqlDependency.ComputeHashAndAddToDispatcher|DEP> computed id string: '{idString}'.\n");
                 return idString;
             }
             finally
             {
-                SqlClientEventSource._log.ScopeLeave(scopeID);
+                _log.ScopeLeave(scopeID);
             }
         }
 
         internal void Invalidate(SqlNotificationType type, SqlNotificationInfo info, SqlNotificationSource source)
         {
-            var scopeID = SqlClientEventSource._log.NotificationsScopeEnter($"<sc.SqlDependency.Invalidate|DEP> {ObjectID}#");
+            var scopeID = _log.NotificationsScopeEnter($"<sc.SqlDependency.Invalidate|DEP> {ObjectID}#");
             try
             {
                 List<EventContextPair> eventList = null;
@@ -1219,12 +1220,12 @@ namespace Microsoft.Data.SqlClient
                             // raises Timeout event but before removing this event from the list. If notification is received from
                             // server in this case, we will hit this code path.
                             // It is safe to ignore this race condition because no event is sent to user and no leak happens.
-                            SqlClientEventSource._log.NotificationsTrace("<sc.SqlDependency.Invalidate|DEP> ignore notification received after timeout!");
+                            _log.NotificationsTrace("<sc.SqlDependency.Invalidate|DEP> ignore notification received after timeout!");
                         }
                         else
                         {
                             Debug.Assert(false, "Received notification twice - we should never enter this state!");
-                            SqlClientEventSource._log.NotificationsTrace("<sc.SqlDependency.Invalidate|DEP|ERR> ERROR - notification received twice - we should never enter this state!");
+                            _log.NotificationsTrace("<sc.SqlDependency.Invalidate|DEP|ERR> ERROR - notification received twice - we should never enter this state!");
                         }
                     }
                     else
@@ -1238,7 +1239,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (eventList != null)
                 {
-                    SqlClientEventSource._log.NotificationsTrace("<sc.SqlDependency.Invalidate|DEP> Firing events.\n");
+                    _log.NotificationsTrace("<sc.SqlDependency.Invalidate|DEP> Firing events.\n");
                     foreach (EventContextPair pair in eventList)
                     {
                         pair.Invoke(new SqlNotificationEventArgs(type, info, source));
@@ -1247,19 +1248,19 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource._log.ScopeLeave(scopeID);
+                _log.ScopeLeave(scopeID);
             }
         }
 
         // This method is used by SqlCommand.
         internal void StartTimer(SqlNotificationRequest notificationRequest)
         {
-            var scopeID = SqlClientEventSource._log.NotificationsScopeEnter($"<sc.SqlDependency.StartTimer|DEP> {ObjectID}#");
+            var scopeID = _log.NotificationsScopeEnter($"<sc.SqlDependency.StartTimer|DEP> {ObjectID}#");
             try
             {
                 if (_expirationTime == DateTime.MaxValue)
                 {
-                    SqlClientEventSource._log.NotificationsTrace("<sc.SqlDependency.StartTimer|DEP> We've timed out, executing logic.\n");
+                    _log.NotificationsTrace("<sc.SqlDependency.StartTimer|DEP> We've timed out, executing logic.\n");
 
                     int seconds = SQL.SqlDependencyServerTimeout;
                     if (0 != _timeout)
@@ -1278,7 +1279,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource._log.ScopeLeave(scopeID);
+                _log.ScopeLeave(scopeID);
             }
         }
 
@@ -1291,7 +1292,7 @@ namespace Microsoft.Data.SqlClient
             if (cmd != null)
             {
                 // Don't bother with BID if command null.
-                var scopeID = SqlClientEventSource._log.NotificationsScopeEnter($"<sc.SqlDependency.AddCommandInternal|DEP> {ObjectID}#, SqlCommand: {cmd.ObjectID}#");
+                var scopeID = _log.NotificationsScopeEnter($"<sc.SqlDependency.AddCommandInternal|DEP> {ObjectID}#, SqlCommand: {cmd.ObjectID}#");
                 try
                 {
                     SqlConnection connection = cmd.Connection;
@@ -1301,7 +1302,7 @@ namespace Microsoft.Data.SqlClient
                         // Fail if cmd has notification that is not already associated with this dependency.
                         if (cmd._sqlDep == null || cmd._sqlDep != this)
                         {
-                            SqlClientEventSource._log.NotificationsTrace("<sc.SqlDependency.AddCommandInternal|DEP|ERR> ERROR - throwing command has existing SqlNotificationRequest exception.\n");
+                            _log.NotificationsTrace("<sc.SqlDependency.AddCommandInternal|DEP|ERR> ERROR - throwing command has existing SqlNotificationRequest exception.\n");
                             throw SQL.SqlCommandHasExistingSqlNotificationRequest();
                         }
                     }
@@ -1332,7 +1333,7 @@ namespace Microsoft.Data.SqlClient
                                 Debug.Assert(0 == _eventList.Count, "How can we have an event at this point?");
                                 if (0 == _eventList.Count)
                                 { // Keep logic just in case.
-                                    SqlClientEventSource._log.NotificationsTrace("<sc.SqlDependency.AddCommandInternal|DEP|ERR> ERROR - firing events, though it is unexpected we have events at this point.\n");
+                                    _log.NotificationsTrace("<sc.SqlDependency.AddCommandInternal|DEP|ERR> ERROR - firing events, though it is unexpected we have events at this point.\n");
                                     needToInvalidate = true; // Delay invalidation until outside of lock.
                                 }
                             }
@@ -1346,14 +1347,14 @@ namespace Microsoft.Data.SqlClient
                 }
                 finally
                 {
-                    SqlClientEventSource._log.ScopeLeave(scopeID);
+                    _log.ScopeLeave(scopeID);
                 }
             }
         }
 
         private string ComputeCommandHash(string connectionString, SqlCommand command)
         {
-            var scopeID = SqlClientEventSource._log.NotificationsScopeEnter($"<sc.SqlDependency.ComputeCommandHash|DEP> {ObjectID}#, SqlCommand: {command.ObjectID}#");
+            var scopeID = _log.NotificationsScopeEnter($"<sc.SqlDependency.ComputeCommandHash|DEP> {ObjectID}#, SqlCommand: {command.ObjectID}#");
             try
             {
                 // Create a string representing the concatenation of the connection string, the command text and .ToString on all its parameter values.
@@ -1411,12 +1412,12 @@ namespace Microsoft.Data.SqlClient
 
                 string result = builder.ToString();
 
-                SqlClientEventSource._log.NotificationsTrace($"<sc.SqlDependency.ComputeCommandHash|DEP> ComputeCommandHash result: '{result}'.\n");
+                _log.NotificationsTrace($"<sc.SqlDependency.ComputeCommandHash|DEP> ComputeCommandHash result: '{result}'.\n");
                 return result;
             }
             finally
             {
-                SqlClientEventSource._log.ScopeLeave(scopeID);
+                _log.ScopeLeave(scopeID);
             }
         }
 

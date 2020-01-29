@@ -14,6 +14,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
+using static Microsoft.Data.SqlClient.SqlClientEventSource;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -560,8 +561,11 @@ namespace Microsoft.Data.SqlClient
                     return false;
                 }
 
-                SqlClientEventSource._log.Trace($"<sc.TdsParserStateObject.NullBitmap.Initialize|INFO|ADV> {stateObj.ObjectID}#, NBCROW bitmap received, column count = {columnsCount}\n");
-                SqlClientEventSource._log.TraceBin($"<sc.TdsParserStateObject.NullBitmap.Initialize|INFO|ADV> NBCROW bitmap data: ", _nullBitmap, (UInt16)_nullBitmap.Length);
+                if (_log.IsTraceEnabled())
+                {
+                    _log.Trace($"<sc.TdsParserStateObject.NullBitmap.Initialize|INFO|ADV> {stateObj.ObjectID}#, NBCROW bitmap received, column count = {columnsCount}");
+                }
+                _log.TraceBin($"<sc.TdsParserStateObject.NullBitmap.Initialize|INFO|ADV> NBCROW bitmap data: ", _nullBitmap, (ushort)_nullBitmap.Length);
 
                 return true;
             }
@@ -914,11 +918,18 @@ namespace Microsoft.Data.SqlClient
         internal int DecrementPendingCallbacks(bool release)
         {
             int remaining = Interlocked.Decrement(ref _pendingCallbacks);
-            SqlClientEventSource._log.Trace($"<sc.TdsParserStateObject.DecrementPendingCallbacks|ADV> {ObjectID}#, after decrementing _pendingCallbacks: { _pendingCallbacks}\n");
+
+            if (_log.IsTraceEnabled())
+            {
+                _log.Trace($"<sc.TdsParserStateObject.DecrementPendingCallbacks|ADV> {ObjectID}#, after decrementing _pendingCallbacks: { _pendingCallbacks}");
+            }
 
             if ((0 == remaining || release) && _gcHandle.IsAllocated)
             {
-                SqlClientEventSource._log.Trace($"<sc.TdsParserStateObject.DecrementPendingCallbacks|ADV> {ObjectID}#, FREEING HANDLE!\n");
+                if (_log.IsTraceEnabled())
+                {
+                    _log.Trace($"<sc.TdsParserStateObject.DecrementPendingCallbacks|ADV> {ObjectID}#, FREEING HANDLE!");
+                }
                 _gcHandle.Free();
             }
 
@@ -1027,7 +1038,10 @@ namespace Microsoft.Data.SqlClient
         {
             int remaining = Interlocked.Increment(ref _pendingCallbacks);
 
-            SqlClientEventSource._log.Trace($"<sc.TdsParserStateObject.IncrementPendingCallbacks|ADV> {ObjectID}#, after incrementing _pendingCallbacks: {_pendingCallbacks}\n");
+            if (_log.IsTraceEnabled())
+            {
+                _log.Trace($"<sc.TdsParserStateObject.IncrementPendingCallbacks|ADV> {ObjectID}#, after incrementing _pendingCallbacks: {_pendingCallbacks}");
+            }
 
             Debug.Assert(0 < remaining && remaining <= 3, $"_pendingCallbacks values is invalid after incrementing: {remaining}");
             return remaining;
@@ -2161,7 +2175,10 @@ namespace Microsoft.Data.SqlClient
                             _snapshot.CheckStack(new StackTrace());
                         }
 #endif
-                        SqlClientEventSource._log.Trace($"<sc.TdsParser.ReadNetworkPacket|INFO|ADV> Async packet replay\n");
+                        if (_log.IsTraceEnabled())
+                        {
+                            _log.Trace($"<sc.TdsParser.ReadNetworkPacket|INFO|ADV> Async packet replay");
+                        }
                         return true;
                     }
 #if DEBUG
@@ -2583,7 +2600,10 @@ namespace Microsoft.Data.SqlClient
                         if ((error != TdsEnums.SNI_SUCCESS) && (error != TdsEnums.SNI_WAIT_TIMEOUT))
                         {
                             // Connection is dead
-                            SqlClientEventSource._log.Trace($"<sc.TdsParser.IsConnectionAlive|Info> received error {(int)error} on idle connection\n");
+                            if (_log.IsTraceEnabled())
+                            {
+                                _log.Trace($"<sc.TdsParser.IsConnectionAlive|Info> received error {(int)error} on idle connection");
+                            }
                             isAlive = false;
                             if (throwOnException)
                             {
@@ -2799,7 +2819,10 @@ namespace Microsoft.Data.SqlClient
 
                     SniReadStatisticsAndTracing();
 
-                    SqlClientEventSource._log.TraceBin($"<sc.TdsParser.ReadNetworkPacketAsyncCallback|INFO|ADV> Packet read", _inBuff, (UInt16)_inBytesRead);
+                    if (_log.IsTraceEnabled())
+                    {
+                        _log.TraceBin($"<sc.TdsParser.ReadNetworkPacketAsyncCallback|INFO|ADV> Packet read", _inBuff, (UInt16)_inBytesRead);
+                    }
 
                     AssertValidState();
                 }
@@ -2957,7 +2980,11 @@ namespace Microsoft.Data.SqlClient
             {
                 if (sniError != TdsEnums.SNI_SUCCESS)
                 {
-                    SqlClientEventSource._log.Trace($"<sc.TdsParser.WriteAsyncCallback|Info> write async returned error code {(int)sniError}\n");
+                    if (_log.IsTraceEnabled())
+                    {
+                        _log.Trace($"<sc.TdsParser.WriteAsyncCallback|Info> write async returned error code {(int)sniError}");
+                    }
+
                     try
                     {
                         AddError(_parser.ProcessSNIError(this));
@@ -3425,7 +3452,10 @@ namespace Microsoft.Data.SqlClient
 
                         if (error != TdsEnums.SNI_SUCCESS)
                         {
-                            SqlClientEventSource._log.Trace($"<sc.TdsParser.WritePacket|Info> write async returned error code {(int)error}\n");
+                            if (_log.IsTraceEnabled())
+                            {
+                                _log.Trace($"<sc.TdsParser.WritePacket|Info> write async returned error code {(int)error}");
+                            }
                             AddError(_parser.ProcessSNIError(this));
                             ThrowExceptionAndWarning();
                         }
@@ -3462,7 +3492,10 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    SqlClientEventSource._log.Trace($"<sc.TdsParser.WritePacket|Info> write async returned error code {(int)sniError}\n");
+                    if (_log.IsTraceEnabled())
+                    {
+                        _log.Trace($"<sc.TdsParser.WritePacket|Info> write async returned error code {(int)sniError}");
+                    }
                     AddError(_parser.ProcessSNIError(this));
                     ThrowExceptionAndWarning(callerHasConnectionLock);
                 }
@@ -3522,7 +3555,11 @@ namespace Microsoft.Data.SqlClient
                             UInt32 sniError;
                             _parser._asyncWrite = false; // stop async write 
                             SNIWritePacket(Handle, attnPacket, out sniError, canAccumulate: false, callerHasConnectionLock: false);
-                            SqlClientEventSource._log.Trace($"<sc.TdsParser.SendAttention|Info> Send Attention ASync .\n");
+
+                            if (_log.IsTraceEnabled())
+                            {
+                                _log.Trace($"<sc.TdsParser.SendAttention|Info> Send Attention ASync.");
+                            }
                         }
                         finally
                         {
@@ -3545,8 +3582,12 @@ namespace Microsoft.Data.SqlClient
                     _attentionSending = false;
                 }
 
-                SqlClientEventSource._log.TraceBin($"<sc.TdsParser.WritePacket|INFO|ADV>  Packet sent", _outBuff, (UInt16)_outBytesUsed);
-                SqlClientEventSource._log.Trace($"<sc.TdsParser.SendAttention|Info> Attention sent to the server.\n");
+                _log.TraceBin($"<sc.TdsParser.WritePacket|INFO|ADV>  Packet sent", _outBuff, (ushort)_outBytesUsed);
+
+                if (_log.IsTraceEnabled())
+                {
+                    _log.Trace($"<sc.TdsParser.SendAttention|Info> Attention sent to the server.");
+                }
 
                 AssertValidState();
             }
@@ -3730,7 +3771,7 @@ namespace Microsoft.Data.SqlClient
                 _traceChangePasswordOffset = 0;
                 _traceChangePasswordLength = 0;
             }
-            SqlClientEventSource._log.TraceBin($"<sc.TdsParser.WritePacket|INFO|ADV>  Packet sent", _outBuff, (UInt16)_outBytesUsed);
+            _log.TraceBin($"<sc.TdsParser.WritePacket|INFO|ADV>  Packet sent", _outBuff, (UInt16)_outBytesUsed);
         }
 
         [Conditional("DEBUG")]

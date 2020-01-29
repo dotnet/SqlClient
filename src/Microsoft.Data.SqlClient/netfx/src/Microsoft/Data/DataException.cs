@@ -8,6 +8,7 @@ using System.Data;
 using System.Diagnostics;
 using System.Globalization;
 using Microsoft.Data.SqlClient;
+using static Microsoft.Data.SqlClient.SqlClientEventSource;
 
 namespace Microsoft.Data
 {
@@ -27,18 +28,19 @@ namespace Microsoft.Data
                 string trace, Exception e)
         {
             Debug.Assert(null != e, "TraceException: null Exception");
-            if (null != e)
+            if (null != e && _log.IsTraceEnabled())
             {
-                SqlClientEventSource._log.Trace(e.Message);
+                _log.Trace(e.Message);
+
                 try
                 {
-                    SqlClientEventSource._log.Trace($", StackTrace='{Environment.StackTrace}'");
+                    _log.Trace($"{trace}, StackTrace='{Environment.StackTrace}'");
                 }
                 catch (System.Security.SecurityException)
                 {
                     // if you don't have permission - you don't get the stack trace
+                    _log.Trace("Permission Denied");
                 }
-                SqlClientEventSource._log.Trace("\n");
             }
         }
 

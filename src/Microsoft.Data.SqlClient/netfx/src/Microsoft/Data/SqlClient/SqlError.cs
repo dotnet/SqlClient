@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using static Microsoft.Data.SqlClient.SqlClientEventSource;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -41,7 +42,10 @@ namespace Microsoft.Data.SqlClient
             this.lineNumber = lineNumber;
             if (errorClass != 0)
             {
-                SqlClientEventSource._log.Trace($"<sc.SqlError.SqlError|ERR> infoNumber={infoNumber}, errorState={(int)errorState}, errorClass={(int)errorClass}, errorMessage='{errorMessage}', procedure='{procedure ?? "None"}', lineNumber={(int)lineNumber}\n");
+                if (_log.IsTraceEnabled())
+                {
+                    _log.Trace($"<sc.SqlError.SqlError|ERR> infoNumber={infoNumber}, errorState={(int)errorState}, errorClass={(int)errorClass}, errorMessage='{errorMessage}', procedure='{procedure ?? "None"}', lineNumber={(int)lineNumber}");
+                }
             }
             this.win32ErrorCode = 0;
         }
