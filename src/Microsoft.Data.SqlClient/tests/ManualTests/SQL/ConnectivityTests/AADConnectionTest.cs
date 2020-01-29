@@ -298,7 +298,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, removeKeys) + "User ID=; Password=;";
             AggregateException e = Assert.Throws<AggregateException>(() => ConnectAndDisconnect(connStr));
 
-            string expectedMessage = " Failed to get user name";
+            string expectedMessage = "Failed to get user name";
 
             Assert.Contains(expectedMessage, e.InnerException.InnerException.InnerException.Message);
         }
