@@ -595,15 +595,16 @@ namespace Microsoft.Data.SqlClient
         {
             string TDSCommand = CreateInitialQuery();
 
-            if (_log.IsTraceEnabled())
+            if (Log.IsTraceEnabled())
             {
-                if (_log.IsTraceEnabled())
+                if (Log.IsTraceEnabled())
                 {
-                    _log.Trace($"<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|INFO> Initial Query: '{TDSCommand}'");
+                    Log.Trace($"<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|INFO> Initial Query: '{TDSCommand}'");
                 }
             }
 
-            _log.CorrelationTrace($"<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|Info|Correlation> ObjectID{ObjectID}#, ActivityID %ls");
+            if (Log.IsCorrelationEnabled())
+                Log.CorrelationTrace($"<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|Info|Correlation> ObjectID{ObjectID}#, ActivityID %ls");
 
             Task executeTask = _parser.TdsExecuteSQLBatch(TDSCommand, this.BulkCopyTimeout, null, _stateObj, sync: !_isAsyncBulkCopy, callerHasConnectionLock: true);
 
@@ -894,7 +895,8 @@ namespace Microsoft.Data.SqlClient
         //
         private Task SubmitUpdateBulkCommand(string TDSCommand)
         {
-            _log.CorrelationTrace($"<sc.SqlBulkCopy.SubmitUpdateBulkCommand|Info|Correlation> ObjectID{ObjectID}#, ActivityID %ls\n");
+            if (Log.IsCorrelationEnabled())
+                Log.CorrelationTrace($"<sc.SqlBulkCopy.SubmitUpdateBulkCommand|Info|Correlation> ObjectID{ObjectID}#, ActivityID {Log.Guid}\n");
 
             Task executeTask = _parser.TdsExecuteSQLBatch(TDSCommand, this.BulkCopyTimeout, null, _stateObj, sync: !_isAsyncBulkCopy, callerHasConnectionLock: true);
 
@@ -2526,9 +2528,9 @@ namespace Microsoft.Data.SqlClient
                             _stateObj.BcpLock = true;
                             abortOperation = FireRowsCopiedEvent(_rowsCopied);
 
-                            if (_log.IsTraceEnabled())
+                            if (Log.IsTraceEnabled())
                             {
-                                _log.Trace("<sc.SqlBulkCopy.WriteToServerInternal|INFO>");
+                                Log.Trace("<sc.SqlBulkCopy.WriteToServerInternal|INFO>");
                             }
 
                             // just in case some pathological person closes the target connection ...

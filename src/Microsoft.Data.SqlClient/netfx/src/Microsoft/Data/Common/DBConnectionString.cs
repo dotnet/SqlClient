@@ -470,9 +470,9 @@ namespace Microsoft.Data.Common
         private static string[] ParseRestrictions(string restrictions, Hashtable synonyms)
         {
 #if DEBUG
-            if (_log.IsTraceEnabled())
+            if (Log.IsTraceEnabled())
             {
-                _log.Trace($"<comm.DBConnectionString|INFO|ADV> Restrictions='{restrictions}'");
+                Log.Trace($"<comm.DBConnectionString|INFO|ADV> Restrictions='{restrictions}'");
             }
 #endif
             List<string> restrictionValues = new List<string>();
@@ -489,9 +489,9 @@ namespace Microsoft.Data.Common
                 if (!ADP.IsEmpty(keyname))
                 {
 #if DEBUG
-                    if (_log.IsTraceEnabled())
+                    if (Log.IsTraceEnabled())
                     {
-                        _log.Trace($"<comm.DBConnectionString|INFO|ADV> KeyName='{keyname}'");
+                        Log.Trace($"<comm.DBConnectionString|INFO|ADV> KeyName='{keyname}'");
                     }
 #endif
                     string realkeyname = ((null != synonyms) ? (string)synonyms[keyname] : keyname); // MDAC 85144

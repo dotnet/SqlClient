@@ -28,18 +28,18 @@ namespace Microsoft.Data
                 string trace, Exception e)
         {
             Debug.Assert(null != e, "TraceException: null Exception");
-            if (null != e && _log.IsTraceEnabled())
+            if (null != e && Log.IsTraceEnabled())
             {
-                _log.Trace(e.Message);
+                Log.Trace(e.Message);
 
                 try
                 {
-                    _log.Trace($"{trace}, StackTrace='{Environment.StackTrace}'");
+                    Log.Trace($"{trace}, StackTrace='{Environment.StackTrace}'");
                 }
                 catch (System.Security.SecurityException)
                 {
                     // if you don't have permission - you don't get the stack trace
-                    _log.Trace("Permission Denied");
+                    Log.Trace("Permission Denied");
                 }
             }
         }

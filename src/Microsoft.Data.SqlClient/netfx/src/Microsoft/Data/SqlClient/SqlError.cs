@@ -42,9 +42,9 @@ namespace Microsoft.Data.SqlClient
             this.lineNumber = lineNumber;
             if (errorClass != 0)
             {
-                if (_log.IsTraceEnabled())
+                if (Log.IsTraceEnabled())
                 {
-                    _log.Trace($"<sc.SqlError.SqlError|ERR> infoNumber={infoNumber}, errorState={(int)errorState}, errorClass={(int)errorClass}, errorMessage='{errorMessage}', procedure='{procedure ?? "None"}', lineNumber={(int)lineNumber}");
+                    Log.Trace($"<sc.SqlError.SqlError|ERR> infoNumber={infoNumber}, errorState={(int)errorState}, errorClass={(int)errorClass}, errorMessage='{errorMessage}', procedure='{procedure ?? "None"}', lineNumber={(int)lineNumber}");
                 }
             }
             this.win32ErrorCode = 0;

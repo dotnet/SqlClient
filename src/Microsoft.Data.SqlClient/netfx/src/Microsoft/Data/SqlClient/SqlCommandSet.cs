@@ -130,9 +130,9 @@ namespace Microsoft.Data.SqlClient
         internal void Append(SqlCommand command)
         {
             ADP.CheckArgumentNull(command, "command");
-            if (_log.IsTraceEnabled())
+            if (Log.IsTraceEnabled())
             {
-                _log.Trace($"<sc.SqlCommandSet.Append|API> {ObjectID}#, command={command.ObjectID}, parameterCount={command.Parameters.Count}");
+                Log.Trace($"<sc.SqlCommandSet.Append|API> {ObjectID}#, command={command.ObjectID}, parameterCount={command.Parameters.Count}");
             }
 
             string cmdText = command.CommandText;
@@ -268,9 +268,9 @@ namespace Microsoft.Data.SqlClient
 
         internal void Clear()
         {
-            if (_log.IsTraceEnabled())
+            if (Log.IsTraceEnabled())
             {
-                _log.Trace($"<sc.SqlCommandSet.Clear|API> {ObjectID}#");
+                Log.Trace($"<sc.SqlCommandSet.Clear|API> {ObjectID}#");
             }
 
             DbCommand batchCommand = BatchCommand;
@@ -288,9 +288,9 @@ namespace Microsoft.Data.SqlClient
 
         internal void Dispose()
         {
-            if (_log.IsTraceEnabled())
+            if (Log.IsTraceEnabled())
             {
-                _log.Trace($"<sc.SqlCommandSet.Dispose|API> {ObjectID}#");
+                Log.Trace($"<sc.SqlCommandSet.Dispose|API> {ObjectID}#");
             }
 
             SqlCommand command = _batchCommand;
@@ -307,7 +307,7 @@ namespace Microsoft.Data.SqlClient
         {
             SqlConnection.ExecutePermission.Demand();
 
-            var scopeID = _log.ScopeEnter($"<sc.SqlCommandSet.ExecuteNonQuery|API> {ObjectID}#");
+            var scopeID = Log.ScopeEnter($"<sc.SqlCommandSet.ExecuteNonQuery|API> {ObjectID}#");
             try
             {
                 if (Connection.IsContextConnection)
@@ -327,7 +327,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                _log.ScopeLeave(scopeID);
+                Log.ScopeLeave(scopeID);
             }
         }
 

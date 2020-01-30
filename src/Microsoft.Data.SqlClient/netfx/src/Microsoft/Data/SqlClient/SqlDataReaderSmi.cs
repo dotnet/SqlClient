@@ -376,7 +376,7 @@ namespace Microsoft.Data.SqlClient
 
         private void CloseInternal(bool closeConnection)
         {
-            var scopeID = _log.ScopeEnter($"<sc.SqlDataReaderSmi.Close|API> {ObjectID}#");
+            var scopeID = Log.ScopeEnter($"<sc.SqlDataReaderSmi.Close|API> {ObjectID}#");
             bool processFinallyBlock = true;
             try
             {
@@ -412,7 +412,7 @@ namespace Microsoft.Data.SqlClient
                         Connection.Close();
                     }
 
-                    _log.ScopeLeave(scopeID);
+                    Log.ScopeLeave(scopeID);
                 }
             }
         }
@@ -435,7 +435,7 @@ namespace Microsoft.Data.SqlClient
 
         internal unsafe bool InternalNextResult(bool ignoreNonFatalMessages)
         {
-            var scopeID = _log.ScopeEnter($"<sc.SqlDataReaderSmi.InternalNextResult|ADV> {ObjectID}#");
+            var scopeID = Log.ScopeEnter($"<sc.SqlDataReaderSmi.InternalNextResult|ADV> {ObjectID}#");
             try
             {
                 _hasRows = false;
@@ -468,7 +468,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                _log.ScopeLeave(scopeID);
+                Log.ScopeLeave(scopeID);
             }
         }
 
@@ -488,7 +488,7 @@ namespace Microsoft.Data.SqlClient
 
         internal unsafe bool InternalRead(bool ignoreNonFatalErrors)
         {
-            var scopeID = _log.ScopeEnter($"<sc.SqlDataReaderSmi.InternalRead|ADV> {ObjectID}#");
+            var scopeID = Log.ScopeEnter($"<sc.SqlDataReaderSmi.InternalRead|ADV> {ObjectID}#");
             try
             {
                 // Don't move unless currently in results.
@@ -527,7 +527,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                _log.ScopeLeave(scopeID);
+                Log.ScopeLeave(scopeID);
             }
         }
 
@@ -1319,16 +1319,16 @@ namespace Microsoft.Data.SqlClient
             {
                 var mdLength = (null != md) ? md.Length : -1;
 
-                if (_log.IsTraceEnabled())
+                if (Log.IsTraceEnabled())
                 {
-                    _log.Trace($"<sc.SqlDataReaderSmi.ReaderEventSink.MetaDataAvailable|ADV> {reader.ObjectID}#, md.Length={mdLength} nextEventIsRow={nextEventIsRow}.");
+                    Log.Trace($"<sc.SqlDataReaderSmi.ReaderEventSink.MetaDataAvailable|ADV> {reader.ObjectID}#, md.Length={mdLength} nextEventIsRow={nextEventIsRow}.");
 
 
                     if (null != md)
                     {
                         for (int i = 0; i < md.Length; i++)
                         {
-                            _log.Trace($"<sc.SqlDataReaderSmi.ReaderEventSink.MetaDataAvailable|ADV> {reader.ObjectID}#, metaData[{i}] is {md[i].GetType().ToString()}{md[i].TraceString()}");
+                            Log.Trace($"<sc.SqlDataReaderSmi.ReaderEventSink.MetaDataAvailable|ADV> {reader.ObjectID}#, metaData[{i}] is {md[i].GetType().ToString()}{md[i].TraceString()}");
                         }
                     }
                 }
@@ -1338,36 +1338,36 @@ namespace Microsoft.Data.SqlClient
             // Obsolete V2- method
             internal override void RowAvailable(ITypedGetters row)
             {
-                if (_log.IsTraceEnabled())
+                if (Log.IsTraceEnabled())
                 {
-                    _log.Trace($"<sc.SqlDataReaderSmi.ReaderEventSink.RowAvailable|ADV> {reader.ObjectID}# (v2).");
+                    Log.Trace($"<sc.SqlDataReaderSmi.ReaderEventSink.RowAvailable|ADV> {reader.ObjectID}# (v2).");
                 }
                 this.reader.RowAvailable(row);
             }
 
             internal override void RowAvailable(ITypedGettersV3 row)
             {
-                if (_log.IsTraceEnabled())
+                if (Log.IsTraceEnabled())
                 {
-                    _log.Trace($"<sc.SqlDataReaderSmi.ReaderEventSink.RowAvailable|ADV> {reader.ObjectID}# (ITypedGettersV3).");
+                    Log.Trace($"<sc.SqlDataReaderSmi.ReaderEventSink.RowAvailable|ADV> {reader.ObjectID}# (ITypedGettersV3).");
                 }
                 this.reader.RowAvailable(row);
             }
 
             internal override void RowAvailable(SmiTypedGetterSetter rowData)
             {
-                if (_log.IsTraceEnabled())
+                if (Log.IsTraceEnabled())
                 {
-                    _log.Trace($"<sc.SqlDataReaderSmi.ReaderEventSink.RowAvailable|ADV> {reader.ObjectID}# (SmiTypedGetterSetter).");
+                    Log.Trace($"<sc.SqlDataReaderSmi.ReaderEventSink.RowAvailable|ADV> {reader.ObjectID}# (SmiTypedGetterSetter).");
                 }
                 this.reader.RowAvailable(rowData);
             }
 
             internal override void StatementCompleted(int recordsAffected)
             {
-                if (_log.IsTraceEnabled())
+                if (Log.IsTraceEnabled())
                 {
-                    _log.Trace($"<sc.SqlDataReaderSmi.ReaderEventSink.StatementCompleted|ADV> {reader.ObjectID}# recordsAffected= {recordsAffected}.");
+                    Log.Trace($"<sc.SqlDataReaderSmi.ReaderEventSink.StatementCompleted|ADV> {reader.ObjectID}# recordsAffected= {recordsAffected}.");
                 }
 
                 // devnote: relies on SmiEventSink_Default to pass event to parent
@@ -1379,9 +1379,9 @@ namespace Microsoft.Data.SqlClient
 
             internal override void BatchCompleted()
             {
-                if (_log.IsTraceEnabled())
+                if (Log.IsTraceEnabled())
                 {
-                    _log.Trace($"<sc.SqlDataReaderSmi.ReaderEventSink.BatchCompleted|ADV> {reader.ObjectID}#.");
+                    Log.Trace($"<sc.SqlDataReaderSmi.ReaderEventSink.BatchCompleted|ADV> {reader.ObjectID}#.");
                 }
 
                 // devnote: relies on SmiEventSink_Default to pass event to parent

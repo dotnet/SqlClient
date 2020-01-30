@@ -143,8 +143,10 @@ namespace Microsoft.Data.SqlClient
 
             SqlStatistics statistics = null;
 
-            var scopeID = _log.ScopeEnter($"<sc.SqlTransaction.Commit|API> {ObjectID}#");
-            _log.CorrelationTrace($"<sc.SqlTransaction.Commit|API|Correlation> ObjectID{ObjectID}#, ActivityID {_log.Guid}");
+            var scopeID = Log.ScopeEnter($"<sc.SqlTransaction.Commit|API> {ObjectID}#");
+
+            if (Log.IsCorrelationEnabled())
+                Log.CorrelationTrace($"<sc.SqlTransaction.Commit|API|Correlation> ObjectID{ObjectID}#, ActivityID {Log.Guid}");
 
             TdsParser bestEffortCleanupTarget = null;
             RuntimeHelpers.PrepareConstrainedRegions();
@@ -207,7 +209,7 @@ namespace Microsoft.Data.SqlClient
                 _isFromAPI = false;
 
                 SqlStatistics.StopTimer(statistics);
-                _log.ScopeLeave(scopeID);
+                Log.ScopeLeave(scopeID);
             }
         }
 
@@ -268,10 +270,10 @@ namespace Microsoft.Data.SqlClient
         {
             if (IsYukonPartialZombie)
             {
-                if (_log.IsTraceEnabled())
+                if (Log.IsTraceEnabled())
                 {
                     // Put something in the trace in case a customer has an issue
-                    _log.Trace($"<sc.SqlTransaction.Rollback|ADV> {ObjectID}# partial zombie no rollback required");
+                    Log.Trace($"<sc.SqlTransaction.Rollback|ADV> {ObjectID}# partial zombie no rollback required");
                 }
 
                 _internalTransaction = null; // yukon zombification
@@ -281,8 +283,10 @@ namespace Microsoft.Data.SqlClient
                 ZombieCheck();
 
                 SqlStatistics statistics = null;
-                var scopeID = _log.ScopeEnter($"<sc.SqlTransaction.Rollback|API> {ObjectID}#");
-                _log.CorrelationTrace($"<sc.SqlTransaction.Rollback|API|Correlation> ObjectID{ObjectID}#, ActivityID {_log.Guid}\n");
+                var scopeID = Log.ScopeEnter($"<sc.SqlTransaction.Rollback|API> {ObjectID}#");
+
+                if (Log.IsCorrelationEnabled())
+                    Log.CorrelationTrace($"<sc.SqlTransaction.Rollback|API|Correlation> ObjectID{ObjectID}#, ActivityID {Log.Guid}");
 
                 TdsParser bestEffortCleanupTarget = null;
                 RuntimeHelpers.PrepareConstrainedRegions();
@@ -333,7 +337,7 @@ namespace Microsoft.Data.SqlClient
                     _isFromAPI = false;
 
                     SqlStatistics.StopTimer(statistics);
-                    _log.ScopeLeave(scopeID);
+                    Log.ScopeLeave(scopeID);
                 }
             }
         }
@@ -347,7 +351,7 @@ namespace Microsoft.Data.SqlClient
 
             SqlStatistics statistics = null;
 
-            var scopeID = _log.ScopeEnter($"<sc.SqlTransaction.Rollback|API> {ObjectID}# transactionName='{transactionName}'");
+            var scopeID = Log.ScopeEnter($"<sc.SqlTransaction.Rollback|API> {ObjectID}# transactionName='{transactionName}'");
 
             TdsParser bestEffortCleanupTarget = null;
             RuntimeHelpers.PrepareConstrainedRegions();
@@ -398,7 +402,7 @@ namespace Microsoft.Data.SqlClient
                 _isFromAPI = false;
 
                 SqlStatistics.StopTimer(statistics);
-                _log.ScopeLeave(scopeID);
+                Log.ScopeLeave(scopeID);
             }
         }
 
@@ -411,7 +415,7 @@ namespace Microsoft.Data.SqlClient
 
             SqlStatistics statistics = null;
 
-            var scopeID = _log.ScopeEnter($"<sc.SqlTransaction.Save|API> {ObjectID}# savePointName='{savePointName}'");
+            var scopeID = Log.ScopeEnter($"<sc.SqlTransaction.Save|API> {ObjectID}# savePointName='{savePointName}'");
 
             TdsParser bestEffortCleanupTarget = null;
             RuntimeHelpers.PrepareConstrainedRegions();
@@ -458,7 +462,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlStatistics.StopTimer(statistics);
-                _log.ScopeLeave(scopeID);
+                Log.ScopeLeave(scopeID);
             }
         }
 
@@ -477,9 +481,9 @@ namespace Microsoft.Data.SqlClient
 
             if (null != internalConnection && internalConnection.IsYukonOrNewer && !_isFromAPI)
             {
-                if (_log.IsTraceEnabled())
+                if (Log.IsTraceEnabled())
                 {
-                    _log.Trace($"<sc.SqlTransaction.Zombie|ADV> {ObjectID}# yukon deferred zombie");
+                    Log.Trace($"<sc.SqlTransaction.Zombie|ADV> {ObjectID}# yukon deferred zombie");
                 }
             }
             else

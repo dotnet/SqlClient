@@ -87,9 +87,9 @@ namespace Microsoft.Data.SqlClient
 
         private string ConnectionString_Get()
         {
-            if (_log.IsTraceEnabled())
+            if (Log.IsTraceEnabled())
             {
-                _log.Trace($"<prov.DbConnectionHelper.ConnectionString_Get|API> {ObjectID}#");
+                Log.Trace($"<prov.DbConnectionHelper.ConnectionString_Get|API> {ObjectID}#");
             }
 
             bool hidePassword = InnerConnection.ShouldHidePassword;
@@ -137,9 +137,9 @@ namespace Microsoft.Data.SqlClient
 
             string cstr = ((null != connectionOptions) ? connectionOptions.UsersConnectionStringForTrace() : "");
 
-            if (_log.IsTraceEnabled())
+            if (Log.IsTraceEnabled())
             {
-                _log.Trace($"<prov.DbConnectionHelper.ConnectionString_Set|API> {ObjectID}#, '{cstr}'");
+                Log.Trace($"<prov.DbConnectionHelper.ConnectionString_Set|API> {ObjectID}#, '{cstr}'");
             }
         }
 
@@ -188,15 +188,15 @@ namespace Microsoft.Data.SqlClient
             // NOTE: we put the tracing last, because the ToString() calls (and
             // the SqlClientEventSource.Log.Trace, for that matter) have no reliability contract and
             // will end the reliable try...
-            if (_log.IsTraceEnabled())
+            if (Log.IsTraceEnabled())
             {
                 if (e is OutOfMemoryException)
                 {
-                    _log.Trace($"<prov.DbConnectionHelper.Abort|RES|INFO|CPOOL> {ObjectID}#, Aborting operation due to asynchronous exception: {"OutOfMemory"}");
+                    Log.Trace($"<prov.DbConnectionHelper.Abort|RES|INFO|CPOOL> {ObjectID}#, Aborting operation due to asynchronous exception: {"OutOfMemory"}");
                 }
                 else
                 {
-                    _log.Trace($"<prov.DbConnectionHelper.Abort|RES|INFO|CPOOL> {ObjectID}#, Aborting operation due to asynchronous exception: {e.ToString()}");
+                    Log.Trace($"<prov.DbConnectionHelper.Abort|RES|INFO|CPOOL> {ObjectID}#, Aborting operation due to asynchronous exception: {e.ToString()}");
                 }
             }
         }
@@ -210,7 +210,7 @@ namespace Microsoft.Data.SqlClient
         override protected DbCommand CreateDbCommand()
         {
             DbCommand command = null;
-            var scopeID = _log.ScopeEnter($"<prov.DbConnectionHelper.CreateDbCommand|API> {ObjectID}#");
+            var scopeID = Log.ScopeEnter($"<prov.DbConnectionHelper.CreateDbCommand|API> {ObjectID}#");
             try
             {
                 DbProviderFactory providerFactory = ConnectionFactory.ProviderFactory;
@@ -219,7 +219,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                _log.ScopeLeave(scopeID);
+                Log.ScopeLeave(scopeID);
             }
             return command;
         }
@@ -256,9 +256,9 @@ namespace Microsoft.Data.SqlClient
             permissionSet.AddPermission(new System.Security.Permissions.SecurityPermission(System.Security.Permissions.SecurityPermissionFlag.UnmanagedCode));
             permissionSet.Demand();
 
-            if (_log.IsTraceEnabled())
+            if (Log.IsTraceEnabled())
             {
-                _log.Trace($"<prov.DbConnectionHelper.EnlistDistributedTransactionHelper|RES|TRAN> {ObjectID}#, Connection enlisting in a transaction.");
+                Log.Trace($"<prov.DbConnectionHelper.EnlistDistributedTransactionHelper|RES|TRAN> {ObjectID}#, Connection enlisting in a transaction.");
             }
 
             SysTx.Transaction indigoTransaction = null;
@@ -286,9 +286,9 @@ namespace Microsoft.Data.SqlClient
         {
             SqlConnection.ExecutePermission.Demand();
 
-            if (_log.IsTraceEnabled())
+            if (Log.IsTraceEnabled())
             {
-                _log.Trace($"<prov.DbConnectionHelper.EnlistTransaction|RES|TRAN> {ObjectID}#, Connection enlisting in a transaction.");
+                Log.Trace($"<prov.DbConnectionHelper.EnlistTransaction|RES|TRAN> {ObjectID}#, Connection enlisting in a transaction.");
             }
 
             // If we're currently enlisted in a transaction and we were called

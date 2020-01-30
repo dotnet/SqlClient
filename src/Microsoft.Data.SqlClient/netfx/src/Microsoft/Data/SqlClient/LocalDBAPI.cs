@@ -74,9 +74,9 @@ namespace Microsoft.Data
                             SNINativeMethodWrapper.SNIQueryInfo(SNINativeMethodWrapper.QTypes.SNI_QUERY_LOCALDB_HMODULE, ref s_userInstanceDLLHandle);
                             if (s_userInstanceDLLHandle != IntPtr.Zero)
                             {
-                                if (_log.IsTraceEnabled())
+                                if (Log.IsTraceEnabled())
                                 {
-                                    _log.Trace("<sc.LocalDBAPI.UserInstanceDLLHandle> LocalDB - handle obtained");
+                                    Log.Trace("<sc.LocalDBAPI.UserInstanceDLLHandle> LocalDB - handle obtained");
                                 }
                             }
                             else
@@ -122,9 +122,9 @@ namespace Microsoft.Data
                             {
                                 int hResult = Marshal.GetLastWin32Error();
 
-                                if (_log.IsTraceEnabled())
+                                if (Log.IsTraceEnabled())
                                 {
-                                    _log.Trace($"<sc.LocalDBAPI.LocalDBCreateInstance> GetProcAddress for LocalDBCreateInstance error 0x{hResult}");
+                                    Log.Trace($"<sc.LocalDBAPI.LocalDBCreateInstance> GetProcAddress for LocalDBCreateInstance error 0x{hResult}");
                                 }
 
                                 throw CreateLocalDBException(errorMessage: StringsHelper.GetString("LocalDB_MethodNotFound"));
@@ -169,9 +169,9 @@ namespace Microsoft.Data
                                 // SNI checks for LocalDBFormatMessage during DLL loading, so it is practically impossibe to get this error.
                                 int hResult = Marshal.GetLastWin32Error();
 
-                                if (_log.IsTraceEnabled())
+                                if (Log.IsTraceEnabled())
                                 {
-                                    _log.Trace($"<sc.LocalDBAPI.LocalDBFormatMessage> GetProcAddress for LocalDBFormatMessage error 0x{hResult}");
+                                    Log.Trace($"<sc.LocalDBAPI.LocalDBFormatMessage> GetProcAddress for LocalDBFormatMessage error 0x{hResult}");
                                 }
 
                                 throw CreateLocalDBException(errorMessage: StringsHelper.GetString("LocalDB_MethodNotFound"));
@@ -329,9 +329,9 @@ namespace Microsoft.Data
                         }
                         else
                         {
-                            if (_log.IsTraceEnabled())
+                            if (Log.IsTraceEnabled())
                             {
-                                _log.Trace("<sc.LocalDBAPI.CreateLocalDBInstance> No system.data.localdb section found in configuration");
+                                Log.Trace("<sc.LocalDBAPI.CreateLocalDBInstance> No system.data.localdb section found in configuration");
                             }
                         }
                         s_configurableInstances = tempConfigurableInstances;
@@ -360,9 +360,9 @@ namespace Microsoft.Data
             // LocalDBCreateInstance is thread- and cross-process safe method, it is OK to call from two threads simultaneously
             int hr = LocalDBCreateInstance(instanceInfo.version, instance, flags: 0);
 
-            if (_log.IsTraceEnabled())
+            if (Log.IsTraceEnabled())
             {
-                _log.Trace($"<sc.LocalDBAPI.CreateLocalDBInstance> Starting creation of instance {instance} version {instanceInfo.version}");
+                Log.Trace($"<sc.LocalDBAPI.CreateLocalDBInstance> Starting creation of instance {instance} version {instanceInfo.version}");
             }
 
             if (hr < 0)
@@ -370,9 +370,9 @@ namespace Microsoft.Data
                 throw CreateLocalDBException(errorMessage: StringsHelper.GetString("LocalDB_CreateFailed"), instance: instance, localDbError: hr);
             }
 
-            if (_log.IsTraceEnabled())
+            if (Log.IsTraceEnabled())
             {
-                _log.Trace($"<sc.LocalDBAPI.CreateLocalDBInstance> Finished creation of instance {instance}");
+                Log.Trace($"<sc.LocalDBAPI.CreateLocalDBInstance> Finished creation of instance {instance}");
             }
             instanceInfo.created = true; // mark instance as created
         } // CreateLocalDbInstance

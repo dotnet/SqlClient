@@ -56,6 +56,7 @@
     <Compile Include="AlwaysEncrypted\TestTrustedMasterKeyPaths.cs" />
     <Compile Include="DataCommon\AADUtility.cs" />
     <Compile Include="DataCommon\CheckConnStrSetupFactAttribute.cs" />
+    <Compile Include="EventSource\EventSourceTest.cs" />
     <Compile Include="SQL\AdapterTest\AdapterTest.cs" />
     <Compile Include="SQL\AsyncTest\BeginExecAsyncTest.cs" />
     <Compile Include="SQL\AsyncTest\BeginExecReaderAsyncTest.cs" />

@@ -144,9 +144,9 @@ namespace Microsoft.Data.SqlClient
                 }
                 _updateBatchSize = value;
 
-                if (_log.IsTraceEnabled())
+                if (Log.IsTraceEnabled())
                 {
-                    _log.Trace($"<sc.SqlDataAdapter.set_UpdateBatchSize|API> {ObjectID}#, {value}");
+                    Log.Trace($"<sc.SqlDataAdapter.set_UpdateBatchSize|API> {ObjectID}#, {value}");
                 }
             }
         }
@@ -254,7 +254,10 @@ namespace Microsoft.Data.SqlClient
         override protected int ExecuteBatch()
         {
             Debug.Assert(null != _commandSet && (0 < _commandSet.CommandCount), "no commands");
-            _log.CorrelationTrace($"<sc.SqlDataAdapter.ExecuteBatch|Info|Correlation> ObjectID{ObjectID}#, ActivityID %ls\n");
+
+            if (Log.IsCorrelationEnabled())
+                Log.CorrelationTrace($"<sc.SqlDataAdapter.ExecuteBatch|Info|Correlation> ObjectID{ObjectID}#, ActivityID %ls");
+
             return _commandSet.ExecuteNonQuery();
         }
 
@@ -277,9 +280,9 @@ namespace Microsoft.Data.SqlClient
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/InitializeBatching/*' />
         override protected void InitializeBatching()
         {
-            if (_log.IsTraceEnabled())
+            if (Log.IsTraceEnabled())
             {
-                _log.Trace($"<sc.SqlDataAdapter.InitializeBatching|API> {ObjectID}#");
+                Log.Trace($"<sc.SqlDataAdapter.InitializeBatching|API> {ObjectID}#");
             }
             _commandSet = new SqlCommandSet();
             SqlCommand command = SelectCommand;

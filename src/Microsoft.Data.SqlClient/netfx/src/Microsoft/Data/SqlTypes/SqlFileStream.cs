@@ -66,7 +66,7 @@ namespace Microsoft.Data.SqlTypes
             )
         {
 
-            var scopeID = _log.ScopeEnter($"<sc.SqlFileStream.ctor|API> { ObjectID}# access={(int)access} options={(int)options} path='{path}'");
+            var scopeID = Log.ScopeEnter($"<sc.SqlFileStream.ctor|API> { ObjectID}# access={(int)access} options={(int)options} path='{path}'");
 
             try
             {
@@ -92,7 +92,7 @@ namespace Microsoft.Data.SqlTypes
             }
             finally
             {
-                _log.ScopeLeave(scopeID);
+                Log.ScopeLeave(scopeID);
             }
         }
 
@@ -715,9 +715,9 @@ namespace Microsoft.Data.SqlTypes
                 UnsafeNativeMethods.SetErrorModeWrapper(UnsafeNativeMethods.SEM_FAILCRITICALERRORS, out oldMode);
                 try
                 {
-                    if (_log.IsTraceEnabled())
+                    if (Log.IsTraceEnabled())
                     {
-                        _log.Trace($"<sc.SqlFileStream.OpenSqlFileStream|ADV> {ObjectID}#, desiredAccess=0x{(int)nDesiredAccess}, allocationSize={allocationSize}, " +
+                        Log.Trace($"<sc.SqlFileStream.OpenSqlFileStream|ADV> {ObjectID}#, desiredAccess=0x{(int)nDesiredAccess}, allocationSize={allocationSize}, " +
                             $"fileAttributes=0x%{0}, shareAccess=0x{(int)shareAccess}, dwCreateDisposition=0x{dwCreateDisposition}, createOptions=0x{ dwCreateOptions}");
                     }
 

@@ -101,9 +101,9 @@ namespace Microsoft.Data.Common
                 string trace, Exception e)
         {
             Debug.Assert(null != e, "TraceException: null Exception");
-            if (null != e && _log.IsTraceEnabled())
+            if (null != e && Log.IsTraceEnabled())
             {
-                _log.Trace(e.ToString()); // will include callstack if permission is available
+                Log.Trace(e.ToString()); // will include callstack if permission is available
             }
         }
 

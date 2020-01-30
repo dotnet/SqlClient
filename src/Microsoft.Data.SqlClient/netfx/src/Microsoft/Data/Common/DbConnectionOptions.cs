@@ -631,17 +631,17 @@ namespace Microsoft.Data.Common
 
             string realkeyname = ((null != synonyms) ? (string)synonyms[keyname] : keyname);
 
-            if (_log.IsTraceEnabled())
+            if (Log.IsTraceEnabled())
             {
                 if ((KEY.Password != realkeyname) && (SYNONYM.Pwd != realkeyname))
                 { // don't trace passwords ever!
                     if (null != keyvalue)
                     {
-                        _log.Trace($"<comm.DbConnectionOptions|INFO|ADV> KeyName='{keyname}', KeyValue='{keyvalue}'\n");
+                        Log.Trace($"<comm.DbConnectionOptions|INFO|ADV> KeyName='{keyname}', KeyValue='{keyvalue}'\n");
                     }
                     else
                     {
-                        _log.Trace($"<comm.DbConnectionOptions|INFO|ADV> KeyName='{keyname}'\n");
+                        Log.Trace($"<comm.DbConnectionOptions|INFO|ADV> KeyName='{keyname}'\n");
                     }
                 }
             }

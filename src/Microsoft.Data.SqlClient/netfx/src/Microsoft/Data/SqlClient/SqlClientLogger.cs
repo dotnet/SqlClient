@@ -19,18 +19,18 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientLogger.xml' path='docs/members[@name="SqlClientLogger"]/LogInfo/*'/>
         public void LogInfo(string type, string method, string message)
         {
-            if (_log.IsTraceEnabled())
+            if (Log.IsTraceEnabled())
             {
-                _log.Trace($"<sc|{type}|{method}|{LogLevel.Info}>{message}");
+                Log.Trace($"<sc|{type}|{method}|{LogLevel.Info}>{message}");
             }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientLogger.xml' path='docs/members[@name="SqlClientLogger"]/LogError/*'/>
         public void LogError(string type, string method, string message)
         {
-            if (_log.IsTraceEnabled())
+            if (Log.IsTraceEnabled())
             {
-                _log.Trace($"<sc|{type}|{method}|{LogLevel.Error}>{message}");
+                Log.Trace($"<sc|{type}|{method}|{LogLevel.Error}>{message}");
             }
         }
 

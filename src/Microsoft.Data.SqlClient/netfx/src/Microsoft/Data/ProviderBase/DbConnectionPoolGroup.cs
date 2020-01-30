@@ -273,9 +273,9 @@ namespace Microsoft.Data.ProviderBase
             {
                 _state = PoolGroupStateActive;
 
-                if (_log.IsTraceEnabled())
+                if (Log.IsTraceEnabled())
                 {
-                    _log.Trace($"<prov.DbConnectionPoolGroup.ClearInternal|RES|INFO|CPOOL> {ObjectID}#, Active");
+                    Log.Trace($"<prov.DbConnectionPoolGroup.ClearInternal|RES|INFO|CPOOL> {ObjectID}#, Active");
                 }
             }
             return (PoolGroupStateActive == _state);
@@ -339,18 +339,18 @@ namespace Microsoft.Data.ProviderBase
                     {
                         _state = PoolGroupStateIdle;
 
-                        if (_log.IsTraceEnabled())
+                        if (Log.IsTraceEnabled())
                         {
-                            _log.Trace($"<prov.DbConnectionPoolGroup.ClearInternal|RES|INFO|CPOOL> {ObjectID}#, Idle");
+                            Log.Trace($"<prov.DbConnectionPoolGroup.ClearInternal|RES|INFO|CPOOL> {ObjectID}#, Idle");
                         }
                     }
                     else if (PoolGroupStateIdle == _state)
                     {
                         _state = PoolGroupStateDisabled;
 
-                        if (_log.IsTraceEnabled())
+                        if (Log.IsTraceEnabled())
                         {
-                            _log.Trace($"<prov.DbConnectionPoolGroup.ReadyToRemove|RES|INFO|CPOOL> {ObjectID}#, Disabled");
+                            Log.Trace($"<prov.DbConnectionPoolGroup.ReadyToRemove|RES|INFO|CPOOL> {ObjectID}#, Disabled");
                         }
                     }
                 }

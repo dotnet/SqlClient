@@ -347,9 +347,9 @@ namespace Microsoft.Data.SqlClient
 
             internal override void StatementCompleted(int rowsAffected)
             {
-                if (_log.IsTraceEnabled())
+                if (Log.IsTraceEnabled())
                 {
-                    _log.Trace($"<sc.SqlCommand.CommandEventSink.StatementCompleted|ADV> {_command.ObjectID}#, rowsAffected={rowsAffected}.");
+                    Log.Trace($"<sc.SqlCommand.CommandEventSink.StatementCompleted|ADV> {_command.ObjectID}#, rowsAffected={rowsAffected}.");
                 }
 
                 _command.InternalRecordsAffected = rowsAffected;
@@ -363,9 +363,9 @@ namespace Microsoft.Data.SqlClient
 
             internal override void BatchCompleted()
             {
-                if (_log.IsTraceEnabled())
+                if (Log.IsTraceEnabled())
                 {
-                    _log.Trace($"<sc.SqlCommand.CommandEventSink.BatchCompleted|ADV> {_command.ObjectID}#.");
+                    Log.Trace($"<sc.SqlCommand.CommandEventSink.BatchCompleted|ADV> {_command.ObjectID}#.");
                 }
             }
 
@@ -374,16 +374,16 @@ namespace Microsoft.Data.SqlClient
 
                 var metaDataLength = (null != metaData) ? metaData.Length : -1;
 
-                if (_log.IsTraceEnabled())
+                if (Log.IsTraceEnabled())
                 {
-                    _log.Trace($"<sc.SqlCommand.CommandEventSink.ParametersAvailable|ADV> {_command.ObjectID}# metaData.Length={metaDataLength}.");
+                    Log.Trace($"<sc.SqlCommand.CommandEventSink.ParametersAvailable|ADV> {_command.ObjectID}# metaData.Length={metaDataLength}.");
                 }
 
-                if (null != metaData && _log.IsTraceEnabled())
+                if (null != metaData && Log.IsTraceEnabled())
                 {
                     for (int i = 0; i < metaData.Length; i++)
                     {
-                        _log.Trace($"<sc.SqlCommand.CommandEventSink.ParametersAvailable|ADV> {_command.ObjectID}#, metaData[{i}] is {metaData[i].GetType().ToString()}{metaData[i].TraceString()}");
+                        Log.Trace($"<sc.SqlCommand.CommandEventSink.ParametersAvailable|ADV> {_command.ObjectID}#, metaData[{i}] is {metaData[i].GetType().ToString()}{metaData[i].TraceString()}");
                     }
                 }
 
@@ -393,9 +393,9 @@ namespace Microsoft.Data.SqlClient
 
             internal override void ParameterAvailable(SmiParameterMetaData metaData, SmiTypedGetterSetter parameterValues, int ordinal)
             {
-                if (null != metaData && _log.IsTraceEnabled())
+                if (null != metaData && Log.IsTraceEnabled())
                 {
-                    _log.Trace($"<sc.SqlCommand.CommandEventSink.ParameterAvailable|ADV> {_command.ObjectID}#, metaData[{ordinal}] is {metaData.GetType().ToString()}{ metaData.TraceString()}");
+                    Log.Trace($"<sc.SqlCommand.CommandEventSink.ParameterAvailable|ADV> {_command.ObjectID}#, metaData[{ordinal}] is {metaData.GetType().ToString()}{ metaData.TraceString()}");
                 }
 
                 Debug.Assert(SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.KatmaiVersion);
@@ -584,9 +584,9 @@ namespace Microsoft.Data.SqlClient
 
                 var _activeConnectionObjectID = (null != value) ? value.ObjectID : -1;
 
-                if (_log.IsTraceEnabled())
+                if (Log.IsTraceEnabled())
                 {
-                    _log.Trace($"<sc.SqlCommand.set_Connection|API> {ObjectID}#, {_activeConnectionObjectID}#");
+                    Log.Trace($"<sc.SqlCommand.set_Connection|API> {ObjectID}#, {_activeConnectionObjectID}#");
                 }
             }
         }
@@ -665,9 +665,9 @@ namespace Microsoft.Data.SqlClient
             }
             set
             {
-                if (_log.IsTraceEnabled())
+                if (Log.IsTraceEnabled())
                 {
-                    _log.Trace($"<sc.SqlCommand.set_Notification|API> {ObjectID}#");
+                    Log.Trace($"<sc.SqlCommand.set_Notification|API> {ObjectID}#");
                 }
 
                 _sqlDep = null;
@@ -719,9 +719,9 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // TODO: Add objid here
-                if (_log.IsTraceEnabled())
+                if (Log.IsTraceEnabled())
                 {
-                    _log.Trace($"<sc.SqlCommand.set_Transaction|API> {ObjectID}#");
+                    Log.Trace($"<sc.SqlCommand.set_Transaction|API> {ObjectID}#");
                 }
                 _transaction = value;
             }
@@ -757,12 +757,10 @@ namespace Microsoft.Data.SqlClient
             }
             set
             {
-                if (_log.IsTraceEnabled())
+                if (Log.IsTraceEnabled())
                 {
-                    _log.Trace($"<sc.SqlCommand.set_CommandText|API> {ObjectID}#");
+                    Log.Trace($"<sc.SqlCommand.set_CommandText|API> {ObjectID}#, String Value = '{value}'");
                 }
-
-                _log.PutStr(value); // Use PutStr to write out entire string
 
                 if (0 != ADP.SrcCompare(_commandText, value))
                 {
@@ -800,9 +798,9 @@ namespace Microsoft.Data.SqlClient
             }
             set
             {
-                if (_log.IsTraceEnabled())
+                if (Log.IsTraceEnabled())
                 {
-                    _log.Trace($"<sc.SqlCommand.set_CommandTimeout|API> {ObjectID}#, {value}");
+                    Log.Trace($"<sc.SqlCommand.set_CommandTimeout|API> {ObjectID}#, {value}");
                 }
 
                 if (value < 0)
@@ -849,9 +847,9 @@ namespace Microsoft.Data.SqlClient
             }
             set
             {
-                if (_log.IsTraceEnabled())
+                if (Log.IsTraceEnabled())
                 {
-                    _log.Trace($"<sc.SqlCommand.set_CommandType|API> {ObjectID}#, {(int)value}{_commandType}");
+                    Log.Trace($"<sc.SqlCommand.set_CommandType|API> {ObjectID}#, {(int)value}{_commandType}");
                 }
                 if (_commandType != value)
                 {
@@ -995,9 +993,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     try
                     {
-                        if (_log.IsTraceEnabled())
+                        if (Log.IsTraceEnabled())
                         {
-                            _log.Trace($"<sc.SqlCommand.OnStatementCompleted|INFO> {ObjectID}#, recordCount={recordCount}");
+                            Log.Trace($"<sc.SqlCommand.OnStatementCompleted|INFO> {ObjectID}#, recordCount={recordCount}");
                         }
 
                         handler(this, new StatementCompletedEventArgs(recordCount));
@@ -1037,8 +1035,11 @@ namespace Microsoft.Data.SqlClient
             }
 
             SqlStatistics statistics = null;
-            var scopeID = _log.ScopeEnter($"<sc.SqlCommand.Prepare|API> {ObjectID}#");
-            _log.CorrelationTrace($"<sc.SqlCommand.Prepare|API|Correlation> ObjectID{ObjectID}#, ActivityID {_log.Guid}\n");
+            var scopeID = Log.ScopeEnter($"<sc.SqlCommand.Prepare|API> {ObjectID}#");
+
+            if (Log.IsCorrelationEnabled())
+                Log.CorrelationTrace($"<sc.SqlCommand.Prepare|API|Correlation> ObjectID{ObjectID}#, ActivityID {Log.Guid}");
+
             statistics = SqlStatistics.StartTimer(Statistics);
 
             // only prepare if batch with parameters
@@ -1139,7 +1140,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             SqlStatistics.StopTimer(statistics);
-            _log.ScopeLeave(scopeID);
+            Log.ScopeLeave(scopeID);
         }
 
         private void InternalPrepare()
@@ -1203,9 +1204,9 @@ namespace Microsoft.Data.SqlClient
             }
 
             _cachedMetaData = null;
-            if (_log.IsTraceEnabled())
+            if (Log.IsTraceEnabled())
             {
-                _log.Trace($"<sc.SqlCommand.Prepare|INFO> {ObjectID}#, Command unprepared.");
+                Log.Trace($"<sc.SqlCommand.Prepare|INFO> {ObjectID}#, Command unprepared.");
             }
         }
 
@@ -1216,8 +1217,10 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Cancel/*'/>
         override public void Cancel()
         {
-            var scopeID = _log.ScopeEnter($"< sc.SqlCommand.Cancel | API > {ObjectID}#");
-            _log.CorrelationTrace($"<sc.SqlCommand.Cancel|API|Correlation> ObjectID{ObjectID}#, ActivityID {_log.Guid}");
+            var scopeID = Log.ScopeEnter($"< sc.SqlCommand.Cancel | API > {ObjectID}#");
+
+            if (Log.IsCorrelationEnabled())
+                Log.CorrelationTrace($"<sc.SqlCommand.Cancel|API|Correlation> ObjectID{ObjectID}#, ActivityID {Log.Guid}");
 
             SqlStatistics statistics = null;
             try
@@ -1336,7 +1339,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlStatistics.StopTimer(statistics);
-                _log.ScopeLeave(scopeID);
+                Log.ScopeLeave(scopeID);
             }
         }
 
@@ -1379,8 +1382,10 @@ namespace Microsoft.Data.SqlClient
             _pendingCancel = false;
 
             SqlStatistics statistics = null;
-            var scopeID = _log.ScopeEnter($"<sc.SqlCommand.ExecuteScalar|API> {ObjectID}#");
-            _log.CorrelationTrace($"<sc.SqlCommand.ExecuteScalar|API|Correlation> ObjectID{ObjectID}#, ActivityID {_log.Guid}\n");
+            var scopeID = Log.ScopeEnter($"<sc.SqlCommand.ExecuteScalar|API> {ObjectID}#");
+
+            if (Log.IsCorrelationEnabled())
+                Log.CorrelationTrace($"<sc.SqlCommand.ExecuteScalar|API|Correlation> ObjectID{ObjectID}#, ActivityID {Log.Guid}");
 
             bool success = false;
             int? sqlExceptionNumber = null;
@@ -1402,7 +1407,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlStatistics.StopTimer(statistics);
-                _log.ScopeLeave(scopeID);
+                Log.ScopeLeave(scopeID);
                 WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
             }
         }
@@ -1447,8 +1452,11 @@ namespace Microsoft.Data.SqlClient
             _pendingCancel = false;
 
             SqlStatistics statistics = null;
-            var scopeID = _log.ScopeEnter($"<sc.SqlCommand.ExecuteNonQuery|API> {ObjectID}#");
-            _log.CorrelationTrace($"<sc.SqlCommand.ExecuteNonQuery|API|Correlation> ObjectID{ObjectID}#, ActivityID {_log.Guid}\n");
+            var scopeID = Log.ScopeEnter($"<sc.SqlCommand.ExecuteNonQuery|API> {ObjectID}#");
+
+            if (Log.IsPoolerTraceEnabled())
+                Log.CorrelationTrace($"<sc.SqlCommand.ExecuteNonQuery|API|Correlation> ObjectID{ObjectID}#, ActivityID {Log.Guid}");
+
             bool success = false;
             int? sqlExceptionNumber = null;
             try
@@ -1468,7 +1476,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlStatistics.StopTimer(statistics);
-                _log.ScopeLeave(scopeID);
+                Log.ScopeLeave(scopeID);
                 WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
             }
         }
@@ -1484,7 +1492,7 @@ namespace Microsoft.Data.SqlClient
             _pendingCancel = false;
 
             SqlStatistics statistics = null;
-            var scopeID = _log.ScopeEnter($"<sc.SqlCommand.ExecuteToPipe|INFO> {ObjectID}#");
+            var scopeID = Log.ScopeEnter($"<sc.SqlCommand.ExecuteToPipe|INFO> {ObjectID}#");
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
@@ -1494,7 +1502,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlStatistics.StopTimer(statistics);
-                _log.ScopeLeave(scopeID);
+                Log.ScopeLeave(scopeID);
             }
         }
 
@@ -1510,7 +1518,9 @@ namespace Microsoft.Data.SqlClient
         [System.Security.Permissions.HostProtectionAttribute(ExternalThreading = true)]
         public IAsyncResult BeginExecuteNonQuery(AsyncCallback callback, object stateObject)
         {
-            _log.CorrelationTrace($"<sc.SqlCommand.BeginExecuteNonQuery|API|Correlation> ObjectID{ObjectID}#, ActivityID {_log.Guid}\n");
+            if (Log.IsCorrelationEnabled())
+                Log.CorrelationTrace($"<sc.SqlCommand.BeginExecuteNonQuery|API|Correlation> ObjectID{ObjectID}#, ActivityID {Log.Guid}");
+
             SqlConnection.ExecutePermission.Demand();
             return BeginExecuteNonQueryInternal(0, callback, stateObject, 0, inRetry: false);
         }
@@ -1736,7 +1746,8 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                _log.CorrelationTrace($"<sc.SqlCommand.EndExecuteNonQuery|API|Correlation> ObjectID{ObjectID}#, ActivityID {_log.Guid}\n");
+                if (Log.IsCorrelationEnabled())
+                    Log.CorrelationTrace($"<sc.SqlCommand.EndExecuteNonQuery|API|Correlation> ObjectID{ObjectID}#, ActivityID {Log.Guid}");
             }
         }
 
@@ -1754,7 +1765,9 @@ namespace Microsoft.Data.SqlClient
 
         private int EndExecuteNonQueryAsync(IAsyncResult asyncResult)
         {
-            _log.CorrelationTrace($"<sc.SqlCommand.EndExecuteNonQueryAsync|Info|Correlation> ObjectID{ObjectID}#, ActivityID {_log.Guid}\n");
+            if (Log.IsCorrelationEnabled())
+                Log.CorrelationTrace($"<sc.SqlCommand.EndExecuteNonQueryAsync|Info|Correlation> ObjectID{ObjectID}#, ActivityID {Log.Guid}");
+
             Debug.Assert(!_internalEndExecuteInitiated || _stateObj == null);
 
             Exception asyncException = ((Task)asyncResult).Exception;
@@ -2015,9 +2028,9 @@ namespace Microsoft.Data.SqlClient
                     { // otherwise, use a full-fledged execute that can handle params and stored procs
                         Debug.Assert(!sendToPipe, "trying to send non-context command to pipe");
 
-                        if (_log.IsTraceEnabled())
+                        if (Log.IsTraceEnabled())
                         {
-                            _log.Trace($"<sc.SqlCommand.ExecuteNonQuery|INFO> {ObjectID}#, Command executed as RPC.");
+                            Log.Trace($"<sc.SqlCommand.ExecuteNonQuery|INFO> {ObjectID}#, Command executed as RPC.");
                         }
 
                         SqlDataReader reader = RunExecuteReader(0, RunBehavior.UntilDone, false, methodName, completion, timeout, out task, out usedCache, asyncWrite, inRetry);
@@ -2071,8 +2084,11 @@ namespace Microsoft.Data.SqlClient
             _pendingCancel = false;
 
             SqlStatistics statistics = null;
-            var scopeID = _log.ScopeEnter($"<sc.SqlCommand.ExecuteXmlReader|API> {ObjectID}#");
-            _log.CorrelationTrace($"<sc.SqlCommand.ExecuteXmlReader|API|Correlation> ObjectID{ObjectID}#, ActivityID {_log.Guid}\n");
+            var scopeID = Log.ScopeEnter($"<sc.SqlCommand.ExecuteXmlReader|API> {ObjectID}#");
+
+            if (Log.IsCorrelationEnabled())
+                Log.CorrelationTrace($"<sc.SqlCommand.ExecuteXmlReader|API|Correlation> ObjectID{ObjectID}#, ActivityID {Log.Guid}");
+
             bool success = false;
             int? sqlExceptionNumber = null;
             try
@@ -2095,7 +2111,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlStatistics.StopTimer(statistics);
-                _log.ScopeLeave(scopeID);
+                Log.ScopeLeave(scopeID);
                 WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
             }
         }
@@ -2112,7 +2128,9 @@ namespace Microsoft.Data.SqlClient
         [System.Security.Permissions.HostProtectionAttribute(ExternalThreading = true)]
         public IAsyncResult BeginExecuteXmlReader(AsyncCallback callback, object stateObject)
         {
-            _log.CorrelationTrace($"<sc.SqlCommand.BeginExecuteXmlReader|API|Correlation> ObjectID{ObjectID}#, ActivityID {_log.Guid}\n");
+            if (Log.IsCorrelationEnabled())
+                Log.CorrelationTrace($"<sc.SqlCommand.BeginExecuteXmlReader|API|Correlation> ObjectID{ObjectID}#, ActivityID {Log.Guid}");
+
             SqlConnection.ExecutePermission.Demand();
             return BeginExecuteXmlReaderInternal(CommandBehavior.SequentialAccess, callback, stateObject, 0, inRetry: false);
         }
@@ -2265,13 +2283,16 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                _log.CorrelationTrace($"<sc.SqlCommand.EndExecuteXmlReader|API|Correlation> ObjectID{ObjectID}#, ActivityID {_log.Guid}\n");
+                if (Log.IsCorrelationEnabled())
+                    Log.CorrelationTrace($"<sc.SqlCommand.EndExecuteXmlReader|API|Correlation> ObjectID{ObjectID}#, ActivityID {Log.Guid}");
             }
         }
 
         private XmlReader EndExecuteXmlReaderAsync(IAsyncResult asyncResult)
         {
-            _log.CorrelationTrace($"<sc.SqlCommand.EndExecuteXmlReaderAsync|Info|Correlation> ObjectID{ObjectID}#, ActivityID {_log.Guid}\n");
+            if (Log.IsCorrelationEnabled())
+                Log.CorrelationTrace($"<sc.SqlCommand.EndExecuteXmlReaderAsync|Info|Correlation> ObjectID{ObjectID}#, ActivityID {Log.Guid}");
+
             Debug.Assert(!_internalEndExecuteInitiated || _stateObj == null);
 
             Exception asyncException = ((Task)asyncResult).Exception;
@@ -2390,7 +2411,9 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteDbDataReader[@name="CommandBehavior"]/*'/>
         override protected DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
         {
-            _log.CorrelationTrace($"<sc.SqlCommand.ExecuteDbDataReader|API|Correlation> ObjectID{ObjectID}#, ActivityID {_log.Guid}\n");
+            if (Log.IsCorrelationEnabled())
+                Log.CorrelationTrace($"<sc.SqlCommand.ExecuteDbDataReader|API|Correlation> ObjectID{ObjectID}#, ActivityID {Log.Guid}");
+
             return ExecuteReader(behavior, ADP.ExecuteReader);
         }
 
@@ -2398,8 +2421,11 @@ namespace Microsoft.Data.SqlClient
         new public SqlDataReader ExecuteReader()
         {
             SqlStatistics statistics = null;
-            var scopeID = _log.ScopeEnter($"<sc.SqlCommand.ExecuteReader|API> {ObjectID}#");
-            _log.CorrelationTrace($"<sc.SqlCommand.ExecuteReader|API|Correlation> ObjectID{ObjectID}#, ActivityID {_log.Guid}\n");
+            var scopeID = Log.ScopeEnter($"<sc.SqlCommand.ExecuteReader|API> {ObjectID}#");
+
+            if (Log.IsCorrelationEnabled())
+                Log.CorrelationTrace($"<sc.SqlCommand.ExecuteReader|API|Correlation> ObjectID{ObjectID}#, ActivityID {Log.Guid}");
+
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
@@ -2408,22 +2434,25 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlStatistics.StopTimer(statistics);
-                _log.ScopeLeave(scopeID);
+                Log.ScopeLeave(scopeID);
             }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReader[@name="CommandBehavior"]/*'/>
         new public SqlDataReader ExecuteReader(CommandBehavior behavior)
         {
-            var scopeID = _log.ScopeEnter($"<sc.SqlCommand.ExecuteReader|API> {ObjectID}#, behavior={(int)behavior}");
-            _log.CorrelationTrace($"<sc.SqlCommand.ExecuteReader|API|Correlation> ObjectID{ObjectID}#, behavior={(int)behavior}, ActivityID {_log.Guid}\n");
+            var scopeID = Log.ScopeEnter($"<sc.SqlCommand.ExecuteReader|API> {ObjectID}#, behavior={(int)behavior}");
+
+            if (Log.IsCorrelationEnabled())
+                Log.CorrelationTrace($"<sc.SqlCommand.ExecuteReader|API|Correlation> ObjectID{ObjectID}#, behavior={(int)behavior}, ActivityID {Log.Guid}");
+
             try
             {
                 return ExecuteReader(behavior, ADP.ExecuteReader);
             }
             finally
             {
-                _log.ScopeLeave(scopeID);
+                Log.ScopeLeave(scopeID);
             }
         }
 
@@ -2438,7 +2467,9 @@ namespace Microsoft.Data.SqlClient
         [System.Security.Permissions.HostProtectionAttribute(ExternalThreading = true)]
         public IAsyncResult BeginExecuteReader(AsyncCallback callback, object stateObject, CommandBehavior behavior)
         {
-            _log.CorrelationTrace($"<sc.SqlCommand.BeginExecuteReader|API|Correlation> ObjectID{ObjectID}#, behavior={(int)behavior}, ActivityID {_log.Guid}\n");
+            if (Log.IsCorrelationEnabled())
+                Log.CorrelationTrace($"<sc.SqlCommand.BeginExecuteReader|API|Correlation> ObjectID{ObjectID}#, behavior={(int)behavior}, ActivityID {Log.Guid}");
+
             SqlConnection.ExecutePermission.Demand();
             return BeginExecuteReaderInternal(behavior, callback, stateObject, 0, inRetry: false);
         }
@@ -2520,13 +2551,16 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                _log.CorrelationTrace($"<sc.SqlCommand.EndExecuteReader|API|Correlation> ObjectID{ObjectID}#, ActivityID {_log.Guid}\n");
+                if (Log.IsCorrelationEnabled())
+                    Log.CorrelationTrace($"<sc.SqlCommand.EndExecuteReader|API|Correlation> ObjectID{ObjectID}#, ActivityID {Log.Guid}");
             }
         }
 
         private SqlDataReader EndExecuteReaderAsync(IAsyncResult asyncResult)
         {
-            _log.CorrelationTrace($"<sc.SqlCommand.EndExecuteReaderAsync|Info|Correlation> ObjectID{ObjectID}#, ActivityID {_log.Guid}\n");
+            if (Log.IsCorrelationEnabled())
+                Log.CorrelationTrace($"<sc.SqlCommand.EndExecuteReaderAsync|Info|Correlation> ObjectID{ObjectID}#, ActivityID {Log.Guid}");
+
             Debug.Assert(!_internalEndExecuteInitiated || _stateObj == null);
 
             Exception asyncException = ((Task)asyncResult).Exception;
@@ -2927,8 +2961,9 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteNonQueryAsync[@name="CancellationToken"]/*'/>
         public override Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
         {
+            if (Log.IsCorrelationEnabled())
+                Log.CorrelationTrace($"<sc.SqlCommand.ExecuteNonQueryAsync|API|Correlation> ObjectID{ObjectID}#, ActivityID {Log.Guid}");
 
-            _log.CorrelationTrace($"<sc.SqlCommand.ExecuteNonQueryAsync|API|Correlation> ObjectID{ObjectID}#, ActivityID {_log.Guid}\n");
             SqlConnection.ExecutePermission.Demand();
 
             TaskCompletionSource<int> source = new TaskCompletionSource<int>();
@@ -3013,8 +3048,9 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="commandBehaviorAndCancellationToken"]/*'/>
         new public Task<SqlDataReader> ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
         {
+            if (Log.IsCorrelationEnabled())
+                Log.CorrelationTrace($"<sc.SqlCommand.ExecuteReaderAsync|API|Correlation> ObjectID{ObjectID}#, behavior={(int)behavior}, ActivityID {Log.Guid}");
 
-            _log.CorrelationTrace($"<sc.SqlCommand.ExecuteReaderAsync|API|Correlation> ObjectID{ObjectID}#, behavior={(int)behavior}, ActivityID {_log.Guid}\n");
             SqlConnection.ExecutePermission.Demand();
 
             TaskCompletionSource<SqlDataReader> source = new TaskCompletionSource<SqlDataReader>();
@@ -3148,8 +3184,9 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReaderAsync[@name="CancellationToken"]/*'/>
         public Task<XmlReader> ExecuteXmlReaderAsync(CancellationToken cancellationToken)
         {
+            if (Log.IsCorrelationEnabled())
+                Log.CorrelationTrace($"<sc.SqlCommand.ExecuteXmlReaderAsync|API|Correlation> ObjectID{ObjectID}#, ActivityID {Log.Guid}");
 
-            _log.CorrelationTrace($"<sc.SqlCommand.ExecuteXmlReaderAsync|API|Correlation> ObjectID{ObjectID}#, ActivityID {_log.Guid}\n");
             SqlConnection.ExecutePermission.Demand();
 
             TaskCompletionSource<XmlReader> source = new TaskCompletionSource<XmlReader>();
@@ -3757,9 +3794,9 @@ namespace Microsoft.Data.SqlClient
                 // no data reader is returned
                 // use this overload for "batch SQL" tds token type
 
-                if (_log.IsTraceEnabled())
+                if (Log.IsTraceEnabled())
                 {
-                    _log.Trace($"<sc.SqlCommand.ExecuteNonQuery|INFO> {ObjectID}#, Command executed as SQLBATCH.");
+                    Log.Trace($"<sc.SqlCommand.ExecuteNonQuery|INFO> {ObjectID}#, Command executed as SQLBATCH.");
                 }
 
                 Task executeTask = _stateObj.Parser.TdsExecuteSQLBatch(this.CommandText, timeout, this.Notification, _stateObj, sync: true);
@@ -3823,9 +3860,9 @@ namespace Microsoft.Data.SqlClient
                     SysTx.Transaction transaction;
                     innerConnection.GetCurrentTransactionPair(out transactionId, out transaction);
 
-                    if (_log.IsTraceEnabled())
+                    if (Log.IsTraceEnabled())
                     {
-                        _log.Trace($"<sc.SqlCommand.RunExecuteNonQuerySmi|ADV> {ObjectID}#, innerConnection={innerConnection.ObjectID}#, transactionId=0x{transactionId}, cmdBehavior={(int)CommandBehavior.Default}.");
+                        Log.Trace($"<sc.SqlCommand.RunExecuteNonQuerySmi|ADV> {ObjectID}#, innerConnection={innerConnection.ObjectID}#, transactionId=0x{transactionId}, cmdBehavior={(int)CommandBehavior.Default}.");
                     }
 
                     if (SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.KatmaiVersion)
@@ -5303,9 +5340,9 @@ namespace Microsoft.Data.SqlClient
                     // Send over SQL Batch command if we are not a stored proc and have no parameters
                     // MDAC BUG #'s 73776 & 72101
                     Debug.Assert(!IsUserPrepared, "CommandType.Text with no params should not be prepared!");
-                    if (returnStream && _log.IsTraceEnabled())
+                    if (returnStream && Log.IsTraceEnabled())
                     {
-                        _log.Trace($"<sc.SqlCommand.ExecuteReader|INFO> {ObjectID}#, Command executed as SQLBATCH.");
+                        Log.Trace($"<sc.SqlCommand.ExecuteReader|INFO> {ObjectID}#, Command executed as SQLBATCH.");
                     }
                     string text = GetCommandText(cmdBehavior) + GetResetOptionsString(cmdBehavior);
 
@@ -5368,9 +5405,9 @@ namespace Microsoft.Data.SqlClient
                     // if shiloh, then set NOMETADATA_UNLESSCHANGED flag
                     if (_activeConnection.IsShiloh)
                         rpc.options = TdsEnums.RPC_NOMETADATA;
-                    if (returnStream && _log.IsTraceEnabled())
+                    if (returnStream && Log.IsTraceEnabled())
                     {
-                        _log.Trace($"<sc.SqlCommand.ExecuteReader|INFO> {ObjectID}#, Command executed as RPC.");
+                        Log.Trace($"<sc.SqlCommand.ExecuteReader|INFO> {ObjectID}#, Command executed as RPC.");
                     }
 
                     // TODO: Medusa: Unprepare only happens for SQL 7.0 which may be broken anyway (it's not re-prepared). Consider removing the reset here if we're really dropping 7.0 support.
@@ -5391,9 +5428,9 @@ namespace Microsoft.Data.SqlClient
                     // then batch sql them over.  This is inefficient (3 round trips) but the only way we can get metadata only from
                     // a stored proc
                     optionSettings = GetSetOptionsString(cmdBehavior);
-                    if (returnStream && _log.IsTraceEnabled())
+                    if (returnStream && Log.IsTraceEnabled())
                     {
-                        _log.Trace($"<sc.SqlCommand.ExecuteReader|INFO> {ObjectID}#, Command executed as RPC.");
+                        Log.Trace($"<sc.SqlCommand.ExecuteReader|INFO> {ObjectID}#, Command executed as RPC.");
                     }
                     // turn set options ON
                     if (null != optionSettings)
@@ -5488,9 +5525,9 @@ namespace Microsoft.Data.SqlClient
                 SysTx.Transaction transaction;
                 innerConnection.GetCurrentTransactionPair(out transactionId, out transaction);
 
-                if (_log.IsTraceEnabled())
+                if (Log.IsTraceEnabled())
                 {
-                    _log.Trace($"<sc.SqlCommand.RunExecuteReaderSmi|ADV> {ObjectID}#, innerConnection={innerConnection.ObjectID}#, transactionId=0x{transactionId}, commandBehavior={(int)cmdBehavior}.");
+                    Log.Trace($"<sc.SqlCommand.RunExecuteReaderSmi|ADV> {ObjectID}#, innerConnection={innerConnection.ObjectID}#, transactionId=0x{transactionId}, commandBehavior={(int)cmdBehavior}.");
                 }
 
                 if (SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.KatmaiVersion)
@@ -5712,9 +5749,9 @@ namespace Microsoft.Data.SqlClient
         {
             SqlCommand clone = new SqlCommand(this);
 
-            if (_log.IsTraceEnabled())
+            if (Log.IsTraceEnabled())
             {
-                _log.Trace($"<sc.SqlCommand.Clone|API> {ObjectID}#, clone={clone.ObjectID}#");
+                Log.Trace($"<sc.SqlCommand.Clone|API> {ObjectID}#, clone={clone.ObjectID}#");
             }
             return clone;
         }
