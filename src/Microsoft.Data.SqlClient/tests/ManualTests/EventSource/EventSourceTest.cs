@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Xunit;
 using static Microsoft.Data.SqlClient.SqlClientEventSource;
 
+
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.EventSourceTest
 {
     public class EventSourceListenerGeneral : EventListener
@@ -23,16 +24,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.EventSourceTest
             events = eventData.Payload.ToList();
         }
     }
+    [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp, "Not Implemented")]
 
     public class SqlClientEventSourceTest
     {
+        [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp,"Not Implemented")]
         [Fact]
         public void TestSqlClientEventSourceName()
         {
             Assert.Equal("Microsoft.Data.SqlClient.EventSource", SqlClientEventSource.Log.Name);
         }
 
-        //The values are equivilant to Keywords value inside SqlClientEventSource
+        [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp, "Not Implemented")]
         [Theory]
         [InlineData(new int[] { 1, 2, 4, 8, 16 })]
         public async void TestEventKeywords(int[] values)
