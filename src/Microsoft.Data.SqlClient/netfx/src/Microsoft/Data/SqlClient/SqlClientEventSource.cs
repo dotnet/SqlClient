@@ -16,7 +16,6 @@ namespace Microsoft.Data.SqlClient
     {
         internal static readonly SqlClientEventSource Log = new SqlClientEventSource();
         private static long s_nextScopeId = 0;
-        private static long s_nextPoolerScopeId = 0;
         private static long s_nextNotificationScopeId = 0;
 
         private const int TraceEventId = 1;
