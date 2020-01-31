@@ -1103,7 +1103,10 @@ namespace Microsoft.Data.SqlClient
         [SuppressMessage("Microsoft.Reliability", "CA2004:RemoveCallsToGCKeepAlive")]
         override protected DbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
         {
-            var scopeID = Log.ScopeEnter($"<prov.SqlConnection.BeginDbTransaction|API> {ObjectID}#, isolationLevel={(int)isolationLevel}");
+            long scopeID = 0;
+            if (Log.IsEnabled())
+                scopeID = Log.ScopeEnter($"<prov.SqlConnection.BeginDbTransaction|API> {ObjectID}#, isolationLevel={(int)isolationLevel}");
+
             try
             {
 
@@ -1128,8 +1131,10 @@ namespace Microsoft.Data.SqlClient
         {
             WaitForPendingReconnection();
             SqlStatistics statistics = null;
-            string xactName = ADP.IsEmpty(transactionName) ? "None" : transactionName;
-            var scopeID = Log.ScopeEnter($"<sc.SqlConnection.BeginTransaction|API> {ObjectID}#, iso={(int)iso}, transactionName='{xactName}'");
+
+            long scopeID = 0;
+            if (Log.IsEnabled())
+                scopeID = Log.ScopeEnter($"<sc.SqlConnection.BeginTransaction|API> {ObjectID}#, iso={(int)iso}, transactionName='{(ADP.IsEmpty(transactionName) ? "None" : transactionName)}'");
 
             try
             {
@@ -1263,7 +1268,9 @@ namespace Microsoft.Data.SqlClient
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Close/*' />
         override public void Close()
         {
-            var scopeID = Log.ScopeEnter($"<sc.SqlConnection.Close|API> {ObjectID}#");
+            long scopeID = 0;
+            if (Log.IsEnabled())
+                scopeID = Log.ScopeEnter($"<sc.SqlConnection.Close|API> {ObjectID}#");
 
             if (Log.IsCorrelationEnabled())
                 Log.CorrelationTrace($"<sc.SqlConnection.Close|API|Correlation> ObjectID{ObjectID}#, ActivityID {EventSource.GetGuid(typeof(SqlClientEventSource))}");
@@ -1403,7 +1410,9 @@ namespace Microsoft.Data.SqlClient
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Open/*' />
         override public void Open()
         {
-            var scopeID = Log.ScopeEnter($"<sc.SqlConnection.Open|API|Correlation> ObjectID: {ObjectID}, ActivityID {Log.Guid}");
+            long scopeID = 0;
+            if (Log.IsEnabled())
+                scopeID = Log.ScopeEnter($"<sc.SqlConnection.Open|API|Correlation> ObjectID: {ObjectID}, ActivityID {Log.Guid}");
 
             if (Log.IsCorrelationEnabled())
                 Log.CorrelationTrace($"<sc.SqlConnection.Open|API|Correlation> ObjectID{ObjectID}#, ActivityID {EventSource.GetGuid(typeof(SqlClientEventSource))}");
@@ -1680,7 +1689,9 @@ namespace Microsoft.Data.SqlClient
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsync/*' />
         public override Task OpenAsync(CancellationToken cancellationToken)
         {
-            var scopeID = Log.PoolerScopeEnter($"<sc.SqlConnection.OpenAsync|API> {ObjectID}#");
+            long scopeID = 0;
+            if (Log.IsEnabled())
+                scopeID = Log.PoolerScopeEnter($"<sc.SqlConnection.OpenAsync|API> {ObjectID}#");
 
             if (Log.IsCorrelationEnabled())
                 Log.CorrelationTrace($"<sc.SqlConnection.OpenAsync|API|Correlation> ObjectID{ObjectID}#, ActivityID {EventSource.GetGuid(typeof(SqlClientEventSource))}");
@@ -2474,7 +2485,9 @@ namespace Microsoft.Data.SqlClient
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ChangePasswordConnectionStringNewPassword/*' />
         public static void ChangePassword(string connectionString, string newPassword)
         {
-            var scopeID = Log.ScopeEnter("<sc.SqlConnection.ChangePassword|API>");
+            long scopeID = 0;
+            if (Log.IsEnabled())
+                scopeID = Log.ScopeEnter("<sc.SqlConnection.ChangePassword|API>");
 
             if (Log.IsCorrelationEnabled())
                 Log.CorrelationTrace($"<sc.SqlConnection.ChangePassword|API|Correlation> ActivityID {EventSource.GetGuid(typeof(SqlClientEventSource))}");
@@ -2524,7 +2537,9 @@ namespace Microsoft.Data.SqlClient
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='/docs/members[@name="SqlConnection"]/ChangePasswordConnectionStringCredentialNewSecurePassword/*' />
         public static void ChangePassword(string connectionString, SqlCredential credential, SecureString newSecurePassword)
         {
-            var scopeID = Log.ScopeEnter("<sc.SqlConnection.ChangePassword|API>");
+            long scopeID = 0;
+            if (Log.IsEnabled())
+                scopeID = Log.ScopeEnter("<sc.SqlConnection.ChangePassword|API>");
 
             if (Log.IsCorrelationEnabled())
                 Log.CorrelationTrace($"<sc.SqlConnection.ChangePassword|API|Correlation> ActivityID {EventSource.GetGuid(typeof(SqlClientEventSource))}");

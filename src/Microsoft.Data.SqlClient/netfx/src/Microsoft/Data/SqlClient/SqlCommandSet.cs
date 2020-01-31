@@ -307,7 +307,10 @@ namespace Microsoft.Data.SqlClient
         {
             SqlConnection.ExecutePermission.Demand();
 
-            var scopeID = Log.ScopeEnter($"<sc.SqlCommandSet.ExecuteNonQuery|API> {ObjectID}#");
+            long scopeID = 0;
+            if (Log.IsEnabled())
+                scopeID = Log.ScopeEnter($"<sc.SqlCommandSet.ExecuteNonQuery|API> {ObjectID}#");
+
             try
             {
                 if (Connection.IsContextConnection)

@@ -66,7 +66,12 @@ namespace Microsoft.Data.ProviderBase
 
         public void ClearAllPools()
         {
-            var scopeID = Log.ScopeEnter("<prov.DbConnectionFactory.ClearAllPools|API> ");
+            long scopeID = 0;
+            if (Log.IsEnabled())
+            {
+                scopeID = Log.ScopeEnter("<prov.DbConnectionFactory.ClearAllPools|API>");
+            }
+
             try
             {
                 Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup> connectionPoolGroups = _connectionPoolGroups;
@@ -89,7 +94,12 @@ namespace Microsoft.Data.ProviderBase
         {
             ADP.CheckArgumentNull(connection, "connection");
 
-            var scopeID = Log.ScopeEnter($"<prov.DbConnectionFactory.ClearPool|API> {GetObjectId(connection)}#");
+            long scopeID = 0;
+            if (Log.IsEnabled())
+            {
+                scopeID = Log.ScopeEnter($"<prov.DbConnectionFactory.ClearPool|API> {GetObjectId(connection)}#");
+            }
+
             try
             {
                 DbConnectionPoolGroup poolGroup = GetConnectionPoolGroup(connection);
@@ -109,7 +119,12 @@ namespace Microsoft.Data.ProviderBase
             Debug.Assert(key != null, "key cannot be null");
             ADP.CheckArgumentNull(key.ConnectionString, "key.ConnectionString");
 
-            var scopeID = Log.ScopeEnter("<prov.DbConnectionFactory.ClearPool|API> connectionString");
+            long scopeID=0;
+            if (Log.IsEnabled())
+            {
+                scopeID = Log.ScopeEnter("<prov.DbConnectionFactory.ClearPool|API> connectionString");
+            }
+
             try
             {
                 DbConnectionPoolGroup poolGroup;

@@ -165,8 +165,7 @@ namespace Microsoft.Data.ProviderBase
                     {
                         if (Log.IsPoolerTraceEnabled())
                         {
-                            int x = value.GetHashCode();
-                            Log.PoolerTrace($"<prov.DbConnectionInternal.set_EnlistedTransaction|RES|CPOOL> {ObjectID}#, Transaction {x}#, Enlisting.");
+                            Log.PoolerTrace($"<prov.DbConnectionInternal.set_EnlistedTransaction|RES|CPOOL> {ObjectID}#, Transaction {value.GetHashCode()}#, Enlisting.");
                         }
 
                         TransactionOutcomeEnlist(value);

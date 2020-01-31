@@ -210,7 +210,13 @@ namespace Microsoft.Data.SqlClient
         override protected DbCommand CreateDbCommand()
         {
             DbCommand command = null;
-            var scopeID = Log.ScopeEnter($"<prov.DbConnectionHelper.CreateDbCommand|API> {ObjectID}#");
+
+            long scopeID = 0;
+            if (Log.IsEnabled())
+            {
+                scopeID = Log.ScopeEnter($"<prov.DbConnectionHelper.CreateDbCommand|API> {ObjectID}#");
+            }
+
             try
             {
                 DbProviderFactory providerFactory = ConnectionFactory.ProviderFactory;

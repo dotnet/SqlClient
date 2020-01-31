@@ -372,11 +372,9 @@ namespace Microsoft.Data.SqlClient
             internal override void ParametersAvailable(SmiParameterMetaData[] metaData, ITypedGettersV3 parameterValues)
             {
 
-                var metaDataLength = (null != metaData) ? metaData.Length : -1;
-
                 if (Log.IsTraceEnabled())
                 {
-                    Log.Trace($"<sc.SqlCommand.CommandEventSink.ParametersAvailable|ADV> {_command.ObjectID}# metaData.Length={metaDataLength}.");
+                    Log.Trace($"<sc.SqlCommand.CommandEventSink.ParametersAvailable|ADV> {_command.ObjectID}# metaData.Length={((null != metaData) ? metaData.Length : -1)}.");
                 }
 
                 if (null != metaData && Log.IsTraceEnabled())
@@ -582,11 +580,9 @@ namespace Microsoft.Data.SqlClient
 
                 _activeConnection = value; // UNDONE: Designers need this setter.  Should we block other scenarios?
 
-                var _activeConnectionObjectID = (null != value) ? value.ObjectID : -1;
-
                 if (Log.IsTraceEnabled())
                 {
-                    Log.Trace($"<sc.SqlCommand.set_Connection|API> {ObjectID}#, {_activeConnectionObjectID}#");
+                    Log.Trace($"<sc.SqlCommand.set_Connection|API> {ObjectID}#, {((null != value) ? value.ObjectID : -1)}#");
                 }
             }
         }
@@ -1035,7 +1031,10 @@ namespace Microsoft.Data.SqlClient
             }
 
             SqlStatistics statistics = null;
-            var scopeID = Log.ScopeEnter($"<sc.SqlCommand.Prepare|API> {ObjectID}#");
+
+            long scopeID = 0;
+            if (Log.IsEnabled())
+                scopeID = Log.ScopeEnter($"<sc.SqlCommand.Prepare|API> {ObjectID}#");
 
             if (Log.IsCorrelationEnabled())
                 Log.CorrelationTrace($"<sc.SqlCommand.Prepare|API|Correlation> ObjectID{ObjectID}#, ActivityID {Log.Guid}");
@@ -1217,7 +1216,9 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Cancel/*'/>
         override public void Cancel()
         {
-            var scopeID = Log.ScopeEnter($"< sc.SqlCommand.Cancel | API > {ObjectID}#");
+            long scopeID = 0;
+            if (Log.IsEnabled())
+                scopeID = Log.ScopeEnter($"< sc.SqlCommand.Cancel | API > {ObjectID}#");
 
             if (Log.IsCorrelationEnabled())
                 Log.CorrelationTrace($"<sc.SqlCommand.Cancel|API|Correlation> ObjectID{ObjectID}#, ActivityID {Log.Guid}");
@@ -1382,7 +1383,10 @@ namespace Microsoft.Data.SqlClient
             _pendingCancel = false;
 
             SqlStatistics statistics = null;
-            var scopeID = Log.ScopeEnter($"<sc.SqlCommand.ExecuteScalar|API> {ObjectID}#");
+
+            long scopeID = 0;
+            if (Log.IsEnabled())
+                scopeID = Log.ScopeEnter($"<sc.SqlCommand.ExecuteScalar|API> {ObjectID}#");
 
             if (Log.IsCorrelationEnabled())
                 Log.CorrelationTrace($"<sc.SqlCommand.ExecuteScalar|API|Correlation> ObjectID{ObjectID}#, ActivityID {Log.Guid}");
@@ -1452,7 +1456,10 @@ namespace Microsoft.Data.SqlClient
             _pendingCancel = false;
 
             SqlStatistics statistics = null;
-            var scopeID = Log.ScopeEnter($"<sc.SqlCommand.ExecuteNonQuery|API> {ObjectID}#");
+
+            long scopeID = 0;
+            if (Log.IsEnabled())
+                scopeID = Log.ScopeEnter($"<sc.SqlCommand.ExecuteNonQuery|API> {ObjectID}#");
 
             if (Log.IsPoolerTraceEnabled())
                 Log.CorrelationTrace($"<sc.SqlCommand.ExecuteNonQuery|API|Correlation> ObjectID{ObjectID}#, ActivityID {Log.Guid}");
@@ -1492,7 +1499,11 @@ namespace Microsoft.Data.SqlClient
             _pendingCancel = false;
 
             SqlStatistics statistics = null;
-            var scopeID = Log.ScopeEnter($"<sc.SqlCommand.ExecuteToPipe|INFO> {ObjectID}#");
+
+            long scopeID = 0;
+            if (Log.IsEnabled())
+                scopeID = Log.ScopeEnter($"<sc.SqlCommand.ExecuteToPipe|INFO> {ObjectID}#");
+
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
@@ -2084,7 +2095,10 @@ namespace Microsoft.Data.SqlClient
             _pendingCancel = false;
 
             SqlStatistics statistics = null;
-            var scopeID = Log.ScopeEnter($"<sc.SqlCommand.ExecuteXmlReader|API> {ObjectID}#");
+
+            long scopeID = 0;
+            if (Log.IsEnabled())
+                scopeID = Log.ScopeEnter($"<sc.SqlCommand.ExecuteXmlReader|API> {ObjectID}#");
 
             if (Log.IsCorrelationEnabled())
                 Log.CorrelationTrace($"<sc.SqlCommand.ExecuteXmlReader|API|Correlation> ObjectID{ObjectID}#, ActivityID {Log.Guid}");
@@ -2421,7 +2435,10 @@ namespace Microsoft.Data.SqlClient
         new public SqlDataReader ExecuteReader()
         {
             SqlStatistics statistics = null;
-            var scopeID = Log.ScopeEnter($"<sc.SqlCommand.ExecuteReader|API> {ObjectID}#");
+
+            long scopeID = 0;
+            if (Log.IsEnabled())
+                scopeID = Log.ScopeEnter($"<sc.SqlCommand.ExecuteReader|API> {ObjectID}#");
 
             if (Log.IsCorrelationEnabled())
                 Log.CorrelationTrace($"<sc.SqlCommand.ExecuteReader|API|Correlation> ObjectID{ObjectID}#, ActivityID {Log.Guid}");

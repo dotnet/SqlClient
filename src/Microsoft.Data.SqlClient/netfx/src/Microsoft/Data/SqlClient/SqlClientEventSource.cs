@@ -72,6 +72,9 @@ namespace Microsoft.Data.SqlClient
         [NonEvent]
         internal bool IsPoolerTraceEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.PoolerTrace);
 
+        [NonEvent]
+        internal bool IsAdvanceTraceOn() => Log.IsEnabled(EventLevel.LogAlways, EventKeywords.All);
+
 
         [Event(TraceEventId, Level = EventLevel.Informational, Channel = EventChannel.Debug, Keywords = Keywords.Trace)]
         internal void Trace(string message)

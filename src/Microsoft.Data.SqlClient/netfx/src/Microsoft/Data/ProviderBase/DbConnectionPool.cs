@@ -1737,8 +1737,11 @@ namespace Microsoft.Data.ProviderBase
             // called by pooler to ensure pool requests are currently being satisfied -
             // creation mutex has not been obtained
 
-
-            var scopeID = Log.PoolerScopeEnter($"<prov.DbConnectionPool.PoolCreateRequest|RES|INFO|CPOOL> {ObjectID}#");
+            long scopeID = 0;
+            if (Log.IsEnabled())
+            {
+                scopeID = Log.PoolerScopeEnter($"<prov.DbConnectionPool.PoolCreateRequest|RES|INFO|CPOOL> {ObjectID}#");
+            }
 
             try
             {
