@@ -48,55 +48,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.EventSourceTest
 
                 //Events should be disabled by default
                 Assert.False(Log.IsEnabled());
-
-                //We try to Enable events. 
-                //Since we have to have 2 arguments in EnableEvents Informational is selected arbitrary.
-                //If we do not wait for tasks to be completed Assert.True will run before other calls and will return false.
-                var task1 = Task.Run(() =>
-                {
-                    listener.EnableEvents(Log, EventLevel.Informational);
-                });
-                await task1.ContinueWith((t) =>
-                 {
-                     status = Log.IsEnabled();
-                 });
-                Assert.True(status);
-
-                //check if we are able to disable all the events
-                var task2 = Task.Run(() =>
-                {
-                    listener.DisableEvents(Log);
-                });
-                await task2.ContinueWith((t) =>
-                {
-                    status = Log.IsEnabled();
-                });
-                Assert.False(status);
-
-                //Check if we are able to enable specific Event keyword  Trace
-                var task3 = Task.Run(() =>
-                {
-                    listener.EnableEvents(Log, listener.Level, listener.Keyword);
-                });
-                await task3.ContinueWith((t) =>
-                {
-                    //(EventKeywords)1 is Trace which is defined in SqlClientEventSource Keywords class
-                    status = Log.IsEnabled(EventLevel.Informational, SqlClientEventSource.Keywords.Trace);
-                });
-                Assert.True(status);
-
-                //Check if we are able to enable specific Event keyword. Scope
-                listener.Keyword = (EventKeywords)values[1];
-                var task4 = Task.Run(() =>
-                {
-                    listener.EnableEvents(Log, listener.Level, listener.Keyword);
-                });
-                await task4.ContinueWith((t) =>
-                {
-                    //(EventKeywords)1 is Trace which is defined in SqlClientEventSource Keywords class
-                    status = Log.IsEnabled(EventLevel.Informational, SqlClientEventSource.Keywords.Scope);
-                });
-                Assert.True(status);
             }
         }
     }
