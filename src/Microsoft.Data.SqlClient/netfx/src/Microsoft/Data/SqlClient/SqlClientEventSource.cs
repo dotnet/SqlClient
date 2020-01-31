@@ -7,7 +7,6 @@ using System.Diagnostics.Tracing;
 using System.Threading;
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("Microsoft.Data.SqlClient.ManualTesting.Tests")]
 namespace Microsoft.Data.SqlClient
 {
     /// <summary>
