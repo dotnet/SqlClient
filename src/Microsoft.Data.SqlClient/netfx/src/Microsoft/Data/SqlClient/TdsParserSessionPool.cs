@@ -66,7 +66,9 @@ namespace Microsoft.Data.SqlClient
             // cache to make sure they're cleaned up and then we dispose of
             // sessions that are past what we want to keep around.
 
-            var scopeID = Log.ScopeEnter($"<sc.TdsParserSessionPool.Deactivate|ADV> {ObjectID}# deactivating cachedCount={_cachedCount}\n");
+            long scopeID = 0;
+            if (Log.IsEnabled())
+                scopeID = Log.ScopeEnter($"<sc.TdsParserSessionPool.Deactivate|ADV> {ObjectID}# deactivating cachedCount={_cachedCount}\n");
 
             try
             {

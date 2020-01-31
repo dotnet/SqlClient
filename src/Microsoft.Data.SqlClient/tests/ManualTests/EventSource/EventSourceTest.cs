@@ -62,7 +62,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.EventSourceTest
                 });
 
                 //Check if enabling Log for Eventkeyword Trace returns true.
-                listener.EnableEvents(Log, EventLevel.Informational, SqlClientEventSource.Keywords.NotificationTrace);
+                listener.EnableEvents(Log, EventLevel.Informational, SqlClientEventSourceKeywords.NotificationTrace);
 
                 Assert.True(Log.IsEnabled());
                 

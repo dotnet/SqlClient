@@ -940,7 +940,11 @@ namespace Microsoft.Data.SqlClient
         override public void Close()
         {
             SqlStatistics statistics = null;
-            var scopeID = Log.ScopeEnter($"<sc.SqlDataReader.Close|API> {ObjectID}#");
+
+            long scopeID = 0;
+            if (Log.IsEnabled())
+                scopeID = Log.ScopeEnter($"<sc.SqlDataReader.Close|API> {ObjectID}#");
+
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
@@ -1670,7 +1674,11 @@ namespace Microsoft.Data.SqlClient
         override public DataTable GetSchemaTable()
         {
             SqlStatistics statistics = null;
-            var scopeID = Log.ScopeEnter($"<sc.SqlDataReader.GetSchemaTable|API> {ObjectID}#");
+
+            long scopeID = 0;
+            if (Log.IsEnabled())
+                scopeID = Log.ScopeEnter($"<sc.SqlDataReader.GetSchemaTable|API> {ObjectID}#");
+
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
@@ -3601,7 +3609,10 @@ namespace Microsoft.Data.SqlClient
         private bool TryNextResult(out bool more)
         {
             SqlStatistics statistics = null;
-            var scopeID = Log.ScopeEnter($"<sc.SqlDataReader.NextResult|API> {ObjectID}#");
+
+            long scopeID = 0;
+            if (Log.IsEnabled())
+                scopeID = Log.ScopeEnter($"<sc.SqlDataReader.NextResult|API> {ObjectID}#");
 
             RuntimeHelpers.PrepareConstrainedRegions();
             try
@@ -3807,7 +3818,10 @@ namespace Microsoft.Data.SqlClient
         private bool TryReadInternal(bool setTimeout, out bool more)
         {
             SqlStatistics statistics = null;
-            var scopeID = Log.ScopeEnter($"<sc.SqlDataReader.Read|API> {ObjectID}#");
+
+            long scopeID = 0;
+            if (Log.IsEnabled())
+                scopeID = Log.ScopeEnter($"<sc.SqlDataReader.Read|API> {ObjectID}#");
 
             RuntimeHelpers.PrepareConstrainedRegions();
             try
@@ -4788,7 +4802,9 @@ namespace Microsoft.Data.SqlClient
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/NextResultAsync/*' />
         public override Task<bool> NextResultAsync(CancellationToken cancellationToken)
         {
-            var scopeID = Log.ScopeEnter($"<sc.SqlDataReader.NextResultAsync|API> {ObjectID}#");
+            long scopeID = 0;
+            if (Log.IsEnabled())
+                scopeID = Log.ScopeEnter($"<sc.SqlDataReader.NextResultAsync|API> {ObjectID}#");
 
             try
             {
@@ -5094,7 +5110,9 @@ namespace Microsoft.Data.SqlClient
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/ReadAsync/*' />
         public override Task<bool> ReadAsync(CancellationToken cancellationToken)
         {
-            var scopeID = Log.ScopeEnter($"<sc.SqlDataReader.ReadAsync|API> {ObjectID}#");
+            long scopeID = 0;
+            if (Log.IsEnabled())
+                scopeID = Log.ScopeEnter($"<sc.SqlDataReader.ReadAsync|API> {ObjectID}#");
 
             try
             {

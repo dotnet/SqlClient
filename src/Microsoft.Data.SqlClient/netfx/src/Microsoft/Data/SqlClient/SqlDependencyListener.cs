@@ -80,7 +80,9 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
 
         internal SqlConnectionContainer(SqlConnectionContainerHashHelper hashHelper, string appDomainKey, bool useDefaults)
         {
-            var scopeID = Log.NotificationsScopeEnter($"<sc.SqlConnectionContainer|DEP> {ObjectID}#, queue: '{hashHelper.Queue}'");
+            long scopeID = 0;
+            if (Log.IsNotificationTraceEnabled())
+                scopeID = Log.NotificationsScopeEnter($"<sc.SqlConnectionContainer|DEP> {ObjectID}#, queue: '{hashHelper.Queue}'");
 
             bool setupCompleted = false;
 
@@ -281,7 +283,10 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
         // SqlDependencyProcessDispatcher.QueueAppDomainUnload on AppDomain.Unload.
         internal bool AppDomainUnload(string appDomainKey)
         {
-            var scopeID = Log.NotificationsScopeEnter($"<sc.SqlConnectionContainer.AppDomainUnload|DEP> {ObjectID}#, AppDomainKey: '{ appDomainKey}'");
+            long scopeID = 0;
+            if (Log.IsNotificationTraceEnabled())
+                scopeID = Log.NotificationsScopeEnter($"<sc.SqlConnectionContainer.AppDomainUnload|DEP> {ObjectID}#, AppDomainKey: '{ appDomainKey}'");
+
             try
             {
                 Debug.Assert(!ADP.IsEmpty(appDomainKey), "Unexpected empty appDomainKey!");
@@ -291,7 +296,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                 lock (_appDomainKeyHash)
                 {
                     if (_appDomainKeyHash.ContainsKey(appDomainKey))
-                    { 
+                    {
                         // Do nothing if AppDomain did not call Start!
                         if (Log.IsNotificationTraceEnabled())
                             Log.NotificationsTrace($"<sc.SqlConnectionContainer.AppDomainUnload|DEP> _appDomainKeyHash contained AppDomainKey: '{appDomainKey}'.");
@@ -341,7 +346,10 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
 
         private void AsynchronouslyQueryServiceBrokerQueue()
         {
-            var scopeID = Log.NotificationsScopeEnter($"<sc.SqlConnectionContainer.AsynchronouslyQueryServiceBrokerQueue|DEP> {ObjectID}#");
+            long scopeID = 0;
+            if (Log.IsNotificationTraceEnabled())
+                scopeID = Log.NotificationsScopeEnter($"<sc.SqlConnectionContainer.AsynchronouslyQueryServiceBrokerQueue|DEP> {ObjectID}#");
+
             try
             {
                 AsyncCallback callback = new AsyncCallback(AsyncResultCallback);
@@ -355,7 +363,9 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
 
         private void AsyncResultCallback(IAsyncResult asyncResult)
         {
-            var scopeID = Log.NotificationsScopeEnter($"<sc.SqlConnectionContainer.AsyncResultCallback|DEP> {ObjectID}#");
+            long scopeID = 0;
+            if (Log.IsNotificationTraceEnabled())
+                scopeID = Log.NotificationsScopeEnter($"<sc.SqlConnectionContainer.AsyncResultCallback|DEP> {ObjectID}#");
             try
             {
                 using (SqlDataReader reader = _com.EndExecuteReader(asyncResult))
@@ -409,7 +419,9 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
 
         private void CreateQueueAndService(bool restart)
         {
-            var scopeID = Log.NotificationsScopeEnter($"<sc.SqlConnectionContainer.CreateQueueAndService|DEP> {ObjectID}#");
+            long scopeID = 0;
+            if (Log.IsNotificationTraceEnabled())
+                scopeID = Log.NotificationsScopeEnter($"<sc.SqlConnectionContainer.CreateQueueAndService|DEP> {ObjectID}#");
             try
             {
                 SqlCommand com = new SqlCommand();
@@ -545,7 +557,9 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
 
         internal void IncrementStartCount(string appDomainKey, out bool appDomainStart)
         {
-            var scopeID = Log.NotificationsScopeEnter($"<sc.SqlConnectionContainer.IncrementStartCount|DEP> {ObjectID}#");
+            long scopeID = 0;
+            if (Log.IsNotificationTraceEnabled())
+                scopeID = Log.NotificationsScopeEnter($"<sc.SqlConnectionContainer.IncrementStartCount|DEP> {ObjectID}#");
             try
             {
                 appDomainStart = false; // Reset out param.
@@ -583,7 +597,9 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
 
         private void ProcessNotificationResults(SqlDataReader reader)
         {
-            var scopeID = Log.NotificationsScopeEnter($"<sc.SqlConnectionContainer.ProcessNotificationResults|DEP> {ObjectID}#");
+            long scopeID = 0;
+            if (Log.IsNotificationTraceEnabled())
+                scopeID = Log.NotificationsScopeEnter($"<sc.SqlConnectionContainer.ProcessNotificationResults|DEP> {ObjectID}#");
             try
             {
                 Guid handle = Guid.Empty; // Conversation_handle.  Always close this!
@@ -732,7 +748,9 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
         private void Restart(object unused)
         {
             // Unused arg required by TimerCallback.
-            var scopeID = Log.NotificationsScopeEnter($"<sc.SqlConnectionContainer.Restart|DEP> {ObjectID}#");
+            long scopeID = 0;
+            if (Log.IsNotificationTraceEnabled())
+                scopeID = Log.NotificationsScopeEnter($"<sc.SqlConnectionContainer.Restart|DEP> {ObjectID}#");
             try
             {
                 try
@@ -900,7 +918,9 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
 
         internal bool Stop(string appDomainKey, out bool appDomainStop)
         {
-            var scopeID = Log.NotificationsScopeEnter($"<sc.SqlConnectionContainer.Stop|DEP> {ObjectID}#");
+            long scopeID = 0;
+            if (Log.IsNotificationTraceEnabled())
+                scopeID = Log.NotificationsScopeEnter($"<sc.SqlConnectionContainer.Stop|DEP> {ObjectID}#");
             try
             {
                 appDomainStop = false;
@@ -1041,7 +1061,10 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
 
         private void SynchronouslyQueryServiceBrokerQueue()
         {
-            var scopeID = Log.NotificationsScopeEnter($"<sc.SqlConnectionContainer.SynchronouslyQueryServiceBrokerQueue|DEP> {ObjectID}#");
+            long scopeID = 0;
+            if (Log.IsNotificationTraceEnabled())
+                scopeID = Log.NotificationsScopeEnter($"<sc.SqlConnectionContainer.SynchronouslyQueryServiceBrokerQueue|DEP> {ObjectID}#");
+
             try
             {
                 using (SqlDataReader reader = _com.ExecuteReader())
@@ -1058,7 +1081,9 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
         [SuppressMessage("Microsoft.Security", "CA2100:ReviewSqlQueriesForSecurityVulnerabilities")]
         private void TearDownAndDispose()
         {
-            var scopeID = Log.NotificationsScopeEnter($"<sc.SqlConnectionContainer.TearDownAndDispose|DEP> {ObjectID}#");
+            long scopeID = 0;
+            if (Log.IsNotificationTraceEnabled())
+                scopeID = Log.NotificationsScopeEnter($"<sc.SqlConnectionContainer.TearDownAndDispose|DEP> {ObjectID}#");
             try
             {
                 lock (this)
@@ -1548,7 +1573,10 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
     private SqlDependencyProcessDispatcher(object dummyVariable)
     {
         Debug.Assert(null == _staticInstance, "Real constructor called with static instance already created!");
-        var scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyProcessDispatcher|DEP> {ObjectID}#");
+
+        long scopeID = 0;
+        if (Log.IsNotificationTraceEnabled())
+            scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyProcessDispatcher|DEP> {ObjectID}#");
         try
         {
 #if DEBUG
@@ -1569,7 +1597,9 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
     // Required to be public, even on internal class, for Remoting infrastructure.
     public SqlDependencyProcessDispatcher()
     {
-        var scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyProcessDispatcher|DEP> {ObjectID}#");
+        long scopeID = 0;
+        if (Log.IsNotificationTraceEnabled())
+            scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyProcessDispatcher|DEP> {ObjectID}#");
         try
         {
             // Empty constructor and object - dummy to obtain singleton.
@@ -1607,7 +1637,10 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                                                                   out string user,
                                                                       string queue)
     {
-        var scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyProcessDispatcher.GetHashString|DEP> {_staticInstance.ObjectID}#, queue: {queue}");
+        long scopeID = 0;
+        if (Log.IsNotificationTraceEnabled())
+            scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyProcessDispatcher.GetHashString|DEP> {_staticInstance.ObjectID}#, queue: {queue}");
+
         try
         {
             // Force certain connection string properties to be used by SqlDependencyProcessDispatcher.  
@@ -1652,7 +1685,10 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
 
     private void Invalidate(string server, SqlNotification sqlNotification)
     {
-        var scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyProcessDispatcher.Invalidate|DEP> {ObjectID}#, server: {server}");
+        long scopeID = 0;
+        if (Log.IsNotificationTraceEnabled())
+            scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyProcessDispatcher.Invalidate|DEP> {ObjectID}#, server: {server}");
+
         try
         {
             Debug.Assert(this == _staticInstance, "Instance method called on non _staticInstance instance!");
@@ -1701,7 +1737,10 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
     // This method is only called by queued work-items from the method above.
     private void AppDomainUnloading(object state)
     {
-        var scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyProcessDispatcher.AppDomainUnloading|DEP> {ObjectID}#");
+        long scopeID = 0;
+        if (Log.IsNotificationTraceEnabled())
+            scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyProcessDispatcher.AppDomainUnloading|DEP> {ObjectID}#");
+
         try
         {
             string appDomainKey = (string)state;
@@ -1800,7 +1839,9 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                        out bool appDomainStart,
                            bool useDefaults)
     {
-        var scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyProcessDispatcher.Start|DEP> {ObjectID}#, queue: '{ queueService}', appDomainKey: '{appDomainKey}', perAppDomainDispatcher ID: '{dispatcher.ObjectID}'");
+        long scopeID = 0;
+        if (Log.IsNotificationTraceEnabled())
+            scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyProcessDispatcher.Start|DEP> {ObjectID}#, queue: '{ queueService}', appDomainKey: '{appDomainKey}', perAppDomainDispatcher ID: '{dispatcher.ObjectID}'");
         try
         {
             Debug.Assert(this == _staticInstance, "Instance method called on non _staticInstance instance!");
@@ -1899,7 +1940,10 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                            string appDomainKey,
                        out bool appDomainStop)
     {
-        var scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyProcessDispatcher.Stop|DEP> {ObjectID}#, queue: '{queueService}'");
+        long scopeID = 0;
+        if (Log.IsNotificationTraceEnabled())
+            scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyProcessDispatcher.Stop|DEP> {ObjectID}#, queue: '{queueService}'");
+        
         try
         {
             Debug.Assert(this == _staticInstance, "Instance method called on non _staticInstance instance!");

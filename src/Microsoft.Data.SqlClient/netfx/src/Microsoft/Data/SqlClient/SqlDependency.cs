@@ -317,7 +317,10 @@ namespace Microsoft.Data.SqlClient
         [System.Security.Permissions.HostProtectionAttribute(ExternalThreading = true)]
         public SqlDependency(SqlCommand command, string options, int timeout)
         {
-            var scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependency|DEP> {ObjectID}#, options: '{options}', timeout: '{timeout}'");
+            long scopeID = 0;
+            if (Log.IsNotificationTraceEnabled())
+                scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependency|DEP> {ObjectID}#, options: '{options}', timeout: '{timeout}'");
+
             try
             {
                 if (InOutOfProcHelper.InProc)
@@ -437,7 +440,9 @@ namespace Microsoft.Data.SqlClient
             // EventHandlers to be fired when dependency is notified.
             add
             {
-                var scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependency.OnChange-Add|DEP> {ObjectID}#");
+                long scopeID = 0;
+                if (Log.IsNotificationTraceEnabled())
+                    scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependency.OnChange-Add|DEP> {ObjectID}#");
                 try
                 {
                     if (null != value)
@@ -484,7 +489,9 @@ namespace Microsoft.Data.SqlClient
             }
             remove
             {
-                var scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependency.OnChange-Remove|DEP> {ObjectID}#");
+                long scopeID = 0;
+                if (Log.IsNotificationTraceEnabled())
+                    scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependency.OnChange-Remove|DEP> {ObjectID}#");
                 try
                 {
                     if (null != value)
@@ -519,7 +526,10 @@ namespace Microsoft.Data.SqlClient
         {
             // Adds command to dependency collection so we automatically create the SqlNotificationsRequest object
             // and listen for a notification for the added commands.
-            var scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependency.AddCommandDependency|DEP> {ObjectID}#");
+            long scopeID = 0;
+            if (Log.IsNotificationTraceEnabled())
+                scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependency.AddCommandDependency|DEP> {ObjectID}#");
+
             try
             {
                 if (command == null)
@@ -670,7 +680,9 @@ namespace Microsoft.Data.SqlClient
 
         internal static bool Start(string connectionString, string queue, bool useDefaults)
         {
-            var scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependency.Start|DEP> AppDomainKey: '{AppDomainKey}', queue: '{queue}'");
+            long scopeID = 0;
+            if (Log.IsNotificationTraceEnabled())
+                scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependency.Start|DEP> AppDomainKey: '{AppDomainKey}', queue: '{queue}'");
             try
             {
                 // The following code exists in Stop as well.  It exists here to demand permissions as high in the stack
@@ -828,7 +840,9 @@ namespace Microsoft.Data.SqlClient
 
         internal static bool Stop(string connectionString, string queue, bool useDefaults, bool startFailed)
         {
-            var scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependency.Stop|DEP> AppDomainKey: '{AppDomainKey}', queue: '{queue}'");
+            long scopeID = 0;
+            if (Log.IsNotificationTraceEnabled())
+                scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependency.Stop|DEP> AppDomainKey: '{AppDomainKey}', queue: '{queue}'");
             try
             {
                 // The following code exists in Stop as well.  It exists here to demand permissions as high in the stack
@@ -948,7 +962,9 @@ namespace Microsoft.Data.SqlClient
 
         private static bool AddToServerUserHash(string server, IdentityUserNamePair identityUser, DatabaseServicePair databaseService)
         {
-            var scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependency.AddToServerUserHash|DEP> server: '{server}', database: '{databaseService.Database}', service: '{databaseService.Service}'");
+            long scopeID = 0;
+            if (Log.IsNotificationTraceEnabled())
+                scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependency.AddToServerUserHash|DEP> server: '{server}', database: '{databaseService.Database}', service: '{databaseService.Service}'");
             try
             {
                 bool result = false;
@@ -1008,7 +1024,9 @@ namespace Microsoft.Data.SqlClient
 
         private static void RemoveFromServerUserHash(string server, IdentityUserNamePair identityUser, DatabaseServicePair databaseService)
         {
-            var scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependency.RemoveFromServerUserHash|DEP> server: '{server}', database: '{databaseService.Database}', service: '{databaseService.Service}'");
+            long scopeID = 0;
+            if (Log.IsNotificationTraceEnabled())
+                scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependency.RemoveFromServerUserHash|DEP> server: '{server}', database: '{databaseService.Database}', service: '{databaseService.Service}'");
             try
             {
                 lock (_serverUserHash)
@@ -1084,7 +1102,10 @@ namespace Microsoft.Data.SqlClient
         {
             // Server must be an exact match, but user and database only needs to match exactly if there is more than one 
             // for the given user or database passed.  That is ambiguious and we must fail.
-            var scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependency.GetDefaultComposedOptions|DEP> server: '{server}', failoverServer: '{failoverServer}', database: '{database}'");
+            long scopeID = 0;
+            if (Log.IsNotificationTraceEnabled())
+                scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependency.GetDefaultComposedOptions|DEP> server: '{server}', failoverServer: '{failoverServer}', database: '{database}'");
+
             try
             {
                 string result;
@@ -1199,7 +1220,9 @@ namespace Microsoft.Data.SqlClient
         // use this list for a reverse lookup based on server.
         internal void AddToServerList(string server)
         {
-            var scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependency.AddToServerList|DEP> {ObjectID}#, server: '{server}'");
+            long scopeID = 0;
+            if (Log.IsNotificationTraceEnabled())
+                scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependency.AddToServerList|DEP> {ObjectID}#, server: '{server}'");
             try
             {
                 lock (_serverList)
@@ -1232,7 +1255,9 @@ namespace Microsoft.Data.SqlClient
 
         internal string ComputeHashAndAddToDispatcher(SqlCommand command)
         {
-            var scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependency.ComputeHashAndAddToDispatcher|DEP> {ObjectID}#, SqlCommand: {command.ObjectID}#");
+            long scopeID = 0;
+            if (Log.IsNotificationTraceEnabled())
+                scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependency.ComputeHashAndAddToDispatcher|DEP> {ObjectID}#, SqlCommand: {command.ObjectID}#");
             try
             {
                 // Create a string representing the concatenation of the connection string, command text and .ToString on all parameter values.
@@ -1259,7 +1284,10 @@ namespace Microsoft.Data.SqlClient
 
         internal void Invalidate(SqlNotificationType type, SqlNotificationInfo info, SqlNotificationSource source)
         {
-            var scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependency.Invalidate|DEP> {ObjectID}#");
+            long scopeID = 0;
+            if (Log.IsNotificationTraceEnabled())
+                scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependency.Invalidate|DEP> {ObjectID}#");
+
             try
             {
                 List<EventContextPair> eventList = null;
@@ -1317,7 +1345,9 @@ namespace Microsoft.Data.SqlClient
         // This method is used by SqlCommand.
         internal void StartTimer(SqlNotificationRequest notificationRequest)
         {
-            var scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependency.StartTimer|DEP> {ObjectID}#");
+            long scopeID = 0;
+            if (Log.IsNotificationTraceEnabled())
+                scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependency.StartTimer|DEP> {ObjectID}#");
             try
             {
                 if (_expirationTime == DateTime.MaxValue)
@@ -1355,7 +1385,10 @@ namespace Microsoft.Data.SqlClient
             if (cmd != null)
             {
                 // Don't bother with BID if command null.
-                var scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependency.AddCommandInternal|DEP> {ObjectID}#, SqlCommand: {cmd.ObjectID}#");
+                long scopeID = 0;
+                if (Log.IsNotificationTraceEnabled())
+                    scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependency.AddCommandInternal|DEP> {ObjectID}#, SqlCommand: {cmd.ObjectID}#");
+
                 try
                 {
                     SqlConnection connection = cmd.Connection;
@@ -1421,7 +1454,9 @@ namespace Microsoft.Data.SqlClient
 
         private string ComputeCommandHash(string connectionString, SqlCommand command)
         {
-            var scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependency.ComputeCommandHash|DEP> {ObjectID}#, SqlCommand: {command.ObjectID}#");
+            long scopeID = 0;
+            if (Log.IsNotificationTraceEnabled())
+                scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependency.ComputeCommandHash|DEP> {ObjectID}#, SqlCommand: {command.ObjectID}#");
             try
             {
                 // Create a string representing the concatenation of the connection string, the command text and .ToString on all its parameter values.

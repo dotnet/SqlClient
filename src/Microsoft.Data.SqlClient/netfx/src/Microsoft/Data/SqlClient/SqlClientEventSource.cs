@@ -10,6 +10,30 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Microsoft.Data.SqlClient.ManualTesting.Tests")]
 namespace Microsoft.Data.SqlClient
 {
+    /// <summary>
+    /// 
+    /// </summary>
+    public class SqlClientEventSourceKeywords
+    {
+        internal const EventKeywords Trace = (EventKeywords)0x0001;                 // Integer 1
+        internal const EventKeywords Scope = (EventKeywords)0x0002;                 // Integer 2
+        internal const EventKeywords NotificationTrace = (EventKeywords)0x0004;     // Integer 4
+        internal const EventKeywords Pooling = (EventKeywords)0x0008;               // Integer 8
+        internal const EventKeywords Correlation = (EventKeywords)0x0010;           // Integer 16
+        internal const EventKeywords NotificationScope = (EventKeywords)0x0020;     // Integer 32
+        internal const EventKeywords PoolerScope = (EventKeywords)0X0040;           // Integer 64
+        internal const EventKeywords StringPrintOut = (EventKeywords)0x0080;        // Integer 128
+        internal const EventKeywords PoolerTrace = (EventKeywords)0x0200;           //Integer 512
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public static EventKeywords GetAll()
+        {
+            return Trace | Scope | NotificationTrace | Pooling | Correlation | NotificationScope | PoolerScope | StringPrintOut;
+        }
+    }
 
     [EventSource(Name = "Microsoft.Data.SqlClient.EventSource")]
     internal class SqlClientEventSource : EventSource
@@ -30,63 +54,47 @@ namespace Microsoft.Data.SqlClient
         private const int PutStrId = 10;
 
         //Any Prropery added to this class should be a power of 2.
-        public class Keywords
-        {
-            internal const EventKeywords Trace = (EventKeywords)0x0001;                 // Integer 1
-            internal const EventKeywords Scope = (EventKeywords)0x0002;                 // Integer 2
-            internal const EventKeywords NotificationTrace = (EventKeywords)0x0004;     // Integer 4
-            internal const EventKeywords Pooling = (EventKeywords)0x0008;               // Integer 8
-            internal const EventKeywords Correlation = (EventKeywords)0x0010;           // Integer 16
-            internal const EventKeywords NotificationScope = (EventKeywords)0x0020;     // Integer 32
-            internal const EventKeywords PoolerScope = (EventKeywords)0X0040;           // Integer 64
-            internal const EventKeywords StringPrintOut = (EventKeywords)0x0080;        // Integer 128
-            internal const EventKeywords PoolerTrace = (EventKeywords)0x0200;           //Integer 512
-
-            public static EventKeywords GetAll()
-            {
-                return Trace | Scope | NotificationTrace | Pooling | Correlation | NotificationScope | PoolerScope | StringPrintOut;
-            }
-        }
 
         [NonEvent]
-        internal bool IsTraceEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.Trace);
+        internal bool IsTraceEnabled() => Log.IsEnabled(EventLevel.Informational, SqlClientEventSourceKeywords.Trace);
 
         [NonEvent]
-        internal bool IsScopeEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.Scope);
+        internal bool IsScopeEnabled() => Log.IsEnabled(EventLevel.Informational, SqlClientEventSourceKeywords.Scope);
 
         [NonEvent]
-        internal bool IsPoolerScopeEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.PoolerScope);
+        internal bool IsPoolerScopeEnabled() => Log.IsEnabled(EventLevel.Informational, SqlClientEventSourceKeywords.PoolerScope);
 
         [NonEvent]
-        internal bool IsCorrelationEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.Correlation);
+        internal bool IsCorrelationEnabled() => Log.IsEnabled(EventLevel.Informational, SqlClientEventSourceKeywords.Correlation);
 
         [NonEvent]
-        internal bool IsNotificationScopeEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.NotificationScope);
+        internal bool IsNotificationScopeEnabled() => Log.IsEnabled(EventLevel.Informational, SqlClientEventSourceKeywords.NotificationScope);
 
         [NonEvent]
-        internal bool IsPoolingEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.Pooling);
+        internal bool IsPoolingEnabled() => Log.IsEnabled(EventLevel.Informational, SqlClientEventSourceKeywords.Pooling);
 
         [NonEvent]
-        internal bool IsNotificationTraceEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.NotificationTrace);
+        internal bool IsNotificationTraceEnabled() => Log.IsEnabled(EventLevel.Informational, SqlClientEventSourceKeywords.NotificationTrace);
 
         [NonEvent]
-        internal bool IsPoolerTraceEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.PoolerTrace);
+        internal bool IsPoolerTraceEnabled() => Log.IsEnabled(EventLevel.Informational, SqlClientEventSourceKeywords.PoolerTrace);
 
         [NonEvent]
         internal bool IsAdvanceTraceOn() => Log.IsEnabled(EventLevel.LogAlways, EventKeywords.All);
 
 
-        [Event(TraceEventId, Level = EventLevel.Informational, Channel = EventChannel.Debug, Keywords = Keywords.Trace)]
+        [Event(TraceEventId, Level = EventLevel.Informational, Channel = EventChannel.Debug, Keywords = SqlClientEventSourceKeywords.Trace)]
         internal void Trace(string message)
         {
             WriteEvent(TraceEventId, message);
         }
 
-        [Event(EnterScopeId, Level = EventLevel.Verbose, Keywords = Keywords.Scope)]
+        [Event(EnterScopeId, Level = EventLevel.Verbose, Keywords = SqlClientEventSourceKeywords.Scope)]
         internal long ScopeEnter(string message)
         {
             StringBuilder MsgstrBldr = new StringBuilder(message);
             long scopeId = 0;
+
             if (Log.IsEnabled())
             {
                 scopeId = Interlocked.Increment(ref s_nextScopeId);
@@ -95,34 +103,32 @@ namespace Microsoft.Data.SqlClient
             return scopeId;
         }
 
-        [Event(ExitScopeId, Level = EventLevel.Verbose, Keywords = Keywords.Scope)]
+        [Event(ExitScopeId, Level = EventLevel.Verbose, Keywords = SqlClientEventSourceKeywords.Scope)]
         internal void ScopeLeave(long scopeId)
         {
             if (!Log.IsEnabled())
             {
-                return;
+                WriteEvent(ExitScopeId, scopeId);
             }
-            WriteEvent(ExitScopeId, scopeId);
+            
         }
 
-        [Event(TraceBinId, Level = EventLevel.Informational, Keywords = Keywords.Trace)]
+        [Event(TraceBinId, Level = EventLevel.Informational, Keywords = SqlClientEventSourceKeywords.Trace)]
         internal void TraceBin(string message, byte[] whereabout, int length)
         {
-            if (Log.IsEnabled(EventLevel.Informational, Keywords.Trace))
+            if (Log.IsEnabled(EventLevel.Informational, SqlClientEventSourceKeywords.Trace))
             {
                 WriteEvent(TraceBinId, message, whereabout, length);
             }
-
         }
 
-        [Event(CorrelationTraceId, Level = EventLevel.Informational, Keywords = Keywords.Correlation, Opcode = EventOpcode.Start)]
+        [Event(CorrelationTraceId, Level = EventLevel.Informational, Keywords = SqlClientEventSourceKeywords.Correlation, Opcode = EventOpcode.Start)]
         internal void CorrelationTrace(string message)
-        {
-
+        { 
             WriteEvent(CorrelationTraceId, message);
         }
 
-        [Event(NotificationsScopeEnterId, Level = EventLevel.Informational, Opcode = EventOpcode.Start, Keywords = Keywords.NotificationScope)]
+        [Event(NotificationsScopeEnterId, Level = EventLevel.Informational, Opcode = EventOpcode.Start, Keywords = SqlClientEventSourceKeywords.NotificationScope)]
         internal long NotificationsScopeEnter(string message)
         {
             long scopeId = 0;
@@ -135,38 +141,36 @@ namespace Microsoft.Data.SqlClient
             return scopeId;
         }
 
-        [Event(PoolerScopeEnterId, Level = EventLevel.Informational, Opcode = EventOpcode.Start, Keywords = Keywords.PoolerScope)]
+        [Event(PoolerScopeEnterId, Level = EventLevel.Informational, Opcode = EventOpcode.Start, Keywords = SqlClientEventSourceKeywords.PoolerScope)]
         internal long PoolerScopeEnter(string message)
         {
             long scopeId = 0;
             if (Log.IsEnabled())
             {
-
                 StringBuilder MsgstrBldr = new StringBuilder(message);
                 WriteEvent(PoolerScopeEnterId, MsgstrBldr.Append($" Scope ID ='[{ scopeId}]'"));
             }
             return scopeId;
         }
 
-        [Event(NotificationsTraceId, Level = EventLevel.Informational, Keywords = Keywords.Trace)]
+        [Event(NotificationsTraceId, Level = EventLevel.Informational, Keywords = SqlClientEventSourceKeywords.Trace)]
         internal void NotificationsTrace(string message)
         {
             WriteEvent(PoolerScopeEnterId, message);
         }
 
-        [Event(PoolerTraceId, Level = EventLevel.Informational, Keywords = Keywords.PoolerTrace)]
+        [Event(PoolerTraceId, Level = EventLevel.Informational, Keywords = SqlClientEventSourceKeywords.PoolerTrace)]
         internal void PoolerTrace(string message)
         {
             WriteEvent(PoolerTraceId, message);
         }
 
-        [Event(PutStrId, Level = EventLevel.Informational, Keywords = Keywords.StringPrintOut)]
+        [Event(PutStrId, Level = EventLevel.Informational, Keywords = SqlClientEventSourceKeywords.StringPrintOut)]
         internal void PutStr(string message)
         {
-            if (Log.IsEnabled(EventLevel.Informational, Keywords.StringPrintOut))
+            if (Log.IsEnabled(EventLevel.Informational, SqlClientEventSourceKeywords.StringPrintOut))
             {
                 WriteEvent(PutStrId, message);
-
             }
         }
     }

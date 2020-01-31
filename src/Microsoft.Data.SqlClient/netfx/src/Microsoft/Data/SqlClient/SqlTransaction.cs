@@ -143,7 +143,9 @@ namespace Microsoft.Data.SqlClient
 
             SqlStatistics statistics = null;
 
-            var scopeID = Log.ScopeEnter($"<sc.SqlTransaction.Commit|API> {ObjectID}#");
+            long scopeID = 0;
+            if (Log.IsEnabled())
+                scopeID = Log.ScopeEnter($"<sc.SqlTransaction.Commit|API> {ObjectID}#");
 
             if (Log.IsCorrelationEnabled())
                 Log.CorrelationTrace($"<sc.SqlTransaction.Commit|API|Correlation> ObjectID{ObjectID}#, ActivityID {Log.Guid}");
@@ -283,7 +285,10 @@ namespace Microsoft.Data.SqlClient
                 ZombieCheck();
 
                 SqlStatistics statistics = null;
-                var scopeID = Log.ScopeEnter($"<sc.SqlTransaction.Rollback|API> {ObjectID}#");
+
+                long scopeID = 0;
+                if (Log.IsEnabled())
+                    scopeID = Log.ScopeEnter($"<sc.SqlTransaction.Rollback|API> {ObjectID}#");
 
                 if (Log.IsCorrelationEnabled())
                     Log.CorrelationTrace($"<sc.SqlTransaction.Rollback|API|Correlation> ObjectID{ObjectID}#, ActivityID {Log.Guid}");
@@ -351,7 +356,9 @@ namespace Microsoft.Data.SqlClient
 
             SqlStatistics statistics = null;
 
-            var scopeID = Log.ScopeEnter($"<sc.SqlTransaction.Rollback|API> {ObjectID}# transactionName='{transactionName}'");
+            long scopeID = 0;
+            if (Log.IsEnabled())
+                scopeID = Log.ScopeEnter($"<sc.SqlTransaction.Rollback|API> {ObjectID}# transactionName='{transactionName}'");
 
             TdsParser bestEffortCleanupTarget = null;
             RuntimeHelpers.PrepareConstrainedRegions();
@@ -414,8 +421,10 @@ namespace Microsoft.Data.SqlClient
             ZombieCheck();
 
             SqlStatistics statistics = null;
-
-            var scopeID = Log.ScopeEnter($"<sc.SqlTransaction.Save|API> {ObjectID}# savePointName='{savePointName}'");
+            
+            long scopeID = 0;
+            if (Log.IsEnabled())
+                scopeID = Log.ScopeEnter($"<sc.SqlTransaction.Save|API> {ObjectID}# savePointName='{savePointName}'");
 
             TdsParser bestEffortCleanupTarget = null;
             RuntimeHelpers.PrepareConstrainedRegions();

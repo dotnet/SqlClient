@@ -376,7 +376,10 @@ namespace Microsoft.Data.SqlClient
 
         private void CloseInternal(bool closeConnection)
         {
-            var scopeID = Log.ScopeEnter($"<sc.SqlDataReaderSmi.Close|API> {ObjectID}#");
+            long scopeID = 0;
+            if (Log.IsEnabled())
+                scopeID = Log.ScopeEnter($"<sc.SqlDataReaderSmi.Close|API> {ObjectID}#");
+
             bool processFinallyBlock = true;
             try
             {
@@ -435,7 +438,9 @@ namespace Microsoft.Data.SqlClient
 
         internal unsafe bool InternalNextResult(bool ignoreNonFatalMessages)
         {
-            var scopeID = Log.ScopeEnter($"<sc.SqlDataReaderSmi.InternalNextResult|ADV> {ObjectID}#");
+            long scopeID = 0;
+            if (Log.IsEnabled())
+                scopeID = Log.ScopeEnter($"<sc.SqlDataReaderSmi.InternalNextResult|ADV> {ObjectID}#");
             try
             {
                 _hasRows = false;
@@ -488,7 +493,10 @@ namespace Microsoft.Data.SqlClient
 
         internal unsafe bool InternalRead(bool ignoreNonFatalErrors)
         {
-            var scopeID = Log.ScopeEnter($"<sc.SqlDataReaderSmi.InternalRead|ADV> {ObjectID}#");
+            long scopeID = 0;
+            if (Log.IsEnabled())
+                scopeID = Log.ScopeEnter($"<sc.SqlDataReaderSmi.InternalRead|ADV> {ObjectID}#");
+
             try
             {
                 // Don't move unless currently in results.

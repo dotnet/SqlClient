@@ -300,7 +300,9 @@ namespace Microsoft.Data.SqlClient
 
         internal void Commit()
         {
-            var scopeID = Log.ScopeEnter($"<sc.SqlInternalTransaction.Commit|API> {ObjectID}#");
+            long scopeID = 0;
+            if (Log.IsEnabled())
+                scopeID = Log.ScopeEnter($"<sc.SqlInternalTransaction.Commit|API> {ObjectID}#");
 
             if (_innerConnection.IsLockedForBulkCopy)
             {

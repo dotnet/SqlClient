@@ -93,7 +93,10 @@ namespace Microsoft.Data.SqlClient
 
         private SqlDependencyPerAppDomainDispatcher()
         {
-            var scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher|DEP> {ObjectID}#");
+            long scopeID = 0;
+            if (Log.IsNotificationTraceEnabled())
+                scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher|DEP> {ObjectID}#");
+
             try
             {
                 _dependencyIdToDependencyHash = new Dictionary<string, SqlDependency>();
@@ -125,7 +128,9 @@ namespace Microsoft.Data.SqlClient
 
         private void UnloadEventHandler(object sender, EventArgs e)
         {
-            var scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.UnloadEventHandler|DEP> {ObjectID}#");
+            long scopeID = 0;
+            if (Log.IsNotificationTraceEnabled())
+                scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.UnloadEventHandler|DEP> {ObjectID}#");
             try
             {
                 // Make non-blocking call to ProcessDispatcher to ThreadPool.QueueUserWorkItem to complete 
@@ -151,7 +156,9 @@ namespace Microsoft.Data.SqlClient
         // This method is called upon SqlDependency constructor.
         internal void AddDependencyEntry(SqlDependency dep)
         {
-            var scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.AddDependencyEntry|DEP> {ObjectID}#, SqlDependency: {dep.ObjectID}#");
+            long scopeID = 0;
+            if (Log.IsNotificationTraceEnabled())
+                scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.AddDependencyEntry|DEP> {ObjectID}#, SqlDependency: {dep.ObjectID}#");
             try
             {
                 lock (this)
@@ -170,7 +177,10 @@ namespace Microsoft.Data.SqlClient
         {
             string notificationId = string.Empty;
 
-            var scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.AddCommandEntry|DEP> {ObjectID}#, commandHash: '{commandHash}', SqlDependency: {dep.ObjectID}#");
+            long scopeID = 0;
+            if (Log.IsNotificationTraceEnabled())
+                scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.AddCommandEntry|DEP> {ObjectID}#, commandHash: '{commandHash}', SqlDependency: {dep.ObjectID}#");
+
             try
             {
                 lock (this)
@@ -256,7 +266,10 @@ namespace Microsoft.Data.SqlClient
         // This method is called by the ProcessDispatcher upon a notification for this AppDomain.
         internal void InvalidateCommandID(SqlNotification sqlNotification)
         {
-            var scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.InvalidateCommandID|DEP> {ObjectID}#, commandHash: '{sqlNotification.Key}'");
+            long scopeID = 0;
+            if (Log.IsNotificationTraceEnabled())
+                scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.InvalidateCommandID|DEP> {ObjectID}#, commandHash: '{sqlNotification.Key}'");
+
             try
             {
                 List<SqlDependency> dependencyList = null;
@@ -321,7 +334,10 @@ namespace Microsoft.Data.SqlClient
         // This method is called when a connection goes down or other unknown error occurs in the ProcessDispatcher.
         internal void InvalidateServer(string server, SqlNotification sqlNotification)
         {
-            var scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.Invalidate|DEP> {ObjectID}#, server: '{server}'");
+            long scopeID = 0;
+            if (Log.IsNotificationTraceEnabled())
+                scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.Invalidate|DEP> {ObjectID}#, server: '{server}'");
+
             try
             {
                 List<SqlDependency> dependencies = new List<SqlDependency>();
@@ -375,7 +391,10 @@ namespace Microsoft.Data.SqlClient
         // This method is called by SqlCommand to enable ASP.NET scenarios - map from ID to Dependency.
         internal SqlDependency LookupDependencyEntry(string id)
         {
-            var scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.LookupDependencyEntry|DEP> {ObjectID}#, Key: '{id}'");
+            long scopeID = 0;
+            if (Log.IsNotificationTraceEnabled())
+                scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.LookupDependencyEntry|DEP> {ObjectID}#, Key: '{id}'");
+
             try
             {
                 if (null == id)
@@ -413,7 +432,10 @@ namespace Microsoft.Data.SqlClient
         // Remove the dependency from the hashtable with the passed id.
         private void LookupDependencyEntryWithRemove(string id)
         {
-            var scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.LookupDependencyEntryWithRemove|DEP> {ObjectID}#, id: '{id}'");
+            long scopeID = 0;
+            if (Log.IsNotificationTraceEnabled())
+                scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.LookupDependencyEntryWithRemove|DEP> {ObjectID}#, id: '{id}'");
+            
             try
             {
                 lock (this)
@@ -448,7 +470,9 @@ namespace Microsoft.Data.SqlClient
         // Find and return arraylist, and remove passed hash value.
         private List<SqlDependency> LookupCommandEntryWithRemove(string notificationId)
         {
-            var scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.LookupCommandEntryWithRemove|DEP> {ObjectID}#, commandHash: '{notificationId}'");
+            long scopeID = 0;
+            if (Log.IsNotificationTraceEnabled())
+                scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.LookupCommandEntryWithRemove|DEP> {ObjectID}#, commandHash: '{notificationId}'");
             try
             {
                 DependencyList entry = null;
@@ -490,7 +514,9 @@ namespace Microsoft.Data.SqlClient
         // Remove from commandToDependenciesHash all references to the passed dependency.
         private void RemoveDependencyFromCommandToDependenciesHash(SqlDependency dependency)
         {
-            var scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.RemoveDependencyFromCommandToDependenciesHash|DEP> {ObjectID}#, SqlDependency: {dependency.ObjectID}#");
+            long scopeID = 0;
+            if (Log.IsNotificationTraceEnabled())
+                scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.RemoveDependencyFromCommandToDependenciesHash|DEP> {ObjectID}#, SqlDependency: {dependency.ObjectID}#");
             try
             {
                 lock (this)
@@ -548,7 +574,9 @@ namespace Microsoft.Data.SqlClient
 
         internal void StartTimer(SqlDependency dep)
         {
-            var scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.StartTimer|DEP> {ObjectID}#, SqlDependency: {dep.ObjectID}#");
+            long scopeID = 0;
+            if (Log.IsNotificationTraceEnabled())
+                scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.StartTimer|DEP> {ObjectID}#, SqlDependency: {dep.ObjectID}#");
             try
             {
                 // If this dependency expires sooner than the current next timeout, change
@@ -586,7 +614,9 @@ namespace Microsoft.Data.SqlClient
 
         private static void TimeoutTimerCallback(object state)
         {
-            var scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.TimeoutTimerCallback|DEP> AppDomainKey: '{SqlDependency.AppDomainKey}'");
+            long scopeID = 0;
+            if (Log.IsNotificationTraceEnabled())
+                scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.TimeoutTimerCallback|DEP> AppDomainKey: '{SqlDependency.AppDomainKey}'");
             try
             {
                 SqlDependency[] dependencies;

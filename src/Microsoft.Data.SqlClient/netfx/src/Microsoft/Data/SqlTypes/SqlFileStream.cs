@@ -65,8 +65,9 @@ namespace Microsoft.Data.SqlTypes
                 Int64 allocationSize
             )
         {
-
-            var scopeID = Log.ScopeEnter($"<sc.SqlFileStream.ctor|API> { ObjectID}# access={(int)access} options={(int)options} path='{path}'");
+            long scopeID = 0;
+            if (Log.IsEnabled())
+                scopeID = Log.ScopeEnter($"<sc.SqlFileStream.ctor|API> { ObjectID}# access={(int)access} options={(int)options} path='{path}'");
 
             try
             {
