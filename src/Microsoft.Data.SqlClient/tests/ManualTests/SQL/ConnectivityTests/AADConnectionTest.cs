@@ -226,7 +226,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         transaction: null
                     ))
                     {
-
                         string customerId = (string)sqlCommand.ExecuteScalar();
                         string expected = RetrieveValueFromConnStr(DataTestUtility.AADPasswordConnectionString, "User ID");
                         Assert.Equal(expected, customerId);
