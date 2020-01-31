@@ -1690,10 +1690,10 @@
     <value>Internal Error. The given key id '{0}' is not valid. Error occurred when converting the key id to unsigned short. Error Message: {1}</value>
   </data>
   <data name="TCE_NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage" xml:space="preserve">
-    <value>Error occured when generating enclave package. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is '{0}'.</value>
+    <value>Error occurred when generating enclave package. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is '{0}'.</value>
   </data>
   <data name="TCE_NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe" xml:space="preserve">
-    <value>Error occured when reading '{0}' resultset. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is '{1}'.</value>
+    <value>Error occurred when reading '{0}' resultset. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is '{1}'.</value>
   </data>
   <data name="TCE_NotSupportedByServer" xml:space="preserve">
     <value>{0} instance in use does not support column encryption.</value>
@@ -1849,7 +1849,7 @@
     <value>Failed to initialize connection. The attestation protocol '{0}' does not support the enclave type '{1}'.</value>
   </data>
   <data name="TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage" xml:space="preserve">
-    <value>Error occured when generating enclave package. Attestation Protocol has not been specified in the connection string, but the query requires enclave computations.</value>
+    <value>Error occurred when generating enclave package. Attestation Protocol has not been specified in the connection string, but the query requires enclave computations.</value>
   </data>
   <data name="SQLUDT_InvalidSize" xml:space="preserve">
     <value>UDT size must be less than {1}, size: {0}</value>

@@ -5,10 +5,10 @@
     <TargetGroup Condition="$(TargetFramework.StartsWith('net4'))">netfx</TargetGroup>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <CodeAnalysisRuleSet>Microsoft.Data.SqlClient.ManualTesting.Tests.ruleset</CodeAnalysisRuleSet>
-    <Configurations>Debug;Release;net46-Release;net46-Debug;netcoreapp2.1-Debug;netcoreapp2.1-Release</Configurations>
+    <Configurations>Debug;Release;net46-Release;net46-Debug;netcoreapp2.1-Debug;netcoreapp2.1-Release;netcoreapp3.1-Debug;netcoreapp3.1-Release</Configurations>
     <Platforms>AnyCPU;x86;x64</Platforms>
     <DefineConstants Condition="'$(TargetGroup)'=='netcoreapp'">$(DefineConstants);netcoreapp</DefineConstants>
-    <IntermediateOutputPath>$(ObjFolder)$(Configuration).ManualTests</IntermediateOutputPath>  
+    <IntermediateOutputPath>$(ObjFolder)$(Configuration).ManualTests</IntermediateOutputPath>
     <OutputPath>$(BinFolder)$(Configuration).ManualTests</OutputPath>
   </PropertyGroup>
   <Target Name="CopyConfig" BeforeTargets="Compile">
@@ -89,13 +89,13 @@
     <Compile Include="SQL\ParameterTest\SteTypeBoundaries.cs" />
     <Compile Include="SQL\ParameterTest\StreamInputParam.cs" />
     <Compile Include="SQL\ParameterTest\TvpTest.cs" />
-    <Compile Include="DDBasics\DDAsyncTest\DDAsyncTest.cs" /> 
+    <Compile Include="DDBasics\DDAsyncTest\DDAsyncTest.cs" />
     <Compile Include="DDBasics\DDDataTypesTest\DDDataTypesTest.cs" />
     <Compile Include="DDBasics\DDMARSTest\DDMARSTest.cs" />
     <Compile Include="ProviderAgnostic\MultipleResultsTest\MultipleResultsTest.cs" />
     <Compile Include="ProviderAgnostic\ReaderTest\ReaderTest.cs" />
     <Compile Include="SQL\AsyncTest\AsyncTest.cs" />
-    <Compile Include="SQL\SqlCommand\SqlCommandCompletedTest.cs" /> 
+    <Compile Include="SQL\SqlCommand\SqlCommandCompletedTest.cs" />
     <Compile Include="SQL\SqlCommand\SqlCommandCancelTest.cs" />
     <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolTest.cs" />
     <Compile Include="SQL\ConnectivityTests\ConnectivityTest.cs" />
@@ -228,9 +228,8 @@
     <Compile Include="SQL\ConnectionPoolTest\PoolBlockPeriodTest.netcoreapp.cs" />
     <Compile Include="SQL\SqlFileStreamTest\SqlFileStreamTest.cs" />
   </ItemGroup>
-  <ItemGroup>
+  <ItemGroup Condition="'$(TargetGroup)' == 'netfx'">
     <Reference Include="System.Transactions" />
-    <Reference Include="System.Runtime.Caching" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\add-ons\AzureKeyVaultProvider\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
@@ -256,14 +255,15 @@
     <ProjectReference Condition="'$(TargetGroup)'=='netfx'" Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <None Condition="'$(TargetGroup)'=='netfx'" Include="$(BinFolder)$(Configuration).AnyCPU\Microsoft.Data.SqlClient\netfx\**\SNI.dll" CopyToOutputDirectory="PreserveNewest" />
+    <Reference Include="System.Runtime.Caching" />
+    <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="$(MicrosoftIdentityModelClientsActiveDirectoryVersion)" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNETTestSdkVersion)" />
+    <PackageReference Include="System.Linq.Expressions" Version="$(SystemLinqExpressionsVersion)" />
+    <PackageReference Include="System.Net.Sockets" Version="$(SystemNetSocketsVersion)" />
+    <PackageReference Include="Newtonsoft.Json" Version="$(NewtonsoftJsonVersion)" />
+    <PackageReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="Microsoft.Windows.Compatibility" Version="$(MicrosoftWindowsCompatibilityVersion)" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="3.19.1" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.9.0" />
-    <PackageReference Include="System.Linq.Expressions" Version="4.3.0" />
-    <PackageReference Include="System.Net.Sockets" Version="4.3.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
-    <PackageReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="Microsoft.Windows.Compatibility" Version="2.1.1" />
+    <None Condition="'$(TargetGroup)'=='netfx'" Include="$(BinFolder)$(Configuration).AnyCPU\Microsoft.Data.SqlClient\netfx\**\SNI.dll" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

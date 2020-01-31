@@ -104,7 +104,7 @@ namespace Microsoft.Data.SqlClient
         internal volatile bool _attentionSent = false;               // true if we sent an Attention to the server
         internal bool _attentionReceived = false;               // NOTE: Received is not volatile as it is only ever accessed\modified by TryRun its callees (i.e. single threaded access)
         internal volatile bool _attentionSending = false;
-        internal bool _internalTimeout = false;               // an internal timeout occured
+        internal bool _internalTimeout = false;               // an internal timeout occurred
         private readonly LastIOTimer _lastSuccessfulIOTimer;
 
         // secure password information to be stored
@@ -206,7 +206,7 @@ namespace Microsoft.Data.SqlClient
         internal object _errorAndWarningsLock = new object();
         private bool _hasErrorOrWarning = false;
 
-        // local exceptions to cache warnings and errors that occured prior to sending attention
+        // local exceptions to cache warnings and errors that occurred prior to sending attention
         internal SqlErrorCollection _preAttentionErrors;
         internal SqlErrorCollection _preAttentionWarnings;
 
@@ -3549,7 +3549,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(Parser.Connection._parserLock.ThreadMayHaveLock(), "Thread is writing without taking the connection lock");
             Task task = SNIWritePacket(Handle, packet, out sniError, canAccumulate, callerHasConnectionLock: true);
 
-            // Check to see if the timeout has occured.  This time out code is special case code to allow BCP writes to timeout to fix bug 350558, eventually we should make all writes timeout.
+            // Check to see if the timeout has occurred.  This time out code is special case code to allow BCP writes to timeout to fix bug 350558, eventually we should make all writes timeout.
             if (_bulkCopyOpperationInProgress && 0 == GetTimeoutRemaining())
             {
                 _parser.Connection.ThreadHasParserLockForClose = true;
@@ -3895,7 +3895,7 @@ namespace Microsoft.Data.SqlClient
                 _errors = null;
                 _warnings = null;
 
-                // We also process the pre-attention error lists here since, if we are here and they are populated, then an error occured while sending attention so we should show the errors now (otherwise they'd be lost)
+                // We also process the pre-attention error lists here since, if we are here and they are populated, then an error occurred while sending attention so we should show the errors now (otherwise they'd be lost)
                 AddErrorsToCollection(_preAttentionErrors, ref allErrors, ref broken);
                 AddErrorsToCollection(_preAttentionWarnings, ref allErrors, ref broken);
                 _preAttentionErrors = null;
