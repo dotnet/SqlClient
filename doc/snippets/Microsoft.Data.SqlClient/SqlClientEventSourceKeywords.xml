@@ -1,0 +1,46 @@
+<docs>
+	<members name="SqlClientEventSourceKeywords">
+		<SqlClientEventSourceKeywords>
+            <summary>
+                Specifies a value for SqlClientEventSource. <see cref="P:Microsoft.Data.SqlClient.SqlClientEventSourceKeywords" />.
+            </summary>
+        </SqlClientEventSourceKeywords>
+        <Trace>
+            <summary>Logs all Trace events.</summary>
+            <value>1</value>
+        </Trace>
+        <Scope>
+            <summary>To be added.</summary>
+            <value>2</value>
+        </Scope>
+        <NotificationTrace>
+         <summary>To be added.</summary>
+            <value>4</value>
+        </NotificationTrace>
+        <Pooling>
+         <summary>To be added.</summary>
+            <value>8</value>
+        </Pooling>
+        <Correlation>
+         <summary>To be added.</summary>
+            <value>16</value>
+        </Correlation>
+        <NotificationScope>
+         <summary>To be added.</summary>
+            <value>32</value>
+        </NotificationScope>
+        <PoolerScope>
+         <summary>To be added.</summary>
+            <value>64</value>
+        </PoolerScope>
+        <StringPrintOut>
+         <summary>To be added.</summary>
+            <value>128</value>
+        </StringPrintOut>
+        <PoolerTrace>
+         <summary>To be added.</summary>
+            <value>512</value>
+        </PoolerTrace>
+        <GetAll>Returns All values of SqlClientEventSourceKeywords.</GetAll>
+    </members>
+</docs>

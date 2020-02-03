@@ -9,25 +9,37 @@ using System.Runtime.CompilerServices;
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <summary>
-    /// 
-    /// </summary>
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientEventSourceKeywords.xml' path='docs/members[@name="SqlClientEventSourceKeywords"]/SqlClientEventSourceKeywords'/>
     public class SqlClientEventSourceKeywords
     {
-        internal const EventKeywords Trace = (EventKeywords)0x0001;                 // Integer 1
-        internal const EventKeywords Scope = (EventKeywords)0x0002;                 // Integer 2
-        internal const EventKeywords NotificationTrace = (EventKeywords)0x0004;     // Integer 4
-        internal const EventKeywords Pooling = (EventKeywords)0x0008;               // Integer 8
-        internal const EventKeywords Correlation = (EventKeywords)0x0010;           // Integer 16
-        internal const EventKeywords NotificationScope = (EventKeywords)0x0020;     // Integer 32
-        internal const EventKeywords PoolerScope = (EventKeywords)0X0040;           // Integer 64
-        internal const EventKeywords StringPrintOut = (EventKeywords)0x0080;        // Integer 128
-        internal const EventKeywords PoolerTrace = (EventKeywords)0x0200;           //Integer 512
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientEventSourceKeywords.xml' path='docs/members[@name="SqlClientEventSourceKeywords"]/Trace'/>
+        internal const EventKeywords Trace = (EventKeywords)1;
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientEventSourceKeywords.xml' path='docs/members[@name="SqlClientEventSourceKeywords"]/Scope'/>
+        internal const EventKeywords Scope = (EventKeywords)2;
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientEventSourceKeywords.xml' path='docs/members[@name="SqlClientEventSourceKeywords"]/NotificationTrace'/>
+        internal const EventKeywords NotificationTrace = (EventKeywords)4;
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientEventSourceKeywords.xml' path='docs/members[@name="SqlClientEventSourceKeywords"]/Pooling'/>
+        internal const EventKeywords Pooling = (EventKeywords)8;
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientEventSourceKeywords.xml' path='docs/members[@name="SqlClientEventSourceKeywords"]/Correlation'/>
+        internal const EventKeywords Correlation = (EventKeywords)16;
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientEventSourceKeywords.xml' path='docs/members[@name="SqlClientEventSourceKeywords"]/NotificationScope'/>
+        internal const EventKeywords NotificationScope = (EventKeywords)32;
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientEventSourceKeywords.xml' path='docs/members[@name="SqlClientEventSourceKeywords"]/PoolerScope'/>
+        internal const EventKeywords PoolerScope = (EventKeywords)64;
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientEventSourceKeywords.xml' path='docs/members[@name="SqlClientEventSourceKeywords"]/StringPrintOut'/>
+        internal const EventKeywords StringPrintOut = (EventKeywords)128;
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientEventSourceKeywords.xml' path='docs/members[@name="SqlClientEventSourceKeywords"]/PoolerTrace'/>
+        internal const EventKeywords PoolerTrace = (EventKeywords)512;
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientEventSourceKeywords.xml' path='docs/members[@name="SqlClientEventSourceKeywords"]/GetAll'/>
         public static EventKeywords GetAll()
         {
             return Trace | Scope | NotificationTrace | Pooling | Correlation | NotificationScope | PoolerScope | StringPrintOut;
@@ -109,7 +121,7 @@ namespace Microsoft.Data.SqlClient
             {
                 WriteEvent(ExitScopeId, scopeId);
             }
-            
+
         }
 
         [Event(TraceBinId, Level = EventLevel.Informational, Keywords = SqlClientEventSourceKeywords.Trace)]
@@ -123,7 +135,7 @@ namespace Microsoft.Data.SqlClient
 
         [Event(CorrelationTraceId, Level = EventLevel.Informational, Keywords = SqlClientEventSourceKeywords.Correlation, Opcode = EventOpcode.Start)]
         internal void CorrelationTrace(string message)
-        { 
+        {
             WriteEvent(CorrelationTraceId, message);
         }
 
