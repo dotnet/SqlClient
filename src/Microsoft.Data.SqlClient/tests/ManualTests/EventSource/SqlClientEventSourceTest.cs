@@ -4,20 +4,22 @@
 
 using System.Collections.Generic;
 using System.Diagnostics.Tracing;
+using Microsoft.Data.SqlClient.ManualTesting.Tests;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
 {
-    [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp,"Not Implemented")]
+    [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp, "Not Implemented")]
     public class SqlClientEventSourceTest
     {
-        [Fact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void IsTraceEnabled()
         {
+            string connString = DataTestUtility.TCPConnectionString;
             using (var listener = new SampleEventListener())
             {
                 listener.EnableEvents(SqlClientEventSource.Log, EventLevel.Informational, SqlClientEventSource.Keywords.Trace);
-                using (SqlConnection connection = new SqlConnection("Data Source=tcp:localhost;Database=Northwind;Integrated Security=true;"))
+                using (SqlConnection connection = new SqlConnection(connString))
                 {
                     connection.Open();
                     using (SqlCommand command = new SqlCommand("SELECT * From [Customers]", connection))
