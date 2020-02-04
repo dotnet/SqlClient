@@ -26,7 +26,6 @@ namespace Microsoft.Data.SqlClient
         private const int NotificationsTraceId = 7;
         private const int PoolerScopeEnterId = 8;
         private const int PoolerTraceId = 9;
-        private const int PutStrId = 10;
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientEventSource.xml' path='docs/members[@name="SqlClientEventSource"]/members[@name="Keywords"]/Keywords/*'/>
         public class Keywords

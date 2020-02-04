@@ -26,7 +26,6 @@ class Program
             }
         }
     }
-   
 }
 
 public class SampleEventListener : EventListenr
@@ -41,7 +40,6 @@ public class SampleEventListener : EventListenr
     {
         // report all event information
         Out.Write("  Event {0} ", eventData.EventName);
-
 
         // Events can have formatting strings 'the Message property on the 'Event' attribute.  
         // If the event has a formatted message, print that, otherwise print out argument values.  
