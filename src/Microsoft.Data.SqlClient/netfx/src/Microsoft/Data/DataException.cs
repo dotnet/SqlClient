@@ -28,7 +28,7 @@ namespace Microsoft.Data
                 string trace, Exception e)
         {
             Debug.Assert(null != e, "TraceException: null Exception");
-            if (null != e && Log.IsTraceEnabled())
+            if (null != e && Log.IsAdvanceTraceOn())
             {
                 Log.Trace(e.Message);
 

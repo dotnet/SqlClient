@@ -272,7 +272,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (IsYukonPartialZombie)
             {
-                if (Log.IsTraceEnabled())
+                if (Log.IsAdvanceTraceOn())
                 {
                     // Put something in the trace in case a customer has an issue
                     Log.Trace($"<sc.SqlTransaction.Rollback|ADV> {ObjectID}# partial zombie no rollback required");
@@ -490,7 +490,7 @@ namespace Microsoft.Data.SqlClient
 
             if (null != internalConnection && internalConnection.IsYukonOrNewer && !_isFromAPI)
             {
-                if (Log.IsTraceEnabled())
+                if (Log.IsAdvanceTraceOn())
                 {
                     Log.Trace($"<sc.SqlTransaction.Zombie|ADV> {ObjectID}# yukon deferred zombie");
                 }

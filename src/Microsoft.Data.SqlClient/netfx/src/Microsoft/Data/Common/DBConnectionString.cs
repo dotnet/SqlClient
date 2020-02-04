@@ -470,7 +470,7 @@ namespace Microsoft.Data.Common
         private static string[] ParseRestrictions(string restrictions, Hashtable synonyms)
         {
 #if DEBUG
-            if (Log.IsTraceEnabled())
+            if (Log.IsAdvanceTraceOn())
             {
                 Log.Trace($"<comm.DBConnectionString|INFO|ADV> Restrictions='{restrictions}'");
             }
@@ -489,7 +489,7 @@ namespace Microsoft.Data.Common
                 if (!ADP.IsEmpty(keyname))
                 {
 #if DEBUG
-                    if (Log.IsTraceEnabled())
+                    if (Log.IsAdvanceTraceOn())
                     {
                         Log.Trace($"<comm.DBConnectionString|INFO|ADV> KeyName='{keyname}'");
                     }

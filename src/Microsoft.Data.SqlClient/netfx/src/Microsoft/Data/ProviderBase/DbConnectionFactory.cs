@@ -572,7 +572,7 @@ namespace Microsoft.Data.ProviderBase
 
         private void PruneConnectionPoolGroups(object state)
         {
-            if (Log.IsTraceEnabled())
+            if (Log.IsAdvanceTraceOn())
             {
                 // when debugging this method, expect multiple threads at the same time
                 Log.Trace($"<prov.DbConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> {ObjectID}#");
@@ -597,7 +597,7 @@ namespace Microsoft.Data.ProviderBase
                             {
                                 _poolsToRelease.Remove(pool);
 
-                                if (Log.IsTraceEnabled())
+                                if (Log.IsAdvanceTraceOn())
                                 {
                                     Log.Trace($"<prov.DbConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> { ObjectID}#, ReleasePool={pool.ObjectID}#");
                                 }
@@ -627,7 +627,7 @@ namespace Microsoft.Data.ProviderBase
                             {
                                 _poolGroupsToRelease.Remove(poolGroup);
 
-                                if (Log.IsTraceEnabled())
+                                if (Log.IsAdvanceTraceOn())
                                 {
                                     Log.Trace($"<prov.DbConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> {ObjectID}#, ReleasePoolGroup={poolGroup.ObjectID}#");
                                 }

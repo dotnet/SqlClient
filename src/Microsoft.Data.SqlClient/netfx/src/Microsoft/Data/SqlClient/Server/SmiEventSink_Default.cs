@@ -269,7 +269,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (null == _parent)
             {
-                if (Log.IsTraceEnabled())
+                if (Log.IsAdvanceTraceOn())
                 {
                     Log.Trace($"<sc.SmiEventSink_Default.MessagePosted|ADV> {0}#, number={number} state={state} errorClass={errorClass} server='{server ?? "<null>"}' message='{message ?? "<null>"}' procedure='{procedure ?? "<null>"}' linenumber={lineNumber}.");
                 }

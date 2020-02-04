@@ -1,0 +1,53 @@
+<docs>
+	<members name="SqlClientEventSource">
+		<SqlClientEventSource>
+            <summary>
+               This class implements <see cref="System.Diagnostics.Tracing.EventSource" /> parent class.
+            </summary>
+        </SqlClientEventSource>
+       <Log>
+       <summary>this is the singleton instantiation of the SqlClientEventSource class.</summary>
+       </Log>
+       <members name="Keywords">
+        <Keywords>
+        <summary>This class defines the nested class of Keywords for <see cref="System.Diagnostics.Tracing.EventSource" />.</summary>
+        </Keywords>
+        <Trace>
+        <summary>Representing possible group of events for Tracing.</summary>
+        </Trace>
+        <value>1</value>
+        <Scope>
+        <summary>Reperesnting possible group of events for Scope.</summary>
+        <value>2</value>
+        </Scope>
+        <NotificationTrace>
+            <summary>Representing possible froup of events for Notofocation Trace.</summary>
+            <value>4</value>
+        </NotificationTrace>
+        <Pooling>
+            <summary>Representing possible group of events for Pooling.</summary>
+            <value>8</value>
+        </Pooling>
+        <Correlation>
+            <summary>Representing possible group of events for Correlation.</summary>
+            <value>16</value>
+        </Correlation>
+        <NotificationScope>
+            <summary>Representing possible group of events for NotificationScope</summary>
+            <value>32</value>
+        </NotificationScope>
+        <PoolerScope>
+            <summary>Representing possible group of events for PoolerScope.</summary>
+            <value>64</value>
+        </PoolerScope>
+        <PoolerTrace>
+            <summary>Representing possible group of events for PoolerTrace.</summary>
+            <value>128</value>
+        </PoolerTrace>
+        <GetAll>
+            <summary></summary>
+            <value></value>
+        </GetAll>
+       </members>
+    </members>
+</docs>

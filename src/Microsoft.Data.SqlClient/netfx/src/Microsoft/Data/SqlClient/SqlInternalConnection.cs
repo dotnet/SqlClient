@@ -315,7 +315,7 @@ namespace Microsoft.Data.SqlClient
 
         override protected void Deactivate()
         {
-            if (Log.IsTraceEnabled())
+            if (Log.IsAdvanceTraceOn())
                 Log.Trace($"<sc.SqlInternalConnection.Deactivate|ADV> {ObjectID}# deactivating");
 
             TdsParser bestEffortCleanupTarget = null;
@@ -440,14 +440,14 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(null != tx, "null transaction?");
 
-            if (Log.IsTraceEnabled())
+            if (Log.IsAdvanceTraceOn())
                 Log.Trace($"<sc.SqlInternalConnection.EnlistNonNull|ADV> {ObjectID}#, transaction {tx.GetHashCode()}#.");
 
             bool hasDelegatedTransaction = false;
 
             if (IsYukonOrNewer)
             {
-                if (Log.IsTraceEnabled())
+                if (Log.IsAdvanceTraceOn())
                     Log.Trace($"<sc.SqlInternalConnection.EnlistNonNull|ADV> {ObjectID}#, attempting to delegate");
 
                 // Promotable transactions are only supported on Yukon
@@ -517,16 +517,8 @@ namespace Microsoft.Data.SqlClient
 
                         this.DelegatedTransaction = delegatedTransaction;
 
-                        long transactionId = SqlInternalTransaction.NullTransactionId;
-                        int transactionObjectID = 0;
-                        if (null != CurrentTransaction)
-                        {
-                            transactionId = CurrentTransaction.TransactionId;
-                            transactionObjectID = CurrentTransaction.ObjectID;
-                        }
-
-                        if (Log.IsTraceEnabled())
-                            Log.Trace($"<sc.SqlInternalConnection.EnlistNonNull|ADV> {ObjectID}#, delegated to transaction {transactionObjectID}# with transactionId=0x{transactionId}");
+                        if (Log.IsAdvanceTraceOn())
+                            Log.Trace($"<sc.SqlInternalConnection.EnlistNonNull|ADV> {ObjectID}#, delegated to transaction {(null != CurrentTransaction? CurrentTransaction.ObjectID:0)}# with transactionId=0x{(null != CurrentTransaction? CurrentTransaction.TransactionId:SqlInternalTransaction.NullTransactionId)}");
                     }
                 }
                 catch (SqlException e)
@@ -559,7 +551,7 @@ namespace Microsoft.Data.SqlClient
 
             if (!hasDelegatedTransaction)
             {
-                if (Log.IsTraceEnabled())
+                if (Log.IsAdvanceTraceOn())
                     Log.Trace($"<sc.SqlInternalConnection.EnlistNonNull|ADV> {ObjectID}#, delegation not possible, enlisting.");
 
                 byte[] cookie = null;
@@ -601,7 +593,7 @@ namespace Microsoft.Data.SqlClient
                     transactionObjectID = CurrentTransaction.ObjectID;
                 }
 
-                if (Log.IsTraceEnabled())
+                if (Log.IsAdvanceTraceOn())
                     Log.Trace($"<sc.SqlInternalConnection.EnlistNonNull|ADV> {ObjectID}#, enlisted with transaction {transactionObjectID}# with transactionId=0x{transactionId}");
             }
 
@@ -626,7 +618,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void EnlistNull()
         {
-            if (Log.IsTraceEnabled())
+            if (Log.IsAdvanceTraceOn())
                 Log.Trace($"<sc.SqlInternalConnection.EnlistNull|ADV> {ObjectID}#, unenlisting.");
 
             // We were in a transaction, but now we are not - so send
@@ -646,7 +638,7 @@ namespace Microsoft.Data.SqlClient
             _isEnlistedInTransaction = false;
             EnlistedTransaction = null; // Tell the base class about our enlistment
 
-            if (Log.IsTraceEnabled())
+            if (Log.IsAdvanceTraceOn())
                 Log.Trace($"<sc.SqlInternalConnection.EnlistNull|ADV> {ObjectID}#, unenlisted.");
 
             // The EnlistTransaction above will return an TransactionEnded event, 
