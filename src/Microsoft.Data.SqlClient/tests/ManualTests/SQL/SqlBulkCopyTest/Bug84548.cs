@@ -62,7 +62,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                 ColumnMappings.Add("CustomerID", "CustomerID");
 
                                 bulkcopy.WriteToServer(reader);
-                                bulkcopy.Close();
+
+                                DataTestUtility.AssertEqualsWithDescription(bulkcopy.RowsCopied, 1, "Unexpected number of rows.");
                             }
                         }
                     }
