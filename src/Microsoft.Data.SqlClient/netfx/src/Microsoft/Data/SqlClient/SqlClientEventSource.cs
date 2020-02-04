@@ -5,7 +5,6 @@
 using System.Text;
 using System.Diagnostics.Tracing;
 using System.Threading;
-using System.Runtime.CompilerServices;
 
 namespace Microsoft.Data.SqlClient
 {
