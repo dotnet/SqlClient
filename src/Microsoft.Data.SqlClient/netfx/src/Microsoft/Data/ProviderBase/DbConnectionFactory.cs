@@ -4,7 +4,6 @@
 
 namespace Microsoft.Data.ProviderBase
 {
-
     using System;
     using System.Collections.Generic;
     using System.Data;
@@ -119,7 +118,7 @@ namespace Microsoft.Data.ProviderBase
             Debug.Assert(key != null, "key cannot be null");
             ADP.CheckArgumentNull(key.ConnectionString, "key.ConnectionString");
 
-            long scopeID=0;
+            long scopeID = 0;
             if (Log.IsEnabled())
             {
                 scopeID = Log.ScopeEnter("<prov.DbConnectionFactory.ClearPool|API> connectionString");

@@ -31,10 +31,10 @@ namespace Microsoft.Data.SqlClient
         public class Keywords
         {
             /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientEventSource.xml' path='docs/members[@name="SqlClientEventSource"]/members[@name="Keywords"]/Trace/*'/>
-            public const EventKeywords Trace = (EventKeywords)0x0001;
+            public const EventKeywords Trace = (EventKeywords)1;
 
             /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientEventSource.xml' path='docs/members[@name="SqlClientEventSource"]/members[@name="Keywords"]/Scope/*' />
-            public const EventKeywords Scope = (EventKeywords)0x0002;
+            public const EventKeywords Scope = (EventKeywords)2;
 
             /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientEventSource.xml' path='docs/members[@name="SqlClientEventSource"]/members[@name="Keywords"]/NotificationTrace/*' />
             public const EventKeywords NotificationTrace = (EventKeywords)4;
@@ -139,7 +139,7 @@ namespace Microsoft.Data.SqlClient
             {
                 StringBuilder MsgstrBldr = new StringBuilder(message);
                 scopeId = Interlocked.Increment(ref s_nextNotificationScopeId);
-                WriteEvent(NotificationsScopeEnterId, MsgstrBldr.Append($" Scope ID ='[{ scopeId}]'"));
+                WriteEvent(NotificationsScopeEnterId, MsgstrBldr.Append($", Scope ID ='[{ scopeId}]'"));
             }
             return scopeId;
         }
@@ -151,7 +151,7 @@ namespace Microsoft.Data.SqlClient
             if (Log.IsEnabled())
             {
                 StringBuilder MsgstrBldr = new StringBuilder(message);
-                WriteEvent(PoolerScopeEnterId, MsgstrBldr.Append($" Scope ID ='[{ scopeId}]'"));
+                WriteEvent(PoolerScopeEnterId, MsgstrBldr.Append($", Scope ID ='[{ scopeId}]'"));
             }
             return scopeId;
         }

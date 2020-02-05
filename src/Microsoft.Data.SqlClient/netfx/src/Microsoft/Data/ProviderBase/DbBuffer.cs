@@ -14,7 +14,6 @@ namespace Microsoft.Data.ProviderBase
     // so that when debugging, we can tell the difference between one DbBuffer and another
     internal abstract class DbBuffer : SafeHandle
     {
-
         internal const int LMEM_FIXED = 0x0000;
         internal const int LMEM_MOVEABLE = 0x0002;
         internal const int LMEM_ZEROINIT = 0x0040;

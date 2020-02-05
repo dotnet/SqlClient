@@ -103,7 +103,7 @@ namespace Microsoft.Data.Common
             Debug.Assert(null != e, "TraceException: null Exception");
             if (null != e && Log.IsTraceEnabled())
             {
-                Log.Trace(e.ToString()); // will include callstack if permission is available
+                Log.Trace($"{e.ToString()}"); // will include callstack if permission is available
             }
         }
 

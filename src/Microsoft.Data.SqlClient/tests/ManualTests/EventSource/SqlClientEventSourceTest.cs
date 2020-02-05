@@ -50,8 +50,9 @@ namespace Microsoft.Data.SqlClient.Tests
         protected override void OnEventWritten(EventWrittenEventArgs eventData)
         {
             if (eventData.Message != null)
-
+            {
                 eventsNames.Add(eventData.EventName);
+            }
             else
             {
                 eventsNames.Add(eventData.EventName);

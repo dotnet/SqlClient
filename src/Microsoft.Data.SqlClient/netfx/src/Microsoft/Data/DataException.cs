@@ -7,12 +7,10 @@ using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
 using System.Globalization;
-using Microsoft.Data.SqlClient;
 using static Microsoft.Data.SqlClient.SqlClientEventSource;
 
 namespace Microsoft.Data
 {
-
     internal static class ExceptionBuilder
     {
         // The class defines the exceptions that are specific to the DataSet.
@@ -32,14 +30,17 @@ namespace Microsoft.Data
             {
                 Log.Trace(e.Message);
 
-                try
+                if (Log.IsAdvanceTraceOn())
                 {
-                    Log.Trace($"{trace}, StackTrace='{Environment.StackTrace}'");
-                }
-                catch (System.Security.SecurityException)
-                {
-                    // if you don't have permission - you don't get the stack trace
-                    Log.Trace("Permission Denied");
+                    try
+                    {
+                        Log.Trace($"{trace}, StackTrace='{Environment.StackTrace}'");
+                    }
+                    catch (System.Security.SecurityException)
+                    {
+                        // if you don't have permission - you don't get the stack trace
+                        Log.Trace("Permission Denied");
+                    }
                 }
             }
         }
@@ -215,7 +216,6 @@ namespace Microsoft.Data
         {
             return _Argument(paramName, StringsHelper.GetString(Strings.Data_ArgumentContainsNull, paramName));
         }
-
 
         //
         // Collections
@@ -897,7 +897,6 @@ namespace Microsoft.Data
             return _InvalidOperation(StringsHelper.GetString(Strings.DataRelation_InValidNestedRelation, childTableName));
         }
 
-
         static public Exception InvalidParentNamespaceinNestedRelation(string childTableName)
         {
             return _InvalidOperation(StringsHelper.GetString(Strings.DataRelation_InValidNamespaceInNestedRelation, childTableName));
@@ -1295,7 +1294,6 @@ namespace Microsoft.Data
             return _Argument(StringsHelper.GetString(Strings.DataStorage_SetInvalidDataType));
         }
 
-
         //
         // XML schema
         //
@@ -1449,7 +1447,6 @@ namespace Microsoft.Data
             return _InvalidOperation(StringsHelper.GetString(Strings.Xml_PolymorphismNotSupported, typeName));
         }
 
-
         static public Exception DataTableInferenceNotSupported()
         {
             return _InvalidOperation(StringsHelper.GetString(Strings.Xml_DataTableInferenceNotSupported));
@@ -1526,7 +1523,6 @@ namespace Microsoft.Data
         {
             return _DeletedRowInaccessible(StringsHelper.GetString(Strings.DataTableReader_DataTableCleared, tableName));
         }
-
 
         //
         static internal Exception InvalidDuplicateNamedSimpleTypeDelaration(string stName, string errorStr)

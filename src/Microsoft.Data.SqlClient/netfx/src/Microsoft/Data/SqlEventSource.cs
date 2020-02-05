@@ -24,7 +24,6 @@ namespace Microsoft.Data
         // Defines the singleton instance for the Resources ETW provider
         internal static readonly SqlEventSource Log = new SqlEventSource();
 
-
         /// <summary>
         /// Keyword definitions.  These represent logical groups of events that can be turned on and off independently
         /// Often each task has a keyword, but where tasks are determined by subsystem, keywords are determined by
