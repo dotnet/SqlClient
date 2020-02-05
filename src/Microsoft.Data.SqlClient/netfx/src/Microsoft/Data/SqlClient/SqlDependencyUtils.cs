@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using Microsoft.Data.Common;
-using static Microsoft.Data.SqlClient.SqlClientEventSource;
+
 
 namespace Microsoft.Data.SqlClient
 {
@@ -94,8 +94,8 @@ namespace Microsoft.Data.SqlClient
         private SqlDependencyPerAppDomainDispatcher()
         {
             long scopeID = 0;
-            if (Log.IsNotificationTraceEnabled())
-                scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher|DEP> {ObjectID}#");
+            if (SqlClientEventSource.Log.IsNotificationTraceEnabled())
+                scopeID = SqlClientEventSource.Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher|DEP> {ObjectID}#");
 
             try
             {
@@ -110,7 +110,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeave(scopeID);
             }
         }
 
@@ -129,8 +129,8 @@ namespace Microsoft.Data.SqlClient
         private void UnloadEventHandler(object sender, EventArgs e)
         {
             long scopeID = 0;
-            if (Log.IsNotificationTraceEnabled())
-                scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.UnloadEventHandler|DEP> {ObjectID}#");
+            if (SqlClientEventSource.Log.IsNotificationTraceEnabled())
+                scopeID = SqlClientEventSource.Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.UnloadEventHandler|DEP> {ObjectID}#");
             try
             {
                 // Make non-blocking call to ProcessDispatcher to ThreadPool.QueueUserWorkItem to complete 
@@ -145,7 +145,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeave(scopeID);
             }
         }
 
@@ -157,8 +157,8 @@ namespace Microsoft.Data.SqlClient
         internal void AddDependencyEntry(SqlDependency dep)
         {
             long scopeID = 0;
-            if (Log.IsNotificationTraceEnabled())
-                scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.AddDependencyEntry|DEP> {ObjectID}#, SqlDependency: {dep.ObjectID}#");
+            if (SqlClientEventSource.Log.IsNotificationTraceEnabled())
+                scopeID = SqlClientEventSource.Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.AddDependencyEntry|DEP> {ObjectID}#, SqlDependency: {dep.ObjectID}#");
             try
             {
                 lock (this)
@@ -168,7 +168,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeave(scopeID);
             }
         }
 
@@ -178,8 +178,8 @@ namespace Microsoft.Data.SqlClient
             string notificationId = string.Empty;
 
             long scopeID = 0;
-            if (Log.IsNotificationTraceEnabled())
-                scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.AddCommandEntry|DEP> {ObjectID}#, commandHash: '{commandHash}', SqlDependency: {dep.ObjectID}#");
+            if (SqlClientEventSource.Log.IsNotificationTraceEnabled())
+                scopeID = SqlClientEventSource.Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.AddCommandEntry|DEP> {ObjectID}#, commandHash: '{commandHash}', SqlDependency: {dep.ObjectID}#");
 
             try
             {
@@ -188,8 +188,8 @@ namespace Microsoft.Data.SqlClient
                     if (!_dependencyIdToDependencyHash.ContainsKey(dep.Id))
                     {
                         // Determine if depId->dep hashtable contains dependency.  If not, it's been invalidated.
-                        if (Log.IsNotificationTraceEnabled())
-                            Log.NotificationsTrace($"<sc.SqlDependencyPerAppDomainDispatcher.AddCommandEntry|DEP> Dependency not present in depId->dep hash, must have been invalidated.");
+                        if (SqlClientEventSource.Log.IsNotificationTraceEnabled())
+                            SqlClientEventSource.Log.NotificationsTrace($"<sc.SqlDependencyPerAppDomainDispatcher.AddCommandEntry|DEP> Dependency not present in depId->dep hash, must have been invalidated.");
                     }
                     else
                     {
@@ -210,15 +210,15 @@ namespace Microsoft.Data.SqlClient
                             // join the new dependency to the list
                             if (!dependencyList.Contains(dep))
                             {
-                                if (Log.IsNotificationTraceEnabled())
-                                    Log.NotificationsTrace($"<sc.SqlDependencyPerAppDomainDispatcher.AddCommandEntry|DEP> Dependency not present for commandHash, adding.");
+                                if (SqlClientEventSource.Log.IsNotificationTraceEnabled())
+                                    SqlClientEventSource.Log.NotificationsTrace($"<sc.SqlDependencyPerAppDomainDispatcher.AddCommandEntry|DEP> Dependency not present for commandHash, adding.");
 
                                 dependencyList.Add(dep);
                             }
                             else
                             {
-                                if (Log.IsNotificationTraceEnabled())
-                                    Log.NotificationsTrace($"<sc.SqlDependencyPerAppDomainDispatcher.AddCommandEntry|DEP> Dependency already present for commandHash.");
+                                if (SqlClientEventSource.Log.IsNotificationTraceEnabled())
+                                    SqlClientEventSource.Log.NotificationsTrace($"<sc.SqlDependencyPerAppDomainDispatcher.AddCommandEntry|DEP> Dependency already present for commandHash.");
                             }
                         }
                         else
@@ -233,8 +233,8 @@ namespace Microsoft.Data.SqlClient
                                 Guid.NewGuid().ToString("D", System.Globalization.CultureInfo.InvariantCulture)
                                 );
 
-                            if (Log.IsNotificationTraceEnabled())
-                                Log.NotificationsTrace($"<sc.SqlDependencyPerAppDomainDispatcher.AddCommandEntry|DEP> Creating new Dependencies list for commandHash.");
+                            if (SqlClientEventSource.Log.IsNotificationTraceEnabled())
+                                SqlClientEventSource.Log.NotificationsTrace($"<sc.SqlDependencyPerAppDomainDispatcher.AddCommandEntry|DEP> Creating new Dependencies list for commandHash.");
 
                             DependencyList dependencyList = new DependencyList(commandHash);
                             dependencyList.Add(dep);
@@ -257,7 +257,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeave(scopeID);
             }
 
             return notificationId;
@@ -267,8 +267,8 @@ namespace Microsoft.Data.SqlClient
         internal void InvalidateCommandID(SqlNotification sqlNotification)
         {
             long scopeID = 0;
-            if (Log.IsNotificationTraceEnabled())
-                scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.InvalidateCommandID|DEP> {ObjectID}#, commandHash: '{sqlNotification.Key}'");
+            if (SqlClientEventSource.Log.IsNotificationTraceEnabled())
+                scopeID = SqlClientEventSource.Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.InvalidateCommandID|DEP> {ObjectID}#, commandHash: '{sqlNotification.Key}'");
 
             try
             {
@@ -280,8 +280,8 @@ namespace Microsoft.Data.SqlClient
 
                     if (null != dependencyList)
                     {
-                        if (Log.IsNotificationTraceEnabled())
-                            Log.NotificationsTrace($"<sc.SqlDependencyPerAppDomainDispatcher.InvalidateCommandID|DEP> commandHash found in hashtable.");
+                        if (SqlClientEventSource.Log.IsNotificationTraceEnabled())
+                            SqlClientEventSource.Log.NotificationsTrace($"<sc.SqlDependencyPerAppDomainDispatcher.InvalidateCommandID|DEP> commandHash found in hashtable.");
 
                         foreach (SqlDependency dependency in dependencyList)
                         {
@@ -294,8 +294,8 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        if (Log.IsNotificationTraceEnabled())
-                            Log.NotificationsTrace($"<sc.SqlDependencyPerAppDomainDispatcher.InvalidateCommandID|DEP> commandHash NOT found in hashtable.");
+                        if (SqlClientEventSource.Log.IsNotificationTraceEnabled())
+                            SqlClientEventSource.Log.NotificationsTrace($"<sc.SqlDependencyPerAppDomainDispatcher.InvalidateCommandID|DEP> commandHash NOT found in hashtable.");
                     }
                 }
 
@@ -304,8 +304,8 @@ namespace Microsoft.Data.SqlClient
                     // After removal from hashtables, invalidate.
                     foreach (SqlDependency dependency in dependencyList)
                     {
-                        if (Log.IsNotificationTraceEnabled())
-                            Log.NotificationsTrace($"<sc.SqlDependencyPerAppDomainDispatcher.InvalidateCommandID|DEP> Dependency found in commandHash dependency ArrayList - calling invalidate.");
+                        if (SqlClientEventSource.Log.IsNotificationTraceEnabled())
+                            SqlClientEventSource.Log.NotificationsTrace($"<sc.SqlDependencyPerAppDomainDispatcher.InvalidateCommandID|DEP> Dependency found in commandHash dependency ArrayList - calling invalidate.");
 
                         try
                         {
@@ -327,7 +327,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeave(scopeID);
             }
         }
 
@@ -335,8 +335,8 @@ namespace Microsoft.Data.SqlClient
         internal void InvalidateServer(string server, SqlNotification sqlNotification)
         {
             long scopeID = 0;
-            if (Log.IsNotificationTraceEnabled())
-                scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.Invalidate|DEP> {ObjectID}#, server: '{server}'");
+            if (SqlClientEventSource.Log.IsNotificationTraceEnabled())
+                scopeID = SqlClientEventSource.Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.Invalidate|DEP> {ObjectID}#, server: '{server}'");
 
             try
             {
@@ -384,7 +384,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeave(scopeID);
             }
         }
 
@@ -392,8 +392,8 @@ namespace Microsoft.Data.SqlClient
         internal SqlDependency LookupDependencyEntry(string id)
         {
             long scopeID = 0;
-            if (Log.IsNotificationTraceEnabled())
-                scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.LookupDependencyEntry|DEP> {ObjectID}#, Key: '{id}'");
+            if (SqlClientEventSource.Log.IsNotificationTraceEnabled())
+                scopeID = SqlClientEventSource.Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.LookupDependencyEntry|DEP> {ObjectID}#, Key: '{id}'");
 
             try
             {
@@ -416,8 +416,8 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        if (Log.IsNotificationTraceEnabled())
-                            Log.NotificationsTrace($"<sc.SqlDependencyPerAppDomainDispatcher.LookupDependencyEntry|DEP|ERR> ERROR - dependency ID mismatch - not throwing.");
+                        if (SqlClientEventSource.Log.IsNotificationTraceEnabled())
+                            SqlClientEventSource.Log.NotificationsTrace($"<sc.SqlDependencyPerAppDomainDispatcher.LookupDependencyEntry|DEP|ERR> ERROR - dependency ID mismatch - not throwing.");
                     }
                 }
 
@@ -425,7 +425,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeave(scopeID);
             }
         }
 
@@ -433,8 +433,8 @@ namespace Microsoft.Data.SqlClient
         private void LookupDependencyEntryWithRemove(string id)
         {
             long scopeID = 0;
-            if (Log.IsNotificationTraceEnabled())
-                scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.LookupDependencyEntryWithRemove|DEP> {ObjectID}#, id: '{id}'");
+            if (SqlClientEventSource.Log.IsNotificationTraceEnabled())
+                scopeID = SqlClientEventSource.Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.LookupDependencyEntryWithRemove|DEP> {ObjectID}#, id: '{id}'");
             
             try
             {
@@ -442,8 +442,8 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (_dependencyIdToDependencyHash.ContainsKey(id))
                     {
-                        if (Log.IsNotificationTraceEnabled())
-                            Log.NotificationsTrace($"<sc.SqlDependencyPerAppDomainDispatcher.LookupDependencyEntryWithRemove|DEP> Entry found in hashtable - removing.");
+                        if (SqlClientEventSource.Log.IsNotificationTraceEnabled())
+                            SqlClientEventSource.Log.NotificationsTrace($"<sc.SqlDependencyPerAppDomainDispatcher.LookupDependencyEntryWithRemove|DEP> Entry found in hashtable - removing.");
 
                         _dependencyIdToDependencyHash.Remove(id);
 
@@ -456,14 +456,14 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        if (Log.IsNotificationTraceEnabled())
-                            Log.NotificationsTrace($"<sc.SqlDependencyPerAppDomainDispatcher.LookupDependencyEntryWithRemove|DEP> Entry NOT found in hashtable.");
+                        if (SqlClientEventSource.Log.IsNotificationTraceEnabled())
+                            SqlClientEventSource.Log.NotificationsTrace($"<sc.SqlDependencyPerAppDomainDispatcher.LookupDependencyEntryWithRemove|DEP> Entry NOT found in hashtable.");
                     }
                 }
             }
             finally
             {
-                Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeave(scopeID);
             }
         }
 
@@ -471,8 +471,8 @@ namespace Microsoft.Data.SqlClient
         private List<SqlDependency> LookupCommandEntryWithRemove(string notificationId)
         {
             long scopeID = 0;
-            if (Log.IsNotificationTraceEnabled())
-                scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.LookupCommandEntryWithRemove|DEP> {ObjectID}#, commandHash: '{notificationId}'");
+            if (SqlClientEventSource.Log.IsNotificationTraceEnabled())
+                scopeID = SqlClientEventSource.Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.LookupCommandEntryWithRemove|DEP> {ObjectID}#, commandHash: '{notificationId}'");
             try
             {
                 DependencyList entry = null;
@@ -481,8 +481,8 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (_notificationIdToDependenciesHash.TryGetValue(notificationId, out entry))
                     {
-                        if (Log.IsNotificationTraceEnabled())
-                            Log.NotificationsTrace($"<sc.SqlDependencyPerAppDomainDispatcher.LookupDependencyEntriesWithRemove|DEP> Entries found in hashtable - removing.");
+                        if (SqlClientEventSource.Log.IsNotificationTraceEnabled())
+                            SqlClientEventSource.Log.NotificationsTrace($"<sc.SqlDependencyPerAppDomainDispatcher.LookupDependencyEntriesWithRemove|DEP> Entries found in hashtable - removing.");
 
                         // update the tables - do it inside finally block to avoid ThreadAbort exception interrupt this operation
                         try
@@ -496,8 +496,8 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        if (Log.IsNotificationTraceEnabled())
-                            Log.NotificationsTrace($"<sc.SqlDependencyPerAppDomainDispatcher.LookupDependencyEntriesWithRemove|DEP> Entries NOT found in hashtable.");
+                        if (SqlClientEventSource.Log.IsNotificationTraceEnabled())
+                            SqlClientEventSource.Log.NotificationsTrace($"<sc.SqlDependencyPerAppDomainDispatcher.LookupDependencyEntriesWithRemove|DEP> Entries NOT found in hashtable.");
                     }
 
                     Debug.Assert(_notificationIdToDependenciesHash.Count == _commandHashToNotificationId.Count, "always keep these maps in sync!");
@@ -507,7 +507,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeave(scopeID);
             }
         }
 
@@ -515,8 +515,8 @@ namespace Microsoft.Data.SqlClient
         private void RemoveDependencyFromCommandToDependenciesHash(SqlDependency dependency)
         {
             long scopeID = 0;
-            if (Log.IsNotificationTraceEnabled())
-                scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.RemoveDependencyFromCommandToDependenciesHash|DEP> {ObjectID}#, SqlDependency: {dependency.ObjectID}#");
+            if (SqlClientEventSource.Log.IsNotificationTraceEnabled())
+                scopeID = SqlClientEventSource.Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.RemoveDependencyFromCommandToDependenciesHash|DEP> {ObjectID}#, SqlDependency: {dependency.ObjectID}#");
             try
             {
                 lock (this)
@@ -529,8 +529,8 @@ namespace Microsoft.Data.SqlClient
                         DependencyList dependencies = entry.Value;
                         if (dependencies.Remove(dependency))
                         {
-                            if (Log.IsNotificationTraceEnabled())
-                                Log.NotificationsTrace($"<sc.SqlDependencyPerAppDomainDispatcher.RemoveDependencyFromCommandToDependenciesHash|DEP> Removed SqlDependency: {dependency.ObjectID}#, with ID: '{dependency.Id}'.");
+                            if (SqlClientEventSource.Log.IsNotificationTraceEnabled())
+                                SqlClientEventSource.Log.NotificationsTrace($"<sc.SqlDependencyPerAppDomainDispatcher.RemoveDependencyFromCommandToDependenciesHash|DEP> Removed SqlDependency: {dependency.ObjectID}#, with ID: '{dependency.Id}'.");
 
                             if (dependencies.Count == 0)
                             {
@@ -564,7 +564,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeave(scopeID);
             }
         }
 
@@ -575,8 +575,8 @@ namespace Microsoft.Data.SqlClient
         internal void StartTimer(SqlDependency dep)
         {
             long scopeID = 0;
-            if (Log.IsNotificationTraceEnabled())
-                scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.StartTimer|DEP> {ObjectID}#, SqlDependency: {dep.ObjectID}#");
+            if (SqlClientEventSource.Log.IsNotificationTraceEnabled())
+                scopeID = SqlClientEventSource.Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.StartTimer|DEP> {ObjectID}#, SqlDependency: {dep.ObjectID}#");
             try
             {
                 // If this dependency expires sooner than the current next timeout, change
@@ -587,8 +587,8 @@ namespace Microsoft.Data.SqlClient
                     // Enable the timer if needed (disable when empty, enable on the first addition).
                     if (!_SqlDependencyTimeOutTimerStarted)
                     {
-                        if (Log.IsNotificationTraceEnabled())
-                            Log.NotificationsTrace($"<sc.SqlDependencyPerAppDomainDispatcher.StartTimer|DEP> Timer not yet started, starting.");
+                        if (SqlClientEventSource.Log.IsNotificationTraceEnabled())
+                            SqlClientEventSource.Log.NotificationsTrace($"<sc.SqlDependencyPerAppDomainDispatcher.StartTimer|DEP> Timer not yet started, starting.");
 
                         _timeoutTimer.Change(15000 /* 15 secs */, 15000 /* 15 secs */);
 
@@ -598,8 +598,8 @@ namespace Microsoft.Data.SqlClient
                     }
                     else if (_nextTimeout > dep.ExpirationTime)
                     {
-                        if (Log.IsNotificationTraceEnabled())
-                            Log.NotificationsTrace($"<sc.SqlDependencyPerAppDomainDispatcher.StartTimer|DEP> Timer already started, resetting time.");
+                        if (SqlClientEventSource.Log.IsNotificationTraceEnabled())
+                            SqlClientEventSource.Log.NotificationsTrace($"<sc.SqlDependencyPerAppDomainDispatcher.StartTimer|DEP> Timer already started, resetting time.");
 
                         // Save this as the earlier timeout to come.
                         _nextTimeout = dep.ExpirationTime;
@@ -608,15 +608,15 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeave(scopeID);
             }
         }
 
         private static void TimeoutTimerCallback(object state)
         {
             long scopeID = 0;
-            if (Log.IsNotificationTraceEnabled())
-                scopeID = Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.TimeoutTimerCallback|DEP> AppDomainKey: '{SqlDependency.AppDomainKey}'");
+            if (SqlClientEventSource.Log.IsNotificationTraceEnabled())
+                scopeID = SqlClientEventSource.Log.NotificationsScopeEnter($"<sc.SqlDependencyPerAppDomainDispatcher.TimeoutTimerCallback|DEP> AppDomainKey: '{SqlDependency.AppDomainKey}'");
             try
             {
                 SqlDependency[] dependencies;
@@ -629,14 +629,14 @@ namespace Microsoft.Data.SqlClient
                     if (0 == SingletonInstance._dependencyIdToDependencyHash.Count)
                     {
                         // Nothing to check.
-                        if (Log.IsNotificationTraceEnabled())
-                            Log.NotificationsTrace($"<sc.SqlDependencyPerAppDomainDispatcher.TimeoutTimerCallback|DEP> No dependencies, exiting.");
+                        if (SqlClientEventSource.Log.IsNotificationTraceEnabled())
+                            SqlClientEventSource.Log.NotificationsTrace($"<sc.SqlDependencyPerAppDomainDispatcher.TimeoutTimerCallback|DEP> No dependencies, exiting.");
                         return;
                     }
                     if (SingletonInstance._nextTimeout > DateTime.UtcNow)
                     {
-                        if (Log.IsNotificationTraceEnabled())
-                            Log.NotificationsTrace($"<sc.SqlDependencyPerAppDomainDispatcher.TimeoutTimerCallback|DEP> No timeouts expired, exiting.");
+                        if (SqlClientEventSource.Log.IsNotificationTraceEnabled())
+                            SqlClientEventSource.Log.NotificationsTrace($"<sc.SqlDependencyPerAppDomainDispatcher.TimeoutTimerCallback|DEP> No timeouts expired, exiting.");
 
                         // No dependency timed-out yet.
                         return;
@@ -707,7 +707,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeave(scopeID);
             }
         }
     }

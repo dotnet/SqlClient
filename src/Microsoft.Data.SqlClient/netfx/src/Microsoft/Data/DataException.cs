@@ -7,7 +7,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
 using System.Globalization;
-using static Microsoft.Data.SqlClient.SqlClientEventSource;
+using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data
 {
@@ -26,20 +26,20 @@ namespace Microsoft.Data
                 string trace, Exception e)
         {
             Debug.Assert(null != e, "TraceException: null Exception");
-            if (null != e && Log.IsAdvanceTraceOn())
+            if (null != e && SqlClientEventSource.Log.IsAdvanceTraceOn())
             {
-                Log.Trace(e.Message);
+                SqlClientEventSource.Log.Trace(e.Message);
 
-                if (Log.IsAdvanceTraceOn())
+                if (SqlClientEventSource.Log.IsAdvanceTraceOn())
                 {
                     try
                     {
-                        Log.Trace($"{trace}, StackTrace='{Environment.StackTrace}'");
+                        SqlClientEventSource.Log.Trace($"{trace}, StackTrace='{Environment.StackTrace}'");
                     }
                     catch (System.Security.SecurityException)
                     {
                         // if you don't have permission - you don't get the stack trace
-                        Log.Trace("Permission Denied");
+                        SqlClientEventSource.Log.Trace("Permission Denied");
                     }
                 }
             }

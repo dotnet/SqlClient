@@ -12,7 +12,7 @@ using System.Runtime.Versioning;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Server;
-using static Microsoft.Data.SqlClient.SqlClientEventSource;
+
 
 namespace Microsoft.Data.SqlClient
 {
@@ -194,9 +194,9 @@ namespace Microsoft.Data.SqlClient
                         connectionTimeout *= 10;
                     }
 
-                    if (Log.IsTraceEnabled())
+                    if (SqlClientEventSource.Log.IsTraceEnabled())
                     {
-                        Log.Trace($"<sc.SqlConnectionFactory.CreateConnectionPoolGroupOptions>Set connection pool CreateTimeout={connectionTimeout} when AD Interactive is in use.");
+                        SqlClientEventSource.Log.Trace($"<sc.SqlConnectionFactory.CreateConnectionPoolGroupOptions>Set connection pool CreateTimeout={connectionTimeout} when AD Interactive is in use.");
                     }
                 }
 

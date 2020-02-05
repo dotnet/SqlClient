@@ -15,7 +15,7 @@ using System.Xml;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Server;
-using static Microsoft.Data.SqlClient.SqlClientEventSource;
+
 
 using Microsoft.Data.SqlTypes;
 
@@ -377,8 +377,8 @@ namespace Microsoft.Data.SqlClient
         private void CloseInternal(bool closeConnection)
         {
             long scopeID = 0;
-            if (Log.IsEnabled())
-                scopeID = Log.ScopeEnter($"<sc.SqlDataReaderSmi.Close|API> {ObjectID}#");
+            if (SqlClientEventSource.Log.IsEnabled())
+                scopeID = SqlClientEventSource.Log.ScopeEnter($"<sc.SqlDataReaderSmi.Close|API> {ObjectID}#");
 
             bool processFinallyBlock = true;
             try
@@ -415,7 +415,7 @@ namespace Microsoft.Data.SqlClient
                         Connection.Close();
                     }
 
-                    Log.ScopeLeave(scopeID);
+                    SqlClientEventSource.Log.ScopeLeave(scopeID);
                 }
             }
         }
@@ -439,8 +439,8 @@ namespace Microsoft.Data.SqlClient
         internal unsafe bool InternalNextResult(bool ignoreNonFatalMessages)
         {
             long scopeID = 0;
-            if (Log.IsAdvanceTraceOn())
-                scopeID = Log.ScopeEnter($"<sc.SqlDataReaderSmi.InternalNextResult|ADV> {ObjectID}#");
+            if (SqlClientEventSource.Log.IsAdvanceTraceOn())
+                scopeID = SqlClientEventSource.Log.ScopeEnter($"<sc.SqlDataReaderSmi.InternalNextResult|ADV> {ObjectID}#");
             try
             {
                 _hasRows = false;
@@ -473,8 +473,8 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                if (Log.IsAdvanceTraceOn())
-                    Log.ScopeLeave(scopeID);
+                if (SqlClientEventSource.Log.IsAdvanceTraceOn())
+                    SqlClientEventSource.Log.ScopeLeave(scopeID);
             }
         }
 
@@ -495,8 +495,8 @@ namespace Microsoft.Data.SqlClient
         internal unsafe bool InternalRead(bool ignoreNonFatalErrors)
         {
             long scopeID = 0;
-            if (Log.IsAdvanceTraceOn())
-                scopeID = Log.ScopeEnter($"<sc.SqlDataReaderSmi.InternalRead|ADV> {ObjectID}#");
+            if (SqlClientEventSource.Log.IsAdvanceTraceOn())
+                scopeID = SqlClientEventSource.Log.ScopeEnter($"<sc.SqlDataReaderSmi.InternalRead|ADV> {ObjectID}#");
 
             try
             {
@@ -536,8 +536,8 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                if (Log.IsAdvanceTraceOn())
-                    Log.ScopeLeave(scopeID);
+                if (SqlClientEventSource.Log.IsAdvanceTraceOn())
+                    SqlClientEventSource.Log.ScopeLeave(scopeID);
             }
         }
 
@@ -1329,16 +1329,16 @@ namespace Microsoft.Data.SqlClient
             {
                 var mdLength = (null != md) ? md.Length : -1;
 
-                if (Log.IsAdvanceTraceOn())
+                if (SqlClientEventSource.Log.IsAdvanceTraceOn())
                 {
-                    Log.Trace($"<sc.SqlDataReaderSmi.ReaderEventSink.MetaDataAvailable|ADV> {reader.ObjectID}#, md.Length={mdLength} nextEventIsRow={nextEventIsRow}.");
+                    SqlClientEventSource.Log.Trace($"<sc.SqlDataReaderSmi.ReaderEventSink.MetaDataAvailable|ADV> {reader.ObjectID}#, md.Length={mdLength} nextEventIsRow={nextEventIsRow}.");
 
 
                     if (null != md)
                     {
                         for (int i = 0; i < md.Length; i++)
                         {
-                            Log.Trace($"<sc.SqlDataReaderSmi.ReaderEventSink.MetaDataAvailable|ADV> {reader.ObjectID}#, metaData[{i}] is {md[i].GetType().ToString()}{md[i].TraceString()}");
+                            SqlClientEventSource.Log.Trace($"<sc.SqlDataReaderSmi.ReaderEventSink.MetaDataAvailable|ADV> {reader.ObjectID}#, metaData[{i}] is {md[i].GetType().ToString()}{md[i].TraceString()}");
                         }
                     }
                 }
@@ -1348,36 +1348,36 @@ namespace Microsoft.Data.SqlClient
             // Obsolete V2- method
             internal override void RowAvailable(ITypedGetters row)
             {
-                if (Log.IsAdvanceTraceOn())
+                if (SqlClientEventSource.Log.IsAdvanceTraceOn())
                 {
-                    Log.Trace($"<sc.SqlDataReaderSmi.ReaderEventSink.RowAvailable|ADV> {reader.ObjectID}# (v2).");
+                    SqlClientEventSource.Log.Trace($"<sc.SqlDataReaderSmi.ReaderEventSink.RowAvailable|ADV> {reader.ObjectID}# (v2).");
                 }
                 this.reader.RowAvailable(row);
             }
 
             internal override void RowAvailable(ITypedGettersV3 row)
             {
-                if (Log.IsAdvanceTraceOn())
+                if (SqlClientEventSource.Log.IsAdvanceTraceOn())
                 {
-                    Log.Trace($"<sc.SqlDataReaderSmi.ReaderEventSink.RowAvailable|ADV> {reader.ObjectID}# (ITypedGettersV3).");
+                    SqlClientEventSource.Log.Trace($"<sc.SqlDataReaderSmi.ReaderEventSink.RowAvailable|ADV> {reader.ObjectID}# (ITypedGettersV3).");
                 }
                 this.reader.RowAvailable(row);
             }
 
             internal override void RowAvailable(SmiTypedGetterSetter rowData)
             {
-                if (Log.IsAdvanceTraceOn())
+                if (SqlClientEventSource.Log.IsAdvanceTraceOn())
                 {
-                    Log.Trace($"<sc.SqlDataReaderSmi.ReaderEventSink.RowAvailable|ADV> {reader.ObjectID}# (SmiTypedGetterSetter).");
+                    SqlClientEventSource.Log.Trace($"<sc.SqlDataReaderSmi.ReaderEventSink.RowAvailable|ADV> {reader.ObjectID}# (SmiTypedGetterSetter).");
                 }
                 this.reader.RowAvailable(rowData);
             }
 
             internal override void StatementCompleted(int recordsAffected)
             {
-                if (Log.IsAdvanceTraceOn())
+                if (SqlClientEventSource.Log.IsAdvanceTraceOn())
                 {
-                    Log.Trace($"<sc.SqlDataReaderSmi.ReaderEventSink.StatementCompleted|ADV> {reader.ObjectID}# recordsAffected= {recordsAffected}.");
+                    SqlClientEventSource.Log.Trace($"<sc.SqlDataReaderSmi.ReaderEventSink.StatementCompleted|ADV> {reader.ObjectID}# recordsAffected= {recordsAffected}.");
                 }
 
                 // devnote: relies on SmiEventSink_Default to pass event to parent
@@ -1389,9 +1389,9 @@ namespace Microsoft.Data.SqlClient
 
             internal override void BatchCompleted()
             {
-                if (Log.IsAdvanceTraceOn())
+                if (SqlClientEventSource.Log.IsAdvanceTraceOn())
                 {
-                    Log.Trace($"<sc.SqlDataReaderSmi.ReaderEventSink.BatchCompleted|ADV> {reader.ObjectID}#.");
+                    SqlClientEventSource.Log.Trace($"<sc.SqlDataReaderSmi.ReaderEventSink.BatchCompleted|ADV> {reader.ObjectID}#.");
                 }
 
                 // devnote: relies on SmiEventSink_Default to pass event to parent

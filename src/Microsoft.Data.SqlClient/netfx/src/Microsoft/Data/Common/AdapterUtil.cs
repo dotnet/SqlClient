@@ -21,12 +21,11 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
-using static Microsoft.Data.SqlClient.SqlClientEventSource;
+using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.Server;
 using Microsoft.Win32;
 using SysES = System.EnterpriseServices;
 using SysTx = System.Transactions;
-using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data.Common
 {
@@ -101,9 +100,9 @@ namespace Microsoft.Data.Common
                 string trace, Exception e)
         {
             Debug.Assert(null != e, "TraceException: null Exception");
-            if (null != e && Log.IsTraceEnabled())
+            if (null != e && SqlClient.SqlClientEventSource.Log.IsTraceEnabled())
             {
-                Log.Trace($"{e.ToString()}"); // will include callstack if permission is available
+                SqlClient.SqlClientEventSource.Log.Trace($"{e.ToString()}"); // will include callstack if permission is available
             }
         }
 

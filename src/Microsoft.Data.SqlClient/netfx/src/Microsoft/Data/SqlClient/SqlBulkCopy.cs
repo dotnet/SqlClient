@@ -15,7 +15,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using Microsoft.Data.Common;
-using static Microsoft.Data.SqlClient.SqlClientEventSource;
+
 
 // todo list:
 // * An ID column need to be ignored - even if there is an association
@@ -595,16 +595,16 @@ namespace Microsoft.Data.SqlClient
         {
             string TDSCommand = CreateInitialQuery();
 
-            if (Log.IsTraceEnabled())
+            if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                if (Log.IsTraceEnabled())
+                if (SqlClientEventSource.Log.IsTraceEnabled())
                 {
-                    Log.Trace($"<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|INFO> Initial Query: '{TDSCommand}'");
+                    SqlClientEventSource.Log.Trace($"<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|INFO> Initial Query: '{TDSCommand}'");
                 }
             }
 
-            if (Log.IsCorrelationEnabled())
-                Log.CorrelationTrace($"<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|Info|Correlation> ObjectID{ObjectID}#, ActivityID %ls");
+            if (SqlClientEventSource.Log.IsCorrelationEnabled())
+                SqlClientEventSource.Log.CorrelationTrace($"<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|Info|Correlation> ObjectID{ObjectID}#, ActivityID %ls");
 
             Task executeTask = _parser.TdsExecuteSQLBatch(TDSCommand, this.BulkCopyTimeout, null, _stateObj, sync: !_isAsyncBulkCopy, callerHasConnectionLock: true);
 
@@ -895,8 +895,8 @@ namespace Microsoft.Data.SqlClient
         //
         private Task SubmitUpdateBulkCommand(string TDSCommand)
         {
-            if (Log.IsCorrelationEnabled())
-                Log.CorrelationTrace($"<sc.SqlBulkCopy.SubmitUpdateBulkCommand|Info|Correlation> ObjectID{ObjectID}#, ActivityID {Log.Guid}\n");
+            if (SqlClientEventSource.Log.IsCorrelationEnabled())
+                SqlClientEventSource.Log.CorrelationTrace($"<sc.SqlBulkCopy.SubmitUpdateBulkCommand|Info|Correlation> ObjectID{ObjectID}#, ActivityID {SqlClientEventSource.Log.Guid}\n");
 
             Task executeTask = _parser.TdsExecuteSQLBatch(TDSCommand, this.BulkCopyTimeout, null, _stateObj, sync: !_isAsyncBulkCopy, callerHasConnectionLock: true);
 
@@ -2528,9 +2528,9 @@ namespace Microsoft.Data.SqlClient
                             _stateObj.BcpLock = true;
                             abortOperation = FireRowsCopiedEvent(_rowsCopied);
 
-                            if (Log.IsTraceEnabled())
+                            if (SqlClientEventSource.Log.IsTraceEnabled())
                             {
-                                Log.Trace("<sc.SqlBulkCopy.WriteToServerInternal|INFO>");
+                                SqlClientEventSource.Log.Trace("<sc.SqlBulkCopy.WriteToServerInternal|INFO>");
                             }
 
                             // just in case some pathological person closes the target connection ...

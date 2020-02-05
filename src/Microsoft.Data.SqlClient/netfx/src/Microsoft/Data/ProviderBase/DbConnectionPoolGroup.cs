@@ -7,7 +7,8 @@ namespace Microsoft.Data.ProviderBase
     using System.Collections.Concurrent;
     using System.Diagnostics;
     using Microsoft.Data.Common;
-    using static Microsoft.Data.SqlClient.SqlClientEventSource;
+    using Microsoft.Data.SqlClient;
+
 
     // set_ConnectionString calls DbConnectionFactory.GetConnectionPoolGroup
     // when not found a new pool entry is created and potentially added
@@ -273,9 +274,9 @@ namespace Microsoft.Data.ProviderBase
             {
                 _state = PoolGroupStateActive;
 
-                if (Log.IsTraceEnabled())
+                if (SqlClientEventSource.Log.IsTraceEnabled())
                 {
-                    Log.Trace($"<prov.DbConnectionPoolGroup.ClearInternal|RES|INFO|CPOOL> {ObjectID}#, Active");
+                    SqlClientEventSource.Log.Trace($"<prov.DbConnectionPoolGroup.ClearInternal|RES|INFO|CPOOL> {ObjectID}#, Active");
                 }
             }
             return (PoolGroupStateActive == _state);
@@ -339,18 +340,18 @@ namespace Microsoft.Data.ProviderBase
                     {
                         _state = PoolGroupStateIdle;
 
-                        if (Log.IsTraceEnabled())
+                        if (SqlClientEventSource.Log.IsTraceEnabled())
                         {
-                            Log.Trace($"<prov.DbConnectionPoolGroup.ClearInternal|RES|INFO|CPOOL> {ObjectID}#, Idle");
+                            SqlClientEventSource.Log.Trace($"<prov.DbConnectionPoolGroup.ClearInternal|RES|INFO|CPOOL> {ObjectID}#, Idle");
                         }
                     }
                     else if (PoolGroupStateIdle == _state)
                     {
                         _state = PoolGroupStateDisabled;
 
-                        if (Log.IsTraceEnabled())
+                        if (SqlClientEventSource.Log.IsTraceEnabled())
                         {
-                            Log.Trace($"<prov.DbConnectionPoolGroup.ReadyToRemove|RES|INFO|CPOOL> {ObjectID}#, Disabled");
+                            SqlClientEventSource.Log.Trace($"<prov.DbConnectionPoolGroup.ReadyToRemove|RES|INFO|CPOOL> {ObjectID}#, Disabled");
                         }
                     }
                 }

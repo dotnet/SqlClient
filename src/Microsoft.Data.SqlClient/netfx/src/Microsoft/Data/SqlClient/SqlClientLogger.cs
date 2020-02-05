@@ -2,7 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using static Microsoft.Data.SqlClient.SqlClientEventSource;
+
 
 namespace Microsoft.Data.SqlClient
 {
@@ -19,23 +19,23 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientLogger.xml' path='docs/members[@name="SqlClientLogger"]/LogInfo/*'/>
         public void LogInfo(string type, string method, string message)
         {
-            if (Log.IsTraceEnabled())
+            if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                Log.Trace($"<sc|{type}|{method}|{LogLevel.Info}>{message}");
+                SqlClientEventSource.Log.Trace($"<sc|{type}|{method}|{LogLevel.Info}>{message}");
             }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientLogger.xml' path='docs/members[@name="SqlClientLogger"]/LogError/*'/>
         public void LogError(string type, string method, string message)
         {
-            if (Log.IsTraceEnabled())
+            if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                Log.Trace($"<sc|{type}|{method}|{LogLevel.Error}>{message}");
+                SqlClientEventSource.Log.Trace($"<sc|{type}|{method}|{LogLevel.Error}>{message}");
             }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientLogger.xml' path='docs/members[@name="SqlClientLogger"]/IsLoggingEnabled/*'/>	
-        public bool IsLoggingEnabled => Log.IsEnabled();
+        public bool IsLoggingEnabled => SqlClientEventSource.Log.IsEnabled();
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientLogger.xml' path='docs/members[@name="SqlClientLogger"]/LogAssert/*'/>
         public bool LogAssert(bool value, string type, string method, string message)

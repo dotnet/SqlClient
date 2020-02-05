@@ -14,7 +14,7 @@ namespace Microsoft.Data.ProviderBase
     using System.Threading;
     using System.Threading.Tasks;
     using Microsoft.Data.Common;
-    using static Microsoft.Data.SqlClient.SqlClientEventSource;
+    using Microsoft.Data.SqlClient;
     using SysTx = System.Transactions;
 
     internal abstract class DbConnectionInternal
@@ -163,9 +163,9 @@ namespace Microsoft.Data.ProviderBase
 
                     if (null != value)
                     {
-                        if (Log.IsPoolerTraceEnabled())
+                        if (SqlClientEventSource.Log.IsPoolerTraceEnabled())
                         {
-                            Log.PoolerTrace($"<prov.DbConnectionInternal.set_EnlistedTransaction|RES|CPOOL> {ObjectID}#, Transaction {value.GetHashCode()}#, Enlisting.");
+                            SqlClientEventSource.Log.PoolerTrace($"<prov.DbConnectionInternal.set_EnlistedTransaction|RES|CPOOL> {ObjectID}#, Transaction {value.GetHashCode()}#, Enlisting.");
                         }
 
                         TransactionOutcomeEnlist(value);
@@ -393,9 +393,9 @@ namespace Microsoft.Data.ProviderBase
             // Internal method called from the connection pooler so we don't expose
             // the Activate method publicly.
 
-            if (Log.IsTraceEnabled())
+            if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                Log.PoolerTrace($"<prov.DbConnectionInternal.ActivateConnection|RES|INFO|CPOOL> {ObjectID}#, Activating");
+                SqlClientEventSource.Log.PoolerTrace($"<prov.DbConnectionInternal.ActivateConnection|RES|INFO|CPOOL> {ObjectID}#, Activating");
             }
 #if DEBUG
             int activateCount = Interlocked.Increment(ref _activateCount);
@@ -468,8 +468,8 @@ namespace Microsoft.Data.ProviderBase
             Debug.Assert(null != owningObject, "null owningObject");
             Debug.Assert(null != connectionFactory, "null connectionFactory");
 
-            if (Log.IsPoolerTraceEnabled())
-                Log.PoolerTrace($"<prov.DbConnectionInternal.CloseConnection|RES|CPOOL> {ObjectID}# Closing.");
+            if (SqlClientEventSource.Log.IsPoolerTraceEnabled())
+                SqlClientEventSource.Log.PoolerTrace($"<prov.DbConnectionInternal.CloseConnection|RES|CPOOL> {ObjectID}# Closing.");
 
             // if an exception occurs after the state change but before the try block
             // the connection will be stuck in OpenBusy state.  The commented out try-catch
@@ -574,8 +574,8 @@ namespace Microsoft.Data.ProviderBase
         {
             // Internal method called from the connection pooler so we don't expose
             // the Deactivate method publicly.
-            if (Log.IsPoolerTraceEnabled())
-                Log.PoolerTrace($"<prov.DbConnectionInternal.DeactivateConnection|RES|INFO|CPOOL> {ObjectID}#, Deactivating");
+            if (SqlClientEventSource.Log.IsPoolerTraceEnabled())
+                SqlClientEventSource.Log.PoolerTrace($"<prov.DbConnectionInternal.DeactivateConnection|RES|INFO|CPOOL> {ObjectID}#, Deactivating");
 #if DEBUG
             int activateCount = Interlocked.Decrement(ref _activateCount);
             Debug.Assert(0 == activateCount, "activated multiple times?");
@@ -610,9 +610,9 @@ namespace Microsoft.Data.ProviderBase
             // you call this method to prevent race conditions with Clear and
             // ReclaimEmancipatedObjects.
 
-            if (Log.IsTraceEnabled())
+            if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                Log.Trace($"<prov.DbConnectionInternal.DelegatedTransactionEnded|RES|CPOOL> {ObjectID}#, Delegated Transaction Completed.");
+                SqlClientEventSource.Log.Trace($"<prov.DbConnectionInternal.DelegatedTransactionEnded|RES|CPOOL> {ObjectID}#, Delegated Transaction Completed.");
             }
 
             if (1 == _pooledCount)
@@ -677,8 +677,8 @@ namespace Microsoft.Data.ProviderBase
         {
             _cannotBePooled = true;
 
-            if (Log.IsPoolerTraceEnabled())
-                Log.PoolerTrace($"<prov.DbConnectionInternal.DoNotPoolThisConnection|RES|INFO|CPOOL> {ObjectID}#, Marking pooled object as non-poolable so it will be disposed");
+            if (SqlClientEventSource.Log.IsPoolerTraceEnabled())
+                SqlClientEventSource.Log.PoolerTrace($"<prov.DbConnectionInternal.DoNotPoolThisConnection|RES|INFO|CPOOL> {ObjectID}#, Marking pooled object as non-poolable so it will be disposed");
         }
 
         /// <devdoc>Ensure that this connection cannot be put back into the pool.</devdoc>
@@ -687,8 +687,8 @@ namespace Microsoft.Data.ProviderBase
         {
             _connectionIsDoomed = true;
 
-            if (Log.IsPoolerTraceEnabled())
-                Log.PoolerTrace($"<prov.DbConnectionInternal.DoomThisConnection|RES|INFO|CPOOL> {ObjectID}#, Dooming");
+            if (SqlClientEventSource.Log.IsPoolerTraceEnabled())
+                SqlClientEventSource.Log.PoolerTrace($"<prov.DbConnectionInternal.DoomThisConnection|RES|INFO|CPOOL> {ObjectID}#, Dooming");
         }
 
         // Reset connection doomed status so it can be re-connected and pooled.
@@ -822,8 +822,8 @@ namespace Microsoft.Data.ProviderBase
             }
 
             //DbConnection x = (expectedOwner as DbConnection);
-            if (Log.IsPoolerTraceEnabled())
-                Log.PoolerTrace($"<prov.DbConnectionInternal.PrePush|RES|CPOOL> {ObjectID}#, Preparing to push into pool, owning connection {0}#, pooledCount={ _pooledCount}");
+            if (SqlClientEventSource.Log.IsPoolerTraceEnabled())
+                SqlClientEventSource.Log.PoolerTrace($"<prov.DbConnectionInternal.PrePush|RES|CPOOL> {ObjectID}#, Preparing to push into pool, owning connection {0}#, pooledCount={ _pooledCount}");
 
             _pooledCount++;
             _owningObject.Target = null; // NOTE: doing this and checking for InternalError.PooledObjectHasOwner degrades the close by 2%
@@ -855,8 +855,8 @@ namespace Microsoft.Data.ProviderBase
             _pooledCount--;
 
             //DbConnection x = (newOwner as DbConnection);
-            if (Log.IsPoolerTraceEnabled())
-                Log.PoolerTrace($"<prov.DbConnectionInternal.PostPop|RES|CPOOL> {ObjectID}#, Preparing to pop from pool,  owning connection {0}#, pooledCount={_pooledCount}");
+            if (SqlClientEventSource.Log.IsPoolerTraceEnabled())
+                SqlClientEventSource.Log.PoolerTrace($"<prov.DbConnectionInternal.PostPop|RES|CPOOL> {ObjectID}#, Preparing to pop from pool,  owning connection {0}#, pooledCount={_pooledCount}");
 
             //3 // The following tests are retail assertions of things we can't allow to happen.
             if (null != Pool)
@@ -913,9 +913,9 @@ namespace Microsoft.Data.ProviderBase
         // Detach transaction from connection.
         internal void DetachTransaction(SysTx.Transaction transaction, bool isExplicitlyReleasing)
         {
-            if (Log.IsTraceEnabled())
+            if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                Log.Trace($"<prov.DbConnectionInternal.DetachTransaction|RES|CPOOL> {ObjectID}#, Transaction Completed. (pooledCount={_pooledCount})");
+                SqlClientEventSource.Log.Trace($"<prov.DbConnectionInternal.DetachTransaction|RES|CPOOL> {ObjectID}#, Transaction Completed. (pooledCount={_pooledCount})");
             }
 
             // potentially a multi-threaded event, so lock the connection to make sure we don't enlist in a new
@@ -958,9 +958,9 @@ namespace Microsoft.Data.ProviderBase
         {
             SysTx.Transaction transaction = e.Transaction;
 
-            if (Log.IsTraceEnabled())
+            if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                Log.Trace($"<prov.DbConnectionInternal.TransactionCompletedEvent|RES|CPOOL> {ObjectID}#, Transaction Completed. (pooledCount={_pooledCount})");
+                SqlClientEventSource.Log.Trace($"<prov.DbConnectionInternal.TransactionCompletedEvent|RES|CPOOL> {ObjectID}#, Transaction Completed. (pooledCount={_pooledCount})");
             }
 
             CleanupTransactionOnCompletion(transaction);
@@ -980,23 +980,23 @@ namespace Microsoft.Data.ProviderBase
         {
             _isInStasis = true;
 
-            if (Log.IsPoolerTraceEnabled())
-                Log.PoolerTrace($"<prov.DbConnectionInternal.SetInStasis|RES|CPOOL> {ObjectID}#, Non-Pooled Connection has Delegated Transaction, waiting to Dispose.");
+            if (SqlClientEventSource.Log.IsPoolerTraceEnabled())
+                SqlClientEventSource.Log.PoolerTrace($"<prov.DbConnectionInternal.SetInStasis|RES|CPOOL> {ObjectID}#, Non-Pooled Connection has Delegated Transaction, waiting to Dispose.");
 
             PerformanceCounters.NumberOfStasisConnections.Increment();
         }
 
         private void TerminateStasis(bool returningToPool)
         {
-            if (Log.IsPoolerTraceEnabled())
+            if (SqlClientEventSource.Log.IsPoolerTraceEnabled())
             {
                 if (returningToPool)
                 {
-                    Log.PoolerTrace($"<prov.DbConnectionInternal.TerminateStasis|RES|CPOOL> { ObjectID}#, Delegated Transaction has ended, connection is closed.  Returning to general pool.");
+                    SqlClientEventSource.Log.PoolerTrace($"<prov.DbConnectionInternal.TerminateStasis|RES|CPOOL> { ObjectID}#, Delegated Transaction has ended, connection is closed.  Returning to general pool.");
                 }
                 else
                 {
-                    Log.PoolerTrace($"<prov.DbConnectionInternal.TerminateStasis|RES|CPOOL> {ObjectID}#, Delegated Transaction has ended, connection is closed/leaked.  Disposing.");
+                    SqlClientEventSource.Log.PoolerTrace($"<prov.DbConnectionInternal.TerminateStasis|RES|CPOOL> {ObjectID}#, Delegated Transaction has ended, connection is closed/leaked.  Disposing.");
                 }
             }
 

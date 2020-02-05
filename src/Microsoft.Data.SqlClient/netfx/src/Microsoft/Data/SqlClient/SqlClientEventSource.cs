@@ -62,31 +62,31 @@ namespace Microsoft.Data.SqlClient
         }
 
         [NonEvent]
-        internal bool IsTraceEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.Trace);
+        internal bool IsTraceEnabled() => SqlClientEventSource.Log.IsEnabled(EventLevel.Informational, Keywords.Trace);
 
         [NonEvent]
-        internal bool IsScopeEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.Scope);
+        internal bool IsScopeEnabled() => SqlClientEventSource.Log.IsEnabled(EventLevel.Informational, Keywords.Scope);
 
         [NonEvent]
-        internal bool IsPoolerScopeEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.PoolerScope);
+        internal bool IsPoolerScopeEnabled() => SqlClientEventSource.Log.IsEnabled(EventLevel.Informational, Keywords.PoolerScope);
 
         [NonEvent]
-        internal bool IsCorrelationEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.Correlation);
+        internal bool IsCorrelationEnabled() => SqlClientEventSource.Log.IsEnabled(EventLevel.Informational, Keywords.Correlation);
 
         [NonEvent]
-        internal bool IsNotificationScopeEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.NotificationScope);
+        internal bool IsNotificationScopeEnabled() => SqlClientEventSource.Log.IsEnabled(EventLevel.Informational, Keywords.NotificationScope);
 
         [NonEvent]
-        internal bool IsPoolingEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.Pooling);
+        internal bool IsPoolingEnabled() => SqlClientEventSource.Log.IsEnabled(EventLevel.Informational, Keywords.Pooling);
 
         [NonEvent]
-        internal bool IsNotificationTraceEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.NotificationTrace);
+        internal bool IsNotificationTraceEnabled() => SqlClientEventSource.Log.IsEnabled(EventLevel.Informational, Keywords.NotificationTrace);
 
         [NonEvent]
-        internal bool IsPoolerTraceEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.PoolerTrace);
+        internal bool IsPoolerTraceEnabled() => SqlClientEventSource.Log.IsEnabled(EventLevel.Informational, Keywords.PoolerTrace);
 
         [NonEvent]
-        internal bool IsAdvanceTraceOn() => Log.IsEnabled(EventLevel.LogAlways, EventKeywords.All);
+        internal bool IsAdvanceTraceOn() => SqlClientEventSource.Log.IsEnabled(EventLevel.LogAlways, EventKeywords.All);
 
         [Event(TraceEventId, Level = EventLevel.Informational, Keywords = Keywords.Trace)]
         internal void Trace(string message)
@@ -98,7 +98,7 @@ namespace Microsoft.Data.SqlClient
         internal long ScopeEnter(string message)
         {
             long scopeId = 0;
-            if (Log.IsEnabled())
+            if (SqlClientEventSource.Log.IsEnabled())
             {
                 StringBuilder MsgstrBldr = new StringBuilder(message);
                 scopeId = Interlocked.Increment(ref s_nextScopeId);
@@ -110,7 +110,7 @@ namespace Microsoft.Data.SqlClient
         [Event(ExitScopeId, Level = EventLevel.Verbose, Keywords = Keywords.Scope)]
         internal void ScopeLeave(long scopeId)
         {
-            if (Log.IsEnabled())
+            if (SqlClientEventSource.Log.IsEnabled())
             {
                 WriteEvent(ExitScopeId, scopeId);
             }
@@ -119,7 +119,7 @@ namespace Microsoft.Data.SqlClient
         [Event(TraceBinId, Level = EventLevel.Informational, Keywords = Keywords.Trace)]
         internal void TraceBin(string message, byte[] whereabout, int length)
         {
-            if (Log.IsEnabled(EventLevel.Informational, Keywords.Trace))
+            if (SqlClientEventSource.Log.IsEnabled(EventLevel.Informational, Keywords.Trace))
             {
                 WriteEvent(TraceBinId, message, whereabout, length);
             }
@@ -135,7 +135,7 @@ namespace Microsoft.Data.SqlClient
         internal long NotificationsScopeEnter(string message)
         {
             long scopeId = 0;
-            if (Log.IsEnabled())
+            if (SqlClientEventSource.Log.IsEnabled())
             {
                 StringBuilder MsgstrBldr = new StringBuilder(message);
                 scopeId = Interlocked.Increment(ref s_nextNotificationScopeId);
@@ -148,7 +148,7 @@ namespace Microsoft.Data.SqlClient
         internal long PoolerScopeEnter(string message)
         {
             long scopeId = 0;
-            if (Log.IsEnabled())
+            if (SqlClientEventSource.Log.IsEnabled())
             {
                 StringBuilder MsgstrBldr = new StringBuilder(message);
                 WriteEvent(PoolerScopeEnterId, MsgstrBldr.Append($", Scope ID ='[{ scopeId}]'"));

@@ -8,7 +8,7 @@ using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
 using Microsoft.Data.Common;
-using static Microsoft.Data.SqlClient.SqlClientEventSource;
+
 
 namespace Microsoft.Data.SqlClient
 {
@@ -144,9 +144,9 @@ namespace Microsoft.Data.SqlClient
                 }
                 _updateBatchSize = value;
 
-                if (Log.IsTraceEnabled())
+                if (SqlClientEventSource.Log.IsTraceEnabled())
                 {
-                    Log.Trace($"<sc.SqlDataAdapter.set_UpdateBatchSize|API> {ObjectID}#, {value}");
+                    SqlClientEventSource.Log.Trace($"<sc.SqlDataAdapter.set_UpdateBatchSize|API> {ObjectID}#, {value}");
                 }
             }
         }
@@ -255,8 +255,8 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(null != _commandSet && (0 < _commandSet.CommandCount), "no commands");
 
-            if (Log.IsCorrelationEnabled())
-                Log.CorrelationTrace($"<sc.SqlDataAdapter.ExecuteBatch|Info|Correlation> ObjectID{ObjectID}#, ActivityID %ls");
+            if (SqlClientEventSource.Log.IsCorrelationEnabled())
+                SqlClientEventSource.Log.CorrelationTrace($"<sc.SqlDataAdapter.ExecuteBatch|Info|Correlation> ObjectID{ObjectID}#, ActivityID %ls");
 
             return _commandSet.ExecuteNonQuery();
         }
@@ -280,9 +280,9 @@ namespace Microsoft.Data.SqlClient
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/InitializeBatching/*' />
         override protected void InitializeBatching()
         {
-            if (Log.IsTraceEnabled())
+            if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                Log.Trace($"<sc.SqlDataAdapter.InitializeBatching|API> {ObjectID}#");
+                SqlClientEventSource.Log.Trace($"<sc.SqlDataAdapter.InitializeBatching|API> {ObjectID}#");
             }
             _commandSet = new SqlCommandSet();
             SqlCommand command = SelectCommand;

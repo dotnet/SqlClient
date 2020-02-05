@@ -3,7 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Diagnostics;
-using static Microsoft.Data.SqlClient.SqlClientEventSource;
+
 
 namespace Microsoft.Data.SqlClient.Server
 {
@@ -269,9 +269,9 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (null == _parent)
             {
-                if (Log.IsAdvanceTraceOn())
+                if (SqlClientEventSource.Log.IsAdvanceTraceOn())
                 {
-                    Log.Trace($"<sc.SmiEventSink_Default.MessagePosted|ADV> {0}#, number={number} state={state} errorClass={errorClass} server='{server ?? "<null>"}' message='{message ?? "<null>"}' procedure='{procedure ?? "<null>"}' linenumber={lineNumber}.");
+                    SqlClientEventSource.Log.Trace($"<sc.SmiEventSink_Default.MessagePosted|ADV> {0}#, number={number} state={state} errorClass={errorClass} server='{server ?? "<null>"}' message='{message ?? "<null>"}' procedure='{procedure ?? "<null>"}' linenumber={lineNumber}.");
                 }
 
                 SqlError error = new SqlError(number, state, errorClass, server, message, procedure, lineNumber);

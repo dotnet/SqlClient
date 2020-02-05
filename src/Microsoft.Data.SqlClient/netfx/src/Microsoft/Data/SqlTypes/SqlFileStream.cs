@@ -12,7 +12,7 @@ using Microsoft.Win32.SafeHandles;
 using System.Diagnostics;
 using System.Runtime.Versioning;
 using Microsoft.Data.Common;
-using static Microsoft.Data.SqlClient.SqlClientEventSource;
+using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data.SqlTypes
 {
@@ -66,9 +66,9 @@ namespace Microsoft.Data.SqlTypes
             )
         {
             long scopeID = 0;
-            if (Log.IsEnabled())
+            if (SqlClientEventSource.Log.IsEnabled())
             {
-                scopeID = Log.ScopeEnter($"<sc.SqlFileStream.ctor|API> { ObjectID}# access={(int)access} options={(int)options} path='{path}'");
+                scopeID = SqlClientEventSource.Log.ScopeEnter($"<sc.SqlFileStream.ctor|API> { ObjectID}# access={(int)access} options={(int)options} path='{path}'");
             }
 
             try
@@ -95,7 +95,7 @@ namespace Microsoft.Data.SqlTypes
             }
             finally
             {
-                Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeave(scopeID);
             }
         }
 
@@ -718,9 +718,9 @@ namespace Microsoft.Data.SqlTypes
                 UnsafeNativeMethods.SetErrorModeWrapper(UnsafeNativeMethods.SEM_FAILCRITICALERRORS, out oldMode);
                 try
                 {
-                    if (Log.IsTraceEnabled())
+                    if (SqlClientEventSource.Log.IsTraceEnabled())
                     {
-                        Log.Trace($"<sc.SqlFileStream.OpenSqlFileStream|ADV> {ObjectID}#, desiredAccess=0x{(int)nDesiredAccess}, allocationSize={allocationSize}, " +
+                        SqlClientEventSource.Log.Trace($"<sc.SqlFileStream.OpenSqlFileStream|ADV> {ObjectID}#, desiredAccess=0x{(int)nDesiredAccess}, allocationSize={allocationSize}, " +
                             $"fileAttributes=0x%{0}, shareAccess=0x{(int)shareAccess}, dwCreateDisposition=0x{dwCreateDisposition}, createOptions=0x{ dwCreateOptions}");
                     }
 

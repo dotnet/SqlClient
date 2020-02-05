@@ -12,7 +12,7 @@ namespace Microsoft.Data.Common
     using System.Runtime.Versioning;
     using System.Text;
     using System.Text.RegularExpressions;
-    using static Microsoft.Data.SqlClient.SqlClientEventSource;
+    using Microsoft.Data.SqlClient;
 
     internal class DbConnectionOptions
     {
@@ -631,17 +631,17 @@ namespace Microsoft.Data.Common
 
             string realkeyname = ((null != synonyms) ? (string)synonyms[keyname] : keyname);
 
-            if (Log.IsTraceEnabled())
+            if (SqlClient.SqlClientEventSource.Log.IsTraceEnabled())
             {
                 if ((KEY.Password != realkeyname) && (SYNONYM.Pwd != realkeyname))
                 { // don't trace passwords ever!
                     if (null != keyvalue)
                     {
-                        Log.Trace($"<comm.DbConnectionOptions|INFO|ADV> KeyName='{keyname}', KeyValue='{keyvalue}'\n");
+                        SqlClientEventSource.Log.Trace($"<comm.DbConnectionOptions|INFO|ADV> KeyName='{keyname}', KeyValue='{keyvalue}'\n");
                     }
                     else
                     {
-                        Log.Trace($"<comm.DbConnectionOptions|INFO|ADV> KeyName='{keyname}'\n");
+                        SqlClientEventSource.Log.Trace($"<comm.DbConnectionOptions|INFO|ADV> KeyName='{keyname}'\n");
                     }
                 }
             }

@@ -21,7 +21,7 @@ using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.DataClassification;
 using Microsoft.Data.SqlClient.Server;
 using Microsoft.Data.SqlTypes;
-using static Microsoft.Data.SqlClient.SqlClientEventSource;
+
 
 namespace Microsoft.Data.SqlClient
 {
@@ -942,8 +942,8 @@ namespace Microsoft.Data.SqlClient
             SqlStatistics statistics = null;
 
             long scopeID = 0;
-            if (Log.IsEnabled())
-                scopeID = Log.ScopeEnter($"<sc.SqlDataReader.Close|API> {ObjectID}#");
+            if (SqlClientEventSource.Log.IsEnabled())
+                scopeID = SqlClientEventSource.Log.ScopeEnter($"<sc.SqlDataReader.Close|API> {ObjectID}#");
 
             try
             {
@@ -1030,7 +1030,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlStatistics.StopTimer(statistics);
-                Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeave(scopeID);
             }
         }
 
@@ -1676,8 +1676,8 @@ namespace Microsoft.Data.SqlClient
             SqlStatistics statistics = null;
 
             long scopeID = 0;
-            if (Log.IsEnabled())
-                scopeID = Log.ScopeEnter($"<sc.SqlDataReader.GetSchemaTable|API> {ObjectID}#");
+            if (SqlClientEventSource.Log.IsEnabled())
+                scopeID = SqlClientEventSource.Log.ScopeEnter($"<sc.SqlDataReader.GetSchemaTable|API> {ObjectID}#");
 
             try
             {
@@ -1701,7 +1701,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlStatistics.StopTimer(statistics);
-                Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeave(scopeID);
             }
         }
 
@@ -3611,8 +3611,8 @@ namespace Microsoft.Data.SqlClient
             SqlStatistics statistics = null;
 
             long scopeID = 0;
-            if (Log.IsEnabled())
-                scopeID = Log.ScopeEnter($"<sc.SqlDataReader.NextResult|API> {ObjectID}#");
+            if (SqlClientEventSource.Log.IsEnabled())
+                scopeID = SqlClientEventSource.Log.ScopeEnter($"<sc.SqlDataReader.NextResult|API> {ObjectID}#");
 
             RuntimeHelpers.PrepareConstrainedRegions();
             try
@@ -3790,7 +3790,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlStatistics.StopTimer(statistics);
-                Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeave(scopeID);
             }
         }
 
@@ -3820,8 +3820,8 @@ namespace Microsoft.Data.SqlClient
             SqlStatistics statistics = null;
 
             long scopeID = 0;
-            if (Log.IsEnabled())
-                scopeID = Log.ScopeEnter($"<sc.SqlDataReader.Read|API> {ObjectID}#");
+            if (SqlClientEventSource.Log.IsEnabled())
+                scopeID = SqlClientEventSource.Log.ScopeEnter($"<sc.SqlDataReader.Read|API> {ObjectID}#");
 
             RuntimeHelpers.PrepareConstrainedRegions();
             try
@@ -4023,7 +4023,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlStatistics.StopTimer(statistics);
-                Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeave(scopeID);
             }
         }
 
@@ -4488,8 +4488,8 @@ namespace Microsoft.Data.SqlClient
                 // broken connection, so check state first.
                 if (parser.State == TdsParserState.OpenLoggedIn)
                 {
-                    if (Log.IsCorrelationEnabled())
-                        Log.CorrelationTrace($"<sc.SqlDataReader.RestoreServerSettings|Info|Correlation> ObjectID{ObjectID}#, ActivityID '{Log.Guid}'");
+                    if (SqlClientEventSource.Log.IsCorrelationEnabled())
+                        SqlClientEventSource.Log.CorrelationTrace($"<sc.SqlDataReader.RestoreServerSettings|Info|Correlation> ObjectID{ObjectID}#, ActivityID '{SqlClientEventSource.Log.Guid}'");
 
                     Task executeTask = parser.TdsExecuteSQLBatch(_resetOptionsString, (_command != null) ? _command.CommandTimeout : 0, null, stateObj, sync: true);
                     Debug.Assert(executeTask == null, "Shouldn't get a task when doing sync writes");
@@ -4803,8 +4803,8 @@ namespace Microsoft.Data.SqlClient
         public override Task<bool> NextResultAsync(CancellationToken cancellationToken)
         {
             long scopeID = 0;
-            if (Log.IsEnabled())
-                scopeID = Log.ScopeEnter($"<sc.SqlDataReader.NextResultAsync|API> {ObjectID}#");
+            if (SqlClientEventSource.Log.IsEnabled())
+                scopeID = SqlClientEventSource.Log.ScopeEnter($"<sc.SqlDataReader.NextResultAsync|API> {ObjectID}#");
 
             try
             {
@@ -4850,9 +4850,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (t != null)
                     {
-                        if (Log.IsTraceEnabled())
+                        if (SqlClientEventSource.Log.IsTraceEnabled())
                         {
-                            Log.Trace($"<sc.SqlDataReader.NextResultAsync> attempt retry {ObjectID}#");
+                            SqlClientEventSource.Log.Trace($"<sc.SqlDataReader.NextResultAsync> attempt retry {ObjectID}#");
                         }
                         PrepareForAsyncContinuation();
                     }
@@ -4871,7 +4871,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeave(scopeID);
             }
         }
 
@@ -4935,9 +4935,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (t != null)
                     {
-                        if (Log.IsTraceEnabled())
+                        if (SqlClientEventSource.Log.IsTraceEnabled())
                         {
-                            Log.Trace($"<sc.SqlDataReader.GetBytesAsync> attempt retry {ObjectID}#");
+                            SqlClientEventSource.Log.Trace($"<sc.SqlDataReader.GetBytesAsync> attempt retry {ObjectID}#");
                         }
 
                         PrepareForAsyncContinuation();
@@ -5111,8 +5111,8 @@ namespace Microsoft.Data.SqlClient
         public override Task<bool> ReadAsync(CancellationToken cancellationToken)
         {
             long scopeID = 0;
-            if (Log.IsEnabled())
-                scopeID = Log.ScopeEnter($"<sc.SqlDataReader.ReadAsync|API> {ObjectID}#");
+            if (SqlClientEventSource.Log.IsEnabled())
+                scopeID = SqlClientEventSource.Log.ScopeEnter($"<sc.SqlDataReader.ReadAsync|API> {ObjectID}#");
 
             try
             {
@@ -5233,9 +5233,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (t != null)
                     {
-                        if (Log.IsTraceEnabled())
+                        if (SqlClientEventSource.Log.IsTraceEnabled())
                         {
-                            Log.Trace($"<sc.SqlDataReader.ReadAsync> attempt retry {ObjectID}#");
+                            SqlClientEventSource.Log.Trace($"<sc.SqlDataReader.ReadAsync> attempt retry {ObjectID}#");
                         }
 
                         PrepareForAsyncContinuation();
@@ -5276,7 +5276,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeave(scopeID);
             }
         }
 

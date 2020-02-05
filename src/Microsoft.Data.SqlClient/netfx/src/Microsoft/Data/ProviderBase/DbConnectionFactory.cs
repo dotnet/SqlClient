@@ -12,7 +12,7 @@ namespace Microsoft.Data.ProviderBase
     using System.Threading;
     using System.Threading.Tasks;
     using Microsoft.Data.Common;
-    using static Microsoft.Data.SqlClient.SqlClientEventSource;
+    using Microsoft.Data.SqlClient;
 
     internal abstract class DbConnectionFactory
     {
@@ -66,9 +66,9 @@ namespace Microsoft.Data.ProviderBase
         public void ClearAllPools()
         {
             long scopeID = 0;
-            if (Log.IsEnabled())
+            if (SqlClientEventSource.Log.IsEnabled())
             {
-                scopeID = Log.ScopeEnter("<prov.DbConnectionFactory.ClearAllPools|API>");
+                scopeID = SqlClientEventSource.Log.ScopeEnter("<prov.DbConnectionFactory.ClearAllPools|API>");
             }
 
             try
@@ -85,7 +85,7 @@ namespace Microsoft.Data.ProviderBase
             }
             finally
             {
-                Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeave(scopeID);
             }
         }
 
@@ -94,9 +94,9 @@ namespace Microsoft.Data.ProviderBase
             ADP.CheckArgumentNull(connection, "connection");
 
             long scopeID = 0;
-            if (Log.IsEnabled())
+            if (SqlClientEventSource.Log.IsEnabled())
             {
-                scopeID = Log.ScopeEnter($"<prov.DbConnectionFactory.ClearPool|API> {GetObjectId(connection)}#");
+                scopeID = SqlClientEventSource.Log.ScopeEnter($"<prov.DbConnectionFactory.ClearPool|API> {GetObjectId(connection)}#");
             }
 
             try
@@ -109,7 +109,7 @@ namespace Microsoft.Data.ProviderBase
             }
             finally
             {
-                Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeave(scopeID);
             }
         }
 
@@ -119,9 +119,9 @@ namespace Microsoft.Data.ProviderBase
             ADP.CheckArgumentNull(key.ConnectionString, "key.ConnectionString");
 
             long scopeID = 0;
-            if (Log.IsEnabled())
+            if (SqlClientEventSource.Log.IsEnabled())
             {
-                scopeID = Log.ScopeEnter("<prov.DbConnectionFactory.ClearPool|API> connectionString");
+                scopeID = SqlClientEventSource.Log.ScopeEnter("<prov.DbConnectionFactory.ClearPool|API> connectionString");
             }
 
             try
@@ -135,7 +135,7 @@ namespace Microsoft.Data.ProviderBase
             }
             finally
             {
-                Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeave(scopeID);
             }
         }
 
@@ -167,9 +167,9 @@ namespace Microsoft.Data.ProviderBase
                 PerformanceCounters.HardConnectsPerSecond.Increment();
                 newConnection.MakeNonPooledObject(owningConnection, PerformanceCounters);
             }
-            if (Log.IsTraceEnabled())
+            if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                Log.Trace($"<prov.DbConnectionFactory.CreateNonPooledConnection|RES|CPOOL> {ObjectID}#, Non-pooled database connection created.");
+                SqlClientEventSource.Log.Trace($"<prov.DbConnectionFactory.CreateNonPooledConnection|RES|CPOOL> {ObjectID}#, Non-pooled database connection created.");
             }
             return newConnection;
         }
@@ -187,9 +187,9 @@ namespace Microsoft.Data.ProviderBase
                 newConnection.MakePooledConnection(pool);
             }
 
-            if (Log.IsTraceEnabled())
+            if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                Log.Trace($"<prov.DbConnectionFactory.CreatePooledConnection|RES|CPOOL> {ObjectID}#, Pooled database connection created.");
+                SqlClientEventSource.Log.Trace($"<prov.DbConnectionFactory.CreatePooledConnection|RES|CPOOL> {ObjectID}#, Pooled database connection created.");
             }
 
             return newConnection;
@@ -386,9 +386,9 @@ namespace Microsoft.Data.ProviderBase
                         // connection creation failed on semaphore waiting or if max pool reached
                         if (connectionPool.IsRunning)
                         {
-                            if (Log.IsTraceEnabled())
+                            if (SqlClientEventSource.Log.IsTraceEnabled())
                             {
-                                Log.Trace($"<prov.DbConnectionFactory.GetConnection|RES|CPOOL> {ObjectID}#, GetConnection failed because a pool timeout occurred.");
+                                SqlClientEventSource.Log.Trace($"<prov.DbConnectionFactory.GetConnection|RES|CPOOL> {ObjectID}#, GetConnection failed because a pool timeout occurred.");
                             }
 
                             // If GetConnection failed while the pool is running, the pool timeout occurred.
@@ -408,9 +408,9 @@ namespace Microsoft.Data.ProviderBase
 
             if (connection == null)
             {
-                if (Log.IsTraceEnabled())
+                if (SqlClientEventSource.Log.IsTraceEnabled())
                 {
-                    Log.Trace($"<prov.DbConnectionFactory.GetConnection|RES|CPOOL> {ObjectID}#, GetConnection failed because a pool timeout occurred and all retries were exhausted.");
+                    SqlClientEventSource.Log.Trace($"<prov.DbConnectionFactory.GetConnection|RES|CPOOL> {ObjectID}#, GetConnection failed because a pool timeout occurred and all retries were exhausted.");
                 }
 
                 // exhausted all retries or timed out - give up
@@ -438,9 +438,9 @@ namespace Microsoft.Data.ProviderBase
             // however, don't rebuild connectionOptions if no pooling is involved - let new connections do that work
             if (connectionPoolGroup.IsDisabled && (null != connectionPoolGroup.PoolGroupOptions))
             {
-                if (Log.IsTraceEnabled())
+                if (SqlClientEventSource.Log.IsTraceEnabled())
                 {
-                    Log.Trace($"<prov.DbConnectionFactory.GetConnectionPool|RES|INFO|CPOOL> {ObjectID}#, DisabledPoolGroup={connectionPoolGroup.ObjectID}#");
+                    SqlClientEventSource.Log.Trace($"<prov.DbConnectionFactory.GetConnectionPool|RES|INFO|CPOOL> {ObjectID}#, DisabledPoolGroup={connectionPoolGroup.ObjectID}#");
                 }
 
                 // reusing existing pool option in case user originally used SetConnectionPoolOptions
@@ -571,10 +571,10 @@ namespace Microsoft.Data.ProviderBase
 
         private void PruneConnectionPoolGroups(object state)
         {
-            if (Log.IsAdvanceTraceOn())
+            if (SqlClientEventSource.Log.IsAdvanceTraceOn())
             {
                 // when debugging this method, expect multiple threads at the same time
-                Log.Trace($"<prov.DbConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> {ObjectID}#");
+                SqlClientEventSource.Log.Trace($"<prov.DbConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> {ObjectID}#");
             }
 
             // First, walk the pool release list and attempt to clear each
@@ -596,9 +596,9 @@ namespace Microsoft.Data.ProviderBase
                             {
                                 _poolsToRelease.Remove(pool);
 
-                                if (Log.IsAdvanceTraceOn())
+                                if (SqlClientEventSource.Log.IsAdvanceTraceOn())
                                 {
-                                    Log.Trace($"<prov.DbConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> { ObjectID}#, ReleasePool={pool.ObjectID}#");
+                                    SqlClientEventSource.Log.Trace($"<prov.DbConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> { ObjectID}#, ReleasePool={pool.ObjectID}#");
                                 }
 
                                 PerformanceCounters.NumberOfInactiveConnectionPools.Decrement();
@@ -626,9 +626,9 @@ namespace Microsoft.Data.ProviderBase
                             {
                                 _poolGroupsToRelease.Remove(poolGroup);
 
-                                if (Log.IsAdvanceTraceOn())
+                                if (SqlClientEventSource.Log.IsAdvanceTraceOn())
                                 {
-                                    Log.Trace($"<prov.DbConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> {ObjectID}#, ReleasePoolGroup={poolGroup.ObjectID}#");
+                                    SqlClientEventSource.Log.Trace($"<prov.DbConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> {ObjectID}#, ReleasePoolGroup={poolGroup.ObjectID}#");
                                 }
 
                                 PerformanceCounters.NumberOfInactiveConnectionPoolGroups.Decrement();
@@ -696,9 +696,9 @@ namespace Microsoft.Data.ProviderBase
         internal void QueuePoolGroupForRelease(DbConnectionPoolGroup poolGroup)
         {
             Debug.Assert(null != poolGroup, "null poolGroup?");
-            if (Log.IsTraceEnabled())
+            if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                Log.Trace($"<prov.DbConnectionFactory.QueuePoolGroupForRelease|RES|INFO|CPOOL> {ObjectID}#, poolGroup={poolGroup.ObjectID}#");
+                SqlClientEventSource.Log.Trace($"<prov.DbConnectionFactory.QueuePoolGroupForRelease|RES|INFO|CPOOL> {ObjectID}#, poolGroup={poolGroup.ObjectID}#");
             }
 
             lock (_poolGroupsToRelease)
