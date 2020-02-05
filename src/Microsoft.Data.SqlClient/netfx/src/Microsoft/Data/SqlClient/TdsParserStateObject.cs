@@ -15,7 +15,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
 
-
 namespace Microsoft.Data.SqlClient
 {
     sealed internal class LastIOTimer

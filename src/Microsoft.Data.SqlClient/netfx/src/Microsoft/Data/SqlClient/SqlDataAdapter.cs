@@ -9,7 +9,6 @@ using System.Data.Common;
 using System.Diagnostics;
 using Microsoft.Data.Common;
 
-
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/SqlDataAdapter/*' />

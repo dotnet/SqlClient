@@ -4,10 +4,8 @@
 
 using System.Diagnostics;
 
-
 namespace Microsoft.Data.SqlClient.Server
 {
-
     internal class SmiEventSink_Default : SmiEventSink
     {
 

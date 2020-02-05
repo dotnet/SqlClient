@@ -11,7 +11,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.Data.Common;
 
-
 namespace Microsoft.Data.SqlClient
 {
     internal sealed class SqlCommandSet

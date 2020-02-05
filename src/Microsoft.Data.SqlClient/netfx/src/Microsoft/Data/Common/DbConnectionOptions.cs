@@ -631,7 +631,7 @@ namespace Microsoft.Data.Common
 
             string realkeyname = ((null != synonyms) ? (string)synonyms[keyname] : keyname);
 
-            if (SqlClient.SqlClientEventSource.Log.IsTraceEnabled())
+            if (SqlClientEventSource.Log.IsTraceEnabled())
             {
                 if ((KEY.Password != realkeyname) && (SYNONYM.Pwd != realkeyname))
                 { // don't trace passwords ever!

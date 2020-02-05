@@ -8,7 +8,6 @@ using System.Diagnostics;
 using System.Threading;
 using Microsoft.Data.Common;
 
-
 namespace Microsoft.Data.SqlClient
 {
     // This is a singleton instance per AppDomain that acts as the notification dispatcher for

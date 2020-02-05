@@ -8,7 +8,6 @@ using System.Diagnostics;
 using System.Threading;
 using Microsoft.Data.Common;
 
-
 namespace Microsoft.Data.SqlClient
 {
     internal enum TransactionState

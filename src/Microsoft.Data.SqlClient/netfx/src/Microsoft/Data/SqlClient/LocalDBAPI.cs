@@ -14,7 +14,6 @@ using System.Text;
 using System.Threading;
 using Microsoft.Data.SqlClient;
 
-
 namespace Microsoft.Data
 {
 

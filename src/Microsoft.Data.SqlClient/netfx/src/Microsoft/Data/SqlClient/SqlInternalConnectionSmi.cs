@@ -8,12 +8,10 @@ using System.Data.Common;
 using System.Diagnostics;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Server;
-
 using SysTx = System.Transactions;
 
 namespace Microsoft.Data.SqlClient
 {
-
     sealed internal class SqlInternalConnectionSmi : SqlInternalConnection
     {
 
