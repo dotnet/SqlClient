@@ -1,13 +1,17 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
-
+[assembly: System.CLSCompliant(true)]
 namespace Microsoft.Data
 {
     /// <include file='..\..\..\..\doc\snippets\Microsoft.Data\OperationAbortedException.xml' path='docs/members[@name="OperationAbortedException"]/OperationAbortedException/*' />
+    [System.Serializable]
     public sealed partial class OperationAbortedException : System.SystemException
     {
         internal OperationAbortedException() { }
+
+        private OperationAbortedException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) { }
+
     }
 }
 namespace Microsoft.Data.Sql
@@ -27,6 +31,7 @@ namespace Microsoft.Data.Sql
         public string UserData { get { throw null; } set { } }
     }
 }
+
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/ApplicationIntent.xml' path='docs/members[@name="ApplicationIntent"]/ApplicationIntent/*'/>
@@ -1315,9 +1320,12 @@ namespace Microsoft.Data.SqlClient
         public System.Collections.IEnumerator GetEnumerator() { throw null; }
     }
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/SqlException/*'/>
+    [System.Serializable]
     public sealed partial class SqlException : System.Data.Common.DbException
     {
         internal SqlException() { }
+        private SqlException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) { }
+
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Class/*'/>
         public byte Class { get { throw null; } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/ClientConnectionId/*'/>
@@ -1708,10 +1716,14 @@ namespace Microsoft.Data.SqlClient.Server
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/IBinarySerialize.xml' path='docs/members[@name="IBinarySerialize"]/Write/*'/>
         void Write(System.IO.BinaryWriter w);
     }
+
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/InvalidUdtException.xml' path='docs/members[@name="InvalidUdtException"]/InvalidUdtException/*'/>
+    [System.Serializable]
     public sealed partial class InvalidUdtException : System.SystemException
     {
         internal InvalidUdtException() { }
+        private InvalidUdtException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) { }
+
     }
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SqlDataRecord/*'/>
     public partial class SqlDataRecord : System.Data.IDataRecord

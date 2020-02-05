@@ -4084,7 +4084,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Error occured when generating enclave package. Attestation Protocol has not been specified in the connection string, but the query requires enclave computations..
+        ///   Looks up a localized string similar to Error occurred when generating enclave package. Attestation Protocol has not been specified in the connection string, but the query requires enclave computations..
         /// </summary>
         internal static string TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage {
             get {
@@ -4840,7 +4840,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Error occured when generating enclave package. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is &apos;{0}&apos;..
+        ///   Looks up a localized string similar to Error occurred when generating enclave package. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is &apos;{0}&apos;..
         /// </summary>
         internal static string TCE_NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage {
             get {
@@ -4849,7 +4849,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Error occured when reading &apos;{0}&apos; resultset. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is &apos;{1}&apos;..
+        ///   Looks up a localized string similar to Error occurred when reading &apos;{0}&apos; resultset. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is &apos;{1}&apos;..
         /// </summary>
         internal static string TCE_NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe {
             get {

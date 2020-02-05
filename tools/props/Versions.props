@@ -1,10 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="Latest" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <AssemblyFileVersion Condition="'$(AssemblyFileVersion)' == ''">1.0.0.0</AssemblyFileVersion>
     <AssemblyVersion>$(AssemblyFileVersion)</AssemblyVersion>
     <MicrosoftDotNetGenAPIPackageVersion>1.0.0-beta.18578.2</MicrosoftDotNetGenAPIPackageVersion>
     <NugetPackageVersion Condition="'$(NugetPackageVersion)' == ''">2.0.0-dev</NugetPackageVersion>
     <Version>$(NugetPackageVersion)</Version>
+  </PropertyGroup>
+  <!-- NetFx project dependencies -->
+  <PropertyGroup>
+    <MicrosoftDataSqlClientSniVersion>1.1.0</MicrosoftDataSqlClientSniVersion>
+  </PropertyGroup>
+  <!-- NetFx and NetCore project dependencies -->
+  <PropertyGroup>
+    <MicrosoftIdentityClientVersion>4.7.1</MicrosoftIdentityClientVersion>
+    <MicrosoftIdentityModelProtocolsOpenIdConnectVersion>5.6.0</MicrosoftIdentityModelProtocolsOpenIdConnectVersion>
+    <MicrosoftIdentityModelJsonWebTokensVersion>5.6.0</MicrosoftIdentityModelJsonWebTokensVersion>
+    <SystemBuffersVersion>4.5.0</SystemBuffersVersion>
+    <SystemIOVersion>4.3.0</SystemIOVersion>
+  </PropertyGroup>
+  <!-- NetCore project dependencies -->
+  <PropertyGroup>
+    <MicrosoftWin32RegistryVersion>4.7.0</MicrosoftWin32RegistryVersion>
+    <RuntimeNativeSystemDataSqlClientSNIVersion>4.4.0</RuntimeNativeSystemDataSqlClientSNIVersion>
+    <SystemConfigurationConfigurationManagerVersion>4.7.0</SystemConfigurationConfigurationManagerVersion>
+    <SystemDiagnosticsDiagnosticSourceVersion>4.7.0</SystemDiagnosticsDiagnosticSourceVersion>
+    <SystemDiagnosticsPerformanceCounterVersion>4.7.0</SystemDiagnosticsPerformanceCounterVersion>
+    <SystemGlobalizationVersion>4.3.0</SystemGlobalizationVersion>
+    <SystemMemoryVersion>4.5.3</SystemMemoryVersion>
+    <SystemResourcesResourceManagerVersion>4.3.0</SystemResourcesResourceManagerVersion>
+    <SystemRuntimeCachingVersion>4.7.0</SystemRuntimeCachingVersion>
+    <SystemSecurityCryptographyCngVersion>4.7.0</SystemSecurityCryptographyCngVersion>
+    <SystemSecurityPermissionsVersion>4.7.0</SystemSecurityPermissionsVersion>
+    <SystemSecurityPrincipalWindowsVersion>4.7.0</SystemSecurityPrincipalWindowsVersion>
+    <SystemTextEncodingCodePagesVersion>4.7.0</SystemTextEncodingCodePagesVersion>
+    <SystemThreadingTasksVersion>4.3.0</SystemThreadingTasksVersion>
+    <SystemXmlReaderWriterVersion>4.3.1</SystemXmlReaderWriterVersion>
+  </PropertyGroup>
+  <!-- AKV Provider project dependencies -->
+  <PropertyGroup>
+    <MicrosoftAzureKeyVaultVersion>[3.0.4,4.0.0)</MicrosoftAzureKeyVaultVersion>
+    <MicrosoftAzureKeyVaultWebKeyVersion>[3.0.4,4.0.0)</MicrosoftAzureKeyVaultWebKeyVersion>
+    <MicrosoftRestClientRuntimeVersion>[2.3.20,3.0.0)</MicrosoftRestClientRuntimeVersion>
+    <MicrosoftRestClientRuntimeAzureVersion>[3.3.19,4.0.0)</MicrosoftRestClientRuntimeAzureVersion>
+  </PropertyGroup>
+  <!-- Test Project Dependencies -->
+  <PropertyGroup>
+    <MicrosoftDotNetPlatformAbstractionsVersion>3.1.1</MicrosoftDotNetPlatformAbstractionsVersion>
+    <MicrosoftIdentityModelClientsActiveDirectoryVersion>5.2.6</MicrosoftIdentityModelClientsActiveDirectoryVersion>
+    <MicrosoftNETTestSdkVersion>15.9.0</MicrosoftNETTestSdkVersion>
+    <MicrosoftWindowsCompatibilityVersion>3.1.0</MicrosoftWindowsCompatibilityVersion>
+    <NewtonsoftJsonVersion>12.0.3</NewtonsoftJsonVersion>
+    <SystemLinqExpressionsVersion>4.3.0</SystemLinqExpressionsVersion>
+    <SystemDataOdbcVersion21>4.5.0</SystemDataOdbcVersion21>
+    <SystemDataOdbcVersion>4.6.0</SystemDataOdbcVersion>
+    <SystemNetSocketsVersion>4.3.0</SystemNetSocketsVersion>
+    <XunitVersion>2.4.1</XunitVersion>
   </PropertyGroup>
 </Project>
