@@ -79,7 +79,7 @@ namespace Microsoft.Data.SqlClient
 
         // Lock to control setting of _CustomColumnEncryptionKeyStoreProviders
         private static readonly object _CustomColumnEncryptionKeyProvidersLock = new object();
-        // statuc of invariant culture environment check
+        // status of invariant culture environment check
         private static CultureCheckState _cultureCheckState;
 
         /// <summary>
@@ -1416,19 +1416,17 @@ namespace Microsoft.Data.SqlClient
         {
             SqlConnectionString connectionOptions = (SqlConnectionString)ConnectionOptions;
 
-            CultureCheckState cultureCheckState = _cultureCheckState;
-            if (cultureCheckState != CultureCheckState.Standard)
+            if (_cultureCheckState != CultureCheckState.Standard)
             {
                 // .NET Core 2.0 and up supports a Globalization Invariant Mode to reduce the size of
                 // required libraries for applications which don't need globalization support. SqlClient
                 // requires those libraries for core functionality and will throw exceptions later if they
                 // are not present. Throwing on open with a meaningful message helps identify the issue.
-                if (cultureCheckState == CultureCheckState.Unknown)
+                if (_cultureCheckState == CultureCheckState.Unknown)
                 {
-                    cultureCheckState = CultureInfo.GetCultureInfo("en-US").EnglishName.Contains("Invariant") ? CultureCheckState.Invariant : CultureCheckState.Standard;
-                    _cultureCheckState = cultureCheckState;
+                    _cultureCheckState = CultureInfo.GetCultureInfo("en-US").EnglishName.Contains("Invariant") ? CultureCheckState.Invariant : CultureCheckState.Standard;
                 }
-                if (cultureCheckState == CultureCheckState.Invariant)
+                if (_cultureCheckState == CultureCheckState.Invariant)
                 {
                     throw SQL.GlobalizationInvariantModeNotSupported();
                 }
