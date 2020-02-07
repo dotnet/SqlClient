@@ -2,52 +2,52 @@
 	<members name="SqlClientEventSource">
 		<SqlClientEventSource>
             <summary>
-               This class implements <see cref="System.Diagnostics.Tracing.EventSource" /> parent class.
+               This class implements <see cref="System.Diagnostics.Tracing.EventSource" /> class and provides ability to create events for event tracing for Windows(ETW).
             </summary>
         </SqlClientEventSource>
        <Log>
-       <summary>this is the singleton instantiation of the SqlClientEventSource class.</summary>
+       <summary>This is the singleton instance of the <see cref="Microsoft.Data.SqlClient.SqlClientEventSource" /> class.</summary>
        </Log>
        <members name="Keywords">
         <Keywords>
-        <summary>This class defines the nested class of Keywords for <see cref="System.Diagnostics.Tracing.EventSource" />.</summary>
+        <summary>This class provides supported Keywords from an EventSource consumer point of view, but these definitions are not needed outside this class.</summary>
         </Keywords>
         <Trace>
-        <summary>Representing possible group of events for Tracing.</summary>
+        <summary>Enabling this event turns on the 'Trace' events for listening <see cref="System.Diagnostics.Tracing.EventListener" /> implementation.</summary>
         </Trace>
         <value>1</value>
         <Scope>
-        <summary>Reperesnting possible group of events for Scope.</summary>
+        <summary>Enabling this event turns on the 'Scope' events for listening <see cref="System.Diagnostics.Tracing.EventListener" /> implementation.</summary>
         <value>2</value>
         </Scope>
         <NotificationTrace>
-            <summary>Representing possible froup of events for Notofocation Trace.</summary>
+            <summary>Enabling this event turns on the 'NotificationTrace' events for listening <see cref="System.Diagnostics.Tracing.EventListener" /> implementation.</summary>
             <value>4</value>
         </NotificationTrace>
         <Pooling>
-            <summary>Representing possible group of events for Pooling.</summary>
+            <summary>Enabling this event turns on the 'Pooling' events for listening <see cref="System.Diagnostics.Tracing.EventListener" /> implementation.</summary>
             <value>8</value>
         </Pooling>
         <Correlation>
-            <summary>Representing possible group of events for Correlation.</summary>
+            <summary>Enabling this event turns on the 'Correlation' events for listening <see cref="System.Diagnostics.Tracing.EventListener" /> implementation.</summary>
             <value>16</value>
         </Correlation>
         <NotificationScope>
-            <summary>Representing possible group of events for NotificationScope</summary>
+            <summary>Enabling this event turns on the 'NotificationScope' events for listening <see cref="System.Diagnostics.Tracing.EventListener" /> implementation.</summary>
             <value>32</value>
         </NotificationScope>
         <PoolerScope>
-            <summary>Representing possible group of events for PoolerScope.</summary>
+            <summary>Enabling this event turns on the 'PoolerScope' events for listening <see cref="System.Diagnostics.Tracing.EventListener" /> implementation.</summary>
             <value>64</value>
         </PoolerScope>
         <PoolerTrace>
-            <summary>Representing possible group of events for PoolerTrace.</summary>
+            <summary>Enabling this event turns on 'PoolerTrace' events for listening <see cref="System.Diagnostics.Tracing.EventListener" /> implementation.</summary>
             <value>128</value>
         </PoolerTrace>
-        <GetAll>
-            <summary></summary>
-            <value></value>
-        </GetAll>
+        <Advanced>
+            <summary>Enabling this event turns on 'Advanced' events for listening <see cref="System.Diagnostics.Tracing.EventListener" /> implementation.</summary>
+            <value>512</value>
+        </Advanced>
        </members>
     </members>
 </docs>

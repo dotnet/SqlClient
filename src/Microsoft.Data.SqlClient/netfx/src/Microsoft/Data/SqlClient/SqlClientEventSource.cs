@@ -54,11 +54,8 @@ namespace Microsoft.Data.SqlClient
             /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientEventSource.xml' path='docs/members[@name="SqlClientEventSource"]/members[@name="Keywords"]/PoolerTrace/*' />
             public const EventKeywords PoolerTrace = (EventKeywords)128;
 
-            /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientEventSource.xml' path='docs/members[@name="SqlClientEventSource"]/members[@name="Keywords"]/GetAll/*' />
-            public static EventKeywords GetAll()
-            {
-                return Trace | Scope | NotificationTrace | Pooling | Correlation | NotificationScope | PoolerScope;
-            }
+            /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientEventSource.xml' path='docs/members[@name="SqlClientEventSource"]/members[@name="Keywords"]/Advanced/*' />
+            public const EventKeywords Advanced = (EventKeywords)512;
         }
 
         [NonEvent]
@@ -86,7 +83,7 @@ namespace Microsoft.Data.SqlClient
         internal bool IsPoolerTraceEnabled() => SqlClientEventSource.Log.IsEnabled(EventLevel.Informational, Keywords.PoolerTrace);
 
         [NonEvent]
-        internal bool IsAdvanceTraceOn() => SqlClientEventSource.Log.IsEnabled(EventLevel.LogAlways, EventKeywords.All);
+        internal bool IsAdvanceTraceOn() => SqlClientEventSource.Log.IsEnabled(EventLevel.LogAlways, Keywords.Advanced);
 
         [Event(TraceEventId, Level = EventLevel.Informational, Keywords = Keywords.Trace)]
         internal void Trace(string message)
