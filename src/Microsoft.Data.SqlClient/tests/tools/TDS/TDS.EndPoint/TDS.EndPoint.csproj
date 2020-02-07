@@ -3,9 +3,8 @@
     <RootNamespace>Microsoft.SqlServer.TDS.EndPoint</RootNamespace>
     <AssemblyName>Microsoft.SqlServer.TDS.EndPoint</AssemblyName>
     <ProjectGuid>{1FF891B4-D3DE-4CCE-887C-CB48F5351A45}</ProjectGuid>
-    <ClsCompliant>false</ClsCompliant>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <Configurations>Debug;Release;net46-Release;net46-Debug;netcoreapp2.1-Debug;netcoreapp2.1-Release</Configurations>
+    <Configurations>Debug;Release;net46-Release;net46-Debug;netcoreapp2.1-Debug;netcoreapp2.1-Release;netcoreapp3.1-Debug;netcoreapp3.1-Release</Configurations>
     <Platforms>AnyCPU;x86;x64</Platforms>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)\$(AssemblyName)</IntermediateOutputPath>
     <OutputPath>$(BinFolder)$(Configuration).$(Platform)\$(AssemblyName)</OutputPath>
@@ -42,14 +41,14 @@
     <Compile Include="TDSServerEndPointConnection.cs" />
     <Compile Include="TDSServerParser.cs" />
   </ItemGroup>
-  <ItemGroup Condition=" '$(TargetsWindows)' == 'true' ">
+  <ItemGroup Condition="'$(TargetsWindows)' == 'true'">
     <Compile Include="$(CommonPath)\Interop\Windows\Interop.Libraries.cs">
       <Link>Common\Interop\Windows\Interop.Libraries.cs</Link>
     </Compile>
     <Compile Include="SSPI\SSPIContext.Windows.cs" />
     <Compile Include="SSPI\SecurityWrapper.cs" />
   </ItemGroup>
-  <ItemGroup Condition=" '$(TargetsWindows)' != 'true' ">
+  <ItemGroup Condition="'$(TargetsWindows)' != 'true'">
     <Compile Include="SSPI\SSPIContext.Unix.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -58,6 +57,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="System.Security.Principal.Windows" Version="4.5.0" />
+    <PackageReference Include="System.Security.Principal.Windows" Version="$(SystemSecurityPrincipalWindowsVersion)" />
   </ItemGroup>
 </Project>

@@ -151,6 +151,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public static void ExceptionTests()
         {
+            // Added to avoid random failures of Pool exhaustion
+            SqlConnection.ClearAllPools();
+
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
 
             // tests improper server name thrown from constructor of tdsparser

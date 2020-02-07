@@ -62,6 +62,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             TestMARSSessionPooling("Case: RPC,  ExecuteReader, ConnectionClose", _testConnString, CommandType.StoredProcedure, ExecuteType.ExecuteReader, ReaderTestType.ConnectionClose, GCType.Wait);
         }
 
+        [ActiveIssue(11167)]
         [CheckConnStrSetupFact]
         public static void MarsExecuteReader_Text_WithGC()
         {

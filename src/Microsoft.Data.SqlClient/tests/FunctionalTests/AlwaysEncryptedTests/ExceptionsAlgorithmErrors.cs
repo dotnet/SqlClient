@@ -96,7 +96,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             // Zero out 4 bytes of authentication tag
             for (int i = 0; i < 4; i++)
             {
-                cipherText[i+1] = 0x00;
+                cipherText[i + 1] = 0x00;
             }
             TargetInvocationException e = Assert.Throws<TargetInvocationException>(() => Utility.DecryptDataUsingAED(cipherText, CertFixture.cek, Utility.CColumnEncryptionType.Deterministic));
             Assert.Matches(expectedMessage, e.InnerException.Message);
