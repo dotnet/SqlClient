@@ -36,7 +36,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [CheckConnStrSetupFact]
         public static void MultiQuerySchema()
         {
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
             using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 connection.Open();
@@ -65,7 +64,25 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        [CheckConnStrSetupFact]
+        public static void GetSchemaTable_returns_null_when_no_resultset()
+        {
+            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                connection.Open();
 
+                using (SqlCommand command = connection.CreateCommand())
+                {
+                    command.CommandText = "SELECT 1";
+                    using (SqlDataReader reader = command.ExecuteReader())
+                    {
+                        reader.NextResult();
+                        Assert.NotNull(reader.GetSchemaTable());
+                    }
+                }
+            }
+        }
+        
         // Checks for the IsColumnSet bit in the GetSchemaTable for Sparse columns
         [CheckConnStrSetupFact]
         public static void CheckSparseColumnBit()
@@ -77,15 +94,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // table name will be provided as an argument
             StringBuilder createBuilder = new StringBuilder("CREATE TABLE {0} ([ID] int PRIMARY KEY, [CSET] xml COLUMN_SET FOR ALL_SPARSE_COLUMNS NULL");
 
-            // TSQL to create the same table, but without the column set column and without sparse
-            // also, it has only 1024 columns, which is the server limit in this case
-            StringBuilder createNonSparseBuilder = new StringBuilder("CREATE TABLE {0} ([ID] int PRIMARY KEY");
-
             // TSQL to select all columns from the sparse table, without columnset one
             StringBuilder selectBuilder = new StringBuilder("SELECT [ID]");
-
-            // TSQL to select all columns from the sparse table, with a limit of 1024 (for bulk-copy test)
-            StringBuilder selectNonSparseBuilder = new StringBuilder("SELECT [ID]");
 
             // add sparse columns
             for (int c = 0; c < sparseColumns; c++)
@@ -98,7 +108,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // table name provided as an argument
             selectBuilder.Append(" FROM {0}");
 
-            string selectStatementFormat = selectBuilder.ToString();
             string createStatementFormat = createBuilder.ToString();
 
             // add a row with nulls only
