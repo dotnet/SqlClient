@@ -3007,6 +3007,7 @@ namespace Microsoft.Data.SqlClient
                         throw SQL.AttestationProtocolNotSupported();
                     }
                 }
+
                 // Check if enclave attestation url was specified and server does not return an enclave type and we aren't going to be routed to another server.
                 if (!string.IsNullOrWhiteSpace(_connHandler.ConnectionOptions.EnclaveAttestationUrl))
                 {
