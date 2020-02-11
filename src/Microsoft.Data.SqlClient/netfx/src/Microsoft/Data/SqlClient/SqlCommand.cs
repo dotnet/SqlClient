@@ -1036,7 +1036,9 @@ namespace Microsoft.Data.SqlClient
             }
 
             if (SqlClientEventSource.Log.IsCorrelationEnabled())
+            {
                 SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.Prepare|API|Correlation> ObjectID{0}#, ActivityID {1}", ObjectID);
+            }
 
             statistics = SqlStatistics.StartTimer(Statistics);
 
@@ -1470,7 +1472,7 @@ namespace Microsoft.Data.SqlClient
                 scopeID = SqlClientEventSource.Log.ScopeEnter("<sc.SqlCommand.ExecuteNonQuery|API> {0}#", ObjectID);
             }
 
-            if (SqlClientEventSource.Log.IsPoolerTraceEnabled())
+            if (SqlClientEventSource.Log.IsCorrelationEnabled())
             {
                 SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.ExecuteNonQuery|API|Correlation> ObjectID{0}#, ActivityID {1}", ObjectID);
             }
@@ -2032,6 +2034,7 @@ namespace Microsoft.Data.SqlClient
 
                         RunExecuteNonQuerySmi(sendToPipe);
                     }
+
                     //Always Encrypted generally operates only on parameterized queries. However enclave based Always encrypted also supports unparameterized queries
                     //We skip this block for enclave based always encrypted so that we can make a call to SQL Server to get the encryption information
                     else if (!ShouldUseEnclaveBasedWorkflow && !BatchRPCMode && (System.Data.CommandType.Text == this.CommandType) && (0 == GetParameterCount(_parameters)))
@@ -2055,9 +2058,9 @@ namespace Microsoft.Data.SqlClient
                         task = RunExecuteNonQueryTds(methodName, async, timeout, asyncWrite);
                     }
                     else
-                    { // otherwise, use a full-fledged execute that can handle params and stored procs
+                    { 
+                        // otherwise, use a full-fledged execute that can handle params and stored procs
                         Debug.Assert(!sendToPipe, "trying to send non-context command to pipe");
-
                         if (SqlClientEventSource.Log.IsTraceEnabled())
                         {
                             SqlClientEventSource.Log.Trace("<sc.SqlCommand.ExecuteNonQuery|INFO> {0}#, Command executed as RPC.", ObjectID);
@@ -2466,7 +2469,6 @@ namespace Microsoft.Data.SqlClient
         new public SqlDataReader ExecuteReader()
         {
             SqlStatistics statistics = null;
-
             long scopeID = 0;
             if (SqlClientEventSource.Log.IsScopeEnabled())
             {
