@@ -484,7 +484,7 @@ and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 				<format type="text/markdown"><![CDATA[
 
 ## Remarks
-This value is incremented during the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.SqlRowsCopied> event and does not imply that these many rows have been sent to the server or committed.
+This value is incremented during the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.SqlRowsCopied> event and does not imply that this number of rows has been sent to the server or committed.
 
 During the execution of a bulk copy operation, this value can be accessed, but it cannot be changed. Any attempt to change it will throw an <xref:System.InvalidOperationException>.
 ]]></format>
