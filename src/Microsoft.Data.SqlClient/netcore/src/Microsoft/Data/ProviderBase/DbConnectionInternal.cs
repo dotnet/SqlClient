@@ -252,7 +252,7 @@ namespace Microsoft.Data.ProviderBase
                 // Lock to prevent race condition with cancellation
                 lock (this)
                 {
-                    object lockToken = ObtainAdditionalLocksForClose();
+                    bool lockToken = ObtainAdditionalLocksForClose();
                     try
                     {
                         PrepareForCloseConnection();

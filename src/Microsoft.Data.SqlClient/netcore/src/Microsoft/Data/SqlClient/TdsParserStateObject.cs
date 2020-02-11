@@ -35,6 +35,8 @@ namespace Microsoft.Data.SqlClient
 
         private const int AttentionTimeoutSeconds = 5;
 
+        private static readonly ContextCallback s_readAdyncCallbackComplete = ReadAsyncCallbackComplete;
+
         // Ticks to consider a connection "good" after a successful I/O (10,000 ticks = 1 ms)
         // The resolution of the timer is typically in the range 10 to 16 milliseconds according to msdn.
         // We choose a value that is smaller than the likely timer resolution, but
@@ -2824,7 +2826,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (_executionContext != null)
                         {
-                            ExecutionContext.Run(_executionContext, (state) => source.TrySetResult(null), null);
+                            ExecutionContext.Run(_executionContext, s_readAdyncCallbackComplete, source);
                         }
                         else
                         {
@@ -2846,6 +2848,12 @@ namespace Microsoft.Data.SqlClient
 
                 AssertValidState();
             }
+        }
+
+        private static void ReadAsyncCallbackComplete(object state)
+        {
+            TaskCompletionSource<object> source = (TaskCompletionSource<object>)state;
+            source.TrySetResult(null);
         }
 
         protected abstract bool CheckPacket(PacketHandle packet, TaskCompletionSource<object> source);
