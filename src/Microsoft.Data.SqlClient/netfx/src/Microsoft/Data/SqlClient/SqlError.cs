@@ -43,7 +43,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (SqlClientEventSource.Log.IsTraceEnabled())
                 {
-                    SqlClientEventSource.Log.Trace($"<sc.SqlError.SqlError|ERR> infoNumber={infoNumber}, errorState={(int)errorState}, errorClass={(int)errorClass}, errorMessage='{errorMessage}', procedure='{procedure ?? "None"}', lineNumber={(int)lineNumber}");
+                    SqlClientEventSource.Log.Trace("<sc.SqlError.SqlError|ERR> infoNumber={0}, errorState={1}, errorClass={2}, errorMessage='{3}', procedure='{4}', lineNumber={5}", infoNumber, (int)errorState, (int)errorClass, errorMessage, procedure ?? "None", (int)lineNumber);
                 }
             }
             this.win32ErrorCode = 0;

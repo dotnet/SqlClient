@@ -34,7 +34,7 @@ namespace Microsoft.Data
                 {
                     try
                     {
-                        SqlClientEventSource.Log.Trace($"{trace}, StackTrace='{Environment.StackTrace}'");
+                        SqlClientEventSource.Log.Trace(", StackTrace='{0}'", Environment.StackTrace);
                     }
                     catch (System.Security.SecurityException)
                     {

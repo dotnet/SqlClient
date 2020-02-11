@@ -472,7 +472,7 @@ namespace Microsoft.Data.Common
 #if DEBUG
             if (SqlClientEventSource.Log.IsAdvanceTraceOn())
             {
-                SqlClientEventSource.Log.Trace($"<comm.DBConnectionString|INFO|ADV> Restrictions='{restrictions}'");
+                SqlClientEventSource.Log.Trace("<comm.DBConnectionString|INFO|ADV> Restrictions='{0}'",restrictions);
             }
 #endif
             List<string> restrictionValues = new List<string>();
@@ -491,7 +491,7 @@ namespace Microsoft.Data.Common
 #if DEBUG
                     if (SqlClientEventSource.Log.IsAdvanceTraceOn())
                     {
-                        SqlClientEventSource.Log.Trace($"<comm.DBConnectionString|INFO|ADV> KeyName='{keyname}'");
+                        SqlClientEventSource.Log.Trace("<comm.DBConnectionString|INFO|ADV> KeyName='{0}'",keyname);
                     }
 #endif
                     string realkeyname = ((null != synonyms) ? (string)synonyms[keyname] : keyname); // MDAC 85144

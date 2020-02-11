@@ -145,7 +145,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (SqlClientEventSource.Log.IsTraceEnabled())
                 {
-                    SqlClientEventSource.Log.Trace($"<sc.SqlDataAdapter.set_UpdateBatchSize|API> {ObjectID}#, {value}");
+                    SqlClientEventSource.Log.Trace("<sc.SqlDataAdapter.set_UpdateBatchSize|API> {0}#, {1}", ObjectID, value);
                 }
             }
         }
@@ -255,7 +255,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(null != _commandSet && (0 < _commandSet.CommandCount), "no commands");
 
             if (SqlClientEventSource.Log.IsCorrelationEnabled())
-                SqlClientEventSource.Log.CorrelationTrace($"<sc.SqlDataAdapter.ExecuteBatch|Info|Correlation> ObjectID{ObjectID}#, ActivityID %ls");
+                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlDataAdapter.ExecuteBatch|Info|Correlation> ObjectID{0}#, ActivityID {1}", ObjectID);
 
             return _commandSet.ExecuteNonQuery();
         }
@@ -281,7 +281,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                SqlClientEventSource.Log.Trace($"<sc.SqlDataAdapter.InitializeBatching|API> {ObjectID}#");
+                SqlClientEventSource.Log.Trace("<sc.SqlDataAdapter.InitializeBatching|API> {0}#", ObjectID);
             }
             _commandSet = new SqlCommandSet();
             SqlCommand command = SelectCommand;

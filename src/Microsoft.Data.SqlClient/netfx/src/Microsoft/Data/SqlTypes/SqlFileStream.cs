@@ -66,9 +66,9 @@ namespace Microsoft.Data.SqlTypes
             )
         {
             long scopeID = 0;
-            if (SqlClientEventSource.Log.IsEnabled())
+            if (SqlClientEventSource.Log.IsScopeEnabled())
             {
-                scopeID = SqlClientEventSource.Log.ScopeEnter($"<sc.SqlFileStream.ctor|API> { ObjectID}# access={(int)access} options={(int)options} path='{path}'");
+                scopeID = SqlClientEventSource.Log.ScopeEnter("<sc.SqlFileStream.ctor|API> {0}# access={1} options={2} path='{3}'", ObjectID, (int)access, (int)options, path);
             }
 
             try
@@ -720,8 +720,8 @@ namespace Microsoft.Data.SqlTypes
                 {
                     if (SqlClientEventSource.Log.IsTraceEnabled())
                     {
-                        SqlClientEventSource.Log.Trace($"<sc.SqlFileStream.OpenSqlFileStream|ADV> {ObjectID}#, desiredAccess=0x{(int)nDesiredAccess}, allocationSize={allocationSize}, " +
-                            $"fileAttributes=0x%{0}, shareAccess=0x{(int)shareAccess}, dwCreateDisposition=0x{dwCreateDisposition}, createOptions=0x{ dwCreateOptions}");
+                        SqlClientEventSource.Log.Trace("<sc.SqlFileStream.OpenSqlFileStream|ADV> {0}#, desiredAccess=0x{1}, allocationSize={2}, " +
+                           "fileAttributes=0x{3}, shareAccess=0x{4}, dwCreateDisposition=0x{5}, createOptions=0x{ dwCreateOptions}", ObjectID, (int)nDesiredAccess, allocationSize, 0, (int)shareAccess, dwCreateDisposition);
                     }
 
                     retval = UnsafeNativeMethods.NtCreateFile(out hFile, nDesiredAccess,

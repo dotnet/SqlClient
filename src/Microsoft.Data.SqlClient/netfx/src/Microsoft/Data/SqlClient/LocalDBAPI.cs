@@ -123,7 +123,7 @@ namespace Microsoft.Data
 
                                 if (SqlClientEventSource.Log.IsTraceEnabled())
                                 {
-                                    SqlClientEventSource.Log.Trace($"<sc.LocalDBAPI.LocalDBCreateInstance> GetProcAddress for LocalDBCreateInstance error 0x{hResult}");
+                                    SqlClientEventSource.Log.Trace("<sc.LocalDBAPI.LocalDBCreateInstance> GetProcAddress for LocalDBCreateInstance error 0x{0}", hResult);
                                 }
 
                                 throw CreateLocalDBException(errorMessage: StringsHelper.GetString("LocalDB_MethodNotFound"));
@@ -170,7 +170,7 @@ namespace Microsoft.Data
 
                                 if (SqlClientEventSource.Log.IsTraceEnabled())
                                 {
-                                    SqlClientEventSource.Log.Trace($"<sc.LocalDBAPI.LocalDBFormatMessage> GetProcAddress for LocalDBFormatMessage error 0x{hResult}");
+                                    SqlClientEventSource.Log.Trace("<sc.LocalDBAPI.LocalDBFormatMessage> GetProcAddress for LocalDBFormatMessage error 0x{0}", hResult);
                                 }
 
                                 throw CreateLocalDBException(errorMessage: StringsHelper.GetString("LocalDB_MethodNotFound"));
@@ -361,7 +361,7 @@ namespace Microsoft.Data
 
             if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                SqlClientEventSource.Log.Trace($"<sc.LocalDBAPI.CreateLocalDBInstance> Starting creation of instance {instance} version {instanceInfo.version}");
+                SqlClientEventSource.Log.Trace("<sc.LocalDBAPI.CreateLocalDBInstance> Starting creation of instance {0} version {1}", instance, instanceInfo.version);
             }
 
             if (hr < 0)
@@ -371,7 +371,7 @@ namespace Microsoft.Data
 
             if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                SqlClientEventSource.Log.Trace($"<sc.LocalDBAPI.CreateLocalDBInstance> Finished creation of instance {instance}");
+                SqlClientEventSource.Log.Trace("<sc.LocalDBAPI.CreateLocalDBInstance> Finished creation of instance {0}", instance);
             }
             instanceInfo.created = true; // mark instance as created
         } // CreateLocalDbInstance

@@ -12,7 +12,7 @@ namespace Microsoft.Data.SqlClient
     using System.Threading;
     using Microsoft.Data.Common;
     using Microsoft.Data.ProviderBase;
-    
+
     using SysTx = System.Transactions;
 
     public sealed partial class SqlConnection : DbConnection
@@ -89,7 +89,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                SqlClientEventSource.Log.Trace($"<prov.DbConnectionHelper.ConnectionString_Get|API> {ObjectID}#");
+                SqlClientEventSource.Log.Trace("<prov.DbConnectionHelper.ConnectionString_Get|API> {0}#", ObjectID);
             }
 
             bool hidePassword = InnerConnection.ShouldHidePassword;
@@ -139,7 +139,7 @@ namespace Microsoft.Data.SqlClient
 
             if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                SqlClientEventSource.Log.Trace($"<prov.DbConnectionHelper.ConnectionString_Set|API> {ObjectID}#, '{cstr}'");
+                SqlClientEventSource.Log.Trace("<prov.DbConnectionHelper.ConnectionString_Set|API> {0}#, '{1}'", ObjectID, cstr);
             }
         }
 
@@ -192,11 +192,11 @@ namespace Microsoft.Data.SqlClient
             {
                 if (e is OutOfMemoryException)
                 {
-                    SqlClientEventSource.Log.Trace($"<prov.DbConnectionHelper.Abort|RES|INFO|CPOOL> {ObjectID}#, Aborting operation due to asynchronous exception: {"OutOfMemory"}");
+                    SqlClientEventSource.Log.Trace("<prov.DbConnectionHelper.Abort|RES|INFO|CPOOL> {0}#, Aborting operation due to asynchronous exception: {'OutOfMemory'}", ObjectID);
                 }
                 else
                 {
-                    SqlClientEventSource.Log.Trace($"<prov.DbConnectionHelper.Abort|RES|INFO|CPOOL> {ObjectID}#, Aborting operation due to asynchronous exception: {e.ToString()}");
+                    SqlClientEventSource.Log.Trace("<prov.DbConnectionHelper.Abort|RES|INFO|CPOOL> {0}#, Aborting operation due to asynchronous exception: {1}", ObjectID, e.ToString());
                 }
             }
         }
@@ -214,7 +214,7 @@ namespace Microsoft.Data.SqlClient
             long scopeID = 0;
             if (SqlClientEventSource.Log.IsEnabled())
             {
-                scopeID = SqlClientEventSource.Log.ScopeEnter($"<prov.DbConnectionHelper.CreateDbCommand|API> {ObjectID}#");
+                scopeID = SqlClientEventSource.Log.ScopeEnter("<prov.DbConnectionHelper.CreateDbCommand|API> {0}#", ObjectID);
             }
 
             try
@@ -264,7 +264,7 @@ namespace Microsoft.Data.SqlClient
 
             if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                SqlClientEventSource.Log.Trace($"<prov.DbConnectionHelper.EnlistDistributedTransactionHelper|RES|TRAN> {ObjectID}#, Connection enlisting in a transaction.");
+                SqlClientEventSource.Log.Trace("<prov.DbConnectionHelper.EnlistDistributedTransactionHelper|RES|TRAN> {0}#, Connection enlisting in a transaction.", ObjectID);
             }
 
             SysTx.Transaction indigoTransaction = null;
@@ -294,7 +294,7 @@ namespace Microsoft.Data.SqlClient
 
             if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                SqlClientEventSource.Log.Trace($"<prov.DbConnectionHelper.EnlistTransaction|RES|TRAN> {ObjectID}#, Connection enlisting in a transaction.");
+                SqlClientEventSource.Log.Trace("<prov.DbConnectionHelper.EnlistTransaction|RES|TRAN> {0}#, Connection enlisting in a transaction.", ObjectID);
             }
 
             // If we're currently enlisted in a transaction and we were called

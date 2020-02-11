@@ -58,7 +58,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (SqlClientEventSource.Log.IsTraceEnabled())
                         {
-                            SqlClientEventSource.Log.Trace($"<sc.SqlConnectionPoolGroupProviderInfo|INFO> alias change detected. Clearing PoolGroup");
+                            SqlClientEventSource.Log.Trace("<sc.SqlConnectionPoolGroupProviderInfo|INFO> alias change detected. Clearing PoolGroup");
                         }
 
                         base.PoolGroup.Clear();
@@ -106,7 +106,7 @@ namespace Microsoft.Data.SqlClient
                 // TODO: will connections in progress somehow be active for two different datasources?
                 if (SqlClientEventSource.Log.IsTraceEnabled())
                 {
-                    SqlClientEventSource.Log.Trace($"<sc.SqlConnectionPoolGroupProviderInfo|INFO> Failover detected. failover partner='{actualFailoverPartner}'. Clearing PoolGroup");
+                    SqlClientEventSource.Log.Trace("<sc.SqlConnectionPoolGroupProviderInfo|INFO> Failover detected. failover partner='{0}'. Clearing PoolGroup", actualFailoverPartner);
                 }
 
                 base.PoolGroup.Clear();

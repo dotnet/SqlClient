@@ -637,11 +637,11 @@ namespace Microsoft.Data.Common
                 { // don't trace passwords ever!
                     if (null != keyvalue)
                     {
-                        SqlClientEventSource.Log.Trace($"<comm.DbConnectionOptions|INFO|ADV> KeyName='{keyname}', KeyValue='{keyvalue}'\n");
+                        SqlClientEventSource.Log.Trace("<comm.DbConnectionOptions|INFO|ADV> KeyName='{0}', KeyValue='{1}'", keyname, keyvalue);
                     }
                     else
                     {
-                        SqlClientEventSource.Log.Trace($"<comm.DbConnectionOptions|INFO|ADV> KeyName='{keyname}'\n");
+                        SqlClientEventSource.Log.Trace("<comm.DbConnectionOptions|INFO|ADV> KeyName='{0}'", keyname);
                     }
                 }
             }

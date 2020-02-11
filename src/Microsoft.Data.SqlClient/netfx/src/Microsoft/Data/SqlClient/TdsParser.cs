@@ -505,7 +505,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (SqlClientEventSource.Log.IsTraceEnabled())
                 {
-                    SqlClientEventSource.Log.Trace($"<sc.TdsParser.Connect|SEC> SSPI or Active Directory Authentication Library for SQL Server based integrated authentication");
+                    SqlClientEventSource.Log.Trace("<sc.TdsParser.Connect|SEC> SSPI or Active Directory Authentication Library for SQL Server based integrated authentication");
                 }
             }
             else
@@ -515,28 +515,28 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (SqlClientEventSource.Log.IsTraceEnabled())
                     {
-                        SqlClientEventSource.Log.Trace($"<sc.TdsParser.Connect|SEC> Active Directory Password authentication");
+                        SqlClientEventSource.Log.Trace("<sc.TdsParser.Connect|SEC> Active Directory Password authentication");
                     }
                 }
                 else if (authType == SqlAuthenticationMethod.SqlPassword)
                 {
                     if (SqlClientEventSource.Log.IsTraceEnabled())
                     {
-                        SqlClientEventSource.Log.Trace($"<sc.TdsParser.Connect|SEC> SQL Password authentication");
+                        SqlClientEventSource.Log.Trace("<sc.TdsParser.Connect|SEC> SQL Password authentication");
                     }
                 }
                 else if (authType == SqlAuthenticationMethod.ActiveDirectoryInteractive)
                 {
                     if (SqlClientEventSource.Log.IsTraceEnabled())
                     {
-                        SqlClientEventSource.Log.Trace($"<sc.TdsParser.Connect|SEC> Active Directory Interactive authentication");
+                        SqlClientEventSource.Log.Trace("<sc.TdsParser.Connect|SEC> Active Directory Interactive authentication");
                     }
                 }
                 else
                 {
                     if (SqlClientEventSource.Log.IsTraceEnabled())
                     {
-                        SqlClientEventSource.Log.Trace($"<sc.TdsParser.Connect|SEC> SQL authentication");
+                        SqlClientEventSource.Log.Trace("<sc.TdsParser.Connect|SEC> SQL authentication");
                     }
                 }
             }
@@ -577,7 +577,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (SqlClientEventSource.Log.IsTraceEnabled())
                 {
-                    SqlClientEventSource.Log.Trace($"<sc.TdsParser.Connect|ERR|SEC> Login failure");
+                    SqlClientEventSource.Log.Trace("<sc.TdsParser.Connect|ERR|SEC> Login failure");
                 }
 
                 ThrowExceptionAndWarning(_physicalStateObj);
@@ -610,7 +610,7 @@ namespace Microsoft.Data.SqlClient
 
             if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                SqlClientEventSource.Log.Trace($"<sc.TdsParser.Connect|SEC> Sending prelogin handshake");
+                SqlClientEventSource.Log.Trace("<sc.TdsParser.Connect|SEC> Sending prelogin handshake");
             }
 
             // UNDONE - send "" for instance now, need to fix later
@@ -623,7 +623,7 @@ namespace Microsoft.Data.SqlClient
 
             if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                SqlClientEventSource.Log.Trace($"<sc.TdsParser.Connect|SEC> Consuming prelogin handshake");
+                SqlClientEventSource.Log.Trace("<sc.TdsParser.Connect|SEC> Consuming prelogin handshake");
             }
 
             PreLoginHandshakeStatus status = ConsumePreLoginHandshake(authType, encrypt, trustServerCert, integratedSecurity, serverCallback, clientCallback,
@@ -633,7 +633,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (SqlClientEventSource.Log.IsTraceEnabled())
                 {
-                    SqlClientEventSource.Log.Trace($"<sc.TdsParser.Connect|SEC> Prelogin handshake unsuccessful. Reattempting prelogin handshake");
+                    SqlClientEventSource.Log.Trace("<sc.TdsParser.Connect|SEC> Prelogin handshake unsuccessful. Reattempting prelogin handshake");
                 }
                 _physicalStateObj.Dispose(); // Close previous connection
 
@@ -647,7 +647,7 @@ namespace Microsoft.Data.SqlClient
 
                     if (SqlClientEventSource.Log.IsTraceEnabled())
                     {
-                        SqlClientEventSource.Log.Trace($"<sc.TdsParser.Connect|ERR|SEC> Login failure");
+                        SqlClientEventSource.Log.Trace("<sc.TdsParser.Connect|ERR|SEC> Login failure");
                     }
                     ThrowExceptionAndWarning(_physicalStateObj);
                 }
@@ -657,8 +657,9 @@ namespace Microsoft.Data.SqlClient
 
                 if (SqlClientEventSource.Log.IsTraceEnabled())
                 {
-                    SqlClientEventSource.Log.Trace($"<sc.TdsParser.Connect|SEC> Sending prelogin handshake");
+                    SqlClientEventSource.Log.Trace("<sc.TdsParser.Connect|SEC> Sending prelogin handshake");
                 }
+
                 SendPreLoginHandshake(instanceName, encrypt, !string.IsNullOrEmpty(certificate), useOriginalAddressInfo);
                 status = ConsumePreLoginHandshake(authType, encrypt, trustServerCert, integratedSecurity, serverCallback, clientCallback, out marsCapable,
                                                   out _connHandler._fedAuthRequired);
@@ -669,7 +670,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (SqlClientEventSource.Log.IsTraceEnabled())
                     {
-                        SqlClientEventSource.Log.Trace($"<sc.TdsParser.Connect|ERR|SEC> Prelogin handshake unsuccessful. Login failure");
+                        SqlClientEventSource.Log.Trace("<sc.TdsParser.Connect|ERR|SEC> Prelogin handshake unsuccessful. Login failure");
                     }
                     throw SQL.InstanceFailure();
                 }
@@ -677,7 +678,7 @@ namespace Microsoft.Data.SqlClient
 
             if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                SqlClientEventSource.Log.Trace($"<sc.TdsParser.Connect|SEC> Prelogin handshake successful");
+                SqlClientEventSource.Log.Trace("<sc.TdsParser.Connect|SEC> Prelogin handshake successful");
             }
 
             if (_fMARS && marsCapable)
@@ -773,7 +774,7 @@ namespace Microsoft.Data.SqlClient
 
             if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                SqlClientEventSource.Log.Trace($"<sc.TdsParser.CreateSession|ADV> {ObjectID}# created session {session.ObjectID}");
+                SqlClientEventSource.Log.Trace("<sc.TdsParser.CreateSession|ADV> {0}# created session {1}", ObjectID, session.ObjectID);
             }
 
             return session;
@@ -792,7 +793,7 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(!session._pendingData, "pending data on a pooled MARS session");
                 if (SqlClientEventSource.Log.IsTraceEnabled())
                 {
-                    SqlClientEventSource.Log.Trace($"<sc.TdsParser.GetSession|ADV> {ObjectID}# getting session {session.ObjectID} from pool");
+                    SqlClientEventSource.Log.Trace("<sc.TdsParser.GetSession|ADV> {0}# getting session {1} from pool", ObjectID, session.ObjectID);
                 }
             }
             else
@@ -801,7 +802,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (SqlClientEventSource.Log.IsTraceEnabled())
                 {
-                    SqlClientEventSource.Log.Trace($"<sc.TdsParser.GetSession|ADV> {ObjectID}# getting physical session {session.ObjectID}");
+                    SqlClientEventSource.Log.Trace("<sc.TdsParser.GetSession|ADV> {0}# getting physical session {1}", ObjectID, session.ObjectID);
                 }
             }
             Debug.Assert(session._outputPacketNumber == 1, "The packet number is expected to be 1");
@@ -1019,7 +1020,7 @@ namespace Microsoft.Data.SqlClient
 
                         if (SqlClientEventSource.Log.IsTraceEnabled())
                         {
-                            SqlClientEventSource.Log.Trace($"<sc.TdsParser.SendPreLoginHandshake|INFO> ClientConnectionID {_connHandler._clientConnectionId.ToString()}, ActivityID {actId.ToString()}");
+                            SqlClientEventSource.Log.Trace("<sc.TdsParser.SendPreLoginHandshake|INFO> ClientConnectionID {0}, ActivityID {1}", _connHandler._clientConnectionId.ToString(), actId.ToString());
                         }
                         break;
 
@@ -1333,8 +1334,8 @@ namespace Microsoft.Data.SqlClient
                         {
                             if (SqlClientEventSource.Log.IsTraceEnabled())
                             {
-                                SqlClientEventSource.Log.Trace($"<sc.TdsParser.ConsumePreLoginHandshake|ERR> {ObjectID}#, " +
-                                $"Server sent an unexpected value for FedAuthRequired PreLogin Option. Value was {(int)payload[payloadOffset]}.");
+                                SqlClientEventSource.Log.Trace("<sc.TdsParser.ConsumePreLoginHandshake|ERR> {0}#, " +
+                                "Server sent an unexpected value for FedAuthRequired PreLogin Option. Value was {1}.", ObjectID, (int)payload[payloadOffset]);
                             }
 
                             throw SQL.ParsingErrorValue(ParsingErrorState.FedAuthRequiredPreLoginResponseInvalidValue, (int)payload[payloadOffset]);
@@ -1378,9 +1379,9 @@ namespace Microsoft.Data.SqlClient
             // Called when the connection that owns us is deactivated.
             if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                SqlClientEventSource.Log.Trace($"<sc.TdsParser.Deactivate|ADV> {ObjectID}# deactivating");
+                SqlClientEventSource.Log.Trace("<sc.TdsParser.Deactivate|ADV> {0}# deactivating", ObjectID);
 
-                SqlClientEventSource.Log.Trace($"<sc.TdsParser.Deactivate|STATE> {ObjectID}#, {TraceString()}");
+                SqlClientEventSource.Log.Trace("<sc.TdsParser.Deactivate|STATE> {0}#, {1}", ObjectID, TraceString());
             }
 
             if (MARSOn)
@@ -1539,7 +1540,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (SqlClientEventSource.Log.IsTraceEnabled())
                 {
-                    SqlClientEventSource.Log.Trace($"<sc.TdsParser.ThrowExceptionAndWarning|ERR> Potential multi-threaded misuse of connection, unexpectedly empty warnings/errors under lock {ObjectID}#");
+                    SqlClientEventSource.Log.Trace("<sc.TdsParser.ThrowExceptionAndWarning|ERR> Potential multi-threaded misuse of connection, unexpectedly empty warnings/errors under lock {0}#", ObjectID);
                 }
             }
             Debug.Assert(_connHandler != null, "TdsParser::ThrowExceptionAndWarning called with null connectionHandler!");
@@ -2263,7 +2264,7 @@ namespace Microsoft.Data.SqlClient
 
                     if (SqlClientEventSource.Log.IsTraceEnabled())
                     {
-                        SqlClientEventSource.Log.Trace($"<sc.TdsParser.Run|ERR> Potential multi-threaded misuse of connection, unexpected TDS token found {ObjectID}#");
+                        SqlClientEventSource.Log.Trace("<sc.TdsParser.Run|ERR> Potential multi-threaded misuse of connection, unexpected TDS token found {0}#", ObjectID);
                     }
                     throw SQL.ParsingErrorToken(ParsingErrorState.InvalidTdsTokenReceived, token); // MDAC 82443
                 }
@@ -2588,8 +2589,9 @@ namespace Microsoft.Data.SqlClient
                         {
                             if (SqlClientEventSource.Log.IsTraceEnabled())
                             {
-                                SqlClientEventSource.Log.Trace($"<sc.TdsParser.TryRun|SEC> Received login acknowledgement token");
+                                SqlClientEventSource.Log.Trace("<sc.TdsParser.TryRun|SEC> Received login acknowledgement token");
                             }
+
                             SqlLoginAck ack;
                             if (!TryProcessLoginAck(stateObj, out ack))
                             {
@@ -2614,7 +2616,7 @@ namespace Microsoft.Data.SqlClient
 
                             if (SqlClientEventSource.Log.IsTraceEnabled())
                             {
-                                SqlClientEventSource.Log.Trace($"<sc.TdsParser.TryRun|SEC> Received federated authentication info token");
+                                SqlClientEventSource.Log.Trace("<sc.TdsParser.TryRun|SEC> Received federated authentication info token");
                             }
 
                             if (!TryProcessFedAuthInfo(stateObj, tokenLength, out info))
@@ -4030,7 +4032,7 @@ namespace Microsoft.Data.SqlClient
             // Skip reading token length, since it has already been read in caller
             if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                SqlClientEventSource.Log.Trace($"<sc.TdsParser.TryProcessFedAuthInfo> FEDAUTHINFO token stream length = {tokenLen}");
+                SqlClientEventSource.Log.Trace("<sc.TdsParser.TryProcessFedAuthInfo> FEDAUTHINFO token stream length = {0}", tokenLen);
             }
 
             if (tokenLen < sizeof(uint))
@@ -4038,7 +4040,7 @@ namespace Microsoft.Data.SqlClient
                 // the token must at least contain a DWORD indicating the number of info IDs
                 if (SqlClientEventSource.Log.IsTraceEnabled())
                 {
-                    SqlClientEventSource.Log.Trace($"<sc.TdsParser.TryProcessFedAuthInfo|ERR> FEDAUTHINFO token stream length too short for CountOfInfoIDs.");
+                    SqlClientEventSource.Log.Trace("<sc.TdsParser.TryProcessFedAuthInfo|ERR> FEDAUTHINFO token stream length too short for CountOfInfoIDs.");
                 }
                 throw SQL.ParsingErrorLength(ParsingErrorState.FedAuthInfoLengthTooShortForCountOfInfoIds, tokenLen);
             }
@@ -4049,7 +4051,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (SqlClientEventSource.Log.IsTraceEnabled())
                 {
-                    SqlClientEventSource.Log.Trace($"<sc.TdsParser.TryProcessFedAuthInfo|ERR> Failed to read CountOfInfoIDs in FEDAUTHINFO token stream.");
+                    SqlClientEventSource.Log.Trace("<sc.TdsParser.TryProcessFedAuthInfo|ERR> Failed to read CountOfInfoIDs in FEDAUTHINFO token stream.");
                 }
                 throw SQL.ParsingError(ParsingErrorState.FedAuthInfoFailedToReadCountOfInfoIds);
             }
@@ -4057,7 +4059,7 @@ namespace Microsoft.Data.SqlClient
 
             if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                SqlClientEventSource.Log.Trace($"<sc.TdsParser.TryProcessFedAuthInfo> CountOfInfoIDs = {optionsCount.ToString(CultureInfo.InvariantCulture)}");
+                SqlClientEventSource.Log.Trace("<sc.TdsParser.TryProcessFedAuthInfo> CountOfInfoIDs = {0}", optionsCount.ToString(CultureInfo.InvariantCulture));
             }
 
             if (tokenLen > 0)
@@ -4069,14 +4071,14 @@ namespace Microsoft.Data.SqlClient
 
                 if (SqlClientEventSource.Log.IsTraceEnabled())
                 {
-                    SqlClientEventSource.Log.Trace($"<sc.TdsParser.TryProcessFedAuthInfo> Read rest of FEDAUTHINFO token stream: {BitConverter.ToString(tokenData, 0, totalRead)}");
+                    SqlClientEventSource.Log.Trace("<sc.TdsParser.TryProcessFedAuthInfo> Read rest of FEDAUTHINFO token stream: {0}", BitConverter.ToString(tokenData, 0, totalRead));
                 }
 
                 if (!successfulRead || totalRead != tokenLen)
                 {
                     if (SqlClientEventSource.Log.IsTraceEnabled())
                     {
-                        SqlClientEventSource.Log.Trace($"<sc.TdsParser.TryProcessFedAuthInfo|ERR> Failed to read FEDAUTHINFO token stream. Attempted to read {tokenLen} bytes, actually read {totalRead}");
+                        SqlClientEventSource.Log.Trace("<sc.TdsParser.TryProcessFedAuthInfo|ERR> Failed to read FEDAUTHINFO token stream. Attempted to read {0} bytes, actually read {1}", tokenLen, totalRead);
                     }
                     throw SQL.ParsingError(ParsingErrorState.FedAuthInfoFailedToReadTokenStream);
                 }
@@ -4099,7 +4101,10 @@ namespace Microsoft.Data.SqlClient
                     uint dataLen = BitConverter.ToUInt32(tokenData, checked((int)(currentOptionOffset + 1)));
                     uint dataOffset = BitConverter.ToUInt32(tokenData, checked((int)(currentOptionOffset + 5)));
 
-                    SqlClientEventSource.Log.Trace($"<sc.TdsParser.TryProcessFedAuthInfo> FedAuthInfoOpt: ID={id}, DataLen={dataLen.ToString(CultureInfo.InvariantCulture)}, Offset={dataOffset.ToString(CultureInfo.InvariantCulture)}\n");
+                    if (SqlClientEventSource.Log.IsTraceEnabled())
+                    {
+                        SqlClientEventSource.Log.Trace("<sc.TdsParser.TryProcessFedAuthInfo> FedAuthInfoOpt: ID={0}, DataLen={1}, Offset={2}", id, dataLen.ToString(CultureInfo.InvariantCulture), dataOffset.ToString(CultureInfo.InvariantCulture));
+                    }
 
                     // offset is measured from optCount, so subtract to make offset measured
                     // from the beginning of tokenData
@@ -4113,7 +4118,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (SqlClientEventSource.Log.IsTraceEnabled())
                         {
-                            SqlClientEventSource.Log.Trace($"<sc.TdsParser.TryProcessFedAuthInfo|ERR> FedAuthInfoDataOffset points to an invalid location.");
+                            SqlClientEventSource.Log.Trace("<sc.TdsParser.TryProcessFedAuthInfo|ERR> FedAuthInfoDataOffset points to an invalid location.");
                         }
                         throw SQL.ParsingErrorOffset(ParsingErrorState.FedAuthInfoInvalidOffset, unchecked((int)dataOffset));
                     }
@@ -4128,7 +4133,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (SqlClientEventSource.Log.IsTraceEnabled())
                         {
-                            SqlClientEventSource.Log.Trace($"<sc.TdsParser.TryProcessFedAuthInfo|ERR> Failed to read FedAuthInfoData.");
+                            SqlClientEventSource.Log.Trace("<sc.TdsParser.TryProcessFedAuthInfo|ERR> Failed to read FedAuthInfoData.");
                         }
                         throw SQL.ParsingError(ParsingErrorState.FedAuthInfoFailedToReadData, e);
                     }
@@ -4136,14 +4141,14 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (SqlClientEventSource.Log.IsTraceEnabled())
                         {
-                            SqlClientEventSource.Log.Trace($"<sc.TdsParser.TryProcessFedAuthInfo|ERR> FedAuthInfoData is not in unicode format.");
+                            SqlClientEventSource.Log.Trace("<sc.TdsParser.TryProcessFedAuthInfo|ERR> FedAuthInfoData is not in unicode format.");
                         }
                         throw SQL.ParsingError(ParsingErrorState.FedAuthInfoDataNotUnicode, e);
                     }
 
                     if (SqlClientEventSource.Log.IsTraceEnabled())
                     {
-                        SqlClientEventSource.Log.Trace($"<sc.TdsParser.TryProcessFedAuthInfo> FedAuthInfoData: {data}");
+                        SqlClientEventSource.Log.Trace("<sc.TdsParser.TryProcessFedAuthInfo> FedAuthInfoData: {0}", data);
                     }
 
                     // store data in tempFedAuthInfo
@@ -4158,7 +4163,7 @@ namespace Microsoft.Data.SqlClient
                         default:
                             if (SqlClientEventSource.Log.IsTraceEnabled())
                             {
-                                SqlClientEventSource.Log.Trace($"<sc.TdsParser.TryProcessFedAuthInfo> Ignoring unknown federated authentication info option: {id}");
+                                SqlClientEventSource.Log.Trace("<sc.TdsParser.TryProcessFedAuthInfo> Ignoring unknown federated authentication info option: {0}", id);
                             }
                             break;
                     }
@@ -4168,14 +4173,14 @@ namespace Microsoft.Data.SqlClient
             {
                 if (SqlClientEventSource.Log.IsTraceEnabled())
                 {
-                    SqlClientEventSource.Log.Trace($"<sc.TdsParser.TryProcessFedAuthInfo|ERR> FEDAUTHINFO token stream is not long enough to contain the data it claims to.");
+                    SqlClientEventSource.Log.Trace("<sc.TdsParser.TryProcessFedAuthInfo|ERR> FEDAUTHINFO token stream is not long enough to contain the data it claims to.");
                 }
                 throw SQL.ParsingErrorLength(ParsingErrorState.FedAuthInfoLengthTooShortForData, tokenLen);
             }
 
             if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                SqlClientEventSource.Log.Trace($"<sc.TdsParser.TryProcessFedAuthInfo> Processed FEDAUTHINFO token stream: {tempFedAuthInfo.ToString()}");
+                SqlClientEventSource.Log.Trace("<sc.TdsParser.TryProcessFedAuthInfo> Processed FEDAUTHINFO token stream: {0}", tempFedAuthInfo.ToString());
             }
 
             if (string.IsNullOrWhiteSpace(tempFedAuthInfo.stsurl) || string.IsNullOrWhiteSpace(tempFedAuthInfo.spn))
@@ -4183,7 +4188,7 @@ namespace Microsoft.Data.SqlClient
                 // We should be receiving both stsurl and spn
                 if (SqlClientEventSource.Log.IsTraceEnabled())
                 {
-                    SqlClientEventSource.Log.Trace($"<sc.TdsParser.TryProcessFedAuthInfo|ERR> FEDAUTHINFO token stream does not contain both STSURL and SPN.");
+                    SqlClientEventSource.Log.Trace("<sc.TdsParser.TryProcessFedAuthInfo|ERR> FEDAUTHINFO token stream does not contain both STSURL and SPN.");
                 }
                 throw SQL.ParsingError(ParsingErrorState.FedAuthInfoDoesNotContainStsurlAndSpn);
             }
@@ -4614,7 +4619,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (SqlClientEventSource.Log.IsTraceEnabled())
                     {
-                        SqlClientEventSource.Log.Trace($"<sc.TdsParser.TryProcessTceCryptoMetadata|TCE> Incorrect ordinal received {index}, max tab size: {cipherTable.Value.Size}");
+                        SqlClientEventSource.Log.Trace("<sc.TdsParser.TryProcessTceCryptoMetadata|TCE> Incorrect ordinal received {0}, max tab size: {1}", index, cipherTable.Value.Size);
                     }
                     throw SQL.ParsingErrorValue(ParsingErrorState.TceInvalidOrdinalIntoCipherInfoTable, index);
                 }
@@ -8885,7 +8890,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (SqlClientEventSource.Log.IsTraceEnabled())
                 {
-                    SqlClientEventSource.Log.Trace($"<sc.TdsParser.TdsLogin|ADV> {ObjectID}#, TDS Login7 flags = {log7Flags}:");
+                    SqlClientEventSource.Log.Trace("<sc.TdsParser.TdsLogin|ADV> {0}#, TDS Login7 flags = {1}:", ObjectID, log7Flags);
                 }
 
                 WriteInt(0, _physicalStateObj);  // ClientTimeZone is not used
@@ -9047,7 +9052,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (SqlClientEventSource.Log.IsTraceEnabled())
                         {
-                            SqlClientEventSource.Log.Trace($"<sc.TdsParser.TdsLogin|SEC> Sending federated authentication feature request");
+                            SqlClientEventSource.Log.Trace("<sc.TdsParser.TdsLogin|SEC> Sending federated authentication feature request");
                         }
                         Debug.Assert(fedAuthFeatureExtensionData != null, "fedAuthFeatureExtensionData should not null.");
                         WriteFedAuthFeatureRequest(fedAuthFeatureExtensionData.Value, write: true);
@@ -9124,7 +9129,7 @@ namespace Microsoft.Data.SqlClient
 
             if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                SqlClientEventSource.Log.Trace($"<sc.TdsParser.SendFedAuthToken|SEC> Sending federated authentication token");
+                SqlClientEventSource.Log.Trace("<sc.TdsParser.SendFedAuthToken|SEC> Sending federated authentication token");
             }
 
             _physicalStateObj._outputMessageType = TdsEnums.MT_FEDAUTH;
@@ -9519,7 +9524,7 @@ namespace Microsoft.Data.SqlClient
 
             if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                SqlClientEventSource.Log.Trace($"<sc.TdsParser.FailureCleanup|ERR> Exception caught on ExecuteXXX: '{e.ToString()}'");
+                SqlClientEventSource.Log.Trace("<sc.TdsParser.FailureCleanup|ERR> Exception caught on ExecuteXXX: '{0}'", e.ToString());
             }
 
             if (stateObj.HasOpenResult)
@@ -9556,7 +9561,7 @@ namespace Microsoft.Data.SqlClient
 
             if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                SqlClientEventSource.Log.Trace($"<sc.TdsParser.FailureCleanup|ERR> Exception rethrown.");
+                SqlClientEventSource.Log.Trace("<sc.TdsParser.FailureCleanup|ERR> Exception rethrown.");
             }
         }
 
@@ -9615,7 +9620,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (SqlClientEventSource.Log.IsTraceEnabled())
                     {
-                        SqlClientEventSource.Log.Trace($"<sc.TdsParser.TdsExecuteSQLBatch|ERR> Potential multi-threaded misuse of connection, non-MARs connection with an open result {ObjectID}#");
+                        SqlClientEventSource.Log.Trace("<sc.TdsParser.TdsExecuteSQLBatch|ERR> Potential multi-threaded misuse of connection, non-MARs connection with an open result {0}#", ObjectID);
                     }
                 }
                 stateObj.SniContext = SniContext.Snix_Execute;
@@ -9747,7 +9752,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             if (SqlClientEventSource.Log.IsTraceEnabled())
                             {
-                                SqlClientEventSource.Log.Trace($"<sc.TdsParser.TdsExecuteRPC|ERR> Potential multi-threaded misuse of connection, non-MARs connection with an open result {ObjectID}#");
+                                SqlClientEventSource.Log.Trace("<sc.TdsParser.TdsExecuteRPC|ERR> Potential multi-threaded misuse of connection, non-MARs connection with an open result {0}#", ObjectID);
                             }
                         }
                         stateObj.SniContext = SniContext.Snix_Execute;
@@ -10615,9 +10620,9 @@ namespace Microsoft.Data.SqlClient
 
             if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                SqlClientEventSource.Log.Trace($"<sc.TdsParser.WriteSmiParameter|ADV> {ObjectID}#, Sending parameter '{param.ParameterName}', default flag={sendDefaultValue}, metadata:{metaData.TraceString(3)}");
+                SqlClientEventSource.Log.Trace("<sc.TdsParser.WriteSmiParameter|ADV> {0}#, Sending parameter '{1}', default flag={2}, metadata:{3}", ObjectID, param.ParameterName, sendDefaultValue, metaData.TraceString(3));
             }
-            
+
             //
             // Write parameter metadata
             //
@@ -11672,7 +11677,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(-1 <= timeout, "Timeout");
 
 
-            SqlClientEventSource.Log.NotificationsTrace($"<sc.TdsParser.WriteQueryNotificationHeader|DEP> NotificationRequest: userData: '{notificationRequest.UserData}', options: '{notificationRequest.Options}', timeout: '{notificationRequest.Timeout}'\n");
+            SqlClientEventSource.Log.NotificationsTrace("<sc.TdsParser.WriteQueryNotificationHeader|DEP> NotificationRequest: userData: '{0}', options: '{1}', timeout: '{2}'", notificationRequest.UserData, notificationRequest.Options, notificationRequest.Timeout);
 
             WriteShort(TdsEnums.HEADERTYPE_QNOTIFICATION, stateObj);      // Query notifications Type
 
@@ -11701,7 +11706,7 @@ namespace Microsoft.Data.SqlClient
 
             if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                SqlClientEventSource.Log.Trace($"<sc.TdsParser.WriteTraceHeaderData|INFO> ActivityID {actId.ToString()}");
+                SqlClientEventSource.Log.Trace("<sc.TdsParser.WriteTraceHeaderData|INFO> ActivityID {0}", actId.ToString());
             }
         }
 

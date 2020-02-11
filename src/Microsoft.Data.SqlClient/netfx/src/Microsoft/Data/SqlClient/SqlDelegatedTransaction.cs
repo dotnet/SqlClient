@@ -91,7 +91,7 @@ namespace Microsoft.Data.SqlClient
             SqlConnection usersConnection = connection.Connection;
             if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                SqlClientEventSource.Log.Trace($"<sc.SqlDelegatedTransaction.Initialize|RES|CPOOL> {ObjectID}#, Connection {connection.ObjectID}#, delegating transaction.");
+                SqlClientEventSource.Log.Trace("<sc.SqlDelegatedTransaction.Initialize|RES|CPOOL> {0}#, Connection {1}#, delegating transaction.", ObjectID, connection.ObjectID);
             }
 
             RuntimeHelpers.PrepareConstrainedRegions();
@@ -101,7 +101,8 @@ namespace Microsoft.Data.SqlClient
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
-                try {
+                try
+                {
                     tdsReliabilitySection.Start();
 #else
                 {
@@ -110,7 +111,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (SqlClientEventSource.Log.IsTraceEnabled())
                         {
-                            SqlClientEventSource.Log.Trace($"<sc.SqlDelegatedTransaction.Initialize|RES|CPOOL> {ObjectID}#, Connection {connection.ObjectID}#, was enlisted, now defecting.");
+                            SqlClientEventSource.Log.Trace("<sc.SqlDelegatedTransaction.Initialize|RES|CPOOL> {0}#, Connection {1}#, was enlisted, now defecting.", ObjectID, connection.ObjectID);
                         }
 
                         // defect first
@@ -131,7 +132,8 @@ namespace Microsoft.Data.SqlClient
                     _active = true;
                 }
 #if DEBUG
-                finally {
+                finally
+                {
                     tdsReliabilitySection.Stop();
                 }
 #endif //DEBUG
@@ -175,7 +177,7 @@ namespace Microsoft.Data.SqlClient
 
             if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                SqlClientEventSource.Log.Trace($"<sc.SqlDelegatedTransaction.Promote|RES|CPOOL> {ObjectID}#, Connection {connection.ObjectID}#, promoting transaction.");
+                SqlClientEventSource.Log.Trace("<sc.SqlDelegatedTransaction.Promote|RES|CPOOL> {0}#, Connection {1}#, promoting transaction.", ObjectID, connection.ObjectID);
             }
 
             RuntimeHelpers.PrepareConstrainedRegions();
@@ -185,7 +187,8 @@ namespace Microsoft.Data.SqlClient
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
-                try {
+                try
+                {
                     tdsReliabilitySection.Start();
 #else
                 {
@@ -238,7 +241,8 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
 #if DEBUG
-                finally {
+                finally
+                {
                     tdsReliabilitySection.Stop();
                 }
 #endif //DEBUG
@@ -277,7 +281,7 @@ namespace Microsoft.Data.SqlClient
 
             if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                SqlClientEventSource.Log.Trace($"<sc.SqlDelegatedTransaction.Rollback|RES|CPOOL> {ObjectID}#, Connection {connection.ObjectID}#, aborting transaction.");
+                SqlClientEventSource.Log.Trace("<sc.SqlDelegatedTransaction.Rollback|RES|CPOOL> {0}#, Connection {1}#, aborting transaction.", ObjectID, connection.ObjectID);
             }
 
             RuntimeHelpers.PrepareConstrainedRegions();
@@ -287,7 +291,8 @@ namespace Microsoft.Data.SqlClient
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
-                try {
+                try
+                {
                     tdsReliabilitySection.Start();
 #else
                 {
@@ -341,7 +346,8 @@ namespace Microsoft.Data.SqlClient
                     enlistment.Aborted();
                 }
 #if DEBUG
-                finally {
+                finally
+                {
                     tdsReliabilitySection.Stop();
                 }
 #endif //DEBUG
@@ -373,7 +379,7 @@ namespace Microsoft.Data.SqlClient
 
             if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                SqlClientEventSource.Log.Trace($"<sc.SqlDelegatedTransaction.SinglePhaseCommit|RES|CPOOL> {ObjectID}#, Connection {connection.ObjectID}#, committing transaction.");
+                SqlClientEventSource.Log.Trace("<sc.SqlDelegatedTransaction.SinglePhaseCommit|RES|CPOOL> {0}#, Connection {1}#, committing transaction.", ObjectID, connection.ObjectID);
             }
 
             RuntimeHelpers.PrepareConstrainedRegions();
@@ -383,7 +389,8 @@ namespace Microsoft.Data.SqlClient
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
-                try {
+                try
+                {
                     tdsReliabilitySection.Start();
 #else
                 {
@@ -472,7 +479,8 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
 #if DEBUG
-                finally {
+                finally
+                {
                     tdsReliabilitySection.Stop();
                 }
 #endif //DEBUG
@@ -506,7 +514,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (SqlClientEventSource.Log.IsTraceEnabled())
                 {
-                    SqlClientEventSource.Log.Trace($"<sc.SqlDelegatedTransaction.TransactionEnded|RES|CPOOL> {ObjectID}#, Connection {connection.ObjectID}#, transaction completed externally.");
+                    SqlClientEventSource.Log.Trace("<sc.SqlDelegatedTransaction.TransactionEnded|RES|CPOOL> {0}#, Connection {1}#, transaction completed externally.", ObjectID, connection.ObjectID);
                 }
 
                 lock (connection)

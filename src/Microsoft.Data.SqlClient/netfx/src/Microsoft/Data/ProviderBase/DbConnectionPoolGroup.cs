@@ -276,7 +276,7 @@ namespace Microsoft.Data.ProviderBase
 
                 if (SqlClientEventSource.Log.IsTraceEnabled())
                 {
-                    SqlClientEventSource.Log.Trace($"<prov.DbConnectionPoolGroup.ClearInternal|RES|INFO|CPOOL> {ObjectID}#, Active");
+                    SqlClientEventSource.Log.Trace("<prov.DbConnectionPoolGroup.ClearInternal|RES|INFO|CPOOL> {0}#, Active", ObjectID);
                 }
             }
             return (PoolGroupStateActive == _state);
@@ -342,7 +342,7 @@ namespace Microsoft.Data.ProviderBase
 
                         if (SqlClientEventSource.Log.IsTraceEnabled())
                         {
-                            SqlClientEventSource.Log.Trace($"<prov.DbConnectionPoolGroup.ClearInternal|RES|INFO|CPOOL> {ObjectID}#, Idle");
+                            SqlClientEventSource.Log.Trace("<prov.DbConnectionPoolGroup.ClearInternal|RES|INFO|CPOOL> {0}#, Idle", ObjectID);
                         }
                     }
                     else if (PoolGroupStateIdle == _state)
@@ -351,7 +351,7 @@ namespace Microsoft.Data.ProviderBase
 
                         if (SqlClientEventSource.Log.IsTraceEnabled())
                         {
-                            SqlClientEventSource.Log.Trace($"<prov.DbConnectionPoolGroup.ReadyToRemove|RES|INFO|CPOOL> {ObjectID}#, Disabled");
+                            SqlClientEventSource.Log.Trace("<prov.DbConnectionPoolGroup.ReadyToRemove|RES|INFO|CPOOL> {0}#, Disabled", ObjectID);
                         }
                     }
                 }

@@ -39,7 +39,7 @@ namespace Microsoft.Data.SqlClient
 
             if (SqlClientEventSource.Log.IsAdvanceTraceOn())
             {
-                SqlClientEventSource.Log.Trace($"<sc.TdsParserSessionPool.ctor|ADV> {ObjectID}# created session pool for parser {parser.ObjectID}");
+                SqlClientEventSource.Log.Trace("<sc.TdsParserSessionPool.ctor|ADV> {0}# created session pool for parser {1}", ObjectID, parser.ObjectID);
             }
         }
 
@@ -66,8 +66,10 @@ namespace Microsoft.Data.SqlClient
             // sessions that are past what we want to keep around.
 
             long scopeID = 0;
-            if (SqlClientEventSource.Log.IsEnabled())
-                scopeID = SqlClientEventSource.Log.ScopeEnter($"<sc.TdsParserSessionPool.Deactivate|ADV> {ObjectID}# deactivating cachedCount={_cachedCount}\n");
+            if (SqlClientEventSource.Log.IsScopeEnabled())
+            {
+                scopeID = SqlClientEventSource.Log.ScopeEnter("<sc.TdsParserSessionPool.Deactivate|ADV> {0}# deactivating cachedCount={1}", ObjectID, _cachedCount);
+            }
 
             try
             {
@@ -90,7 +92,7 @@ namespace Microsoft.Data.SqlClient
 
                                 if (SqlClientEventSource.Log.IsAdvanceTraceOn())
                                 {
-                                    SqlClientEventSource.Log.Trace($"<sc.TdsParserSessionPool.Deactivate|ADV> {ObjectID}# reclaiming session {session.ObjectID}");
+                                    SqlClientEventSource.Log.Trace("<sc.TdsParserSessionPool.Deactivate|ADV> {0}# reclaiming session {1}", ObjectID, session.ObjectID);
                                 }
 
                                 PutSession(session);
@@ -128,7 +130,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (SqlClientEventSource.Log.IsAdvanceTraceOn())
             {
-                SqlClientEventSource.Log.Trace($"<sc.TdsParserSessionPool.Dispose|ADV> {ObjectID}# disposing cachedCount={_cachedCount}");
+                SqlClientEventSource.Log.Trace("<sc.TdsParserSessionPool.Dispose|ADV> {0}# disposing cachedCount={1}", ObjectID, _cachedCount);
             }
 
             lock (_cache)
@@ -192,7 +194,7 @@ namespace Microsoft.Data.SqlClient
 
                     if (SqlClientEventSource.Log.IsAdvanceTraceOn())
                     {
-                        SqlClientEventSource.Log.Trace($"<sc.TdsParserSessionPool.CreateSession|ADV> {ObjectID}# adding session {session.ObjectID} to pool");
+                        SqlClientEventSource.Log.Trace("<sc.TdsParserSessionPool.CreateSession|ADV> {0}# adding session {1} to pool", ObjectID, session.ObjectID);
                     }
 
                     _cache.Add(session);
@@ -204,7 +206,7 @@ namespace Microsoft.Data.SqlClient
 
             if (SqlClientEventSource.Log.IsAdvanceTraceOn())
             {
-                SqlClientEventSource.Log.Trace($"<sc.TdsParserSessionPool.GetSession|ADV> {ObjectID}# using session {session.ObjectID}");
+                SqlClientEventSource.Log.Trace("<sc.TdsParserSessionPool.GetSession|ADV> {0}# using session {1}", ObjectID, session.ObjectID);
             }
 
             return session;
@@ -230,7 +232,7 @@ namespace Microsoft.Data.SqlClient
                     // Session is good to re-use and our cache has space
                     if (SqlClientEventSource.Log.IsAdvanceTraceOn())
                     {
-                        SqlClientEventSource.Log.Trace($"<sc.TdsParserSessionPool.PutSession|ADV> {ObjectID}# keeping session {session.ObjectID} cachedCount={_cachedCount}");
+                        SqlClientEventSource.Log.Trace("<sc.TdsParserSessionPool.PutSession|ADV> {0}# keeping session {1} cachedCount={2}", ObjectID, session.ObjectID, _cachedCount);
                     }
 
                     Debug.Assert(!session._pendingData, "pending data on a pooled session?");
@@ -243,7 +245,7 @@ namespace Microsoft.Data.SqlClient
                     // Either the session is bad, or we have no cache space - so dispose the session and remove it
                     if (SqlClientEventSource.Log.IsAdvanceTraceOn())
                     {
-                        SqlClientEventSource.Log.Trace($"<sc.TdsParserSessionPool.PutSession|ADV> {ObjectID}# disposing session {session.ObjectID} cachedCount={_cachedCount}");
+                        SqlClientEventSource.Log.Trace("<sc.TdsParserSessionPool.PutSession|ADV> {0}# disposing session {1} cachedCount={2}", ObjectID, session.ObjectID, _cachedCount);
                     }
 
                     bool removed = _cache.Remove(session);

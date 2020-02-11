@@ -269,7 +269,7 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 if (SqlClientEventSource.Log.IsAdvanceTraceOn())
                 {
-                    SqlClientEventSource.Log.Trace($"<sc.SmiEventSink_Default.MessagePosted|ADV> {0}#, number={number} state={state} errorClass={errorClass} server='{server ?? "<null>"}' message='{message ?? "<null>"}' procedure='{procedure ?? "<null>"}' linenumber={lineNumber}.");
+                    SqlClientEventSource.Log.Trace("<sc.SmiEventSink_Default.MessagePosted|ADV> {0}#, number={1} state={2} errorClass={3} server='{4}' message='{5}' procedure='{6}' linenumber={7}.", 0, number, state, errorClass, server ?? "<null>", message ?? "<null>", procedure ?? "<null>", lineNumber);
                 }
 
                 SqlError error = new SqlError(number, state, errorClass, server, message, procedure, lineNumber);

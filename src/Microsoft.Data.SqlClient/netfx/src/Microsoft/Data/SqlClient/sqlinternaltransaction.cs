@@ -54,7 +54,9 @@ namespace Microsoft.Data.SqlClient
         internal SqlInternalTransaction(SqlInternalConnection innerConnection, TransactionType type, SqlTransaction outerTransaction, long transactionId)
         {
             if (SqlClientEventSource.Log.IsPoolerTraceEnabled())
-                SqlClientEventSource.Log.PoolerTrace($"<sc.SqlInternalTransaction.ctor|RES|CPOOL> {ObjectID}#, Created for connection {innerConnection.ObjectID}#, outer transaction {((null != outerTransaction) ? outerTransaction.ObjectID : -1)}#, Type {(int)type}");
+            {
+                SqlClientEventSource.Log.PoolerTrace("<sc.SqlInternalTransaction.ctor|RES|CPOOL> {0}#, Created for connection {1}#, outer transaction {2}#, Type {3}", ObjectID, innerConnection.ObjectID, (null != outerTransaction) ? outerTransaction.ObjectID : -1, (int)type);
+            }
 
             _innerConnection = innerConnection;
             _transactionType = type;
@@ -271,7 +273,9 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(innerConnection != null, "How can we be here if the connection is null?");
 
             if (SqlClientEventSource.Log.IsPoolerTraceEnabled())
-                SqlClientEventSource.Log.PoolerTrace($"<sc.SqlInteralTransaction.CloseFromConnection|RES|CPOOL> {ObjectID}#, Closing");
+            {
+                SqlClientEventSource.Log.PoolerTrace("<sc.SqlInteralTransaction.CloseFromConnection|RES|CPOOL> {0}#, Closing", ObjectID);
+            }
 
             bool processFinallyBlock = true;
             try
@@ -300,8 +304,10 @@ namespace Microsoft.Data.SqlClient
         internal void Commit()
         {
             long scopeID = 0;
-            if (SqlClientEventSource.Log.IsEnabled())
-                scopeID = SqlClientEventSource.Log.ScopeEnter($"<sc.SqlInternalTransaction.Commit|API> {ObjectID}#");
+            if (SqlClientEventSource.Log.IsScopeEnabled())
+            {
+                scopeID = SqlClientEventSource.Log.ScopeEnter("<sc.SqlInternalTransaction.Commit|API> {0}#", ObjectID);
+            }
 
             if (_innerConnection.IsLockedForBulkCopy)
             {
@@ -376,7 +382,9 @@ namespace Microsoft.Data.SqlClient
         private /*protected override*/ void Dispose(bool disposing)
         {
             if (SqlClientEventSource.Log.IsPoolerTraceEnabled())
-                SqlClientEventSource.Log.PoolerTrace($"<sc.SqlInteralTransaction.Dispose|RES|CPOOL> {ObjectID}#, Disposing");
+            {
+                SqlClientEventSource.Log.PoolerTrace("<sc.SqlInteralTransaction.Dispose|RES|CPOOL> {0}#, Disposing", ObjectID);
+            }
 
             if (disposing)
             {
@@ -432,7 +440,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void Rollback()
         {
-            var scopeID = SqlClientEventSource.Log.ScopeEnter($"<sc.SqlInternalTransaction.Rollback|API> {ObjectID}#");
+            var scopeID = SqlClientEventSource.Log.ScopeEnter("<sc.SqlInternalTransaction.Rollback|API> {0}#", ObjectID);
 
             if (_innerConnection.IsLockedForBulkCopy)
             {
@@ -479,7 +487,11 @@ namespace Microsoft.Data.SqlClient
 
         internal void Rollback(string transactionName)
         {
-            var scopeID = SqlClientEventSource.Log.ScopeEnter($"<sc.SqlInternalTransaction.Rollback|API> {ObjectID}#, transactionName='{transactionName}'");
+            long scopeID = 0;
+            if (SqlClientEventSource.Log.IsScopeEnabled())
+            {
+                scopeID = SqlClientEventSource.Log.ScopeEnter("<sc.SqlInternalTransaction.Rollback|API> {0}#, transactionName='{transactionName}'", ObjectID);
+            }
 
             if (_innerConnection.IsLockedForBulkCopy)
             {
@@ -528,7 +540,11 @@ namespace Microsoft.Data.SqlClient
 
         internal void Save(string savePointName)
         {
-            var scopeID = SqlClientEventSource.Log.ScopeEnter($"<sc.SqlInternalTransaction.Save|API> {ObjectID}#, savePointName='{savePointName}'");
+            long scopeID = 0;
+            if (SqlClientEventSource.Log.IsScopeEnabled())
+            {
+                scopeID = SqlClientEventSource.Log.ScopeEnter("<sc.SqlInternalTransaction.Save|API> {0}#, savePointName='{savePointName}'", ObjectID);
+            }
 
             _innerConnection.ValidateConnectionForExecute(null);
 

@@ -518,7 +518,7 @@ namespace Microsoft.Data.SqlClient
             }
             if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.ctor|ADV> {ObjectID}#, constructed new TDS internal connection");
+                SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.ctor|ADV> {0}#, constructed new TDS internal connection", ObjectID);
             }
         }
 
@@ -776,7 +776,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.Dispose|ADV> {ObjectID}# disposing");
+                SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.Dispose|ADV> {0}# disposing", ObjectID);
             }
 
             try
@@ -1371,7 +1371,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (SqlClientEventSource.Log.IsTraceEnabled())
                     {
-                        SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.CompleteLogin|ERR> {ObjectID}#, Server did not acknowledge the federated authentication request");
+                        SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.CompleteLogin|ERR> {0}#, Server did not acknowledge the federated authentication request", ObjectID);
                     }
 
                     throw SQL.ParsingError(ParsingErrorState.FedAuthNotAcknowledged);
@@ -1380,7 +1380,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (SqlClientEventSource.Log.IsTraceEnabled())
                     {
-                        SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.CompleteLogin|ERR> {ObjectID}#, Server never sent the requested federated authentication info");
+                        SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.CompleteLogin|ERR> {0}#, Server never sent the requested federated authentication info", ObjectID);
                     }
                     throw SQL.ParsingError(ParsingErrorState.FedAuthInfoNotReceived);
                 }
@@ -1422,7 +1422,7 @@ namespace Microsoft.Data.SqlClient
 
             if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.CompleteLogin|ADV> Post-Login Phase: Server connection obtained.");
+                SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.CompleteLogin|ADV> Post-Login Phase: Server connection obtained.");
             }
 
             // for non-pooled connections, enlist in a distributed transaction
@@ -1554,7 +1554,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.LoginFailure|RES|CPOOL> {ObjectID}#");
+                SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.LoginFailure|RES|CPOOL> {0}#", ObjectID);
             }
 
             // If the parser was allocated and we failed, then we must have failed on
@@ -1683,7 +1683,7 @@ namespace Microsoft.Data.SqlClient
 
             if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.LoginNoFailover|ADV> {ObjectID}#, host={serverInfo.UserServerName}");
+                SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.LoginNoFailover|ADV> {0}#, host={1}", ObjectID, serverInfo.UserServerName);
             }
 
             int sleepInterval = 100;  //milliseconds to sleep (back off) between attempts.
@@ -1792,7 +1792,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (SqlClientEventSource.Log.IsTraceEnabled())
                         {
-                            SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.LoginNoFailover> Routed to {serverInfo.ExtendedServerName}");
+                            SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.LoginNoFailover> Routed to {0}", serverInfo.ExtendedServerName);
                         }
 
                         if (routingAttempts > _maxNumberOfRedirectRoute)
@@ -1884,7 +1884,7 @@ namespace Microsoft.Data.SqlClient
                 //  then update sleep interval for next iteration (max 1 second interval)
                 if (SqlClientEventSource.Log.IsTraceEnabled())
                 {
-                    SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.LoginNoFailover|ADV> {ObjectID}#, sleeping {sleepInterval}[milisec]");
+                    SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.LoginNoFailover|ADV> {0}#, sleeping {1}[milisec]", ObjectID, sleepInterval);
                 }
 
                 Thread.Sleep(sleepInterval);
@@ -1970,7 +1970,7 @@ namespace Microsoft.Data.SqlClient
 
             if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.LoginWithFailover|ADV> {ObjectID}#, useFailover={useFailoverHost}[bool], primary={primaryServerInfo.UserServerName}, failover={failoverHost}");
+                SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.LoginWithFailover|ADV> {0}#, useFailover={1}[bool], primary={2}, failover={failoverHost}", ObjectID, useFailoverHost, primaryServerInfo.UserServerName);
             }
 
             int sleepInterval = 100;  //milliseconds to sleep (back off) between attempts.
@@ -2041,7 +2041,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (SqlClientEventSource.Log.IsTraceEnabled())
                         {
-                            SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.LoginWithFailover|ADV> {ObjectID}#, new failover partner={ServerProvidedFailOverPartner}");
+                            SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.LoginWithFailover|ADV> {0}#, new failover partner={1}", ObjectID, ServerProvidedFailOverPartner);
                         }
                         failoverServerInfo.SetDerivedNames(protocol, ServerProvidedFailOverPartner);
                     }
@@ -2077,7 +2077,7 @@ namespace Microsoft.Data.SqlClient
 
                         if (SqlClientEventSource.Log.IsTraceEnabled())
                         {
-                            SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.LoginWithFailover> Routed to {_routingInfo.ServerName}");
+                            SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.LoginWithFailover> Routed to {0}", _routingInfo.ServerName);
                         }
 
                         if (_parser != null)
@@ -2149,7 +2149,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (SqlClientEventSource.Log.IsTraceEnabled())
                     {
-                        SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.LoginWithFailover|ADV> {ObjectID}#, sleeping {sleepInterval}[milisec]");
+                        SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.LoginWithFailover|ADV> {0}#, sleeping {1}[milisec]", ObjectID, sleepInterval);
                     }
 
                     Thread.Sleep(sleepInterval);
@@ -2228,7 +2228,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.AttemptOneLogin|ADV> {ObjectID}#, timout={timeout.MillisecondsRemaining}[msec], server={serverInfo.ExtendedServerName}");
+                SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.AttemptOneLogin|ADV> {0}#, timout={1}[msec], server={2}", ObjectID, timeout.MillisecondsRemaining, serverInfo.ExtendedServerName);
             }
 
             _routingInfo = null; // forget routing information
@@ -2384,7 +2384,7 @@ namespace Microsoft.Data.SqlClient
 
             if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.BreakConnection|RES|CPOOL> {ObjectID}#, Breaking connection.");
+                SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.BreakConnection|RES|CPOOL> {0}#, Breaking connection.", ObjectID);
             }
             DoomThisConnection();   // Mark connection as unusable, so it will be destroyed
             if (null != connection)
@@ -2479,7 +2479,7 @@ namespace Microsoft.Data.SqlClient
 
                     if (SqlClientEventSource.Log.IsTraceEnabled())
                     {
-                        SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.OnEnvChange> {ObjectID}#, Received routing info");
+                        SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.OnEnvChange> {0}#, Received routing info", ObjectID);
                     }
 
                     if (string.IsNullOrEmpty(rec.newRoutingInfo.ServerName) || rec.newRoutingInfo.Protocol != 0 || rec.newRoutingInfo.Port == 0)
@@ -2528,7 +2528,7 @@ namespace Microsoft.Data.SqlClient
 
             if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.OnFedAuthInfo> {ObjectID}#, Generating federated authentication token");
+                SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.OnFedAuthInfo> {0}#, Generating federated authentication token", ObjectID);
             }
 
             DbConnectionPoolAuthenticationContext dbConnectionPoolAuthenticationContext = null;
@@ -2563,9 +2563,9 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (SqlClientEventSource.Log.IsTraceEnabled())
                         {
-                            SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.OnFedAuthInfo> {ObjectID}#, " +
-                                $"The expiration time is less than 10 mins, so trying to get new access token regardless of if an other thread is also trying to update it." +
-                                $"The expiration time is {dbConnectionPoolAuthenticationContext.ExpirationTime.ToLongTimeString()}. Current Time is {DateTime.UtcNow.ToLongTimeString()}.");
+                            SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.OnFedAuthInfo> {0}#, " +
+                                "The expiration time is less than 10 mins, so trying to get new access token regardless of if an other thread is also trying to update it." +
+                                "The expiration time is {1}. Current Time is {DateTime.UtcNow.ToLongTimeString()}.", ObjectID, dbConnectionPoolAuthenticationContext.ExpirationTime.ToLongTimeString());
                         }
 
                         attemptRefreshTokenUnLocked = true;
@@ -2589,9 +2589,9 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (SqlClientEventSource.Log.IsTraceEnabled())
                         {
-                            SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.OnFedAuthInfo> {ObjectID}#, " +
-                                $"The authentication context needs a refresh.The expiration time is {dbConnectionPoolAuthenticationContext.ExpirationTime.ToLongTimeString()}. " +
-                                $"Current Time is {DateTime.UtcNow.ToLongTimeString()}.");
+                            SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.OnFedAuthInfo> {0}#, " +
+                                "The authentication context needs a refresh.The expiration time is {1}. " +
+                                "Current Time is {2}.", ObjectID, dbConnectionPoolAuthenticationContext.ExpirationTime.ToLongTimeString(), DateTime.UtcNow.ToLongTimeString());
                         }
 
                         // Call the function which tries to acquire a lock over the authentication context before trying to update.
@@ -2608,14 +2608,14 @@ namespace Microsoft.Data.SqlClient
                         {
                             if (SqlClientEventSource.Log.IsTraceEnabled())
                             {
-                                SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.OnFedAuthInfo> %d#, The attempt to get a new access token succeeded under the locked mode.");
+                                SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.OnFedAuthInfo> %d#, The attempt to get a new access token succeeded under the locked mode.");
                             }
                         }
 
                     }
                     if (SqlClientEventSource.Log.IsTraceEnabled())
                     {
-                        SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.OnFedAuthInfo> {ObjectID}#, Found an authentication context in the cache that does not need a refresh at this time. Re-using the cached token.");
+                        SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.OnFedAuthInfo> {0}#, Found an authentication context in the cache that does not need a refresh at this time. Re-using the cached token.", ObjectID);
                     }
                 }
             }
@@ -2678,9 +2678,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (SqlClientEventSource.Log.IsTraceEnabled())
                     {
-                        SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.TryGetFedAuthTokenLocked> {ObjectID}#, " +
-                        $"Acquired the lock to update the authentication context.The expiration time is {dbConnectionPoolAuthenticationContext.ExpirationTime.ToLongTimeString()}. " +
-                        $"Current Time is {DateTime.UtcNow.ToLongTimeString()}.");
+                        SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.TryGetFedAuthTokenLocked> {0}#, " +
+                        "Acquired the lock to update the authentication context.The expiration time is {1}. " +
+                        "Current Time is {2}.", ObjectID, dbConnectionPoolAuthenticationContext.ExpirationTime.ToLongTimeString(), DateTime.UtcNow.ToLongTimeString());
                     }
 
                     authenticationContextLocked = true;
@@ -2689,7 +2689,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (SqlClientEventSource.Log.IsTraceEnabled())
                     {
-                        SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.TryGetFedAuthTokenLocked> {ObjectID}#, Refreshing the context is already in progress by another thread.");
+                        SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.TryGetFedAuthTokenLocked> {}#, Refreshing the context is already in progress by another thread.", ObjectID);
                     }
                 }
 
@@ -2850,7 +2850,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (SqlClientEventSource.Log.IsTraceEnabled())
                         {
-                            SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.GetFedAuthToken.MSALException error:> {msalException.ErrorCode}#");
+                            SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.GetFedAuthToken.MSALException error:> {0}#", msalException.ErrorCode);
                         }
 
                         // Error[0]
@@ -2872,8 +2872,8 @@ namespace Microsoft.Data.SqlClient
 
                     if (SqlClientEventSource.Log.IsTraceEnabled())
                     {
-                        SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.GetFedAuthToken|ADV> {ObjectID}#, sleeping {sleepInterval}[Milliseconds]");
-                        SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.GetFedAuthToken|ADV> {ObjectID}#, remaining {_timeout.MillisecondsRemaining}[Milliseconds]");
+                        SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.GetFedAuthToken|ADV> {0}#, sleeping {1}[Milliseconds]", ObjectID, sleepInterval);
+                        SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.GetFedAuthToken|ADV> {0}#, remaining {1}[Milliseconds]", ObjectID, _timeout.MillisecondsRemaining);
                     }
 
                     Thread.Sleep(sleepInterval);
@@ -2893,7 +2893,7 @@ namespace Microsoft.Data.SqlClient
 
             if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.GetFedAuthToken> {ObjectID}#, Finished generating federated authentication token.");
+                SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.GetFedAuthToken> {0}#, Finished generating federated authentication token.", ObjectID);
             }
 
             return fedAuthToken;
@@ -2960,14 +2960,14 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (SqlClientEventSource.Log.IsTraceEnabled())
                         {
-                            SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.OnFeatureExtAck> {ObjectID}#, Received feature extension acknowledgement for federated authentication");
+                            SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.OnFeatureExtAck> {0}#, Received feature extension acknowledgement for federated authentication", ObjectID);
                         }
 
                         if (!_federatedAuthenticationRequested)
                         {
                             if (SqlClientEventSource.Log.IsTraceEnabled())
                             {
-                                SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {ObjectID}#, Did not request federated authentication");
+                                SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}#, Did not request federated authentication", ObjectID);
                             }
 
                             throw SQL.ParsingErrorFeatureId(ParsingErrorState.UnrequestedFeatureAckReceived, featureId);
@@ -2984,8 +2984,8 @@ namespace Microsoft.Data.SqlClient
                                 {
                                     if (SqlClientEventSource.Log.IsTraceEnabled())
                                     {
-                                        SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {ObjectID}#, " +
-                                            $"Federated authentication feature extension ack for MSAL and Security Token includes extra data");
+                                        SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}#, " +
+                                            "Federated authentication feature extension ack for MSAL and Security Token includes extra data", ObjectID);
                                     }
                                     throw SQL.ParsingError(ParsingErrorState.FedAuthFeatureAckContainsExtraData);
                                 }
@@ -2995,7 +2995,7 @@ namespace Microsoft.Data.SqlClient
                                 Debug.Fail("Unknown _fedAuthLibrary type");
                                 if (SqlClientEventSource.Log.IsTraceEnabled())
                                 {
-                                    SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {ObjectID}#, Attempting to use unknown federated authentication library");
+                                    SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}#, Attempting to use unknown federated authentication library", ObjectID);
                                 }
 
                                 throw SQL.ParsingErrorLibraryType(ParsingErrorState.FedAuthFeatureAckUnknownLibraryType, (int)_fedAuthFeatureExtensionData.Value.libraryType);
@@ -3018,11 +3018,11 @@ namespace Microsoft.Data.SqlClient
                                 // For debug purposes, assert and trace if we ended up updating the cache with the new one or some other thread's context won the expiration race.
                                 if (newAuthenticationContextInCacheAfterAddOrUpdate == _newDbConnectionPoolAuthenticationContext)
                                 {
-                                    SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {ObjectID}#, Updated the new dbAuthenticationContext in the _dbConnectionPool.AuthenticationContexts.");
+                                    SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}#, Updated the new dbAuthenticationContext in the _dbConnectionPool.AuthenticationContexts.", ObjectID);
                                 }
                                 else
                                 {
-                                    SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {ObjectID}#, AddOrUpdate attempted on _dbConnectionPool.AuthenticationContexts, but it did not update the new value.");
+                                    SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}#, AddOrUpdate attempted on _dbConnectionPool.AuthenticationContexts, but it did not update the new value.", ObjectID);
                                 }
                             }
 #endif
@@ -3034,14 +3034,14 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (SqlClientEventSource.Log.IsTraceEnabled())
                         {
-                            SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.OnFeatureExtAck> {ObjectID}#, Received feature extension acknowledgement for TCE");
+                            SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.OnFeatureExtAck> {0}#, Received feature extension acknowledgement for TCE", ObjectID);
                         }
 
                         if (data.Length < 1)
                         {
                             if (SqlClientEventSource.Log.IsTraceEnabled())
                             {
-                                SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {ObjectID}#, Unknown version number for TCE");
+                                SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}#, Unknown version number for TCE", ObjectID);
                             }
 
                             throw SQL.ParsingError(ParsingErrorState.TceUnknownVersion);
@@ -3052,7 +3052,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             if (SqlClientEventSource.Log.IsTraceEnabled())
                             {
-                                SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {ObjectID}#, Invalid version number for TCE");
+                                SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}#, Invalid version number for TCE", ObjectID);
                             }
                             throw SQL.ParsingErrorValue(ParsingErrorState.TceInvalidVersion, supportedTceVersion);
                         }
@@ -3074,14 +3074,14 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (SqlClientEventSource.Log.IsTraceEnabled())
                         {
-                            SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.OnFeatureExtAck> {ObjectID}#, Received feature extension acknowledgement for GlobalTransactions");
+                            SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.OnFeatureExtAck> {0}#, Received feature extension acknowledgement for GlobalTransactions", ObjectID);
                         }
 
                         if (data.Length < 1)
                         {
                             if (SqlClientEventSource.Log.IsTraceEnabled())
                             {
-                                SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {ObjectID}#, Unknown version number for GlobalTransactions");
+                                SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}#, Unknown version number for GlobalTransactions", ObjectID);
                             }
 
                             throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
@@ -3099,14 +3099,14 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (SqlClientEventSource.Log.IsTraceEnabled())
                         {
-                            SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.OnFeatureExtAck> {ObjectID}#, Received feature extension acknowledgement for AzureSQLSupport");
+                            SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.OnFeatureExtAck> {0}#, Received feature extension acknowledgement for AzureSQLSupport", ObjectID);
                         }
 
                         if (data.Length < 1)
                         {
                             if (SqlClientEventSource.Log.IsTraceEnabled())
                             {
-                                SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {ObjectID}#, Unknown token for AzureSQLSupport");
+                                SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}#, Unknown token for AzureSQLSupport", ObjectID);
                             }
 
                             throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
@@ -3117,7 +3117,7 @@ namespace Microsoft.Data.SqlClient
                         //  Bit 0 for RO/FP support
                         if ((data[0] & 1) == 1 && SqlClientEventSource.Log.IsTraceEnabled())
                         {
-                            SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.OnFeatureExtAck> {ObjectID}#, FailoverPartner enabled with Readonly intent for AzureSQL DB");
+                            SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.OnFeatureExtAck> {0}#, FailoverPartner enabled with Readonly intent for AzureSQL DB", ObjectID);
                         }
                         break;
                     }
@@ -3126,14 +3126,14 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (SqlClientEventSource.Log.IsTraceEnabled())
                         {
-                            SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.OnFeatureExtAck> {ObjectID}#, Received feature extension acknowledgement for DATACLASSIFICATION");
+                            SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.OnFeatureExtAck> {0}#, Received feature extension acknowledgement for DATACLASSIFICATION", ObjectID);
                         }
 
                         if (data.Length < 1)
                         {
                             if (SqlClientEventSource.Log.IsTraceEnabled())
                             {
-                                SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {ObjectID}#, Unknown token for DATACLASSIFICATION");
+                                SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}#, Unknown token for DATACLASSIFICATION", ObjectID);
                             }
 
                             throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
@@ -3143,7 +3143,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             if (SqlClientEventSource.Log.IsTraceEnabled())
                             {
-                                SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {ObjectID}#, Invalid version number for DATACLASSIFICATION");
+                                SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}#, Invalid version number for DATACLASSIFICATION", ObjectID);
                             }
                             throw SQL.ParsingErrorValue(ParsingErrorState.DataClassificationInvalidVersion, supportedDataClassificationVersion);
                         }
@@ -3152,7 +3152,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             if (SqlClientEventSource.Log.IsTraceEnabled())
                             {
-                                SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {ObjectID}#, Unknown token for DATACLASSIFICATION");
+                                SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}#, Unknown token for DATACLASSIFICATION", ObjectID);
                             }
                             throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
                         }
@@ -3165,14 +3165,14 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (SqlClientEventSource.Log.IsTraceEnabled())
                         {
-                            SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.OnFeatureExtAck> {ObjectID}#, Received feature extension acknowledgement for UTF8 support");
+                            SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.OnFeatureExtAck> {0}#, Received feature extension acknowledgement for UTF8 support", ObjectID);
                         }
 
                         if (data.Length < 1)
                         {
                             if (SqlClientEventSource.Log.IsTraceEnabled())
                             {
-                                SqlClientEventSource.Log.Trace($"<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {ObjectID}#, Unknown value for UTF8 support");
+                                SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}#, Unknown value for UTF8 support", ObjectID);
                             }
                             throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
                         }

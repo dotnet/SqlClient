@@ -196,7 +196,7 @@ namespace Microsoft.Data.SqlClient
 
                     if (SqlClientEventSource.Log.IsTraceEnabled())
                     {
-                        SqlClientEventSource.Log.Trace($"<sc.SqlConnectionFactory.CreateConnectionPoolGroupOptions>Set connection pool CreateTimeout={connectionTimeout} when AD Interactive is in use.");
+                        SqlClientEventSource.Log.Trace("<sc.SqlConnectionFactory.CreateConnectionPoolGroupOptions>Set connection pool CreateTimeout={0} when AD Interactive is in use.", connectionTimeout);
                     }
                 }
 
