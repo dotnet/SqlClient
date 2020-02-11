@@ -97,7 +97,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // TSQL to create the same table, but without the column set column and without sparse
             // also, it has only 1024 columns, which is the server limit in this case
             StringBuilder createNonSparseBuilder = new StringBuilder("CREATE TABLE {0} ([ID] int PRIMARY KEY");
-            
+
             // TSQL to select all columns from the sparse table, without columnset one
             StringBuilder selectBuilder = new StringBuilder("SELECT [ID]");
 
