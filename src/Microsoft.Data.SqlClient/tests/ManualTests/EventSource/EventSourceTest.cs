@@ -4,22 +4,19 @@
 
 using System.Collections.Generic;
 using System.Diagnostics.Tracing;
-using Microsoft.Data.SqlClient.ManualTesting.Tests;
 using Xunit;
 
-namespace Microsoft.Data.SqlClient.Tests
+namespace Microsoft.Data.SqlClient.ManualTesting.Tests.EventSource
 {
     [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp, "Not Implemented")]
-    public class SqlClientEventSourceTest
+    public class EventSourceTest
     {
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void IsTraceEnabled()
         {
-            string connString = DataTestUtility.TCPConnectionString;
             using (var listener = new SampleEventListener())
             {
-                listener.EnableEvents(SqlClientEventSource.Log, EventLevel.Informational, SqlClientEventSource.Keywords.Trace);
-                using (SqlConnection connection = new SqlConnection(connString))
+                using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
                 {
                     connection.Open();
                     using (SqlCommand command = new SqlCommand("SELECT * From [Customers]", connection))
@@ -27,19 +24,22 @@ namespace Microsoft.Data.SqlClient.Tests
                         command.ExecuteNonQuery();
                     }
                 }
+
                 //Check if all the events are from Trace
                 foreach (var item in listener.eventsNames)
                 {
                     Assert.Contains("Trace", item);
                 }
-
+#if net46
                 //Check if we can disable the events
                 listener.DisableEvents(SqlClientEventSource.Log);
+
                 Assert.False(SqlClientEventSource.Log.IsEnabled());
 
                 //Check if we are able to enable events again
                 listener.EnableEvents(SqlClientEventSource.Log, EventLevel.Informational);
                 Assert.True(SqlClientEventSource.Log.IsEnabled());
+#endif
             }
         }
     }
