@@ -4336,7 +4336,13 @@
     <value>{0} instance in use does not support column encryption.</value>
   </data>
   <data name="TCE_EnclaveComputationsNotSupported" xml:space="preserve">
+    <value>You have specified the enclave attestation URL and attestation protocol in the connection string, but the SQL Server instance in use does not support enclave based computations.</value>
+  </data>
+  <data name="TCE_AttestationURLNotSupported" xml:space="preserve">
     <value>You have specified the enclave attestation URL in the connection string, but the SQL Server instance in use does not support enclave based computations.</value>
+  </data>
+  <data name="TCE_AttestationProtocolNotSupported" xml:space="preserve">
+    <value>You have specified the attestation protocol in the connection string, but the SQL Server instance in use does not support enclave based computations.</value>
   </data>
   <data name="TCE_EnclaveTypeNotReturned" xml:space="preserve">
     <value>You have specified the enclave attestation URL in the connection string, but the SQL Server instance did not return an enclave type. Please make sure the enclave type is correctly configured in your instance.</value>

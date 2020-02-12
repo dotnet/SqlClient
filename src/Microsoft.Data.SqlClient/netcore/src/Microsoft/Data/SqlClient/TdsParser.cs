@@ -2986,30 +2986,44 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.TceNotSupported();
             }
 
-            // Check if enclave attestation url was specified and server does not support enclave computations and we aren't going to be routed to another server.
-            if (Connection.RoutingInfo == null
-                && (!string.IsNullOrWhiteSpace(_connHandler.ConnectionOptions.EnclaveAttestationUrl))
-                && (TceVersionSupported < TdsEnums.MIN_TCE_VERSION_WITH_ENCLAVE_SUPPORT))
+            // Check if server does not support Enclave Computations and we aren't going to be routed to another server.
+            if (Connection.RoutingInfo == null)
             {
-                throw SQL.EnclaveComputationsNotSupported();
-            }
+                SqlConnectionAttestationProtocol attestationProtocol = _connHandler.ConnectionOptions.AttestationProtocol;
 
-            // Check if enclave attestation url was specified and server does not return an enclave type and we aren't going to be routed to another server.
-            if (Connection.RoutingInfo == null
-                && (!string.IsNullOrWhiteSpace(_connHandler.ConnectionOptions.EnclaveAttestationUrl))
-                && string.IsNullOrWhiteSpace(EnclaveType))
-            {
-                throw SQL.EnclaveTypeNotReturned();
-            }
+                if (TceVersionSupported < TdsEnums.MIN_TCE_VERSION_WITH_ENCLAVE_SUPPORT)
+                {
+                    // Check if enclave attestation url was specified and server does not support enclave computations and we aren't going to be routed to another server.
+                    if (!string.IsNullOrWhiteSpace(_connHandler.ConnectionOptions.EnclaveAttestationUrl) && SqlConnectionAttestationProtocol.NotSpecified != attestationProtocol)
+                    {
+                        throw SQL.EnclaveComputationsNotSupported();
+                    }
+                    else if (!string.IsNullOrWhiteSpace(_connHandler.ConnectionOptions.EnclaveAttestationUrl))
+                    {
+                        throw SQL.AttestationURLNotSupported();
+                    }
+                    else if (SqlConnectionAttestationProtocol.NotSpecified != _connHandler.ConnectionOptions.AttestationProtocol)
+                    {
+                        throw SQL.AttestationProtocolNotSupported();
+                    }
+                }
 
-            // Check if enclave attestation url was specified and the attestation protocol supports the enclave type.
-            SqlConnectionAttestationProtocol attestationProtocol = _connHandler.ConnectionOptions.AttestationProtocol;
-            if (this.Connection.RoutingInfo == null
-                && (!string.IsNullOrWhiteSpace(_connHandler.ConnectionOptions.EnclaveAttestationUrl))
-                && (!string.IsNullOrWhiteSpace(EnclaveType))
-                && (!IsValidAttestationProtocol(attestationProtocol, EnclaveType)))
-            {
-                throw SQL.AttestationProtocolNotSupportEnclaveType(ConvertAttestationProtocolToString(attestationProtocol), EnclaveType);
+                // Check if enclave attestation url was specified and server does not return an enclave type and we aren't going to be routed to another server.
+                if (!string.IsNullOrWhiteSpace(_connHandler.ConnectionOptions.EnclaveAttestationUrl))
+                {
+                    if (string.IsNullOrWhiteSpace(EnclaveType))
+                    {
+                        throw SQL.EnclaveTypeNotReturned();
+                    }
+                    else
+                    {
+                        // Check if the attestation protocol is specified and supports the enclave type.
+                        if (SqlConnectionAttestationProtocol.NotSpecified != attestationProtocol && !IsValidAttestationProtocol(attestationProtocol, EnclaveType))
+                        {
+                            throw SQL.AttestationProtocolNotSupportEnclaveType(ConvertAttestationProtocolToString(attestationProtocol), EnclaveType);
+                        }
+                    }
+                }
             }
 
             return true;
@@ -4087,8 +4101,8 @@ namespace Microsoft.Data.SqlClient
                         case 0x11404: // zh-MO
                         case 0x10411: // ja-JP
                         case 0x10412: // ko-KR
-                            // If one of the following special cases, mask out sortId and
-                            // retry.
+                                      // If one of the following special cases, mask out sortId and
+                                      // retry.
                             cultureId = cultureId & 0x03fff;
 
                             try
@@ -6411,7 +6425,7 @@ namespace Microsoft.Data.SqlClient
                     Debug.Fail("unknown tds type for sqlvariant!");
                     break;
             } // switch
-            // return point for accumulated writes, note: non-accumulated writes returned from their case statements
+              // return point for accumulated writes, note: non-accumulated writes returned from their case statements
             return null;
         }
 
@@ -6578,7 +6592,7 @@ namespace Microsoft.Data.SqlClient
                     Debug.Fail("unknown tds type for sqlvariant!");
                     break;
             } // switch
-            // return point for accumulated writes, note: non-accumulated writes returned from their case statements
+              // return point for accumulated writes, note: non-accumulated writes returned from their case statements
             return null;
         }
 
@@ -9095,89 +9109,89 @@ namespace Microsoft.Data.SqlClient
                             maxsize = 1;
                     }
 
-                                    WriteParameterVarLen(mt, maxsize, false /*IsNull*/, stateObj);
-                                }
-                            }
-                            else
+                    WriteParameterVarLen(mt, maxsize, false /*IsNull*/, stateObj);
+                }
+            }
+            else
+            {
+                // If type timestamp - treat as fixed type and always send over timestamp length, which is 8.
+                // For fixed types, we either send null or fixed length for type length.  We want to match that
+                // behavior for timestamps.  However, in the case of null, we still must send 8 because if we
+                // send null we will not receive a output val.  You can send null for fixed types and still
+                // receive a output value, but not for variable types.  So, always send 8 for timestamp because
+                // while the user sees it as a fixed type, we are actually representing it as a bigbinary which
+                // is variable.
+                if (mt.SqlDbType == SqlDbType.Timestamp)
+                {
+                    WriteParameterVarLen(mt, TdsEnums.TEXT_TIME_STAMP_LEN, false, stateObj);
+                }
+                else if (mt.SqlDbType == SqlDbType.Udt)
+                {
+                    Debug.Assert(_isYukon, "Invalid DataType UDT for non-Yukon or later server!");
+
+                    int maxSupportedSize = IsKatmaiOrNewer ? int.MaxValue : short.MaxValue;
+                    byte[] udtVal = null;
+                    Format format = Format.Native;
+
+                    if (string.IsNullOrEmpty(param.UdtTypeName))
+                    {
+                        throw SQL.MustSetUdtTypeNameForUdtParams();
+                    }
+
+                    if (!isNull)
+                    {
+                        // When writing UDT parameter values to the TDS stream, allow sending byte[] or SqlBytes
+                        // directly to the server and not reject them as invalid. This allows users to handle
+                        // serialization and deserialization logic without having to have SqlClient be aware of
+                        // the types and without using inefficient text representations.
+                        if (value is byte[] rawBytes)
+                        {
+                            udtVal = rawBytes;
+                        }
+                        else if (value is SqlBytes sqlBytes)
+                        {
+                            switch (sqlBytes.Storage)
                             {
-                                // If type timestamp - treat as fixed type and always send over timestamp length, which is 8.
-                                // For fixed types, we either send null or fixed length for type length.  We want to match that
-                                // behavior for timestamps.  However, in the case of null, we still must send 8 because if we
-                                // send null we will not receive a output val.  You can send null for fixed types and still
-                                // receive a output value, but not for variable types.  So, always send 8 for timestamp because
-                                // while the user sees it as a fixed type, we are actually representing it as a bigbinary which
-                                // is variable.
-                                if (mt.SqlDbType == SqlDbType.Timestamp)
-                                {
-                                    WriteParameterVarLen(mt, TdsEnums.TEXT_TIME_STAMP_LEN, false, stateObj);
-                                }
-                                else if (mt.SqlDbType == SqlDbType.Udt)
-                                {
-                                    Debug.Assert(_isYukon, "Invalid DataType UDT for non-Yukon or later server!");
-
-                                    int maxSupportedSize = IsKatmaiOrNewer ? int.MaxValue : short.MaxValue;
-                                    byte[] udtVal = null;
-                                    Format format = Format.Native;
-
-                                    if (string.IsNullOrEmpty(param.UdtTypeName))
-                                    {
-                                        throw SQL.MustSetUdtTypeNameForUdtParams();
-                                    }
-
-                                    if (!isNull)
-                                    {
-                                        // When writing UDT parameter values to the TDS stream, allow sending byte[] or SqlBytes
-                                        // directly to the server and not reject them as invalid. This allows users to handle
-                                        // serialization and deserialization logic without having to have SqlClient be aware of
-                                        // the types and without using inefficient text representations.
-                                        if (value is byte[] rawBytes)
-                                        {
-                                            udtVal = rawBytes;
-                                        }
-                                        else if (value is SqlBytes sqlBytes)
-                                        {
-                                            switch (sqlBytes.Storage)
-                                            {
-                                                case StorageState.Buffer:
-                                                    // use the buffer directly, the only way to create it is with the correctly sized byte array
-                                                    udtVal = sqlBytes.Buffer;
-                                                    break;
-                                                case StorageState.Stream:
-                                                case StorageState.UnmanagedBuffer:
-                                                    // allocate a new byte array to store the data
-                                                    udtVal = sqlBytes.Value;
-                                                    break;
-                                            }
-                                        }
-                                        else
-                                        {
-                                            udtVal = _connHandler.Connection.GetBytes(value, out format, out maxsize);
-                                        }
+                                case StorageState.Buffer:
+                                    // use the buffer directly, the only way to create it is with the correctly sized byte array
+                                    udtVal = sqlBytes.Buffer;
+                                    break;
+                                case StorageState.Stream:
+                                case StorageState.UnmanagedBuffer:
+                                    // allocate a new byte array to store the data
+                                    udtVal = sqlBytes.Value;
+                                    break;
+                            }
+                        }
+                        else
+                        {
+                            udtVal = _connHandler.Connection.GetBytes(value, out format, out maxsize);
+                        }
 
                         Debug.Assert(null != udtVal, "GetBytes returned null instance. Make sure that it always returns non-null value");
                         size = udtVal.Length;
 
-                                        if (size >= maxSupportedSize && maxsize != -1)
-                                        {
-                                            throw SQL.UDTInvalidSize(maxsize, maxSupportedSize);
-                                        }
-                                    }
+                        if (size >= maxSupportedSize && maxsize != -1)
+                        {
+                            throw SQL.UDTInvalidSize(maxsize, maxSupportedSize);
+                        }
+                    }
 
-                                    // Split the input name. TypeName is returned as single 3 part name during DeriveParameters.
-                                    // NOTE: ParseUdtTypeName throws if format is incorrect
-                                    string[] names = SqlParameter.ParseTypeName(param.UdtTypeName, isUdtTypeName: true);
-                                    if (!string.IsNullOrEmpty(names[0]) && TdsEnums.MAX_SERVERNAME < names[0].Length)
-                                    {
-                                        throw ADP.ArgumentOutOfRange(nameof(names));
-                                    }
-                                    if (!string.IsNullOrEmpty(names[1]) && TdsEnums.MAX_SERVERNAME < names[names.Length - 2].Length)
-                                    {
-                                        throw ADP.ArgumentOutOfRange(nameof(names));
-                                    }
-                                    if (TdsEnums.MAX_SERVERNAME < names[2].Length)
-                                    {
-                                        throw ADP.ArgumentOutOfRange(nameof(names));
-                                    }
+                    // Split the input name. TypeName is returned as single 3 part name during DeriveParameters.
+                    // NOTE: ParseUdtTypeName throws if format is incorrect
+                    string[] names = SqlParameter.ParseTypeName(param.UdtTypeName, isUdtTypeName: true);
+                    if (!string.IsNullOrEmpty(names[0]) && TdsEnums.MAX_SERVERNAME < names[0].Length)
+                    {
+                        throw ADP.ArgumentOutOfRange(nameof(names));
+                    }
+                    if (!string.IsNullOrEmpty(names[1]) && TdsEnums.MAX_SERVERNAME < names[names.Length - 2].Length)
+                    {
+                        throw ADP.ArgumentOutOfRange(nameof(names));
+                    }
+                    if (TdsEnums.MAX_SERVERNAME < names[2].Length)
+                    {
+                        throw ADP.ArgumentOutOfRange(nameof(names));
+                    }
 
                     WriteUDTMetaData(value, names[0], names[1], names[2], stateObj);
 
@@ -10886,7 +10900,7 @@ namespace Microsoft.Data.SqlClient
                     Debug.Fail("Unknown TdsType!" + type.NullableType.ToString("x2", (IFormatProvider)null));
                     break;
             } // switch
-            // return point for accumulated writes, note: non-accumulated writes returned from their case statements
+              // return point for accumulated writes, note: non-accumulated writes returned from their case statements
             return null;
         }
 
@@ -11574,7 +11588,7 @@ namespace Microsoft.Data.SqlClient
                     Debug.Fail("Unknown TdsType!" + type.NullableType.ToString("x2", (IFormatProvider)null));
                     break;
             } // switch
-            // return point for accumulated writes, note: non-accumulated writes returned from their case statements
+              // return point for accumulated writes, note: non-accumulated writes returned from their case statements
             return null;
             // Debug.WriteLine("value:  " + value.ToString(CultureInfo.InvariantCulture));
         }

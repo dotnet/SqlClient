@@ -1654,7 +1654,13 @@
     <value>Invalid key store provider name specified. Key store provider names cannot be null or empty.</value>
   </data>
   <data name="TCE_EnclaveComputationsNotSupported" xml:space="preserve">
+    <value>You have specified the enclave attestation URL and attestation protocol in the connection string, but the SQL Server instance in use does not support enclave based computations.</value>
+  </data>
+  <data name="TCE_AttestationURLNotSupported" xml:space="preserve">
     <value>You have specified the enclave attestation URL in the connection string, but the SQL Server instance in use does not support enclave based computations.</value>
+  </data>
+  <data name="TCE_AttestationProtocolNotSupported" xml:space="preserve">
+    <value>You have specified the attestation protocol in the connection string, but the SQL Server instance in use does not support enclave based computations.</value>
   </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
     <value>No enclave provider found for enclave type '{0}' and attestation protocol '{1}'. Please specify the correct attestation protocol in the connection string.</value>

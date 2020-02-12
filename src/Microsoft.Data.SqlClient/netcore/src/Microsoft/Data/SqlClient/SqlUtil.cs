@@ -1712,6 +1712,16 @@ namespace Microsoft.Data.SqlClient
             return ADP.InvalidOperation(System.SRHelper.GetString(SR.TCE_EnclaveComputationsNotSupported));
         }
 
+        internal static Exception AttestationURLNotSupported()
+        {
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.TCE_AttestationURLNotSupported));
+        }
+
+        internal static Exception AttestationProtocolNotSupported()
+        {
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.TCE_AttestationProtocolNotSupported));
+        }
+
         internal static Exception EnclaveTypeNotReturned()
         {
             return ADP.InvalidOperation(System.SRHelper.GetString(SR.TCE_EnclaveTypeNotReturned));
