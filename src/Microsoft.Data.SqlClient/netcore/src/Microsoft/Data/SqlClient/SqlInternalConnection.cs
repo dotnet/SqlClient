@@ -11,16 +11,20 @@ using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient
 {
-    abstract internal class SqlInternalConnection : DbConnectionInternal
+    internal abstract class SqlInternalConnection : DbConnectionInternal
     {
         private readonly SqlConnectionString _connectionOptions;
         private bool _isEnlistedInTransaction; // is the server-side connection enlisted? true while we're enlisted, reset only after we send a null...
         private byte[] _promotedDTCToken;        // token returned by the server when we promote transaction
         private byte[] _whereAbouts;             // cache the whereabouts (DTC Address) for exporting
 
-        private bool _isGlobalTransaction = false; // Whether this is a Global Transaction (Non-MSDTC, Azure SQL DB Transaction)
-        private bool _isGlobalTransactionEnabledForServer = false; // Whether Global Transactions are enabled for this Azure SQL DB Server
+        private bool _isGlobalTransaction; // Whether this is a Global Transaction (Non-MSDTC, Azure SQL DB Transaction)
+        private bool _isGlobalTransactionEnabledForServer; // Whether Global Transactions are enabled for this Azure SQL DB Server
         private static readonly Guid _globalTransactionTMID = new Guid("1c742caf-6680-40ea-9c26-6b6846079764"); // ID of the Non-MSDTC, Azure SQL DB Transaction Manager
+
+        internal SqlDataReader.Snapshot CachedDataReaderSnapshot;
+        internal SqlDataReader.IsDBNullAsyncCallContext CachedDataReaderIsDBNullContext;
+        internal SqlDataReader.ReadAsyncCallContext CachedDataReaderReadAsyncContext;
 
         // if connection is not open: null
         // if connection is open: currently active database

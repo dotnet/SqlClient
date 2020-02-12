@@ -27,7 +27,7 @@ namespace Microsoft.Data.SqlClient
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/SqlDataReader/*' />
     public class SqlDataReader : DbDataReader, IDataReader, IDbColumnSchemaGenerator
     {
-        private enum ALTROWSTATUS
+        internal enum ALTROWSTATUS
         {
             Null = 0,           // default and after Done
             AltRow,             // after calling NextResult and the first AltRow is available for read
@@ -87,7 +87,7 @@ namespace Microsoft.Data.SqlClient
 
         private Task _currentTask;
         private Snapshot _snapshot;
-        private Snapshot _cachedSnapshot;
+
         private CancellationTokenSource _cancelAsyncOnCloseTokenSource;
         private CancellationToken _cancelAsyncOnCloseToken;
 
@@ -97,8 +97,6 @@ namespace Microsoft.Data.SqlClient
 
         private SqlSequentialStream _currentStream;
         private SqlSequentialTextReader _currentTextReader;
-        private IsDBNullAsyncCallContext _cachedIsDBNullContext;
-        private ReadAsyncCallContext _cachedReadAsyncContext;
 
         internal SqlDataReader(SqlCommand command, CommandBehavior behavior)
         {
@@ -3781,9 +3779,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     // reset snapshot to save memory use.  We can safely do that here because all SqlDataReader values are stable.
                     // The retry logic can use the current values to get back to the right state.
-                    if (_cachedSnapshot is null)
+                    if (_connection?.InnerConnection is SqlInternalConnection sqlInternalConnection && sqlInternalConnection.CachedDataReaderSnapshot is null)
                     {
-                        _cachedSnapshot = _snapshot;
+                        sqlInternalConnection.CachedDataReaderSnapshot = _snapshot;
                     }
                     _snapshot = null;
                     PrepareAsyncInvocation(useSnapshot: true);
@@ -4696,7 +4694,15 @@ namespace Microsoft.Data.SqlClient
                     registration = cancellationToken.Register(SqlCommand.s_cancelIgnoreFailure, _command);
                 }
 
-                var context = Interlocked.Exchange(ref _cachedReadAsyncContext, null) ?? new ReadAsyncCallContext();
+                ReadAsyncCallContext context = null;
+                if (_connection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
+                {
+                    context = Interlocked.Exchange(ref sqlInternalConnection.CachedDataReaderReadAsyncContext, null);
+                }
+                if (context is null)
+                {
+                    context = new ReadAsyncCallContext();
+                }
 
                 Debug.Assert(context._reader == null && context._source == null && context._disposable == null, "cached ReadAsyncCallContext was not properly disposed");
 
@@ -4740,9 +4746,9 @@ namespace Microsoft.Data.SqlClient
                     if (!hasReadRowToken)
                     {
                         hasReadRowToken = true;
-                        if (reader._cachedSnapshot is null)
+                        if (reader.Connection?.InnerConnection is SqlInternalConnection sqlInternalConnection && sqlInternalConnection.CachedDataReaderSnapshot is null)
                         {
-                            reader._cachedSnapshot = reader._snapshot;
+                            sqlInternalConnection.CachedDataReaderSnapshot = reader._snapshot;
                         }
                         reader._snapshot = null;
                         reader.PrepareAsyncInvocation(useSnapshot: true);
@@ -4762,7 +4768,10 @@ namespace Microsoft.Data.SqlClient
 
         private void SetCachedReadAsyncCallContext(ReadAsyncCallContext instance)
         {
-            Interlocked.CompareExchange(ref _cachedReadAsyncContext, instance, null);
+            if (_connection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
+            {
+                Interlocked.CompareExchange(ref sqlInternalConnection.CachedDataReaderReadAsyncContext, instance, null);
+            }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/IsDBNullAsync/*' />
@@ -4863,7 +4872,15 @@ namespace Microsoft.Data.SqlClient
                     registration = cancellationToken.Register(SqlCommand.s_cancelIgnoreFailure, _command);
                 }
 
-                IsDBNullAsyncCallContext context = Interlocked.Exchange(ref _cachedIsDBNullContext, null) ?? new IsDBNullAsyncCallContext();
+                IsDBNullAsyncCallContext context = null;
+                if (_connection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
+                {
+                    context = Interlocked.Exchange(ref sqlInternalConnection.CachedDataReaderIsDBNullContext, null);
+                }
+                if (context is null)
+                {
+                    context = new IsDBNullAsyncCallContext();
+                }
 
                 Debug.Assert(context._reader == null && context._source == null && context._disposable == null, "cached ISDBNullAsync context not properly disposed");
 
@@ -4899,7 +4916,10 @@ namespace Microsoft.Data.SqlClient
 
         private void SetCachedIDBNullAsyncCallContext(IsDBNullAsyncCallContext instance)
         {
-            Interlocked.CompareExchange(ref _cachedIsDBNullContext, instance, null);
+            if (_connection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
+            {
+                Interlocked.CompareExchange(ref sqlInternalConnection.CachedDataReaderIsDBNullContext, instance, null);
+            }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetFieldValueAsync/*' />
@@ -5047,7 +5067,7 @@ namespace Microsoft.Data.SqlClient
 
 #endif
 
-        private class Snapshot
+        internal class Snapshot
         {
             public bool _dataReady;
             public bool _haltRead;
@@ -5068,7 +5088,7 @@ namespace Microsoft.Data.SqlClient
             public SqlSequentialTextReader _currentTextReader;
         }
 
-        private abstract class AAsyncCallContext<T> : IDisposable
+        internal abstract class AAsyncCallContext<T> : IDisposable
         {
             internal static readonly Action<Task<T>, object> s_completeCallback = SqlDataReader.CompleteAsyncCallCallback<T>;
 
@@ -5111,7 +5131,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private sealed class ReadAsyncCallContext : AAsyncCallContext<bool>
+        internal sealed class ReadAsyncCallContext : AAsyncCallContext<bool>
         {
             internal static readonly Func<Task, object, Task<bool>> s_execute = SqlDataReader.ReadAsyncExecute;
 
@@ -5132,7 +5152,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private sealed class IsDBNullAsyncCallContext : AAsyncCallContext<bool>
+        internal sealed class IsDBNullAsyncCallContext : AAsyncCallContext<bool>
         {
             internal static readonly Func<Task, object, Task<bool>> s_execute = SqlDataReader.IsDBNullAsyncExecute;
 
@@ -5381,7 +5401,14 @@ namespace Microsoft.Data.SqlClient
 
                 if (_snapshot == null)
                 {
-                    _snapshot = Interlocked.Exchange(ref _cachedSnapshot, null) ?? new Snapshot();
+                    if (_connection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
+                    {
+                        _snapshot = Interlocked.Exchange(ref sqlInternalConnection.CachedDataReaderSnapshot, null) ?? new Snapshot();
+                    }
+                    else
+                    {
+                        _snapshot = new Snapshot();
+                    }
 
                     _snapshot._dataReady = _sharedState._dataReady;
                     _snapshot._haltRead = _haltRead;
@@ -5454,9 +5481,9 @@ namespace Microsoft.Data.SqlClient
             stateObj._permitReplayStackTraceToDiffer = false;
 #endif
 
-            if (_cachedSnapshot is null)
+            if (_connection?.InnerConnection is SqlInternalConnection sqlInternalConnection && sqlInternalConnection.CachedDataReaderSnapshot is null)
             {
-                _cachedSnapshot = _snapshot;
+                sqlInternalConnection.CachedDataReaderSnapshot = _snapshot;
             }
             // We are setting this to null inside the if-statement because stateObj==null means that the reader hasn't been initialized or has been closed (either way _snapshot should already be null)
             _snapshot = null;
@@ -5496,9 +5523,9 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(_snapshot != null, "Should currently have a snapshot");
             Debug.Assert(_stateObj != null && !_stateObj._asyncReadWithoutSnapshot, "Already in async without snapshot");
 
-            if (_cachedSnapshot is null)
+            if (_connection?.InnerConnection is SqlInternalConnection sqlInternalConnection && sqlInternalConnection.CachedDataReaderSnapshot is null)
             {
-                _cachedSnapshot = _snapshot;
+                sqlInternalConnection.CachedDataReaderSnapshot = _snapshot;
             }
             _snapshot = null;
             _stateObj.ResetSnapshot();
