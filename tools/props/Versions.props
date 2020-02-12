@@ -9,7 +9,7 @@
   </PropertyGroup>
   <!-- NetFx project dependencies -->
   <PropertyGroup>
-    <MicrosoftDataSqlClientSniVersion>1.1.0</MicrosoftDataSqlClientSniVersion>
+    <MicrosoftDataSqlClientSniVersion>1.1.*</MicrosoftDataSqlClientSniVersion>
   </PropertyGroup>
   <!-- NetFx and NetCore project dependencies -->
   <PropertyGroup>
