@@ -28,7 +28,7 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
     <dependencies>
       <group targetFramework="net46">
         <dependency id="System.Data.Common" version="4.3.0" />
-        <dependency id="Microsoft.Data.SqlClient.sni" version="[1.1.0, 1.2.0)" />
+        <dependency id="Microsoft.Data.SqlClient.sni" version="[1.1.0, )" />
         <dependency id="Microsoft.Identity.Client" version="3.0.8" />
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="5.5.0" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="5.5.0" />
