@@ -28,10 +28,6 @@ For the .NET Framework driver on Windows, a package reference to [Microsoft.Data
 
 For the .NET Core driver on Windows, a package reference to [runtime.native.System.Data.SqlClient.sni](https://www.nuget.org/packages/runtime.native.System.Data.SqlClient.sni/) loads `arm64`, `x64` and `x86` native `SNI.dll` libraries into the client's build directories.
 
-**Note**
-When referencing the native `SNI.dll` on Windows, the Microsoft Visual C++ Redistributable is required to be installed: [The latest supported Visual C++ downloads](https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads)
-
-
 ## Helpful Links
 
 | Topic | Link to File |
