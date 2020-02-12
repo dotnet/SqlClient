@@ -822,6 +822,9 @@ namespace Microsoft.Data.Common
         /// </summary>
         const string AttestationProtocolHGS = "HGS";
         const string AttestationProtocolAAS = "AAS";
+#if ENCLAVE_SIMULATOR
+        const string AttestationProtocolSIM = "SIM";
+#endif
 
         /// <summary>
         ///  Convert a string value to the corresponding SqlConnectionAttestationProtocol
@@ -841,6 +844,13 @@ namespace Microsoft.Data.Common
                 result = SqlConnectionAttestationProtocol.AAS;
                 return true;
             }
+#if ENCLAVE_SIMULATOR
+            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, AttestationProtocolSIM))
+            {
+                result = SqlConnectionAttestationProtocol.SIM;
+                return true;
+            }
+#endif
             else
             {
                 result = DbConnectionStringDefaults.AttestationProtocol;
@@ -850,11 +860,18 @@ namespace Microsoft.Data.Common
 
         internal static bool IsValidAttestationProtocol(SqlConnectionAttestationProtocol value)
         {
+#if ENCLAVE_SIMULATOR
+            Debug.Assert(Enum.GetNames(typeof(SqlConnectionAttestationProtocol)).Length == 4, "SqlConnectionAttestationProtocol enum has changed, update needed");
+            return value == SqlConnectionAttestationProtocol.NotSpecified
+                || value == SqlConnectionAttestationProtocol.HGS
+                || value == SqlConnectionAttestationProtocol.AAS
+                || value == SqlConnectionAttestationProtocol.SIM;
+#else
             Debug.Assert(Enum.GetNames(typeof(SqlConnectionAttestationProtocol)).Length == 3, "SqlConnectionAttestationProtocol enum has changed, update needed");
             return value == SqlConnectionAttestationProtocol.NotSpecified
                 || value == SqlConnectionAttestationProtocol.HGS
                 || value == SqlConnectionAttestationProtocol.AAS;
-
+#endif
         }
 
         internal static string AttestationProtocolToString(SqlConnectionAttestationProtocol value)
@@ -867,6 +884,10 @@ namespace Microsoft.Data.Common
                     return AttestationProtocolHGS;
                 case SqlConnectionAttestationProtocol.AAS:
                     return AttestationProtocolAAS;
+#if ENCLAVE_SIMULATOR
+                case SqlConnectionAttestationProtocol.SIM:
+                    return AttestationProtocolSIM;
+#endif
                 default:
                     return null;
             }

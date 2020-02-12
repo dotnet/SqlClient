@@ -13,6 +13,10 @@
             <summary>Attestation portocol for Azure Attestation Service</summary>
             <value>1</value>
         </AAS>
+        <SIM>
+            <summary>Attestation protocol for Simulator</summary>
+            <value>2</value>
+        </SIM>
         <HGS>
             <summary>Attestation protocol for Host Guardian Service</summary>
              <value>3</value>
