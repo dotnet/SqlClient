@@ -2543,7 +2543,6 @@ namespace Microsoft.Data.SqlClient
             // Reset _pendingCancel upon entry into any Execute - used to synchronize state
             // between entry into Execute* API and the thread obtaining the stateObject.
             _pendingCancel = false;
-
             SqlStatistics statistics = null;
 
             TdsParser bestEffortCleanupTarget = null;
