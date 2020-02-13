@@ -84,7 +84,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Microsoft.Data.SqlClientKey.snk" />
-    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Microsoft\Data\Interop\SNINativeMethodWrapper.cs" />
@@ -340,6 +339,12 @@
     </COMReference>
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="System.Security.Cryptography.Algorithms">
+      <Version>$(SystemSecurityCryptographyAlgorithmsVersion)</Version>
+    </PackageReference>
+    <PackageReference Include="System.Security.Cryptography.Primitives">
+      <Version>$(SystemSecurityCryptographyPrimitivesVersion)</Version>
+    </PackageReference>
     <PackageReference Include="Microsoft.Data.SqlClient.SNI">
       <Version>$(MicrosoftDataSqlClientSniVersion)</Version>
     </PackageReference>
