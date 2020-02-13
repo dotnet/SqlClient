@@ -427,7 +427,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                return (_isDenali);
+                return (_isDenali && SqlClientEventSource.Log.IsEnabled());
             }
         }
 
@@ -608,12 +608,12 @@ namespace Microsoft.Data.SqlClient
             UInt32 result = SNINativeMethodWrapper.SniGetConnectionId(_physicalStateObj.Handle, ref _connHandler._clientConnectionId);
             Debug.Assert(result == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetConnectionId");
 
+            // UNDONE - send "" for instance now, need to fix later
             if (SqlClientEventSource.Log.IsTraceEnabled())
             {
                 SqlClientEventSource.Log.Trace("<sc.TdsParser.Connect|SEC> Sending prelogin handshake");
             }
 
-            // UNDONE - send "" for instance now, need to fix later
             SendPreLoginHandshake(instanceName, encrypt, !string.IsNullOrEmpty(certificate), useOriginalAddressInfo);
 
             _connHandler.TimeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.SendPreLoginHandshake);
@@ -772,7 +772,7 @@ namespace Microsoft.Data.SqlClient
         {
             TdsParserStateObject session = new TdsParserStateObject(this, (SNIHandle)_pMarsPhysicalConObj.Handle, true);
 
-            if (SqlClientEventSource.Log.IsTraceEnabled())
+            if (SqlClientEventSource.Log.IsAdvanceTraceOn())
             {
                 SqlClientEventSource.Log.Trace("<sc.TdsParser.CreateSession|ADV> {0}# created session {1}", ObjectID, session.ObjectID);
             }
@@ -791,7 +791,7 @@ namespace Microsoft.Data.SqlClient
                 session = _sessionPool.GetSession(owner);
 
                 Debug.Assert(!session._pendingData, "pending data on a pooled MARS session");
-                if (SqlClientEventSource.Log.IsTraceEnabled())
+                if (SqlClientEventSource.Log.IsAdvanceTraceOn())
                 {
                     SqlClientEventSource.Log.Trace("<sc.TdsParser.GetSession|ADV> {0}# getting session {1} from pool", ObjectID, session.ObjectID);
                 }
@@ -800,7 +800,7 @@ namespace Microsoft.Data.SqlClient
             {
                 session = _physicalStateObj;
 
-                if (SqlClientEventSource.Log.IsTraceEnabled())
+                if (SqlClientEventSource.Log.IsAdvanceTraceOn())
                 {
                     SqlClientEventSource.Log.Trace("<sc.TdsParser.GetSession|ADV> {0}# getting physical session {1}", ObjectID, session.ObjectID);
                 }
@@ -1377,10 +1377,12 @@ namespace Microsoft.Data.SqlClient
         internal void Deactivate(bool connectionIsDoomed)
         {
             // Called when the connection that owns us is deactivated.
-            if (SqlClientEventSource.Log.IsTraceEnabled())
+            if (SqlClientEventSource.Log.IsAdvanceTraceOn())
             {
                 SqlClientEventSource.Log.Trace("<sc.TdsParser.Deactivate|ADV> {0}# deactivating", ObjectID);
-
+            }
+            if (SqlClientEventSource.Log.IsStateDumpEnabled())
+            {
                 SqlClientEventSource.Log.Trace("<sc.TdsParser.Deactivate|STATE> {0}#, {1}", ObjectID, TraceString());
             }
 
@@ -4030,7 +4032,7 @@ namespace Microsoft.Data.SqlClient
             SqlFedAuthInfo tempFedAuthInfo = new SqlFedAuthInfo();
 
             // Skip reading token length, since it has already been read in caller
-            if (SqlClientEventSource.Log.IsTraceEnabled())
+            if (SqlClientEventSource.Log.IsAdvanceTraceOn())
             {
                 SqlClientEventSource.Log.Trace("<sc.TdsParser.TryProcessFedAuthInfo> FEDAUTHINFO token stream length = {0}", tokenLen);
             }
@@ -4038,7 +4040,7 @@ namespace Microsoft.Data.SqlClient
             if (tokenLen < sizeof(uint))
             {
                 // the token must at least contain a DWORD indicating the number of info IDs
-                if (SqlClientEventSource.Log.IsTraceEnabled())
+                if (SqlClientEventSource.Log.IsAdvanceTraceOn())
                 {
                     SqlClientEventSource.Log.Trace("<sc.TdsParser.TryProcessFedAuthInfo|ERR> FEDAUTHINFO token stream length too short for CountOfInfoIDs.");
                 }
@@ -4057,7 +4059,7 @@ namespace Microsoft.Data.SqlClient
             }
             tokenLen -= sizeof(uint); // remaining length is shortened since we read optCount
 
-            if (SqlClientEventSource.Log.IsTraceEnabled())
+            if (SqlClientEventSource.Log.IsAdvanceTraceOn())
             {
                 SqlClientEventSource.Log.Trace("<sc.TdsParser.TryProcessFedAuthInfo> CountOfInfoIDs = {0}", optionsCount.ToString(CultureInfo.InvariantCulture));
             }
@@ -4161,7 +4163,7 @@ namespace Microsoft.Data.SqlClient
                             tempFedAuthInfo.stsurl = data;
                             break;
                         default:
-                            if (SqlClientEventSource.Log.IsTraceEnabled())
+                            if (SqlClientEventSource.Log.IsAdvanceTraceOn())
                             {
                                 SqlClientEventSource.Log.Trace("<sc.TdsParser.TryProcessFedAuthInfo> Ignoring unknown federated authentication info option: {0}", id);
                             }
@@ -8889,7 +8891,7 @@ namespace Microsoft.Data.SqlClient
 
                 WriteInt(log7Flags, _physicalStateObj);
 
-                if (SqlClientEventSource.Log.IsTraceEnabled())
+                if (SqlClientEventSource.Log.IsAdvanceTraceOn())
                 {
                     SqlClientEventSource.Log.Trace("<sc.TdsParser.TdsLogin|ADV> {0}#, TDS Login7 flags = {1}:", ObjectID, log7Flags);
                 }
@@ -10619,7 +10621,7 @@ namespace Microsoft.Data.SqlClient
 
             var sendDefaultValue = sendDefault ? 1 : 0;
 
-            if (SqlClientEventSource.Log.IsTraceEnabled())
+            if (SqlClientEventSource.Log.IsAdvanceTraceOn())
             {
                 SqlClientEventSource.Log.Trace("<sc.TdsParser.WriteSmiParameter|ADV> {0}#, Sending parameter '{1}', default flag={2}, metadata:{3}", ObjectID, param.ParameterName, sendDefaultValue, metaData.TraceString(3));
             }

@@ -28,8 +28,6 @@ namespace Microsoft.Data.SqlClient
     //        This is accomplished by having no public override constructors.
     internal sealed class SqlDataReaderSmi : SqlDataReader
     {
-
-
         //
         // IDBRecord properties
         //
@@ -1343,8 +1341,6 @@ namespace Microsoft.Data.SqlClient
                 if (SqlClientEventSource.Log.IsAdvanceTraceOn())
                 {
                     SqlClientEventSource.Log.Trace("<sc.SqlDataReaderSmi.ReaderEventSink.MetaDataAvailable|ADV> {0}#, md.Length={1} nextEventIsRow={2}.", reader.ObjectID, mdLength, nextEventIsRow);
-
-
                     if (null != md)
                     {
                         for (int i = 0; i < md.Length; i++)

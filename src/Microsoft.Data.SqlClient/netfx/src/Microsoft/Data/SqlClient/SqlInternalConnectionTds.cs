@@ -516,7 +516,7 @@ namespace Microsoft.Data.SqlClient
                 ThreadHasParserLockForClose = false;
                 _parserLock.Release();
             }
-            if (SqlClientEventSource.Log.IsTraceEnabled())
+            if (SqlClientEventSource.Log.IsAdvanceTraceOn())
             {
                 SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.ctor|ADV> {0}#, constructed new TDS internal connection", ObjectID);
             }
@@ -774,7 +774,7 @@ namespace Microsoft.Data.SqlClient
 
         override public void Dispose()
         {
-            if (SqlClientEventSource.Log.IsTraceEnabled())
+            if (SqlClientEventSource.Log.IsAdvanceTraceOn())
             {
                 SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.Dispose|ADV> {0}# disposing", ObjectID);
             }
@@ -1420,7 +1420,7 @@ namespace Microsoft.Data.SqlClient
 
             _fConnectionOpen = true; // mark connection as open
 
-            if (SqlClientEventSource.Log.IsTraceEnabled())
+            if (SqlClientEventSource.Log.IsAdvanceTraceOn())
             {
                 SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.CompleteLogin|ADV> Post-Login Phase: Server connection obtained.");
             }
@@ -1681,7 +1681,7 @@ namespace Microsoft.Data.SqlClient
             int routingAttempts = 0;
             ServerInfo originalServerInfo = serverInfo; // serverInfo may end up pointing to new object due to routing, original object is used to set CurrentDatasource
 
-            if (SqlClientEventSource.Log.IsTraceEnabled())
+            if (SqlClientEventSource.Log.IsAdvanceTraceOn())
             {
                 SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.LoginNoFailover|ADV> {0}#, host={1}", ObjectID, serverInfo.UserServerName);
             }
@@ -1882,7 +1882,7 @@ namespace Microsoft.Data.SqlClient
 
                 // Sleep for a bit to prevent clogging the network with requests,
                 //  then update sleep interval for next iteration (max 1 second interval)
-                if (SqlClientEventSource.Log.IsTraceEnabled())
+                if (SqlClientEventSource.Log.IsAdvanceTraceOn())
                 {
                     SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.LoginNoFailover|ADV> {0}#, sleeping {1}[milisec]", ObjectID, sleepInterval);
                 }
@@ -1968,7 +1968,7 @@ namespace Microsoft.Data.SqlClient
 
             Debug.Assert(!connectionOptions.MultiSubnetFailover, "MultiSubnetFailover should not be set if failover partner is used");
 
-            if (SqlClientEventSource.Log.IsTraceEnabled())
+            if (SqlClientEventSource.Log.IsAdvanceTraceOn())
             {
                 SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.LoginWithFailover|ADV> {0}#, useFailover={1}[bool], primary={2}, failover={failoverHost}", ObjectID, useFailoverHost, primaryServerInfo.UserServerName);
             }
@@ -2039,7 +2039,7 @@ namespace Microsoft.Data.SqlClient
                     // Primary server may give us a different failover partner than the connection string indicates.  Update it
                     if (null != ServerProvidedFailOverPartner && failoverServerInfo.ResolvedServerName != ServerProvidedFailOverPartner)
                     {
-                        if (SqlClientEventSource.Log.IsTraceEnabled())
+                        if (SqlClientEventSource.Log.IsAdvanceTraceOn())
                         {
                             SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.LoginWithFailover|ADV> {0}#, new failover partner={1}", ObjectID, ServerProvidedFailOverPartner);
                         }
@@ -2147,7 +2147,7 @@ namespace Microsoft.Data.SqlClient
                 //  the network with requests, then update sleep interval for next iteration (max 1 second interval)
                 if (1 == attemptNumber % 2)
                 {
-                    if (SqlClientEventSource.Log.IsTraceEnabled())
+                    if (SqlClientEventSource.Log.IsAdvanceTraceOn())
                     {
                         SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.LoginWithFailover|ADV> {0}#, sleeping {1}[milisec]", ObjectID, sleepInterval);
                     }
@@ -2226,7 +2226,7 @@ namespace Microsoft.Data.SqlClient
         // Common code path for making one attempt to establish a connection and log in to server.
         private void AttemptOneLogin(ServerInfo serverInfo, string newPassword, SecureString newSecurePassword, bool ignoreSniOpenTimeout, TimeoutTimer timeout, bool withFailover = false, bool isFirstTransparentAttempt = true, bool disableTnir = false)
         {
-            if (SqlClientEventSource.Log.IsTraceEnabled())
+            if (SqlClientEventSource.Log.IsAdvanceTraceOn())
             {
                 SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.AttemptOneLogin|ADV> {0}#, timout={1}[msec], server={2}", ObjectID, timeout.MillisecondsRemaining, serverInfo.ExtendedServerName);
             }
@@ -2870,7 +2870,7 @@ namespace Microsoft.Data.SqlClient
                         throw exc;
                     }
 
-                    if (SqlClientEventSource.Log.IsTraceEnabled())
+                    if (SqlClientEventSource.Log.IsAdvanceTraceOn())
                     {
                         SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.GetFedAuthToken|ADV> {0}#, sleeping {1}[Milliseconds]", ObjectID, sleepInterval);
                         SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionTds.GetFedAuthToken|ADV> {0}#, remaining {1}[Milliseconds]", ObjectID, _timeout.MillisecondsRemaining);

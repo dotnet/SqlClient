@@ -590,25 +590,17 @@ namespace Microsoft.Data.SqlClient
 
                 // send cookie to server to finish enlistment
                 PropagateTransactionCookie(cookie);
-
                 _isEnlistedInTransaction = true;
-
-                long transactionId = SqlInternalTransaction.NullTransactionId;
-                int transactionObjectID = 0;
-                if (null != CurrentTransaction)
-                {
-                    transactionId = CurrentTransaction.TransactionId;
-                    transactionObjectID = CurrentTransaction.ObjectID;
-                }
 
                 if (SqlClientEventSource.Log.IsAdvanceTraceOn())
                 {
+                    long transactionId = null != CurrentTransaction ? CurrentTransaction.TransactionId : SqlInternalTransaction.NullTransactionId;
+                    int transactionObjectID = null != CurrentTransaction ? CurrentTransaction.ObjectID : 0;
                     SqlClientEventSource.Log.Trace("<sc.SqlInternalConnection.EnlistNonNull|ADV> {0}#, enlisted with transaction {1}# with transactionId=0x{2}", ObjectID, transactionObjectID, transactionId);
                 }
             }
 
             EnlistedTransaction = tx; // Tell the base class about our enlistment
-
 
             // If we're on a Yukon or newer server, and we we delegate the 
             // transaction successfully, we will have done a begin transaction, 

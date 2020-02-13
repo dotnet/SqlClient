@@ -918,14 +918,14 @@ namespace Microsoft.Data.SqlClient
         {
             int remaining = Interlocked.Decrement(ref _pendingCallbacks);
 
-            if (SqlClientEventSource.Log.IsTraceEnabled())
+            if (SqlClientEventSource.Log.IsAdvanceTraceOn())
             {
                 SqlClientEventSource.Log.Trace("<sc.TdsParserStateObject.DecrementPendingCallbacks|ADV> {0}#, after decrementing _pendingCallbacks: {1}", ObjectID, _pendingCallbacks);
             }
 
             if ((0 == remaining || release) && _gcHandle.IsAllocated)
             {
-                if (SqlClientEventSource.Log.IsTraceEnabled())
+                if (SqlClientEventSource.Log.IsAdvanceTraceOn())
                 {
                     SqlClientEventSource.Log.Trace("<sc.TdsParserStateObject.DecrementPendingCallbacks|ADV> {0}#, FREEING HANDLE!", ObjectID);
                 }
@@ -1037,7 +1037,7 @@ namespace Microsoft.Data.SqlClient
         {
             int remaining = Interlocked.Increment(ref _pendingCallbacks);
 
-            if (SqlClientEventSource.Log.IsTraceEnabled())
+            if (SqlClientEventSource.Log.IsAdvanceTraceOn())
             {
                 SqlClientEventSource.Log.Trace("<sc.TdsParserStateObject.IncrementPendingCallbacks|ADV> {0}#, after incrementing _pendingCallbacks: {1}", ObjectID, _pendingCallbacks);
             }
@@ -3770,7 +3770,11 @@ namespace Microsoft.Data.SqlClient
                 _traceChangePasswordOffset = 0;
                 _traceChangePasswordLength = 0;
             }
-            SqlClientEventSource.Log.TraceBin("<sc.TdsParser.WritePacket|INFO|ADV>  Packet sent", _outBuff, (UInt16)_outBytesUsed);
+
+            if (SqlClientEventSource.Log.IsTraceEnabled())
+            {
+                SqlClientEventSource.Log.TraceBin("<sc.TdsParser.WritePacket|INFO|ADV>  Packet sent", _outBuff, (ushort)_outBytesUsed);
+            }
         }
 
         [Conditional("DEBUG")]

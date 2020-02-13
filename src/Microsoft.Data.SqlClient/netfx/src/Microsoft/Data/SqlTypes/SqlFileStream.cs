@@ -718,7 +718,7 @@ namespace Microsoft.Data.SqlTypes
                 UnsafeNativeMethods.SetErrorModeWrapper(UnsafeNativeMethods.SEM_FAILCRITICALERRORS, out oldMode);
                 try
                 {
-                    if (SqlClientEventSource.Log.IsTraceEnabled())
+                    if (SqlClientEventSource.Log.IsAdvanceTraceOn())
                     {
                         SqlClientEventSource.Log.Trace("<sc.SqlFileStream.OpenSqlFileStream|ADV> {0}#, desiredAccess=0x{1}, allocationSize={2}, " +
                            "fileAttributes=0x{3}, shareAccess=0x{4}, dwCreateDisposition=0x{5}, createOptions=0x{ dwCreateOptions}", ObjectID, (int)nDesiredAccess, allocationSize, 0, (int)shareAccess, dwCreateDisposition);

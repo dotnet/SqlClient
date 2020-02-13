@@ -372,13 +372,13 @@ namespace Microsoft.Data.SqlClient
                 if (SqlClientEventSource.Log.IsAdvanceTraceOn())
                 {
                     SqlClientEventSource.Log.Trace("<sc.SqlCommand.CommandEventSink.ParametersAvailable|ADV> {0}# metaData.Length={1}.", _command.ObjectID, (null != metaData) ? metaData.Length : -1);
-                }
 
-                if (null != metaData && SqlClientEventSource.Log.IsTraceEnabled())
-                {
-                    for (int i = 0; i < metaData.Length; i++)
+                    if (null != metaData)
                     {
-                        SqlClientEventSource.Log.Trace("<sc.SqlCommand.CommandEventSink.ParametersAvailable|ADV> {0}#, metaData[{1}] is {2}{3}", _command.ObjectID, i, metaData[i].GetType().ToString(), metaData[i].TraceString());
+                        for (int i = 0; i < metaData.Length; i++)
+                        {
+                            SqlClientEventSource.Log.Trace("<sc.SqlCommand.CommandEventSink.ParametersAvailable|ADV> {0}#, metaData[{1}] is {2}{3}", _command.ObjectID, i, metaData[i].GetType().ToString(), metaData[i].TraceString());
+                        }
                     }
                 }
 
@@ -3808,7 +3808,6 @@ namespace Microsoft.Data.SqlClient
             bool processFinallyBlock = true;
             try
             {
-
                 Task reconnectTask = _activeConnection.ValidateAndReconnect(null, timeout);
 
                 if (reconnectTask != null)
@@ -3863,7 +3862,6 @@ namespace Microsoft.Data.SqlClient
                 // no parameters are sent over
                 // no data reader is returned
                 // use this overload for "batch SQL" tds token type
-
                 if (SqlClientEventSource.Log.IsTraceEnabled())
                 {
                     SqlClientEventSource.Log.Trace("<sc.SqlCommand.ExecuteNonQuery|INFO> {0}#, Command executed as SQLBATCH.", ObjectID);

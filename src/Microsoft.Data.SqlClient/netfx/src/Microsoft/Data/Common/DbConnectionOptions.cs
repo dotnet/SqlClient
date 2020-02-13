@@ -627,12 +627,11 @@ namespace Microsoft.Data.Common
         [System.Diagnostics.Conditional("DEBUG")]
         private static void DebugTraceKeyValuePair(string keyname, string keyvalue, Hashtable synonyms)
         {
-            Debug.Assert(keyname == keyname.ToLower(CultureInfo.InvariantCulture), "missing ToLower");
-
-            string realkeyname = ((null != synonyms) ? (string)synonyms[keyname] : keyname);
-
-            if (SqlClientEventSource.Log.IsTraceEnabled())
+            if (SqlClientEventSource.Log.IsAdvanceTraceOn())
             {
+                Debug.Assert(keyname == keyname.ToLower(CultureInfo.InvariantCulture), "missing ToLower");
+                string realkeyname = ((null != synonyms) ? (string)synonyms[keyname] : keyname);
+
                 if ((KEY.Password != realkeyname) && (SYNONYM.Pwd != realkeyname))
                 { // don't trace passwords ever!
                     if (null != keyvalue)

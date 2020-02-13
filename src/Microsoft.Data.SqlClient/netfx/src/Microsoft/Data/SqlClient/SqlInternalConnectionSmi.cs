@@ -411,12 +411,10 @@ namespace Microsoft.Data.SqlClient
                     SqlInternalTransaction internalTransaction,
                     bool isDelegateControlRequest)
         {
-            var transactionNameValue = (null != transactionName) ? transactionName : "null";
-
             if (SqlClientEventSource.Log.IsAdvanceTraceOn())
             {
                 SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionSmi.ExecuteTransaction|ADV> {0}#, transactionRequest={1}, " +
-                    "transactionName='{2}', isolationLevel={3}, internalTransaction=#{4} transactionId=0x{5}.", ObjectID, transactionRequest.ToString(), transactionNameValue, iso.ToString(), (null != internalTransaction) ? internalTransaction.ObjectID : 0, (null != internalTransaction) ? internalTransaction.TransactionId : SqlInternalTransaction.NullTransactionId);
+                    "transactionName='{2}', isolationLevel={3}, internalTransaction=#{4} transactionId=0x{5}.", ObjectID, transactionRequest.ToString(), transactionName ?? "null", iso.ToString(), (null != internalTransaction) ? internalTransaction.ObjectID : 0, (null != internalTransaction) ? internalTransaction.TransactionId : SqlInternalTransaction.NullTransactionId);
             }
 
             switch (transactionRequest)
