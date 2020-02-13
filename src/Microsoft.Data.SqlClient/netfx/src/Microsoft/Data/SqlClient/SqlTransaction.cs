@@ -151,7 +151,7 @@ namespace Microsoft.Data.SqlClient
 
             if (SqlClientEventSource.Log.IsCorrelationEnabled())
             {
-                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlTransaction.Commit|API|Correlation> ObjectID{0}#, ActivityID {1}", ObjectID);
+                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlTransaction.Commit|API|Correlation> ObjectID {0}#, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
             }
 
             TdsParser bestEffortCleanupTarget = null;
@@ -298,7 +298,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (SqlClientEventSource.Log.IsCorrelationEnabled())
                 {
-                    SqlClientEventSource.Log.CorrelationTrace("<sc.SqlTransaction.Rollback|API|Correlation> ObjectID{0}#, ActivityID {1}", ObjectID);
+                    SqlClientEventSource.Log.CorrelationTrace("<sc.SqlTransaction.Rollback|API|Correlation> ObjectID {0}#, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
                 }
 
                 TdsParser bestEffortCleanupTarget = null;

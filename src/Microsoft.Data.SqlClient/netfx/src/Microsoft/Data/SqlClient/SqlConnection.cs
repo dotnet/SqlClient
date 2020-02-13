@@ -1177,7 +1177,7 @@ namespace Microsoft.Data.SqlClient
 
             if (SqlClientEventSource.Log.IsCorrelationEnabled())
             {
-                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlConnection.ChangeDatabase|API|Correlation> ObjectID{0}#, ActivityID {1}", ObjectID, EventSource.GetGuid(typeof(SqlClientEventSource)));
+                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlConnection.ChangeDatabase|API|Correlation> ObjectID{0}#, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
             }
 
             TdsParser bestEffortCleanupTarget = null;
@@ -1280,7 +1280,7 @@ namespace Microsoft.Data.SqlClient
 
             if (SqlClientEventSource.Log.IsCorrelationEnabled())
             {
-                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlConnection.Close|API|Correlation> ObjectID{0}#, ActivityID {1}", ObjectID, EventSource.GetGuid(typeof(SqlClientEventSource)));
+                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlConnection.Close|API|Correlation> ObjectID {0}#, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
             }
 
             try
@@ -1422,12 +1422,12 @@ namespace Microsoft.Data.SqlClient
             long scopeID = 0;
             if (SqlClientEventSource.Log.IsScopeEnabled())
             {
-                scopeID = SqlClientEventSource.Log.ScopeEnter("<sc.SqlConnection.Open|API|Correlation> ObjectID: {0}, ActivityID {1}", ObjectID);
+                scopeID = SqlClientEventSource.Log.ScopeEnter("<sc.SqlConnection.Open|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
             }
 
             if (SqlClientEventSource.Log.IsCorrelationEnabled())
             {
-                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlConnection.Open|API|Correlation> ObjectID{0}#, ActivityID {1}", ObjectID, EventSource.GetGuid(typeof(SqlClientEventSource)));
+                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlConnection.Open|API|Correlation> ObjectID {0}#, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
             }
 
             try
@@ -1710,7 +1710,7 @@ namespace Microsoft.Data.SqlClient
 
             if (SqlClientEventSource.Log.IsCorrelationEnabled())
             {
-                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlConnection.OpenAsync|API|Correlation> ObjectID{0}#, ActivityID {1}", ObjectID, EventSource.GetGuid(typeof(SqlClientEventSource)));
+                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlConnection.OpenAsync|API|Correlation> ObjectID {0}#, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
             }
 
             try
@@ -2510,7 +2510,7 @@ namespace Microsoft.Data.SqlClient
 
             if (SqlClientEventSource.Log.IsCorrelationEnabled())
             {
-                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlConnection.ChangePassword|API|Correlation> ActivityID {0}", EventSource.GetGuid(typeof(SqlClientEventSource)));
+                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlConnection.ChangePassword|API|Correlation> ActivityID {0}", ActivityCorrelator.Current.ToString());
             }
 
             try
@@ -2566,7 +2566,7 @@ namespace Microsoft.Data.SqlClient
 
             if (SqlClientEventSource.Log.IsCorrelationEnabled())
             {
-                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlConnection.ChangePassword|API|Correlation> ActivityID {0}", EventSource.GetGuid(typeof(SqlClientEventSource)));
+                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlConnection.ChangePassword|API|Correlation> ActivityID {0}", ActivityCorrelator.Current.ToString());
             }
 
             try

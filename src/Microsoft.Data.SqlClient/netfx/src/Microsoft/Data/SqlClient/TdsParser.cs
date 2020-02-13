@@ -2140,7 +2140,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-
         internal bool Run(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj)
         {
             bool syncOverAsync = stateObj._syncOverAsync;
@@ -2951,6 +2950,7 @@ namespace Microsoft.Data.SqlClient
                             // Changing packet size does not support retry, should not pend"
                             throw SQL.SynchronousCallMayNotPend();
                         }
+
                         // Only set on physical state object - this should only occur on LoginAck prior
                         // to MARS initialization!
                         Int32 packetSize = Int32.Parse(env.newValue, NumberStyles.Integer, CultureInfo.InvariantCulture);
@@ -3275,7 +3275,6 @@ namespace Microsoft.Data.SqlClient
             // status
             // command
             // rowcount (valid only if DONE_COUNT bit is set)
-
             if (!stateObj.TryReadUInt16(out status))
             {
                 return false;
@@ -3300,6 +3299,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     return false;
                 }
+
                 // If we haven't yet completed processing login token stream yet, we may be talking to a Yukon server
                 // In that case we still have to read another 4 bytes
                 // But don't try to read beyond the TDS stream in this case, because it generates errors if login failed.
@@ -3347,6 +3347,7 @@ namespace Microsoft.Data.SqlClient
                         cmd.InternalRecordsAffected = count;
                     }
                 }
+
                 // Skip the bogus DONE counts sent by the server
                 if (stateObj._receivedColMetaData || (curCmd != TdsEnums.SELECT))
                 {
@@ -3922,7 +3923,6 @@ namespace Microsoft.Data.SqlClient
             // 0x71000001 -> Shiloh SP1
             // 0x72xx0002 -> Yukon RTM
             // information provided by S. Ashwin
-
             switch (majorMinor)
             {
                 case TdsEnums.SPHINXORSHILOH_MAJOR << 24 | TdsEnums.DEFAULT_MINOR:    // Sphinx & Shiloh RTM
@@ -4280,6 +4280,7 @@ namespace Microsoft.Data.SqlClient
                     return false;
                 }
                 line = shortLine;
+
                 // If we haven't yet completed processing login token stream yet, we may be talking to a Yukon server
                 // In that case we still have to read another 2 bytes
                 if (_state == TdsParserState.OpenNotLoggedIn)

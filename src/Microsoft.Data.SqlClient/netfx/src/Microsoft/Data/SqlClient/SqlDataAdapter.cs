@@ -255,7 +255,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(null != _commandSet && (0 < _commandSet.CommandCount), "no commands");
 
             if (SqlClientEventSource.Log.IsCorrelationEnabled())
-                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlDataAdapter.ExecuteBatch|Info|Correlation> ObjectID{0}#, ActivityID {1}", ObjectID);
+                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlDataAdapter.ExecuteBatch|Info|Correlation> ObjectID {0}#, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
 
             return _commandSet.ExecuteNonQuery();
         }

@@ -4493,7 +4493,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (SqlClientEventSource.Log.IsCorrelationEnabled())
                     {
-                        SqlClientEventSource.Log.CorrelationTrace("<sc.SqlDataReader.RestoreServerSettings|Info|Correlation> ObjectID {0}#, ActivityID '{1}'", ObjectID);
+                        SqlClientEventSource.Log.CorrelationTrace("<sc.SqlDataReader.RestoreServerSettings|Info|Correlation> ObjectID {0}#, ActivityID '{1}'", ObjectID, ActivityCorrelator.Current.ToString());
                     }
 
                     Task executeTask = parser.TdsExecuteSQLBatch(_resetOptionsString, (_command != null) ? _command.CommandTimeout : 0, null, stateObj, sync: true);
