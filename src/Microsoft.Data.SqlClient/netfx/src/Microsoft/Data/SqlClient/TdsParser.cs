@@ -3490,11 +3490,9 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.ENCLAVE_TYPE_VBS:
                     if (attestationProtocol != SqlConnectionAttestationProtocol.AAS
 #if ENCLAVE_SIMULATOR
-                        && attestationProtocol != SqlConnectionAttestationProtocol.HGS
-                        && attestationProtocol != SqlConnectionAttestationProtocol.SIM)
-#else
-                        && attestationProtocol != SqlConnectionAttestationProtocol.HGS)
+                        && attestationProtocol != SqlConnectionAttestationProtocol.SIM
 #endif
+                        && attestationProtocol != SqlConnectionAttestationProtocol.HGS)
                     {
                         return false;
                     }
