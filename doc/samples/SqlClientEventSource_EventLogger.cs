@@ -28,7 +28,7 @@ class Program
     }
 }
 
-public class SampleEventListener : EventListenr
+public class SampleEventListener : EventListener
 {
     static TextWriter Out = Console.Out;
 

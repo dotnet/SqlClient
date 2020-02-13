@@ -602,7 +602,7 @@ namespace Microsoft.Data.SqlClient
 
             if (SqlClientEventSource.Log.IsCorrelationEnabled())
             {
-                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|Info|Correlation> ObjectID{0}#, ActivityID %ls", ObjectID);
+                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|Info|Correlation> ObjectID {0}#, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
             }
 
             Task executeTask = _parser.TdsExecuteSQLBatch(TDSCommand, this.BulkCopyTimeout, null, _stateObj, sync: !_isAsyncBulkCopy, callerHasConnectionLock: true);
@@ -895,7 +895,7 @@ namespace Microsoft.Data.SqlClient
         private Task SubmitUpdateBulkCommand(string TDSCommand)
         {
             if (SqlClientEventSource.Log.IsCorrelationEnabled())
-                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlBulkCopy.SubmitUpdateBulkCommand|Info|Correlation> ObjectID{0}#, ActivityID {1}", ObjectID);
+                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlBulkCopy.SubmitUpdateBulkCommand|Info|Correlation> ObjectID{0}#, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
 
             Task executeTask = _parser.TdsExecuteSQLBatch(TDSCommand, this.BulkCopyTimeout, null, _stateObj, sync: !_isAsyncBulkCopy, callerHasConnectionLock: true);
 

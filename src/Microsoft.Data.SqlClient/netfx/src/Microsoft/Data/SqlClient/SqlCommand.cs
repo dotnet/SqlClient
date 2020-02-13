@@ -1037,7 +1037,7 @@ namespace Microsoft.Data.SqlClient
 
             if (SqlClientEventSource.Log.IsCorrelationEnabled())
             {
-                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.Prepare|API|Correlation> ObjectID{0}#, ActivityID {1}", ObjectID);
+                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.Prepare|API|Correlation> ObjectID {0}#, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
             }
 
             statistics = SqlStatistics.StartTimer(Statistics);
@@ -1225,7 +1225,7 @@ namespace Microsoft.Data.SqlClient
 
             if (SqlClientEventSource.Log.IsCorrelationEnabled())
             {
-                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.Cancel|API|Correlation> ObjectID{0}#, ActivityID {1}", ObjectID);
+                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.Cancel|API|Correlation> ObjectID {0}#, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
             }
 
             SqlStatistics statistics = null;
@@ -1397,7 +1397,7 @@ namespace Microsoft.Data.SqlClient
 
             if (SqlClientEventSource.Log.IsCorrelationEnabled())
             {
-                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.ExecuteScalar|API|Correlation> ObjectID{0}#, ActivityID {1}", ObjectID);
+                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.ExecuteScalar|API|Correlation> ObjectID{0}#, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
             }
 
             bool success = false;
@@ -1474,7 +1474,7 @@ namespace Microsoft.Data.SqlClient
 
             if (SqlClientEventSource.Log.IsCorrelationEnabled())
             {
-                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.ExecuteNonQuery|API|Correlation> ObjectID{0}#, ActivityID {1}", ObjectID);
+                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.ExecuteNonQuery|API|Correlation> ObjectID {0}#, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
             }
 
             bool success = false;
@@ -1546,7 +1546,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (SqlClientEventSource.Log.IsCorrelationEnabled())
             {
-                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.BeginExecuteNonQuery|API|Correlation> ObjectID{0}#, ActivityID {1}", ObjectID);
+                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.BeginExecuteNonQuery|API|Correlation> ObjectID {0}#, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
             }
 
             SqlConnection.ExecutePermission.Demand();
@@ -1776,7 +1776,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (SqlClientEventSource.Log.IsCorrelationEnabled())
                 {
-                    SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.EndExecuteNonQuery|API|Correlation> ObjectID{0}#, ActivityID {1}", ObjectID);
+                    SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.EndExecuteNonQuery|API|Correlation> ObjectID {0}#, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
                 }
             }
         }
@@ -1797,7 +1797,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (SqlClientEventSource.Log.IsCorrelationEnabled())
             {
-                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.EndExecuteNonQueryAsync|Info|Correlation> ObjectID{0}#, ActivityID {1}", ObjectID);
+                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.EndExecuteNonQueryAsync|Info|Correlation> ObjectID {0}#, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
             }
 
             Debug.Assert(!_internalEndExecuteInitiated || _stateObj == null);
@@ -2058,7 +2058,7 @@ namespace Microsoft.Data.SqlClient
                         task = RunExecuteNonQueryTds(methodName, async, timeout, asyncWrite);
                     }
                     else
-                    { 
+                    {
                         // otherwise, use a full-fledged execute that can handle params and stored procs
                         Debug.Assert(!sendToPipe, "trying to send non-context command to pipe");
                         if (SqlClientEventSource.Log.IsTraceEnabled())
@@ -2126,7 +2126,7 @@ namespace Microsoft.Data.SqlClient
 
             if (SqlClientEventSource.Log.IsCorrelationEnabled())
             {
-                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.ExecuteXmlReader|API|Correlation> ObjectID{0}#, ActivityID {1}", ObjectID);
+                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.ExecuteXmlReader|API|Correlation> ObjectID {0}#, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
             }
 
             bool success = false;
@@ -2170,7 +2170,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (SqlClientEventSource.Log.IsCorrelationEnabled())
             {
-                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.BeginExecuteXmlReader|API|Correlation> ObjectID {0}#, ActivityID {1}", ObjectID);
+                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.BeginExecuteXmlReader|API|Correlation> ObjectID {0}#, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
             }
 
             SqlConnection.ExecutePermission.Demand();
@@ -2327,7 +2327,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (SqlClientEventSource.Log.IsCorrelationEnabled())
                 {
-                    SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.EndExecuteXmlReader|API|Correlation> ObjectID{}#, ActivityID {1}", ObjectID);
+                    SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.EndExecuteXmlReader|API|Correlation> ObjectID {0}#, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
                 }
             }
         }
@@ -2336,7 +2336,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (SqlClientEventSource.Log.IsCorrelationEnabled())
             {
-                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.EndExecuteXmlReaderAsync|Info|Correlation> ObjectID{0}#, ActivityID {1}", ObjectID);
+                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.EndExecuteXmlReaderAsync|Info|Correlation> ObjectID {0}#, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
             }
 
             Debug.Assert(!_internalEndExecuteInitiated || _stateObj == null);
@@ -2459,7 +2459,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (SqlClientEventSource.Log.IsCorrelationEnabled())
             {
-                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.ExecuteDbDataReader|API|Correlation> ObjectID{0}#, ActivityID {1}", ObjectID);
+                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.ExecuteDbDataReader|API|Correlation> ObjectID {0}#, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
             }
 
             return ExecuteReader(behavior, ADP.ExecuteReader);
@@ -2477,7 +2477,7 @@ namespace Microsoft.Data.SqlClient
 
             if (SqlClientEventSource.Log.IsCorrelationEnabled())
             {
-                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.ExecuteReader|API|Correlation> ObjectID{0}#, ActivityID {1}", ObjectID);
+                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.ExecuteReader|API|Correlation> ObjectID {0}#, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
             }
 
             try
@@ -2503,7 +2503,7 @@ namespace Microsoft.Data.SqlClient
 
             if (SqlClientEventSource.Log.IsCorrelationEnabled())
             {
-                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.ExecuteReader|API|Correlation> ObjectID{ObjectID}#, behavior={1}, ActivityID {2}", ObjectID, (int)behavior);
+                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.ExecuteReader|API|Correlation> ObjectID {0}#, behavior={1}, ActivityID {2}", ObjectID, (int)behavior, ActivityCorrelator.Current.ToString());
             }
 
             try
@@ -2529,7 +2529,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (SqlClientEventSource.Log.IsCorrelationEnabled())
             {
-                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.BeginExecuteReader|API|Correlation> ObjectID{0}#, behavior={1}, ActivityID {2}", ObjectID, (int)behavior);
+                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.BeginExecuteReader|API|Correlation> ObjectID{0}#, behavior={1}, ActivityID {2}", ObjectID, (int)behavior, ActivityCorrelator.Current.ToString());
             }
 
             SqlConnection.ExecutePermission.Demand();
@@ -2614,7 +2614,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (SqlClientEventSource.Log.IsCorrelationEnabled())
                 {
-                    SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.EndExecuteReader|API|Correlation> ObjectID{0}#, ActivityID {1}", ObjectID);
+                    SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.EndExecuteReader|API|Correlation> ObjectID{0}#, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
                 }
             }
         }
@@ -2623,7 +2623,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (SqlClientEventSource.Log.IsCorrelationEnabled())
             {
-                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.EndExecuteReaderAsync|Info|Correlation> ObjectID{0}#, ActivityID {1}", ObjectID);
+                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.EndExecuteReaderAsync|Info|Correlation> ObjectID{0}#, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
             }
 
             Debug.Assert(!_internalEndExecuteInitiated || _stateObj == null);
@@ -3028,7 +3028,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (SqlClientEventSource.Log.IsCorrelationEnabled())
             {
-                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.ExecuteNonQueryAsync|API|Correlation> ObjectID{0}#, ActivityID {1}", ObjectID);
+                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.ExecuteNonQueryAsync|API|Correlation> ObjectID {0}#, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
             }
 
             SqlConnection.ExecutePermission.Demand();
@@ -3117,7 +3117,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (SqlClientEventSource.Log.IsCorrelationEnabled())
             {
-                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.ExecuteReaderAsync|API|Correlation> ObjectID {0}#, behavior={1}, ActivityID {2}", ObjectID, (int)behavior);
+                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.ExecuteReaderAsync|API|Correlation> ObjectID {0}#, behavior={1}, ActivityID {2}", ObjectID, (int)behavior, ActivityCorrelator.Current.ToString());
             }
 
             SqlConnection.ExecutePermission.Demand();
@@ -3255,7 +3255,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (SqlClientEventSource.Log.IsCorrelationEnabled())
             {
-                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.ExecuteXmlReaderAsync|API|Correlation> ObjectID{0}#, ActivityID {1}", ObjectID);
+                SqlClientEventSource.Log.CorrelationTrace("<sc.SqlCommand.ExecuteXmlReaderAsync|API|Correlation> ObjectID {0}#, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
             }
             SqlConnection.ExecutePermission.Demand();
 

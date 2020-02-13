@@ -8,12 +8,10 @@ using System.Threading;
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientEventSource.xml' path='docs/members[@name="SqlClientEventSource"]/SqlClientEventSource/*'/>
     [EventSource(Name = "Microsoft.Data.SqlClient.EventSource")]
-    public class SqlClientEventSource : EventSource
+    internal class SqlClientEventSource : EventSource
     {
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientEventSource.xml' path='docs/members[@name="SqlClientEventSource"]/Log/*'  />
-        public static readonly SqlClientEventSource Log = new SqlClientEventSource();
+        internal static readonly SqlClientEventSource Log = new SqlClientEventSource();
         private static long s_nextScopeId = 0;
         private static long s_nextNotificationScopeId = 0;
 
@@ -27,36 +25,28 @@ namespace Microsoft.Data.SqlClient
         private const int PoolerScopeEnterId = 8;
         private const int PoolerTraceId = 9;
 
+        //if we add more keywords they need to be a power of 2.
+        //Keyword class needs to be nested inside this class otherwise nothing will be logged as the SqlClientEventSource wont have contorol over that.
         #region Keywords
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientEventSource.xml' path='docs/members[@name="SqlClientEventSource"]/members[@name="Keywords"]/Keywords/*'/>
-        public class Keywords
+        internal class Keywords
         {
-            /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientEventSource.xml' path='docs/members[@name="SqlClientEventSource"]/members[@name="Keywords"]/Trace/*'/>
-            public const EventKeywords Trace = (EventKeywords)1;
+            internal const EventKeywords Trace = (EventKeywords)1;
 
-            /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientEventSource.xml' path='docs/members[@name="SqlClientEventSource"]/members[@name="Keywords"]/Scope/*' />
-            public const EventKeywords Scope = (EventKeywords)2;
+            internal const EventKeywords Scope = (EventKeywords)2;
 
-            /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientEventSource.xml' path='docs/members[@name="SqlClientEventSource"]/members[@name="Keywords"]/NotificationTrace/*' />
-            public const EventKeywords NotificationTrace = (EventKeywords)4;
+            internal const EventKeywords NotificationTrace = (EventKeywords)4;
 
-            /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientEventSource.xml' path='docs/members[@name="SqlClientEventSource"]/members[@name="Keywords"]/Pooling/*' />
-            public const EventKeywords Pooling = (EventKeywords)8;
+            internal const EventKeywords Pooling = (EventKeywords)8;
 
-            /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientEventSource.xml' path='docs/members[@name="SqlClientEventSource"]/members[@name="Keywords"]/Correlation/*' />
-            public const EventKeywords Correlation = (EventKeywords)16;
+            internal const EventKeywords Correlation = (EventKeywords)16;
 
-            /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientEventSource.xml' path='docs/members[@name="SqlClientEventSource"]/members[@name="Keywords"]/NotificationScope/*' />
-            public const EventKeywords NotificationScope = (EventKeywords)32;
+            internal const EventKeywords NotificationScope = (EventKeywords)32;
 
-            /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientEventSource.xml' path='docs/members[@name="SqlClientEventSource"]/members[@name="Keywords"]/PoolerScope/*' />
-            public const EventKeywords PoolerScope = (EventKeywords)64;
+            internal const EventKeywords PoolerScope = (EventKeywords)64;
 
-            /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientEventSource.xml' path='docs/members[@name="SqlClientEventSource"]/members[@name="Keywords"]/PoolerTrace/*' />
-            public const EventKeywords PoolerTrace = (EventKeywords)128;
+            internal const EventKeywords PoolerTrace = (EventKeywords)128;
 
-            /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientEventSource.xml' path='docs/members[@name="SqlClientEventSource"]/members[@name="Keywords"]/Advanced/*' />
-            public const EventKeywords Advanced = (EventKeywords)512;
+            internal const EventKeywords Advanced = (EventKeywords)512;
         }
         #endregion
 
@@ -169,7 +159,6 @@ namespace Microsoft.Data.SqlClient
         }
 
         [NonEvent]
-
         internal long PoolerScopeEnter<T0>(string message, T0 args0)
         {
             return PoolerScopeEnter(string.Format(message, args0));
@@ -236,6 +225,12 @@ namespace Microsoft.Data.SqlClient
         }
 
         [NonEvent]
+        internal void CorrelationTrace<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
+        {
+            CorrelationTrace(string.Format(message, args0, args1, args2));
+        }
+
+        [NonEvent]
         internal void NotificationsTrace<T0>(string message, T0 args0)
         {
             NotificationsTrace(string.Format(message, args0));
@@ -274,7 +269,7 @@ namespace Microsoft.Data.SqlClient
             if (SqlClientEventSource.Log.IsEnabled())
             {
                 scopeId = Interlocked.Increment(ref s_nextScopeId);
-                WriteEvent(EnterScopeId, scopeId, message);
+                WriteEvent(EnterScopeId, message);
             }
             return scopeId;
         }
