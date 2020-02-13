@@ -46,7 +46,9 @@ namespace Microsoft.Data.SqlClient
 
             internal const EventKeywords PoolerTrace = (EventKeywords)128;
 
-            internal const EventKeywords Advanced = (EventKeywords)512;
+            internal const EventKeywords Advanced = (EventKeywords)256;
+
+            internal const EventKeywords StateDump = (EventKeywords)512;
         }
         #endregion
 
@@ -77,6 +79,9 @@ namespace Microsoft.Data.SqlClient
 
         [NonEvent]
         internal bool IsAdvanceTraceOn() => SqlClientEventSource.Log.IsEnabled(EventLevel.Informational, Keywords.Advanced);
+
+        [NonEvent]
+        internal bool IsStateDumpEnabled() => SqlClientEventSource.Log.IsEnabled(EventLevel.Informational, Keywords.StateDump);
         #endregion
 
         #region overloads
