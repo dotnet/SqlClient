@@ -4,6 +4,7 @@ The following Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 1.0
 
 | Release Date | Description | Notes |
 | :-- | :-- | :--: |
+| 2020/02/14 | 1.1.0  | [release notes](1.1.0.md) |
 | 2019/11/19 | 1.0.0  | [release notes](1.0.0.md) |
 
 The following Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 1.0 preview releases have been shipped:
