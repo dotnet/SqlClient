@@ -153,7 +153,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public void InvalidCertificatePath()
         {
             string dummyPath = @"https://www.microsoft.com";
-            string errorMessage = $@"Invalid Azure Key Vault key path specified: '{dummyPath}'. Valid trusted endpoints: vault.azure.net, vault.azure.cn, vault.usgovcloudapi.net, vault.microsoftazure.de.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            string errorMessage = $@"Invalid Azure Key Vault key path specified: '{dummyPath}'. Valid trusted endpoints: vault.azure.net, vault.azure.cn, vault.usgovcloudapi.net, vault.microsoftazure.de, vault.cloudapi.eaglex.ic.gov, vault.cloudapi.microsoft.scloud.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
             
             Exception ex1 = Assert.Throws<ArgumentException>(() => fixture.AkvStoreProvider.EncryptColumnEncryptionKey(dummyPath, MasterKeyEncAlgo, cek));
             Assert.Matches(errorMessage, ex1.Message);

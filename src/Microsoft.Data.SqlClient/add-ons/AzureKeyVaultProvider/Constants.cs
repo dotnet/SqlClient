@@ -24,7 +24,9 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             @"vault.azure.net", // default
             @"vault.azure.cn", // Azure China
             @"vault.usgovcloudapi.net", // US Government
-            @"vault.microsoftazure.de" // Azure Germany
+            @"vault.microsoftazure.de", // Azure Germany
+            @"vault.cloudapi.eaglex.ic.gov", 
+            @"vault.cloudapi.microsoft.scloud" 
             };
 
         /// <summary>
