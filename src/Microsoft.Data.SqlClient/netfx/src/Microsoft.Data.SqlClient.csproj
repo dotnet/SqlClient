@@ -308,6 +308,9 @@
     <Compile Include="Microsoft\Data\ProviderBase\FieldNameLookup.cs" />
     <Compile Include="Microsoft\Data\OperationAbortedException.cs" />
   </ItemGroup>
+  <ItemGroup Condition="'$(BuildSimulator)' == 'true'">
+    <Compile Include="Microsoft\Data\SqlClient\SimulatorEnclaveProvider.cs" />
+  </ItemGroup>
   <!-- Resources  -->
   <ItemGroup>
     <Compile Include="Resources\$(ResxFileName).Designer.cs">
