@@ -3509,10 +3509,13 @@ namespace Microsoft.Data.SqlClient
 
         private bool IsValidAttestationProtocol(SqlConnectionAttestationProtocol attestationProtocol, string enclaveType)
         {
-            switch (enclaveType)
+            switch (enclaveType.ToUpper())
             {
                 case TdsEnums.ENCLAVE_TYPE_VBS:
                     if (attestationProtocol != SqlConnectionAttestationProtocol.AAS
+#if ENCLAVE_SIMULATOR
+                        && attestationProtocol != SqlConnectionAttestationProtocol.SIM
+#endif
                         && attestationProtocol != SqlConnectionAttestationProtocol.HGS)
                     {
                         return false;
@@ -3520,12 +3523,25 @@ namespace Microsoft.Data.SqlClient
                     break;
 
                 case TdsEnums.ENCLAVE_TYPE_SGX:
+#if ENCLAVE_SIMULATOR
+                    if (attestationProtocol != SqlConnectionAttestationProtocol.AAS
+                        && attestationProtocol != SqlConnectionAttestationProtocol.SIM)
+#else
                     if (attestationProtocol != SqlConnectionAttestationProtocol.AAS)
+#endif
                     {
                         return false;
                     }
                     break;
 
+#if ENCLAVE_SIMULATOR
+                case TdsEnums.ENCLAVE_TYPE_SIMULATOR:
+                    if (attestationProtocol != SqlConnectionAttestationProtocol.SIM)
+                    {
+                        return false;
+                    }
+                    break;
+#endif
                 default:
                     // if we reach here, the enclave type is not supported
                     throw SQL.EnclaveTypeNotSupported(enclaveType);
@@ -3543,6 +3559,11 @@ namespace Microsoft.Data.SqlClient
 
                 case SqlConnectionAttestationProtocol.HGS:
                     return "HGS";
+
+#if ENCLAVE_SIMULATOR
+                case SqlConnectionAttestationProtocol.SIM:
+                    return "SIM";
+#endif
 
                 default:
                     return "NotSpecified";

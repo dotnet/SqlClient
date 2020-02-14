@@ -39,6 +39,10 @@
     <DotNetCmd>$(DotNetRoot)dotnet</DotNetCmd>
     <DotNetCmd Condition="'$(OS)' == 'Windows_NT'">$(DotNetCmd).exe</DotNetCmd>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <BuildSimulator Condition="'$(BuildSimulator)' != 'true'">false</BuildSimulator>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(BuildSimulator)' == 'true'">
+    <DefineConstants>$(DefineConstants);ENCLAVE_SIMULATOR</DefineConstants>
   </PropertyGroup>
 
   <!-- Provides Version properties -->

@@ -53,6 +53,9 @@
     <Compile Include="Microsoft\Data\SqlClient\EnclaveProviderBase.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\EnclaveSessionCache.NetCoreApp.cs" />
   </ItemGroup>
+  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netcoreapp' AND '$(BuildSimulator)' == 'true'">
+    <Compile Include="Microsoft\Data\SqlClient\SimulatorEnclaveProvider.NetCoreApp.cs" />
+  </ItemGroup>
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netstandard'">
     <Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.NetStandard.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.NetStandard.cs" />
