@@ -11,47 +11,74 @@ namespace Microsoft.Data.SqlClient
     [EventSource(Name = "Microsoft.Data.SqlClient.EventSource")]
     internal class SqlClientEventSource : EventSource
     {
+        // Defines the singleton instance for the Resources ETW provider
         internal static readonly SqlClientEventSource Log = new SqlClientEventSource();
+
         private static long s_nextScopeId = 0;
         private static long s_nextNotificationScopeId = 0;
         private static long s_nextPoolerScopeId = 0;
 
-        private const int TraceEventId = 1;
-        private const int EnterScopeId = 2;
-        private const int ExitScopeId = 3;
-        private const int TraceBinId = 4;
-        private const int CorrelationTraceId = 5;
-        private const int NotificationsScopeEnterId = 6;
-        private const int NotificationsTraceId = 7;
-        private const int PoolerScopeEnterId = 8;
-        private const int PoolerTraceId = 9;
+        /// <summary>
+        /// Defines EventId for BeginExecute (Reader, Scalar, NonQuery, XmlReader).
+        /// </summary>
+        private const int BeginExecuteEventId = 1;
 
-        //if we add more keywords they need to be a power of 2.
-        //Keyword class needs to be nested inside this class otherwise nothing will be logged as the SqlClientEventSource wont have contorol over that.
+        /// <summary>
+        /// Defines EventId for EndExecute (Reader, Scalar, NonQuery, XmlReader).
+        /// </summary>
+        private const int EndExecuteEventId = 2;
+        private const int TraceEventId = 3;
+        private const int EnterScopeId = 4;
+        private const int ExitScopeId = 5;
+        private const int TraceBinId = 6;
+        private const int CorrelationTraceId = 7;
+        private const int NotificationsScopeEnterId = 8;
+        private const int NotificationsTraceId = 9;
+        private const int PoolerScopeEnterId = 10;
+        private const int PoolerTraceId = 11;
+
+        /// <summary>
+        /// Keyword definitions.  These represent logical groups of events that can be turned on and off independently
+        /// Often each task has a keyword, but where tasks are determined by subsystem, keywords are determined by
+        /// usefulness to end users to filter.  Generally users don't mind extra events if they are not high volume
+        /// so grouping low volume events together in a single keywords is OK (users can post-filter by task if desired)
+        /// <remarks>
+        /// The visibility of the enum has to be public, otherwise there will be an ArgumentException on calling related WriteEvent method. the Keywords class has to be a nested class.
+        /// Each keyword must be a power of 2.
+        /// </remarks>
+        /// </summary>
         #region Keywords
-        internal class Keywords
-        {
-            internal const EventKeywords Trace = (EventKeywords)1;
+        public class Keywords
+        { 
+            internal const EventKeywords SqlClient = (EventKeywords)3;
 
-            internal const EventKeywords Scope = (EventKeywords)2;
+            internal const EventKeywords Trace = (EventKeywords)2;
 
-            internal const EventKeywords NotificationTrace = (EventKeywords)4;
+            internal const EventKeywords Scope = (EventKeywords)4;
 
-            internal const EventKeywords Pooling = (EventKeywords)8;
+            internal const EventKeywords NotificationTrace = (EventKeywords)8;
 
-            internal const EventKeywords Correlation = (EventKeywords)16;
+            internal const EventKeywords Pooling = (EventKeywords)16;
 
-            internal const EventKeywords NotificationScope = (EventKeywords)32;
+            internal const EventKeywords Correlation = (EventKeywords)32;
 
-            internal const EventKeywords PoolerScope = (EventKeywords)64;
+            internal const EventKeywords NotificationScope = (EventKeywords)64;
 
-            internal const EventKeywords PoolerTrace = (EventKeywords)128;
+            internal const EventKeywords PoolerScope = (EventKeywords)128;
 
-            internal const EventKeywords Advanced = (EventKeywords)256;
+            internal const EventKeywords PoolerTrace = (EventKeywords)256;
 
-            internal const EventKeywords StateDump = (EventKeywords)512;
+            internal const EventKeywords Advanced = (EventKeywords)512;
+
+            internal const EventKeywords StateDump = (EventKeywords)1024;
         }
         #endregion
+
+        public static class Tasks // this name is important for EventSource
+        {
+            /// <summary>Task that tracks sql command execute.</summary>
+            public const EventTask ExecuteCommand = (EventTask)1;
+        }
 
         #region Enable/Disable Events
         [NonEvent]
@@ -495,6 +522,28 @@ namespace Microsoft.Data.SqlClient
         internal void PoolerTrace(string message)
         {
             WriteEvent(PoolerTraceId, message);
+        }
+
+        // unfortunately these are not marked as Start/Stop opcodes.  The reason is that we dont want them to participate in 
+        // the EventSource activity IDs (because they currently don't use tasks and this simply confuses the logic) and 
+        // because of versioning requirements we don't have ActivityOptions capability (because mscorlib and System.Data version 
+        // at different rates)  Sigh...
+        [Event(BeginExecuteEventId, Keywords = Keywords.SqlClient, Task = Tasks.ExecuteCommand, Opcode = EventOpcode.Start)]
+        public void BeginExecute(int objectId, string dataSource, string database, string commandText)
+        {
+            // we do not use unsafe code for better performance optization here because optimized helpers make the code unsafe where that would not be the case otherwise. 
+            // This introduces the question of partial trust, which is complex in the SQL case (there are a lot of scenarios and SQL has special security support).   
+            WriteEvent(BeginExecuteEventId, objectId, dataSource, database, commandText);
+        }
+
+        // unfortunately these are not marked as Start/Stop opcodes.  The reason is that we dont want them to participate in 
+        // the EventSource activity IDs (because they currently don't use tasks and this simply confuses the logic) and 
+        // because of versioning requirements we don't have ActivityOptions capability (because mscorlib and System.Data version 
+        // at different rates)  Sigh...
+        [Event(EndExecuteEventId, Keywords = Keywords.SqlClient, Task = Tasks.ExecuteCommand, Opcode = EventOpcode.Stop)]
+        public void EndExecute(int objectId, int compositeState, int sqlExceptionNumber)
+        {
+            WriteEvent(EndExecuteEventId, objectId, compositeState, sqlExceptionNumber);
         }
         #endregion
     }

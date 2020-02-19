@@ -269,7 +269,6 @@
     <Compile Include="Microsoft\Data\ProviderBase\DbReferenceCollection.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\WrappedIUnknown.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\TimeoutTimer.cs" />
-    <Compile Include="Microsoft\Data\SqlEventSource.cs" />
     <Compile Include="Microsoft\Data\RelationshipConverter.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\ITypedGetters.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\ITypedGettersV3.cs" />

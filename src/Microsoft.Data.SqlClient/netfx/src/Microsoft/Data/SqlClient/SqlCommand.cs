@@ -7438,9 +7438,9 @@ namespace Microsoft.Data.SqlClient
 
         private void WriteBeginExecuteEvent()
         {
-            if (SqlEventSource.Log.IsEnabled() && Connection != null)
+            if (SqlClientEventSource.Log.IsEnabled() && Connection != null)
             {
-                SqlEventSource.Log.BeginExecute(GetHashCode(), Connection.DataSource, Connection.Database, CommandText);
+                SqlClientEventSource.Log.BeginExecute(GetHashCode(), Connection.DataSource, Connection.Database, CommandText);
             }
         }
 
@@ -7452,7 +7452,7 @@ namespace Microsoft.Data.SqlClient
         /// <param name="synchronous">True if SQL command was executed synchronously, otherwise false.</param>
         private void WriteEndExecuteEvent(bool success, int? sqlExceptionNumber, bool synchronous)
         {
-            if (SqlEventSource.Log.IsEnabled())
+            if (SqlClientEventSource.Log.IsEnabled())
             {
                 // SqlEventSource.WriteEvent(int, int, int, int) is faster than provided overload SqlEventSource.WriteEvent(int, object[]).
                 // that's why trying to fit several booleans in one integer value
@@ -7468,7 +7468,7 @@ namespace Microsoft.Data.SqlClient
 
                 int compositeState = successFlag | isSqlExceptionFlag | synchronousFlag;
 
-                SqlEventSource.Log.EndExecute(GetHashCode(), compositeState, sqlExceptionNumber.GetValueOrDefault());
+                SqlClientEventSource.Log.EndExecute(GetHashCode(), compositeState, sqlExceptionNumber.GetValueOrDefault());
             }
         }
 
