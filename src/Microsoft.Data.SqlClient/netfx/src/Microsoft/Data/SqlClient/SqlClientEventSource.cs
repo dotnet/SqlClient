@@ -14,6 +14,7 @@ namespace Microsoft.Data.SqlClient
         internal static readonly SqlClientEventSource Log = new SqlClientEventSource();
         private static long s_nextScopeId = 0;
         private static long s_nextNotificationScopeId = 0;
+        private static long s_nextPoolerScopeId = 0;
 
         private const int TraceEventId = 1;
         private const int EnterScopeId = 2;
@@ -85,17 +86,27 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region overloads
+        //Never use event writer directly as they are not checking for enabled/disabled situations. Always use overloads.
         [NonEvent]
-        internal void Trace<T0>(string message, T0 args0)
+        internal void TraceEvent<T0>(string message, T0 args0)
         {
             if (Log.IsTraceEnabled())
             {
-                Trace(string.Format(message), args0);
+                TraceEvent(string.Format(message), args0);
             }
         }
 
         [NonEvent]
-        internal void Trace<T0, T1>(string message, T0 args0, T1 args1)
+        internal void TraceEvent(string message)
+        {
+            if (Log.IsTraceEnabled())
+            {
+                Trace(message);
+            }
+        }
+
+        [NonEvent]
+        internal void TraceEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
             if (Log.IsTraceEnabled())
             {
@@ -104,7 +115,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         [NonEvent]
-        internal void Trace<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
+        internal void TraceEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
         {
             if (Log.IsTraceEnabled())
             {
@@ -113,7 +124,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         [NonEvent]
-        internal void Trace<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
+        internal void TraceEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
         {
             if (Log.IsTraceEnabled())
             {
@@ -122,7 +133,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         [NonEvent]
-        internal void Trace<T0, T1, T2, T3, T4, T5>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4, T5 args5)
+        internal void TraceEvent<T0, T1, T2, T3, T4, T5>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4, T5 args5)
         {
             if (Log.IsTraceEnabled())
             {
@@ -131,133 +142,295 @@ namespace Microsoft.Data.SqlClient
         }
 
         [NonEvent]
-        internal void Trace<T0, T1, T2, T3, T4, T5, T6, T7>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4, T5 args5, T6 args6, T7 args7)
+        internal void AdvanceTrace(string message)
         {
-            if (Log.IsTraceEnabled())
+            if (Log.IsAdvanceTraceOn())
+            {
+                Trace(message);
+            }
+        }
+
+        [NonEvent]
+        internal void AdvanceTrace<T0>(string message, T0 args0)
+        {
+            if (Log.IsAdvanceTraceOn())
+            {
+                Trace(string.Format(message, args0));
+            }
+        }
+
+        [NonEvent]
+        internal void AdvanceTrace<T0, T1>(string message, T0 args0, T1 args1)
+        {
+            if (Log.IsAdvanceTraceOn())
+            {
+                Trace(string.Format(message, args0, args1));
+            }
+        }
+
+        [NonEvent]
+        internal void AdvanceTrace<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
+        {
+            if (Log.IsAdvanceTraceOn())
+            {
+                Trace(string.Format(message, args0, args1, args2));
+            }
+        }
+
+        [NonEvent]
+        internal void AdvanceTrace<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
+        {
+            if (Log.IsAdvanceTraceOn())
+            {
+                Trace(string.Format(message, args0, args1, args2, args3));
+            }
+        }
+
+        [NonEvent]
+        internal void AdvanceTrace<T0, T1, T2, T3, T4, T5>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4, T5 args5)
+        {
+            if (Log.IsAdvanceTraceOn())
+            {
+                Trace(string.Format(message, args0, args1, args2, args3, args4, args5));
+            }
+        }
+
+        [NonEvent]
+        internal void AdvanceTrace<T0, T1, T2, T3, T4, T5, T6, T7>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4, T5 args5, T6 args6, T7 args7)
+        {
+            if (Log.IsAdvanceTraceOn())
             {
                 Trace(string.Format(message, args0, args1, args2, args3, args4, args5, args6, args7));
             }
         }
 
         [NonEvent]
-        internal long ScopeEnter<T0>(string message, T0 args0)
+        internal long ScopeEnterEvent<T0>(string message, T0 args0)
         {
-            return ScopeEnter(string.Format(message, args0));
+            if (Log.IsScopeEnabled())
+            {
+                return ScopeEnter(string.Format(message, args0));
+            }
+            return 0;
         }
 
         [NonEvent]
-        internal long ScopeEnter<T0, T1>(string message, T0 args0, T1 args1)
+        internal long AdvanceScopeEnter<T0>(string message, T0 args0)
         {
-            return ScopeEnter(string.Format(message, args0, args1));
+            if (IsAdvanceTraceOn())
+            {
+                return ScopeEnter(string.Format(message, args0));
+            }
+            return 0;
         }
 
         [NonEvent]
-        internal long ScopeEnter<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
+        internal long ScopeEnterEvent(string message)
         {
-            return ScopeEnter(string.Format(message, args0, args1, args2));
+            if (IsScopeEnabled())
+            {
+                return ScopeEnter(message);
+            }
+            return 0;
         }
 
         [NonEvent]
-        internal long ScopeEnter<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
+        internal long ScopeEnterEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
-            return ScopeEnter(string.Format(message, args0, args1, args2, args3));
+            if (IsScopeEnabled())
+            {
+                return ScopeEnter(string.Format(message, args0, args1));
+            }
+            return 0;
         }
 
         [NonEvent]
-        internal long PoolerScopeEnter<T0>(string message, T0 args0)
+        internal long ScopeEnterEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
         {
-            return PoolerScopeEnter(string.Format(message, args0));
+            if (IsScopeEnabled())
+            {
+                return ScopeEnter(string.Format(message, args0, args1, args2));
+            }
+            return 0;
         }
 
         [NonEvent]
-        internal long NotificationsScopeEnter<T0>(string message, T0 args0)
+        internal long ScopeEnterEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
         {
-            return NotificationsScopeEnter(string.Format(message, args0));
+            if (IsScopeEnabled())
+            {
+                return ScopeEnter(string.Format(message, args0, args1, args2, args3));
+            }
+            return 0;
         }
 
         [NonEvent]
-        internal long NotificationsScopeEnter<T0, T1>(string message, T0 args0, T1 args1)
+        internal long PoolerScopeEnterEvent<T0>(string message, T0 args0)
         {
-            return NotificationsScopeEnter(string.Format(message, args0, args1));
+            if (IsPoolerScopeEnabled())
+            {
+                return PoolerScopeEnter(string.Format(message, args0));
+            }
+            return 0;
         }
 
         [NonEvent]
-        internal long NotificationsScopeEnter<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
+        internal long NotificationsScopeEnterEvent<T0>(string message, T0 args0)
         {
-            return NotificationsScopeEnter(string.Format(message, args0, args1, args2));
+            if (IsNotificationScopeEnabled())
+            {
+                return NotificationsScopeEnter(string.Format(message, args0));
+            }
+            return 0;
         }
 
         [NonEvent]
-        internal long NotificationsScopeEnter<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
+        internal long NotificationsScopeEnterEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
-            return NotificationsScopeEnter(string.Format(message, args0, args1, args2, args3));
+            if (IsNotificationScopeEnabled())
+            {
+                return NotificationsScopeEnter(string.Format(message, args0, args1));
+            }
+            return 0;
         }
 
         [NonEvent]
-        internal void PoolerTrace<T0>(string message, T0 args0)
+        internal long NotificationsScopeEnterEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
         {
-            PoolerTrace(string.Format(message, args0));
+            if (IsNotificationScopeEnabled())
+            {
+                return NotificationsScopeEnter(string.Format(message, args0, args1, args2));
+            }
+            return 0;
         }
 
         [NonEvent]
-        internal void PoolerTrace<T0, T1>(string message, T0 args0, T1 args1)
+        internal long NotificationsScopeEnterEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
         {
-            PoolerTrace(string.Format(message, args0, args1));
+            if (IsNotificationScopeEnabled())
+            {
+                return NotificationsScopeEnter(string.Format(message, args0, args1, args2, args3));
+            }
+            return 0;
         }
 
         [NonEvent]
-        internal void PoolerTrace<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
+        internal void PoolerTraceEvent<T0>(string message, T0 args0)
         {
-            PoolerTrace(string.Format(message, args0, args1, args2));
+            if (IsPoolerTraceEnabled())
+            {
+                PoolerTrace(string.Format(message, args0));
+            }
         }
 
         [NonEvent]
-        internal void PoolerTrace<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
+        internal void PoolerTraceEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
-            PoolerTrace(string.Format(message, args0, args1, args2, args3));
+            if (IsPoolerTraceEnabled())
+            {
+                PoolerTrace(string.Format(message, args0, args1));
+            }
         }
 
         [NonEvent]
-        internal void CorrelationTrace<T0>(string message, T0 args0)
+        internal void PoolerTraceEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
         {
-            CorrelationTrace(string.Format(message, args0));
+            if (IsPoolerTraceEnabled())
+            {
+                PoolerTrace(string.Format(message, args0, args1, args2));
+            }
         }
 
         [NonEvent]
-        internal void CorrelationTrace<T0, T1>(string message, T0 args0, T1 args1)
+        internal void PoolerTraceEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
         {
-            CorrelationTrace(string.Format(message, args0, args1));
+            if (IsPoolerTraceEnabled())
+            {
+                PoolerTrace(string.Format(message, args0, args1, args2, args3));
+            }
         }
 
         [NonEvent]
-        internal void CorrelationTrace<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
+        internal void CorrelationTraceEvent<T0>(string message, T0 args0)
         {
-            CorrelationTrace(string.Format(message, args0, args1, args2));
+            if (IsCorrelationEnabled())
+            {
+                CorrelationTrace(string.Format(message, args0));
+            }
         }
 
         [NonEvent]
-        internal void NotificationsTrace<T0>(string message, T0 args0)
+        internal void CorrelationTraceEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
-            NotificationsTrace(string.Format(message, args0));
+            if (IsCorrelationEnabled())
+            {
+                CorrelationTrace(string.Format(message, args0, args1));
+            }
         }
 
         [NonEvent]
-        internal void NotificationsTrace<T0, T1>(string message, T0 args0, T1 args1)
+        internal void CorrelationTraceEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
         {
-            NotificationsTrace(string.Format(message, args0, args1));
+            if (IsCorrelationEnabled())
+            {
+                CorrelationTrace(string.Format(message, args0, args1, args2));
+            }
         }
 
         [NonEvent]
-        internal void NotificationsTrace<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
+        internal void NotificationsTraceEvent<T0>(string message, T0 args0)
         {
-            NotificationsTrace(string.Format(message, args0, args1, args2));
+            if (IsNotificationTraceEnabled())
+            {
+                NotificationsTrace(string.Format(message, args0));
+            }
         }
 
         [NonEvent]
-        internal void NotificationsTrace<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
+        internal void NotificationsTraceEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
-            NotificationsTrace(string.Format(message, args0, args1, args2, args3));
+            if (IsNotificationTraceEnabled())
+            {
+                NotificationsTrace(string.Format(message, args0, args1));
+            }
         }
+
+        [NonEvent]
+        internal void NotificationsTraceEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
+        {
+            if (IsNotificationTraceEnabled())
+            {
+                NotificationsTrace(string.Format(message, args0, args1, args2));
+            }
+        }
+
+        [NonEvent]
+        internal void NotificationsTraceEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
+        {
+            if (IsNotificationTraceEnabled())
+            {
+                NotificationsTrace(string.Format(message, args0, args1, args2, args3));
+            }
+        }
+
+        [NonEvent]
+        internal void TraceBinEvent<T0, T1>(string message, T0 args0, T1 args1)
+        {
+            if (IsTraceEnabled())
+            {
+                TraceBin(string.Format(message, args0, args1));
+            }
+        }
+
+        [NonEvent]
+        internal void StateDumpEvent<T0, T1>(string message, T0 args0, T1 args1)
+        {
+            if (IsStateDumpEnabled())
+            {
+                Trace(string.Format(message, args0, args1));
+            }
+        }
+
         #endregion
 
         #region Events
@@ -270,12 +443,8 @@ namespace Microsoft.Data.SqlClient
         [Event(EnterScopeId, Level = EventLevel.Verbose, Keywords = Keywords.Scope)]
         internal long ScopeEnter(string message)
         {
-            long scopeId = 0;
-            if (SqlClientEventSource.Log.IsEnabled())
-            {
-                scopeId = Interlocked.Increment(ref s_nextScopeId);
-                WriteEvent(EnterScopeId, message);
-            }
+            long scopeId = Interlocked.Increment(ref s_nextScopeId);
+            WriteEvent(EnterScopeId, message);
             return scopeId;
         }
 
@@ -289,12 +458,9 @@ namespace Microsoft.Data.SqlClient
         }
 
         [Event(TraceBinId, Level = EventLevel.Informational, Keywords = Keywords.Trace)]
-        internal void TraceBin(string message, byte[] whereabout, int length)
+        internal void TraceBin(string message)
         {
-            if (SqlClientEventSource.Log.IsEnabled(EventLevel.Informational, Keywords.Trace))
-            {
-                WriteEvent(TraceBinId, message, whereabout, length);
-            }
+            WriteEvent(TraceBinId, message);
         }
 
         [Event(CorrelationTraceId, Level = EventLevel.Informational, Keywords = Keywords.Correlation, Opcode = EventOpcode.Start)]
@@ -306,25 +472,16 @@ namespace Microsoft.Data.SqlClient
         [Event(NotificationsScopeEnterId, Level = EventLevel.Informational, Opcode = EventOpcode.Start, Keywords = Keywords.NotificationScope)]
         internal long NotificationsScopeEnter(string message)
         {
-            long scopeId = 0;
-            if (SqlClientEventSource.Log.IsEnabled())
-            {
-                StringBuilder MsgstrBldr = new StringBuilder(message);
-                scopeId = Interlocked.Increment(ref s_nextNotificationScopeId);
-                WriteEvent(NotificationsScopeEnterId, MsgstrBldr.Append($", Scope ID ='[{ scopeId}]'"));
-            }
+            long scopeId = Interlocked.Increment(ref s_nextNotificationScopeId);
+            WriteEvent(NotificationsScopeEnterId, message);
             return scopeId;
         }
 
         [Event(PoolerScopeEnterId, Level = EventLevel.Informational, Opcode = EventOpcode.Start, Keywords = Keywords.PoolerScope)]
         internal long PoolerScopeEnter(string message)
         {
-            long scopeId = 0;
-            if (SqlClientEventSource.Log.IsEnabled())
-            {
-                StringBuilder MsgstrBldr = new StringBuilder(message);
-                WriteEvent(PoolerScopeEnterId, MsgstrBldr.Append($", Scope ID ='[{ scopeId}]'"));
-            }
+            long scopeId = Interlocked.Increment(ref s_nextPoolerScopeId);
+            WriteEvent(PoolerScopeEnterId, message);
             return scopeId;
         }
 

@@ -26,21 +26,17 @@ namespace Microsoft.Data
                 string trace, Exception e)
         {
             Debug.Assert(null != e, "TraceException: null Exception");
-            if (null != e && SqlClientEventSource.Log.IsAdvanceTraceOn())
+            if (null != e)
             {
-                SqlClientEventSource.Log.Trace(e.Message);
-
-                if (SqlClientEventSource.Log.IsAdvanceTraceOn())
+                SqlClientEventSource.Log.AdvanceTrace(e.Message);
+                try
                 {
-                    try
-                    {
-                        SqlClientEventSource.Log.Trace(", StackTrace='{0}'", Environment.StackTrace);
-                    }
-                    catch (System.Security.SecurityException)
-                    {
-                        // if you don't have permission - you don't get the stack trace
-                        SqlClientEventSource.Log.Trace("Permission Denied");
-                    }
+                    SqlClientEventSource.Log.AdvanceTrace(", StackTrace='{0}'", Environment.StackTrace);
+                }
+                catch (System.Security.SecurityException)
+                {
+                    // if you don't have permission - you don't get the stack trace
+                    SqlClientEventSource.Log.AdvanceTrace("Permission Denied");
                 }
             }
         }

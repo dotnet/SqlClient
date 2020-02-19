@@ -273,11 +273,7 @@ namespace Microsoft.Data.ProviderBase
             if (PoolGroupStateIdle == _state)
             {
                 _state = PoolGroupStateActive;
-
-                if (SqlClientEventSource.Log.IsTraceEnabled())
-                {
-                    SqlClientEventSource.Log.Trace("<prov.DbConnectionPoolGroup.ClearInternal|RES|INFO|CPOOL> {0}#, Active", ObjectID);
-                }
+                SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionPoolGroup.ClearInternal|RES|INFO|CPOOL> {0}#, Active", ObjectID);
             }
             return (PoolGroupStateActive == _state);
         }
@@ -339,20 +335,12 @@ namespace Microsoft.Data.ProviderBase
                     if (PoolGroupStateActive == _state)
                     {
                         _state = PoolGroupStateIdle;
-
-                        if (SqlClientEventSource.Log.IsTraceEnabled())
-                        {
-                            SqlClientEventSource.Log.Trace("<prov.DbConnectionPoolGroup.ClearInternal|RES|INFO|CPOOL> {0}#, Idle", ObjectID);
-                        }
+                        SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionPoolGroup.ClearInternal|RES|INFO|CPOOL> {0}#, Idle", ObjectID);
                     }
                     else if (PoolGroupStateIdle == _state)
                     {
                         _state = PoolGroupStateDisabled;
-
-                        if (SqlClientEventSource.Log.IsTraceEnabled())
-                        {
-                            SqlClientEventSource.Log.Trace("<prov.DbConnectionPoolGroup.ReadyToRemove|RES|INFO|CPOOL> {0}#, Disabled", ObjectID);
-                        }
+                        SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionPoolGroup.ReadyToRemove|RES|INFO|CPOOL> {0}#, Disabled", ObjectID);
                     }
                 }
 

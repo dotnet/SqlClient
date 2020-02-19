@@ -633,14 +633,15 @@ namespace Microsoft.Data.Common
                 string realkeyname = ((null != synonyms) ? (string)synonyms[keyname] : keyname);
 
                 if ((KEY.Password != realkeyname) && (SYNONYM.Pwd != realkeyname))
-                { // don't trace passwords ever!
+                {
+                    // don't trace passwords ever!
                     if (null != keyvalue)
                     {
-                        SqlClientEventSource.Log.Trace("<comm.DbConnectionOptions|INFO|ADV> KeyName='{0}', KeyValue='{1}'", keyname, keyvalue);
+                        SqlClientEventSource.Log.AdvanceTrace("<comm.DbConnectionOptions|INFO|ADV> KeyName='{0}', KeyValue='{1}'", keyname, keyvalue);
                     }
                     else
                     {
-                        SqlClientEventSource.Log.Trace("<comm.DbConnectionOptions|INFO|ADV> KeyName='{0}'", keyname);
+                        SqlClientEventSource.Log.AdvanceTrace("<comm.DbConnectionOptions|INFO|ADV> KeyName='{0}'", keyname);
                     }
                 }
             }

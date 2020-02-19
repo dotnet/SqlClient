@@ -89,12 +89,9 @@ namespace Microsoft.Data.SqlClient
             // transaction.
             SqlInternalConnection connection = _connection;
             SqlConnection usersConnection = connection.Connection;
-            if (SqlClientEventSource.Log.IsTraceEnabled())
-            {
-                SqlClientEventSource.Log.Trace("<sc.SqlDelegatedTransaction.Initialize|RES|CPOOL> {0}#, Connection {1}#, delegating transaction.", ObjectID, connection.ObjectID);
-            }
-
+            SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.Initialize|RES|CPOOL> {0}#, Connection {1}#, delegating transaction.", ObjectID, connection.ObjectID);
             RuntimeHelpers.PrepareConstrainedRegions();
+
             try
             {
 #if DEBUG
@@ -109,10 +106,7 @@ namespace Microsoft.Data.SqlClient
 #endif //DEBUG
                     if (connection.IsEnlistedInTransaction)
                     {
-                        if (SqlClientEventSource.Log.IsTraceEnabled())
-                        {
-                            SqlClientEventSource.Log.Trace("<sc.SqlDelegatedTransaction.Initialize|RES|CPOOL> {0}#, Connection {1}#, was enlisted, now defecting.", ObjectID, connection.ObjectID);
-                        }
+                        SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.Initialize|RES|CPOOL> {0}#, Connection {1}#, was enlisted, now defecting.", ObjectID, connection.ObjectID);
 
                         // defect first
                         connection.EnlistNull();
@@ -174,13 +168,9 @@ namespace Microsoft.Data.SqlClient
             Exception promoteException;
             byte[] returnValue = null;
             SqlConnection usersConnection = connection.Connection;
-
-            if (SqlClientEventSource.Log.IsTraceEnabled())
-            {
-                SqlClientEventSource.Log.Trace("<sc.SqlDelegatedTransaction.Promote|RES|CPOOL> {0}#, Connection {1}#, promoting transaction.", ObjectID, connection.ObjectID);
-            }
-
+            SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.Promote|RES|CPOOL> {0}#, Connection {1}#, promoting transaction.", ObjectID, connection.ObjectID);
             RuntimeHelpers.PrepareConstrainedRegions();
+
             try
             {
 #if DEBUG
@@ -278,13 +268,9 @@ namespace Microsoft.Data.SqlClient
 
             SqlInternalConnection connection = GetValidConnection();
             SqlConnection usersConnection = connection.Connection;
-
-            if (SqlClientEventSource.Log.IsTraceEnabled())
-            {
-                SqlClientEventSource.Log.Trace("<sc.SqlDelegatedTransaction.Rollback|RES|CPOOL> {0}#, Connection {1}#, aborting transaction.", ObjectID, connection.ObjectID);
-            }
-
+            SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.Rollback|RES|CPOOL> {0}#, Connection {1}#, aborting transaction.", ObjectID, connection.ObjectID);
             RuntimeHelpers.PrepareConstrainedRegions();
+
             try
             {
 #if DEBUG
@@ -376,13 +362,9 @@ namespace Microsoft.Data.SqlClient
 
             SqlInternalConnection connection = GetValidConnection();
             SqlConnection usersConnection = connection.Connection;
-
-            if (SqlClientEventSource.Log.IsTraceEnabled())
-            {
-                SqlClientEventSource.Log.Trace("<sc.SqlDelegatedTransaction.SinglePhaseCommit|RES|CPOOL> {0}#, Connection {1}#, committing transaction.", ObjectID, connection.ObjectID);
-            }
-
+            SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.SinglePhaseCommit|RES|CPOOL> {0}#, Connection {1}#, committing transaction.", ObjectID, connection.ObjectID);
             RuntimeHelpers.PrepareConstrainedRegions();
+
             try
             {
 #if DEBUG
@@ -512,10 +494,7 @@ namespace Microsoft.Data.SqlClient
 
             if (connection != null)
             {
-                if (SqlClientEventSource.Log.IsTraceEnabled())
-                {
-                    SqlClientEventSource.Log.Trace("<sc.SqlDelegatedTransaction.TransactionEnded|RES|CPOOL> {0}#, Connection {1}#, transaction completed externally.", ObjectID, connection.ObjectID);
-                }
+                SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.TransactionEnded|RES|CPOOL> {0}#, Connection {1}#, transaction completed externally.", ObjectID, connection.ObjectID);
 
                 lock (connection)
                 {

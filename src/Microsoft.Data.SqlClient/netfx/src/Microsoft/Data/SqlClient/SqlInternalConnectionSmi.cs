@@ -65,55 +65,37 @@ namespace Microsoft.Data.SqlClient
 
             internal override void DefaultDatabaseChanged(string databaseName)
             {
-                if (SqlClientEventSource.Log.IsAdvanceTraceOn())
-                {
-                    SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionSmi.EventSink.DefaultDatabaseChanged|ADV> {0}#, databaseName='{1}'.", _connection.ObjectID, databaseName);
-                }
+                SqlClientEventSource.Log.AdvanceTrace("<sc.SqlInternalConnectionSmi.EventSink.DefaultDatabaseChanged|ADV> {0}#, databaseName='{1}'.", _connection.ObjectID, databaseName);
                 _connection.CurrentDatabase = databaseName;
             }
 
             internal override void TransactionCommitted(long transactionId)
             {
-                if (SqlClientEventSource.Log.IsAdvanceTraceOn())
-                {
-                    SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionSmi.EventSink.TransactionCommitted|ADV> {0}#, transactionId=0x{1}.", _connection.ObjectID, transactionId);
-                }
+                SqlClientEventSource.Log.AdvanceTrace("<sc.SqlInternalConnectionSmi.EventSink.TransactionCommitted|ADV> {0}#, transactionId=0x{1}.", _connection.ObjectID, transactionId);
                 _connection.TransactionEnded(transactionId, TransactionState.Committed);
             }
 
             internal override void TransactionDefected(long transactionId)
             {
-                if (SqlClientEventSource.Log.IsAdvanceTraceOn())
-                {
-                    SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionSmi.EventSink.TransactionDefected|ADV> {0}#, transactionId=0x{1}.", _connection.ObjectID, transactionId);
-                }
+                SqlClientEventSource.Log.AdvanceTrace("<sc.SqlInternalConnectionSmi.EventSink.TransactionDefected|ADV> {0}#, transactionId=0x{1}.", _connection.ObjectID, transactionId);
                 _connection.TransactionEnded(transactionId, TransactionState.Unknown);
             }
 
             internal override void TransactionEnlisted(long transactionId)
             {
-                if (SqlClientEventSource.Log.IsAdvanceTraceOn())
-                {
-                    SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionSmi.EventSink.TransactionEnlisted|ADV> {0}#, transactionId=0x{1}.", _connection.ObjectID, transactionId);
-                }
+                SqlClientEventSource.Log.AdvanceTrace("<sc.SqlInternalConnectionSmi.EventSink.TransactionEnlisted|ADV> {0}#, transactionId=0x{1}.", _connection.ObjectID, transactionId);
                 _connection.TransactionStarted(transactionId, true); // distributed;
             }
 
             internal override void TransactionEnded(long transactionId)
             {
-                if (SqlClientEventSource.Log.IsAdvanceTraceOn())
-                {
-                    SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionSmi.EventSink.TransactionEnded|ADV> {0}#, transactionId=0x{1}.", _connection.ObjectID, transactionId);
-                }
+                SqlClientEventSource.Log.AdvanceTrace("<sc.SqlInternalConnectionSmi.EventSink.TransactionEnded|ADV> {0}#, transactionId=0x{1}.", _connection.ObjectID, transactionId);
                 _connection.TransactionEndedByServer(transactionId, TransactionState.Unknown);
             }
 
             internal override void TransactionRolledBack(long transactionId)
             {
-                if (SqlClientEventSource.Log.IsAdvanceTraceOn())
-                {
-                    SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionSmi.EventSink.TransactionRolledBack|ADV> {0}#, transactionId=0x{1}.", _connection.ObjectID, transactionId);
-                }
+                SqlClientEventSource.Log.AdvanceTrace("<sc.SqlInternalConnectionSmi.EventSink.TransactionRolledBack|ADV> {0}#, transactionId=0x{1}.", _connection.ObjectID, transactionId);
 
                 // Dev11 1066: ensure delegated transaction is rolled back
                 _connection.TransactionEndedByServer(transactionId, TransactionState.Aborted);
@@ -121,10 +103,7 @@ namespace Microsoft.Data.SqlClient
 
             internal override void TransactionStarted(long transactionId)
             {
-                if (SqlClientEventSource.Log.IsAdvanceTraceOn())
-                {
-                    SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionSmi.EventSink.TransactionStarted|ADV> {0}#, transactionId=0x{1}.", _connection.ObjectID, transactionId);
-                }
+                SqlClientEventSource.Log.AdvanceTrace("<sc.SqlInternalConnectionSmi.EventSink.TransactionStarted|ADV> {0}#, transactionId=0x{1}.", _connection.ObjectID, transactionId);
                 _connection.TransactionStarted(transactionId, false); // not distributed;
             }
         }
@@ -140,11 +119,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(null != _smiConnection, "null SmiContext.ContextConnection?");
 
             _smiEventSink = new EventSink(this);
-
-            if (SqlClientEventSource.Log.IsAdvanceTraceOn())
-            {
-                SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionSmi.ctor|ADV> {0}#, constructed new SMI internal connection", ObjectID);
-            }
+            SqlClientEventSource.Log.AdvanceTrace("<sc.SqlInternalConnectionSmi.ctor|ADV> {0}#, constructed new SMI internal connection", ObjectID);
         }
 
         internal SmiContext InternalContext
@@ -294,11 +269,7 @@ namespace Microsoft.Data.SqlClient
             SysTx.Transaction currentSystemTransaction = ADP.GetCurrentTransaction();      // NOTE: Must be first to ensure _smiContext.ContextTransaction is set!
             SysTx.Transaction contextTransaction = _smiContext.ContextTransaction; // returns the transaction that was handed to SysTx that wraps the ContextTransactionId.
             long contextTransactionId = _smiContext.ContextTransactionId;
-
-            if (SqlClientEventSource.Log.IsAdvanceTraceOn())
-            {
-                SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionSmi.AutomaticEnlistment|ADV> {0}#, contextTransactionId=0x{1}, contextTransaction={2}#, currentSystemTransaction={3}#.", ObjectID, contextTransactionId, (null != contextTransaction) ? contextTransaction.GetHashCode() : 0, (null != currentSystemTransaction) ? currentSystemTransaction.GetHashCode() : 0);
-            }
+            SqlClientEventSource.Log.AdvanceTrace("<sc.SqlInternalConnectionSmi.AutomaticEnlistment|ADV> {0}#, contextTransactionId=0x{1}, contextTransaction={2}#, currentSystemTransaction={3}#.", ObjectID, contextTransactionId, (null != contextTransaction) ? contextTransaction.GetHashCode() : 0, (null != currentSystemTransaction) ? currentSystemTransaction.GetHashCode() : 0);
 
             if (SqlInternalTransaction.NullTransactionId != contextTransactionId)
             {
@@ -307,28 +278,18 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.NestedTransactionScopesNotSupported();    // can't use TransactionScope(RequiresNew) inside a Sql Transaction.
                 }
 
-                if (SqlClientEventSource.Log.IsAdvanceTraceOn())
-                {
-                    SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionSmi.AutomaticEnlistment|ADV> {0}#, using context transaction with transactionId=0x{1}", ObjectID, contextTransactionId);
-                }
+                SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionSmi.AutomaticEnlistment|ADV> {0}#, using context transaction with transactionId=0x{1}", ObjectID, contextTransactionId);
                 _currentTransaction = new SqlInternalTransaction(this, TransactionType.Context, null, contextTransactionId);
                 ContextTransaction = contextTransaction;
             }
             else if (null == currentSystemTransaction)
             {
                 _currentTransaction = null;  // there really isn't a transaction.
-
-                if (SqlClientEventSource.Log.IsAdvanceTraceOn())
-                {
-                    SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionSmi.AutomaticEnlistment|ADV> {0}#, no transaction.", ObjectID);
-                }
+                SqlClientEventSource.Log.AdvanceTrace("<sc.SqlInternalConnectionSmi.AutomaticEnlistment|ADV> {0}#, no transaction.", ObjectID);
             }
             else
             {
-                if (SqlClientEventSource.Log.IsAdvanceTraceOn())
-                {
-                    SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionSmi.AutomaticEnlistment|ADV> {0}#, using current System.Transaction.", ObjectID);
-                }
+                SqlClientEventSource.Log.AdvanceTrace("<sc.SqlInternalConnectionSmi.AutomaticEnlistment|ADV> {0}#, using current System.Transaction.", ObjectID);
                 base.Enlist(currentSystemTransaction);
             }
         }
@@ -341,10 +302,7 @@ namespace Microsoft.Data.SqlClient
 
         override protected void InternalDeactivate()
         {
-            if (SqlClientEventSource.Log.IsAdvanceTraceOn())
-            {
-                SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionSmi.Deactivate|ADV> {0}#, Deactivating.", ObjectID);
-            }
+            SqlClientEventSource.Log.AdvanceTrace("<sc.SqlInternalConnectionSmi.Deactivate|ADV> {0}#, Deactivating.", ObjectID);
 
             // When we put this to bed, we should not hold on to the transaction
             // or any activity (commit/rollback) may cause it to stop responding.
@@ -373,21 +331,13 @@ namespace Microsoft.Data.SqlClient
         override internal void DelegatedTransactionEnded()
         {
             base.DelegatedTransactionEnded();
-
-            if (SqlClientEventSource.Log.IsAdvanceTraceOn())
-            {
-                SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionSmi.DelegatedTransactionEnded|ADV> {0}#, cleaning up after Delegated Transaction Completion", ObjectID);
-            }
-
+            SqlClientEventSource.Log.AdvanceTrace("<sc.SqlInternalConnectionSmi.DelegatedTransactionEnded|ADV> {0}#, cleaning up after Delegated Transaction Completion", ObjectID);
             _currentTransaction = null;           // clean up our current transaction too
         }
 
         override internal void DisconnectTransaction(SqlInternalTransaction internalTransaction)
         {
-            if (SqlClientEventSource.Log.IsAdvanceTraceOn())
-            {
-                SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionSmi.DisconnectTransaction|ADV> {0}#, Disconnecting Transaction {1}#.", ObjectID, internalTransaction.ObjectID);
-            }
+            SqlClientEventSource.Log.AdvanceTrace("<sc.SqlInternalConnectionSmi.DisconnectTransaction|ADV> {0}#, Disconnecting Transaction {1}#.", ObjectID, internalTransaction.ObjectID);
 
             // VSTS 215465/15029: allow _currentTransaction to be null - it can be cleared before by server's callback
             Debug.Assert(_currentTransaction == null || _currentTransaction == internalTransaction, "disconnecting different transaction");
@@ -411,11 +361,8 @@ namespace Microsoft.Data.SqlClient
                     SqlInternalTransaction internalTransaction,
                     bool isDelegateControlRequest)
         {
-            if (SqlClientEventSource.Log.IsAdvanceTraceOn())
-            {
-                SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionSmi.ExecuteTransaction|ADV> {0}#, transactionRequest={1}, " +
-                    "transactionName='{2}', isolationLevel={3}, internalTransaction=#{4} transactionId=0x{5}.", ObjectID, transactionRequest.ToString(), transactionName ?? "null", iso.ToString(), (null != internalTransaction) ? internalTransaction.ObjectID : 0, (null != internalTransaction) ? internalTransaction.TransactionId : SqlInternalTransaction.NullTransactionId);
-            }
+            SqlClientEventSource.Log.AdvanceTrace("<sc.SqlInternalConnectionSmi.ExecuteTransaction|ADV> {0}#, transactionRequest={1}, " +
+                "transactionName='{2}', isolationLevel={3}, internalTransaction=#{4} transactionId=0x{5}.", ObjectID, transactionRequest.ToString(), transactionName ?? "null", iso.ToString(), (null != internalTransaction) ? internalTransaction.ObjectID : 0, (null != internalTransaction) ? internalTransaction.TransactionId : SqlInternalTransaction.NullTransactionId);
 
             switch (transactionRequest)
             {
@@ -470,17 +417,15 @@ namespace Microsoft.Data.SqlClient
 
             _smiEventSink.ProcessMessagesAndThrow();
 
-            if (SqlClientEventSource.Log.IsAdvanceTraceOn())
+            if (null != whereAbouts)
             {
-                if (null != whereAbouts)
-                {
-                    SqlClientEventSource.Log.TraceBin("<sc.SqlInternalConnectionSmi.GetDTCAddress|ADV> whereAbouts", whereAbouts, (ushort)whereAbouts.Length);
-                }
-                else
-                {
-                    SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionSmi.GetDTCAddress|ADV> whereAbouts=null");
-                }
+                SqlClientEventSource.Log.AdvanceTrace("<sc.SqlInternalConnectionSmi.GetDTCAddress|ADV> whereAbouts = {0}, Length = {1}", whereAbouts, (ushort)whereAbouts.Length);
             }
+            else
+            {
+                SqlClientEventSource.Log.AdvanceTrace("<sc.SqlInternalConnectionSmi.GetDTCAddress|ADV> whereAbouts=null");
+            }
+
             return whereAbouts;
         }
 
@@ -504,10 +449,7 @@ namespace Microsoft.Data.SqlClient
             // Called whenever the context goes out of scope, we need to make
             // sure that we close the connection, or the next person that uses
             // the context may appear to have the connection in use.
-            if (SqlClientEventSource.Log.IsAdvanceTraceOn())
-            {
-                SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionSmi.OutOfScope|ADV> {0}# context is out of scope", ObjectID);
-            }
+            SqlClientEventSource.Log.AdvanceTrace("<sc.SqlInternalConnectionSmi.OutOfScope|ADV> {0}# context is out of scope", ObjectID);
 
             // TODO: This is suspect to me -- if I go out of scope, who will commit the transaction?
             DelegatedTransaction = null;     // we don't want to hold this over to the next usage; it will automatically be reused as the context transaction...
@@ -535,16 +477,14 @@ namespace Microsoft.Data.SqlClient
 
         override protected void PropagateTransactionCookie(byte[] transactionCookie)
         {
-            if (SqlClientEventSource.Log.IsAdvanceTraceOn())
+
+            if (null != transactionCookie)
             {
-                if (null != transactionCookie)
-                {
-                    SqlClientEventSource.Log.TraceBin("<sc.SqlInternalConnectionSmi.PropagateTransactionCookie|ADV> transactionCookie", transactionCookie, (UInt16)transactionCookie.Length);
-                }
-                else
-                {
-                    SqlClientEventSource.Log.Trace("<sc.SqlInternalConnectionSmi.PropagateTransactionCookie|ADV> null");
-                }
+                SqlClientEventSource.Log.AdvanceTrace("<sc.SqlInternalConnectionSmi.PropagateTransactionCookie|ADV> transactionCookie", transactionCookie, (UInt16)transactionCookie.Length);
+            }
+            else
+            {
+                SqlClientEventSource.Log.AdvanceTrace("<sc.SqlInternalConnectionSmi.PropagateTransactionCookie|ADV> null");
             }
 
             // Propagate the transaction cookie to the server

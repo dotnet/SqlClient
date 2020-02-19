@@ -129,12 +129,9 @@ namespace Microsoft.Data.SqlClient
         internal void Append(SqlCommand command)
         {
             ADP.CheckArgumentNull(command, "command");
-            if (SqlClientEventSource.Log.IsTraceEnabled())
-            {
-                SqlClientEventSource.Log.Trace($"<sc.SqlCommandSet.Append|API> {ObjectID}#, command={command.ObjectID}, parameterCount={command.Parameters.Count}");
-            }
-
+            SqlClientEventSource.Log.TraceEvent("<sc.SqlCommandSet.Append|API> {0}#, command={1}, parameterCount={2}", ObjectID, command.ObjectID, command.Parameters.Count);
             string cmdText = command.CommandText;
+
             if (ADP.IsEmpty(cmdText))
             {
                 throw ADP.CommandTextRequired(ADP.Append);
@@ -267,11 +264,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void Clear()
         {
-            if (SqlClientEventSource.Log.IsTraceEnabled())
-            {
-                SqlClientEventSource.Log.Trace($"<sc.SqlCommandSet.Clear|API> {ObjectID}#");
-            }
-
+            SqlClientEventSource.Log.TraceEvent("<sc.SqlCommandSet.Clear|API> {0}#", ObjectID);
             DbCommand batchCommand = BatchCommand;
             if (null != batchCommand)
             {
@@ -287,11 +280,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void Dispose()
         {
-            if (SqlClientEventSource.Log.IsTraceEnabled())
-            {
-                SqlClientEventSource.Log.Trace($"<sc.SqlCommandSet.Dispose|API> {ObjectID}#");
-            }
-
+            SqlClientEventSource.Log.TraceEvent("<sc.SqlCommandSet.Dispose|API> {0}#", ObjectID);
             SqlCommand command = _batchCommand;
             _commandList = null;
             _batchCommand = null;
@@ -305,10 +294,7 @@ namespace Microsoft.Data.SqlClient
         internal int ExecuteNonQuery()
         {
             SqlConnection.ExecutePermission.Demand();
-
-            long scopeID = 0;
-            if (SqlClientEventSource.Log.IsEnabled())
-                scopeID = SqlClientEventSource.Log.ScopeEnter($"<sc.SqlCommandSet.ExecuteNonQuery|API> {ObjectID}#");
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlCommandSet.ExecuteNonQuery|API> {0}#", ObjectID);
 
             try
             {

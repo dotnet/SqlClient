@@ -939,12 +939,7 @@ namespace Microsoft.Data.SqlClient
         override public void Close()
         {
             SqlStatistics statistics = null;
-
-            long scopeID = 0;
-            if (SqlClientEventSource.Log.IsScopeEnabled())
-            {
-                scopeID = SqlClientEventSource.Log.ScopeEnter("<sc.SqlDataReader.Close|API> {0}#", ObjectID);
-            }
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlDataReader.Close|API> {0}#", ObjectID);
 
             try
             {
@@ -1675,12 +1670,7 @@ namespace Microsoft.Data.SqlClient
         override public DataTable GetSchemaTable()
         {
             SqlStatistics statistics = null;
-
-            long scopeID = 0;
-            if (SqlClientEventSource.Log.IsScopeEnabled())
-            {
-                scopeID = SqlClientEventSource.Log.ScopeEnter("<sc.SqlDataReader.GetSchemaTable|API> {0}#", ObjectID);
-            }
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlDataReader.GetSchemaTable|API> {0}#", ObjectID);
 
             try
             {
@@ -3612,12 +3602,9 @@ namespace Microsoft.Data.SqlClient
         private bool TryNextResult(out bool more)
         {
             SqlStatistics statistics = null;
-
-            long scopeID = 0;
-            if (SqlClientEventSource.Log.IsScopeEnabled())
-                scopeID = SqlClientEventSource.Log.ScopeEnter("<sc.SqlDataReader.NextResult|API> {0}#", ObjectID);
-
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlDataReader.NextResult|API> {0}#", ObjectID);
             RuntimeHelpers.PrepareConstrainedRegions();
+
             try
             {
 #if DEBUG
@@ -3821,12 +3808,9 @@ namespace Microsoft.Data.SqlClient
         private bool TryReadInternal(bool setTimeout, out bool more)
         {
             SqlStatistics statistics = null;
-
-            long scopeID = 0;
-            if (SqlClientEventSource.Log.IsScopeEnabled())
-                scopeID = SqlClientEventSource.Log.ScopeEnter("<sc.SqlDataReader.Read|API> {0}#", ObjectID);
-
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlDataReader.Read|API> {0}#", ObjectID);
             RuntimeHelpers.PrepareConstrainedRegions();
+
             try
             {
 #if DEBUG
@@ -4491,11 +4475,7 @@ namespace Microsoft.Data.SqlClient
                 // broken connection, so check state first.
                 if (parser.State == TdsParserState.OpenLoggedIn)
                 {
-                    if (SqlClientEventSource.Log.IsCorrelationEnabled())
-                    {
-                        SqlClientEventSource.Log.CorrelationTrace("<sc.SqlDataReader.RestoreServerSettings|Info|Correlation> ObjectID {0}#, ActivityID '{1}'", ObjectID, ActivityCorrelator.Current.ToString());
-                    }
-
+                    SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlDataReader.RestoreServerSettings|Info|Correlation> ObjectID {0}#, ActivityID '{1}'", ObjectID, ActivityCorrelator.Current.ToString());
                     Task executeTask = parser.TdsExecuteSQLBatch(_resetOptionsString, (_command != null) ? _command.CommandTimeout : 0, null, stateObj, sync: true);
                     Debug.Assert(executeTask == null, "Shouldn't get a task when doing sync writes");
 
@@ -4807,11 +4787,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/NextResultAsync/*' />
         public override Task<bool> NextResultAsync(CancellationToken cancellationToken)
         {
-            long scopeID = 0;
-            if (SqlClientEventSource.Log.IsScopeEnabled())
-            {
-                scopeID = SqlClientEventSource.Log.ScopeEnter("<sc.SqlDataReader.NextResultAsync|API> {0}#", ObjectID);
-            }
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlDataReader.NextResultAsync|API> {0}#", ObjectID);
 
             try
             {
@@ -4857,10 +4833,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (t != null)
                     {
-                        if (SqlClientEventSource.Log.IsTraceEnabled())
-                        {
-                            SqlClientEventSource.Log.Trace("<sc.SqlDataReader.NextResultAsync> attempt retry {0}#", ObjectID);
-                        }
+                        SqlClientEventSource.Log.TraceEvent("<sc.SqlDataReader.NextResultAsync> attempt retry {0}#", ObjectID);
                         PrepareForAsyncContinuation();
                     }
 
@@ -4942,11 +4915,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (t != null)
                     {
-                        if (SqlClientEventSource.Log.IsTraceEnabled())
-                        {
-                            SqlClientEventSource.Log.Trace("<sc.SqlDataReader.GetBytesAsync> attempt retry {0}#", ObjectID);
-                        }
-
+                        SqlClientEventSource.Log.TraceEvent("<sc.SqlDataReader.GetBytesAsync> attempt retry {0}#", ObjectID);
                         PrepareForAsyncContinuation();
                     }
 
@@ -5117,12 +5086,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/ReadAsync/*' />
         public override Task<bool> ReadAsync(CancellationToken cancellationToken)
         {
-            long scopeID = 0;
-            if (SqlClientEventSource.Log.IsScopeEnabled())
-            {
-                scopeID = SqlClientEventSource.Log.ScopeEnter("<sc.SqlDataReader.ReadAsync|API> {0}#", ObjectID);
-            }
-
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlDataReader.ReadAsync|API> {0}#", ObjectID);
             try
             {
                 if (IsClosed)
@@ -5242,11 +5206,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (t != null)
                     {
-                        if (SqlClientEventSource.Log.IsTraceEnabled())
-                        {
-                            SqlClientEventSource.Log.Trace("<sc.SqlDataReader.ReadAsync> attempt retry {0}#", ObjectID);
-                        }
-
+                        SqlClientEventSource.Log.TraceEvent("<sc.SqlDataReader.ReadAsync> attempt retry {0}#", ObjectID);
                         PrepareForAsyncContinuation();
                     }
 
