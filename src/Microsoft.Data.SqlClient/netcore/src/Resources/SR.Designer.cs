@@ -2140,7 +2140,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The given value of type {0} from the data source cannot be converted to type {1} of the specified target column..
+        ///   Looks up a localized string similar to The {0} of type {1} from the data source cannot be converted to type {2} for colid {3} [{4}]..
         /// </summary>
         internal static string SQL_BulkLoadCannotConvertValue {
             get {
