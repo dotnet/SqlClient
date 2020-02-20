@@ -959,9 +959,14 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_BulkLoadMappingsNamesOrOrdinalsOnly));
         }
-        static internal Exception BulkLoadCannotConvertValue(Type sourcetype, MetaType metatype, Exception e)
+        static internal Exception BulkLoadCannotConvertValue(Type sourcetype, MetaType metatype, int ordinal, bool isEncrypted, string columnName, string value, Exception e)
         {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_BulkLoadCannotConvertValue, sourcetype.Name, metatype.TypeName), e);
+            string quotedValue = "given value";
+
+            if (!isEncrypted)
+                quotedValue = string.Format("'{0}'", (value.Length > 100 ? value.Substring(0, 100) : value));
+            
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_BulkLoadCannotConvertValue, quotedValue, sourcetype.Name, metatype.TypeName, ordinal, columnName), e);
         }
         static internal Exception BulkLoadNonMatchingColumnMapping()
         {

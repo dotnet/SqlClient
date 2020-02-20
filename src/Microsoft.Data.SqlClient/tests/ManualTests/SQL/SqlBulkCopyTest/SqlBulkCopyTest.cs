@@ -247,5 +247,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             DestinationTableNameWithSpecialChar.Test(srcConstr, AddGuid("SqlBulkCopyTest_DestinationTableNameWithSpecialChar"));
         }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public void CopyStringToIntTest()
+        {
+            DataConversionErrorMessage.StringToIntTest(srcConstr, AddGuid("SqlBulkCopyTest_CopyStringToIntTest"));
+        }
     }
 }
