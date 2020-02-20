@@ -1356,7 +1356,6 @@ namespace Microsoft.Data.SqlClient
 
                 // devnote: relies on SmiEventSink_Default to pass event to parent
                 // Both command and reader care about StatementCompleted, but for different reasons.
-
                 base.StatementCompleted(recordsAffected);
                 this.reader.StatementCompleted();
             }
@@ -1369,7 +1368,6 @@ namespace Microsoft.Data.SqlClient
                 //  parent's callback *MUST* come before reader's BatchCompleted, since
                 //  reader will close the event stream during this call, and parent wants
                 //  to extract parameter values before that happens.
-
                 base.BatchCompleted();
                 this.reader.BatchCompleted();
             }

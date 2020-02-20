@@ -25,9 +25,6 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TraceEvent("<sc|{0}|{1}|{2}>{3}", type, method, LogLevel.Info, message);
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientLogger.xml' path='docs/members[@name="SqlClientLogger"]/IsLoggingEnabled/*'/>	
-        public bool IsLoggingEnabled => SqlClientEventSource.Log.IsEnabled();
-
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientLogger.xml' path='docs/members[@name="SqlClientLogger"]/LogAssert/*'/>
         public bool LogAssert(bool value, string type, string method, string message)
         {
@@ -35,5 +32,8 @@ namespace Microsoft.Data.SqlClient
                 LogError(type, method, message);
             return value;
         }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientLogger.xml' path='docs/members[@name="SqlClientLogger"]/IsLoggingEnabled/*'/>	
+        public bool IsLoggingEnabled => SqlClientEventSource.Log.IsEnabled();
     }
 }
