@@ -79,7 +79,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
 
         internal SqlConnectionContainer(SqlConnectionContainerHashHelper hashHelper, string appDomainKey, bool useDefaults)
         {
-            long scopeID = SqlClientEventSource.Log.NotificationsScopeEnterEvent("<sc.SqlConnectionContainer|DEP> {0}#, queue: '{1}'", ObjectID, HashHelper.Queue);
+            long scopeID = SqlClientEventSource.Log.NotificationsScopeEnterEvent("<sc.SqlConnectionContainer|DEP> {0}#, queue: '{1}'", ObjectID, HashHelper?.Queue);
             bool setupCompleted = false;
 
             try

@@ -100,7 +100,7 @@ namespace Microsoft.Data.Common
                 string trace, Exception e)
         {
             Debug.Assert(null != e, "TraceException: null Exception");
-            if (null != e && SqlClientEventSource.Log.IsTraceEnabled())
+            if (null != e)
             {
                 SqlClientEventSource.Log.TraceEvent(trace, e.ToString()); // will include callstack if permission is available
             }

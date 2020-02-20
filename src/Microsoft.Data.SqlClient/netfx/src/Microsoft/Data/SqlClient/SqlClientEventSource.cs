@@ -49,7 +49,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         #region Keywords
         public class Keywords
-        { 
+        {
             internal const EventKeywords SqlClient = (EventKeywords)3;
 
             internal const EventKeywords Trace = (EventKeywords)2;
@@ -401,6 +401,15 @@ namespace Microsoft.Data.SqlClient
             if (IsCorrelationEnabled())
             {
                 CorrelationTrace(string.Format(message, args0, args1, args2));
+            }
+        }
+
+        [NonEvent]
+        internal void NotificationsTraceEvent(string message)
+        {
+            if (IsNotificationTraceEnabled())
+            {
+                NotificationsTrace(message);
             }
         }
 

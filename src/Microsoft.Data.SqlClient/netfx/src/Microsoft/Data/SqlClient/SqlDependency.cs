@@ -779,7 +779,7 @@ namespace Microsoft.Data.SqlClient
 
                         ADP.TraceExceptionWithoutRethrow(e); // Discard failure, but trace for now.
 
-                        SqlClientEventSource.Log.NotificationsTrace("<sc.SqlDependency.Start|DEP|ERR> Exception occurred from _processDispatcher.Start(...), calling Invalidate(...).");
+                        SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlDependency.Start|DEP|ERR> Exception occurred from _processDispatcher.Start(...), calling Invalidate(...).");
                         throw;
                     }
                 }
