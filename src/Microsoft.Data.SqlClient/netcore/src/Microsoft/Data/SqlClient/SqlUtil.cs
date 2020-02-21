@@ -812,14 +812,14 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_BulkLoadMappingsNamesOrOrdinalsOnly));
         }
-        internal static Exception BulkLoadCannotConvertValue(Type sourcetype, MetaType metatype, int ordinal, bool isEncrypted, string columnName, string value, Exception e)
+        internal static Exception BulkLoadCannotConvertValue(Type sourcetype, MetaType metatype, int ordinal, int rowNumber, bool isEncrypted, string columnName, string value, Exception e)
         {
-            string quotedValue = "given value";
+            string quotedValue = string.Empty;
 
             if (!isEncrypted)
-                quotedValue = string.Format("'{0}'", (value.Length > 100 ? value.Substring(0, 100) : value));
+                quotedValue = string.Format(" '{0}'", (value.Length > 100 ? value.Substring(0, 100) : value));
 
-            return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_BulkLoadCannotConvertValue, quotedValue, sourcetype.Name, metatype.TypeName, ordinal, columnName), e);
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_BulkLoadCannotConvertValue, quotedValue, sourcetype.Name, metatype.TypeName, ordinal, columnName, rowNumber), e);
         }
         internal static Exception BulkLoadNonMatchingColumnMapping()
         {

@@ -206,6 +206,31 @@ namespace Microsoft.Data.SqlClient
         private DataRowState _rowStateToSkip;
         private IEnumerator _rowEnumerator;
 
+        private int RowNumber
+        {
+            get
+            {
+                int rowNo;
+
+                switch (_rowSourceType)
+                {
+                    case ValueSourceType.RowArray:
+                        rowNo = ((DataTable)_dataTableSource).Rows.IndexOf(_rowEnumerator.Current as DataRow);
+                        break;
+                    case ValueSourceType.DataTable:
+                        rowNo = ((DataTable)_rowSource).Rows.IndexOf(_rowEnumerator.Current as DataRow);                        
+                        break;
+
+                    case ValueSourceType.DbDataReader:
+                    case ValueSourceType.IDataReader:
+                    case ValueSourceType.Unspecified:
+                    default:
+                        return -1;                        
+                }
+                return ++rowNo;
+            }
+        }
+
         private TdsParser _parser;
         private TdsParserStateObject _stateObj;
         private List<_ColumnMapping> _sortedColumnMappings;
@@ -1477,7 +1502,7 @@ namespace Microsoft.Data.SqlClient
                             }
                             catch (SqlTruncateException)
                             {
-                                throw SQL.BulkLoadCannotConvertValue(value.GetType(), mt, metadata.ordinal, metadata.isEncrypted, metadata.column, value.ToString(), ADP.ParameterValueOutOfRange(sqlValue));
+                                throw SQL.BulkLoadCannotConvertValue(value.GetType(), mt, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), ADP.ParameterValueOutOfRange(sqlValue));
                             }
                         }
 
@@ -1566,7 +1591,7 @@ namespace Microsoft.Data.SqlClient
 
                     default:
                         Debug.Fail("Unknown TdsType!" + type.NullableType.ToString("x2", (IFormatProvider)null));
-                        throw SQL.BulkLoadCannotConvertValue(value.GetType(), metadata.metaType, metadata.ordinal, metadata.isEncrypted, metadata.column, value.ToString(), null);
+                        throw SQL.BulkLoadCannotConvertValue(value.GetType(), metadata.metaType, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), null);
                 }
 
                 if (typeChanged)
@@ -1583,7 +1608,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw;
                 }
-                throw SQL.BulkLoadCannotConvertValue(value.GetType(), metadata.metaType, metadata.ordinal, metadata.isEncrypted, metadata.column, value.ToString(), e);
+                throw SQL.BulkLoadCannotConvertValue(value.GetType(), metadata.metaType, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), e);
             }
         }
 
