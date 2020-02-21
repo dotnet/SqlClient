@@ -206,7 +206,7 @@ namespace Microsoft.Data.SqlClient
                 _isFromAPI = false;
 
                 SqlStatistics.StopTimer(statistics);
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
@@ -329,7 +329,7 @@ namespace Microsoft.Data.SqlClient
                     _isFromAPI = false;
 
                     SqlStatistics.StopTimer(statistics);
-                    SqlClientEventSource.Log.ScopeLeave(scopeID);
+                    SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
                 }
             }
         }
@@ -392,7 +392,7 @@ namespace Microsoft.Data.SqlClient
                 _isFromAPI = false;
 
                 SqlStatistics.StopTimer(statistics);
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
@@ -451,7 +451,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlStatistics.StopTimer(statistics);
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 

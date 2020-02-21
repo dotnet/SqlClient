@@ -36,7 +36,6 @@ namespace Microsoft.Data
                 catch (System.Security.SecurityException)
                 {
                     // if you don't have permission - you don't get the stack trace
-                    SqlClientEventSource.Log.AdvanceTrace("Permission Denied");
                 }
             }
         }

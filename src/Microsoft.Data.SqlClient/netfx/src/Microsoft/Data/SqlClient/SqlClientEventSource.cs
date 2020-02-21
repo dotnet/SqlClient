@@ -467,6 +467,41 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        [NonEvent]
+        internal void ScopeLeaveEvent(long scopeId)
+        {
+            if (IsScopeEnabled())
+            {
+                ScopeLeave(scopeId);
+            }
+        }
+
+        [NonEvent]
+        internal void NotificationsScopeLeaveEvent(long scopeId)
+        {
+            if (IsNotificationScopeEnabled())
+            {
+                ScopeLeave(scopeId);
+            }
+        }
+
+        [NonEvent]
+        internal void PoolerScopeLeaveEvent(long scopeId)
+        {
+            if (IsPoolerScopeEnabled())
+            {
+                ScopeLeave(scopeId);
+            }
+        }
+
+        [NonEvent]
+        internal void AdvanceScopeLeave(long scopeId)
+        {
+            if (IsAdvanceTraceOn())
+            {
+                ScopeLeave(scopeId);
+            }
+        }
         #endregion
 
         #region Events
@@ -487,10 +522,7 @@ namespace Microsoft.Data.SqlClient
         [Event(ExitScopeId, Level = EventLevel.Verbose, Keywords = Keywords.Scope)]
         internal void ScopeLeave(long scopeId)
         {
-            if (SqlClientEventSource.Log.IsEnabled())
-            {
-                WriteEvent(ExitScopeId, scopeId);
-            }
+            WriteEvent(ExitScopeId, scopeId);
         }
 
         [Event(TraceBinId, Level = EventLevel.Informational, Keywords = Keywords.Trace)]

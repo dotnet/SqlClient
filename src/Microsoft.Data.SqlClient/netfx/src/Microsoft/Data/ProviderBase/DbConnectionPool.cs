@@ -1780,7 +1780,7 @@ namespace Microsoft.Data.ProviderBase
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.PoolerScopeLeaveEvent(scopeID);
             }
         }
 

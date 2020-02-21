@@ -410,7 +410,7 @@ namespace Microsoft.Data.SqlClient
                         Connection.Close();
                     }
 
-                    SqlClientEventSource.Log.ScopeLeave(scopeID);
+                    SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
                 }
             }
         }
@@ -466,7 +466,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.AdvanceScopeLeave(scopeID);
             }
         }
 
@@ -525,7 +525,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.AdvanceScopeLeave(scopeID);
             }
         }
 

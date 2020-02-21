@@ -339,7 +339,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
             }
         }
 
@@ -475,7 +475,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 finally
                 {
-                    SqlClientEventSource.Log.ScopeLeave(scopeID);
+                    SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
                 }
             }
             remove
@@ -498,7 +498,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 finally
                 {
-                    SqlClientEventSource.Log.ScopeLeave(scopeID);
+                    SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
                 }
             }
         }
@@ -527,7 +527,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
             }
         }
 
@@ -788,7 +788,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
             }
         }
 
@@ -918,7 +918,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
             }
         }
 
@@ -978,7 +978,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
             }
         }
 
@@ -1041,7 +1041,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
             }
         }
 
@@ -1145,7 +1145,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
             }
         }
 
@@ -1174,7 +1174,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
             }
         }
 
@@ -1208,7 +1208,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
             }
         }
 
@@ -1260,7 +1260,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
             }
         }
 
@@ -1290,7 +1290,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
             }
         }
 
@@ -1359,7 +1359,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 finally
                 {
-                    SqlClientEventSource.Log.ScopeLeave(scopeID);
+                    SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
                 }
             }
         }
@@ -1429,7 +1429,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
             }
         }
 

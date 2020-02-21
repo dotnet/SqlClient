@@ -1095,7 +1095,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             SqlStatistics.StopTimer(statistics);
-            SqlClientEventSource.Log.ScopeLeave(scopeID);
+            SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
         }
 
         private void InternalPrepare()
@@ -1289,7 +1289,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlStatistics.StopTimer(statistics);
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
@@ -1356,7 +1356,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlStatistics.StopTimer(statistics);
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
                 WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
             }
         }
@@ -1424,7 +1424,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlStatistics.StopTimer(statistics);
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
                 WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
             }
         }
@@ -1450,7 +1450,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlStatistics.StopTimer(statistics);
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
@@ -2051,7 +2051,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlStatistics.StopTimer(statistics);
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
                 WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
             }
         }
@@ -2364,7 +2364,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlStatistics.StopTimer(statistics);
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
@@ -2380,7 +2380,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 

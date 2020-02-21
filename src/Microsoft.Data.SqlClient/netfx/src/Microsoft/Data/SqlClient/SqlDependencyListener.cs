@@ -216,7 +216,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
             }
         }
 
@@ -320,7 +320,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
             }
         }
 
@@ -334,7 +334,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
             }
         }
 
@@ -386,7 +386,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
             }
         }
 
@@ -522,7 +522,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
             }
         }
 
@@ -554,7 +554,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
             }
         }
 
@@ -682,7 +682,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
             }
         }
 
@@ -855,7 +855,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
             }
         }
 
@@ -985,7 +985,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
             }
         }
 
@@ -1002,7 +1002,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
             }
         }
 
@@ -1083,7 +1083,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
             }
         }
     }
@@ -1484,7 +1484,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
         }
         finally
         {
-            SqlClientEventSource.Log.ScopeLeave(scopeID);
+            SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
         }
     }
 
@@ -1503,7 +1503,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
         }
         finally
         {
-            SqlClientEventSource.Log.ScopeLeave(scopeID);
+            SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
         }
     }
 
@@ -1562,7 +1562,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
         }
         finally
         {
-            SqlClientEventSource.Log.ScopeLeave(scopeID);
+            SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
         }
     }
 
@@ -1606,7 +1606,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
         }
         finally
         {
-            SqlClientEventSource.Log.ScopeLeave(scopeID);
+            SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
         }
     }
 
@@ -1655,7 +1655,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
         }
         finally
         {
-            SqlClientEventSource.Log.ScopeLeave(scopeID);
+            SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
         }
     }
 
@@ -1794,7 +1794,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
         }
         finally
         {
-            SqlClientEventSource.Log.ScopeLeave(scopeID);
+            SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
         }
     }
 
@@ -1861,7 +1861,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
         }
         finally
         {
-            SqlClientEventSource.Log.ScopeLeave(scopeID);
+            SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
         }
     }
 

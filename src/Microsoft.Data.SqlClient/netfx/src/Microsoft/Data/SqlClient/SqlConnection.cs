@@ -1117,7 +1117,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
@@ -1154,7 +1154,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
                 SqlStatistics.StopTimer(statistics);
             }
         }
@@ -1343,7 +1343,7 @@ namespace Microsoft.Data.SqlClient
                 SqlDebugContext sdc = _sdc;
                 _sdc = null;
 
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
 
                 if (sdc != null)
                 {
@@ -1432,7 +1432,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
@@ -1734,7 +1734,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.PoolerScopeLeaveEvent(scopeID);
             }
         }
 
@@ -2475,7 +2475,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
@@ -2546,7 +2546,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 

@@ -90,7 +90,7 @@ namespace Microsoft.Data.SqlTypes
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 

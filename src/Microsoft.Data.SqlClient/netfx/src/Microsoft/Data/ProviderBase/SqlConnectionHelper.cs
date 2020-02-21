@@ -208,7 +208,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeave(scopeID);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
             return command;
         }
