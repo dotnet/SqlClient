@@ -17,17 +17,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void EventTraceTests()
         {
             GetIds();
-            foreach (var id in ids)
-            {
-                Assert.Equal(3, id);
-            }
+            //Trace EventKeyword is 3.
+            //We did not want to break the SqlEventSource for BeginExexute and EndExecute
+            // BeginExexute and EndExecute are Enabled when any kind of Event logging is enabled, so we check for those values as well.
+            Assert.All(ids, item => { Assert.True(3 == item || 1 == item || item == 2); });
         }
 
         private void GetIds()
         {
             using (var TraceListener = new TraceEventListener())
             {
-                using (SqlConnection connection = new SqlConnection("Data Source = localhost; Initial Catalog = Northwind; Integrated Security = true;Timeout= 120"))
+                using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
                 {
                     connection.Open();
                     using (SqlCommand command = new SqlCommand("SELECT * From [Customers]", connection))
@@ -41,6 +41,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
     }
 
+    [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp, "Not Implemented")]
     public class TraceEventListener : EventListener
     {
         public List<int> IDs = new List<int>();

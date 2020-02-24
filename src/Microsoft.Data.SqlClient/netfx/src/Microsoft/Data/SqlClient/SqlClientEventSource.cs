@@ -50,6 +50,8 @@ namespace Microsoft.Data.SqlClient
         #region Keywords
         public class Keywords
         {
+            internal const EventKeywords SqlClient = 0;
+
             internal const EventKeywords Trace = (EventKeywords)1;
 
             internal const EventKeywords TraceBin = (EventKeywords)2;
@@ -71,8 +73,6 @@ namespace Microsoft.Data.SqlClient
             internal const EventKeywords Advanced = (EventKeywords)512;
 
             internal const EventKeywords StateDump = (EventKeywords)1024;
-
-            internal const EventKeywords SqlClient = (EventKeywords)2048;
         }
         #endregion
 
