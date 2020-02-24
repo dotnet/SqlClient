@@ -65,7 +65,7 @@ namespace Microsoft.Data.SqlClient
             SqlConnectionPoolKey key = obj as SqlConnectionPoolKey;
             return (key != null
                 && _credential == key._credential
-                && string.CompareOrdinal(ConnectionString, key.ConnectionString) == 0
+                && ConnectionString == key.ConnectionString
                 && string.CompareOrdinal(_accessToken, key._accessToken) == 0);
         }
 

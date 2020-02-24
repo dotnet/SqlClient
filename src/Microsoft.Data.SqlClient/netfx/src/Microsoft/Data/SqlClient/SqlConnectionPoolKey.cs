@@ -109,7 +109,7 @@ namespace Microsoft.Data.SqlClient
 
             return (key != null &&
                     _credential == key._credential &&
-                    string.CompareOrdinal(ConnectionString, key.ConnectionString) == 0 &&
+                    ConnectionString == key.ConnectionString &&
                     string.CompareOrdinal(_accessToken, key._accessToken) == 0 &&
                     _serverCertificateValidationCallback == key._serverCertificateValidationCallback &&
                     _clientCertificateRetrievalCallback == key._clientCertificateRetrievalCallback &&
