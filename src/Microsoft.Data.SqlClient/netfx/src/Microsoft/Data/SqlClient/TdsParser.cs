@@ -3955,7 +3955,7 @@ namespace Microsoft.Data.SqlClient
             if (tokenLen < sizeof(uint))
             {
                 // the token must at least contain a DWORD indicating the number of info IDs
-                SqlClientEventSource.Log.AdvanceTrace("<sc.TdsParser.TryProcessFedAuthInfo|ERR> FEDAUTHINFO token stream length too short for CountOfInfoIDs.");
+                SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.TryProcessFedAuthInfo|ERR> FEDAUTHINFO token stream length too short for CountOfInfoIDs.");
                 throw SQL.ParsingErrorLength(ParsingErrorState.FedAuthInfoLengthTooShortForCountOfInfoIds, tokenLen);
             }
 
@@ -3969,7 +3969,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             tokenLen -= sizeof(uint); // remaining length is shortened since we read optCount
-            SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.TryProcessFedAuthInfo> CountOfInfoIDs = {0}", optionsCount.ToString(CultureInfo.InvariantCulture));
+            SqlClientEventSource.Log.AdvanceTrace("<sc.TdsParser.TryProcessFedAuthInfo|ADV> CountOfInfoIDs = {0}", optionsCount.ToString(CultureInfo.InvariantCulture));
 
             if (tokenLen > 0)
             {
@@ -3978,7 +3978,7 @@ namespace Microsoft.Data.SqlClient
                 int totalRead = 0;
                 bool successfulRead = stateObj.TryReadByteArray(tokenData, 0, tokenLen, out totalRead);
 
-                SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.TryProcessFedAuthInfo> Read rest of FEDAUTHINFO token stream: {0}", BitConverter.ToString(tokenData, 0, totalRead));
+                SqlClientEventSource.Log.AdvanceTrace("<sc.TdsParser.TryProcessFedAuthInfo|ADV> Read rest of FEDAUTHINFO token stream: {0}", BitConverter.ToString(tokenData, 0, totalRead));
 
                 if (!successfulRead || totalRead != tokenLen)
                 {
@@ -4003,7 +4003,7 @@ namespace Microsoft.Data.SqlClient
                     byte id = tokenData[currentOptionOffset];
                     uint dataLen = BitConverter.ToUInt32(tokenData, checked((int)(currentOptionOffset + 1)));
                     uint dataOffset = BitConverter.ToUInt32(tokenData, checked((int)(currentOptionOffset + 5)));
-                    SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.TryProcessFedAuthInfo> FedAuthInfoOpt: ID={0}, DataLen={1}, Offset={2}", id, dataLen.ToString(CultureInfo.InvariantCulture), dataOffset.ToString(CultureInfo.InvariantCulture));
+                    SqlClientEventSource.Log.AdvanceTrace("<sc.TdsParser.TryProcessFedAuthInfo> FedAuthInfoOpt: ID={0}, DataLen={1}, Offset={2}", id, dataLen.ToString(CultureInfo.InvariantCulture), dataOffset.ToString(CultureInfo.InvariantCulture));
 
                     // offset is measured from optCount, so subtract to make offset measured
                     // from the beginning of tokenData
@@ -4035,7 +4035,7 @@ namespace Microsoft.Data.SqlClient
                         SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.TryProcessFedAuthInfo|{0}> FedAuthInfoData is not in unicode format.", "ERR");
                         throw SQL.ParsingError(ParsingErrorState.FedAuthInfoDataNotUnicode, e);
                     }
-                    SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.TryProcessFedAuthInfo> FedAuthInfoData: {0}", data);
+                    SqlClientEventSource.Log.AdvanceTrace("<sc.TdsParser.TryProcessFedAuthInfo|ADV> FedAuthInfoData: {0}", data);
 
                     // store data in tempFedAuthInfo
                     switch ((TdsEnums.FedAuthInfoId)id)
@@ -4047,7 +4047,7 @@ namespace Microsoft.Data.SqlClient
                             tempFedAuthInfo.stsurl = data;
                             break;
                         default:
-                            SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.TryProcessFedAuthInfo> Ignoring unknown federated authentication info option: {0}", id);
+                            SqlClientEventSource.Log.AdvanceTrace("<sc.TdsParser.TryProcessFedAuthInfo|ADV> Ignoring unknown federated authentication info option: {0}", id);
                             break;
                     }
                 }
@@ -8758,7 +8758,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 WriteInt(log7Flags, _physicalStateObj);
-                SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.TdsLogin|ADV> {0}#, TDS Login7 flags = {1}:", ObjectID, log7Flags);
+                SqlClientEventSource.Log.AdvanceTrace("<sc.TdsParser.TdsLogin|ADV> {0}#, TDS Login7 flags = {1}:", ObjectID, log7Flags);
 
                 WriteInt(0, _physicalStateObj);  // ClientTimeZone is not used
                 WriteInt(0, _physicalStateObj);  // LCID is unused by server

@@ -1937,7 +1937,7 @@ namespace Microsoft.Data.SqlClient
         {
 
             Debug.Assert(!connectionOptions.MultiSubnetFailover, "MultiSubnetFailover should not be set if failover partner is used");
-            SqlClientEventSource.Log.AdvanceTrace("<sc.SqlInternalConnectionTds.LoginWithFailover|ADV> {0}#, useFailover={1}[bool], primary={2}, failover={failoverHost}", ObjectID, useFailoverHost, primaryServerInfo.UserServerName);
+            SqlClientEventSource.Log.AdvanceTrace("<sc.SqlInternalConnectionTds.LoginWithFailover|ADV> {0}#, useFailover={1}[bool], primary={2}, failover={3}", ObjectID, useFailoverHost, primaryServerInfo.UserServerName, failoverHost ?? "null");
 
             int sleepInterval = 100;  //milliseconds to sleep (back off) between attempts.
             long timeoutUnitInterval;
@@ -2426,7 +2426,7 @@ namespace Microsoft.Data.SqlClient
                     break;
 
                 case TdsEnums.ENV_ROUTING:
-                    SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnEnvChange> {0}#, Received routing info", ObjectID);
+                    SqlClientEventSource.Log.AdvanceTrace("<sc.SqlInternalConnectionTds.OnEnvChange|ADV> {0}#, Received routing info", ObjectID);
                     if (string.IsNullOrEmpty(rec.newRoutingInfo.ServerName) || rec.newRoutingInfo.Protocol != 0 || rec.newRoutingInfo.Port == 0)
                     {
                         throw SQL.ROR_InvalidRoutingInfo(this);
@@ -2503,7 +2503,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFedAuthInfo> {0}#, " +
                             "The expiration time is less than 10 mins, so trying to get new access token regardless of if an other thread is also trying to update it." +
-                            "The expiration time is {1}. Current Time is {DateTime.UtcNow.ToLongTimeString()}.", ObjectID, dbConnectionPoolAuthenticationContext.ExpirationTime.ToLongTimeString());
+                            "The expiration time is {1}. Current Time is {2}.", ObjectID, dbConnectionPoolAuthenticationContext.ExpirationTime.ToLongTimeString(), DateTime.UtcNow.ToLongTimeString());
 
                         attemptRefreshTokenUnLocked = true;
                     }
@@ -2524,7 +2524,7 @@ namespace Microsoft.Data.SqlClient
                     // If a thread is already doing the refresh, just use the existing token in the cache and proceed.
                     else if (contextValidity <= _dbAuthenticationContextLockedRefreshTimeSpan)
                     {
-                        SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFedAuthInfo> {0}#, " +
+                        SqlClientEventSource.Log.AdvanceTrace("<sc.SqlInternalConnectionTds.OnFedAuthInfo|ADV> {0}#, " +
                             "The authentication context needs a refresh.The expiration time is {1}. " +
                             "Current Time is {2}.", ObjectID, dbConnectionPoolAuthenticationContext.ExpirationTime.ToLongTimeString(), DateTime.UtcNow.ToLongTimeString());
 
@@ -2540,11 +2540,11 @@ namespace Microsoft.Data.SqlClient
                         // Indicate in Bid Trace that we are successful with the update.
                         if (attemptRefreshTokenLocked)
                         {
-                            SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFedAuthInfo> %d#, The attempt to get a new access token succeeded under the locked mode.");
+                            SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFedAuthInfo> {0}#, The attempt to get a new access token succeeded under the locked mode.", ObjectID);
                         }
 
                     }
-                    SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFedAuthInfo> {0}#, Found an authentication context in the cache that does not need a refresh at this time. Re-using the cached token.", ObjectID);
+                    SqlClientEventSource.Log.AdvanceTrace("<sc.SqlInternalConnectionTds.OnFedAuthInfo> {0}#, Found an authentication context in the cache that does not need a refresh at this time. Re-using the cached token.", ObjectID);
                 }
             }
 
@@ -2612,7 +2612,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.TryGetFedAuthTokenLocked> {}#, Refreshing the context is already in progress by another thread.", ObjectID);
+                    SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.TryGetFedAuthTokenLocked> {0}#, Refreshing the context is already in progress by another thread.", ObjectID);
                 }
 
                 if (authenticationContextLocked)
@@ -2869,7 +2869,7 @@ namespace Microsoft.Data.SqlClient
                     }
                 case TdsEnums.FEATUREEXT_FEDAUTH:
                     {
-                        SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck> {0}#, Received feature extension acknowledgement for federated authentication", ObjectID);
+                        SqlClientEventSource.Log.AdvanceTrace("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}#, Received feature extension acknowledgement for federated authentication", ObjectID);
 
                         if (!_federatedAuthenticationRequested)
                         {
@@ -2886,8 +2886,7 @@ namespace Microsoft.Data.SqlClient
                                 // The server shouldn't have sent any additional data with the ack (like a nonce)
                                 if (data.Length != 0)
                                 {
-                                    SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}#, " +
-                                        "Federated authentication feature extension ack for MSAL and Security Token includes extra data", ObjectID);
+                                    SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}#, Federated authentication feature extension ack for MSAL and Security Token includes extra data", ObjectID);
                                     throw SQL.ParsingError(ParsingErrorState.FedAuthFeatureAckContainsExtraData);
                                 }
                                 break;
@@ -2927,7 +2926,7 @@ namespace Microsoft.Data.SqlClient
                     }
                 case TdsEnums.FEATUREEXT_TCE:
                     {
-                        SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck> {0}#, Received feature extension acknowledgement for TCE", ObjectID);
+                        SqlClientEventSource.Log.AdvanceTrace("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}#, Received feature extension acknowledgement for TCE", ObjectID);
                         if (data.Length < 1)
                         {
                             SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}#, Unknown version number for TCE", ObjectID);
@@ -2956,7 +2955,7 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.FEATUREEXT_GLOBALTRANSACTIONS:
                     {
-                        SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck> {0}#, Received feature extension acknowledgement for GlobalTransactions", ObjectID);
+                        SqlClientEventSource.Log.AdvanceTrace("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}#, Received feature extension acknowledgement for GlobalTransactions", ObjectID);
 
                         if (data.Length < 1)
                         {
@@ -2975,7 +2974,7 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.FEATUREEXT_AZURESQLSUPPORT:
                     {
-                        SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck> {0}#, Received feature extension acknowledgement for AzureSQLSupport", ObjectID);
+                        SqlClientEventSource.Log.AdvanceTrace("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}#, Received feature extension acknowledgement for AzureSQLSupport", ObjectID);
 
                         if (data.Length < 1)
                         {
@@ -2987,14 +2986,14 @@ namespace Microsoft.Data.SqlClient
                         //  Bit 0 for RO/FP support
                         if ((data[0] & 1) == 1 && SqlClientEventSource.Log.IsTraceEnabled())
                         {
-                            SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck> {0}#, FailoverPartner enabled with Readonly intent for AzureSQL DB", ObjectID);
+                            SqlClientEventSource.Log.AdvanceTrace("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}#, FailoverPartner enabled with Readonly intent for AzureSQL DB", ObjectID);
                         }
                         break;
                     }
 
                 case TdsEnums.FEATUREEXT_DATACLASSIFICATION:
                     {
-                        SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck> {0}#, Received feature extension acknowledgement for DATACLASSIFICATION", ObjectID);
+                        SqlClientEventSource.Log.AdvanceTrace("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}#, Received feature extension acknowledgement for DATACLASSIFICATION", ObjectID);
 
                         if (data.Length < 1)
                         {
@@ -3021,7 +3020,7 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.FEATUREEXT_UTF8SUPPORT:
                     {
-                        SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck> {0}#, Received feature extension acknowledgement for UTF8 support", ObjectID);
+                        SqlClientEventSource.Log.AdvanceTrace("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}#, Received feature extension acknowledgement for UTF8 support", ObjectID);
 
                         if (data.Length < 1)
                         {

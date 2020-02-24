@@ -7438,7 +7438,7 @@ namespace Microsoft.Data.SqlClient
 
         private void WriteBeginExecuteEvent()
         {
-            if (SqlClientEventSource.Log.IsEnabled() && Connection != null)
+            if (Connection != null)
             {
                 SqlClientEventSource.Log.BeginExecute(GetHashCode(), Connection.DataSource, Connection.Database, CommandText);
             }
@@ -7452,7 +7452,7 @@ namespace Microsoft.Data.SqlClient
         /// <param name="synchronous">True if SQL command was executed synchronously, otherwise false.</param>
         private void WriteEndExecuteEvent(bool success, int? sqlExceptionNumber, bool synchronous)
         {
-            if (SqlClientEventSource.Log.IsEnabled())
+            if (SqlClientEventSource.Log.IsSqlClientEnabled())
             {
                 // SqlEventSource.WriteEvent(int, int, int, int) is faster than provided overload SqlEventSource.WriteEvent(int, object[]).
                 // that's why trying to fit several booleans in one integer value

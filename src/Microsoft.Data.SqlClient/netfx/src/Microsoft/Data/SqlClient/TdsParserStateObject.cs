@@ -2796,7 +2796,7 @@ namespace Microsoft.Data.SqlClient
                         }
                     }
                     SniReadStatisticsAndTracing();
-                    SqlClientEventSource.Log.TraceBinEvent("<sc.TdsParser.ReadNetworkPacketAsyncCallback|INFO|ADV> Packet read", _inBuff, (ushort)_inBytesRead);
+                    SqlClientEventSource.Log.AdvanceTraceBin("<sc.TdsParser.ReadNetworkPacketAsyncCallback|INFO|ADV> Packet read", _inBuff, (ushort)_inBytesRead);
                     AssertValidState();
                 }
                 else
@@ -3542,7 +3542,7 @@ namespace Microsoft.Data.SqlClient
                     _attentionSending = false;
                 }
 
-                SqlClientEventSource.Log.TraceBinEvent("<sc.TdsParser.WritePacket|INFO|ADV>  Packet sent", _outBuff, (ushort)_outBytesUsed);
+                SqlClientEventSource.Log.AdvanceTraceBin("<sc.TdsParser.WritePacket|INFO|ADV>  Packet sent", _outBuff, (ushort)_outBytesUsed);
                 SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.SendAttention|{0}> Attention sent to the server.", "Info");
 
                 AssertValidState();
@@ -3699,35 +3699,37 @@ namespace Microsoft.Data.SqlClient
                 statistics.SafeAdd(ref statistics._bytesSent, _outBytesUsed);
                 statistics.RequestNetworkServerTimer();
             }
-
-            // If we have tracePassword variables set, we are flushing TDSLogin and so we need to
-            // blank out password in buffer.  Buffer has already been sent to netlib, so no danger
-            // of losing info.
-            if (_tracePasswordOffset != 0)
+            if (SqlClientEventSource.Log.IsAdvanceTraceOn())
             {
-                for (int i = _tracePasswordOffset; i < _tracePasswordOffset +
-                    _tracePasswordLength; i++)
+                // If we have tracePassword variables set, we are flushing TDSLogin and so we need to
+                // blank out password in buffer.  Buffer has already been sent to netlib, so no danger
+                // of losing info.
+                if (_tracePasswordOffset != 0)
                 {
-                    _outBuff[i] = 0;
-                }
+                    for (int i = _tracePasswordOffset; i < _tracePasswordOffset +
+                        _tracePasswordLength; i++)
+                    {
+                        _outBuff[i] = 0;
+                    }
 
-                // Reset state.
-                _tracePasswordOffset = 0;
-                _tracePasswordLength = 0;
-            }
-            if (_traceChangePasswordOffset != 0)
-            {
-                for (int i = _traceChangePasswordOffset; i < _traceChangePasswordOffset +
-                    _traceChangePasswordLength; i++)
+                    // Reset state.
+                    _tracePasswordOffset = 0;
+                    _tracePasswordLength = 0;
+                }
+                if (_traceChangePasswordOffset != 0)
                 {
-                    _outBuff[i] = 0;
-                }
+                    for (int i = _traceChangePasswordOffset; i < _traceChangePasswordOffset +
+                        _traceChangePasswordLength; i++)
+                    {
+                        _outBuff[i] = 0;
+                    }
 
-                // Reset state.
-                _traceChangePasswordOffset = 0;
-                _traceChangePasswordLength = 0;
+                    // Reset state.
+                    _traceChangePasswordOffset = 0;
+                    _traceChangePasswordLength = 0;
+                }
             }
-            SqlClientEventSource.Log.TraceBinEvent("<sc.TdsParser.WritePacket|INFO|ADV>  Packet sent", _outBuff, (ushort)_outBytesUsed);
+            SqlClientEventSource.Log.AdvanceTraceBin("<sc.TdsParser.WritePacket|INFO|ADV>  Packet sent", _outBuff, (ushort)_outBytesUsed);
         }
 
         [Conditional("DEBUG")]

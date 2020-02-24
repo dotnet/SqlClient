@@ -50,9 +50,9 @@ namespace Microsoft.Data.SqlClient
         #region Keywords
         public class Keywords
         {
-            internal const EventKeywords SqlClient = (EventKeywords)3;
+            internal const EventKeywords Trace = (EventKeywords)1;
 
-            internal const EventKeywords Trace = (EventKeywords)2;
+            internal const EventKeywords TraceBin = (EventKeywords)2;
 
             internal const EventKeywords Scope = (EventKeywords)4;
 
@@ -71,6 +71,8 @@ namespace Microsoft.Data.SqlClient
             internal const EventKeywords Advanced = (EventKeywords)512;
 
             internal const EventKeywords StateDump = (EventKeywords)1024;
+
+            internal const EventKeywords SqlClient = (EventKeywords)2048;
         }
         #endregion
 
@@ -83,6 +85,9 @@ namespace Microsoft.Data.SqlClient
         #region Enable/Disable Events
         [NonEvent]
         internal bool IsTraceEnabled() => SqlClientEventSource.Log.IsEnabled(EventLevel.Informational, Keywords.Trace);
+
+        [NonEvent]
+        internal bool IsTraceBinEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.TraceBin);
 
         [NonEvent]
         internal bool IsScopeEnabled() => SqlClientEventSource.Log.IsEnabled(EventLevel.Informational, Keywords.Scope);
@@ -110,6 +115,9 @@ namespace Microsoft.Data.SqlClient
 
         [NonEvent]
         internal bool IsStateDumpEnabled() => SqlClientEventSource.Log.IsEnabled(EventLevel.Informational, Keywords.StateDump);
+
+        [NonEvent]
+        internal bool IsSqlClientEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.SqlClient);
         #endregion
 
         #region overloads
@@ -119,7 +127,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsTraceEnabled())
             {
-                TraceEvent(string.Format(message), args0);
+                TraceEvent(string.Format(message, args0));
             }
         }
 
@@ -232,6 +240,15 @@ namespace Microsoft.Data.SqlClient
         }
 
         [NonEvent]
+        internal void AdvanceTraceBin<T0, T1>(string message, T0 args0, T1 args1)
+        {
+            if (Log.IsAdvanceTraceOn())
+            {
+                TraceBin(string.Format(message, args0, args1));
+            }
+        }
+
+        [NonEvent]
         internal long ScopeEnterEvent<T0>(string message, T0 args0)
         {
             if (Log.IsScopeEnabled())
@@ -244,7 +261,7 @@ namespace Microsoft.Data.SqlClient
         [NonEvent]
         internal long AdvanceScopeEnter<T0>(string message, T0 args0)
         {
-            if (IsAdvanceTraceOn())
+            if (Log.IsAdvanceTraceOn())
             {
                 return ScopeEnter(string.Format(message, args0));
             }
@@ -254,7 +271,7 @@ namespace Microsoft.Data.SqlClient
         [NonEvent]
         internal long ScopeEnterEvent(string message)
         {
-            if (IsScopeEnabled())
+            if (Log.IsScopeEnabled())
             {
                 return ScopeEnter(message);
             }
@@ -264,7 +281,7 @@ namespace Microsoft.Data.SqlClient
         [NonEvent]
         internal long ScopeEnterEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
-            if (IsScopeEnabled())
+            if (Log.IsScopeEnabled())
             {
                 return ScopeEnter(string.Format(message, args0, args1));
             }
@@ -274,7 +291,7 @@ namespace Microsoft.Data.SqlClient
         [NonEvent]
         internal long ScopeEnterEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
         {
-            if (IsScopeEnabled())
+            if (Log.IsScopeEnabled())
             {
                 return ScopeEnter(string.Format(message, args0, args1, args2));
             }
@@ -284,7 +301,7 @@ namespace Microsoft.Data.SqlClient
         [NonEvent]
         internal long ScopeEnterEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
         {
-            if (IsScopeEnabled())
+            if (Log.IsScopeEnabled())
             {
                 return ScopeEnter(string.Format(message, args0, args1, args2, args3));
             }
@@ -294,7 +311,7 @@ namespace Microsoft.Data.SqlClient
         [NonEvent]
         internal long PoolerScopeEnterEvent<T0>(string message, T0 args0)
         {
-            if (IsPoolerScopeEnabled())
+            if (Log.IsPoolerScopeEnabled())
             {
                 return PoolerScopeEnter(string.Format(message, args0));
             }
@@ -304,7 +321,7 @@ namespace Microsoft.Data.SqlClient
         [NonEvent]
         internal long NotificationsScopeEnterEvent<T0>(string message, T0 args0)
         {
-            if (IsNotificationScopeEnabled())
+            if (Log.IsNotificationScopeEnabled())
             {
                 return NotificationsScopeEnter(string.Format(message, args0));
             }
@@ -314,7 +331,7 @@ namespace Microsoft.Data.SqlClient
         [NonEvent]
         internal long NotificationsScopeEnterEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
-            if (IsNotificationScopeEnabled())
+            if (Log.IsNotificationScopeEnabled())
             {
                 return NotificationsScopeEnter(string.Format(message, args0, args1));
             }
@@ -324,7 +341,7 @@ namespace Microsoft.Data.SqlClient
         [NonEvent]
         internal long NotificationsScopeEnterEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
         {
-            if (IsNotificationScopeEnabled())
+            if (Log.IsNotificationScopeEnabled())
             {
                 return NotificationsScopeEnter(string.Format(message, args0, args1, args2));
             }
@@ -334,7 +351,7 @@ namespace Microsoft.Data.SqlClient
         [NonEvent]
         internal long NotificationsScopeEnterEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
         {
-            if (IsNotificationScopeEnabled())
+            if (Log.IsNotificationScopeEnabled())
             {
                 return NotificationsScopeEnter(string.Format(message, args0, args1, args2, args3));
             }
@@ -344,7 +361,7 @@ namespace Microsoft.Data.SqlClient
         [NonEvent]
         internal void PoolerTraceEvent<T0>(string message, T0 args0)
         {
-            if (IsPoolerTraceEnabled())
+            if (Log.IsPoolerTraceEnabled())
             {
                 PoolerTrace(string.Format(message, args0));
             }
@@ -353,7 +370,7 @@ namespace Microsoft.Data.SqlClient
         [NonEvent]
         internal void PoolerTraceEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
-            if (IsPoolerTraceEnabled())
+            if (Log.IsPoolerTraceEnabled())
             {
                 PoolerTrace(string.Format(message, args0, args1));
             }
@@ -362,7 +379,7 @@ namespace Microsoft.Data.SqlClient
         [NonEvent]
         internal void PoolerTraceEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
         {
-            if (IsPoolerTraceEnabled())
+            if (Log.IsPoolerTraceEnabled())
             {
                 PoolerTrace(string.Format(message, args0, args1, args2));
             }
@@ -371,7 +388,7 @@ namespace Microsoft.Data.SqlClient
         [NonEvent]
         internal void PoolerTraceEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
         {
-            if (IsPoolerTraceEnabled())
+            if (Log.IsPoolerTraceEnabled())
             {
                 PoolerTrace(string.Format(message, args0, args1, args2, args3));
             }
@@ -380,7 +397,7 @@ namespace Microsoft.Data.SqlClient
         [NonEvent]
         internal void CorrelationTraceEvent<T0>(string message, T0 args0)
         {
-            if (IsCorrelationEnabled())
+            if (Log.IsCorrelationEnabled())
             {
                 CorrelationTrace(string.Format(message, args0));
             }
@@ -389,7 +406,7 @@ namespace Microsoft.Data.SqlClient
         [NonEvent]
         internal void CorrelationTraceEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
-            if (IsCorrelationEnabled())
+            if (Log.IsCorrelationEnabled())
             {
                 CorrelationTrace(string.Format(message, args0, args1));
             }
@@ -398,7 +415,7 @@ namespace Microsoft.Data.SqlClient
         [NonEvent]
         internal void CorrelationTraceEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
         {
-            if (IsCorrelationEnabled())
+            if (Log.IsCorrelationEnabled())
             {
                 CorrelationTrace(string.Format(message, args0, args1, args2));
             }
@@ -407,7 +424,7 @@ namespace Microsoft.Data.SqlClient
         [NonEvent]
         internal void NotificationsTraceEvent(string message)
         {
-            if (IsNotificationTraceEnabled())
+            if (Log.IsNotificationTraceEnabled())
             {
                 NotificationsTrace(message);
             }
@@ -416,7 +433,7 @@ namespace Microsoft.Data.SqlClient
         [NonEvent]
         internal void NotificationsTraceEvent<T0>(string message, T0 args0)
         {
-            if (IsNotificationTraceEnabled())
+            if (Log.IsNotificationTraceEnabled())
             {
                 NotificationsTrace(string.Format(message, args0));
             }
@@ -425,7 +442,7 @@ namespace Microsoft.Data.SqlClient
         [NonEvent]
         internal void NotificationsTraceEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
-            if (IsNotificationTraceEnabled())
+            if (Log.IsNotificationTraceEnabled())
             {
                 NotificationsTrace(string.Format(message, args0, args1));
             }
@@ -434,7 +451,7 @@ namespace Microsoft.Data.SqlClient
         [NonEvent]
         internal void NotificationsTraceEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
         {
-            if (IsNotificationTraceEnabled())
+            if (Log.IsNotificationTraceEnabled())
             {
                 NotificationsTrace(string.Format(message, args0, args1, args2));
             }
@@ -443,7 +460,7 @@ namespace Microsoft.Data.SqlClient
         [NonEvent]
         internal void NotificationsTraceEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
         {
-            if (IsNotificationTraceEnabled())
+            if (Log.IsNotificationTraceEnabled())
             {
                 NotificationsTrace(string.Format(message, args0, args1, args2, args3));
             }
@@ -452,7 +469,7 @@ namespace Microsoft.Data.SqlClient
         [NonEvent]
         internal void TraceBinEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
-            if (IsTraceEnabled())
+            if (Log.IsTraceBinEnabled())
             {
                 TraceBin(string.Format(message, args0, args1));
             }
@@ -461,7 +478,7 @@ namespace Microsoft.Data.SqlClient
         [NonEvent]
         internal void StateDumpEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
-            if (IsStateDumpEnabled())
+            if (Log.IsStateDumpEnabled())
             {
                 Trace(string.Format(message, args0, args1));
             }
@@ -470,7 +487,7 @@ namespace Microsoft.Data.SqlClient
         [NonEvent]
         internal void ScopeLeaveEvent(long scopeId)
         {
-            if (IsScopeEnabled())
+            if (Log.IsScopeEnabled())
             {
                 ScopeLeave(scopeId);
             }
@@ -479,7 +496,7 @@ namespace Microsoft.Data.SqlClient
         [NonEvent]
         internal void NotificationsScopeLeaveEvent(long scopeId)
         {
-            if (IsNotificationScopeEnabled())
+            if (Log.IsNotificationScopeEnabled())
             {
                 ScopeLeave(scopeId);
             }
@@ -488,7 +505,7 @@ namespace Microsoft.Data.SqlClient
         [NonEvent]
         internal void PoolerScopeLeaveEvent(long scopeId)
         {
-            if (IsPoolerScopeEnabled())
+            if (Log.IsPoolerScopeEnabled())
             {
                 ScopeLeave(scopeId);
             }
@@ -497,7 +514,7 @@ namespace Microsoft.Data.SqlClient
         [NonEvent]
         internal void AdvanceScopeLeave(long scopeId)
         {
-            if (IsAdvanceTraceOn())
+            if (Log.IsAdvanceTraceOn())
             {
                 ScopeLeave(scopeId);
             }
@@ -574,7 +591,10 @@ namespace Microsoft.Data.SqlClient
         {
             // we do not use unsafe code for better performance optization here because optimized helpers make the code unsafe where that would not be the case otherwise. 
             // This introduces the question of partial trust, which is complex in the SQL case (there are a lot of scenarios and SQL has special security support).   
-            WriteEvent(BeginExecuteEventId, objectId, dataSource, database, commandText);
+            if (Log.IsSqlClientEnabled())
+            {
+                WriteEvent(BeginExecuteEventId, objectId, dataSource, database, commandText);
+            }
         }
 
         // unfortunately these are not marked as Start/Stop opcodes.  The reason is that we dont want them to participate in 
@@ -584,7 +604,10 @@ namespace Microsoft.Data.SqlClient
         [Event(EndExecuteEventId, Keywords = Keywords.SqlClient, Task = Tasks.ExecuteCommand, Opcode = EventOpcode.Stop)]
         public void EndExecute(int objectId, int compositeState, int sqlExceptionNumber)
         {
-            WriteEvent(EndExecuteEventId, objectId, compositeState, sqlExceptionNumber);
+            if (Log.IsSqlClientEnabled())
+            {
+                WriteEvent(EndExecuteEventId, objectId, compositeState, sqlExceptionNumber);
+            }
         }
         #endregion
     }

@@ -132,7 +132,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             string cstr = ((null != connectionOptions) ? connectionOptions.UsersConnectionStringForTrace() : "");
-            SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionHelper.ConnectionString_Set|API> {0}#, '{1}'", ObjectID, cstr);
+            SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionHelper.ConnectionString_Set|API> {0}#, '{1}'", ObjectID, connectionOptions.UsersConnectionStringForTrace());
         }
 
         internal DbConnectionInternal InnerConnection

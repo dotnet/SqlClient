@@ -803,7 +803,7 @@ namespace Microsoft.Data.ProviderBase
             }
 
             //DbConnection x = (expectedOwner as DbConnection);
-            SqlClientEventSource.Log.PoolerTraceEvent("<prov.DbConnectionInternal.PrePush|RES|CPOOL> {}#, Preparing to push into pool, owning connection {0}#, pooledCount={1}", ObjectID, _pooledCount);
+            SqlClientEventSource.Log.PoolerTraceEvent("<prov.DbConnectionInternal.PrePush|RES|CPOOL> {0}#, Preparing to push into pool, owning connection {1}#, pooledCount={2}", ObjectID, 0, _pooledCount);
 
             _pooledCount++;
             _owningObject.Target = null; // NOTE: doing this and checking for InternalError.PooledObjectHasOwner degrades the close by 2%

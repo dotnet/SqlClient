@@ -6,57 +6,55 @@ using System.Collections.Generic;
 using System.Diagnostics.Tracing;
 using Xunit;
 
-namespace Microsoft.Data.SqlClient.ManualTesting.Tests.EventSource
+namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp, "Not Implemented")]
     public class EventSourceTest
     {
+        List<int> ids = new List<int>();
+
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public void IsTraceEnabled()
+        public void EventTraceTests()
         {
-            using (var listener = new SampleEventListener())
+            GetIds();
+            foreach (var id in ids)
             {
-                using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+                Assert.Equal(3, id);
+            }
+        }
+
+        private void GetIds()
+        {
+            using (var TraceListener = new TraceEventListener())
+            {
+                using (SqlConnection connection = new SqlConnection("Data Source = localhost; Initial Catalog = Northwind; Integrated Security = true;Timeout= 120"))
                 {
                     connection.Open();
                     using (SqlCommand command = new SqlCommand("SELECT * From [Customers]", connection))
                     {
                         command.ExecuteNonQuery();
                     }
+                    ids = TraceListener.IDs;
                 }
-
-                //Check if all the events are from Trace
-                foreach (var item in listener.eventsNames)
-                {
-                    Assert.Contains("Trace", item);
-                }
-#if net46
-                //Check if we can disable the events
-                listener.DisableEvents(SqlClientEventSource.Log);
-
-                Assert.False(SqlClientEventSource.Log.IsEnabled());
-
-                //Check if we are able to enable events again
-                listener.EnableEvents(SqlClientEventSource.Log, EventLevel.Informational);
-                Assert.True(SqlClientEventSource.Log.IsEnabled());
-#endif
+                ids = TraceListener.IDs;
             }
         }
     }
 
-    public class SampleEventListener : EventListener
+    public class TraceEventListener : EventListener
     {
-        public List<string> eventsNames = new List<string>();
+        public List<int> IDs = new List<int>();
+        protected override void OnEventSourceCreated(EventSource eventSource)
+        {
+            if (eventSource.Name.Equals("Microsoft.Data.SqlClient.EventSource"))
+            {
+                EnableEvents(eventSource, EventLevel.Informational, (EventKeywords)1);
+            }
+        }
+
         protected override void OnEventWritten(EventWrittenEventArgs eventData)
         {
-            if (eventData.Message != null)
-            {
-                eventsNames.Add(eventData.EventName);
-            }
-            else
-            {
-                eventsNames.Add(eventData.EventName);
-            }
+            IDs.Add(eventData.EventId);
         }
     }
 }
