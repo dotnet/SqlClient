@@ -11,9 +11,11 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Security;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Identity.Client;
 using Newtonsoft.Json;
 using Xunit;
 
@@ -26,8 +28,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string TCPConnectionStringHGSVBS = null;
         public static readonly string TCPConnectionStringAASVBS = null;
         public static readonly string TCPConnectionStringAASSGX = null;
-        public static readonly string AADAccessToken = null;
+        public static readonly string AADAuthorityURL = null;
         public static readonly string AADPasswordConnectionString = null;
+        public static readonly string AADAccessToken = null;
         public static readonly string AKVBaseUrl = null;
         public static readonly string AKVUrl = null;
         public static readonly string AKVClientId = null;
@@ -60,7 +63,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             public string TCPConnectionStringHGSVBS = null;
             public string TCPConnectionStringAASVBS = null;
             public string TCPConnectionStringAASSGX = null;
-            public string AADAccessToken = null;
+            public string AADAuthorityURL = null;
             public string AADPasswordConnectionString = null;
             public string AzureKeyVaultURL = null;
             public string AzureKeyVaultClientId = null;
@@ -83,12 +86,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 TCPConnectionStringHGSVBS = c.TCPConnectionStringHGSVBS;
                 TCPConnectionStringAASVBS = c.TCPConnectionStringAASVBS;
                 TCPConnectionStringAASSGX = c.TCPConnectionStringAASSGX;
-                AADAccessToken = c.AADAccessToken;
+                AADAuthorityURL = c.AADAuthorityURL;
                 AADPasswordConnectionString = c.AADPasswordConnectionString;
                 SupportsLocalDb = c.SupportsLocalDb;
                 SupportsIntegratedSecurity = c.SupportsIntegratedSecurity;
                 SupportsFileStream = c.SupportsFileStream;
                 EnclaveEnabled = c.EnclaveEnabled;
+
+                if (IsAADPasswordConnStrSetup())
+                {
+                    string username = RetrieveValueFromConnStr(AADPasswordConnectionString, new string[] { "User ID", "UID" });
+                    string password = RetrieveValueFromConnStr(AADPasswordConnectionString, new string[] { "Password", "PWD" });
+                    AADAccessToken = GenerateAccessToken(AADAuthorityURL, username, password);
+                }
 
                 string url = c.AzureKeyVaultURL;
                 Uri AKVBaseUri = null;
@@ -133,6 +143,41 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
             }
         }
+
+        private static string GenerateAccessToken(string authorityURL, string aADAuthUserID, string aADAuthPassword)
+        {
+            return AcquireTokenAsync(authorityURL, aADAuthUserID, aADAuthPassword).Result;
+        }
+
+        private static Task<string> AcquireTokenAsync(string authorityURL, string userID, string password) => Task.Run(() =>
+        {
+            // The below properties are set specific to test configurations.
+            string scope = "https://database.windows.net/.default";
+            string applicationName = "Microsoft Data SqlClient Manual Tests";
+            string clientVersion = "1.0.0.0";
+            string adoClientId = "4d079b4c-cab7-4b7c-a115-8fd51b6f8239";
+
+            IPublicClientApplication app = PublicClientApplicationBuilder.Create(adoClientId)
+                .WithAuthority(authorityURL)
+                .WithClientName(applicationName)
+                .WithClientVersion(clientVersion)
+                .Build();
+            AuthenticationResult result;
+            string[] scopes = new string[] { scope };
+
+            // Note: CorrelationId, which existed in ADAL, can not be set in MSAL (yet?).
+            // parameter.ConnectionId was passed as the CorrelationId in ADAL to aid support in troubleshooting.
+            // If/When MSAL adds CorrelationId support, it should be passed from parameters here, too.
+
+            SecureString securePassword = new SecureString();
+
+            foreach (char c in password)
+                securePassword.AppendChar(c);
+            securePassword.MakeReadOnly();
+            result = app.AcquireTokenByUsernamePassword(scopes, userID, securePassword).ExecuteAsync().Result;
+
+            return result.AccessToken;
+        });
 
         public static bool IsDatabasePresent(string name)
         {
@@ -518,6 +563,28 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             return paramValue.ToString();
+        }
+
+        public static string RetrieveValueFromConnStr(string connStr, string[] keywords)
+        {
+            // tokenize connection string and retrieve value for a specific key.
+            string res = "";
+            string[] keys = connStr.Split(';');
+            foreach (var key in keys)
+            {
+                foreach (var keyword in keywords)
+                {
+                    if (!string.IsNullOrEmpty(key.Trim()))
+                    {
+                        if (key.Trim().ToLower().StartsWith(keyword.Trim().ToLower()))
+                        {
+                            res = key.Substring(key.IndexOf('=') + 1).Trim();
+                            break;
+                        }
+                    }
+                }
+            }
+            return res;
         }
     }
 }

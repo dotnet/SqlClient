@@ -48,32 +48,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return res;
         }
 
-        private static string RetrieveValueFromConnStr(string connStr, string keyword)
-        {
-            // tokenize connection string and retrieve value for a specific key.
-            string res = "";
-            string[] keys = connStr.Split(';');
-            foreach (var key in keys)
-            {
-                if (!string.IsNullOrEmpty(key.Trim()))
-                {
-                    if (key.Trim().ToLower().StartsWith(keyword.Trim().ToLower()))
-                    {
-                        res = key.Substring(key.IndexOf('=') + 1).Trim();
-                        break;
-                    }
-                }
-            }
-            return res;
-        }
-
         private static bool IsAccessTokenSetup() => DataTestUtility.IsAccessTokenSetup();
         private static bool IsAADConnStringsSetup() => DataTestUtility.IsAADPasswordConnStrSetup();
 
         [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAADConnStringsSetup))]
         public static void AccessTokenTest()
         {
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            // Remove cred info and add invalid token
+            string[] credKeys = { "User ID", "Password", "UID", "PWD", "Authentication" };
+            string connStr = RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys);
+
+            using (SqlConnection connection = new SqlConnection(connStr))
             {
                 connection.AccessToken = DataTestUtility.GetAccessToken();
                 connection.Open();
@@ -227,7 +212,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     ))
                     {
                         string customerId = (string)sqlCommand.ExecuteScalar();
-                        string expected = RetrieveValueFromConnStr(DataTestUtility.AADPasswordConnectionString, "User ID");
+                        string expected = DataTestUtility.RetrieveValueFromConnStr(DataTestUtility.AADPasswordConnectionString, new string[] { "User ID", "UID" });
                         Assert.Equal(expected, customerId);
                     }
                 }
