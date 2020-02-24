@@ -110,7 +110,7 @@ namespace Microsoft.Data.SqlClient
             return (key != null &&
                     _credential == key._credential &&
                     ConnectionString == key.ConnectionString &&
-                    Object.ReferenceEquals(_accessToken, key._accessToken) &&
+                    _accessToken == key._accessToken &&
                     _serverCertificateValidationCallback == key._serverCertificateValidationCallback &&
                     _clientCertificateRetrievalCallback == key._clientCertificateRetrievalCallback &&
                     _originalNetworkAddressInfo == key._originalNetworkAddressInfo);

@@ -93,7 +93,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 SupportsFileStream = c.SupportsFileStream;
                 EnclaveEnabled = c.EnclaveEnabled;
 
-                if (IsAADPasswordConnStrSetup())
+                if (IsAADPasswordConnStrSetup() && IsAADAuthorityURLSetup())
                 {
                     string username = RetrieveValueFromConnStr(AADPasswordConnectionString, new string[] { "User ID", "UID" });
                     string password = RetrieveValueFromConnStr(AADPasswordConnectionString, new string[] { "Password", "PWD" });
@@ -152,7 +152,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static Task<string> AcquireTokenAsync(string authorityURL, string userID, string password) => Task.Run(() =>
         {
             // The below properties are set specific to test configurations.
-            string scope = "https://database.windows.net/.default";
+            string scope = "https://database.windows.net//.default";
             string applicationName = "Microsoft Data SqlClient Manual Tests";
             string clientVersion = "1.0.0.0";
             string adoClientId = "4d079b4c-cab7-4b7c-a115-8fd51b6f8239";
@@ -214,6 +214,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool IsAADPasswordConnStrSetup()
         {
             return !string.IsNullOrEmpty(AADPasswordConnectionString);
+        }
+
+        public static bool IsAADAuthorityURLSetup()
+        {
+            return !string.IsNullOrEmpty(AADAuthorityURL);
         }
 
         public static bool IsNotAzureServer()
@@ -293,10 +298,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static string GetAccessToken()
         {
-            return AADAccessToken;
+            // Creates a new Object Reference of Access Token - See GitHub Issue 438
+            return (null != AADAccessToken) ? new string(AADAccessToken.ToCharArray()) : null;
         }
 
-        public static bool IsAccessTokenSetup() => string.IsNullOrEmpty(GetAccessToken()) ? false : true;
+        public static bool IsAccessTokenSetup() => !string.IsNullOrEmpty(GetAccessToken());
 
         public static bool IsFileStreamSetup() => SupportsFileStream;
 
@@ -563,6 +569,33 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             return paramValue.ToString();
+        }
+
+        public static string RemoveKeysInConnStr(string connStr, string[] keysToRemove)
+        {
+            // tokenize connection string and remove input keys.
+            string res = "";
+            string[] keys = connStr.Split(';');
+            foreach (var key in keys)
+            {
+                if (!string.IsNullOrEmpty(key.Trim()))
+                {
+                    bool removeKey = false;
+                    foreach (var keyToRemove in keysToRemove)
+                    {
+                        if (key.Trim().ToLower().StartsWith(keyToRemove.Trim().ToLower()))
+                        {
+                            removeKey = true;
+                            break;
+                        }
+                    }
+                    if (!removeKey)
+                    {
+                        res += key + ";";
+                    }
+                }
+            }
+            return res;
         }
 
         public static string RetrieveValueFromConnStr(string connStr, string[] keywords)
