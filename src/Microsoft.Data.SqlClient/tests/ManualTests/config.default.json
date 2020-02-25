@@ -5,7 +5,7 @@
     "TCPConnectionStringAASVBS": "",
     "TCPConnectionStringAASSGX": "",
     "EnclaveEnabled": false,
-    "AADAccessToken": "",
+    "AADAuthorityURL": "",
     "AADPasswordConnectionString": "",
     "AzureKeyVaultURL": "",
     "AzureKeyVaultClientId": "",
