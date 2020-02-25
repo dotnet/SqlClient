@@ -28,10 +28,10 @@ namespace Microsoft.Data
             Debug.Assert(null != e, "TraceException: null Exception");
             if (null != e)
             {
-                SqlClientEventSource.Log.AdvanceTrace(e.Message);
+                SqlClientEventSource.Log.AdvanceTrace(trace, e.Message);
                 try
                 {
-                    SqlClientEventSource.Log.AdvanceTrace(", StackTrace='{0}'", Environment.StackTrace);
+                    SqlClientEventSource.Log.AdvanceTrace("<comm.ADP.TraceException|ERR|ADV> Environment StackTrace = '{0}'", Environment.StackTrace);
                 }
                 catch (System.Security.SecurityException)
                 {
@@ -42,15 +42,15 @@ namespace Microsoft.Data
 
         static internal void TraceExceptionAsReturnValue(Exception e)
         {
-            TraceException("<comm.ADP.TraceException|ERR|THROW> Message='%ls'", e);
+            TraceException("<comm.ADP.TraceException|ERR|THROW> Message='{0}'", e);
         }
         static internal void TraceExceptionForCapture(Exception e)
         {
-            TraceException("<comm.ADP.TraceException|ERR|CATCH> Message='%ls'", e);
+            TraceException("<comm.ADP.TraceException|ERR|CATCH> Message = {0}", e);
         }
         static internal void TraceExceptionWithoutRethrow(Exception e)
         {
-            TraceException("<comm.ADP.TraceException|ERR|CATCH> Message='%ls'", e);
+            TraceException("<comm.ADP.TraceException|ERR|CATCH> Message = '{0}'", e);
         }
 
         //
