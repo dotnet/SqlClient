@@ -27,8 +27,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             srcConstr = DataTestUtility.TCPConnectionString;
 
-            Connection = new SqlConnection(srcConstr);
-            TableName = $"SqlBulkCopyTest_CopyStringToIntTest_{Guid.NewGuid().ToString().Replace('-', '_')}";
+            Connection = new SqlConnection(srcConstr);            
+            TableName = DataTestUtility.GetUniqueNameForSqlServer("SqlBulkCopyTest_CopyStringToIntTest_");
             InitialTable(Connection, TableName);
         }
 
