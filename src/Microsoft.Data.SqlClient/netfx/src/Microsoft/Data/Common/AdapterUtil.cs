@@ -96,8 +96,7 @@ namespace Microsoft.Data.Common
             }
         }
 
-        static private void TraceException(
-                string trace, Exception e)
+        static private void TraceException(string trace, Exception e)
         {
             Debug.Assert(null != e, "TraceException: null Exception");
             if (null != e)
@@ -113,12 +112,12 @@ namespace Microsoft.Data.Common
         static internal void TraceExceptionForCapture(Exception e)
         {
             Debug.Assert(ADP.IsCatchableExceptionType(e), "Invalid exception type, should have been re-thrown!");
-            TraceException("<comm.ADP.TraceException|ERR|CATCH> '%ls'\n", e);
+            TraceException("<comm.ADP.TraceException|ERR|CATCH> '{0}'", e);
         }
         static internal void TraceExceptionWithoutRethrow(Exception e)
         {
             Debug.Assert(ADP.IsCatchableExceptionType(e), "Invalid exception type, should have been re-thrown!");
-            TraceException("<comm.ADP.TraceException|ERR|CATCH> '%ls'\n", e);
+            TraceException("<comm.ADP.TraceException|ERR|CATCH> '{0}'", e);
         }
 
         //
