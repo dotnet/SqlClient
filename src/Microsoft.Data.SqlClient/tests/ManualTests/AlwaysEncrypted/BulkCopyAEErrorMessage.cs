@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             string value = "stringValue";
             DataTable dataTable = CreateTable(value);
 
-            Assert.True(StringToIntTest(connectionString, _tableName, dataTable, value, dataTable.Rows.Count), "Did not get any exceptions for DataTable!");
+            Assert.True(StringToIntTest(connectionString, _tableName, dataTable, value, dataTable.Rows.Count), "Did not get any exceptions for DataTable when converting data from 'string' to 'int' datatype!");
             Assert.True(StringToIntTest(connectionString, _tableName, dataTable.Select(), value, dataTable.Rows.Count),"Did not get any exceptions for DataRow[] when converting data from 'string' to 'int' datatype!");
         }
 
