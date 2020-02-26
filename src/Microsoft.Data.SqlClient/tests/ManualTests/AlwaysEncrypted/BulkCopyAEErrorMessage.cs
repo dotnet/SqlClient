@@ -33,13 +33,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public void TextToIntErrorMessageTest(string connectionString)
         {
             string value = "stringValue";
-            DataTable dataTable = CreateTable(value);
+            DataTable dataTable = CreateDataTable(value);
 
             Assert.True(StringToIntTest(connectionString, _tableName, dataTable, value, dataTable.Rows.Count), "Did not get any exceptions for DataTable when converting data from 'string' to 'int' datatype!");
             Assert.True(StringToIntTest(connectionString, _tableName, dataTable.Select(), value, dataTable.Rows.Count),"Did not get any exceptions for DataRow[] when converting data from 'string' to 'int' datatype!");
         }
 
-        private DataTable CreateTable(string value)
+        private DataTable CreateDataTable(string value)
         {
             var dataTable = new DataTable();
             dataTable.Columns.Add(_columnName, typeof(string));
