@@ -77,8 +77,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         bulkCopy.WriteToServer((DataTable)dataSet);
                     if (dataSet as DataRow[] != null)
                         bulkCopy.WriteToServer((DataRow[])dataSet);
-
-                    bulkCopy.Close();
                 }
             }
             catch (Exception ex)
