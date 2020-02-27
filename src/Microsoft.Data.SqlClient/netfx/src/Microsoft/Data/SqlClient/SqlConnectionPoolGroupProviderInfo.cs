@@ -5,7 +5,6 @@
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 
-
 namespace Microsoft.Data.SqlClient
 {
     sealed internal class SqlConnectionPoolGroupProviderInfo : DbConnectionPoolGroupProviderInfo
