@@ -11,21 +11,6 @@ namespace Microsoft.Data.SqlClient
 {
     sealed internal class SqlReferenceCollection : DbReferenceCollection
     {
-        private sealed class FindLiveCommandContext
-        {
-            public readonly Func<SqlCommand, bool> Func;
-
-            private TdsParserStateObject _stateObj;
-
-            public FindLiveCommandContext() => Func = Predicate;
-
-            public void Setup(TdsParserStateObject state) => _stateObj = state;
-
-            public void Clear() => _stateObj = null;
-
-            private bool Predicate(SqlCommand command) => command.StateObject == _stateObj;
-        }
-
         private sealed class FindLiveReaderContext
         {
             public readonly Func<SqlDataReader, bool> Func;
@@ -46,7 +31,6 @@ namespace Microsoft.Data.SqlClient
         internal const int BulkCopyTag = 3;
 
         private readonly static Func<SqlDataReader, bool> s_hasOpenReaderFunc = HasOpenReaderPredicate;
-        private static FindLiveCommandContext s_cachedFindLiveCommandContext;
         private static FindLiveReaderContext s_cachedFindLiveReaderContext;
 
         public override void Add(object value, int tag)
@@ -81,17 +65,6 @@ namespace Microsoft.Data.SqlClient
                 Interlocked.CompareExchange(ref s_cachedFindLiveReaderContext, context, null);
                 return retval;
             }
-        }
-
-        // Finds a SqlCommand associated with the given StateObject
-        internal SqlCommand FindLiveCommand(TdsParserStateObject stateObj)
-        {
-            FindLiveCommandContext context = Interlocked.Exchange(ref s_cachedFindLiveCommandContext, null) ?? new FindLiveCommandContext();
-            context.Setup(stateObj);
-            SqlCommand retval = FindItem(CommandTag, context.Func);
-            context.Clear();
-            Interlocked.CompareExchange(ref s_cachedFindLiveCommandContext, context, null);
-            return retval;
         }
 
         protected override void NotifyItem(int message, int tag, object value)
