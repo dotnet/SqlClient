@@ -815,11 +815,18 @@ namespace Microsoft.Data.SqlClient
         internal static Exception BulkLoadCannotConvertValue(Type sourcetype, MetaType metatype, int ordinal, int rowNumber, bool isEncrypted, string columnName, string value, Exception e)
         {
             string quotedValue = string.Empty;
-
             if (!isEncrypted)
+            {
                 quotedValue = string.Format(" '{0}'", (value.Length > 100 ? value.Substring(0, 100) : value));
-
-            return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_BulkLoadCannotConvertValue, quotedValue, sourcetype.Name, metatype.TypeName, ordinal, columnName, rowNumber), e);
+            }
+            if (rowNumber == -1)
+            {
+                return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_BulkLoadCannotConvertValueWithoutRowNo, quotedValue, sourcetype.Name, metatype.TypeName, ordinal, columnName), e);
+            }
+            else
+            {
+                return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_BulkLoadCannotConvertValue, quotedValue, sourcetype.Name, metatype.TypeName, ordinal, columnName, rowNumber), e);
+            }
         }
         internal static Exception BulkLoadNonMatchingColumnMapping()
         {

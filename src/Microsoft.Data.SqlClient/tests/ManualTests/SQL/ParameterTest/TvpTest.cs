@@ -41,12 +41,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         // data value and server consts
         private string _connStr;
 
-        /// <summary>
-        /// ToDo: This test is marked as windows only for now, cause of different short date pattern behaviour in linux as two digits for year.
-        /// Probably solution is adding a separate base line for linux.
-        /// </summary>
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [PlatformSpecific(TestPlatforms.Windows)]
         public void TestMain()
         {
             Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US"); // To keep things consistent since we output dates as strings

@@ -280,7 +280,6 @@ namespace Microsoft.Data.SqlClient
                     case ValueSourceType.DataTable:
                         rowNo = ((DataTable)_rowSource).Rows.IndexOf(_rowEnumerator.Current as DataRow);
                         break;
-
                     case ValueSourceType.DbDataReader:
                     case ValueSourceType.IDataReader:
                     case ValueSourceType.Unspecified:

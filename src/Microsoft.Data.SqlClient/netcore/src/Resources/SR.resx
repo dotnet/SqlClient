@@ -1860,4 +1860,7 @@
   <data name="SQLUDT_InvalidSize" xml:space="preserve">
     <value>UDT size must be less than {1}, size: {0}</value>
   </data>
+  <data name="SQL_BulkLoadCannotConvertValueWithoutRowNo" xml:space="preserve">
+    <value>The given value{0} of type {1} from the data source cannot be converted to type {2} for Column {3} [{4}].</value>
+  </data>
 </root>

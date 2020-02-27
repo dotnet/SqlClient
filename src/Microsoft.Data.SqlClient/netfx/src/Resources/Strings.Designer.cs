@@ -8866,6 +8866,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The given value{0} of type {1} from the data source cannot be converted to type {2} for Column {3} [{4}]..
+        /// </summary>
+        internal static string SQL_BulkLoadCannotConvertValueWithoutRowNo {
+            get {
+                return ResourceManager.GetString("SQL_BulkLoadCannotConvertValueWithoutRowNo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Must not specify SqlBulkCopyOption.UseInternalTransaction and pass an external Transaction at the same time..
         /// </summary>
         internal static string SQL_BulkLoadConflictingTransactionOption {

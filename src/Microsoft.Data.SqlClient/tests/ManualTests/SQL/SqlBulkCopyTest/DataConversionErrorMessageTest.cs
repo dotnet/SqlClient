@@ -27,7 +27,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             srcConstr = DataTestUtility.TCPConnectionString;
 
-            Connection = new SqlConnection(srcConstr);            
+            Connection = new SqlConnection(srcConstr);
             TableName = DataTestUtility.GetUniqueNameForSqlServer("SqlBulkCopyTest_CopyStringToIntTest_");
             InitialTable(Connection, TableName);
         }
@@ -92,7 +92,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private enum SourceType
         {
             DataTable,
-            DataRows
+            DataRows,
+            DataReader
         }
 
         public DataConversionErrorMessageTest(InitialDatabase fixture)
@@ -101,20 +102,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public void StringToIntDataTableTest()
+        public void StringToIntErrorMessageTest()
         {
-            StringToIntTest(_fixture.Connection, _fixture.TableName, SourceType.DataTable);
+            Assert.True(StringToIntTest(_fixture.Connection, _fixture.TableName, SourceType.DataTable), "Did not get any exceptions for DataTable when converting data from 'string' to 'int' datatype!");
+            Assert.True(StringToIntTest(_fixture.Connection, _fixture.TableName, SourceType.DataRows), "Did not get any exceptions for DataRow[] when converting data from 'string' to 'int' datatype!");
+            Assert.True(StringToIntTest(_fixture.Connection, _fixture.TableName, SourceType.DataReader), "Did not get any exceptions for DataReader when converting data from 'string' to 'int' datatype!");
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public void StringToIntDataRowArrayTest()
-        {
-            StringToIntTest(_fixture.Connection, _fixture.TableName, SourceType.DataRows);
-        }
-
-        private void StringToIntTest(SqlConnection cnn, string targetTable, SourceType sourceType)
+        private bool StringToIntTest(SqlConnection cnn, string targetTable, SourceType sourceType)
         {
             var value = "abcde";
+            int rowNo = -1;
 
             DataTable table = PrepareDataTable(targetTable, ColumnsEnum._varChar3, value);
 
@@ -128,10 +126,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     switch (sourceType)
                     {
                         case SourceType.DataTable:
+                            rowNo = table.Rows.Count;
                             bulkcopy.WriteToServer(table);
                             break;
                         case SourceType.DataRows:
+                            rowNo = table.Rows.Count;
                             bulkcopy.WriteToServer(table.Select());
+                            break;
+                        case SourceType.DataReader:
+                            bulkcopy.WriteToServer(table.CreateDataReader());
                             break;
                         default:
                             break;
@@ -142,13 +145,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             catch (Exception ex)
             {
-                object[] args =
-                    new object[] { string.Format(" '{0}'", value), value.GetType().Name, "int", (int)ColumnsEnum._int, Enum.GetName(typeof(ColumnsEnum), ColumnsEnum._int), table.Rows.Count };
-                string expectedErrorMsg = string.Format(SystemDataResourceManager.Instance.SQL_BulkLoadCannotConvertValue, args);
+                string pattern;
+                object[] args = new object[] { string.Format(" '{0}'", value), value.GetType().Name, "int", (int)ColumnsEnum._int, Enum.GetName(typeof(ColumnsEnum), ColumnsEnum._int), rowNo };
+                if (rowNo == -1)
+                {
+                    Array.Resize(ref args, args.Length - 1);
+                    pattern = SystemDataResourceManager.Instance.SQL_BulkLoadCannotConvertValueWithoutRowNo;
+                }
+                else
+                {
+                    pattern = SystemDataResourceManager.Instance.SQL_BulkLoadCannotConvertValue;
+                }
+
+                string expectedErrorMsg = string.Format(pattern, args);
+
                 Assert.True(ex.Message.Contains(expectedErrorMsg), "Unexpected error message: " + ex.Message);
                 hitException = true;
             }
-            Assert.True(hitException, "Did not get any exceptions!");
+            return hitException;
         }
 
         private DataTable PrepareDataTable(string tableName, ColumnsEnum selectedColumn, object value)

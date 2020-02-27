@@ -4,7 +4,6 @@
 
 using System;
 using System.Data;
-using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
@@ -14,16 +13,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     /// TODO: These tests are marked as Windows only for now but should be run for all platforms once the Master Key is accessible to this app from Azure Key Vault.
     /// </summary>
     [PlatformSpecific(TestPlatforms.Windows)]
-    public class BulkCopyAEErrorMessage : IClassFixture<SQLSetupStrategyCertStoreProvider>, IDisposable
+    public class BulkCopyAEErrorMessage : IClassFixture<SQLSetupStrategyCertStoreProvider>
     {
-        private SQLSetupStrategyCertStoreProvider fixture;
+        private SQLSetupStrategyCertStoreProvider _fixture;
         
         private readonly string _tableName;
         private readonly string _columnName;
 
         public BulkCopyAEErrorMessage(SQLSetupStrategyCertStoreProvider fixture)
         {
-            this.fixture = fixture;
+            _fixture = fixture;
             _tableName = fixture.BulkCopyAEErrorMessageTestTable.Name;
             _columnName = "c1";
         }
@@ -37,6 +36,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             Assert.True(StringToIntTest(connectionString, _tableName, dataTable, value, dataTable.Rows.Count), "Did not get any exceptions for DataTable when converting data from 'string' to 'int' datatype!");
             Assert.True(StringToIntTest(connectionString, _tableName, dataTable.Select(), value, dataTable.Rows.Count),"Did not get any exceptions for DataRow[] when converting data from 'string' to 'int' datatype!");
+            Assert.True(StringToIntTest(connectionString, _tableName, dataTable.CreateDataReader(), value, -1),"Did not get any exceptions for DataReader when converting data from 'string' to 'int' datatype!");
         }
 
         private DataTable CreateDataTable(string value)
@@ -74,32 +74,40 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping(0, 0));
 
                     if (dataSet as DataTable != null)
+                    {
                         bulkCopy.WriteToServer((DataTable)dataSet);
+                    }
                     if (dataSet as DataRow[] != null)
+                    {
                         bulkCopy.WriteToServer((DataRow[])dataSet);
+                    }
+                    if (dataSet as IDataReader != null)
+                    {
+                        bulkCopy.WriteToServer((IDataReader)dataSet);
+                    }
                 }
             }
             catch (Exception ex)
             {
-                object[] args =
-                    new object[] { string.Empty, value.GetType().Name, targetType, 0, _columnName, rowNo};
-                string expectedErrorMsg = string.Format(SystemDataResourceManager.Instance.SQL_BulkLoadCannotConvertValue, args);
+                string pattern;
+                object[] args = 
+                    new object[] { string.Empty, value.GetType().Name, targetType, 0, _columnName, rowNo };
+                if (rowNo == -1)
+                {
+                    Array.Resize(ref args, args.Length - 1);
+                    pattern = SystemDataResourceManager.Instance.SQL_BulkLoadCannotConvertValueWithoutRowNo;
+                }
+                else
+                {
+                    pattern = SystemDataResourceManager.Instance.SQL_BulkLoadCannotConvertValue;
+                }
+
+                string expectedErrorMsg = string.Format(pattern, args);
+
                 Assert.True(ex.Message.Contains(expectedErrorMsg), "Unexpected error message: " + ex.Message);
                 hitException = true;
             }
             return hitException;
-        }
-
-        public void Dispose()
-        {
-            foreach (string connection in DataTestUtility.AEConnStringsSetup)
-            {
-                using (SqlConnection sqlConnection = new SqlConnection(connection))
-                {
-                    sqlConnection.Open();
-                    Table.DeleteData(_tableName, sqlConnection);
-                }
-            }
         }
     }
 }
