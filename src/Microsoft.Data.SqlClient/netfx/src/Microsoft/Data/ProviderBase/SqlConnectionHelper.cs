@@ -12,6 +12,7 @@ namespace Microsoft.Data.SqlClient
     using System.Threading;
     using Microsoft.Data.Common;
     using Microsoft.Data.ProviderBase;
+
     using SysTx = System.Transactions;
 
     public sealed partial class SqlConnection : DbConnection
@@ -86,7 +87,7 @@ namespace Microsoft.Data.SqlClient
 
         private string ConnectionString_Get()
         {
-            Bid.Trace("<prov.DbConnectionHelper.ConnectionString_Get|API> %d#\n", ObjectID);
+            SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionHelper.ConnectionString_Get|API> {0}#", ObjectID);
             bool hidePassword = InnerConnection.ShouldHidePassword;
             DbConnectionOptions connectionOptions = UserConnectionOptions;
             return ((null != connectionOptions) ? connectionOptions.UsersConnectionString(hidePassword) : "");
@@ -129,11 +130,9 @@ namespace Microsoft.Data.SqlClient
             {
                 throw ADP.OpenConnectionPropertySet(ADP.ConnectionString, connectionInternal.State);
             }
-            if (Bid.TraceOn)
-            {
-                string cstr = ((null != connectionOptions) ? connectionOptions.UsersConnectionStringForTrace() : "");
-                Bid.Trace("<prov.DbConnectionHelper.ConnectionString_Set|API> %d#, '%ls'\n", ObjectID, cstr);
-            }
+
+            string cstr = ((null != connectionOptions) ? connectionOptions.UsersConnectionStringForTrace() : "");
+            SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionHelper.ConnectionString_Set|API> {0}#, '{1}'", ObjectID, cstr);
         }
 
         internal DbConnectionInternal InnerConnection
@@ -179,15 +178,15 @@ namespace Microsoft.Data.SqlClient
             }
 
             // NOTE: we put the tracing last, because the ToString() calls (and
-            // the Bid.Trace, for that matter) have no reliability contract and
+            // the SqlClientEventSource.SqlClientEventSource.Log.Trace, for that matter) have no reliability contract and
             // will end the reliable try...
             if (e is OutOfMemoryException)
             {
-                Bid.Trace("<prov.DbConnectionHelper.Abort|RES|INFO|CPOOL> %d#, Aborting operation due to asynchronous exception: %ls\n", ObjectID, "OutOfMemory");
+                SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionHelper.Abort|RES|INFO|CPOOL> {0}#, Aborting operation due to asynchronous exception: {'OutOfMemory'}", ObjectID);
             }
             else
             {
-                Bid.Trace("<prov.DbConnectionHelper.Abort|RES|INFO|CPOOL> %d#, Aborting operation due to asynchronous exception: %ls\n", ObjectID, e.ToString());
+                SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionHelper.Abort|RES|INFO|CPOOL> {0}#, Aborting operation due to asynchronous exception: {1}", ObjectID, e.ToString());
             }
         }
 
@@ -200,8 +199,7 @@ namespace Microsoft.Data.SqlClient
         override protected DbCommand CreateDbCommand()
         {
             DbCommand command = null;
-            IntPtr hscp;
-            Bid.ScopeEnter(out hscp, "<prov.DbConnectionHelper.CreateDbCommand|API> %d#\n", ObjectID);
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<prov.DbConnectionHelper.CreateDbCommand|API> {0}#", ObjectID);
             try
             {
                 DbProviderFactory providerFactory = ConnectionFactory.ProviderFactory;
@@ -210,7 +208,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                Bid.ScopeLeave(ref hscp);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
             return command;
         }
@@ -247,7 +245,7 @@ namespace Microsoft.Data.SqlClient
             permissionSet.AddPermission(new System.Security.Permissions.SecurityPermission(System.Security.Permissions.SecurityPermissionFlag.UnmanagedCode));
             permissionSet.Demand();
 
-            Bid.Trace("<prov.DbConnectionHelper.EnlistDistributedTransactionHelper|RES|TRAN> %d#, Connection enlisting in a transaction.\n", ObjectID);
+            SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionHelper.EnlistDistributedTransactionHelper|RES|TRAN> {0}#, Connection enlisting in a transaction.", ObjectID);
             SysTx.Transaction indigoTransaction = null;
 
             if (null != transaction)
@@ -272,8 +270,7 @@ namespace Microsoft.Data.SqlClient
         override public void EnlistTransaction(SysTx.Transaction transaction)
         {
             SqlConnection.ExecutePermission.Demand();
-
-            Bid.Trace("<prov.DbConnectionHelper.EnlistTransaction|RES|TRAN> %d#, Connection enlisting in a transaction.\n", ObjectID);
+            SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionHelper.EnlistTransaction|RES|TRAN> {0}#, Connection enlisting in a transaction.", ObjectID);
 
             // If we're currently enlisted in a transaction and we were called
             // on the EnlistTransaction method (Whidbey) we're not allowed to

@@ -272,7 +272,8 @@ namespace Microsoft.Data.SqlClient
                         TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                         RuntimeHelpers.PrepareConstrainedRegions();
-                        try {
+                        try
+                        {
                             tdsReliabilitySection.Start();
 #else
                         {
@@ -285,7 +286,8 @@ namespace Microsoft.Data.SqlClient
                             }
                         }
 #if DEBUG
-                        finally {
+                        finally
+                        {
                             tdsReliabilitySection.Stop();
                         }
 #endif //DEBUG
@@ -859,15 +861,17 @@ namespace Microsoft.Data.SqlClient
             }
 
 #if DEBUG
-                if (_stateObj._pendingData) {
-                    byte token;
-                    if (!_stateObj.TryPeekByte(out token)) {
-                        return false;
-                    }
-
-                    Debug.Assert(TdsParser.IsValidTdsToken(token), string.Format("Invalid token after performing CleanPartialRead: {0,-2:X2}", token));
-                    
+            if (_stateObj._pendingData)
+            {
+                byte token;
+                if (!_stateObj.TryPeekByte(out token))
+                {
+                    return false;
                 }
+
+                Debug.Assert(TdsParser.IsValidTdsToken(token), string.Format("Invalid token after performing CleanPartialRead: {0,-2:X2}", token));
+
+            }
 #endif
             _sharedState._dataReady = false;
 
@@ -885,7 +889,8 @@ namespace Microsoft.Data.SqlClient
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
-                try {
+                try
+                {
                     tdsReliabilitySection.Start();
 #else
                 {
@@ -895,7 +900,8 @@ namespace Microsoft.Data.SqlClient
                     Debug.Assert(!_sharedState._dataReady, "_dataReady should be cleared");
                 }
 #if DEBUG
-                finally {
+                finally
+                {
                     tdsReliabilitySection.Stop();
                 }
 #endif //DEBUG
@@ -933,8 +939,8 @@ namespace Microsoft.Data.SqlClient
         override public void Close()
         {
             SqlStatistics statistics = null;
-            IntPtr hscp;
-            Bid.ScopeEnter(out hscp, "<sc.SqlDataReader.Close|API> %d#", ObjectID);
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlDataReader.Close|API> {0}#", ObjectID);
+
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
@@ -1020,7 +1026,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlStatistics.StopTimer(statistics);
-                Bid.ScopeLeave(ref hscp);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
@@ -1039,7 +1045,8 @@ namespace Microsoft.Data.SqlClient
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
-                try {
+                try
+                {
                     tdsReliabilitySection.Start();
 #else
                 {
@@ -1074,9 +1081,11 @@ namespace Microsoft.Data.SqlClient
                                 }
                             }
 #if DEBUG
-                            else {
+                            else
+                            {
                                 byte token;
-                                if (!_stateObj.TryPeekByte(out token)) {
+                                if (!_stateObj.TryPeekByte(out token))
+                                {
                                     return false;
                                 }
 
@@ -1097,7 +1106,8 @@ namespace Microsoft.Data.SqlClient
                     return true;
                 }
 #if DEBUG
-                finally {
+                finally
+                {
                     tdsReliabilitySection.Stop();
                 }
 #endif //DEBUG
@@ -1178,7 +1188,8 @@ namespace Microsoft.Data.SqlClient
                         TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                         RuntimeHelpers.PrepareConstrainedRegions();
-                        try {
+                        try
+                        {
                             tdsReliabilitySection.Start();
 #else
                         {
@@ -1204,7 +1215,8 @@ namespace Microsoft.Data.SqlClient
                             // DO NOT USE stateObj after this point - it has been returned to the TdsParser's session pool and potentially handed out to another thread
                         }
 #if DEBUG
-                        finally {
+                        finally
+                        {
                             tdsReliabilitySection.Stop();
                         }
 #endif //DEBUG
@@ -1658,8 +1670,8 @@ namespace Microsoft.Data.SqlClient
         override public DataTable GetSchemaTable()
         {
             SqlStatistics statistics = null;
-            IntPtr hscp;
-            Bid.ScopeEnter(out hscp, "<sc.SqlDataReader.GetSchemaTable|API> %d#", ObjectID);
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlDataReader.GetSchemaTable|API> {0}#", ObjectID);
+
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
@@ -1677,7 +1689,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlStatistics.StopTimer(statistics);
-                Bid.ScopeLeave(ref hscp);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
@@ -1839,7 +1851,8 @@ namespace Microsoft.Data.SqlClient
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
-                try {
+                try
+                {
                     tdsReliabilitySection.Start();
 #else
                 {
@@ -2048,7 +2061,8 @@ namespace Microsoft.Data.SqlClient
                     return true;
                 }
 #if DEBUG
-                finally {
+                finally
+                {
                     tdsReliabilitySection.Stop();
                 }
 #endif //DEBUG
@@ -2134,51 +2148,53 @@ namespace Microsoft.Data.SqlClient
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
-                try {
+                try
+                {
                     tdsReliabilitySection.Start();
 #endif //DEBUG
-                if ((_sharedState._columnDataBytesRemaining == 0) || (length == 0))
-                {
-                    // No data left or nothing requested, return 0
-                    bytesRead = 0;
-                    return true;
-                }
-                else
-                {
-                    // if plp columns, do partial reads. Don't read the entire value in one shot.
-                    if (_metaData[i].metaType.IsPlp)
+                    if ((_sharedState._columnDataBytesRemaining == 0) || (length == 0))
                     {
-                        // Read in data
-                        bool result = _stateObj.TryReadPlpBytes(ref buffer, index, length, out bytesRead);
-                        _columnDataBytesRead += bytesRead;
-                        if (!result)
-                        {
-                            return false;
-                        }
-
-                        // Query for number of bytes left
-                        ulong left;
-                        if (!_parser.TryPlpBytesLeft(_stateObj, out left))
-                        {
-                            _sharedState._columnDataBytesRemaining = -1;
-                            return false;
-                        }
-                        _sharedState._columnDataBytesRemaining = (long)left;
+                        // No data left or nothing requested, return 0
+                        bytesRead = 0;
                         return true;
                     }
                     else
                     {
-                        // Read data (not exceeding the total amount of data available)
-                        int bytesToRead = (int)Math.Min((long)length, _sharedState._columnDataBytesRemaining);
-                        bool result = _stateObj.TryReadByteArray(buffer, index, bytesToRead, out bytesRead);
-                        _columnDataBytesRead += bytesRead;
-                        _sharedState._columnDataBytesRemaining -= bytesRead;
-                        return result;
+                        // if plp columns, do partial reads. Don't read the entire value in one shot.
+                        if (_metaData[i].metaType.IsPlp)
+                        {
+                            // Read in data
+                            bool result = _stateObj.TryReadPlpBytes(ref buffer, index, length, out bytesRead);
+                            _columnDataBytesRead += bytesRead;
+                            if (!result)
+                            {
+                                return false;
+                            }
+
+                            // Query for number of bytes left
+                            ulong left;
+                            if (!_parser.TryPlpBytesLeft(_stateObj, out left))
+                            {
+                                _sharedState._columnDataBytesRemaining = -1;
+                                return false;
+                            }
+                            _sharedState._columnDataBytesRemaining = (long)left;
+                            return true;
+                        }
+                        else
+                        {
+                            // Read data (not exceeding the total amount of data available)
+                            int bytesToRead = (int)Math.Min((long)length, _sharedState._columnDataBytesRemaining);
+                            bool result = _stateObj.TryReadByteArray(buffer, index, bytesToRead, out bytesRead);
+                            _columnDataBytesRead += bytesRead;
+                            _sharedState._columnDataBytesRemaining -= bytesRead;
+                            return result;
+                        }
                     }
-                }
 #if DEBUG
                 }
-                finally {
+                finally
+                {
                     tdsReliabilitySection.Stop();
                 }
 #endif //DEBUG
@@ -2473,7 +2489,8 @@ namespace Microsoft.Data.SqlClient
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
-                try {
+                try
+                {
                     tdsReliabilitySection.Start();
 #else
                 {
@@ -2569,7 +2586,8 @@ namespace Microsoft.Data.SqlClient
                     return cch;
                 }
 #if DEBUG
-                finally {
+                finally
+                {
                     tdsReliabilitySection.Stop();
                 }
 #endif //DEBUG
@@ -3579,17 +3597,17 @@ namespace Microsoft.Data.SqlClient
         private bool TryNextResult(out bool more)
         {
             SqlStatistics statistics = null;
-            IntPtr hscp;
-            Bid.ScopeEnter(out hscp, "<sc.SqlDataReader.NextResult|API> %d#", ObjectID);
-
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlDataReader.NextResult|API> {0}#", ObjectID);
             RuntimeHelpers.PrepareConstrainedRegions();
+
             try
             {
 #if DEBUG
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
-                try {
+                try
+                {
                     tdsReliabilitySection.Start();
 #else
                 {
@@ -3721,7 +3739,8 @@ namespace Microsoft.Data.SqlClient
                     return true;
                 }
 #if DEBUG
-                finally {
+                finally
+                {
                     tdsReliabilitySection.Stop();
                 }
 #endif //DEBUG
@@ -3756,7 +3775,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlStatistics.StopTimer(statistics);
-                Bid.ScopeLeave(ref hscp);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
@@ -3784,17 +3803,17 @@ namespace Microsoft.Data.SqlClient
         private bool TryReadInternal(bool setTimeout, out bool more)
         {
             SqlStatistics statistics = null;
-            IntPtr hscp;
-            Bid.ScopeEnter(out hscp, "<sc.SqlDataReader.Read|API> %d#", ObjectID);
-
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlDataReader.Read|API> {0}#", ObjectID);
             RuntimeHelpers.PrepareConstrainedRegions();
+
             try
             {
 #if DEBUG
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
-                try {
+                try
+                {
                     tdsReliabilitySection.Start();
 #else
                 {
@@ -3932,9 +3951,11 @@ namespace Microsoft.Data.SqlClient
                     more = false;
 
 #if DEBUG
-                    if ((!_sharedState._dataReady) && (_stateObj._pendingData)) {
+                    if ((!_sharedState._dataReady) && (_stateObj._pendingData))
+                    {
                         byte token;
-                        if (!_stateObj.TryPeekByte(out token)) {
+                        if (!_stateObj.TryPeekByte(out token))
+                        {
                             return false;
                         }
 
@@ -3945,7 +3966,8 @@ namespace Microsoft.Data.SqlClient
                     return true;
                 }
 #if DEBUG
-                finally {
+                finally
+                {
                     tdsReliabilitySection.Stop();
                 }
 #endif //DEBUG
@@ -3983,7 +4005,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlStatistics.StopTimer(statistics);
-                Bid.ScopeLeave(ref hscp);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
@@ -4011,7 +4033,8 @@ namespace Microsoft.Data.SqlClient
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
-                try {
+                try
+                {
                     tdsReliabilitySection.Start();
 #else
                 {
@@ -4032,7 +4055,8 @@ namespace Microsoft.Data.SqlClient
                     Debug.Assert(null != _data[i], " data buffer is null?");
                 }
 #if DEBUG
-                finally {
+                finally
+                {
                     tdsReliabilitySection.Stop();
                 }
 #endif //DEBUG
@@ -4109,13 +4133,15 @@ namespace Microsoft.Data.SqlClient
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
-                try {
+                try
+                {
                     tdsReliabilitySection.Start();
 #endif //DEBUG
-                return TryReadColumnInternal(i, readHeaderOnly: true);
+                    return TryReadColumnInternal(i, readHeaderOnly: true);
 #if DEBUG
                 }
-                finally {
+                finally
+                {
                     tdsReliabilitySection.Stop();
                 }
 #endif //DEBUG
@@ -4405,7 +4431,8 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 #if DEBUG
-            else {
+            else
+            {
                 Debug.Assert((_sharedState._columnDataBytesRemaining == 0 || _sharedState._columnDataBytesRemaining == -1) && _stateObj._longlen == 0, "Haven't read header yet, but column is partially read?");
             }
 #endif
@@ -4443,7 +4470,7 @@ namespace Microsoft.Data.SqlClient
                 // broken connection, so check state first.
                 if (parser.State == TdsParserState.OpenLoggedIn)
                 {
-                    Bid.CorrelationTrace("<sc.SqlDataReader.RestoreServerSettings|Info|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
+                    SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlDataReader.RestoreServerSettings|Info|Correlation> ObjectID {0}#, ActivityID '{1}'", ObjectID, ActivityCorrelator.Current.ToString());
                     Task executeTask = parser.TdsExecuteSQLBatch(_resetOptionsString, (_command != null) ? _command.CommandTimeout : 0, null, stateObj, sync: true);
                     Debug.Assert(executeTask == null, "Shouldn't get a task when doing sync writes");
 
@@ -4755,8 +4782,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/NextResultAsync/*' />
         public override Task<bool> NextResultAsync(CancellationToken cancellationToken)
         {
-            IntPtr hscp;
-            Bid.ScopeEnter(out hscp, "<sc.SqlDataReader.NextResultAsync|API> %d#", ObjectID);
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlDataReader.NextResultAsync|API> {0}#", ObjectID);
 
             try
             {
@@ -4802,7 +4828,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (t != null)
                     {
-                        Bid.Trace("<sc.SqlDataReader.NextResultAsync> attempt retry %d#\n", ObjectID);
+                        SqlClientEventSource.Log.TraceEvent("<sc.SqlDataReader.NextResultAsync> attempt retry {0}#", ObjectID);
                         PrepareForAsyncContinuation();
                     }
 
@@ -4820,7 +4846,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                Bid.ScopeLeave(ref hscp);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
@@ -4884,7 +4910,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (t != null)
                     {
-                        Bid.Trace("<sc.SqlDataReader.GetBytesAsync> attempt retry %d#\n", ObjectID);
+                        SqlClientEventSource.Log.TraceEvent("<sc.SqlDataReader.GetBytesAsync> attempt retry {0}#", ObjectID);
                         PrepareForAsyncContinuation();
                     }
 
@@ -5055,9 +5081,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/ReadAsync/*' />
         public override Task<bool> ReadAsync(CancellationToken cancellationToken)
         {
-            IntPtr hscp;
-            Bid.ScopeEnter(out hscp, "<sc.SqlDataReader.ReadAsync|API> %d#", ObjectID);
-
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlDataReader.ReadAsync|API> {0}#", ObjectID);
             try
             {
                 if (IsClosed)
@@ -5090,48 +5114,50 @@ namespace Microsoft.Data.SqlClient
                     {
 
 #if DEBUG
-                        try {
+                        try
+                        {
                             _stateObj._shouldHaveEnoughData = true;
 #endif
-                        if (_sharedState._dataReady)
-                        {
-                            // Clean off current row
-                            CleanPartialReadReliable();
-                        }
-
-                        // If there a ROW token ready (as well as any metadata for the row)
-                        if (_stateObj.IsRowTokenReady())
-                        {
-                            // Read the ROW token
-                            bool result = TryReadInternal(true, out more);
-                            Debug.Assert(result, "Should not have run out of data");
-
-                            rowTokenRead = true;
-                            if (more)
+                            if (_sharedState._dataReady)
                             {
-                                // Sequential mode, nothing left to do
-                                if (IsCommandBehavior(CommandBehavior.SequentialAccess))
+                                // Clean off current row
+                                CleanPartialReadReliable();
+                            }
+
+                            // If there a ROW token ready (as well as any metadata for the row)
+                            if (_stateObj.IsRowTokenReady())
+                            {
+                                // Read the ROW token
+                                bool result = TryReadInternal(true, out more);
+                                Debug.Assert(result, "Should not have run out of data");
+
+                                rowTokenRead = true;
+                                if (more)
                                 {
-                                    return ADP.TrueTask;
+                                    // Sequential mode, nothing left to do
+                                    if (IsCommandBehavior(CommandBehavior.SequentialAccess))
+                                    {
+                                        return ADP.TrueTask;
+                                    }
+                                    // For non-sequential, check if we can read the row data now
+                                    else if (WillHaveEnoughData(_metaData.Length - 1))
+                                    {
+                                        // Read row data
+                                        result = TryReadColumn(_metaData.Length - 1, setTimeout: true);
+                                        Debug.Assert(result, "Should not have run out of data");
+                                        return ADP.TrueTask;
+                                    }
                                 }
-                                // For non-sequential, check if we can read the row data now
-                                else if (WillHaveEnoughData(_metaData.Length - 1))
+                                else
                                 {
-                                    // Read row data
-                                    result = TryReadColumn(_metaData.Length - 1, setTimeout: true);
-                                    Debug.Assert(result, "Should not have run out of data");
-                                    return ADP.TrueTask;
+                                    // No data left, return
+                                    return ADP.FalseTask;
                                 }
                             }
-                            else
-                            {
-                                // No data left, return
-                                return ADP.FalseTask;
-                            }
-                        }
 #if DEBUG
                         }
-                        finally {
+                        finally
+                        {
                             _stateObj._shouldHaveEnoughData = false;
                         }
 #endif
@@ -5175,7 +5201,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (t != null)
                     {
-                        Bid.Trace("<sc.SqlDataReader.ReadAsync> attempt retry %d#\n", ObjectID);
+                        SqlClientEventSource.Log.TraceEvent("<sc.SqlDataReader.ReadAsync> attempt retry {0}#", ObjectID);
                         PrepareForAsyncContinuation();
                     }
 
@@ -5214,7 +5240,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                Bid.ScopeLeave(ref hscp);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
@@ -5269,16 +5295,18 @@ namespace Microsoft.Data.SqlClient
                     if (WillHaveEnoughData(i, headerOnly: true))
                     {
 #if DEBUG
-                    try {
-                        _stateObj._shouldHaveEnoughData = true;
+                        try
+                        {
+                            _stateObj._shouldHaveEnoughData = true;
 #endif
-                        ReadColumnHeader(i);
-                        return _data[i].IsNull ? ADP.TrueTask : ADP.FalseTask;
+                            ReadColumnHeader(i);
+                            return _data[i].IsNull ? ADP.TrueTask : ADP.FalseTask;
 #if DEBUG
-                    }
-                    finally {
-                        _stateObj._shouldHaveEnoughData = false;
-                    }
+                        }
+                        finally
+                        {
+                            _stateObj._shouldHaveEnoughData = false;
+                        }
 #endif
                     }
                 }
@@ -5393,13 +5421,15 @@ namespace Microsoft.Data.SqlClient
                 if (WillHaveEnoughData(i))
                 {
 #if DEBUG
-                    try {
+                    try
+                    {
                         _stateObj._shouldHaveEnoughData = true;
 #endif
-                    return Task.FromResult(GetFieldValueInternal<T>(i));
+                        return Task.FromResult(GetFieldValueInternal<T>(i));
 #if DEBUG
                     }
-                    finally {
+                    finally
+                    {
                         _stateObj._shouldHaveEnoughData = false;
                     }
 #endif
@@ -5466,16 +5496,20 @@ namespace Microsoft.Data.SqlClient
 
 #if DEBUG
 
-        internal void CompletePendingReadWithSuccess(bool resetForcePendingReadsToWait) {
+        internal void CompletePendingReadWithSuccess(bool resetForcePendingReadsToWait)
+        {
             var stateObj = _stateObj;
-            if (stateObj != null) {
+            if (stateObj != null)
+            {
                 stateObj.CompletePendingReadWithSuccess(resetForcePendingReadsToWait);
             }
         }
 
-        internal void CompletePendingReadWithFailure(int errorCode, bool resetForcePendingReadsToWait) {
+        internal void CompletePendingReadWithFailure(int errorCode, bool resetForcePendingReadsToWait)
+        {
             var stateObj = _stateObj;
-            if (stateObj != null) {
+            if (stateObj != null)
+            {
                 stateObj.CompletePendingReadWithFailure(errorCode, resetForcePendingReadsToWait);
             }
         }

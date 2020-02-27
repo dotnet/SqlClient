@@ -1615,7 +1615,8 @@ namespace Microsoft.Data.SqlClient
                 //      2) no ordinals outside continuous range from 0 to fieldcount - 1 are allowed
                 //      3) no duplicate ordinals are allowed
                 // But assert no holes to be sure.
-                foreach (SmiExtendedMetaData md in fields) {
+                foreach (SmiExtendedMetaData md in fields)
+                {
                     Debug.Assert(null != md, "Shouldn't be able to have holes, since original loop algorithm prevents such.");
                 }
 #endif

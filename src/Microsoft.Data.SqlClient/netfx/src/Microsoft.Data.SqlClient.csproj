@@ -116,6 +116,7 @@
     <Compile Include="Microsoft\Data\SqlClient\Server\SqlUserDefinedTypeAttribute.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\TriggerAction.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SortOrder.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SqlClientEventSource.cs" />
     <Compile Include="Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProvider.cs" />
     <Compile Include="Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProviderBase.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\SqlFileStream.cs" />
@@ -227,7 +228,6 @@
     <Compile Include="Microsoft\Data\SqlTypes\SqlStreamChars.cs" />
     <Compile Include="Microsoft\Data\DataException.cs" />
     <Compile Include="Microsoft\Data\Common\NativeMethods.cs" />
-    <Compile Include="Microsoft\Data\Common\System.Data_BID.cs" />
     <Compile Include="Microsoft\Data\Common\GreenMethods.cs" />
     <Compile Include="Microsoft\Data\Common\SQLResource.cs" />
     <Compile Include="Misc\ExternDll.cs" />
@@ -268,7 +268,6 @@
     <Compile Include="Microsoft\Data\ProviderBase\DbReferenceCollection.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\WrappedIUnknown.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\TimeoutTimer.cs" />
-    <Compile Include="Microsoft\Data\SqlEventSource.cs" />
     <Compile Include="Microsoft\Data\RelationshipConverter.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\ITypedGetters.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\ITypedGettersV3.cs" />
@@ -302,8 +301,6 @@
     <Compile Include="Microsoft\Data\Sql\SqlGenericUtil.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\sqlnorm.cs" />
     <Compile Include="Microsoft\Data\Sql\SqlNotificationRequest.cs" />
-    <Compile Include="BID\INC\CS\BidPrivateBase.cs" />
-    <None Include="BID\INC\CS\AssemblyTemplate_BID.cs" />
     <Compile Include="Microsoft\Data\SqlClient\DataClassification\SensitivityClassification.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\FieldNameLookup.cs" />
     <Compile Include="Microsoft\Data\OperationAbortedException.cs" />

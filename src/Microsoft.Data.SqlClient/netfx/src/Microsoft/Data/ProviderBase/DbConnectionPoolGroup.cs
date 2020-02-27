@@ -7,6 +7,8 @@ namespace Microsoft.Data.ProviderBase
     using System.Collections.Concurrent;
     using System.Diagnostics;
     using Microsoft.Data.Common;
+    using Microsoft.Data.SqlClient;
+
 
     // set_ConnectionString calls DbConnectionFactory.GetConnectionPoolGroup
     // when not found a new pool entry is created and potentially added
@@ -271,7 +273,7 @@ namespace Microsoft.Data.ProviderBase
             if (PoolGroupStateIdle == _state)
             {
                 _state = PoolGroupStateActive;
-                Bid.Trace("<prov.DbConnectionPoolGroup.ClearInternal|RES|INFO|CPOOL> %d#, Active\n", ObjectID);
+                SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionPoolGroup.ClearInternal|RES|INFO|CPOOL> {0}#, Active", ObjectID);
             }
             return (PoolGroupStateActive == _state);
         }
@@ -333,14 +335,15 @@ namespace Microsoft.Data.ProviderBase
                     if (PoolGroupStateActive == _state)
                     {
                         _state = PoolGroupStateIdle;
-                        Bid.Trace("<prov.DbConnectionPoolGroup.ClearInternal|RES|INFO|CPOOL> %d#, Idle\n", ObjectID);
+                        SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionPoolGroup.ClearInternal|RES|INFO|CPOOL> {0}#, Idle", ObjectID);
                     }
                     else if (PoolGroupStateIdle == _state)
                     {
                         _state = PoolGroupStateDisabled;
-                        Bid.Trace("<prov.DbConnectionPoolGroup.ReadyToRemove|RES|INFO|CPOOL> %d#, Disabled\n", ObjectID);
+                        SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionPoolGroup.ReadyToRemove|RES|INFO|CPOOL> {0}#, Disabled", ObjectID);
                     }
                 }
+
                 return (PoolGroupStateDisabled == _state);
             }
         }

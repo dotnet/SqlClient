@@ -26,7 +26,7 @@ namespace Microsoft.Data.SqlClient
         private Encoder _encoder;       // required for chunking character type data
         private SmiMetaData _variantType;   // required for sql_variant
 #if DEBUG
-        private int                     _currentOffset; // for chunking, verify that caller is using correct offsets
+        private int _currentOffset; // for chunking, verify that caller is using correct offsets
 #endif
 
         #endregion

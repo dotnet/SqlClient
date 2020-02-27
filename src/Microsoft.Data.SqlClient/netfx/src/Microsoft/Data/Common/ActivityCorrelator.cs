@@ -14,7 +14,6 @@ namespace Microsoft.Data.Common
 
     internal static class ActivityCorrelator
     {
-        internal const Bid.ApiGroup CorrelationTracePoints = Bid.ApiGroup.Correlation;
 
         internal class ActivityId
         {

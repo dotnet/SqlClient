@@ -96,15 +96,12 @@ namespace Microsoft.Data.Common
             }
         }
 
-        [BidMethod] // this method accepts BID format as an argument, this attribute allows FXCopBid rule to validate calls to it
-        static private void TraceException(
-                string trace,
-                [BidArgumentType(typeof(String))] Exception e)
+        static private void TraceException(string trace, Exception e)
         {
             Debug.Assert(null != e, "TraceException: null Exception");
             if (null != e)
             {
-                Bid.Trace(trace, e.ToString()); // will include callstack if permission is available
+                SqlClientEventSource.Log.TraceEvent(trace, e.ToString()); // will include callstack if permission is available
             }
         }
 
@@ -115,12 +112,12 @@ namespace Microsoft.Data.Common
         static internal void TraceExceptionForCapture(Exception e)
         {
             Debug.Assert(ADP.IsCatchableExceptionType(e), "Invalid exception type, should have been re-thrown!");
-            TraceException("<comm.ADP.TraceException|ERR|CATCH> '%ls'\n", e);
+            TraceException("<comm.ADP.TraceException|ERR|CATCH> '{0}'", e);
         }
         static internal void TraceExceptionWithoutRethrow(Exception e)
         {
             Debug.Assert(ADP.IsCatchableExceptionType(e), "Invalid exception type, should have been re-thrown!");
-            TraceException("<comm.ADP.TraceException|ERR|CATCH> '%ls'\n", e);
+            TraceException("<comm.ADP.TraceException|ERR|CATCH> '{0}'", e);
         }
 
         //
@@ -475,11 +472,12 @@ namespace Microsoft.Data.Common
         static internal ArgumentOutOfRangeException InvalidAcceptRejectRule(AcceptRejectRule value)
         {
 #if DEBUG
-            switch(value) {
-            case AcceptRejectRule.None:
-            case AcceptRejectRule.Cascade:
-                Debug.Assert(false, "valid AcceptRejectRule " + value.ToString());
-                break;
+            switch (value)
+            {
+                case AcceptRejectRule.None:
+                case AcceptRejectRule.Cascade:
+                    Debug.Assert(false, "valid AcceptRejectRule " + value.ToString());
+                    break;
             }
 #endif
             return InvalidEnumerationValue(typeof(AcceptRejectRule), (int)value);
@@ -488,11 +486,12 @@ namespace Microsoft.Data.Common
         static internal ArgumentOutOfRangeException InvalidCatalogLocation(CatalogLocation value)
         {
 #if DEBUG
-            switch(value) {
-            case CatalogLocation.Start:
-            case CatalogLocation.End:
-                Debug.Assert(false, "valid CatalogLocation " + value.ToString());
-                break;
+            switch (value)
+            {
+                case CatalogLocation.Start:
+                case CatalogLocation.End:
+                    Debug.Assert(false, "valid CatalogLocation " + value.ToString());
+                    break;
             }
 #endif
             return InvalidEnumerationValue(typeof(CatalogLocation), (int)value);
@@ -501,7 +500,8 @@ namespace Microsoft.Data.Common
         static internal ArgumentOutOfRangeException InvalidCommandBehavior(CommandBehavior value)
         {
 #if DEBUG
-            if ((0 <= (int)value) && ((int)value <= 0x3F)) {
+            if ((0 <= (int)value) && ((int)value <= 0x3F))
+            {
                 Debug.Assert(false, "valid CommandType " + value.ToString());
             }
 #endif
@@ -528,12 +528,13 @@ namespace Microsoft.Data.Common
         static internal ArgumentOutOfRangeException InvalidCommandType(CommandType value)
         {
 #if DEBUG
-            switch(value) {
-            case CommandType.Text:
-            case CommandType.StoredProcedure:
-            case CommandType.TableDirect:
-                Debug.Assert(false, "valid CommandType " + value.ToString());
-                break;
+            switch (value)
+            {
+                case CommandType.Text:
+                case CommandType.StoredProcedure:
+                case CommandType.TableDirect:
+                    Debug.Assert(false, "valid CommandType " + value.ToString());
+                    break;
             }
 #endif
             return InvalidEnumerationValue(typeof(CommandType), (int)value);
@@ -542,12 +543,13 @@ namespace Microsoft.Data.Common
         static internal ArgumentOutOfRangeException InvalidConflictOptions(ConflictOption value)
         {
 #if DEBUG
-            switch(value) {
-            case ConflictOption.CompareAllSearchableValues:
-            case ConflictOption.CompareRowVersion:
-            case ConflictOption.OverwriteChanges:
-                Debug.Assert(false, "valid ConflictOption " + value.ToString());
-                break;
+            switch (value)
+            {
+                case ConflictOption.CompareAllSearchableValues:
+                case ConflictOption.CompareRowVersion:
+                case ConflictOption.OverwriteChanges:
+                    Debug.Assert(false, "valid ConflictOption " + value.ToString());
+                    break;
             }
 #endif
             return InvalidEnumerationValue(typeof(ConflictOption), (int)value);
@@ -557,14 +559,15 @@ namespace Microsoft.Data.Common
         static internal ArgumentOutOfRangeException InvalidDataRowState(DataRowState value)
         {
 #if DEBUG
-            switch(value) {
-            case DataRowState.Detached:
-            case DataRowState.Unchanged:
-            case DataRowState.Added:
-            case DataRowState.Deleted:
-            case DataRowState.Modified:
-                Debug.Assert(false, "valid DataRowState " + value.ToString());
-                break;
+            switch (value)
+            {
+                case DataRowState.Detached:
+                case DataRowState.Unchanged:
+                case DataRowState.Added:
+                case DataRowState.Deleted:
+                case DataRowState.Modified:
+                    Debug.Assert(false, "valid DataRowState " + value.ToString());
+                    break;
             }
 #endif
             return InvalidEnumerationValue(typeof(DataRowState), (int)value);
@@ -574,13 +577,14 @@ namespace Microsoft.Data.Common
         static internal ArgumentOutOfRangeException InvalidDataRowVersion(DataRowVersion value)
         {
 #if DEBUG
-            switch(value) {
-            case DataRowVersion.Default:
-            case DataRowVersion.Current:
-            case DataRowVersion.Original:
-            case DataRowVersion.Proposed:
-                Debug.Assert(false, "valid DataRowVersion " + value.ToString());
-                break;
+            switch (value)
+            {
+                case DataRowVersion.Default:
+                case DataRowVersion.Current:
+                case DataRowVersion.Original:
+                case DataRowVersion.Proposed:
+                    Debug.Assert(false, "valid DataRowVersion " + value.ToString());
+                    break;
             }
 #endif
             return InvalidEnumerationValue(typeof(DataRowVersion), (int)value);
@@ -590,16 +594,17 @@ namespace Microsoft.Data.Common
         static internal ArgumentOutOfRangeException InvalidIsolationLevel(IsolationLevel value)
         {
 #if DEBUG
-            switch(value) {
-            case IsolationLevel.Unspecified:
-            case IsolationLevel.Chaos:
-            case IsolationLevel.ReadUncommitted:
-            case IsolationLevel.ReadCommitted:
-            case IsolationLevel.RepeatableRead:
-            case IsolationLevel.Serializable:
-            case IsolationLevel.Snapshot:
-                Debug.Assert(false, "valid IsolationLevel " + value.ToString());
-                break;
+            switch (value)
+            {
+                case IsolationLevel.Unspecified:
+                case IsolationLevel.Chaos:
+                case IsolationLevel.ReadUncommitted:
+                case IsolationLevel.ReadCommitted:
+                case IsolationLevel.RepeatableRead:
+                case IsolationLevel.Serializable:
+                case IsolationLevel.Snapshot:
+                    Debug.Assert(false, "valid IsolationLevel " + value.ToString());
+                    break;
             }
 #endif
             return InvalidEnumerationValue(typeof(IsolationLevel), (int)value);
@@ -609,11 +614,12 @@ namespace Microsoft.Data.Common
         static internal ArgumentOutOfRangeException InvalidKeyRestrictionBehavior(KeyRestrictionBehavior value)
         {
 #if DEBUG
-            switch(value) {
-            case KeyRestrictionBehavior.PreventUsage:
-            case KeyRestrictionBehavior.AllowOnly:
-                Debug.Assert(false, "valid KeyRestrictionBehavior " + value.ToString());
-                break;
+            switch (value)
+            {
+                case KeyRestrictionBehavior.PreventUsage:
+                case KeyRestrictionBehavior.AllowOnly:
+                    Debug.Assert(false, "valid KeyRestrictionBehavior " + value.ToString());
+                    break;
             }
 #endif
             return InvalidEnumerationValue(typeof(KeyRestrictionBehavior), (int)value);
@@ -623,12 +629,13 @@ namespace Microsoft.Data.Common
         static internal ArgumentOutOfRangeException InvalidLoadOption(LoadOption value)
         {
 #if DEBUG
-            switch(value) {
-            case LoadOption.OverwriteChanges:
-            case LoadOption.PreserveChanges:
-            case LoadOption.Upsert:
-                Debug.Assert(false, "valid LoadOption " + value.ToString());
-                break;
+            switch (value)
+            {
+                case LoadOption.OverwriteChanges:
+                case LoadOption.PreserveChanges:
+                case LoadOption.Upsert:
+                    Debug.Assert(false, "valid LoadOption " + value.ToString());
+                    break;
             }
 #endif
             return InvalidEnumerationValue(typeof(LoadOption), (int)value);
@@ -638,12 +645,13 @@ namespace Microsoft.Data.Common
         static internal ArgumentOutOfRangeException InvalidMissingMappingAction(MissingMappingAction value)
         {
 #if DEBUG
-            switch(value) {
-            case MissingMappingAction.Passthrough:
-            case MissingMappingAction.Ignore:
-            case MissingMappingAction.Error:
-                Debug.Assert(false, "valid MissingMappingAction " + value.ToString());
-                break;
+            switch (value)
+            {
+                case MissingMappingAction.Passthrough:
+                case MissingMappingAction.Ignore:
+                case MissingMappingAction.Error:
+                    Debug.Assert(false, "valid MissingMappingAction " + value.ToString());
+                    break;
             }
 #endif
             return InvalidEnumerationValue(typeof(MissingMappingAction), (int)value);
@@ -653,13 +661,14 @@ namespace Microsoft.Data.Common
         static internal ArgumentOutOfRangeException InvalidMissingSchemaAction(MissingSchemaAction value)
         {
 #if DEBUG
-            switch(value) {
-            case MissingSchemaAction.Add:
-            case MissingSchemaAction.Ignore:
-            case MissingSchemaAction.Error:
-            case MissingSchemaAction.AddWithKey:
-                Debug.Assert(false, "valid MissingSchemaAction " + value.ToString());
-                break;
+            switch (value)
+            {
+                case MissingSchemaAction.Add:
+                case MissingSchemaAction.Ignore:
+                case MissingSchemaAction.Error:
+                case MissingSchemaAction.AddWithKey:
+                    Debug.Assert(false, "valid MissingSchemaAction " + value.ToString());
+                    break;
             }
 #endif
             return InvalidEnumerationValue(typeof(MissingSchemaAction), (int)value);
@@ -669,13 +678,14 @@ namespace Microsoft.Data.Common
         static internal ArgumentOutOfRangeException InvalidParameterDirection(ParameterDirection value)
         {
 #if DEBUG
-            switch(value) {
-            case ParameterDirection.Input:
-            case ParameterDirection.Output:
-            case ParameterDirection.InputOutput:
-            case ParameterDirection.ReturnValue:
-                Debug.Assert(false, "valid ParameterDirection " + value.ToString());
-                break;
+            switch (value)
+            {
+                case ParameterDirection.Input:
+                case ParameterDirection.Output:
+                case ParameterDirection.InputOutput:
+                case ParameterDirection.ReturnValue:
+                    Debug.Assert(false, "valid ParameterDirection " + value.ToString());
+                    break;
             }
 #endif
             return InvalidEnumerationValue(typeof(ParameterDirection), (int)value);
@@ -684,11 +694,12 @@ namespace Microsoft.Data.Common
         static internal ArgumentOutOfRangeException InvalidPermissionState(PermissionState value)
         {
 #if DEBUG
-            switch(value) {
-            case PermissionState.Unrestricted:
-            case PermissionState.None:
-                Debug.Assert(false, "valid PermissionState " + value.ToString());
-                break;
+            switch (value)
+            {
+                case PermissionState.Unrestricted:
+                case PermissionState.None:
+                    Debug.Assert(false, "valid PermissionState " + value.ToString());
+                    break;
             }
 #endif
             return InvalidEnumerationValue(typeof(PermissionState), (int)value);
@@ -697,13 +708,14 @@ namespace Microsoft.Data.Common
         static internal ArgumentOutOfRangeException InvalidRule(Rule value)
         {
 #if DEBUG
-            switch(value) {
-            case Rule.None:
-            case Rule.Cascade:
-            case Rule.SetNull:
-            case Rule.SetDefault:
-                Debug.Assert(false, "valid Rule " + value.ToString());
-                break;
+            switch (value)
+            {
+                case Rule.None:
+                case Rule.Cascade:
+                case Rule.SetNull:
+                case Rule.SetDefault:
+                    Debug.Assert(false, "valid Rule " + value.ToString());
+                    break;
             }
 #endif
             return InvalidEnumerationValue(typeof(Rule), (int)value);
@@ -713,11 +725,12 @@ namespace Microsoft.Data.Common
         static internal ArgumentOutOfRangeException InvalidSchemaType(SchemaType value)
         {
 #if DEBUG
-            switch(value) {
-            case SchemaType.Source:
-            case SchemaType.Mapped:
-                Debug.Assert(false, "valid SchemaType " + value.ToString());
-                break;
+            switch (value)
+            {
+                case SchemaType.Source:
+                case SchemaType.Mapped:
+                    Debug.Assert(false, "valid SchemaType " + value.ToString());
+                    break;
             }
 #endif
             return InvalidEnumerationValue(typeof(SchemaType), (int)value);
@@ -727,14 +740,15 @@ namespace Microsoft.Data.Common
         static internal ArgumentOutOfRangeException InvalidStatementType(StatementType value)
         {
 #if DEBUG
-            switch(value) {
-            case StatementType.Select:
-            case StatementType.Insert:
-            case StatementType.Update:
-            case StatementType.Delete:
-            case StatementType.Batch:
-                 Debug.Assert(false, "valid StatementType " + value.ToString());
-                break;
+            switch (value)
+            {
+                case StatementType.Select:
+                case StatementType.Insert:
+                case StatementType.Update:
+                case StatementType.Delete:
+                case StatementType.Batch:
+                    Debug.Assert(false, "valid StatementType " + value.ToString());
+                    break;
             }
 #endif
             return InvalidEnumerationValue(typeof(StatementType), (int)value);
@@ -744,13 +758,14 @@ namespace Microsoft.Data.Common
         static internal ArgumentOutOfRangeException InvalidUpdateRowSource(UpdateRowSource value)
         {
 #if DEBUG
-            switch(value) {
-            case UpdateRowSource.None:
-            case UpdateRowSource.OutputParameters:
-            case UpdateRowSource.FirstReturnedRecord:
-            case UpdateRowSource.Both:
-                Debug.Assert(false, "valid UpdateRowSource " + value.ToString());
-                break;
+            switch (value)
+            {
+                case UpdateRowSource.None:
+                case UpdateRowSource.OutputParameters:
+                case UpdateRowSource.FirstReturnedRecord:
+                case UpdateRowSource.Both:
+                    Debug.Assert(false, "valid UpdateRowSource " + value.ToString());
+                    break;
             }
 #endif
             return InvalidEnumerationValue(typeof(UpdateRowSource), (int)value);
@@ -760,13 +775,14 @@ namespace Microsoft.Data.Common
         static internal ArgumentOutOfRangeException InvalidUpdateStatus(UpdateStatus value)
         {
 #if DEBUG
-            switch(value) {
-            case UpdateStatus.Continue:
-            case UpdateStatus.ErrorsOccurred:
-            case UpdateStatus.SkipAllRemainingRows:
-            case UpdateStatus.SkipCurrentRow:
-                Debug.Assert(false, "valid UpdateStatus " + value.ToString());
-                break;
+            switch (value)
+            {
+                case UpdateStatus.Continue:
+                case UpdateStatus.ErrorsOccurred:
+                case UpdateStatus.SkipAllRemainingRows:
+                case UpdateStatus.SkipCurrentRow:
+                    Debug.Assert(false, "valid UpdateStatus " + value.ToString());
+                    break;
             }
 #endif
             return InvalidEnumerationValue(typeof(UpdateStatus), (int)value);
@@ -785,12 +801,13 @@ namespace Microsoft.Data.Common
         static internal ArgumentOutOfRangeException InvalidUserDefinedTypeSerializationFormat(Format value)
         {
 #if DEBUG
-            switch(value) {
-            case Format.Unknown:
-            case Format.Native:
-            case Format.UserDefined:
-                Debug.Assert(false, "valid UserDefinedTypeSerializationFormat " + value.ToString());
-                break;
+            switch (value)
+            {
+                case Format.Unknown:
+                case Format.Native:
+                case Format.UserDefined:
+                    Debug.Assert(false, "valid UserDefinedTypeSerializationFormat " + value.ToString());
+                    break;
             }
 #endif
             return InvalidEnumerationValue(typeof(Format), (int)value);
@@ -1301,9 +1318,9 @@ namespace Microsoft.Data.Common
                         resource = Strings.ADP_ConnectionRequired_Batch;
                         goto default;
 #if DEBUG
-                case StatementType.Select:
-                    Debug.Assert(false, "shouldn't be here");
-                    goto default;
+                    case StatementType.Select:
+                        Debug.Assert(false, "shouldn't be here");
+                        goto default;
 #endif
                     default:
                         throw ADP.InvalidStatementType(statementType);
@@ -1316,16 +1333,17 @@ namespace Microsoft.Data.Common
         {
             string resource = "ADP_ConnectionRequired_" + method;
 #if DEBUG
-            switch(resource) {
-            case StringsHelper.ResourceNames.ADP_ConnectionRequired_Fill:
-            case StringsHelper.ResourceNames.ADP_ConnectionRequired_FillPage:
-            case StringsHelper.ResourceNames.ADP_ConnectionRequired_FillSchema:
-            case StringsHelper.ResourceNames.ADP_ConnectionRequired_Update:
-            case StringsHelper.ResourceNames.ADP_ConnecitonRequired_UpdateRows:
-                break;
-            default:
-                Debug.Assert(false, "missing resource string: " + resource);
-                break;
+            switch (resource)
+            {
+                case StringsHelper.ResourceNames.ADP_ConnectionRequired_Fill:
+                case StringsHelper.ResourceNames.ADP_ConnectionRequired_FillPage:
+                case StringsHelper.ResourceNames.ADP_ConnectionRequired_FillSchema:
+                case StringsHelper.ResourceNames.ADP_ConnectionRequired_Update:
+                case StringsHelper.ResourceNames.ADP_ConnecitonRequired_UpdateRows:
+                    break;
+                default:
+                    Debug.Assert(false, "missing resource string: " + resource);
+                    break;
             }
 #endif
             return InvalidOperation(StringsHelper.GetString(resource));
@@ -1351,12 +1369,12 @@ namespace Microsoft.Data.Common
                         resource = Strings.ADP_OpenConnectionRequired_Delete;
                         break;
 #if DEBUG
-                case StatementType.Select:
-                    Debug.Assert(false, "shouldn't be here");
-                    goto default;
-                case StatementType.Batch:
-                    Debug.Assert(false, "isRowUpdatingCommand should have been true");
-                    goto default;
+                    case StatementType.Select:
+                        Debug.Assert(false, "shouldn't be here");
+                        goto default;
+                    case StatementType.Batch:
+                        Debug.Assert(false, "isRowUpdatingCommand should have been true");
+                        goto default;
 #endif
                     default:
                         throw ADP.InvalidStatementType(statementType);
@@ -1519,10 +1537,10 @@ namespace Microsoft.Data.Common
                     resource = Strings.ADP_UpdateConcurrencyViolation_Batch;
                     break;
 #if DEBUG
-            case StatementType.Select:
-            case StatementType.Insert:
-                Debug.Assert(false, "should be here");
-                goto default;
+                case StatementType.Select:
+                case StatementType.Insert:
+                    Debug.Assert(false, "should be here");
+                    goto default;
 #endif
                 default:
                     throw ADP.InvalidStatementType(statementType);
@@ -1556,9 +1574,9 @@ namespace Microsoft.Data.Common
                         resource = Strings.ADP_UpdateRequiresCommandDelete;
                         break;
 #if DEBUG
-                case StatementType.Batch:
-                    Debug.Assert(false, "isRowUpdatingCommand should have been true");
-                    goto default;
+                    case StatementType.Batch:
+                        Debug.Assert(false, "isRowUpdatingCommand should have been true");
+                        goto default;
 #endif
                     default:
                         throw ADP.InvalidStatementType(statementType);
@@ -2929,15 +2947,17 @@ namespace Microsoft.Data.Common
             return (condition == (condition & value.Direction));
         }
 #if DEBUG
-        static private void IsDirectionValid(ParameterDirection value) {
-            switch (value) { // @perfnote: Enum.IsDefined
-            case ParameterDirection.Input:
-            case ParameterDirection.Output:
-            case ParameterDirection.InputOutput:
-            case ParameterDirection.ReturnValue:
-                break;
-            default:
-                throw ADP.InvalidParameterDirection(value);
+        static private void IsDirectionValid(ParameterDirection value)
+        {
+            switch (value)
+            { // @perfnote: Enum.IsDefined
+                case ParameterDirection.Input:
+                case ParameterDirection.Output:
+                case ParameterDirection.InputOutput:
+                case ParameterDirection.ReturnValue:
+                    break;
+                default:
+                    throw ADP.InvalidParameterDirection(value);
             }
         }
 #endif
