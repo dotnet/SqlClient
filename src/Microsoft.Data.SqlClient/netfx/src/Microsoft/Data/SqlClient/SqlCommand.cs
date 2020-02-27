@@ -693,7 +693,6 @@ namespace Microsoft.Data.SqlClient
 
                 // TODO: Add objid here
                 SqlClientEventSource.Log.TraceEvent("<sc.SqlCommand.set_Transaction|API> {0}#", ObjectID);
-
                 _transaction = value;
             }
         }
