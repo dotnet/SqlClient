@@ -16,7 +16,6 @@ using System.Threading.Tasks;
 using System.Xml;
 using Microsoft.Data.Common;
 
-
 // todo list:
 // * An ID column need to be ignored - even if there is an association
 // * Spec: ID columns will be ignored - even if there is an association
