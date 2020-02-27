@@ -13,7 +13,6 @@ using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Server;
 
-
 namespace Microsoft.Data.SqlClient
 {
     sealed internal class SqlConnectionFactory : DbConnectionFactory
