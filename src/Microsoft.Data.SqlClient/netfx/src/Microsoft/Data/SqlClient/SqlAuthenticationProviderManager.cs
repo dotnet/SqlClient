@@ -81,7 +81,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                // _sqlAuthLogger.LogInfo(_typeName, methodName, "No user-defined SqlAuthenticationInitializer found.");
+                _sqlAuthLogger.LogInfo(_typeName, methodName, "No user-defined SqlAuthenticationInitializer found.");
             }
 
             // add user-defined providers, if any.
