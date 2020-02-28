@@ -567,17 +567,6 @@ namespace Microsoft.Data.SqlClient
             return reader;
         }
 
-        internal SqlCommand FindLiveCommand(TdsParserStateObject stateObj)
-        {
-            SqlCommand command = null;
-            SqlReferenceCollection referenceCollection = (SqlReferenceCollection)ReferenceCollection;
-            if (null != referenceCollection)
-            {
-                command = referenceCollection.FindLiveCommand(stateObj);
-            }
-            return command;
-        }
-
         abstract protected byte[] GetDTCAddress();
 
         static private byte[] GetTransactionCookie(Transaction transaction, byte[] whereAbouts)
