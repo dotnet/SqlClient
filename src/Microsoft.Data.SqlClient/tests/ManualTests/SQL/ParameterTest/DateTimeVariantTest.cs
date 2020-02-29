@@ -907,9 +907,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                {
                     LogMessage(tag, "[EXPECTED EXPECTION] " + e.Message);
+                }
+                else if (IsExpectedInvalidOperationException(e, expectedBaseTypeName))
+                {
+                    LogMessage(tag, "[EXPECTED INVALID OPERATION EXCEPTION] " + AmendTheGivenMessageDateValueException(e.Message, paramValue));
+                }
                 else
+                {
                     DisplayError(tag, e);
+                }
             }
             finally
             {
@@ -1024,9 +1032,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                {
                     LogMessage(tag, "[EXPECTED EXPECTION] " + e.Message);
+                }
+                else if (IsExpectedInvalidOperationException(e, expectedBaseTypeName))
+                {
+                    LogMessage(tag, "[EXPECTED INVALID OPERATION EXCEPTION] " + AmendTheGivenMessageDateValueException(e.Message, paramValue));
+                }
                 else
+                {
                     DisplayError(tag, e);
+                }
             }
             finally
             {
@@ -1271,6 +1287,33 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 return false;
             }
+        }
+                
+        private static bool IsExpectedInvalidOperationException(Exception e, string expectedBaseTypeName)
+        {
+            return ((e.GetType() == typeof(InvalidOperationException)) &&
+                    (expectedBaseTypeName == "time") &&
+                    (e.Message.Contains("The given value ")));
+        }
+
+        private static string AmendTheGivenMessageDateValueException(string message, object paramValue)
+        {
+            string value = string.Empty;
+            if (paramValue.GetType() == typeof(System.DateTimeOffset))
+            {
+                DateTime dt = ((System.DateTimeOffset)paramValue).UtcDateTime;
+                value = dt.ToString("M/d/yyyy") + " " + dt.TimeOfDay;
+            }
+            else if (paramValue.GetType() == typeof(System.TimeSpan))
+            {
+                value = ((System.TimeSpan)paramValue).ToString();
+            }
+            else
+            {
+                value = ((System.DateTime)paramValue).ToString("M/d/yyyy") + " " + ((System.DateTime)paramValue).TimeOfDay;
+            }
+
+            return message.Replace(paramValue.ToString(), value);
         }
 
         // NOTE: Logging and Display

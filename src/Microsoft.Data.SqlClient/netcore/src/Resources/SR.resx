@@ -625,7 +625,7 @@
     <value>Mappings must be either all name or all ordinal based.</value>
   </data>
   <data name="SQL_BulkLoadCannotConvertValue" xml:space="preserve">
-    <value>The given value of type {0} from the data source cannot be converted to type {1} of the specified target column.</value>
+    <value>The given value{0} of type {1} from the data source cannot be converted to type {2} for Column {3} [{4}] Row {5}.</value>
   </data>
   <data name="SQL_BulkLoadNonMatchingColumnMapping" xml:space="preserve">
     <value>The given ColumnMapping does not match up with any column in the source or destination.</value>
@@ -1859,5 +1859,8 @@
   </data>
   <data name="SQLUDT_InvalidSize" xml:space="preserve">
     <value>UDT size must be less than {1}, size: {0}</value>
+  </data>
+  <data name="SQL_BulkLoadCannotConvertValueWithoutRowNo" xml:space="preserve">
+    <value>The given value{0} of type {1} from the data source cannot be converted to type {2} for Column {3} [{4}].</value>
   </data>
 </root>

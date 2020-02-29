@@ -266,6 +266,30 @@ namespace Microsoft.Data.SqlClient
         private DataRowState _rowStateToSkip;
         private IEnumerator _rowEnumerator;
 
+        private int RowNumber
+        {
+            get
+            {
+                int rowNo;
+
+                switch (_rowSourceType)
+                {
+                    case ValueSourceType.RowArray:
+                        rowNo = ((DataTable)_dataTableSource).Rows.IndexOf(_rowEnumerator.Current as DataRow);
+                        break;
+                    case ValueSourceType.DataTable:
+                        rowNo = ((DataTable)_rowSource).Rows.IndexOf(_rowEnumerator.Current as DataRow);
+                        break;
+                    case ValueSourceType.DbDataReader:
+                    case ValueSourceType.IDataReader:
+                    case ValueSourceType.Unspecified:
+                    default:
+                        return -1;
+                }
+                return ++rowNo;
+            }
+        }
+
         private TdsParser _parser;
         private TdsParserStateObject _stateObj;
         private List<_ColumnMapping> _sortedColumnMappings;
@@ -1626,11 +1650,11 @@ namespace Microsoft.Data.SqlClient
                             }
                             catch (SqlTruncateException)
                             {
-                                throw SQL.BulkLoadCannotConvertValue(value.GetType(), mt, ADP.ParameterValueOutOfRange(sqlValue));
+                                throw SQL.BulkLoadCannotConvertValue(value.GetType(), mt, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), ADP.ParameterValueOutOfRange(sqlValue));
                             }
                             catch (Exception e)
                             {
-                                throw SQL.BulkLoadCannotConvertValue(value.GetType(), mt, e);
+                                throw SQL.BulkLoadCannotConvertValue(value.GetType(), mt, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), e);
                             }
                         }
 
@@ -1719,7 +1743,7 @@ namespace Microsoft.Data.SqlClient
 
                     default:
                         Debug.Assert(false, "Unknown TdsType!" + type.NullableType.ToString("x2", (IFormatProvider)null));
-                        throw SQL.BulkLoadCannotConvertValue(value.GetType(), type, null);
+                        throw SQL.BulkLoadCannotConvertValue(value.GetType(), type, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), null);
                 }
 
                 if (typeChanged)
@@ -1736,7 +1760,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw;
                 }
-                throw SQL.BulkLoadCannotConvertValue(value.GetType(), type, e);
+                throw SQL.BulkLoadCannotConvertValue(value.GetType(), type, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), e);
             }
         }
 
