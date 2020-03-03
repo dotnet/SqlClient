@@ -1,16 +1,16 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="Latest" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="$(CommonSource)Microsoft.Data.SqlClient.Common.props" Condition="Exists('$(CommonSource)Microsoft.Data.SqlClient.Common.props')" />
   <PropertyGroup>
     <ProjectGuid>{407890AC-9876-4FEF-A6F1-F36A876BAADE}</ProjectGuid>
     <RootNamespace>SqlClient</RootNamespace>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <TargetFramework>net46</TargetFramework>
     <EnableLocalAppContext>true</EnableLocalAppContext>
     <ResxFileName>Strings</ResxFileName>
     <ResourceFileName>SqlClient.Resources.$(ResxFileName)</ResourceFileName>
     <GeneratedSourceFileName>$(ResxFileName).ResourceNames.cs</GeneratedSourceFileName>
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
-    <OutputPlatform>AnyCPU</OutputPlatform>
+    <Platform>AnyCPU</Platform>    
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <BinPath>$(BinFolder)$(Configuration).$(OutputPlatform)\</BinPath>
     <ObjPath>$(ObjFolder)$(Configuration).$(OutputPlatform)\</ObjPath>
     <OutputPath>$(BinPath)$(AssemblyName)\netfx\</OutputPath>
@@ -20,6 +20,7 @@
     <!-- ResolveComReferenceSilent suppresses warnings thrown due to the inclusion of mscoree.
      We should remove ResolveComReferenceSilent as soon as we can remove the dependency on mscoree. -->
     <ResolveComReferenceSilent>True</ResolveComReferenceSilent>
+    <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
   </PropertyGroup>
   <PropertyGroup>
     <!-- CSC Compiler Options -->
@@ -116,7 +117,6 @@
     <Compile Include="Microsoft\Data\SqlClient\Server\SqlUserDefinedTypeAttribute.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\TriggerAction.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SortOrder.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlClientEventSource.cs" />
     <Compile Include="Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProvider.cs" />
     <Compile Include="Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProviderBase.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\SqlFileStream.cs" />
@@ -301,7 +301,6 @@
     <Compile Include="Microsoft\Data\Sql\SqlGenericUtil.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\sqlnorm.cs" />
     <Compile Include="Microsoft\Data\Sql\SqlNotificationRequest.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\DataClassification\SensitivityClassification.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\FieldNameLookup.cs" />
     <Compile Include="Microsoft\Data\OperationAbortedException.cs" />
   </ItemGroup>
@@ -364,7 +363,6 @@
       <Version>$(SystemIOVersion)</Version>
     </PackageReference>
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(NetFxSource)tools\targets\GenerateResourceStringsSource.targets" />
   <Import Project="$(NetFxSource)tools\targets\GenerateThisAssemblyCs.targets" />
   <Import Project="$(NetFxSource)tools\targets\GenerateAssemblyRef.targets" />
