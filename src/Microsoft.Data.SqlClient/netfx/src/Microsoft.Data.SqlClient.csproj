@@ -254,14 +254,10 @@
     <Compile Include="Microsoft\Data\ProviderBase\SqlConnectionHelper.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionInternal.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPool.cs" />
-    <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContext.cs" />
-    <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContextKey.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolGroup.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolCounters.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolOptions.cs" />
-    <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolProviderInfo.cs" />
-    <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolGroupProviderInfo.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbMetaDataFactory.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\SqlParameterCollectionHelper.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\SqlParameterHelper.cs" />
