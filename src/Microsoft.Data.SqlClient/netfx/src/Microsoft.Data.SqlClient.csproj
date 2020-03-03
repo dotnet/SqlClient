@@ -11,8 +11,8 @@
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
     <Platform>AnyCPU</Platform>    
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <BinPath>$(BinFolder)$(Configuration).$(OutputPlatform)\</BinPath>
-    <ObjPath>$(ObjFolder)$(Configuration).$(OutputPlatform)\</ObjPath>
+    <BinPath>$(BinFolder)$(Configuration).$(Platform)\</BinPath>
+    <ObjPath>$(ObjFolder)$(Configuration).$(Platform)\</ObjPath>
     <OutputPath>$(BinPath)$(AssemblyName)\netfx\</OutputPath>
     <DocumentationFile>$(OutputPath)\Microsoft.Data.SqlClient.xml</DocumentationFile>
     <IntermediateOutputPath>$(ObjPath)$(AssemblyName)\netfx\</IntermediateOutputPath>
