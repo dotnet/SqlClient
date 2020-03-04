@@ -9,10 +9,10 @@
     <ResourceFileName>SqlClient.Resources.$(ResxFileName)</ResourceFileName>
     <GeneratedSourceFileName>$(ResxFileName).ResourceNames.cs</GeneratedSourceFileName>
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
-    <Platform>AnyCPU</Platform>    
+    <OutputPlatform>AnyCPU</OutputPlatform>    
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <BinPath>$(BinFolder)$(Configuration).$(Platform)\</BinPath>
-    <ObjPath>$(ObjFolder)$(Configuration).$(Platform)\</ObjPath>
+    <BinPath>$(BinFolder)$(Configuration).$(OutputPlatform)\</BinPath>
+    <ObjPath>$(ObjFolder)$(Configuration).$(OutputPlatform)\</ObjPath>
     <OutputPath>$(BinPath)$(AssemblyName)\netfx\</OutputPath>
     <DocumentationFile>$(OutputPath)\Microsoft.Data.SqlClient.xml</DocumentationFile>
     <IntermediateOutputPath>$(ObjPath)$(AssemblyName)\netfx\</IntermediateOutputPath>
