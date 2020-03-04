@@ -129,9 +129,9 @@ namespace Microsoft.Data.SqlClient
         internal void Append(SqlCommand command)
         {
             ADP.CheckArgumentNull(command, "command");
-            Bid.Trace("<sc.SqlCommandSet.Append|API> %d#, command=%d, parameterCount=%d\n", ObjectID, command.ObjectID, command.Parameters.Count);
-
+            SqlClientEventSource.Log.TraceEvent("<sc.SqlCommandSet.Append|API> {0}#, command={1}, parameterCount={2}", ObjectID, command.ObjectID, command.Parameters.Count);
             string cmdText = command.CommandText;
+
             if (ADP.IsEmpty(cmdText))
             {
                 throw ADP.CommandTextRequired(ADP.Append);
@@ -264,7 +264,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void Clear()
         {
-            Bid.Trace("<sc.SqlCommandSet.Clear|API> %d#\n", ObjectID);
+            SqlClientEventSource.Log.TraceEvent("<sc.SqlCommandSet.Clear|API> {0}#", ObjectID);
             DbCommand batchCommand = BatchCommand;
             if (null != batchCommand)
             {
@@ -280,7 +280,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void Dispose()
         {
-            Bid.Trace("<sc.SqlCommandSet.Dispose|API> %d#\n", ObjectID);
+            SqlClientEventSource.Log.TraceEvent("<sc.SqlCommandSet.Dispose|API> {0}#", ObjectID);
             SqlCommand command = _batchCommand;
             _commandList = null;
             _batchCommand = null;
@@ -294,9 +294,8 @@ namespace Microsoft.Data.SqlClient
         internal int ExecuteNonQuery()
         {
             SqlConnection.ExecutePermission.Demand();
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlCommandSet.ExecuteNonQuery|API> {0}#", ObjectID);
 
-            IntPtr hscp;
-            Bid.ScopeEnter(out hscp, "<sc.SqlCommandSet.ExecuteNonQuery|API> %d#", ObjectID);
             try
             {
                 if (Connection.IsContextConnection)
@@ -316,7 +315,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                Bid.ScopeLeave(ref hscp);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 

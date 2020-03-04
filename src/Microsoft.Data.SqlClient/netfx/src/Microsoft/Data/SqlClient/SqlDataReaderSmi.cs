@@ -15,6 +15,8 @@ using System.Xml;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Server;
+
+
 using Microsoft.Data.SqlTypes;
 
 namespace Microsoft.Data.SqlClient
@@ -26,8 +28,6 @@ namespace Microsoft.Data.SqlClient
     //        This is accomplished by having no public override constructors.
     internal sealed class SqlDataReaderSmi : SqlDataReader
     {
-
-
         //
         // IDBRecord properties
         //
@@ -374,8 +374,7 @@ namespace Microsoft.Data.SqlClient
 
         private void CloseInternal(bool closeConnection)
         {
-            IntPtr hscp;
-            Bid.ScopeEnter(out hscp, "<sc.SqlDataReaderSmi.Close|API> %d#", ObjectID);
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlDataReaderSmi.Close|API> {0}#", ObjectID);
             bool processFinallyBlock = true;
             try
             {
@@ -411,7 +410,7 @@ namespace Microsoft.Data.SqlClient
                         Connection.Close();
                     }
 
-                    Bid.ScopeLeave(ref hscp);
+                    SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
                 }
             }
         }
@@ -434,11 +433,7 @@ namespace Microsoft.Data.SqlClient
 
         internal unsafe bool InternalNextResult(bool ignoreNonFatalMessages)
         {
-            IntPtr hscp = IntPtr.Zero;
-            if (Bid.AdvancedOn)
-            {
-                Bid.ScopeEnter(out hscp, "<sc.SqlDataReaderSmi.InternalNextResult|ADV> %d#", ObjectID);
-            }
+            long scopeID = SqlClientEventSource.Log.AdvanceScopeEnter("<sc.SqlDataReaderSmi.InternalNextResult|ADV> {0}#", ObjectID);
             try
             {
                 _hasRows = false;
@@ -471,10 +466,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                if (Bid.AdvancedOn)
-                {
-                    Bid.ScopeLeave(ref hscp);
-                }
+                SqlClientEventSource.Log.AdvanceScopeLeave(scopeID);
             }
         }
 
@@ -494,11 +486,7 @@ namespace Microsoft.Data.SqlClient
 
         internal unsafe bool InternalRead(bool ignoreNonFatalErrors)
         {
-            IntPtr hscp = IntPtr.Zero;
-            if (Bid.AdvancedOn)
-            {
-                Bid.ScopeEnter(out hscp, "<sc.SqlDataReaderSmi.InternalRead|ADV> %d#", ObjectID);
-            }
+            long scopeID = SqlClientEventSource.Log.AdvanceScopeEnter("<sc.SqlDataReaderSmi.InternalRead|ADV> {0}#", ObjectID);
             try
             {
                 // Don't move unless currently in results.
@@ -537,10 +525,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                if (Bid.AdvancedOn)
-                {
-                    Bid.ScopeLeave(ref hscp);
-                }
+                SqlClientEventSource.Log.AdvanceScopeLeave(scopeID);
             }
         }
 
@@ -1144,10 +1129,12 @@ namespace Microsoft.Data.SqlClient
                 for (int i = 0; i < _visibleColumnCount; i++)
                 {
 #if DEBUG
-                    if (_currentMetaData[_indexMap[i]].IsHidden.IsTrue) {
+                    if (_currentMetaData[_indexMap[i]].IsHidden.IsTrue)
+                    {
                         sawHiddenColumn = true;
                     }
-                    else {
+                    else
+                    {
                         Debug.Assert(!sawHiddenColumn);
                     }
 #endif
@@ -1328,16 +1315,16 @@ namespace Microsoft.Data.SqlClient
 
             internal override void MetaDataAvailable(SmiQueryMetaData[] md, bool nextEventIsRow)
             {
-                if (Bid.AdvancedOn)
-                {
-                    Bid.Trace("<sc.SqlDataReaderSmi.ReaderEventSink.MetaDataAvailable|ADV> %d#, md.Length=%d nextEventIsRow=%d.\n", reader.ObjectID, (null != md) ? md.Length : -1, nextEventIsRow);
+                var mdLength = (null != md) ? md.Length : -1;
+                SqlClientEventSource.Log.AdvanceTrace("<sc.SqlDataReaderSmi.ReaderEventSink.MetaDataAvailable|ADV> {0}#, md.Length={1} nextEventIsRow={2}.", reader.ObjectID, mdLength, nextEventIsRow);
 
+                if (SqlClientEventSource.Log.IsAdvanceTraceOn())
+                {
                     if (null != md)
                     {
                         for (int i = 0; i < md.Length; i++)
                         {
-                            Bid.Trace("<sc.SqlDataReaderSmi.ReaderEventSink.MetaDataAvailable|ADV> %d#, metaData[%d] is %ls%ls\n",
-                                            reader.ObjectID, i, md[i].GetType().ToString(), md[i].TraceString());
+                            SqlClientEventSource.Log.TraceEvent("<sc.SqlDataReaderSmi.ReaderEventSink.MetaDataAvailable|ADV> {0}#, metaData[{1}] is {2}{3}", reader.ObjectID, i, md[i].GetType().ToString(), md[i].TraceString());
                         }
                     }
                 }
@@ -1347,57 +1334,40 @@ namespace Microsoft.Data.SqlClient
             // Obsolete V2- method
             internal override void RowAvailable(ITypedGetters row)
             {
-                if (Bid.AdvancedOn)
-                {
-                    Bid.Trace("<sc.SqlDataReaderSmi.ReaderEventSink.RowAvailable|ADV> %d# (v2).\n", reader.ObjectID);
-                }
+                SqlClientEventSource.Log.AdvanceTrace("<sc.SqlDataReaderSmi.ReaderEventSink.RowAvailable|ADV> {0}# (v2).", reader.ObjectID);
                 this.reader.RowAvailable(row);
             }
 
             internal override void RowAvailable(ITypedGettersV3 row)
             {
-                if (Bid.AdvancedOn)
-                {
-                    Bid.Trace("<sc.SqlDataReaderSmi.ReaderEventSink.RowAvailable|ADV> %d# (ITypedGettersV3).\n", reader.ObjectID);
-                }
+                SqlClientEventSource.Log.AdvanceTrace("<sc.SqlDataReaderSmi.ReaderEventSink.RowAvailable|ADV> {0}# (ITypedGettersV3).", reader.ObjectID);
                 this.reader.RowAvailable(row);
             }
 
             internal override void RowAvailable(SmiTypedGetterSetter rowData)
             {
-                if (Bid.AdvancedOn)
-                {
-                    Bid.Trace("<sc.SqlDataReaderSmi.ReaderEventSink.RowAvailable|ADV> %d# (SmiTypedGetterSetter).\n", reader.ObjectID);
-                }
+                SqlClientEventSource.Log.AdvanceTrace("<sc.SqlDataReaderSmi.ReaderEventSink.RowAvailable|ADV> {0}# (SmiTypedGetterSetter).", reader.ObjectID);
                 this.reader.RowAvailable(rowData);
             }
 
             internal override void StatementCompleted(int recordsAffected)
             {
-                if (Bid.AdvancedOn)
-                {
-                    Bid.Trace("<sc.SqlDataReaderSmi.ReaderEventSink.StatementCompleted|ADV> %d# recordsAffected=%d.\n", reader.ObjectID, recordsAffected);
-                }
+                SqlClientEventSource.Log.AdvanceTrace("<sc.SqlDataReaderSmi.ReaderEventSink.StatementCompleted|ADV> {0}# recordsAffected= {1}.", reader.ObjectID, recordsAffected);
 
                 // devnote: relies on SmiEventSink_Default to pass event to parent
                 // Both command and reader care about StatementCompleted, but for different reasons.
-
                 base.StatementCompleted(recordsAffected);
                 this.reader.StatementCompleted();
             }
 
             internal override void BatchCompleted()
             {
-                if (Bid.AdvancedOn)
-                {
-                    Bid.Trace("<sc.SqlDataReaderSmi.ReaderEventSink.BatchCompleted|ADV> %d#.\n", reader.ObjectID);
-                }
+                SqlClientEventSource.Log.AdvanceTrace("<sc.SqlDataReaderSmi.ReaderEventSink.BatchCompleted|ADV> {0}#.", reader.ObjectID);
 
                 // devnote: relies on SmiEventSink_Default to pass event to parent
                 //  parent's callback *MUST* come before reader's BatchCompleted, since
                 //  reader will close the event stream during this call, and parent wants
                 //  to extract parameter values before that happens.
-
                 base.BatchCompleted();
                 this.reader.BatchCompleted();
             }

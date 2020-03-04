@@ -106,7 +106,7 @@ namespace Microsoft.Data.SqlClient
 
                     _providers[authentication] = provider;
                     authenticationsWithAppSpecifiedProvider.Add(authentication);
-                    _sqlAuthLogger.LogInfo(_typeName, methodName, $"Added user-defined auth provider: {providerSettings.Type} for authentication {authentication}.");
+                    _sqlAuthLogger.LogInfo(_typeName, methodName, string.Format("Added user-defined auth provider: {0} for authentication {1}.", providerSettings?.Type, authentication));
                 }
             }
             else

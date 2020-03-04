@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Microsoft.Data.Common;
+
 using SysTx = System.Transactions;
 
 namespace Microsoft.Data.SqlClient
@@ -88,24 +89,26 @@ namespace Microsoft.Data.SqlClient
             // transaction.
             SqlInternalConnection connection = _connection;
             SqlConnection usersConnection = connection.Connection;
-
-            Bid.Trace("<sc.SqlDelegatedTransaction.Initialize|RES|CPOOL> %d#, Connection %d#, delegating transaction.\n", ObjectID, connection.ObjectID);
-
+            SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.Initialize|RES|CPOOL> {0}#, Connection {1}#, delegating transaction.", ObjectID, connection.ObjectID);
             RuntimeHelpers.PrepareConstrainedRegions();
+
             try
             {
 #if DEBUG
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
-                try {
+                try
+                {
                     tdsReliabilitySection.Start();
 #else
                 {
 #endif //DEBUG
                     if (connection.IsEnlistedInTransaction)
-                    { // defect first
-                        Bid.Trace("<sc.SqlDelegatedTransaction.Initialize|RES|CPOOL> %d#, Connection %d#, was enlisted, now defecting.\n", ObjectID, connection.ObjectID);
+                    {
+                        SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.Initialize|RES|CPOOL> {0}#, Connection {1}#, was enlisted, now defecting.", ObjectID, connection.ObjectID);
+
+                        // defect first
                         connection.EnlistNull();
                     }
 
@@ -123,7 +126,8 @@ namespace Microsoft.Data.SqlClient
                     _active = true;
                 }
 #if DEBUG
-                finally {
+                finally
+                {
                     tdsReliabilitySection.Stop();
                 }
 #endif //DEBUG
@@ -164,17 +168,17 @@ namespace Microsoft.Data.SqlClient
             Exception promoteException;
             byte[] returnValue = null;
             SqlConnection usersConnection = connection.Connection;
-
-            Bid.Trace("<sc.SqlDelegatedTransaction.Promote|RES|CPOOL> %d#, Connection %d#, promoting transaction.\n", ObjectID, connection.ObjectID);
-
+            SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.Promote|RES|CPOOL> {0}#, Connection {1}#, promoting transaction.", ObjectID, connection.ObjectID);
             RuntimeHelpers.PrepareConstrainedRegions();
+
             try
             {
 #if DEBUG
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
-                try {
+                try
+                {
                     tdsReliabilitySection.Start();
 #else
                 {
@@ -227,7 +231,8 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
 #if DEBUG
-                finally {
+                finally
+                {
                     tdsReliabilitySection.Stop();
                 }
 #endif //DEBUG
@@ -263,17 +268,17 @@ namespace Microsoft.Data.SqlClient
 
             SqlInternalConnection connection = GetValidConnection();
             SqlConnection usersConnection = connection.Connection;
-
-            Bid.Trace("<sc.SqlDelegatedTransaction.Rollback|RES|CPOOL> %d#, Connection %d#, aborting transaction.\n", ObjectID, connection.ObjectID);
-
+            SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.Rollback|RES|CPOOL> {0}#, Connection {1}#, aborting transaction.", ObjectID, connection.ObjectID);
             RuntimeHelpers.PrepareConstrainedRegions();
+
             try
             {
 #if DEBUG
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
-                try {
+                try
+                {
                     tdsReliabilitySection.Start();
 #else
                 {
@@ -327,7 +332,8 @@ namespace Microsoft.Data.SqlClient
                     enlistment.Aborted();
                 }
 #if DEBUG
-                finally {
+                finally
+                {
                     tdsReliabilitySection.Stop();
                 }
 #endif //DEBUG
@@ -356,17 +362,17 @@ namespace Microsoft.Data.SqlClient
 
             SqlInternalConnection connection = GetValidConnection();
             SqlConnection usersConnection = connection.Connection;
-
-            Bid.Trace("<sc.SqlDelegatedTransaction.SinglePhaseCommit|RES|CPOOL> %d#, Connection %d#, committing transaction.\n", ObjectID, connection.ObjectID);
-
+            SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.SinglePhaseCommit|RES|CPOOL> {0}#, Connection {1}#, committing transaction.", ObjectID, connection.ObjectID);
             RuntimeHelpers.PrepareConstrainedRegions();
+
             try
             {
 #if DEBUG
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
-                try {
+                try
+                {
                     tdsReliabilitySection.Start();
 #else
                 {
@@ -455,7 +461,8 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
 #if DEBUG
-                finally {
+                finally
+                {
                     tdsReliabilitySection.Stop();
                 }
 #endif //DEBUG
@@ -487,7 +494,7 @@ namespace Microsoft.Data.SqlClient
 
             if (connection != null)
             {
-                Bid.Trace("<sc.SqlDelegatedTransaction.TransactionEnded|RES|CPOOL> %d#, Connection %d#, transaction completed externally.\n", ObjectID, connection.ObjectID);
+                SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.TransactionEnded|RES|CPOOL> {0}#, Connection {1}#, transaction completed externally.", ObjectID, connection.ObjectID);
 
                 lock (connection)
                 {

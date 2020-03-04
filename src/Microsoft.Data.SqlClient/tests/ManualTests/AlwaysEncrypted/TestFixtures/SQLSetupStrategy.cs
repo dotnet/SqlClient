@@ -17,6 +17,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         protected internal readonly X509Certificate2 certificate;
         public string keyPath { get; internal set; }
         public Table ApiTestTable { get; private set; }
+        public Table BulkCopyAEErrorMessageTestTable { get; private set; }
         public Table BulkCopyAETestTable { get; private set; }
         public Table SqlParameterPropertiesTable { get; private set; }
         public Table End2EndSmokeTable { get; private set; }
@@ -111,6 +112,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             ApiTestTable = new ApiTestTable(GenerateUniqueName("ApiTestTable"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
             tables.Add(ApiTestTable);
+
+            BulkCopyAEErrorMessageTestTable = new BulkCopyAEErrorMessageTestTable(GenerateUniqueName("BulkCopyAEErrorMessageTestTable"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
+            tables.Add(BulkCopyAEErrorMessageTestTable);
 
             BulkCopyAETestTable = new BulkCopyAETestTable(GenerateUniqueName("BulkCopyAETestTable"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
             tables.Add(BulkCopyAETestTable);

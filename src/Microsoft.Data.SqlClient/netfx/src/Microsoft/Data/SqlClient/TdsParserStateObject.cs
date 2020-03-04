@@ -174,7 +174,7 @@ namespace Microsoft.Data.SqlClient
 
         private SniContext _sniContext = SniContext.Undefined;
 #if DEBUG
-        private SniContext _debugOnlyCopyOfSniContext=SniContext.Undefined;
+        private SniContext _debugOnlyCopyOfSniContext = SniContext.Undefined;
 #endif
 
         private bool _bcpLock = false;
@@ -328,8 +328,10 @@ namespace Microsoft.Data.SqlClient
         }
 
 #if DEBUG
-        internal SniContext DebugOnlyCopyOfSniContext {
-            get {
+        internal SniContext DebugOnlyCopyOfSniContext
+        {
+            get
+            {
                 return _debugOnlyCopyOfSniContext;
             }
         }
@@ -352,7 +354,8 @@ namespace Microsoft.Data.SqlClient
         }
 
 #if DEBUG
-        internal void InvalidateDebugOnlyCopyOfSniContext() {
+        internal void InvalidateDebugOnlyCopyOfSniContext()
+        {
             _debugOnlyCopyOfSniContext = SniContext.Undefined;
         }
 #endif
@@ -556,12 +559,8 @@ namespace Microsoft.Data.SqlClient
                 {
                     return false;
                 }
-
-                if (Bid.TraceOn)
-                {
-                    Bid.Trace("<sc.TdsParserStateObject.NullBitmap.Initialize|INFO|ADV> %d#, NBCROW bitmap received, column count = %d\n", stateObj.ObjectID, columnsCount);
-                    Bid.TraceBin("<sc.TdsParserStateObject.NullBitmap.Initialize|INFO|ADV> NBCROW bitmap data: ", _nullBitmap, (UInt16)_nullBitmap.Length);
-                }
+                SqlClientEventSource.Log.TraceEvent("<sc.TdsParserStateObject.NullBitmap.Initialize|INFO|ADV> {0}#, NBCROW bitmap received, column count = {1}", stateObj.ObjectID, columnsCount);
+                SqlClientEventSource.Log.TraceBinEvent("<sc.TdsParserStateObject.NullBitmap.Initialize|INFO|ADV> NBCROW bitmap data: ", _nullBitmap, (ushort)_nullBitmap.Length);
 
                 return true;
             }
@@ -791,7 +790,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         tdsReliabilitySection.Start();
 #endif //DEBUG
-                    Parser.ProcessPendingAck(this);
+                        Parser.ProcessPendingAck(this);
 #if DEBUG
                     }
                     finally
@@ -914,17 +913,11 @@ namespace Microsoft.Data.SqlClient
         internal int DecrementPendingCallbacks(bool release)
         {
             int remaining = Interlocked.Decrement(ref _pendingCallbacks);
-            if (Bid.AdvancedOn)
-            {
-                Bid.Trace("<sc.TdsParserStateObject.DecrementPendingCallbacks|ADV> %d#, after decrementing _pendingCallbacks: %d\n", ObjectID, _pendingCallbacks);
-            }
+            SqlClientEventSource.Log.AdvanceTrace("<sc.TdsParserStateObject.DecrementPendingCallbacks|ADV> {0}#, after decrementing _pendingCallbacks: {1}", ObjectID, _pendingCallbacks);
 
             if ((0 == remaining || release) && _gcHandle.IsAllocated)
             {
-                if (Bid.AdvancedOn)
-                {
-                    Bid.Trace("<sc.TdsParserStateObject.DecrementPendingCallbacks|ADV> %d#, FREEING HANDLE!\n", ObjectID);
-                }
+                SqlClientEventSource.Log.AdvanceTrace("<sc.TdsParserStateObject.DecrementPendingCallbacks|ADV> {0}#, FREEING HANDLE!", ObjectID);
                 _gcHandle.Free();
             }
 
@@ -1032,10 +1025,8 @@ namespace Microsoft.Data.SqlClient
         internal int IncrementPendingCallbacks()
         {
             int remaining = Interlocked.Increment(ref _pendingCallbacks);
-            if (Bid.AdvancedOn)
-            {
-                Bid.Trace("<sc.TdsParserStateObject.IncrementPendingCallbacks|ADV> %d#, after incrementing _pendingCallbacks: %d\n", ObjectID, _pendingCallbacks);
-            }
+
+            SqlClientEventSource.Log.AdvanceTrace("<sc.TdsParserStateObject.IncrementPendingCallbacks|ADV> {0}#, after incrementing _pendingCallbacks: {1}", ObjectID, _pendingCallbacks);
             Debug.Assert(0 < remaining && remaining <= 3, $"_pendingCallbacks values is invalid after incrementing: {remaining}");
             return remaining;
         }
@@ -1375,15 +1366,18 @@ namespace Microsoft.Data.SqlClient
             totalRead = 0;
 
 #if DEBUG
-            if (_snapshot != null && _snapshot.DoPend()) {
+            if (_snapshot != null && _snapshot.DoPend())
+            {
                 _networkPacketTaskSource = new TaskCompletionSource<object>();
                 Thread.MemoryBarrier();
 
-                if (_forcePendingReadsToWaitForUser) {
+                if (_forcePendingReadsToWaitForUser)
+                {
                     _realNetworkPacketTaskSource = new TaskCompletionSource<object>();
                     _realNetworkPacketTaskSource.SetResult(null);
                 }
-                else {
+                else
+                {
                     _networkPacketTaskSource.TrySetResult(null);
                 }
                 return false;
@@ -1430,15 +1424,18 @@ namespace Microsoft.Data.SqlClient
             value = 0;
 
 #if DEBUG
-            if (_snapshot != null && _snapshot.DoPend()) {
+            if (_snapshot != null && _snapshot.DoPend())
+            {
                 _networkPacketTaskSource = new TaskCompletionSource<object>();
                 Thread.MemoryBarrier();
 
-                if (_forcePendingReadsToWaitForUser) {
+                if (_forcePendingReadsToWaitForUser)
+                {
                     _realNetworkPacketTaskSource = new TaskCompletionSource<object>();
                     _realNetworkPacketTaskSource.SetResult(null);
                 }
-                else {
+                else
+                {
                     _networkPacketTaskSource.TrySetResult(null);
                 }
                 return false;
@@ -2157,16 +2154,19 @@ namespace Microsoft.Data.SqlClient
                     if (_snapshot.Replay())
                     {
 #if DEBUG
-                        if (_checkNetworkPacketRetryStacks) {
+                        if (_checkNetworkPacketRetryStacks)
+                        {
                             _snapshot.CheckStack(new StackTrace());
                         }
 #endif
-                        Bid.Trace("<sc.TdsParser.ReadNetworkPacket|INFO|ADV> Async packet replay\n");
+                        SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.ReadNetworkPacket|{0}|ADV> Async packet replay{0}", "INFO");
                         return true;
                     }
 #if DEBUG
-                    else {
-                        if (_checkNetworkPacketRetryStacks) {
+                    else
+                    {
+                        if (_checkNetworkPacketRetryStacks)
+                        {
                             _lastStack = new StackTrace();
                         }
                     }
@@ -2186,10 +2186,12 @@ namespace Microsoft.Data.SqlClient
             ReadSni(new TaskCompletionSource<object>());
 
 #if DEBUG
-            if (_failAsyncPends) {
+            if (_failAsyncPends)
+            {
                 throw new InvalidOperationException("Attempted to pend a read when _failAsyncPends test hook was enabled");
             }
-            if (_forceSyncOverAsyncAfterFirstPend) {
+            if (_forceSyncOverAsyncAfterFirstPend)
+            {
                 _syncOverAsync = true;
             }
 #endif
@@ -2244,7 +2246,8 @@ namespace Microsoft.Data.SqlClient
                     Debug.Assert(ADP.PtrZero != readPacket, "ReadNetworkPacket cannot be null in synchronous operation!");
                     ProcessSniPacket(readPacket, 0);
 #if DEBUG
-                    if (_forcePendingReadsToWaitForUser) {
+                    if (_forcePendingReadsToWaitForUser)
+                    {
                         _networkPacketTaskSource = new TaskCompletionSource<object>();
                         Thread.MemoryBarrier();
                         _networkPacketTaskSource.Task.Wait();
@@ -2432,7 +2435,8 @@ namespace Microsoft.Data.SqlClient
             }
 
 #if DEBUG
-            if (_forcePendingReadsToWaitForUser) {
+            if (_forcePendingReadsToWaitForUser)
+            {
                 _realNetworkPacketTaskSource = new TaskCompletionSource<object>();
             }
 #endif
@@ -2500,7 +2504,8 @@ namespace Microsoft.Data.SqlClient
                     Debug.Assert(IntPtr.Zero == readPacket, "unexpected readPacket without corresponding SNIPacketRelease");
                     ReadSniError(this, error);
 #if DEBUG
-                    if ((_forcePendingReadsToWaitForUser) && (_realNetworkPacketTaskSource != null)) {
+                    if ((_forcePendingReadsToWaitForUser) && (_realNetworkPacketTaskSource != null))
+                    {
                         _realNetworkPacketTaskSource.TrySetResult(null);
                     }
                     else
@@ -2576,7 +2581,8 @@ namespace Microsoft.Data.SqlClient
                         if ((error != TdsEnums.SNI_SUCCESS) && (error != TdsEnums.SNI_WAIT_TIMEOUT))
                         {
                             // Connection is dead
-                            Bid.Trace("<sc.TdsParser.IsConnectionAlive|Info> received error %d on idle connection\n", (int)error);
+                            SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.IsConnectionAlive|Info> received error {0} on idle connection", (int)error);
+
                             isAlive = false;
                             if (throwOnException)
                             {
@@ -2789,14 +2795,8 @@ namespace Microsoft.Data.SqlClient
 #endif
                         }
                     }
-
                     SniReadStatisticsAndTracing();
-
-                    if (Bid.AdvancedOn)
-                    {
-                        Bid.TraceBin("<sc.TdsParser.ReadNetworkPacketAsyncCallback|INFO|ADV> Packet read", _inBuff, (UInt16)_inBytesRead);
-                    }
-
+                    SqlClientEventSource.Log.AdvanceTraceBin("<sc.TdsParser.ReadNetworkPacketAsyncCallback|INFO|ADV> Packet read", _inBuff, (ushort)_inBytesRead);
                     AssertValidState();
                 }
                 else
@@ -2836,7 +2836,8 @@ namespace Microsoft.Data.SqlClient
 
             TaskCompletionSource<object> source = _networkPacketTaskSource;
 #if DEBUG
-            if ((_forcePendingReadsToWaitForUser) && (_realNetworkPacketTaskSource != null)) {
+            if ((_forcePendingReadsToWaitForUser) && (_realNetworkPacketTaskSource != null))
+            {
                 source = _realNetworkPacketTaskSource;
             }
 #endif
@@ -2952,7 +2953,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (sniError != TdsEnums.SNI_SUCCESS)
                 {
-                    Bid.Trace("<sc.TdsParser.WriteAsyncCallback|Info> write async returned error code %d\n", (int)sniError);
+                    SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.WriteAsyncCallback|Info> write async returned error code {0}", (int)sniError);
                     try
                     {
                         AddError(_parser.ProcessSNIError(this));
@@ -2995,16 +2996,20 @@ namespace Microsoft.Data.SqlClient
             finally
             {
 #if DEBUG
-                if (SqlCommand.DebugForceAsyncWriteDelay > 0) {
-                     new Timer(obj => {
+                if (SqlCommand.DebugForceAsyncWriteDelay > 0)
+                {
+                    new Timer(obj =>
+                    {
                         Interlocked.Decrement(ref _asyncWriteCount);
                         var writeCompletionSource = _writeCompletionSource;
-                        if (_asyncWriteCount == 0 && writeCompletionSource != null) {
+                        if (_asyncWriteCount == 0 && writeCompletionSource != null)
+                        {
                             writeCompletionSource.TrySetResult(null);
                         }
                     }, null, SqlCommand.DebugForceAsyncWriteDelay, Timeout.Infinite);
                 }
-                else {
+                else
+                {
 #else
                 {
 #endif
@@ -3012,7 +3017,8 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 #if DEBUG
-            if (SqlCommand.DebugForceAsyncWriteDelay > 0) {
+            if (SqlCommand.DebugForceAsyncWriteDelay > 0)
+            {
                 return;
             }
 #endif
@@ -3399,30 +3405,37 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 #if DEBUG
-            else if (!sync && !canAccumulate && SqlCommand.DebugForceAsyncWriteDelay > 0) {
-                    // Executed synchronously - callback will not be called 
-                    TaskCompletionSource<object> completion = new TaskCompletionSource<object>();
-                    uint error = sniError;
-                    new Timer(obj=>{
-                            try {
-                                if (_parser.MARSOn) { // Only take reset lock on MARS.
-                                    CheckSetResetConnectionState(error, CallbackType.Write);
-                                }
+            else if (!sync && !canAccumulate && SqlCommand.DebugForceAsyncWriteDelay > 0)
+            {
+                // Executed synchronously - callback will not be called 
+                TaskCompletionSource<object> completion = new TaskCompletionSource<object>();
+                uint error = sniError;
+                new Timer(obj =>
+                {
+                    try
+                    {
+                        if (_parser.MARSOn)
+                        { // Only take reset lock on MARS.
+                            CheckSetResetConnectionState(error, CallbackType.Write);
+                        }
 
-                                if (error != TdsEnums.SNI_SUCCESS) {
-                                    Bid.Trace("<sc.TdsParser.WritePacket|Info> write async returned error code %d\n", (int)error);
-                                    AddError(_parser.ProcessSNIError(this));
-                                    ThrowExceptionAndWarning();
-                                }
-                                AssertValidState();
-                                completion.SetResult(null);
-                            }
-                            catch (Exception e) {
-                                completion.SetException(e);
-                            }
-                        },null,SqlCommand.DebugForceAsyncWriteDelay,Timeout.Infinite);
-                    task = completion.Task;
-                }
+                        if (error != TdsEnums.SNI_SUCCESS)
+                        {
+                            SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.WritePacket|Info> write async returned error code {0}", (int)error);
+
+                            AddError(_parser.ProcessSNIError(this));
+                            ThrowExceptionAndWarning();
+                        }
+                        AssertValidState();
+                        completion.SetResult(null);
+                    }
+                    catch (Exception e)
+                    {
+                        completion.SetException(e);
+                    }
+                }, null, SqlCommand.DebugForceAsyncWriteDelay, Timeout.Infinite);
+                task = completion.Task;
+            }
 
 #endif
             else
@@ -3446,7 +3459,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    Bid.Trace("<sc.TdsParser.WritePacket|Info> write async returned error code %d\n", (int)sniError);
+                    SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.WritePacket|Info> write async returned error code {0}", (int)sniError);
                     AddError(_parser.ProcessSNIError(this));
                     ThrowExceptionAndWarning(callerHasConnectionLock);
                 }
@@ -3487,35 +3500,35 @@ namespace Microsoft.Data.SqlClient
                     if (!_skipSendAttention)
                     {
 #endif
-                    // Take lock and send attention
-                    bool releaseLock = false;
-                    if ((mustTakeWriteLock) && (!_parser.Connection.ThreadHasParserLockForClose))
-                    {
-                        releaseLock = true;
-                        _parser.Connection._parserLock.Wait(canReleaseFromAnyThread: false);
-                        _parser.Connection.ThreadHasParserLockForClose = true;
-                    }
-                    try
-                    {
-                        // Check again (just in case the connection was closed while we were waiting)
-                        if (_parser.State == TdsParserState.Closed || _parser.State == TdsParserState.Broken)
+                        // Take lock and send attention
+                        bool releaseLock = false;
+                        if ((mustTakeWriteLock) && (!_parser.Connection.ThreadHasParserLockForClose))
                         {
-                            return;
+                            releaseLock = true;
+                            _parser.Connection._parserLock.Wait(canReleaseFromAnyThread: false);
+                            _parser.Connection.ThreadHasParserLockForClose = true;
                         }
+                        try
+                        {
+                            // Check again (just in case the connection was closed while we were waiting)
+                            if (_parser.State == TdsParserState.Closed || _parser.State == TdsParserState.Broken)
+                            {
+                                return;
+                            }
 
-                        UInt32 sniError;
-                        _parser._asyncWrite = false; // stop async write 
-                        SNIWritePacket(Handle, attnPacket, out sniError, canAccumulate: false, callerHasConnectionLock: false);
-                        Bid.Trace("<sc.TdsParser.SendAttention|Info> Send Attention ASync .\n");
-                    }
-                    finally
-                    {
-                        if (releaseLock)
-                        {
-                            _parser.Connection.ThreadHasParserLockForClose = false;
-                            _parser.Connection._parserLock.Release();
+                            UInt32 sniError;
+                            _parser._asyncWrite = false; // stop async write 
+                            SNIWritePacket(Handle, attnPacket, out sniError, canAccumulate: false, callerHasConnectionLock: false);
+                            SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.SendAttention|{0}> Send Attention ASync.", "Info");
                         }
-                    }
+                        finally
+                        {
+                            if (releaseLock)
+                            {
+                                _parser.Connection.ThreadHasParserLockForClose = false;
+                                _parser.Connection._parserLock.Release();
+                            }
+                        }
 
 #if DEBUG
                     }
@@ -3529,11 +3542,8 @@ namespace Microsoft.Data.SqlClient
                     _attentionSending = false;
                 }
 
-                if (Bid.AdvancedOn)
-                {
-                    Bid.TraceBin("<sc.TdsParser.WritePacket|INFO|ADV>  Packet sent", _outBuff, (UInt16)_outBytesUsed);
-                }
-                Bid.Trace("<sc.TdsParser.SendAttention|Info> Attention sent to the server.\n");
+                SqlClientEventSource.Log.AdvanceTraceBin("<sc.TdsParser.WritePacket|INFO|ADV>  Packet sent", _outBuff, (ushort)_outBytesUsed);
+                SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.SendAttention|{0}> Attention sent to the server.", "Info");
 
                 AssertValidState();
             }
@@ -3652,7 +3662,8 @@ namespace Microsoft.Data.SqlClient
                     _writePacketCache.Add(recoveredPacket);
                 }
 #if DEBUG
-                else {
+                else
+                {
                     Debug.Assert(false, "Removing a packet from the pending list that was never added to it");
                 }
 #endif
@@ -3688,8 +3699,7 @@ namespace Microsoft.Data.SqlClient
                 statistics.SafeAdd(ref statistics._bytesSent, _outBytesUsed);
                 statistics.RequestNetworkServerTimer();
             }
-
-            if (Bid.AdvancedOn)
+            if (SqlClientEventSource.Log.IsAdvanceTraceOn())
             {
                 // If we have tracePassword variables set, we are flushing TDSLogin and so we need to
                 // blank out password in buffer.  Buffer has already been sent to netlib, so no danger
@@ -3718,8 +3728,8 @@ namespace Microsoft.Data.SqlClient
                     _traceChangePasswordOffset = 0;
                     _traceChangePasswordLength = 0;
                 }
-                Bid.TraceBin("<sc.TdsParser.WritePacket|INFO|ADV>  Packet sent", _outBuff, (UInt16)_outBytesUsed);
             }
+            SqlClientEventSource.Log.AdvanceTraceBin("<sc.TdsParser.WritePacket|INFO|ADV>  Packet sent", _outBuff, (ushort)_outBytesUsed);
         }
 
         [Conditional("DEBUG")]
@@ -3993,22 +4003,28 @@ namespace Microsoft.Data.SqlClient
         }
 
 #if DEBUG
-        internal void CompletePendingReadWithSuccess(bool resetForcePendingReadsToWait) {
+        internal void CompletePendingReadWithSuccess(bool resetForcePendingReadsToWait)
+        {
             var realNetworkPacketTaskSource = _realNetworkPacketTaskSource;
             var networkPacketTaskSource = _networkPacketTaskSource;
 
             Debug.Assert(_forcePendingReadsToWaitForUser, "Not forcing pends to wait for user - can't force complete");
             Debug.Assert(networkPacketTaskSource != null, "No pending read to complete");
-            
-            try {
-                if (realNetworkPacketTaskSource != null) {
+
+            try
+            {
+                if (realNetworkPacketTaskSource != null)
+                {
                     // Wait for the real read to complete
                     realNetworkPacketTaskSource.Task.Wait();
                 }
             }
-            finally {
-                if (networkPacketTaskSource != null) {
-                    if (resetForcePendingReadsToWait) {
+            finally
+            {
+                if (networkPacketTaskSource != null)
+                {
+                    if (resetForcePendingReadsToWait)
+                    {
                         _forcePendingReadsToWaitForUser = false;
                     }
 
@@ -4017,30 +4033,38 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal void CompletePendingReadWithFailure(int errorCode, bool resetForcePendingReadsToWait) {
+        internal void CompletePendingReadWithFailure(int errorCode, bool resetForcePendingReadsToWait)
+        {
             var realNetworkPacketTaskSource = _realNetworkPacketTaskSource;
             var networkPacketTaskSource = _networkPacketTaskSource;
 
             Debug.Assert(_forcePendingReadsToWaitForUser, "Not forcing pends to wait for user - can't force complete");
             Debug.Assert(networkPacketTaskSource != null, "No pending read to complete");
-            
-            try {
-                if (realNetworkPacketTaskSource != null) {
+
+            try
+            {
+                if (realNetworkPacketTaskSource != null)
+                {
                     // Wait for the real read to complete
                     realNetworkPacketTaskSource.Task.Wait();
                 }
             }
-            finally {
-                if (networkPacketTaskSource != null) {
-                    if (resetForcePendingReadsToWait) {
+            finally
+            {
+                if (networkPacketTaskSource != null)
+                {
+                    if (resetForcePendingReadsToWait)
+                    {
                         _forcePendingReadsToWaitForUser = false;
                     }
 
                     AddError(new SqlError(errorCode, 0x00, TdsEnums.FATAL_ERROR_CLASS, _parser.Server, string.Empty, string.Empty, 0));
-                    try {
+                    try
+                    {
                         ThrowExceptionAndWarning();
                     }
-                    catch (Exception ex) {
+                    catch (Exception ex)
+                    {
                         networkPacketTaskSource.TrySetException(ex);
                     }
                 }
@@ -4096,12 +4120,15 @@ namespace Microsoft.Data.SqlClient
             private int _rollingPend = 0;
             private int _rollingPendCount = 0;
 
-            internal bool DoPend() {
-                if (_failAsyncPends || !_forceAllPends) {
+            internal bool DoPend()
+            {
+                if (_failAsyncPends || !_forceAllPends)
+                {
                     return false;
                 }
 
-                if (_rollingPendCount == _rollingPend) {
+                if (_rollingPendCount == _rollingPend)
+                {
                     _rollingPend++;
                     _rollingPendCount = 0;
                     return true;

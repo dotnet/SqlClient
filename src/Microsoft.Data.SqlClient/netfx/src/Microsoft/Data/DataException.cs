@@ -7,10 +7,10 @@ using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
 using System.Globalization;
+using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data
 {
-
     internal static class ExceptionBuilder
     {
         // The class defines the exceptions that are specific to the DataSet.
@@ -22,41 +22,35 @@ namespace Microsoft.Data
         // The resource Data.txt will ensure proper string text based on the appropriate
         // locale.
 
-        [BidMethod] // this method accepts BID format as an argument, this attribute allows FXCopBid rule to validate calls to it
         static private void TraceException(
-                string trace,
-                [BidArgumentType(typeof(String))] Exception e)
+                string trace, Exception e)
         {
             Debug.Assert(null != e, "TraceException: null Exception");
             if (null != e)
             {
-                Bid.Trace(trace, e.Message);
-                if (Bid.AdvancedOn)
+                SqlClientEventSource.Log.AdvanceTrace(trace, e.Message);
+                try
                 {
-                    try
-                    {
-                        Bid.Trace(", StackTrace='%ls'", Environment.StackTrace);
-                    }
-                    catch (System.Security.SecurityException)
-                    {
-                        // if you don't have permission - you don't get the stack trace
-                    }
+                    SqlClientEventSource.Log.AdvanceTrace("<comm.ADP.TraceException|ERR|ADV> Environment StackTrace = '{0}'", Environment.StackTrace);
                 }
-                Bid.Trace("\n");
+                catch (System.Security.SecurityException)
+                {
+                    // if you don't have permission - you don't get the stack trace
+                }
             }
         }
 
         static internal void TraceExceptionAsReturnValue(Exception e)
         {
-            TraceException("<comm.ADP.TraceException|ERR|THROW> Message='%ls'", e);
+            TraceException("<comm.ADP.TraceException|ERR|THROW> Message='{0}'", e);
         }
         static internal void TraceExceptionForCapture(Exception e)
         {
-            TraceException("<comm.ADP.TraceException|ERR|CATCH> Message='%ls'", e);
+            TraceException("<comm.ADP.TraceException|ERR|CATCH> Message = {0}", e);
         }
         static internal void TraceExceptionWithoutRethrow(Exception e)
         {
-            TraceException("<comm.ADP.TraceException|ERR|CATCH> Message='%ls'", e);
+            TraceException("<comm.ADP.TraceException|ERR|CATCH> Message = '{0}'", e);
         }
 
         //
@@ -217,7 +211,6 @@ namespace Microsoft.Data
         {
             return _Argument(paramName, StringsHelper.GetString(Strings.Data_ArgumentContainsNull, paramName));
         }
-
 
         //
         // Collections
@@ -899,7 +892,6 @@ namespace Microsoft.Data
             return _InvalidOperation(StringsHelper.GetString(Strings.DataRelation_InValidNestedRelation, childTableName));
         }
 
-
         static public Exception InvalidParentNamespaceinNestedRelation(string childTableName)
         {
             return _InvalidOperation(StringsHelper.GetString(Strings.DataRelation_InValidNamespaceInNestedRelation, childTableName));
@@ -1168,11 +1160,12 @@ namespace Microsoft.Data
         static public Exception InvalidRemotingFormat(SerializationFormat mode)
         {
 #if DEBUG
-            switch(mode) {
-            case SerializationFormat.Xml:
-            case SerializationFormat.Binary:
-                Debug.Assert(false, "valid SerializationFormat " + mode.ToString());
-                break;
+            switch (mode)
+            {
+                case SerializationFormat.Xml:
+                case SerializationFormat.Binary:
+                    Debug.Assert(false, "valid SerializationFormat " + mode.ToString());
+                    break;
             }
 #endif
             return _InvalidEnumArgumentException<SerializationFormat>(mode);
@@ -1295,7 +1288,6 @@ namespace Microsoft.Data
         {
             return _Argument(StringsHelper.GetString(Strings.DataStorage_SetInvalidDataType));
         }
-
 
         //
         // XML schema
@@ -1450,7 +1442,6 @@ namespace Microsoft.Data
             return _InvalidOperation(StringsHelper.GetString(Strings.Xml_PolymorphismNotSupported, typeName));
         }
 
-
         static public Exception DataTableInferenceNotSupported()
         {
             return _InvalidOperation(StringsHelper.GetString(Strings.Xml_DataTableInferenceNotSupported));
@@ -1527,7 +1518,6 @@ namespace Microsoft.Data
         {
             return _DeletedRowInaccessible(StringsHelper.GetString(Strings.DataTableReader_DataTableCleared, tableName));
         }
-
 
         //
         static internal Exception InvalidDuplicateNamedSimpleTypeDelaration(string stName, string errorStr)

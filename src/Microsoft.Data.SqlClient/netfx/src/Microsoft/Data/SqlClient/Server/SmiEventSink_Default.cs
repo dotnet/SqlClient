@@ -6,7 +6,6 @@ using System.Diagnostics;
 
 namespace Microsoft.Data.SqlClient.Server
 {
-
     internal class SmiEventSink_Default : SmiEventSink
     {
 
@@ -268,19 +267,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (null == _parent)
             {
-                if (Bid.AdvancedOn)
-                {
-                    Bid.Trace("<sc.SmiEventSink_Default.MessagePosted|ADV> %d#, number=%d state=%d errorClass=%d server='%ls' message='%ls' procedure='%ls' linenumber=%d.\n",
-                                0,
-                                number,
-                                state,
-                                errorClass,
-                                (null != server) ? server : "<null>",
-                                (null != message) ? message : "<null>",
-                                (null != procedure) ? procedure : "<null>",
-                                lineNumber
-                                );
-                }
+                SqlClientEventSource.Log.AdvanceTrace("<sc.SmiEventSink_Default.MessagePosted|ADV> {0}#, number={1} state={2} errorClass={3} server='{4}' message='{5}' procedure='{6}' linenumber={7}.", 0, number, state, errorClass, server ?? "<null>", message ?? "<null>", procedure ?? "<null>", lineNumber);
                 SqlError error = new SqlError(number, state, errorClass, server, message, procedure, lineNumber);
 
                 if (error.Class < TdsEnums.MIN_ERROR_CLASS)

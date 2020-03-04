@@ -64,8 +64,46 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             connection3.Close();
 
             connectionPool.Cleanup();
-            SqlConnection connection4 = new SqlConnection(connectionString);
 
+            SqlConnection connection4 = new SqlConnection(connectionString);
+            connection4.Open();
+            Assert.True(internalConnection.IsInternalConnectionOf(connection4), "New connection does not use same internal connection");
+            Assert.True(connectionPool.ContainsConnection(connection4), "New connection is in a different pool");
+            connection4.Close();
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAADPasswordConnStrSetup), nameof(DataTestUtility.IsAADAuthorityURLSetup))]
+        public static void AccessTokenConnectionPoolingTest()
+        {
+            // Remove cred info and add invalid token
+            string[] credKeys = { "User ID", "Password", "UID", "PWD", "Authentication" };
+            string connectionString = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys);
+
+            SqlConnection connection = new SqlConnection(connectionString);
+            connection.AccessToken = DataTestUtility.GetAccessToken();
+            connection.Open();
+            InternalConnectionWrapper internalConnection = new InternalConnectionWrapper(connection);
+            ConnectionPoolWrapper connectionPool = new ConnectionPoolWrapper(connection);
+            connection.Close();
+
+            SqlConnection connection2 = new SqlConnection(connectionString);
+            connection2.AccessToken = DataTestUtility.GetAccessToken();
+            connection2.Open();
+            Assert.True(internalConnection.IsInternalConnectionOf(connection2), "New connection does not use same internal connection");
+            Assert.True(connectionPool.ContainsConnection(connection2), "New connection is in a different pool");
+            connection2.Close();
+
+            SqlConnection connection3 = new SqlConnection(connectionString + ";App=SqlConnectionPoolUnitTest;");
+            connection3.AccessToken = DataTestUtility.GetAccessToken();
+            connection3.Open();
+            Assert.False(internalConnection.IsInternalConnectionOf(connection3), "Connection with different connection string uses same internal connection");
+            Assert.False(connectionPool.ContainsConnection(connection3), "Connection with different connection string uses same connection pool");
+            connection3.Close();
+
+            connectionPool.Cleanup();
+
+            SqlConnection connection4 = new SqlConnection(connectionString);
+            connection4.AccessToken = DataTestUtility.GetAccessToken();
             connection4.Open();
             Assert.True(internalConnection.IsInternalConnectionOf(connection4), "New connection does not use same internal connection");
             Assert.True(connectionPool.ContainsConnection(connection4), "New connection is in a different pool");

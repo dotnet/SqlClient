@@ -142,7 +142,7 @@ namespace Microsoft.Data.SqlClient
                     throw ADP.ArgumentOutOfRange("UpdateBatchSize");
                 }
                 _updateBatchSize = value;
-                Bid.Trace("<sc.SqlDataAdapter.set_UpdateBatchSize|API> %d#, %d\n", ObjectID, value);
+                SqlClientEventSource.Log.TraceEvent("<sc.SqlDataAdapter.set_UpdateBatchSize|API> {0}#, {1}", ObjectID, value);
             }
         }
 
@@ -249,7 +249,8 @@ namespace Microsoft.Data.SqlClient
         override protected int ExecuteBatch()
         {
             Debug.Assert(null != _commandSet && (0 < _commandSet.CommandCount), "no commands");
-            Bid.CorrelationTrace("<sc.SqlDataAdapter.ExecuteBatch|Info|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
+            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlDataAdapter.ExecuteBatch|Info|Correlation> ObjectID {0}#, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
+
             return _commandSet.ExecuteNonQuery();
         }
 
@@ -272,7 +273,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/InitializeBatching/*' />
         override protected void InitializeBatching()
         {
-            Bid.Trace("<sc.SqlDataAdapter.InitializeBatching|API> %d#\n", ObjectID);
+            SqlClientEventSource.Log.TraceEvent("<sc.SqlDataAdapter.InitializeBatching|API> {0}#", ObjectID);
             _commandSet = new SqlCommandSet();
             SqlCommand command = SelectCommand;
             if (null == command)

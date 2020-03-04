@@ -216,7 +216,8 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
 #if DEBUG
-                    if (_sleepOnTrim) {
+                    if (_sleepOnTrim)
+                    {
                         Thread.Sleep(TimeSpan.FromSeconds(10));
                     }
 #endif

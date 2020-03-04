@@ -2,13 +2,13 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Microsoft.Data.Common;
+
 
 namespace Microsoft.Data.SqlClient
 {
@@ -142,10 +142,8 @@ namespace Microsoft.Data.SqlClient
             ZombieCheck();
 
             SqlStatistics statistics = null;
-            IntPtr hscp;
-
-            Bid.ScopeEnter(out hscp, "<sc.SqlTransaction.Commit|API> %d#", ObjectID);
-            Bid.CorrelationTrace("<sc.SqlTransaction.Commit|API|Correlation> ObjectID%d#, ActivityID %ls", ObjectID);
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlTransaction.Commit|API> {0}#", ObjectID);
+            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlTransaction.Commit|API|Correlation> ObjectID {0}#, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
 
             TdsParser bestEffortCleanupTarget = null;
             RuntimeHelpers.PrepareConstrainedRegions();
@@ -155,7 +153,8 @@ namespace Microsoft.Data.SqlClient
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
-                try {
+                try
+                {
                     tdsReliabilitySection.Start();
 #else
                 {
@@ -168,7 +167,8 @@ namespace Microsoft.Data.SqlClient
                     _internalTransaction.Commit();
                 }
 #if DEBUG
-                finally {
+                finally
+                {
                     tdsReliabilitySection.Stop();
                 }
 #endif //DEBUG
@@ -206,7 +206,7 @@ namespace Microsoft.Data.SqlClient
                 _isFromAPI = false;
 
                 SqlStatistics.StopTimer(statistics);
-                Bid.ScopeLeave(ref hscp);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
@@ -223,7 +223,8 @@ namespace Microsoft.Data.SqlClient
                     TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                     RuntimeHelpers.PrepareConstrainedRegions();
-                    try {
+                    try
+                    {
                         tdsReliabilitySection.Start();
 #else
                     {
@@ -235,7 +236,8 @@ namespace Microsoft.Data.SqlClient
                         }
                     }
 #if DEBUG
-                    finally {
+                    finally
+                    {
                         tdsReliabilitySection.Stop();
                     }
 #endif //DEBUG
@@ -266,10 +268,8 @@ namespace Microsoft.Data.SqlClient
             if (IsYukonPartialZombie)
             {
                 // Put something in the trace in case a customer has an issue
-                if (Bid.AdvancedOn)
-                {
-                    Bid.Trace("<sc.SqlTransaction.Rollback|ADV> %d# partial zombie no rollback required\n", ObjectID);
-                }
+                SqlClientEventSource.Log.AdvanceTrace("<sc.SqlTransaction.Rollback|ADV> {0}# partial zombie no rollback required", ObjectID);
+
                 _internalTransaction = null; // yukon zombification
             }
             else
@@ -277,9 +277,8 @@ namespace Microsoft.Data.SqlClient
                 ZombieCheck();
 
                 SqlStatistics statistics = null;
-                IntPtr hscp;
-                Bid.ScopeEnter(out hscp, "<sc.SqlTransaction.Rollback|API> %d#", ObjectID);
-                Bid.CorrelationTrace("<sc.SqlTransaction.Rollback|API|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
+                long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlTransaction.Rollback|API> {0}#", ObjectID);
+                SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlTransaction.Rollback|API|Correlation> ObjectID {0}#, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
 
                 TdsParser bestEffortCleanupTarget = null;
                 RuntimeHelpers.PrepareConstrainedRegions();
@@ -289,7 +288,8 @@ namespace Microsoft.Data.SqlClient
                     TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                     RuntimeHelpers.PrepareConstrainedRegions();
-                    try {
+                    try
+                    {
                         tdsReliabilitySection.Start();
 #else
                     {
@@ -302,7 +302,8 @@ namespace Microsoft.Data.SqlClient
                         _internalTransaction.Rollback();
                     }
 #if DEBUG
-                    finally {
+                    finally
+                    {
                         tdsReliabilitySection.Stop();
                     }
 #endif //DEBUG
@@ -328,7 +329,7 @@ namespace Microsoft.Data.SqlClient
                     _isFromAPI = false;
 
                     SqlStatistics.StopTimer(statistics);
-                    Bid.ScopeLeave(ref hscp);
+                    SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
                 }
             }
         }
@@ -341,9 +342,7 @@ namespace Microsoft.Data.SqlClient
             ZombieCheck();
 
             SqlStatistics statistics = null;
-            IntPtr hscp;
-            Bid.ScopeEnter(out hscp, "<sc.SqlTransaction.Rollback|API> %d# transactionName='%ls'", ObjectID, transactionName);
-
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlTransaction.Rollback|API> {0}# transactionName='{1}'", ObjectID, transactionName);
             TdsParser bestEffortCleanupTarget = null;
             RuntimeHelpers.PrepareConstrainedRegions();
             try
@@ -352,7 +351,8 @@ namespace Microsoft.Data.SqlClient
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
-                try {
+                try
+                {
                     tdsReliabilitySection.Start();
 #else
                 {
@@ -365,7 +365,8 @@ namespace Microsoft.Data.SqlClient
                     _internalTransaction.Rollback(transactionName);
                 }
 #if DEBUG
-                finally {
+                finally
+                {
                     tdsReliabilitySection.Stop();
                 }
 #endif //DEBUG
@@ -391,7 +392,7 @@ namespace Microsoft.Data.SqlClient
                 _isFromAPI = false;
 
                 SqlStatistics.StopTimer(statistics);
-                Bid.ScopeLeave(ref hscp);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
@@ -403,8 +404,7 @@ namespace Microsoft.Data.SqlClient
             ZombieCheck();
 
             SqlStatistics statistics = null;
-            IntPtr hscp;
-            Bid.ScopeEnter(out hscp, "<sc.SqlTransaction.Save|API> %d# savePointName='%ls'", ObjectID, savePointName);
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlTransaction.Save|API> {0}# savePointName='{1}'", ObjectID, savePointName);
 
             TdsParser bestEffortCleanupTarget = null;
             RuntimeHelpers.PrepareConstrainedRegions();
@@ -414,7 +414,8 @@ namespace Microsoft.Data.SqlClient
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
-                try {
+                try
+                {
                     tdsReliabilitySection.Start();
 #else
                 {
@@ -425,7 +426,8 @@ namespace Microsoft.Data.SqlClient
                     _internalTransaction.Save(savePointName);
                 }
 #if DEBUG
-                finally {
+                finally
+                {
                     tdsReliabilitySection.Stop();
                 }
 #endif //DEBUG
@@ -449,7 +451,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlStatistics.StopTimer(statistics);
-                Bid.ScopeLeave(ref hscp);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
@@ -465,12 +467,10 @@ namespace Microsoft.Data.SqlClient
             //                 Of course, if the connection is aready closed, 
             //                 then we're free to zombify...
             SqlInternalConnection internalConnection = (_connection.InnerConnection as SqlInternalConnection);
+
             if (null != internalConnection && internalConnection.IsYukonOrNewer && !_isFromAPI)
             {
-                if (Bid.AdvancedOn)
-                {
-                    Bid.Trace("<sc.SqlTransaction.Zombie|ADV> %d# yukon deferred zombie\n", ObjectID);
-                }
+                SqlClientEventSource.Log.AdvanceTrace("<sc.SqlTransaction.Zombie|ADV> {0}# yukon deferred zombie", ObjectID);
             }
             else
             {
