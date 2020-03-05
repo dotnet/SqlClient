@@ -19,12 +19,20 @@ namespace Microsoft.Data.SqlClient
 
         private void UnloadEventHandler(object sender, EventArgs e)
         {
-            // Make non-blocking call to ProcessDispatcher to ThreadPool.QueueUserWorkItem to complete 
-            // stopping of all start calls in this AppDomain.  For containers shared among various AppDomains,
-            // this will just be a ref-count subtract.  For non-shared containers, we will close the container
-            // and clean-up.
-            var dispatcher = SqlDependency.ProcessDispatcher;
-            dispatcher?.QueueAppDomainUnloading(SqlDependency.AppDomainKey);
+            long scopeID = SqlClientEventSource.Log.NotificationsScopeEnterEvent("<sc.SqlDependencyPerAppDomainDispatcher.UnloadEventHandler|DEP> {0}#", ObjectID);
+            try
+            {
+                // Make non-blocking call to ProcessDispatcher to ThreadPool.QueueUserWorkItem to complete 
+                // stopping of all start calls in this AppDomain.  For containers shared among various AppDomains,
+                // this will just be a ref-count subtract.  For non-shared containers, we will close the container
+                // and clean-up.
+                var dispatcher = SqlDependency.ProcessDispatcher;
+                dispatcher?.QueueAppDomainUnloading(SqlDependency.AppDomainKey);
+            }
+            finally
+            {
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
+            }
         }
     }
 }

@@ -3,6 +3,8 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Diagnostics;
+using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data
 {
@@ -23,8 +25,27 @@ namespace Microsoft.Data
         // The resource Data.txt will ensure proper string text based on the appropriate
         // locale.
 
+        static private void TraceException(
+           string trace, Exception e)
+        {
+            Debug.Assert(null != e, "TraceException: null Exception");
+            if (null != e)
+            {
+                SqlClientEventSource.Log.AdvanceTrace(trace, e.Message);
+                try
+                {
+                    SqlClientEventSource.Log.AdvanceTrace("<comm.ADP.TraceException|ERR|ADV> Environment StackTrace = '{0}'", Environment.StackTrace);
+                }
+                catch (System.Security.SecurityException)
+                {
+                    // if you don't have permission - you don't get the stack trace
+                }
+            }
+        }
+
         internal static void TraceExceptionAsReturnValue(Exception e)
         {
+            TraceException("<comm.ADP.TraceException|ERR|THROW> Message='{0}'", e);
         }
 
         //

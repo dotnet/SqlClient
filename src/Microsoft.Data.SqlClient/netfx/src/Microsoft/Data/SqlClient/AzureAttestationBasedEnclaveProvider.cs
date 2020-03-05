@@ -63,7 +63,6 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Public methods
-
         // When overridden in a derived class, looks up an existing enclave session information in the enclave session cache.
         // If the enclave provider doesn't implement enclave session caching, this method is expected to return null in the sqlEnclaveSession parameter.
         public override void GetEnclaveSession(string servername, string attestationUrl, bool generateCustomData, out SqlEnclaveSession sqlEnclaveSession, out long counter, out byte[] customData, out int customDataLength)
@@ -80,7 +79,6 @@ namespace Microsoft.Data.SqlClient
             byte[] attestationParam = PrepareAttestationParameters(attestationUrl, customData, customDataLength);
             return new SqlEnclaveAttestationParameters(AzureBasedAttestationProtocolId, attestationParam, clientDHKey);
         }
-
 
         // When overridden in a derived class, performs enclave attestation, generates a symmetric key for the session, creates a an enclave session and stores the session information in the cache.
         public override void CreateEnclaveSession(byte[] attestationInfo, ECDiffieHellmanCng clientDHKey, string attestationUrl, string servername, byte[] customData, int customDataLength, out SqlEnclaveSession sqlEnclaveSession, out long counter)

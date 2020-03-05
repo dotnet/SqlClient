@@ -48,10 +48,14 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
         private Timer _retryTimer = null;
         private Dictionary<string, int> _appDomainKeyHash = null;  // AppDomainKey->Open RefCount
 
+        private static int _objectTypeCount; // EventSource counter
+        internal int ObjectID { get; } = Interlocked.Increment(ref _objectTypeCount);
+
         // Constructor
 
         internal SqlConnectionContainer(SqlConnectionContainerHashHelper hashHelper, string appDomainKey, bool useDefaults)
         {
+            long scopeID = SqlClientEventSource.Log.NotificationsScopeEnterEvent("<sc.SqlConnectionContainer|DEP> {0}#, queue: '{1}'", ObjectID, HashHelper?.Queue);
             bool setupCompleted = false;
             try
             {
@@ -70,6 +74,10 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                 {
                     _queue = _hashHelper.Queue;
                 }
+#if DEBUG
+                SqlConnectionString connectionStringOptions = new SqlConnectionString(_hashHelper.ConnectionStringBuilder.ConnectionString);
+                SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlConnectionContainer|DEP> Modified connection string: '{0}'", connectionStringOptions.UsersConnectionStringForTrace());
+#endif
 
                 // Always use ConnectionStringBuilder since in default case it is different from the 
                 // connection string used in the hashHelper.
@@ -165,6 +173,10 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                 }
                 throw;
             }
+            finally
+            {
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
+            }
         }
 
         // Properties
@@ -195,42 +207,71 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
         // SqlDependencyProcessDispatcher.QueueAppDomainUnload on AppDomain.Unload.
         internal bool AppDomainUnload(string appDomainKey)
         {
-            Debug.Assert(!string.IsNullOrEmpty(appDomainKey), "Unexpected empty appDomainKey!");
-
-            // Dictionary used to track how many times start has been called per app domain.
-            // For each decrement, subtract from count, and delete if we reach 0.
-            lock (_appDomainKeyHash)
+            long scopeID = SqlClientEventSource.Log.NotificationsScopeEnterEvent("<sc.SqlConnectionContainer.AppDomainUnload|DEP> {0}#, AppDomainKey: '{1}'", ObjectID, appDomainKey);
+            try
             {
-                if (_appDomainKeyHash.ContainsKey(appDomainKey))
-                { // Do nothing if AppDomain did not call Start!
-                    int value = _appDomainKeyHash[appDomainKey];
-                    Debug.Assert(value > 0, "Why is value 0 or less?");
+                Debug.Assert(!string.IsNullOrEmpty(appDomainKey), "Unexpected empty appDomainKey!");
 
-                    bool ignored = false;
-                    while (value > 0)
+                // Dictionary used to track how many times start has been called per app domain.
+                // For each decrement, subtract from count, and delete if we reach 0.
+                lock (_appDomainKeyHash)
+                {
+                    if (_appDomainKeyHash.ContainsKey(appDomainKey))
                     {
-                        Debug.Assert(!_stopped, "We should not yet be stopped!");
-                        Stop(appDomainKey, out ignored); // Stop will decrement value and remove if necessary from _appDomainKeyHash.
-                        value--;
+                        // Do nothing if AppDomain did not call Start!
+                        SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlConnectionContainer.AppDomainUnload|DEP> _appDomainKeyHash contained AppDomainKey: '{0}'.", appDomainKey);
+                        int value = _appDomainKeyHash[appDomainKey];
+                        SqlClientEventSource.Log.NotificationsTraceEvent("SqlConnectionContainer.AppDomainUnload|DEP> _appDomainKeyHash for AppDomainKey: '{0}' count: '{1}'.", appDomainKey, value);
+                        Debug.Assert(value > 0, "Why is value 0 or less?");
+
+                        bool ignored = false;
+                        while (value > 0)
+                        {
+                            Debug.Assert(!_stopped, "We should not yet be stopped!");
+                            Stop(appDomainKey, out ignored); // Stop will decrement value and remove if necessary from _appDomainKeyHash.
+                            value--;
+                        }
+
+                        // Stop will remove key when decremented to 0 for this AppDomain, which should now be the case.
+                        Debug.Assert(0 == value, "We did not reach 0 at end of loop in AppDomainUnload!");
+                        Debug.Assert(!_appDomainKeyHash.ContainsKey(appDomainKey), "Key not removed after AppDomainUnload!");
+
+                        if (_appDomainKeyHash.ContainsKey(appDomainKey))
+                        {
+                            SqlClientEventSource.Log.NotificationsTraceEvent("SqlConnectionContainer.AppDomainUnload|DEP|ERR> ERROR - after the Stop() loop, _appDomainKeyHash for AppDomainKey: '{0}' entry not removed from hash.  Count: {1}'", appDomainKey, _appDomainKeyHash[appDomainKey]);
+                        }
                     }
-
-                    // Stop will remove key when decremented to 0 for this AppDomain, which should now be the case.
-                    Debug.Assert(0 == value, "We did not reach 0 at end of loop in AppDomainUnload!");
-                    Debug.Assert(!_appDomainKeyHash.ContainsKey(appDomainKey), "Key not removed after AppDomainUnload!");
+                    else
+                    {
+                        SqlClientEventSource.Log.NotificationsTraceEvent("SqlConnectionContainer.AppDomainUnload|DEP> _appDomainKeyHash did not contain AppDomainKey: '{0}'.", appDomainKey);
+                    }
                 }
+                SqlClientEventSource.Log.NotificationsTraceEvent("SqlConnectionContainer.AppDomainUnload|DEP> Exiting, _stopped: '{0}'.", _stopped);
+                return _stopped;
             }
-
-            return _stopped;
+            finally
+            {
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
+            }
         }
 
         private void AsynchronouslyQueryServiceBrokerQueue()
         {
-            AsyncCallback callback = new AsyncCallback(AsyncResultCallback);
-            _com.BeginExecuteReader(callback, null, CommandBehavior.Default); // NO LOCK NEEDED
+            long scopeID = SqlClientEventSource.Log.NotificationsScopeEnterEvent("<sc.SqlConnectionContainer.AsynchronouslyQueryServiceBrokerQueue|DEP> {0}#", ObjectID);
+            try
+            {
+                AsyncCallback callback = new AsyncCallback(AsyncResultCallback);
+                _com.BeginExecuteReader(callback, null, CommandBehavior.Default); // NO LOCK NEEDED
+            }
+            finally
+            {
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
+            }
         }
 
         private void AsyncResultCallback(IAsyncResult asyncResult)
         {
+            long scopeID = SqlClientEventSource.Log.NotificationsScopeEnterEvent("<sc.SqlConnectionContainer.AsyncResultCallback|DEP> {0}#", ObjectID);
             try
             {
                 using (SqlDataReader reader = _com.EndExecuteReader(asyncResult))
@@ -256,6 +297,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                     _errorState = true;
                     throw;
                 }
+                SqlClientEventSource.Log.NotificationsTrace("<sc.SqlConnectionContainer.AsyncResultCallback|DEP> Exception occurred.");
 
                 if (!_stop)
                 { // Only assert if not in cancel path.
@@ -273,163 +315,187 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                     Restart(null); // Error code path.  Will Invalidate based on server if 1st retry fails.
                 }
             }
+            finally
+            {
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
+            }
         }
 
         private void CreateQueueAndService(bool restart)
         {
-            SqlCommand com = new SqlCommand()
-            {
-                Connection = _con
-            };
-            SqlTransaction trans = null;
-
+            long scopeID = SqlClientEventSource.Log.NotificationsScopeEnterEvent("<sc.SqlConnectionContainer.CreateQueueAndService|DEP> {0}#", ObjectID);
             try
             {
-                trans = _con.BeginTransaction(); // Since we cannot batch proc creation, start transaction.
-                com.Transaction = trans;
-
-                string nameLiteral = SqlServerEscapeHelper.MakeStringLiteral(_queue);
-
-                com.CommandText =
-                        "CREATE PROCEDURE " + _sprocName + " AS"
-                        + " BEGIN"
-                            + " BEGIN TRANSACTION;"
-                            + " RECEIVE TOP(0) conversation_handle FROM " + _escapedQueueName + ";"
-                            + " IF (SELECT COUNT(*) FROM " + _escapedQueueName + " WHERE message_type_name = 'http://schemas.microsoft.com/SQL/ServiceBroker/DialogTimer') > 0"
-                            + " BEGIN"
-                                + " if ((SELECT COUNT(*) FROM sys.services WHERE name = " + nameLiteral + ") > 0)"
-                                + "   DROP SERVICE " + _escapedQueueName + ";"
-                                + " if (OBJECT_ID(" + nameLiteral + ", 'SQ') IS NOT NULL)"
-                                + "   DROP QUEUE " + _escapedQueueName + ";"
-                                + " DROP PROCEDURE " + _sprocName + ";" // Don't need conditional because this is self
-                            + " END"
-                            + " COMMIT TRANSACTION;"
-                        + " END";
-
-                if (!restart)
+                SqlCommand com = new SqlCommand()
                 {
-                    com.ExecuteNonQuery();
-                }
-                else
-                { // Upon restart, be resilient to the user dropping queue, service, or procedure.
-                    try
-                    {
-                        com.ExecuteNonQuery(); // Cannot add 'IF OBJECT_ID' to create procedure query - wrap and discard failure.
-                    }
-                    catch (Exception e)
-                    {
-                        if (!ADP.IsCatchableExceptionType(e))
-                        {
-                            throw;
-                        }
-                        ADP.TraceExceptionWithoutRethrow(e);
+                    Connection = _con
+                };
+                SqlTransaction trans = null;
 
+                try
+                {
+                    trans = _con.BeginTransaction(); // Since we cannot batch proc creation, start transaction.
+                    com.Transaction = trans;
+
+                    string nameLiteral = SqlServerEscapeHelper.MakeStringLiteral(_queue);
+
+                    com.CommandText =
+                            "CREATE PROCEDURE " + _sprocName + " AS"
+                            + " BEGIN"
+                                + " BEGIN TRANSACTION;"
+                                + " RECEIVE TOP(0) conversation_handle FROM " + _escapedQueueName + ";"
+                                + " IF (SELECT COUNT(*) FROM " + _escapedQueueName + " WHERE message_type_name = 'http://schemas.microsoft.com/SQL/ServiceBroker/DialogTimer') > 0"
+                                + " BEGIN"
+                                    + " if ((SELECT COUNT(*) FROM sys.services WHERE name = " + nameLiteral + ") > 0)"
+                                    + "   DROP SERVICE " + _escapedQueueName + ";"
+                                    + " if (OBJECT_ID(" + nameLiteral + ", 'SQ') IS NOT NULL)"
+                                    + "   DROP QUEUE " + _escapedQueueName + ";"
+                                    + " DROP PROCEDURE " + _sprocName + ";" // Don't need conditional because this is self
+                                + " END"
+                                + " COMMIT TRANSACTION;"
+                            + " END";
+
+                    if (!restart)
+                    {
+                        com.ExecuteNonQuery();
+                    }
+                    else
+                    { // Upon restart, be resilient to the user dropping queue, service, or procedure.
                         try
-                        { // Since the failure will result in a rollback, rollback our object.
-                            if (null != trans)
-                            {
-                                trans.Rollback();
-                                trans = null;
-                            }
-                        }
-                        catch (Exception f)
                         {
-                            if (!ADP.IsCatchableExceptionType(f))
+                            com.ExecuteNonQuery(); // Cannot add 'IF OBJECT_ID' to create procedure query - wrap and discard failure.
+                        }
+                        catch (Exception e)
+                        {
+                            if (!ADP.IsCatchableExceptionType(e))
                             {
                                 throw;
                             }
-                            ADP.TraceExceptionWithoutRethrow(f); // Discard failure, but trace for now.
+                            ADP.TraceExceptionWithoutRethrow(e);
+
+                            try
+                            { // Since the failure will result in a rollback, rollback our object.
+                                if (null != trans)
+                                {
+                                    trans.Rollback();
+                                    trans = null;
+                                }
+                            }
+                            catch (Exception f)
+                            {
+                                if (!ADP.IsCatchableExceptionType(f))
+                                {
+                                    throw;
+                                }
+                                ADP.TraceExceptionWithoutRethrow(f); // Discard failure, but trace for now.
+                            }
+                        }
+
+                        if (null == trans)
+                        { // Create a new transaction for next operations.
+                            trans = _con.BeginTransaction();
+                            com.Transaction = trans;
                         }
                     }
 
-                    if (null == trans)
-                    { // Create a new transaction for next operations.
-                        trans = _con.BeginTransaction();
-                        com.Transaction = trans;
+
+                    com.CommandText =
+                             "IF OBJECT_ID(" + nameLiteral + ", 'SQ') IS NULL"
+                                + " BEGIN"
+                                + " CREATE QUEUE " + _escapedQueueName + " WITH ACTIVATION (PROCEDURE_NAME=" + _sprocName + ", MAX_QUEUE_READERS=1, EXECUTE AS OWNER);"
+                                + " END;"
+                          + " IF (SELECT COUNT(*) FROM sys.services WHERE NAME=" + nameLiteral + ") = 0"
+                                + " BEGIN"
+                                + " CREATE SERVICE " + _escapedQueueName + " ON QUEUE " + _escapedQueueName + " ([http://schemas.microsoft.com/SQL/Notifications/PostQueryNotification]);"
+                             + " IF (SELECT COUNT(*) FROM sys.database_principals WHERE name='sql_dependency_subscriber' AND type='R') <> 0"
+                                  + " BEGIN"
+                                  + " GRANT SEND ON SERVICE::" + _escapedQueueName + " TO sql_dependency_subscriber;"
+                                  + " END; "
+                                + " END;"
+                          + " BEGIN DIALOG @dialog_handle FROM SERVICE " + _escapedQueueName + " TO SERVICE " + nameLiteral;
+
+                    SqlParameter param = new SqlParameter()
+                    {
+                        ParameterName = "@dialog_handle",
+                        DbType = DbType.Guid,
+                        Direction = ParameterDirection.Output
+                    };
+                    com.Parameters.Add(param);
+                    com.ExecuteNonQuery();
+
+                    // Finish setting up queries and state.  For re-start, we need to ensure we begin a new dialog above and reset
+                    // our queries to use the new dialogHandle.
+                    _dialogHandle = ((Guid)param.Value).ToString();
+                    _beginConversationQuery = "BEGIN CONVERSATION TIMER ('" + _dialogHandle + "') TIMEOUT = 120; " + _receiveQuery;
+                    _com.CommandText = _beginConversationQuery;
+                    _endConversationQuery = "END CONVERSATION @p1; ";
+                    _concatQuery = _endConversationQuery + _com.CommandText;
+
+                    trans.Commit();
+                    trans = null;
+                    _serviceQueueCreated = true;
+                }
+                finally
+                {
+                    if (null != trans)
+                    {
+                        try
+                        {
+                            trans.Rollback();
+                            trans = null;
+                        }
+                        catch (Exception e)
+                        {
+                            if (!ADP.IsCatchableExceptionType(e))
+                            {
+                                throw;
+                            }
+                            ADP.TraceExceptionWithoutRethrow(e); // Discard failure, but trace for now.
+                        }
                     }
                 }
-
-
-                com.CommandText =
-                         "IF OBJECT_ID(" + nameLiteral + ", 'SQ') IS NULL"
-                            + " BEGIN"
-                            + " CREATE QUEUE " + _escapedQueueName + " WITH ACTIVATION (PROCEDURE_NAME=" + _sprocName + ", MAX_QUEUE_READERS=1, EXECUTE AS OWNER);"
-                            + " END;"
-                      + " IF (SELECT COUNT(*) FROM sys.services WHERE NAME=" + nameLiteral + ") = 0"
-                            + " BEGIN"
-                            + " CREATE SERVICE " + _escapedQueueName + " ON QUEUE " + _escapedQueueName + " ([http://schemas.microsoft.com/SQL/Notifications/PostQueryNotification]);"
-                         + " IF (SELECT COUNT(*) FROM sys.database_principals WHERE name='sql_dependency_subscriber' AND type='R') <> 0"
-                              + " BEGIN"
-                              + " GRANT SEND ON SERVICE::" + _escapedQueueName + " TO sql_dependency_subscriber;"
-                              + " END; "
-                            + " END;"
-                      + " BEGIN DIALOG @dialog_handle FROM SERVICE " + _escapedQueueName + " TO SERVICE " + nameLiteral;
-
-                SqlParameter param = new SqlParameter()
-                {
-                    ParameterName = "@dialog_handle",
-                    DbType = DbType.Guid,
-                    Direction = ParameterDirection.Output
-                };
-                com.Parameters.Add(param);
-                com.ExecuteNonQuery();
-
-                // Finish setting up queries and state.  For re-start, we need to ensure we begin a new dialog above and reset
-                // our queries to use the new dialogHandle.
-                _dialogHandle = ((Guid)param.Value).ToString();
-                _beginConversationQuery = "BEGIN CONVERSATION TIMER ('" + _dialogHandle + "') TIMEOUT = 120; " + _receiveQuery;
-                _com.CommandText = _beginConversationQuery;
-                _endConversationQuery = "END CONVERSATION @p1; ";
-                _concatQuery = _endConversationQuery + _com.CommandText;
-
-                trans.Commit();
-                trans = null;
-                _serviceQueueCreated = true;
             }
             finally
             {
-                if (null != trans)
-                {
-                    try
-                    {
-                        trans.Rollback();
-                        trans = null;
-                    }
-                    catch (Exception e)
-                    {
-                        if (!ADP.IsCatchableExceptionType(e))
-                        {
-                            throw;
-                        }
-                        ADP.TraceExceptionWithoutRethrow(e); // Discard failure, but trace for now.
-                    }
-                }
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
             }
         }
 
         internal void IncrementStartCount(string appDomainKey, out bool appDomainStart)
         {
-            appDomainStart = false; // Reset out param.
-            int result = Interlocked.Increment(ref _startCount); // Add to refCount.
-
-            // Dictionary used to track how many times start has been called per app domain.
-            // For each increment, add to count, and create entry if not present.
-            lock (_appDomainKeyHash)
+            long scopeID = SqlClientEventSource.Log.NotificationsScopeEnterEvent("<sc.SqlConnectionContainer.IncrementStartCount|DEP> {0}#", ObjectID);
+            try
             {
-                if (_appDomainKeyHash.ContainsKey(appDomainKey))
+                appDomainStart = false; // Reset out param.
+                int result = Interlocked.Increment(ref _startCount); // Add to refCount.
+                SqlClientEventSource.Log.NotificationsTraceEvent("SqlConnectionContainer.IncrementStartCount|DEP> {0}#, incremented _startCount: {1}", s_staticInstance.ObjectID, result);
+
+                // Dictionary used to track how many times start has been called per app domain.
+                // For each increment, add to count, and create entry if not present.
+                lock (_appDomainKeyHash)
                 {
-                    _appDomainKeyHash[appDomainKey] = _appDomainKeyHash[appDomainKey] + 1;
+                    if (_appDomainKeyHash.ContainsKey(appDomainKey))
+                    {
+                        _appDomainKeyHash[appDomainKey] = _appDomainKeyHash[appDomainKey] + 1;
+                        SqlClientEventSource.Log.NotificationsTraceEvent("SqlConnectionContainer.IncrementStartCount|DEP> _appDomainKeyHash contained AppDomainKey: '{0}', incremented count: '{1}'.", appDomainKey, _appDomainKeyHash[appDomainKey]);
+                    }
+                    else
+                    {
+                        _appDomainKeyHash[appDomainKey] = 1;
+                        appDomainStart = true;
+                        SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlConnectionContainer.IncrementStartCount|DEP> _appDomainKeyHash did not contain AppDomainKey: '{0}', added to hashtable and value set to 1.", appDomainKey);
+                    }
                 }
-                else
-                {
-                    _appDomainKeyHash[appDomainKey] = 1;
-                    appDomainStart = true;
-                }
+            }
+            finally
+            {
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
             }
         }
 
         private void ProcessNotificationResults(SqlDataReader reader)
         {
+            long scopeID = SqlClientEventSource.Log.NotificationsScopeEnterEvent("<sc.SqlConnectionContainer.ProcessNotificationResults|DEP> {0}#", ObjectID);
             Guid handle = Guid.Empty; // Conversation_handle.  Always close this!
             try
             {
@@ -437,7 +503,18 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                 {
                     while (reader.Read())
                     {
+                        SqlClientEventSource.Log.NotificationsTrace("<sc.SqlConnectionContainer.ProcessNotificationResults|DEP> Row read.");
+#if DEBUG
+                        if (SqlClientEventSource.Log.IsNotificationTraceEnabled())
+                        {
+                            for (int i = 0; i < reader.FieldCount; i++)
+                            {
+                                SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlConnectionContainer.ProcessNotificationResults|DEP> column: {0}, value: {1}", reader.GetName(i), reader.GetValue(i).ToString());
+                            }
+                        }
+#endif
                         string msgType = reader.GetString(0);
+                        SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlConnectionContainer.ProcessNotificationResults|DEP> msgType: '{0}'", msgType);
                         handle = reader.GetGuid(1);
 
                         // Only process QueryNotification messages.
@@ -450,6 +527,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                                 if (null != notification)
                                 {
                                     string key = notification.Key;
+                                    SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlConnectionContainer.ProcessNotificationResults|DEP> Key: '{0}'", key);
                                     int index = key.IndexOf(';'); // Our format is simple: "AppDomainKey;commandHash"
 
                                     if (index >= 0)
@@ -478,26 +556,31 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                                         else
                                         {
                                             Debug.Fail("Received notification but do not have an associated PerAppDomainDispatcher!");
+                                            SqlClientEventSource.Log.NotificationsTrace("<sc.SqlConnectionContainer.ProcessNotificationResults|DEP|ERR> Received notification but do not have an associated PerAppDomainDispatcher!");
                                         }
                                     }
                                     else
                                     {
                                         Debug.Fail("Unexpected ID format received!");
+                                        SqlClientEventSource.Log.NotificationsTrace("<sc.SqlConnectionContainer.ProcessNotificationResults|DEP|ERR> Unexpected ID format received!");
                                     }
                                 }
                                 else
                                 {
                                     Debug.Fail("Null notification returned from ProcessMessage!");
+                                    SqlClientEventSource.Log.NotificationsTrace("<sc.SqlConnectionContainer.ProcessNotificationResults|DEP|ERR> Null notification returned from ProcessMessage!");
                                 }
                             }
                             else
                             {
                                 Debug.Fail("Null payload for QN notification type!");
+                                SqlClientEventSource.Log.NotificationsTrace("<sc.SqlConnectionContainer.ProcessNotificationResults|DEP|ERR> Null payload for QN notification type!");
                             }
                         }
                         else
                         {
                             handle = Guid.Empty;
+                            SqlClientEventSource.Log.NotificationsTrace("<sc.SqlConnectionContainer.ProcessNotificationResults|DEP> Unexpected message format received!");
                         }
                     }
                 }
@@ -525,20 +608,226 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                     }
                     Debug.Assert(_com.Parameters.Count == 2, "Unexpected number of parameters!");
                 }
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
             }
         }
 
         private void Restart(object unused)
-        { // Unused arg required by TimerCallback.
+        {
+            long scopeID = SqlClientEventSource.Log.NotificationsScopeEnterEvent("<sc.SqlConnectionContainer.Restart|DEP> {0}#", ObjectID);
             try
             {
-                lock (this)
+                // Unused arg required by TimerCallback.
+                try
                 {
+                    lock (this)
+                    {
+                        if (!_stop)
+                        { // Only execute if we are still in running state.
+                            try
+                            {
+                                _con.Close();
+                            }
+                            catch (Exception e)
+                            {
+                                if (!ADP.IsCatchableExceptionType(e))
+                                {
+                                    throw;
+                                }
+                                ADP.TraceExceptionWithoutRethrow(e); // Discard close failure, if it occurs.  Only trace it.
+                            }
+                        }
+                    }
+
+                    // Rather than one long lock - take lock 3 times for shorter periods.
+
+                    lock (this)
+                    {
+                        if (!_stop)
+                        {
+                            _con.Open();
+                        }
+                    }
+
+                    lock (this)
+                    {
+                        if (!_stop)
+                        {
+                            if (_serviceQueueCreated)
+                            {
+                                bool failure = false;
+
+                                try
+                                {
+                                    CreateQueueAndService(true); // Ensure service, queue, etc is present, if we created it.
+                                }
+                                catch (Exception e)
+                                {
+                                    if (!ADP.IsCatchableExceptionType(e))
+                                    {
+                                        throw;
+                                    }
+                                    ADP.TraceExceptionWithoutRethrow(e); // Discard failure, but trace for now.
+                                    failure = true;
+                                }
+
+                                if (failure)
+                                {
+                                    // If we failed to re-created queue, service, sproc - invalidate!
+                                    s_staticInstance.Invalidate(Server,
+                                                               new SqlNotification(SqlNotificationInfo.Error,
+                                                                                   SqlNotificationSource.Client,
+                                                                                   SqlNotificationType.Change,
+                                                                                   null));
+
+                                }
+                            }
+                        }
+                    }
+
+                    lock (this)
+                    {
+                        if (!_stop)
+                        {
+                            _timeoutParam.Value = 0; // Reset timeout to zero - we do not want to block.
+                            SynchronouslyQueryServiceBrokerQueue();
+                            // If the above succeeds, we are back in success case - requeue for async call.
+                            _timeoutParam.Value = _defaultWaitforTimeout; // If success, reset to default for re-queue.
+                            AsynchronouslyQueryServiceBrokerQueue();
+                            _errorState = false;
+                            Timer retryTimer = _retryTimer;
+                            if (retryTimer != null)
+                            {
+                                _retryTimer = null;
+                                retryTimer.Dispose();
+                            }
+                        }
+                    }
+
+                    if (_stop)
+                    {
+                        TearDownAndDispose(); // Function will lock(this).
+                    }
+                }
+                catch (Exception e)
+                {
+                    if (!ADP.IsCatchableExceptionType(e))
+                    {
+                        throw;
+                    }
+                    ADP.TraceExceptionWithoutRethrow(e);
+
+                    try
+                    {
+                        // If unexpected query or connection failure, invalidate all dependencies against this server.
+                        // We may over-notify if only some of the connections to a particular database were affected,
+                        // but this should not be frequent enough to be a concern.
+                        // NOTE - we invalidate after failure first occurs and then retry fails.  We will then continue
+                        // to invalidate every time the retry fails.
+                        s_staticInstance.Invalidate(Server,
+                                                   new SqlNotification(SqlNotificationInfo.Error,
+                                                                       SqlNotificationSource.Client,
+                                                                       SqlNotificationType.Change,
+                                                                       null));
+                    }
+                    catch (Exception f)
+                    {
+                        if (!ADP.IsCatchableExceptionType(f))
+                        {
+                            throw;
+                        }
+                        ADP.TraceExceptionWithoutRethrow(f); // Discard exception from Invalidate.  User events can throw.
+                    }
+
+                    try
+                    {
+                        _con.Close();
+                    }
+                    catch (Exception f)
+                    {
+                        if (!ADP.IsCatchableExceptionType(f))
+                        {
+                            throw;
+                        }
+                        ADP.TraceExceptionWithoutRethrow(f); // Discard close failure, if it occurs.  Only trace it.
+                    }
+
                     if (!_stop)
-                    { // Only execute if we are still in running state.
+                    {
+                        // Create a timer to callback in one minute, retrying the call to Restart().
+                        _retryTimer = new Timer(new TimerCallback(Restart), null, _defaultWaitforTimeout, Timeout.Infinite);
+                        // We will retry this indefinitely, until success - or Stop();
+                    }
+                }
+            }
+            finally
+            {
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
+            }
+        }
+
+        internal bool Stop(string appDomainKey, out bool appDomainStop)
+        {
+            long scopeID = SqlClientEventSource.Log.NotificationsScopeEnterEvent("<sc.SqlConnectionContainer.Stop|DEP> {0}#", ObjectID);
+            try
+            {
+                appDomainStop = false;
+
+                // Dictionary used to track how many times start has been called per app domain.
+                // For each decrement, subtract from count, and delete if we reach 0.
+
+                if (null != appDomainKey)
+                {
+                    // If null, then this was called from SqlDependencyProcessDispatcher, we ignore appDomainKeyHash.
+                    lock (_appDomainKeyHash)
+                    {
+                        if (_appDomainKeyHash.ContainsKey(appDomainKey))
+                        { // Do nothing if AppDomain did not call Start!
+                            int value = _appDomainKeyHash[appDomainKey];
+
+                            Debug.Assert(value > 0, "Unexpected count for appDomainKey");
+                            SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlConnectionContainer.Stop|DEP> _appDomainKeyHash contained AppDomainKey: '{0}', pre-decrement Count: '{1}'.", appDomainKey, value);
+
+                            if (value > 0)
+                            {
+                                _appDomainKeyHash[appDomainKey] = value - 1;
+                            }
+                            else
+                            {
+                                SqlClientEventSource.Log.NotificationsTrace("<sc.SqlConnectionContainer.Stop|DEP|ERR> ERROR pre-decremented count <= 0!");
+                                Debug.Fail("Unexpected AppDomainKey count in Stop()");
+                            }
+
+                            if (1 == value)
+                            { // Remove from dictionary if pre-decrement count was one.
+                                _appDomainKeyHash.Remove(appDomainKey);
+                                appDomainStop = true;
+                            }
+                        }
+                        else
+                        {
+                            SqlClientEventSource.Log.NotificationsTrace("<sc.SqlConnectionContainer.Stop|DEP|ERR> ERROR appDomainKey not null and not found in hash!");
+                            Debug.Fail("Unexpected state on Stop() - no AppDomainKey entry in hashtable!");
+                        }
+                    }
+                }
+
+                Debug.Assert(_startCount > 0, "About to decrement _startCount less than 0!");
+                int result = Interlocked.Decrement(ref _startCount);
+
+                if (0 == result)
+                {
+                    // If we've reached refCount 0, destroy.
+                    // Lock to ensure Cancel() complete prior to other thread calling TearDown.
+                    SqlClientEventSource.Log.NotificationsTrace("<sc.SqlConnectionContainer.Stop|DEP> Reached 0 count, cancelling and waiting.");
+
+                    lock (this)
+                    {
                         try
                         {
-                            _con.Close();
+                            // Race condition with executing thread - will throw if connection is closed due to failure.
+                            // Rather than fighting the race condition, just call it and discard any potential failure.
+                            _com.Cancel(); // Cancel the pending command.  No-op if connection closed.
                         }
                         catch (Exception e)
                         {
@@ -546,314 +835,153 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                             {
                                 throw;
                             }
-                            ADP.TraceExceptionWithoutRethrow(e); // Discard close failure, if it occurs.  Only trace it.
+                            ADP.TraceExceptionWithoutRethrow(e); // Discard failure, if it should occur.
                         }
+                        _stop = true;
                     }
-                }
 
-                // Rather than one long lock - take lock 3 times for shorter periods.
-
-                lock (this)
-                {
-                    if (!_stop)
+                    // Wait until stopped and service & queue are dropped.
+                    Stopwatch retryStopwatch = Stopwatch.StartNew();
+                    while (true)
                     {
-                        _con.Open();
-                    }
-                }
-
-                lock (this)
-                {
-                    if (!_stop)
-                    {
-                        if (_serviceQueueCreated)
+                        lock (this)
                         {
-                            bool failure = false;
-
-                            try
+                            if (_stopped)
                             {
-                                CreateQueueAndService(true); // Ensure service, queue, etc is present, if we created it.
+                                break;
                             }
-                            catch (Exception e)
+
+                            // If we are in error state (_errorState is true), force a tear down.
+                            // Likewise, if we have exceeded the maximum retry period (30 seconds) waiting for cleanup, force a tear down.
+                            // In rare cases during app domain unload, the async cleanup performed by AsyncResultCallback
+                            // may fail to execute TearDownAndDispose, leaving this method in an infinite loop.
+                            // To avoid the infinite loop, we force the cleanup here after 30 seconds.  Since we have reached 
+                            // refcount of 0, either this method call or the thread running AsyncResultCallback is responsible for calling 
+                            // TearDownAndDispose when transitioning to the _stopped state.  Failing to call TearDownAndDispose means we leak 
+                            // the service broker objects created by this SqlDependency instance, so we make a best effort here to call 
+                            // TearDownAndDispose in the maximum retry period case as well as in the _errorState case.
+                            if (_errorState || retryStopwatch.Elapsed.Seconds >= 30)
                             {
-                                if (!ADP.IsCatchableExceptionType(e))
+                                SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlConnectionContainer.Stop|DEP|ERR> forcing cleanup. elapsedSeconds: '{0}', _errorState: '{1}'.", retryStopwatch.Elapsed.Seconds, _errorState);
+                                Timer retryTimer = _retryTimer;
+                                _retryTimer = null;
+                                if (retryTimer != null)
                                 {
-                                    throw;
+                                    retryTimer.Dispose(); // Dispose timer - stop retry loop!
                                 }
-                                ADP.TraceExceptionWithoutRethrow(e); // Discard failure, but trace for now.
-                                failure = true;
-                            }
-
-                            if (failure)
-                            {
-                                // If we failed to re-created queue, service, sproc - invalidate!
-                                s_staticInstance.Invalidate(Server,
-                                                           new SqlNotification(SqlNotificationInfo.Error,
-                                                                               SqlNotificationSource.Client,
-                                                                               SqlNotificationType.Change,
-                                                                               null));
-
+                                TearDownAndDispose(); // Will not hit server unless connection open!
+                                break;
                             }
                         }
+
+                        // Yield the thread since the stop has not yet completed.
+                        // To avoid CPU spikes while waiting, yield and wait for at least one millisecond
+                        Thread.Sleep(1);
                     }
                 }
-
-                lock (this)
+                else
                 {
-                    if (!_stop)
-                    {
-                        _timeoutParam.Value = 0; // Reset timeout to zero - we do not want to block.
-                        SynchronouslyQueryServiceBrokerQueue();
-                        // If the above succeeds, we are back in success case - requeue for async call.
-                        _timeoutParam.Value = _defaultWaitforTimeout; // If success, reset to default for re-queue.
-                        AsynchronouslyQueryServiceBrokerQueue();
-                        _errorState = false;
-                        Timer retryTimer = _retryTimer;
-                        if (retryTimer != null)
-                        {
-                            _retryTimer = null;
-                            retryTimer.Dispose();
-                        }
-                    }
+                    SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlConnectionContainer.Stop|DEP> _startCount not 0 after decrement.  _startCount: '{0}'.", _startCount);
                 }
 
-                if (_stop)
-                {
-                    TearDownAndDispose(); // Function will lock(this).
-                }
+                Debug.Assert(0 <= _startCount, "Invalid start count state");
+
+                return _stopped;
             }
-            catch (Exception e)
+            finally
             {
-                if (!ADP.IsCatchableExceptionType(e))
-                {
-                    throw;
-                }
-                ADP.TraceExceptionWithoutRethrow(e);
-
-                try
-                {
-                    // If unexpected query or connection failure, invalidate all dependencies against this server.
-                    // We may over-notify if only some of the connections to a particular database were affected,
-                    // but this should not be frequent enough to be a concern.
-                    // NOTE - we invalidate after failure first occurs and then retry fails.  We will then continue
-                    // to invalidate every time the retry fails.
-                    s_staticInstance.Invalidate(Server,
-                                               new SqlNotification(SqlNotificationInfo.Error,
-                                                                   SqlNotificationSource.Client,
-                                                                   SqlNotificationType.Change,
-                                                                   null));
-                }
-                catch (Exception f)
-                {
-                    if (!ADP.IsCatchableExceptionType(f))
-                    {
-                        throw;
-                    }
-                    ADP.TraceExceptionWithoutRethrow(f); // Discard exception from Invalidate.  User events can throw.
-                }
-
-                try
-                {
-                    _con.Close();
-                }
-                catch (Exception f)
-                {
-                    if (!ADP.IsCatchableExceptionType(f))
-                    {
-                        throw;
-                    }
-                    ADP.TraceExceptionWithoutRethrow(f); // Discard close failure, if it occurs.  Only trace it.
-                }
-
-                if (!_stop)
-                {
-                    // Create a timer to callback in one minute, retrying the call to Restart().
-                    _retryTimer = new Timer(new TimerCallback(Restart), null, _defaultWaitforTimeout, Timeout.Infinite);
-                    // We will retry this indefinitely, until success - or Stop();
-                }
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
             }
-        }
-
-        internal bool Stop(string appDomainKey, out bool appDomainStop)
-        {
-            appDomainStop = false;
-
-            // Dictionary used to track how many times start has been called per app domain.
-            // For each decrement, subtract from count, and delete if we reach 0.
-
-            if (null != appDomainKey)
-            {
-                // If null, then this was called from SqlDependencyProcessDispatcher, we ignore appDomainKeyHash.
-                lock (_appDomainKeyHash)
-                {
-                    if (_appDomainKeyHash.ContainsKey(appDomainKey))
-                    { // Do nothing if AppDomain did not call Start!
-                        int value = _appDomainKeyHash[appDomainKey];
-
-                        Debug.Assert(value > 0, "Unexpected count for appDomainKey");
-
-                        if (value > 0)
-                        {
-                            _appDomainKeyHash[appDomainKey] = value - 1;
-                        }
-                        else
-                        {
-                            Debug.Fail("Unexpected AppDomainKey count in Stop()");
-                        }
-
-                        if (1 == value)
-                        { // Remove from dictionary if pre-decrement count was one.
-                            _appDomainKeyHash.Remove(appDomainKey);
-                            appDomainStop = true;
-                        }
-                    }
-                    else
-                    {
-                        Debug.Fail("Unexpected state on Stop() - no AppDomainKey entry in hashtable!");
-                    }
-                }
-            }
-
-            Debug.Assert(_startCount > 0, "About to decrement _startCount less than 0!");
-            int result = Interlocked.Decrement(ref _startCount);
-
-            if (0 == result)
-            { // If we've reached refCount 0, destroy.
-                // Lock to ensure Cancel() complete prior to other thread calling TearDown.
-                lock (this)
-                {
-                    try
-                    {
-                        // Race condition with executing thread - will throw if connection is closed due to failure.
-                        // Rather than fighting the race condition, just call it and discard any potential failure.
-                        _com.Cancel(); // Cancel the pending command.  No-op if connection closed.
-                    }
-                    catch (Exception e)
-                    {
-                        if (!ADP.IsCatchableExceptionType(e))
-                        {
-                            throw;
-                        }
-                        ADP.TraceExceptionWithoutRethrow(e); // Discard failure, if it should occur.
-                    }
-                    _stop = true;
-                }
-
-                // Wait until stopped and service & queue are dropped.
-                Stopwatch retryStopwatch = Stopwatch.StartNew();
-                while (true)
-                {
-                    lock (this)
-                    {
-                        if (_stopped)
-                        {
-                            break;
-                        }
-
-                        // If we are in error state (_errorState is true), force a tear down.
-                        // Likewise, if we have exceeded the maximum retry period (30 seconds) waiting for cleanup, force a tear down.
-                        // In rare cases during app domain unload, the async cleanup performed by AsyncResultCallback
-                        // may fail to execute TearDownAndDispose, leaving this method in an infinite loop.
-                        // To avoid the infinite loop, we force the cleanup here after 30 seconds.  Since we have reached 
-                        // refcount of 0, either this method call or the thread running AsyncResultCallback is responsible for calling 
-                        // TearDownAndDispose when transitioning to the _stopped state.  Failing to call TearDownAndDispose means we leak 
-                        // the service broker objects created by this SqlDependency instance, so we make a best effort here to call 
-                        // TearDownAndDispose in the maximum retry period case as well as in the _errorState case.
-                        if (_errorState || retryStopwatch.Elapsed.Seconds >= 30)
-                        {
-                            Timer retryTimer = _retryTimer;
-                            _retryTimer = null;
-                            if (retryTimer != null)
-                            {
-                                retryTimer.Dispose(); // Dispose timer - stop retry loop!
-                            }
-                            TearDownAndDispose(); // Will not hit server unless connection open!
-                            break;
-                        }
-                    }
-
-                    // Yield the thread since the stop has not yet completed.
-                    // To avoid CPU spikes while waiting, yield and wait for at least one millisecond
-                    Thread.Sleep(1);
-                }
-            }
-
-            Debug.Assert(0 <= _startCount, "Invalid start count state");
-
-            return _stopped;
         }
 
         private void SynchronouslyQueryServiceBrokerQueue()
         {
-            using (SqlDataReader reader = _com.ExecuteReader())
+            long scopeID = SqlClientEventSource.Log.NotificationsScopeEnterEvent("<sc.SqlConnectionContainer.SynchronouslyQueryServiceBrokerQueue|DEP> {0}#", ObjectID);
+            try
             {
-                ProcessNotificationResults(reader);
+                using (SqlDataReader reader = _com.ExecuteReader())
+                {
+                    ProcessNotificationResults(reader);
+                }
+            }
+            finally
+            {
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
             }
         }
 
         [SuppressMessage("Microsoft.Security", "CA2100:ReviewSqlQueriesForSecurityVulnerabilities")]
         private void TearDownAndDispose()
         {
-            lock (this)
-            { // Lock to ensure Stop() (with Cancel()) complete prior to TearDown.
-                try
-                {
-                    // Only execute if connection is still up and open.
-                    if (ConnectionState.Closed != _con.State && ConnectionState.Broken != _con.State)
+            long scopeID = SqlClientEventSource.Log.NotificationsScopeEnterEvent("<sc.SqlConnectionContainer.TearDownAndDispose|DEP> {0}#", ObjectID);
+            try
+            {
+                lock (this)
+                { // Lock to ensure Stop() (with Cancel()) complete prior to TearDown.
+                    try
                     {
-                        if (_com.Parameters.Count > 1)
-                        { // Need to close dialog before completing.
-                            // In the normal case, the "End Conversation" query is executed before a
-                            // receive query and upon return we will clear the state.  However, unless
-                            // a non notification query result is returned, we will not clear it.  That
-                            // means a query is generally always executing with an "end conversation" on
-                            // the wire.  Rather than synchronize for success of the other "end conversation", 
-                            // simply re-execute.
-                            try
-                            {
-                                _com.CommandText = _endConversationQuery;
-                                _com.Parameters.Remove(_timeoutParam);
-                                _com.ExecuteNonQuery();
-                            }
-                            catch (Exception e)
-                            {
-                                if (!ADP.IsCatchableExceptionType(e))
-                                {
-                                    throw;
-                                }
-                                ADP.TraceExceptionWithoutRethrow(e); // Discard failure.
-                            }
-                        }
-
-                        if (_serviceQueueCreated && !_errorState)
+                        // Only execute if connection is still up and open.
+                        if (ConnectionState.Closed != _con.State && ConnectionState.Broken != _con.State)
                         {
-                            /*
-                                BEGIN TRANSACTION;
-                                DROP SERVICE "+_escapedQueueName+";
-                                DROP QUEUE "+_escapedQueueName+";
-                                DROP PROCEDURE "+_sprocName+";
-                                COMMIT TRANSACTION;
-                            */
-                            _com.CommandText = "BEGIN TRANSACTION; DROP SERVICE " + _escapedQueueName + "; DROP QUEUE " + _escapedQueueName + "; DROP PROCEDURE " + _sprocName + "; COMMIT TRANSACTION;";
-                            try
-                            {
-                                _com.ExecuteNonQuery();
-                            }
-                            catch (Exception e)
-                            {
-                                if (!ADP.IsCatchableExceptionType(e))
+                            if (_com.Parameters.Count > 1)
+                            { // Need to close dialog before completing.
+                              // In the normal case, the "End Conversation" query is executed before a
+                              // receive query and upon return we will clear the state.  However, unless
+                              // a non notification query result is returned, we will not clear it.  That
+                              // means a query is generally always executing with an "end conversation" on
+                              // the wire.  Rather than synchronize for success of the other "end conversation", 
+                              // simply re-execute.
+                                try
                                 {
-                                    throw;
+                                    _com.CommandText = _endConversationQuery;
+                                    _com.Parameters.Remove(_timeoutParam);
+                                    _com.ExecuteNonQuery();
                                 }
-                                ADP.TraceExceptionWithoutRethrow(e); // Discard failure.
+                                catch (Exception e)
+                                {
+                                    if (!ADP.IsCatchableExceptionType(e))
+                                    {
+                                        throw;
+                                    }
+                                    ADP.TraceExceptionWithoutRethrow(e); // Discard failure.
+                                }
+                            }
+
+                            if (_serviceQueueCreated && !_errorState)
+                            {
+                                /*
+                                    BEGIN TRANSACTION;
+                                    DROP SERVICE "+_escapedQueueName+";
+                                    DROP QUEUE "+_escapedQueueName+";
+                                    DROP PROCEDURE "+_sprocName+";
+                                    COMMIT TRANSACTION;
+                                */
+                                _com.CommandText = "BEGIN TRANSACTION; DROP SERVICE " + _escapedQueueName + "; DROP QUEUE " + _escapedQueueName + "; DROP PROCEDURE " + _sprocName + "; COMMIT TRANSACTION;";
+                                try
+                                {
+                                    _com.ExecuteNonQuery();
+                                }
+                                catch (Exception e)
+                                {
+                                    if (!ADP.IsCatchableExceptionType(e))
+                                    {
+                                        throw;
+                                    }
+                                    ADP.TraceExceptionWithoutRethrow(e); // Discard failure.
+                                }
                             }
                         }
                     }
+                    finally
+                    {
+                        _stopped = true;
+                        _con.Dispose(); // Close and dispose connection.
+                    }
                 }
-                finally
-                {
-                    _stopped = true;
-                    _con.Dispose(); // Close and dispose connection.
-                }
+            }
+            finally
+            {
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
             }
         }
     }
@@ -988,36 +1116,42 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                         catch (ArgumentException e)
                         {
                             ADP.TraceExceptionWithoutRethrow(e); // Discard failure, but trace.
+                            SqlClientEventSource.Log.TraceEvent("<sc.SqlDependencyProcessDispatcher.ProcessMessage|DEP|ERR> Exception thrown - Enum.Parse failed to parse the value '{0}' of the attribute '{1}'.", xmlReader.Value, xmlReader.LocalName);
                             return null;
                         }
                     }
 
                     if (MessageAttributes.All != messageAttributes)
                     {
+                        SqlClientEventSource.Log.TraceEvent("<sc.SqlDependencyProcessDispatcher.ProcessMessage|DEP|ERR> Not all expected attributes in Message; messageAttributes = '{0}'.", (int)messageAttributes);
                         return null;
                     }
 
                     // Proceed to the "Message" node.
                     if (!xmlReader.Read())
                     {
+                        SqlClientEventSource.Log.TraceEvent("<Sc.SqlDependencyProcessDispatcher.ProcessMessage|DEP|ERR> unexpected Read failure on xml or unexpected structure of xml.");
                         return null;
                     }
 
                     // Verify state after Read().
                     if ((XmlNodeType.Element != xmlReader.NodeType) || (0 != string.Compare(xmlReader.LocalName, MessageNode, StringComparison.OrdinalIgnoreCase)))
                     {
+                        SqlClientEventSource.Log.TraceEvent("<sc.SqlDependencyProcessDispatcher.ProcessMessage|DEP|ERR> unexpected Read failure on xml or unexpected structure of xml.");
                         return null;
                     }
 
                     // Proceed to the Text Node.
                     if (!xmlReader.Read())
                     {
+                        SqlClientEventSource.Log.TraceEvent("<sc.SqlDependencyProcessDispatcher.ProcessMessage|DEP|ERR> unexpected Read failure on xml or unexpected structure of xml.");
                         return null;
                     }
 
                     // Verify state after Read().
                     if (xmlReader.NodeType != XmlNodeType.Text)
                     {
+                        SqlClientEventSource.Log.TraceEvent("<sc.SqlDependencyProcessDispatcher.ProcessMessage|DEP|ERR> unexpected Read failure on xml or unexpected structure of xml.");
                         return null;
                     }
 
@@ -1027,6 +1161,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                         // Proceed to the Text Node.
                         if (!xmlMessageReader.Read())
                         {
+                            SqlClientEventSource.Log.TraceEvent("<sc.SqlDependencyProcessDispatcher.ProcessMessage|DEP|ERR> unexpected Read failure on xml or unexpected structure of xml.");
                             return null;
                         }
 
@@ -1037,6 +1172,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                         }
                         else
                         {
+                            SqlClientEventSource.Log.TraceEvent("<sc.SqlDependencyProcessDispatcher.ProcessMessage|DEP|ERR> unexpected Read failure on xml or unexpected structure of xml.");
                             return null;
                         }
                     }
@@ -1045,6 +1181,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                 }
                 else
                 {
+                    SqlClientEventSource.Log.TraceEvent("<sc.SqlDependencyProcessDispatcher.ProcessMessage|DEP|ERR> unexpected Read failure on xml or unexpected structure of xml.");
                     return null; // failure
                 }
             }
@@ -1165,15 +1302,28 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
     private Dictionary<SqlConnectionContainerHashHelper, SqlConnectionContainer> _connectionContainers;                 // NT_ID+ConStr+Service->Container
     private Dictionary<string, SqlDependencyPerAppDomainDispatcher> _sqlDependencyPerAppDomainDispatchers; // AppDomainKey->Callback
 
+    private static int _objectTypeCount; //EventSource counter
+    internal int ObjectID { get; } = Interlocked.Increment(ref _objectTypeCount);
     // Constructors
 
     // Private constructor - only called by public constructor for static initialization.
     private SqlDependencyProcessDispatcher(object dummyVariable)
     {
         Debug.Assert(null == s_staticInstance, "Real constructor called with static instance already created!");
-
-        _connectionContainers = new Dictionary<SqlConnectionContainerHashHelper, SqlConnectionContainer>();
-        _sqlDependencyPerAppDomainDispatchers = new Dictionary<string, SqlDependencyPerAppDomainDispatcher>();
+        long scopeID = SqlClientEventSource.Log.NotificationsScopeEnterEvent("<sc.SqlDependencyProcessDispatcher|DEP> {0}#", ObjectID);
+        try
+        {
+#if DEBUG
+            // Possibly expensive, limit to debug.
+            SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlDependencyProcessDispatcher|DEP> {0}#, AppDomain.CurrentDomain.FriendlyName: {1}", ObjectID, AppDomain.CurrentDomain.FriendlyName);
+#endif
+            _connectionContainers = new Dictionary<SqlConnectionContainerHashHelper, SqlConnectionContainer>();
+            _sqlDependencyPerAppDomainDispatchers = new Dictionary<string, SqlDependencyPerAppDomainDispatcher>();
+        }
+        finally
+        {
+            SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
+        }
     }
 
     // Constructor is only called by remoting.
@@ -1181,6 +1331,18 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
     public SqlDependencyProcessDispatcher()
     {
         // Empty constructor and object - dummy to obtain singleton.
+        long scopeID = SqlClientEventSource.Log.NotificationsScopeEnterEvent("<sc.SqlDependencyProcessDispatcher|DEP> {0}#", ObjectID);
+        try
+        {
+#if DEBUG
+            // Possibly expensive, limit to debug.
+            SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlDependencyProcessDispatcher|DEP> {0}#, AppDomain.CurrentDomain.FriendlyName: {1}", ObjectID, AppDomain.CurrentDomain.FriendlyName);
+#endif
+        }
+        finally
+        {
+            SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
+        }
     }
 
     // Properties
@@ -1196,34 +1358,42 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
         out string user,
             string queue)
     {
-        // Force certain connection string properties to be used by SqlDependencyProcessDispatcher.  
-        // This logic is done here to enable us to have the complete connection string now to be used
-        // for tracing as we flow through the logic.
-        connectionStringBuilder = new SqlConnectionStringBuilder(connectionString)
+        long scopeID = SqlClientEventSource.Log.NotificationsScopeEnterEvent("<sc.SqlDependencyProcessDispatcher.GetHashString|DEP> {0}#, queue: {1}", s_staticInstance.ObjectID, queue);
+        try
         {
-            Pooling = false,
-            Enlist = false,
-            ConnectRetryCount = 0
-        };
-        if (null != queue)
-        { // User provided!
-            connectionStringBuilder.ApplicationName = queue; // ApplicationName will be set to queue name.
-        }
+            // Force certain connection string properties to be used by SqlDependencyProcessDispatcher.  
+            // This logic is done here to enable us to have the complete connection string now to be used
+            // for tracing as we flow through the logic.
+            connectionStringBuilder = new SqlConnectionStringBuilder(connectionString)
+            {
+                Pooling = false,
+                Enlist = false,
+                ConnectRetryCount = 0
+            };
+            if (null != queue)
+            { // User provided!
+                connectionStringBuilder.ApplicationName = queue; // ApplicationName will be set to queue name.
+            }
 
-        if (connectionStringBuilder.IntegratedSecurity)
-        {
-            // Use existing identity infrastructure for error cases and proper hash value.
-            identity = DbConnectionPoolIdentity.GetCurrent();
-            user = null;
-        }
-        else
-        {
-            identity = null;
-            user = connectionStringBuilder.UserID;
-        }
+            if (connectionStringBuilder.IntegratedSecurity)
+            {
+                // Use existing identity infrastructure for error cases and proper hash value.
+                identity = DbConnectionPoolIdentity.GetCurrent();
+                user = null;
+            }
+            else
+            {
+                identity = null;
+                user = connectionStringBuilder.UserID;
+            }
 
-        return new SqlConnectionContainerHashHelper(identity, connectionStringBuilder.ConnectionString,
-                                                    queue, connectionStringBuilder);
+            return new SqlConnectionContainerHashHelper(identity, connectionStringBuilder.ConnectionString,
+                                                        queue, connectionStringBuilder);
+        }
+        finally
+        {
+            SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
+        }
     }
 
     // Needed for remoting to prevent lifetime issues and default GC cleanup.
@@ -1234,31 +1404,39 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
 
     private void Invalidate(string server, SqlNotification sqlNotification)
     {
-        Debug.Assert(this == s_staticInstance, "Instance method called on non _staticInstance instance!");
-        lock (_sqlDependencyPerAppDomainDispatchers)
+        long scopeID = SqlClientEventSource.Log.NotificationsScopeEnterEvent("<sc.SqlDependencyProcessDispatcher.Invalidate|DEP> {0}#, server: {1}", ObjectID, server);
+        try
         {
-
-            foreach (KeyValuePair<string, SqlDependencyPerAppDomainDispatcher> entry in _sqlDependencyPerAppDomainDispatchers)
+            Debug.Assert(this == s_staticInstance, "Instance method called on non _staticInstance instance!");
+            lock (_sqlDependencyPerAppDomainDispatchers)
             {
-                SqlDependencyPerAppDomainDispatcher perAppDomainDispatcher = entry.Value;
-                try
+
+                foreach (KeyValuePair<string, SqlDependencyPerAppDomainDispatcher> entry in _sqlDependencyPerAppDomainDispatchers)
                 {
-                    perAppDomainDispatcher.InvalidateServer(server, sqlNotification);
-                }
-                catch (Exception f)
-                {
-                    // Since we are looping over dependency dispatchers, do not allow one Invalidate
-                    // that results in a throw prevent us from invalidating all dependencies
-                    // related to this server.
-                    // NOTE - SqlDependencyPerAppDomainDispatcher already wraps individual dependency invalidates
-                    // with try/catch, but we should be careful and do the same here.
-                    if (!ADP.IsCatchableExceptionType(f))
+                    SqlDependencyPerAppDomainDispatcher perAppDomainDispatcher = entry.Value;
+                    try
                     {
-                        throw;
+                        perAppDomainDispatcher.InvalidateServer(server, sqlNotification);
                     }
-                    ADP.TraceExceptionWithoutRethrow(f); // Discard failure, but trace.
+                    catch (Exception f)
+                    {
+                        // Since we are looping over dependency dispatchers, do not allow one Invalidate
+                        // that results in a throw prevent us from invalidating all dependencies
+                        // related to this server.
+                        // NOTE - SqlDependencyPerAppDomainDispatcher already wraps individual dependency invalidates
+                        // with try/catch, but we should be careful and do the same here.
+                        if (!ADP.IsCatchableExceptionType(f))
+                        {
+                            throw;
+                        }
+                        ADP.TraceExceptionWithoutRethrow(f); // Discard failure, but trace.
+                    }
                 }
             }
+        }
+        finally
+        {
+            SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
         }
     }
 
@@ -1273,31 +1451,39 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
     // This method is only called by queued work-items from the method above.
     private void AppDomainUnloading(object state)
     {
-        string appDomainKey = (string)state;
-
-        Debug.Assert(this == s_staticInstance, "Instance method called on non _staticInstance instance!");
-        lock (_connectionContainers)
+        long scopeID = SqlClientEventSource.Log.NotificationsScopeEnterEvent("<sc.SqlDependencyProcessDispatcher.AppDomainUnloading|DEP> {0}#", ObjectID);
+        try
         {
-            List<SqlConnectionContainerHashHelper> containersToRemove = new List<SqlConnectionContainerHashHelper>();
+            string appDomainKey = (string)state;
 
-            foreach (KeyValuePair<SqlConnectionContainerHashHelper, SqlConnectionContainer> entry in _connectionContainers)
+            Debug.Assert(this == s_staticInstance, "Instance method called on non _staticInstance instance!");
+            lock (_connectionContainers)
             {
-                SqlConnectionContainer container = entry.Value;
-                if (container.AppDomainUnload(appDomainKey))
-                { // Perhaps wrap in try catch.
-                    containersToRemove.Add(container.HashHelper);
+                List<SqlConnectionContainerHashHelper> containersToRemove = new List<SqlConnectionContainerHashHelper>();
+
+                foreach (KeyValuePair<SqlConnectionContainerHashHelper, SqlConnectionContainer> entry in _connectionContainers)
+                {
+                    SqlConnectionContainer container = entry.Value;
+                    if (container.AppDomainUnload(appDomainKey))
+                    { // Perhaps wrap in try catch.
+                        containersToRemove.Add(container.HashHelper);
+                    }
+                }
+
+                foreach (SqlConnectionContainerHashHelper hashHelper in containersToRemove)
+                {
+                    _connectionContainers.Remove(hashHelper);
                 }
             }
 
-            foreach (SqlConnectionContainerHashHelper hashHelper in containersToRemove)
-            {
-                _connectionContainers.Remove(hashHelper);
+            lock (_sqlDependencyPerAppDomainDispatchers)
+            { // Remove from global Dictionary.
+                _sqlDependencyPerAppDomainDispatchers.Remove(appDomainKey);
             }
         }
-
-        lock (_sqlDependencyPerAppDomainDispatchers)
-        { // Remove from global Dictionary.
-            _sqlDependencyPerAppDomainDispatchers.Remove(appDomainKey);
+        finally
+        {
+            SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
         }
     }
 
@@ -1367,61 +1553,77 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
             bool useDefaults)
     {
         Debug.Assert(this == s_staticInstance, "Instance method called on non _staticInstance instance!");
-        server = null;  // Reset out params.
-        identity = null;
-        user = null;
-        database = null;
-        errorOccurred = false;
-        appDomainStart = false;
-
-        lock (_sqlDependencyPerAppDomainDispatchers)
+        long scopeID = SqlClientEventSource.Log.NotificationsScopeEnterEvent("<sc.SqlDependencyProcessDispatcher.Start|DEP> {0}#, queue: '{1}', appDomainKey: '{2}', perAppDomainDispatcher ID: '{3}'", ObjectID, queueService, appDomainKey, dispatcher.ObjectID);
+        try
         {
-            if (!_sqlDependencyPerAppDomainDispatchers.ContainsKey(appDomainKey))
-            {
-                _sqlDependencyPerAppDomainDispatchers[appDomainKey] = dispatcher;
-            }
-        }
+            server = null;  // Reset out params.
+            identity = null;
+            user = null;
+            database = null;
+            errorOccurred = false;
+            appDomainStart = false;
 
-        SqlConnectionContainerHashHelper hashHelper = GetHashHelper(connectionString,
-                                                            out SqlConnectionStringBuilder connectionStringBuilder,
-                                                            out identity,
-                                                            out user,
-                                                                queueService);
-
-        bool started = false;
-
-        SqlConnectionContainer container = null;
-        lock (_connectionContainers)
-        {
-            if (!_connectionContainers.ContainsKey(hashHelper))
+            lock (_sqlDependencyPerAppDomainDispatchers)
             {
-                container = new SqlConnectionContainer(hashHelper, appDomainKey, useDefaults);
-                _connectionContainers.Add(hashHelper, container);
-                started = true;
-                appDomainStart = true;
-            }
-            else
-            {
-                container = _connectionContainers[hashHelper];
-                if (container.InErrorState)
+                if (!_sqlDependencyPerAppDomainDispatchers.ContainsKey(appDomainKey))
                 {
-                    errorOccurred = true; // Set outparam errorOccurred true so we invalidate on Start().
+                    _sqlDependencyPerAppDomainDispatchers[appDomainKey] = dispatcher;
+                }
+            }
+
+            SqlConnectionContainerHashHelper hashHelper = GetHashHelper(connectionString,
+                                                                out SqlConnectionStringBuilder connectionStringBuilder,
+                                                                out identity,
+                                                                out user,
+                                                                    queueService);
+#if DEBUG
+            SqlConnectionString connectionStringOptions = new SqlConnectionString(connectionStringBuilder.ConnectionString);
+            SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlDependencyProcessDispatcher.Start|DEP> Modified connection string: '{0}'", connectionStringOptions.UsersConnectionStringForTrace());
+#endif
+
+            bool started = false;
+
+            SqlConnectionContainer container = null;
+            lock (_connectionContainers)
+            {
+                if (!_connectionContainers.ContainsKey(hashHelper))
+                {
+                    SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlDependencyProcessDispatcher.Start|DEP> {0}#, hashtable miss, creating new container.", ObjectID);
+                    container = new SqlConnectionContainer(hashHelper, appDomainKey, useDefaults);
+                    _connectionContainers.Add(hashHelper, container);
+                    started = true;
+                    appDomainStart = true;
                 }
                 else
                 {
-                    container.IncrementStartCount(appDomainKey, out appDomainStart);
+                    container = _connectionContainers[hashHelper];
+                    SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlDependencyProcessDispatcher.Start|DEP> {0}#, hashtable hit, container: {1}", ObjectID, container.ObjectID);
+                    if (container.InErrorState)
+                    {
+                        SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlDependencyProcessDispatcher.Start|DEP> {0}#, container: {1} is in error state!", ObjectID, container.ObjectID);
+                        errorOccurred = true; // Set outparam errorOccurred true so we invalidate on Start().
+                    }
+                    else
+                    {
+                        container.IncrementStartCount(appDomainKey, out appDomainStart);
+                    }
                 }
             }
-        }
 
-        if (useDefaults && !errorOccurred)
-        { // Return server, database, and queue for use by SqlDependency.
-            server = container.Server;
-            database = container.Database;
-            queueService = container.Queue;
+            if (useDefaults && !errorOccurred)
+            { // Return server, database, and queue for use by SqlDependency.
+                server = container.Server;
+                database = container.Database;
+                queueService = container.Queue;
+                SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlDependencyProcessDispatcher.Start|DEP> {0}#, default service: '{1}', server: '{2}', database: '{3}'", ObjectID, queueService, server, database);
+            }
+            SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlDependencyProcessDispatcher.Start|DEP> {0}#, started: {1}", ObjectID, started);
+            return started;
         }
-
-        return started;
+        finally
+        {
+            SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
+        }
     }
 
     // Stop methods
@@ -1436,38 +1638,55 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
             string appDomainKey,
         out bool appDomainStop)
     {
+        long scopeID = SqlClientEventSource.Log.NotificationsScopeEnterEvent("<sc.SqlDependencyProcessDispatcher.Stop|DEP> {0}#, queue: '{1}'", ObjectID, queueService);
         Debug.Assert(this == s_staticInstance, "Instance method called on non _staticInstance instance!");
-        server = null;  // Reset out param.
-        identity = null;
-        user = null;
-        database = null;
-        appDomainStop = false;
-
-        SqlConnectionContainerHashHelper hashHelper = GetHashHelper(connectionString,
-                                                          out SqlConnectionStringBuilder connectionStringBuilder,
-                                                          out identity,
-                                                          out user,
-                                                              queueService);
-
-        bool stopped = false;
-
-        lock (_connectionContainers)
+        try
         {
-            if (_connectionContainers.ContainsKey(hashHelper))
-            {
-                SqlConnectionContainer container = _connectionContainers[hashHelper];
-                server = container.Server;   // Return server, database, and queue info for use by calling SqlDependency.
-                database = container.Database;
-                queueService = container.Queue;
+            server = null;  // Reset out param.
+            identity = null;
+            user = null;
+            database = null;
+            appDomainStop = false;
 
-                if (container.Stop(appDomainKey, out appDomainStop))
-                { // Stop can be blocking if refCount == 0 on container.
-                    stopped = true;
-                    _connectionContainers.Remove(hashHelper); // Remove from collection.
+            SqlConnectionContainerHashHelper hashHelper = GetHashHelper(connectionString,
+                                                              out SqlConnectionStringBuilder connectionStringBuilder,
+                                                              out identity,
+                                                              out user,
+                                                                  queueService);
+#if DEBUG
+            SqlConnectionString connectionStringOptions = new SqlConnectionString(connectionStringBuilder.ConnectionString);
+            SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlDependencyProcessDispatcher.Stop|DEP> Modified connection string: '{0}'", connectionStringOptions.UsersConnectionStringForTrace());
+#endif
+
+            bool stopped = false;
+
+            lock (_connectionContainers)
+            {
+                if (_connectionContainers.ContainsKey(hashHelper))
+                {
+                    SqlConnectionContainer container = _connectionContainers[hashHelper];
+                    SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlDependencyProcessDispatcher.Stop|DEP> {0}#, hashtable hit, container: {1}", ObjectID, container.ObjectID);
+                    server = container.Server;   // Return server, database, and queue info for use by calling SqlDependency.
+                    database = container.Database;
+                    queueService = container.Queue;
+
+                    if (container.Stop(appDomainKey, out appDomainStop))
+                    { // Stop can be blocking if refCount == 0 on container.
+                        stopped = true;
+                        _connectionContainers.Remove(hashHelper); // Remove from collection.
+                    }
+                }
+                else
+                {
+                    SqlClientEventSource.Log.NotificationsTraceEvent("<Sc.SqlDependencyProcessDispatcher.Stop|DEP> {0}#, hashtable miss.", ObjectID);
                 }
             }
+            SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlDependencyProcessDispatcher.Stop|DEP> {0}#, stopped: {1}", ObjectID, stopped);
+            return stopped;
         }
-
-        return stopped;
+        finally
+        {
+            SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
+        }
     }
 }

@@ -24,11 +24,9 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
-    // -------------------------------------------------------------------------------------------------
-    // this internal class helps us to associate the metadata (from the target)
-    // with columnordinals (from the source)
-    //
-    sealed internal class _ColumnMapping
+    // This internal class helps us to associate the metadata from the target.
+    // with ColumnOrdinals from the source.
+    internal sealed class _ColumnMapping
     {
         internal int _sourceColumnOrdinal;
         internal _SqlMetaData _metadata;

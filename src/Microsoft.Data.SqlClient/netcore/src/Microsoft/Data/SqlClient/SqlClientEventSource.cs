@@ -12,9 +12,6 @@ namespace Microsoft.Data.SqlClient
     internal class SqlClientEventSource : EventSource
     {
         // Defines the singleton instance for the Resources ETW provider
-        /// <summary>
-        /// 
-        /// </summary>
         internal static readonly SqlClientEventSource Log = new SqlClientEventSource();
 
         private static long s_nextScopeId = 0;

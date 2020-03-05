@@ -35,7 +35,6 @@ namespace Microsoft.Data.SqlClient
     ]
     public sealed class SqlCommand : DbCommand, ICloneable
     {
-
         private static int _objectTypeCount; // Bid counter
         internal readonly int ObjectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
 
@@ -5338,6 +5337,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         SqlClientEventSource.Log.TraceEvent("<sc.SqlCommand.ExecuteReader|INFO> {0}#, Command executed as RPC.", ObjectID);
                     }
+
                     // turn set options ON
                     if (null != optionSettings)
                     {

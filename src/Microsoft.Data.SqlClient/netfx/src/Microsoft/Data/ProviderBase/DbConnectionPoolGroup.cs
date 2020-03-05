@@ -39,7 +39,7 @@ namespace Microsoft.Data.ProviderBase
         private DbConnectionPoolGroupProviderInfo _providerInfo;
         private DbMetaDataFactory _metaDataFactory;
 
-        private static int _objectTypeCount; // Bid counter
+        private static int _objectTypeCount; // EventSource counter
         internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
 
         // always lock this before changing _state, we don't want to move out of the 'Disabled' state
