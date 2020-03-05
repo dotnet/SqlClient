@@ -9965,6 +9965,8 @@ namespace Microsoft.Data.SqlClient
 
                                     Debug.Assert(_isYukon, "Invalid DataType UDT for non-Yukon or later server!");
 
+                                    int maxSupportedSize = IsKatmaiOrNewer ? int.MaxValue : short.MaxValue;
+
                                     if (!isNull)
                                     {
                                         // When writing UDT parameter values to the TDS stream, allow sending byte[] or SqlBytes
@@ -9999,7 +10001,7 @@ namespace Microsoft.Data.SqlClient
                                         size = udtVal.Length;
 
                                         //it may be legitimate, but we dont support it yet
-                                        if (size < 0 || (size >= UInt16.MaxValue && maxsize != -1))
+                                        if (size < 0 || (size >= maxSupportedSize && maxsize != -1))
                                             throw new IndexOutOfRangeException();
                                     }
 
