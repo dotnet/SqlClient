@@ -153,7 +153,6 @@ namespace Microsoft.Data.SqlClient
         internal byte[] _bShortBytes = null;                 // scratch buffer to serialize Short values (2 bytes).
         internal byte[] _bDecimalBytes = null;                 // scratch buffer to serialize decimal values (17 bytes).
 
-        //
         // DO NOT USE THIS BUFFER FOR OTHER THINGS.
         // ProcessHeader can be called ANYTIME while doing network reads.
         private byte[] _partialHeaderBuffer = new byte[TdsEnums.HEADER_LEN];   // Scratch buffer for ProcessHeader
