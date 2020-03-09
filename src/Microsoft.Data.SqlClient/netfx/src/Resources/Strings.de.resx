@@ -2722,7 +2722,7 @@
     <value>Verbindungstimeout abgelaufen. Das Timeout ist in der Phase nach der Anmeldung aufgetreten. Möglicherweise ist das Verbindungstimeout aufgetreten, während auf den Abschluss des Anmeldevorgangs durch den Server und eine entsprechende Antwort des Servers gewartet wurde. Das Timeout kann auch während des Versuchs aufgetreten sein, mehrere aktive Verbindungen zu erstellen.</value>
   </data>
   <data name="SQL_Timeout_FailoverInfo" xml:space="preserve">
-    <value>Der Fehler ist bei dem Versuch aufgetreten, eine Verbindung mit dem {0}-Server herzustellen.</value>
+    <value>This failure occurred while attempting to connect to the {0} server.</value>
   </data>
   <data name="SQL_Timeout_RoutingDestinationInfo" xml:space="preserve">
     <value>Der Fehler ist bei dem Versuch aufgetreten, eine Verbindung mit dem Routingziel herzustellen. Folgende Verbindungszeiten wurden bei dem Versuch benötigt, eine Verbindung mit dem ursprünglichen Server herzustellen: [Vor Anmeldung] Initialisierung={0}; Handshake={1}; [Anmeldung] Initialisierung={2}; Authentifizierung={3}; [Nach Anmeldung] Abgeschlossen={4};  </value>
@@ -2809,7 +2809,10 @@
     <value>Zuordnungen müssen entweder vollständig auf dem Namen oder der Ordinalzahl basieren.</value>
   </data>
   <data name="SQL_BulkLoadCannotConvertValue" xml:space="preserve">
-    <value>Der angegebene Wert vom Typ {0} aus der Datenquelle kann nicht in Typ {1} der angegebenen Zielspalte konvertiert werden.</value>
+    <value>The given value{0} of type {1} from the data source cannot be converted to type {2} for Column {3} [{4}] Row {5}.</value>
+  </data>
+  <data name="SQL_BulkLoadCannotConvertValueWithoutRowNo" xml:space="preserve">
+    <value>The given value{0} of type {1} from the data source cannot be converted to type {2} for Column {3} [{4}].</value>
   </data>
   <data name="SQL_BulkLoadNonMatchingColumnMapping" xml:space="preserve">
     <value>Die angegebene ColumnMapping stimmt mit keiner Spalte in der Quelle oder dem Ziel überein.</value>
@@ -3964,7 +3967,7 @@
     <value>Fehler auf Übertragungsebene beim Senden von Informationen an den Server.</value>
   </data>
   <data name="Snix_ProcessSspi" xml:space="preserve">
-    <value>Fehler auf Übertragungsebene während des SSPI-Handshakes.</value>
+    <value>A transport-level error has occurred during SSPI handshake.</value>
   </data>
   <data name="LocalDB_CreateFailed" xml:space="preserve">
     <value>Local Database Runtime: Benannte Instanz kann nicht erstellt werden.</value>
@@ -4309,10 +4312,10 @@
     <value>Interner Fehler. SqlColumnEncryptionEnclaveProviderName darf nicht NULL oder leer sein.</value>
   </data>
   <data name="TCE_NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe" xml:space="preserve">
-    <value>Fehler beim Lesen des Resultsets "{0}". Die Nachweis-URL wurde nicht in der Verbindungszeichenfolge angegeben, aber die Abfrage erfordert Enclave-Berechnungen. Der Enclave-Typ lautet "{1}".</value>
+    <value>Error occurred when reading '{0}' resultset. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is '{1}'. </value>
   </data>
   <data name="TCE_NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage" xml:space="preserve">
-    <value>Fehler beim Generieren des Enclave-Pakets. Die Nachweis-URL wurde nicht in der Verbindungszeichenfolge angegeben, aber die Abfrage erfordert Enclave-Berechnungen. Der Enclave-Typ lautet "{0}".</value>
+    <value>Error occurred when generating enclave package. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is '{0}'. </value>
   </data>
   <data name="TCE_EnclaveTypeNullForEnclaveBasedQuery" xml:space="preserve">
     <value>Interner Fehler. Beim Ausführen einer Abfrage, die Enclave-Berechnungen erfordert, war der von SQL Server empfangene Enclave-Typ leer oder NULL.</value>
@@ -4336,7 +4339,13 @@
     <value>Verwendete {0}-Instanz unterstützt die Spaltenverschlüsselung nicht.</value>
   </data>
   <data name="TCE_EnclaveComputationsNotSupported" xml:space="preserve">
-    <value>Sie haben die Enclave-Nachweis-URL in der Verbindungszeichenfolge angegeben, aber die SQL Server-Instanz unterstützt keine Enclave-basierten Berechnungen.</value>
+    <value>You have specified the enclave attestation URL and attestation protocol in the connection string, but the SQL Server instance in use does not support enclave based computations.</value>
+  </data>
+  <data name="TCE_AttestationURLNotSupported" xml:space="preserve">
+    <value>You have specified the enclave attestation URL in the connection string, but the SQL Server instance in use does not support enclave based computations.</value>
+  </data>
+  <data name="TCE_AttestationProtocolNotSupported" xml:space="preserve">
+    <value>You have specified the attestation protocol in the connection string, but the SQL Server instance in use does not support enclave based computations.</value>
   </data>
   <data name="TCE_EnclaveTypeNotReturned" xml:space="preserve">
     <value>Sie haben die Enclave-Nachweis-URL in der Verbindungszeichenfolge angegeben, aber die SQL Server-Instanz hat keinen Enclave-Typ zurückgegeben. Stellen Sie sicher, dass der Enclave-Typ ordnungsgemäß in Ihrer Instanz konfiguriert wurde.</value>
@@ -4516,6 +4525,6 @@
     <value>Fehler beim Initialisieren der Verbindung. Der Enclave-Typ "{1}" wird vom Nachweisprotokoll "{0}" nicht unterstützt.</value>
   </data>
   <data name="TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage" xml:space="preserve">
-    <value>Fehler beim Generieren des Enclave-Pakets. In der Verbindungszeichenfolge wurde kein Nachweisprotokoll angegeben, aber für die Abfrage sind Enclave-Berechnungen erforderlich.</value>
+    <value>Error occurred when generating enclave package. Attestation Protocol has not been specified in the connection string, but the query requires enclave computations.</value>
   </data>
 </root>
