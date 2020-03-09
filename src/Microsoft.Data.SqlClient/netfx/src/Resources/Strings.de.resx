@@ -1948,7 +1948,7 @@
     <value>Diesem Befehl ist bereits ein geöffnetes SqlResultSet zugeordnet, das zuerst geschlossen werden muss.</value>
   </data>
   <data name="ADP_OpenReaderExists" xml:space="preserve">
-    <value>Diesem {0}-Element ist bereits ein geöffneter DataReader zugeordnet, der zuerst geschlossen werden muss.</value>
+    <value>Diesem {0}selement ist bereits ein geöffneter DataReader zugeordnet, der zuerst geschlossen werden muss.</value>
   </data>
   <data name="ADP_DeriveParametersNotSupported" xml:space="preserve">
     <value>{0} DeriveParameters unterstützen nur CommandType.StoredProcedure, nicht CommandType.{1}.</value>

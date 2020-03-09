@@ -124,7 +124,7 @@
     <value>Недопустимый индекс {0} для этого {1} с Count={2}.</value>
   </data>
   <data name="ADP_CollectionIndexString" xml:space="preserve">
-    <value>{0}, где используется {1} "{2}", не входит в состав "{3}".</value>
+    <value>Элемент {0} со свойством {1} "{2}" не входит в коллекцию {3}.</value>
   </data>
   <data name="ADP_CollectionInvalidType" xml:space="preserve">
     <value>Для {0} могут задаваться только объекты типа {1}, имеющие определенные значения, но не объекты {2}.</value>
