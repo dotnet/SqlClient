@@ -164,6 +164,24 @@ namespace Microsoft.Data.SqlClient
         }
 
         [NonEvent]
+        internal void SNITrace<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
+        {
+            if (Log.IsSNITraceEnabled())
+            {
+                Trace(string.Format(message, args0, args1, args2, args3));
+            }
+        }
+
+        [NonEvent]
+        internal void SNITrace<T0, T1, T2, T3, T4>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4)
+        {
+            if (Log.IsSNITraceEnabled())
+            {
+                Trace(string.Format(message, args0, args1, args2, args3, args4));
+            }
+        }
+
+        [NonEvent]
         internal void TraceEvent<T0>(string message, T0 args0)
         {
             if (Log.IsTraceEnabled())
@@ -262,6 +280,14 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        [NonEvent]
+        internal void AdvanceTrace<T0, T1, T2, T3, T4>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4)
+        {
+            if (Log.IsAdvanceTraceOn())
+            {
+                Trace(string.Format(message, args0, args1, args2, args3, args4));
+            }
+        }
         [NonEvent]
         internal void AdvanceTrace<T0, T1, T2, T3, T4, T5>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4, T5 args5)
         {
