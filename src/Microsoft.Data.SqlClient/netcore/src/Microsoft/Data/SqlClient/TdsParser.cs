@@ -1246,120 +1246,141 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlError ProcessSNIError(TdsParserStateObject stateObj)
         {
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.TdsParser.ProcessSNIError|ERR>");
+            try
+            {
 #if DEBUG
-            // There is an exception here for MARS as its possible that another thread has closed the connection just as we see an error
-            Debug.Assert(SniContext.Undefined != stateObj.DebugOnlyCopyOfSniContext || ((_fMARS) && ((_state == TdsParserState.Closed) || (_state == TdsParserState.Broken))), "SniContext must not be None");
+                // There is an exception here for MARS as its possible that another thread has closed the connection just as we see an error
+                Debug.Assert(SniContext.Undefined != stateObj.DebugOnlyCopyOfSniContext || ((_fMARS) && ((_state == TdsParserState.Closed) || (_state == TdsParserState.Broken))), "SniContext must not be None");
+                SqlClientEventSource.Log.SNITrace("<sc.TdsParser.ProcessSNIError|ERR> SNIContext must not be None = {0}, _fMARS = {1}, TDS Parser State = {2}", stateObj.DebugOnlyCopyOfSniContext, _fMARS, _state);
+
 #endif
-            SNIErrorDetails details = GetSniErrorDetails();
+                SNIErrorDetails details = GetSniErrorDetails();
 
-            if (details.sniErrorNumber != 0)
-            {
-                // handle special SNI error codes that are converted into exception which is not a SqlException.
-                switch (details.sniErrorNumber)
+                if (details.sniErrorNumber != 0)
                 {
-                    case (int)SNINativeMethodWrapper.SniSpecialErrors.MultiSubnetFailoverWithMoreThan64IPs:
-                        // Connecting with the MultiSubnetFailover connection option to a SQL Server instance configured with more than 64 IP addresses is not supported.
-                        throw SQL.MultiSubnetFailoverWithMoreThan64IPs();
-
-                    case (int)SNINativeMethodWrapper.SniSpecialErrors.MultiSubnetFailoverWithInstanceSpecified:
-                        // Connecting to a named SQL Server instance using the MultiSubnetFailover connection option is not supported.
-                        throw SQL.MultiSubnetFailoverWithInstanceSpecified();
-
-                    case (int)SNINativeMethodWrapper.SniSpecialErrors.MultiSubnetFailoverWithNonTcpProtocol:
-                        // Connecting to a SQL Server instance using the MultiSubnetFailover connection option is only supported when using the TCP protocol.
-                        throw SQL.MultiSubnetFailoverWithNonTcpProtocol();
-                        // continue building SqlError instance
-                }
-            }
-            // PInvoke code automatically sets the length of the string for us
-            // So no need to look for \0
-            string errorMessage = details.errorMessage;
-
-            //  Format SNI errors and add Context Information
-            //
-            //  General syntax is:
-            //  <sqlclient message>
-            //  (provider:<SNIx provider>, error: <SNIx error code> - <SNIx error message>)
-            //
-            // errorMessage | sniError |
-            // -------------------------------------------
-            // ==null       | x        | must never happen
-            // !=null       | != 0     | retrieve corresponding errorMessage from resources
-            // !=null       | == 0     | replace text left of errorMessage
-            //
-
-            if (TdsParserStateObjectFactory.UseManagedSNI)
-                Debug.Assert(!string.IsNullOrEmpty(details.errorMessage) || details.sniErrorNumber != 0, "Empty error message received from SNI");
-            else
-                Debug.Assert(!string.IsNullOrEmpty(details.errorMessage), "Empty error message received from SNI");
-
-            string sniContextEnumName = TdsEnums.GetSniContextEnumName(stateObj.SniContext);
-
-            string sqlContextInfo = SRHelper.GetResourceString(sniContextEnumName);
-            string providerRid = string.Format("SNI_PN{0}", details.provider);
-            string providerName = SRHelper.GetResourceString(providerRid);
-            Debug.Assert(!string.IsNullOrEmpty(providerName), $"invalid providerResourceId '{providerRid}'");
-            uint win32ErrorCode = details.nativeError;
-
-            if (details.sniErrorNumber == 0)
-            {
-                // Provider error. The message from provider is preceded with non-localizable info from SNI
-                // strip provider info from SNI
-                //
-                int iColon = errorMessage.IndexOf(':');
-                Debug.Assert(0 <= iColon, "':' character missing in sni errorMessage");
-                Debug.Assert(errorMessage.Length > iColon + 1 && errorMessage[iColon + 1] == ' ', "Expecting a space after the ':' character");
-
-                // extract the message excluding the colon and trailing cr/lf chars
-                if (0 <= iColon)
-                {
-                    int len = errorMessage.Length;
-                    len -= Environment.NewLine.Length; // exclude newline sequence
-                    iColon += 2;  // skip over ": " sequence
-                    len -= iColon;
-                    /*
-                        The error message should come back in the following format: "TCP Provider: MESSAGE TEXT"
-                        If the message is received on a Win9x OS, the error message will not contain MESSAGE TEXT 
-                        If we get an error message with no message text, just return the entire message otherwise 
-                        return just the message text.
-                    */
-                    if (len > 0)
+                    // handle special SNI error codes that are converted into exception which is not a SqlException.
+                    switch (details.sniErrorNumber)
                     {
-                        errorMessage = errorMessage.Substring(iColon, len);
+                        case (int)SNINativeMethodWrapper.SniSpecialErrors.MultiSubnetFailoverWithMoreThan64IPs:
+                            // Connecting with the MultiSubnetFailover connection option to a SQL Server instance configured with more than 64 IP addresses is not supported.
+                            SqlClientEventSource.Log.AdvanceTrace("<sc.TdsParser.ProcessSNIError|ERR|ADV> Connecting with the MultiSubnetFailover connection option to a SQL Server instance configured with more than 64 IP addresses is not supported.");
+                            throw SQL.MultiSubnetFailoverWithMoreThan64IPs();
+
+                        case (int)SNINativeMethodWrapper.SniSpecialErrors.MultiSubnetFailoverWithInstanceSpecified:
+                            // Connecting to a named SQL Server instance using the MultiSubnetFailover connection option is not supported.
+                            SqlClientEventSource.Log.AdvanceTrace("<sc.TdsParser.ProcessSNIError|ERR|ADV> Connecting to a named SQL Server instance using the MultiSubnetFailover connection option is not supported.");
+                            throw SQL.MultiSubnetFailoverWithInstanceSpecified();
+
+                        case (int)SNINativeMethodWrapper.SniSpecialErrors.MultiSubnetFailoverWithNonTcpProtocol:
+                            // Connecting to a SQL Server instance using the MultiSubnetFailover connection option is only supported when using the TCP protocol.
+                            SqlClientEventSource.Log.AdvanceTrace("<sc.TdsParser.ProcessSNIError|ERR|ADV> Connecting to a SQL Server instance using the MultiSubnetFailover connection option is only supported when using the TCP protocol.");
+                            throw SQL.MultiSubnetFailoverWithNonTcpProtocol();
+                            // continue building SqlError instance
                     }
                 }
-            }
-            else
-            {
+                // PInvoke code automatically sets the length of the string for us
+                // So no need to look for \0
+                string errorMessage = details.errorMessage;
+                SqlClientEventSource.Log.AdvanceTrace("< sc.TdsParser.ProcessSNIError |ERR|ADV > Error message Detail: {0}", details.errorMessage);
+
+                //  Format SNI errors and add Context Information
+                //
+                //  General syntax is:
+                //  <sqlclient message>
+                //  (provider:<SNIx provider>, error: <SNIx error code> - <SNIx error message>)
+                //
+                // errorMessage | sniError |
+                // -------------------------------------------
+                // ==null       | x        | must never happen
+                // !=null       | != 0     | retrieve corresponding errorMessage from resources
+                // !=null       | == 0     | replace text left of errorMessage
+                //
 
                 if (TdsParserStateObjectFactory.UseManagedSNI)
                 {
-                    // SNI error. Append additional error message info if available.
-                    //
-                    string sniLookupMessage = SQL.GetSNIErrorMessage((int)details.sniErrorNumber);
-                    errorMessage = (errorMessage != string.Empty) ?
-                                    (sniLookupMessage + ": " + errorMessage) :
-                                    sniLookupMessage;
+                    Debug.Assert(!string.IsNullOrEmpty(details.errorMessage) || details.sniErrorNumber != 0, "Empty error message received from SNI");
+                    SqlClientEventSource.Log.AdvanceTrace("<sc.TdsParser.ProcessSNIError |ERR|ADV > Empty error message received from SNI. Error Message = {0}, SNI Error Number ={1}", details.errorMessage, details.sniErrorNumber);
                 }
                 else
                 {
-                    // SNI error. Replace the entire message.
-                    //
-                    errorMessage = SQL.GetSNIErrorMessage((int)details.sniErrorNumber);
+                    Debug.Assert(!string.IsNullOrEmpty(details.errorMessage), "Empty error message received from SNI");
+                    SqlClientEventSource.Log.AdvanceTrace("<sc.TdsParser.ProcessSNIError |ERR|ADV > Empty error message received from SNI. Error Message = {0}", details.errorMessage);
+                }
 
-                    // If its a LocalDB error, then nativeError actually contains a LocalDB-specific error code, not a win32 error code
-                    if (details.sniErrorNumber == (int)SNINativeMethodWrapper.SniSpecialErrors.LocalDBErrorCode)
+                string sniContextEnumName = TdsEnums.GetSniContextEnumName(stateObj.SniContext);
+
+                string sqlContextInfo = SRHelper.GetResourceString(sniContextEnumName);
+                string providerRid = string.Format("SNI_PN{0}", details.provider);
+                string providerName = SRHelper.GetResourceString(providerRid);
+                Debug.Assert(!string.IsNullOrEmpty(providerName), $"invalid providerResourceId '{providerRid}'");
+                uint win32ErrorCode = details.nativeError;
+                SqlClientEventSource.Log.AdvanceTrace("<sc.TdsParser.ProcessSNIError |ERR|ADV > SNI Native Error Code = {0}", win32ErrorCode);
+                if (details.sniErrorNumber == 0)
+                {
+                    // Provider error. The message from provider is preceded with non-localizable info from SNI
+                    // strip provider info from SNI
+                    //
+                    int iColon = errorMessage.IndexOf(':');
+                    Debug.Assert(0 <= iColon, "':' character missing in sni errorMessage");
+                    SqlClientEventSource.Log.AdvanceTrace("<sc.TdsParser.ProcessSNIError |ERR|ADV > ':' character missing in sni errorMessage. Error Mesage index of ':' = {0}", iColon);
+                    Debug.Assert(errorMessage.Length > iColon + 1 && errorMessage[iColon + 1] == ' ', "Expecting a space after the ':' character");
+                    SqlClientEventSource.Log.AdvanceTrace("<sc.TdsParser.ProcessSNIError |ERR|ADV > Expecting a space after the ':' character. Error Mesage Length = {0}", errorMessage.Length);
+                    // extract the message excluding the colon and trailing cr/lf chars
+                    if (0 <= iColon)
                     {
-                        errorMessage += LocalDBAPI.GetLocalDBMessage((int)details.nativeError);
-                        win32ErrorCode = 0;
+                        int len = errorMessage.Length;
+                        len -= Environment.NewLine.Length; // exclude newline sequence
+                        iColon += 2;  // skip over ": " sequence
+                        len -= iColon;
+                        /*
+                            The error message should come back in the following format: "TCP Provider: MESSAGE TEXT"
+                            If the message is received on a Win9x OS, the error message will not contain MESSAGE TEXT 
+                            If we get an error message with no message text, just return the entire message otherwise 
+                            return just the message text.
+                        */
+                        if (len > 0)
+                        {
+                            errorMessage = errorMessage.Substring(iColon, len);
+                        }
                     }
                 }
-            }
-            errorMessage = string.Format("{0} (provider: {1}, error: {2} - {3})",
-                sqlContextInfo, providerName, (int)details.sniErrorNumber, errorMessage);
+                else
+                {
 
-            return new SqlError((int)details.nativeError, 0x00, TdsEnums.FATAL_ERROR_CLASS,
-                                _server, errorMessage, details.function, (int)details.lineNumber, details.nativeError, details.exception);
+                    if (TdsParserStateObjectFactory.UseManagedSNI)
+                    {
+                        // SNI error. Append additional error message info if available.
+                        //
+                        string sniLookupMessage = SQL.GetSNIErrorMessage((int)details.sniErrorNumber);
+                        errorMessage = (errorMessage != string.Empty) ?
+                                        (sniLookupMessage + ": " + errorMessage) :
+                                        sniLookupMessage;
+                    }
+                    else
+                    {
+                        // SNI error. Replace the entire message.
+                        //
+                        errorMessage = SQL.GetSNIErrorMessage((int)details.sniErrorNumber);
+
+                        // If its a LocalDB error, then nativeError actually contains a LocalDB-specific error code, not a win32 error code
+                        if (details.sniErrorNumber == (int)SNINativeMethodWrapper.SniSpecialErrors.LocalDBErrorCode)
+                        {
+                            errorMessage += LocalDBAPI.GetLocalDBMessage((int)details.nativeError);
+                            win32ErrorCode = 0;
+                        }
+                    }
+                }
+                errorMessage = string.Format("{0} (provider: {1}, error: {2} - {3})",
+                    sqlContextInfo, providerName, (int)details.sniErrorNumber, errorMessage);
+                SqlClientEventSource.Log.AdvanceTrace("<sc.TdsParser.ProcessSNIError |ERR|ADV > SNI Error Message. Native Error = {0}, Line Number ={1}, Function ={2}, Exception ={3}, Server = {4}", (int)details.nativeError, (int)details.lineNumber, details.function, details.exception, _server);
+                return new SqlError((int)details.nativeError, 0x00, TdsEnums.FATAL_ERROR_CLASS,
+                                    _server, errorMessage, details.function, (int)details.lineNumber, details.nativeError, details.exception);
+            }
+            finally
+            {
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
+            }
         }
 
         internal void CheckResetConnection(TdsParserStateObject stateObj)

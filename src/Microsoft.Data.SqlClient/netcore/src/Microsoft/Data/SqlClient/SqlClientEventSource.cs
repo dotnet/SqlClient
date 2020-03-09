@@ -73,6 +73,8 @@ namespace Microsoft.Data.SqlClient
             internal const EventKeywords Advanced = (EventKeywords)512;
 
             internal const EventKeywords StateDump = (EventKeywords)1024;
+
+            internal const EventKeywords SNITrace = (EventKeywords)2048;
         }
         #endregion
 
@@ -118,16 +120,55 @@ namespace Microsoft.Data.SqlClient
 
         [NonEvent]
         internal bool IsSqlClientEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.SqlClient);
+
+        [NonEvent]
+        internal bool IsSNITraceEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.SNITrace);
         #endregion
 
         #region overloads
         //Never use event writer directly as they are not checking for enabled/disabled situations. Always use overloads.
         [NonEvent]
+        internal void SNITrace(string message)
+        {
+            if (Log.IsSNITraceEnabled())
+            {
+                Trace(string.Format(message));
+            }
+        }
+
+        [NonEvent]
+        internal void SNITrace<T0>(string message, T0 args0)
+        {
+            if (Log.IsSNITraceEnabled())
+            {
+                Trace(string.Format(message, args0));
+            }
+        }
+
+        [NonEvent]
+        internal void SNITrace<T0, T1>(string message, T0 args0, T1 args1)
+        {
+            if (Log.IsSNITraceEnabled())
+            {
+                Trace(string.Format(message, args0, args1));
+            }
+        }
+
+        [NonEvent]
+        internal void SNITrace<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
+        {
+            if (Log.IsSNITraceEnabled())
+            {
+                Trace(string.Format(message, args0, args1, args2));
+            }
+        }
+
+        [NonEvent]
         internal void TraceEvent<T0>(string message, T0 args0)
         {
             if (Log.IsTraceEnabled())
             {
-                TraceEvent(string.Format(message, args0));
+                Trace(string.Format(message, args0));
             }
         }
 
@@ -253,7 +294,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsScopeEnabled())
             {
-                return ScopeEnter(string.Format(message, args0));
+                return SNIScopeEnter(string.Format(message, args0));
             }
             return 0;
         }
@@ -263,7 +304,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsAdvanceTraceOn())
             {
-                return ScopeEnter(string.Format(message, args0));
+                return SNIScopeEnter(string.Format(message, args0));
             }
             return 0;
         }
@@ -273,7 +314,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsScopeEnabled())
             {
-                return ScopeEnter(message);
+                return SNIScopeEnter(message);
             }
             return 0;
         }
@@ -283,7 +324,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsScopeEnabled())
             {
-                return ScopeEnter(string.Format(message, args0, args1));
+                return SNIScopeEnter(string.Format(message, args0, args1));
             }
             return 0;
         }
@@ -293,7 +334,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsScopeEnabled())
             {
-                return ScopeEnter(string.Format(message, args0, args1, args2));
+                return SNIScopeEnter(string.Format(message, args0, args1, args2));
             }
             return 0;
         }
@@ -303,7 +344,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsScopeEnabled())
             {
-                return ScopeEnter(string.Format(message, args0, args1, args2, args3));
+                return SNIScopeEnter(string.Format(message, args0, args1, args2, args3));
             }
             return 0;
         }
@@ -529,7 +570,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         [Event(EnterScopeId, Level = EventLevel.Verbose, Keywords = Keywords.Scope)]
-        internal long ScopeEnter(string message)
+        internal long SNIScopeEnter(string message)
         {
             long scopeId = Interlocked.Increment(ref s_nextScopeId);
             WriteEvent(EnterScopeId, message);
