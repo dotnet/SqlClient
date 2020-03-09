@@ -2722,7 +2722,7 @@
     <value>连接超时时间已到。在登录后阶段超过了此超时时间。连接可能在等待服务器完成登录过程并响应时超时；或者在尝试创建多个活动连接时超时。</value>
   </data>
   <data name="SQL_Timeout_FailoverInfo" xml:space="preserve">
-    <value>尝试连接到 {0} 服务器时发生了此故障。</value>
+    <value>This failure occurred while attempting to connect to the {0} server.</value>
   </data>
   <data name="SQL_Timeout_RoutingDestinationInfo" xml:space="preserve">
     <value>尝试连接到路由目标时发生了此故障。尝试连接原服务器所用时长为 - [预登录] 初始化={0}; 握手={1}; [登录] 初始化={2}; 身份验证={3}; [登录后] 完成={4};</value>
@@ -2809,7 +2809,10 @@
     <value>映射必须要么全部基于名称，要么全部基于序数。</value>
   </data>
   <data name="SQL_BulkLoadCannotConvertValue" xml:space="preserve">
-    <value>来自数据源的 {0} 类型的给定值不能转换为指定目标列的类型 {1}。</value>
+    <value>The given value{0} of type {1} from the data source cannot be converted to type {2} for Column {3} [{4}] Row {5}.</value>
+  </data>
+  <data name="SQL_BulkLoadCannotConvertValueWithoutRowNo" xml:space="preserve">
+    <value>The given value{0} of type {1} from the data source cannot be converted to type {2} for Column {3} [{4}].</value>
   </data>
   <data name="SQL_BulkLoadNonMatchingColumnMapping" xml:space="preserve">
     <value>给定的 ColumnMapping 与源或目标中的任意列均不匹配。</value>
@@ -3964,7 +3967,7 @@
     <value>在向服务器发送信息时发生传输级错误。</value>
   </data>
   <data name="Snix_ProcessSspi" xml:space="preserve">
-    <value>在 SSPI 握手期间发生传输级错误。</value>
+    <value>A transport-level error has occurred during SSPI handshake.</value>
   </data>
   <data name="LocalDB_CreateFailed" xml:space="preserve">
     <value>Local Database Runtime: 无法创建命名实例。</value>
@@ -4309,10 +4312,10 @@
     <value>出现内部错误。SqlColumnEncryptionEnclaveProviderName 不能为 null 或为空。</value>
   </data>
   <data name="TCE_NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe" xml:space="preserve">
-    <value>读取“{0}”结果集时出错。尚未在连接字符串中指定证明 URL，但查询需要 enclave 计算。Enclave 类型为“{1}”。</value>
+    <value>Error occurred when reading '{0}' resultset. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is '{1}'. </value>
   </data>
   <data name="TCE_NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage" xml:space="preserve">
-    <value>生成 enclave 包时出错。尚未在连接字符串中指定证明 URL，但查询需要 enclave 计算。Enclave 类型为“{0}”。</value>
+    <value>Error occurred when generating enclave package. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is '{0}'. </value>
   </data>
   <data name="TCE_EnclaveTypeNullForEnclaveBasedQuery" xml:space="preserve">
     <value>出现内部错误。执行需要 enclave 计算的查询时，接收自 SQL Server 的 enclave 类型为 null 或为空。</value>
@@ -4336,7 +4339,13 @@
     <value>使用的 {0} 实例不支持列加密。</value>
   </data>
   <data name="TCE_EnclaveComputationsNotSupported" xml:space="preserve">
-    <value>已在连接字符串中指定 enclave 证明 URL，但正在使用的 SQL Server 实例不支持基于 enclave 的计算。</value>
+    <value>You have specified the enclave attestation URL and attestation protocol in the connection string, but the SQL Server instance in use does not support enclave based computations.</value>
+  </data>
+  <data name="TCE_AttestationURLNotSupported" xml:space="preserve">
+    <value>You have specified the enclave attestation URL in the connection string, but the SQL Server instance in use does not support enclave based computations.</value>
+  </data>
+  <data name="TCE_AttestationProtocolNotSupported" xml:space="preserve">
+    <value>You have specified the attestation protocol in the connection string, but the SQL Server instance in use does not support enclave based computations.</value>
   </data>
   <data name="TCE_EnclaveTypeNotReturned" xml:space="preserve">
     <value>连接字符串中已指定 enclave 证明 URL，但 SQL Server 实例未返回 enclave 类型。请确保在实例中正确配置 enclave 类型。</value>
@@ -4516,6 +4525,6 @@
     <value>未能初始化连接。证明协议“{0}”不支持 enclave 类型“{1}”。</value>
   </data>
   <data name="TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage" xml:space="preserve">
-    <value>生成 enclave 包时出错。未在连接字符串中指定证明协议，但该查询需要 enclave 计算。</value>
+    <value>Error occurred when generating enclave package. Attestation Protocol has not been specified in the connection string, but the query requires enclave computations.</value>
   </data>
 </root>
