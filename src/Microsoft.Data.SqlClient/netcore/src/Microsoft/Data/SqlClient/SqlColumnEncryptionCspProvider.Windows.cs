@@ -424,7 +424,7 @@ namespace Microsoft.Data.SqlClient
         /// <returns></returns>
         private int GetProviderType(string providerName, string keyPath, bool isSystemOp)
         {
-            string keyName = String.Format(@"SOFTWARE/Microsoft/Cryptography/Defaults/Provider/{0}", providerName);
+            string keyName = String.Format(@"SOFTWARE\Microsoft\Cryptography\Defaults\Provider\{0}", providerName);
             RegistryKey key = Registry.LocalMachine.OpenSubKey(keyName);
             if (key == null)
             {
