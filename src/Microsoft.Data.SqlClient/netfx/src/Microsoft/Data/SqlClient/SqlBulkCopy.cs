@@ -71,12 +71,12 @@ namespace Microsoft.Data.SqlClient
     sealed internal class Result
     {
         private _SqlMetaDataSet _metadata;
-        private ArrayList _rowset;
+        private List<Row> _rowset;
 
         internal Result(_SqlMetaDataSet metadata)
         {
             this._metadata = metadata;
-            this._rowset = new ArrayList();
+            this._rowset = new List<Row>();
         }
 
         internal int Count
@@ -113,7 +113,7 @@ namespace Microsoft.Data.SqlClient
     //
     sealed internal class BulkCopySimpleResultSet
     {
-        private ArrayList _results;                   // the list of results
+        private List<Result> _results;                   // the list of results
         private Result resultSet;                     // the current result
         private int[] indexmap;                       // associates columnids with indexes in the rowarray
 
@@ -121,7 +121,7 @@ namespace Microsoft.Data.SqlClient
         //
         internal BulkCopySimpleResultSet()
         {
-            _results = new ArrayList();
+            _results = new List<Result>();
         }
 
         // indexer
