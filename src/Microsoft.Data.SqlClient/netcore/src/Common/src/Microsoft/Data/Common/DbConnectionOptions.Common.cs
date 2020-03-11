@@ -101,7 +101,6 @@ namespace Microsoft.Data.Common
         private readonly string _usersConnectionString;
         private readonly Dictionary<string, string> _parsetable;
         internal readonly NameValuePair _keyChain;
-        internal readonly bool _hasPasswordKeyword;
 
         internal Dictionary<string, string> Parsetable
         {
@@ -114,14 +113,14 @@ namespace Microsoft.Data.Common
         private string UsersConnectionString(bool hidePassword, bool forceHidePassword)
         {
             string connectionString = _usersConnectionString;
-            if (_hasPasswordKeyword && (forceHidePassword || (hidePassword && !HasPersistablePassword)))
+            if (HasPasswordKeyword && (forceHidePassword || (hidePassword && !HasPersistablePassword)))
             {
                 ReplacePasswordPwd(out connectionString, false);
             }
             return connectionString ?? string.Empty;
         }
 
-        internal bool HasPersistablePassword => _hasPasswordKeyword ?
+        internal bool HasPersistablePassword => HasPasswordKeyword ?
             ConvertValueToBoolean(KEY.Persist_Security_Info, false) :
             true; // no password means persistable password so we don't have to munge
 

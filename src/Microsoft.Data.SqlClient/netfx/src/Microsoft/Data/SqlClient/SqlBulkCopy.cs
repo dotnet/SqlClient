@@ -495,6 +495,15 @@ namespace Microsoft.Data.SqlClient
 
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/RowsCopied/*'/>
+        public int RowsCopied
+        {
+            get
+            {
+                return _rowsCopied;
+            }
+        }
+
         internal SqlStatistics Statistics
         {
             get
@@ -2927,18 +2936,18 @@ namespace Microsoft.Data.SqlClient
                 {
                     tdsReliabilitySection.Start();
 #endif //DEBUG
-                    if ((cleanupParser) && (_parser != null) && (_stateObj != null))
-                    {
-                        _parser._asyncWrite = false;
-                        Task task = _parser.WriteBulkCopyDone(_stateObj);
-                        Debug.Assert(task == null, "Write should not pend when error occurs");
-                        RunParser();
-                    }
+                if ((cleanupParser) && (_parser != null) && (_stateObj != null))
+                {
+                    _parser._asyncWrite = false;
+                    Task task = _parser.WriteBulkCopyDone(_stateObj);
+                    Debug.Assert(task == null, "Write should not pend when error occurs");
+                    RunParser();
+                }
 
-                    if (_stateObj != null)
-                    {
-                        CleanUpStateObject();
-                    }
+                if (_stateObj != null)
+                {
+                    CleanUpStateObject();
+                }
 #if DEBUG
                 }
                 finally

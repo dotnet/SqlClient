@@ -419,6 +419,15 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/RowsCopied/*'/>
+        public int RowsCopied
+        {
+            get
+            {
+                return _rowsCopied;
+            }
+        }
+
         internal SqlStatistics Statistics
         {
             get

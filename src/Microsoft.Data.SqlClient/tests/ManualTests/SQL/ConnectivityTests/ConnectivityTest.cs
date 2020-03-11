@@ -10,7 +10,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
-    public static class ConnectivityParametersTest
+    public static class ConnectivityTest
     {
         private const string COL_SPID = "SPID";
         private const string COL_PROGRAM_NAME = "ProgramName";
@@ -274,6 +274,34 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         while (reader.Read())
                         { }
                 }
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnectionStringPasswordIncluded))]
+        public static void ConnectionStringPersistantInfoTest()
+        {
+            SqlConnectionStringBuilder connectionStringBuilder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
+            connectionStringBuilder.PersistSecurityInfo = false;
+            string cnnString = connectionStringBuilder.ConnectionString;
+
+            connectionStringBuilder.Clear();
+            using (SqlConnection sqlCnn = new SqlConnection(cnnString))
+            {
+                sqlCnn.Open();
+                connectionStringBuilder.ConnectionString = sqlCnn.ConnectionString;
+                Assert.True(connectionStringBuilder.Password == string.Empty, "Password must not persist according to set the PersistSecurityInfo by false!");
+            }
+
+            connectionStringBuilder.ConnectionString = DataTestUtility.TCPConnectionString;
+            connectionStringBuilder.PersistSecurityInfo = true;
+            cnnString = connectionStringBuilder.ConnectionString;
+
+            connectionStringBuilder.Clear();
+            using (SqlConnection sqlCnn = new SqlConnection(cnnString))
+            {
+                sqlCnn.Open();
+                connectionStringBuilder.ConnectionString = sqlCnn.ConnectionString;
+                Assert.True(connectionStringBuilder.Password != string.Empty, "Password must persist according to set the PersistSecurityInfo by true!");
             }
         }
     }

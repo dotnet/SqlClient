@@ -32,8 +32,7 @@ namespace Microsoft.Data.Common
 
         protected DbConnectionOptions(DbConnectionOptions connectionOptions)
         { // Clone used by SqlConnectionString
-            _usersConnectionString = connectionOptions._usersConnectionString;
-            _hasPasswordKeyword = connectionOptions._hasPasswordKeyword;
+            _usersConnectionString = connectionOptions._usersConnectionString;            
             _parsetable = connectionOptions._parsetable;
             _keyChain = connectionOptions._keyChain;
             HasPasswordKeyword = connectionOptions.HasPasswordKeyword;
