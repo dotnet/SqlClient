@@ -260,6 +260,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return retval;
         }
 
+        public static bool IsTCPConnectionStringPasswordIncluded()
+        {
+            return RetrieveValueFromConnStr(TCPConnectionString, new string[] { "Password", "PWD" }) != string.Empty;
+        }
+
         // the name length will be no more then (16 + prefix.Length + escapeLeft.Length + escapeRight.Length)
         // some providers does not support names (Oracle supports up to 30)
         public static string GetUniqueName(string prefix)
@@ -575,23 +580,26 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             // tokenize connection string and remove input keys.
             string res = "";
-            string[] keys = connStr.Split(';');
-            foreach (var key in keys)
+            if (connStr != null && keysToRemove != null)
             {
-                if (!string.IsNullOrEmpty(key.Trim()))
+                string[] keys = connStr.Split(';');
+                foreach (var key in keys)
                 {
-                    bool removeKey = false;
-                    foreach (var keyToRemove in keysToRemove)
+                    if (!string.IsNullOrEmpty(key.Trim()))
                     {
-                        if (key.Trim().ToLower().StartsWith(keyToRemove.Trim().ToLower()))
+                        bool removeKey = false;
+                        foreach (var keyToRemove in keysToRemove)
                         {
-                            removeKey = true;
-                            break;
+                            if (key.Trim().ToLower().StartsWith(keyToRemove.Trim().ToLower()))
+                            {
+                                removeKey = true;
+                                break;
+                            }
                         }
-                    }
-                    if (!removeKey)
-                    {
-                        res += key + ";";
+                        if (!removeKey)
+                        {
+                            res += key + ";";
+                        }
                     }
                 }
             }
@@ -602,17 +610,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             // tokenize connection string and retrieve value for a specific key.
             string res = "";
-            string[] keys = connStr.Split(';');
-            foreach (var key in keys)
+            if (connStr != null && keywords != null)
             {
-                foreach (var keyword in keywords)
+                string[] keys = connStr.Split(';');
+                foreach (var key in keys)
                 {
-                    if (!string.IsNullOrEmpty(key.Trim()))
+                    foreach (var keyword in keywords)
                     {
-                        if (key.Trim().ToLower().StartsWith(keyword.Trim().ToLower()))
+                        if (!string.IsNullOrEmpty(key.Trim()))
                         {
-                            res = key.Substring(key.IndexOf('=') + 1).Trim();
-                            break;
+                            if (key.Trim().ToLower().StartsWith(keyword.Trim().ToLower()))
+                            {
+                                res = key.Substring(key.IndexOf('=') + 1).Trim();
+                                break;
+                            }
                         }
                     }
                 }
