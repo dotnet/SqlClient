@@ -2432,6 +2432,8 @@ namespace Microsoft.Data.SqlClient
                         }
                         _federatedAuthenticationAcknowledged = true;
 
+                        // If a new authentication context was used as part of this login attempt, try to update the new context in the cache, i.e.dbConnectionPool.AuthenticationContexts.
+                        // ChooseAuthenticationContextToUpdate will take care that only the context which has more validity will remain in the cache, based on the Update logic.
                         if (_newDbConnectionPoolAuthenticationContext != null)
                         {
                             Debug.Assert(_dbConnectionPool != null, "_dbConnectionPool should not be null when _newDbConnectionPoolAuthenticationContext != null.");
@@ -2452,6 +2454,7 @@ namespace Microsoft.Data.SqlClient
                             }
 #endif
                         }
+
                         break;
                     }
                 case TdsEnums.FEATUREEXT_TCE:
@@ -2480,7 +2483,6 @@ namespace Microsoft.Data.SqlClient
                             // Extract the type of enclave being used by the server.
                             _parser.EnclaveType = Encoding.Unicode.GetString(data, 2, (data.Length - 2));
                         }
-
                         break;
                     }
 

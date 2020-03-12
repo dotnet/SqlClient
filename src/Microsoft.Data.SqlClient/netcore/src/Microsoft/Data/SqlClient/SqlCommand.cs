@@ -731,7 +731,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    // Validate the command outside of the try\catch to avoid putting the _stateObj on error
+                    // Validate the command outside of the try/catch to avoid putting the _stateObj on error
                     ValidateCommand(isAsync: false);
 
                     bool processFinallyBlock = true;
@@ -1144,7 +1144,7 @@ namespace Microsoft.Data.SqlClient
                     globalCompletion = localCompletion;
                 }
 
-                // Add callback after work is done to avoid overlapping Begin\End methods
+                // Add callback after work is done to avoid overlapping Begin/End methods
                 if (callback != null)
                 {
                     globalCompletion.Task.ContinueWith(
@@ -1647,7 +1647,7 @@ namespace Microsoft.Data.SqlClient
                     globalCompletion = localCompletion;
                 }
 
-                // Add callback after work is done to avoid overlapping Begin\End methods
+                // Add callback after work is done to avoid overlapping Begin/End methods
                 if (callback != null)
                 {
                     localCompletion.Task.ContinueWith(
@@ -2032,7 +2032,7 @@ namespace Microsoft.Data.SqlClient
                     globalCompletion = localCompletion;
                 }
 
-                // Add callback after work is done to avoid overlapping Begin\End methods
+                // Add callback after work is done to avoid overlapping Begin/End methods
                 if (callback != null)
                 {
                     globalCompletion.Task.ContinueWith(

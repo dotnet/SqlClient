@@ -26,7 +26,7 @@ namespace Microsoft.Data.SqlClient
         private static int _objectTypeCount; // Bid counter
         internal readonly int ObjectID = Interlocked.Increment(ref _objectTypeCount);
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctor2/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctor2/*' />
         public SqlConnection() : base()
         {
             GC.SuppressFinalize(this);
@@ -148,7 +148,7 @@ namespace Microsoft.Data.SqlClient
             InnerConnection.AddWeakReference(value, tag);
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CreateDbCommand/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CreateDbCommand/*' />
         override protected DbCommand CreateDbCommand()
         {
             long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<prov.DbConnectionHelper.CreateDbCommand|API> {0}#", ObjectID);
@@ -166,7 +166,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Dispose/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Dispose/*' />
         override protected void Dispose(bool disposing)
         {
             if (disposing)
@@ -181,7 +181,7 @@ namespace Microsoft.Data.SqlClient
 
         partial void RepairInnerConnection();
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/EnlistTransaction/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/EnlistTransaction/*' />
         public override void EnlistTransaction(Transaction transaction)
         {
             SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionHelper.EnlistTransaction|RES|TRAN> {0}#, Connection enlisting in a transaction.", ObjectID);
