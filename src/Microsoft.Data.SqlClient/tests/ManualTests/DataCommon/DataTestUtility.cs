@@ -297,6 +297,30 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return name;
         }
 
+        public static void DropTable(SqlConnection sqlConnection, string tableName)
+        {
+            using (SqlCommand cmd = new SqlCommand(string.Format("IF (OBJECT_ID('{0}') IS NOT NULL) \n DROP TABLE {0}", tableName), sqlConnection))
+            {
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        public static void DropUserDefinedType(SqlConnection sqlConnection, string typeName)
+        {
+            using (SqlCommand cmd = new SqlCommand(string.Format("IF (TYPE_ID('{0}') IS NOT NULL) \n DROP TYPE {0}", typeName), sqlConnection))
+            {
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        public static void DropStoredProcedure(SqlConnection sqlConnection, string spName)
+        {
+            using (SqlCommand cmd = new SqlCommand(string.Format("IF (OBJECT_ID('{0}') IS NOT NULL) \n DROP PROCEDURE {0}", spName), sqlConnection))
+            {
+                cmd.ExecuteNonQuery();
+            }
+        }
+
         public static bool IsLocalDBInstalled() => SupportsLocalDb;
 
         public static bool IsIntegratedSecuritySetup() => SupportsIntegratedSecurity;

@@ -1027,6 +1027,7 @@ namespace Microsoft.Data.Common
         internal const SqlConnectionAttestationProtocol AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified;
         internal const string Certificate = "";
         internal const PoolBlockingPeriod PoolBlockingPeriod = SqlClient.PoolBlockingPeriod.Auto;
+        internal const bool TruncateScaledDecimal = false;
     }
 
     internal static class DbConnectionOptionKeywords
@@ -1099,6 +1100,7 @@ namespace Microsoft.Data.Common
         internal const string EnclaveAttestationUrl = "Enclave Attestation Url";
         internal const string AttestationProtocol = "Attestation Protocol";
         internal const string PoolBlockingPeriod = "PoolBlockingPeriod";
+        internal const string TruncateScaledDecimal = "Truncate Scaled Decimal";
 
         // common keywords (OleDb, OracleClient, SqlClient)
         internal const string DataSource = "Data Source";

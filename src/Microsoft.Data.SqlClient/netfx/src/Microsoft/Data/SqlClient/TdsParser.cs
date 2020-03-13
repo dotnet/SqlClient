@@ -309,6 +309,14 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        internal bool TruncateScaledDecimal
+        {
+            get
+            {
+                return _connHandler.ConnectionOptions.TruncateScaledDecimal;
+            }
+        }
+
         internal SqlInternalTransaction CurrentTransaction
         {
             get
@@ -2045,7 +2053,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     tdsReliabilitySection.Start();
 #endif //DEBUG
-                    return Run(runBehavior, cmdHandler, dataStream, bulkCopyHandler, stateObj);
+                return Run(runBehavior, cmdHandler, dataStream, bulkCopyHandler, stateObj);
 #if DEBUG
                 }
                 finally
@@ -7721,17 +7729,17 @@ namespace Microsoft.Data.SqlClient
             return true;
         }
 
-        static internal SqlDecimal AdjustSqlDecimalScale(SqlDecimal d, int newScale)
+        static internal SqlDecimal AdjustSqlDecimalScale(SqlDecimal d, int newScale, bool round)
         {
             if (d.Scale != newScale)
             {
-                return SqlDecimal.AdjustScale(d, newScale - d.Scale, false /* Don't round, truncate.  MDAC 69229 */);
+                return SqlDecimal.AdjustScale(d, newScale - d.Scale, round);
             }
 
             return d;
         }
 
-        static internal decimal AdjustDecimalScale(decimal value, int newScale)
+        static internal decimal AdjustDecimalScale(decimal value, int newScale, bool round)
         {
             int oldScale = (Decimal.GetBits(value)[3] & 0x00ff0000) >> 0x10;
 
@@ -7739,7 +7747,7 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlDecimal num = new SqlDecimal(value);
 
-                num = SqlDecimal.AdjustScale(num, newScale - oldScale, false /* Don't round, truncate.  MDAC 69229 */);
+                num = SqlDecimal.AdjustScale(num, newScale - oldScale, round);
                 return num.Value;
             }
 
@@ -9777,9 +9785,10 @@ namespace Microsoft.Data.SqlClient
                                 // bug 49512, make sure the value matches the scale the user enters
                                 if (!isNull)
                                 {
+                                    bool roundDecimal = !TruncateScaledDecimal;
                                     if (isSqlVal)
                                     {
-                                        value = AdjustSqlDecimalScale((SqlDecimal)value, scale);
+                                        value = AdjustSqlDecimalScale((SqlDecimal)value, scale, roundDecimal);
 
                                         // If Precision is specified, verify value precision vs param precision
                                         if (precision != 0)
@@ -9792,7 +9801,7 @@ namespace Microsoft.Data.SqlClient
                                     }
                                     else
                                     {
-                                        value = AdjustDecimalScale((Decimal)value, scale);
+                                        value = AdjustDecimalScale((Decimal)value, scale, roundDecimal);
 
                                         SqlDecimal sqlValue = new SqlDecimal((Decimal)value);
 

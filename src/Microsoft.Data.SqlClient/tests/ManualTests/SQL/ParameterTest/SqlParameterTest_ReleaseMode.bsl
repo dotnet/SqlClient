@@ -22,14 +22,14 @@ Matches = 168
 Matches = 168
 ------DataTables---------
 Matches = 14
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 14
 +++++++ Iteration 1 ++++++++
 ------IEnumerable<SqlDataRecord>---------
@@ -38,14 +38,14 @@ Matches = 168
 Matches = 168
 ------DataTables---------
 Matches = 14
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 14
 +++++++ Iteration 2 ++++++++
 ------IEnumerable<SqlDataRecord>---------
@@ -54,14 +54,14 @@ Matches = 168
 Matches = 168
 ------DataTables---------
 Matches = 14
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 28
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 14
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 14
 +++++++ Iteration 3 ++++++++
 ------IEnumerable<SqlDataRecord>---------
@@ -70,14 +70,14 @@ Matches = 168
 Matches = 168
 ------DataTables---------
 Matches = 14
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 14
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 14
 +++++++ Iteration 4 ++++++++
 ------IEnumerable<SqlDataRecord>---------
@@ -86,14 +86,14 @@ Matches = 168
 Matches = 168
 ------DataTables---------
 Matches = 14
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 14
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 14
 +++++++ Iteration 5 ++++++++
 ------IEnumerable<SqlDataRecord>---------
@@ -102,14 +102,14 @@ Matches = 168
 Matches = 168
 ------DataTables---------
 Matches = 14
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 28
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 14
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 14
 +++++++ Iteration 6 ++++++++
 SqlException creating objects: 1701
@@ -121,14 +121,14 @@ Matches = 168
 Matches = 168
 ------DataTables---------
 Matches = 14
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 28
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 14
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 14
 +++++++ Iteration 8 ++++++++
 ------IEnumerable<SqlDataRecord>---------
@@ -137,14 +137,14 @@ Matches = 168
 Matches = 168
 ------DataTables---------
 Matches = 14
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 28
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 14
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 14
 +++++++ Iteration 9 ++++++++
 ------IEnumerable<SqlDataRecord>---------
@@ -153,14 +153,14 @@ Matches = 168
 Matches = 168
 ------DataTables---------
 Matches = 14
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 14
 +++++++ Iteration 10 ++++++++
 ------IEnumerable<SqlDataRecord>---------
@@ -169,14 +169,14 @@ Matches = 168
 Matches = 168
 ------DataTables---------
 Matches = 14
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 14
 +++++++ Iteration 11 ++++++++
 ------IEnumerable<SqlDataRecord>---------
@@ -185,14 +185,14 @@ Matches = 168
 Matches = 168
 ------DataTables---------
 Matches = 14
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 28
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 14
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 14
 +++++++ Iteration 12 ++++++++
 ------IEnumerable<SqlDataRecord>---------
@@ -201,14 +201,14 @@ Matches = 168
 Matches = 168
 ------DataTables---------
 Matches = 14
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 14
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 14
 +++++++ Iteration 13 ++++++++
 ------IEnumerable<SqlDataRecord>---------
@@ -217,14 +217,14 @@ Matches = 168
 Matches = 168
 ------DataTables---------
 Matches = 14
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 14
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 14
 +++++++ Iteration 14 ++++++++
 SqlException creating objects: 1701
@@ -239,14 +239,14 @@ Matches = 168
 Matches = 168
 ------DataTables---------
 Matches = 14
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 28
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 14
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 14
 +++++++ Iteration 17 ++++++++
 ------IEnumerable<SqlDataRecord>---------
@@ -255,14 +255,14 @@ Matches = 168
 Matches = 168
 ------DataTables---------
 Matches = 14
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 28
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 14
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 14
 +++++++ Iteration 18 ++++++++
 ------IEnumerable<SqlDataRecord>---------
@@ -271,14 +271,14 @@ Matches = 168
 Matches = 168
 ------DataTables---------
 Matches = 14
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 14
 +++++++ Iteration 19 ++++++++
 ------IEnumerable<SqlDataRecord>---------
@@ -287,14 +287,14 @@ Matches = 168
 Matches = 168
 ------DataTables---------
 Matches = 14
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 14
 +++++++ Iteration 20 ++++++++
 ------IEnumerable<SqlDataRecord>---------
@@ -304,13 +304,13 @@ Matches = 168
 ------DataTables---------
 Matches = 14
 Matches = 14
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
 Matches = 28
 Matches = 14
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
 Matches = 14
 Matches = 14
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
 Matches = 14
 +++++++ Iteration 21 ++++++++
 ------IEnumerable<SqlDataRecord>---------
@@ -320,13 +320,13 @@ Matches = 168
 ------DataTables---------
 Matches = 14
 Matches = 14
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 14
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
 Matches = 14
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 14
 +++++++ Iteration 22 ++++++++
 SqlException creating objects: 1701
@@ -380,14 +380,14 @@ Mismatch: Source = 1/1/1753 12:00:00 AM, result = , metadata=SteAttributeKey=Sma
 Matches = 162
 ------DataTables---------
 SqlException. Error Code: 242
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 28
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 14
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 14
 +++++++ Iteration 26 ++++++++
 ------IEnumerable<SqlDataRecord>---------
@@ -396,14 +396,14 @@ Matches = 168
 Matches = 168
 ------DataTables---------
 Matches = 14
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 28
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 14
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 Matches = 14
 +++++++ Iteration 27 ++++++++
 ------IEnumerable<SqlDataRecord>---------
@@ -472,14 +472,14 @@ Mismatch: Source = 922337203685477.5807, result = , metadata=SteAttributeKey=Sma
 Matches = 158
 ------DataTables---------
 SqlException. Error Code: 242
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
-SqlException. Error Code: 8152
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
+SqlException. Error Code: 2628
 SqlException. Error Code: 8115
 ------- Sort order + uniqueness #1: simple -------
 -------------

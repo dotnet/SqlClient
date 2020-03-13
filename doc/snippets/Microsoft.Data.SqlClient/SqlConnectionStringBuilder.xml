@@ -889,5 +889,29 @@ Unable to retrieve value for null key.
             </remarks>
             <exception cref="T:System.ArgumentNullException">To set the value to null, use <see cref="F:System.DBNull.Value" />.</exception>
         </WorkstationID>
+        <TruncateScaledDecimal>
+            <summary>Gets or sets a Boolean value that indicates how the decimal scale conversion applies when using either the <see cref="P:Microsoft.Data.SqlClient.SqlParameter" /> type or <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy" /> type.</summary>
+            <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.TruncateScaledDecimal" /> property, or <see langword ="false" /> if none has been supplied.</value>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+ This property corresponds to the "Truncate Scaled Decimal" key within the connection string.
+  
+ The value of this key must be `true`, `false`, `yes`, or `no`.
+  
+ A value of `yes` is treated the same as a value of `true`.  
+  
+ A value of `no` is treated the same as a value of `false`.
+  
+ If this property is set as **true**, the result value will be truncated by the number of <xref:Microsoft.Data.SqlClient.SqlParameter.Scale%2A>'s digits, or as defined in target table in <xref:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName%2A> property. Otherwise, the result will be rounded like Microsoft SQL Server does.  
+  
+> [!NOTE]
+> This feature is added to cover the backwards compatibility.
+  
+ ]]></format>
+            </remarks>
+            <altmember cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Keys" />        
+        </TruncateScaledDecimal>
     </members>
 </docs>
