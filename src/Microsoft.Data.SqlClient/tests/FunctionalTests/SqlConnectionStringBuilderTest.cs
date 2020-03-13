@@ -17,6 +17,10 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("WSID = myworkstation")]
         [InlineData("Application Name = .Net Tests")]
         [InlineData("Pooling = false")]
+        [InlineData("Truncate Scaled Decimal = false")]
+        [InlineData("Truncate Scaled Decimal = no")]
+        [InlineData("Truncate Scaled Decimal = true")]
+        [InlineData("Truncate Scaled Decimal = yes")]
         public void ConnectionStringTests(string connectionString)
         {
             ExecuteConnectionStringTests(connectionString);

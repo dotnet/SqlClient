@@ -27,7 +27,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal("12.3", value.ToString());
 
             value = BulkCopySqlDecimalToTable(new SqlDecimal(123.45), 10, 2, 4, 1);
-            Assert.Equal("123.4", value.ToString());
+            Assert.Equal("123.5", value.ToString());
 
             Assert.Throws<InvalidOperationException>(() => BulkCopySqlDecimalToTable(new SqlDecimal(111.00), 7, 2, 2, 0));
         }
