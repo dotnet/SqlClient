@@ -101,7 +101,6 @@ namespace Microsoft.Data.Common
         private readonly string _usersConnectionString;
         private readonly Dictionary<string, string> _parsetable;
         internal readonly NameValuePair _keyChain;
-        internal readonly bool _hasPasswordKeyword;
 
         internal Dictionary<string, string> Parsetable
         {
