@@ -12,9 +12,6 @@ namespace Microsoft.Data.SqlClient
     internal class SqlClientEventSource : EventSource
     {
         // Defines the singleton instance for the Resources ETW provider
-        /// <summary>
-        /// 
-        /// </summary>
         internal static readonly SqlClientEventSource Log = new SqlClientEventSource();
 
         private static long s_nextScopeId = 0;
@@ -402,7 +399,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsCorrelationEnabled())
             {
-                CorrelationTrace(string.Format(message, args0));
+                CorrelationTrace(string.Format(message, args0.ToString()));
             }
         }
 
@@ -411,7 +408,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsCorrelationEnabled())
             {
-                CorrelationTrace(string.Format(message, args0, args1));
+                CorrelationTrace(string.Format(message, args0.ToString(), args1.ToString()));
             }
         }
 
@@ -420,7 +417,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsCorrelationEnabled())
             {
-                CorrelationTrace(string.Format(message, args0, args1, args2));
+                CorrelationTrace(string.Format(message, args0.ToString(), args1.ToString(), args2.ToString()));
             }
         }
 

@@ -58,7 +58,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             catch (Exception e)
             {
-                SqlClientEventSource.Log.SNITrace("<sc.SNI.SNIMarsHandle.Dispose |SNI|ERR> internal exception error = {0}", e.Message);
+                SqlClientEventSource.Log.SNITrace("<sc.SNI.SNIMarsHandle.Dispose |SNI|ERR> internal exception error = {0}, Member Name={1}", e.Message, e.GetType().Name);
                 SNICommon.ReportSNIError(SNIProviders.SMUX_PROV, SNICommon.InternalExceptionError, e);
             }
             finally

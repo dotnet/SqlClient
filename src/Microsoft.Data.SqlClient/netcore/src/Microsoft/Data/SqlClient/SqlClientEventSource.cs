@@ -466,7 +466,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsCorrelationEnabled())
             {
-                CorrelationTrace(string.Format(message, args0));
+                CorrelationTrace(string.Format(message, args0.ToString()));
             }
         }
 
@@ -475,7 +475,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsCorrelationEnabled())
             {
-                CorrelationTrace(string.Format(message, args0, args1));
+                CorrelationTrace(string.Format(message, args0, args1.ToString()));
             }
         }
 
@@ -484,7 +484,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsCorrelationEnabled())
             {
-                CorrelationTrace(string.Format(message, args0, args1, args2));
+                CorrelationTrace(string.Format(message, args0.ToString(), args1.ToString(), args2.ToString()));
             }
         }
 

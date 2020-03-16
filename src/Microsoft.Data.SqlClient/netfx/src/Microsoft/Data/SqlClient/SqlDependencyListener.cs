@@ -583,7 +583,6 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                             string msgType = reader.GetString(0);
                             SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlConnectionContainer.ProcessNotificationResults|DEP> msgType: '{0}'", msgType);
                             handle = reader.GetGuid(1);
-                            //SqlClientEventSource.Log.NotificationsTrace("SqlConnectionContainer.ProcessNotificationResults(SqlDataReader)|DEP> conversationHandle: '%p(GUID)'", conversationHandle);
 
                             // Only process QueryNotification messages.
                             if (0 == String.Compare(msgType, "http://schemas.microsoft.com/SQL/Notifications/QueryNotification", StringComparison.OrdinalIgnoreCase))

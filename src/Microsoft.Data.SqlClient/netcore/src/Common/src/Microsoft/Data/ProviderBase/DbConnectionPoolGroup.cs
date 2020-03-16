@@ -8,6 +8,7 @@ using Microsoft.Data.SqlClient;
 using System.Collections.Concurrent;
 using System.Data.Common;
 using System.Diagnostics;
+using System.Threading;
 
 namespace Microsoft.Data.ProviderBase
 {
@@ -40,8 +41,7 @@ namespace Microsoft.Data.ProviderBase
         private DbConnectionPoolGroupProviderInfo _providerInfo;
         private DbMetaDataFactory _metaDataFactory;
 
-        private static int _objectTypeCount; // EventSource counter
-        internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
+        private static int s_objectTypeCount; // EventSource counter
 
         // always lock this before changing _state, we don't want to move out of the 'Disabled' state
         // PoolGroupStateUninitialized = 0;
@@ -87,13 +87,7 @@ namespace Microsoft.Data.ProviderBase
 
         internal bool IsDisabled => (PoolGroupStateDisabled == _state);
 
-        internal int ObjectID
-        {
-            get
-            {
-                return _objectID;
-            }
-        }
+        internal int ObjectID { get; } = Interlocked.Increment(ref s_objectTypeCount);
 
         internal DbConnectionPoolGroupOptions PoolGroupOptions => _poolGroupOptions;
 

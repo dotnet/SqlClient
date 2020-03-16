@@ -177,7 +177,10 @@ namespace Microsoft.Data.SqlClient.SNI
         public void HandleReceiveError(SNIPacket packet)
         {
             Debug.Assert(Monitor.IsEntered(this), "HandleReceiveError was called without being locked.");
-            SqlClientEventSource.Log.SNITrace("<sc.SNI.SNIMarsConnection.HandleReceiveError |SNI|ERR> HandleReceiveError was called without being locked.");
+            if (!Monitor.IsEntered(this))
+            {
+                SqlClientEventSource.Log.SNITrace("<sc.SNI.SNIMarsConnection.HandleReceiveError |SNI|ERR> HandleReceiveError was called without being locked.");
+            }
             foreach (SNIMarsHandle handle in _sessions.Values)
             {
                 if (packet.HasCompletionCallback)
@@ -243,7 +246,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
                                     if (sniErrorCode == TdsEnums.SNI_SUCCESS_IO_PENDING)
                                     {
-                                        SqlClientEventSource.Log.SNITrace("<sc.SNI.SNIMarsConnection.HandleReceiveComplete |SNI|ERR> not successfull IO Pending.");
+                                        SqlClientEventSource.Log.SNITrace("<sc.SNI.SNIMarsConnection.HandleReceiveComplete |SNI|ERR> not successfull.");
                                         return;
                                     }
 

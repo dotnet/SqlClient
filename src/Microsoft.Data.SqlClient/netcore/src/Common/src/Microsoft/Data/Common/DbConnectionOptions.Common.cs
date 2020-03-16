@@ -163,7 +163,7 @@ namespace Microsoft.Data.Common
         {
             if (SqlClientEventSource.Log.IsAdvanceTraceOn())
             {
-                Debug.Assert(keyname == keyname.ToLower(CultureInfo.InvariantCulture), "missing ToLower");
+                Debug.Assert(string.Equals(keyname, keyname?.ToLower(), StringComparison.InvariantCulture), "missing ToLower");
                 string realkeyname = ((null != synonyms) ? (string)synonyms[keyname] : keyname);
 
                 if ((KEY.Password != realkeyname) && (SYNONYM.Pwd != realkeyname))
