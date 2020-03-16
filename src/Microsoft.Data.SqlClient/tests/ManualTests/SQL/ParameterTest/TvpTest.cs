@@ -1162,10 +1162,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 conn.Open();
                 cmd.Connection = conn;
-                // Chose the 2628 error message instead of 8152 in SQL Server 2016 & 2017
-                using (SqlCommand cmdFix = new SqlCommand("DBCC TRACEON(460)", conn))
+                if (DataTestUtility.IsNotAzureServer())
                 {
-                    cmdFix.ExecuteNonQuery();
+                    // Chose the 2628 error message instead of 8152 in SQL Server 2016 & 2017
+                    using (SqlCommand cmdFix = new SqlCommand("DBCC TRACEON(460)", conn))
+                    {
+                        cmdFix.ExecuteNonQuery();
+                    }
                 }
                 //                cmd.Transaction = conn.BeginTransaction();
 
