@@ -4342,7 +4342,7 @@
     <value>You have specified the enclave attestation URL and attestation protocol in the connection string, but the SQL Server instance in use does not support enclave based computations.</value>
   </data>
   <data name="TCE_AttestationURLNotSupported" xml:space="preserve">
-    <value>You have specified the enclave attestation URL in the connection string, but the SQL Server instance in use does not support enclave based computations.</value>
+    <value>L'URL di attestazione dell'enclave è stato specificato nella stringa di connessione, ma l'istanza di SQL Server non supporta i calcoli basati su enclave.</value>
   </data>
   <data name="TCE_AttestationProtocolNotSupported" xml:space="preserve">
     <value>You have specified the attestation protocol in the connection string, but the SQL Server instance in use does not support enclave based computations.</value>
