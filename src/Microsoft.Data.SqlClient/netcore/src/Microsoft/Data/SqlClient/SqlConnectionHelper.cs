@@ -139,7 +139,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionHelper.Abort|RES|INFO|CPOOL> {0}#, Aborting operation due to asynchronous exception: {1}", ObjectID, e.ToString());
+                SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionHelper.Abort|RES|INFO|CPOOL> {0}#, Aborting operation due to asynchronous exception: {1}", ObjectID, e);
             }
         }
 

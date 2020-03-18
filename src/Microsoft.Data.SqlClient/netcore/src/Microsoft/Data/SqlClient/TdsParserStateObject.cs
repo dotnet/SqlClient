@@ -22,7 +22,7 @@ namespace Microsoft.Data.SqlClient
 
     internal abstract class TdsParserStateObject
     {
-        private static int _objectTypeCount; // Bid counter
+        private static int _objectTypeCount; // EventSource counter
         internal readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
 
         [Flags]

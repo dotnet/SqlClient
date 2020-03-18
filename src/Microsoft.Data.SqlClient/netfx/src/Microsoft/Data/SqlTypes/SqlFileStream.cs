@@ -23,7 +23,7 @@ namespace Microsoft.Data.SqlTypes
         //   TransactionContext accessors as virtual methods. Doing so now on a sealed class
         //   generates a compiler error (CS0549)
 
-        // For BID tracing output
+        // For EventTrace output
         private static int _objectTypeCount; // Bid counter
         internal readonly int ObjectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
 
