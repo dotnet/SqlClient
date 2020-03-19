@@ -904,7 +904,7 @@ Unable to retrieve value for null key.
   
  A value of `no` is treated the same as a value of `false`.
   
- If this property is set as **true**, the result value will be truncated by the number of <xref:Microsoft.Data.SqlClient.SqlParameter.Scale%2A>'s digits, or as defined in target table in <xref:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName%2A> property. Otherwise, the result will be rounded like Microsoft SQL Server does.  
+ If this property is set to **true**, the resulting value will be truncated by the number of <xref:Microsoft.Data.SqlClient.SqlParameter.Scale%2A>'s digits, or as defined in the target table in the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName%2A> property. Otherwise, the result will be rounded, as is done by Microsoft SQL Server.
   
 > [!NOTE]
 > This feature is added to cover the backwards compatibility.
