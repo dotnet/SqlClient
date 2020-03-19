@@ -5,6 +5,9 @@
     <DockerTargetOS>Linux</DockerTargetOS>
     <ProjectGuid>f5df2fdc-c860-4cb3-8b24-7c903c6fc076</ProjectGuid>
   </PropertyGroup>
+  <PropertyGroup>
+    <DockerServiceName>microsoft.data.sqlclient.dockertests</DockerServiceName>
+  </PropertyGroup>
   <ItemGroup>
     <None Include="docker-compose.override.yml">
       <DependentUpon>docker-compose.yml</DependentUpon>
