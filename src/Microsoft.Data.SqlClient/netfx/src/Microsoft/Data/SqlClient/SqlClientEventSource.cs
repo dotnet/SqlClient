@@ -127,7 +127,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsTraceEnabled())
             {
-                TraceEvent(string.Format(message, args0));
+                TraceEvent(string.Format(message, args0.ToString()));
             }
         }
 
@@ -145,7 +145,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsTraceEnabled())
             {
-                Trace(string.Format(message, args0, args1));
+                Trace(string.Format(message, args0.ToString(), args1.ToString()));
             }
         }
 

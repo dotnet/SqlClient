@@ -24,7 +24,7 @@ namespace Microsoft.Data.SqlTypes
         //   generates a compiler error (CS0549)
 
         // For EventTrace output
-        private static int _objectTypeCount; // Bid counter
+        private static int _objectTypeCount; // EventSource counter
         internal readonly int ObjectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
 
         // from System.IO.FileStream implementation
