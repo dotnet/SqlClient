@@ -5,7 +5,7 @@
 using System;
 using Microsoft.Data.SqlClient;
 
-namespace Microsoft.Data.SqlClient.DockerLnuxTest
+namespace Microsoft.Data.SqlClient.DockerLinuxTest
 {
     class Program
     {
