@@ -81,7 +81,7 @@ namespace Microsoft.Data.SqlClient
         // -----------
 
         private readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
-        private static int _objectTypeCount; // Bid counter
+        private static int _objectTypeCount; // EventSource Counter
         internal int ObjectID
         {
             get

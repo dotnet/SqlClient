@@ -186,7 +186,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsTraceEnabled())
             {
-                Trace(string.Format(message, args0.ToString()));
+                Trace(string.Format(message, args0?.ToString()));
             }
         }
 
@@ -204,7 +204,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsTraceEnabled())
             {
-                Trace(string.Format(message, args0.ToString(), args1.ToString()));
+                Trace(string.Format(message, args0?.ToString(), args1?.ToString()));
             }
         }
 
@@ -213,7 +213,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsTraceEnabled())
             {
-                Trace(string.Format(message, args0.ToString(), args1.ToString(), args2.ToString()));
+                Trace(string.Format(message, args0?.ToString(), args1?.ToString(), args2?.ToString()));
             }
         }
 

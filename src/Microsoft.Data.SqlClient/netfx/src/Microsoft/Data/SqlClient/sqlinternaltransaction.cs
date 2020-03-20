@@ -41,7 +41,7 @@ namespace Microsoft.Data.SqlClient
         private bool _disposing;                 // used to prevent us from throwing exceptions while we're disposing
         private WeakReference _parent;                    // weak ref to the outer transaction object; needs to be weak to allow GC to occur.
 
-        private static int _objectTypeCount; // Bid counter
+        private static int _objectTypeCount; // EventSource Counter
         internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
 
         internal bool RestoreBrokenConnection { get; set; }

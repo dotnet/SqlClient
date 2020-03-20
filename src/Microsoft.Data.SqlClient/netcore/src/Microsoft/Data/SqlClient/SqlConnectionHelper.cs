@@ -23,7 +23,7 @@ namespace Microsoft.Data.SqlClient
         private DbConnectionInternal _innerConnection;
         private int _closeCount;
 
-        private static int _objectTypeCount; // Bid counter
+        private static int _objectTypeCount; // EventSource Counter
         internal readonly int ObjectID = Interlocked.Increment(ref _objectTypeCount);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctor2/*' />

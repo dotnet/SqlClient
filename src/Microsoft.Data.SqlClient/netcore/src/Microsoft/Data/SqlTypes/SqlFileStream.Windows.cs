@@ -23,7 +23,7 @@ namespace Microsoft.Data.SqlTypes
         // TransactionContext accessors as virtual methods. Doing so now on a sealed class
         // generates a compiler error (CS0549)
 
-        private static int _objectTypeCount; // Bid counter
+        private static int _objectTypeCount; // EventSource Counter
         internal int ObjectID { get; } = Interlocked.Increment(ref _objectTypeCount);
 
         // from System.IO.FileStream implementation
