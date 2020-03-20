@@ -13,7 +13,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static bool AreConnectionStringsSetup() => DataTestUtility.AreConnStringsSetup();
 
-
         [ConditionalFact(nameof(IsIntegratedSecurityEnvironmentSet), nameof(AreConnectionStringsSetup))]
         public static void IntegratedAuthenticationTestWithConnectionPooling()
         {
