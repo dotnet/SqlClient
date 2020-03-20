@@ -11,17 +11,13 @@ namespace Microsoft.Data.SqlClient
     {
         public static readonly TdsParserStateObjectFactory Singleton = new TdsParserStateObjectFactory();
 
-        /* Managed SNI can be enabled on Windows by setting any of the below two environment variables to 'True':
-         * Microsoft.Data.SqlClient.UseManagedSNIOnWindows (Supported to respect namespace format)
-         * Microsoft_Data_SqlClient_UseManagedSNIOnWindows (Supported for Azure Pipelines)
-        **/
-        private static Lazy<bool> useManagedSNIOnWindows = new Lazy<bool>(
-            () => bool.TrueString.Equals(Environment.GetEnvironmentVariable("Microsoft.Data.SqlClient.UseManagedSNIOnWindows"),
-                                        StringComparison.InvariantCultureIgnoreCase) ||
-                  bool.TrueString.Equals(Environment.GetEnvironmentVariable("Microsoft_Data_SqlClient_UseManagedSNIOnWindows"),
-                                        StringComparison.InvariantCultureIgnoreCase)
-        );
-        public static bool UseManagedSNI => useManagedSNIOnWindows.Value;
+        private const string UseManagedNetworkingOnWindows = "Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows";
+
+        private static bool shouldUseManagedSNI;
+
+        // If the appcontext switch is set then Use Managed SNI based on the value. Otherwise Native SNI.dll will be used by default.
+        public static bool UseManagedSNI { get; } =
+            AppContext.TryGetSwitch(UseManagedNetworkingOnWindows, out shouldUseManagedSNI) ? shouldUseManagedSNI : false;
 
         public EncryptionOptions EncryptionOptions
         {
