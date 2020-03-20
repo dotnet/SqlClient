@@ -175,7 +175,6 @@ Tests can be built and run with custom Target Frameworks. See the below examples
 
 ## Using Managed SNI on Windows
 
-Managed SNI can be enabled on Windows by setting any of the below two environment variables to 'True':
+Managed SNI can be enabled on Windows by enabling below AppContext switch:
 
-- **Microsoft.Data.SqlClient.UseManagedSNIOnWindows** (Supported to respect namespace format)
-- **Microsoft_Data_SqlClient_UseManagedSNIOnWindows** (Supported for Azure Pipelines)
+**"Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows"**
