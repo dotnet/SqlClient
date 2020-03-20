@@ -349,7 +349,6 @@ namespace Microsoft.Data.SqlClient.SNI
                     SqlClientEventSource.Log.SNITrace("<sc.SNI.SNINpHandle.EnableSsl |SNI|ERR>InvalidOperationExceptionn message = {0}.", ioe.Message);
                     return SNICommon.ReportSNIError(SNIProviders.NP_PROV, SNICommon.InternalExceptionError, ioe);
                 }
-
                 _stream = _sslStream;
                 return TdsEnums.SNI_SUCCESS;
             }
