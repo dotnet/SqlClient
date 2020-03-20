@@ -8,7 +8,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class IntegratedAuthenticationTest
     {
-        private static bool IsIntegratedSecurityEnvironmentSet() => DataTestUtility.IsIntegratedSecuritySetup();
+        // Managed SNI does not support Windows Integrated Authentication, hence tests disabled for the same.
+        private static bool IsIntegratedSecurityEnvironmentSet() => DataTestUtility.IsIntegratedSecuritySetup() && DataTestUtility.IsUsingNativeSNI();
+
         private static bool AreConnectionStringsSetup() => DataTestUtility.AreConnStringsSetup();
 
 
