@@ -22,6 +22,9 @@ namespace Microsoft.Data.SqlClient
 
     internal abstract class TdsParserStateObject
     {
+        private static int _objectTypeCount; // EventSource counter
+        internal readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
+
         [Flags]
         internal enum SnapshottedStateFlags : byte
         {
@@ -537,7 +540,8 @@ namespace Microsoft.Data.SqlClient
                     return false;
                 }
 
-
+                SqlClientEventSource.Log.TraceEvent("<sc.TdsParserStateObject.NullBitmap.Initialize|INFO|ADV> {0}#, NBCROW bitmap received, column count = {1}", stateObj.ObjectID, columnsCount);
+                SqlClientEventSource.Log.TraceBinEvent("<sc.TdsParserStateObject.NullBitmap.Initialize|INFO|ADV> NBCROW bitmap data: ", _nullBitmap, (ushort)_nullBitmap.Length);
                 return true;
             }
 
@@ -865,9 +869,8 @@ namespace Microsoft.Data.SqlClient
         internal int DecrementPendingCallbacks(bool release)
         {
             int remaining = Interlocked.Decrement(ref _pendingCallbacks);
-
+            SqlClientEventSource.Log.AdvanceTrace("<sc.TdsParserStateObject.DecrementPendingCallbacks|ADV> {0}#, after decrementing _pendingCallbacks: {1}", ObjectID, _pendingCallbacks);
             FreeGcHandle(remaining, release);
-
             // NOTE: TdsParserSessionPool may call DecrementPendingCallbacks on a TdsParserStateObject which is already disposed
             // This is not dangerous (since the stateObj is no longer in use), but we need to add a workaround in the assert for it
             Debug.Assert((remaining == -1 && SessionHandle.IsNull) || (0 <= remaining && remaining < 3), $"_pendingCallbacks values is invalid after decrementing: {remaining}");
@@ -2005,7 +2008,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 if (_longlenleft == 0)
-                { 
+                {
                     // Read the next chunk or cleanup state if hit the end
                     if (!TryReadPlpLength(false, out ignored))
                     {
@@ -3723,6 +3726,42 @@ namespace Microsoft.Data.SqlClient
         }
 
         protected abstract PacketHandle EmptyReadPacket { get; }
+        internal int ObjectID => _objectID;
+
+        internal int PreAttentionErrorCount
+        {
+            get
+            {
+                int count = 0;
+                lock (_errorAndWarningsLock)
+                {
+                    if (_preAttentionErrors != null)
+                    {
+                        count = _preAttentionErrors.Count;
+                    }
+                }
+                return count;
+            }
+        }
+
+        /// <summary>
+        /// Gets the number of errors currently in the pre-attention warning collection
+        /// </summary>
+        internal int PreAttentionWarningCount
+        {
+            get
+            {
+                int count = 0;
+                lock (_errorAndWarningsLock)
+                {
+                    if (_preAttentionWarnings != null)
+                    {
+                        count = _preAttentionWarnings.Count;
+                    }
+                }
+                return count;
+            }
+        }
 
         /// <summary>
         /// Gets the full list of errors and warnings (including the pre-attention ones), then wipes all error and warning lists

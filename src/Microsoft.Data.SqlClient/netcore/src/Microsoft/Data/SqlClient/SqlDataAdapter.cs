@@ -6,6 +6,7 @@ using System;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
+using System.Threading;
 using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
@@ -20,6 +21,11 @@ namespace Microsoft.Data.SqlClient
 
         private SqlCommandSet _commandSet;
         private int _updateBatchSize = 1;
+
+        private static int _objectTypeCount; // EventSource Counter
+        internal readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
+
+        internal int ObjectID => _objectID;
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/ctor2/*' />
         public SqlDataAdapter() : base()
@@ -121,6 +127,7 @@ namespace Microsoft.Data.SqlClient
                     throw ADP.ArgumentOutOfRange(nameof(UpdateBatchSize));
                 }
                 _updateBatchSize = value;
+                SqlClientEventSource.Log.TraceEvent("<sc.SqlDataAdapter.set_UpdateBatchSize|API> {0}#, {1}", ObjectID, value);
             }
         }
 
@@ -142,6 +149,7 @@ namespace Microsoft.Data.SqlClient
         protected override int ExecuteBatch()
         {
             Debug.Assert(null != _commandSet && (0 < _commandSet.CommandCount), "no commands");
+            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlDataAdapter.ExecuteBatch|Info|Correlation> ObjectID {0}#, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
             return _commandSet.ExecuteNonQuery();
         }
 
@@ -164,6 +172,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/InitializeBatching/*' />
         protected override void InitializeBatching()
         {
+            SqlClientEventSource.Log.TraceEvent("<sc.SqlDataAdapter.InitializeBatching|API> {0}#", ObjectID);
             _commandSet = new SqlCommandSet();
             SqlCommand command = SelectCommand;
             if (null == command)

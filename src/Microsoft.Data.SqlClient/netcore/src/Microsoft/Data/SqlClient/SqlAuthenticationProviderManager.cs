@@ -41,6 +41,7 @@ namespace Microsoft.Data.SqlClient
         private readonly SqlAuthenticationInitializer _initializer;
         private readonly IReadOnlyCollection<SqlAuthenticationMethod> _authenticationsWithAppSpecifiedProvider;
         private readonly ConcurrentDictionary<SqlAuthenticationMethod, SqlAuthenticationProvider> _providers;
+        private readonly SqlClientLogger _sqlAuthLogger = new SqlClientLogger();
 
         /// <summary>
         /// Constructor.
@@ -48,12 +49,14 @@ namespace Microsoft.Data.SqlClient
         public SqlAuthenticationProviderManager(SqlAuthenticationProviderConfigurationSection configSection)
         {
             _typeName = GetType().Name;
+            var methodName = "Ctor";
             _providers = new ConcurrentDictionary<SqlAuthenticationMethod, SqlAuthenticationProvider>();
             var authenticationsWithAppSpecifiedProvider = new HashSet<SqlAuthenticationMethod>();
             _authenticationsWithAppSpecifiedProvider = authenticationsWithAppSpecifiedProvider;
 
             if (configSection == null)
             {
+                _sqlAuthLogger.LogInfo(_typeName, methodName, "No SqlAuthProviders configuration section found.");
                 return;
             }
 
@@ -71,6 +74,11 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw SQL.CannotCreateSqlAuthInitializer(configSection.InitializerType, e);
                 }
+                _sqlAuthLogger.LogInfo(_typeName, methodName, "Created user-defined SqlAuthenticationInitializer.");
+            }
+            else
+            {
+                _sqlAuthLogger.LogInfo(_typeName, methodName, "No user-defined SqlAuthenticationInitializer found.");
             }
 
             // add user-defined providers, if any.
@@ -95,7 +103,12 @@ namespace Microsoft.Data.SqlClient
 
                     _providers[authentication] = provider;
                     authenticationsWithAppSpecifiedProvider.Add(authentication);
+                    _sqlAuthLogger.LogInfo(_typeName, methodName, string.Format("Added user-defined auth provider: {0} for authentication {1}.", providerSettings?.Type, authentication));
                 }
+            }
+            else
+            {
+                _sqlAuthLogger.LogInfo(_typeName, methodName, "No user-defined auth providers.");
             }
         }
 
@@ -119,10 +132,13 @@ namespace Microsoft.Data.SqlClient
         public bool SetProvider(SqlAuthenticationMethod authenticationMethod, SqlAuthenticationProvider provider)
         {
             if (!provider.IsSupported(authenticationMethod))
+            {
                 throw SQL.UnsupportedAuthenticationByProvider(authenticationMethod.ToString(), provider.GetType().Name);
-
+            }
+            var methodName = "SetProvider";
             if (_authenticationsWithAppSpecifiedProvider.Contains(authenticationMethod))
             {
+                _sqlAuthLogger.LogError(_typeName, methodName, $"Failed to add provider {GetProviderType(provider)} because a user-defined provider with type {GetProviderType(_providers[authenticationMethod])} already existed for authentication {authenticationMethod}.");
             }
             _providers.AddOrUpdate(authenticationMethod, provider, (key, oldProvider) =>
             {
@@ -134,6 +150,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     provider.BeforeLoad(authenticationMethod);
                 }
+                _sqlAuthLogger.LogInfo(_typeName, methodName, $"Added auth provider {GetProviderType(provider)}, overriding existed provider {GetProviderType(oldProvider)} for authentication {authenticationMethod}.");
                 return provider;
             });
             return true;

@@ -22,6 +22,9 @@ namespace Microsoft.Data.SqlClient
 
         private SqlCommand _batchCommand;
 
+        private static int _objectTypeCount; // EventSource Counter
+        internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
+
         private sealed class LocalCommand
         {
             internal readonly string CommandText;
@@ -102,10 +105,18 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        internal int ObjectID
+        {
+            get
+            {
+                return _objectID;
+            }
+        }
+
         internal void Append(SqlCommand command)
         {
             ADP.CheckArgumentNull(command, nameof(command));
-
+            SqlClientEventSource.Log.TraceEvent("<sc.SqlCommandSet.Append|API> {0}#, command={1}, parameterCount={2}", ObjectID, command.ObjectID, command.Parameters.Count);
             string cmdText = command.CommandText;
             if (string.IsNullOrEmpty(cmdText))
             {
@@ -237,6 +248,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void Clear()
         {
+            SqlClientEventSource.Log.TraceEvent("<sc.SqlCommandSet.Clear|API> {0}#", ObjectID);
             DbCommand batchCommand = BatchCommand;
             if (null != batchCommand)
             {
@@ -252,6 +264,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void Dispose()
         {
+            SqlClientEventSource.Log.TraceEvent("<sc.SqlCommandSet.Dispose|API> {0}#", ObjectID);
             SqlCommand command = _batchCommand;
             _commandList = null;
             _batchCommand = null;
@@ -265,17 +278,25 @@ namespace Microsoft.Data.SqlClient
         internal int ExecuteNonQuery()
         {
             ValidateCommandBehavior(nameof(ExecuteNonQuery), CommandBehavior.Default);
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlCommandSet.ExecuteNonQuery|API> {0}#", ObjectID);
 
-            BatchCommand.BatchRPCMode = true;
-            BatchCommand.ClearBatchCommand();
-            BatchCommand.Parameters.Clear();
-            for (int ii = 0; ii < _commandList.Count; ii++)
+            try
             {
-                LocalCommand cmd = _commandList[ii];
-                BatchCommand.AddBatchCommand(cmd.CommandText, cmd.Parameters, cmd.CmdType, cmd.ColumnEncryptionSetting);
-            }
+                BatchCommand.BatchRPCMode = true;
+                BatchCommand.ClearBatchCommand();
+                BatchCommand.Parameters.Clear();
+                for (int ii = 0; ii < _commandList.Count; ii++)
+                {
+                    LocalCommand cmd = _commandList[ii];
+                    BatchCommand.AddBatchCommand(cmd.CommandText, cmd.Parameters, cmd.CmdType, cmd.ColumnEncryptionSetting);
+                }
 
-            return BatchCommand.ExecuteBatchRPCCommand();
+                return BatchCommand.ExecuteBatchRPCCommand();
+            }
+            finally
+            {
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
+            }
         }
 
         internal SqlParameter GetParameter(int commandIndex, int parameterIndex)

@@ -23,7 +23,7 @@ namespace Microsoft.Data.SqlClient
 
         private SqlCommand _batchCommand;
 
-        private static int _objectTypeCount; // Bid counter
+        private static int _objectTypeCount; // EventSource Counter
         internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
 
         private sealed class LocalCommand

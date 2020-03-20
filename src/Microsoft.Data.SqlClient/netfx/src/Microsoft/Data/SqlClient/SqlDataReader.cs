@@ -72,7 +72,7 @@ namespace Microsoft.Data.SqlClient
         private FieldNameLookup _fieldNameLookup;
         private CommandBehavior _commandBehavior;
 
-        private static int _objectTypeCount; // Bid counter
+        private static int _objectTypeCount; // EventSource Counter
         internal readonly int ObjectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
 
         // context

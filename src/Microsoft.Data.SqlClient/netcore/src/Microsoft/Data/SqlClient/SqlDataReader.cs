@@ -71,9 +71,9 @@ namespace Microsoft.Data.SqlClient
         private FieldNameLookup _fieldNameLookup;
         private CommandBehavior _commandBehavior;
 
-        private static int s_objectTypeCount; // Bid counter
+        private static int s_objectTypeCount; // Eventsource counter
         private static readonly ReadOnlyCollection<DbColumn> s_emptySchema = new ReadOnlyCollection<DbColumn>(Array.Empty<DbColumn>());
-        internal readonly int ObjectID = System.Threading.Interlocked.Increment(ref s_objectTypeCount);
+        internal static readonly int ObjectID = Interlocked.Increment(ref s_objectTypeCount);
 
         // metadata (no explicit table, use 'Table')
         private MultiPartTableName[] _tableNames = null;
@@ -844,6 +844,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/Close/*' />
         public override void Close()
         {
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlDataReader.Close|API> {0}#", ObjectID);
             SqlStatistics statistics = null;
             try
             {
@@ -926,6 +927,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlStatistics.StopTimer(statistics);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
@@ -1465,6 +1467,7 @@ namespace Microsoft.Data.SqlClient
         public override DataTable GetSchemaTable()
         {
             SqlStatistics statistics = null;
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlDataReader.GetSchemaTable|API> {0}#", ObjectID);
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
@@ -1481,6 +1484,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlStatistics.StopTimer(statistics);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
@@ -3257,6 +3261,7 @@ namespace Microsoft.Data.SqlClient
         private bool TryNextResult(out bool more)
         {
             SqlStatistics statistics = null;
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlDataReader.NextResult|API> {0}#", ObjectID);
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
@@ -3387,6 +3392,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlStatistics.StopTimer(statistics);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
@@ -3416,6 +3422,7 @@ namespace Microsoft.Data.SqlClient
         private bool TryReadInternal(bool setTimeout, out bool more)
         {
             SqlStatistics statistics = null;
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlDataReader.Read|API> {0}#", ObjectID);
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
@@ -3568,6 +3575,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlStatistics.StopTimer(statistics);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
@@ -3945,6 +3953,7 @@ namespace Microsoft.Data.SqlClient
                 // broken connection, so check state first.
                 if (parser.State == TdsParserState.OpenLoggedIn)
                 {
+                    SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlDataReader.RestoreServerSettings|Info|Correlation> ObjectID {0}#, ActivityID '{1}'", ObjectID, ActivityCorrelator.Current.ToString());
                     Task executeTask = parser.TdsExecuteSQLBatch(_resetOptionsString, (_command != null) ? _command.CommandTimeout : 0, null, stateObj, sync: true);
                     Debug.Assert(executeTask == null, "Shouldn't get a task when doing sync writes");
 
@@ -4249,41 +4258,49 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/NextResultAsync/*' />
         public override Task<bool> NextResultAsync(CancellationToken cancellationToken)
         {
-            TaskCompletionSource<bool> source = new TaskCompletionSource<bool>();
-
-            if (IsClosed)
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlDataReader.NextResultAsync|API> {0}#", ObjectID);
+            try
             {
-                source.SetException(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed()));
-                return source.Task;
-            }
+                TaskCompletionSource<bool> source = new TaskCompletionSource<bool>();
 
-            IDisposable registration = null;
-            if (cancellationToken.CanBeCanceled)
-            {
-                if (cancellationToken.IsCancellationRequested)
+                if (IsClosed)
                 {
-                    source.SetCanceled();
+                    source.SetException(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed()));
                     return source.Task;
                 }
-                registration = cancellationToken.Register(SqlCommand.s_cancelIgnoreFailure, _command);
-            }
 
-            Task original = Interlocked.CompareExchange(ref _currentTask, source.Task, null);
-            if (original != null)
+                IDisposable registration = null;
+                if (cancellationToken.CanBeCanceled)
+                {
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        source.SetCanceled();
+                        return source.Task;
+                    }
+                    registration = cancellationToken.Register(SqlCommand.s_cancelIgnoreFailure, _command);
+                }
+
+                Task original = Interlocked.CompareExchange(ref _currentTask, source.Task, null);
+                if (original != null)
+                {
+                    source.SetException(ADP.ExceptionWithStackTrace(SQL.PendingBeginXXXExists()));
+                    return source.Task;
+                }
+
+                // Check if cancellation due to close is requested (this needs to be done after setting _currentTask)
+                if (_cancelAsyncOnCloseToken.IsCancellationRequested)
+                {
+                    source.SetCanceled();
+                    _currentTask = null;
+                    return source.Task;
+                }
+
+                return InvokeAsyncCall(new HasNextResultAsyncCallContext(this, source, registration));
+            }
+            finally
             {
-                source.SetException(ADP.ExceptionWithStackTrace(SQL.PendingBeginXXXExists()));
-                return source.Task;
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
-
-            // Check if cancellation due to close is requested (this needs to be done after setting _currentTask)
-            if (_cancelAsyncOnCloseToken.IsCancellationRequested)
-            {
-                source.SetCanceled();
-                _currentTask = null;
-                return source.Task;
-            }
-
-            return InvokeAsyncCall(new HasNextResultAsyncCallContext(this, source, registration));
         }
 
         private static Task<bool> NextResultAsyncExecute(Task task, object state)
@@ -4291,6 +4308,7 @@ namespace Microsoft.Data.SqlClient
             HasNextResultAsyncCallContext context = (HasNextResultAsyncCallContext)state;
             if (task != null)
             {
+                SqlClientEventSource.Log.TraceEvent("<sc.SqlDataReader.NextResultAsync> attempt retry {0}#", ObjectID);
                 context._reader.PrepareForAsyncContinuation();
             }
 
@@ -4566,126 +4584,134 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/ReadAsync/*' />
         public override Task<bool> ReadAsync(CancellationToken cancellationToken)
         {
-            if (IsClosed)
-            {
-                return Task.FromException<bool>(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed()));
-            }
-
-            // If user's token is canceled, return a canceled task
-            if (cancellationToken.IsCancellationRequested)
-            {
-                return Task.FromCanceled<bool>(cancellationToken);
-            }
-
-            // Check for existing async
-            if (_currentTask != null)
-            {
-                return Task.FromException<bool>(ADP.ExceptionWithStackTrace(SQL.PendingBeginXXXExists()));
-            }
-
-            // These variables will be captured in moreFunc so that we can skip searching for a row token once one has been read
-            bool rowTokenRead = false;
-            bool more = false;
-
-            // Shortcut, do we have enough data to immediately do the ReadAsync?
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlDataReader.ReadAsync|API> {0}#", ObjectID);
             try
             {
-                // First, check if we can finish reading the current row
-                // NOTE: If we are in SingleRow mode and we've read that single row (i.e. _haltRead == true), then skip the shortcut
-                if ((!_haltRead) && ((!_sharedState._dataReady) || (WillHaveEnoughData(_metaData.Length - 1))))
+                if (IsClosed)
                 {
-#if DEBUG
-                    try
+                    return Task.FromException<bool>(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed()));
+                }
+
+                // If user's token is canceled, return a canceled task
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return Task.FromCanceled<bool>(cancellationToken);
+                }
+
+                // Check for existing async
+                if (_currentTask != null)
+                {
+                    return Task.FromException<bool>(ADP.ExceptionWithStackTrace(SQL.PendingBeginXXXExists()));
+                }
+
+                // These variables will be captured in moreFunc so that we can skip searching for a row token once one has been read
+                bool rowTokenRead = false;
+                bool more = false;
+
+                // Shortcut, do we have enough data to immediately do the ReadAsync?
+                try
+                {
+                    // First, check if we can finish reading the current row
+                    // NOTE: If we are in SingleRow mode and we've read that single row (i.e. _haltRead == true), then skip the shortcut
+                    if ((!_haltRead) && ((!_sharedState._dataReady) || (WillHaveEnoughData(_metaData.Length - 1))))
                     {
-                        _stateObj._shouldHaveEnoughData = true;
+#if DEBUG
+                        try
+                        {
+                            _stateObj._shouldHaveEnoughData = true;
 #endif
-                        if (_sharedState._dataReady)
-                        {
-                            // Clean off current row
-                            CleanPartialReadReliable();
-                        }
-
-                        // If there a ROW token ready (as well as any metadata for the row)
-                        if (_stateObj.IsRowTokenReady())
-                        {
-                            // Read the ROW token
-                            bool result = TryReadInternal(true, out more);
-                            Debug.Assert(result, "Should not have run out of data");
-
-                            rowTokenRead = true;
-                            if (more)
+                            if (_sharedState._dataReady)
                             {
-                                // Sequential mode, nothing left to do
-                                if (IsCommandBehavior(CommandBehavior.SequentialAccess))
+                                // Clean off current row
+                                CleanPartialReadReliable();
+                            }
+
+                            // If there a ROW token ready (as well as any metadata for the row)
+                            if (_stateObj.IsRowTokenReady())
+                            {
+                                // Read the ROW token
+                                bool result = TryReadInternal(true, out more);
+                                Debug.Assert(result, "Should not have run out of data");
+
+                                rowTokenRead = true;
+                                if (more)
                                 {
-                                    return ADP.TrueTask;
+                                    // Sequential mode, nothing left to do
+                                    if (IsCommandBehavior(CommandBehavior.SequentialAccess))
+                                    {
+                                        return ADP.TrueTask;
+                                    }
+                                    // For non-sequential, check if we can read the row data now
+                                    else if (WillHaveEnoughData(_metaData.Length - 1))
+                                    {
+                                        // Read row data
+                                        result = TryReadColumn(_metaData.Length - 1, setTimeout: true);
+                                        Debug.Assert(result, "Should not have run out of data");
+                                        return ADP.TrueTask;
+                                    }
                                 }
-                                // For non-sequential, check if we can read the row data now
-                                else if (WillHaveEnoughData(_metaData.Length - 1))
+                                else
                                 {
-                                    // Read row data
-                                    result = TryReadColumn(_metaData.Length - 1, setTimeout: true);
-                                    Debug.Assert(result, "Should not have run out of data");
-                                    return ADP.TrueTask;
+                                    // No data left, return
+                                    return ADP.FalseTask;
                                 }
                             }
-                            else
-                            {
-                                // No data left, return
-                                return ADP.FalseTask;
-                            }
-                        }
 #if DEBUG
-                    }
-                    finally
-                    {
-                        _stateObj._shouldHaveEnoughData = false;
-                    }
+                        }
+                        finally
+                        {
+                            _stateObj._shouldHaveEnoughData = false;
+                        }
 #endif
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                if (!ADP.IsCatchableExceptionType(ex))
+                catch (Exception ex)
                 {
-                    throw;
+                    if (!ADP.IsCatchableExceptionType(ex))
+                    {
+                        throw;
+                    }
+                    return Task.FromException<bool>(ex);
                 }
-                return Task.FromException<bool>(ex);
-            }
 
-            TaskCompletionSource<bool> source = new TaskCompletionSource<bool>();
-            Task original = Interlocked.CompareExchange(ref _currentTask, source.Task, null);
-            if (original != null)
+                TaskCompletionSource<bool> source = new TaskCompletionSource<bool>();
+                Task original = Interlocked.CompareExchange(ref _currentTask, source.Task, null);
+                if (original != null)
+                {
+                    source.SetException(ADP.ExceptionWithStackTrace(SQL.PendingBeginXXXExists()));
+                    return source.Task;
+                }
+
+                // Check if cancellation due to close is requested (this needs to be done after setting _currentTask)
+                if (_cancelAsyncOnCloseToken.IsCancellationRequested)
+                {
+                    source.SetCanceled();
+                    _currentTask = null;
+                    return source.Task;
+                }
+
+                IDisposable registration = null;
+                if (cancellationToken.CanBeCanceled)
+                {
+                    registration = cancellationToken.Register(SqlCommand.s_cancelIgnoreFailure, _command);
+                }
+
+                var context = Interlocked.Exchange(ref _cachedReadAsyncContext, null) ?? new ReadAsyncCallContext();
+
+                Debug.Assert(context._reader == null && context._source == null && context._disposable == null, "cached ReadAsyncCallContext was not properly disposed");
+
+                context.Set(this, source, registration);
+                context._hasMoreData = more;
+                context._hasReadRowToken = rowTokenRead;
+
+                PrepareAsyncInvocation(useSnapshot: true);
+
+                return InvokeAsyncCall(context);
+            }
+            finally
             {
-                source.SetException(ADP.ExceptionWithStackTrace(SQL.PendingBeginXXXExists()));
-                return source.Task;
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
-
-            // Check if cancellation due to close is requested (this needs to be done after setting _currentTask)
-            if (_cancelAsyncOnCloseToken.IsCancellationRequested)
-            {
-                source.SetCanceled();
-                _currentTask = null;
-                return source.Task;
-            }
-
-            IDisposable registration = null;
-            if (cancellationToken.CanBeCanceled)
-            {
-                registration = cancellationToken.Register(SqlCommand.s_cancelIgnoreFailure, _command);
-            }
-
-            var context = Interlocked.Exchange(ref _cachedReadAsyncContext, null) ?? new ReadAsyncCallContext();
-
-            Debug.Assert(context._reader == null && context._source == null && context._disposable == null, "cached ReadAsyncCallContext was not properly disposed");
-
-            context.Set(this, source, registration);
-            context._hasMoreData = more;
-            context._hasReadRowToken = rowTokenRead;
-
-            PrepareAsyncInvocation(useSnapshot: true);
-
-            return InvokeAsyncCall(context);
         }
 
         private static Task<bool> ReadAsyncExecute(Task task, object state)
