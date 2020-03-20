@@ -2,8 +2,9 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using Xunit;
 using System;
+using System.Diagnostics;
+using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -299,6 +300,35 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             string expectedMessage = "Either Credential or both 'User ID' and 'Password' (or 'UID' and 'PWD') connection string keywords must be specified, if 'Authentication=Active Directory Password'.";
             Assert.Contains(expectedMessage, e.Message);
+        }
+
+        [ConditionalFact(nameof(IsAADConnStringsSetup))]
+        public static void ConnectionSpeed()
+        {
+            //Ensure server endpoints are warm
+            using (var connectionDrill = new SqlConnection(DataTestUtility.AADPasswordConnectionString))
+            {
+                connectionDrill.Open();
+            }
+            SqlConnection.ClearAllPools();
+
+            using (var connectionDrill = new SqlConnection(DataTestUtility.AADPasswordConnectionString))
+            {
+                Stopwatch firstConnectionTime = new Stopwatch();
+                firstConnectionTime.Start();
+                connectionDrill.Open();
+                firstConnectionTime.Stop();
+                using (var connectionDrill2 = new SqlConnection(DataTestUtility.AADPasswordConnectionString))
+                {
+                    Stopwatch secondConnectionTime = new Stopwatch();
+                    secondConnectionTime.Start();
+                    connectionDrill2.Open();
+                    secondConnectionTime.Stop();
+                    // Subsequent AAD connections within a short timeframe should use an auth token cached from the connection pool
+                    // Second connection speed in tests was typically 10-15% of the first connection time. Using 30% since speeds may vary.
+                    Assert.True(secondConnectionTime.ElapsedMilliseconds / firstConnectionTime.ElapsedMilliseconds < .30, $"Second AAD connection too slow ({secondConnectionTime.ElapsedMilliseconds}ms)! (More than 30% of the first ({firstConnectionTime.ElapsedMilliseconds}ms).)");
+                }
+            }
         }
     }
 }

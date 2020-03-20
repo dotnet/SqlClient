@@ -2722,7 +2722,7 @@
     <value>Tempo Limite de Conexão Expirado. O tempo limite decorrido durante a fase pós-logon. A conexão expirou enquanto aguardava o servidor concluir o processo de logon e responder; ou talvez tenha expirado ao tentar criar várias conexões ativas.</value>
   </data>
   <data name="SQL_Timeout_FailoverInfo" xml:space="preserve">
-    <value>This failure occurred while attempting to connect to the {0} server.</value>
+    <value>Essa falha ocorreu durante a tentativa de conexão com o servidor {0}.</value>
   </data>
   <data name="SQL_Timeout_RoutingDestinationInfo" xml:space="preserve">
     <value>Falha ao tentar conectar ao destino de roteamento. A duração da tentativa de conexão com o servidor original foi - [Pre-Login] initialization={0}; handshake={1}; [Login] initialization={2}; authentication={3}; [Post-Login] complete={4};  </value>
@@ -2809,10 +2809,10 @@
     <value>Os mapeamentos devem ser inteiramente baseados em nomes ou ordinais.</value>
   </data>
   <data name="SQL_BulkLoadCannotConvertValue" xml:space="preserve">
-    <value>The given value{0} of type {1} from the data source cannot be converted to type {2} for Column {3} [{4}] Row {5}.</value>
+    <value>O valor especificado {0} do tipo {1} da fonte de dados não pode ser convertido no tipo {2} da Coluna {3} [{4}] Linha {5}.</value>
   </data>
   <data name="SQL_BulkLoadCannotConvertValueWithoutRowNo" xml:space="preserve">
-    <value>The given value{0} of type {1} from the data source cannot be converted to type {2} for Column {3} [{4}].</value>
+    <value>O valor especificado {0} do tipo {1} da fonte de dados não pode ser convertido no tipo {2} da Coluna {3} [{4}].</value>
   </data>
   <data name="SQL_BulkLoadNonMatchingColumnMapping" xml:space="preserve">
     <value>A propriedade ColumnMapping fornecida não corresponde a nenhuma coluna na origem ou no destino.</value>
@@ -3967,7 +3967,7 @@
     <value>Ocorreu um erro no nível de transporte ao enviar informações ao servidor.</value>
   </data>
   <data name="Snix_ProcessSspi" xml:space="preserve">
-    <value>A transport-level error has occurred during SSPI handshake.</value>
+    <value>Erro no nível do transporte durante um handshake SSPI.</value>
   </data>
   <data name="LocalDB_CreateFailed" xml:space="preserve">
     <value>Local Database Runtime: não é possível criar uma instância nomeada.</value>
@@ -4312,10 +4312,10 @@
     <value>Erro Interno. SqlColumnEncryptionEnclaveProviderName não pode ser nulo ou vazio.</value>
   </data>
   <data name="TCE_NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe" xml:space="preserve">
-    <value>Error occurred when reading '{0}' resultset. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is '{1}'. </value>
+    <value>Erro ao ler o conjunto de regras '{0}'. A URL de Atestado não foi especificada na cadeia de conexão, mas a consulta exige computações de enclave. O tipo de enclave é '{1}'. </value>
   </data>
   <data name="TCE_NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage" xml:space="preserve">
-    <value>Error occurred when generating enclave package. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is '{0}'. </value>
+    <value>Erro ao gerar o pacote de enclave. A URL de Atestado não foi especificada na cadeia de conexão, mas a consulta exige computações de enclave. O tipo de enclave é '{0}'. </value>
   </data>
   <data name="TCE_EnclaveTypeNullForEnclaveBasedQuery" xml:space="preserve">
     <value>Erro Interno. O tipo de enclave recebido do SQL Server é nulo ou vazio ao executar uma consulta que requer cálculos de enclave.</value>
@@ -4339,13 +4339,13 @@
     <value>A instância {0} não dá suporte à criptografia de coluna.</value>
   </data>
   <data name="TCE_EnclaveComputationsNotSupported" xml:space="preserve">
-    <value>You have specified the enclave attestation URL and attestation protocol in the connection string, but the SQL Server instance in use does not support enclave based computations.</value>
+    <value>Você especificou a URL de atestado e o protocolo de atestado de enclave na cadeia de conexão, mas a instância do SQL Server em uso não dá suporte a computações baseadas em enclave.</value>
   </data>
   <data name="TCE_AttestationURLNotSupported" xml:space="preserve">
-    <value>You have specified the enclave attestation URL in the connection string, but the SQL Server instance in use does not support enclave based computations.</value>
+    <value>Você especificou a URL de atestado do enclave na cadeia de conexão, mas a instância do SQL Server não dá suporte para cálculos baseados em enclave.</value>
   </data>
   <data name="TCE_AttestationProtocolNotSupported" xml:space="preserve">
-    <value>You have specified the attestation protocol in the connection string, but the SQL Server instance in use does not support enclave based computations.</value>
+    <value>Você especificou o protocolo de atestado na cadeia de conexão, mas a instância do SQL Server em uso não dá suporte a computações baseadas em enclave.</value>
   </data>
   <data name="TCE_EnclaveTypeNotReturned" xml:space="preserve">
     <value>Você especificou a URL de atestado do enclave na cadeia de conexão, mas a instância do SQL Server não retornou um tipo de enclave. Certifique-se de que o tipo de enclave esteja configurado corretamente na sua instância.</value>
@@ -4525,6 +4525,6 @@
     <value>Falha ao inicializar a conexão. O protocolo de atestado '{0}' não dá suporte ao tipo de enclave '{1}'.</value>
   </data>
   <data name="TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage" xml:space="preserve">
-    <value>Error occurred when generating enclave package. Attestation Protocol has not been specified in the connection string, but the query requires enclave computations.</value>
+    <value>Erro ao gerar o pacote de enclave. O Protocolo de Atestado não foi especificado na cadeia de conexão, mas a consulta exige computações de enclave.</value>
   </data>
 </root>
