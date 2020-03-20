@@ -9,18 +9,17 @@ namespace Microsoft.Data.SqlClient
 {
     internal sealed class TdsParserStateObjectFactory
     {
-
-        private const string UseLegacyNetworkingOnWindows = "Microsoft.Data.SqlClient.UseLegacyNetworkingOnWindows";
-
         public static readonly TdsParserStateObjectFactory Singleton = new TdsParserStateObjectFactory();
 
-        // Temporary disabling App Context switching for managed SNI.
-        // If the appcontext switch is set then Use Managed SNI based on the value. Otherwise Managed SNI should always be used.
-        //private static bool shouldUseLegacyNetorking;
-        //public static bool UseManagedSNI { get; } = AppContext.TryGetSwitch(UseLegacyNetworkingOnWindows, out shouldUseLegacyNetorking) ? !shouldUseLegacyNetorking : true;
-
+        /* Managed SNI can be enabled on Windows by setting any of the below two environment variables to 'True':
+         * Microsoft.Data.SqlClient.UseManagedSNIOnWindows (Supported to respect namespace format)
+         * Microsoft_Data_SqlClient_UseManagedSNIOnWindows (Supported for Azure Pipelines)
+        **/
         private static Lazy<bool> useManagedSNIOnWindows = new Lazy<bool>(
-            () => bool.TrueString.Equals(Environment.GetEnvironmentVariable("Microsoft.Data.SqlClient.UseManagedSNIOnWindows"), StringComparison.InvariantCultureIgnoreCase)
+            () => bool.TrueString.Equals(Environment.GetEnvironmentVariable("Microsoft.Data.SqlClient.UseManagedSNIOnWindows"),
+                                        StringComparison.InvariantCultureIgnoreCase) ||
+                  bool.TrueString.Equals(Environment.GetEnvironmentVariable("Microsoft_Data_SqlClient_UseManagedSNIOnWindows"),
+                                        StringComparison.InvariantCultureIgnoreCase)
         );
         public static bool UseManagedSNI => useManagedSNIOnWindows.Value;
 
