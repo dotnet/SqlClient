@@ -258,9 +258,9 @@ namespace Microsoft.Data.SqlClient.SNI
 
                             _currentHeader.Read(_headerBytes);
 
-                        _dataBytesLeft = (int)_currentHeader.length;
-                        _currentPacket = _lowerHandle.RentPacket(headerSize: 0, dataSize: (int)_currentHeader.length);
-                    }
+                            _dataBytesLeft = (int)_currentHeader.length;
+                            _currentPacket = _lowerHandle.RentPacket(headerSize: 0, dataSize: (int)_currentHeader.length);
+                        }
 
                         currentHeader = _currentHeader;
                         currentPacket = _currentPacket;
@@ -313,22 +313,22 @@ namespace Microsoft.Data.SqlClient.SNI
                         currentSession.HandleReceiveComplete(currentPacket, currentHeader);
                     }
 
-                if (_currentHeader.flags == (byte)SNISMUXFlags.SMUX_ACK)
-                {
-                    try
+                    if (_currentHeader.flags == (byte)SNISMUXFlags.SMUX_ACK)
                     {
-                        currentSession.HandleAck(currentHeader.highwater);
-                    }
-                    catch (Exception e)
-                    {
-                        SNICommon.ReportSNIError(SNIProviders.SMUX_PROV, SNICommon.InternalExceptionError, e);
-                    }
+                        try
+                        {
+                            currentSession.HandleAck(currentHeader.highwater);
+                        }
+                        catch (Exception e)
+                        {
+                            SNICommon.ReportSNIError(SNIProviders.SMUX_PROV, SNICommon.InternalExceptionError, e);
+                        }
 
-                    Debug.Assert(_currentPacket == currentPacket, "current and _current are not the same");
-                    ReturnPacket(currentPacket);
-                    currentPacket = null;
-                    _currentPacket = null;
-                }
+                        Debug.Assert(_currentPacket == currentPacket, "current and _current are not the same");
+                        ReturnPacket(currentPacket);
+                        currentPacket = null;
+                        _currentPacket = null;
+                    }
 
                     lock (this)
                     {
@@ -383,6 +383,16 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 SqlClientEventSource.Log.SNIScopeLeaveEvent(scopeID);
             }
+        }
+
+        public SNIPacket RentPacket(int headerSize, int dataSize)
+        {
+            return _lowerHandle.RentPacket(headerSize, dataSize);
+        }
+
+        public void ReturnPacket(SNIPacket packet)
+        {
+            _lowerHandle.ReturnPacket(packet);
         }
 
 #if DEBUG
