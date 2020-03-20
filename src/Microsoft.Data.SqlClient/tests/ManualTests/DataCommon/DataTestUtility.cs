@@ -80,6 +80,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (UseManagedSNI)
             {
                 AppContext.SetSwitch(ManagedNetworkingAppContextSwitch, true);
+                Console.WriteLine($"App Context switch {ManagedNetworkingAppContextSwitch} enabled on {Environment.OSVersion}");
             }
 
             using (StreamReader r = new StreamReader("config.json"))
