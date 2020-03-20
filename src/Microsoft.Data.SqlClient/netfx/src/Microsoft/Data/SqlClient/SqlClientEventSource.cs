@@ -127,7 +127,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsTraceEnabled())
             {
-                TraceEvent(string.Format(message, args0?.ToString()));
+                TraceEvent(string.Format(message, args0?.ToString() ?? "Null"));
             }
         }
 
@@ -145,7 +145,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsTraceEnabled())
             {
-                Trace(string.Format(message, args0?.ToString(), args1?.ToString()));
+                Trace(string.Format(message, args0?.ToString() ?? "Null", args1?.ToString() ?? "Null"));
             }
         }
 
@@ -399,7 +399,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsCorrelationEnabled())
             {
-                CorrelationTrace(string.Format(message, args0.ToString()));
+                CorrelationTrace(string.Format(message, args0?.ToString() ?? "Null"));
             }
         }
 
@@ -408,7 +408,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsCorrelationEnabled())
             {
-                CorrelationTrace(string.Format(message, args0.ToString(), args1.ToString()));
+                CorrelationTrace(string.Format(message, args0?.ToString() ?? "Null", args1?.ToString() ?? "Null"));
             }
         }
 
@@ -417,7 +417,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsCorrelationEnabled())
             {
-                CorrelationTrace(string.Format(message, args0.ToString(), args1.ToString(), args2.ToString()));
+                CorrelationTrace(string.Format(message, args0?.ToString() ?? "Null", args1?.ToString() ?? "Null", args2?.ToString() ?? "Null"));
             }
         }
 
