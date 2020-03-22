@@ -171,3 +171,9 @@ Tests can be built and run with custom Target Frameworks. See the below examples
 # Use above property to run Functional Tests with custom TargetFramework (.NET Core)
 # Applicable values: netcoreapp2.1 | netcoreapp2.2 | netcoreapp3.0
 ```
+
+## Set truncation on for scaled decimal parameters
+
+Scaled decimal parameter truncation can be enabled by enabling the below AppContext switch:
+
+**"Microsoft.Data.SqlClient.TruncateScaledDecimal"**

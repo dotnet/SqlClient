@@ -265,7 +265,6 @@ namespace Microsoft.Data.SqlClient
         private int _currentRowLength;
         private DataRowState _rowStateToSkip;
         private IEnumerator _rowEnumerator;
-        private bool _truncateScaledDecimal;
 
         private int RowNumber
         {
@@ -288,17 +287,6 @@ namespace Microsoft.Data.SqlClient
                         return -1;
                 }
                 return ++rowNo;
-            }
-        }
-
-        private SqlConnection Connection
-        {
-            get { return _connection; }
-            set
-            {
-                var cnnStringBuilder = new SqlConnectionStringBuilder(value.ConnectionString);
-                _truncateScaledDecimal = cnnStringBuilder.TruncateScaledDecimal;
-                _connection = value;
             }
         }
 
@@ -345,7 +333,7 @@ namespace Microsoft.Data.SqlClient
             {
                 throw ADP.ArgumentNull("connection");
             }
-            Connection = connection;
+            _connection = connection;
             _columnMappings = new SqlBulkCopyColumnMappingCollection();
         }
 
@@ -373,7 +361,7 @@ namespace Microsoft.Data.SqlClient
             {
                 throw ADP.ArgumentNull("connectionString");
             }
-            Connection = new SqlConnection(connectionString);
+            _connection = new SqlConnection(connectionString);
             _columnMappings = new SqlBulkCopyColumnMappingCollection();
             _ownConnection = true;
         }
@@ -1659,9 +1647,8 @@ namespace Microsoft.Data.SqlClient
                         }
 
                         if (sqlValue.Scale != scale)
-                        {                            
-                            bool roundDecimal = !_truncateScaledDecimal;
-                            sqlValue = TdsParser.AdjustSqlDecimalScale(sqlValue, scale, roundDecimal);
+                        {
+                            sqlValue = TdsParser.AdjustSqlDecimalScale(sqlValue, scale);
                         }
 
                         if (sqlValue.Precision > precision)

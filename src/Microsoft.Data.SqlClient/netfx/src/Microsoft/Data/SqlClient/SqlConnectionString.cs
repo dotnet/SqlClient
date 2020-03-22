@@ -56,7 +56,6 @@ namespace Microsoft.Data.SqlClient
             internal static readonly SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Disabled;
             internal const string EnclaveAttestationUrl = "";
             internal static readonly SqlConnectionAttestationProtocol AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified;
-            internal const bool Truncate_Scaled_Decimal = false;
 #if ADONET_CERT_AUTH
             internal const  string Certificate            = "";
 #endif
@@ -105,7 +104,6 @@ namespace Microsoft.Data.SqlClient
             internal const string Connect_Retry_Count = "connectretrycount";
             internal const string Connect_Retry_Interval = "connectretryinterval";
             internal const string Authentication = "authentication";
-            internal const string Truncate_Scaled_Decimal = "truncate scaled decimal";
 #if ADONET_CERT_AUTH            
             internal const string Certificate						= "certificate";
 #endif
@@ -254,7 +252,6 @@ namespace Microsoft.Data.SqlClient
 
         private readonly string _expandedAttachDBFilename; // expanded during construction so that CreatePermissionSet & Expand are consistent
 
-        private readonly bool _truncateScaledDecimal;
 
         // SxS: reading Software\\Microsoft\\MSSQLServer\\Client\\SuperSocketNetLib\Encrypt value from registry
         [ResourceExposure(ResourceScope.None)]
@@ -305,8 +302,6 @@ namespace Microsoft.Data.SqlClient
             _columnEncryptionSetting = ConvertValueToColumnEncryptionSetting();
             _enclaveAttestationUrl = ConvertValueToString(KEY.EnclaveAttestationUrl, DEFAULT.EnclaveAttestationUrl);
             _attestationProtocol = ConvertValueToAttestationProtocol();
-
-            _truncateScaledDecimal = ConvertValueToBoolean(KEY.Truncate_Scaled_Decimal, DEFAULT.Truncate_Scaled_Decimal);
 
 #if ADONET_CERT_AUTH            
             _certificate = ConvertValueToString(KEY.Certificate,         DEFAULT.Certificate);
@@ -615,7 +610,6 @@ namespace Microsoft.Data.SqlClient
             _columnEncryptionSetting = connectionOptions._columnEncryptionSetting;
             _enclaveAttestationUrl = connectionOptions._enclaveAttestationUrl;
             _attestationProtocol = connectionOptions._attestationProtocol;
-            _truncateScaledDecimal = connectionOptions._truncateScaledDecimal;
 #if ADONET_CERT_AUTH            
             _certificate              = connectionOptions._certificate;
 #endif
@@ -655,7 +649,6 @@ namespace Microsoft.Data.SqlClient
         internal bool Pooling { get { return _pooling; } }
         internal bool Replication { get { return _replication; } }
         internal bool UserInstance { get { return _userInstance; } }
-        internal bool TruncateScaledDecimal { get { return _truncateScaledDecimal; } }
 
         internal int ConnectTimeout { get { return _connectTimeout; } }
         internal int LoadBalanceTimeout { get { return _loadBalanceTimeout; } }
@@ -783,7 +776,6 @@ namespace Microsoft.Data.SqlClient
                 hash.Add(KEY.Connect_Retry_Count, KEY.Connect_Retry_Count);
                 hash.Add(KEY.Connect_Retry_Interval, KEY.Connect_Retry_Interval);
                 hash.Add(KEY.Authentication, KEY.Authentication);
-                hash.Add(KEY.Truncate_Scaled_Decimal, KEY.Truncate_Scaled_Decimal);
 #if ADONET_CERT_AUTH                
                 hash.Add(KEY.Certificate,                    KEY.Certificate);
 #endif

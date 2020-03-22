@@ -1083,17 +1083,6 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Fact]
-        public void ConnectionString_TruncateScaledDecimal()
-        {            
-            SqlConnection cn = new SqlConnection();
-            Assert.False(new SqlConnectionStringBuilder(cn.ConnectionString).TruncateScaledDecimal, "The default 'Truncate Scaled Decimal' property expects to be false!");
-            cn.ConnectionString = "Truncate Scaled Decimal=false";
-            cn.ConnectionString = "Truncate Scaled Decimal=true";
-            cn.ConnectionString = "Truncate Scaled Decimal=no";
-            cn.ConnectionString = "Truncate Scaled Decimal=yes";
-        }
-
-        [Fact]
         public void ConnectionString_OtherKeywords()
         {
             SqlConnection cn = new SqlConnection();

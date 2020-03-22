@@ -327,6 +327,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     using (SqlCommand cmd = connection.CreateCommand())
                     {
+                        AppContext.SetSwitch(truncateDecimalSwitch, truncateScaledDecimal);
                         var p = new SqlParameter("@Value", null);
                         p.Precision = 18;
                         p.Scale = 2;
@@ -370,6 +371,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         }
 
                         bulkCopy.DestinationTableName = tableName;
+                        AppContext.SetSwitch(truncateDecimalSwitch, truncateScaledDecimal);
                         bulkCopy.WriteToServer(table);
                     }
                     Assert.True(ValidateInsertedValues(connection, tableName, truncateScaledDecimal), $"Invalid test happened with connection string [{connection.ConnectionString}]");
@@ -411,6 +413,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             table.Rows.Add(newRow);
                         }
                         p.Value = table;
+                        AppContext.SetSwitch(truncateDecimalSwitch, truncateScaledDecimal);
                         cmd.ExecuteNonQuery();
                     }
                     // TVP always rounds data without attention to the configuration.
@@ -429,6 +432,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly decimal[] _testValues = new[] { 4210862852.8600000000_0000000000m, 19.1560m, 19.1550m, 19.1549m };
         private static readonly decimal[] _expectedRoundedValues = new[] { 4210862852.86m, 19.16m, 19.16m, 19.15m };
         private static readonly decimal[] _expectedTruncatedValues = new[] { 4210862852.86m, 19.15m, 19.15m, 19.15m };
+        private const string truncateDecimalSwitch = "Microsoft.Data.SqlClient.TruncateScaledDecimal";
 
         private static SqlConnection InitialDatabaseUDTT(string cnnString, string tableName, string tableTypeName, string spName)
         {
@@ -495,32 +499,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             public IEnumerator<object[]> GetEnumerator()
             {
-                var cnnStringBuilder = new SqlConnectionStringBuilder();
-
                 if (!string.IsNullOrEmpty(DataTestUtility.TCPConnectionString))
                 {
-                    cnnStringBuilder.ConnectionString = DataTestUtility.TCPConnectionString;
-                    cnnStringBuilder.TruncateScaledDecimal = false;
-                    yield return new object[] { cnnStringBuilder.ConnectionString, false };
-                    cnnStringBuilder.TruncateScaledDecimal = true;
-                    yield return new object[] { cnnStringBuilder.ConnectionString, true };
+                    yield return new object[] { DataTestUtility.TCPConnectionString, false };                    
+                    yield return new object[] { DataTestUtility.TCPConnectionString, true };
                 }
                 else if (!string.IsNullOrEmpty(DataTestUtility.NPConnectionString))
                 {
-                    cnnStringBuilder.ConnectionString = DataTestUtility.NPConnectionString;
-                    cnnStringBuilder.TruncateScaledDecimal = false;
-                    yield return new object[] { cnnStringBuilder.ConnectionString, false };
-                    cnnStringBuilder.TruncateScaledDecimal = true;
-                    yield return new object[] { cnnStringBuilder.ConnectionString, true };
+                    yield return new object[] { DataTestUtility.NPConnectionString, false };
+                    yield return new object[] { DataTestUtility.NPConnectionString, true };
                 }
 
                 foreach (string connStrAE in DataTestUtility.AEConnStrings)
                 {
-                    cnnStringBuilder.ConnectionString = connStrAE;
-                    cnnStringBuilder.TruncateScaledDecimal = false;
-                    yield return new object[] { cnnStringBuilder.ConnectionString, false };
-                    cnnStringBuilder.TruncateScaledDecimal = true;
-                    yield return new object[] { cnnStringBuilder.ConnectionString, true };
+                    yield return new object[] { connStrAE, false };
+                    yield return new object[] { connStrAE, true };
                 }
             }
 

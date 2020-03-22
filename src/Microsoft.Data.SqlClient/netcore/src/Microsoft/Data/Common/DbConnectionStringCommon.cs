@@ -668,7 +668,6 @@ namespace Microsoft.Data.Common
         internal const SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Disabled;
         internal const string EnclaveAttestationUrl = "";
         internal const SqlConnectionAttestationProtocol AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified;
-        internal const bool TruncateScaledDecimal = false;
     }
 
 
@@ -705,7 +704,6 @@ namespace Microsoft.Data.Common
         internal const string ColumnEncryptionSetting = "Column Encryption Setting";
         internal const string EnclaveAttestationUrl = "Enclave Attestation Url";
         internal const string AttestationProtocol = "Attestation Protocol";
-        internal const string TruncateScaledDecimal = "Truncate Scaled Decimal";
 
         // common keywords (OleDb, OracleClient, SqlClient)
         internal const string DataSource = "Data Source";

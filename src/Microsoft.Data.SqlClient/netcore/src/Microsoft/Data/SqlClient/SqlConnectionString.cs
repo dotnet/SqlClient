@@ -51,7 +51,6 @@ namespace Microsoft.Data.SqlClient
             internal const SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Disabled;
             internal const string EnclaveAttestationUrl = "";
             internal static readonly SqlConnectionAttestationProtocol AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified;
-            internal const bool Truncate_Scaled_Decimal = false;
         }
 
         // SqlConnection ConnectionString Options
@@ -98,7 +97,6 @@ namespace Microsoft.Data.SqlClient
             internal const string Connect_Retry_Count = "connectretrycount";
             internal const string Connect_Retry_Interval = "connectretryinterval";
             internal const string Authentication = "authentication";
-            internal const string Truncate_Scaled_Decimal = "truncate scaled decimal";
         }
 
         // Constant for the number of duplicate options in the connection string
@@ -224,8 +222,6 @@ namespace Microsoft.Data.SqlClient
 
         private readonly string _expandedAttachDBFilename; // expanded during construction so that CreatePermissionSet & Expand are consistent
 
-        private readonly bool _truncateScaledDecimal;
-
         internal SqlConnectionString(string connectionString) : base(connectionString, GetParseSynonyms())
         {
             ThrowUnsupportedIfKeywordSet(KEY.AsynchronousProcessing);
@@ -281,7 +277,6 @@ namespace Microsoft.Data.SqlClient
             _userID = ConvertValueToString(KEY.User_ID, DEFAULT.User_ID);
             _workstationId = ConvertValueToString(KEY.Workstation_Id, null);
 
-            _truncateScaledDecimal = ConvertValueToBoolean(KEY.Truncate_Scaled_Decimal, DEFAULT.Truncate_Scaled_Decimal);
 
 
             if (_loadBalanceTimeout < 0)
@@ -506,7 +501,6 @@ namespace Microsoft.Data.SqlClient
             _columnEncryptionSetting = connectionOptions._columnEncryptionSetting;
             _enclaveAttestationUrl = connectionOptions._enclaveAttestationUrl;
             _attestationProtocol = connectionOptions._attestationProtocol;
-            _truncateScaledDecimal = connectionOptions._truncateScaledDecimal;
 
             ValidateValueLength(_dataSource, TdsEnums.MAXLEN_SERVERNAME, KEY.Data_Source);
         }
@@ -532,7 +526,6 @@ namespace Microsoft.Data.SqlClient
         internal bool Pooling { get { return _pooling; } }
         internal bool Replication { get { return _replication; } }
         internal bool UserInstance { get { return _userInstance; } }
-        internal bool TruncateScaledDecimal { get { return _truncateScaledDecimal; } }
 
         internal int ConnectTimeout { get { return _connectTimeout; } }
         internal int LoadBalanceTimeout { get { return _loadBalanceTimeout; } }
@@ -655,7 +648,6 @@ namespace Microsoft.Data.SqlClient
                     { KEY.Connect_Retry_Count, KEY.Connect_Retry_Count },
                     { KEY.Connect_Retry_Interval, KEY.Connect_Retry_Interval },
                     { KEY.Authentication, KEY.Authentication },
-                    { KEY.Truncate_Scaled_Decimal, KEY.Truncate_Scaled_Decimal },
 
                     { SYNONYM.APP, KEY.Application_Name },
                     { SYNONYM.Async, KEY.AsynchronousProcessing },

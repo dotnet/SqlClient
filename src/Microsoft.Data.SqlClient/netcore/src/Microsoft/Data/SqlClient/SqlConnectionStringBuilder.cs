@@ -69,8 +69,6 @@ namespace Microsoft.Data.SqlClient
             EnclaveAttestationUrl,
             AttestationProtocol,
 
-            TruncateScaledDecimal,
-
             // keep the count value last
             KeywordsCount
         }
@@ -94,7 +92,6 @@ namespace Microsoft.Data.SqlClient
         private string _typeSystemVersion = DbConnectionStringDefaults.TypeSystemVersion;
         private string _userID = DbConnectionStringDefaults.UserID;
         private string _workstationID = DbConnectionStringDefaults.WorkstationID;
-        private bool _truncateScaledDecimal = DbConnectionStringDefaults.TruncateScaledDecimal;
 
         private int _connectTimeout = DbConnectionStringDefaults.ConnectTimeout;
         private int _loadBalanceTimeout = DbConnectionStringDefaults.LoadBalanceTimeout;
@@ -159,7 +156,6 @@ namespace Microsoft.Data.SqlClient
             validKeywords[(int)Keywords.ColumnEncryptionSetting] = DbConnectionStringKeywords.ColumnEncryptionSetting;
             validKeywords[(int)Keywords.EnclaveAttestationUrl] = DbConnectionStringKeywords.EnclaveAttestationUrl;
             validKeywords[(int)Keywords.AttestationProtocol] = DbConnectionStringKeywords.AttestationProtocol;
-            validKeywords[(int)Keywords.TruncateScaledDecimal] = DbConnectionStringKeywords.TruncateScaledDecimal;
             return validKeywords;
         }
 
@@ -203,7 +199,6 @@ namespace Microsoft.Data.SqlClient
             hash.Add(DbConnectionStringKeywords.ColumnEncryptionSetting, Keywords.ColumnEncryptionSetting);
             hash.Add(DbConnectionStringKeywords.EnclaveAttestationUrl, Keywords.EnclaveAttestationUrl);
             hash.Add(DbConnectionStringKeywords.AttestationProtocol, Keywords.AttestationProtocol);
-            hash.Add(DbConnectionStringKeywords.TruncateScaledDecimal, Keywords.TruncateScaledDecimal);
 
             hash.Add(DbConnectionStringSynonyms.APP, Keywords.ApplicationName);
             hash.Add(DbConnectionStringSynonyms.EXTENDEDPROPERTIES, Keywords.AttachDBFilename);
@@ -360,9 +355,6 @@ namespace Microsoft.Data.SqlClient
                             break;
                         case Keywords.ConnectRetryInterval:
                             ConnectRetryInterval = ConvertToInt32(value);
-                            break;
-                        case Keywords.TruncateScaledDecimal:
-                            TruncateScaledDecimal = ConvertToBoolean(value);
                             break;
 
                         default:
@@ -829,17 +821,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TruncateScaledDecimal/*' />
-        public bool TruncateScaledDecimal
-        {
-            get { return _truncateScaledDecimal; } 
-            set
-            {
-                SetValue(DbConnectionStringKeywords.TruncateScaledDecimal, value);
-                _truncateScaledDecimal = value;
-            }
-        }
-
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Clear/*' />
         public override void Clear()
         {
@@ -976,8 +957,6 @@ namespace Microsoft.Data.SqlClient
                     return EnclaveAttestationUrl;
                 case Keywords.AttestationProtocol:
                     return AttestationProtocol;
-                case Keywords.TruncateScaledDecimal:
-                    return TruncateScaledDecimal;
 
                 default:
                     Debug.Fail("unexpected keyword");
@@ -1122,9 +1101,6 @@ namespace Microsoft.Data.SqlClient
                     break;
                 case Keywords.AttestationProtocol:
                     _attestationProtocol = DbConnectionStringDefaults.AttestationProtocol;
-                    break;
-                case Keywords.TruncateScaledDecimal:
-                    _truncateScaledDecimal = DbConnectionStringDefaults.TruncateScaledDecimal;
                     break;
                 default:
                     Debug.Fail("unexpected keyword");
