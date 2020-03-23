@@ -51,13 +51,19 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         public override void Dispose()
         {
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNIMarsHandle.Dispose |SNI|INFO|SCOPE>");
             try
             {
                 SendControlPacket(SNISMUXFlags.SMUX_FIN);
             }
             catch (Exception e)
             {
+                SqlClientEventSource.Log.SNITrace("<sc.SNI.SNIMarsHandle.Dispose |SNI|ERR> internal exception error = {0}, Member Name={1}", e.Message, e.GetType().Name);
                 SNICommon.ReportSNIError(SNIProviders.SMUX_PROV, SNICommon.InternalExceptionError, e);
+            }
+            finally
+            {
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
@@ -83,16 +89,24 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="flags">SMUX header flags</param>
         private void SendControlPacket(SNISMUXFlags flags)
         {
-            SNIPacket packet = new SNIPacket(headerSize: SNISMUXHeader.HEADER_LENGTH, dataSize: 0);
-
-            lock (this)
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNIMarsHandle.SendControlPacket |SNI|INFO|SCOPE>");
+            try
             {
-                SetupSMUXHeader(0, flags);
-                _currentHeader.Write(packet.GetHeaderBuffer(SNISMUXHeader.HEADER_LENGTH));
-                packet.SetHeaderActive();
-            }
+                SNIPacket packet = new SNIPacket(headerSize: SNISMUXHeader.HEADER_LENGTH, dataSize: 0);
 
-            _connection.Send(packet);
+                lock (this)
+                {
+                    SetupSMUXHeader(0, flags);
+                    _currentHeader.Write(packet.GetHeaderBuffer(SNISMUXHeader.HEADER_LENGTH));
+                    packet.SetHeaderActive();
+                }
+
+                _connection.Send(packet);
+            }
+            finally
+            {
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
+            }
         }
 
         private void SetupSMUXHeader(int length, SNISMUXFlags flags)
@@ -132,31 +146,38 @@ namespace Microsoft.Data.SqlClient.SNI
         public override uint Send(SNIPacket packet)
         {
             Debug.Assert(packet.ReservedHeaderSize == SNISMUXHeader.HEADER_LENGTH, "mars handle attempting to send muxed packet without mux reservation in Send");
-
-            while (true)
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNIMarsHandle.Send |SNI|INFO|SCOPE>");
+            try
             {
-                lock (this)
+                while (true)
                 {
-                    if (_sequenceNumber < _sendHighwater)
+                    lock (this)
                     {
-                        break;
+                        if (_sequenceNumber < _sendHighwater)
+                        {
+                            break;
+                        }
+                    }
+
+                    _ackEvent.Wait();
+
+                    lock (this)
+                    {
+                        _ackEvent.Reset();
                     }
                 }
 
-                _ackEvent.Wait();
-
+                SNIPacket muxedPacket = null;
                 lock (this)
                 {
-                    _ackEvent.Reset();
+                    muxedPacket = SetPacketSMUXHeader(packet);
                 }
+                return _connection.Send(muxedPacket);
             }
-
-            SNIPacket muxedPacket = null;
-            lock (this)
+            finally
             {
-                muxedPacket = SetPacketSMUXHeader(packet);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
-            return _connection.Send(muxedPacket);
         }
 
         /// <summary>
@@ -168,17 +189,25 @@ namespace Microsoft.Data.SqlClient.SNI
         private uint InternalSendAsync(SNIPacket packet, SNIAsyncCallback callback)
         {
             Debug.Assert(packet.ReservedHeaderSize == SNISMUXHeader.HEADER_LENGTH, "mars handle attempting to send muxed packet without mux reservation in InternalSendAsync");
-
-            lock (this)
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNIMarsHandle.InternalSendAsync |SNI|INFO|SCOPE>");
+            try
             {
-                if (_sequenceNumber >= _sendHighwater)
+                lock (this)
                 {
-                    return TdsEnums.SNI_QUEUE_FULL;
-                }
+                    if (_sequenceNumber >= _sendHighwater)
+                    {
+                        SqlClientEventSource.Log.SNITrace("<sc.SNI.SNIMarsHandle.InternalSendAsync |SNI|INFO|> SNI Queue is full");
+                        return TdsEnums.SNI_QUEUE_FULL;
+                    }
 
-                SNIPacket muxedPacket = SetPacketSMUXHeader(packet);
-                muxedPacket.SetCompletionCallback(callback ?? HandleSendComplete);
-                return _connection.SendAsync(muxedPacket, callback);
+                    SNIPacket muxedPacket = SetPacketSMUXHeader(packet);
+                    muxedPacket.SetCompletionCallback(callback ?? HandleSendComplete);
+                    return _connection.SendAsync(muxedPacket, callback);
+                }
+            }
+            finally
+            {
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
@@ -188,38 +217,46 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error code</returns>
         private uint SendPendingPackets()
         {
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNIMarsHandle.SendPendingPackets |SNI|INFO|SCOPE>");
             SNIMarsQueuedPacket packet = null;
-
-            while (true)
+            try
             {
-                lock (this)
+                while (true)
                 {
-                    if (_sequenceNumber < _sendHighwater)
+                    lock (this)
                     {
-                        if (_sendPacketQueue.Count != 0)
+                        if (_sequenceNumber < _sendHighwater)
                         {
-                            packet = _sendPacketQueue.Peek();
-                            uint result = InternalSendAsync(packet.Packet, packet.Callback);
-
-                            if (result != TdsEnums.SNI_SUCCESS && result != TdsEnums.SNI_SUCCESS_IO_PENDING)
+                            if (_sendPacketQueue.Count != 0)
                             {
-                                return result;
+                                packet = _sendPacketQueue.Peek();
+                                uint result = InternalSendAsync(packet.Packet, packet.Callback);
+
+                                if (result != TdsEnums.SNI_SUCCESS && result != TdsEnums.SNI_SUCCESS_IO_PENDING)
+                                {
+                                    SqlClientEventSource.Log.SNITrace("<sc.SNI.SNIMarsHandle.SendPendingPackets |SNI|ERR> InternalSendAsync result is not SNI_SUCCESS and is not SNI_SUCCESS_IO_PENDING");
+                                    return result;
+                                }
+
+                                _sendPacketQueue.Dequeue();
+                                continue;
                             }
+                            else
+                            {
+                                _ackEvent.Set();
+                            }
+                        }
 
-                            _sendPacketQueue.Dequeue();
-                            continue;
-                        }
-                        else
-                        {
-                            _ackEvent.Set();
-                        }
+                        break;
                     }
-
-                    break;
                 }
-            }
 
-            return TdsEnums.SNI_SUCCESS;
+                return TdsEnums.SNI_SUCCESS;
+            }
+            finally
+            {
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
+            }
         }
 
         /// <summary>
@@ -231,13 +268,21 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error code</returns>
         public override uint SendAsync(SNIPacket packet, bool disposePacketAfterSendAsync, SNIAsyncCallback callback = null)
         {
-            lock (this)
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNIMarsHandle.SendAsync |SNI|INFO|SCOPE>");
+            try
             {
-                _sendPacketQueue.Enqueue(new SNIMarsQueuedPacket(packet, callback != null ? callback : HandleSendComplete));
-            }
+                lock (this)
+                {
+                    _sendPacketQueue.Enqueue(new SNIMarsQueuedPacket(packet, callback != null ? callback : HandleSendComplete));
+                }
 
-            SendPendingPackets();
-            return TdsEnums.SNI_SUCCESS_IO_PENDING;
+                SendPendingPackets();
+                return TdsEnums.SNI_SUCCESS_IO_PENDING;
+            }
+            finally
+            {
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
+            }
         }
 
         /// <summary>
@@ -247,36 +292,44 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error code</returns>
         public override uint ReceiveAsync(ref SNIPacket packet)
         {
-            lock (_receivedPacketQueue)
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNIMarsHandle.SendAsync |SNI|INFO|SCOPE>");
+            try
             {
-                int queueCount = _receivedPacketQueue.Count;
-
-                if (_connectionError != null)
+                lock (_receivedPacketQueue)
                 {
-                    return SNICommon.ReportSNIError(_connectionError);
+                    int queueCount = _receivedPacketQueue.Count;
+
+                    if (_connectionError != null)
+                    {
+                        return SNICommon.ReportSNIError(_connectionError);
+                    }
+
+                    if (queueCount == 0)
+                    {
+                        _asyncReceives++;
+                        return TdsEnums.SNI_SUCCESS_IO_PENDING;
+                    }
+
+                    packet = _receivedPacketQueue.Dequeue();
+
+                    if (queueCount == 1)
+                    {
+                        _packetEvent.Reset();
+                    }
                 }
 
-                if (queueCount == 0)
+                lock (this)
                 {
-                    _asyncReceives++;
-                    return TdsEnums.SNI_SUCCESS_IO_PENDING;
+                    _receiveHighwater++;
                 }
 
-                packet = _receivedPacketQueue.Dequeue();
-
-                if (queueCount == 1)
-                {
-                    _packetEvent.Reset();
-                }
+                SendAckIfNecessary();
+                return TdsEnums.SNI_SUCCESS;
             }
-
-            lock (this)
+            finally
             {
-                _receiveHighwater++;
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
-
-            SendAckIfNecessary();
-            return TdsEnums.SNI_SUCCESS;
         }
 
         /// <summary>
@@ -284,13 +337,21 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         public void HandleReceiveError(SNIPacket packet)
         {
-            lock (_receivedPacketQueue)
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNIMarsHandle.HandleReceiveError |SNI|INFO|SCOPE>");
+            try
             {
-                _connectionError = SNILoadHandle.SingletonInstance.LastError;
-                _packetEvent.Set();
-            }
+                lock (_receivedPacketQueue)
+                {
+                    _connectionError = SNILoadHandle.SingletonInstance.LastError;
+                    _packetEvent.Set();
+                }
 
             ((TdsParserStateObject)_callbackObject).ReadAsyncCallback(PacketHandle.FromManagedPacket(packet), 1);
+            }
+            finally
+            {
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
+            }
         }
 
         /// <summary>
@@ -300,11 +361,19 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="sniErrorCode">SNI error code</param>
         public void HandleSendComplete(SNIPacket packet, uint sniErrorCode)
         {
-            lock (this)
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNIMarsHandle.HandleSendComplete |SNI|INFO|SCOPE>");
+            try
             {
-                Debug.Assert(_callbackObject != null);
+                lock (this)
+                {
+                    Debug.Assert(_callbackObject != null);
 
-                ((TdsParserStateObject)_callbackObject).WriteAsyncCallback(PacketHandle.FromManagedPacket(packet), sniErrorCode);
+                    ((TdsParserStateObject)_callbackObject).WriteAsyncCallback(PacketHandle.FromManagedPacket(packet), sniErrorCode);
+                }
+            }
+            finally
+            {
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
@@ -314,13 +383,21 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="highwater">Send highwater mark</param>
         public void HandleAck(uint highwater)
         {
-            lock (this)
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNIMarsHandle.HandleAck |SNI|INFO|SCOPE>");
+            try
             {
-                if (_sendHighwater != highwater)
+                lock (this)
                 {
-                    _sendHighwater = highwater;
-                    SendPendingPackets();
+                    if (_sendHighwater != highwater)
+                    {
+                        _sendHighwater = highwater;
+                        SendPendingPackets();
+                    }
                 }
+            }
+            finally
+            {
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
@@ -331,35 +408,43 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="header">SMUX header</param>
         public void HandleReceiveComplete(SNIPacket packet, SNISMUXHeader header)
         {
-            lock (this)
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNIMarsHandle.HandleReceiveComplete |SNI|INFO|SCOPE>");
+            try
             {
-                if (_sendHighwater != header.highwater)
+                lock (this)
                 {
-                    HandleAck(header.highwater);
-                }
-
-                lock (_receivedPacketQueue)
-                {
-                    if (_asyncReceives == 0)
+                    if (_sendHighwater != header.highwater)
                     {
-                        _receivedPacketQueue.Enqueue(packet);
-                        _packetEvent.Set();
-                        return;
+                        HandleAck(header.highwater);
                     }
 
-                    _asyncReceives--;
-                    Debug.Assert(_callbackObject != null);
+                    lock (_receivedPacketQueue)
+                    {
+                        if (_asyncReceives == 0)
+                        {
+                            _receivedPacketQueue.Enqueue(packet);
+                            _packetEvent.Set();
+                            return;
+                        }
 
-                    ((TdsParserStateObject)_callbackObject).ReadAsyncCallback(PacketHandle.FromManagedPacket(packet), 0);
+                        _asyncReceives--;
+                        Debug.Assert(_callbackObject != null);
+
+                        ((TdsParserStateObject)_callbackObject).ReadAsyncCallback(PacketHandle.FromManagedPacket(packet), 0);
+                    }
                 }
-            }
 
-            lock (this)
+                lock (this)
+                {
+                    _receiveHighwater++;
+                }
+
+                SendAckIfNecessary();
+            }
+            finally
             {
-                _receiveHighwater++;
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
-
-            SendAckIfNecessary();
         }
 
         /// <summary>
@@ -390,50 +475,58 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error code</returns>
         public override uint Receive(out SNIPacket packet, int timeoutInMilliseconds)
         {
-            packet = null;
-            int queueCount;
-            uint result = TdsEnums.SNI_SUCCESS_IO_PENDING;
-
-            while (true)
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNIMarsHandle.Receive |SNI|INFO|SCOPE>");
+            try
             {
-                lock (_receivedPacketQueue)
+                packet = null;
+                int queueCount;
+                uint result = TdsEnums.SNI_SUCCESS_IO_PENDING;
+
+                while (true)
                 {
-                    if (_connectionError != null)
+                    lock (_receivedPacketQueue)
                     {
-                        return SNICommon.ReportSNIError(_connectionError);
-                    }
-
-                    queueCount = _receivedPacketQueue.Count;
-
-                    if (queueCount > 0)
-                    {
-                        packet = _receivedPacketQueue.Dequeue();
-
-                        if (queueCount == 1)
+                        if (_connectionError != null)
                         {
-                            _packetEvent.Reset();
+                            return SNICommon.ReportSNIError(_connectionError);
                         }
 
-                        result = TdsEnums.SNI_SUCCESS;
-                    }
-                }
+                        queueCount = _receivedPacketQueue.Count;
 
-                if (result == TdsEnums.SNI_SUCCESS)
-                {
-                    lock (this)
+                        if (queueCount > 0)
+                        {
+                            packet = _receivedPacketQueue.Dequeue();
+
+                            if (queueCount == 1)
+                            {
+                                _packetEvent.Reset();
+                            }
+
+                            result = TdsEnums.SNI_SUCCESS;
+                        }
+                    }
+
+                    if (result == TdsEnums.SNI_SUCCESS)
                     {
-                        _receiveHighwater++;
+                        lock (this)
+                        {
+                            _receiveHighwater++;
+                        }
+
+                        SendAckIfNecessary();
+                        return result;
                     }
 
-                    SendAckIfNecessary();
-                    return result;
+                    if (!_packetEvent.Wait(timeoutInMilliseconds))
+                    {
+                        SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.SMUX_PROV, 0, SNICommon.ConnTimeoutError, string.Empty);
+                        return TdsEnums.SNI_WAIT_TIMEOUT;
+                    }
                 }
-
-                if (!_packetEvent.Wait(timeoutInMilliseconds))
-                {
-                    SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.SMUX_PROV, 0, SNICommon.ConnTimeoutError, string.Empty);
-                    return TdsEnums.SNI_WAIT_TIMEOUT;
-                }
+            }
+            finally
+            {
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 

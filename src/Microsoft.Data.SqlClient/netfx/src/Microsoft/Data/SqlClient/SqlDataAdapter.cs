@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClient
         private SqlCommandSet _commandSet;
         private int _updateBatchSize = 1;
 
-        private static int _objectTypeCount; // Bid counter
+        private static int _objectTypeCount; // EventSource Counter
         internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
 
         internal int ObjectID

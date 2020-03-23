@@ -26,35 +26,43 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             Debug.Assert(!string.IsNullOrWhiteSpace(browserHostName), "browserHostName should not be null, empty, or whitespace");
             Debug.Assert(!string.IsNullOrWhiteSpace(instanceName), "instanceName should not be null, empty, or whitespace");
-
-            byte[] instanceInfoRequest = CreateInstanceInfoRequest(instanceName);
-            byte[] responsePacket = null;
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SSRP.GetPortByInstanceName |SNI|SCOPE>");
             try
             {
-                responsePacket = SendUDPRequest(browserHostName, SqlServerBrowserPort, instanceInfoRequest);
+                byte[] instanceInfoRequest = CreateInstanceInfoRequest(instanceName);
+                byte[] responsePacket = null;
+                try
+                {
+                    responsePacket = SendUDPRequest(browserHostName, SqlServerBrowserPort, instanceInfoRequest);
+                }
+                catch (SocketException se)
+                {
+                    SqlClientEventSource.Log.SNITrace("<sc.SNI.SSRP.GetPortByInstanceName |SNI|ERR> SocketException Message = {0}", se.Message);
+                    throw new Exception(SQLMessage.SqlServerBrowserNotAccessible(), se);
+                }
+
+                const byte SvrResp = 0x05;
+                if (responsePacket == null || responsePacket.Length <= 3 || responsePacket[0] != SvrResp ||
+                    BitConverter.ToUInt16(responsePacket, 1) != responsePacket.Length - 3)
+                {
+                    throw new SocketException();
+                }
+
+                string serverMessage = Encoding.ASCII.GetString(responsePacket, 3, responsePacket.Length - 3);
+
+                string[] elements = serverMessage.Split(SemicolonSeparator);
+                int tcpIndex = Array.IndexOf(elements, "tcp");
+                if (tcpIndex < 0 || tcpIndex == elements.Length - 1)
+                {
+                    throw new SocketException();
+                }
+
+                return ushort.Parse(elements[tcpIndex + 1]);
             }
-            catch (SocketException se)
+            finally
             {
-                throw new Exception(SQLMessage.SqlServerBrowserNotAccessible(), se);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
-
-            const byte SvrResp = 0x05;
-            if (responsePacket == null || responsePacket.Length <= 3 || responsePacket[0] != SvrResp ||
-                BitConverter.ToUInt16(responsePacket, 1) != responsePacket.Length - 3)
-            {
-                throw new SocketException();
-            }
-
-            string serverMessage = Encoding.ASCII.GetString(responsePacket, 3, responsePacket.Length - 3);
-
-            string[] elements = serverMessage.Split(SemicolonSeparator);
-            int tcpIndex = Array.IndexOf(elements, "tcp");
-            if (tcpIndex < 0 || tcpIndex == elements.Length - 1)
-            {
-                throw new SocketException();
-            }
-
-            return ushort.Parse(elements[tcpIndex + 1]);
         }
 
         /// <summary>
@@ -65,16 +73,23 @@ namespace Microsoft.Data.SqlClient.SNI
         private static byte[] CreateInstanceInfoRequest(string instanceName)
         {
             Debug.Assert(!string.IsNullOrWhiteSpace(instanceName), "instanceName should not be null, empty, or whitespace");
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SSRP.CreateInstanceInfoRequest |SNI|SCOPE>");
+            try
+            {
+                const byte ClntUcastInst = 0x04;
+                instanceName += char.MinValue;
+                int byteCount = Encoding.ASCII.GetByteCount(instanceName);
 
-            const byte ClntUcastInst = 0x04;
-            instanceName += char.MinValue;
-            int byteCount = Encoding.ASCII.GetByteCount(instanceName);
+                byte[] requestPacket = new byte[byteCount + 1];
+                requestPacket[0] = ClntUcastInst;
+                Encoding.ASCII.GetBytes(instanceName, 0, instanceName.Length, requestPacket, 1);
 
-            byte[] requestPacket = new byte[byteCount + 1];
-            requestPacket[0] = ClntUcastInst;
-            Encoding.ASCII.GetBytes(instanceName, 0, instanceName.Length, requestPacket, 1);
-
-            return requestPacket;
+                return requestPacket;
+            }
+            finally
+            {
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
+            }
         }
 
         /// <summary>

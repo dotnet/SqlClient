@@ -9,8 +9,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public static class IntegratedAuthenticationTest
     {
         private static bool IsIntegratedSecurityEnvironmentSet() => DataTestUtility.IsIntegratedSecuritySetup();
-        private static bool AreConnectionStringsSetup() => DataTestUtility.AreConnStringsSetup();
 
+        private static bool AreConnectionStringsSetup() => DataTestUtility.AreConnStringsSetup();
 
         [ConditionalFact(nameof(IsIntegratedSecurityEnvironmentSet), nameof(AreConnectionStringsSetup))]
         public static void IntegratedAuthenticationTestWithConnectionPooling()

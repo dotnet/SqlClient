@@ -37,6 +37,10 @@ namespace Microsoft.Data.SqlClient
             _lineNumber = lineNumber;
             _win32ErrorCode = 0;
             _exception = exception;
+            if (errorClass != 0)
+            {
+                SqlClientEventSource.Log.TraceEvent("<sc.SqlError.SqlError|ERR> infoNumber={0}, errorState={1}, errorClass={2}, errorMessage='{3}', procedure='{4}', lineNumber={5}", infoNumber, (int)errorState, (int)errorClass, errorMessage, procedure ?? "None", (int)lineNumber);
+            }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlError.xml' path='docs/members[@name="SqlError"]/ToString/*' />

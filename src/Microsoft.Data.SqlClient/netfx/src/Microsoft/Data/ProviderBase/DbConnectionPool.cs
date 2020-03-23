@@ -73,7 +73,7 @@ namespace Microsoft.Data.ProviderBase
 
             DbConnectionPool _pool;
 
-            private static int _objectTypeCount; // Bid counter
+            private static int _objectTypeCount; // EventSource Counter
             internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
 
             internal TransactedConnectionPool(DbConnectionPool pool)
@@ -475,7 +475,7 @@ namespace Microsoft.Data.ProviderBase
         private readonly List<DbConnectionInternal> _objectList;
         private int _totalObjects;
 
-        private static int _objectTypeCount; // Bid counter
+        private static int _objectTypeCount; // EventSource counter
         internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
 
         // only created by DbConnectionPoolGroup.GetConnectionPool
@@ -1971,14 +1971,12 @@ namespace Microsoft.Data.ProviderBase
             // transaction is completed.  We tell the transacted pool to remove
             // the connection from it's list, then we put the connection back in
             // general circulation.
-
             TransactedConnectionPool transactedConnectionPool = _transactedConnectionPool;
             if (null != transactedConnectionPool)
             {
                 transactedConnectionPool.TransactionEnded(transaction, transactedObject);
             }
         }
-
 
         private DbConnectionInternal UserCreateRequest(DbConnection owningObject, DbConnectionOptions userOptions, DbConnectionInternal oldConnection = null)
         {

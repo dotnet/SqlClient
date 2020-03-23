@@ -14,15 +14,9 @@ namespace Microsoft.Data.SqlClient
     sealed internal partial class SqlDelegatedTransaction : IPromotableSinglePhaseNotification
     {
         private static int _objectTypeCount;
-        private readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
+        internal int ObjectID { get; } = Interlocked.Increment(ref _objectTypeCount);
+
         private const int _globalTransactionsTokenVersionSizeInBytes = 4; // the size of the version in the PromotedDTCToken for Global Transactions
-        internal int ObjectID
-        {
-            get
-            {
-                return _objectID;
-            }
-        }
 
         // WARNING!!! Multithreaded object!
         // Locking strategy: Any potentailly-multithreaded operation must first lock the associated connection, then
@@ -86,12 +80,15 @@ namespace Microsoft.Data.SqlClient
             // transaction.
             SqlInternalConnection connection = _connection;
             SqlConnection usersConnection = connection.Connection;
-
+            SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.Initialize|RES|CPOOL> {0}#, Connection {1}#, delegating transaction.", ObjectID, connection.ObjectID);
             RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
                 if (connection.IsEnlistedInTransaction)
-                { // defect first
+                {
+                    SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.Initialize|RES|CPOOL> {0}#, Connection {1}#, was enlisted, now defecting.", ObjectID, connection.ObjectID);
+
+                    // defect first
                     connection.EnlistNull();
                 }
 
@@ -144,7 +141,7 @@ namespace Microsoft.Data.SqlClient
             Exception promoteException;
             byte[] returnValue = null;
             SqlConnection usersConnection = connection.Connection;
-
+            SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.Promote|RES|CPOOL> {0}#, Connection {1}#, promoting transaction.", ObjectID, connection.ObjectID);
             RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
@@ -223,7 +220,7 @@ namespace Microsoft.Data.SqlClient
 
             SqlInternalConnection connection = GetValidConnection();
             SqlConnection usersConnection = connection.Connection;
-
+            SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.Rollback|RES|CPOOL> {0}#, Connection {1}#, aborting transaction.", ObjectID, connection.ObjectID);
             RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
@@ -296,7 +293,7 @@ namespace Microsoft.Data.SqlClient
 
             SqlInternalConnection connection = GetValidConnection();
             SqlConnection usersConnection = connection.Connection;
-
+            SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.SinglePhaseCommit|RES|CPOOL> {0}#, Connection {1}#, committing transaction.", ObjectID, connection.ObjectID);
             RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
@@ -407,6 +404,7 @@ namespace Microsoft.Data.SqlClient
 
             if (connection != null)
             {
+                SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.TransactionEnded|RES|CPOOL> {0}#, Connection {1}#, transaction completed externally.", ObjectID, connection.ObjectID);
                 lock (connection)
                 {
                     if (_atomicTransaction.Equals(transaction))

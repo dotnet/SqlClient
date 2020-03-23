@@ -9,7 +9,6 @@ using System.Text;
 
 namespace Microsoft.Data.SqlClient
 {
-
     /// <summary>
     /// AD auth retry states.
     /// </summary>
@@ -28,6 +27,7 @@ namespace Microsoft.Data.SqlClient
         private ActiveDirectoryAuthenticationTimeoutRetryState _state = ActiveDirectoryAuthenticationTimeoutRetryState.NotStarted;
         private SqlFedAuthToken _token;
         private readonly string _typeName;
+        private readonly SqlClientLogger _sqlAuthLogger = new SqlClientLogger();
 
         /// <summary>
         /// Constructor.
@@ -65,6 +65,10 @@ namespace Microsoft.Data.SqlClient
                     default:
                         throw new InvalidOperationException($"Unsupported state: {value}.");
                 }
+                if (_sqlAuthLogger.IsLoggingEnabled)
+                {
+                    _sqlAuthLogger.LogInfo(_typeName, "SetState", $"State changed from {_state} to {value}.");
+                }
                 _state = value;
             }
         }
@@ -76,10 +80,18 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
+                if (_sqlAuthLogger.IsLoggingEnabled)
+                {
+                    _sqlAuthLogger.LogInfo(_typeName, "GetCachedToken", $"Retrieved cached token {GetTokenHash(_token)}.");
+                }
                 return _token;
             }
             set
             {
+                if (_sqlAuthLogger.IsLoggingEnabled)
+                {
+                    _sqlAuthLogger.LogInfo(_typeName, "SetCachedToken", $"CachedToken changed from {GetTokenHash(_token)} to {GetTokenHash(value)}.");
+                }
                 _token = value;
             }
         }
@@ -89,10 +101,12 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         public bool CanRetryWithSqlException(SqlException sqlex)
         {
-            if (_state == ActiveDirectoryAuthenticationTimeoutRetryState.NotStarted
-                && CachedToken != null
-                && IsConnectTimeoutError(sqlex))
+            var methodName = "CheckCanRetry";
+            if (_sqlAuthLogger.LogAssert(_state == ActiveDirectoryAuthenticationTimeoutRetryState.NotStarted, _typeName, methodName, $"Cannot retry due to state == {_state}.")
+                && _sqlAuthLogger.LogAssert(CachedToken != null, _typeName, methodName, $"Cannot retry when cached token is null.")
+                && _sqlAuthLogger.LogAssert(IsConnectTimeoutError(sqlex), _typeName, methodName, $"Cannot retry when exception is not timeout."))
             {
+                _sqlAuthLogger.LogInfo(_typeName, methodName, "All checks passed.");
                 return true;
             }
             return false;

@@ -17,8 +17,8 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
-    // This internal class helps us to associate the metadata from the target
-    // with the ColumnOrdinals from the source.
+    // This internal class helps us to associate the metadata from the target.
+    // with ColumnOrdinals from the source.
     internal sealed class _ColumnMapping
     {
         internal int _sourceColumnOrdinal;
@@ -236,6 +236,9 @@ namespace Microsoft.Data.SqlClient
 
         private SqlRowsCopiedEventHandler _rowsCopiedEventHandler;
 
+        private static int _objectTypeCount; // EventSource Counter
+        internal readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
+
         // Newly added member variables for Async modification, m = member variable to bcp.
         private int _savedBatchSize = 0; // Save the batchsize so that changes are not affected unexpectedly.
         private bool _hasMoreRowToCopy = false;
@@ -406,6 +409,14 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        internal int ObjectID
+        {
+            get
+            {
+                return _objectID;
+            }
+        }
+
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/SqlRowsCopied/*'/>
         public event SqlRowsCopiedEventHandler SqlRowsCopied
         {
@@ -534,7 +545,8 @@ namespace Microsoft.Data.SqlClient
         private Task<BulkCopySimpleResultSet> CreateAndExecuteInitialQueryAsync(out BulkCopySimpleResultSet result)
         {
             string TDSCommand = CreateInitialQuery();
-
+            SqlClientEventSource.Log.TraceEvent("<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|INFO> Initial Query: '{0}'", TDSCommand);
+            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|Info|Correlation> ObjectID {0}#, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
             Task executeTask = _parser.TdsExecuteSQLBatch(TDSCommand, this.BulkCopyTimeout, null, _stateObj, sync: !_isAsyncBulkCopy, callerHasConnectionLock: true);
 
             if (executeTask == null)
@@ -799,6 +811,7 @@ namespace Microsoft.Data.SqlClient
 
         private Task SubmitUpdateBulkCommand(string TDSCommand)
         {
+            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlBulkCopy.SubmitUpdateBulkCommand|Info|Correlation> ObjectID{0}#, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
             Task executeTask = _parser.TdsExecuteSQLBatch(TDSCommand, this.BulkCopyTimeout, null, _stateObj, sync: !_isAsyncBulkCopy, callerHasConnectionLock: true);
 
             if (executeTask == null)
@@ -2305,6 +2318,7 @@ namespace Microsoft.Data.SqlClient
                             // It's also the user's chance to cause an exception.
                             _stateObj.BcpLock = true;
                             abortOperation = FireRowsCopiedEvent(_rowsCopied);
+                            SqlClientEventSource.Log.TraceEvent("<sc.SqlBulkCopy.WriteToServerInternal|{0}>", "INFO");
 
                             // In case the target connection is closed accidentally.
                             if (ConnectionState.Open != _connection.State)

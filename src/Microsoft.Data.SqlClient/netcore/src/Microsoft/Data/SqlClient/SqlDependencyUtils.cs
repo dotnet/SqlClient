@@ -75,19 +75,30 @@ namespace Microsoft.Data.SqlClient
         // a timeout.  We'll enable this only on demand.
         private Timer _timeoutTimer;
 
+        private static int _objectTypeCount; // EventSource counter
+        internal int ObjectID { get; } = Interlocked.Increment(ref _objectTypeCount);
+
         private SqlDependencyPerAppDomainDispatcher()
         {
-            _dependencyIdToDependencyHash = new Dictionary<string, SqlDependency>();
-            _notificationIdToDependenciesHash = new Dictionary<string, DependencyList>();
-            _commandHashToNotificationId = new Dictionary<string, string>();
+            long scopeID = SqlClientEventSource.Log.NotificationsScopeEnterEvent("<sc.SqlDependencyPerAppDomainDispatcher|DEP> {0}#", ObjectID);
+            try
+            {
+                _dependencyIdToDependencyHash = new Dictionary<string, SqlDependency>();
+                _notificationIdToDependenciesHash = new Dictionary<string, DependencyList>();
+                _commandHashToNotificationId = new Dictionary<string, string>();
 
-            _timeoutTimer = ADP.UnsafeCreateTimer(
-                new TimerCallback(TimeoutTimerCallback),
-                null,
-                Timeout.Infinite,
-                Timeout.Infinite);
+                _timeoutTimer = ADP.UnsafeCreateTimer(
+                    new TimerCallback(TimeoutTimerCallback),
+                    null,
+                    Timeout.Infinite,
+                    Timeout.Infinite);
 
-            SubscribeToAppDomainUnload();
+                SubscribeToAppDomainUnload();
+            }
+            finally
+            {
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
+            }
         }
 
         //  When remoted across appdomains, MarshalByRefObject links by default time out if there is no activity 
@@ -102,94 +113,184 @@ namespace Microsoft.Data.SqlClient
         // This method is called upon SqlDependency constructor.
         internal void AddDependencyEntry(SqlDependency dep)
         {
-            lock (_instanceLock)
+            long scopeID = SqlClientEventSource.Log.NotificationsScopeEnterEvent("<sc.SqlDependencyPerAppDomainDispatcher.AddDependencyEntry|DEP> {0}#, SqlDependency: {1}#", ObjectID, dep.ObjectID);
+            try
             {
-                _dependencyIdToDependencyHash.Add(dep.Id, dep);
+                lock (_instanceLock)
+                {
+                    _dependencyIdToDependencyHash.Add(dep.Id, dep);
+                }
+            }
+            finally
+            {
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
             }
         }
 
         // This method is called upon Execute of a command associated with a SqlDependency object.
         internal string AddCommandEntry(string commandHash, SqlDependency dep)
         {
+            long scopeID = SqlClientEventSource.Log.NotificationsScopeEnterEvent("<sc.SqlDependencyPerAppDomainDispatcher.AddCommandEntry|DEP> {0}#, commandHash: '{1}', SqlDependency: {2}#", ObjectID, commandHash, dep.ObjectID);
             string notificationId = string.Empty;
-            lock (_instanceLock)
+            try
             {
-                if (_dependencyIdToDependencyHash.ContainsKey(dep.Id))
+                lock (_instanceLock)
                 {
-                    // check if we already have notification associated with given command hash
-                    if (_commandHashToNotificationId.TryGetValue(commandHash, out notificationId))
+                    if (!_dependencyIdToDependencyHash.ContainsKey(dep.Id))
                     {
-                        // we have one or more SqlDependency instances with same command hash
-
-                        DependencyList dependencyList = null;
-                        if (!_notificationIdToDependenciesHash.TryGetValue(notificationId, out dependencyList))
-                        {
-                            // this should not happen since _commandHashToNotificationId and _notificationIdToDependenciesHash are always
-                            // updated together
-                            Debug.Fail("_commandHashToNotificationId has entries that were removed from _notificationIdToDependenciesHash. Remember to keep them in sync");
-                            throw ADP.InternalError(ADP.InternalErrorCode.SqlDependencyCommandHashIsNotAssociatedWithNotification);
-                        }
-
-                        // join the new dependency to the list
-                        if (!dependencyList.Contains(dep))
-                        {
-                            dependencyList.Add(dep);
-                        }
+                        // Determine if depId->dep hashtable contains dependency.  If not, it's been invalidated.
+                        SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlDependencyPerAppDomainDispatcher.AddCommandEntry|DEP> Dependency not present in depId->dep hash, must have been invalidated.");
                     }
                     else
                     {
-                        // we did not find notification ID with the same app domain and command hash, create a new one
-                        // use unique guid to avoid duplicate IDs
-                        // prepend app domain ID to the key - SqlConnectionContainer::ProcessNotificationResults (SqlDependencyListener.cs)
-                        // uses this app domain ID to route the message back to the app domain in which this SqlDependency was created
-                        notificationId = string.Format(System.Globalization.CultureInfo.InvariantCulture,
-                            "{0};{1}",
-                            SqlDependency.AppDomainKey, // must be first
-                            Guid.NewGuid().ToString("D", System.Globalization.CultureInfo.InvariantCulture)
-                            );
+                        // check if we already have notification associated with given command hash
+                        if (_commandHashToNotificationId.TryGetValue(commandHash, out notificationId))
+                        {
+                            // we have one or more SqlDependency instances with same command hash
 
-                        DependencyList dependencyList = new DependencyList(commandHash);
-                        dependencyList.Add(dep);
+                            DependencyList dependencyList = null;
+                            if (!_notificationIdToDependenciesHash.TryGetValue(notificationId, out dependencyList))
+                            {
+                                // this should not happen since _commandHashToNotificationId and _notificationIdToDependenciesHash are always
+                                // updated together
+                                Debug.Fail("_commandHashToNotificationId has entries that were removed from _notificationIdToDependenciesHash. Remember to keep them in sync");
+                                throw ADP.InternalError(ADP.InternalErrorCode.SqlDependencyCommandHashIsNotAssociatedWithNotification);
+                            }
 
-                        // map command hash to notification we just created to reuse it for the next client
-                        _commandHashToNotificationId.Add(commandHash, notificationId);
-                        _notificationIdToDependenciesHash.Add(notificationId, dependencyList);
+                            // join the new dependency to the list
+                            if (!dependencyList.Contains(dep))
+                            {
+                                SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlDependencyPerAppDomainDispatcher.AddCommandEntry|DEP> Dependency not present for commandHash, adding.");
+                                dependencyList.Add(dep);
+                            }
+                            else
+                            {
+                                SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlDependencyPerAppDomainDispatcher.AddCommandEntry|DEP> Dependency already present for commandHash.");
+                            }
+                        }
+                        else
+                        {
+                            // we did not find notification ID with the same app domain and command hash, create a new one
+                            // use unique guid to avoid duplicate IDs
+                            // prepend app domain ID to the key - SqlConnectionContainer::ProcessNotificationResults (SqlDependencyListener.cs)
+                            // uses this app domain ID to route the message back to the app domain in which this SqlDependency was created
+                            notificationId = string.Format(System.Globalization.CultureInfo.InvariantCulture,
+                                "{0};{1}",
+                                SqlDependency.AppDomainKey, // must be first
+                                Guid.NewGuid().ToString("D", System.Globalization.CultureInfo.InvariantCulture)
+                                );
+                            SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlDependencyPerAppDomainDispatcher.AddCommandEntry|DEP> Creating new Dependencies list for commandHash.");
+                            DependencyList dependencyList = new DependencyList(commandHash);
+                            dependencyList.Add(dep);
+
+                            // map command hash to notification we just created to reuse it for the next client
+                            _commandHashToNotificationId.Add(commandHash, notificationId);
+                            _notificationIdToDependenciesHash.Add(notificationId, dependencyList);
+                        }
+
+                        Debug.Assert(_notificationIdToDependenciesHash.Count == _commandHashToNotificationId.Count, "always keep these maps in sync!");
                     }
-
-                    Debug.Assert(_notificationIdToDependenciesHash.Count == _commandHashToNotificationId.Count, "always keep these maps in sync!");
                 }
-            }
 
-            return notificationId;
+                return notificationId;
+            }
+            finally
+            {
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
+            }
         }
 
         // This method is called by the ProcessDispatcher upon a notification for this AppDomain.
         internal void InvalidateCommandID(SqlNotification sqlNotification)
         {
-            List<SqlDependency> dependencyList = null;
-
-            lock (_instanceLock)
+            long scopeID = SqlClientEventSource.Log.NotificationsScopeEnterEvent("<sc.SqlDependencyPerAppDomainDispatcher.InvalidateCommandID|DEP> {0}#, commandHash: '{1}'", ObjectID, sqlNotification.Key);
+            try
             {
-                dependencyList = LookupCommandEntryWithRemove(sqlNotification.Key);
+                List<SqlDependency> dependencyList = null;
+
+                lock (_instanceLock)
+                {
+                    dependencyList = LookupCommandEntryWithRemove(sqlNotification.Key);
+
+                    if (null != dependencyList)
+                    {
+                        SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlDependencyPerAppDomainDispatcher.InvalidateCommandID|DEP> commandHash found in hashtable.");
+                        foreach (SqlDependency dependency in dependencyList)
+                        {
+                            // Ensure we remove from process static app domain hash for dependency initiated invalidates.
+                            LookupDependencyEntryWithRemove(dependency.Id);
+
+                            // Completely remove Dependency from commandToDependenciesHash.
+                            RemoveDependencyFromCommandToDependenciesHash(dependency);
+                        }
+                    }
+                    else
+                    {
+                        SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlDependencyPerAppDomainDispatcher.InvalidateCommandID|DEP> commandHash NOT found in hashtable.");
+                    }
+                }
 
                 if (null != dependencyList)
                 {
+                    // After removal from hashtables, invalidate.
                     foreach (SqlDependency dependency in dependencyList)
                     {
-                        // Ensure we remove from process static app domain hash for dependency initiated invalidates.
+                        SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlDependencyPerAppDomainDispatcher.InvalidateCommandID|DEP> Dependency found in commandHash dependency ArrayList - calling invalidate.");
+                        try
+                        {
+                            dependency.Invalidate(sqlNotification.Type, sqlNotification.Info, sqlNotification.Source);
+                        }
+                        catch (Exception e)
+                        {
+                            // Since we are looping over dependencies, do not allow one Invalidate
+                            // that results in a throw prevent us from invalidating all dependencies
+                            // related to this server.
+                            if (!ADP.IsCatchableExceptionType(e))
+                            {
+                                throw;
+                            }
+                            ADP.TraceExceptionWithoutRethrow(e);
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
+            }
+        }
+
+        // This method is called when a connection goes down or other unknown error occurs in the ProcessDispatcher.
+        internal void InvalidateServer(string server, SqlNotification sqlNotification)
+        {
+            long scopeID = SqlClientEventSource.Log.NotificationsScopeEnterEvent("<sc.SqlDependencyPerAppDomainDispatcher.Invalidate|DEP> {0}#, server: '{1}'", ObjectID, server);
+            try
+            {
+                List<SqlDependency> dependencies = new List<SqlDependency>();
+
+                lock (_instanceLock)
+                { // Copy inside of lock, but invalidate outside of lock.
+                    foreach (KeyValuePair<string, SqlDependency> entry in _dependencyIdToDependencyHash)
+                    {
+                        SqlDependency dependency = entry.Value;
+                        if (dependency.ContainsServer(server))
+                        {
+                            dependencies.Add(dependency);
+                        }
+                    }
+
+                    foreach (SqlDependency dependency in dependencies)
+                    { // Iterate over resulting list removing from our hashes.
+                      // Ensure we remove from process static app domain hash for dependency initiated invalidates.
                         LookupDependencyEntryWithRemove(dependency.Id);
 
                         // Completely remove Dependency from commandToDependenciesHash.
                         RemoveDependencyFromCommandToDependenciesHash(dependency);
                     }
                 }
-            }
 
-            if (null != dependencyList)
-            {
-                // After removal from hashtables, invalidate.
-                foreach (SqlDependency dependency in dependencyList)
-                {
+                foreach (SqlDependency dependency in dependencies)
+                { // Iterate and invalidate.
                     try
                     {
                         dependency.Invalidate(sqlNotification.Type, sqlNotification.Info, sqlNotification.Source);
@@ -207,154 +308,160 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
             }
-        }
-
-        // This method is called when a connection goes down or other unknown error occurs in the ProcessDispatcher.
-        internal void InvalidateServer(string server, SqlNotification sqlNotification)
-        {
-            List<SqlDependency> dependencies = new List<SqlDependency>();
-
-            lock (_instanceLock)
-            { // Copy inside of lock, but invalidate outside of lock.
-                foreach (KeyValuePair<string, SqlDependency> entry in _dependencyIdToDependencyHash)
-                {
-                    SqlDependency dependency = entry.Value;
-                    if (dependency.ContainsServer(server))
-                    {
-                        dependencies.Add(dependency);
-                    }
-                }
-
-                foreach (SqlDependency dependency in dependencies)
-                { // Iterate over resulting list removing from our hashes.
-                    // Ensure we remove from process static app domain hash for dependency initiated invalidates.
-                    LookupDependencyEntryWithRemove(dependency.Id);
-
-                    // Completely remove Dependency from commandToDependenciesHash.
-                    RemoveDependencyFromCommandToDependenciesHash(dependency);
-                }
-            }
-
-            foreach (SqlDependency dependency in dependencies)
-            { // Iterate and invalidate.
-                try
-                {
-                    dependency.Invalidate(sqlNotification.Type, sqlNotification.Info, sqlNotification.Source);
-                }
-                catch (Exception e)
-                {
-                    // Since we are looping over dependencies, do not allow one Invalidate
-                    // that results in a throw prevent us from invalidating all dependencies
-                    // related to this server.
-                    if (!ADP.IsCatchableExceptionType(e))
-                    {
-                        throw;
-                    }
-                    ADP.TraceExceptionWithoutRethrow(e);
-                }
+            finally
+            {
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
             }
         }
 
         // This method is called by SqlCommand to enable ASP.NET scenarios - map from ID to Dependency.
         internal SqlDependency LookupDependencyEntry(string id)
         {
-            if (null == id)
+            long scopeID = SqlClientEventSource.Log.NotificationsScopeEnterEvent("<sc.SqlDependencyPerAppDomainDispatcher.LookupDependencyEntry|DEP> {0}#, Key: '{1}'", ObjectID, id);
+            try
             {
-                throw ADP.ArgumentNull(nameof(id));
-            }
-            if (string.IsNullOrEmpty(id))
-            {
-                throw SQL.SqlDependencyIdMismatch();
-            }
-
-            SqlDependency entry = null;
-
-            lock (_instanceLock)
-            {
-                if (_dependencyIdToDependencyHash.ContainsKey(id))
+                if (null == id)
                 {
-                    entry = _dependencyIdToDependencyHash[id];
+                    throw ADP.ArgumentNull(nameof(id));
                 }
-            }
+                if (string.IsNullOrEmpty(id))
+                {
+                    throw SQL.SqlDependencyIdMismatch();
+                }
 
-            return entry;
+                SqlDependency entry = null;
+
+                lock (_instanceLock)
+                {
+                    if (_dependencyIdToDependencyHash.ContainsKey(id))
+                    {
+                        entry = _dependencyIdToDependencyHash[id];
+                    }
+                    else
+                    {
+                        SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlDependencyPerAppDomainDispatcher.LookupDependencyEntry|DEP|ERR> ERROR - dependency ID mismatch - not throwing.");
+                    }
+                }
+
+                return entry;
+            }
+            finally
+            {
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
+            }
         }
 
         // Remove the dependency from the hashtable with the passed id.
         private void LookupDependencyEntryWithRemove(string id)
         {
-            lock (_instanceLock)
+            long scopeID = SqlClientEventSource.Log.NotificationsScopeEnterEvent("<sc.SqlDependencyPerAppDomainDispatcher.LookupDependencyEntryWithRemove|DEP> {0}#, id: '{1}'", ObjectID, id);
+            try
             {
-                if (_dependencyIdToDependencyHash.ContainsKey(id))
+                lock (_instanceLock)
                 {
-                    _dependencyIdToDependencyHash.Remove(id);
-
-                    // if there are no more dependencies then we can dispose the timer.
-                    if (0 == _dependencyIdToDependencyHash.Count)
+                    if (_dependencyIdToDependencyHash.ContainsKey(id))
                     {
-                        _timeoutTimer.Change(Timeout.Infinite, Timeout.Infinite);
-                        _sqlDependencyTimeOutTimerStarted = false;
+                        SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlDependencyPerAppDomainDispatcher.LookupDependencyEntryWithRemove|DEP> Entry found in hashtable - removing.");
+                        _dependencyIdToDependencyHash.Remove(id);
+
+                        // if there are no more dependencies then we can dispose the timer.
+                        if (0 == _dependencyIdToDependencyHash.Count)
+                        {
+                            _timeoutTimer.Change(Timeout.Infinite, Timeout.Infinite);
+                            _sqlDependencyTimeOutTimerStarted = false;
+                        }
+                    }
+                    else
+                    {
+                        SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlDependencyPerAppDomainDispatcher.LookupDependencyEntryWithRemove|DEP> Entry NOT found in hashtable.");
                     }
                 }
+            }
+            finally
+            {
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
             }
         }
 
         // Find and return arraylist, and remove passed hash value.
         private List<SqlDependency> LookupCommandEntryWithRemove(string notificationId)
         {
-            DependencyList entry = null;
-
-            lock (_instanceLock)
+            long scopeID = SqlClientEventSource.Log.NotificationsScopeEnterEvent("<sc.SqlDependencyPerAppDomainDispatcher.LookupCommandEntryWithRemove|DEP> {0}#, commandHash: '{1}'", ObjectID, notificationId);
+            try
             {
-                if (_notificationIdToDependenciesHash.TryGetValue(notificationId, out entry))
+                DependencyList entry = null;
+
+                lock (_instanceLock)
                 {
-                    // update the tables
-                    _notificationIdToDependenciesHash.Remove(notificationId);
-                    // Cleanup the map between the command hash and associated notification ID
-                    _commandHashToNotificationId.Remove(entry.CommandHash);
+                    if (_notificationIdToDependenciesHash.TryGetValue(notificationId, out entry))
+                    {
+                        SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlDependencyPerAppDomainDispatcher.LookupDependencyEntriesWithRemove|DEP> Entries found in hashtable - removing.");
+
+                        // update the tables
+                        _notificationIdToDependenciesHash.Remove(notificationId);
+                        // Cleanup the map between the command hash and associated notification ID
+                        _commandHashToNotificationId.Remove(entry.CommandHash);
+                    }
+                    else
+                    {
+                        SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlDependencyPerAppDomainDispatcher.LookupDependencyEntriesWithRemove|DEP> Entries NOT found in hashtable.");
+                    }
+
+                    Debug.Assert(_notificationIdToDependenciesHash.Count == _commandHashToNotificationId.Count, "always keep these maps in sync!");
                 }
 
-                Debug.Assert(_notificationIdToDependenciesHash.Count == _commandHashToNotificationId.Count, "always keep these maps in sync!");
+                return entry; // DependencyList inherits from List<SqlDependency>
             }
-
-            return entry; // DependencyList inherits from List<SqlDependency>
+            finally
+            {
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
+            }
         }
 
         // Remove from commandToDependenciesHash all references to the passed dependency.
         private void RemoveDependencyFromCommandToDependenciesHash(SqlDependency dependency)
         {
-            lock (_instanceLock)
+            long scopeID = SqlClientEventSource.Log.NotificationsScopeEnterEvent("<sc.SqlDependencyPerAppDomainDispatcher.RemoveDependencyFromCommandToDependenciesHash|DEP> {0}#, SqlDependency: {1}#", ObjectID, dependency.ObjectID);
+            try
             {
-                List<string> notificationIdsToRemove = new List<string>();
-                List<string> commandHashesToRemove = new List<string>();
-
-                foreach (KeyValuePair<string, DependencyList> entry in _notificationIdToDependenciesHash)
+                lock (_instanceLock)
                 {
-                    DependencyList dependencies = entry.Value;
-                    if (dependencies.Remove(dependency))
+                    List<string> notificationIdsToRemove = new List<string>();
+                    List<string> commandHashesToRemove = new List<string>();
+
+                    foreach (KeyValuePair<string, DependencyList> entry in _notificationIdToDependenciesHash)
                     {
-                        if (dependencies.Count == 0)
+                        DependencyList dependencies = entry.Value;
+                        if (dependencies.Remove(dependency))
                         {
-                            // this dependency was the last associated with this notification ID, remove the entry
-                            // note: cannot do it inside foreach over dictionary
-                            notificationIdsToRemove.Add(entry.Key);
-                            commandHashesToRemove.Add(entry.Value.CommandHash);
+                            SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlDependencyPerAppDomainDispatcher.RemoveDependencyFromCommandToDependenciesHash|DEP> Removed SqlDependency: {0}#, with ID: '{1}'.", dependency.ObjectID, dependency.Id);
+                            if (dependencies.Count == 0)
+                            {
+                                // this dependency was the last associated with this notification ID, remove the entry
+                                // note: cannot do it inside foreach over dictionary
+                                notificationIdsToRemove.Add(entry.Key);
+                                commandHashesToRemove.Add(entry.Value.CommandHash);
+                            }
                         }
+
+                        // same SqlDependency can be associated with more than one command, so we have to continue till the end...
                     }
 
-                    // same SqlDependency can be associated with more than one command, so we have to continue till the end...
-                }
+                    Debug.Assert(commandHashesToRemove.Count == notificationIdsToRemove.Count, "maps should be kept in sync");
+                    for (int i = 0; i < notificationIdsToRemove.Count; i++)
+                    {
+                        // cleanup the entry outside of foreach
+                        _notificationIdToDependenciesHash.Remove(notificationIdsToRemove[i]);
+                        // Cleanup the map between the command hash and associated notification ID
+                        _commandHashToNotificationId.Remove(commandHashesToRemove[i]);
+                    }
 
-                Debug.Assert(commandHashesToRemove.Count == notificationIdsToRemove.Count, "maps should be kept in sync");
-                for (int i = 0; i < notificationIdsToRemove.Count; i++)
-                {
-                    // cleanup the entry outside of foreach
-                    _notificationIdToDependenciesHash.Remove(notificationIdsToRemove[i]);
-                    // Cleanup the map between the command hash and associated notification ID
-                    _commandHashToNotificationId.Remove(commandHashesToRemove[i]);
+                    Debug.Assert(_notificationIdToDependenciesHash.Count == _commandHashToNotificationId.Count, "always keep these maps in sync!");
                 }
-
-                Debug.Assert(_notificationIdToDependenciesHash.Count == _commandHashToNotificationId.Count, "always keep these maps in sync!");
+            }
+            finally
+            {
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
             }
         }
 
@@ -362,109 +469,132 @@ namespace Microsoft.Data.SqlClient
 
         internal void StartTimer(SqlDependency dep)
         {
-            // If this dependency expires sooner than the current next timeout, change
-            // the timeout and enable timer callback as needed.  Note that we change _nextTimeout
-            // only inside the hashtable syncroot.
-            lock (_instanceLock)
+            long scopeID = SqlClientEventSource.Log.NotificationsScopeEnterEvent("<sc.SqlDependencyPerAppDomainDispatcher.StartTimer|DEP> {0}#, SqlDependency: {1}#", ObjectID, dep.ObjectID);
+            try
             {
-                // Enable the timer if needed (disable when empty, enable on the first addition).
-                if (!_sqlDependencyTimeOutTimerStarted)
+                // If this dependency expires sooner than the current next timeout, change
+                // the timeout and enable timer callback as needed.  Note that we change _nextTimeout
+                // only inside the hashtable syncroot.
+                lock (_instanceLock)
                 {
-                    _timeoutTimer.Change(15000 /* 15 secs */, 15000 /* 15 secs */);
+                    // Enable the timer if needed (disable when empty, enable on the first addition).
+                    if (!_sqlDependencyTimeOutTimerStarted)
+                    {
+                        SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlDependencyPerAppDomainDispatcher.StartTimer|DEP> Timer not yet started, starting.");
+                        _timeoutTimer.Change(15000 /* 15 secs */, 15000 /* 15 secs */);
 
-                    // Save this as the earlier timeout to come.
-                    _nextTimeout = dep.ExpirationTime;
-                    _sqlDependencyTimeOutTimerStarted = true;
+                        // Save this as the earlier timeout to come.
+                        _nextTimeout = dep.ExpirationTime;
+                        _sqlDependencyTimeOutTimerStarted = true;
+                    }
+                    else if (_nextTimeout > dep.ExpirationTime)
+                    {
+                        SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlDependencyPerAppDomainDispatcher.StartTimer|DEP> Timer already started, resetting time.");
+
+                        // Save this as the earlier timeout to come.
+                        _nextTimeout = dep.ExpirationTime;
+                    }
                 }
-                else if (_nextTimeout > dep.ExpirationTime)
-                {
-                    // Save this as the earlier timeout to come.
-                    _nextTimeout = dep.ExpirationTime;
-                }
+            }
+            finally
+            {
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
             }
         }
 
         private static void TimeoutTimerCallback(object state)
         {
-            SqlDependency[] dependencies;
-
-            // Only take the lock for checking whether there is work to do
-            // if we do have work, we'll copy the hashtable and scan it after releasing
-            // the lock.
-            lock (SingletonInstance._instanceLock)
+            long scopeID = SqlClientEventSource.Log.NotificationsScopeEnterEvent("<sc.SqlDependencyPerAppDomainDispatcher.TimeoutTimerCallback|DEP> AppDomainKey: '{0}'", SqlDependency.AppDomainKey);
+            try
             {
-                if (0 == SingletonInstance._dependencyIdToDependencyHash.Count)
-                {
-                    // Nothing to check.
-                    return;
-                }
-                if (SingletonInstance._nextTimeout > DateTime.UtcNow)
-                {
-                    // No dependency timed-out yet.
-                    return;
-                }
+                SqlDependency[] dependencies;
 
-                // If at least one dependency timed-out do a scan of the table.
-                // NOTE: we could keep a shadow table sorted by expiration time, but
-                // given the number of typical simultaneously alive dependencies it's
-                // probably not worth the optimization.
-                dependencies = new SqlDependency[SingletonInstance._dependencyIdToDependencyHash.Count];
-                SingletonInstance._dependencyIdToDependencyHash.Values.CopyTo(dependencies, 0);
-            }
-
-            // Scan the active dependencies if needed.
-            DateTime now = DateTime.UtcNow;
-            DateTime newNextTimeout = DateTime.MaxValue;
-
-            for (int i = 0; i < dependencies.Length; i++)
-            {
-                // If expired fire the change notification.
-                if (dependencies[i].ExpirationTime <= now)
+                // Only take the lock for checking whether there is work to do
+                // if we do have work, we'll copy the hashtable and scan it after releasing
+                // the lock.
+                lock (SingletonInstance._instanceLock)
                 {
-                    try
+                    if (0 == SingletonInstance._dependencyIdToDependencyHash.Count)
                     {
-                        // This invokes user-code which may throw exceptions.
-                        // NOTE: this is intentionally outside of the lock, we don't want
-                        // to invoke user-code while holding an internal lock.
-                        dependencies[i].Invalidate(SqlNotificationType.Change, SqlNotificationInfo.Error, SqlNotificationSource.Timeout);
-                    }
-                    catch (Exception e)
-                    {
-                        if (!ADP.IsCatchableExceptionType(e))
-                        {
-                            throw;
-                        }
+                        SqlClientEventSource.Log.NotificationsTrace("<sc.SqlDependencyPerAppDomainDispatcher.TimeoutTimerCallback|DEP> No dependencies, exiting.");
 
-                        // This is an exception in user code, and we're in a thread-pool thread
-                        // without user's code up in the stack, no much we can do other than
-                        // eating the exception.
-                        ADP.TraceExceptionWithoutRethrow(e);
+                        // Nothing to check.
+                        return;
                     }
-                }
-                else
-                {
-                    if (dependencies[i].ExpirationTime < newNextTimeout)
+                    if (SingletonInstance._nextTimeout > DateTime.UtcNow)
                     {
-                        newNextTimeout = dependencies[i].ExpirationTime; // Track the next earlier timeout.
-                    }
-                    dependencies[i] = null; // Null means "don't remove it from the hashtable" in the loop below.
-                }
-            }
+                        SqlClientEventSource.Log.NotificationsTrace("<sc.SqlDependencyPerAppDomainDispatcher.TimeoutTimerCallback|DEP> No timeouts expired, exiting.");
 
-            // Remove timed-out dependencies from the hashtable.
-            lock (SingletonInstance._instanceLock)
-            {
+                        // No dependency timed-out yet.
+                        return;
+                    }
+
+                    // If at least one dependency timed-out do a scan of the table.
+                    // NOTE: we could keep a shadow table sorted by expiration time, but
+                    // given the number of typical simultaneously alive dependencies it's
+                    // probably not worth the optimization.
+                    dependencies = new SqlDependency[SingletonInstance._dependencyIdToDependencyHash.Count];
+                    SingletonInstance._dependencyIdToDependencyHash.Values.CopyTo(dependencies, 0);
+                }
+
+                // Scan the active dependencies if needed.
+                DateTime now = DateTime.UtcNow;
+                DateTime newNextTimeout = DateTime.MaxValue;
+
                 for (int i = 0; i < dependencies.Length; i++)
                 {
-                    if (null != dependencies[i])
+                    // If expired fire the change notification.
+                    if (dependencies[i].ExpirationTime <= now)
                     {
-                        SingletonInstance._dependencyIdToDependencyHash.Remove(dependencies[i].Id);
+                        try
+                        {
+                            // This invokes user-code which may throw exceptions.
+                            // NOTE: this is intentionally outside of the lock, we don't want
+                            // to invoke user-code while holding an internal lock.
+                            dependencies[i].Invalidate(SqlNotificationType.Change, SqlNotificationInfo.Error, SqlNotificationSource.Timeout);
+                        }
+                        catch (Exception e)
+                        {
+                            if (!ADP.IsCatchableExceptionType(e))
+                            {
+                                throw;
+                            }
+
+                            // This is an exception in user code, and we're in a thread-pool thread
+                            // without user's code up in the stack, no much we can do other than
+                            // eating the exception.
+                            ADP.TraceExceptionWithoutRethrow(e);
+                        }
+                    }
+                    else
+                    {
+                        if (dependencies[i].ExpirationTime < newNextTimeout)
+                        {
+                            newNextTimeout = dependencies[i].ExpirationTime; // Track the next earlier timeout.
+                        }
+                        dependencies[i] = null; // Null means "don't remove it from the hashtable" in the loop below.
                     }
                 }
-                if (newNextTimeout < SingletonInstance._nextTimeout)
+
+                // Remove timed-out dependencies from the hashtable.
+                lock (SingletonInstance._instanceLock)
                 {
-                    SingletonInstance._nextTimeout = newNextTimeout; // We're inside the lock so ok to update.
+                    for (int i = 0; i < dependencies.Length; i++)
+                    {
+                        if (null != dependencies[i])
+                        {
+                            SingletonInstance._dependencyIdToDependencyHash.Remove(dependencies[i].Id);
+                        }
+                    }
+                    if (newNextTimeout < SingletonInstance._nextTimeout)
+                    {
+                        SingletonInstance._nextTimeout = newNextTimeout; // We're inside the lock so ok to update.
+                    }
                 }
+            }
+            finally
+            {
+                SqlClientEventSource.Log.NotificationsScopeLeaveEvent(scopeID);
             }
         }
     }

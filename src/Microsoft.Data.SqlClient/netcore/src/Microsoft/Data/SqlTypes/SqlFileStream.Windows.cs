@@ -9,7 +9,9 @@ using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Security.Permissions;
+using System.Threading;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient;
 using Microsoft.Win32.SafeHandles;
 
 namespace Microsoft.Data.SqlTypes
@@ -20,6 +22,9 @@ namespace Microsoft.Data.SqlTypes
         // NOTE: if we ever unseal this class, be sure to specify the Name, SafeFileHandle, and 
         // TransactionContext accessors as virtual methods. Doing so now on a sealed class
         // generates a compiler error (CS0549)
+
+        private static int _objectTypeCount; // EventSource Counter
+        internal int ObjectID { get; } = Interlocked.Increment(ref _objectTypeCount);
 
         // from System.IO.FileStream implementation
         // DefaultBufferSize = 4096;
@@ -56,25 +61,33 @@ namespace Microsoft.Data.SqlTypes
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/ctor2/*' />
         public SqlFileStream(string path, byte[] transactionContext, FileAccess access, FileOptions options, long allocationSize)
         {
-            //-----------------------------------------------------------------
-            // precondition validation
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlFileStream.ctor|API> {0}# access={1} options={2} path='{3}'", ObjectID, (int)access, (int)options, path);
+            try
+            {
+                //-----------------------------------------------------------------
+                // precondition validation
 
-            if (transactionContext == null)
-                throw ADP.ArgumentNull("transactionContext");
+                if (transactionContext == null)
+                    throw ADP.ArgumentNull("transactionContext");
 
-            if (path == null)
-                throw ADP.ArgumentNull("path");
+                if (path == null)
+                    throw ADP.ArgumentNull("path");
 
-            //-----------------------------------------------------------------
+                //-----------------------------------------------------------------
 
-            _m_disposed = false;
-            _m_fs = null;
+                _m_disposed = false;
+                _m_fs = null;
 
-            OpenSqlFileStream(path, transactionContext, access, options, allocationSize);
+                OpenSqlFileStream(path, transactionContext, access, options, allocationSize);
 
-            // only set internal state once the file has actually been successfully opened
-            Name = path;
-            TransactionContext = transactionContext;
+                // only set internal state once the file has actually been successfully opened
+                Name = path;
+                TransactionContext = transactionContext;
+            }
+            finally
+            {
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
+            }
         }
 
         #region destructor/dispose code
@@ -585,6 +598,10 @@ namespace Microsoft.Data.SqlTypes
                                                                                 createOptions: dwCreateOptions,
                                                                                 eaBuffer: b,
                                                                                 eaLength: (uint)fullSize);
+
+                        SqlClientEventSource.Log.AdvanceTrace("<sc.SqlFileStream.OpenSqlFileStream|ADV> {0}#, desiredAccess=0x{1}, allocationSize={2}, " +
+                       "fileAttributes=0x{3}, shareAccess=0x{4}, dwCreateDisposition=0x{5}, createOptions=0x{ dwCreateOptions}", ObjectID, (int)nDesiredAccess, allocationSize, 0, (int)nShareAccess, dwCreateDisposition);
+
                         retval = status;
                         hFile = new SafeFileHandle(handle, true);
                     }
@@ -597,71 +614,71 @@ namespace Microsoft.Data.SqlTypes
                 }
 
                 switch (retval)
-                    {
-                        case 0:
-                            break;
+                {
+                    case 0:
+                        break;
 
-                        case Interop.Errors.ERROR_SHARING_VIOLATION:
-                            throw ADP.InvalidOperation(System.SRHelper.GetString(SR.SqlFileStream_FileAlreadyInTransaction));
+                    case Interop.Errors.ERROR_SHARING_VIOLATION:
+                        throw ADP.InvalidOperation(System.SRHelper.GetString(SR.SqlFileStream_FileAlreadyInTransaction));
 
-                        case Interop.Errors.ERROR_INVALID_PARAMETER:
-                            throw ADP.Argument(System.SRHelper.GetString(SR.SqlFileStream_InvalidParameter));
+                    case Interop.Errors.ERROR_INVALID_PARAMETER:
+                        throw ADP.Argument(System.SRHelper.GetString(SR.SqlFileStream_InvalidParameter));
 
-                        case Interop.Errors.ERROR_FILE_NOT_FOUND:
-                            {
-                                System.IO.DirectoryNotFoundException e = new System.IO.DirectoryNotFoundException();
-                                ADP.TraceExceptionAsReturnValue(e);
-                                throw e;
-                            }
-                        default:
-                            {
-                                uint error = Interop.NtDll.RtlNtStatusToDosError(retval);
-                                if (error == ERROR_MR_MID_NOT_FOUND)
-                                {
-                                    // status code could not be mapped to a Win32 error code 
-                                    error = (uint)retval;
-                                }
-
-                                System.ComponentModel.Win32Exception e = new System.ComponentModel.Win32Exception(unchecked((int)error));
-                                ADP.TraceExceptionAsReturnValue(e);
-                                throw e;
-                            }
-                    }
-
-                    if (hFile.IsInvalid)
-                    {
-                        System.ComponentModel.Win32Exception e = new System.ComponentModel.Win32Exception(Interop.Errors.ERROR_INVALID_HANDLE);
-                        ADP.TraceExceptionAsReturnValue(e);
-                        throw e;
-                    }
-
-                    if (Interop.Kernel32.GetFileType(hFile) != Interop.Kernel32.FileTypes.FILE_TYPE_DISK)
-                    {
-                        hFile.Dispose();
-                        throw ADP.Argument(System.SRHelper.GetString(SR.SqlFileStream_PathNotValidDiskResource));
-                    }
-
-                    // if the user is opening the SQL FileStream in read/write mode, we assume that they want to scan
-                    // through current data and then append new data to the end, so we need to tell SQL Server to preserve
-                    // the existing file contents.
-                    if (access == System.IO.FileAccess.ReadWrite)
-                    {
-                        uint ioControlCode = Interop.Kernel32.CTL_CODE(FILE_DEVICE_FILE_SYSTEM,
-                            IoControlCodeFunctionCode, (byte)Interop.Kernel32.IoControlTransferType.METHOD_BUFFERED,
-                            (byte)Interop.Kernel32.IoControlCodeAccess.FILE_ANY_ACCESS);
-
-                        if (!Interop.Kernel32.DeviceIoControl(hFile, ioControlCode, IntPtr.Zero, 0, IntPtr.Zero, 0, out uint cbBytesReturned, IntPtr.Zero))
+                    case Interop.Errors.ERROR_FILE_NOT_FOUND:
                         {
-                            System.ComponentModel.Win32Exception e = new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
+                            System.IO.DirectoryNotFoundException e = new System.IO.DirectoryNotFoundException();
                             ADP.TraceExceptionAsReturnValue(e);
                             throw e;
                         }
-                    }
+                    default:
+                        {
+                            uint error = Interop.NtDll.RtlNtStatusToDosError(retval);
+                            if (error == ERROR_MR_MID_NOT_FOUND)
+                            {
+                                // status code could not be mapped to a Win32 error code 
+                                error = (uint)retval;
+                            }
 
-                    // now that we've successfully opened a handle on the path and verified that it is a file,
-                    // use the SafeFileHandle to initialize our internal System.IO.FileStream instance
-                    System.Diagnostics.Debug.Assert(_m_fs == null);
-                    _m_fs = new System.IO.FileStream(hFile, access, DefaultBufferSize, ((options & System.IO.FileOptions.Asynchronous) != 0));
+                            System.ComponentModel.Win32Exception e = new System.ComponentModel.Win32Exception(unchecked((int)error));
+                            ADP.TraceExceptionAsReturnValue(e);
+                            throw e;
+                        }
+                }
+
+                if (hFile.IsInvalid)
+                {
+                    System.ComponentModel.Win32Exception e = new System.ComponentModel.Win32Exception(Interop.Errors.ERROR_INVALID_HANDLE);
+                    ADP.TraceExceptionAsReturnValue(e);
+                    throw e;
+                }
+
+                if (Interop.Kernel32.GetFileType(hFile) != Interop.Kernel32.FileTypes.FILE_TYPE_DISK)
+                {
+                    hFile.Dispose();
+                    throw ADP.Argument(System.SRHelper.GetString(SR.SqlFileStream_PathNotValidDiskResource));
+                }
+
+                // if the user is opening the SQL FileStream in read/write mode, we assume that they want to scan
+                // through current data and then append new data to the end, so we need to tell SQL Server to preserve
+                // the existing file contents.
+                if (access == System.IO.FileAccess.ReadWrite)
+                {
+                    uint ioControlCode = Interop.Kernel32.CTL_CODE(FILE_DEVICE_FILE_SYSTEM,
+                        IoControlCodeFunctionCode, (byte)Interop.Kernel32.IoControlTransferType.METHOD_BUFFERED,
+                        (byte)Interop.Kernel32.IoControlCodeAccess.FILE_ANY_ACCESS);
+
+                    if (!Interop.Kernel32.DeviceIoControl(hFile, ioControlCode, IntPtr.Zero, 0, IntPtr.Zero, 0, out uint cbBytesReturned, IntPtr.Zero))
+                    {
+                        System.ComponentModel.Win32Exception e = new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
+                        ADP.TraceExceptionAsReturnValue(e);
+                        throw e;
+                    }
+                }
+
+                // now that we've successfully opened a handle on the path and verified that it is a file,
+                // use the SafeFileHandle to initialize our internal System.IO.FileStream instance
+                System.Diagnostics.Debug.Assert(_m_fs == null);
+                _m_fs = new System.IO.FileStream(hFile, access, DefaultBufferSize, ((options & System.IO.FileOptions.Asynchronous) != 0));
             }
             catch
             {

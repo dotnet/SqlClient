@@ -17,7 +17,6 @@ using Microsoft.IdentityModel.Protocols;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 
-
 // Azure Attestation Protocol Flow
 // To start the attestation process, Sql Client sends the Protocol Id (i.e. 1), Nonce, Attestation Url and ECDH Public Key
 // Sql Server uses attestation Url to attest the enclave and send the JWT to Sql client.

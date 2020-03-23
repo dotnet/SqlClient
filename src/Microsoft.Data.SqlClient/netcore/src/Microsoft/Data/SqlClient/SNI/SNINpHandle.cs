@@ -40,56 +40,68 @@ namespace Microsoft.Data.SqlClient.SNI
 
         public SNINpHandle(string serverName, string pipeName, long timerExpire, object callbackObject)
         {
-            _sendSync = new object();
-            _targetServer = serverName;
-            _callbackObject = callbackObject;
-
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNINpHandle.SNINpHandle |SNI|INFO|SCOPE> Constructor");
+            SqlClientEventSource.Log.SNITrace("<sc.SNI.SNINpHandle.SNINpHandle |SNI|INFO> Constructor. server name = {0}, pipe name = {1}", serverName, pipeName);
             try
             {
-                _pipeStream = new NamedPipeClientStream(
-                    serverName,
-                    pipeName,
-                    PipeDirection.InOut,
-                    PipeOptions.Asynchronous | PipeOptions.WriteThrough);
+                _sendSync = new object();
+                _targetServer = serverName;
+                _callbackObject = callbackObject;
 
-                bool isInfiniteTimeOut = long.MaxValue == timerExpire;
-                if (isInfiniteTimeOut)
+                try
                 {
-                    _pipeStream.Connect(System.Threading.Timeout.Infinite);
+                    _pipeStream = new NamedPipeClientStream(
+                        serverName,
+                        pipeName,
+                        PipeDirection.InOut,
+                        PipeOptions.Asynchronous | PipeOptions.WriteThrough);
+
+                    bool isInfiniteTimeOut = long.MaxValue == timerExpire;
+                    if (isInfiniteTimeOut)
+                    {
+                        _pipeStream.Connect(System.Threading.Timeout.Infinite);
+                    }
+                    else
+                    {
+                        TimeSpan ts = DateTime.FromFileTime(timerExpire) - DateTime.Now;
+                        ts = ts.Ticks < 0 ? TimeSpan.FromTicks(0) : ts;
+
+                        _pipeStream.Connect((int)ts.TotalMilliseconds);
+                    }
                 }
-                else
+                catch (TimeoutException te)
                 {
-                    TimeSpan ts = DateTime.FromFileTime(timerExpire) - DateTime.Now;
-                    ts = ts.Ticks < 0 ? TimeSpan.FromTicks(0) : ts;
-
-                    _pipeStream.Connect((int)ts.TotalMilliseconds);
+                    SNICommon.ReportSNIError(SNIProviders.NP_PROV, SNICommon.ConnOpenFailedError, te);
+                    _status = TdsEnums.SNI_ERROR;
+                    SqlClientEventSource.Log.SNITrace("<sc.SNI.SNINpHandle.SNINpHandle |SNI|ERR> Timed out. Exception = {0}", te.Message);
+                    return;
                 }
-            }
-            catch (TimeoutException te)
-            {
-                SNICommon.ReportSNIError(SNIProviders.NP_PROV, SNICommon.ConnOpenFailedError, te);
-                _status = TdsEnums.SNI_ERROR;
-                return;
-            }
-            catch (IOException ioe)
-            {
-                SNICommon.ReportSNIError(SNIProviders.NP_PROV, SNICommon.ConnOpenFailedError, ioe);
-                _status = TdsEnums.SNI_ERROR;
-                return;
-            }
+                catch (IOException ioe)
+                {
+                    SNICommon.ReportSNIError(SNIProviders.NP_PROV, SNICommon.ConnOpenFailedError, ioe);
+                    _status = TdsEnums.SNI_ERROR;
+                    SqlClientEventSource.Log.SNITrace("<sc.SNI.SNINpHandle.SNINpHandle |SNI|ERR> IOException = {0}", ioe.Message);
+                    return;
+                }
 
-            if (!_pipeStream.IsConnected || !_pipeStream.CanWrite || !_pipeStream.CanRead)
-            {
-                SNICommon.ReportSNIError(SNIProviders.NP_PROV, 0, SNICommon.ConnOpenFailedError, string.Empty);
-                _status = TdsEnums.SNI_ERROR;
-                return;
+                if (!_pipeStream.IsConnected || !_pipeStream.CanWrite || !_pipeStream.CanRead)
+                {
+                    SNICommon.ReportSNIError(SNIProviders.NP_PROV, 0, SNICommon.ConnOpenFailedError, string.Empty);
+                    _status = TdsEnums.SNI_ERROR;
+                    SqlClientEventSource.Log.SNITrace("<sc.SNI.SNINpHandle.SNINpHandle |SNI|ERR> Pipe stream is not connected or cannot write or read to/from it.");
+                    return;
+                }
+
+                _sslOverTdsStream = new SslOverTdsStream(_pipeStream);
+                _sslStream = new SslStream(_sslOverTdsStream, true, new RemoteCertificateValidationCallback(ValidateServerCertificate), null);
+
+                _stream = _pipeStream;
+                _status = TdsEnums.SNI_SUCCESS;
             }
-
-            _sslOverTdsStream = new SslOverTdsStream(_pipeStream);
-            _sslStream = new SslStream(_sslOverTdsStream, true, new RemoteCertificateValidationCallback(ValidateServerCertificate), null);
-
-            _stream = _pipeStream;
-            _status = TdsEnums.SNI_SUCCESS;
+            finally
+            {
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
+            }
         }
 
         public override Guid ConnectionId
@@ -110,13 +122,22 @@ namespace Microsoft.Data.SqlClient.SNI
 
         public override uint CheckConnection()
         {
-            if (!_stream.CanWrite || !_stream.CanRead)
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNINpHandle.CheckConnection |SNI|INFO>");
+            try
             {
-                return TdsEnums.SNI_ERROR;
+                if (!_stream.CanWrite || !_stream.CanRead)
+                {
+                    SqlClientEventSource.Log.SNITrace("<sc.SNI.SNINpHandle.CheckConnection |SNI|ERR> cannot wite or read to/from the stream");
+                    return TdsEnums.SNI_ERROR;
+                }
+                else
+                {
+                    return TdsEnums.SNI_SUCCESS;
+                }
             }
-            else
+            finally
             {
-                return TdsEnums.SNI_SUCCESS;
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
@@ -149,117 +170,156 @@ namespace Microsoft.Data.SqlClient.SNI
 
         public override uint Receive(out SNIPacket packet, int timeout)
         {
-            SNIPacket errorPacket;
-            lock (this)
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNINpHandle.Receive |SNI|INFO>");
+            try
             {
-                packet = null;
-                try
+                SNIPacket errorPacket;
+                lock (this)
                 {
-                    packet = new SNIPacket(headerSize: 0, dataSize: _bufferSize);
-                    packet.ReadFromStream(_stream);
+                    packet = null;
+                    try
+                    {
+                        packet = new SNIPacket(headerSize: 0, dataSize: _bufferSize);
+                        packet.ReadFromStream(_stream);
 
-                    if (packet.Length == 0)
+                        if (packet.Length == 0)
+                        {
+                            errorPacket = packet;
+                            packet = null;
+                            var e = new Win32Exception();
+                            SqlClientEventSource.Log.SNITrace("<sc.SNI.SNINpHandle.Receive |SNI|ERR> packet length is 0.");
+                            return ReportErrorAndReleasePacket(errorPacket, (uint)e.NativeErrorCode, 0, e.Message);
+                        }
+                    }
+                    catch (ObjectDisposedException ode)
                     {
                         errorPacket = packet;
                         packet = null;
-                        var e = new Win32Exception();
-                        return ReportErrorAndReleasePacket(errorPacket, (uint)e.NativeErrorCode, 0, e.Message);
+                        SqlClientEventSource.Log.SNITrace("<sc.SNI.SNINpHandle.Receive |SNI|ERR> ObjectDisposedException message = {0}.", ode.Message);
+                        return ReportErrorAndReleasePacket(errorPacket, ode);
                     }
+                    catch (IOException ioe)
+                    {
+                        errorPacket = packet;
+                        packet = null;
+                        SqlClientEventSource.Log.SNITrace("<sc.SNI.SNINpHandle.Receive |SNI|ERR> IOException message = {0}.", ioe.Message);
+                        return ReportErrorAndReleasePacket(errorPacket, ioe);
+                    }
+                    return TdsEnums.SNI_SUCCESS;
+                }
+            }
+            finally
+            {
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
+            }
+        }
+
+        public override uint ReceiveAsync(ref SNIPacket packet)
+        {
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNINpHandle.ReceiveAsync |SNI|SCOPE>");
+            try
+            {
+                SNIPacket errorPacket;
+                packet = new SNIPacket(headerSize: 0, dataSize: _bufferSize);
+
+                try
+                {
+                    packet.ReadFromStreamAsync(_stream, _receiveCallback);
+                    return TdsEnums.SNI_SUCCESS_IO_PENDING;
                 }
                 catch (ObjectDisposedException ode)
                 {
                     errorPacket = packet;
                     packet = null;
+                    SqlClientEventSource.Log.SNITrace("<sc.SNI.SNINpHandle.ReceiveAsync |SNI|ERR> ObjectDisposedException message = {0}.", ode.Message);
                     return ReportErrorAndReleasePacket(errorPacket, ode);
                 }
                 catch (IOException ioe)
                 {
                     errorPacket = packet;
                     packet = null;
+                    SqlClientEventSource.Log.SNITrace("<sc.SNI.SNINpHandle.ReceiveAsync |SNI|ERR> IOException message = {0}.", ioe.Message);
                     return ReportErrorAndReleasePacket(errorPacket, ioe);
                 }
-
-                return TdsEnums.SNI_SUCCESS;
             }
-        }
-
-        public override uint ReceiveAsync(ref SNIPacket packet)
-        {
-            SNIPacket errorPacket;
-            packet = new SNIPacket(headerSize: 0, dataSize: _bufferSize);
-            
-            try
+            finally
             {
-                packet.ReadFromStreamAsync(_stream, _receiveCallback);
-                return TdsEnums.SNI_SUCCESS_IO_PENDING;
-            }
-            catch (ObjectDisposedException ode)
-            {
-                errorPacket = packet;
-                packet = null;
-                return ReportErrorAndReleasePacket(errorPacket, ode);
-            }
-            catch (IOException ioe)
-            {
-                errorPacket = packet;
-                packet = null;
-                return ReportErrorAndReleasePacket(errorPacket, ioe);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
         public override uint Send(SNIPacket packet)
         {
-            bool releaseLock = false;
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNINpHandle.Send |SNI|SCOPE>");
             try
             {
-                // is the packet is marked out out-of-band (attention packets only) it must be
-                // sent immediately even if a send of recieve operation is already in progress
-                // because out of band packets are used to cancel ongoing operations
-                // so try to take the lock if possible but continue even if it can't be taken
-                if (packet.IsOutOfBand)
+                bool releaseLock = false;
+                try
                 {
-                    Monitor.TryEnter(this, ref releaseLock);
-                }
-                else
-                {
-                    Monitor.Enter(this);
-                    releaseLock = true;
-                }
+                    // is the packet is marked out out-of-band (attention packets only) it must be
+                    // sent immediately even if a send of recieve operation is already in progress
+                    // because out of band packets are used to cancel ongoing operations
+                    // so try to take the lock if possible but continue even if it can't be taken
+                    if (packet.IsOutOfBand)
+                    {
+                        Monitor.TryEnter(this, ref releaseLock);
+                    }
+                    else
+                    {
+                        Monitor.Enter(this);
+                        releaseLock = true;
+                    }
 
-                // this lock ensures that two packets are not being written to the transport at the same time
-                // so that sending a standard and an out-of-band packet are both written atomically no data is 
-                // interleaved
-                lock (_sendSync)
+                    // this lock ensures that two packets are not being written to the transport at the same time
+                    // so that sending a standard and an out-of-band packet are both written atomically no data is 
+                    // interleaved
+                    lock (_sendSync)
+                    {
+                        try
+                        {
+                            packet.WriteToStream(_stream);
+                            return TdsEnums.SNI_SUCCESS;
+                        }
+                        catch (ObjectDisposedException ode)
+                        {
+                            SqlClientEventSource.Log.SNITrace("<sc.SNI.SNINpHandle.Send |SNI|ERR> ObjectDisposedException message = {0}.", ode.Message);
+                            return ReportErrorAndReleasePacket(packet, ode);
+                        }
+                        catch (IOException ioe)
+                        {
+                            SqlClientEventSource.Log.SNITrace("<sc.SNI.SNINpHandle.Send |SNI|ERR> IOException message = {0}.", ioe.Message);
+
+                            return ReportErrorAndReleasePacket(packet, ioe);
+                        }
+                    }
+                }
+                finally
                 {
-                    try
+                    if (releaseLock)
                     {
-                        packet.WriteToStream(_stream);
-                        return TdsEnums.SNI_SUCCESS;
-                    }
-                    catch (ObjectDisposedException ode)
-                    {
-                        return ReportErrorAndReleasePacket(packet, ode);
-                    }
-                    catch (IOException ioe)
-                    {
-                        return ReportErrorAndReleasePacket(packet, ioe);
+                        Monitor.Exit(this);
                     }
                 }
             }
             finally
             {
-                if (releaseLock)
-                {
-                    Monitor.Exit(this);
-                }
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
         public override uint SendAsync(SNIPacket packet, bool disposePacketAfterSendAsync, SNIAsyncCallback callback = null)
         {
-            SNIAsyncCallback cb = callback ?? _sendCallback;
-            packet.WriteToStreamAsync(_stream, cb, SNIProviders.NP_PROV, disposePacketAfterSendAsync);
-            return TdsEnums.SNI_SUCCESS_IO_PENDING;
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNINpHandle.SendAsync |SNI|SCOPE>");
+            try
+            {
+                SNIAsyncCallback cb = callback ?? _sendCallback;
+                packet.WriteToStreamAsync(_stream, cb, SNIProviders.NP_PROV, disposePacketAfterSendAsync);
+                return TdsEnums.SNI_SUCCESS_IO_PENDING;
+            }
+            finally
+            {
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
+            }
         }
 
         public override void SetAsyncCallbacks(SNIAsyncCallback receiveCallback, SNIAsyncCallback sendCallback)
@@ -270,24 +330,32 @@ namespace Microsoft.Data.SqlClient.SNI
 
         public override uint EnableSsl(uint options)
         {
-            _validateCert = (options & TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE) != 0;
-
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNINpHandle.EnableSsl |SNI|SCOPE>");
             try
             {
-                _sslStream.AuthenticateAsClient(_targetServer);
-                _sslOverTdsStream.FinishHandshake();
+                _validateCert = (options & TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE) != 0;
+                try
+                {
+                    _sslStream.AuthenticateAsClient(_targetServer);
+                    _sslOverTdsStream.FinishHandshake();
+                }
+                catch (AuthenticationException aue)
+                {
+                    SqlClientEventSource.Log.SNITrace("<sc.SNI.SNINpHandle.EnableSsl |SNI|ERR> AuthenticationException message = {0}.", aue.Message);
+                    return SNICommon.ReportSNIError(SNIProviders.NP_PROV, SNICommon.InternalExceptionError, aue);
+                }
+                catch (InvalidOperationException ioe)
+                {
+                    SqlClientEventSource.Log.SNITrace("<sc.SNI.SNINpHandle.EnableSsl |SNI|ERR>InvalidOperationExceptionn message = {0}.", ioe.Message);
+                    return SNICommon.ReportSNIError(SNIProviders.NP_PROV, SNICommon.InternalExceptionError, ioe);
+                }
+                _stream = _sslStream;
+                return TdsEnums.SNI_SUCCESS;
             }
-            catch (AuthenticationException aue)
+            finally
             {
-                return SNICommon.ReportSNIError(SNIProviders.NP_PROV, SNICommon.InternalExceptionError, aue);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
-            catch (InvalidOperationException ioe)
-            {
-                return SNICommon.ReportSNIError(SNIProviders.NP_PROV, SNICommon.InternalExceptionError, ioe);
-            }
-
-            _stream = _sslStream;
-            return TdsEnums.SNI_SUCCESS;
         }
 
         public override void DisableSsl()
@@ -310,12 +378,20 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>true if valid</returns>
         private bool ValidateServerCertificate(object sender, X509Certificate cert, X509Chain chain, SslPolicyErrors policyErrors)
         {
-            if (!_validateCert)
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNINpHandle.ValidateServerCertificate |SNI|SCOPE>");
+            try
             {
-                return true;
-            }
+                if (!_validateCert)
+                {
+                    return true;
+                }
 
-            return SNICommon.ValidateSslServerCertificate(_targetServer, sender, cert, chain, policyErrors);
+                return SNICommon.ValidateSslServerCertificate(_targetServer, sender, cert, chain, policyErrors);
+            }
+            finally
+            {
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
+            }
         }
 
         /// <summary>

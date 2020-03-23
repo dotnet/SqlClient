@@ -160,6 +160,7 @@ Tests can be built and run with custom Target Frameworks. See the below examples
 # Build the tests for custom TargetFramework (.NET Core)
 # Applicable values: netcoreapp2.1 | netcoreapp2.2 | netcoreapp3.0
 ```
+
 ### Running Tests:
 
 ```bash
@@ -171,3 +172,9 @@ Tests can be built and run with custom Target Frameworks. See the below examples
 # Use above property to run Functional Tests with custom TargetFramework (.NET Core)
 # Applicable values: netcoreapp2.1 | netcoreapp2.2 | netcoreapp3.0
 ```
+
+## Using Managed SNI on Windows
+
+Managed SNI can be enabled on Windows by enabling the below AppContext switch:
+
+**"Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows"**

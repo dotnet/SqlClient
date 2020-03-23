@@ -674,6 +674,59 @@ namespace Microsoft.Data.SqlClient.Server
             _fieldMetaData = smdDflt._fieldMetaData;            // This is ok due to immutability
             _extendedProperties = smdDflt._extendedProperties;  // This is ok due to immutability
         }
+
+        internal string TraceString()
+        {
+            return TraceString(0);
+        }
+
+        virtual internal string TraceString(int indent)
+        {
+            string indentStr = new String(' ', indent);
+            string fields = String.Empty;
+            if (null != _fieldMetaData)
+            {
+                foreach (SmiMetaData fieldMd in _fieldMetaData)
+                {
+                    fields = String.Format(CultureInfo.InvariantCulture,
+                                "{0}{1}\n\t", fields, fieldMd.TraceString(indent + 5));
+                }
+            }
+
+            string properties = string.Empty;
+            if (null != _extendedProperties)
+            {
+                foreach (SmiMetaDataProperty property in _extendedProperties.Values)
+                {
+                    properties = String.Format(CultureInfo.InvariantCulture,
+                                "{0}{1}                   {2}\n\t", properties, indentStr, property.TraceString());
+                }
+            }
+
+            return String.Format(CultureInfo.InvariantCulture, "\n\t"
+                               + "{0}            SqlDbType={1:g}\n\t"
+                               + "{0}            MaxLength={2:d}\n\t"
+                               + "{0}            Precision={3:d}\n\t"
+                               + "{0}                Scale={4:d}\n\t"
+                               + "{0}             LocaleId={5:x}\n\t"
+                               + "{0}       CompareOptions={6:g}\n\t"
+                               + "{0}                 Type={7}\n\t"
+                               + "{0}          MultiValued={8}\n\t"
+                               + "{0}               fields=\n\t{9}"
+                               + "{0}           properties=\n\t{10}",
+                                indentStr,
+                                SqlDbType,
+                                MaxLength,
+                                Precision,
+                                Scale,
+                                LocaleId,
+                                CompareOptions,
+                                (null != Type) ? Type.ToString() : "<null>",
+                                IsMultiValued,
+                                fields,
+                                properties);
+
+        }
     }
 
     // SmiExtendedMetaData
@@ -799,6 +852,22 @@ namespace Microsoft.Data.SqlClient.Server
         internal string TypeSpecificNamePart2 => _typeSpecificNamePart2;
 
         internal string TypeSpecificNamePart3 => _typeSpecificNamePart3;
+
+        internal override string TraceString(int indent)
+        {
+            return String.Format(CultureInfo.InvariantCulture,
+                                 "{2}                 Name={0}"
+                                + "{1}"
+                                + "{2}TypeSpecificNamePart1='{3}'\n\t"
+                                + "{2}TypeSpecificNamePart2='{4}'\n\t"
+                                + "{2}TypeSpecificNamePart3='{5}'\n\t",
+                                (null != _name) ? _name : "<null>",
+                                base.TraceString(indent),
+                                new String(' ', indent),
+                                (null != TypeSpecificNamePart1) ? TypeSpecificNamePart1 : "<null>",
+                                (null != TypeSpecificNamePart2) ? TypeSpecificNamePart2 : "<null>",
+                                (null != TypeSpecificNamePart3) ? TypeSpecificNamePart3 : "<null>");
+        }
     }
 
     // SmiParameterMetaData
@@ -889,6 +958,15 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         internal ParameterDirection Direction => _direction;
+
+        internal override string TraceString(int indent)
+        {
+            return String.Format(CultureInfo.InvariantCulture, "{0}"
+                                + "{1}            Direction={2:g}\n\t",
+                                base.TraceString(indent),
+                                new String(' ', indent),
+                                Direction);
+        }
     }
 
     // SmiStorageMetaData
@@ -1082,6 +1160,29 @@ namespace Microsoft.Data.SqlClient.Server
         internal bool IsIdentity => _isIdentity;
 
         internal bool IsColumnSet => _isColumnSet;
+
+        internal override string TraceString(int indent)
+        {
+            return String.Format(CultureInfo.InvariantCulture, "{0}"
+                                + "{1}         AllowsDBNull={2}\n\t"
+                                + "{1}           ServerName='{3}'\n\t"
+                                + "{1}          CatalogName='{4}'\n\t"
+                                + "{1}           SchemaName='{5}'\n\t"
+                                + "{1}            TableName='{6}'\n\t"
+                                + "{1}           ColumnName='{7}'\n\t"
+                                + "{1}                IsKey={8}\n\t"
+                                + "{1}           IsIdentity={9}\n\t",
+                                base.TraceString(indent),
+                                new String(' ', indent),
+                                AllowsDBNull,
+                                (null != ServerName) ? ServerName : "<null>",
+                                (null != CatalogName) ? CatalogName : "<null>",
+                                (null != SchemaName) ? SchemaName : "<null>",
+                                (null != TableName) ? TableName : "<null>",
+                                (null != ColumnName) ? ColumnName : "<null>",
+                                IsKey,
+                                IsIdentity);
+        }
     }
 
     // SmiQueryMetaData

@@ -9,25 +9,15 @@ namespace Microsoft.Data.SqlClient
 {
     internal sealed class TdsParserStateObjectFactory
     {
-
-        private const string UseLegacyNetworkingOnWindows = "Microsoft.Data.SqlClient.UseLegacyNetworkingOnWindows";
-
         public static readonly TdsParserStateObjectFactory Singleton = new TdsParserStateObjectFactory();
 
+        private const string UseManagedNetworkingOnWindows = "Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows";
 
-        // Temporary disabling App Context switching for managed SNI.
-        // If the appcontext switch is set then Use Managed SNI based on the value. Otherwise Managed SNI should always be used.
-        //private static bool shouldUseLegacyNetorking;
-        //public static bool UseManagedSNI { get; } = AppContext.TryGetSwitch(UseLegacyNetworkingOnWindows, out shouldUseLegacyNetorking) ? !shouldUseLegacyNetorking : true;
+        private static bool shouldUseManagedSNI;
 
-#if DEBUG
-        private static Lazy<bool> useManagedSNIOnWindows = new Lazy<bool>(
-            () => bool.TrueString.Equals(Environment.GetEnvironmentVariable("Microsoft.Data.SqlClient.UseManagedSNIOnWindows"), StringComparison.InvariantCultureIgnoreCase)
-        );
-        public static bool UseManagedSNI => useManagedSNIOnWindows.Value;
-#else
-         public static bool UseManagedSNI { get; } = false;
-#endif
+        // If the appcontext switch is set then Use Managed SNI based on the value. Otherwise Native SNI.dll will be used by default.
+        public static bool UseManagedSNI { get; } =
+            AppContext.TryGetSwitch(UseManagedNetworkingOnWindows, out shouldUseManagedSNI) ? shouldUseManagedSNI : false;
 
         public EncryptionOptions EncryptionOptions
         {
@@ -49,10 +39,14 @@ namespace Microsoft.Data.SqlClient
         {
             if (UseManagedSNI)
             {
+                SqlClientEventSource.Log.TraceEvent("<sc.TdsParserStateObjectFactory.CreateTdsParserStateObject|INFO> Found AppContext switch '{0}#' enabled, managed networking implementation will be used."
+                   , UseManagedNetworkingOnWindows);
                 return new TdsParserStateObjectManaged(parser);
             }
             else
             {
+                SqlClientEventSource.Log.TraceEvent("<sc.TdsParserStateObjectFactory.CreateTdsParserStateObject|INFO> AppContext switch '{0}#' not enabled, native networking implementation will be used."
+                   , UseManagedNetworkingOnWindows);
                 return new TdsParserStateObjectNative(parser);
             }
         }
