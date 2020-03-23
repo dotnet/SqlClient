@@ -25,7 +25,7 @@ namespace Microsoft.Data.ProviderBase
         private const int PruningDueTime = 4 * 60 * 1000;           // 4 minutes
         private const int PruningPeriod = 30 * 1000;           // thirty seconds
 
-        private static int _objectTypeCount; // Bid counter
+        private static int _objectTypeCount; // EventSource counter
         internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
 
         // s_pendingOpenNonPooled is an array of tasks used to throttle creation of non-pooled connections to 
@@ -106,7 +106,7 @@ namespace Microsoft.Data.ProviderBase
         {
             Debug.Assert(key != null, "key cannot be null");
             ADP.CheckArgumentNull(key.ConnectionString, "key.ConnectionString");
-            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<prov.DbConnectionFactory.ClearPool|{0}> connectionString", "API");
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<prov.DbConnectionFactory.ClearPool|API> connectionString");
 
             try
             {

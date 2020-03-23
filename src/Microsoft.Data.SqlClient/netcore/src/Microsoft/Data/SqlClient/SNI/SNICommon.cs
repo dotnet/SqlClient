@@ -136,51 +136,61 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>True if certificate is valid</returns>
         internal static bool ValidateSslServerCertificate(string targetServerName, object sender, X509Certificate cert, X509Chain chain, SslPolicyErrors policyErrors)
         {
-            if (policyErrors == SslPolicyErrors.None)
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNICommon.ValidateSslServerCertificate |SNI|SCOPE|INFO >");
+            try
             {
-                return true;
-            }
-
-            if ((policyErrors & SslPolicyErrors.RemoteCertificateNameMismatch) != 0)
-            {
-                string certServerName = cert.Subject.Substring(cert.Subject.IndexOf('=') + 1);
-
-                // Verify that target server name matches subject in the certificate
-                if (targetServerName.Length > certServerName.Length)
+                if (policyErrors == SslPolicyErrors.None)
                 {
-                    return false;
+                    SqlClientEventSource.Log.SNITrace("<sc.SNI.SNICommon.ValidateSslServerCertificate |SNI|INFO > SSL Server certificate validated.");
+                    return true;
                 }
-                else if (targetServerName.Length == certServerName.Length)
+
+                if ((policyErrors & SslPolicyErrors.RemoteCertificateNameMismatch) != 0)
                 {
-                    // Both strings have the same length, so targetServerName must be a FQDN
-                    if (!targetServerName.Equals(certServerName, StringComparison.OrdinalIgnoreCase))
+                    SqlClientEventSource.Log.SNITrace("<sc.SNI.SNICommon.ValidateSslServerCertificate |SNI|ERR > SSL Remote certificate name mismatched.");
+                    string certServerName = cert.Subject.Substring(cert.Subject.IndexOf('=') + 1);
+
+                    // Verify that target server name matches subject in the certificate
+                    if (targetServerName.Length > certServerName.Length)
                     {
                         return false;
+                    }
+                    else if (targetServerName.Length == certServerName.Length)
+                    {
+                        // Both strings have the same length, so targetServerName must be a FQDN
+                        if (!targetServerName.Equals(certServerName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        if (string.Compare(targetServerName, 0, certServerName, 0, targetServerName.Length, StringComparison.OrdinalIgnoreCase) != 0)
+                        {
+                            return false;
+                        }
+
+                        // Server name matches cert name for its whole length, so ensure that the
+                        // character following the server name is a '.'. This will avoid
+                        // having server name "ab" match "abc.corp.company.com"
+                        // (Names have different lengths, so the target server can't be a FQDN.)
+                        if (certServerName[targetServerName.Length] != '.')
+                        {
+                            return false;
+                        }
                     }
                 }
                 else
                 {
-                    if (string.Compare(targetServerName, 0, certServerName, 0, targetServerName.Length, StringComparison.OrdinalIgnoreCase) != 0)
-                    {
-                        return false;
-                    }
-
-                    // Server name matches cert name for its whole length, so ensure that the
-                    // character following the server name is a '.'. This will avoid
-                    // having server name "ab" match "abc.corp.company.com"
-                    // (Names have different lengths, so the target server can't be a FQDN.)
-                    if (certServerName[targetServerName.Length] != '.')
-                    {
-                        return false;
-                    }
+                    // Fail all other SslPolicy cases besides RemoteCertificateNameMismatch
+                    return false;
                 }
+                return true;
             }
-            else
+            finally
             {
-                // Fail all other SslPolicy cases besides RemoteCertificateNameMismatch
-                return false;
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
-            return true;
         }
 
         /// <summary>
@@ -193,6 +203,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns></returns>
         internal static uint ReportSNIError(SNIProviders provider, uint nativeError, uint sniError, string errorMessage)
         {
+            SqlClientEventSource.Log.SNITrace("<sc.SNI.SNICommon. ReportSNIError |SNI|ERR > Provider ={0}, native Error ={1}, SNI Error ={2}, Error Message ={3}", provider, nativeError, sniError, errorMessage);
             return ReportSNIError(new SNIError(provider, nativeError, sniError, errorMessage));
         }
 
@@ -205,6 +216,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns></returns>
         internal static uint ReportSNIError(SNIProviders provider, uint sniError, Exception sniException)
         {
+            SqlClientEventSource.Log.SNITrace("<sc.SNI.SNICommon. ReportSNIError |SNI|ERR > Provider ={0}, SNI Error ={2}, Exception ={3}", provider, sniError, sniException.Message);
             return ReportSNIError(new SNIError(provider, sniError, sniException));
         }
 

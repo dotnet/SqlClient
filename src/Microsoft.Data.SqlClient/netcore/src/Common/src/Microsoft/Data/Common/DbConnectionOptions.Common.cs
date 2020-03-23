@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
+using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data.Common
 {
@@ -110,6 +111,8 @@ namespace Microsoft.Data.Common
         public string UsersConnectionString(bool hidePassword) =>
             UsersConnectionString(hidePassword, false);
 
+        internal string UsersConnectionStringForTrace() => UsersConnectionString(true, true);
+
         private string UsersConnectionString(bool hidePassword, bool forceHidePassword)
         {
             string connectionString = _usersConnectionString;
@@ -156,7 +159,27 @@ namespace Microsoft.Data.Common
             (0 == StringComparer.OrdinalIgnoreCase.Compare(strvalue, strconst));
 
         [System.Diagnostics.Conditional("DEBUG")]
-        static partial void DebugTraceKeyValuePair(string keyname, string keyvalue, Dictionary<string, string> synonyms);
+        private static void DebugTraceKeyValuePair(string keyname, string keyvalue, Dictionary<string, string> synonyms)
+        {
+            if (SqlClientEventSource.Log.IsAdvanceTraceOn())
+            {
+                Debug.Assert(string.Equals(keyname, keyname?.ToLower(), StringComparison.InvariantCulture), "missing ToLower");
+                string realkeyname = ((null != synonyms) ? (string)synonyms[keyname] : keyname);
+
+                if ((KEY.Password != realkeyname) && (SYNONYM.Pwd != realkeyname))
+                {
+                    // don't trace passwords ever!
+                    if (null != keyvalue)
+                    {
+                        SqlClientEventSource.Log.AdvanceTrace("<comm.DbConnectionOptions|INFO|ADV> KeyName='{0}', KeyValue='{1}'", keyname, keyvalue);
+                    }
+                    else
+                    {
+                        SqlClientEventSource.Log.AdvanceTrace("<comm.DbConnectionOptions|INFO|ADV> KeyName='{0}'", keyname);
+                    }
+                }
+            }
+        }
 
         private static string GetKeyName(StringBuilder buffer)
         {

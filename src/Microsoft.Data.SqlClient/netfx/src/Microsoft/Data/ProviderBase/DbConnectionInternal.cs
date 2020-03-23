@@ -598,7 +598,7 @@ namespace Microsoft.Data.ProviderBase
             // IMPORTANT NOTE: You must have taken a lock on the object before
             // you call this method to prevent race conditions with Clear and
             // ReclaimEmancipatedObjects.
-            SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionInternal.DelegatedTransactionEnded|RES|CPOOL> {0}#, Delegated Transaction Completed.", ObjectID);
+            SqlClientEventSource.Log.PoolerTraceEvent("<prov.DbConnectionInternal.DelegatedTransactionEnded|RES|CPOOL> {0}#, Delegated Transaction Completed.", ObjectID);
 
             if (1 == _pooledCount)
             {
@@ -892,7 +892,7 @@ namespace Microsoft.Data.ProviderBase
         // Detach transaction from connection.
         internal void DetachTransaction(SysTx.Transaction transaction, bool isExplicitlyReleasing)
         {
-            SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionInternal.DetachTransaction|RES|CPOOL> {0}#, Transaction Completed. (pooledCount={1})", ObjectID, _pooledCount);
+            SqlClientEventSource.Log.PoolerTraceEvent("<prov.DbConnectionInternal.DetachTransaction|RES|CPOOL> {0}#, Transaction Completed. (pooledCount={1})", ObjectID, _pooledCount);
 
             // potentially a multi-threaded event, so lock the connection to make sure we don't enlist in a new
             // transaction between compare and assignment. No need to short circuit outside of lock, since failed comparisons should
@@ -933,7 +933,7 @@ namespace Microsoft.Data.ProviderBase
         void TransactionCompletedEvent(object sender, SysTx.TransactionEventArgs e)
         {
             SysTx.Transaction transaction = e.Transaction;
-            SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionInternal.TransactionCompletedEvent|RES|CPOOL> {0}#, Transaction Completed. (pooledCount = {1})", ObjectID, _pooledCount);
+            SqlClientEventSource.Log.PoolerTraceEvent("<prov.DbConnectionInternal.TransactionCompletedEvent|RES|CPOOL> {0}#, Transaction Completed. (pooledCount = {1})", ObjectID, _pooledCount);
 
             CleanupTransactionOnCompletion(transaction);
             CleanupConnectionOnTransactionCompletion(transaction);

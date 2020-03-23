@@ -1359,7 +1359,8 @@ namespace Microsoft.Data.SqlClient
             _parser.Run(RunBehavior.UntilDone, null, null, null, _parser._physicalStateObj);
 
             if (_routingInfo == null)
-            { // ROR should not affect state of connection recovery
+            {
+                // ROR should not affect state of connection recovery
                 if (_federatedAuthenticationRequested && !_federatedAuthenticationAcknowledged)
                 {
                     SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.CompleteLogin|ERR> {0}#, Server did not acknowledge the federated authentication request", ObjectID);
@@ -2542,7 +2543,6 @@ namespace Microsoft.Data.SqlClient
                         {
                             SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFedAuthInfo> {0}#, The attempt to get a new access token succeeded under the locked mode.", ObjectID);
                         }
-
                     }
                     SqlClientEventSource.Log.AdvanceTrace("<sc.SqlInternalConnectionTds.OnFedAuthInfo> {0}#, Found an authentication context in the cache that does not need a refresh at this time. Re-using the cached token.", ObjectID);
                 }
@@ -2960,7 +2960,6 @@ namespace Microsoft.Data.SqlClient
                         if (data.Length < 1)
                         {
                             SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}#, Unknown version number for GlobalTransactions", ObjectID);
-
                             throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
                         }
 

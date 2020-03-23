@@ -64,7 +64,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
         // -----------
 
         private readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
-        private static int _objectTypeCount; // Bid counter
+        private static int _objectTypeCount; // EventSource Counter
         internal int ObjectID
         {
             get
@@ -583,7 +583,6 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                             string msgType = reader.GetString(0);
                             SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlConnectionContainer.ProcessNotificationResults|DEP> msgType: '{0}'", msgType);
                             handle = reader.GetGuid(1);
-                            //                            SqlClientEventSource.SqlClientEventSource.Log.NotificationsTrace($"SqlConnectionContainer.ProcessNotificationResults(SqlDataReader)|DEP> conversationHandle: '%p(GUID)'", conversationHandle);
 
                             // Only process QueryNotification messages.
                             if (0 == String.Compare(msgType, "http://schemas.microsoft.com/SQL/Notifications/QueryNotification", StringComparison.OrdinalIgnoreCase))
@@ -911,8 +910,9 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                 int result = Interlocked.Decrement(ref _startCount);
 
                 if (0 == result)
-                { // If we've reached refCount 0, destroy.
-                  // Lock to ensure Cancel() complete prior to other thread calling TearDown.
+                {
+                    // If we've reached refCount 0, destroy.
+                    // Lock to ensure Cancel() complete prior to other thread calling TearDown.
                     SqlClientEventSource.Log.NotificationsTrace("<sc.SqlConnectionContainer.Stop|DEP> Reached 0 count, cancelling and waiting.");
 
                     lock (this)
@@ -1455,7 +1455,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
     // -----------
 
     private readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
-    private static int _objectTypeCount; // Bid counter
+    private static int _objectTypeCount; // EventSource Counter
     internal int ObjectID
     {
         get

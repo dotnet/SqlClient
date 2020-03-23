@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient
         private DbConnectionInternal _innerConnection;
         private int _closeCount;          // used to distinguish between different uses of this object, so we don't have to maintain a list of it's children
 
-        private static int _objectTypeCount; // Bid counter
+        private static int _objectTypeCount; // EventSource Counter
         internal readonly int ObjectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctor2/*' />

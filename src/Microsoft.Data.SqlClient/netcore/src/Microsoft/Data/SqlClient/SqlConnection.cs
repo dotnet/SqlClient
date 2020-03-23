@@ -782,15 +782,23 @@ namespace Microsoft.Data.SqlClient
         [SuppressMessage("Microsoft.Reliability", "CA2004:RemoveCallsToGCKeepAlive")]
         override protected DbTransaction BeginDbTransaction(System.Data.IsolationLevel isolationLevel)
         {
-            DbTransaction transaction = BeginTransaction(isolationLevel);
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<prov.SqlConnection.BeginDbTransaction|API> {0}#, isolationLevel={1}", ObjectID, (int)isolationLevel);
+            try
+            {
+                DbTransaction transaction = BeginTransaction(isolationLevel);
 
-            //   InnerConnection doesn't maintain a ref on the outer connection (this) and 
-            //   subsequently leaves open the possibility that the outer connection could be GC'ed before the SqlTransaction
-            //   is fully hooked up (leaving a DbTransaction with a null connection property). Ensure that this is reachable
-            //   until the completion of BeginTransaction with KeepAlive
-            GC.KeepAlive(this);
+                //   InnerConnection doesn't maintain a ref on the outer connection (this) and 
+                //   subsequently leaves open the possibility that the outer connection could be GC'ed before the SqlTransaction
+                //   is fully hooked up (leaving a DbTransaction with a null connection property). Ensure that this is reachable
+                //   until the completion of BeginTransaction with KeepAlive
+                GC.KeepAlive(this);
 
-            return transaction;
+                return transaction;
+            }
+            finally
+            {
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
+            }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/BeginTransactionIsoTransactionName/*' />
@@ -798,7 +806,7 @@ namespace Microsoft.Data.SqlClient
         {
             WaitForPendingReconnection();
             SqlStatistics statistics = null;
-
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlConnection.BeginTransaction|API> {0}#, iso={1}, transactionName='{2}'", ObjectID, (int)iso, (string.IsNullOrEmpty(transactionName) ? "None" : transactionName));
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
@@ -823,6 +831,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlStatistics.StopTimer(statistics);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
@@ -831,6 +840,7 @@ namespace Microsoft.Data.SqlClient
         {
             SqlStatistics statistics = null;
             RepairInnerConnection();
+            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlConnection.ChangeDatabase|API|Correlation> ObjectID{0}#, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
@@ -875,77 +885,86 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Close/*' />
         public override void Close()
         {
-            ConnectionState previousState = State;
-            Guid operationId = default(Guid);
-            Guid clientConnectionId = default(Guid);
-
-            // during the call to Dispose() there is a redundant call to 
-            // Close(). because of this, the second time Close() is invoked the 
-            // connection is already in a closed state. this doesn't seem to be a 
-            // problem except for logging, as we'll get duplicate Before/After/Error
-            // log entries
-            if (previousState != ConnectionState.Closed)
-            {
-                operationId = s_diagnosticListener.WriteConnectionCloseBefore(this);
-                // we want to cache the ClientConnectionId for After/Error logging, as when the connection 
-                // is closed then we will lose this identifier
-                //
-                // note: caching this is only for diagnostics logging purposes
-                clientConnectionId = ClientConnectionId;
-            }
-
-            SqlStatistics statistics = null;
-
-            Exception e = null;
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlConnection.Close|API> {0}#", ObjectID);
+            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlConnection.Close|API|Correlation> ObjectID {0}#, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
             try
             {
-                statistics = SqlStatistics.StartTimer(Statistics);
+                ConnectionState previousState = State;
+                Guid operationId = default(Guid);
+                Guid clientConnectionId = default(Guid);
 
-                Task reconnectTask = _currentReconnectionTask;
-                if (reconnectTask != null && !reconnectTask.IsCompleted)
+                // during the call to Dispose() there is a redundant call to 
+                // Close(). because of this, the second time Close() is invoked the 
+                // connection is already in a closed state. this doesn't seem to be a 
+                // problem except for logging, as we'll get duplicate Before/After/Error
+                // log entries
+                if (previousState != ConnectionState.Closed)
                 {
-                    CancellationTokenSource cts = _reconnectionCancellationSource;
-                    if (cts != null)
+                    operationId = s_diagnosticListener.WriteConnectionCloseBefore(this);
+                    // we want to cache the ClientConnectionId for After/Error logging, as when the connection 
+                    // is closed then we will lose this identifier
+                    //
+                    // note: caching this is only for diagnostics logging purposes
+                    clientConnectionId = ClientConnectionId;
+                }
+
+                SqlStatistics statistics = null;
+
+                Exception e = null;
+                try
+                {
+                    statistics = SqlStatistics.StartTimer(Statistics);
+
+                    Task reconnectTask = _currentReconnectionTask;
+                    if (reconnectTask != null && !reconnectTask.IsCompleted)
                     {
-                        cts.Cancel();
+                        CancellationTokenSource cts = _reconnectionCancellationSource;
+                        if (cts != null)
+                        {
+                            cts.Cancel();
+                        }
+                        AsyncHelper.WaitForCompletion(reconnectTask, 0, null, rethrowExceptions: false); // we do not need to deal with possible exceptions in reconnection
+                        if (State != ConnectionState.Open)
+                        {// if we cancelled before the connection was opened 
+                            OnStateChange(DbConnectionInternal.StateChangeClosed);
+                        }
                     }
-                    AsyncHelper.WaitForCompletion(reconnectTask, 0, null, rethrowExceptions: false); // we do not need to deal with possible exceptions in reconnection
-                    if (State != ConnectionState.Open)
-                    {// if we cancelled before the connection was opened 
-                        OnStateChange(DbConnectionInternal.StateChangeClosed);
-                    }
-                }
-                CancelOpenAndWait();
-                CloseInnerConnection();
-                GC.SuppressFinalize(this);
+                    CancelOpenAndWait();
+                    CloseInnerConnection();
+                    GC.SuppressFinalize(this);
 
-                if (null != Statistics)
-                {
-                    ADP.TimerCurrent(out _statistics._closeTimestamp);
+                    if (null != Statistics)
+                    {
+                        ADP.TimerCurrent(out _statistics._closeTimestamp);
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                e = ex;
-                throw;
+                catch (Exception ex)
+                {
+                    e = ex;
+                    throw;
+                }
+                finally
+                {
+                    SqlStatistics.StopTimer(statistics);
+
+                    // we only want to log this if the previous state of the 
+                    // connection is open, as that's the valid use-case
+                    if (previousState != ConnectionState.Closed)
+                    {
+                        if (e != null)
+                        {
+                            s_diagnosticListener.WriteConnectionCloseError(operationId, clientConnectionId, this, e);
+                        }
+                        else
+                        {
+                            s_diagnosticListener.WriteConnectionCloseAfter(operationId, clientConnectionId, this);
+                        }
+                    }
+                }
             }
             finally
             {
-                SqlStatistics.StopTimer(statistics);
-
-                // we only want to log this if the previous state of the 
-                // connection is open, as that's the valid use-case
-                if (previousState != ConnectionState.Closed)
-                {
-                    if (e != null)
-                    {
-                        s_diagnosticListener.WriteConnectionCloseError(operationId, clientConnectionId, this, e);
-                    }
-                    else
-                    {
-                        s_diagnosticListener.WriteConnectionCloseAfter(operationId, clientConnectionId, this);
-                    }
-                }
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
@@ -980,39 +999,48 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Open/*' />
         public override void Open()
         {
-            Guid operationId = s_diagnosticListener.WriteConnectionOpenBefore(this);
-
-            PrepareStatisticsForNewConnection();
-
-            SqlStatistics statistics = null;
-
-            Exception e = null;
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlConnection.Open|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
+            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlConnection.Open|API|Correlation> ObjectID {0}#, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
             try
             {
-                statistics = SqlStatistics.StartTimer(Statistics);
+                Guid operationId = s_diagnosticListener.WriteConnectionOpenBefore(this);
 
-                if (!TryOpen(null))
+                PrepareStatisticsForNewConnection();
+
+                SqlStatistics statistics = null;
+
+                Exception e = null;
+                try
                 {
-                    throw ADP.InternalError(ADP.InternalErrorCode.SynchronousConnectReturnedPending);
+                    statistics = SqlStatistics.StartTimer(Statistics);
+
+                    if (!TryOpen(null))
+                    {
+                        throw ADP.InternalError(ADP.InternalErrorCode.SynchronousConnectReturnedPending);
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                e = ex;
-                throw;
+                catch (Exception ex)
+                {
+                    e = ex;
+                    throw;
+                }
+                finally
+                {
+                    SqlStatistics.StopTimer(statistics);
+
+                    if (e != null)
+                    {
+                        s_diagnosticListener.WriteConnectionOpenError(operationId, this, e);
+                    }
+                    else
+                    {
+                        s_diagnosticListener.WriteConnectionOpenAfter(operationId, this);
+                    }
+                }
             }
             finally
             {
-                SqlStatistics.StopTimer(statistics);
-
-                if (e != null)
-                {
-                    s_diagnosticListener.WriteConnectionOpenError(operationId, this, e);
-                }
-                else
-                {
-                    s_diagnosticListener.WriteConnectionOpenAfter(operationId, this);
-                }
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
@@ -1046,6 +1074,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (ctoken.IsCancellationRequested)
                     {
+                        SqlClientEventSource.Log.TraceEvent("<sc.SqlConnection.ReconnectAsync|INFO> Orginal ClientConnectionID: {0} - reconnection cancelled.", _originalConnectionId.ToString());
                         return;
                     }
                     try
@@ -1064,12 +1093,15 @@ namespace Microsoft.Data.SqlClient
                         {
                             ForceNewConnection = false;
                         }
+                        SqlClientEventSource.Log.TraceEvent("<sc.SqlConnection.ReconnectIfNeeded|INFO> Reconnection suceeded.  ClientConnectionID {0} -> {1}", _originalConnectionId.ToString(), ClientConnectionId.ToString());
                         return;
                     }
                     catch (SqlException e)
                     {
+                        SqlClientEventSource.Log.TraceEvent("<sc.SqlConnection.ReconnectAsyncINFO> Orginal ClientConnectionID {0} - reconnection attempt failed error {1}", _originalConnectionId, e.Message);
                         if (attempt == retryCount - 1)
                         {
+                            SqlClientEventSource.Log.TraceEvent("<sc.SqlConnection.ReconnectAsync|INFO> Orginal ClientConnectionID {0} - give up reconnection", _originalConnectionId.ToString());
                             throw SQL.CR_AllAttemptsFailed(e, _originalConnectionId);
                         }
                         if (timeout > 0 && ADP.TimerRemaining(commandTimeoutExpiration) < ADP.TimerFromSeconds(ConnectRetryInterval))
@@ -1139,8 +1171,10 @@ namespace Microsoft.Data.SqlClient
                                     if (runningReconnect == null)
                                     {
                                         if (cData._unrecoverableStatesCount == 0)
-                                        { // could change since the first check, but now is stable since connection is know to be broken
+                                        {
+                                            // could change since the first check, but now is stable since connection is know to be broken
                                             _originalConnectionId = ClientConnectionId;
+                                            SqlClientEventSource.Log.TraceEvent("<sc.SqlConnection.ReconnectIfNeeded|INFO> Connection ClientConnectionID {0} is invalid, reconnecting", _originalConnectionId.ToString());
                                             _recoverySessionData = cData;
                                             if (beforeDisconnect != null)
                                             {
@@ -1233,82 +1267,91 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsync/*' />
         public override Task OpenAsync(CancellationToken cancellationToken)
         {
-            Guid operationId = s_diagnosticListener.WriteConnectionOpenBefore(this);
-
-            PrepareStatisticsForNewConnection();
-
-            SqlStatistics statistics = null;
+            long scopeID = SqlClientEventSource.Log.PoolerScopeEnterEvent("<sc.SqlConnection.OpenAsync|API> {0}#", ObjectID);
+            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlConnection.OpenAsync|API|Correlation> ObjectID {0}#, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
             try
             {
-                statistics = SqlStatistics.StartTimer(Statistics);
+                Guid operationId = s_diagnosticListener.WriteConnectionOpenBefore(this);
 
-                System.Transactions.Transaction transaction = ADP.GetCurrentTransaction();
-                TaskCompletionSource<DbConnectionInternal> completion = new TaskCompletionSource<DbConnectionInternal>(transaction);
-                TaskCompletionSource<object> result = new TaskCompletionSource<object>();
+                PrepareStatisticsForNewConnection();
 
-                if (s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlAfterOpenConnection) ||
-                    s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlErrorOpenConnection))
-                {
-                    result.Task.ContinueWith((t) =>
-                    {
-                        if (t.Exception != null)
-                        {
-                            s_diagnosticListener.WriteConnectionOpenError(operationId, this, t.Exception);
-                        }
-                        else
-                        {
-                            s_diagnosticListener.WriteConnectionOpenAfter(operationId, this);
-                        }
-                    }, TaskScheduler.Default);
-                }
-
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    result.SetCanceled();
-                    return result.Task;
-                }
-
-
-                bool completed;
-
+                SqlStatistics statistics = null;
                 try
                 {
-                    completed = TryOpen(completion);
-                }
-                catch (Exception e)
-                {
-                    s_diagnosticListener.WriteConnectionOpenError(operationId, this, e);
-                    result.SetException(e);
-                    return result.Task;
-                }
+                    statistics = SqlStatistics.StartTimer(Statistics);
 
-                if (completed)
-                {
-                    result.SetResult(null);
-                }
-                else
-                {
-                    CancellationTokenRegistration registration = new CancellationTokenRegistration();
-                    if (cancellationToken.CanBeCanceled)
+                    System.Transactions.Transaction transaction = ADP.GetCurrentTransaction();
+                    TaskCompletionSource<DbConnectionInternal> completion = new TaskCompletionSource<DbConnectionInternal>(transaction);
+                    TaskCompletionSource<object> result = new TaskCompletionSource<object>();
+
+                    if (s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlAfterOpenConnection) ||
+                        s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlErrorOpenConnection))
                     {
-                        registration = cancellationToken.Register(s_openAsyncCancel, completion);
+                        result.Task.ContinueWith((t) =>
+                        {
+                            if (t.Exception != null)
+                            {
+                                s_diagnosticListener.WriteConnectionOpenError(operationId, this, t.Exception);
+                            }
+                            else
+                            {
+                                s_diagnosticListener.WriteConnectionOpenAfter(operationId, this);
+                            }
+                        }, TaskScheduler.Default);
                     }
-                    OpenAsyncRetry retry = new OpenAsyncRetry(this, completion, result, registration);
-                    _currentCompletion = new Tuple<TaskCompletionSource<DbConnectionInternal>, Task>(completion, result.Task);
-                    completion.Task.ContinueWith(retry.Retry, TaskScheduler.Default);
+
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        result.SetCanceled();
+                        return result.Task;
+                    }
+
+
+                    bool completed;
+
+                    try
+                    {
+                        completed = TryOpen(completion);
+                    }
+                    catch (Exception e)
+                    {
+                        s_diagnosticListener.WriteConnectionOpenError(operationId, this, e);
+                        result.SetException(e);
+                        return result.Task;
+                    }
+
+                    if (completed)
+                    {
+                        result.SetResult(null);
+                    }
+                    else
+                    {
+                        CancellationTokenRegistration registration = new CancellationTokenRegistration();
+                        if (cancellationToken.CanBeCanceled)
+                        {
+                            registration = cancellationToken.Register(s_openAsyncCancel, completion);
+                        }
+                        OpenAsyncRetry retry = new OpenAsyncRetry(this, completion, result, registration);
+                        _currentCompletion = new Tuple<TaskCompletionSource<DbConnectionInternal>, Task>(completion, result.Task);
+                        completion.Task.ContinueWith(retry.Retry, TaskScheduler.Default);
+                        return result.Task;
+                    }
+
                     return result.Task;
                 }
-
-                return result.Task;
-            }
-            catch (Exception ex)
-            {
-                s_diagnosticListener.WriteConnectionOpenError(operationId, this, ex);
-                throw;
+                catch (Exception ex)
+                {
+                    s_diagnosticListener.WriteConnectionOpenError(operationId, this, ex);
+                    throw;
+                }
+                finally
+                {
+                    SqlStatistics.StopTimer(statistics);
+                }
             }
             finally
             {
-                SqlStatistics.StopTimer(statistics);
+                SqlClientEventSource.Log.PoolerScopeLeaveEvent(scopeID);
             }
         }
 
@@ -1352,6 +1395,7 @@ namespace Microsoft.Data.SqlClient
 
             internal void Retry(Task<DbConnectionInternal> retryTask)
             {
+                SqlClientEventSource.Log.TraceEvent("<sc.SqlConnection.OpenAsyncRetry|Info> {0}#", _parent.ObjectID);
                 _registration.Dispose();
                 try
                 {
@@ -1609,6 +1653,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (capturedCloseCount == _closeCount)
                         {
+                            SqlClientEventSource.Log.TraceEvent("<sc.SqlConnection.OnError|INFO> {0}#, Connection broken.", ObjectID);
                             Close();
                         }
                     };
@@ -1617,6 +1662,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
+                    SqlClientEventSource.Log.TraceEvent("<sc.SqlConnection.OnError|INFO> {0}#, Connection broken.", ObjectID);
                     Close();
                 }
             }
@@ -1667,6 +1713,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void OnInfoMessage(SqlInfoMessageEventArgs imevent, out bool notified)
         {
+            SqlClientEventSource.Log.TraceEvent("<sc.SqlConnection.OnInfoMessage|API|INFO> {0}#, Message='{1}'", ObjectID, (null != imevent) ? imevent.Message : "");
             SqlInfoMessageEventHandler handler = InfoMessage;
             if (null != handler)
             {
@@ -1692,84 +1739,102 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ChangePasswordConnectionStringNewPassword/*' />
         public static void ChangePassword(string connectionString, string newPassword)
         {
-            if (string.IsNullOrEmpty(connectionString))
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlConnection.ChangePassword|API>");
+            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlConnection.ChangePassword|API|Correlation> ActivityID {0}", ActivityCorrelator.Current.ToString());
+            try
             {
-                throw SQL.ChangePasswordArgumentMissing(nameof(newPassword));
-            }
-            if (string.IsNullOrEmpty(newPassword))
-            {
-                throw SQL.ChangePasswordArgumentMissing(nameof(newPassword));
-            }
-            if (TdsEnums.MAXLEN_NEWPASSWORD < newPassword.Length)
-            {
-                throw ADP.InvalidArgumentLength(nameof(newPassword), TdsEnums.MAXLEN_NEWPASSWORD);
-            }
+                if (string.IsNullOrEmpty(connectionString))
+                {
+                    throw SQL.ChangePasswordArgumentMissing(nameof(newPassword));
+                }
+                if (string.IsNullOrEmpty(newPassword))
+                {
+                    throw SQL.ChangePasswordArgumentMissing(nameof(newPassword));
+                }
+                if (TdsEnums.MAXLEN_NEWPASSWORD < newPassword.Length)
+                {
+                    throw ADP.InvalidArgumentLength(nameof(newPassword), TdsEnums.MAXLEN_NEWPASSWORD);
+                }
 
-            SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential: null, accessToken: null);
+                SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential: null, accessToken: null);
 
-            SqlConnectionString connectionOptions = SqlConnectionFactory.FindSqlConnectionOptions(key);
-            if (connectionOptions.IntegratedSecurity)
-            {
-                throw SQL.ChangePasswordConflictsWithSSPI();
-            }
-            if (!string.IsNullOrEmpty(connectionOptions.AttachDBFilename))
-            {
-                throw SQL.ChangePasswordUseOfUnallowedKey(SqlConnectionString.KEY.AttachDBFilename);
-            }
+                SqlConnectionString connectionOptions = SqlConnectionFactory.FindSqlConnectionOptions(key);
+                if (connectionOptions.IntegratedSecurity)
+                {
+                    throw SQL.ChangePasswordConflictsWithSSPI();
+                }
+                if (!string.IsNullOrEmpty(connectionOptions.AttachDBFilename))
+                {
+                    throw SQL.ChangePasswordUseOfUnallowedKey(SqlConnectionString.KEY.AttachDBFilename);
+                }
 
-            ChangePassword(connectionString, connectionOptions, null, newPassword, null);
+                ChangePassword(connectionString, connectionOptions, null, newPassword, null);
+            }
+            finally
+            {
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
+            }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ChangePasswordConnectionStringCredentialNewSecurePassword/*' />
         public static void ChangePassword(string connectionString, SqlCredential credential, SecureString newSecurePassword)
         {
-            if (string.IsNullOrEmpty(connectionString))
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlConnection.ChangePassword|API>");
+            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlConnection.ChangePassword|API|Correlation> ActivityID {0}", ActivityCorrelator.Current.ToString());
+            try
             {
-                throw SQL.ChangePasswordArgumentMissing(nameof(connectionString));
-            }
+                if (string.IsNullOrEmpty(connectionString))
+                {
+                    throw SQL.ChangePasswordArgumentMissing(nameof(connectionString));
+                }
 
-            // check credential; not necessary to check the length of password in credential as the check is done by SqlCredential class
-            if (credential == null)
+                // check credential; not necessary to check the length of password in credential as the check is done by SqlCredential class
+                if (credential == null)
+                {
+                    throw SQL.ChangePasswordArgumentMissing(nameof(credential));
+                }
+
+                if (newSecurePassword == null || newSecurePassword.Length == 0)
+                {
+                    throw SQL.ChangePasswordArgumentMissing(nameof(newSecurePassword));
+                }
+
+                if (!newSecurePassword.IsReadOnly())
+                {
+                    throw ADP.MustBeReadOnly(nameof(newSecurePassword));
+                }
+
+                if (TdsEnums.MAXLEN_NEWPASSWORD < newSecurePassword.Length)
+                {
+                    throw ADP.InvalidArgumentLength(nameof(newSecurePassword), TdsEnums.MAXLEN_NEWPASSWORD);
+                }
+
+                SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null);
+
+                SqlConnectionString connectionOptions = SqlConnectionFactory.FindSqlConnectionOptions(key);
+
+                // Check for connection string values incompatible with SqlCredential
+                if (!string.IsNullOrEmpty(connectionOptions.UserID) || !string.IsNullOrEmpty(connectionOptions.Password))
+                {
+                    throw ADP.InvalidMixedArgumentOfSecureAndClearCredential();
+                }
+
+                if (connectionOptions.IntegratedSecurity)
+                {
+                    throw SQL.ChangePasswordConflictsWithSSPI();
+                }
+
+                if (!string.IsNullOrEmpty(connectionOptions.AttachDBFilename))
+                {
+                    throw SQL.ChangePasswordUseOfUnallowedKey(SqlConnectionString.KEY.AttachDBFilename);
+                }
+
+                ChangePassword(connectionString, connectionOptions, credential, null, newSecurePassword);
+            }
+            finally
             {
-                throw SQL.ChangePasswordArgumentMissing(nameof(credential));
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
-
-            if (newSecurePassword == null || newSecurePassword.Length == 0)
-            {
-                throw SQL.ChangePasswordArgumentMissing(nameof(newSecurePassword));
-            }
-
-            if (!newSecurePassword.IsReadOnly())
-            {
-                throw ADP.MustBeReadOnly(nameof(newSecurePassword));
-            }
-
-            if (TdsEnums.MAXLEN_NEWPASSWORD < newSecurePassword.Length)
-            {
-                throw ADP.InvalidArgumentLength(nameof(newSecurePassword), TdsEnums.MAXLEN_NEWPASSWORD);
-            }
-
-            SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null);
-
-            SqlConnectionString connectionOptions = SqlConnectionFactory.FindSqlConnectionOptions(key);
-
-            // Check for connection string values incompatible with SqlCredential
-            if (!string.IsNullOrEmpty(connectionOptions.UserID) || !string.IsNullOrEmpty(connectionOptions.Password))
-            {
-                throw ADP.InvalidMixedArgumentOfSecureAndClearCredential();
-            }
-
-            if (connectionOptions.IntegratedSecurity)
-            {
-                throw SQL.ChangePasswordConflictsWithSSPI();
-            }
-
-            if (!string.IsNullOrEmpty(connectionOptions.AttachDBFilename))
-            {
-                throw SQL.ChangePasswordUseOfUnallowedKey(SqlConnectionString.KEY.AttachDBFilename);
-            }
-
-            ChangePassword(connectionString, connectionOptions, credential, null, newSecurePassword);
         }
 
         private static void ChangePassword(string connectionString, SqlConnectionString connectionOptions, SqlCredential credential, string newPassword, SecureString newSecurePassword)
@@ -1873,6 +1938,10 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(TypeSystemAssemblyVersion != null, "TypeSystemAssembly should be set !");
             if (string.Equals(asmRef.Name, "Microsoft.SqlServer.Types", StringComparison.OrdinalIgnoreCase))
             {
+                if (asmRef.Version != TypeSystemAssemblyVersion && SqlClientEventSource.Log.IsTraceEnabled())
+                {
+                    SqlClientEventSource.Log.TraceEvent("<sc.SqlConnection.ResolveTypeAssembly> SQL CLR type version change: Server sent {0}, client will instantiate {1}", asmRef.Version.ToString(), TypeSystemAssemblyVersion.ToString());
+                }
                 asmRef.Version = TypeSystemAssemblyVersion;
             }
             try

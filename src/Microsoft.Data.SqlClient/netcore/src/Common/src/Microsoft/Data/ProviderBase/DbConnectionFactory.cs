@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using System;
+using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data.ProviderBase
 {
@@ -21,12 +22,15 @@ namespace Microsoft.Data.ProviderBase
         private const int PruningDueTime = 4 * 60 * 1000;           // 4 minutes
         private const int PruningPeriod = 30 * 1000;           // thirty seconds
 
+        private static int _objectTypeCount; // EventSource counter
+        internal int ObjectID { get; } = Interlocked.Increment(ref _objectTypeCount);
 
         // s_pendingOpenNonPooled is an array of tasks used to throttle creation of non-pooled connections to 
         // a maximum of Environment.ProcessorCount at a time.
         private static uint s_pendingOpenNonPooledNext = 0;
         private static Task<DbConnectionInternal>[] s_pendingOpenNonPooled = new Task<DbConnectionInternal>[Environment.ProcessorCount];
         private static Task<DbConnectionInternal> s_completedTask;
+
 
         protected DbConnectionFactory()
         {
@@ -45,25 +49,40 @@ namespace Microsoft.Data.ProviderBase
 
         public void ClearAllPools()
         {
-            Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup> connectionPoolGroups = _connectionPoolGroups;
-            foreach (KeyValuePair<DbConnectionPoolKey, DbConnectionPoolGroup> entry in connectionPoolGroups)
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<prov.DbConnectionFactory.ClearAllPools|{0}>", "API");
+            try
             {
-                DbConnectionPoolGroup poolGroup = entry.Value;
-                if (null != poolGroup)
+                Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup> connectionPoolGroups = _connectionPoolGroups;
+                foreach (KeyValuePair<DbConnectionPoolKey, DbConnectionPoolGroup> entry in connectionPoolGroups)
                 {
-                    poolGroup.Clear();
+                    DbConnectionPoolGroup poolGroup = entry.Value;
+                    if (null != poolGroup)
+                    {
+                        poolGroup.Clear();
+                    }
                 }
+            }
+            finally
+            {
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
         public void ClearPool(DbConnection connection)
         {
             ADP.CheckArgumentNull(connection, nameof(connection));
-
-            DbConnectionPoolGroup poolGroup = GetConnectionPoolGroup(connection);
-            if (null != poolGroup)
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<prov.DbConnectionFactory.ClearPool|API> {0}#", GetObjectId(connection));
+            try
             {
-                poolGroup.Clear();
+                DbConnectionPoolGroup poolGroup = GetConnectionPoolGroup(connection);
+                if (null != poolGroup)
+                {
+                    poolGroup.Clear();
+                }
+            }
+            finally
+            {
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
@@ -71,12 +90,19 @@ namespace Microsoft.Data.ProviderBase
         {
             Debug.Assert(key != null, "key cannot be null");
             ADP.CheckArgumentNull(key.ConnectionString, nameof(key) + "." + nameof(key.ConnectionString));
-
-            DbConnectionPoolGroup poolGroup;
-            Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup> connectionPoolGroups = _connectionPoolGroups;
-            if (connectionPoolGroups.TryGetValue(key, out poolGroup))
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<prov.DbConnectionFactory.ClearPool|API> connectionString");
+            try
             {
-                poolGroup.Clear();
+                DbConnectionPoolGroup poolGroup;
+                Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup> connectionPoolGroups = _connectionPoolGroups;
+                if (connectionPoolGroups.TryGetValue(key, out poolGroup))
+                {
+                    poolGroup.Clear();
+                }
+            }
+            finally
+            {
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
@@ -100,6 +126,7 @@ namespace Microsoft.Data.ProviderBase
             {
                 newConnection.MakeNonPooledObject(owningConnection);
             }
+            SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionFactory.CreateNonPooledConnection|RES|CPOOL> {0}#, Non-pooled database connection created.", ObjectID);
             return newConnection;
         }
 
@@ -113,6 +140,7 @@ namespace Microsoft.Data.ProviderBase
             {
                 newConnection.MakePooledConnection(pool);
             }
+            SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionFactory.CreatePooledConnection|RES|CPOOL> {0}#, Pooled database connection created.", ObjectID);
             return newConnection;
         }
 
@@ -167,6 +195,8 @@ namespace Microsoft.Data.ProviderBase
             // however, don't rebuild connectionOptions if no pooling is involved - let new connections do that work
             if (connectionPoolGroup.IsDisabled && (null != connectionPoolGroup.PoolGroupOptions))
             {
+                SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionFactory.GetConnectionPool|RES|INFO|CPOOL> {0}#, DisabledPoolGroup={1}#", ObjectID, connectionPoolGroup.ObjectID);
+
                 // reusing existing pool option in case user originally used SetConnectionPoolOptions
                 DbConnectionPoolGroupOptions poolOptions = connectionPoolGroup.PoolGroupOptions;
 
@@ -272,6 +302,9 @@ namespace Microsoft.Data.ProviderBase
 
         private void PruneConnectionPoolGroups(object state)
         {
+            // when debugging this method, expect multiple threads at the same time
+            SqlClientEventSource.Log.AdvanceTrace("<prov.DbConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> {0}#", ObjectID);
+            
             // First, walk the pool release list and attempt to clear each
             // pool, when the pool is finally empty, we dispose of it.  If the
             // pool isn't empty, it's because there are active connections or
@@ -290,6 +323,7 @@ namespace Microsoft.Data.ProviderBase
                             if (0 == pool.Count)
                             {
                                 _poolsToRelease.Remove(pool);
+                                SqlClientEventSource.Log.AdvanceTrace("<prov.DbConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> {0}#, ReleasePool={1}#", ObjectID, pool.ObjectID);
                             }
                         }
                     }
@@ -313,6 +347,7 @@ namespace Microsoft.Data.ProviderBase
                             if (0 == poolsLeft)
                             {
                                 _poolGroupsToRelease.Remove(poolGroup);
+                                SqlClientEventSource.Log.AdvanceTrace("<prov.DbConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> {0}#, ReleasePoolGroup={1}#", ObjectID, poolGroup.ObjectID);
                             }
                         }
                     }
@@ -375,6 +410,7 @@ namespace Microsoft.Data.ProviderBase
         internal void QueuePoolGroupForRelease(DbConnectionPoolGroup poolGroup)
         {
             Debug.Assert(null != poolGroup, "null poolGroup?");
+            SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionFactory.QueuePoolGroupForRelease|RES|INFO|CPOOL> {0}#, poolGroup={1}#", ObjectID, poolGroup.ObjectID);
 
             lock (_poolGroupsToRelease)
             {
@@ -426,6 +462,8 @@ namespace Microsoft.Data.ProviderBase
         abstract internal DbConnectionPoolGroup GetConnectionPoolGroup(DbConnection connection);
 
         abstract internal DbConnectionInternal GetInnerConnection(DbConnection connection);
+
+        abstract protected int GetObjectId(DbConnection conne);
 
         abstract internal void PermissionDemand(DbConnection outerConnection);
 

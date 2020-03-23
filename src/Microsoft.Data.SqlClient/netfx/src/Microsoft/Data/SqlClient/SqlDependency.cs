@@ -288,7 +288,7 @@ namespace Microsoft.Data.SqlClient
 
 
         private readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
-        private static int _objectTypeCount; // Bid counter
+        private static int _objectTypeCount; // EventSource Counter
         internal int ObjectID
         {
             get
@@ -929,7 +929,6 @@ namespace Microsoft.Data.SqlClient
         private static bool AddToServerUserHash(string server, IdentityUserNamePair identityUser, DatabaseServicePair databaseService)
         {
             long scopeID = SqlClientEventSource.Log.NotificationsScopeEnterEvent("<sc.SqlDependency.AddToServerUserHash|DEP> server: '{0}', database: '{1}', service: '{2}'", server, databaseService.Database, databaseService.Service);
-
             try
             {
                 bool result = false;
@@ -985,7 +984,6 @@ namespace Microsoft.Data.SqlClient
         private static void RemoveFromServerUserHash(string server, IdentityUserNamePair identityUser, DatabaseServicePair databaseService)
         {
             long scopeID = SqlClientEventSource.Log.NotificationsScopeEnterEvent("<sc.SqlDependency.RemoveFromServerUserHash|DEP> server: '{0}', database: '{1}', service: '{2}'", server, databaseService.Database, databaseService.Service);
-
             try
             {
                 lock (_serverUserHash)
@@ -1367,7 +1365,6 @@ namespace Microsoft.Data.SqlClient
         private string ComputeCommandHash(string connectionString, SqlCommand command)
         {
             long scopeID = SqlClientEventSource.Log.NotificationsScopeEnterEvent("<sc.SqlDependency.ComputeCommandHash|DEP> {0}#, SqlCommand: {1}#", ObjectID, command.ObjectID);
-
             try
             {
                 // Create a string representing the concatenation of the connection string, the command text and .ToString on all its parameter values.

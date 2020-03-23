@@ -81,7 +81,7 @@ namespace Microsoft.Data.SqlClient
         // -----------
 
         private readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
-        private static int _objectTypeCount; // Bid counter
+        private static int _objectTypeCount; // EventSource Counter
         internal int ObjectID
         {
             get
@@ -470,9 +470,7 @@ namespace Microsoft.Data.SqlClient
         // Remove from commandToDependenciesHash all references to the passed dependency.
         private void RemoveDependencyFromCommandToDependenciesHash(SqlDependency dependency)
         {
-
             long scopeID = SqlClientEventSource.Log.NotificationsScopeEnterEvent("<sc.SqlDependencyPerAppDomainDispatcher.RemoveDependencyFromCommandToDependenciesHash|DEP> {0}#, SqlDependency: {1}#", ObjectID, dependency.ObjectID);
-
             try
             {
                 lock (this)
@@ -539,7 +537,7 @@ namespace Microsoft.Data.SqlClient
                     // Enable the timer if needed (disable when empty, enable on the first addition).
                     if (!_SqlDependencyTimeOutTimerStarted)
                     {
-                        SqlClientEventSource.Log.NotificationsTrace("<sc.SqlDependencyPerAppDomainDispatcher.StartTimer|DEP> Timer not yet started, starting.");
+                        SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlDependencyPerAppDomainDispatcher.StartTimer|DEP> Timer not yet started, starting.");
                         _timeoutTimer.Change(15000 /* 15 secs */, 15000 /* 15 secs */);
 
                         // Save this as the earlier timeout to come.
@@ -548,7 +546,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else if (_nextTimeout > dep.ExpirationTime)
                     {
-                        SqlClientEventSource.Log.NotificationsTrace("<sc.SqlDependencyPerAppDomainDispatcher.StartTimer|DEP> Timer already started, resetting time.");
+                        SqlClientEventSource.Log.NotificationsTraceEvent("<sc.SqlDependencyPerAppDomainDispatcher.StartTimer|DEP> Timer already started, resetting time.");
 
                         // Save this as the earlier timeout to come.
                         _nextTimeout = dep.ExpirationTime;

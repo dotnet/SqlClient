@@ -62,14 +62,23 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns></returns>
         public uint StartReceive()
         {
-            SNIPacket packet = null;
-
-            if (ReceiveAsync(ref packet) == TdsEnums.SNI_SUCCESS_IO_PENDING)
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNIMarsConnection.StartReceive |SNI|INFO|SCOPE> StartReceive");
+            try
             {
-                return TdsEnums.SNI_SUCCESS_IO_PENDING;
-            }
+                SNIPacket packet = null;
 
-            return SNICommon.ReportSNIError(SNIProviders.SMUX_PROV, 0, SNICommon.ConnNotUsableError, string.Empty);
+                if (ReceiveAsync(ref packet) == TdsEnums.SNI_SUCCESS_IO_PENDING)
+                {
+                    SqlClientEventSource.Log.SNITrace("<sc.SNI.SNIMarsConnection.StartReceive |SNI|INFO|Trace> Success IO pending.");
+                    return TdsEnums.SNI_SUCCESS_IO_PENDING;
+                }
+                SqlClientEventSource.Log.SNITrace("<sc.SNI.SNIMarsConnection.StartReceive |SNI|ERR> Connection not useable.");
+                return SNICommon.ReportSNIError(SNIProviders.SMUX_PROV, 0, SNICommon.ConnNotUsableError, string.Empty);
+            }
+            finally
+            {
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
+            }
         }
 
         /// <summary>
@@ -79,9 +88,17 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error code</returns>
         public uint Send(SNIPacket packet)
         {
-            lock (this)
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNIMarsConnection.Send |SNI|INFO|SCOPE> Send");
+            try
             {
-                return _lowerHandle.Send(packet);
+                lock (this)
+                {
+                    return _lowerHandle.Send(packet);
+                }
+            }
+            finally
+            {
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
@@ -93,9 +110,17 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error code</returns>
         public uint SendAsync(SNIPacket packet, SNIAsyncCallback callback)
         {
-            lock (this)
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNIMarsConnection.SendAsync |SNI|INFO|SCOPE> SendAsync");
+            try
             {
-                return _lowerHandle.SendAsync(packet, false, callback);
+                lock (this)
+                {
+                    return _lowerHandle.SendAsync(packet, false, callback);
+                }
+            }
+            finally
+            {
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
@@ -106,15 +131,23 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error code</returns>
         public uint ReceiveAsync(ref SNIPacket packet)
         {
-            if (packet != null)
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNIMarsConnection.SendAsync |SNI|INFO|SCOPE> SendAsync");
+            try
             {
-                packet.Release();
-                packet = null;
-            }
+                if (packet != null)
+                {
+                    packet.Release();
+                    packet = null;
+                }
 
-            lock (this)
+                lock (this)
+                {
+                    return _lowerHandle.ReceiveAsync(ref packet);
+                }
+            }
+            finally
             {
-                return _lowerHandle.ReceiveAsync(ref packet);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
@@ -124,9 +157,17 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error status</returns>
         public uint CheckConnection()
         {
-            lock (this)
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNIMarsConnection.CheckConnection |SNI|INFO|SCOPE>");
+            try
             {
-                return _lowerHandle.CheckConnection();
+                lock (this)
+                {
+                    return _lowerHandle.CheckConnection();
+                }
+            }
+            finally
+            {
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
@@ -136,6 +177,10 @@ namespace Microsoft.Data.SqlClient.SNI
         public void HandleReceiveError(SNIPacket packet)
         {
             Debug.Assert(Monitor.IsEntered(this), "HandleReceiveError was called without being locked.");
+            if (!Monitor.IsEntered(this))
+            {
+                SqlClientEventSource.Log.SNITrace("<sc.SNI.SNIMarsConnection.HandleReceiveError |SNI|ERR> HandleReceiveError was called without being locked.");
+            }
             foreach (SNIMarsHandle handle in _sessions.Values)
             {
                 if (packet.HasCompletionCallback)
@@ -163,132 +208,142 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="sniErrorCode">SNI error code</param>
         public void HandleReceiveComplete(SNIPacket packet, uint sniErrorCode)
         {
-            SNISMUXHeader currentHeader = null;
-            SNIPacket currentPacket = null;
-            SNIMarsHandle currentSession = null;
-
-            if (sniErrorCode != TdsEnums.SNI_SUCCESS)
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNIMarsConnection.HandleReceiveComplete |SNI|INFO|SCOPE>");
+            try
             {
-                lock (this)
+                SNISMUXHeader currentHeader = null;
+                SNIPacket currentPacket = null;
+                SNIMarsHandle currentSession = null;
+
+                if (sniErrorCode != TdsEnums.SNI_SUCCESS)
                 {
-                    HandleReceiveError(packet);
-                    return;
-                }
-            }
-
-            while (true)
-            {
-                lock (this)
-                {
-                    if (_currentHeaderByteCount != SNISMUXHeader.HEADER_LENGTH)
+                    lock (this)
                     {
-                        currentHeader = null;
-                        currentPacket = null;
-                        currentSession = null;
-
-                        while (_currentHeaderByteCount != SNISMUXHeader.HEADER_LENGTH)
-                        {
-                            int bytesTaken = packet.TakeData(_headerBytes, _currentHeaderByteCount, SNISMUXHeader.HEADER_LENGTH - _currentHeaderByteCount);
-                            _currentHeaderByteCount += bytesTaken;
-
-                            if (bytesTaken == 0)
-                            {
-                                sniErrorCode = ReceiveAsync(ref packet);
-
-                                if (sniErrorCode == TdsEnums.SNI_SUCCESS_IO_PENDING)
-                                {
-                                    return;
-                                }
-
-                                HandleReceiveError(packet);
-                                return;
-                            }
-                        }
-
-                        _currentHeader.Read(_headerBytes);
-
-                        _dataBytesLeft = (int)_currentHeader.length;
-                        _currentPacket = new SNIPacket(headerSize: 0, dataSize: (int)_currentHeader.length);
-                    }
-
-                    currentHeader = _currentHeader;
-                    currentPacket = _currentPacket;
-
-                    if (_currentHeader.flags == (byte)SNISMUXFlags.SMUX_DATA)
-                    {
-                        if (_dataBytesLeft > 0)
-                        {
-                            int length = packet.TakeData(_currentPacket, _dataBytesLeft);
-                            _dataBytesLeft -= length;
-
-                            if (_dataBytesLeft > 0)
-                            {
-                                sniErrorCode = ReceiveAsync(ref packet);
-
-                                if (sniErrorCode == TdsEnums.SNI_SUCCESS_IO_PENDING)
-                                {
-                                    return;
-                                }
-
-                                HandleReceiveError(packet);
-                                return;
-                            }
-                        }
-                    }
-
-                    _currentHeaderByteCount = 0;
-
-                    if (!_sessions.ContainsKey(_currentHeader.sessionId))
-                    {
-                        SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.SMUX_PROV, 0, SNICommon.InvalidParameterError, string.Empty);
                         HandleReceiveError(packet);
-                        _lowerHandle.Dispose();
-                        _lowerHandle = null;
+                        SqlClientEventSource.Log.SNITrace("<sc.SNI.SNIMarsConnection.HandleReceiveComplete |SNI|ERR> not successfull.");
                         return;
                     }
-
-                    if (_currentHeader.flags == (byte)SNISMUXFlags.SMUX_FIN)
-                    {
-                        _sessions.Remove(_currentHeader.sessionId);
-                    }
-                    else
-                    {
-                        currentSession = _sessions[_currentHeader.sessionId];
-                    }
                 }
 
-                if (currentHeader.flags == (byte)SNISMUXFlags.SMUX_DATA)
+                while (true)
                 {
-                    currentSession.HandleReceiveComplete(currentPacket, currentHeader);
-                }
-
-                if (_currentHeader.flags == (byte)SNISMUXFlags.SMUX_ACK)
-                {
-                    try
+                    lock (this)
                     {
-                        currentSession.HandleAck(currentHeader.highwater);
-                    }
-                    catch (Exception e)
-                    {
-                        SNICommon.ReportSNIError(SNIProviders.SMUX_PROV, SNICommon.InternalExceptionError, e);
-                    }
-                }
-
-                lock (this)
-                {
-                    if (packet.DataLeft == 0)
-                    {
-                        sniErrorCode = ReceiveAsync(ref packet);
-
-                        if (sniErrorCode == TdsEnums.SNI_SUCCESS_IO_PENDING)
+                        if (_currentHeaderByteCount != SNISMUXHeader.HEADER_LENGTH)
                         {
+                            currentHeader = null;
+                            currentPacket = null;
+                            currentSession = null;
+
+                            while (_currentHeaderByteCount != SNISMUXHeader.HEADER_LENGTH)
+                            {
+                                int bytesTaken = packet.TakeData(_headerBytes, _currentHeaderByteCount, SNISMUXHeader.HEADER_LENGTH - _currentHeaderByteCount);
+                                _currentHeaderByteCount += bytesTaken;
+
+                                if (bytesTaken == 0)
+                                {
+                                    sniErrorCode = ReceiveAsync(ref packet);
+
+                                    if (sniErrorCode == TdsEnums.SNI_SUCCESS_IO_PENDING)
+                                    {
+                                        SqlClientEventSource.Log.SNITrace("<sc.SNI.SNIMarsConnection.HandleReceiveComplete |SNI|ERR> not successfull.");
+                                        return;
+                                    }
+
+                                    HandleReceiveError(packet);
+                                    return;
+                                }
+                            }
+
+                            _currentHeader.Read(_headerBytes);
+
+                            _dataBytesLeft = (int)_currentHeader.length;
+                            _currentPacket = new SNIPacket(headerSize: 0, dataSize: (int)_currentHeader.length);
+                        }
+
+                        currentHeader = _currentHeader;
+                        currentPacket = _currentPacket;
+
+                        if (_currentHeader.flags == (byte)SNISMUXFlags.SMUX_DATA)
+                        {
+                            if (_dataBytesLeft > 0)
+                            {
+                                int length = packet.TakeData(_currentPacket, _dataBytesLeft);
+                                _dataBytesLeft -= length;
+
+                                if (_dataBytesLeft > 0)
+                                {
+                                    sniErrorCode = ReceiveAsync(ref packet);
+
+                                    if (sniErrorCode == TdsEnums.SNI_SUCCESS_IO_PENDING)
+                                    {
+                                        return;
+                                    }
+
+                                    HandleReceiveError(packet);
+                                    return;
+                                }
+                            }
+                        }
+
+                        _currentHeaderByteCount = 0;
+
+                        if (!_sessions.ContainsKey(_currentHeader.sessionId))
+                        {
+                            SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.SMUX_PROV, 0, SNICommon.InvalidParameterError, string.Empty);
+                            HandleReceiveError(packet);
+                            _lowerHandle.Dispose();
+                            _lowerHandle = null;
                             return;
                         }
 
-                        HandleReceiveError(packet);
-                        return;
+                        if (_currentHeader.flags == (byte)SNISMUXFlags.SMUX_FIN)
+                        {
+                            _sessions.Remove(_currentHeader.sessionId);
+                        }
+                        else
+                        {
+                            currentSession = _sessions[_currentHeader.sessionId];
+                        }
+                    }
+
+                    if (currentHeader.flags == (byte)SNISMUXFlags.SMUX_DATA)
+                    {
+                        currentSession.HandleReceiveComplete(currentPacket, currentHeader);
+                    }
+
+                    if (_currentHeader.flags == (byte)SNISMUXFlags.SMUX_ACK)
+                    {
+                        try
+                        {
+                            currentSession.HandleAck(currentHeader.highwater);
+                        }
+                        catch (Exception e)
+                        {
+                            SNICommon.ReportSNIError(SNIProviders.SMUX_PROV, SNICommon.InternalExceptionError, e);
+                        }
+                    }
+
+                    lock (this)
+                    {
+                        if (packet.DataLeft == 0)
+                        {
+                            sniErrorCode = ReceiveAsync(ref packet);
+
+                            if (sniErrorCode == TdsEnums.SNI_SUCCESS_IO_PENDING)
+                            {
+                                return;
+                            }
+
+                            HandleReceiveError(packet);
+                            return;
+                        }
                     }
                 }
+            }
+            finally
+            {
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
@@ -297,7 +352,15 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         public uint EnableSsl(uint options)
         {
-            return _lowerHandle.EnableSsl(options);
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNIMarsConnection.EnableSsl |SNI|INFO|SCOPE>");
+            try
+            {
+                return _lowerHandle.EnableSsl(options);
+            }
+            finally
+            {
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
+            }
         }
 
         /// <summary>
@@ -305,7 +368,15 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         public void DisableSsl()
         {
-            _lowerHandle.DisableSsl();
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNIMarsConnection.EnableSsl |SNI|INFO|SCOPE>");
+            try
+            {
+                _lowerHandle.DisableSsl();
+            }
+            finally
+            {
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
+            }
         }
 
 #if DEBUG
@@ -314,7 +385,15 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         public void KillConnection()
         {
-            _lowerHandle.KillConnection();
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNIMarsConnection.KillConnection |SNI|INFO|SCOPE>");
+            try
+            {
+                _lowerHandle.KillConnection();
+            }
+            finally
+            {
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
+            }
         }
 #endif
     }

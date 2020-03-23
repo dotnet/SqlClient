@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data.ProviderBase
 {
@@ -162,6 +163,7 @@ namespace Microsoft.Data.ProviderBase
                         // connection creation failed on semaphore waiting or if max pool reached
                         if (connectionPool.IsRunning)
                         {
+                            SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionFactory.GetConnection|RES|CPOOL> {0}#, GetConnection failed because a pool timeout occurred.", ObjectID);
                             // If GetConnection failed while the pool is running, the pool timeout occurred.
                             throw ADP.PooledOpenTimeout();
                         }
@@ -179,6 +181,7 @@ namespace Microsoft.Data.ProviderBase
 
             if (connection == null)
             {
+                SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionFactory.GetConnection|RES|CPOOL> {0}#, GetConnection failed because a pool timeout occurred and all retries were exhausted.", ObjectID);
                 // exhausted all retries or timed out - give up
                 throw ADP.PooledOpenTimeout();
             }
