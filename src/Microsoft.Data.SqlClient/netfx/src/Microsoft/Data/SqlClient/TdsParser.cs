@@ -1134,10 +1134,8 @@ namespace Microsoft.Data.SqlClient
 
                             UInt32 error = 0;
 
-                            // If we're using legacy server certificate validation behavior (Authentication keyword not provided and not using access token), then validate if
-                            //     Encrypt=true and Trust Sever Certificate = false.
-                            // If using Authentication keyword or access token, validate if Trust Server Certificate=false.
-                            bool shouldValidateServerCert = (encrypt && !trustServerCert) || ((authType != SqlAuthenticationMethod.NotSpecified || _connHandler._accessTokenInBytes != null) && !trustServerCert);
+                            // Validate Certificate if Trust Server Certificate=false and Encryption forced (EncryptionOptions.ON) from Server.
+                            bool shouldValidateServerCert = (_encryptionOption == EncryptionOptions.ON && !trustServerCert) || ((authType != SqlAuthenticationMethod.NotSpecified || _connHandler._accessTokenInBytes != null) && !trustServerCert);
 
                             UInt32 info = (shouldValidateServerCert ? TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE : 0)
                                 | (isYukonOrLater && (_encryptionOption & EncryptionOptions.CLIENT_CERT) == 0 ? TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE : 0);
@@ -1316,7 +1314,10 @@ namespace Microsoft.Data.SqlClient
             // Called when the connection that owns us is deactivated.
 
             SqlClientEventSource.Log.AdvancedTraceEvent("<sc.TdsParser.Deactivate|ADV> {0}# deactivating", ObjectID);
-            SqlClientEventSource.Log.StateDumpEvent("<sc.TdsParser.Deactivate|STATE> {0}#, {1}", ObjectID, TraceString());
+            if (SqlClientEventSource.Log.IsStateDumpEnabled())
+            {
+                SqlClientEventSource.Log.StateDumpEvent("<sc.TdsParser.Deactivate|STATE> {0}#, {1}", ObjectID, TraceString());
+            }
 
             if (MARSOn)
             {
@@ -13504,13 +13505,13 @@ namespace Microsoft.Data.SqlClient
                                         ;
         internal string TraceString()
         {
-            return String.Format(/*IFormatProvider*/ null,
+            return string.Format(/*IFormatProvider*/ null,
                             StateTraceFormatString,
-                            null == _physicalStateObj,
-                            null == _pMarsPhysicalConObj,
+                            null == _physicalStateObj ? bool.TrueString : bool.FalseString,
+                            null == _pMarsPhysicalConObj ? bool.TrueString : bool.FalseString,
                             _state,
                             _server,
-                            _fResetConnection,
+                            _fResetConnection ? bool.TrueString : bool.FalseString,
                             null == _defaultCollation ? "(null)" : _defaultCollation.TraceString(),
                             _defaultCodePage,
                             _defaultLCID,
@@ -13522,19 +13523,19 @@ namespace Microsoft.Data.SqlClient
                             _retainedTransactionId,
                             _nonTransactedOpenResultCount,
                             null == _connHandler ? "(null)" : _connHandler.ObjectID.ToString((IFormatProvider)null),
-                            _fMARS,
+                            _fMARS ? bool.TrueString : bool.FalseString,
                             null == _sessionPool ? "(null)" : _sessionPool.TraceString(),
-                            _isShiloh,
-                            _isShilohSP1,
-                            _isYukon,
+                            _isShiloh ? bool.TrueString : bool.FalseString,
+                            _isShilohSP1 ? bool.TrueString : bool.FalseString,
+                            _isYukon ? bool.TrueString : bool.FalseString,
                             null == _sniSpnBuffer ? "(null)" : _sniSpnBuffer.Length.ToString((IFormatProvider)null),
                             _physicalStateObj != null ? "(null)" : _physicalStateObj.ErrorCount.ToString((IFormatProvider)null),
                             _physicalStateObj != null ? "(null)" : _physicalStateObj.WarningCount.ToString((IFormatProvider)null),
                             _physicalStateObj != null ? "(null)" : _physicalStateObj.PreAttentionErrorCount.ToString((IFormatProvider)null),
                             _physicalStateObj != null ? "(null)" : _physicalStateObj.PreAttentionWarningCount.ToString((IFormatProvider)null),
-                            null == _statistics,
-                            _statisticsIsInTransaction,
-                            _fPreserveTransaction,
+                            null == _statistics ? bool.TrueString : bool.FalseString,
+                            _statisticsIsInTransaction ? bool.TrueString : bool.FalseString,
+                            _fPreserveTransaction ? bool.TrueString : bool.FalseString,
                             null == _connHandler ? "(null)" : _connHandler.ConnectionOptions.MultiSubnetFailover.ToString((IFormatProvider)null),
                             null == _connHandler ? "(null)" : _connHandler.ConnectionOptions.TransparentNetworkIPResolution.ToString((IFormatProvider)null));
         }
