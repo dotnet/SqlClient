@@ -161,7 +161,7 @@ namespace Microsoft.Data.Common
         [System.Diagnostics.Conditional("DEBUG")]
         private static void DebugTraceKeyValuePair(string keyname, string keyvalue, Dictionary<string, string> synonyms)
         {
-            if (SqlClientEventSource.Log.IsAdvanceTraceOn())
+            if (SqlClientEventSource.Log.IsAdvancedTraceOn())
             {
                 Debug.Assert(string.Equals(keyname, keyname?.ToLower(), StringComparison.InvariantCulture), "missing ToLower");
                 string realkeyname = ((null != synonyms) ? (string)synonyms[keyname] : keyname);
@@ -171,11 +171,11 @@ namespace Microsoft.Data.Common
                     // don't trace passwords ever!
                     if (null != keyvalue)
                     {
-                        SqlClientEventSource.Log.AdvanceTrace("<comm.DbConnectionOptions|INFO|ADV> KeyName='{0}', KeyValue='{1}'", keyname, keyvalue);
+                        SqlClientEventSource.Log.AdvancedTraceEvent("<comm.DbConnectionOptions|INFO|ADV> KeyName='{0}', KeyValue='{1}'", keyname, keyvalue);
                     }
                     else
                     {
-                        SqlClientEventSource.Log.AdvanceTrace("<comm.DbConnectionOptions|INFO|ADV> KeyName='{0}'", keyname);
+                        SqlClientEventSource.Log.AdvancedTraceEvent("<comm.DbConnectionOptions|INFO|ADV> KeyName='{0}'", keyname);
                     }
                 }
             }

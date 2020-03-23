@@ -343,7 +343,7 @@ namespace Microsoft.Data.SqlClient
 
             internal override void StatementCompleted(int rowsAffected)
             {
-                SqlClientEventSource.Log.AdvanceTrace("<sc.SqlCommand.CommandEventSink.StatementCompleted|ADV> {0}#, rowsAffected={1}.", _command.ObjectID, rowsAffected);
+                SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlCommand.CommandEventSink.StatementCompleted|ADV> {0}#, rowsAffected={1}.", _command.ObjectID, rowsAffected);
                 _command.InternalRecordsAffected = rowsAffected;
 
                 // UNDONE: need to fire events back to user code, but this may be called
@@ -355,20 +355,20 @@ namespace Microsoft.Data.SqlClient
 
             internal override void BatchCompleted()
             {
-                SqlClientEventSource.Log.AdvanceTrace("<sc.SqlCommand.CommandEventSink.BatchCompleted|ADV> {0}#.", _command.ObjectID);
+                SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlCommand.CommandEventSink.BatchCompleted|ADV> {0}#.", _command.ObjectID);
             }
 
             internal override void ParametersAvailable(SmiParameterMetaData[] metaData, ITypedGettersV3 parameterValues)
             {
-                SqlClientEventSource.Log.AdvanceTrace("<sc.SqlCommand.CommandEventSink.ParametersAvailable|ADV> {0}# metaData.Length={1}.", _command.ObjectID, (null != metaData) ? metaData.Length : -1);
+                SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlCommand.CommandEventSink.ParametersAvailable|ADV> {0}# metaData.Length={1}.", _command.ObjectID, (null != metaData) ? metaData.Length : -1);
 
-                if (SqlClientEventSource.Log.IsAdvanceTraceOn())
+                if (SqlClientEventSource.Log.IsAdvancedTraceOn())
                 {
                     if (null != metaData)
                     {
                         for (int i = 0; i < metaData.Length; i++)
                         {
-                            SqlClientEventSource.Log.AdvanceTrace("<sc.SqlCommand.CommandEventSink.ParametersAvailable|ADV> {0}#, metaData[{1}] is {2}{3}", _command.ObjectID, i, metaData[i].GetType().ToString(), metaData[i].TraceString());
+                            SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlCommand.CommandEventSink.ParametersAvailable|ADV> {0}#, metaData[{1}] is {2}{3}", _command.ObjectID, i, metaData[i].GetType().ToString(), metaData[i].TraceString());
                         }
                     }
                 }
@@ -379,7 +379,7 @@ namespace Microsoft.Data.SqlClient
 
             internal override void ParameterAvailable(SmiParameterMetaData metaData, SmiTypedGetterSetter parameterValues, int ordinal)
             {
-                SqlClientEventSource.Log.AdvanceTrace("<sc.SqlCommand.CommandEventSink.ParameterAvailable|ADV> {0}#, metaData[{1}] is {2}{ 3}", _command.ObjectID, ordinal, metaData.GetType().ToString(), metaData.TraceString());
+                SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlCommand.CommandEventSink.ParameterAvailable|ADV> {0}#, metaData[{1}] is {2}{ 3}", _command.ObjectID, ordinal, metaData.GetType().ToString(), metaData.TraceString());
                 Debug.Assert(SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.KatmaiVersion);
                 _command.OnParameterAvailableSmi(metaData, parameterValues, ordinal);
             }
@@ -3767,7 +3767,7 @@ namespace Microsoft.Data.SqlClient
                     SysTx.Transaction transaction;
                     innerConnection.GetCurrentTransactionPair(out transactionId, out transaction);
 
-                    SqlClientEventSource.Log.AdvanceTrace("<sc.SqlCommand.RunExecuteNonQuerySmi|ADV> {0}#, innerConnection={1}#, transactionId=0x{2}, cmdBehavior={3}.", ObjectID, innerConnection.ObjectID, transactionId, (int)CommandBehavior.Default);
+                    SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlCommand.RunExecuteNonQuerySmi|ADV> {0}#, innerConnection={1}#, transactionId=0x{2}, cmdBehavior={3}.", ObjectID, innerConnection.ObjectID, transactionId, (int)CommandBehavior.Default);
 
                     if (SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.KatmaiVersion)
                     {
@@ -5429,7 +5429,7 @@ namespace Microsoft.Data.SqlClient
                 long transactionId;
                 SysTx.Transaction transaction;
                 innerConnection.GetCurrentTransactionPair(out transactionId, out transaction);
-                SqlClientEventSource.Log.AdvanceTrace("<sc.SqlCommand.RunExecuteReaderSmi|ADV> {0}#, innerConnection={1}#, transactionId=0x{2}, commandBehavior={(int)cmdBehavior}.", ObjectID, innerConnection.ObjectID, transactionId);
+                SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlCommand.RunExecuteReaderSmi|ADV> {0}#, innerConnection={1}#, transactionId=0x{2}, commandBehavior={(int)cmdBehavior}.", ObjectID, innerConnection.ObjectID, transactionId);
 
                 if (SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.KatmaiVersion)
                 {
@@ -7450,7 +7450,7 @@ namespace Microsoft.Data.SqlClient
         /// <param name="synchronous">True if SQL command was executed synchronously, otherwise false.</param>
         private void WriteEndExecuteEvent(bool success, int? sqlExceptionNumber, bool synchronous)
         {
-            if (SqlClientEventSource.Log.IsSqlClientEnabled())
+            if (SqlClientEventSource.Log.IsExecutionTraceEnabled())
             {
                 // SqlEventSource.WriteEvent(int, int, int, int) is faster than provided overload SqlEventSource.WriteEvent(int, object[]).
                 // that's why trying to fit several booleans in one integer value

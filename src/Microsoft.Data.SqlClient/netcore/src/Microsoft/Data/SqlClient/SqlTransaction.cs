@@ -209,7 +209,7 @@ namespace Microsoft.Data.SqlClient
             if (IsYukonPartialZombie)
             {
                 // Put something in the trace in case a customer has an issue
-                SqlClientEventSource.Log.AdvanceTrace("<sc.SqlTransaction.Rollback|ADV> {0}# partial zombie no rollback required", ObjectID);
+                SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlTransaction.Rollback|ADV> {0}# partial zombie no rollback required", ObjectID);
                 _internalTransaction = null; // yukon zombification
             }
             else
@@ -323,7 +323,7 @@ namespace Microsoft.Data.SqlClient
             SqlInternalConnection internalConnection = (_connection.InnerConnection as SqlInternalConnection);
             if (null != internalConnection && !_isFromAPI)
             {
-                SqlClientEventSource.Log.AdvanceTrace("<sc.SqlTransaction.Zombie|ADV> {0}# yukon deferred zombie", ObjectID);
+                SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlTransaction.Zombie|ADV> {0}# yukon deferred zombie", ObjectID);
             }
             else
             {

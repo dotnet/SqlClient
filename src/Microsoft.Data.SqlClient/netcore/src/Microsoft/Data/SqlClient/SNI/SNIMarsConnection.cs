@@ -62,7 +62,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns></returns>
         public uint StartReceive()
         {
-            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNIMarsConnection.StartReceive |SNI|INFO|SCOPE> StartReceive");
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnterEvent("<sc.SNI.SNIMarsConnection.StartReceive |SNI|INFO|SCOPE> StartReceive");
             try
             {
                 SNIPacket packet = null;
@@ -88,7 +88,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error code</returns>
         public uint Send(SNIPacket packet)
         {
-            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNIMarsConnection.Send |SNI|INFO|SCOPE> Send");
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnterEvent("<sc.SNI.SNIMarsConnection.Send |SNI|INFO|SCOPE> Send");
             try
             {
                 lock (this)
@@ -110,7 +110,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error code</returns>
         public uint SendAsync(SNIPacket packet, SNIAsyncCallback callback)
         {
-            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNIMarsConnection.SendAsync |SNI|INFO|SCOPE> SendAsync");
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnterEvent("<sc.SNI.SNIMarsConnection.SendAsync |SNI|INFO|SCOPE> SendAsync");
             try
             {
                 lock (this)
@@ -131,7 +131,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error code</returns>
         public uint ReceiveAsync(ref SNIPacket packet)
         {
-            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNIMarsConnection.SendAsync |SNI|INFO|SCOPE> SendAsync");
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnterEvent("<sc.SNI.SNIMarsConnection.SendAsync |SNI|INFO|SCOPE> SendAsync");
             try
             {
                 if (packet != null)
@@ -157,7 +157,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error status</returns>
         public uint CheckConnection()
         {
-            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNIMarsConnection.CheckConnection |SNI|INFO|SCOPE>");
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnterEvent("<sc.SNI.SNIMarsConnection.CheckConnection |SNI|INFO|SCOPE>");
             try
             {
                 lock (this)
@@ -208,7 +208,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="sniErrorCode">SNI error code</param>
         public void HandleReceiveComplete(SNIPacket packet, uint sniErrorCode)
         {
-            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNIMarsConnection.HandleReceiveComplete |SNI|INFO|SCOPE>");
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnterEvent("<sc.SNI.SNIMarsConnection.HandleReceiveComplete |SNI|INFO|SCOPE>");
             try
             {
                 SNISMUXHeader currentHeader = null;
@@ -352,7 +352,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         public uint EnableSsl(uint options)
         {
-            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNIMarsConnection.EnableSsl |SNI|INFO|SCOPE>");
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnterEvent("<sc.SNI.SNIMarsConnection.EnableSsl |SNI|INFO|SCOPE>");
             try
             {
                 return _lowerHandle.EnableSsl(options);
@@ -368,7 +368,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         public void DisableSsl()
         {
-            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNIMarsConnection.EnableSsl |SNI|INFO|SCOPE>");
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnterEvent("<sc.SNI.SNIMarsConnection.EnableSsl |SNI|INFO|SCOPE>");
             try
             {
                 _lowerHandle.DisableSsl();
@@ -385,7 +385,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         public void KillConnection()
         {
-            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNIMarsConnection.KillConnection |SNI|INFO|SCOPE>");
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnterEvent("<sc.SNI.SNIMarsConnection.KillConnection |SNI|INFO|SCOPE>");
             try
             {
                 _lowerHandle.KillConnection();

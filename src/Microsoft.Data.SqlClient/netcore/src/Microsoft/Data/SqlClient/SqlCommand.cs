@@ -6127,7 +6127,7 @@ namespace Microsoft.Data.SqlClient
 
         private void WriteEndExecuteEvent(bool success, int? sqlExceptionNumber, bool synchronous)
         {
-            if (SqlClientEventSource.Log.IsSqlClientEnabled())
+            if (SqlClientEventSource.Log.IsExecutionTraceEnabled())
             {
                 // SqlEventSource.WriteEvent(int, int, int, int) is faster than provided overload SqlEventSource.WriteEvent(int, object[]).
                 // that's why trying to fit several booleans in one integer value

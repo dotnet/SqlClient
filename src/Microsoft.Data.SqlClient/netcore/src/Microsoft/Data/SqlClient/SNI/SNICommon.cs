@@ -136,7 +136,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>True if certificate is valid</returns>
         internal static bool ValidateSslServerCertificate(string targetServerName, object sender, X509Certificate cert, X509Chain chain, SslPolicyErrors policyErrors)
         {
-            long scopeID = SqlClientEventSource.Log.SNIScopeEnter("<sc.SNI.SNICommon.ValidateSslServerCertificate |SNI|SCOPE|INFO >");
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnterEvent("<sc.SNI.SNICommon.ValidateSslServerCertificate |SNI|SCOPE|INFO >");
             try
             {
                 if (policyErrors == SslPolicyErrors.None)
@@ -203,7 +203,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns></returns>
         internal static uint ReportSNIError(SNIProviders provider, uint nativeError, uint sniError, string errorMessage)
         {
-            SqlClientEventSource.Log.SNITrace("<sc.SNI.SNICommon. ReportSNIError |SNI|ERR > Provider ={0}, native Error ={1}, SNI Error ={2}, Error Message ={3}", provider, nativeError, sniError, errorMessage);
+            SqlClientEventSource.Log.SNITraceEvent("<sc.SNI.SNICommon. ReportSNIError |SNI|ERR > Provider ={0}, native Error ={1}, SNI Error ={2}, Error Message ={3}", provider, nativeError, sniError, errorMessage);
             return ReportSNIError(new SNIError(provider, nativeError, sniError, errorMessage));
         }
 
@@ -216,7 +216,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns></returns>
         internal static uint ReportSNIError(SNIProviders provider, uint sniError, Exception sniException)
         {
-            SqlClientEventSource.Log.SNITrace("<sc.SNI.SNICommon. ReportSNIError |SNI|ERR > Provider ={0}, SNI Error ={2}, Exception ={3}", provider, sniError, sniException.Message);
+            SqlClientEventSource.Log.SNITraceEvent("<sc.SNI.SNICommon. ReportSNIError |SNI|ERR > Provider ={0}, SNI Error ={2}, Exception ={3}", provider, sniError, sniException.Message);
             return ReportSNIError(new SNIError(provider, sniError, sniException));
         }
 

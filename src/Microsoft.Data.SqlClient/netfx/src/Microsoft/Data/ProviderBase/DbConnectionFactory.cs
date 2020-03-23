@@ -539,7 +539,7 @@ namespace Microsoft.Data.ProviderBase
         private void PruneConnectionPoolGroups(object state)
         {
             // when debugging this method, expect multiple threads at the same time
-            SqlClientEventSource.Log.AdvanceTrace("<prov.DbConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> {0}#", ObjectID);
+            SqlClientEventSource.Log.AdvancedTraceEvent("<prov.DbConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> {0}#", ObjectID);
 
             // First, walk the pool release list and attempt to clear each
             // pool, when the pool is finally empty, we dispose of it.  If the
@@ -559,7 +559,7 @@ namespace Microsoft.Data.ProviderBase
                             if (0 == pool.Count)
                             {
                                 _poolsToRelease.Remove(pool);
-                                SqlClientEventSource.Log.AdvanceTrace("<prov.DbConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> {0}#, ReleasePool={1}#", ObjectID, pool.ObjectID);
+                                SqlClientEventSource.Log.AdvancedTraceEvent("<prov.DbConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> {0}#, ReleasePool={1}#", ObjectID, pool.ObjectID);
                                 PerformanceCounters.NumberOfInactiveConnectionPools.Decrement();
                             }
                         }
@@ -584,7 +584,7 @@ namespace Microsoft.Data.ProviderBase
                             if (0 == poolsLeft)
                             {
                                 _poolGroupsToRelease.Remove(poolGroup);
-                                SqlClientEventSource.Log.AdvanceTrace("<prov.DbConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> {0}#, ReleasePoolGroup={1}#", ObjectID, poolGroup.ObjectID);
+                                SqlClientEventSource.Log.AdvancedTraceEvent("<prov.DbConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> {0}#, ReleasePoolGroup={1}#", ObjectID, poolGroup.ObjectID);
                                 PerformanceCounters.NumberOfInactiveConnectionPoolGroups.Decrement();
                             }
                         }
