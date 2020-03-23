@@ -245,7 +245,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/ctorCommandOptionsTimeout/*' />
         public SqlDependency(SqlCommand command, string options, int timeout)
         {
-            long scopeID = SqlClientEventSource.Log.notificationScopeEnterEvent("<sc.SqlDependency|DEP> {0}#, options: '{1}', timeout: '{2}'", ObjectID, options, timeout);
+            long scopeID = SqlClientEventSource.Log.NotificationScopeEnterEvent("<sc.SqlDependency|DEP> {0}#, options: '{1}', timeout: '{2}'", ObjectID, options, timeout);
             try
             {
                 if (timeout < 0)
@@ -264,7 +264,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.notificationScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.NotificationScopeLeaveEvent(scopeID);
             }
         }
 
@@ -294,7 +294,7 @@ namespace Microsoft.Data.SqlClient
             // EventHandlers to be fired when dependency is notified.
             add
             {
-                long scopeID = SqlClientEventSource.Log.notificationScopeEnterEvent("<sc.SqlDependency.OnChange-Add|DEP> {0}#", ObjectID);
+                long scopeID = SqlClientEventSource.Log.NotificationScopeEnterEvent("<sc.SqlDependency.OnChange-Add|DEP> {0}#", ObjectID);
                 try
                 {
                     if (null != value)
@@ -329,12 +329,12 @@ namespace Microsoft.Data.SqlClient
                 }
                 finally
                 {
-                    SqlClientEventSource.Log.notificationScopeLeaveEvent(scopeID);
+                    SqlClientEventSource.Log.NotificationScopeLeaveEvent(scopeID);
                 }
             }
             remove
             {
-                long scopeID = SqlClientEventSource.Log.notificationScopeEnterEvent("<sc.SqlDependency.OnChange-Remove|DEP> {0}#", ObjectID);
+                long scopeID = SqlClientEventSource.Log.NotificationScopeEnterEvent("<sc.SqlDependency.OnChange-Remove|DEP> {0}#", ObjectID);
                 try
                 {
                     if (null != value)
@@ -352,7 +352,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 finally
                 {
-                    SqlClientEventSource.Log.notificationScopeLeaveEvent(scopeID);
+                    SqlClientEventSource.Log.NotificationScopeLeaveEvent(scopeID);
                 }
             }
         }
@@ -362,7 +362,7 @@ namespace Microsoft.Data.SqlClient
         public void AddCommandDependency(SqlCommand command)
         {
             // Adds command to dependency collection so we automatically create the SqlNotificationsRequest object
-            long scopeID = SqlClientEventSource.Log.notificationScopeEnterEvent("<sc.SqlDependency.AddCommandDependency|DEP> {0}#", ObjectID);
+            long scopeID = SqlClientEventSource.Log.NotificationScopeEnterEvent("<sc.SqlDependency.AddCommandDependency|DEP> {0}#", ObjectID);
             try
             {
                 // and listen for a notification for the added commands.
@@ -375,7 +375,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.notificationScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.NotificationScopeLeaveEvent(scopeID);
             }
         }
 
@@ -396,7 +396,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static bool Start(string connectionString, string queue, bool useDefaults)
         {
-            long scopeID = SqlClientEventSource.Log.notificationScopeEnterEvent("<sc.SqlDependency.Start|DEP> AppDomainKey: '{0}', queue: '{1}'", AppDomainKey, queue);
+            long scopeID = SqlClientEventSource.Log.NotificationScopeEnterEvent("<sc.SqlDependency.Start|DEP> AppDomainKey: '{0}', queue: '{1}'", AppDomainKey, queue);
             try
             {
                 if (string.IsNullOrEmpty(connectionString))
@@ -514,7 +514,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.notificationScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.NotificationScopeLeaveEvent(scopeID);
             }
         }
 
@@ -532,7 +532,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static bool Stop(string connectionString, string queue, bool useDefaults, bool startFailed)
         {
-            long scopeID = SqlClientEventSource.Log.notificationScopeEnterEvent("<sc.SqlDependency.Stop|DEP> AppDomainKey: '{0}', queue: '{1}'", AppDomainKey, queue);
+            long scopeID = SqlClientEventSource.Log.NotificationScopeEnterEvent("<sc.SqlDependency.Stop|DEP> AppDomainKey: '{0}', queue: '{1}'", AppDomainKey, queue);
             try
             {
                 if (string.IsNullOrEmpty(connectionString))
@@ -628,7 +628,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.notificationScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.NotificationScopeLeaveEvent(scopeID);
             }
         }
 
@@ -636,7 +636,7 @@ namespace Microsoft.Data.SqlClient
 
         private static bool AddToServerUserHash(string server, IdentityUserNamePair identityUser, DatabaseServicePair databaseService)
         {
-            long scopeID = SqlClientEventSource.Log.notificationScopeEnterEvent("<sc.SqlDependency.AddToServerUserHash|DEP> server: '{0}', database: '{1}', service: '{2}'", server, databaseService.Database, databaseService.Service);
+            long scopeID = SqlClientEventSource.Log.NotificationScopeEnterEvent("<sc.SqlDependency.AddToServerUserHash|DEP> server: '{0}', database: '{1}', service: '{2}'", server, databaseService.Database, databaseService.Service);
             try
             {
                 bool result = false;
@@ -685,13 +685,13 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.notificationScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.NotificationScopeLeaveEvent(scopeID);
             }
         }
 
         private static void RemoveFromServerUserHash(string server, IdentityUserNamePair identityUser, DatabaseServicePair databaseService)
         {
-            long scopeID = SqlClientEventSource.Log.notificationScopeEnterEvent("<sc.SqlDependency.RemoveFromServerUserHash|DEP> server: '{0}', database: '{1}', service: '{2}'", server, databaseService.Database, databaseService.Service);
+            long scopeID = SqlClientEventSource.Log.NotificationScopeEnterEvent("<sc.SqlDependency.RemoveFromServerUserHash|DEP> server: '{0}', database: '{1}', service: '{2}'", server, databaseService.Database, databaseService.Service);
             try
             {
                 lock (s_serverUserHash)
@@ -747,7 +747,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.notificationScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.NotificationScopeLeaveEvent(scopeID);
             }
         }
 
@@ -755,7 +755,7 @@ namespace Microsoft.Data.SqlClient
         {
             // Server must be an exact match, but user and database only needs to match exactly if there is more than one 
             // for the given user or database passed.  That is ambiguious and we must fail.
-            long scopeID = SqlClientEventSource.Log.notificationScopeEnterEvent("<sc.SqlDependency.GetDefaultComposedOptions|DEP> server: '{0}', failoverServer: '{1}', database: '{2}'", server, failoverServer, database);
+            long scopeID = SqlClientEventSource.Log.NotificationScopeEnterEvent("<sc.SqlDependency.GetDefaultComposedOptions|DEP> server: '{0}', failoverServer: '{1}', database: '{2}'", server, failoverServer, database);
             try
             {
                 string result;
@@ -851,7 +851,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.notificationScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.NotificationScopeLeaveEvent(scopeID);
             }
         }
 
@@ -861,7 +861,7 @@ namespace Microsoft.Data.SqlClient
         // use this list for a reverse lookup based on server.
         internal void AddToServerList(string server)
         {
-            long scopeID = SqlClientEventSource.Log.notificationScopeEnterEvent("<sc.SqlDependency.AddToServerList|DEP> {0}#, server: '{1}'", ObjectID, server);
+            long scopeID = SqlClientEventSource.Log.NotificationScopeEnterEvent("<sc.SqlDependency.AddToServerList|DEP> {0}#, server: '{1}'", ObjectID, server);
             try
             {
                 lock (_serverList)
@@ -877,7 +877,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.notificationScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.NotificationScopeLeaveEvent(scopeID);
             }
         }
 
@@ -891,7 +891,7 @@ namespace Microsoft.Data.SqlClient
 
         internal string ComputeHashAndAddToDispatcher(SqlCommand command)
         {
-            long scopeID = SqlClientEventSource.Log.notificationScopeEnterEvent("<sc.SqlDependency.ComputeHashAndAddToDispatcher|DEP> {0}#, SqlCommand: {1}#", ObjectID, command.ObjectID);
+            long scopeID = SqlClientEventSource.Log.NotificationScopeEnterEvent("<sc.SqlDependency.ComputeHashAndAddToDispatcher|DEP> {0}#, SqlCommand: {1}#", ObjectID, command.ObjectID);
             try
             {
                 // Create a string representing the concatenation of the connection string, command text and .ToString on all parameter values.
@@ -908,13 +908,13 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.notificationScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.NotificationScopeLeaveEvent(scopeID);
             }
         }
 
         internal void Invalidate(SqlNotificationType type, SqlNotificationInfo info, SqlNotificationSource source)
         {
-            long scopeID = SqlClientEventSource.Log.notificationScopeEnterEvent("<sc.SqlDependency.Invalidate|DEP> {0}#", ObjectID);
+            long scopeID = SqlClientEventSource.Log.NotificationScopeEnterEvent("<sc.SqlDependency.Invalidate|DEP> {0}#", ObjectID);
             try
             {
                 List<EventContextPair> eventList = null;
@@ -960,14 +960,14 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.notificationScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.NotificationScopeLeaveEvent(scopeID);
             }
         }
 
         // This method is used by SqlCommand.
         internal void StartTimer(SqlNotificationRequest notificationRequest)
         {
-            long scopeID = SqlClientEventSource.Log.notificationScopeEnterEvent("<sc.SqlDependency.StartTimer|DEP> {0}#", ObjectID);
+            long scopeID = SqlClientEventSource.Log.NotificationScopeEnterEvent("<sc.SqlDependency.StartTimer|DEP> {0}#", ObjectID);
             try
             {
                 if (_expirationTime == DateTime.MaxValue)
@@ -989,7 +989,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.notificationScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.NotificationScopeLeaveEvent(scopeID);
             }
         }
 
@@ -1000,7 +1000,7 @@ namespace Microsoft.Data.SqlClient
             if (cmd != null)
             {
                 // Don't bother with EventSource if command null.
-                long scopeID = SqlClientEventSource.Log.notificationScopeEnterEvent("<sc.SqlDependency.AddCommandInternal|DEP> {0}#, SqlCommand: {1}#", ObjectID, cmd.ObjectID);
+                long scopeID = SqlClientEventSource.Log.NotificationScopeEnterEvent("<sc.SqlDependency.AddCommandInternal|DEP> {0}#, SqlCommand: {1}#", ObjectID, cmd.ObjectID);
                 try
                 {
                     SqlConnection connection = cmd.Connection;
@@ -1058,14 +1058,14 @@ namespace Microsoft.Data.SqlClient
                 }
                 finally
                 {
-                    SqlClientEventSource.Log.notificationScopeLeaveEvent(scopeID);
+                    SqlClientEventSource.Log.NotificationScopeLeaveEvent(scopeID);
                 }
             }
         }
 
         private string ComputeCommandHash(string connectionString, SqlCommand command)
         {
-            long scopeID = SqlClientEventSource.Log.notificationScopeEnterEvent("<sc.SqlDependency.ComputeCommandHash|DEP> {0}#, SqlCommand: {1}#", ObjectID, command.ObjectID);
+            long scopeID = SqlClientEventSource.Log.NotificationScopeEnterEvent("<sc.SqlDependency.ComputeCommandHash|DEP> {0}#, SqlCommand: {1}#", ObjectID, command.ObjectID);
             try
             {
                 // Create a string representing the concatenation of the connection string, the command text and .ToString on all its parameter values.
@@ -1126,7 +1126,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.notificationScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.NotificationScopeLeaveEvent(scopeID);
             }
         }
 

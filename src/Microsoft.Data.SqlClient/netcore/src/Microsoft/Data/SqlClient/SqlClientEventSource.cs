@@ -428,7 +428,7 @@ namespace Microsoft.Data.SqlClient
 
         #region Notification Scope
         [NonEvent]
-        internal long notificationScopeEnterEvent<T0>(string message, T0 args0)
+        internal long NotificationScopeEnterEvent<T0>(string message, T0 args0)
         {
             if (Log.IsNotificationScopeEnabled())
             {
@@ -438,7 +438,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         [NonEvent]
-        internal long notificationScopeEnterEvent<T0, T1>(string message, T0 args0, T1 args1)
+        internal long NotificationScopeEnterEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
             if (Log.IsNotificationScopeEnabled())
             {
@@ -448,7 +448,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         [NonEvent]
-        internal long notificationScopeEnterEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
+        internal long NotificationScopeEnterEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
         {
             if (Log.IsNotificationScopeEnabled())
             {
@@ -458,7 +458,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         [NonEvent]
-        internal long notificationScopeEnterEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
+        internal long NotificationScopeEnterEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
         {
             if (Log.IsNotificationScopeEnabled())
             {
@@ -468,7 +468,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         [NonEvent]
-        internal void notificationScopeLeaveEvent(long scopeId)
+        internal void NotificationScopeLeaveEvent(long scopeId)
         {
             if (Log.IsNotificationScopeEnabled())
             {

@@ -55,7 +55,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
 
         internal SqlConnectionContainer(SqlConnectionContainerHashHelper hashHelper, string appDomainKey, bool useDefaults)
         {
-            long scopeID = SqlClientEventSource.Log.notificationScopeEnterEvent("<sc.SqlConnectionContainer|DEP> {0}#, queue: '{1}'", ObjectID, HashHelper?.Queue);
+            long scopeID = SqlClientEventSource.Log.NotificationScopeEnterEvent("<sc.SqlConnectionContainer|DEP> {0}#, queue: '{1}'", ObjectID, HashHelper?.Queue);
             bool setupCompleted = false;
             try
             {
@@ -175,7 +175,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
             }
             finally
             {
-                SqlClientEventSource.Log.notificationScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.NotificationScopeLeaveEvent(scopeID);
             }
         }
 
@@ -207,7 +207,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
         // SqlDependencyProcessDispatcher.QueueAppDomainUnload on AppDomain.Unload.
         internal bool AppDomainUnload(string appDomainKey)
         {
-            long scopeID = SqlClientEventSource.Log.notificationScopeEnterEvent("<sc.SqlConnectionContainer.AppDomainUnload|DEP> {0}#, AppDomainKey: '{1}'", ObjectID, appDomainKey);
+            long scopeID = SqlClientEventSource.Log.NotificationScopeEnterEvent("<sc.SqlConnectionContainer.AppDomainUnload|DEP> {0}#, AppDomainKey: '{1}'", ObjectID, appDomainKey);
             try
             {
                 Debug.Assert(!string.IsNullOrEmpty(appDomainKey), "Unexpected empty appDomainKey!");
@@ -251,13 +251,13 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
             }
             finally
             {
-                SqlClientEventSource.Log.notificationScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.NotificationScopeLeaveEvent(scopeID);
             }
         }
 
         private void AsynchronouslyQueryServiceBrokerQueue()
         {
-            long scopeID = SqlClientEventSource.Log.notificationScopeEnterEvent("<sc.SqlConnectionContainer.AsynchronouslyQueryServiceBrokerQueue|DEP> {0}#", ObjectID);
+            long scopeID = SqlClientEventSource.Log.NotificationScopeEnterEvent("<sc.SqlConnectionContainer.AsynchronouslyQueryServiceBrokerQueue|DEP> {0}#", ObjectID);
             try
             {
                 AsyncCallback callback = new AsyncCallback(AsyncResultCallback);
@@ -265,13 +265,13 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
             }
             finally
             {
-                SqlClientEventSource.Log.notificationScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.NotificationScopeLeaveEvent(scopeID);
             }
         }
 
         private void AsyncResultCallback(IAsyncResult asyncResult)
         {
-            long scopeID = SqlClientEventSource.Log.notificationScopeEnterEvent("<sc.SqlConnectionContainer.AsyncResultCallback|DEP> {0}#", ObjectID);
+            long scopeID = SqlClientEventSource.Log.NotificationScopeEnterEvent("<sc.SqlConnectionContainer.AsyncResultCallback|DEP> {0}#", ObjectID);
             try
             {
                 using (SqlDataReader reader = _com.EndExecuteReader(asyncResult))
@@ -317,13 +317,13 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
             }
             finally
             {
-                SqlClientEventSource.Log.notificationScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.NotificationScopeLeaveEvent(scopeID);
             }
         }
 
         private void CreateQueueAndService(bool restart)
         {
-            long scopeID = SqlClientEventSource.Log.notificationScopeEnterEvent("<sc.SqlConnectionContainer.CreateQueueAndService|DEP> {0}#", ObjectID);
+            long scopeID = SqlClientEventSource.Log.NotificationScopeEnterEvent("<sc.SqlConnectionContainer.CreateQueueAndService|DEP> {0}#", ObjectID);
             try
             {
                 SqlCommand com = new SqlCommand()
@@ -457,13 +457,13 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
             }
             finally
             {
-                SqlClientEventSource.Log.notificationScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.NotificationScopeLeaveEvent(scopeID);
             }
         }
 
         internal void IncrementStartCount(string appDomainKey, out bool appDomainStart)
         {
-            long scopeID = SqlClientEventSource.Log.notificationScopeEnterEvent("<sc.SqlConnectionContainer.IncrementStartCount|DEP> {0}#", ObjectID);
+            long scopeID = SqlClientEventSource.Log.NotificationScopeEnterEvent("<sc.SqlConnectionContainer.IncrementStartCount|DEP> {0}#", ObjectID);
             try
             {
                 appDomainStart = false; // Reset out param.
@@ -489,13 +489,13 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
             }
             finally
             {
-                SqlClientEventSource.Log.notificationScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.NotificationScopeLeaveEvent(scopeID);
             }
         }
 
         private void ProcessNotificationResults(SqlDataReader reader)
         {
-            long scopeID = SqlClientEventSource.Log.notificationScopeEnterEvent("<sc.SqlConnectionContainer.ProcessNotificationResults|DEP> {0}#", ObjectID);
+            long scopeID = SqlClientEventSource.Log.NotificationScopeEnterEvent("<sc.SqlConnectionContainer.ProcessNotificationResults|DEP> {0}#", ObjectID);
             Guid handle = Guid.Empty; // Conversation_handle.  Always close this!
             try
             {
@@ -608,13 +608,13 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                     }
                     Debug.Assert(_com.Parameters.Count == 2, "Unexpected number of parameters!");
                 }
-                SqlClientEventSource.Log.notificationScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.NotificationScopeLeaveEvent(scopeID);
             }
         }
 
         private void Restart(object unused)
         {
-            long scopeID = SqlClientEventSource.Log.notificationScopeEnterEvent("<sc.SqlConnectionContainer.Restart|DEP> {0}#", ObjectID);
+            long scopeID = SqlClientEventSource.Log.NotificationScopeEnterEvent("<sc.SqlConnectionContainer.Restart|DEP> {0}#", ObjectID);
             try
             {
                 // Unused arg required by TimerCallback.
@@ -762,13 +762,13 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
             }
             finally
             {
-                SqlClientEventSource.Log.notificationScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.NotificationScopeLeaveEvent(scopeID);
             }
         }
 
         internal bool Stop(string appDomainKey, out bool appDomainStop)
         {
-            long scopeID = SqlClientEventSource.Log.notificationScopeEnterEvent("<sc.SqlConnectionContainer.Stop|DEP> {0}#", ObjectID);
+            long scopeID = SqlClientEventSource.Log.NotificationScopeEnterEvent("<sc.SqlConnectionContainer.Stop|DEP> {0}#", ObjectID);
             try
             {
                 appDomainStop = false;
@@ -890,13 +890,13 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
             }
             finally
             {
-                SqlClientEventSource.Log.notificationScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.NotificationScopeLeaveEvent(scopeID);
             }
         }
 
         private void SynchronouslyQueryServiceBrokerQueue()
         {
-            long scopeID = SqlClientEventSource.Log.notificationScopeEnterEvent("<sc.SqlConnectionContainer.SynchronouslyQueryServiceBrokerQueue|DEP> {0}#", ObjectID);
+            long scopeID = SqlClientEventSource.Log.NotificationScopeEnterEvent("<sc.SqlConnectionContainer.SynchronouslyQueryServiceBrokerQueue|DEP> {0}#", ObjectID);
             try
             {
                 using (SqlDataReader reader = _com.ExecuteReader())
@@ -906,14 +906,14 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
             }
             finally
             {
-                SqlClientEventSource.Log.notificationScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.NotificationScopeLeaveEvent(scopeID);
             }
         }
 
         [SuppressMessage("Microsoft.Security", "CA2100:ReviewSqlQueriesForSecurityVulnerabilities")]
         private void TearDownAndDispose()
         {
-            long scopeID = SqlClientEventSource.Log.notificationScopeEnterEvent("<sc.SqlConnectionContainer.TearDownAndDispose|DEP> {0}#", ObjectID);
+            long scopeID = SqlClientEventSource.Log.NotificationScopeEnterEvent("<sc.SqlConnectionContainer.TearDownAndDispose|DEP> {0}#", ObjectID);
             try
             {
                 lock (this)
@@ -981,7 +981,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
             }
             finally
             {
-                SqlClientEventSource.Log.notificationScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.NotificationScopeLeaveEvent(scopeID);
             }
         }
     }
@@ -1310,7 +1310,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
     private SqlDependencyProcessDispatcher(object dummyVariable)
     {
         Debug.Assert(null == s_staticInstance, "Real constructor called with static instance already created!");
-        long scopeID = SqlClientEventSource.Log.notificationScopeEnterEvent("<sc.SqlDependencyProcessDispatcher|DEP> {0}#", ObjectID);
+        long scopeID = SqlClientEventSource.Log.NotificationScopeEnterEvent("<sc.SqlDependencyProcessDispatcher|DEP> {0}#", ObjectID);
         try
         {
 #if DEBUG
@@ -1322,7 +1322,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
         }
         finally
         {
-            SqlClientEventSource.Log.notificationScopeLeaveEvent(scopeID);
+            SqlClientEventSource.Log.NotificationScopeLeaveEvent(scopeID);
         }
     }
 
@@ -1331,7 +1331,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
     public SqlDependencyProcessDispatcher()
     {
         // Empty constructor and object - dummy to obtain singleton.
-        long scopeID = SqlClientEventSource.Log.notificationScopeEnterEvent("<sc.SqlDependencyProcessDispatcher|DEP> {0}#", ObjectID);
+        long scopeID = SqlClientEventSource.Log.NotificationScopeEnterEvent("<sc.SqlDependencyProcessDispatcher|DEP> {0}#", ObjectID);
         try
         {
 #if DEBUG
@@ -1341,7 +1341,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
         }
         finally
         {
-            SqlClientEventSource.Log.notificationScopeLeaveEvent(scopeID);
+            SqlClientEventSource.Log.NotificationScopeLeaveEvent(scopeID);
         }
     }
 
@@ -1358,7 +1358,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
         out string user,
             string queue)
     {
-        long scopeID = SqlClientEventSource.Log.notificationScopeEnterEvent("<sc.SqlDependencyProcessDispatcher.GetHashString|DEP> {0}#, queue: {1}", s_staticInstance.ObjectID, queue);
+        long scopeID = SqlClientEventSource.Log.NotificationScopeEnterEvent("<sc.SqlDependencyProcessDispatcher.GetHashString|DEP> {0}#, queue: {1}", s_staticInstance.ObjectID, queue);
         try
         {
             // Force certain connection string properties to be used by SqlDependencyProcessDispatcher.  
@@ -1392,7 +1392,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
         }
         finally
         {
-            SqlClientEventSource.Log.notificationScopeLeaveEvent(scopeID);
+            SqlClientEventSource.Log.NotificationScopeLeaveEvent(scopeID);
         }
     }
 
@@ -1404,7 +1404,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
 
     private void Invalidate(string server, SqlNotification sqlNotification)
     {
-        long scopeID = SqlClientEventSource.Log.notificationScopeEnterEvent("<sc.SqlDependencyProcessDispatcher.Invalidate|DEP> {0}#, server: {1}", ObjectID, server);
+        long scopeID = SqlClientEventSource.Log.NotificationScopeEnterEvent("<sc.SqlDependencyProcessDispatcher.Invalidate|DEP> {0}#, server: {1}", ObjectID, server);
         try
         {
             Debug.Assert(this == s_staticInstance, "Instance method called on non _staticInstance instance!");
@@ -1436,7 +1436,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
         }
         finally
         {
-            SqlClientEventSource.Log.notificationScopeLeaveEvent(scopeID);
+            SqlClientEventSource.Log.NotificationScopeLeaveEvent(scopeID);
         }
     }
 
@@ -1451,7 +1451,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
     // This method is only called by queued work-items from the method above.
     private void AppDomainUnloading(object state)
     {
-        long scopeID = SqlClientEventSource.Log.notificationScopeEnterEvent("<sc.SqlDependencyProcessDispatcher.AppDomainUnloading|DEP> {0}#", ObjectID);
+        long scopeID = SqlClientEventSource.Log.NotificationScopeEnterEvent("<sc.SqlDependencyProcessDispatcher.AppDomainUnloading|DEP> {0}#", ObjectID);
         try
         {
             string appDomainKey = (string)state;
@@ -1483,7 +1483,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
         }
         finally
         {
-            SqlClientEventSource.Log.notificationScopeLeaveEvent(scopeID);
+            SqlClientEventSource.Log.NotificationScopeLeaveEvent(scopeID);
         }
     }
 
@@ -1553,7 +1553,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
             bool useDefaults)
     {
         Debug.Assert(this == s_staticInstance, "Instance method called on non _staticInstance instance!");
-        long scopeID = SqlClientEventSource.Log.notificationScopeEnterEvent("<sc.SqlDependencyProcessDispatcher.Start|DEP> {0}#, queue: '{1}', appDomainKey: '{2}', perAppDomainDispatcher ID: '{3}'", ObjectID, queueService, appDomainKey, dispatcher.ObjectID);
+        long scopeID = SqlClientEventSource.Log.NotificationScopeEnterEvent("<sc.SqlDependencyProcessDispatcher.Start|DEP> {0}#, queue: '{1}', appDomainKey: '{2}', perAppDomainDispatcher ID: '{3}'", ObjectID, queueService, appDomainKey, dispatcher.ObjectID);
         try
         {
             server = null;  // Reset out params.
@@ -1622,7 +1622,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
         }
         finally
         {
-            SqlClientEventSource.Log.notificationScopeLeaveEvent(scopeID);
+            SqlClientEventSource.Log.NotificationScopeLeaveEvent(scopeID);
         }
     }
 
@@ -1638,7 +1638,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
             string appDomainKey,
         out bool appDomainStop)
     {
-        long scopeID = SqlClientEventSource.Log.notificationScopeEnterEvent("<sc.SqlDependencyProcessDispatcher.Stop|DEP> {0}#, queue: '{1}'", ObjectID, queueService);
+        long scopeID = SqlClientEventSource.Log.NotificationScopeEnterEvent("<sc.SqlDependencyProcessDispatcher.Stop|DEP> {0}#, queue: '{1}'", ObjectID, queueService);
         Debug.Assert(this == s_staticInstance, "Instance method called on non _staticInstance instance!");
         try
         {
@@ -1686,7 +1686,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
         }
         finally
         {
-            SqlClientEventSource.Log.notificationScopeLeaveEvent(scopeID);
+            SqlClientEventSource.Log.NotificationScopeLeaveEvent(scopeID);
         }
     }
 }
