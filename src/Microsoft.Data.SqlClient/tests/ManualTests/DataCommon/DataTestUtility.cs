@@ -45,9 +45,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public const string UdtTestDbName = "UdtTestDb";
         public const string AKVKeyName = "TestSqlClientAzureKeyVaultProvider";
 
-        private static readonly Assembly MdsAssembly = typeof(Microsoft.Data.SqlClient.SqlConnection).GetTypeInfo().Assembly;
-        private static readonly Type TdsParserStateObjectFactoryInstance = MdsAssembly?.GetType("Microsoft.Data.SqlClient.TdsParserStateObjectFactory");
-        private static readonly PropertyInfo UseManagedSni = TdsParserStateObjectFactoryInstance?.GetProperty("UseManagedSNI", BindingFlags.Static | BindingFlags.Public);
+        private const string ManagedNetworkingAppContextSwitch = "Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows";
+
+        private static bool UseManagedSNI =
+            bool.TryParse(Environment.GetEnvironmentVariable("Microsoft_Data_SqlClient_UseManagedSniOnWindows"), out UseManagedSNI) ? UseManagedSNI : false;
 
         private static readonly string[] AzureSqlServerEndpoints = {".database.windows.net",
                                                                      ".database.cloudapi.de",
@@ -76,6 +77,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         static DataTestUtility()
         {
+            if (UseManagedSNI)
+            {
+                AppContext.SetSwitch(ManagedNetworkingAppContextSwitch, true);
+                Console.WriteLine($"App Context switch {ManagedNetworkingAppContextSwitch} enabled on {Environment.OSVersion}");
+            }
+
             using (StreamReader r = new StreamReader("config.json"))
             {
                 string json = r.ReadToEnd();
@@ -231,7 +238,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return !string.IsNullOrEmpty(AKVUrl) && !string.IsNullOrEmpty(AKVClientId) && !string.IsNullOrEmpty(AKVClientSecret);
         }
 
-        public static bool IsUsingManagedSNI() => (bool)(UseManagedSni?.GetValue(null) ?? false);
+        public static bool IsUsingManagedSNI() => UseManagedSNI;
 
         public static bool IsUsingNativeSNI() => !IsUsingManagedSNI();
 
