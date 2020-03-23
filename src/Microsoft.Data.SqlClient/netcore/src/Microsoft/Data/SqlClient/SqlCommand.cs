@@ -610,7 +610,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/Sqlcommand.xml' path='docs/members[@name="SqlCommand"]/Parameters/*'/>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Parameters/*'/>
         new public SqlParameterCollection Parameters
         {
             get
@@ -6117,7 +6117,7 @@ namespace Microsoft.Data.SqlClient
         object ICloneable.Clone() => Clone();
 
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.Sqlclient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Clone/*'/>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Clone/*'/>
         public SqlCommand Clone()
         {
             SqlCommand clone = new SqlCommand(this);
