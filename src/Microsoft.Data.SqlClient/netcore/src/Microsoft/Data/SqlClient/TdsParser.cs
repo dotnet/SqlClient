@@ -979,7 +979,10 @@ namespace Microsoft.Data.SqlClient
         {
             // Called when the connection that owns us is deactivated.
             SqlClientEventSource.Log.AdvanceTrace("<sc.TdsParser.Deactivate|ADV> {0}# deactivating", ObjectID);
-            SqlClientEventSource.Log.StateDumpEvent("<sc.TdsParser.Deactivate|STATE> {0}# {1}", ObjectID, TraceString());
+            if (SqlClientEventSource.Log.IsStateDumpEnabled())
+            {
+                SqlClientEventSource.Log.StateDumpEvent("<sc.TdsParser.Deactivate|STATE> {0}# {1}", ObjectID, TraceString());
+            }
 
             if (MARSOn)
             {
@@ -12631,13 +12634,13 @@ namespace Microsoft.Data.SqlClient
                                        ;
         internal string TraceString()
         {
-            return String.Format(/*IFormatProvider*/ null,
+            return string.Format(/*IFormatProvider*/ null,
                            StateTraceFormatString,
-                           null == _physicalStateObj,
-                           null == _pMarsPhysicalConObj,
+                           null == _physicalStateObj ? bool.TrueString : bool.FalseString,
+                           null == _pMarsPhysicalConObj ? bool.TrueString : bool.FalseString,
                            _state,
                            _server,
-                           _fResetConnection,
+                           _fResetConnection ? bool.TrueString : bool.FalseString,
                            null == _defaultCollation ? "(null)" : _defaultCollation.TraceString(),
                            _defaultCodePage,
                            _defaultLCID,
@@ -12649,17 +12652,17 @@ namespace Microsoft.Data.SqlClient
                            _retainedTransactionId,
                            _nonTransactedOpenResultCount,
                            null == _connHandler ? "(null)" : _connHandler.ObjectID.ToString((IFormatProvider)null),
-                           _fMARS,
+                           _fMARS ? bool.TrueString : bool.FalseString,
                            null == _sessionPool ? "(null)" : _sessionPool.TraceString(),
-                           _isYukon,
+                           _isYukon ? bool.TrueString : bool.FalseString,
                            null == _sniSpnBuffer ? "(null)" : _sniSpnBuffer.Length.ToString((IFormatProvider)null),
                            _physicalStateObj != null ? "(null)" : _physicalStateObj.ErrorCount.ToString((IFormatProvider)null),
                            _physicalStateObj != null ? "(null)" : _physicalStateObj.WarningCount.ToString((IFormatProvider)null),
                            _physicalStateObj != null ? "(null)" : _physicalStateObj.PreAttentionErrorCount.ToString((IFormatProvider)null),
                            _physicalStateObj != null ? "(null)" : _physicalStateObj.PreAttentionWarningCount.ToString((IFormatProvider)null),
-                           null == _statistics,
-                           _statisticsIsInTransaction,
-                           _fPreserveTransaction,
+                           null == _statistics ? bool.TrueString : bool.FalseString,
+                           _statisticsIsInTransaction ? bool.TrueString : bool.FalseString,
+                           _fPreserveTransaction ? bool.TrueString : bool.FalseString,
                            null == _connHandler ? "(null)" : _connHandler.ConnectionOptions.MultiSubnetFailover.ToString((IFormatProvider)null));
         }
 
