@@ -17,20 +17,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Fixed
 - Fixed Access Token behavior in connection pool to perform string comparison [#443](https://github.com/dotnet/SqlClient/pull/443)
-- Fixed concurrent connection speed issues when connecting with Azure Federated Authentication modes in .NET Core [#466](https://github.com/dotnet/SqlClient/pull/466)
+- Fixed concurrent connection speed issues when connecting with Azure Active Directory Authentication modes in .NET Core [#466](https://github.com/dotnet/SqlClient/pull/466)
 - Fixed issues with `Password` persistence in Connection String [#453](https://github.com/dotnet/SqlClient/pull/453)
 
 ### Changes
-- Updated all driver assemblies to become CLS Compliant [#396](https://github.com/dotnet/SqlClient/pull/396)
-- Updated Bulk Copy error messages to also include Column, Row and non-encrypted Data information [#427](https://github.com/dotnet/SqlClient/pull/437)
+- Updated all driver assemblies to be CLS Compliant [#396](https://github.com/dotnet/SqlClient/pull/396)
+- Updated Bulk Copy error messages to also include Column, Row and non-encrypted Data information [#437](https://github.com/dotnet/SqlClient/pull/437)
 - Updated error messages for "Always Encrypted - Secure Enclaves" to handle 'Attestation Protocol' and fixed typos [#421](https://github.com/dotnet/SqlClient/pull/421) [#397](https://github.com/dotnet/SqlClient/pull/397)
 - Removed sync over async in `SNINpHandle.EnableSsl` [#474](https://github.com/dotnet/SqlClient/pull/474)
 - Changed non-generic `ArrayList` to `List<T>` in `SqlBulkCopy` [#457](https://github.com/dotnet/SqlClient/pull/457)
 - Multiple performance improvements [#377](https://github.com/dotnet/SqlClient/pull/377) [#378](https://github.com/dotnet/SqlClient/pull/378) [#379](https://github.com/dotnet/SqlClient/pull/379) 
 
 ### Breaking Changes
-- The driver will now perform Server Certificate validation when TLS encryption enforced by target Server, effective automatically on Azure connections [#391](https://github.com/dotnet/SqlClient/pull/391)
-- `SqlDataReader.GetSchemaTable()` now returns empty `DataTable` instead of returning `null` [#419](https://github.com/dotnet/SqlClient/pull/419)
+- The driver will now perform Server Certificate validation when TLS encryption is enforced by the target Server, which is the default for Azure connections [#391](https://github.com/dotnet/SqlClient/pull/391)
+- `SqlDataReader.GetSchemaTable()` now returns an empty `DataTable` instead of returning `null` [#419](https://github.com/dotnet/SqlClient/pull/419)
 
 
 ## [Stable Release 1.1.1] - 2020-02-14
