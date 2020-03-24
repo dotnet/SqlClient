@@ -5,6 +5,7 @@
     "TCPConnectionStringAASVBS": "",
     "TCPConnectionStringAASSGX": "",
     "EnclaveEnabled": false,
+    "TracingEnabled": false,
     "AADAuthorityURL": "",
     "AADPasswordConnectionString": "",
     "AzureKeyVaultURL": "",

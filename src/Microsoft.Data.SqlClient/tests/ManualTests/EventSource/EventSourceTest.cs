@@ -2,10 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Diagnostics.Tracing;
 using System.Linq;
 using Xunit;
 
@@ -16,7 +12,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void EventSourceTestAll()
         {
-            using (var TraceListener = new TraceEventListener())
+            using (var TraceListener = new DataTestUtility.TraceEventListener())
             {
                 using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
                 {
@@ -36,25 +32,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 Assert.All(TraceListener.IDs, item => { Assert.Contains(item, Enumerable.Range(1, 21)); });
             }
-        }
-    }
-
-    public class TraceEventListener : EventListener
-    {
-        public List<int> IDs = new List<int>();
-
-        protected override void OnEventSourceCreated(EventSource eventSource)
-        {
-            if (eventSource.Name.Equals("Microsoft.Data.SqlClient.EventSource"))
-            {
-                // Collect all traces for better code coverage
-                // EnableEvents(eventSource, EventLevel.Informational, EventKeywords.All);
-            }
-        }
-
-        protected override void OnEventWritten(EventWrittenEventArgs eventData)
-        {
-            IDs.Add(eventData.EventId);
         }
     }
 }
