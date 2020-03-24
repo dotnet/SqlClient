@@ -104,6 +104,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private const int StateDumpEventId = 17;
         #endregion
+
         /// <summary>
         /// These represent logical groups of events that can be turned on and off independently
         /// Often each task has a keyword, but where tasks are determined by subsystem, keywords

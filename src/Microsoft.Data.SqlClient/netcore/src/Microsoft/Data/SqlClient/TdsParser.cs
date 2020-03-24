@@ -1287,18 +1287,18 @@ namespace Microsoft.Data.SqlClient
                 string errorMessage = details.errorMessage;
                 SqlClientEventSource.Log.AdvancedTraceEvent("< sc.TdsParser.ProcessSNIError |ERR|ADV > Error message Detail: {0}", details.errorMessage);
 
-                //  Format SNI errors and add Context Information
-                //
-                //  General syntax is:
-                //  <sqlclient message>
-                //  (provider:<SNIx provider>, error: <SNIx error code> - <SNIx error message>)
-                //
-                // errorMessage | sniError |
-                // -------------------------------------------
-                // ==null       | x        | must never happen
-                // !=null       | != 0     | retrieve corresponding errorMessage from resources
-                // !=null       | == 0     | replace text left of errorMessage
-                //
+                /*  Format SNI errors and add Context Information
+                 *
+                 *  General syntax is:
+                 *  <sqlclient message>
+                 *  (provider:<SNIx provider>, error: <SNIx error code> - <SNIx error message>)
+                 *
+                 * errorMessage | sniError |
+                 * -------------------------------------------
+                 * ==null       | x        | must never happen
+                 * !=null       | != 0     | retrieve corresponding errorMessage from resources
+                 * !=null       | == 0     | replace text left of errorMessage
+                 */
 
                 if (TdsParserStateObjectFactory.UseManagedSNI)
                 {

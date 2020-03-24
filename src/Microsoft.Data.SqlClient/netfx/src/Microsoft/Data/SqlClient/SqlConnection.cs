@@ -2500,7 +2500,6 @@ namespace Microsoft.Data.SqlClient
                 if (newSecurePassword == null || newSecurePassword.Length == 0)
                 {
                     throw SQL.ChangePasswordArgumentMissing("newSecurePassword");
-                    ;
                 }
 
                 if (!newSecurePassword.IsReadOnly())
