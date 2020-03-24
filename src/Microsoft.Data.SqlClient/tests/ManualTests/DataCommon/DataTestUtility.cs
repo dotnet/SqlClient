@@ -208,6 +208,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return retval;
         }
 
+        public static bool IsTCPConnectionStringPasswordIncluded()
+        {
+            return RetrieveValueFromConnStr(TCPConnectionString, new string[] { "Password", "PWD" }) != string.Empty;
+        }
+
         // the name length will be no more then (16 + prefix.Length + escapeLeft.Length + escapeRight.Length)
         // some providers does not support names (Oracle supports up to 30)
         public static string GetUniqueName(string prefix)
@@ -481,6 +486,31 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 cmd.ExecuteNonQuery();
             }
+        }
+
+        public static string RetrieveValueFromConnStr(string connStr, string[] keywords)
+        {
+            // tokenize connection string and retrieve value for a specific key.
+            string res = "";
+            if (connStr != null && keywords != null)
+            {
+                string[] keys = connStr.Split(';');
+                foreach (var key in keys)
+                {
+                    foreach (var keyword in keywords)
+                    {
+                        if (!string.IsNullOrEmpty(key.Trim()))
+                        {
+                            if (key.Trim().ToLower().StartsWith(keyword.Trim().ToLower()))
+                            {
+                                res = key.Substring(key.IndexOf('=') + 1).Trim();
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            return res;
         }
     }
 }
