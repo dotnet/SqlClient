@@ -349,7 +349,7 @@ namespace Microsoft.Data.SqlClient
 
         #region Notification Trace
         [NonEvent]
-        internal void NotificationsTraceEvent(string message)
+        internal void NotificationTraceEvent(string message)
         {
             if (Log.IsNotificationTraceEnabled())
             {
@@ -358,7 +358,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         [NonEvent]
-        internal void NotificationsTraceEvent<T0>(string message, T0 args0)
+        internal void NotificationTraceEvent<T0>(string message, T0 args0)
         {
             if (Log.IsNotificationTraceEnabled())
             {
@@ -367,7 +367,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         [NonEvent]
-        internal void NotificationsTraceEvent<T0, T1>(string message, T0 args0, T1 args1)
+        internal void NotificationTraceEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
             if (Log.IsNotificationTraceEnabled())
             {
@@ -376,7 +376,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         [NonEvent]
-        internal void NotificationsTraceEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
+        internal void NotificationTraceEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
         {
             if (Log.IsNotificationTraceEnabled())
             {
@@ -385,7 +385,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         [NonEvent]
-        internal void NotificationsTraceEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
+        internal void NotificationTraceEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
         {
             if (Log.IsNotificationTraceEnabled())
             {

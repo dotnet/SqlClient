@@ -118,7 +118,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     if (dllPath == null)
                     {
                         SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, MapLocalDBErrorStateToCode(registryQueryErrorState), string.Empty);
-                        SqlClientEventSource.Log.SNITrace("<sc.SNI.LocalDB.Windows.LoadUserInstanceDll |SNI|ERR >User instance DLL path is null.");
+                        SqlClientEventSource.Log.SNITraceEvent("<sc.SNI.LocalDB.Windows.LoadUserInstanceDll |SNI|ERR >User instance DLL path is null.");
                         return false;
                     }
 
@@ -136,7 +136,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     if (libraryHandle.IsInvalid)
                     {
                         SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.LocalDBFailedToLoadDll, string.Empty);
-                        SqlClientEventSource.Log.SNITrace("<sc.SNI.LocalDB.Windows.LoadUserInstanceDll |SNI|ERR > Library Handle is invalid. Could not load the dll.");
+                        SqlClientEventSource.Log.SNITraceEvent("<sc.SNI.LocalDB.Windows.LoadUserInstanceDll |SNI|ERR > Library Handle is invalid. Could not load the dll.");
                         libraryHandle.Dispose();
                         return false;
                     }
@@ -147,7 +147,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     if (_startInstanceHandle == IntPtr.Zero)
                     {
                         SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.LocalDBBadRuntime, string.Empty);
-                        SqlClientEventSource.Log.SNITrace("<sc.SNI.LocalDB.Windows.LoadUserInstanceDll |SNI|ERR > Was not able to load the PROC from DLL. Bad Runtime.");
+                        SqlClientEventSource.Log.SNITraceEvent("<sc.SNI.LocalDB.Windows.LoadUserInstanceDll |SNI|ERR > Was not able to load the PROC from DLL. Bad Runtime.");
                         libraryHandle.Dispose();
                         return false;
                     }
@@ -164,13 +164,13 @@ namespace Microsoft.Data.SqlClient.SNI
                     }
 
                     _sqlUserInstanceLibraryHandle = libraryHandle;
-                    SqlClientEventSource.Log.SNITrace("<sc.SNI.LocalDB.Windows.LoadUserInstanceDll |SNI|INFO > User Instance DLL was loaded successfully.");
+                    SqlClientEventSource.Log.SNITraceEvent("<sc.SNI.LocalDB.Windows.LoadUserInstanceDll |SNI|INFO > User Instance DLL was loaded successfully.");
                     return true;
                 }
             }
             finally
             {
-                SqlClientEventSource.Log.SNIScopeLeave(scopeID);
+                SqlClientEventSource.Log.SNIScopeLeaveEvent(scopeID);
             }
         }
 
@@ -254,7 +254,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             finally
             {
-                SqlClientEventSource.Log.SNIScopeLeave(scopeID);
+                SqlClientEventSource.Log.SNIScopeLeaveEvent(scopeID);
             }
         }
     }

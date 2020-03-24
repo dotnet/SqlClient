@@ -225,7 +225,7 @@ namespace Microsoft.Data.ProviderBase
         {
             // Internal method called from the connection pooler so we don't expose
             // the Deactivate method publicly.
-            SqlClientEventSource.Log.PoolerTraceEvent("<prov.DbConnectionInternal.DeactivateConnection|RES|INFO|CPOOL> {0}#, Deactivating", ObjectID);
+            SqlClientEventSource.Log.PoolerTraceEvent("<prov.DbConnectionInternal.DeactivateConnection|RES|INFO|CPOOL> {0}, Deactivating", ObjectID);
 
 #if DEBUG
             int activateCount = Interlocked.Decrement(ref _activateCount);
@@ -249,14 +249,14 @@ namespace Microsoft.Data.ProviderBase
         protected internal void DoNotPoolThisConnection()
         {
             _cannotBePooled = true;
-            SqlClientEventSource.Log.PoolerTraceEvent("<prov.DbConnectionInternal.DoNotPoolThisConnection|RES|INFO|CPOOL> {0}#, Marking pooled object as non-poolable so it will be disposed", ObjectID);
+            SqlClientEventSource.Log.PoolerTraceEvent("<prov.DbConnectionInternal.DoNotPoolThisConnection|RES|INFO|CPOOL> {0}, Marking pooled object as non-poolable so it will be disposed", ObjectID);
         }
 
         /// <devdoc>Ensure that this connection cannot be put back into the pool.</devdoc>
         protected internal void DoomThisConnection()
         {
             _connectionIsDoomed = true;
-            SqlClientEventSource.Log.PoolerTraceEvent("<prov.DbConnectionInternal.DoomThisConnection|RES|INFO|CPOOL> {0}#, Dooming", ObjectID);
+            SqlClientEventSource.Log.PoolerTraceEvent("<prov.DbConnectionInternal.DoomThisConnection|RES|INFO|CPOOL> {0}, Dooming", ObjectID);
         }
 
         protected internal virtual DataTable GetSchema(DbConnectionFactory factory, DbConnectionPoolGroup poolGroup, DbConnection outerConnection, string collectionName, string[] restrictions)
@@ -377,7 +377,7 @@ namespace Microsoft.Data.ProviderBase
                 throw ADP.InternalError(ADP.InternalErrorCode.PushingObjectSecondTime);         // pushing object onto stack a second time
             }
 
-            SqlClientEventSource.Log.PoolerTraceEvent("<prov.DbConnectionInternal.PrePush|RES|CPOOL> {0}#, Preparing to push into pool, owning connection {1}#, pooledCount={2}", ObjectID, 0, _pooledCount);
+            SqlClientEventSource.Log.PoolerTraceEvent("<prov.DbConnectionInternal.PrePush|RES|CPOOL> {0}, Preparing to push into pool, owning connection {1}, pooledCount={2}", ObjectID, 0, _pooledCount);
             _pooledCount++;
             _owningObject.Target = null; // NOTE: doing this and checking for InternalError.PooledObjectHasOwner degrades the close by 2%
         }
@@ -406,7 +406,7 @@ namespace Microsoft.Data.ProviderBase
             }
             _owningObject.Target = newOwner;
             _pooledCount--;
-            SqlClientEventSource.Log.PoolerTraceEvent("<prov.DbConnectionInternal.PostPop|RES|CPOOL> {0}#, Preparing to pop from pool,  owning connection {1}#, pooledCount={2}", ObjectID, 0, _pooledCount);
+            SqlClientEventSource.Log.PoolerTraceEvent("<prov.DbConnectionInternal.PostPop|RES|CPOOL> {0}, Preparing to pop from pool,  owning connection {1}, pooledCount={2}", ObjectID, 0, _pooledCount);
 
             //3 // The following tests are retail assertions of things we can't allow to happen.
             if (null != Pool)

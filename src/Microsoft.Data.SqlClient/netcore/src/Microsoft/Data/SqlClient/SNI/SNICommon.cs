@@ -141,13 +141,13 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 if (policyErrors == SslPolicyErrors.None)
                 {
-                    SqlClientEventSource.Log.SNITrace("<sc.SNI.SNICommon.ValidateSslServerCertificate |SNI|INFO > SSL Server certificate validated.");
+                    SqlClientEventSource.Log.SNITraceEvent("<sc.SNI.SNICommon.ValidateSslServerCertificate |SNI|INFO > SSL Server certificate validated.");
                     return true;
                 }
 
                 if ((policyErrors & SslPolicyErrors.RemoteCertificateNameMismatch) != 0)
                 {
-                    SqlClientEventSource.Log.SNITrace("<sc.SNI.SNICommon.ValidateSslServerCertificate |SNI|ERR > SSL Remote certificate name mismatched.");
+                    SqlClientEventSource.Log.SNITraceEvent("<sc.SNI.SNICommon.ValidateSslServerCertificate |SNI|ERR > SSL Remote certificate name mismatched.");
                     string certServerName = cert.Subject.Substring(cert.Subject.IndexOf('=') + 1);
 
                     // Verify that target server name matches subject in the certificate
@@ -189,7 +189,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             finally
             {
-                SqlClientEventSource.Log.SNIScopeLeave(scopeID);
+                SqlClientEventSource.Log.SNIScopeLeaveEvent(scopeID);
             }
         }
 
@@ -203,7 +203,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns></returns>
         internal static uint ReportSNIError(SNIProviders provider, uint nativeError, uint sniError, string errorMessage)
         {
-            SqlClientEventSource.Log.SNITraceEvent("<sc.SNI.SNICommon. ReportSNIError |SNI|ERR > Provider ={0}#, native Error ={1}#, SNI Error ={2}#, Error Message ={3}#", provider, nativeError, sniError, errorMessage);
+            SqlClientEventSource.Log.SNITraceEvent("<sc.SNI.SNICommon. ReportSNIError |SNI|ERR > Provider ={0}, native Error ={1}, SNI Error ={2}, Error Message ={3}", provider, nativeError, sniError, errorMessage);
             return ReportSNIError(new SNIError(provider, nativeError, sniError, errorMessage));
         }
 

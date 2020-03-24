@@ -63,7 +63,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             finally
             {
-                SqlClientEventSource.Log.SNIScopeLeave(scopeID);
+                SqlClientEventSource.Log.SNIScopeLeaveEvent(scopeID);
             }
         }
 
@@ -105,7 +105,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             finally
             {
-                SqlClientEventSource.Log.SNIScopeLeave(scopeID);
+                SqlClientEventSource.Log.SNIScopeLeaveEvent(scopeID);
             }
         }
 
@@ -176,7 +176,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             finally
             {
-                SqlClientEventSource.Log.SNIScopeLeave(scopeID);
+                SqlClientEventSource.Log.SNIScopeLeaveEvent(scopeID);
             }
         }
 
@@ -196,7 +196,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 {
                     if (_sequenceNumber >= _sendHighwater)
                     {
-                        SqlClientEventSource.Log.SNITrace("<sc.SNI.SNIMarsHandle.InternalSendAsync |SNI|INFO|> SNI Queue is full");
+                        SqlClientEventSource.Log.SNITraceEvent("<sc.SNI.SNIMarsHandle.InternalSendAsync |SNI|INFO|> SNI Queue is full");
                         return TdsEnums.SNI_QUEUE_FULL;
                     }
 
@@ -207,7 +207,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             finally
             {
-                SqlClientEventSource.Log.SNIScopeLeave(scopeID);
+                SqlClientEventSource.Log.SNIScopeLeaveEvent(scopeID);
             }
         }
 
@@ -234,7 +234,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
                                 if (result != TdsEnums.SNI_SUCCESS && result != TdsEnums.SNI_SUCCESS_IO_PENDING)
                                 {
-                                    SqlClientEventSource.Log.SNITrace("<sc.SNI.SNIMarsHandle.SendPendingPackets |SNI|ERR> InternalSendAsync result is not SNI_SUCCESS and is not SNI_SUCCESS_IO_PENDING");
+                                    SqlClientEventSource.Log.SNITraceEvent("<sc.SNI.SNIMarsHandle.SendPendingPackets |SNI|ERR> InternalSendAsync result is not SNI_SUCCESS and is not SNI_SUCCESS_IO_PENDING");
                                     return result;
                                 }
 
@@ -255,7 +255,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             finally
             {
-                SqlClientEventSource.Log.SNIScopeLeave(scopeID);
+                SqlClientEventSource.Log.SNIScopeLeaveEvent(scopeID);
             }
         }
 
@@ -281,7 +281,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             finally
             {
-                SqlClientEventSource.Log.SNIScopeLeave(scopeID);
+                SqlClientEventSource.Log.SNIScopeLeaveEvent(scopeID);
             }
         }
 
@@ -328,7 +328,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             finally
             {
-                SqlClientEventSource.Log.SNIScopeLeave(scopeID);
+                SqlClientEventSource.Log.SNIScopeLeaveEvent(scopeID);
             }
         }
 
@@ -350,7 +350,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             finally
             {
-                SqlClientEventSource.Log.SNIScopeLeave(scopeID);
+                SqlClientEventSource.Log.SNIScopeLeaveEvent(scopeID);
             }
         }
 
@@ -373,7 +373,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             finally
             {
-                SqlClientEventSource.Log.SNIScopeLeave(scopeID);
+                SqlClientEventSource.Log.SNIScopeLeaveEvent(scopeID);
             }
         }
 
@@ -397,7 +397,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             finally
             {
-                SqlClientEventSource.Log.SNIScopeLeave(scopeID);
+                SqlClientEventSource.Log.SNIScopeLeaveEvent(scopeID);
             }
         }
 
@@ -443,7 +443,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             finally
             {
-                SqlClientEventSource.Log.SNIScopeLeave(scopeID);
+                SqlClientEventSource.Log.SNIScopeLeaveEvent(scopeID);
             }
         }
 
@@ -526,7 +526,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             finally
             {
-                SqlClientEventSource.Log.SNIScopeLeave(scopeID);
+                SqlClientEventSource.Log.SNIScopeLeaveEvent(scopeID);
             }
         }
 
