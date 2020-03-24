@@ -8,6 +8,7 @@
     <Configurations>Debug;Release;net46-Release;net46-Debug;netcoreapp2.1-Debug;netcoreapp2.1-Release;netcoreapp3.1-Debug;netcoreapp3.1-Release</Configurations>
     <Platforms>AnyCPU;x86;x64</Platforms>
     <DefineConstants Condition="'$(TargetGroup)'=='netcoreapp'">$(DefineConstants);netcoreapp</DefineConstants>
+    <DefineConstants Condition="'$(TargetGroup)'=='netfx'">$(DefineConstants);netfx</DefineConstants>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).ManualTests</IntermediateOutputPath>
     <OutputPath>$(BinFolder)$(Configuration).ManualTests</OutputPath>
   </PropertyGroup>
