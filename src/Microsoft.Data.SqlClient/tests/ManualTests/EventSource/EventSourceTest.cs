@@ -34,11 +34,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 // Need to investigate better way of collecting traces in sequential runs, 
                 // For now we're collecting all traces to improve code coverage.
 #if NETCOREAPP
+#if unix
+                Assert.Equal(211, TraceListener.IDs.Count);
+#else
                 Assert.Equal(226, TraceListener.IDs.Count);
+#endif
 #elif NETFX
                 Assert.Equal(250, TraceListener.IDs.Count);
-#elif UNIX
-                Assert.Equal(211, TraceListener.IDs.Count);
 #endif
                 Assert.All(TraceListener.IDs, item => { Assert.Contains(item, Enumerable.Range(1, 21)); });
             }
