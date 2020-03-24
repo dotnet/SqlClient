@@ -13,5 +13,6 @@
     "AzureKeyVaultClientSecret": "",
     "SupportsIntegratedSecurity": true,
     "SupportsLocalDb": false,
-    "SupportsFileStream": false
+    "SupportsFileStream": false,
+    "UseManagedSNIOnWindows": false
 }
