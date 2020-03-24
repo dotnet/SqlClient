@@ -38,7 +38,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 #elif NETFX
                 Assert.Equal(250, TraceListener.IDs.Count);
 #elif UNIX
-                Assert.Equal(226, TraceListener.IDs.Count);
+                Assert.Equal(211, TraceListener.IDs.Count);
 #endif
                 Assert.All(TraceListener.IDs, item => { Assert.Contains(item, Enumerable.Range(1, 21)); });
             }
