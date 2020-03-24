@@ -1273,7 +1273,7 @@ namespace Microsoft.Data.ProviderBase
                                 break;
 
                             default:
-                                SqlClientEventSource.Log.PoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}#, WaitForMultipleObjects={1}", ObjectID, waitResult);
+                                SqlClientEventSource.Log.PoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}#, WaitForMultipleObjects={1}#", ObjectID, waitResult);
                                 Interlocked.Decrement(ref _waitCount);
                                 throw ADP.InternalError(ADP.InternalErrorCode.UnexpectedWaitAnyResult);
                         }

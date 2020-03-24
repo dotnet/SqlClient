@@ -432,7 +432,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void Rollback(string transactionName)
         {
-            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlInternalTransaction.Rollback|API> {0}#, transactionName='{transactionName}'", ObjectID);
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlInternalTransaction.Rollback|API> {0}#, transactionName='{1}#'", ObjectID, transactionName);
             if (_innerConnection.IsLockedForBulkCopy)
             {
                 throw SQL.ConnectionLockedForBcpEvent();
@@ -468,7 +468,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void Save(string savePointName)
         {
-            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlInternalTransaction.Save|API> {0}#, savePointName='{savePointName}'", ObjectID);
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlInternalTransaction.Save|API> {0}#, savePointName='{1}#'", ObjectID, savePointName);
             _innerConnection.ValidateConnectionForExecute(null);
 
             // ROLLBACK takes either a save point name or a transaction name.  It will rollback the

@@ -520,7 +520,7 @@ namespace Microsoft.Data.SqlClient
             }
             set
             {
-                SqlClientEventSource.Log.TraceEvent("<sc.SqlCommand.set_CommandText|API> {0}#, String Value = '{1}'", ObjectID, value);
+                SqlClientEventSource.Log.TraceEvent("<sc.SqlCommand.set_CommandText|API> {0}#, String Value = '{1}#'", ObjectID, value);
                 if (_commandText != value)
                 {
                     PropertyChanging();
@@ -541,7 +541,7 @@ namespace Microsoft.Data.SqlClient
             }
             set
             {
-                SqlClientEventSource.Log.TraceEvent("<sc.SqlCommand.set_CommandTimeout|API> {0}#, {1}", ObjectID, value);
+                SqlClientEventSource.Log.TraceEvent("<sc.SqlCommand.set_CommandTimeout|API> {0}#, {1}#", ObjectID, value);
                 if (value < 0)
                 {
                     throw ADP.InvalidCommandTimeout(value);
@@ -574,7 +574,7 @@ namespace Microsoft.Data.SqlClient
             }
             set
             {
-                SqlClientEventSource.Log.TraceEvent("<sc.SqlCommand.set_CommandType|API> {0}#, {1}{2}", ObjectID, (int)value, _commandType);
+                SqlClientEventSource.Log.TraceEvent("<sc.SqlCommand.set_CommandType|API> {0}#, {1}#{2}#", ObjectID, (int)value, _commandType);
                 if (_commandType != value)
                 {
                     switch (value)
@@ -679,7 +679,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     try
                     {
-                        SqlClientEventSource.Log.TraceEvent("<sc.SqlCommand.OnStatementCompleted|INFO> {0}#, recordCount={1}", ObjectID, recordCount);
+                        SqlClientEventSource.Log.TraceEvent("<sc.SqlCommand.OnStatementCompleted|INFO> {0}#, recordCount={1}#", ObjectID, recordCount);
                         handler(this, new StatementCompletedEventArgs(recordCount));
                     }
                     catch (Exception e)
@@ -707,7 +707,7 @@ namespace Microsoft.Data.SqlClient
 
             SqlStatistics statistics = null;
             long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlCommand.Prepare|API> {0}#", ObjectID);
-            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlCommand.Prepare|API|Correlation> ObjectID {0}#, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
+            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlCommand.Prepare|API|Correlation> ObjectID {0}#, ActivityID {1}#", ObjectID, ActivityCorrelator.Current);
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);

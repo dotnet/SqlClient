@@ -61,7 +61,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.SNIScopeLeave(scopeID);
             }
         }
 
@@ -88,7 +88,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.SNIScopeLeave(scopeID);
             }
         }
 

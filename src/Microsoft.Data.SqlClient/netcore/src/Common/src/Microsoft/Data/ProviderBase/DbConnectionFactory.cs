@@ -49,7 +49,7 @@ namespace Microsoft.Data.ProviderBase
 
         public void ClearAllPools()
         {
-            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<prov.DbConnectionFactory.ClearAllPools|{0}>", "API");
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<prov.DbConnectionFactory.ClearAllPools|API");
             try
             {
                 Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup> connectionPoolGroups = _connectionPoolGroups;
