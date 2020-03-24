@@ -96,29 +96,34 @@ namespace Microsoft.Data.SqlClient
         private const int AdvancedTraceBinId = 15;
 
         /// <summary>
+        /// Defines EventId for AdvancedTraceError() events
+        /// </summary>
+        private const int AdvancedTraceErrorId = 16;
+
+        /// <summary>
         /// Defines EventId for CorrelationTrace() events
         /// </summary>
-        private const int CorrelationTraceId = 16;
+        private const int CorrelationTraceId = 17;
 
         /// <summary>
         /// Defines EventId for StateDump() events
         /// </summary>
-        private const int StateDumpEventId = 17;
+        private const int StateDumpEventId = 18;
 
         /// <summary>
         /// Defines EventId for SNITrace() events
         /// </summary>
-        private const int SNITraceEventId = 18;
+        private const int SNITraceEventId = 19;
 
         /// <summary>
         /// Defines EventId for SNIEnterScope() events
         /// </summary>
-        private const int SNIScopeEnterId = 19;
+        private const int SNIScopeEnterId = 20;
 
         /// <summary>
         /// Defines EventId for SNIExitScope() events
         /// </summary>
-        private const int SNIScopeExitId = 20;
+        private const int SNIScopeExitId = 21;
         #endregion
 
         /// <summary>
@@ -873,13 +878,13 @@ namespace Microsoft.Data.SqlClient
         [Event(PoolerScopeExitId, Level = EventLevel.Informational, Opcode = EventOpcode.Stop, Keywords = Keywords.PoolerScope)]
         internal void PoolerScopeLeave(long scopeId)
         {
-            WriteEvent(ScopeExitId, scopeId);
+            WriteEvent(PoolerScopeExitId, scopeId);
         }
 
         [Event(AdvancedTraceId, Level = EventLevel.Verbose, Keywords = Keywords.AdvancedTrace)]
         internal void AdvancedTrace(string message)
         {
-            WriteEvent(TraceEventId, message);
+            WriteEvent(AdvancedTraceId, message);
         }
 
         [Event(AdvancedScopeEnterId, Level = EventLevel.Verbose, Opcode = EventOpcode.Start, Keywords = Keywords.AdvancedTrace)]
@@ -902,10 +907,10 @@ namespace Microsoft.Data.SqlClient
             WriteEvent(AdvancedTraceBinId, message);
         }
 
-        [Event(AdvancedTraceId, Level = EventLevel.Error, Keywords = Keywords.AdvancedTrace)]
+        [Event(AdvancedTraceErrorId, Level = EventLevel.Error, Keywords = Keywords.AdvancedTrace)]
         internal void AdvancedTraceError(string message)
         {
-            WriteEvent(TraceEventId, message);
+            WriteEvent(AdvancedTraceErrorId, message);
         }
 
         [Event(CorrelationTraceId, Level = EventLevel.Informational, Keywords = Keywords.CorrelationTrace, Opcode = EventOpcode.Start)]

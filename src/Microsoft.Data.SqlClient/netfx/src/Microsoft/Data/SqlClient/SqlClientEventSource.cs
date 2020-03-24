@@ -715,13 +715,13 @@ namespace Microsoft.Data.SqlClient
         [Event(PoolerScopeExitId, Level = EventLevel.Informational, Opcode = EventOpcode.Stop, Keywords = Keywords.PoolerScope)]
         internal void PoolerScopeLeave(long scopeId)
         {
-            WriteEvent(ScopeExitId, scopeId);
+            WriteEvent(PoolerScopeExitId, scopeId);
         }
 
         [Event(AdvancedTraceId, Level = EventLevel.Verbose, Keywords = Keywords.AdvancedTrace)]
         internal void AdvancedTrace(string message)
         {
-            WriteEvent(TraceEventId, message);
+            WriteEvent(AdvancedTraceId, message);
         }
 
         [Event(AdvancedScopeEnterId, Level = EventLevel.Verbose, Opcode = EventOpcode.Start, Keywords = Keywords.AdvancedTrace)]
