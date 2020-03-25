@@ -2938,12 +2938,12 @@ namespace Microsoft.Data.SqlClient
             // _pendingData set by e.g. 'TdsExecuteSQLBatch'
             // _hasOpenResult always set to true by 'WriteMarsHeader'
             //
-            if (!stateObj.HasPendingData && stateObj.HasOpenResult)
+            if (!stateObj._attentionSent && !stateObj.HasPendingData && stateObj.HasOpenResult)
             {
                 /*
                                 Debug.Assert(!((sqlTransaction != null               && _distributedTransaction != null) ||
-                                               (_userStartedLocalTransaction != null && _distributedTransaction != null))
-                                              , "ProcessDone - have both distributed and local transactions not null!");
+                                                (_userStartedLocalTransaction != null && _distributedTransaction != null))
+                                                , "ProcessDone - have both distributed and local transactions not null!");
                 */
                 // WebData 112722
 
@@ -8706,7 +8706,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     Debug.Assert(!sync, "Should not have gotten a Task when writing in sync mode");
 
-                    // Need to wait for flush - continuation will unlock the connection                    
+                    // Need to wait for flush - continuation will unlock the connection
                     bool taskReleaseConnectionLock = releaseConnectionLock;
                     releaseConnectionLock = false;
                     return executeTask.ContinueWith(
