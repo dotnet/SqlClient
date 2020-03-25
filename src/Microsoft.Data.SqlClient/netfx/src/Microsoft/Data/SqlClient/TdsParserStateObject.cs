@@ -558,8 +558,8 @@ namespace Microsoft.Data.SqlClient
                 {
                     return false;
                 }
-                SqlClientEventSource.Log.TraceEvent("<sc.TdsParserStateObject.NullBitmap.Initialize|INFO|ADV> {0}#, NBCROW bitmap received, column count = {1}", stateObj.ObjectID, columnsCount);
-                SqlClientEventSource.Log.TraceBinEvent("<sc.TdsParserStateObject.NullBitmap.Initialize|INFO|ADV> NBCROW bitmap data: ", _nullBitmap, (ushort)_nullBitmap.Length);
+                SqlClientEventSource.Log.AdvancedTraceEvent("<sc.TdsParserStateObject.NullBitmap.Initialize|INFO|ADV> {0}, NBCROW bitmap received, column count = {1}", stateObj.ObjectID, columnsCount);
+                SqlClientEventSource.Log.AdvancedTraceBinEvent("<sc.TdsParserStateObject.NullBitmap.Initialize|INFO|ADV> NBCROW bitmap data: ", _nullBitmap, (ushort)_nullBitmap.Length);
 
                 return true;
             }
@@ -912,11 +912,11 @@ namespace Microsoft.Data.SqlClient
         internal int DecrementPendingCallbacks(bool release)
         {
             int remaining = Interlocked.Decrement(ref _pendingCallbacks);
-            SqlClientEventSource.Log.AdvanceTrace("<sc.TdsParserStateObject.DecrementPendingCallbacks|ADV> {0}#, after decrementing _pendingCallbacks: {1}", ObjectID, _pendingCallbacks);
+            SqlClientEventSource.Log.AdvancedTraceEvent("<sc.TdsParserStateObject.DecrementPendingCallbacks|ADV> {0}, after decrementing _pendingCallbacks: {1}", ObjectID, _pendingCallbacks);
 
             if ((0 == remaining || release) && _gcHandle.IsAllocated)
             {
-                SqlClientEventSource.Log.AdvanceTrace("<sc.TdsParserStateObject.DecrementPendingCallbacks|ADV> {0}#, FREEING HANDLE!", ObjectID);
+                SqlClientEventSource.Log.AdvancedTraceEvent("<sc.TdsParserStateObject.DecrementPendingCallbacks|ADV> {0}, FREEING HANDLE!", ObjectID);
                 _gcHandle.Free();
             }
 
@@ -1025,7 +1025,7 @@ namespace Microsoft.Data.SqlClient
         {
             int remaining = Interlocked.Increment(ref _pendingCallbacks);
 
-            SqlClientEventSource.Log.AdvanceTrace("<sc.TdsParserStateObject.IncrementPendingCallbacks|ADV> {0}#, after incrementing _pendingCallbacks: {1}", ObjectID, _pendingCallbacks);
+            SqlClientEventSource.Log.AdvancedTraceEvent("<sc.TdsParserStateObject.IncrementPendingCallbacks|ADV> {0}, after incrementing _pendingCallbacks: {1}", ObjectID, _pendingCallbacks);
             Debug.Assert(0 < remaining && remaining <= 3, $"_pendingCallbacks values is invalid after incrementing: {remaining}");
             return remaining;
         }
@@ -2795,7 +2795,7 @@ namespace Microsoft.Data.SqlClient
                         }
                     }
                     SniReadStatisticsAndTracing();
-                    SqlClientEventSource.Log.AdvanceTraceBin("<sc.TdsParser.ReadNetworkPacketAsyncCallback|INFO|ADV> Packet read", _inBuff, (ushort)_inBytesRead);
+                    SqlClientEventSource.Log.AdvancedTraceBinEvent("<sc.TdsParser.ReadNetworkPacketAsyncCallback|INFO|ADV> Packet read", _inBuff, (ushort)_inBytesRead);
                     AssertValidState();
                 }
                 else
@@ -3541,7 +3541,7 @@ namespace Microsoft.Data.SqlClient
                     _attentionSending = false;
                 }
 
-                SqlClientEventSource.Log.AdvanceTraceBin("<sc.TdsParser.WritePacket|INFO|ADV>  Packet sent", _outBuff, (ushort)_outBytesUsed);
+                SqlClientEventSource.Log.AdvancedTraceBinEvent("<sc.TdsParser.WritePacket|INFO|ADV>  Packet sent", _outBuff, (ushort)_outBytesUsed);
                 SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.SendAttention|{0}> Attention sent to the server.", "Info");
 
                 AssertValidState();
@@ -3698,7 +3698,7 @@ namespace Microsoft.Data.SqlClient
                 statistics.SafeAdd(ref statistics._bytesSent, _outBytesUsed);
                 statistics.RequestNetworkServerTimer();
             }
-            if (SqlClientEventSource.Log.IsAdvanceTraceOn())
+            if (SqlClientEventSource.Log.IsAdvancedTraceOn())
             {
                 // If we have tracePassword variables set, we are flushing TDSLogin and so we need to
                 // blank out password in buffer.  Buffer has already been sent to netlib, so no danger
@@ -3728,7 +3728,7 @@ namespace Microsoft.Data.SqlClient
                     _traceChangePasswordLength = 0;
                 }
             }
-            SqlClientEventSource.Log.AdvanceTraceBin("<sc.TdsParser.WritePacket|INFO|ADV>  Packet sent", _outBuff, (ushort)_outBytesUsed);
+            SqlClientEventSource.Log.AdvancedTraceBinEvent("<sc.TdsParser.WritePacket|INFO|ADV>  Packet sent", _outBuff, (ushort)_outBytesUsed);
         }
 
         [Conditional("DEBUG")]

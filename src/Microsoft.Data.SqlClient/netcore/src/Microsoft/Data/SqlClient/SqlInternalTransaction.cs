@@ -52,7 +52,7 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlInternalTransaction(SqlInternalConnection innerConnection, TransactionType type, SqlTransaction outerTransaction, long transactionId)
         {
-            SqlClientEventSource.Log.PoolerTraceEvent("<sc.SqlInternalTransaction.ctor|RES|CPOOL> {0}#, Created for connection {1}#, outer transaction {2}#, Type {3}", ObjectID, innerConnection.ObjectID, (null != outerTransaction) ? outerTransaction.ObjectID : -1, (int)type);
+            SqlClientEventSource.Log.PoolerTraceEvent("<sc.SqlInternalTransaction.ctor|RES|CPOOL> {0}, Created for connection {1}, outer transaction {2}, Type {3}", ObjectID, innerConnection.ObjectID, (null != outerTransaction) ? outerTransaction.ObjectID : -1, (int)type);
             _innerConnection = innerConnection;
             _transactionType = type;
 
@@ -254,7 +254,7 @@ namespace Microsoft.Data.SqlClient
             SqlInternalConnection innerConnection = _innerConnection;
 
             Debug.Assert(innerConnection != null, "How can we be here if the connection is null?");
-            SqlClientEventSource.Log.PoolerTraceEvent("<sc.SqlInteralTransaction.CloseFromConnection|RES|CPOOL> {0}#, Closing", ObjectID);
+            SqlClientEventSource.Log.PoolerTraceEvent("<sc.SqlInteralTransaction.CloseFromConnection|RES|CPOOL> {0}, Closing", ObjectID);
             bool processFinallyBlock = true;
             try
             {
@@ -280,7 +280,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void Commit()
         {
-            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlInternalTransaction.Commit|API> {0}#", ObjectID);
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlInternalTransaction.Commit|API> {0}", ObjectID);
 
             if (_innerConnection.IsLockedForBulkCopy)
             {
@@ -339,7 +339,7 @@ namespace Microsoft.Data.SqlClient
 
         private /*protected override*/ void Dispose(bool disposing)
         {
-            SqlClientEventSource.Log.PoolerTraceEvent("<sc.SqlInteralTransaction.Dispose|RES|CPOOL> {0}#, Disposing", ObjectID);
+            SqlClientEventSource.Log.PoolerTraceEvent("<sc.SqlInteralTransaction.Dispose|RES|CPOOL> {0}, Disposing", ObjectID);
             if (disposing)
             {
                 if (null != _innerConnection)
@@ -390,7 +390,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void Rollback()
         {
-            var scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlInternalTransaction.Rollback|API> {0}#", ObjectID);
+            var scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlInternalTransaction.Rollback|API> {0}", ObjectID);
             if (_innerConnection.IsLockedForBulkCopy)
             {
                 throw SQL.ConnectionLockedForBcpEvent();
@@ -432,7 +432,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void Rollback(string transactionName)
         {
-            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlInternalTransaction.Rollback|API> {0}#, transactionName='{transactionName}'", ObjectID);
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlInternalTransaction.Rollback|API> {0}, transactionName={1}", ObjectID, transactionName);
             if (_innerConnection.IsLockedForBulkCopy)
             {
                 throw SQL.ConnectionLockedForBcpEvent();
@@ -468,7 +468,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void Save(string savePointName)
         {
-            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlInternalTransaction.Save|API> {0}#, savePointName='{savePointName}'", ObjectID);
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlInternalTransaction.Save|API> {0}, savePointName={1}", ObjectID, savePointName);
             _innerConnection.ValidateConnectionForExecute(null);
 
             // ROLLBACK takes either a save point name or a transaction name.  It will rollback the

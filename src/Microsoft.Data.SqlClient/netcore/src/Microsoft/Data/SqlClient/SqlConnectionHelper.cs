@@ -60,7 +60,7 @@ namespace Microsoft.Data.SqlClient
 
         private string ConnectionString_Get()
         {
-            SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionHelper.ConnectionString_Get|API> {0}#", ObjectID);
+            SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionHelper.ConnectionString_Get|API> {0}", ObjectID);
             bool hidePassword = InnerConnection.ShouldHidePassword;
             DbConnectionOptions connectionOptions = UserConnectionOptions;
             return ((null != connectionOptions) ? connectionOptions.UsersConnectionString(hidePassword) : "");
@@ -87,7 +87,7 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.OpenConnectionPropertySet(nameof(ConnectionString), connectionInternal.State);
             }
             string cstr = ((null != connectionOptions) ? connectionOptions.UsersConnectionStringForTrace() : "");
-            SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionHelper.ConnectionString_Set|API> {0}#, '{1}'", ObjectID, cstr);
+            SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionHelper.ConnectionString_Set|API> {0}, '{1}'", ObjectID, cstr);
         }
 
         internal DbConnectionInternal InnerConnection
@@ -135,11 +135,11 @@ namespace Microsoft.Data.SqlClient
             // will end the reliable try...
             if (e is OutOfMemoryException)
             {
-                SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionHelper.Abort|RES|INFO|CPOOL> {0}#, Aborting operation due to asynchronous exception: {'OutOfMemory'}", ObjectID);
+                SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionHelper.Abort|RES|INFO|CPOOL> {0}, Aborting operation due to asynchronous exception: {'OutOfMemory'}", ObjectID);
             }
             else
             {
-                SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionHelper.Abort|RES|INFO|CPOOL> {0}#, Aborting operation due to asynchronous exception: {1}", ObjectID, e);
+                SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionHelper.Abort|RES|INFO|CPOOL> {0}, Aborting operation due to asynchronous exception: {1}", ObjectID, e);
             }
         }
 
@@ -151,7 +151,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CreateDbCommand/*' />
         override protected DbCommand CreateDbCommand()
         {
-            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<prov.DbConnectionHelper.CreateDbCommand|API> {0}#", ObjectID);
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<prov.DbConnectionHelper.CreateDbCommand|API> {0}", ObjectID);
             try
             {
                 DbCommand command = null;
@@ -184,7 +184,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/EnlistTransaction/*' />
         public override void EnlistTransaction(Transaction transaction)
         {
-            SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionHelper.EnlistTransaction|RES|TRAN> {0}#, Connection enlisting in a transaction.", ObjectID);
+            SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionHelper.EnlistTransaction|RES|TRAN> {0}, Connection enlisting in a transaction.", ObjectID);
 
             // If we're currently enlisted in a transaction and we were called
             // on the EnlistTransaction method (Whidbey) we're not allowed to

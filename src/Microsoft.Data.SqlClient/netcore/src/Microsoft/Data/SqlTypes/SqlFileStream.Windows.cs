@@ -61,7 +61,7 @@ namespace Microsoft.Data.SqlTypes
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/ctor2/*' />
         public SqlFileStream(string path, byte[] transactionContext, FileAccess access, FileOptions options, long allocationSize)
         {
-            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlFileStream.ctor|API> {0}# access={1} options={2} path='{3}'", ObjectID, (int)access, (int)options, path);
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlFileStream.ctor|API> {0} access={1} options={2} path='{3}'", ObjectID, (int)access, (int)options, path);
             try
             {
                 //-----------------------------------------------------------------
@@ -599,7 +599,7 @@ namespace Microsoft.Data.SqlTypes
                                                                                 eaBuffer: b,
                                                                                 eaLength: (uint)fullSize);
 
-                        SqlClientEventSource.Log.AdvanceTrace("<sc.SqlFileStream.OpenSqlFileStream|ADV> {0}#, desiredAccess=0x{1}, allocationSize={2}, " +
+                        SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlFileStream.OpenSqlFileStream|ADV> {0}, desiredAccess=0x{1}, allocationSize={2}, " +
                        "fileAttributes=0x{3}, shareAccess=0x{4}, dwCreateDisposition=0x{5}, createOptions=0x{ dwCreateOptions}", ObjectID, (int)nDesiredAccess, allocationSize, 0, (int)nShareAccess, dwCreateDisposition);
 
                         retval = status;

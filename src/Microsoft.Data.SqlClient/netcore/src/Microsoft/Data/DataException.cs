@@ -31,8 +31,8 @@ namespace Microsoft.Data
             Debug.Assert(null != e, "TraceException: null Exception");
             if (null != e)
             {
-                SqlClientEventSource.Log.AdvanceTrace(trace, e.Message);
-                SqlClientEventSource.Log.AdvanceTrace("<comm.ADP.TraceException|ERR|ADV> Environment StackTrace = '{0}'", Environment.StackTrace);
+                SqlClientEventSource.Log.AdvancedTraceEvent(trace, e.Message);
+                SqlClientEventSource.Log.AdvancedTraceEvent("<comm.ADP.TraceException|ERR|ADV> Environment StackTrace = '{0}'", Environment.StackTrace);
             }
         }
 
