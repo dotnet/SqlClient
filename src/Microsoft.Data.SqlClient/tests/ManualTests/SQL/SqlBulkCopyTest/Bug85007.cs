@@ -90,6 +90,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                 ColumnMappings.Add("ShipCountry", "ShipCountry");
 
                                 bulkcopy.WriteToServer(reader);
+                                
+                                DataTestUtility.AssertEqualsWithDescription(bulkcopy.RowsCopied, 830, "Unexpected number of rows.");
                             }
                             Helpers.VerifyResults(dstConn, dstTable, 14, 830);
                         }

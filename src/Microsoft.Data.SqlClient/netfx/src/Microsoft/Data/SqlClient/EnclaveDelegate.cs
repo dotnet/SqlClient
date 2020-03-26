@@ -10,13 +10,11 @@ using System.Text;
 
 namespace Microsoft.Data.SqlClient
 {
-
     /// <summary>
     /// A delegate for communicating with secure enclave
     /// </summary>
     internal class EnclaveDelegate
     {
-
         private static readonly SqlAeadAes256CbcHmac256Factory SqlAeadAes256CbcHmac256Factory = new SqlAeadAes256CbcHmac256Factory();
         private static readonly string GetAttestationInfoQueryString = String.Format(@"Select GetTrustedModuleIdentityAndAttestationInfo({0}) as attestationInfo", 0);
         private static readonly EnclaveDelegate _EnclaveDelegate = new EnclaveDelegate();

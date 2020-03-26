@@ -3,16 +3,13 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlTypes;
+using System.Diagnostics.Tracing;
 using System.Globalization;
 using System.IO;
-using System.Linq;
-using System.Reflection;
 using System.Security;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Identity.Client;
@@ -38,16 +35,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static List<string> AEConnStrings = new List<string>();
         public static List<string> AEConnStringsSetup = new List<string>();
         public static readonly bool EnclaveEnabled = false;
+        public static readonly bool TracingEnabled = false;
         public static readonly bool SupportsIntegratedSecurity = false;
         public static readonly bool SupportsLocalDb = false;
         public static readonly bool SupportsFileStream = false;
+        public static readonly bool UseManagedSNIOnWindows = false;
 
         public const string UdtTestDbName = "UdtTestDb";
         public const string AKVKeyName = "TestSqlClientAzureKeyVaultProvider";
-
-        private static readonly Assembly MdsAssembly = typeof(Microsoft.Data.SqlClient.SqlConnection).GetTypeInfo().Assembly;
-        private static readonly Type TdsParserStateObjectFactoryInstance = MdsAssembly?.GetType("Microsoft.Data.SqlClient.TdsParserStateObjectFactory");
-        private static readonly PropertyInfo UseManagedSni = TdsParserStateObjectFactoryInstance?.GetProperty("UseManagedSNI", BindingFlags.Static | BindingFlags.Public);
+        private const string ManagedNetworkingAppContextSwitch = "Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows";
 
         private static readonly string[] AzureSqlServerEndpoints = {".database.windows.net",
                                                                      ".database.cloudapi.de",
@@ -55,6 +51,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                                                      ".database.chinacloudapi.cn"};
 
         private static Dictionary<string, bool> AvailableDatabases;
+        private static TraceEventListener TraceListener;
 
         private class Config
         {
@@ -69,9 +66,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             public string AzureKeyVaultClientId = null;
             public string AzureKeyVaultClientSecret = null;
             public bool EnclaveEnabled = false;
+            public bool TracingEnabled = false;
             public bool SupportsIntegratedSecurity = false;
             public bool SupportsLocalDb = false;
             public bool SupportsFileStream = false;
+            public bool UseManagedSNIOnWindows = false;
         }
 
         static DataTestUtility()
@@ -92,6 +91,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 SupportsIntegratedSecurity = c.SupportsIntegratedSecurity;
                 SupportsFileStream = c.SupportsFileStream;
                 EnclaveEnabled = c.EnclaveEnabled;
+                TracingEnabled = c.TracingEnabled;
+                UseManagedSNIOnWindows = c.UseManagedSNIOnWindows;
+
+                if (TracingEnabled)
+                {
+                    TraceListener = new DataTestUtility.TraceEventListener();
+                }
+
+                if (UseManagedSNIOnWindows)
+                {
+                    AppContext.SetSwitch(ManagedNetworkingAppContextSwitch, true);
+                    Console.WriteLine($"App Context switch {ManagedNetworkingAppContextSwitch} enabled on {Environment.OSVersion}");
+                }
 
                 if (IsAADPasswordConnStrSetup() && IsAADAuthorityURLSetup())
                 {
@@ -231,7 +243,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return !string.IsNullOrEmpty(AKVUrl) && !string.IsNullOrEmpty(AKVClientId) && !string.IsNullOrEmpty(AKVClientSecret);
         }
 
-        public static bool IsUsingManagedSNI() => (bool)(UseManagedSni?.GetValue(null) ?? false);
+        public static bool IsUsingManagedSNI() => UseManagedSNIOnWindows;
 
         public static bool IsUsingNativeSNI() => !IsUsingManagedSNI();
 
@@ -258,6 +270,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
             }
             return retval;
+        }
+
+        public static bool IsTCPConnectionStringPasswordIncluded()
+        {
+            return RetrieveValueFromConnStr(TCPConnectionString, new string[] { "Password", "PWD" }) != string.Empty;
         }
 
         // the name length will be no more then (16 + prefix.Length + escapeLeft.Length + escapeRight.Length)
@@ -575,23 +592,26 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             // tokenize connection string and remove input keys.
             string res = "";
-            string[] keys = connStr.Split(';');
-            foreach (var key in keys)
+            if (connStr != null && keysToRemove != null)
             {
-                if (!string.IsNullOrEmpty(key.Trim()))
+                string[] keys = connStr.Split(';');
+                foreach (var key in keys)
                 {
-                    bool removeKey = false;
-                    foreach (var keyToRemove in keysToRemove)
+                    if (!string.IsNullOrEmpty(key.Trim()))
                     {
-                        if (key.Trim().ToLower().StartsWith(keyToRemove.Trim().ToLower()))
+                        bool removeKey = false;
+                        foreach (var keyToRemove in keysToRemove)
                         {
-                            removeKey = true;
-                            break;
+                            if (key.Trim().ToLower().StartsWith(keyToRemove.Trim().ToLower()))
+                            {
+                                removeKey = true;
+                                break;
+                            }
                         }
-                    }
-                    if (!removeKey)
-                    {
-                        res += key + ";";
+                        if (!removeKey)
+                        {
+                            res += key + ";";
+                        }
                     }
                 }
             }
@@ -602,22 +622,44 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             // tokenize connection string and retrieve value for a specific key.
             string res = "";
-            string[] keys = connStr.Split(';');
-            foreach (var key in keys)
+            if (connStr != null && keywords != null)
             {
-                foreach (var keyword in keywords)
+                string[] keys = connStr.Split(';');
+                foreach (var key in keys)
                 {
-                    if (!string.IsNullOrEmpty(key.Trim()))
+                    foreach (var keyword in keywords)
                     {
-                        if (key.Trim().ToLower().StartsWith(keyword.Trim().ToLower()))
+                        if (!string.IsNullOrEmpty(key.Trim()))
                         {
-                            res = key.Substring(key.IndexOf('=') + 1).Trim();
-                            break;
+                            if (key.Trim().ToLower().StartsWith(keyword.Trim().ToLower()))
+                            {
+                                res = key.Substring(key.IndexOf('=') + 1).Trim();
+                                break;
+                            }
                         }
                     }
                 }
             }
             return res;
+        }
+
+        public class TraceEventListener : EventListener
+        {
+            public List<int> IDs = new List<int>();
+
+            protected override void OnEventSourceCreated(EventSource eventSource)
+            {
+                if (eventSource.Name.Equals("Microsoft.Data.SqlClient.EventSource"))
+                {
+                    // Collect all traces for better code coverage
+                    EnableEvents(eventSource, EventLevel.Informational, EventKeywords.All);
+                }
+            }
+
+            protected override void OnEventWritten(EventWrittenEventArgs eventData)
+            {
+                IDs.Add(eventData.EventId);
+            }
         }
     }
 }

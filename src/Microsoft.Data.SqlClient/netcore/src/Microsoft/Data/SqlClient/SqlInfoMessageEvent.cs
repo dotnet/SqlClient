@@ -4,7 +4,7 @@
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlInfoMessageEventArgs.xml' path='docs/members[@name="SqlInfoMessageEventArgs"]/SqlInfoMessageEventArgs/*' />
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlInfoMessageEventArgs.xml' path='docs/members[@name="SqlInfoMessageEventArgs"]/SqlInfoMessageEventArgs/*' />
     public sealed class SqlInfoMessageEventArgs : System.EventArgs
     {
         private SqlException _exception;
@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClient
             _exception = exception;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlInfoMessageEventArgs.xml' path='docs/members[@name="SqlInfoMessageEventArgs"]/Errors/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlInfoMessageEventArgs.xml' path='docs/members[@name="SqlInfoMessageEventArgs"]/Errors/*' />
         public SqlErrorCollection Errors
         {
             get { return _exception.Errors; }
@@ -25,19 +25,19 @@ namespace Microsoft.Data.SqlClient
             return (null != _exception) && (0 < _exception.Errors.Count);
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlInfoMessageEventArgs.xml' path='docs/members[@name="SqlInfoMessageEventArgs"]/Message/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlInfoMessageEventArgs.xml' path='docs/members[@name="SqlInfoMessageEventArgs"]/Message/*' />
         public string Message
         {
             get { return _exception.Message; }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlInfoMessageEventArgs.xml' path='docs/members[@name="SqlInfoMessageEventArgs"]/Source/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlInfoMessageEventArgs.xml' path='docs/members[@name="SqlInfoMessageEventArgs"]/Source/*' />
         public string Source
         {
             get { return _exception.Source; }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlInfoMessageEventArgs.xml' path='docs/members[@name="SqlInfoMessageEventArgs"]/ToString/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlInfoMessageEventArgs.xml' path='docs/members[@name="SqlInfoMessageEventArgs"]/ToString/*' />
         override public string ToString()
         {
             return Message;

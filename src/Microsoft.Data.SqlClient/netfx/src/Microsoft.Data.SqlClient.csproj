@@ -134,7 +134,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlClientEncryptionAlgorithm.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientEncryptionAlgorithmFactoryList.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientFactory.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlClientLogger.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientMetaDataCollectionNames.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientOriginalAddressInfo.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientPermission.cs" />

@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Latest" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <!-- Contains common items shared between NetFx and NetCore -->
-  <ItemGroup>
+  <ItemGroup Condition="'$(TargetGroup)' == 'netfx' or '$(OSGroup)' != 'AnyOS'">
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientEventSource.cs">
       <Link>Microsoft\Data\SqlClient\SqlClientEventSource.cs</Link>
     </Compile>
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetGroup)' == 'netfx' or '$(OSGroup)' != 'AnyOS'">
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientLogger.cs" >
+      <Link>Microsoft\Data\SqlClient\SqlClientLogger.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\DataClassification\SensitivityClassification.cs">
       <Link>Microsoft\Data\SqlClient\DataClassification\SensitivityClassification.cs</Link>
     </Compile>

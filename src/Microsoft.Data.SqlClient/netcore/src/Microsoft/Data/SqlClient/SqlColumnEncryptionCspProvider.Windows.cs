@@ -11,11 +11,11 @@ using Microsoft.Win32;
 namespace Microsoft.Data.SqlClient
 {
 
-    /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/SqlColumnEncryptionCspProvider/*' />
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/SqlColumnEncryptionCspProvider/*' />
     public class SqlColumnEncryptionCspProvider : SqlColumnEncryptionKeyStoreProvider
     {
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/ProviderName/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/ProviderName/*' />
         public const string ProviderName = @"MSSQL_CSP_PROVIDER";
 
         /// <summary>
@@ -34,7 +34,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private readonly byte[] _version = new byte[] { 0x01 };
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/DecryptColumnEncryptionKey/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/DecryptColumnEncryptionKey/*' />
         public override byte[] DecryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] encryptedColumnEncryptionKey)
         {
             // Validate the input parameters
@@ -128,7 +128,7 @@ namespace Microsoft.Data.SqlClient
             return RSADecrypt(rsaProvider, cipherText);
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/EncryptColumnEncryptionKey/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/EncryptColumnEncryptionKey/*' />
         public override byte[] EncryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] columnEncryptionKey)
         {
             // Validate the input parameters
@@ -218,13 +218,13 @@ namespace Microsoft.Data.SqlClient
             return encryptedColumnEncryptionKey;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/SignColumnMasterKeyMetadata/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/SignColumnMasterKeyMetadata/*' />
         public override byte[] SignColumnMasterKeyMetadata(string masterKeyPath, bool allowEnclaveComputations)
         {
             throw new NotSupportedException();
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/VerifyColumnMasterKeyMetadata/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/VerifyColumnMasterKeyMetadata/*' />
         public override bool VerifyColumnMasterKeyMetadata(string masterKeyPath, bool allowEnclaveComputations, byte[] signature)
         {
             throw new NotSupportedException();
@@ -344,7 +344,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Creates a RSACryptoServiceProvider from the given key path which contains both CSP name and key name
         /// </summary>
-        /// <param name="keyPath">key path in the format of [CAPI provider name]\[key name]</param>
+        /// <param name="keyPath">key path in the format of [CAPI provider name]/[key name]</param>
         /// <param name="isSystemOp">Indicates if ADO.NET calls or the customer calls the API</param>
         /// <returns></returns>
         private RSACryptoServiceProvider CreateRSACryptoProvider(string keyPath, bool isSystemOp)
@@ -389,7 +389,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Extracts the CSP provider name and key name from the given key path
         /// </summary>
-        /// <param name="keyPath">key path in the format of [CSP provider name]\[key name]</param>
+        /// <param name="keyPath">key path in the format of [CSP provider name]/[key name]</param>
         /// <param name="isSystemOp">Indicates if ADO.NET calls or the customer calls the API</param>
         /// <param name="cspProviderName">output containing the CSP provider name</param>
         /// <param name="keyIdentifier">output containing the key name</param>
@@ -419,7 +419,7 @@ namespace Microsoft.Data.SqlClient
         /// Gets the provider type from a given CAPI provider name
         /// </summary>
         /// <param name="providerName">CAPI provider name</param>
-        /// <param name="keyPath">key path in the format of [CSP provider name]\[key name]</param>
+        /// <param name="keyPath">key path in the format of [CSP provider name]/[key name]</param>
         /// <param name="isSystemOp">Indicates if ADO.NET calls or the customer calls the API</param>
         /// <returns></returns>
         private int GetProviderType(string providerName, string keyPath, bool isSystemOp)

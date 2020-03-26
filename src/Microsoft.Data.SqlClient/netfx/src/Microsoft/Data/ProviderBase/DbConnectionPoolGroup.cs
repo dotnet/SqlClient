@@ -39,7 +39,7 @@ namespace Microsoft.Data.ProviderBase
         private DbConnectionPoolGroupProviderInfo _providerInfo;
         private DbMetaDataFactory _metaDataFactory;
 
-        private static int _objectTypeCount; // Bid counter
+        private static int _objectTypeCount; // EventSource counter
         internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
 
         // always lock this before changing _state, we don't want to move out of the 'Disabled' state
@@ -273,7 +273,7 @@ namespace Microsoft.Data.ProviderBase
             if (PoolGroupStateIdle == _state)
             {
                 _state = PoolGroupStateActive;
-                SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionPoolGroup.ClearInternal|RES|INFO|CPOOL> {0}#, Active", ObjectID);
+                SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionPoolGroup.ClearInternal|RES|INFO|CPOOL> {0}, Active", ObjectID);
             }
             return (PoolGroupStateActive == _state);
         }
@@ -335,12 +335,12 @@ namespace Microsoft.Data.ProviderBase
                     if (PoolGroupStateActive == _state)
                     {
                         _state = PoolGroupStateIdle;
-                        SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionPoolGroup.ClearInternal|RES|INFO|CPOOL> {0}#, Idle", ObjectID);
+                        SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionPoolGroup.ClearInternal|RES|INFO|CPOOL> {0}, Idle", ObjectID);
                     }
                     else if (PoolGroupStateIdle == _state)
                     {
                         _state = PoolGroupStateDisabled;
-                        SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionPoolGroup.ReadyToRemove|RES|INFO|CPOOL> {0}#, Disabled", ObjectID);
+                        SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionPoolGroup.ReadyToRemove|RES|INFO|CPOOL> {0}, Disabled", ObjectID);
                     }
                 }
 
