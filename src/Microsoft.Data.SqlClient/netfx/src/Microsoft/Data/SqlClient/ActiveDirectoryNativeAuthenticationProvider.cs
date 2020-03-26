@@ -52,6 +52,7 @@ namespace Microsoft.Data.SqlClient
             {
                 result = await app.AcquireTokenInteractive(scopes)
                   .WithUseEmbeddedWebView(true)
+                  .WithLoginHint(parameters.UserId)
                   .ExecuteAsync();
             }
 
