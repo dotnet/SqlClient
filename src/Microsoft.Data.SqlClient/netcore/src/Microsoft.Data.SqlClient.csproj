@@ -608,7 +608,7 @@
       <CustomToolNamespace>System</CustomToolNamespace>
     </EmbeddedResource>
   </ItemGroup>
-  <Import Project="tools\targets\GenerateThisAssemblyCs.targets" />
-  <Import Project="tools\targets\ResolveContract.targets" Condition="'$(OSGroup)' == 'AnyOS'" />
-  <Import Project="tools\targets\NotSupported.targets" Condition="'$(OSGroup)' == 'AnyOS'" />
+  <Import Project="$(ToolsDir)targets\GenerateThisAssemblyCs.targets" />
+  <Import Project="$(ToolsDir)targets\ResolveContract.targets" Condition="'$(OSGroup)' == 'AnyOS'" />
+  <Import Project="$(ToolsDir)targets\NotSupported.targets" Condition="'$(OSGroup)' == 'AnyOS'" />
 </Project>
