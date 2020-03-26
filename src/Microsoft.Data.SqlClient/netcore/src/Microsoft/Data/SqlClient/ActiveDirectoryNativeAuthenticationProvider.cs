@@ -16,6 +16,7 @@ namespace Microsoft.Data.SqlClient
     {
         private static readonly string s_defaultScopeSuffix = "/.default";
         private readonly string _type = typeof(ActiveDirectoryNativeAuthenticationProvider).Name;
+        private readonly SqlClientLogger _logger = new SqlClientLogger();
 
         /// <summary>
         /// Get token.
@@ -51,6 +52,16 @@ namespace Microsoft.Data.SqlClient
         public override bool IsSupported(SqlAuthenticationMethod authentication)
         {
             return authentication == SqlAuthenticationMethod.ActiveDirectoryPassword;
+        }
+
+        public override void BeforeLoad(SqlAuthenticationMethod authentication)
+        {
+            _logger.LogInfo(_type, "BeforeLoad", $"being loaded into SqlAuthProviders for {authentication}.");
+        }
+
+        public override void BeforeUnload(SqlAuthenticationMethod authentication)
+        {
+            _logger.LogInfo(_type, "BeforeUnload", $"being unloaded from SqlAuthProviders for {authentication}.");
         }
     }
 }

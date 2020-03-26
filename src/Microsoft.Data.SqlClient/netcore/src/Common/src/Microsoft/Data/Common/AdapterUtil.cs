@@ -14,6 +14,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
+using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data.Common
 {
@@ -30,7 +31,14 @@ namespace Microsoft.Data.Common
         internal const CompareOptions DefaultCompareOptions = CompareOptions.IgnoreKanaType | CompareOptions.IgnoreWidth | CompareOptions.IgnoreCase;
         internal const int DefaultConnectionTimeout = DbConnectionStringDefaults.ConnectTimeout;
 
-        static partial void TraceException(string trace, Exception e);
+        static private void TraceException(string trace, Exception e)
+        {
+            Debug.Assert(null != e, "TraceException: null Exception");
+            if (null != e)
+            {
+                SqlClientEventSource.Log.TraceEvent(trace, e);
+            }
+        }
 
         internal static void TraceExceptionAsReturnValue(Exception e)
         {
@@ -40,7 +48,7 @@ namespace Microsoft.Data.Common
         internal static void TraceExceptionWithoutRethrow(Exception e)
         {
             Debug.Assert(ADP.IsCatchableExceptionType(e), "Invalid exception type, should have been re-thrown!");
-            TraceException("<comm.ADP.TraceException|ERR|CATCH> '%ls'\n", e);
+            TraceException("<comm.ADP.TraceException|ERR|CATCH> '{0}'", e);
         }
 
         internal static ArgumentException Argument(string error)

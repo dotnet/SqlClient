@@ -14,30 +14,15 @@ namespace Microsoft.Data.Common
 
     internal static class ActivityCorrelator
     {
-        internal class ActivityId
+        internal sealed class ActivityId
         {
-            internal Guid Id { get; private set; }
-            internal uint Sequence { get; private set; }
+            internal readonly Guid Id;
+            internal readonly uint Sequence;
 
-            internal ActivityId()
+            internal ActivityId(uint sequence)
             {
                 this.Id = Guid.NewGuid();
-                this.Sequence = 0; // the first event will start 1
-            }
-
-            // copy-constructor
-            internal ActivityId(ActivityId activity)
-            {
-                this.Id = activity.Id;
-                this.Sequence = activity.Sequence;
-            }
-
-            internal void Increment()
-            {
-                unchecked
-                {
-                    ++this.Sequence;
-                }
+                this.Sequence = sequence;
             }
 
             public override string ToString()
@@ -61,10 +46,9 @@ namespace Microsoft.Data.Common
             {
                 if (t_tlsActivity == null)
                 {
-                    t_tlsActivity = new ActivityId();
+                    t_tlsActivity = new ActivityId(1);
                 }
-
-                return new ActivityId(t_tlsActivity);
+                return t_tlsActivity;
             }
         }
 
@@ -74,14 +58,9 @@ namespace Microsoft.Data.Common
         /// <returns>ActivityId</returns>
         internal static ActivityId Next()
         {
-            if (t_tlsActivity == null)
-            {
-                t_tlsActivity = new ActivityId();
-            }
+            t_tlsActivity = new ActivityId( (t_tlsActivity?.Sequence ?? 0) + 1);
 
-            t_tlsActivity.Increment();
-
-            return new ActivityId(t_tlsActivity);
+            return t_tlsActivity;
         }
     }
 }

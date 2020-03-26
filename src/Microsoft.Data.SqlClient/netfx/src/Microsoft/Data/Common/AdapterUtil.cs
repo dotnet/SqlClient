@@ -101,13 +101,13 @@ namespace Microsoft.Data.Common
             Debug.Assert(null != e, "TraceException: null Exception");
             if (null != e)
             {
-                SqlClientEventSource.Log.TraceEvent(trace, e.ToString()); // will include callstack if permission is available
+                SqlClientEventSource.Log.TraceEvent(trace, e);
             }
         }
 
         static internal void TraceExceptionAsReturnValue(Exception e)
         {
-            TraceException("<comm.ADP.TraceException|ERR|THROW> '%ls'\n", e);
+            TraceException("<comm.ADP.TraceException|ERR|THROW> {0}", e);
         }
         static internal void TraceExceptionForCapture(Exception e)
         {

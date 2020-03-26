@@ -566,6 +566,8 @@
     <Reference Include="System.Memory" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Microsoft\Data\SqlClient\SqlClientEventSource.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SqlClientLogger.cs" />
     <Compile Include="Resources\SR.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
