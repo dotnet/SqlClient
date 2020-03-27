@@ -11404,6 +11404,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to UDT size must be less than {1}, size: {0}.
+        /// </summary>
+        internal static string SQLUDT_InvalidSize {
+            get {
+                return ResourceManager.GetString("SQLUDT_InvalidSize", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Specified type is not registered on the target server.{0}..
         /// </summary>
         internal static string SQLUDT_InvalidSqlType {
