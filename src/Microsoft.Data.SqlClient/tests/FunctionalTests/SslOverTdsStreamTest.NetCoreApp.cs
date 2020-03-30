@@ -9,7 +9,9 @@ namespace Microsoft.Data.SqlClient.Tests
     {
         static partial void SyncCoreTest(int encapsulatedPacketCount, int passthroughPacketCount, int maxPacketReadLength)
         {
-            (byte[] input, byte[] output) = SetupArrays(encapsulatedPacketCount + passthroughPacketCount);
+            byte[] input;
+            byte[] output;
+            SetupArrays(encapsulatedPacketCount + passthroughPacketCount, out input, out output);
 
             byte[] buffer = WritePackets(encapsulatedPacketCount, passthroughPacketCount,
                 (Stream stream, int index) =>
@@ -30,7 +32,9 @@ namespace Microsoft.Data.SqlClient.Tests
 
         static partial void AsyncCoreTest(int encapsulatedPacketCount, int passthroughPacketCount, int maxPacketReadLength)
         {
-            (byte[] input, byte[] output) = SetupArrays(encapsulatedPacketCount + passthroughPacketCount);
+            byte[] input;
+            byte[] output;
+            SetupArrays(encapsulatedPacketCount + passthroughPacketCount, out input, out output);
 
             byte[] buffer = WritePackets(encapsulatedPacketCount, passthroughPacketCount,
                 async (Stream stream, int index) =>

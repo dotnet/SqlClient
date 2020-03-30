@@ -25,7 +25,9 @@ namespace Microsoft.Data.SqlClient.Tests
 
         private static void SyncTest(int encapsulatedPacketCount, int passthroughPacketCount, int maxPacketReadLength)
         {
-            (byte[] input, byte[] output) = SetupArrays(encapsulatedPacketCount + passthroughPacketCount);
+            byte[] input;
+            byte[] output;
+            SetupArrays(encapsulatedPacketCount + passthroughPacketCount, out input, out output);
 
             byte[] buffer = WritePackets(encapsulatedPacketCount, passthroughPacketCount,
                 (Stream stream, int index) =>
@@ -48,8 +50,9 @@ namespace Microsoft.Data.SqlClient.Tests
 
         private static void AsyncTest(int encapsulatedPacketCount, int passthroughPacketCount, int maxPacketReadLength)
         {
-            (byte[] input, byte[] output) = SetupArrays(encapsulatedPacketCount + passthroughPacketCount);
-
+            byte[] input;
+            byte[] output;
+            SetupArrays(encapsulatedPacketCount + passthroughPacketCount, out input, out output);
             byte[] buffer = WritePackets(encapsulatedPacketCount, passthroughPacketCount,
                 async (Stream stream, int index) =>
                 {
@@ -195,11 +198,11 @@ namespace Microsoft.Data.SqlClient.Tests
             return buffer;
         }
 
-        private static (byte[] input, byte[] output) SetupArrays(int packetCount)
+        private static void SetupArrays(int packetCount, out byte[] input, out byte[] output)
         {
             byte[] pattern = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 };
-            byte[] input = new byte[packetCount * TdsEnums.DEFAULT_LOGIN_PACKET_SIZE];
-            byte[] output = new byte[input.Length];
+            input = new byte[packetCount * TdsEnums.DEFAULT_LOGIN_PACKET_SIZE];
+            output = new byte[input.Length];
             for (int index = 0; index < packetCount; index++)
             {
                 int position = 0;
@@ -210,7 +213,6 @@ namespace Microsoft.Data.SqlClient.Tests
                     position += copyCount;
                 }
             }
-            return (input, output);
         }
 
         private static void Validate(byte[] input, byte[] output)
