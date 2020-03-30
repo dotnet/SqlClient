@@ -28,6 +28,7 @@
     <Compile Include="SqlConnectionBasicTests.cs" />
     <Compile Include="SqlCommandTest.cs" />
     <Compile Include="SqlConnectionTest.cs" />
+    <Compile Include="SslOverTdsStreamTest.cs" />
     <Compile Include="TestTdsServer.cs" />
     <Compile Include="AADAccessTokenTest.cs" />
     <Compile Include="CloneTests.cs" />
@@ -60,6 +61,7 @@
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' != 'netcoreapp2.1' AND '$(TargetGroup)' == 'netcoreapp'">
     <PackageReference Include="System.Data.Odbc" Version="$(SystemDataOdbcVersion)" />
+    <Compile Include="SslOverTdsStreamTest.NetCoreApp.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="$(TestsPath)ManualTests\SQL\UdtTest\UDTs\Address\Address.csproj">
