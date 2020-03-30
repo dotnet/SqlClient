@@ -11,6 +11,7 @@ namespace Microsoft.Data.SqlClient.Tests
     public static partial class SslOverTdsStreamTest
     {
         [Theory]
+        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [InlineData(0),InlineData(3),InlineData(128), InlineData(2048), InlineData(8192)]
         public static void ReadWrite(int readLimit)
         {
