@@ -24,11 +24,9 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
-    // -------------------------------------------------------------------------------------------------
-    // this internal class helps us to associate the metadata (from the target)
-    // with columnordinals (from the source)
-    //
-    sealed internal class _ColumnMapping
+    // This internal class helps us to associate the metadata from the target.
+    // with ColumnOrdinals from the source.
+    internal sealed class _ColumnMapping
     {
         internal int _sourceColumnOrdinal;
         internal _SqlMetaData _metadata;
@@ -296,7 +294,7 @@ namespace Microsoft.Data.SqlClient
 
         private SqlRowsCopiedEventHandler _rowsCopiedEventHandler;
 
-        private static int _objectTypeCount; // Bid counter
+        private static int _objectTypeCount; // EventSource Counter
         internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
 
         //newly added member variables for Async modification, m = member variable to bcp
@@ -627,7 +625,7 @@ namespace Microsoft.Data.SqlClient
         {
             string TDSCommand = CreateInitialQuery();
             SqlClientEventSource.Log.TraceEvent("<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|INFO> Initial Query: '{0}'", TDSCommand);
-            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|Info|Correlation> ObjectID {0}#, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
+            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|Info|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
             Task executeTask = _parser.TdsExecuteSQLBatch(TDSCommand, this.BulkCopyTimeout, null, _stateObj, sync: !_isAsyncBulkCopy, callerHasConnectionLock: true);
 
             if (executeTask == null)
@@ -917,7 +915,7 @@ namespace Microsoft.Data.SqlClient
         //
         private Task SubmitUpdateBulkCommand(string TDSCommand)
         {
-            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlBulkCopy.SubmitUpdateBulkCommand|Info|Correlation> ObjectID{0}#, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
+            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlBulkCopy.SubmitUpdateBulkCommand|Info|Correlation> ObjectID{0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
             Task executeTask = _parser.TdsExecuteSQLBatch(TDSCommand, this.BulkCopyTimeout, null, _stateObj, sync: !_isAsyncBulkCopy, callerHasConnectionLock: true);
 
             if (executeTask == null)

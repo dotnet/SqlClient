@@ -100,8 +100,8 @@ Unix (`netcoreapp`):
 ### Pre-Requisites for running Manual tests:
 Manual Tests require the below setup to run:
 * SQL Server with enabled Shared Memory, TCP and Named Pipes Protocols and access to the Client OS.
-* Databases "NORTHWIND" and "UdtTestDb" present in SQL Server, created using SQL scripts [createNorthwindDb.sql](tools\testsql\createNorthwindDb.sql) and [createUdtTestDb.sql](tools\testsql\createUdtTestDb.sql).
-* Make a copy of the configuration file [config.default.json](src\Microsoft.Data.SqlClient\tests\ManualTests\config.default.json) and rename it to `config.json`. Update the values in `config.json`:
+* Databases "NORTHWIND" and "UdtTestDb" present in SQL Server, created using SQL scripts [createNorthwindDb.sql](tools/testsql/createNorthwindDb.sql) and [createUdtTestDb.sql](tools/testsql/createUdtTestDb.sql).
+* Make a copy of the configuration file [config.default.json](src/Microsoft.Data.SqlClient/tests/ManualTests/config.default.json) and rename it to `config.json`. Update the values in `config.json`:
 
 |Property|Description|Value|
 |------|--------|-------------------|
@@ -160,6 +160,7 @@ Tests can be built and run with custom Target Frameworks. See the below examples
 # Build the tests for custom TargetFramework (.NET Core)
 # Applicable values: netcoreapp2.1 | netcoreapp2.2 | netcoreapp3.0
 ```
+
 ### Running Tests:
 
 ```bash
@@ -172,8 +173,14 @@ Tests can be built and run with custom Target Frameworks. See the below examples
 # Applicable values: netcoreapp2.1 | netcoreapp2.2 | netcoreapp3.0
 ```
 
+## Using Managed SNI on Windows
+
+Managed SNI can be enabled on Windows by enabling the below AppContext switch:
+
+**"Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows"**
+
 ## Set truncation on for scaled decimal parameters
 
 Scaled decimal parameter truncation can be enabled by enabling the below AppContext switch:
 
-**"Microsoft.Data.SqlClient.TruncateScaledDecimal"**
+**"Switch.Microsoft.Data.SqlClient.TruncateScaledDecimal"**

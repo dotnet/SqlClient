@@ -165,17 +165,34 @@ namespace Microsoft.Data.SqlClient
                 int connectionTimeout = opt.ConnectTimeout;
 
                 if ((0 < connectionTimeout) && (connectionTimeout < int.MaxValue / 1000))
+                {
                     connectionTimeout *= 1000;
+                }
                 else if (connectionTimeout >= int.MaxValue / 1000)
+                {
                     connectionTimeout = int.MaxValue;
+                }
 
+                if (opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive)
+                {
+                    // interactive mode will always have pool's CreateTimeout = 10 x ConnectTimeout.
+                    if (connectionTimeout >= Int32.MaxValue / 10)
+                    {
+                        connectionTimeout = Int32.MaxValue;
+                    }
+                    else
+                    {
+                        connectionTimeout *= 10;
+                    }
+                    SqlClientEventSource.Log.TraceEvent("<sc.SqlConnectionFactory.CreateConnectionPoolGroupOptions>Set connection pool CreateTimeout={0} when AD Interactive is in use.", connectionTimeout);
+                }
                 poolingOptions = new DbConnectionPoolGroupOptions(
-                                                    opt.IntegratedSecurity,
-                                                    opt.MinPoolSize,
-                                                    opt.MaxPoolSize,
-                                                    connectionTimeout,
-                                                    opt.LoadBalanceTimeout,
-                                                    opt.Enlist);
+                                                opt.IntegratedSecurity,
+                                                opt.MinPoolSize,
+                                                opt.MaxPoolSize,
+                                                connectionTimeout,
+                                                opt.LoadBalanceTimeout,
+                                                opt.Enlist);
             }
             return poolingOptions;
         }
@@ -222,6 +239,15 @@ namespace Microsoft.Data.SqlClient
             return null;
         }
 
+        override protected int GetObjectId(DbConnection connection)
+        {
+            SqlConnection c = (connection as SqlConnection);
+            if (null != c)
+            {
+                return c.ObjectID;
+            }
+            return 0;
+        }
 
         override internal void PermissionDemand(DbConnection outerConnection)
         {

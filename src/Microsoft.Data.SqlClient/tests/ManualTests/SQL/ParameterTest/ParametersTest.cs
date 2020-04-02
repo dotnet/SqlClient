@@ -432,7 +432,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly decimal[] _testValues = new[] { 4210862852.8600000000_0000000000m, 19.1560m, 19.1550m, 19.1549m };
         private static readonly decimal[] _expectedRoundedValues = new[] { 4210862852.86m, 19.16m, 19.16m, 19.15m };
         private static readonly decimal[] _expectedTruncatedValues = new[] { 4210862852.86m, 19.15m, 19.15m, 19.15m };
-        private const string truncateDecimalSwitch = "Microsoft.Data.SqlClient.TruncateScaledDecimal";
+        private const string truncateDecimalSwitch = "Switch.Microsoft.Data.SqlClient.TruncateScaledDecimal";
 
         private static SqlConnection InitialDatabaseUDTT(string cnnString, string tableName, string tableTypeName, string spName)
         {

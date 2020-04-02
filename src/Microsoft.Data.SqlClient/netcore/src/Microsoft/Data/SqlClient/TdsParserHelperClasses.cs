@@ -250,6 +250,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        internal string TraceString()
+        {
+            return string.Format(/*IFormatProvider*/ null, "(LCID={0}, Opts={1})", LCID, (int)SqlCompareOptions);
+        }
 
         internal static bool AreSame(SqlCollation a, SqlCollation b)
         {

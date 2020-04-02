@@ -2722,7 +2722,7 @@
     <value>Истекло время ожидания соединения. Время ожидания истекло на этапе после входа. Возможно, время ожидания соединения истекло, пока сервер выполнял процесс входа в систему и отправки ответа, или это произошло при попытке создать несколько активных соединений.</value>
   </data>
   <data name="SQL_Timeout_FailoverInfo" xml:space="preserve">
-    <value>This failure occurred while attempting to connect to the {0} server.</value>
+    <value>Этот сбой произошел при попытке подключения к серверу {0}.</value>
   </data>
   <data name="SQL_Timeout_RoutingDestinationInfo" xml:space="preserve">
     <value>Эта ошибка произошла при попытке подключиться к цели маршрутизации. Продолжительность этапов попытки подключения к исходному серверу: [перед входом в систему] инициализация = {0}; подтверждение установления связи = {1}; [вход в систему] инициализация = {2}; аутентификация = {3}; [после входа в систему] завершено = {4};  </value>
@@ -2809,10 +2809,10 @@
     <value>Сопоставление должно основываться на всех именах или всех порядковых номерах.</value>
   </data>
   <data name="SQL_BulkLoadCannotConvertValue" xml:space="preserve">
-    <value>The given value{0} of type {1} from the data source cannot be converted to type {2} for Column {3} [{4}] Row {5}.</value>
+    <value>Указанное значение {0} типа {1} из источника данных невозможно преобразовать в тип {2} для столбца {3} [{4}] и строки {5}.</value>
   </data>
   <data name="SQL_BulkLoadCannotConvertValueWithoutRowNo" xml:space="preserve">
-    <value>The given value{0} of type {1} from the data source cannot be converted to type {2} for Column {3} [{4}].</value>
+    <value>Указанное значение {0} типа {1} из источника данных невозможно преобразовать в тип {2} для столбца {3} [{4}].</value>
   </data>
   <data name="SQL_BulkLoadNonMatchingColumnMapping" xml:space="preserve">
     <value>Указанное ColumnMapping не соответствует ни одному столбцу в источнике данных или в пункте назначения.</value>
@@ -3967,7 +3967,7 @@
     <value>Ошибка на транспортном уровне при отправке данных на сервер.</value>
   </data>
   <data name="Snix_ProcessSspi" xml:space="preserve">
-    <value>A transport-level error has occurred during SSPI handshake.</value>
+    <value>Возникла ошибка на транспортном уровне в процессе подтверждения SSPI.</value>
   </data>
   <data name="LocalDB_CreateFailed" xml:space="preserve">
     <value>Local Database Runtime: не удается создать именованный экземпляр.</value>
@@ -4312,10 +4312,10 @@
     <value>Внутренняя ошибка. SqlColumnEncryptionEnclaveProviderName не может быть пустым или иметь значение NULL.</value>
   </data>
   <data name="TCE_NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe" xml:space="preserve">
-    <value>Error occurred when reading '{0}' resultset. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is '{1}'. </value>
+    <value>Возникла ошибка при чтении набора результатов "{0}". Запрос требует вычислений на основе анклава, но в строке подключения не указан URL-адрес аттестации. Тип анклава — "{1}". </value>
   </data>
   <data name="TCE_NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage" xml:space="preserve">
-    <value>Error occurred when generating enclave package. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is '{0}'. </value>
+    <value>Возникла ошибка при создании пакета анклава. Запрос требует вычислений на основе анклава, но в строке подключения не указан URL-адрес аттестации. Тип анклава — "{0}". </value>
   </data>
   <data name="TCE_EnclaveTypeNullForEnclaveBasedQuery" xml:space="preserve">
     <value>Внутренняя ошибка. При выполнении запроса, требующего вычислений анклава, из SQL Server получен пустой или равный NULL тип.</value>
@@ -4339,13 +4339,13 @@
     <value>Используемый экземпляр {0} не поддерживает шифрование столбцов.</value>
   </data>
   <data name="TCE_EnclaveComputationsNotSupported" xml:space="preserve">
-    <value>You have specified the enclave attestation URL and attestation protocol in the connection string, but the SQL Server instance in use does not support enclave based computations.</value>
+    <value>Вы указали в строке подключения URL-адрес и протокол аттестации анклава, но используемый экземпляр SQL Server не поддерживает вычисления на основе анклава.</value>
   </data>
   <data name="TCE_AttestationURLNotSupported" xml:space="preserve">
-    <value>You have specified the enclave attestation URL in the connection string, but the SQL Server instance in use does not support enclave based computations.</value>
+    <value>В строке подключения указан URL-адрес аттестации анклава, но используемый экземпляр SQL Server не поддерживает вычисления на основе анклава.</value>
   </data>
   <data name="TCE_AttestationProtocolNotSupported" xml:space="preserve">
-    <value>You have specified the attestation protocol in the connection string, but the SQL Server instance in use does not support enclave based computations.</value>
+    <value>Вы указали в строке подключения протокол аттестации, но используемый экземпляр SQL Server не поддерживает вычисления на основе анклава.</value>
   </data>
   <data name="TCE_EnclaveTypeNotReturned" xml:space="preserve">
     <value>В строке подключения указан URL-адрес аттестации анклава, но экземпляр SQL Server не вернул тип анклава. Убедитесь, что тип анклава правильно настроен в вашем экземпляре.</value>
@@ -4525,6 +4525,6 @@
     <value>Не удалось инициализировать подключение. Протокол аттестации "{0}" не поддерживает анклав типа "{1}".</value>
   </data>
   <data name="TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage" xml:space="preserve">
-    <value>Error occurred when generating enclave package. Attestation Protocol has not been specified in the connection string, but the query requires enclave computations.</value>
+    <value>Возникла ошибка при создании пакета анклава. Запрос требует вычислений на основе анклава, но в строке подключения не указан протокол аттестации.</value>
   </data>
 </root>

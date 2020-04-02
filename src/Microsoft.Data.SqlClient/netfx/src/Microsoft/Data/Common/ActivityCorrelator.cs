@@ -15,30 +15,15 @@ namespace Microsoft.Data.Common
     internal static class ActivityCorrelator
     {
 
-        internal class ActivityId
+        internal sealed class ActivityId
         {
-            internal Guid Id { get; private set; }
-            internal UInt32 Sequence { get; private set; }
+            internal readonly Guid Id;
+            internal readonly uint Sequence;
 
-            internal ActivityId()
+            internal ActivityId(uint sequence)
             {
                 this.Id = Guid.NewGuid();
-                this.Sequence = 0; // the first event will start 1
-            }
-
-            // copy-constructor
-            internal ActivityId(ActivityId activity)
-            {
-                this.Id = activity.Id;
-                this.Sequence = activity.Sequence;
-            }
-
-            internal void Increment()
-            {
-                unchecked
-                {
-                    ++this.Sequence;
-                }
+                this.Sequence = sequence;
             }
 
             public override string ToString()
@@ -51,7 +36,7 @@ namespace Microsoft.Data.Common
         // The Sequence number will be incremented when each event happens.
         // Correlation along threads is consistent with the current XEvent mechanisam at server.
         [ThreadStaticAttribute]
-        static ActivityId tlsActivity;
+        static ActivityId t_tlsActivity;
 
         /// <summary>
         /// Get the current ActivityId
@@ -60,12 +45,12 @@ namespace Microsoft.Data.Common
         {
             get
             {
-                if (tlsActivity == null)
+                if (t_tlsActivity == null)
                 {
-                    tlsActivity = new ActivityId();
+                    t_tlsActivity = new ActivityId(1);
                 }
 
-                return new ActivityId(tlsActivity);
+                return t_tlsActivity;
             }
         }
 
@@ -75,14 +60,9 @@ namespace Microsoft.Data.Common
         /// <returns>ActivityId</returns>
         internal static ActivityId Next()
         {
-            if (tlsActivity == null)
-            {
-                tlsActivity = new ActivityId();
-            }
-
-            tlsActivity.Increment();
-
-            return new ActivityId(tlsActivity);
+            t_tlsActivity = new ActivityId(t_tlsActivity?.Sequence ?? 0);
+            
+            return t_tlsActivity;
         }
     }
 }

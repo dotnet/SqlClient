@@ -6,7 +6,6 @@ using System;
 
 namespace Microsoft.Data.SqlClient
 {
-
     /// <summary>
     /// Class encapsulating Column encryption key info
     /// </summary>

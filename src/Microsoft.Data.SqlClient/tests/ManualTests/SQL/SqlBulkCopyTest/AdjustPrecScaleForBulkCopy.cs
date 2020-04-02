@@ -27,7 +27,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal("12.3", value.ToString());
 
             value = BulkCopySqlDecimalToTable(new SqlDecimal(123.45), 10, 2, 4, 1);
-            if (AppContext.TryGetSwitch("Microsoft.Data.SqlClient.TruncateScaledDecimal", out bool switchValue) && switchValue)
+            if (AppContext.TryGetSwitch("Switch.Microsoft.Data.SqlClient.TruncateScaledDecimal", out bool switchValue) && switchValue)
             {
                 Assert.Equal("123.4", value.ToString());
             }

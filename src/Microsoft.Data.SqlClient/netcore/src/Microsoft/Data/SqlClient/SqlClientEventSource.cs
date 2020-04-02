@@ -18,6 +18,7 @@ namespace Microsoft.Data.SqlClient
         private static long s_nextScopeId = 0;
         private static long s_nextNotificationScopeId = 0;
         private static long s_nextPoolerScopeId = 0;
+        private static long s_nextSNIScopeId = 0;
 
         /// <summary>
         /// Defines EventId for BeginExecute (Reader, Scalar, NonQuery, XmlReader).
@@ -45,17 +46,17 @@ namespace Microsoft.Data.SqlClient
         private const int ScopeExitId = 5;
 
         /// <summary>
-        /// Defines EventId for NotificationScopeEnter() events
+        /// Defines EventId for notificationScopeEnter() events
         /// </summary>
         private const int NotificationScopeEnterId = 6;
 
         /// <summary>
-        /// Defines EventId for NotificationScopeLeave() events
+        /// Defines EventId for notificationScopeLeave() events
         /// </summary>
         private const int NotificationScopeExitId = 7;
 
         /// <summary>
-        /// Defines EventId for NotificationScopeTrace() events
+        /// Defines EventId for notificationScopeTrace() events
         /// </summary>
         private const int NotificationTraceId = 8;
 
@@ -95,14 +96,34 @@ namespace Microsoft.Data.SqlClient
         private const int AdvancedTraceBinId = 15;
 
         /// <summary>
+        /// Defines EventId for AdvancedTraceError() events
+        /// </summary>
+        private const int AdvancedTraceErrorId = 16;
+
+        /// <summary>
         /// Defines EventId for CorrelationTrace() events
         /// </summary>
-        private const int CorrelationTraceId = 16;
+        private const int CorrelationTraceId = 17;
 
         /// <summary>
         /// Defines EventId for StateDump() events
         /// </summary>
-        private const int StateDumpEventId = 17;
+        private const int StateDumpEventId = 18;
+
+        /// <summary>
+        /// Defines EventId for SNITrace() events
+        /// </summary>
+        private const int SNITraceEventId = 19;
+
+        /// <summary>
+        /// Defines EventId for SNIEnterScope() events
+        /// </summary>
+        private const int SNIScopeEnterId = 20;
+
+        /// <summary>
+        /// Defines EventId for SNIExitScope() events
+        /// </summary>
+        private const int SNIScopeExitId = 21;
         #endregion
 
         /// <summary>
@@ -179,6 +200,16 @@ namespace Microsoft.Data.SqlClient
             /// Captures full state dump of `SqlConnection`
             /// </summary>
             internal const EventKeywords StateDump = (EventKeywords)1024;
+
+            /// <summary>
+            /// Captures application flow traces from Managed networking implementation
+            /// </summary>
+            internal const EventKeywords SNITrace = (EventKeywords)2048;
+
+            /// <summary>
+            /// Captures scope trace events from Managed networking implementation
+            /// </summary>
+            internal const EventKeywords SNIScope = (EventKeywords)4096;
         }
         #endregion
 
@@ -218,7 +249,7 @@ namespace Microsoft.Data.SqlClient
         internal bool IsPoolerScopeEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.PoolerScope);
 
         [NonEvent]
-        internal bool IsAdvancedTraceOn() => Log.IsEnabled(EventLevel.Informational, Keywords.AdvancedTrace);
+        internal bool IsAdvancedTraceOn() => Log.IsEnabled(EventLevel.Verbose, Keywords.AdvancedTrace);
 
         [NonEvent]
         internal bool IsCorrelationEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.CorrelationTrace);
@@ -226,6 +257,11 @@ namespace Microsoft.Data.SqlClient
         [NonEvent]
         internal bool IsStateDumpEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.StateDump);
 
+        [NonEvent]
+        internal bool IsSNITraceEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.SNITrace);
+
+        [NonEvent]
+        internal bool IsSNIScopeEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.SNIScope);
         #endregion
 
         #region overloads
@@ -596,6 +632,15 @@ namespace Microsoft.Data.SqlClient
                 AdvancedTraceBin(string.Format(message, args0, args1));
             }
         }
+
+        [NonEvent]
+        internal void AdvancedTraceErrorEvent<T0, T1, T2, T3, T4>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4)
+        {
+            if (Log.IsAdvancedTraceOn())
+            {
+                AdvancedTraceError(string.Format(message, args0, args1, args2, args3, args4));
+            }
+        }
         #endregion
 
         #region Correlation Trace
@@ -634,6 +679,123 @@ namespace Microsoft.Data.SqlClient
             if (Log.IsStateDumpEnabled())
             {
                 StateDump(string.Format(message, args0, args1));
+            }
+        }
+        #endregion
+
+        #region SNI Trace
+        [NonEvent]
+        internal void SNITraceEvent(string message)
+        {
+            if (Log.IsSNITraceEnabled())
+            {
+                SNITrace(string.Format(message));
+            }
+        }
+
+        [NonEvent]
+        internal void SNITraceEvent<T0>(string message, T0 args0)
+        {
+            if (Log.IsSNITraceEnabled())
+            {
+                SNITrace(string.Format(message, args0));
+            }
+        }
+
+        [NonEvent]
+        internal void SNITraceEvent<T0, T1>(string message, T0 args0, T1 args1)
+        {
+            if (Log.IsSNITraceEnabled())
+            {
+                SNITrace(string.Format(message, args0, args1));
+            }
+        }
+
+        [NonEvent]
+        internal void SNITraceEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
+        {
+            if (Log.IsSNITraceEnabled())
+            {
+                SNITrace(string.Format(message, args0, args1, args2));
+            }
+        }
+
+        [NonEvent]
+        internal void SNITraceEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
+        {
+            if (Log.IsSNITraceEnabled())
+            {
+                SNITrace(string.Format(message, args0, args1, args2, args3));
+            }
+        }
+
+        [NonEvent]
+        internal void SNITraceEvent<T0, T1, T2, T3, T4>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4)
+        {
+            if (Log.IsSNITraceEnabled())
+            {
+                SNITrace(string.Format(message, args0, args1, args2, args3, args4));
+            }
+        }
+        #endregion
+
+        #region SNI Scope
+        [NonEvent]
+        internal long SNIScopeEnterEvent(string message)
+        {
+            if (Log.IsSNIScopeEnabled())
+            {
+                return SNIScopeEnter(message);
+            }
+            return 0;
+        }
+
+        [NonEvent]
+        internal long SNIScopeEnterEvent<T0>(string message, T0 args0)
+        {
+            if (Log.IsSNIScopeEnabled())
+            {
+                return SNIScopeEnter(string.Format(message, args0));
+            }
+            return 0;
+        }
+
+        [NonEvent]
+        internal long SNIScopeEnterEvent<T0, T1>(string message, T0 args0, T1 args1)
+        {
+            if (Log.IsSNIScopeEnabled())
+            {
+                return SNIScopeEnter(string.Format(message, args0, args1));
+            }
+            return 0;
+        }
+
+        [NonEvent]
+        internal long SNIScopeEnterEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
+        {
+            if (Log.IsSNIScopeEnabled())
+            {
+                return SNIScopeEnter(string.Format(message, args0, args1, args2));
+            }
+            return 0;
+        }
+
+        [NonEvent]
+        internal long SNIScopeEnterEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
+        {
+            if (Log.IsSNIScopeEnabled())
+            {
+                return SNIScopeEnter(string.Format(message, args0, args1, args2, args3));
+            }
+            return 0;
+        }
+
+        [NonEvent]
+        internal void SNIScopeLeaveEvent(long scopeId)
+        {
+            if (Log.IsSNIScopeEnabled())
+            {
+                SNIScopeLeave(scopeId);
             }
         }
         #endregion
@@ -739,10 +901,16 @@ namespace Microsoft.Data.SqlClient
             WriteEvent(AdvancedScopeExitId, scopeId);
         }
 
-        [Event(AdvancedTraceBinId, Level = EventLevel.Informational, Keywords = Keywords.AdvancedTraceBin)]
+        [Event(AdvancedTraceBinId, Level = EventLevel.Verbose, Keywords = Keywords.AdvancedTraceBin)]
         internal void AdvancedTraceBin(string message)
         {
             WriteEvent(AdvancedTraceBinId, message);
+        }
+
+        [Event(AdvancedTraceErrorId, Level = EventLevel.Error, Keywords = Keywords.AdvancedTrace)]
+        internal void AdvancedTraceError(string message)
+        {
+            WriteEvent(AdvancedTraceErrorId, message);
         }
 
         [Event(CorrelationTraceId, Level = EventLevel.Informational, Keywords = Keywords.CorrelationTrace, Opcode = EventOpcode.Start)]
@@ -755,6 +923,26 @@ namespace Microsoft.Data.SqlClient
         internal void StateDump(string message)
         {
             WriteEvent(StateDumpEventId, message);
+        }
+
+        [Event(SNITraceEventId, Level = EventLevel.Informational, Keywords = Keywords.SNITrace)]
+        internal void SNITrace(string message)
+        {
+            WriteEvent(SNITraceEventId, message);
+        }
+
+        [Event(SNIScopeEnterId, Level = EventLevel.Informational, Opcode = EventOpcode.Start, Keywords = Keywords.SNIScope)]
+        internal long SNIScopeEnter(string message)
+        {
+            long scopeId = Interlocked.Increment(ref s_nextSNIScopeId);
+            WriteEvent(SNIScopeEnterId, message);
+            return scopeId;
+        }
+
+        [Event(SNIScopeExitId, Level = EventLevel.Informational, Opcode = EventOpcode.Stop, Keywords = Keywords.SNIScope)]
+        internal void SNIScopeLeave(long scopeId)
+        {
+            WriteEvent(SNIScopeExitId, scopeId);
         }
         #endregion
     }

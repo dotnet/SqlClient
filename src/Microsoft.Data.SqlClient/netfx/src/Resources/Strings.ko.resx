@@ -2722,7 +2722,7 @@
     <value>연결 제한 시간이 만료되었습니다. 사후 로그인 단계 중에 제한 시간이 경과되었습니다. 서버가 로그인 처리 및 응답을 완료할 때까지 기다리는 동안 연결 제한 시간이 만료되었거나 여러 활성 연결을 만들려는 동안 연결 제한 시간이 만료되었을 수 있습니다.</value>
   </data>
   <data name="SQL_Timeout_FailoverInfo" xml:space="preserve">
-    <value>This failure occurred while attempting to connect to the {0} server.</value>
+    <value>이 오류는 {0} 서버에 연결하려는 중에 발생했습니다.</value>
   </data>
   <data name="SQL_Timeout_RoutingDestinationInfo" xml:space="preserve">
     <value>이 오류는 라우팅 대상에 연결하려는 중에 발생했습니다. 원래 서버에 연결하려고 시도할 때 걸린 시간은 [사전 로그인] 초기화={0}; 핸드셰이크={1}; [로그인] 초기화={2}; 인증={3}; [사후 로그인] 완료={4}입니다.  </value>
@@ -2809,10 +2809,10 @@
     <value>매핑은 모든 이름 또는 모든 서수 기반이어야 합니다.</value>
   </data>
   <data name="SQL_BulkLoadCannotConvertValue" xml:space="preserve">
-    <value>The given value{0} of type {1} from the data source cannot be converted to type {2} for Column {3} [{4}] Row {5}.</value>
+    <value>데이터 원본에서 {1} 형식의 지정된 값 {0}을(를) 열 {3} [{4}] 행 {5}에 대한 {2} 형식으로 변환할 수 없습니다.</value>
   </data>
   <data name="SQL_BulkLoadCannotConvertValueWithoutRowNo" xml:space="preserve">
-    <value>The given value{0} of type {1} from the data source cannot be converted to type {2} for Column {3} [{4}].</value>
+    <value>데이터 원본에서 {1} 형식의 지정된 값 {0}을(를) 열 {3} [{4}]에 대한 {2} 형식으로 변환할 수 없습니다.</value>
   </data>
   <data name="SQL_BulkLoadNonMatchingColumnMapping" xml:space="preserve">
     <value>지정된 ColumnMapping이 원본 또는 대상의 열과 일치하지 않습니다.</value>
@@ -3967,7 +3967,7 @@
     <value>서버로 정보를 보내는 동안 전송 수준 오류가 발생했습니다.</value>
   </data>
   <data name="Snix_ProcessSspi" xml:space="preserve">
-    <value>A transport-level error has occurred during SSPI handshake.</value>
+    <value>SSPI 핸드셰이크 중에 전송 수준 오류가 발생했습니다.</value>
   </data>
   <data name="LocalDB_CreateFailed" xml:space="preserve">
     <value>Local Database Runtime: 이름이 지정된 인스턴스를 만들 수 없습니다.</value>
@@ -4312,10 +4312,10 @@
     <value>내부 오류입니다. SqlColumnEncryptionEnclaveProviderName은 null이거나 비워둘 수 없습니다.</value>
   </data>
   <data name="TCE_NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe" xml:space="preserve">
-    <value>Error occurred when reading '{0}' resultset. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is '{1}'. </value>
+    <value>'{0}' 결과 집합을 읽는 동안 오류가 발생했습니다. 연결 문자열에 증명 URL이 지정되지 않았지만 쿼리에 enclave 계산이 필요합니다. enclave 형식은 '{1}'입니다. </value>
   </data>
   <data name="TCE_NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage" xml:space="preserve">
-    <value>Error occurred when generating enclave package. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is '{0}'. </value>
+    <value>enclave 패키지를 생성하는 동안 오류가 발생했습니다. 연결 문자열에 증명 URL이 지정되지 않았지만 쿼리에 enclave 계산이 필요합니다. enclave 형식은 '{0}'입니다. </value>
   </data>
   <data name="TCE_EnclaveTypeNullForEnclaveBasedQuery" xml:space="preserve">
     <value>내부 오류가 발생했습니다. enclave 계산이 필요한 쿼리를 실행할 때 SQL Server에서 수신된 enclave 형식이 null이거나 비어 있습니다.</value>
@@ -4339,13 +4339,13 @@
     <value>사용 중인 {0} 인스턴스에서 열 암호화를 지원하지 않습니다.</value>
   </data>
   <data name="TCE_EnclaveComputationsNotSupported" xml:space="preserve">
-    <value>You have specified the enclave attestation URL and attestation protocol in the connection string, but the SQL Server instance in use does not support enclave based computations.</value>
+    <value>연결 문자열에 enclave 증명 URL 및 증명 프로토콜을 지정했지만 사용 중인 SQL Server 인스턴스가 enclave 기반 계산을 지원하지 않습니다.</value>
   </data>
   <data name="TCE_AttestationURLNotSupported" xml:space="preserve">
-    <value>You have specified the enclave attestation URL in the connection string, but the SQL Server instance in use does not support enclave based computations.</value>
+    <value>연결 문자열에 enclave 증명 URL을 지정했지만 사용 중인 SQL Server 인스턴스가 enclave 기반 계산을 지원하지 않습니다.</value>
   </data>
   <data name="TCE_AttestationProtocolNotSupported" xml:space="preserve">
-    <value>You have specified the attestation protocol in the connection string, but the SQL Server instance in use does not support enclave based computations.</value>
+    <value>연결 문자열에 증명 프로토콜을 지정했지만 사용 중인 SQL Server 인스턴스가 enclave 기반 계산을 지원하지 않습니다.</value>
   </data>
   <data name="TCE_EnclaveTypeNotReturned" xml:space="preserve">
     <value>연결 문자열에 enclave 증명 URL을 지정했지만 SQL Server 인스턴스는 enclave 형식을 반환하지 않았습니다. enclave 형식이 인스턴스에 올바르게 구성되어 있는지 확인하세요.</value>
@@ -4525,6 +4525,6 @@
     <value>연결을 초기화하지 못했습니다. 증명 프로토콜 '{0}'은(는) enclave 형식 '{1}'을(를) 지원하지 않습니다.</value>
   </data>
   <data name="TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage" xml:space="preserve">
-    <value>Error occurred when generating enclave package. Attestation Protocol has not been specified in the connection string, but the query requires enclave computations.</value>
+    <value>enclave 패키지를 생성하는 동안 오류가 발생했습니다. 연결 문자열에 증명 프로토콜이 지정되지 않았지만 쿼리에 enclave 계산이 필요합니다.</value>
   </data>
 </root>

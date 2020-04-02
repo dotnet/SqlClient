@@ -135,7 +135,9 @@ namespace Microsoft.Data.SqlClient
         public bool SetProvider(SqlAuthenticationMethod authenticationMethod, SqlAuthenticationProvider provider)
         {
             if (!provider.IsSupported(authenticationMethod))
+            {
                 throw SQL.UnsupportedAuthenticationByProvider(authenticationMethod.ToString(), provider.GetType().Name);
+            }
 
             var methodName = "SetProvider";
             if (_authenticationsWithAppSpecifiedProvider.Contains(authenticationMethod))

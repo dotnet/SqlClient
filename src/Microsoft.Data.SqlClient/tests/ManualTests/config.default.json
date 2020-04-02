@@ -5,6 +5,7 @@
     "TCPConnectionStringAASVBS": "",
     "TCPConnectionStringAASSGX": "",
     "EnclaveEnabled": false,
+    "TracingEnabled": false,
     "AADAuthorityURL": "",
     "AADPasswordConnectionString": "",
     "AzureKeyVaultURL": "",
@@ -12,5 +13,6 @@
     "AzureKeyVaultClientSecret": "",
     "SupportsIntegratedSecurity": true,
     "SupportsLocalDb": false,
-    "SupportsFileStream": false
+    "SupportsFileStream": false,
+    "UseManagedSNIOnWindows": false
 }

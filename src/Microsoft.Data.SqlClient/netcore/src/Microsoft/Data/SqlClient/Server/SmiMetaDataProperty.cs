@@ -4,6 +4,7 @@
 
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient.Server
@@ -75,6 +76,13 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
+        internal IEnumerable<SmiMetaDataProperty> Values
+        {
+            get
+            {
+                return new List<SmiMetaDataProperty>(_properties);
+            }
+        }
 
         // Allow switching to read only, but not back.
         internal void SetReadOnly()
@@ -94,6 +102,7 @@ namespace Microsoft.Data.SqlClient.Server
     // Base class for properties
     internal abstract class SmiMetaDataProperty
     {
+        internal abstract string TraceString();
     }
 
     // Property defining a list of column ordinals that define a unique key
@@ -129,6 +138,30 @@ namespace Microsoft.Data.SqlClient.Server
                     "SmiDefaultFieldsProperty.CheckCount: DefaultFieldsProperty size (" + _columns.Count +
                     ") not equal to checked size (" + countToMatch + ")");
         }
+
+        internal override string TraceString()
+        {
+            string returnValue = "UniqueKey(";
+            bool delimit = false;
+            for (int columnOrd = 0; columnOrd < _columns.Count; columnOrd++)
+            {
+                if (delimit)
+                {
+                    returnValue += ",";
+                }
+                else
+                {
+                    delimit = true;
+                }
+                if (_columns[columnOrd])
+                {
+                    returnValue += columnOrd.ToString(CultureInfo.InvariantCulture);
+                }
+            }
+            returnValue += ")";
+
+            return returnValue;
+        }
     }
 
     // Property defining a sort order for a set of columns (by ordinal and ASC/DESC).
@@ -138,6 +171,11 @@ namespace Microsoft.Data.SqlClient.Server
         {
             internal int SortOrdinal;
             internal SortOrder Order;
+
+            internal string TraceString()
+            {
+                return string.Format(CultureInfo.InvariantCulture, "{0} {1}", SortOrdinal, Order);
+            }
         }
 
         private IList<SmiColumnOrder> _columns;
@@ -174,6 +212,31 @@ namespace Microsoft.Data.SqlClient.Server
             Debug.Assert(0 == _columns.Count || countToMatch == _columns.Count,
                     "SmiDefaultFieldsProperty.CheckCount: DefaultFieldsProperty size (" + _columns.Count +
                     ") not equal to checked size (" + countToMatch + ")");
+        }
+
+        internal override string TraceString()
+        {
+            string returnValue = "SortOrder(";
+            bool delimit = false;
+            foreach (SmiColumnOrder columnOrd in _columns)
+            {
+                if (delimit)
+                {
+                    returnValue += ",";
+                }
+                else
+                {
+                    delimit = true;
+                }
+
+                if (Microsoft.Data.SqlClient.SortOrder.Unspecified != columnOrd.Order)
+                {
+                    returnValue += columnOrd.TraceString();
+                }
+            }
+            returnValue += ")";
+
+            return returnValue;
         }
     }
 
@@ -214,6 +277,31 @@ namespace Microsoft.Data.SqlClient.Server
             Debug.Assert(0 == _defaults.Count || countToMatch == _defaults.Count,
                     "SmiDefaultFieldsProperty.CheckCount: DefaultFieldsProperty size (" + _defaults.Count +
                     ") not equal to checked size (" + countToMatch + ")");
+        }
+
+        internal override string TraceString()
+        {
+            string returnValue = "DefaultFields(";
+            bool delimit = false;
+            for (int columnOrd = 0; columnOrd < _defaults.Count; columnOrd++)
+            {
+                if (delimit)
+                {
+                    returnValue += ",";
+                }
+                else
+                {
+                    delimit = true;
+                }
+
+                if (_defaults[columnOrd])
+                {
+                    returnValue += columnOrd;
+                }
+            }
+            returnValue += ")";
+
+            return returnValue;
         }
 
         #endregion
