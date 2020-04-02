@@ -19,7 +19,6 @@
     <ManagedSourceCode>$(ProjectDir)Microsoft.Data.SqlClient\</ManagedSourceCode>
     <NetCoreSource>$(ManagedSourceCode)netcore\</NetCoreSource>
     <NetFxSource>$(ManagedSourceCode)netfx\</NetFxSource>
-    <CommonSource>$(ManagedSourceCode)src\</CommonSource>
     <NetFxResources>$(ManagedSourceCode)netfx\src\Resources\</NetFxResources>
     <ObjFolder>$(RepoRoot)obj\</ObjFolder>
     <CommonPath>$(NetCoreSource)src\Common\src</CommonPath>
