@@ -1,5 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="Latest" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project ToolsVersion="Latest" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <ProjectGuid>{407890AC-9876-4FEF-A6F1-F36A876BAADE}</ProjectGuid>
     <RootNamespace>SqlClient</RootNamespace>
@@ -9,7 +10,7 @@
     <ResourceFileName>SqlClient.Resources.$(ResxFileName)</ResourceFileName>
     <GeneratedSourceFileName>$(ResxFileName).ResourceNames.cs</GeneratedSourceFileName>
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
-    <OutputPlatform>AnyCPU</OutputPlatform>    
+    <OutputPlatform>AnyCPU</OutputPlatform>
     <BinPath>$(BinFolder)$(Configuration).$(OutputPlatform)\</BinPath>
     <ObjPath>$(ObjFolder)$(Configuration).$(OutputPlatform)\</ObjPath>
     <OutputPath>$(BinPath)$(AssemblyName)\netfx\</OutputPath>
