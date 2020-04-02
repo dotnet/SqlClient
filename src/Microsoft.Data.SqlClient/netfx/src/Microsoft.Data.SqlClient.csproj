@@ -85,7 +85,7 @@
     <None Include="Microsoft.Data.SqlClientKey.snk" />
   </ItemGroup>
   <!-- Contains common items shared between NetFx and NetCore -->
-  <ItemGroup Condition="'$(TargetGroup)' == 'netfx' or '$(OSGroup)' != 'AnyOS'">
+  <ItemGroup>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientEventSource.cs">
       <Link>Microsoft\Data\SqlClient\SqlClientEventSource.cs</Link>
     </Compile>
