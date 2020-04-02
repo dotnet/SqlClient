@@ -46,17 +46,17 @@ namespace Microsoft.Data.SqlClient
         private const int ScopeExitId = 5;
 
         /// <summary>
-        /// Defines EventId for notificationScopeEnter() events
+        /// Defines EventId for NotificationScopeEnter() events
         /// </summary>
         private const int NotificationScopeEnterId = 6;
 
         /// <summary>
-        /// Defines EventId for notificationScopeLeave() events
+        /// Defines EventId for NotificationScopeLeave() events
         /// </summary>
         private const int NotificationScopeExitId = 7;
 
         /// <summary>
-        /// Defines EventId for notificationScopeTrace() events
+        /// Defines EventId for NotificationScopeTrace() events
         /// </summary>
         private const int NotificationTraceId = 8;
 
