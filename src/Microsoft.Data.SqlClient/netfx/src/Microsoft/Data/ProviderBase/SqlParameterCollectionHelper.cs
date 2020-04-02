@@ -235,7 +235,7 @@ namespace Microsoft.Data.SqlClient
         {
             OnChange();  // fire event before value is validated
             ValidateType(value);
-            Validate(-1, (SqlParameterCollection)value);
+            Validate(-1, (SqlParameter)value);
             InnerList.Insert(index, (SqlParameter)value);
         }
 
