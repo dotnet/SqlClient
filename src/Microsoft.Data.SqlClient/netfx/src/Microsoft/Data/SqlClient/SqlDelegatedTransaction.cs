@@ -265,11 +265,7 @@ namespace Microsoft.Data.SqlClient
         public void Rollback(SysTx.SinglePhaseEnlistment enlistment)
         {
             Debug.Assert(null != enlistment, "null enlistment?");
-
-            SqlInternalConnection connection = GetValidConnection();
-            SqlConnection usersConnection = connection.Connection;
-            SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.Rollback|RES|CPOOL> {0}, Connection {1}, aborting transaction.", ObjectID, connection.ObjectID);
-            RuntimeHelpers.PrepareConstrainedRegions();
+            SqlInternalConnection connection = null;
 
             try
             {
@@ -277,12 +273,13 @@ namespace Microsoft.Data.SqlClient
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
+                tdsReliabilitySection.Start();
+#endif //DEBUG
+                connection = GetValidConnection();
+                SqlConnection usersConnection = connection.Connection;
+                SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.Rollback|RES|CPOOL> {0}, Connection {1}, aborting transaction.", ObjectID, connection.ObjectID);
                 try
                 {
-                    tdsReliabilitySection.Start();
-#else
-                {
-#endif //DEBUG
                     lock (connection)
                     {
                         try
@@ -331,6 +328,21 @@ namespace Microsoft.Data.SqlClient
                     connection.CleanupConnectionOnTransactionCompletion(_atomicTransaction);
                     enlistment.Aborted();
                 }
+                catch (System.OutOfMemoryException e)
+                {
+                    usersConnection.Abort(e);
+                    throw;
+                }
+                catch (System.StackOverflowException e)
+                {
+                    usersConnection.Abort(e);
+                    throw;
+                }
+                catch (System.Threading.ThreadAbortException e)
+                {
+                    usersConnection.Abort(e);
+                    throw;
+                }
 #if DEBUG
                 finally
                 {
@@ -338,20 +350,14 @@ namespace Microsoft.Data.SqlClient
                 }
 #endif //DEBUG
             }
-            catch (System.OutOfMemoryException e)
+            catch (ObjectDisposedException)
             {
-                usersConnection.Abort(e);
-                throw;
-            }
-            catch (System.StackOverflowException e)
-            {
-                usersConnection.Abort(e);
-                throw;
-            }
-            catch (System.Threading.ThreadAbortException e)
-            {
-                usersConnection.Abort(e);
-                throw;
+                if (_atomicTransaction.TransactionInformation.Status == SysTx.TransactionStatus.Active)
+                {
+                    throw;
+                }
+                // Do not throw exception if connection is already aborted/ended from another thread,
+                // replicate as done in TransactionEnded event handler.
             }
         }
 
