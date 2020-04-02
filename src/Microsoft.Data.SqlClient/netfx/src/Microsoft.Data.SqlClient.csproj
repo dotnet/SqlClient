@@ -1,16 +1,15 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="$(CommonSource)Microsoft.Data.SqlClient.Common.props" Condition="Exists('$(CommonSource)Microsoft.Data.SqlClient.Common.props')" />
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="Latest" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <ProjectGuid>{407890AC-9876-4FEF-A6F1-F36A876BAADE}</ProjectGuid>
     <RootNamespace>SqlClient</RootNamespace>
-    <TargetFramework>net46</TargetFramework>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <EnableLocalAppContext>true</EnableLocalAppContext>
     <ResxFileName>Strings</ResxFileName>
     <ResourceFileName>SqlClient.Resources.$(ResxFileName)</ResourceFileName>
     <GeneratedSourceFileName>$(ResxFileName).ResourceNames.cs</GeneratedSourceFileName>
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
     <OutputPlatform>AnyCPU</OutputPlatform>    
-    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <BinPath>$(BinFolder)$(Configuration).$(OutputPlatform)\</BinPath>
     <ObjPath>$(ObjFolder)$(Configuration).$(OutputPlatform)\</ObjPath>
     <OutputPath>$(BinPath)$(AssemblyName)\netfx\</OutputPath>
@@ -20,7 +19,6 @@
     <!-- ResolveComReferenceSilent suppresses warnings thrown due to the inclusion of mscoree.
      We should remove ResolveComReferenceSilent as soon as we can remove the dependency on mscoree. -->
     <ResolveComReferenceSilent>True</ResolveComReferenceSilent>
-    <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
   </PropertyGroup>
   <PropertyGroup>
     <!-- CSC Compiler Options -->
@@ -85,6 +83,105 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Microsoft.Data.SqlClientKey.snk" />
+  </ItemGroup>
+  <!-- Contains common items shared between NetFx and NetCore -->
+  <ItemGroup Condition="'$(TargetGroup)' == 'netfx' or '$(OSGroup)' != 'AnyOS'">
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientEventSource.cs">
+      <Link>Microsoft\Data\SqlClient\SqlClientEventSource.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientLogger.cs" >
+      <Link>Microsoft\Data\SqlClient\SqlClientLogger.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\DataClassification\SensitivityClassification.cs">
+      <Link>Microsoft\Data\SqlClient\DataClassification\SensitivityClassification.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\ProviderBase\DbConnectionPoolProviderInfo.cs">
+      <Link>Microsoft\Data\ProviderBase\DbConnectionPoolProviderInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\ProviderBase\DbConnectionPoolGroupProviderInfo.cs">
+      <Link>Microsoft\Data\ProviderBase\DbConnectionPoolGroupProviderInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContext.cs">
+      <Link>Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContext.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContextKey.cs">
+      <Link>Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContextKey.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\IBinarySerialize.cs">
+      <Link>Microsoft\Data\SqlClient\Server\IBinarySerialize.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\ColumnEncryptionKeyInfo.cs">
+      <Link>Microsoft\Data\SqlClient\ColumnEncryptionKeyInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\OnChangedEventHandler.cs" >
+      <Link>Microsoft\Data\SqlClient\OnChangedEventHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlAeadAes256CbcHmac256Algorithm.cs">
+      <Link>Microsoft\Data\SqlClient\SqlAeadAes256CbcHmac256Algorithm.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlAeadAes256CbcHmac256EncryptionKey.cs">
+      <Link>Microsoft\Data\SqlClient\SqlAeadAes256CbcHmac256EncryptionKey.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlAeadAes256CbcHmac256Factory.cs">
+      <Link>Microsoft\Data\SqlClient\SqlAeadAes256CbcHmac256Factory.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlAes256CbcAlgorithm.cs">
+      <Link>Microsoft\Data\SqlClient\SqlAes256CbcAlgorithm.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlAes256CbcFactory.cs">
+      <Link>Microsoft\Data\SqlClient\SqlAes256CbcFactory.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlAuthenticationParameters.cs">
+      <Link>Microsoft\Data\SqlClient\SqlAuthenticationParameters.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlAuthenticationProvider.cs">
+      <Link>Microsoft\Data\SqlClient\SqlAuthenticationProvider.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlBulkCopyOptions.cs">
+      <Link>Microsoft\Data\SqlClient\SqlBulkCopyOptions.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientEncryptionAlgorithmFactory.cs">
+      <Link>Microsoft\Data\SqlClient\SqlClientEncryptionAlgorithmFactory.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientEncryptionType.cs">
+      <Link>Microsoft\Data\SqlClient\SqlClientEncryptionType.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientSymmetricKey.cs">
+      <Link>Microsoft\Data\SqlClient\SqlClientSymmetricKey.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlColumnEncryptionKeyStoreProvider.cs">
+      <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionKeyStoreProvider.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlConnectionPoolProviderInfo.cs">
+      <Link>Microsoft\Data\SqlClient\SqlConnectionPoolProviderInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlInfoMessageEventHandler.cs">
+      <Link>Microsoft\Data\SqlClient\SqlInfoMessageEventHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlNotificationInfo.cs">
+      <Link>Microsoft\Data\SqlClient\SqlNotificationInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlNotificationSource.cs">
+      <Link>Microsoft\Data\SqlClient\SqlNotificationSource.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlNotificationType.cs">
+      <Link>Microsoft\Data\SqlClient\SqlNotificationType.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlRowUpdatedEvent.cs">
+      <Link>Microsoft\Data\SqlClient\SqlRowUpdatedEvent.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlRowUpdatedEventHandler.cs">
+      <Link>Microsoft\Data\SqlClient\SqlRowUpdatedEventHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlRowUpdatingEvent.cs">
+      <Link>Microsoft\Data\SqlClient\SqlRowUpdatingEvent.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlRowUpdatingEventHandler.cs">
+      <Link>Microsoft\Data\SqlClient\SqlRowUpdatingEventHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlSymmetricKeyCache.cs">
+      <Link>Microsoft\Data\SqlClient\SqlSymmetricKeyCache.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Microsoft\Data\Interop\SNINativeMethodWrapper.cs" />
@@ -333,6 +430,7 @@
       <Version>$(SystemIOVersion)</Version>
     </PackageReference>
   </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(NetFxSource)tools\targets\GenerateResourceStringsSource.targets" />
   <Import Project="$(NetFxSource)tools\targets\GenerateThisAssemblyCs.targets" />
   <Import Project="$(NetFxSource)tools\targets\GenerateAssemblyRef.targets" />
