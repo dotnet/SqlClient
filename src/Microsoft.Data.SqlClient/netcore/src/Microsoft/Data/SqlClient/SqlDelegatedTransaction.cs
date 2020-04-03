@@ -137,79 +137,92 @@ namespace Microsoft.Data.SqlClient
             //  from an operational standpoint (i.e. logging connection's ObjectID should be fine,
             //  but the PromotedDTCToken can change over calls. so that must be protected).
             SqlInternalConnection connection = GetValidConnection();
-
             Exception promoteException;
             byte[] returnValue = null;
-            SqlConnection usersConnection = connection.Connection;
-            SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.Promote|RES|CPOOL> {0}, Connection {1}, promoting transaction.", ObjectID, connection.ObjectID);
-            RuntimeHelpers.PrepareConstrainedRegions();
-            try
+
+            if (null != connection)
             {
-                lock (connection)
+                SqlConnection usersConnection = connection.Connection;
+                SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.Promote|RES|CPOOL> {0}, Connection {1}, promoting transaction.", ObjectID, connection.ObjectID);
+                RuntimeHelpers.PrepareConstrainedRegions();
+                try
                 {
-                    try
+                    lock (connection)
                     {
-                        // Now that we've acquired the lock, make sure we still have valid state for this operation.
-                        ValidateActiveOnConnection(connection);
-
-                        connection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Promote, null, System.Data.IsolationLevel.Unspecified, _internalTransaction, true);
-                        returnValue = _connection.PromotedDTCToken;
-
-                        // For Global Transactions, we need to set the Transaction Id since we use a Non-MSDTC Promoter type.
-                        if (_connection.IsGlobalTransaction)
+                        try
                         {
-                            if (SysTxForGlobalTransactions.SetDistributedTransactionIdentifier == null)
+                            // Now that we've acquired the lock, make sure we still have valid state for this operation.
+                            ValidateActiveOnConnection(connection);
+
+                            connection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Promote, null, System.Data.IsolationLevel.Unspecified, _internalTransaction, true);
+                            returnValue = _connection.PromotedDTCToken;
+
+                            // For Global Transactions, we need to set the Transaction Id since we use a Non-MSDTC Promoter type.
+                            if (_connection.IsGlobalTransaction)
                             {
-                                throw SQL.UnsupportedSysTxForGlobalTransactions();
+                                if (SysTxForGlobalTransactions.SetDistributedTransactionIdentifier == null)
+                                {
+                                    throw SQL.UnsupportedSysTxForGlobalTransactions();
+                                }
+
+                                if (!_connection.IsGlobalTransactionsEnabledForServer)
+                                {
+                                    throw SQL.GlobalTransactionsNotEnabled();
+                                }
+
+                                SysTxForGlobalTransactions.SetDistributedTransactionIdentifier.Invoke(_atomicTransaction, new object[] { this, GetGlobalTxnIdentifierFromToken() });
                             }
 
-                            if (!_connection.IsGlobalTransactionsEnabledForServer)
-                            {
-                                throw SQL.GlobalTransactionsNotEnabled();
-                            }
-
-                            SysTxForGlobalTransactions.SetDistributedTransactionIdentifier.Invoke(_atomicTransaction, new object[] { this, GetGlobalTxnIdentifierFromToken() });
+                            promoteException = null;
                         }
+                        catch (SqlException e)
+                        {
+                            promoteException = e;
 
-                        promoteException = null;
-                    }
-                    catch (SqlException e)
-                    {
-                        promoteException = e;
-
-                        // Doom the connection, to make sure that the transaction is
-                        // eventually rolled back.
-                        // VSTS 144562: doom the connection while having the lock on it to prevent race condition with "Transaction Ended" Event
-                        connection.DoomThisConnection();
-                    }
-                    catch (InvalidOperationException e)
-                    {
-                        promoteException = e;
-                        connection.DoomThisConnection();
+                            // Doom the connection, to make sure that the transaction is
+                            // eventually rolled back.
+                            // VSTS 144562: doom the connection while having the lock on it to prevent race condition with "Transaction Ended" Event
+                            connection.DoomThisConnection();
+                        }
+                        catch (InvalidOperationException e)
+                        {
+                            promoteException = e;
+                            connection.DoomThisConnection();
+                        }
                     }
                 }
-            }
-            catch (System.OutOfMemoryException e)
-            {
-                usersConnection.Abort(e);
-                throw;
-            }
-            catch (System.StackOverflowException e)
-            {
-                usersConnection.Abort(e);
-                throw;
-            }
-            catch (System.Threading.ThreadAbortException e)
-            {
-                usersConnection.Abort(e);
-                throw;
-            }
+                catch (System.OutOfMemoryException e)
+                {
+                    usersConnection.Abort(e);
+                    throw;
+                }
+                catch (System.StackOverflowException e)
+                {
+                    usersConnection.Abort(e);
+                    throw;
+                }
+                catch (System.Threading.ThreadAbortException e)
+                {
+                    usersConnection.Abort(e);
+                    throw;
+                }
 
-            if (promoteException != null)
-            {
-                throw SQL.PromotionFailed(promoteException);
+                //Throw exception only if Transaction is till active and not yet aborted.
+                if (promoteException != null && Transaction.TransactionInformation.Status != TransactionStatus.Aborted)
+                {
+                    throw SQL.PromotionFailed(promoteException);
+                }
+                else
+                {
+                    // The transaction was aborted externally, since it's already doomed above, we only log the same.
+                    SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.Promote|RES|CPOOL> {0}, Connection {1}, aborted during promotion.", ObjectID, connection.ObjectID);
+                }
             }
-
+            else
+            {
+                // The transaction was aborted externally, doom the connection to make sure it's eventually rolled back and log the same.
+                SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.Promote|RES|CPOOL> {0}, Connection {1}, aborted before promoting.", ObjectID, connection.ObjectID);
+            }
             return returnValue;
         }
 
@@ -217,13 +230,12 @@ namespace Microsoft.Data.SqlClient
         public void Rollback(SinglePhaseEnlistment enlistment)
         {
             Debug.Assert(null != enlistment, "null enlistment?");
-            SqlInternalConnection connection = null;
+            SqlInternalConnection connection = GetValidConnection();
 
-            try
+            if (null != connection)
             {
-                connection = GetValidConnection();
                 SqlConnection usersConnection = connection.Connection;
-                SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.Rollback|RES|CPOOL> {0}, Connection {1}, aborting transaction.", ObjectID, connection.ObjectID);
+                SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.Rollback|RES|CPOOL> {0}, Connection {1}, rolling back transaction.", ObjectID, connection.ObjectID);
                 RuntimeHelpers.PrepareConstrainedRegions();
                 try
                 {
@@ -288,14 +300,11 @@ namespace Microsoft.Data.SqlClient
                     throw;
                 }
             }
-            catch (ObjectDisposedException)
+            else
             {
-                if (_atomicTransaction.TransactionInformation.Status == TransactionStatus.Active)
-                {
-                    throw;
-                }
-                // Do not throw exception if connection is already aborted/ended from another thread,
-                // replicate as done in TransactionEnded event handler.
+                // The transaction was aborted, report that to SysTx and log the same.
+                enlistment.Aborted();
+                SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.Rollback|RES|CPOOL> {0}, Connection {1}, aborted before rollback.", ObjectID, connection.ObjectID);
             }
         }
 
@@ -303,107 +312,116 @@ namespace Microsoft.Data.SqlClient
         public void SinglePhaseCommit(SinglePhaseEnlistment enlistment)
         {
             Debug.Assert(null != enlistment, "null enlistment?");
-
             SqlInternalConnection connection = GetValidConnection();
-            SqlConnection usersConnection = connection.Connection;
-            SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.SinglePhaseCommit|RES|CPOOL> {0}, Connection {1}, committing transaction.", ObjectID, connection.ObjectID);
-            RuntimeHelpers.PrepareConstrainedRegions();
-            try
+
+            if (null != connection)
             {
-                // If the connection is dooomed, we can be certain that the
-                // transaction will eventually be rolled back, and we shouldn't
-                // attempt to commit it.
-                if (connection.IsConnectionDoomed)
+                SqlConnection usersConnection = connection.Connection;
+                SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.SinglePhaseCommit|RES|CPOOL> {0}, Connection {1}, committing transaction.", ObjectID, connection.ObjectID);
+                RuntimeHelpers.PrepareConstrainedRegions();
+                try
                 {
-                    lock (connection)
+                    // If the connection is dooomed, we can be certain that the
+                    // transaction will eventually be rolled back, and we shouldn't
+                    // attempt to commit it.
+                    if (connection.IsConnectionDoomed)
                     {
-                        _active = false; // set to inactive first, doesn't matter how the rest completes, this transaction is done.
-                        _connection = null;
-                    }
-
-                    enlistment.Aborted(SQL.ConnectionDoomed());
-                }
-                else
-                {
-                    Exception commitException;
-                    lock (connection)
-                    {
-                        try
+                        lock (connection)
                         {
-                            // Now that we've acquired the lock, make sure we still have valid state for this operation.
-                            ValidateActiveOnConnection(connection);
-
                             _active = false; // set to inactive first, doesn't matter how the rest completes, this transaction is done.
-                            _connection = null;   // Set prior to ExecuteTransaction call in case this initiates a TransactionEnd event
+                            _connection = null;
+                        }
 
-                            connection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Commit, null, System.Data.IsolationLevel.Unspecified, _internalTransaction, true);
-                            commitException = null;
-                        }
-                        catch (SqlException e)
-                        {
-                            commitException = e;
-
-                            // Doom the connection, to make sure that the transaction is
-                            // eventually rolled back.
-                            // VSTS 144562: doom the connection while having the lock on it to prevent race condition with "Transaction Ended" Event
-                            connection.DoomThisConnection();
-                        }
-                        catch (InvalidOperationException e)
-                        {
-                            commitException = e;
-                            connection.DoomThisConnection();
-                        }
+                        enlistment.Aborted(SQL.ConnectionDoomed());
                     }
-                    if (commitException != null)
+                    else
                     {
-                        // connection.ExecuteTransaction failed with exception
-                        if (_internalTransaction.IsCommitted)
+                        Exception commitException;
+                        lock (connection)
                         {
-                            // Even though we got an exception, the transaction
-                            // was committed by the server.
+                            try
+                            {
+                                // Now that we've acquired the lock, make sure we still have valid state for this operation.
+                                ValidateActiveOnConnection(connection);
+
+                                _active = false; // set to inactive first, doesn't matter how the rest completes, this transaction is done.
+                                _connection = null;   // Set prior to ExecuteTransaction call in case this initiates a TransactionEnd event
+
+                                connection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Commit, null, System.Data.IsolationLevel.Unspecified, _internalTransaction, true);
+                                commitException = null;
+                            }
+                            catch (SqlException e)
+                            {
+                                commitException = e;
+
+                                // Doom the connection, to make sure that the transaction is
+                                // eventually rolled back.
+                                // VSTS 144562: doom the connection while having the lock on it to prevent race condition with "Transaction Ended" Event
+                                connection.DoomThisConnection();
+                            }
+                            catch (InvalidOperationException e)
+                            {
+                                commitException = e;
+                                connection.DoomThisConnection();
+                            }
+                        }
+                        if (commitException != null)
+                        {
+                            // connection.ExecuteTransaction failed with exception
+                            if (_internalTransaction.IsCommitted)
+                            {
+                                // Even though we got an exception, the transaction
+                                // was committed by the server.
+                                enlistment.Committed();
+                            }
+                            else if (_internalTransaction.IsAborted)
+                            {
+                                // The transaction was aborted, report that to
+                                // SysTx.
+                                enlistment.Aborted(commitException);
+                            }
+                            else
+                            {
+                                // The transaction is still active, we cannot
+                                // know the state of the transaction.
+                                enlistment.InDoubt(commitException);
+                            }
+
+                            // We eat the exception.  This is called on the SysTx
+                            // thread, not the applications thread.  If we don't 
+                            // eat the exception an UnhandledException will occur,
+                            // causing the process to FailFast.
+                        }
+
+                        connection.CleanupConnectionOnTransactionCompletion(_atomicTransaction);
+                        if (commitException == null)
+                        {
+                            // connection.ExecuteTransaction succeeded
                             enlistment.Committed();
                         }
-                        else if (_internalTransaction.IsAborted)
-                        {
-                            // The transaction was aborted, report that to
-                            // SysTx.
-                            enlistment.Aborted(commitException);
-                        }
-                        else
-                        {
-                            // The transaction is still active, we cannot
-                            // know the state of the transaction.
-                            enlistment.InDoubt(commitException);
-                        }
-
-                        // We eat the exception.  This is called on the SysTx
-                        // thread, not the applications thread.  If we don't 
-                        // eat the exception an UnhandledException will occur,
-                        // causing the process to FailFast.
-                    }
-
-                    connection.CleanupConnectionOnTransactionCompletion(_atomicTransaction);
-                    if (commitException == null)
-                    {
-                        // connection.ExecuteTransaction succeeded
-                        enlistment.Committed();
                     }
                 }
+                catch (System.OutOfMemoryException e)
+                {
+                    usersConnection.Abort(e);
+                    throw;
+                }
+                catch (System.StackOverflowException e)
+                {
+                    usersConnection.Abort(e);
+                    throw;
+                }
+                catch (System.Threading.ThreadAbortException e)
+                {
+                    usersConnection.Abort(e);
+                    throw;
+                }
             }
-            catch (System.OutOfMemoryException e)
+            else
             {
-                usersConnection.Abort(e);
-                throw;
-            }
-            catch (System.StackOverflowException e)
-            {
-                usersConnection.Abort(e);
-                throw;
-            }
-            catch (System.Threading.ThreadAbortException e)
-            {
-                usersConnection.Abort(e);
-                throw;
+                // The transaction was aborted before we could commit, report that to SysTx and log the same.
+                enlistment.Aborted();
+                SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.SinglePhaseCommit|RES|CPOOL> {0}, Connection {1}, aborted before commit.", ObjectID, connection.ObjectID);
             }
         }
 
@@ -436,7 +454,7 @@ namespace Microsoft.Data.SqlClient
         private SqlInternalConnection GetValidConnection()
         {
             SqlInternalConnection connection = _connection;
-            if (null == connection)
+            if (null == connection && Transaction.TransactionInformation.Status != TransactionStatus.Aborted)
             {
                 throw ADP.ObjectDisposed(this);
             }
