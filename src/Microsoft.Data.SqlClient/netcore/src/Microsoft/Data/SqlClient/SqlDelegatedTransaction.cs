@@ -217,72 +217,85 @@ namespace Microsoft.Data.SqlClient
         public void Rollback(SinglePhaseEnlistment enlistment)
         {
             Debug.Assert(null != enlistment, "null enlistment?");
+            SqlInternalConnection connection = null;
 
-            SqlInternalConnection connection = GetValidConnection();
-            SqlConnection usersConnection = connection.Connection;
-            SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.Rollback|RES|CPOOL> {0}, Connection {1}, aborting transaction.", ObjectID, connection.ObjectID);
-            RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
-                lock (connection)
+                connection = GetValidConnection();
+                SqlConnection usersConnection = connection.Connection;
+                SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.Rollback|RES|CPOOL> {0}, Connection {1}, aborting transaction.", ObjectID, connection.ObjectID);
+                RuntimeHelpers.PrepareConstrainedRegions();
+                try
                 {
-                    try
+                    lock (connection)
                     {
-                        // Now that we've acquired the lock, make sure we still have valid state for this operation.
-                        ValidateActiveOnConnection(connection);
-                        _active = false; // set to inactive first, doesn't matter how the execute completes, this transaction is done.
-                        _connection = null;  // Set prior to ExecuteTransaction call in case this initiates a TransactionEnd event
-
-                        // If we haven't already rolled back (or aborted) then tell the SQL Server to roll back
-                        if (!_internalTransaction.IsAborted)
+                        try
                         {
-                            connection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Rollback, null, System.Data.IsolationLevel.Unspecified, _internalTransaction, true);
+                            // Now that we've acquired the lock, make sure we still have valid state for this operation.
+                            ValidateActiveOnConnection(connection);
+                            _active = false; // set to inactive first, doesn't matter how the execute completes, this transaction is done.
+                            _connection = null;  // Set prior to ExecuteTransaction call in case this initiates a TransactionEnd event
+
+                            // If we haven't already rolled back (or aborted) then tell the SQL Server to roll back
+                            if (!_internalTransaction.IsAborted)
+                            {
+                                connection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Rollback, null, System.Data.IsolationLevel.Unspecified, _internalTransaction, true);
+                            }
+                        }
+                        catch (SqlException)
+                        {
+                            // Doom the connection, to make sure that the transaction is
+                            // eventually rolled back.
+                            // VSTS 144562: doom the connection while having the lock on it to prevent race condition with "Transaction Ended" Event
+                            connection.DoomThisConnection();
+
+                            // Unlike SinglePhaseCommit, a rollback is a rollback, regardless 
+                            // of how it happens, so SysTx won't throw an exception, and we
+                            // don't want to throw an exception either, because SysTx isn't 
+                            // handling it and it may create a fail fast scenario. In the end,
+                            // there is no way for us to communicate to the consumer that this
+                            // failed for more serious reasons than usual.
+                            // 
+                            // This is a bit like "should you throw if Close fails", however,
+                            // it only matters when you really need to know.  In that case, 
+                            // we have the tracing that we're doing to fallback on for the
+                            // investigation.
+                        }
+                        catch (InvalidOperationException)
+                        {
+                            connection.DoomThisConnection();
                         }
                     }
-                    catch (SqlException)
-                    {
-                        // Doom the connection, to make sure that the transaction is
-                        // eventually rolled back.
-                        // VSTS 144562: doom the connection while having the lock on it to prevent race condition with "Transaction Ended" Event
-                        connection.DoomThisConnection();
 
-                        // Unlike SinglePhaseCommit, a rollback is a rollback, regardless 
-                        // of how it happens, so SysTx won't throw an exception, and we
-                        // don't want to throw an exception either, because SysTx isn't 
-                        // handling it and it may create a fail fast scenario. In the end,
-                        // there is no way for us to communicate to the consumer that this
-                        // failed for more serious reasons than usual.
-                        // 
-                        // This is a bit like "should you throw if Close fails", however,
-                        // it only matters when you really need to know.  In that case, 
-                        // we have the tracing that we're doing to fallback on for the
-                        // investigation.
-                    }
-                    catch (InvalidOperationException)
-                    {
-                        connection.DoomThisConnection();
-                    }
+                    // it doesn't matter whether the rollback succeeded or not, we presume
+                    // that the transaction is aborted, because it will be eventually.
+                    connection.CleanupConnectionOnTransactionCompletion(_atomicTransaction);
+                    enlistment.Aborted();
                 }
-
-                // it doesn't matter whether the rollback succeeded or not, we presume
-                // that the transaction is aborted, because it will be eventually.
-                connection.CleanupConnectionOnTransactionCompletion(_atomicTransaction);
-                enlistment.Aborted();
+                catch (System.OutOfMemoryException e)
+                {
+                    usersConnection.Abort(e);
+                    throw;
+                }
+                catch (System.StackOverflowException e)
+                {
+                    usersConnection.Abort(e);
+                    throw;
+                }
+                catch (System.Threading.ThreadAbortException e)
+                {
+                    usersConnection.Abort(e);
+                    throw;
+                }
             }
-            catch (System.OutOfMemoryException e)
+            catch (ObjectDisposedException)
             {
-                usersConnection.Abort(e);
-                throw;
-            }
-            catch (System.StackOverflowException e)
-            {
-                usersConnection.Abort(e);
-                throw;
-            }
-            catch (System.Threading.ThreadAbortException e)
-            {
-                usersConnection.Abort(e);
-                throw;
+                if (_atomicTransaction.TransactionInformation.Status == TransactionStatus.Active)
+                {
+                    throw;
+                }
+                // Do not throw exception if connection is already aborted/ended from another thread,
+                // replicate as done in TransactionEnded event handler.
             }
         }
 
