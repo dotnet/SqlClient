@@ -15,13 +15,13 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData(0),InlineData(3),InlineData(128), InlineData(2048), InlineData(8192)]
         public static void ReadWrite(int readLimit)
         {
-            const int EncapulatedPacketCount = 4;
+            const int EncaspulatedPacketCount = 4;
             const int PassThroughPacketCount = 5;
 
-            SyncTest(EncapulatedPacketCount, PassThroughPacketCount, readLimit);
-            SyncCoreTest(EncapulatedPacketCount, PassThroughPacketCount, readLimit);
-            AsyncTest(EncapulatedPacketCount, PassThroughPacketCount, readLimit);
-            AsyncCoreTest(EncapulatedPacketCount, PassThroughPacketCount, readLimit);
+            SyncTest(EncaspulatedPacketCount, PassThroughPacketCount, readLimit);
+            SyncCoreTest(EncaspulatedPacketCount, PassThroughPacketCount, readLimit);
+            AsyncTest(EncaspulatedPacketCount, PassThroughPacketCount, readLimit);
+            AsyncCoreTest(EncaspulatedPacketCount, PassThroughPacketCount, readLimit);
         }
 
         private static void SyncTest(int encapsulatedPacketCount, int passthroughPacketCount, int maxPacketReadLength)
