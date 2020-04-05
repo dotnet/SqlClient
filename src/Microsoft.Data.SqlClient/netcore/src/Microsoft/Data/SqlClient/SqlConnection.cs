@@ -48,7 +48,7 @@ namespace Microsoft.Data.SqlClient
         private SqlCredential _credential;
         private string _connectionString;
         private int _connectRetryCount;
-        private string _accessToken; // Access Token to be used for token based authententication
+        private string _accessToken; // Access Token to be used for token based authentication
 
         // connection resiliency
         private object _reconnectLock;
@@ -123,7 +123,7 @@ namespace Microsoft.Data.SqlClient
             if (credential != null)
             {
                 // The following checks are necessary as setting Credential property will call CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential
-                //  CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential it will throw InvalidOperationException rather than Arguemtn exception
+                //  CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential it will throw InvalidOperationException rather than ArgumentException
                 //  Need to call setter on Credential property rather than setting _credential directly as pool groups need to be checked
                 SqlConnectionString connectionOptions = (SqlConnectionString)ConnectionOptions;
                 if (UsesClearUserIdOrPassword(connectionOptions))

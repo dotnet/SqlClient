@@ -826,7 +826,7 @@ namespace Microsoft.Data.SqlClient
 
         // Cancel is supposed to be multi-thread safe.
         // It doesn't make sense to verify the connection exists or that it is open during cancel
-        // because immediately after checkin the connection can be closed or removed via another thread.
+        // because immediately after checking the connection can be closed or removed via another thread.
         //
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Cancel/*'/>
         override public void Cancel()
@@ -2066,7 +2066,7 @@ namespace Microsoft.Data.SqlClient
             // We shouldn't be using the cache if we are in retry.
             Debug.Assert(!usedCache || !inRetry);
 
-            // If column ecnryption is enabled and we used the cache, we want to catch any potential exceptions that were caused by the query cache and retry if the error indicates that we should.
+            // If column encryption is enabled and we used the cache, we want to catch any potential exceptions that were caused by the query cache and retry if the error indicates that we should.
             // So, try to read the result of the query before completing the overall task and trigger a retry if appropriate.
             if ((IsColumnEncryptionEnabled && !inRetry && (usedCache || ShouldUseEnclaveBasedWorkflow))
 #if DEBUG
@@ -2933,7 +2933,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // Check to see if notificactions auto enlistment is turned on. Enlist if so.
+        // Check to see if notifications auto enlistment is turned on. Enlist if so.
         private void CheckNotificationStateAndAutoEnlist()
         {
             // Auto-enlist not supported in Core
@@ -3600,7 +3600,7 @@ namespace Microsoft.Data.SqlClient
 
             // Construct the RPC request for sp_describe_parameter_encryption
             // sp_describe_parameter_encryption always has 2 parameters (stmt, paramlist).
-            // sp_describe_parameter_encryption can have an optional 3rd parameter (attestationParametes), used to identify and execute attestation protocol
+            // sp_describe_parameter_encryption can have an optional 3rd parameter (attestationParameters), used to identify and execute attestation protocol
             GetRPCObject(attestationParameters == null ? 2 : 3, 0, ref describeParameterEncryptionRequest, forSpDescribeParameterEncryption: true);
             describeParameterEncryptionRequest.rpcName = "sp_describe_parameter_encryption";
 
@@ -5542,7 +5542,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     // Possibility of a SQL Injection issue through parameter names and how to construct valid identifier for parameters.
                     // Since the parameters comes from application itself, there should not be a security vulnerability.
-                    // Also since the query is not executed, but only analyzed there is no possibility for elevation of priviledge, but only for 
+                    // Also since the query is not executed, but only analyzed there is no possibility for elevation of privilege, but only for 
                     // incorrect results which would only affect the user that attempts the injection.
                     execStatement.AppendFormat(@" {0}={0}", parameters[index].ParameterNameFixed);
 

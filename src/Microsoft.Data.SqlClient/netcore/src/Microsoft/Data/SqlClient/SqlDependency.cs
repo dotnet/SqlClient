@@ -754,7 +754,7 @@ namespace Microsoft.Data.SqlClient
         internal static string GetDefaultComposedOptions(string server, string failoverServer, IdentityUserNamePair identityUser, string database)
         {
             // Server must be an exact match, but user and database only needs to match exactly if there is more than one 
-            // for the given user or database passed.  That is ambiguious and we must fail.
+            // for the given user or database passed.  That is ambiguous and we must fail.
             long scopeID = SqlClientEventSource.Log.NotificationScopeEnterEvent("<sc.SqlDependency.GetDefaultComposedOptions|DEP> server: '{0}', failoverServer: '{1}', database: '{2}'", server, failoverServer, database);
             try
             {
@@ -1027,7 +1027,7 @@ namespace Microsoft.Data.SqlClient
                                     Timeout = _timeout
                                 };
 
-                                // Add the command - A dependancy should always map to a set of commands which haven't fired.
+                                // Add the command - A dependency should always map to a set of commands which haven't fired.
                                 if (null != _options)
                                 { // Assign options if user provided.
                                     cmd.Notification.Options = _options;

@@ -357,7 +357,7 @@ namespace Microsoft.Data.ProviderBase
             get;
         }
 
-        // this should be abstract but untill it is added to all the providers virtual will have to do RickFe
+        // this should be abstract but until it is added to all the providers virtual will have to do RickFe
         virtual public string ServerVersionNormalized
         {
             get
@@ -535,12 +535,12 @@ namespace Microsoft.Data.ProviderBase
 
         virtual internal void PrepareForReplaceConnection()
         {
-            // By default, there is no preperation required
+            // By default, there is no preparation required
         }
 
         virtual protected void PrepareForCloseConnection()
         {
-            // By default, there is no preperation required
+            // By default, there is no preparation required
         }
 
         virtual protected object ObtainAdditionalLocksForClose()
@@ -761,7 +761,7 @@ namespace Microsoft.Data.ProviderBase
                 }
                 catch
                 {
-                    // This should occure for all exceptions, even ADP.UnCatchableExceptions.
+                    // This should occur for all exceptions, even ADP.UnCatchableExceptions.
                     connectionFactory.SetInnerConnectionTo(outerConnection, this);
                     throw;
                 }

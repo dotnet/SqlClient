@@ -24,7 +24,7 @@ namespace Microsoft.Data.SqlClient
         /// Creates an instance of SqlAes256CbcAlgorithm class with a given key
         /// </summary>
         /// <param name="encryptionKey">Root key</param>
-        /// <param name="encryptionType">Encryption Type. Expected values are either Determinitic or Randomized.</param>
+        /// <param name="encryptionType">Encryption Type. Expected values are either Deterministic or Randomized.</param>
         /// <param name="encryptionAlgorithm">Encryption Algorithm.</param>
         /// <returns></returns>
         internal override SqlClientEncryptionAlgorithm Create(SqlClientSymmetricKey encryptionKey, SqlClientEncryptionType encryptionType, string encryptionAlgorithm)

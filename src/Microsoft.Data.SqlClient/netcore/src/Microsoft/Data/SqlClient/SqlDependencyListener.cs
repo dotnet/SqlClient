@@ -279,7 +279,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                     ProcessNotificationResults(reader);
                 }
 
-                // Successfull completion of query - no errors.
+                // Successful completion of query - no errors.
                 if (!_stop)
                 {
                     AsynchronouslyQueryServiceBrokerQueue(); // Requeue...

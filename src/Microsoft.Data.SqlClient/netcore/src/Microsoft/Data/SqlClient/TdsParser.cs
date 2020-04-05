@@ -7639,7 +7639,7 @@ namespace Microsoft.Data.SqlClient
                     break;
                 case TdsEnums.FedAuthLibrary.SecurityToken:
                     Debug.Assert(fedAuthFeatureData.accessToken != null, "AccessToken should not be null.");
-                    dataLen = 1 + sizeof(int) + fedAuthFeatureData.accessToken.Length; // length of feature data = 1 byte for library and echo, security token length and sizeof(int) for token lengh itself
+                    dataLen = 1 + sizeof(int) + fedAuthFeatureData.accessToken.Length; // length of feature data = 1 byte for library and echo, security token length and sizeof(int) for token lenght itself
                     break;
                 default:
                     Debug.Fail("Unrecognized library type for fedauth feature extension request");
@@ -8217,7 +8217,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Send the access token to the server.
         /// </summary>
-        /// <param name="fedAuthToken">Type encapuslating a Federated Authentication access token.</param>
+        /// <param name="fedAuthToken">Type encapsulating a Federated Authentication access token.</param>
         internal void SendFedAuthToken(SqlFedAuthToken fedAuthToken)
         {
             Debug.Assert(fedAuthToken != null, "fedAuthToken cannot be null");
@@ -8363,7 +8363,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         Debug.Fail("unexpected length (> Int32.MaxValue) returned from dtcReader.GetBytes");
                         // if we hit this case we'll just return a null address so that the user
-                        // will get a transcaction enlistment error in the upper layers
+                        // will get a transaction enlistment error in the upper layers
                     }
 #endif
                 }

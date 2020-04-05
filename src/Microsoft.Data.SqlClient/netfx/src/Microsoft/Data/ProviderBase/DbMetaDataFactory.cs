@@ -326,7 +326,7 @@ namespace Microsoft.Data.ProviderBase
                             // have an inexact match - ok only if it is the only one
                             if (exactCollectionName != null)
                             {
-                                // can't fail here becasue we may still find an exact match
+                                // can't fail here because we may still find an exact match
                                 haveMultipleInexactMatches = true;
                             }
                             requestedCollectionRow = row;
@@ -437,7 +437,7 @@ namespace Microsoft.Data.ProviderBase
         {
             Debug.Assert(_metaDataCollectionsDataSet != null);
 
-            //TODO: MarkAsh or EnzoL should review this code for efficency.
+            //TODO: MarkAsh or EnzoL should review this code for efficiency.
             DataTable metaDataCollectionsTable = _metaDataCollectionsDataSet.Tables[DbMetaDataCollectionNames.MetaDataCollections];
             DataColumn populationMechanismColumn = metaDataCollectionsTable.Columns[_populationMechanism];
             DataColumn collectionNameColumn = metaDataCollectionsTable.Columns[DbMetaDataColumnNames.CollectionName];
@@ -489,7 +489,7 @@ namespace Microsoft.Data.ProviderBase
 
                     // TODO: Consider an alternate method that doesn't involve special casing -- perhaps _prepareCollection
 
-                    // for the data source infomation table we need to fix up the version columns at run time
+                    // for the data source information table we need to fix up the version columns at run time
                     // since the version is determined at run time
                     if (exactCollectionName == DbMetaDataCollectionNames.DataSourceInformation)
                     {
@@ -582,7 +582,7 @@ namespace Microsoft.Data.ProviderBase
                 }
             }
 
-            // if the minmum version was ok what about the maximum version
+            // if the minimum version was ok what about the maximum version
             if (result == true)
             {
                 versionColumn = tableColumns[_maximumVersion];
