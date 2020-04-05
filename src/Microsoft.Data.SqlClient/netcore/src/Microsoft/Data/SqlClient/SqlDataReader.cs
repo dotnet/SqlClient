@@ -4547,7 +4547,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         CancellationTokenSource timeoutCancellationSource = new CancellationTokenSource();
                         timeoutCancellationSource.CancelAfter(context.timeout);
-                        Debug.Assert(context._disposable is null, "setting context.disposable would lose the previous dispoable");
+                        Debug.Assert(context._disposable is null, "setting context.disposable would lose the previous disposable");
                         context._disposable = timeoutCancellationSource;
                         context.timeoutToken = timeoutCancellationSource.Token;
                     }
@@ -4561,7 +4561,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    Debug.Assert(context._source != null, "context.source shuld not be null when continuing");
+                    Debug.Assert(context._source != null, "context.source should not be null when continuing");
                     // setup for cleanup/completing
                     retryTask.ContinueWith(
                         continuationAction: AAsyncCallContext<int>.s_completeCallback,

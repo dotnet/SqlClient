@@ -3645,7 +3645,7 @@ namespace Microsoft.Data.SqlClient
             // And it is already in the format expected out of BuildParamList, which is not the case with Non-BatchRPCMode.
             if (BatchRPCMode)
             {
-                // systemParamCount == 2 when user parameters are supplied to BuildExcucuteSql
+                // systemParamCount == 2 when user parameters are supplied to BuildExecuteSql
                 if (originalRpcRequest.systemParamCount > 1)
                 {
                     parameterList = (string)originalRpcRequest.systemParams[1].Value;
@@ -4364,7 +4364,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if (BatchRPCMode)
                 {
-                    Debug.Assert(inSchema == false, "Batch RPC does not support schema only command beahvior");
+                    Debug.Assert(inSchema == false, "Batch RPC does not support schema only command behavior");
                     Debug.Assert(!IsPrepared, "Batch RPC should not be prepared!");
                     Debug.Assert(!IsDirty, "Batch RPC should not be marked as dirty!");
                     Debug.Assert(_SqlRPCBatchArray != null, "RunExecuteReader rpc array not provided");

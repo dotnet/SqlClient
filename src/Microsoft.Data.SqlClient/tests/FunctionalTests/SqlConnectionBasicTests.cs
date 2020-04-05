@@ -77,7 +77,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Throws<ArgumentException>(() => new SqlConnection("Timeout= null;"));
             Assert.Throws<ArgumentException>(() => new SqlConnection("Timeout=1 1;"));
             Assert.Throws<ArgumentException>(() => new SqlConnection("Timeout=1a;"));
-            Assert.Throws<ArgumentException>(() => new SqlConnection("Integrated Security=truee"));
+            Assert.Throws<ArgumentException>(() => new SqlConnection("Integrated Security=true"));
         }
 
         [Fact]

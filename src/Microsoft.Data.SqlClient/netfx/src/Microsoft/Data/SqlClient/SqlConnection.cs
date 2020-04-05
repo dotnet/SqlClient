@@ -1466,7 +1466,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (ctoken.IsCancellationRequested)
                     {
-                        SqlClientEventSource.Log.TraceEvent("<sc.SqlConnection.ReconnectAsync|INFO> Orginal ClientConnectionID: {0} - reconnection cancelled.", _originalConnectionId.ToString());
+                        SqlClientEventSource.Log.TraceEvent("<sc.SqlConnection.ReconnectAsync|INFO> Original ClientConnectionID: {0} - reconnection cancelled.", _originalConnectionId.ToString());
                         return;
                     }
                     try
@@ -1488,15 +1488,15 @@ namespace Microsoft.Data.SqlClient
                             ForceNewConnection = false;
                         }
 
-                        SqlClientEventSource.Log.TraceEvent("<sc.SqlConnection.ReconnectIfNeeded|INFO> Reconnection suceeded.  ClientConnectionID {0} -> {1}", _originalConnectionId.ToString(), ClientConnectionId.ToString());
+                        SqlClientEventSource.Log.TraceEvent("<sc.SqlConnection.ReconnectIfNeeded|INFO> Reconnection succeeded.  ClientConnectionID {0} -> {1}", _originalConnectionId.ToString(), ClientConnectionId.ToString());
                         return;
                     }
                     catch (SqlException e)
                     {
-                        SqlClientEventSource.Log.TraceEvent("<sc.SqlConnection.ReconnectAsyncINFO> Orginal ClientConnectionID {0} - reconnection attempt failed error {1}", _originalConnectionId, e.Message);
+                        SqlClientEventSource.Log.TraceEvent("<sc.SqlConnection.ReconnectAsyncINFO> Original ClientConnectionID {0} - reconnection attempt failed error {1}", _originalConnectionId, e.Message);
                         if (attempt == retryCount - 1)
                         {
-                            SqlClientEventSource.Log.TraceEvent("<sc.SqlConnection.ReconnectAsync|INFO> Orginal ClientConnectionID {0} - give up reconnection", _originalConnectionId.ToString());
+                            SqlClientEventSource.Log.TraceEvent("<sc.SqlConnection.ReconnectAsync|INFO> Original ClientConnectionID {0} - give up reconnection", _originalConnectionId.ToString());
                             throw SQL.CR_AllAttemptsFailed(e, _originalConnectionId);
                         }
                         if (timeout > 0 && ADP.TimerRemaining(commandTimeoutExpiration) < ADP.TimerFromSeconds(ConnectRetryInterval))
