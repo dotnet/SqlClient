@@ -499,21 +499,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             public IEnumerator<object[]> GetEnumerator()
             {
-                if (!string.IsNullOrEmpty(DataTestUtility.TCPConnectionString))
+                foreach (var cnnString in DataTestUtility.ConnectionStrings)
                 {
-                    yield return new object[] { DataTestUtility.TCPConnectionString, false };                    
-                    yield return new object[] { DataTestUtility.TCPConnectionString, true };
-                }
-                else if (!string.IsNullOrEmpty(DataTestUtility.NPConnectionString))
-                {
-                    yield return new object[] { DataTestUtility.NPConnectionString, false };
-                    yield return new object[] { DataTestUtility.NPConnectionString, true };
-                }
-
-                foreach (string connStrAE in DataTestUtility.AEConnStrings)
-                {
-                    yield return new object[] { connStrAE, false };
-                    yield return new object[] { connStrAE, true };
+                    yield return new object[] { cnnString, false };
+                    yield return new object[] { cnnString, true };
                 }
             }
 

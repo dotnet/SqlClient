@@ -52,6 +52,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static Dictionary<string, bool> AvailableDatabases;
         private static TraceEventListener TraceListener;
+        public static IEnumerable<string> ConnectionStrings
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(TCPConnectionString))
+                {
+                    yield return TCPConnectionString;
+                }
+                else if (!string.IsNullOrEmpty(NPConnectionString))
+                {
+                    yield return NPConnectionString;
+                }
+                foreach (string connStrAE in AEConnStrings)
+                {
+                    yield return connStrAE;
+                }
+            }
+        }
 
         private class Config
         {

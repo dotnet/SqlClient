@@ -9091,7 +9091,7 @@ namespace Microsoft.Data.SqlClient
 
                 // bug 49512, make sure the value matches the scale the user enters
                 if (!isNull)
-                {                    
+                {
                     if (isSqlVal)
                     {
                         value = AdjustSqlDecimalScale((SqlDecimal)value, scale);
