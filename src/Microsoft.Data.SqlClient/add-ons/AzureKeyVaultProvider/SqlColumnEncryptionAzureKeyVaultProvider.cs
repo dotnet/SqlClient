@@ -386,7 +386,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// This function validates that the encryption algorithm is RSA_OAEP and if it is not,
         /// then throws an exception
         /// </summary>
-        /// <param name="encryptionAlgorithm">Asymmetric key encryptio algorithm</param>
+        /// <param name="encryptionAlgorithm">Asymmetric key encryption algorithm</param>
         /// <param name="isSystemOp">is the operation a system operation</param>
         private void ValidateEncryptionAlgorithm(ref string encryptionAlgorithm, bool isSystemOp)
         {

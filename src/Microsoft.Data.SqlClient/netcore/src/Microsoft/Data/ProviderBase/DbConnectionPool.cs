@@ -616,7 +616,7 @@ namespace Microsoft.Data.ProviderBase
                         //   by transaction-end thread!
 
                         // Note that there is a minor race condition between this task and the transaction end event, if the latter runs 
-                        //  between the lock above and the SetInStasis call below. The reslult is that the stasis counter may be
+                        //  between the lock above and the SetInStasis call below. The result is that the stasis counter may be
                         //  incremented without a corresponding decrement (the transaction end task is normally expected
                         //  to decrement, but will only do so if the stasis flag is set when it runs). I've minimized the size
                         //  of the window, but we aren't totally eliminating it due to SetInStasis needing to do bid tracing, which

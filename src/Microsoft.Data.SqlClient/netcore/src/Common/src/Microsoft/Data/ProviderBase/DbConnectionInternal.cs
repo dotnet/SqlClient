@@ -121,7 +121,7 @@ namespace Microsoft.Data.ProviderBase
         protected internal object Owner
         {
             // We use a weak reference to the owning object so we can identify when
-            // it has been garbage collected without thowing exceptions.
+            // it has been garbage collected without throwing exceptions.
             get
             {
                 return _owningObject.Target;

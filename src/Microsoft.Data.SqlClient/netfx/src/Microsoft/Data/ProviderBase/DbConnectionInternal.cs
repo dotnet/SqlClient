@@ -174,7 +174,7 @@ namespace Microsoft.Data.ProviderBase
         /// Get boolean value that indicates whether the enlisted transaction has been disposed.
         /// </summary>
         /// <value>
-        /// True if there is an enlisted transaction, and it has been diposed.
+        /// True if there is an enlisted transaction, and it has been disposed.
         /// False if there is an enlisted transaction that has not been disposed, or if the transaction reference is null.
         /// </value>
         /// <remarks>
@@ -313,7 +313,7 @@ namespace Microsoft.Data.ProviderBase
         protected internal object Owner
         {
             // We use a weak reference to the owning object so we can identify when
-            // it has been garbage collected without thowing exceptions.
+            // it has been garbage collected without throwing exceptions.
             get
             {
                 return _owningObject.Target;
@@ -464,7 +464,7 @@ namespace Microsoft.Data.ProviderBase
             // if an exception occurs after the state change but before the try block
             // the connection will be stuck in OpenBusy state.  The commented out try-catch
             // block doesn't really help because a ThreadAbort during the finally block
-            // would just refert the connection to a bad state.
+            // would just revert the connection to a bad state.
             // Open->Closed: guarantee internal connection is returned to correct pool
             if (connectionFactory.SetInnerConnectionFrom(owningObject, DbConnectionOpenBusy.SingletonInstance, this))
             {

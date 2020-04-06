@@ -240,7 +240,7 @@ namespace Microsoft.Data.Common
                                     state = MPIState.MPI_Value;
                                 }
                                 else
-                                { // Othewise not a separator
+                                { // Otherwise not a separator
                                     throw ADP.InvalidMultipartNameIncorrectUsageOfQuotes(property, name);
                                 }
                             }

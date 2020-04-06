@@ -368,7 +368,7 @@ namespace Microsoft.Data.Common
                 {
                     try
                     {
-                        // Enum.ToObject allows only integral and enum values (enums are blocked above), rasing ArgumentException for the rest
+                        // Enum.ToObject allows only integral and enum values (enums are blocked above), raising ArgumentException for the rest
                         eValue = (PoolBlockingPeriod)Enum.ToObject(typeof(PoolBlockingPeriod), value);
                     }
                     catch (ArgumentException e)

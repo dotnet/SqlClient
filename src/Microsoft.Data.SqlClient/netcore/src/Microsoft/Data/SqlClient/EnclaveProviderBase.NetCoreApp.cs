@@ -175,10 +175,10 @@ namespace Microsoft.Data.SqlClient
         // Reset the session lock status
         protected void UpdateEnclaveSessionLockStatus(SqlEnclaveSession sqlEnclaveSession)
         {
-            // As per current design, we want to minimize the number of create session calls. To acheive this we block all the GetEnclaveSession calls until the first call to
+            // As per current design, we want to minimize the number of create session calls. To achieve this we block all the GetEnclaveSession calls until the first call to
             // GetEnclaveSession -> GetAttestationParameters -> CreateEnclaveSession completes or the event timeout happens.
             // Case 1: When the first request successfully creates the session, then all outstanding GetEnclaveSession will use the current session.
-            // Case 2: When the first request unable to create the encalve session (may be due to some error or the first request doesn't require enclave computation) then in those case we set the event timeout to 0.
+            // Case 2: When the first request unable to create the enclave session (may be due to some error or the first request doesn't require enclave computation) then in those case we set the event timeout to 0.
             if (sqlEnclaveSession != null && isSessionLockAcquired)
             {
                 lock (lockUpdateSessionLock)

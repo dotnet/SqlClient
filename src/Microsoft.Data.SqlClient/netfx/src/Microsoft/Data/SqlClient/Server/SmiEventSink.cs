@@ -61,13 +61,13 @@ namespace Microsoft.Data.SqlClient.Server
         // Called when any statement completes on server (DONE token)
         internal abstract void StatementCompleted(int rowsAffected);
 
-        // Called when a transaction is commited (ENVCHANGE token)
+        // Called when a transaction is committed (ENVCHANGE token)
         internal abstract void TransactionCommitted(long transactionId);
 
-        // Called when a transaction is commited (ENVCHANGE token)
+        // Called when a transaction is committed (ENVCHANGE token)
         internal abstract void TransactionDefected(long transactionId);
 
-        // Called when a transaction is commited (ENVCHANGE token)
+        // Called when a transaction is committed (ENVCHANGE token)
         internal abstract void TransactionEnlisted(long transactionId);
 
         // Called when a transaction is forcibly ended in the server, not requested

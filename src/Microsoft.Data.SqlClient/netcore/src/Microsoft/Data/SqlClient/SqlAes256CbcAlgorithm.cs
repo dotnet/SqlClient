@@ -21,7 +21,7 @@ namespace Microsoft.Data.SqlClient
         /// Root encryption key from which three other keys will be derived
         /// </param>
         /// <param name="encryptionType">Encryption Type, accepted values are Deterministic and Randomized. 
-        /// For Deterministic encryption, a synthetic IV will be genenrated during encryption
+        /// For Deterministic encryption, a synthetic IV will be generated during encryption
         /// For Randomized encryption, a random IV will be generated during encryption.
         /// </param>
         /// <param name="algorithmVersion">

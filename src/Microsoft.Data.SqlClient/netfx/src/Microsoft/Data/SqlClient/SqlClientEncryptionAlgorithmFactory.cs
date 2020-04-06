@@ -6,13 +6,13 @@ namespace Microsoft.Data.SqlClient
 {
     /// <summary>
     /// Abstract base class for all TCE encryption algorithm factory classes. Factory classes create instances of an encryption algorithm
-    /// with a given key. At runtime when we determine a particular column is marked for TCE, based on the encryption algorithm we invoke 
+    /// with a given key. At runtime when we determine a particular column is marked for TCE, based on the encryption algorithm we invoke
     /// the corresponding factory class and retrieve an object to an encryption algorithm.
     /// </summary>
     internal abstract class SqlClientEncryptionAlgorithmFactory
     {
         /// <summary>
-        /// Creates an encrytion algorithm with a given key.
+        /// Creates an encryption algorithm with a given key.
         /// </summary>
         /// <param name="encryptionKey">encryption key that should be passed to the encryption algorithm to be created</param>
         /// <param name="encryptionType">Encryption Type, some algorithms will need this</param>

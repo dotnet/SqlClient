@@ -351,7 +351,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Return the cipher encyrption algorithm handle.
+        /// Return the cipher encryption algorithm handle.
         /// </summary>
         internal SqlClientEncryptionAlgorithm CipherAlgorithm
         {
