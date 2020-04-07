@@ -367,7 +367,7 @@ namespace Microsoft.Data.SqlClient
 
     }
 
-    [System.Security.Permissions.PermissionSetAttribute(System.Security.Permissions.SecurityAction.LinkDemand, Name = "FullTrust")]
+    [System.Security.Permissions.PermissionSet(System.Security.Permissions.SecurityAction.LinkDemand, Name = "FullTrust")]
     sealed internal class SqlPerformanceCounters : DbConnectionPoolCounters
     {
         private const string CategoryName = ".NET Data Provider for SqlServer";

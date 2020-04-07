@@ -97,7 +97,7 @@ namespace Microsoft.Data.ProviderBase
             {
                 try
                 {
-                    if (categoryName != string.Empty && instanceName != string.Empty)
+                    if (!string.IsNullOrEmpty(categoryName) && !string.IsNullOrEmpty(instanceName))
                     {
                         PerformanceCounter instance = new PerformanceCounter();
                         instance.CategoryName = categoryName;
@@ -179,7 +179,7 @@ namespace Microsoft.Data.ProviderBase
 
             string instanceName = null;
 
-            if (categoryName != string.Empty)
+            if (!string.IsNullOrEmpty(categoryName))
             {
                 instanceName = GetInstanceName();
             }
@@ -199,7 +199,7 @@ namespace Microsoft.Data.ProviderBase
 
             // level 4: expensive stuff
             string verboseCategoryName = null;
-            if (categoryName != string.Empty)
+            if (!string.IsNullOrEmpty(categoryName))
             {
                 // don't load TraceSwitch if no categoryName so that Odbc/OleDb have a chance of not loading TraceSwitch
                 // which are also used by System.Diagnostics.PerformanceCounter.ctor & System.Transactions.get_Current
@@ -244,7 +244,7 @@ namespace Microsoft.Data.ProviderBase
 
             string instanceName = GetAssemblyName(); // instance perfcounter name
 
-            if (instanceName == string.Empty)
+            if (string.IsNullOrEmpty(instanceName))
             {
                 AppDomain appDomain = AppDomain.CurrentDomain;
                 if (null != appDomain)
