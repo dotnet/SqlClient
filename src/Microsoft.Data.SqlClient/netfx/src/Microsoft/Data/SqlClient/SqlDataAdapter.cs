@@ -249,7 +249,7 @@ namespace Microsoft.Data.SqlClient
         override protected int ExecuteBatch()
         {
             Debug.Assert(null != _commandSet && (0 < _commandSet.CommandCount), "no commands");
-            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlDataAdapter.ExecuteBatch|Info|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
+            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlDataAdapter.ExecuteBatch|Info|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
 
             return _commandSet.ExecuteNonQuery();
         }

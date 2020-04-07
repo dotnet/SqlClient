@@ -840,7 +840,7 @@ namespace Microsoft.Data.SqlClient
         {
             SqlStatistics statistics = null;
             RepairInnerConnection();
-            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlConnection.ChangeDatabase|API|Correlation> ObjectID{0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
+            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlConnection.ChangeDatabase|API|Correlation> ObjectID{0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
@@ -886,7 +886,7 @@ namespace Microsoft.Data.SqlClient
         public override void Close()
         {
             long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlConnection.Close|API> {0}", ObjectID);
-            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlConnection.Close|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
+            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlConnection.Close|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
             try
             {
                 ConnectionState previousState = State;
@@ -999,8 +999,8 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Open/*' />
         public override void Open()
         {
-            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlConnection.Open|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
-            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlConnection.Open|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlConnection.Open|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
+            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlConnection.Open|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
             try
             {
                 Guid operationId = s_diagnosticListener.WriteConnectionOpenBefore(this);
@@ -1268,7 +1268,7 @@ namespace Microsoft.Data.SqlClient
         public override Task OpenAsync(CancellationToken cancellationToken)
         {
             long scopeID = SqlClientEventSource.Log.PoolerScopeEnterEvent("<sc.SqlConnection.OpenAsync|API> {0}", ObjectID);
-            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlConnection.OpenAsync|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
+            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlConnection.OpenAsync|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
             try
             {
                 Guid operationId = s_diagnosticListener.WriteConnectionOpenBefore(this);
@@ -1740,7 +1740,7 @@ namespace Microsoft.Data.SqlClient
         public static void ChangePassword(string connectionString, string newPassword)
         {
             long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlConnection.ChangePassword|API>");
-            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlConnection.ChangePassword|API|Correlation> ActivityID {0}", ActivityCorrelator.Current.ToString());
+            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlConnection.ChangePassword|API|Correlation> ActivityID {0}", ActivityCorrelator.Current);
             try
             {
                 if (string.IsNullOrEmpty(connectionString))
@@ -1780,7 +1780,7 @@ namespace Microsoft.Data.SqlClient
         public static void ChangePassword(string connectionString, SqlCredential credential, SecureString newSecurePassword)
         {
             long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlConnection.ChangePassword|API>");
-            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlConnection.ChangePassword|API|Correlation> ActivityID {0}", ActivityCorrelator.Current.ToString());
+            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlConnection.ChangePassword|API|Correlation> ActivityID {0}", ActivityCorrelator.Current);
             try
             {
                 if (string.IsNullOrEmpty(connectionString))

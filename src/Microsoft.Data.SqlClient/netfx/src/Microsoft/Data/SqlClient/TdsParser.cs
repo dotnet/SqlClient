@@ -11582,7 +11582,7 @@ namespace Microsoft.Data.SqlClient
             stateObj.WriteByteArray(actId.Id.ToByteArray(), GUID_SIZE, 0); // Id (Guid)
             WriteUnsignedInt(actId.Sequence, stateObj); // sequence number
 
-            SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.WriteTraceHeaderData|INFO> ActivityID {0}", actId.ToString());
+            SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.WriteTraceHeaderData|INFO> ActivityID {0}", actId);
         }
 
         private void WriteRPCBatchHeaders(TdsParserStateObject stateObj, SqlNotificationRequest notificationRequest)
