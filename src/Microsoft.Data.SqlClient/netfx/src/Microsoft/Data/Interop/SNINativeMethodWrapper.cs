@@ -80,10 +80,7 @@ namespace Microsoft.Data.SqlClient
 
         static AppDomain GetDefaultAppDomainInternal()
         {
-            var host = new mscoree.CorRuntimeHost();
-            host.GetDefaultDomain(out object temp);
-            AppDomain defaultAppDomain = temp as AppDomain;
-            return defaultAppDomain;
+            return AppDomain.CurrentDomain;
         }
 
         internal static _AppDomain GetDefaultAppDomain()
@@ -157,7 +154,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 int result = Interlocked.CompareExchange(ref thelock, 0, 1);
-                Trace.Assert(1 == result); // The release of the lock should have been successfull.  
+                Trace.Assert(1 == result); // The release of the lock should have been successful.  
 
                 return success;
             }

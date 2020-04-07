@@ -11,7 +11,7 @@ namespace Microsoft.Data.Sql
     sealed internal class SqlGenericUtil
     {
 
-        private SqlGenericUtil() { /* prevent utility class from being insantiated*/ }
+        private SqlGenericUtil() { /* prevent utility class from being instantiated*/ }
 
         //
         // Sql generic exceptions

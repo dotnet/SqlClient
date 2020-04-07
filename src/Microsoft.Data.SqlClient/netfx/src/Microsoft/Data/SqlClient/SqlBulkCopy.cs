@@ -1623,14 +1623,14 @@ namespace Microsoft.Data.SqlClient
                         mt = MetaType.GetMetaTypeFromSqlDbType(type.SqlDbType, false);
                         value = SqlParameter.CoerceValue(value, mt, out coercedToDataFeed, out typeChanged, false);
 
-                        // Convert Source Decimal Percision and Scale to Destination Percision and Scale
+                        // Convert Source Decimal Precision and Scale to Destination Precision and Scale
                         // Fix Bug: 385971 sql decimal data could get corrupted on insert if the scale of
-                        // the source and destination weren't the same.  The BCP protocal, specifies the
+                        // the source and destination weren't the same.  The BCP protocol, specifies the
                         // scale of the incoming data in the insert statement, we just tell the server we
-                        // are inserting the same scale back. This then created a bug inside the BCP opperation
-                        // if the scales didn't match.  The fix is to do the same thing that SQL Paramater does,
+                        // are inserting the same scale back. This then created a bug inside the BCP operation
+                        // if the scales didn't match.  The fix is to do the same thing that SQL Parameter does,
                         // and adjust the scale before writing.  In Orcas is scale adjustment should be removed from
-                        // SqlParamater and SqlBulkCopy and Isoloated inside SqlParamater.CoerceValue, but becouse of
+                        // SqlParameter and SqlBulkCopy and Isolated inside SqlParameter.CoerceValue, but because of
                         // where we are in the cycle, the changes must be kept at minimum, so I'm just bringing the
                         // code over to SqlBulkCopy.
 
@@ -1665,10 +1665,10 @@ namespace Microsoft.Data.SqlClient
                             }
                         }
 
-                        // Perf: It is more effecient to write a SqlDecimal than a decimal since we need to break it into its 'bits' when writing
+                        // Perf: It is more efficient to write a SqlDecimal than a decimal since we need to break it into its 'bits' when writing
                         value = sqlValue;
                         isSqlType = true;
-                        typeChanged = false;    // Setting this to false as SqlParameter.CoerceValue will only set it to true when coverting to a CLR type           
+                        typeChanged = false;    // Setting this to false as SqlParameter.CoerceValue will only set it to true when converting to a CLR type           
                         break;
 
                     case TdsEnums.SQLINTN:
@@ -2250,7 +2250,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     try
                     {
-                        AbortTransaction(); // if there is one, on success transactions will be commited
+                        AbortTransaction(); // if there is one, on success transactions will be committed
                     }
                     finally
                     {
@@ -2738,7 +2738,7 @@ namespace Microsoft.Data.SqlClient
                     SqlInternalConnectionTds internalConnection = _connection.GetOpenTdsConnection();
 
                     if (IsCopyOption(SqlBulkCopyOptions.UseInternalTransaction))
-                    { //internal trasaction is started prior to each batch if the Option is set.
+                    { //internal transaction is started prior to each batch if the Option is set.
                         internalConnection.ThreadHasParserLockForClose = true;     // In case of error, tell the connection we already have the parser lock
                         try
                         {

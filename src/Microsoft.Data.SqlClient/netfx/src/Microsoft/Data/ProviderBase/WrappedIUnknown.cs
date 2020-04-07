@@ -11,7 +11,7 @@ namespace Microsoft.Data.ProviderBase
 
     // We wrap the interface as a native IUnknown IntPtr so that every
     // thread that creates a connection will fake the correct context when
-    // in transactions, otherwise everything is marshalled.  We do this
+    // in transactions, otherwise everything is marshaled.  We do this
     // for two reasons: first for the connection pooler, this is a significant
     // performance gain, second for the OLE DB provider, it doesn't marshal.
 

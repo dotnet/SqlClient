@@ -220,7 +220,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     lock (this)
                     {
                         HandleReceiveError(packet);
-                        SqlClientEventSource.Log.SNITraceEvent("<sc.SNI.SNIMarsConnection.HandleReceiveComplete |SNI|ERR> not successfull.");
+                        SqlClientEventSource.Log.SNITraceEvent("<sc.SNI.SNIMarsConnection.HandleReceiveComplete |SNI|ERR> not successful.");
                         return;
                     }
                 }
@@ -246,7 +246,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
                                     if (sniErrorCode == TdsEnums.SNI_SUCCESS_IO_PENDING)
                                     {
-                                        SqlClientEventSource.Log.SNITraceEvent("<sc.SNI.SNIMarsConnection.HandleReceiveComplete |SNI|ERR> not successfull.");
+                                        SqlClientEventSource.Log.SNITraceEvent("<sc.SNI.SNIMarsConnection.HandleReceiveComplete |SNI|ERR> not successful.");
                                         return;
                                     }
 

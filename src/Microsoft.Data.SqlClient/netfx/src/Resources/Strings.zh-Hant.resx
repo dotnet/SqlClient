@@ -2496,8 +2496,8 @@
   <data name="SQL_IntegratedWithUserIDAndPassword" xml:space="preserve">
     <value>無法搭配 'User ID'、'UID'、'Password' 或 'PWD' 等連接字串關鍵字使用 'Authentication=Active Directory Integrated'。</value>
   </data>
-  <data name="SQL_InteractiveWithUserIDAndPassword" xml:space="preserve">
-    <value>無法搭配 'User ID'、'UID'、'Password' 或 'PWD' 連接字串關鍵字使用 'Authentication=Active Directory Interactive'。</value>
+  <data name="SQL_InteractiveWithPassword" xml:space="preserve">
+    <value>Cannot use 'Authentication=Active Directory Interactive' with 'Password' or 'PWD' connection string keywords.</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
     <value>如果已設定 Credential 屬性，則無法使用 'Authentication=Active Directory Integrated'。</value>

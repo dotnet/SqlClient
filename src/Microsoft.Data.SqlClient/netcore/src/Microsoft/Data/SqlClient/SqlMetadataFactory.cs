@@ -245,14 +245,14 @@ namespace Microsoft.Data.SqlClient
 
         private DataTable GetDataTypesTable(SqlConnection connection)
         {
-            // verify the existance of the table in the data set
+            // verify the existence of the table in the data set
             DataTable dataTypesTable = CollectionDataSet.Tables[DbMetaDataCollectionNames.DataTypes];
             if (dataTypesTable == null)
             {
                 throw ADP.UnableToBuildCollection(DbMetaDataCollectionNames.DataTypes);
             }
 
-            // copy the table filtering out any rows that don't apply to tho current version of the prrovider
+            // copy the table filtering out any rows that don't apply to tho current version of the provider
             dataTypesTable = CloneAndFilterCollection(DbMetaDataCollectionNames.DataTypes, null);
 
             addUDTsToDataTypesTable(dataTypesTable, connection, ServerVersionNormalized);

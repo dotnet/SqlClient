@@ -102,7 +102,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
-                    LogMessage(tag, "[EXPECTED EXPECTION] " + e.Message);
+                    LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
                 else
                     DisplayError(tag, e);
             }
@@ -149,7 +149,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
-                    LogMessage(tag, "[EXPECTED EXPECTION] " + e.Message);
+                    LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
                 else
                     DisplayError(tag, e);
             }
@@ -201,7 +201,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
-                    LogMessage(tag, "[EXPECTED EXPECTION] " + e.Message);
+                    LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
                 else
                     DisplayError(tag, e);
             }
@@ -255,7 +255,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
-                    LogMessage(tag, "[EXPECTED EXPECTION] " + e.Message);
+                    LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
                 else
                     DisplayError(tag, e);
             }
@@ -315,7 +315,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
-                    LogMessage(tag, "[EXPECTED EXPECTION] " + e.Message);
+                    LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
                 else
                     DisplayError(tag, e);
             }
@@ -375,7 +375,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
-                    LogMessage(tag, "[EXPECTED EXPECTION] " + e.Message);
+                    LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
                 else
                     DisplayError(tag, e);
             }
@@ -462,7 +462,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
-                    LogMessage(tag, "[EXPECTED EXPECTION] " + e.Message);
+                    LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
                 else
                     DisplayError(tag, e);
             }
@@ -550,7 +550,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
-                    LogMessage(tag, "[EXPECTED EXPECTION] " + e.Message);
+                    LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
                 else
                     DisplayError(tag, e);
             }
@@ -617,7 +617,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
-                    LogMessage(tag, "[EXPECTED EXPECTION] " + e.Message);
+                    LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
                 else
                     DisplayError(tag, e);
             }
@@ -680,7 +680,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
-                    LogMessage(tag, "[EXPECTED EXPECTION] " + e.Message);
+                    LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
                 else
                     DisplayError(tag, e);
             }
@@ -762,7 +762,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
-                    LogMessage(tag, "[EXPECTED EXPECTION] " + e.Message);
+                    LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
                 else
                     DisplayError(tag, e);
             }
@@ -849,7 +849,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
-                    LogMessage(tag, "[EXPECTED EXPECTION] " + e.Message);
+                    LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
                 else
                     DisplayError(tag, e);
             }
@@ -908,7 +908,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
                 {
-                    LogMessage(tag, "[EXPECTED EXPECTION] " + e.Message);
+                    LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
                 }
                 else if (IsExpectedInvalidOperationException(e, expectedBaseTypeName))
                 {
@@ -974,7 +974,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
-                    LogMessage(tag, "[EXPECTED EXPECTION] " + e.Message);
+                    LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
                 else
                     DisplayError(tag, e);
             }
@@ -1033,7 +1033,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
                 {
-                    LogMessage(tag, "[EXPECTED EXPECTION] " + e.Message);
+                    LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
                 }
                 else if (IsExpectedInvalidOperationException(e, expectedBaseTypeName))
                 {
@@ -1100,7 +1100,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
-                    LogMessage(tag, "[EXPECTED EXPECTION] " + e.Message);
+                    LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
                 else
                     DisplayError(tag, e);
             }

@@ -2496,8 +2496,8 @@
   <data name="SQL_IntegratedWithUserIDAndPassword" xml:space="preserve">
     <value>'Authentication=Active Directory Integrated'를 'User ID', 'UID', 'Password' 또는 'PWD' 연결 문자열 키워드와 함께 사용할 수 없습니다.</value>
   </data>
-  <data name="SQL_InteractiveWithUserIDAndPassword" xml:space="preserve">
-    <value>'Authentication=Active Directory Interactive'를 'User ID', 'UID', 'Password' 또는 'PWD' 연결 문자열 키워드와 함께 사용할 수 없습니다.</value>
+  <data name="SQL_InteractiveWithPassword" xml:space="preserve">
+    <value>Cannot use 'Authentication=Active Directory Interactive' with 'Password' or 'PWD' connection string keywords.</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
     <value>Credential 속성이 설정된 경우 'Authentication=Active Directory Integrated'를 사용할 수 없습니다.</value>

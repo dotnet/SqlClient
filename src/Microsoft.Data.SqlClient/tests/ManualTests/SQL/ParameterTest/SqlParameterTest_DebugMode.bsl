@@ -1404,58 +1404,58 @@ SqlBulkCopy From Data Row [Variant Type]>>> ERROR: VARIANT BASE TYPE MISMATCH!!!
 SqlBulkCopy From Data Row [Variant Type]>>> ERROR: VALUE MISMATCH!!! [Actual = 12/31/9999 11:59:59 PM] [Expected = 12/31/9999 11:59:59 PM]
 
 ------------------------------ TestSimpleParameter_Type [type: datetime value:1/1/0001 00:00:00] ------------------------------
-TestSimpleParameter_Type[EXPECTED EXPECTION] SqlDateTime overflow. Must be between 1/1/1753 12:00:00 AM and 12/31/9999 11:59:59 PM.
+TestSimpleParameter_Type[EXPECTED EXCEPTION] SqlDateTime overflow. Must be between 1/1/1753 12:00:00 AM and 12/31/9999 11:59:59 PM.
 
 ------------------------------ TestSimpleParameter_Variant [type: datetime value:1/1/0001 00:00:00] ------------------------------
-TestSimpleParameter_Variant[EXPECTED EXPECTION] SqlDateTime overflow. Must be between 1/1/1753 12:00:00 AM and 12/31/9999 11:59:59 PM.
+TestSimpleParameter_Variant[EXPECTED EXCEPTION] SqlDateTime overflow. Must be between 1/1/1753 12:00:00 AM and 12/31/9999 11:59:59 PM.
 
 ------------------------------ TestSqlDataRecordParameterToTVP_Type [type: datetime value:1/1/0001 00:00:00] ------------------------------
-TestSqlDataRecordParameterToTVP_Type[EXPECTED EXPECTION] SqlDateTime overflow. Must be between 1/1/1753 12:00:00 AM and 12/31/9999 11:59:59 PM.
+TestSqlDataRecordParameterToTVP_Type[EXPECTED EXCEPTION] SqlDateTime overflow. Must be between 1/1/1753 12:00:00 AM and 12/31/9999 11:59:59 PM.
 
 ------------------------------ TestSqlDataRecordParameterToTVP_Variant [type: datetime value:1/1/0001 00:00:00] ------------------------------
-TestSqlDataRecordParameterToTVP_Variant[EXPECTED EXPECTION] SqlDateTime overflow. Must be between 1/1/1753 12:00:00 AM and 12/31/9999 11:59:59 PM.
+TestSqlDataRecordParameterToTVP_Variant[EXPECTED EXCEPTION] SqlDateTime overflow. Must be between 1/1/1753 12:00:00 AM and 12/31/9999 11:59:59 PM.
 
 ------------------------------ TestSqlDataReaderParameterToTVP_Type [type: datetime value:1/1/0001 00:00:00] ------------------------------
-TestSqlDataReaderParameterToTVP_Type[EXPECTED EXPECTION] SqlDateTime overflow. Must be between 1/1/1753 12:00:00 AM and 12/31/9999 11:59:59 PM.
+TestSqlDataReaderParameterToTVP_Type[EXPECTED EXCEPTION] SqlDateTime overflow. Must be between 1/1/1753 12:00:00 AM and 12/31/9999 11:59:59 PM.
 
 ------------------------------ TestSqlDataReaderParameterToTVP_Variant [type: datetime value:1/1/0001 00:00:00] ------------------------------
-TestSqlDataReaderParameterToTVP_Variant[EXPECTED EXPECTION] SqlDateTime overflow. Must be between 1/1/1753 12:00:00 AM and 12/31/9999 11:59:59 PM.
+TestSqlDataReaderParameterToTVP_Variant[EXPECTED EXCEPTION] SqlDateTime overflow. Must be between 1/1/1753 12:00:00 AM and 12/31/9999 11:59:59 PM.
 
 ------------------------------ TestSqlDataReader_TVP_Type [type: datetime value:1/1/0001 00:00:00] ------------------------------
-TestSqlDataReader_TVP_Type[EXPECTED EXPECTION] The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.
+TestSqlDataReader_TVP_Type[EXPECTED EXCEPTION] The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.
 The statement has been terminated.
 
 ------------------------------ TestSqlDataReader_TVP_Variant [type: datetime value:1/1/0001 00:00:00] ------------------------------
-TestSqlDataReader_TVP_Variant[EXPECTED EXPECTION] The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.
+TestSqlDataReader_TVP_Variant[EXPECTED EXCEPTION] The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.
 The statement has been terminated.
 
 ------------------------------ TestSimpleDataReader_Type [type: datetime value:1/1/0001 00:00:00] ------------------------------
-TestSimpleDataReader_Type[EXPECTED EXPECTION] The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.
+TestSimpleDataReader_Type[EXPECTED EXCEPTION] The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.
 The statement has been terminated.
 
 ------------------------------ TestSimpleDataReader_Variant [type: datetime value:1/1/0001 00:00:00] ------------------------------
-TestSimpleDataReader_Variant[EXPECTED EXPECTION] The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.
+TestSimpleDataReader_Variant[EXPECTED EXCEPTION] The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.
 The statement has been terminated.
 
 ------------------------------ SqlBulkCopySqlDataReader_Type [type: datetime value:1/1/0001 00:00:00] ------------------------------
-SqlBulkCopySqlDataReader_Type[EXPECTED EXPECTION] The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.
+SqlBulkCopySqlDataReader_Type[EXPECTED EXCEPTION] The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.
 The statement has been terminated.
 
 ------------------------------ SqlBulkCopySqlDataReader_Variant [type: datetime value:1/1/0001 00:00:00] ------------------------------
-SqlBulkCopySqlDataReader_Variant[EXPECTED EXPECTION] The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.
+SqlBulkCopySqlDataReader_Variant[EXPECTED EXCEPTION] The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.
 The statement has been terminated.
 
 ------------------------------ SqlBulkCopyDataTable_Type [type: datetime value:1/1/0001 00:00:00] ------------------------------
-SqlBulkCopyDataTable_Type[EXPECTED EXPECTION] SqlDateTime overflow. Must be between 1/1/1753 12:00:00 AM and 12/31/9999 11:59:59 PM.
+SqlBulkCopyDataTable_Type[EXPECTED EXCEPTION] SqlDateTime overflow. Must be between 1/1/1753 12:00:00 AM and 12/31/9999 11:59:59 PM.
 
 ------------------------------ SqlBulkCopyDataTable_Variant [type: datetime value:1/1/0001 00:00:00] ------------------------------
-SqlBulkCopyDataTable_Variant[EXPECTED EXPECTION] SqlDateTime overflow. Must be between 1/1/1753 12:00:00 AM and 12/31/9999 11:59:59 PM.
+SqlBulkCopyDataTable_Variant[EXPECTED EXCEPTION] SqlDateTime overflow. Must be between 1/1/1753 12:00:00 AM and 12/31/9999 11:59:59 PM.
 
 ------------------------------ SqlBulkCopyDataRow_Type [type: datetime value:1/1/0001 00:00:00] ------------------------------
-SqlBulkCopyDataRow_Type[EXPECTED EXPECTION] SqlDateTime overflow. Must be between 1/1/1753 12:00:00 AM and 12/31/9999 11:59:59 PM.
+SqlBulkCopyDataRow_Type[EXPECTED EXCEPTION] SqlDateTime overflow. Must be between 1/1/1753 12:00:00 AM and 12/31/9999 11:59:59 PM.
 
 ------------------------------ SqlBulkCopyDataRow_Variant [type: datetime value:1/1/0001 00:00:00] ------------------------------
-SqlBulkCopyDataRow_Variant[EXPECTED EXPECTION] SqlDateTime overflow. Must be between 1/1/1753 12:00:00 AM and 12/31/9999 11:59:59 PM.
+SqlBulkCopyDataRow_Variant[EXPECTED EXCEPTION] SqlDateTime overflow. Must be between 1/1/1753 12:00:00 AM and 12/31/9999 11:59:59 PM.
 
 ------------------------------ TestSimpleParameter_Type [type: datetime value:12/31/9999 23:59:59.9999999] ------------------------------
 Type        => Expected : Actual == System.DateTime : System.DateTime
@@ -1494,22 +1494,22 @@ Value       => Expected : Actual == 3155378975999999999 : 3155378975999970000
 Test SqlDataReader Parameter To TVP [Variant Type][EXPECTED ERROR]: VALUE MISMATCH - [Actual = 12/31/9999 11:59:59 PM] [Expected = 12/31/9999 11:59:59 PM]
 
 ------------------------------ TestSqlDataReader_TVP_Type [type: datetime value:12/31/9999 23:59:59.9999999] ------------------------------
-TestSqlDataReader_TVP_Type[EXPECTED EXPECTION] Conversion failed when converting date and/or time from character string.
+TestSqlDataReader_TVP_Type[EXPECTED EXCEPTION] Conversion failed when converting date and/or time from character string.
 
 ------------------------------ TestSqlDataReader_TVP_Variant [type: datetime value:12/31/9999 23:59:59.9999999] ------------------------------
-TestSqlDataReader_TVP_Variant[EXPECTED EXPECTION] Conversion failed when converting date and/or time from character string.
+TestSqlDataReader_TVP_Variant[EXPECTED EXCEPTION] Conversion failed when converting date and/or time from character string.
 
 ------------------------------ TestSimpleDataReader_Type [type: datetime value:12/31/9999 23:59:59.9999999] ------------------------------
-TestSimpleDataReader_Type[EXPECTED EXPECTION] Conversion failed when converting date and/or time from character string.
+TestSimpleDataReader_Type[EXPECTED EXCEPTION] Conversion failed when converting date and/or time from character string.
 
 ------------------------------ TestSimpleDataReader_Variant [type: datetime value:12/31/9999 23:59:59.9999999] ------------------------------
-TestSimpleDataReader_Variant[EXPECTED EXPECTION] Conversion failed when converting date and/or time from character string.
+TestSimpleDataReader_Variant[EXPECTED EXCEPTION] Conversion failed when converting date and/or time from character string.
 
 ------------------------------ SqlBulkCopySqlDataReader_Type [type: datetime value:12/31/9999 23:59:59.9999999] ------------------------------
-SqlBulkCopySqlDataReader_Type[EXPECTED EXPECTION] Conversion failed when converting date and/or time from character string.
+SqlBulkCopySqlDataReader_Type[EXPECTED EXCEPTION] Conversion failed when converting date and/or time from character string.
 
 ------------------------------ SqlBulkCopySqlDataReader_Variant [type: datetime value:12/31/9999 23:59:59.9999999] ------------------------------
-SqlBulkCopySqlDataReader_Variant[EXPECTED EXPECTION] Conversion failed when converting date and/or time from character string.
+SqlBulkCopySqlDataReader_Variant[EXPECTED EXCEPTION] Conversion failed when converting date and/or time from character string.
 
 ------------------------------ SqlBulkCopyDataTable_Type [type: datetime value:12/31/9999 23:59:59.9999999] ------------------------------
 Type        => Expected : Actual == System.DateTime : System.DateTime

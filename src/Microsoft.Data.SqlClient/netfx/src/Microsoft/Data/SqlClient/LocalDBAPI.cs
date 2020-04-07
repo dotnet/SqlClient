@@ -157,7 +157,7 @@ namespace Microsoft.Data
 
                             if (functionAddr == IntPtr.Zero)
                             {
-                                // SNI checks for LocalDBFormatMessage during DLL loading, so it is practically impossibe to get this error.
+                                // SNI checks for LocalDBFormatMessage during DLL loading, so it is practically impossible to get this error.
                                 int hResult = Marshal.GetLastWin32Error();
                                 SqlClientEventSource.Log.TraceEvent("<sc.LocalDBAPI.LocalDBFormatMessage> GetProcAddress for LocalDBFormatMessage error 0x{0}", hResult);
                                 throw CreateLocalDBException(errorMessage: StringsHelper.GetString("LocalDB_MethodNotFound"));

@@ -295,7 +295,7 @@ namespace Microsoft.Data.ProviderBase
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
         public void Dispose()
         {
-            // ExceptionEventHandler with IsTerminiating may be called before
+            // ExceptionEventHandler with IsTerminating may be called before
             // the Connection Close is called or the variables are initialized
             SafeDispose(HardConnectsPerSecond);
             SafeDispose(HardDisconnectsPerSecond);

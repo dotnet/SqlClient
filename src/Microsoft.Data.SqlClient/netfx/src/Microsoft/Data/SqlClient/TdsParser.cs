@@ -714,7 +714,7 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(IntPtr.Zero == temp, "unexpected syncReadPacket without corresponding SNIPacketRelease");
                 if (TdsEnums.SNI_SUCCESS_IO_PENDING != error)
                 {
-                    Debug.Assert(TdsEnums.SNI_SUCCESS != error, "Unexpected successfull read async on physical connection before enabling MARS!");
+                    Debug.Assert(TdsEnums.SNI_SUCCESS != error, "Unexpected successful read async on physical connection before enabling MARS!");
                     _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
                     ThrowExceptionAndWarning(_physicalStateObj);
                 }
@@ -12753,7 +12753,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLIMAGE:
                 case TdsEnums.SQLUDT:
                     {
-                        Debug.Assert(!isDataFeed, "We cannot seriliaze streams");
+                        Debug.Assert(!isDataFeed, "We cannot serialize streams");
                         Debug.Assert(value is byte[], "Value should be an array of bytes");
 
                         byte[] b = new byte[actualLength];
@@ -12795,7 +12795,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLBIGVARCHAR:
                 case TdsEnums.SQLTEXT:
                     {
-                        Debug.Assert(!isDataFeed, "We cannot seriliaze streams");
+                        Debug.Assert(!isDataFeed, "We cannot serialize streams");
                         Debug.Assert((value is string || value is byte[]), "Value is a byte array or string");
 
                         if (value is byte[])
@@ -12814,7 +12814,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLNTEXT:
                 case TdsEnums.SQLXMLTYPE:
                     {
-                        Debug.Assert(!isDataFeed, "We cannot seriliaze streams");
+                        Debug.Assert(!isDataFeed, "We cannot serialize streams");
                         Debug.Assert((value is string || value is byte[]), "Value is a byte array or string");
 
                         if (value is byte[])

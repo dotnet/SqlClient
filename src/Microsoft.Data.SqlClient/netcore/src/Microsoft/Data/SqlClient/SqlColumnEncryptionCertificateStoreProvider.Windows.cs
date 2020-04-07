@@ -47,7 +47,7 @@ namespace Microsoft.Data.SqlClient
         private const string _certificatePathFormat = @"[LocalMachine|CurrentUser]/My/[Thumbprint]";
 
         /// <summary>
-        /// Hashig algoirthm used for signing
+        /// Hashing algorithm used for signing
         /// </summary>
         private const string _hashingAlgorithm = @"SHA256";
 
@@ -291,7 +291,7 @@ namespace Microsoft.Data.SqlClient
         /// This function validates that the encryption algorithm is RSA_OAEP and if it is not,
         /// then throws an exception
         /// </summary>
-        /// <param name="encryptionAlgorithm">Asymmetric key encryptio algorithm</param>
+        /// <param name="encryptionAlgorithm">Asymmetric key encryption algorithm</param>
         /// <param name="isSystemOp"></param>
         private void ValidateEncryptionAlgorithm(string encryptionAlgorithm, bool isSystemOp)
         {

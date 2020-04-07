@@ -881,7 +881,7 @@ namespace Microsoft.Data.SqlClient
                                 {
                                     if (appDomainStop && !startFailed)
                                     { // If success, remove from hashtable.
-                                        Debug.Assert(!ADP.IsEmpty(server) && !ADP.IsEmpty(database), "Server or Database null/Empty upon successfull Stop()!");
+                                        Debug.Assert(!ADP.IsEmpty(server) && !ADP.IsEmpty(database), "Server or Database null/Empty upon successful Stop()!");
                                         IdentityUserNamePair identityUser = new IdentityUserNamePair(identity, user);
                                         DatabaseServicePair databaseService = new DatabaseServicePair(database, service);
                                         RemoveFromServerUserHash(server, identityUser, databaseService);

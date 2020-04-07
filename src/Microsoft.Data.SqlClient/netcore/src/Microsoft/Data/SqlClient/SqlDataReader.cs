@@ -2815,7 +2815,7 @@ namespace Microsoft.Data.SqlClient
 
         private T GetFieldValueFromSqlBufferInternal<T>(SqlBuffer data, _SqlMetaData metaData)
         {
-            // this block of type specific shortcuts uses RyuJIT jit behaviours to achieve fast implementations of the primitive types
+            // this block of type specific shortcuts uses RyuJIT jit behaviors to achieve fast implementations of the primitive types
             // RyuJIT will be able to determine at compilation time that the typeof(T)==typeof(<primitive>) options are constant
             // and be able to remove all implementations which cannot be reached. this will eliminate non-specialized code for 
             Type dataType = data.GetTypeFromStorageType(false);
@@ -4547,7 +4547,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         CancellationTokenSource timeoutCancellationSource = new CancellationTokenSource();
                         timeoutCancellationSource.CancelAfter(context.timeout);
-                        Debug.Assert(context._disposable is null, "setting context.disposable would lose the previous dispoable");
+                        Debug.Assert(context._disposable is null, "setting context.disposable would lose the previous disposable");
                         context._disposable = timeoutCancellationSource;
                         context.timeoutToken = timeoutCancellationSource.Token;
                     }
@@ -4561,7 +4561,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    Debug.Assert(context._source != null, "context.source shuld not be null when continuing");
+                    Debug.Assert(context._source != null, "context.source should not be null when continuing");
                     // setup for cleanup/completing
                     retryTask.ContinueWith(
                         continuationAction: AAsyncCallContext<int>.s_completeCallback,
@@ -5291,7 +5291,7 @@ namespace Microsoft.Data.SqlClient
         private Task<T> ExecuteAsyncCall<T>(Task task, AAsyncCallContext<T> context)
         {
             // this function must be an instance function called from the static callback because otherwise a compiler error
-            // is caused by accessing the _cancelAsyncOnCloseToken field of a MarchalByRefObject derived class
+            // is caused by accessing the _cancelAsyncOnCloseToken field of a MarshalByRefObject derived class
             if (task.IsFaulted)
             {
                 // Somehow the network task faulted - return the exception

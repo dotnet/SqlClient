@@ -254,7 +254,7 @@ namespace Microsoft.Data.SqlClient
             SqlInternalConnection innerConnection = _innerConnection;
 
             Debug.Assert(innerConnection != null, "How can we be here if the connection is null?");
-            SqlClientEventSource.Log.PoolerTraceEvent("<sc.SqlInteralTransaction.CloseFromConnection|RES|CPOOL> {0}, Closing", ObjectID);
+            SqlClientEventSource.Log.PoolerTraceEvent("<sc.SqlInternalTransaction.CloseFromConnection|RES|CPOOL> {0}, Closing", ObjectID);
             bool processFinallyBlock = true;
             try
             {
@@ -339,7 +339,7 @@ namespace Microsoft.Data.SqlClient
 
         private /*protected override*/ void Dispose(bool disposing)
         {
-            SqlClientEventSource.Log.PoolerTraceEvent("<sc.SqlInteralTransaction.Dispose|RES|CPOOL> {0}, Disposing", ObjectID);
+            SqlClientEventSource.Log.PoolerTraceEvent("<sc.SqlInternalTransaction.Dispose|RES|CPOOL> {0}, Disposing", ObjectID);
             if (disposing)
             {
                 if (null != _innerConnection)
