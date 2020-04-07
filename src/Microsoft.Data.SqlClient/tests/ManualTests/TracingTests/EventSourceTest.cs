@@ -74,9 +74,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 //Disable all events to prevent any further testing issues.
                 TraceListener.DisableEvents(eventSource);
-
             }
-
         }
     }
 }
