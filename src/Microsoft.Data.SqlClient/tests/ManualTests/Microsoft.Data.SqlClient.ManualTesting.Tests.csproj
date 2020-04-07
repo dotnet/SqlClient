@@ -93,6 +93,7 @@
     <Compile Include="ProviderAgnostic\MultipleResultsTest\MultipleResultsTest.cs" />
     <Compile Include="ProviderAgnostic\ReaderTest\ReaderTest.cs" />
     <Compile Include="SQL\AsyncTest\AsyncTest.cs" />
+    <Compile Include="SQL\AsyncTest\AsyncCancelledConnectionsTest.cs" />
     <Compile Include="SQL\SqlCommand\SqlCommandCompletedTest.cs" /> 
     <Compile Include="SQL\SqlCommand\SqlCommandCancelTest.cs" />
     <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolTest.cs" />
