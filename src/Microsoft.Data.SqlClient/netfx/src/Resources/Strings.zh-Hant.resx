@@ -339,7 +339,7 @@
   <data name="MDF_UnableToBuildCollection" xml:space="preserve">
     <value>無法建置結構描述 '{0}';</value>
   </data>
-  <data name="MDF_AmbigousCollectionName" xml:space="preserve">
+  <data name="MDF_AmbiguousCollectionName" xml:space="preserve">
     <value>集合名稱 '{0}' 至少與兩個同名但大小寫不同的名稱相符，但與其中任一個均不完全相符。</value>
   </data>
   <data name="MDF_CollectionNameISNotUnique" xml:space="preserve">

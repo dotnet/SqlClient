@@ -46,7 +46,7 @@ namespace Microsoft.Data.SqlClient
             set;
         }
 
-        internal bool _supressStateChangeForReconnection = false; // Do not use for anything else ! Value will be overwritten by CR process
+        internal bool _suppressStateChangeForReconnection = false; // Do not use for anything else ! Value will be overwritten by CR process
 
         static private readonly object EventInfoMessage = new object();
 
@@ -1445,7 +1445,7 @@ namespace Microsoft.Data.SqlClient
             Interlocked.CompareExchange(ref _asyncWaitingForReconnection, waitingTask, null);
             if (_asyncWaitingForReconnection != waitingTask)
             { // somebody else managed to register 
-                throw SQL.MARSUnspportedOnConnection();
+                throw SQL.MARSUnsupportedOnConnection();
             }
         }
 
@@ -1510,7 +1510,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 _recoverySessionData = null;
-                _supressStateChangeForReconnection = false;
+                _suppressStateChangeForReconnection = false;
             }
             Debug.Fail("Should not reach this point");
         }
@@ -1572,7 +1572,7 @@ namespace Microsoft.Data.SqlClient
                                             }
                                             try
                                             {
-                                                _supressStateChangeForReconnection = true;
+                                                _suppressStateChangeForReconnection = true;
                                                 tdsConn.DoomThisConnection();
                                             }
                                             catch (SqlException)
@@ -2044,7 +2044,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (!asyncWaitingForReconnection.IsCompleted)
                 {
-                    throw SQL.MARSUnspportedOnConnection();
+                    throw SQL.MARSUnsupportedOnConnection();
                 }
                 else
                 {
@@ -2566,10 +2566,10 @@ namespace Microsoft.Data.SqlClient
             SqlConnectionFactory.SingletonInstance.ClearPool(key);
         }
 
-        internal void RegisterForConnectionCloseNotification<T>(ref Task<T> outterTask, object value, int tag)
+        internal void RegisterForConnectionCloseNotification<T>(ref Task<T> outerTask, object value, int tag)
         {
             // Connection exists,  schedule removal, will be added to ref collection after calling ValidateAndReconnect
-            outterTask = outterTask.ContinueWith(task =>
+            outerTask = outerTask.ContinueWith(task =>
             {
                 RemoveWeakReference(value);
                 return task;

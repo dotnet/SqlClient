@@ -339,7 +339,7 @@
   <data name="MDF_UnableToBuildCollection" xml:space="preserve">
     <value>Die Schema-Sammlung '{0}' konnte nicht erstellt werden.</value>
   </data>
-  <data name="MDF_AmbigousCollectionName" xml:space="preserve">
+  <data name="MDF_AmbiguousCollectionName" xml:space="preserve">
     <value>Der Sammlungsname '{0}' stimmt mit mindestens zwei Sammlungen mit demselben Namen, jedoch anderer Schreibung überein, ohne aber mit diesen exakt übereinzustimmen.</value>
   </data>
   <data name="MDF_CollectionNameISNotUnique" xml:space="preserve">

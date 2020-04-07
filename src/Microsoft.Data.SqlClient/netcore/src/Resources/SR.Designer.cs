@@ -1143,9 +1143,9 @@ namespace System {
         /// <summary>
         ///   Looks up a localized string similar to The collection name &apos;{0}&apos; matches at least two collections with the same name but with different case, but does not match any of them exactly..
         /// </summary>
-        internal static string MDF_AmbigousCollectionName {
+        internal static string MDF_AmbiguousCollectionName {
             get {
-                return ResourceManager.GetString("MDF_AmbigousCollectionName", resourceCulture);
+                return ResourceManager.GetString("MDF_AmbiguousCollectionName", resourceCulture);
             }
         }
         

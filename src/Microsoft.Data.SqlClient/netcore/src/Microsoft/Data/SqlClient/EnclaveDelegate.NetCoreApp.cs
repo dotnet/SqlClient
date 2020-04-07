@@ -100,13 +100,13 @@ namespace Microsoft.Data.SqlClient
         /// Generate the byte package that needs to be sent to the enclave
         /// </summary>
         /// <param name="attestationProtocol">attestation protocol</param>
-        /// <param name="keysTobeSentToEnclave">Keys to be sent to enclave</param>
+        /// <param name="keysToBeSentToEnclave">Keys to be sent to enclave</param>
         /// <param name="queryText"></param>
         /// <param name="enclaveType">enclave type</param>
         /// <param name="serverName">server name</param>
         /// <param name="enclaveAttestationUrl">url for attestation endpoint</param>
         /// <returns></returns>
-        internal EnclavePackage GenerateEnclavePackage(SqlConnectionAttestationProtocol attestationProtocol, Dictionary<int, SqlTceCipherInfoEntry> keysTobeSentToEnclave, string queryText, string enclaveType, string serverName, string enclaveAttestationUrl)
+        internal EnclavePackage GenerateEnclavePackage(SqlConnectionAttestationProtocol attestationProtocol, Dictionary<int, SqlTceCipherInfoEntry> keysToBeSentToEnclave, string queryText, string enclaveType, string serverName, string enclaveAttestationUrl)
         {
 
             SqlEnclaveSession sqlEnclaveSession = null;
@@ -123,7 +123,7 @@ namespace Microsoft.Data.SqlClient
                 throw new RetryableEnclaveQueryExecutionException(e.Message, e);
             }
 
-            List<ColumnEncryptionKeyInfo> decryptedKeysToBeSentToEnclave = GetDecryptedKeysToBeSentToEnclave(keysTobeSentToEnclave, serverName);
+            List<ColumnEncryptionKeyInfo> decryptedKeysToBeSentToEnclave = GetDecryptedKeysToBeSentToEnclave(keysToBeSentToEnclave, serverName);
             byte[] queryStringHashBytes = ComputeQueryStringHash(queryText);
             byte[] keyBytePackage = GenerateBytePackageForKeys(counter, queryStringHashBytes, decryptedKeysToBeSentToEnclave);
             byte[] sessionKey = sqlEnclaveSession.GetSessionKey();

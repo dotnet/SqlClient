@@ -233,7 +233,7 @@ namespace Microsoft.Data.SqlClient
                 if (null != activeConnection && !parser.MARSOn)
                 {
                     if (activeConnection.AsyncCommandInProgress)
-                        throw SQL.MARSUnspportedOnConnection();
+                        throw SQL.MARSUnsupportedOnConnection();
                 }
                 _cachedAsyncConnection = activeConnection;
 
@@ -4714,7 +4714,7 @@ namespace Microsoft.Data.SqlClient
                                 sqlParameter.HasReceivedMetadata = true;
 
                                 // Found the param, setup the encryption info.
-                                byte columnEncryptionType = ds.GetByte((int)DescribeParameterEncryptionResultSet2.ColumnEncrytionType);
+                                byte columnEncryptionType = ds.GetByte((int)DescribeParameterEncryptionResultSet2.ColumnEncryptionType);
                                 if ((byte)SqlClientEncryptionType.PlainText != columnEncryptionType)
                                 {
                                     byte cipherAlgorithmId = ds.GetByte((int)DescribeParameterEncryptionResultSet2.ColumnEncryptionAlgorithm);
@@ -6743,7 +6743,7 @@ namespace Microsoft.Data.SqlClient
         internal string BuildParamList(TdsParser parser, SqlParameterCollection parameters, bool includeReturnValue = false)
         {
             StringBuilder paramList = new StringBuilder();
-            bool fAddSeperator = false;
+            bool fAddSeparator = false;
 
             bool yukonOrNewer = parser.IsYukonOrNewer;
 
@@ -6759,7 +6759,7 @@ namespace Microsoft.Data.SqlClient
                     continue;
 
                 // add our separator for the ith parmeter
-                if (fAddSeperator)
+                if (fAddSeparator)
                     paramList.Append(',');
 
                 paramList.Append(sqlParam.ParameterNameFixed);
@@ -6804,7 +6804,7 @@ namespace Microsoft.Data.SqlClient
                     paramList.Append(mt.TypeName);
                 }
 
-                fAddSeperator = true;
+                fAddSeparator = true;
 
                 if (mt.SqlDbType == SqlDbType.Decimal)
                 {

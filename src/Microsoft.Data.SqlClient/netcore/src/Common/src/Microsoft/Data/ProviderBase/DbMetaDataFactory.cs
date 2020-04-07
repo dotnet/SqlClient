@@ -312,7 +312,7 @@ namespace Microsoft.Data.ProviderBase
 
             if ((haveExactMatch == false) && (haveMultipleInexactMatches == true))
             {
-                throw ADP.AmbigousCollectionName(collectionName);
+                throw ADP.AmbiguousCollectionName(collectionName);
             }
 
             return requestedCollectionRow;

@@ -339,7 +339,7 @@
   <data name="MDF_UnableToBuildCollection" xml:space="preserve">
     <value>Impossible de créer la collection de schémas '{0}' ;</value>
   </data>
-  <data name="MDF_AmbigousCollectionName" xml:space="preserve">
+  <data name="MDF_AmbiguousCollectionName" xml:space="preserve">
     <value>Le nom de collection '{0}' correspond au moins à deux collections dotées du même nom, mais de casse différente, mais cette correspondance n'est pas précise.</value>
   </data>
   <data name="MDF_CollectionNameISNotUnique" xml:space="preserve">

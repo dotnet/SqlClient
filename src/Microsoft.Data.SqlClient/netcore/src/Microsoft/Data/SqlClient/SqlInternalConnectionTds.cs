@@ -688,7 +688,7 @@ namespace Microsoft.Data.SqlClient
                 { // single execution/datareader per connection
                     if (_asyncCommandCount > 0)
                     {
-                        throw SQL.MARSUnspportedOnConnection();
+                        throw SQL.MARSUnsupportedOnConnection();
                     }
 
                     reader = FindLiveReader(null);

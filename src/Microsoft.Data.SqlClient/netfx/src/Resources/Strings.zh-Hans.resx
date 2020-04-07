@@ -339,7 +339,7 @@
   <data name="MDF_UnableToBuildCollection" xml:space="preserve">
     <value>无法构建架构集合“{0}”；</value>
   </data>
-  <data name="MDF_AmbigousCollectionName" xml:space="preserve">
+  <data name="MDF_AmbiguousCollectionName" xml:space="preserve">
     <value>集合名“{0}”至少与两个同名但是大小写不同的集合匹配，但是不与任何一个完全匹配。</value>
   </data>
   <data name="MDF_CollectionNameISNotUnique" xml:space="preserve">

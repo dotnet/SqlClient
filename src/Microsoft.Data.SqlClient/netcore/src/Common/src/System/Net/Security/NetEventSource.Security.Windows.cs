@@ -56,9 +56,9 @@ namespace System.Net
                 AcceptSecurityContext(IdOf(credential), IdOf(context), inFlags);
             }
         }
-        [Event(AcceptSecuritContextId, Keywords = Keywords.Default, Level = EventLevel.Informational)]
+        [Event(AcceptSecurityContextId, Keywords = Keywords.Default, Level = EventLevel.Informational)]
         private void AcceptSecurityContext(string credential, string context, Interop.SspiCli.ContextFlags inFlags) =>
-            WriteEvent(AcceptSecuritContextId, credential, context, (int)inFlags);
+            WriteEvent(AcceptSecurityContextId, credential, context, (int)inFlags);
 
         [Event(OperationReturnedSomethingId, Keywords = Keywords.Default, Level = EventLevel.Informational)]
         public void OperationReturnedSomething(string operation, Interop.SECURITY_STATUS errorCode)

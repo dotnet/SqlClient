@@ -1053,7 +1053,7 @@ namespace Microsoft.Data.SqlClient
             Interlocked.CompareExchange(ref _asyncWaitingForReconnection, waitingTask, null);
             if (_asyncWaitingForReconnection != waitingTask)
             { // somebody else managed to register 
-                throw SQL.MARSUnspportedOnConnection();
+                throw SQL.MARSUnsupportedOnConnection();
             }
         }
 
@@ -1602,7 +1602,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (!asyncWaitingForReconnection.IsCompleted)
                 {
-                    throw SQL.MARSUnspportedOnConnection();
+                    throw SQL.MARSUnsupportedOnConnection();
                 }
                 else
                 {

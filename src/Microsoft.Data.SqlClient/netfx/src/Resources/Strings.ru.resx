@@ -339,7 +339,7 @@
   <data name="MDF_UnableToBuildCollection" xml:space="preserve">
     <value>Не удается создать коллекцию схемы "{0}";</value>
   </data>
-  <data name="MDF_AmbigousCollectionName" xml:space="preserve">
+  <data name="MDF_AmbiguousCollectionName" xml:space="preserve">
     <value>Имя коллекции "{0}" без учета регистра совпадает по меньшей мере с двумя именами коллекций, но с учетом регистра не совпадает ни с одним из них.</value>
   </data>
   <data name="MDF_CollectionNameISNotUnique" xml:space="preserve">
