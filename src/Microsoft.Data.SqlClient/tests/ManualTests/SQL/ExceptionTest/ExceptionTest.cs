@@ -231,10 +231,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void EnclavesConnectionExceptionTest()
         {
             string connectionStringWithAttestationProtocol = DataTestUtility.TCPConnectionString + ";Attestation Protocol = HGS;";
-            string connectionStringWithAttestionURL = DataTestUtility.TCPConnectionString + ";Enclave Attestation URL = https://dummyURL;";
-            string connectionStringWithEnclave = connectionStringWithAttestionURL + ";Attestation Protocol = HGS;";
+            string connectionStringWithAttestationURL = DataTestUtility.TCPConnectionString + ";Enclave Attestation URL = https://dummyURL;";
+            string connectionStringWithEnclave = connectionStringWithAttestationURL + ";Attestation Protocol = HGS;";
 
-            InvalidOperationException e1 = Assert.Throws<InvalidOperationException>(() => new SqlConnection(connectionStringWithAttestionURL).Open());
+            InvalidOperationException e1 = Assert.Throws<InvalidOperationException>(() => new SqlConnection(connectionStringWithAttestationURL).Open());
             Assert.Contains("You have specified the enclave attestation URL in the connection string", e1.Message);
 
             InvalidOperationException e2 = Assert.Throws<InvalidOperationException>(() => new SqlConnection(connectionStringWithAttestationProtocol).Open());

@@ -226,7 +226,7 @@ namespace Microsoft.Data.SqlClient
                 if (!parser.MARSOn)
                 {
                     if (activeConnection.AsyncCommandInProgress)
-                        throw SQL.MARSUnspportedOnConnection();
+                        throw SQL.MARSUnsupportedOnConnection();
                 }
                 _cachedAsyncConnection = activeConnection;
 
@@ -5587,7 +5587,7 @@ namespace Microsoft.Data.SqlClient
         internal string BuildParamList(TdsParser parser, SqlParameterCollection parameters, bool includeReturnValue = false)
         {
             StringBuilder paramList = new StringBuilder();
-            bool fAddSeperator = false;
+            bool fAddSeparator = false;
 
             int count = 0;
 
@@ -5601,7 +5601,7 @@ namespace Microsoft.Data.SqlClient
                     continue;
 
                 // add our separator for the ith parameter
-                if (fAddSeperator)
+                if (fAddSeparator)
                     paramList.Append(',');
 
                 paramList.Append(sqlParam.ParameterNameFixed);
@@ -5646,7 +5646,7 @@ namespace Microsoft.Data.SqlClient
                     paramList.Append(mt.TypeName);
                 }
 
-                fAddSeperator = true;
+                fAddSeparator = true;
 
                 if (mt.SqlDbType == SqlDbType.Decimal)
                 {

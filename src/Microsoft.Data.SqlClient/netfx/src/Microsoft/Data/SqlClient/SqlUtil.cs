@@ -219,7 +219,7 @@ namespace Microsoft.Data.SqlClient
 
         // InOutOfProcHelper detects whether it's running inside the server or not.  It does this
         //  by checking for the existence of a well-known function export on the current process.
-        //  Note that calling conventions, etc. do not matter -- we'll never call the function, so 
+        //  Note that calling conventions, etc. do not matter -- we'll never call the function, so
         //  only the name match or lack thereof matter.
         [ResourceExposure(ResourceScope.None)]
         [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
@@ -395,7 +395,7 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_BatchedUpdateColumnEncryptionSettingMismatch, "SqlCommandColumnEncryptionSetting", "SelectCommand", "InsertCommand", "UpdateCommand", "DeleteCommand"));
         }
-        static internal Exception MARSUnspportedOnConnection()
+        static internal Exception MARSUnsupportedOnConnection()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_MarsUnsupportedOnConnection));
         }
@@ -1476,9 +1476,9 @@ namespace Microsoft.Data.SqlClient
             return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidKeyStoreProviderName, providerName, systemProviderStr, customProviderStr));
         }
 
-        static internal Exception UnableToVerifyColumnMasterKeySignature(Exception innerExeption)
+        static internal Exception UnableToVerifyColumnMasterKeySignature(Exception innerException)
         {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_UnableToVerifyColumnMasterKeySignature, innerExeption.Message), innerExeption);
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_UnableToVerifyColumnMasterKeySignature, innerException.Message), innerException);
         }
 
         static internal Exception ColumnMasterKeySignatureVerificationFailed(string cmkPath)
@@ -1494,14 +1494,14 @@ namespace Microsoft.Data.SqlClient
         //
         // TCE - Errors from secure channel Communication
         //
-        internal static Exception ExceptionWhenGeneratingEnclavePackage(Exception innerExeption)
+        internal static Exception ExceptionWhenGeneratingEnclavePackage(Exception innerException)
         {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_ExceptionWhenGeneratingEnclavePackage, innerExeption.Message), innerExeption);
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_ExceptionWhenGeneratingEnclavePackage, innerException.Message), innerException);
         }
 
-        static internal Exception FailedToEncryptRegisterRulesBytePackage(Exception innerExeption)
+        static internal Exception FailedToEncryptRegisterRulesBytePackage(Exception innerException)
         {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_FailedToEncryptRegisterRulesBytePackage, innerExeption.Message), innerExeption);
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_FailedToEncryptRegisterRulesBytePackage, innerException.Message), innerException);
         }
 
         static internal Exception InvalidKeyIdUnableToCastToUnsignedShort(int keyId, Exception innerException)
@@ -1837,7 +1837,7 @@ namespace Microsoft.Data.SqlClient
         //
 
         /// <summary>
-        /// used to block two scenarios if MultiSubnetFailover is true: 
+        /// used to block two scenarios if MultiSubnetFailover is true:
         /// * server-provided failover partner - raising SqlException in this case
         /// * connection string with failover partner and MultiSubnetFailover=true - rasing argument one in this case with the same message
         /// </summary>
@@ -2299,7 +2299,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <summary>
         /// Escape a string as a TSQL literal, wrapping it around with single quotes.
-        /// Use this method to escape input strings to prevent SQL injection 
+        /// Use this method to escape input strings to prevent SQL injection
         /// and to get correct behavior for embedded quotes.
         /// </summary>
         /// <param name="input">unescaped string</param>

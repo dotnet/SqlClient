@@ -339,7 +339,7 @@
   <data name="MDF_UnableToBuildCollection" xml:space="preserve">
     <value>스키마 컬렉션 '{0}'을(를) 작성할 수 없습니다.</value>
   </data>
-  <data name="MDF_AmbigousCollectionName" xml:space="preserve">
+  <data name="MDF_AmbiguousCollectionName" xml:space="preserve">
     <value>컬렉션 이름 '{0}'이(가) 이름은 같지만 사례는 다른 둘 이상의 컬렉션과 일치합니다. 그러나 모두 정확하게 일치하지는 않습니다.</value>
   </data>
   <data name="MDF_CollectionNameISNotUnique" xml:space="preserve">

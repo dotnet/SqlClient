@@ -339,7 +339,7 @@
   <data name="MDF_UnableToBuildCollection" xml:space="preserve">
     <value>Impossibile compilare la raccolta di schemi '{0}';</value>
   </data>
-  <data name="MDF_AmbigousCollectionName" xml:space="preserve">
+  <data name="MDF_AmbiguousCollectionName" xml:space="preserve">
     <value>Il nome della raccolta "{0}" corrisponde ad almeno due raccolte i cui nomi differiscono solo per l'uso delle maiuscole, ma non corrisponde a nessuno dei due esattamente.</value>
   </data>
   <data name="MDF_CollectionNameISNotUnique" xml:space="preserve">
