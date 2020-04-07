@@ -16,7 +16,13 @@ namespace Microsoft.Data.SqlClient
 
         private const string _metaDataXml = "MetaDataXml";
 
+#if NETCORE3
+        private SqlConnectionFactory() : base(SqlPerformanceCounters.SingletonInstance)
+        {
+        }
+#else
         private SqlConnectionFactory() : base() { }
+#endif
 
         public static readonly SqlConnectionFactory SingletonInstance = new SqlConnectionFactory();
 
@@ -309,5 +315,20 @@ namespace Microsoft.Data.SqlClient
                                           internalConnection.ServerVersion);
         }
     }
-}
 
+#if NETCORE3
+    [System.Security.Permissions.PermissionSetAttribute(System.Security.Permissions.SecurityAction.LinkDemand, Name = "FullTrust")]
+    sealed internal class SqlPerformanceCounters : DbConnectionPoolCounters
+    {
+        private const string CategoryName = ".NET Core Data Provider for SqlServer";
+        private const string CategoryHelp = "Counters for Microsoft.Data.SqlClient";
+
+        public static readonly SqlPerformanceCounters SingletonInstance = new SqlPerformanceCounters();
+
+        [System.Diagnostics.PerformanceCounterPermissionAttribute(System.Security.Permissions.SecurityAction.Assert, PermissionAccess = PerformanceCounterPermissionAccess.Write, MachineName = ".", CategoryName = CategoryName)]
+        private SqlPerformanceCounters() : base(CategoryName, CategoryHelp)
+        {
+        }
+    }
+#endif
+}

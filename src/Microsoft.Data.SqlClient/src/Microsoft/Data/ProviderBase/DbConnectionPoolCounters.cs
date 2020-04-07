@@ -2,17 +2,17 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
+using System.Diagnostics;
+using System.Reflection;
+using System.Runtime.ConstrainedExecution;
+using System.Runtime.Versioning;
+using System.Security.Permissions;
+using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient;
+
 namespace Microsoft.Data.ProviderBase
 {
-
-    using System;
-    using System.Diagnostics;
-    using System.Reflection;
-    using System.Runtime.ConstrainedExecution;
-    using System.Runtime.Versioning;
-    using System.Security.Permissions;
-    using Microsoft.Data.Common;
-
     internal abstract class DbConnectionPoolCounters
     {
         private static class CreationData
@@ -95,27 +95,24 @@ namespace Microsoft.Data.ProviderBase
 
             internal Counter(string categoryName, string instanceName, string counterName, PerformanceCounterType counterType)
             {
-                if (ADP.IsPlatformNT5)
+                try
                 {
-                    try
+                    if (categoryName != string.Empty && instanceName != string.Empty)
                     {
-                        if (!ADP.IsEmpty(categoryName) && !ADP.IsEmpty(instanceName))
-                        {
-                            PerformanceCounter instance = new PerformanceCounter();
-                            instance.CategoryName = categoryName;
-                            instance.CounterName = counterName;
-                            instance.InstanceName = instanceName;
-                            instance.InstanceLifetime = PerformanceCounterInstanceLifetime.Process;
-                            instance.ReadOnly = false;
-                            instance.RawValue = 0;  // make sure we start out at zero
-                            _instance = instance;
-                        }
+                        PerformanceCounter instance = new PerformanceCounter();
+                        instance.CategoryName = categoryName;
+                        instance.CounterName = counterName;
+                        instance.InstanceName = instanceName;
+                        instance.InstanceLifetime = PerformanceCounterInstanceLifetime.Process;
+                        instance.ReadOnly = false;
+                        instance.RawValue = 0;  // make sure we start out at zero
+                        _instance = instance;
                     }
-                    catch (InvalidOperationException e)
-                    {
-                        ADP.TraceExceptionWithoutRethrow(e);
-                        // TODO: generate Application EventLog entry about inability to find perf counter
-                    }
+                }
+                catch (InvalidOperationException e)
+                {
+                    ADP.TraceExceptionWithoutRethrow(e);
+                    // TODO: generate Application EventLog entry about inability to find perf counter
                 }
             }
 
@@ -182,12 +179,9 @@ namespace Microsoft.Data.ProviderBase
 
             string instanceName = null;
 
-            if (!ADP.IsEmpty(categoryName))
+            if (categoryName != string.Empty)
             {
-                if (ADP.IsPlatformNT5)
-                {
-                    instanceName = GetInstanceName();
-                }
+                instanceName = GetInstanceName();
             }
 
             // level 0-3: hard connects/disconnects, plus basic pool/pool entry statistics
@@ -205,7 +199,7 @@ namespace Microsoft.Data.ProviderBase
 
             // level 4: expensive stuff
             string verboseCategoryName = null;
-            if (!ADP.IsEmpty(categoryName))
+            if (categoryName != string.Empty)
             {
                 // don't load TraceSwitch if no categoryName so that Odbc/OleDb have a chance of not loading TraceSwitch
                 // which are also used by System.Diagnostics.PerformanceCounter.ctor & System.Transactions.get_Current
@@ -250,7 +244,7 @@ namespace Microsoft.Data.ProviderBase
 
             string instanceName = GetAssemblyName(); // instance perfcounter name
 
-            if (ADP.IsEmpty(instanceName))
+            if (instanceName == string.Empty)
             {
                 AppDomain appDomain = AppDomain.CurrentDomain;
                 if (null != appDomain)
@@ -260,7 +254,7 @@ namespace Microsoft.Data.ProviderBase
             }
 
             // TODO: If you do not use GetCurrentProcessId after fixing VSDD 534795, please remove Resource* attributes from this method
-            int pid = SafeNativeMethods.GetCurrentProcessId();
+            int pid = TdsParserStaticMethods.GetCurrentProcessId();
 
 
             // SQLBUDT #366157 -there are several characters which have special meaning

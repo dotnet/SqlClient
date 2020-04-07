@@ -112,7 +112,7 @@ namespace Microsoft.Data.SqlClient
 
         [ResourceExposure(ResourceScope.None)] // SxS: we use this method for TDS login only
         [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
-        static internal int GetCurrentProcessIdForTdsLoginOnly()
+        static internal int GetCurrentProcessId()
         {
             return SafeNativeMethods.GetCurrentProcessId();
         }

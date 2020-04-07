@@ -31,7 +31,25 @@ namespace Microsoft.Data.ProviderBase
         private static Task<DbConnectionInternal>[] s_pendingOpenNonPooled = new Task<DbConnectionInternal>[Environment.ProcessorCount];
         private static Task<DbConnectionInternal> s_completedTask;
 
+#if NETCORE3
+        private readonly DbConnectionPoolCounters _performanceCounters;
 
+        protected DbConnectionFactory() : this(DbConnectionPoolCountersNoCounters.SingletonInstance) { }
+
+        protected DbConnectionFactory(DbConnectionPoolCounters performanceCounters)
+        {
+            _performanceCounters = performanceCounters;
+            _connectionPoolGroups = new Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup>();
+            _poolsToRelease = new List<DbConnectionPool>();
+            _poolGroupsToRelease = new List<DbConnectionPoolGroup>();
+            _pruningTimer = CreatePruningTimer();
+        }
+
+        internal DbConnectionPoolCounters PerformanceCounters
+        {
+            get { return _performanceCounters; }
+        }
+#else
         protected DbConnectionFactory()
         {
             _connectionPoolGroups = new Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup>();
@@ -39,13 +57,12 @@ namespace Microsoft.Data.ProviderBase
             _poolGroupsToRelease = new List<DbConnectionPoolGroup>();
             _pruningTimer = CreatePruningTimer();
         }
-
+#endif
 
         abstract public DbProviderFactory ProviderFactory
         {
             get;
         }
-
 
         public void ClearAllPools()
         {
@@ -124,7 +141,12 @@ namespace Microsoft.Data.ProviderBase
             DbConnectionInternal newConnection = CreateConnection(connectionOptions, poolKey, poolGroupProviderInfo, null, owningConnection, userOptions);
             if (null != newConnection)
             {
+#if NETCORE3
+                PerformanceCounters.HardConnectsPerSecond.Increment();
+                newConnection.MakeNonPooledObject(owningConnection, PerformanceCounters);
+#else
                 newConnection.MakeNonPooledObject(owningConnection);
+#endif
             }
             SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionFactory.CreateNonPooledConnection|RES|CPOOL> {0}, Non-pooled database connection created.", ObjectID);
             return newConnection;
@@ -138,6 +160,9 @@ namespace Microsoft.Data.ProviderBase
             DbConnectionInternal newConnection = CreateConnection(options, poolKey, poolGroupProviderInfo, pool, owningObject, userOptions);
             if (null != newConnection)
             {
+#if NETCORE3
+                PerformanceCounters.HardConnectsPerSecond.Increment();
+#endif
                 newConnection.MakePooledConnection(pool);
             }
             SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionFactory.CreatePooledConnection|RES|CPOOL> {0}, Pooled database connection created.", ObjectID);
@@ -281,6 +306,9 @@ namespace Microsoft.Data.ProviderBase
 
                         // lock prevents race condition with PruneConnectionPoolGroups
                         newConnectionPoolGroups.Add(key, newConnectionPoolGroup);
+#if NETCORE3
+                        PerformanceCounters.NumberOfActiveConnectionPoolGroups.Increment();
+#endif
                         connectionPoolGroup = newConnectionPoolGroup;
                         _connectionPoolGroups = newConnectionPoolGroups;
                     }
@@ -324,6 +352,9 @@ namespace Microsoft.Data.ProviderBase
                             {
                                 _poolsToRelease.Remove(pool);
                                 SqlClientEventSource.Log.AdvancedTraceEvent("<prov.DbConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> {0}, ReleasePool={1}", ObjectID, pool.ObjectID);
+#if NETCORE3
+                                PerformanceCounters.NumberOfInactiveConnectionPools.Decrement();
+#endif
                             }
                         }
                     }
@@ -348,6 +379,9 @@ namespace Microsoft.Data.ProviderBase
                             {
                                 _poolGroupsToRelease.Remove(poolGroup);
                                 SqlClientEventSource.Log.AdvancedTraceEvent("<prov.DbConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> {0}, ReleasePoolGroup={1}", ObjectID, poolGroup.ObjectID);
+#if NETCORE3
+                                PerformanceCounters.NumberOfInactiveConnectionPoolGroups.Decrement();
+#endif
                             }
                         }
                     }
@@ -373,6 +407,9 @@ namespace Microsoft.Data.ProviderBase
                         // otherwise process entry which may move it from active to idle
                         if (entry.Value.Prune())
                         { // may add entries to _poolsToRelease
+#if NETCORE3
+                            PerformanceCounters.NumberOfActiveConnectionPoolGroups.Decrement();
+#endif
                             QueuePoolGroupForRelease(entry.Value);
                         }
                         else
@@ -405,6 +442,9 @@ namespace Microsoft.Data.ProviderBase
                 }
                 _poolsToRelease.Add(pool);
             }
+#if NETCORE3
+            PerformanceCounters.NumberOfInactiveConnectionPools.Increment();
+#endif
         }
 
         internal void QueuePoolGroupForRelease(DbConnectionPoolGroup poolGroup)
@@ -416,6 +456,9 @@ namespace Microsoft.Data.ProviderBase
             {
                 _poolGroupsToRelease.Add(poolGroup);
             }
+#if NETCORE3
+            PerformanceCounters.NumberOfInactiveConnectionPoolGroups.Increment();
+#endif
         }
 
         virtual protected DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, DbConnectionPool pool, DbConnection owningConnection, DbConnectionOptions userOptions)

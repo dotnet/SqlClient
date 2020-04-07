@@ -129,6 +129,9 @@ namespace Microsoft.Data.ProviderBase
                     if (pool != null)
                     {
                         DbConnectionFactory connectionFactory = pool.ConnectionFactory;
+#if NETCORE3
+                        connectionFactory.PerformanceCounters.NumberOfActiveConnectionPools.Decrement();
+#endif
                         connectionFactory.QueuePoolForRelease(pool, true);
                     }
                 }
@@ -187,6 +190,9 @@ namespace Microsoft.Data.ProviderBase
                                     newPool.Startup(); // must start pool before usage
                                     bool addResult = _poolCollection.TryAdd(currentIdentity, newPool);
                                     Debug.Assert(addResult, "No other pool with current identity should exist at this point");
+#if NETCORE3
+                                    connectionFactory.PerformanceCounters.NumberOfActiveConnectionPools.Increment();
+#endif
                                     pool = newPool;
                                 }
                                 else
@@ -262,7 +268,9 @@ namespace Microsoft.Data.ProviderBase
                                 // pool into a list of pools to be released when they
                                 // are completely empty.
                                 DbConnectionFactory connectionFactory = pool.ConnectionFactory;
-
+#if NETCORE3
+                                connectionFactory.PerformanceCounters.NumberOfActiveConnectionPools.Decrement();
+#endif
                                 connectionFactory.QueuePoolForRelease(pool, false);
                             }
                             else

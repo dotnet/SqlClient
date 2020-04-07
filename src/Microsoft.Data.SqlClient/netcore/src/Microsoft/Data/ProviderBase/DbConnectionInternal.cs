@@ -217,6 +217,10 @@ namespace Microsoft.Data.ProviderBase
 #endif // DEBUG
 
             Activate(transaction);
+
+#if NETCORE3
+            PerformanceCounters.NumberOfActiveConnections.Increment();
+#endif
         }
 
         internal virtual void CloseConnection(DbConnection owningObject, DbConnectionFactory connectionFactory)
@@ -294,7 +298,9 @@ namespace Microsoft.Data.ProviderBase
                         else
                         {
                             Deactivate();   // ensure we de-activate non-pooled connections, or the data readers and transactions may not get cleaned up...
-
+#if NETCORE3
+                            PerformanceCounters.HardDisconnectsPerSecond.Increment();
+#endif
                             // To prevent an endless recursion, we need to clear
                             // the owning object before we call dispose so that
                             // we can't get here a second time... Ordinarily, I
@@ -310,6 +316,9 @@ namespace Microsoft.Data.ProviderBase
                             }
                             else
                             {
+#if NETCORE3
+                                PerformanceCounters.NumberOfNonPooledConnections.Decrement();
+#endif
                                 Dispose();
                             }
                         }
@@ -368,6 +377,9 @@ namespace Microsoft.Data.ProviderBase
                 // once and for all, or the server will have fits about us
                 // leaving connections open until the client-side GC kicks 
                 // in.
+#if NETCORE3
+                PerformanceCounters.NumberOfNonPooledConnections.Decrement();
+#endif
                 Dispose();
             }
             // When _pooledCount is 0, the connection is a pooled connection
@@ -378,6 +390,9 @@ namespace Microsoft.Data.ProviderBase
 
         public virtual void Dispose()
         {
+#if NETCORE3
+            _performanceCounters = null;
+#endif
             _connectionPool = null;
             _connectionIsDoomed = true;
             _enlistedTransactionOriginal = null; // should not be disposed
@@ -480,6 +495,9 @@ namespace Microsoft.Data.ProviderBase
         {
             _isInStasis = true;
             SqlClientEventSource.Log.PoolerTraceEvent("<prov.DbConnectionInternal.SetInStasis|RES|CPOOL> {0}, Non-Pooled Connection has Delegated Transaction, waiting to Dispose.", ObjectID);
+#if NETCORE3
+            PerformanceCounters.NumberOfStasisConnections.Increment();
+#endif
         }
 
         private void TerminateStasis(bool returningToPool)
@@ -492,6 +510,9 @@ namespace Microsoft.Data.ProviderBase
             {
                 SqlClientEventSource.Log.PoolerTraceEvent("<prov.DbConnectionInternal.TerminateStasis|RES|CPOOL> {0}, Delegated Transaction has ended, connection is closed/leaked.  Disposing.", ObjectID);
             }
+#if NETCORE3
+            PerformanceCounters.NumberOfStasisConnections.Decrement();
+#endif
             _isInStasis = false;
         }
     }

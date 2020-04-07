@@ -53,7 +53,7 @@ namespace Microsoft.Data.SqlClient
 
         private const int NoProcessId = -1;
         private static int s_currentProcessId = NoProcessId;
-        internal static int GetCurrentProcessIdForTdsLoginOnly()
+        internal static int GetCurrentProcessId()
         {
             if (s_currentProcessId == NoProcessId)
             {

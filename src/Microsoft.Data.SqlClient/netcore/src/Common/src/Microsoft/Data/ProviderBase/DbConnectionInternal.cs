@@ -27,6 +27,9 @@ namespace Microsoft.Data.ProviderBase
         private readonly WeakReference _owningObject = new WeakReference(null, false);  // [usage must be thread safe] the owning object, when not in the pool. (both Pooled and Non-Pooled connections)
 
         private DbConnectionPool _connectionPool;           // the pooler that the connection came from (Pooled connections only)
+#if NETCORE3
+        private DbConnectionPoolCounters _performanceCounters;      // the performance counters we're supposed to update
+#endif
         private DbReferenceCollection _referenceCollection;      // collection of objects that we need to notify in some way when we're being deactivated
         private int _pooledCount;              // [usage must be thread safe] the number of times this object has been pushed into the pool less the number of times it's been popped (0 != inPool)
 
@@ -136,6 +139,16 @@ namespace Microsoft.Data.ProviderBase
             }
         }
 
+#if NETCORE3
+        protected DbConnectionPoolCounters PerformanceCounters
+        {
+            get
+            {
+                return _performanceCounters;
+            }
+        }
+#endif
+
         protected internal DbReferenceCollection ReferenceCollection
         {
             get
@@ -230,7 +243,12 @@ namespace Microsoft.Data.ProviderBase
 #if DEBUG
             int activateCount = Interlocked.Decrement(ref _activateCount);
 #endif // DEBUG
-
+#if NETCORE3
+            if (PerformanceCounters != null)
+            { // Pool.Clear will DestroyObject that will clean performanceCounters before going here 
+                PerformanceCounters.NumberOfActiveConnections.Decrement();
+            }
+#endif
 
             if (!_connectionIsDoomed && Pool.UseLoadBalancing)
             {
@@ -269,11 +287,16 @@ namespace Microsoft.Data.ProviderBase
             return metaDataFactory.GetSchema(outerConnection, collectionName, restrictions);
         }
 
+#if NETCORE3
+        internal void MakeNonPooledObject(object owningObject, DbConnectionPoolCounters performanceCounters)
+        {
+            _performanceCounters = performanceCounters;
+#else
         internal void MakeNonPooledObject(object owningObject)
         {
+#endif
             // Used by DbConnectionFactory to indicate that this object IS NOT part of
             // a connection pool.
-
             _connectionPool = null;
             _owningObject.Target = owningObject;
             _pooledCount = -1;
@@ -285,6 +308,9 @@ namespace Microsoft.Data.ProviderBase
             // a connection pool.
             _createTime = DateTime.UtcNow;
 
+#if NETCORE3
+            _performanceCounters = connectionPool.PerformanceCounters;
+#endif
             _connectionPool = connectionPool;
         }
 

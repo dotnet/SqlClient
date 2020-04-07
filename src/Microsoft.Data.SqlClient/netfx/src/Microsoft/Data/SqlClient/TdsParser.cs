@@ -8723,7 +8723,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 WriteInt(rec.packetSize, _physicalStateObj);
                 WriteInt(TdsEnums.CLIENT_PROG_VER, _physicalStateObj);
-                WriteInt(TdsParserStaticMethods.GetCurrentProcessIdForTdsLoginOnly(), _physicalStateObj); //MDAC 84718
+                WriteInt(TdsParserStaticMethods.GetCurrentProcessId(), _physicalStateObj); //MDAC 84718
                 WriteInt(0, _physicalStateObj); // connectionID is unused
 
                 // Log7Flags (DWORD)

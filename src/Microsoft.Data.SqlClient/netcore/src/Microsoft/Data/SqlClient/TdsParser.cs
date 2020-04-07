@@ -7944,7 +7944,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 WriteInt(rec.packetSize, _physicalStateObj);
                 WriteInt(TdsEnums.CLIENT_PROG_VER, _physicalStateObj);
-                WriteInt(TdsParserStaticMethods.GetCurrentProcessIdForTdsLoginOnly(), _physicalStateObj);
+                WriteInt(TdsParserStaticMethods.GetCurrentProcessId(), _physicalStateObj);
                 WriteInt(0, _physicalStateObj); // connectionID is unused
 
                 // Log7Flags (DWORD)

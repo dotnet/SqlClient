@@ -15,7 +15,6 @@ namespace Microsoft.Data.ProviderBase
 {
     internal abstract partial class DbConnectionFactory
     {
-
         internal bool TryGetConnection(DbConnection owningConnection, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions, DbConnectionInternal oldConnection, out DbConnectionInternal connection)
         {
             Debug.Assert(null != owningConnection, "null owningConnection?");
@@ -127,7 +126,13 @@ namespace Microsoft.Data.ProviderBase
                             }
                             else
                             {
-                                if (!retry.TrySetResult(task.Result))
+                                if (retry.TrySetResult(task.Result))
+                                {
+#if NETCORE3
+                                    PerformanceCounters.NumberOfNonPooledConnections.Increment();
+#endif
+                                }
+                                else
                                 {
                                     // The outer TaskCompletionSource was already completed
                                     // Which means that we don't know if someone has messed with the outer connection in the middle of creation
@@ -142,6 +147,9 @@ namespace Microsoft.Data.ProviderBase
                     }
 
                     connection = CreateNonPooledConnection(owningConnection, poolGroup, userOptions);
+#if NETCORE3
+                    PerformanceCounters.NumberOfNonPooledConnections.Increment();
+#endif
                 }
                 else
                 {

@@ -10,6 +10,7 @@
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <TargetGroup Condition="$(TargetFramework.StartsWith('netcoreapp'))">netcoreapp</TargetGroup>
     <TargetGroup Condition="$(TargetFramework.StartsWith('netstandard'))">netstandard</TargetGroup>
+    <NetCoreVersion></NetCoreVersion>
     <Configurations>Debug;Release;netcoreapp2.1-Debug;netcoreapp2.1-Release;netcoreapp3.1-Debug;netcoreapp3.1-Release</Configurations>
     <Platforms>AnyCPU;x64;x86</Platforms>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)\$(AssemblyName)\netcore\</IntermediateOutputPath>
@@ -19,9 +20,11 @@
     <Product>Core $(BaseProduct)</Product>
   </PropertyGroup>
   <PropertyGroup Condition="'$(TargetGroup)' == 'netcoreapp'">
+    <NetCoreVersion Condition="'$(TargetFramework)' == 'netcoreapp3.1'">3.1</NetCoreVersion>
+    <NetCoreVersion Condition="'$(TargetFramework)' == 'netcoreapp2.1'">2.1</NetCoreVersion>
     <DefineConstants>$(DefineConstants);netcoreapp;</DefineConstants>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(TargetGroup)' == 'netcoreapp' AND '$(TargetFramework)' != 'netcoreapp2.1'">
+  <PropertyGroup Condition="'$(NetCoreVersion)' == '3.1'">
     <DefineConstants>$(DefineConstants);NETCORE3</DefineConstants>
   </PropertyGroup>
   <PropertyGroup>
@@ -125,6 +128,11 @@
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlSymmetricKeyCache.cs">
       <Link>Microsoft\Data\SqlClient\SqlSymmetricKeyCache.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup Condition="'$(NetCoreVersion)' == '3.1' AND '$(OSGroup)' != 'AnyOS'">
+    <Compile Include="..\..\src\Microsoft\Data\ProviderBase\DbConnectionPoolCounters.cs">
+      <Link>Microsoft\Data\ProviderBase\DbConnectionPoolCounters.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)' == 'netstandard' OR '$(TargetGroup)' == 'netcoreapp' OR '$(IsUAPAssembly)' == 'true'">
@@ -649,6 +657,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Condition="'$(TargetsWindows)' == 'true' and '$(IsUAPAssembly)' != 'true'" Include="Microsoft.Win32.Registry" Version="$(MicrosoftWin32RegistryVersion)" />
+    <PackageReference Condition="'$(NetCoreVersion)' == '3.1'" Include="System.Diagnostics.PerformanceCounter" Version="$(SystemDiagnosticsPerformanceCounterVersion)" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="$(SystemConfigurationConfigurationManagerVersion)" />
     <PackageReference Include="System.Security.Permissions" Version="$(SystemSecurityPermissionsVersion)" />
     <PackageReference Include="System.Security.Principal.Windows" Version="$(SystemSecurityPrincipalWindowsVersion)" />

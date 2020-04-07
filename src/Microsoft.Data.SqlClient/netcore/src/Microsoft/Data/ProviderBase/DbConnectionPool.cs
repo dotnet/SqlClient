@@ -24,6 +24,13 @@ namespace Microsoft.Data.ProviderBase
             ShuttingDown,
         }
 
+#if NETCORE3
+        internal DbConnectionPoolCounters PerformanceCounters
+        {
+            get { return _connectionFactory.PerformanceCounters; }
+        }
+#endif
+
         // This class is a way to stash our cloned Tx key for later disposal when it's no longer needed.
         // We can't get at the key in the dictionary without enumerating entries, so we stash an extra
         // copy as part of the value.
@@ -231,6 +238,9 @@ namespace Microsoft.Data.ProviderBase
                     }
                     SqlClientEventSource.Log.PoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.PutTransactedObject|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Added.", ObjectID, transaction.GetHashCode(), transactedObject.ObjectID);
                 }
+#if NETCORE3
+                Pool.PerformanceCounters.NumberOfFreeConnections.Increment();
+#endif                
             }
 
             internal void TransactionEnded(Transaction transaction, DbConnectionInternal transactedObject)
@@ -293,6 +303,9 @@ namespace Microsoft.Data.ProviderBase
                 // connections, we'll put it back...
                 if (0 <= entry)
                 {
+#if NETCORE3
+                    Pool.PerformanceCounters.NumberOfFreeConnections.Decrement();
+#endif
                     Pool.PutObjectFromTransactedPool(transactedObject);
                 }
             }
@@ -600,7 +613,9 @@ namespace Microsoft.Data.ProviderBase
                     {
                         Debug.Assert(obj != null, "null connection is not expected");
                         // If we obtained one from the old stack, destroy it.
-
+#if NETCORE3
+                        PerformanceCounters.NumberOfFreeConnections.Decrement();
+#endif
                         // Transaction roots must survive even aging out (TxEnd event will clean them up).
                         bool shouldDestroy = true;
                         lock (obj)
@@ -696,11 +711,17 @@ namespace Microsoft.Data.ProviderBase
             while (_stackNew.TryPop(out obj))
             {
                 Debug.Assert(obj != null, "null connection is not expected");
+#if NETCORE3
+                PerformanceCounters.NumberOfFreeConnections.Decrement();
+#endif
                 DestroyObject(obj);
             }
             while (_stackOld.TryPop(out obj))
             {
                 Debug.Assert(obj != null, "null connection is not expected");
+#if NETCORE3
+                PerformanceCounters.NumberOfFreeConnections.Decrement();
+#endif
                 DestroyObject(obj);
             }
 
@@ -742,6 +763,9 @@ namespace Microsoft.Data.ProviderBase
                     }
                     _objectList.Add(newObj);
                     _totalObjects = _objectList.Count;
+#if NETCORE3
+                    PerformanceCounters.NumberOfPooledConnections.Increment();   // TODO: Performance: Consider moving outside of lock?
+#endif
                 }
 
                 // If the old connection belonged to another pool, we need to remove it from that
@@ -967,9 +991,15 @@ namespace Microsoft.Data.ProviderBase
                 if (removed)
                 {
                     SqlClientEventSource.Log.PoolerTraceEvent("<prov.DbConnectionPool.DestroyObject|RES|CPOOL> {0}, Connection {1}, Removed from pool.", ObjectID, obj.ObjectID);
+#if NETCORE3
+                    PerformanceCounters.NumberOfPooledConnections.Decrement();
+#endif
                 }
                 obj.Dispose();
                 SqlClientEventSource.Log.PoolerTraceEvent("<prov.DbConnectionPool.DestroyObject|RES|CPOOL> {0}, Connection {1}, Disposed.", ObjectID, obj.ObjectID);
+#if NETCORE3
+                PerformanceCounters.HardDisconnectsPerSecond.Increment();
+#endif
             }
         }
 
@@ -1146,6 +1176,10 @@ namespace Microsoft.Data.ProviderBase
         {
             DbConnectionInternal obj = null;
             Transaction transaction = null;
+
+#if NETCORE3
+            PerformanceCounters.SoftConnectsPerSecond.Increment();
+#endif
             SqlClientEventSource.Log.PoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Getting connection.", ObjectID);
 
             // If automatic transaction enlistment is required, then we try to
@@ -1325,6 +1359,9 @@ namespace Microsoft.Data.ProviderBase
         /// <returns>A new inner connection that is attached to the <paramref name="owningObject"/></returns>
         internal DbConnectionInternal ReplaceConnection(DbConnection owningObject, DbConnectionOptions userOptions, DbConnectionInternal oldConnection)
         {
+#if NETCORE3
+            PerformanceCounters.SoftConnectsPerSecond.Increment();
+#endif
             SqlClientEventSource.Log.PoolerTraceEvent("<prov.DbConnectionPool.ReplaceConnection|RES|CPOOL> {0}, replacing connection.", ObjectID);
             DbConnectionInternal newConnection = UserCreateRequest(owningObject, userOptions, oldConnection);
 
@@ -1367,6 +1404,9 @@ namespace Microsoft.Data.ProviderBase
             if (null != obj)
             {
                 SqlClientEventSource.Log.PoolerTraceEvent("<prov.DbConnectionPool.GetFromGeneralPool|RES|CPOOL> {0}, Connection {1}, Popped from general pool.", ObjectID, obj.ObjectID);
+#if NETCORE3
+                PerformanceCounters.NumberOfFreeConnections.Decrement();
+#endif
             }
             return (obj);
         }
@@ -1383,7 +1423,9 @@ namespace Microsoft.Data.ProviderBase
                 if (null != obj)
                 {
                     SqlClientEventSource.Log.PoolerTraceEvent("<prov.DbConnectionPool.GetFromTransactedPool|RES|CPOOL> {0}, Connection {1}, Popped from transacted pool.", ObjectID, obj.ObjectID);
-
+#if NETCORE3
+                    PerformanceCounters.NumberOfFreeConnections.Decrement();
+#endif
                     if (obj.IsTransactionRoot)
                     {
                         try
@@ -1537,13 +1579,18 @@ namespace Microsoft.Data.ProviderBase
 
             _stackNew.Push(obj);
             _waitHandles.PoolSemaphore.Release(1);
+#if NETCORE3
+            PerformanceCounters.NumberOfFreeConnections.Increment();
+#endif
         }
 
         internal void PutObject(DbConnectionInternal obj, object owningObject)
         {
             Debug.Assert(null != obj, "null obj?");
 
-
+#if NETCORE3
+            PerformanceCounters.SoftDisconnectsPerSecond.Increment();
+#endif
             // Once a connection is closing (which is the state that we're in at
             // this point in time) you cannot delegate a transaction to or enlist
             // a transaction in it, so we can correctly presume that if there was
@@ -1655,6 +1702,9 @@ namespace Microsoft.Data.ProviderBase
             {
                 DbConnectionInternal obj = reclaimedObjects[i];
                 SqlClientEventSource.Log.PoolerTraceEvent("<prov.DbConnectionPool.ReclaimEmancipatedObjects|RES|CPOOL> {0}, Connection {1}, Reclaiming.", ObjectID, obj.ObjectID);
+#if NETCORE3
+                PerformanceCounters.NumberOfReclaimedConnections.Increment();
+#endif
                 emancipatedObjectFound = true;
 
                 obj.DetachCurrentTransactionIfEnded();
