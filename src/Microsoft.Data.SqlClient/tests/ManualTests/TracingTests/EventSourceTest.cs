@@ -34,35 +34,5 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.All(TraceListener.IDs, item => { Assert.Contains(item, Enumerable.Range(1, 21)); });
             }
         }
-
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void EventSourceTestEnableDisable()
-        {
-            EventSource eventSource = null;
-
-            //We have to have some enabled EventSource activities in order to asign the value to local eventSource.
-            using (var TraceListener = new DataTestUtility.TraceEventListener())
-            {
-                using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
-                {
-                    connection.Open();
-                    using (SqlCommand command = new SqlCommand("SELECT * From [Customers]", connection))
-                    using (SqlDataReader reader = command.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            // Flush data
-                        }
-                    }
-                }
-                eventSource = TraceListener.EventSourceProperty;
-
-                //Try to disable events
-                TraceListener.DisableEvents(eventSource);
-
-                //Try to see if any event is enabled
-                Assert.False(eventSource.IsEnabled());
-            }
-        }
     }
 }
