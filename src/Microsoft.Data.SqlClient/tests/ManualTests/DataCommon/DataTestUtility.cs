@@ -646,6 +646,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public class TraceEventListener : EventListener
         {
             public List<int> IDs = new List<int>();
+            public EventSource EventSourceProperty;
 
             protected override void OnEventSourceCreated(EventSource eventSource)
             {
@@ -653,6 +654,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     // Collect all traces for better code coverage
                     EnableEvents(eventSource, EventLevel.Informational, EventKeywords.All);
+                    EventSourceProperty = eventSource;
                 }
             }
 

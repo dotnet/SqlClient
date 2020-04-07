@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "Microsoft.Data.SqlClient.Tests": {
+      "commandName": "Project",
+      "remoteDebugEnabled": false,
+      "sqlDebugging": true,
+      "remoteDebugMachine": "",
+      "nativeDebugging": true
+    }
+  }
+}
