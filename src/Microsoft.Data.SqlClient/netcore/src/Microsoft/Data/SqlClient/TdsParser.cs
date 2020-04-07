@@ -492,7 +492,7 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(_encryptionOption == EncryptionOptions.LOGIN, "Invalid encryption option state");
 
-            uint error = _physicalStateObj.DisabeSsl();
+            uint error = _physicalStateObj.DisableSsl();
 
             if (error != TdsEnums.SNI_SUCCESS)
             {

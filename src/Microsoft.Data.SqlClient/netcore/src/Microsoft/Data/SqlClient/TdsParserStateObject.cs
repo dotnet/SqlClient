@@ -370,7 +370,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal abstract uint DisabeSsl();
+        internal abstract uint DisableSsl();
 
         internal bool HasOwner
         {

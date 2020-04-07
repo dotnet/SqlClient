@@ -4714,7 +4714,7 @@ namespace Microsoft.Data.SqlClient
                                 sqlParameter.HasReceivedMetadata = true;
 
                                 // Found the param, setup the encryption info.
-                                byte columnEncryptionType = ds.GetByte((int)DescribeParameterEncryptionResultSet2.ColumnEncrytionType);
+                                byte columnEncryptionType = ds.GetByte((int)DescribeParameterEncryptionResultSet2.ColumnEncryptionType);
                                 if ((byte)SqlClientEncryptionType.PlainText != columnEncryptionType)
                                 {
                                     byte cipherAlgorithmId = ds.GetByte((int)DescribeParameterEncryptionResultSet2.ColumnEncryptionAlgorithm);

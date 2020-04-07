@@ -1119,7 +1119,7 @@ namespace Microsoft.Data.SqlClient
         ParameterOrdinal = 0,
         ParameterName,
         ColumnEncryptionAlgorithm,
-        ColumnEncrytionType,
+        ColumnEncryptionType,
         ColumnEncryptionKeyOrdinal,
         NormalizationRuleVersion,
     }

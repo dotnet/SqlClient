@@ -3475,7 +3475,7 @@ namespace Microsoft.Data.SqlClient
             inputParameterEncryptionNeeded = false;
             task = null;
             describeParameterEncryptionRpcOriginalRpcMap = null;
-            byte[] serializedAttestatationParameters = null;
+            byte[] serializedAttestationParameters = null;
 
             if (ShouldUseEnclaveBasedWorkflow)
             {
@@ -3488,7 +3488,7 @@ namespace Microsoft.Data.SqlClient
                 if (sqlEnclaveSession == null)
                 {
                     enclaveAttestationParameters = EnclaveDelegate.Instance.GetAttestationParameters(attestationProtocol, enclaveType, enclaveAttestationUrl, customData, customDataLength);
-                    serializedAttestatationParameters = EnclaveDelegate.Instance.GetSerializedAttestationParameters(enclaveAttestationParameters, enclaveType);
+                    serializedAttestationParameters = EnclaveDelegate.Instance.GetSerializedAttestationParameters(enclaveAttestationParameters, enclaveType);
                 }
             }
 
@@ -3510,7 +3510,7 @@ namespace Microsoft.Data.SqlClient
                         _SqlRPC rpcDescribeParameterEncryptionRequest = new _SqlRPC();
 
                         // Prepare the describe parameter encryption request.
-                        PrepareDescribeParameterEncryptionRequest(_SqlRPCBatchArray[i], ref rpcDescribeParameterEncryptionRequest, i == 0 ? serializedAttestatationParameters : null);
+                        PrepareDescribeParameterEncryptionRequest(_SqlRPCBatchArray[i], ref rpcDescribeParameterEncryptionRequest, i == 0 ? serializedAttestationParameters : null);
                         Debug.Assert(rpcDescribeParameterEncryptionRequest != null, "rpcDescribeParameterEncryptionRequest should not be null, after call to PrepareDescribeParameterEncryptionRequest.");
 
                         Debug.Assert(!describeParameterEncryptionRpcOriginalRpcDictionary.ContainsKey(rpcDescribeParameterEncryptionRequest),
@@ -3554,7 +3554,7 @@ namespace Microsoft.Data.SqlClient
                 rpc.userParams = _parameters;
 
                 // Prepare the RPC request for describe parameter encryption procedure.
-                PrepareDescribeParameterEncryptionRequest(rpc, ref _sqlRPCParameterEncryptionReqArray[0], serializedAttestatationParameters);
+                PrepareDescribeParameterEncryptionRequest(rpc, ref _sqlRPCParameterEncryptionReqArray[0], serializedAttestationParameters);
                 Debug.Assert(_sqlRPCParameterEncryptionReqArray[0] != null, "_sqlRPCParameterEncryptionReqArray[0] should not be null, after call to PrepareDescribeParameterEncryptionRequest.");
             }
 
@@ -3923,7 +3923,7 @@ namespace Microsoft.Data.SqlClient
                                 sqlParameter.HasReceivedMetadata = true;
                                 recievedMetadataCount += 1;
                                 // Found the param, setup the encryption info.
-                                byte columnEncryptionType = ds.GetByte((int)DescribeParameterEncryptionResultSet2.ColumnEncrytionType);
+                                byte columnEncryptionType = ds.GetByte((int)DescribeParameterEncryptionResultSet2.ColumnEncryptionType);
                                 if ((byte)SqlClientEncryptionType.PlainText != columnEncryptionType)
                                 {
                                     byte cipherAlgorithmId = ds.GetByte((int)DescribeParameterEncryptionResultSet2.ColumnEncryptionAlgorithm);

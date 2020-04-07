@@ -625,12 +625,12 @@ namespace Microsoft.Data
             return _Data(StringsHelper.GetString(Strings.DataStorage_IComparableNotDefined, typeName));
         }
 
-        static public Exception UDTImplementsIChangeTrackingButnotIRevertible(string typeName)
+        static public Exception UDTImplementsIChangeTrackingButNotIRevertible(string typeName)
         {
             return _InvalidOperation(StringsHelper.GetString(Strings.DataColumn_UDTImplementsIChangeTrackingButnotIRevertible, typeName));
         }
 
-        static public Exception SetAddedAndModifiedCalledOnnonUnchanged()
+        static public Exception SetAddedAndModifiedCalledOnNonUnchanged()
         {
             return _InvalidOperation(StringsHelper.GetString(Strings.DataColumn_SetAddedAndModifiedCalledOnNonUnchanged));
         }
@@ -1421,7 +1421,7 @@ namespace Microsoft.Data
         {
             return _Data(StringsHelper.GetString(Strings.Xml_IsDataSetAttributeMissingInSchema));
         }
-        static public Exception TooManyIsDataSetAtributeInSchema()
+        static public Exception TooManyIsDataSetAttributeInSchema()
         {
             return _Data(StringsHelper.GetString(Strings.Xml_TooManyIsDataSetAtributeInSchema));
         }
@@ -1520,7 +1520,7 @@ namespace Microsoft.Data
         }
 
         //
-        static internal Exception InvalidDuplicateNamedSimpleTypeDelaration(string stName, string errorStr)
+        static internal Exception InvalidDuplicateNamedSimpleTypeDeclaration(string stName, string errorStr)
         {
             return _Argument(StringsHelper.GetString(Strings.NamedSimpleType_InvalidDuplicateNamedSimpleTypeDelaration, stName, errorStr));
         }
