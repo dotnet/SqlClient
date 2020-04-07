@@ -9,7 +9,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class SqlDependencyTest
     {
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]        
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void SqlDependencyStartStopTest()
         {
             try
