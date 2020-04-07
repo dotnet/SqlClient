@@ -11,7 +11,6 @@ namespace Microsoft.Data.SqlClient.Tests
     public static partial class SslOverTdsStreamTest
     {
         [Theory]
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [InlineData(0),InlineData(3),InlineData(128), InlineData(2048), InlineData(8192)]
         public static void ReadWrite(int readLimit)
         {
@@ -47,8 +46,6 @@ namespace Microsoft.Data.SqlClient.Tests
             Validate(input, output);
         }
 
-        static partial void SyncCoreTest(int encapsulatedPacketCount, int passthroughPacketCount, int maxPacketReadLength);
-
         private static void AsyncTest(int encapsulatedPacketCount, int passthroughPacketCount, int maxPacketReadLength)
         {
             byte[] input;
@@ -71,8 +68,55 @@ namespace Microsoft.Data.SqlClient.Tests
             Validate(input, output);
         }
 
-        static partial void AsyncCoreTest(int encapsulatedPacketCount, int passthroughPacketCount, int maxPacketReadLength);
+        private static void SyncCoreTest(int encapsulatedPacketCount, int passthroughPacketCount, int maxPacketReadLength)
+        {
+            byte[] input;
+            byte[] output;
+            SetupArrays(encapsulatedPacketCount + passthroughPacketCount, out input, out output);
 
+            byte[] buffer = WritePackets(encapsulatedPacketCount, passthroughPacketCount,
+                (Stream stream, int index) =>
+                {
+                    stream.Write(input.AsSpan(TdsEnums.DEFAULT_LOGIN_PACKET_SIZE * index, TdsEnums.DEFAULT_LOGIN_PACKET_SIZE));
+                }
+            );
+
+            ReadPackets(buffer, encapsulatedPacketCount, passthroughPacketCount, maxPacketReadLength, output,
+                (Stream stream, byte[] bytes, int offset, int count) =>
+                {
+                    return stream.Read(bytes.AsSpan(offset, count));
+                }
+            );
+
+            Validate(input, output);
+        }
+
+        private static void AsyncCoreTest(int encapsulatedPacketCount, int passthroughPacketCount, int maxPacketReadLength)
+        {
+            byte[] input;
+            byte[] output;
+            SetupArrays(encapsulatedPacketCount + passthroughPacketCount, out input, out output);
+
+            byte[] buffer = WritePackets(encapsulatedPacketCount, passthroughPacketCount,
+                async (Stream stream, int index) =>
+                {
+                    await stream.WriteAsync(
+                        new ReadOnlyMemory<byte>(input, TdsEnums.DEFAULT_LOGIN_PACKET_SIZE * index, TdsEnums.DEFAULT_LOGIN_PACKET_SIZE)
+                    );
+                }
+            );
+
+            ReadPackets(buffer, encapsulatedPacketCount, passthroughPacketCount, maxPacketReadLength, output,
+                async (Stream stream, byte[] bytes, int offset, int count) =>
+                {
+                    return await stream.ReadAsync(
+                        new Memory<byte>(bytes, offset, count)
+                    );
+                }
+            );
+
+            Validate(input, output);
+        }
 
 
         private static void ReadPackets(byte[] buffer, int encapsulatedPacketCount, int passthroughPacketCount, int maxPacketReadLength, byte[] output, Func<Stream, byte[], int, int, Task<int>> action)
@@ -273,6 +317,29 @@ namespace Microsoft.Data.SqlClient.Tests
                 return await base.ReadAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
             }
         }
+        public override int Read(Span<byte> destination)
+        {
+            if (_readLimit > 0)
+            {
+                return base.Read(destination.Slice(0, Math.Min(_readLimit, destination.Length)));
+            }
+            else
+            {
+                return base.Read(destination);
+            }
+        }
 
+        public override ValueTask<int> ReadAsync(Memory<byte> destination, CancellationToken cancellationToken = default)
+        {
+
+            if (_readLimit > 0)
+            {
+                return base.ReadAsync(destination.Slice(0, Math.Min(_readLimit, destination.Length)), cancellationToken);
+            }
+            else
+            {
+                return base.ReadAsync(destination, cancellationToken);
+            }
+        }
     }
 }
