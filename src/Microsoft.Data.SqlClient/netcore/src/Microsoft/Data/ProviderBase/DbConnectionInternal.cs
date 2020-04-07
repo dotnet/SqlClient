@@ -217,7 +217,6 @@ namespace Microsoft.Data.ProviderBase
 #endif // DEBUG
 
             Activate(transaction);
-
 #if NETCORE3
             PerformanceCounters.NumberOfActiveConnections.Increment();
 #endif

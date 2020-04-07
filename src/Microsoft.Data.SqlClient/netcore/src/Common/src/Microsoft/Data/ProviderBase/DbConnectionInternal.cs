@@ -245,7 +245,8 @@ namespace Microsoft.Data.ProviderBase
 #endif // DEBUG
 #if NETCORE3
             if (PerformanceCounters != null)
-            { // Pool.Clear will DestroyObject that will clean performanceCounters before going here 
+            {
+                // Pool.Clear will DestroyObject that will clean performanceCounters before going here 
                 PerformanceCounters.NumberOfActiveConnections.Decrement();
             }
 #endif
