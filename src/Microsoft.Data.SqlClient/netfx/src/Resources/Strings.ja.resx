@@ -2496,8 +2496,8 @@
   <data name="SQL_IntegratedWithUserIDAndPassword" xml:space="preserve">
     <value>'Authentication=Active Directory Integrated' と接続文字列キーワード 'User ID'、'UID'、'Password'、'PWD' を一緒に使用することはできません。</value>
   </data>
-  <data name="SQL_InteractiveWithUserIDAndPassword" xml:space="preserve">
-    <value>'Authentication=Active Directory Interactive' と接続文字列キーワード 'User ID'、'UID'、'Password'、'PWD' を一緒に使用することはできません。</value>
+  <data name="SQL_InteractiveWithPassword" xml:space="preserve">
+    <value>Cannot use 'Authentication=Active Directory Interactive' with 'Password' or 'PWD' connection string keywords.</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
     <value>Credential プロパティが設定されている場合は、'Authentication=Active Directory Integrated' を使用できません。</value>
