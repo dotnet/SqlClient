@@ -62,15 +62,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 //Try to see if any event is enabled
                 Assert.False(eventSource.IsEnabled());
-
-                //Try to enable events for specific keyword
-                TraceListener.EnableEvents(eventSource, EventLevel.Informational, (EventKeywords)2);
-
-                //Try to see if EventKeyword 2 is enabled.
-                Assert.True(eventSource.IsEnabled(EventLevel.Informational, (EventKeywords)2));
-
-                //Try to see if any other eventKeyword is activated
-                Assert.False(eventSource.IsEnabled(EventLevel.Informational, (EventKeywords)4));
             }
         }
     }
