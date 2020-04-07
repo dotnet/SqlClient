@@ -27,8 +27,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private const string BadConnectionString = "data source = bad; initial catalog = bad; uid = bad; password = bad; connection timeout = 1;";
         private static readonly string s_tcpConnStr =  DataTestUtility.TCPConnectionString ?? string.Empty;
         
-        public static bool IsConnectionStringConfigured() => s_tcpConnStr != string.Empty;
-
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void ExecuteScalarTest()
         {
