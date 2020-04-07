@@ -4,7 +4,6 @@
 
 namespace Microsoft.Data.ProviderBase
 {
-
     using System;
     using System.Data;
     using System.Data.Common;

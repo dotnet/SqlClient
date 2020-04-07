@@ -1678,13 +1678,13 @@ Base Type   => Expected : Actual == time : time
 SqlBulkCopySqlDataReader_Variant>>> EXCEPTION: [System.InvalidCastException] Specified cast is not valid.
 
 ------------------------------ SqlBulkCopyDataTable_Type [type: time value:1/1/0001 00:00:00] ------------------------------
-SqlBulkCopyDataTable_Type>>> EXCEPTION: [System.InvalidOperationException] The given value of type DateTime from the data source cannot be converted to type time of the specified target column.
+SqlBulkCopyDataTable_Type[EXPECTED INVALID OPERATION EXCEPTION] The given value '1/1/0001 00:00:00' of type DateTime from the data source cannot be converted to type time for Column 0 [f1] Row 1.
 
 ------------------------------ SqlBulkCopyDataTable_Variant [type: time value:1/1/0001 00:00:00] ------------------------------
 SqlBulkCopyDataTable_Variant>>> EXCEPTION: [System.Data.SqlTypes.SqlTypeException] SqlDateTime overflow. Must be between 1/1/1753 12:00:00 AM and 12/31/9999 11:59:59 PM.
 
 ------------------------------ SqlBulkCopyDataRow_Type [type: time value:1/1/0001 00:00:00] ------------------------------
-SqlBulkCopyDataRow_Type>>> EXCEPTION: [System.InvalidOperationException] The given value of type DateTime from the data source cannot be converted to type time of the specified target column.
+SqlBulkCopyDataRow_Type[EXPECTED INVALID OPERATION EXCEPTION] The given value '1/1/0001 00:00:00' of type DateTime from the data source cannot be converted to type time for Column 0 [f1] Row 1.
 
 ------------------------------ SqlBulkCopyDataRow_Variant [type: time value:1/1/0001 00:00:00] ------------------------------
 SqlBulkCopyDataRow_Variant>>> EXCEPTION: [System.Data.SqlTypes.SqlTypeException] SqlDateTime overflow. Must be between 1/1/1753 12:00:00 AM and 12/31/9999 11:59:59 PM.
@@ -1750,7 +1750,7 @@ Base Type   => Expected : Actual == time : time
 SqlBulkCopySqlDataReader_Variant>>> EXCEPTION: [System.InvalidCastException] Specified cast is not valid.
 
 ------------------------------ SqlBulkCopyDataTable_Type [type: time value:12/31/9999 23:59:59.9999999] ------------------------------
-SqlBulkCopyDataTable_Type>>> EXCEPTION: [System.InvalidOperationException] The given value of type DateTime from the data source cannot be converted to type time of the specified target column.
+SqlBulkCopyDataTable_Type[EXPECTED INVALID OPERATION EXCEPTION] The given value '12/31/9999 23:59:59.9999999' of type DateTime from the data source cannot be converted to type time for Column 0 [f1] Row 1.
 
 ------------------------------ SqlBulkCopyDataTable_Variant [type: time value:12/31/9999 23:59:59.9999999] ------------------------------
 Type        => Expected : Actual == System.DateTime : System.DateTime
@@ -1760,7 +1760,7 @@ SqlBulkCopy From Data Table [Variant Type]>>> ERROR: VARIANT BASE TYPE MISMATCH!
 SqlBulkCopy From Data Table [Variant Type]>>> ERROR: VALUE MISMATCH!!! [Actual = 12/31/9999 11:59:59 PM] [Expected = 12/31/9999 11:59:59 PM]
 
 ------------------------------ SqlBulkCopyDataRow_Type [type: time value:12/31/9999 23:59:59.9999999] ------------------------------
-SqlBulkCopyDataRow_Type>>> EXCEPTION: [System.InvalidOperationException] The given value of type DateTime from the data source cannot be converted to type time of the specified target column.
+SqlBulkCopyDataRow_Type[EXPECTED INVALID OPERATION EXCEPTION] The given value '12/31/9999 23:59:59.9999999' of type DateTime from the data source cannot be converted to type time for Column 0 [f1] Row 1.
 
 ------------------------------ SqlBulkCopyDataRow_Variant [type: time value:12/31/9999 23:59:59.9999999] ------------------------------
 Type        => Expected : Actual == System.DateTime : System.DateTime

@@ -812,9 +812,21 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_BulkLoadMappingsNamesOrOrdinalsOnly));
         }
-        internal static Exception BulkLoadCannotConvertValue(Type sourcetype, MetaType metatype, Exception e)
+        internal static Exception BulkLoadCannotConvertValue(Type sourcetype, MetaType metatype, int ordinal, int rowNumber, bool isEncrypted, string columnName, string value, Exception e)
         {
-            return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_BulkLoadCannotConvertValue, sourcetype.Name, metatype.TypeName), e);
+            string quotedValue = string.Empty;
+            if (!isEncrypted)
+            {
+                quotedValue = string.Format(" '{0}'", (value.Length > 100 ? value.Substring(0, 100) : value));
+            }
+            if (rowNumber == -1)
+            {
+                return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_BulkLoadCannotConvertValueWithoutRowNo, quotedValue, sourcetype.Name, metatype.TypeName, ordinal, columnName), e);
+            }
+            else
+            {
+                return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_BulkLoadCannotConvertValue, quotedValue, sourcetype.Name, metatype.TypeName, ordinal, columnName, rowNumber), e);
+            }
         }
         internal static Exception BulkLoadNonMatchingColumnMapping()
         {
@@ -1710,6 +1722,16 @@ namespace Microsoft.Data.SqlClient
         internal static Exception EnclaveComputationsNotSupported()
         {
             return ADP.InvalidOperation(System.SRHelper.GetString(SR.TCE_EnclaveComputationsNotSupported));
+        }
+
+        internal static Exception AttestationURLNotSupported()
+        {
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.TCE_AttestationURLNotSupported));
+        }
+
+        internal static Exception AttestationProtocolNotSupported()
+        {
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.TCE_AttestationProtocolNotSupported));
         }
 
         internal static Exception EnclaveTypeNotReturned()

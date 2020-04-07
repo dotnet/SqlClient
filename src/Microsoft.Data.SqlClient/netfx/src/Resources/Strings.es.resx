@@ -2809,7 +2809,10 @@
     <value>Las asignaciones se deben basar sólo en nombres o en ordinales.</value>
   </data>
   <data name="SQL_BulkLoadCannotConvertValue" xml:space="preserve">
-    <value>El valor del tipo especificado {0} del origen de datos no se puede convertir al tipo {1} de la columna de destino especificada.</value>
+    <value>El valor proporcionado {0} de tipo {1} del origen de datos no se puede convertir al tipo {2} para la columna {3} [{4}], fila {5}.</value>
+  </data>
+  <data name="SQL_BulkLoadCannotConvertValueWithoutRowNo" xml:space="preserve">
+    <value>El valor proporcionado {0} de tipo {1} del origen de datos no se puede convertir al tipo {2} para la columna {3} [{4}].</value>
   </data>
   <data name="SQL_BulkLoadNonMatchingColumnMapping" xml:space="preserve">
     <value>La ColumnMapping proporcionada no coincide con ninguna columna del origen o del destino.</value>
@@ -4309,10 +4312,10 @@
     <value>Error interno. SqlColumnEncryptionEnclaveProviderName no puede ser nulo ni estar vacío.</value>
   </data>
   <data name="TCE_NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe" xml:space="preserve">
-    <value>Error al leer el conjunto de resultados "{0}. La dirección URL de atestación no se ha especificado en la cadena de conexión, pero la consulta requiere cálculos de enclave. El tipo de enclave es "{1}". </value>
+    <value>Se ha producido un error al leer el conjunto de resultados "{0}". No se ha especificado la dirección URL de atestación en la cadena de conexión, pero la consulta requiere cálculos de enclave. El tipo de enclave es "{1}". </value>
   </data>
   <data name="TCE_NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage" xml:space="preserve">
-    <value>Error al generar el paquete de enclave. La dirección URL de atestación no se ha especificado en la cadena de conexión, pero la consulta requiere cálculos de enclave.  El tipo de enclave es "{0}". </value>
+    <value>Se ha producido un error durante la generación del paquete enclave. No se ha especificado la dirección URL de atestación en la cadena de conexión, pero la consulta requiere cálculos de enclave. El tipo de enclave es "{0}". </value>
   </data>
   <data name="TCE_EnclaveTypeNullForEnclaveBasedQuery" xml:space="preserve">
     <value>Error interno. El tipo de enclave recibido de SQL Server es nulo o está vacío al ejecutar una consulta que requiere cálculos de enclave.</value>
@@ -4336,7 +4339,13 @@
     <value>La instancia de {0} en uso no admite el cifrado de columnas.</value>
   </data>
   <data name="TCE_EnclaveComputationsNotSupported" xml:space="preserve">
+    <value>Ha especificado la dirección URL de atestación de enclave y el protocolo de atestación en la cadena de conexión, pero la instancia de SQL Server que se está usando no admite los cálculos basados en enclave.</value>
+  </data>
+  <data name="TCE_AttestationURLNotSupported" xml:space="preserve">
     <value>Ha especificado la dirección URL de atestación de enclave en la cadena de conexión, pero la instancia de SQL Server en uso no admite cálculos basados en enclave.</value>
+  </data>
+  <data name="TCE_AttestationProtocolNotSupported" xml:space="preserve">
+    <value>Ha especificado el protocolo de atestación en la cadena de conexión, pero la instancia de SQL Server que se está usando no admite cálculos basados en enclave.</value>
   </data>
   <data name="TCE_EnclaveTypeNotReturned" xml:space="preserve">
     <value>Ha especificado la dirección URL de atestación de enclave en la cadena de conexión, pero la instancia de SQL Server no devolvió un tipo de enclave. Asegúrese de que el tipo de enclave está configurado correctamente en la instancia.</value>
@@ -4516,6 +4525,6 @@
     <value>No se pudo inicializar la conexión. El protocolo de atestación "{0}" no admite el tipo de enclave "{1}".</value>
   </data>
   <data name="TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage" xml:space="preserve">
-    <value>Error durante la generación del paquete enclave. No se ha especificado el protocolo de atestación en la cadena de conexión, pero la consulta requiere cálculos de enclave.</value>
+    <value>Se ha producido un error durante la generación del paquete enclave. No se ha especificado el protocolo de atestación en la cadena de conexión, pero la consulta requiere cálculos de enclave.</value>
   </data>
 </root>

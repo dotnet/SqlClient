@@ -228,6 +228,23 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [CheckConnStrSetupFact]
+        public static void EnclavesConnectionExceptionTest()
+        {
+            string connectionStringWithAttestationProtocol = DataTestUtility.TCPConnectionString + ";Attestation Protocol = HGS;";
+            string connectionStringWithAttestionURL = DataTestUtility.TCPConnectionString + ";Enclave Attestation URL = https://dummyURL;";
+            string connectionStringWithEnclave = connectionStringWithAttestionURL + ";Attestation Protocol = HGS;";
+
+            InvalidOperationException e1 = Assert.Throws<InvalidOperationException>(() => new SqlConnection(connectionStringWithAttestionURL).Open());
+            Assert.Contains("You have specified the enclave attestation URL in the connection string", e1.Message);
+
+            InvalidOperationException e2 = Assert.Throws<InvalidOperationException>(() => new SqlConnection(connectionStringWithAttestationProtocol).Open());
+            Assert.Contains("You have specified the attestation protocol in the connection string", e2.Message);
+
+            InvalidOperationException e3 = Assert.Throws<InvalidOperationException>(() => new SqlConnection(connectionStringWithEnclave).Open());
+            Assert.Contains("You have specified the enclave attestation URL and attestation protocol in the connection string", e3.Message);
+        }
+
+        [CheckConnStrSetupFact]
         public static async Task UnobservedTaskExceptionTest()
         {
             List<Exception> exceptionsSeen = new List<Exception>();

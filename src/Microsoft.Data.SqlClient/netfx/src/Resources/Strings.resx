@@ -2496,8 +2496,8 @@
   <data name="SQL_IntegratedWithUserIDAndPassword" xml:space="preserve">
     <value>Cannot use 'Authentication=Active Directory Integrated' with 'User ID', 'UID', 'Password' or 'PWD' connection string keywords.</value>
   </data>
-  <data name="SQL_InteractiveWithUserIDAndPassword" xml:space="preserve">
-    <value>Cannot use 'Authentication=Active Directory Interactive' with 'User ID', 'UID', 'Password' or 'PWD' connection string keywords.</value>
+  <data name="SQL_InteractiveWithPassword" xml:space="preserve">
+    <value>Cannot use 'Authentication=Active Directory Interactive' with 'Password' or 'PWD' connection string keywords.</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
     <value>Cannot use 'Authentication=Active Directory Integrated', if the Credential property has been set.</value>
@@ -2809,7 +2809,10 @@
     <value>Mappings must be either all name or all ordinal based.</value>
   </data>
   <data name="SQL_BulkLoadCannotConvertValue" xml:space="preserve">
-    <value>The given value of type {0} from the data source cannot be converted to type {1} of the specified target column.</value>
+    <value>The given value{0} of type {1} from the data source cannot be converted to type {2} for Column {3} [{4}] Row {5}.</value>
+  </data>
+  <data name="SQL_BulkLoadCannotConvertValueWithoutRowNo" xml:space="preserve">
+    <value>The given value{0} of type {1} from the data source cannot be converted to type {2} for Column {3} [{4}].</value>
   </data>
   <data name="SQL_BulkLoadNonMatchingColumnMapping" xml:space="preserve">
     <value>The given ColumnMapping does not match up with any column in the source or destination.</value>
@@ -4336,7 +4339,13 @@
     <value>{0} instance in use does not support column encryption.</value>
   </data>
   <data name="TCE_EnclaveComputationsNotSupported" xml:space="preserve">
+    <value>You have specified the enclave attestation URL and attestation protocol in the connection string, but the SQL Server instance in use does not support enclave based computations.</value>
+  </data>
+  <data name="TCE_AttestationURLNotSupported" xml:space="preserve">
     <value>You have specified the enclave attestation URL in the connection string, but the SQL Server instance in use does not support enclave based computations.</value>
+  </data>
+  <data name="TCE_AttestationProtocolNotSupported" xml:space="preserve">
+    <value>You have specified the attestation protocol in the connection string, but the SQL Server instance in use does not support enclave based computations.</value>
   </data>
   <data name="TCE_EnclaveTypeNotReturned" xml:space="preserve">
     <value>You have specified the enclave attestation URL in the connection string, but the SQL Server instance did not return an enclave type. Please make sure the enclave type is correctly configured in your instance.</value>

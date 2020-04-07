@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 [assembly: System.CLSCompliant(true)]
+[assembly: System.Resources.NeutralResourcesLanguageAttribute("en-US")]
 namespace Microsoft.Data
 {
     /// <include file='..\..\..\..\doc\snippets\Microsoft.Data\OperationAbortedException.xml' path='docs/members[@name="OperationAbortedException"]/OperationAbortedException/*' />
@@ -160,6 +161,8 @@ namespace Microsoft.Data.SqlClient
         public bool EnableStreaming { get { throw null; } set { } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/NotifyAfter/*'/>
         public int NotifyAfter { get { throw null; } set { } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/RowsCopied/*'/>
+        public int RowsCopied { get { throw null; } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/SqlRowsCopied/*'/>
         public event Microsoft.Data.SqlClient.SqlRowsCopiedEventHandler SqlRowsCopied { add { } remove { } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/Close/*'/>
@@ -800,6 +803,11 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/AAS/*' />
         AAS = 1,
+
+#if ENCLAVE_SIMULATOR
+        /// <include file='..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/SIM/*' />
+        SIM = 2,
+#endif
 
         /// <include file='..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/HGS/*' />
         HGS = 3

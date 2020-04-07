@@ -10,13 +10,11 @@ using System.Text;
 
 namespace Microsoft.Data.SqlClient
 {
-
     /// <summary>
     /// A delegate for communicating with secure enclave
     /// </summary>
     internal class EnclaveDelegate
     {
-
         private static readonly SqlAeadAes256CbcHmac256Factory SqlAeadAes256CbcHmac256Factory = new SqlAeadAes256CbcHmac256Factory();
         private static readonly string GetAttestationInfoQueryString = String.Format(@"Select GetTrustedModuleIdentityAndAttestationInfo({0}) as attestationInfo", 0);
         private static readonly EnclaveDelegate _EnclaveDelegate = new EnclaveDelegate();
@@ -212,6 +210,14 @@ namespace Microsoft.Data.SqlClient
                         sqlColumnEncryptionEnclaveProvider = EnclaveProviders[attestationProtocol];
                         break;
 
+#if ENCLAVE_SIMULATOR
+                    case SqlConnectionAttestationProtocol.SIM:
+                        SimulatorEnclaveProvider simulatorEnclaveProvider = new SimulatorEnclaveProvider();
+                        EnclaveProviders[attestationProtocol] = (SqlColumnEncryptionEnclaveProvider)simulatorEnclaveProvider;
+                        sqlColumnEncryptionEnclaveProvider = EnclaveProviders[attestationProtocol];
+                        break;
+#endif
+
                     default:
                         break;
                 }
@@ -234,6 +240,11 @@ namespace Microsoft.Data.SqlClient
 
                 case SqlConnectionAttestationProtocol.HGS:
                     return "HGS";
+
+#if ENCLAVE_SIMULATOR
+                case SqlConnectionAttestationProtocol.SIM:
+                    return "SIM";
+#endif
 
                 default:
                     return "NotSpecified";

@@ -555,8 +555,15 @@ namespace Microsoft.Data.SqlClient.Tests
         [Fact]
         public void ParameterCollectionTest()
         {
-            SqlCommand cmd = new SqlCommand();
-            cmd.Parameters.AddRange(new SqlParameter[] { });
+            using (var cmd = new SqlCommand())
+            {
+                cmd.Parameters.Add(new SqlParameter());
+                cmd.Parameters.AddRange(new SqlParameter[] { });
+                cmd.Parameters.Insert(0, new SqlParameter());                
+                cmd.Parameters.Insert(1, new SqlParameter());                
+                cmd.Parameters.RemoveAt(0);
+                cmd.Parameters.Remove(cmd.Parameters[0]);
+            }
         }
     }
 }

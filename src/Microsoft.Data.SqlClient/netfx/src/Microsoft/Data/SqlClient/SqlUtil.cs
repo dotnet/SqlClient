@@ -326,9 +326,9 @@ namespace Microsoft.Data.SqlClient
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_IntegratedWithUserIDAndPassword));
         }
 
-        static internal Exception InteractiveWithUserIDAndPassword()
+        static internal Exception InteractiveWithPassword()
         {
-            return ADP.Argument(StringsHelper.GetString(Strings.SQL_InteractiveWithUserIDAndPassword));
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_InteractiveWithPassword));
         }
 
         static internal Exception SettingIntegratedWithCredential()
@@ -959,9 +959,21 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_BulkLoadMappingsNamesOrOrdinalsOnly));
         }
-        static internal Exception BulkLoadCannotConvertValue(Type sourcetype, MetaType metatype, Exception e)
+        static internal Exception BulkLoadCannotConvertValue(Type sourcetype, MetaType metatype, int ordinal, int rowNumber, bool isEncrypted, string columnName, string value, Exception e)
         {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_BulkLoadCannotConvertValue, sourcetype.Name, metatype.TypeName), e);
+            string quotedValue = string.Empty;
+            if (!isEncrypted)
+            {
+                quotedValue = string.Format(" '{0}'", (value.Length > 100 ? value.Substring(0, 100) : value));
+            }
+            if (rowNumber == -1)
+            {
+                return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_BulkLoadCannotConvertValueWithoutRowNo, quotedValue, sourcetype.Name, metatype.TypeName, ordinal, columnName), e);
+            }
+            else
+            {
+                return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_BulkLoadCannotConvertValue, quotedValue, sourcetype.Name, metatype.TypeName, ordinal, columnName, rowNumber), e);
+            }
         }
         static internal Exception BulkLoadNonMatchingColumnMapping()
         {
@@ -1728,6 +1740,16 @@ namespace Microsoft.Data.SqlClient
         static internal Exception EnclaveComputationsNotSupported()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_EnclaveComputationsNotSupported));
+        }
+
+        internal static Exception AttestationURLNotSupported()
+        {
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_AttestationURLNotSupported));
+        }
+
+        internal static Exception AttestationProtocolNotSupported()
+        {
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_AttestationProtocolNotSupported));
         }
 
         static internal Exception EnclaveTypeNotReturned()

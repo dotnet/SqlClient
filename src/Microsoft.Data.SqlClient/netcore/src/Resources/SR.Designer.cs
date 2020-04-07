@@ -10,8 +10,8 @@
 
 namespace System {
     using System;
-
-
+    
+    
     /// <summary>
     ///   A strongly-typed resource class, for looking up localized strings, etc.
     /// </summary>
@@ -19,7 +19,7 @@ namespace System {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class SR {
@@ -2140,11 +2140,20 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The given value of type {0} from the data source cannot be converted to type {1} of the specified target column..
+        ///   Looks up a localized string similar to The given value{0} of type {1} from the data source cannot be converted to type {2} for Column {3} [{4}] Row {5}..
         /// </summary>
         internal static string SQL_BulkLoadCannotConvertValue {
             get {
                 return ResourceManager.GetString("SQL_BulkLoadCannotConvertValue", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The given value{0} of type {1} from the data source cannot be converted to type {2} for Column {3} [{4}]..
+        /// </summary>
+        internal static string SQL_BulkLoadCannotConvertValueWithoutRowNo {
+            get {
+                return ResourceManager.GetString("SQL_BulkLoadCannotConvertValueWithoutRowNo", resourceCulture);
             }
         }
         
@@ -4093,11 +4102,29 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to You have specified the attestation protocol in the connection string, but the SQL Server instance in use does not support enclave based computations..
+        /// </summary>
+        internal static string TCE_AttestationProtocolNotSupported {
+            get {
+                return ResourceManager.GetString("TCE_AttestationProtocolNotSupported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Failed to initialize connection. The attestation protocol &apos;{0}&apos; does not support the enclave type &apos;{1}&apos;..
         /// </summary>
         internal static string TCE_AttestationProtocolNotSupportEnclaveType {
             get {
                 return ResourceManager.GetString("TCE_AttestationProtocolNotSupportEnclaveType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You have specified the enclave attestation URL in the connection string, but the SQL Server instance in use does not support enclave based computations..
+        /// </summary>
+        internal static string TCE_AttestationURLNotSupported {
+            get {
+                return ResourceManager.GetString("TCE_AttestationURLNotSupported", resourceCulture);
             }
         }
         
@@ -4363,7 +4390,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to You have specified the enclave attestation URL in the connection string, but the SQL Server instance in use does not support enclave based computations..
+        ///   Looks up a localized string similar to You have specified the enclave attestation URL and attestation protocol in the connection string, but the SQL Server instance in use does not support enclave based computations..
         /// </summary>
         internal static string TCE_EnclaveComputationsNotSupported {
             get {

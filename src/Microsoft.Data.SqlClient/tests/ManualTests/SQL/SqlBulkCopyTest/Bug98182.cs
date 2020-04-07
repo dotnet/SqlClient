@@ -47,8 +47,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                 ColumnMappings.Add("col 2", "[col 2]");
 
                                 bulkcopy.WriteToServer(reader);
+                                
+                                DataTestUtility.AssertEqualsWithDescription(bulkcopy.RowsCopied, 1, "Unexpected number of rows.");
                             }
-
                             Helpers.VerifyResults(dstConn, dstTable, 2, 1);
                         }
                     }

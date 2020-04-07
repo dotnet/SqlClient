@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
+using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data.Common
 {
@@ -101,7 +102,6 @@ namespace Microsoft.Data.Common
         private readonly string _usersConnectionString;
         private readonly Dictionary<string, string> _parsetable;
         internal readonly NameValuePair _keyChain;
-        internal readonly bool _hasPasswordKeyword;
 
         internal Dictionary<string, string> Parsetable
         {
@@ -111,17 +111,19 @@ namespace Microsoft.Data.Common
         public string UsersConnectionString(bool hidePassword) =>
             UsersConnectionString(hidePassword, false);
 
+        internal string UsersConnectionStringForTrace() => UsersConnectionString(true, true);
+
         private string UsersConnectionString(bool hidePassword, bool forceHidePassword)
         {
             string connectionString = _usersConnectionString;
-            if (_hasPasswordKeyword && (forceHidePassword || (hidePassword && !HasPersistablePassword)))
+            if (HasPasswordKeyword && (forceHidePassword || (hidePassword && !HasPersistablePassword)))
             {
                 ReplacePasswordPwd(out connectionString, false);
             }
             return connectionString ?? string.Empty;
         }
 
-        internal bool HasPersistablePassword => _hasPasswordKeyword ?
+        internal bool HasPersistablePassword => HasPasswordKeyword ?
             ConvertValueToBoolean(KEY.Persist_Security_Info, false) :
             true; // no password means persistable password so we don't have to munge
 
@@ -157,7 +159,27 @@ namespace Microsoft.Data.Common
             (0 == StringComparer.OrdinalIgnoreCase.Compare(strvalue, strconst));
 
         [System.Diagnostics.Conditional("DEBUG")]
-        static partial void DebugTraceKeyValuePair(string keyname, string keyvalue, Dictionary<string, string> synonyms);
+        private static void DebugTraceKeyValuePair(string keyname, string keyvalue, Dictionary<string, string> synonyms)
+        {
+            if (SqlClientEventSource.Log.IsAdvancedTraceOn())
+            {
+                Debug.Assert(string.Equals(keyname, keyname?.ToLower(), StringComparison.InvariantCulture), "missing ToLower");
+                string realkeyname = ((null != synonyms) ? (string)synonyms[keyname] : keyname);
+
+                if ((KEY.Password != realkeyname) && (SYNONYM.Pwd != realkeyname))
+                {
+                    // don't trace passwords ever!
+                    if (null != keyvalue)
+                    {
+                        SqlClientEventSource.Log.AdvancedTraceEvent("<comm.DbConnectionOptions|INFO|ADV> KeyName='{0}', KeyValue='{1}'", keyname, keyvalue);
+                    }
+                    else
+                    {
+                        SqlClientEventSource.Log.AdvancedTraceEvent("<comm.DbConnectionOptions|INFO|ADV> KeyName='{0}'", keyname);
+                    }
+                }
+            }
+        }
 
         private static string GetKeyName(StringBuilder buffer)
         {

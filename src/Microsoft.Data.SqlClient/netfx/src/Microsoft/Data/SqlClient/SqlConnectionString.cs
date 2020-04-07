@@ -530,9 +530,9 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.IntegratedWithUserIDAndPassword();
             }
 
-            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive && (HasUserIdKeyword || HasPasswordKeyword))
+            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive && (HasPasswordKeyword))
             {
-                throw SQL.InteractiveWithUserIDAndPassword();
+                throw SQL.InteractiveWithPassword();
             }
 
 #if ADONET_CERT_AUTH

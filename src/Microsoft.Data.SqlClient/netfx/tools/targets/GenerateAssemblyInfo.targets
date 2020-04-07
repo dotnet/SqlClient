@@ -26,6 +26,7 @@
             <AssemblyInfo Include="[assembly: AssemblyFileVersion(&quot;$(AssemblyFileVersion)&quot;)]" />
             <AssemblyInfo Include="[assembly: AssemblyInformationalVersion(&quot;$(Version)&quot;)]" />
             <AssemblyInfo Include="[assembly: AssemblyConfiguration(&quot;$(Configuration)&quot;)]" />
+            <AssemblyInfo Include="[assembly: NeutralResourcesLanguage(&quot;en-US&quot;)]" />
         </ItemGroup>
         <MakeDir Directories="$(IntermediateOutputPath)" />
         <WriteLinesToFile File="$(IntermediateOutputPath)$(AssemblyName).AssemblyInfo.cs" Overwrite="True" Lines="@(AssemblyInfo)" />

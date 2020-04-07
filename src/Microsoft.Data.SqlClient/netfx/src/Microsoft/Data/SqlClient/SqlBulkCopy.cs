@@ -24,11 +24,9 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
-    // -------------------------------------------------------------------------------------------------
-    // this internal class helps us to associate the metadata (from the target)
-    // with columnordinals (from the source)
-    //
-    sealed internal class _ColumnMapping
+    // This internal class helps us to associate the metadata from the target.
+    // with ColumnOrdinals from the source.
+    internal sealed class _ColumnMapping
     {
         internal int _sourceColumnOrdinal;
         internal _SqlMetaData _metadata;
@@ -71,12 +69,12 @@ namespace Microsoft.Data.SqlClient
     sealed internal class Result
     {
         private _SqlMetaDataSet _metadata;
-        private ArrayList _rowset;
+        private List<Row> _rowset;
 
         internal Result(_SqlMetaDataSet metadata)
         {
             this._metadata = metadata;
-            this._rowset = new ArrayList();
+            this._rowset = new List<Row>();
         }
 
         internal int Count
@@ -113,7 +111,7 @@ namespace Microsoft.Data.SqlClient
     //
     sealed internal class BulkCopySimpleResultSet
     {
-        private ArrayList _results;                   // the list of results
+        private List<Result> _results;                   // the list of results
         private Result resultSet;                     // the current result
         private int[] indexmap;                       // associates columnids with indexes in the rowarray
 
@@ -121,7 +119,7 @@ namespace Microsoft.Data.SqlClient
         //
         internal BulkCopySimpleResultSet()
         {
-            _results = new ArrayList();
+            _results = new List<Result>();
         }
 
         // indexer
@@ -266,13 +264,37 @@ namespace Microsoft.Data.SqlClient
         private DataRowState _rowStateToSkip;
         private IEnumerator _rowEnumerator;
 
+        private int RowNumber
+        {
+            get
+            {
+                int rowNo;
+
+                switch (_rowSourceType)
+                {
+                    case ValueSourceType.RowArray:
+                        rowNo = ((DataTable)_dataTableSource).Rows.IndexOf(_rowEnumerator.Current as DataRow);
+                        break;
+                    case ValueSourceType.DataTable:
+                        rowNo = ((DataTable)_rowSource).Rows.IndexOf(_rowEnumerator.Current as DataRow);
+                        break;
+                    case ValueSourceType.DbDataReader:
+                    case ValueSourceType.IDataReader:
+                    case ValueSourceType.Unspecified:
+                    default:
+                        return -1;
+                }
+                return ++rowNo;
+            }
+        }
+
         private TdsParser _parser;
         private TdsParserStateObject _stateObj;
         private List<_ColumnMapping> _sortedColumnMappings;
 
         private SqlRowsCopiedEventHandler _rowsCopiedEventHandler;
 
-        private static int _objectTypeCount; // Bid counter
+        private static int _objectTypeCount; // EventSource Counter
         internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
 
         //newly added member variables for Async modification, m = member variable to bcp
@@ -471,6 +493,15 @@ namespace Microsoft.Data.SqlClient
 
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/RowsCopied/*'/>
+        public int RowsCopied
+        {
+            get
+            {
+                return _rowsCopied;
+            }
+        }
+
         internal SqlStatistics Statistics
         {
             get
@@ -593,10 +624,8 @@ namespace Microsoft.Data.SqlClient
         private Task<BulkCopySimpleResultSet> CreateAndExecuteInitialQueryAsync(out BulkCopySimpleResultSet result)
         {
             string TDSCommand = CreateInitialQuery();
-
-            Bid.Trace("<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|INFO> Initial Query: '%ls' \n", TDSCommand);
-            Bid.CorrelationTrace("<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|Info|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
-
+            SqlClientEventSource.Log.TraceEvent("<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|INFO> Initial Query: '{0}'", TDSCommand);
+            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|Info|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
             Task executeTask = _parser.TdsExecuteSQLBatch(TDSCommand, this.BulkCopyTimeout, null, _stateObj, sync: !_isAsyncBulkCopy, callerHasConnectionLock: true);
 
             if (executeTask == null)
@@ -886,8 +915,7 @@ namespace Microsoft.Data.SqlClient
         //
         private Task SubmitUpdateBulkCommand(string TDSCommand)
         {
-            Bid.CorrelationTrace("<sc.SqlBulkCopy.SubmitUpdateBulkCommand|Info|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
-
+            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlBulkCopy.SubmitUpdateBulkCommand|Info|Correlation> ObjectID{0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
             Task executeTask = _parser.TdsExecuteSQLBatch(TDSCommand, this.BulkCopyTimeout, null, _stateObj, sync: !_isAsyncBulkCopy, callerHasConnectionLock: true);
 
             if (executeTask == null)
@@ -1629,11 +1657,11 @@ namespace Microsoft.Data.SqlClient
                             }
                             catch (SqlTruncateException)
                             {
-                                throw SQL.BulkLoadCannotConvertValue(value.GetType(), mt, ADP.ParameterValueOutOfRange(sqlValue));
+                                throw SQL.BulkLoadCannotConvertValue(value.GetType(), mt, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), ADP.ParameterValueOutOfRange(sqlValue));
                             }
                             catch (Exception e)
                             {
-                                throw SQL.BulkLoadCannotConvertValue(value.GetType(), mt, e);
+                                throw SQL.BulkLoadCannotConvertValue(value.GetType(), mt, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), e);
                             }
                         }
 
@@ -1722,7 +1750,7 @@ namespace Microsoft.Data.SqlClient
 
                     default:
                         Debug.Assert(false, "Unknown TdsType!" + type.NullableType.ToString("x2", (IFormatProvider)null));
-                        throw SQL.BulkLoadCannotConvertValue(value.GetType(), type, null);
+                        throw SQL.BulkLoadCannotConvertValue(value.GetType(), type, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), null);
                 }
 
                 if (typeChanged)
@@ -1739,7 +1767,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw;
                 }
-                throw SQL.BulkLoadCannotConvertValue(value.GetType(), type, e);
+                throw SQL.BulkLoadCannotConvertValue(value.GetType(), type, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), e);
             }
         }
 
@@ -2517,7 +2545,7 @@ namespace Microsoft.Data.SqlClient
                             // it's also the user's chance to cause an exception ...
                             _stateObj.BcpLock = true;
                             abortOperation = FireRowsCopiedEvent(_rowsCopied);
-                            Bid.Trace("<sc.SqlBulkCopy.WriteToServerInternal|INFO> \n");
+                            SqlClientEventSource.Log.TraceEvent("<sc.SqlBulkCopy.WriteToServerInternal|{0}>", "INFO");
 
                             // just in case some pathological person closes the target connection ...
                             if (ConnectionState.Open != _connection.State)
@@ -2906,18 +2934,18 @@ namespace Microsoft.Data.SqlClient
                 {
                     tdsReliabilitySection.Start();
 #endif //DEBUG
-                    if ((cleanupParser) && (_parser != null) && (_stateObj != null))
-                    {
-                        _parser._asyncWrite = false;
-                        Task task = _parser.WriteBulkCopyDone(_stateObj);
-                        Debug.Assert(task == null, "Write should not pend when error occurs");
-                        RunParser();
-                    }
+                if ((cleanupParser) && (_parser != null) && (_stateObj != null))
+                {
+                    _parser._asyncWrite = false;
+                    Task task = _parser.WriteBulkCopyDone(_stateObj);
+                    Debug.Assert(task == null, "Write should not pend when error occurs");
+                    RunParser();
+                }
 
-                    if (_stateObj != null)
-                    {
-                        CleanUpStateObject();
-                    }
+                if (_stateObj != null)
+                {
+                    CleanUpStateObject();
+                }
 #if DEBUG
                 }
                 finally

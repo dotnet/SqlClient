@@ -100,14 +100,14 @@ Unix (`netcoreapp`):
 ### Pre-Requisites for running Manual tests:
 Manual Tests require the below setup to run:
 * SQL Server with enabled Shared Memory, TCP and Named Pipes Protocols and access to the Client OS.
-* Databases "NORTHWIND" and "UdtTestDb" present in SQL Server, created using SQL scripts [createNorthwindDb.sql](tools\testsql\createNorthwindDb.sql) and [createUdtTestDb.sql](tools\testsql\createUdtTestDb.sql).
-* Make a copy of the configuration file [config.default.json](src\Microsoft.Data.SqlClient\tests\ManualTests\config.default.json) and rename it to `config.json`. Update the values in `config.json`:
+* Databases "NORTHWIND" and "UdtTestDb" present in SQL Server, created using SQL scripts [createNorthwindDb.sql](tools/testsql/createNorthwindDb.sql) and [createUdtTestDb.sql](tools/testsql/createUdtTestDb.sql).
+* Make a copy of the configuration file [config.default.json](src/Microsoft.Data.SqlClient/tests/ManualTests/config.default.json) and rename it to `config.json`. Update the values in `config.json`:
 
 |Property|Description|Value|
 |------|--------|-------------------|
 |TCPConnectionString | Connection String for a TCP enabled SQL Server instance. | `Server={servername};Database={Database_Name};Trusted_Connection=True;` <br/> OR `Data Source={servername};Initial Catalog={Database_Name};Integrated Security=True;`|
 |NPConnectionString | Connection String for a Named Pipes enabled SQL Server instance.| `Server=\\{servername}\pipe\sql\query;Database={Database_Name};Trusted_Connection=True;` <br/> OR <br/> `Data Source=np:{servername};Initial Catalog={Database_Name};Integrated Security=True;`|
-|AADAccessToken | (Optional) Contains the Access Token to be used for tests.| _<OAuth 2.0 Access Token>_ |
+|AADAuthorityURL | (Optional) Identifies the OAuth2 authority resource for `Server` specified in `AADPasswordConnectionString` | `https://login.windows.net/<tenant>`, where `<tenant>` is the tenant ID of the Azure Active Directory (Azure AD) tenant |
 |AADPasswordConnectionString | (Optional) Connection String for testing Azure Active Directory Password Authentication. | `Data Source={server.database.windows.net}; Initial Catalog={Azure_DB_Name};Authentication=Active Directory Password; User ID={AAD_User}; Password={AAD_User_Password};`|
 |AzureKeyVaultURL | (Optional) Azure Key Vault Identifier URL | `https://{keyvaultname}.vault.azure.net/` |
 |AzureKeyVaultClientId | (Optional) "Application (client) ID" of an Active Directory registered application, granted access to the Azure Key Vault specified in `AZURE_KEY_VAULT_URL`. Requires the key permissions Get, List, Import, Decrypt, Encrypt, Unwrap, Wrap, Verify, and Sign. | _{Client Application ID}_ |
@@ -160,6 +160,7 @@ Tests can be built and run with custom Target Frameworks. See the below examples
 # Build the tests for custom TargetFramework (.NET Core)
 # Applicable values: netcoreapp2.1 | netcoreapp2.2 | netcoreapp3.0
 ```
+
 ### Running Tests:
 
 ```bash
@@ -171,3 +172,9 @@ Tests can be built and run with custom Target Frameworks. See the below examples
 # Use above property to run Functional Tests with custom TargetFramework (.NET Core)
 # Applicable values: netcoreapp2.1 | netcoreapp2.2 | netcoreapp3.0
 ```
+
+## Using Managed SNI on Windows
+
+Managed SNI can be enabled on Windows by enabling the below AppContext switch:
+
+**"Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows"**

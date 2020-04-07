@@ -65,7 +65,10 @@ namespace Microsoft.Data.SqlClient
                     default:
                         throw new InvalidOperationException($"Unsupported state: {value}.");
                 }
-                _sqlAuthLogger.LogInfo(_typeName, "SetState", $"State changed from {_state} to {value}.");
+                if (_sqlAuthLogger.IsLoggingEnabled)
+                {
+                    _sqlAuthLogger.LogInfo(_typeName, "SetState", $"State changed from {_state} to {value}.");
+                }
                 _state = value;
             }
         }

@@ -17,8 +17,8 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
-    // This internal class helps us to associate the metadata from the target
-    // with the ColumnOrdinals from the source.
+    // This internal class helps us to associate the metadata from the target.
+    // with ColumnOrdinals from the source.
     internal sealed class _ColumnMapping
     {
         internal int _sourceColumnOrdinal;
@@ -206,11 +206,38 @@ namespace Microsoft.Data.SqlClient
         private DataRowState _rowStateToSkip;
         private IEnumerator _rowEnumerator;
 
+        private int RowNumber
+        {
+            get
+            {
+                int rowNo;
+
+                switch (_rowSourceType)
+                {
+                    case ValueSourceType.RowArray:
+                        rowNo = ((DataTable)_dataTableSource).Rows.IndexOf(_rowEnumerator.Current as DataRow);
+                        break;
+                    case ValueSourceType.DataTable:
+                        rowNo = ((DataTable)_rowSource).Rows.IndexOf(_rowEnumerator.Current as DataRow);                        
+                        break;
+                    case ValueSourceType.DbDataReader:
+                    case ValueSourceType.IDataReader:
+                    case ValueSourceType.Unspecified:
+                    default:
+                        return -1;                        
+                }
+                return ++rowNo;
+            }
+        }
+
         private TdsParser _parser;
         private TdsParserStateObject _stateObj;
         private List<_ColumnMapping> _sortedColumnMappings;
 
         private SqlRowsCopiedEventHandler _rowsCopiedEventHandler;
+
+        private static int _objectTypeCount; // EventSource Counter
+        internal readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
 
         // Newly added member variables for Async modification, m = member variable to bcp.
         private int _savedBatchSize = 0; // Save the batchsize so that changes are not affected unexpectedly.
@@ -382,6 +409,14 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        internal int ObjectID
+        {
+            get
+            {
+                return _objectID;
+            }
+        }
+
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/SqlRowsCopied/*'/>
         public event SqlRowsCopiedEventHandler SqlRowsCopied
         {
@@ -392,6 +427,15 @@ namespace Microsoft.Data.SqlClient
             remove
             {
                 _rowsCopiedEventHandler -= value;
+            }
+        }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/RowsCopied/*'/>
+        public int RowsCopied
+        {
+            get
+            {
+                return _rowsCopied;
             }
         }
 
@@ -501,7 +545,8 @@ namespace Microsoft.Data.SqlClient
         private Task<BulkCopySimpleResultSet> CreateAndExecuteInitialQueryAsync(out BulkCopySimpleResultSet result)
         {
             string TDSCommand = CreateInitialQuery();
-
+            SqlClientEventSource.Log.TraceEvent("<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|INFO> Initial Query: '{0}'", TDSCommand);
+            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|Info|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
             Task executeTask = _parser.TdsExecuteSQLBatch(TDSCommand, this.BulkCopyTimeout, null, _stateObj, sync: !_isAsyncBulkCopy, callerHasConnectionLock: true);
 
             if (executeTask == null)
@@ -766,6 +811,7 @@ namespace Microsoft.Data.SqlClient
 
         private Task SubmitUpdateBulkCommand(string TDSCommand)
         {
+            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlBulkCopy.SubmitUpdateBulkCommand|Info|Correlation> ObjectID{0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current.ToString());
             Task executeTask = _parser.TdsExecuteSQLBatch(TDSCommand, this.BulkCopyTimeout, null, _stateObj, sync: !_isAsyncBulkCopy, callerHasConnectionLock: true);
 
             if (executeTask == null)
@@ -1477,7 +1523,7 @@ namespace Microsoft.Data.SqlClient
                             }
                             catch (SqlTruncateException)
                             {
-                                throw SQL.BulkLoadCannotConvertValue(value.GetType(), mt, ADP.ParameterValueOutOfRange(sqlValue));
+                                throw SQL.BulkLoadCannotConvertValue(value.GetType(), mt, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), ADP.ParameterValueOutOfRange(sqlValue));
                             }
                         }
 
@@ -1566,7 +1612,7 @@ namespace Microsoft.Data.SqlClient
 
                     default:
                         Debug.Fail("Unknown TdsType!" + type.NullableType.ToString("x2", (IFormatProvider)null));
-                        throw SQL.BulkLoadCannotConvertValue(value.GetType(), metadata.metaType, null);
+                        throw SQL.BulkLoadCannotConvertValue(value.GetType(), type, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), null);
                 }
 
                 if (typeChanged)
@@ -1583,7 +1629,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw;
                 }
-                throw SQL.BulkLoadCannotConvertValue(value.GetType(), metadata.metaType, e);
+                throw SQL.BulkLoadCannotConvertValue(value.GetType(), type, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), e);
             }
         }
 
@@ -2272,6 +2318,7 @@ namespace Microsoft.Data.SqlClient
                             // It's also the user's chance to cause an exception.
                             _stateObj.BcpLock = true;
                             abortOperation = FireRowsCopiedEvent(_rowsCopied);
+                            SqlClientEventSource.Log.TraceEvent("<sc.SqlBulkCopy.WriteToServerInternal|{0}>", "INFO");
 
                             // In case the target connection is closed accidentally.
                             if (ConnectionState.Open != _connection.State)
