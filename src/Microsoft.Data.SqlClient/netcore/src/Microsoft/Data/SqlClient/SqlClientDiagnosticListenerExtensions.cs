@@ -38,7 +38,7 @@ namespace Microsoft.Data.SqlClient
         public const string SqlAfterRollbackTransaction = SqlClientPrefix + nameof(WriteTransactionRollbackAfter);
         public const string SqlErrorRollbackTransaction = SqlClientPrefix + nameof(WriteTransactionRollbackError);
 
-        public static Guid WriteCommandBefore(this DiagnosticListener @this, SqlCommand sqlCommand, [CallerMemberName] string operation = "")
+        public static Guid WriteCommandBefore(this DiagnosticListener @this, SqlCommand sqlCommand, long? transactionId, [CallerMemberName] string operation = "")
         {
             if (@this.IsEnabled(SqlBeforeExecuteCommand))
             {
@@ -52,6 +52,7 @@ namespace Microsoft.Data.SqlClient
                         Operation = operation,
                         ConnectionId = sqlCommand.Connection?.ClientConnectionId,
                         Command = sqlCommand,
+                        TransactionId = transactionId,
                         Timestamp = Stopwatch.GetTimestamp()
                     });
 
@@ -61,7 +62,7 @@ namespace Microsoft.Data.SqlClient
                 return Guid.Empty;
         }
 
-        public static void WriteCommandAfter(this DiagnosticListener @this, Guid operationId, SqlCommand sqlCommand, [CallerMemberName] string operation = "")
+        public static void WriteCommandAfter(this DiagnosticListener @this, Guid operationId, SqlCommand sqlCommand, long? transactionId, [CallerMemberName] string operation = "")
         {
             if (@this.IsEnabled(SqlAfterExecuteCommand))
             {
@@ -73,13 +74,14 @@ namespace Microsoft.Data.SqlClient
                         Operation = operation,
                         ConnectionId = sqlCommand.Connection?.ClientConnectionId,
                         Command = sqlCommand,
+                        TransactionId = transactionId,
                         Statistics = sqlCommand.Statistics?.GetDictionary(),
                         Timestamp = Stopwatch.GetTimestamp()
                     });
             }
         }
 
-        public static void WriteCommandError(this DiagnosticListener @this, Guid operationId, SqlCommand sqlCommand, Exception ex, [CallerMemberName] string operation = "")
+        public static void WriteCommandError(this DiagnosticListener @this, Guid operationId, SqlCommand sqlCommand, long? transactionId, Exception ex, [CallerMemberName] string operation = "")
         {
             if (@this.IsEnabled(SqlErrorExecuteCommand))
             {
@@ -91,6 +93,7 @@ namespace Microsoft.Data.SqlClient
                         Operation = operation,
                         ConnectionId = sqlCommand.Connection?.ClientConnectionId,
                         Command = sqlCommand,
+                        TransactionId = transactionId,
                         Exception = ex,
                         Timestamp = Stopwatch.GetTimestamp()
                     });
@@ -216,7 +219,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        public static Guid WriteTransactionCommitBefore(this DiagnosticListener @this, IsolationLevel isolationLevel, SqlConnection connection, [CallerMemberName] string operation = "")
+        public static Guid WriteTransactionCommitBefore(this DiagnosticListener @this, IsolationLevel isolationLevel, SqlConnection connection, long? transactionId, [CallerMemberName] string operation = "")
         {
             if (@this.IsEnabled(SqlBeforeCommitTransaction))
             {
@@ -230,6 +233,7 @@ namespace Microsoft.Data.SqlClient
                         Operation = operation,
                         IsolationLevel = isolationLevel,
                         Connection = connection,
+                        TransactionId = transactionId,
                         Timestamp = Stopwatch.GetTimestamp()
                     });
 
@@ -239,7 +243,7 @@ namespace Microsoft.Data.SqlClient
                 return Guid.Empty;
         }
 
-        public static void WriteTransactionCommitAfter(this DiagnosticListener @this, Guid operationId, IsolationLevel isolationLevel, SqlConnection connection, [CallerMemberName] string operation = "")
+        public static void WriteTransactionCommitAfter(this DiagnosticListener @this, Guid operationId, IsolationLevel isolationLevel, SqlConnection connection, long? transactionId, [CallerMemberName] string operation = "")
         {
             if (@this.IsEnabled(SqlAfterCommitTransaction))
             {
@@ -251,12 +255,13 @@ namespace Microsoft.Data.SqlClient
                         Operation = operation,
                         IsolationLevel = isolationLevel,
                         Connection = connection,
+                        TransactionId = transactionId,
                         Timestamp = Stopwatch.GetTimestamp()
                     });
             }
         }
 
-        public static void WriteTransactionCommitError(this DiagnosticListener @this, Guid operationId, IsolationLevel isolationLevel, SqlConnection connection, Exception ex, [CallerMemberName] string operation = "")
+        public static void WriteTransactionCommitError(this DiagnosticListener @this, Guid operationId, IsolationLevel isolationLevel, SqlConnection connection, long? transactionId, Exception ex, [CallerMemberName] string operation = "")
         {
             if (@this.IsEnabled(SqlErrorCommitTransaction))
             {
@@ -268,13 +273,14 @@ namespace Microsoft.Data.SqlClient
                         Operation = operation,
                         IsolationLevel = isolationLevel,
                         Connection = connection,
+                        TransactionId = transactionId,
                         Exception = ex,
                         Timestamp = Stopwatch.GetTimestamp()
                     });
             }
         }
 
-        public static Guid WriteTransactionRollbackBefore(this DiagnosticListener @this, IsolationLevel isolationLevel, SqlConnection connection, string transactionName, [CallerMemberName] string operation = "")
+        public static Guid WriteTransactionRollbackBefore(this DiagnosticListener @this, IsolationLevel isolationLevel, SqlConnection connection, long? transactionId, string transactionName = null, [CallerMemberName] string operation = "")
         {
             if (@this.IsEnabled(SqlBeforeRollbackTransaction))
             {
@@ -288,6 +294,7 @@ namespace Microsoft.Data.SqlClient
                         Operation = operation,
                         IsolationLevel = isolationLevel,
                         Connection = connection,
+                        TransactionId = transactionId,
                         TransactionName = transactionName,
                         Timestamp = Stopwatch.GetTimestamp()
                     });
@@ -298,7 +305,7 @@ namespace Microsoft.Data.SqlClient
                 return Guid.Empty;
         }
 
-        public static void WriteTransactionRollbackAfter(this DiagnosticListener @this, Guid operationId, IsolationLevel isolationLevel, SqlConnection connection, string transactionName, [CallerMemberName] string operation = "")
+        public static void WriteTransactionRollbackAfter(this DiagnosticListener @this, Guid operationId, IsolationLevel isolationLevel, SqlConnection connection, long? transactionId, string transactionName = null, [CallerMemberName] string operation = "")
         {
             if (@this.IsEnabled(SqlAfterRollbackTransaction))
             {
@@ -310,13 +317,14 @@ namespace Microsoft.Data.SqlClient
                         Operation = operation,
                         IsolationLevel = isolationLevel,
                         Connection = connection,
+                        TransactionId = transactionId,
                         TransactionName = transactionName,
                         Timestamp = Stopwatch.GetTimestamp()
                     });
             }
         }
 
-        public static void WriteTransactionRollbackError(this DiagnosticListener @this, Guid operationId, IsolationLevel isolationLevel, SqlConnection connection, string transactionName, Exception ex, [CallerMemberName] string operation = "")
+        public static void WriteTransactionRollbackError(this DiagnosticListener @this, Guid operationId, IsolationLevel isolationLevel, SqlConnection connection, long? transactionId, Exception ex, string transactionName = null, [CallerMemberName] string operation = "")
         {
             if (@this.IsEnabled(SqlErrorRollbackTransaction))
             {
@@ -328,6 +336,7 @@ namespace Microsoft.Data.SqlClient
                         Operation = operation,
                         IsolationLevel = isolationLevel,
                         Connection = connection,
+                        TransactionId = transactionId,
                         TransactionName = transactionName,
                         Exception = ex,
                         Timestamp = Stopwatch.GetTimestamp()
