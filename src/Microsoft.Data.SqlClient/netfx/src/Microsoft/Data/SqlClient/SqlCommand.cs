@@ -5229,7 +5229,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if (BatchRPCMode)
                 {
-                    Debug.Assert(inSchema == false, "Batch RPC does not support schema only command beahvior");
+                    Debug.Assert(inSchema == false, "Batch RPC does not support schema only command behavior");
                     Debug.Assert(!IsPrepared, "Batch RPC should not be prepared!");
                     Debug.Assert(!IsDirty, "Batch RPC should not be marked as dirty!");
                     //Currently returnStream is always false, but we may want to return a Reader later.

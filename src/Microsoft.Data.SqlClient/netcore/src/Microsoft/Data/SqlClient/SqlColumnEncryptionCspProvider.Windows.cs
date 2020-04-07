@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient
         private const string RSAEncryptionAlgorithmWithOAEP = @"RSA_OAEP";
 
         /// <summary>
-        /// Hashing algoirthm used for signing
+        /// Hashing algorithm used for signing
         /// </summary>
         private const string HashingAlgorithm = @"SHA256";
 
@@ -234,7 +234,7 @@ namespace Microsoft.Data.SqlClient
         /// This function validates that the encryption algorithm is RSA_OAEP and if it is not,
         /// then throws an exception
         /// </summary>
-        /// <param name="encryptionAlgorithm">Asymmetric key encryptio algorithm</param>
+        /// <param name="encryptionAlgorithm">Asymmetric key encryption algorithm</param>
         /// <param name="isSystemOp">Indicates if ADO.NET calls or the customer calls the API</param>
         private void ValidateEncryptionAlgorithm(string encryptionAlgorithm, bool isSystemOp)
         {

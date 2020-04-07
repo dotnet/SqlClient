@@ -12,7 +12,7 @@ namespace Microsoft.Data.SqlClient
     internal abstract class SqlClientEncryptionAlgorithmFactory
     {
         /// <summary>
-        /// Creates an encrytion algorithm with a given key.
+        /// Creates an encryption algorithm with a given key.
         /// </summary>
         /// <param name="encryptionKey">encryption key that should be passed to the encryption algorithm to be created</param>
         /// <param name="encryptionType">Encryption Type, some algorithms will need this</param>

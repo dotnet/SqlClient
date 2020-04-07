@@ -64,7 +64,7 @@ namespace Microsoft.Data.SqlClient.SNI
             => WriteInternal(buffer, offset, count, CancellationToken.None, async: false).Wait();
 
         /// <summary>
-        /// Write Buffer Asynchronosly
+        /// Write Buffer Asynchronously
         /// </summary>
         /// <param name="buffer"></param>
         /// <param name="offset"></param>
@@ -75,7 +75,7 @@ namespace Microsoft.Data.SqlClient.SNI
             => WriteInternal(buffer, offset, count, token, async: true);
 
         /// <summary>
-        /// Read Buffer Asynchronosly
+        /// Read Buffer Asynchronously
         /// </summary>
         /// <param name="buffer"></param>
         /// <param name="offset"></param>
@@ -86,7 +86,7 @@ namespace Microsoft.Data.SqlClient.SNI
             => ReadInternal(buffer, offset, count, token, async: true);
 
         /// <summary>
-        /// Read Internal is called synchronosly when async is false
+        /// Read Internal is called synchronously when async is false
         /// </summary>
         private async Task<int> ReadInternal(byte[] buffer, int offset, int count, CancellationToken token, bool async)
         {
@@ -145,7 +145,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
             while (count > 0)
             {
-                // During the SSL negotiation phase, SSL is tunnelled over TDS packet type 0x12. After
+                // During the SSL negotiation phase, SSL is tunneled over TDS packet type 0x12. After
                 // negotiation, the underlying socket only sees SSL frames.
                 //
                 if (_encapsulate)

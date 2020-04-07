@@ -449,7 +449,7 @@ namespace Microsoft.Data.ProviderBase
 
                     // TODO: Consider an alternate method that doesn't involve special casing -- perhaps _prepareCollection
 
-                    // for the data source infomation table we need to fix up the version columns at run time
+                    // for the data source information table we need to fix up the version columns at run time
                     // since the version is determined at run time
                     if (exactCollectionName == DbMetaDataCollectionNames.DataSourceInformation)
                     {
@@ -541,7 +541,7 @@ namespace Microsoft.Data.ProviderBase
                 }
             }
 
-            // if the minmum version was ok what about the maximum version
+            // if the minimum version was ok what about the maximum version
             if (result == true)
             {
                 versionColumn = tableColumns[_maximumVersion];

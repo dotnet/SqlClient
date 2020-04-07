@@ -1166,7 +1166,7 @@ namespace Microsoft.Data.SqlClient
                     return true;
 
                 default:
-                    Debug.Fail("ValueSourcType unspecified");
+                    Debug.Fail("ValueSourceType unspecified");
                     throw ADP.NotSupported();
             }
         }

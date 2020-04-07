@@ -194,7 +194,7 @@ namespace Microsoft.Data
 
 
         // Consider: whether we need to keep our own texts from Data_ArgumentNull and Data_ArgumentOutOfRange?
-        // Unfortunately ours and the system ones are not consisten between each other. Try to raise this isue in "URT user comunity"
+        // Unfortunately ours and the system ones are not consistent between each other. Try to raise this issue in "URT user community"
         static public Exception ArgumentNull(string paramName)
         {
             return _ArgumentNull(paramName, StringsHelper.GetString(Strings.Data_ArgumentNull, paramName));

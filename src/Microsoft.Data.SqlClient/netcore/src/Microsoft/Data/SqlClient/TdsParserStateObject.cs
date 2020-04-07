@@ -97,7 +97,7 @@ namespace Microsoft.Data.SqlClient
         internal volatile bool _fResetEventOwned;           // ResetEvent serializing call to sp_reset_connection
         internal volatile bool _fResetConnectionSent;       // For multiple packet execute
         internal bool _bulkCopyOpperationInProgress;        // Set to true during bulk copy and used to turn toggle write timeouts.
-        internal bool _bulkCopyWriteTimeout;                // Set to trun when _bulkCopyOpeperationInProgress is trun and write timeout happens
+        internal bool _bulkCopyWriteTimeout;                // Set to trun when _bulkCopyOperationInProgress is trun and write timeout happens
 
         // SNI variables
         /// <summary>

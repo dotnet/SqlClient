@@ -325,7 +325,7 @@ namespace Microsoft.Data.SqlClient.Server
             _parent.StatementCompleted(rowsAffected);
         }
 
-        // Called when a transaction is commited (ENVCHANGE token)
+        // Called when a transaction is committed (ENVCHANGE token)
         internal override void TransactionCommitted(long transactionId)
         {
             if (null == _parent)
@@ -335,7 +335,7 @@ namespace Microsoft.Data.SqlClient.Server
             _parent.TransactionCommitted(transactionId);
         }
 
-        // Called when a transaction is commited (ENVCHANGE token)
+        // Called when a transaction is committed (ENVCHANGE token)
         internal override void TransactionDefected(long transactionId)
         {
             if (null == _parent)
@@ -345,7 +345,7 @@ namespace Microsoft.Data.SqlClient.Server
             _parent.TransactionDefected(transactionId);
         }
 
-        // Called when a transaction is commited (ENVCHANGE token)
+        // Called when a transaction is committed (ENVCHANGE token)
         internal override void TransactionEnlisted(long transactionId)
         {
             if (null == _parent)

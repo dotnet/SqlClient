@@ -10,7 +10,7 @@ using System.Threading;
 namespace Microsoft.Data.SqlClient
 {
     /// <summary>
-    /// Cache for storing result of signature verfication of CMK Metadata
+    /// Cache for storing result of signature verification of CMK Metadata
     /// </summary>
     internal class ColumnMasterKeyMetadataSignatureVerificationCache
     {

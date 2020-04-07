@@ -49,7 +49,7 @@ namespace Microsoft.Data.Common
             + "(?<![\"']))"                                            // unquoted value must not stop with " or '
             + ")(\\s*)(;|[\u0000\\s]*$)"                                // whitespace after value up to semicolon or end-of-line
             + ")*"                                                      // repeat the key-value pair
-            + "[\\s;]*[\u0000\\s]*"                                     // traling whitespace/semicolons (DataSourceLocator), embedded nulls are allowed only in the end
+            + "[\\s;]*[\u0000\\s]*"                                     // trailing whitespace/semicolons (DataSourceLocator), embedded nulls are allowed only in the end
         ;
 
         private const string ConnectionStringPatternOdbc =              // may not contain embedded null except trailing last value
@@ -69,7 +69,7 @@ namespace Microsoft.Data.Common
 
             + ")(\\s*)(;|[\u0000\\s]*$)"                               // whitespace after value up to semicolon or end-of-line
             + ")*"                                                      // repeat the key-value pair
-            + "[\\s;]*[\u0000\\s]*"                                     // traling whitespace/semicolons (DataSourceLocator), embedded nulls are allowed only in the end
+            + "[\\s;]*[\u0000\\s]*"                                     // trailing whitespace/semicolons (DataSourceLocator), embedded nulls are allowed only in the end
         ;
 
         private static readonly Regex ConnectionStringRegex = new Regex(ConnectionStringPattern, RegexOptions.ExplicitCapture | RegexOptions.Compiled);
@@ -676,7 +676,7 @@ namespace Microsoft.Data.Common
             return buffer.ToString(index, count - index);
         }
 
-        // transistion states used for parsing
+        // transition states used for parsing
         private enum ParserState
         {
             NothingYet = 1,   //start point

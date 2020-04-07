@@ -300,7 +300,7 @@ namespace Microsoft.Data.SqlClient
         internal int IncrementNonTransactedOpenResultCount()
         {
             // IMPORTANT - this increments the connection wide open result count for all
-            // operations not under a transaction!  Do not call if you intend to modify the 
+            // operations not under a transaction!  Do not call if you intend to modify the
             // count for a transaction!
             Debug.Assert(_nonTransactedOpenResultCount >= 0, "Unexpected result count state");
             int result = Interlocked.Increment(ref _nonTransactedOpenResultCount);
@@ -310,7 +310,7 @@ namespace Microsoft.Data.SqlClient
         internal void DecrementNonTransactedOpenResultCount()
         {
             // IMPORTANT - this decrements the connection wide open result count for all
-            // operations not under a transaction!  Do not call if you intend to modify the 
+            // operations not under a transaction!  Do not call if you intend to modify the
             // count for a transaction!
             Interlocked.Decrement(ref _nonTransactedOpenResultCount);
             Debug.Assert(_nonTransactedOpenResultCount >= 0, "Unexpected result count state");
@@ -416,7 +416,7 @@ namespace Microsoft.Data.SqlClient
                 // If we are pooling, check to see if we were processing an
                 // alias which has changed, which means we need to clean out
                 // the pool. See Webdata 104293.
-                // This should not apply to routing, as it is not an alias change, routed connection 
+                // This should not apply to routing, as it is not an alias change, routed connection
                 // should still use VNN of AlwaysOn cluster as server for pooling purposes.
                 connHandler.PoolGroupProviderInfo.AliasCheck(serverInfo.PreRoutingServerName == null ?
                     serverInfo.ResolvedServerName : serverInfo.PreRoutingServerName);
@@ -779,7 +779,7 @@ namespace Microsoft.Data.SqlClient
             if (payload[0] == 0xaa)
             {
                 // If the first byte is 0xAA, we are connecting to a 6.5 or earlier server, which
-                // is not supported. 
+                // is not supported.
                 throw SQL.InvalidSQLServerVersionUnknown();
             }
 
@@ -876,9 +876,9 @@ namespace Microsoft.Data.SqlClient
 
                             if (encrypt && !integratedSecurity)
                             {
-                                // optimization: in case of SQL Authentication and encryption, set SNI_SSL_IGNORE_CHANNEL_BINDINGS to let SNI 
+                                // optimization: in case of SQL Authentication and encryption, set SNI_SSL_IGNORE_CHANNEL_BINDINGS to let SNI
                                 // know that it does not need to allocate/retrieve the Channel Bindings from the SSL context.
-                                // This applies to Native SNI 
+                                // This applies to Native SNI
                                 info |= TdsEnums.SNI_SSL_IGNORE_CHANNEL_BINDINGS;
                             }
 
@@ -1233,7 +1233,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     try
                     {
-                        // the following handler will throw an exception or generate a warning event   
+                        // the following handler will throw an exception or generate a warning event
                         _connHandler.OnError(exception, breakConnection);
                     }
                     finally
@@ -1326,9 +1326,9 @@ namespace Microsoft.Data.SqlClient
                     //
                     int iColon = errorMessage.IndexOf(':');
                     Debug.Assert(0 <= iColon, "':' character missing in sni errorMessage");
-                    SqlClientEventSource.Log.AdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > ':' character missing in sni errorMessage. Error Mesage index of ':' = {0}", iColon);
+                    SqlClientEventSource.Log.AdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > ':' character missing in sni errorMessage. Error Message index of ':' = {0}", iColon);
                     Debug.Assert(errorMessage.Length > iColon + 1 && errorMessage[iColon + 1] == ' ', "Expecting a space after the ':' character");
-                    SqlClientEventSource.Log.AdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > Expecting a space after the ':' character. Error Mesage Length = {0}", errorMessage.Length);
+                    SqlClientEventSource.Log.AdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > Expecting a space after the ':' character. Error Message Length = {0}", errorMessage.Length);
                     // extract the message excluding the colon and trailing cr/lf chars
                     if (0 <= iColon)
                     {
@@ -1338,8 +1338,8 @@ namespace Microsoft.Data.SqlClient
                         len -= iColon;
                         /*
                             The error message should come back in the following format: "TCP Provider: MESSAGE TEXT"
-                            If the message is received on a Win9x OS, the error message will not contain MESSAGE TEXT 
-                            If we get an error message with no message text, just return the entire message otherwise 
+                            If the message is received on a Win9x OS, the error message will not contain MESSAGE TEXT
+                            If we get an error message with no message text, just return the entire message otherwise
                             return just the message text.
                         */
                         if (len > 0)
@@ -1376,8 +1376,8 @@ namespace Microsoft.Data.SqlClient
                 }
                 errorMessage = string.Format("{0} (provider: {1}, error: {2} - {3})",
                     sqlContextInfo, providerName, (int)details.sniErrorNumber, errorMessage);
-                
-                SqlClientEventSource.Log.AdvancedTraceErrorEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > SNI Error Message. Native Error = {0}, Line Number ={1}, Function ={2}, Exception ={3}, Server = {4}", 
+
+                SqlClientEventSource.Log.AdvancedTraceErrorEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > SNI Error Message. Native Error = {0}, Line Number ={1}, Function ={2}, Exception ={3}, Server = {4}",
                     (int)details.nativeError, (int)details.lineNumber, details.function, details.exception, _server);
 
                 return new SqlError((int)details.nativeError, 0x00, TdsEnums.FATAL_ERROR_CLASS,
@@ -1837,7 +1837,7 @@ namespace Microsoft.Data.SqlClient
                         if (_connHandler != null)
                             connection = _connHandler.Connection; // SqlInternalConnection holds the user connection object as a weak ref
                         // We are omitting checks for error.Class in the code below (see processing of INFO) since we know (and assert) that error class
-                        // error.Class < TdsEnums.MIN_ERROR_CLASS for info message. 
+                        // error.Class < TdsEnums.MIN_ERROR_CLASS for info message.
                         // Also we know that TdsEnums.MIN_ERROR_CLASS<TdsEnums.MAX_USER_CORRECTABLE_ERROR_CLASS
                         if ((connection != null) && connection.FireInfoMessageEventOnUserErrors)
                         {
@@ -2460,7 +2460,7 @@ namespace Microsoft.Data.SqlClient
             return true;
         }
 
-        // This is in its own method to avoid always allocating the lambda in TryRun 
+        // This is in its own method to avoid always allocating the lambda in TryRun
         private static void TryRunSetupSpinWaitContinuation(TdsParserStateObject stateObj) => SpinWait.SpinUntil(() => !stateObj._attentionSending);
 
         private bool TryProcessEnvChange(int tokenLength, TdsParserStateObject stateObj, out SqlEnvChange sqlEnvChange)
@@ -4101,7 +4101,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            // Read Encryption Type. 
+            // Read Encryption Type.
             byte encryptionType;
             if (!stateObj.TryReadByte(out encryptionType))
             {
@@ -4203,9 +4203,9 @@ namespace Microsoft.Data.SqlClient
 
                 // If we failed, it is quite possible this is because certain culture id's
                 // were removed in Win2k and beyond, however Sql Server still supports them.
-                // In this case we will mask off the sort id (the leading 1). If that fails, 
-                // or we have a culture id other than the cases below, we throw an error and 
-                // throw away the rest of the results. 
+                // In this case we will mask off the sort id (the leading 1). If that fails,
+                // or we have a culture id other than the cases below, we throw an error and
+                // throw away the rest of the results.
 
                 //  Sometimes GetCultureInfo will return CodePage 0 instead of throwing.
                 //  This should be treated as an error and functionality switches into the following logic.
@@ -4457,7 +4457,7 @@ namespace Microsoft.Data.SqlClient
                 byte byteValue;
                 int length;
 
-                // Read the length of encrypted CEK 
+                // Read the length of encrypted CEK
                 if (!stateObj.TryReadUInt16(out shortValue))
                 {
                     return false;
@@ -4567,7 +4567,7 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(cColumns > 0, "should have at least 1 column in metadata!");
 
-            // Read the cipher info table first 
+            // Read the cipher info table first
             SqlTceCipherInfoTable? cipherTable = null;
             if (IsColumnEncryptionSupported)
             {
@@ -4835,7 +4835,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            // Read the column name 
+            // Read the column name
             if (!stateObj.TryReadByte(out byteLen))
             {
                 return false;
@@ -5544,7 +5544,7 @@ namespace Microsoft.Data.SqlClient
             byte denormalizedScale = md.baseTI.scale;
 
             Debug.Assert(false == md.baseTI.isEncrypted, "Double encryption detected");
-            //DEVNOTE: When modifying the following routines (for deserialization) please pay attention to 
+            //DEVNOTE: When modifying the following routines (for deserialization) please pay attention to
             // deserialization code in DecryptWithKey () method and modify it accordingly.
             switch (tdsType)
             {
@@ -5818,7 +5818,7 @@ namespace Microsoft.Data.SqlClient
                 length = int.MaxValue;
             }
 
-            //DEVNOTE: When modifying the following routines (for deserialization) please pay attention to 
+            //DEVNOTE: When modifying the following routines (for deserialization) please pay attention to
             // deserialization code in DecryptWithKey () method and modify it accordingly.
             switch (tdsType)
             {
@@ -6408,10 +6408,10 @@ namespace Microsoft.Data.SqlClient
             // Special case data type correction for SqlMoney inside a SqlVariant.
             if ((TdsEnums.SQLNUMERICN == mt.TDSType) && (8 == length))
             {
-                // The caller will coerce all SqlTypes to native CLR types, which means SqlMoney will 
-                // coerce to decimal/SQLNUMERICN (via SqlMoney.Value call).  In the case where the original 
-                // value was SqlMoney the caller will also pass in the metadata length for the SqlMoney type 
-                // which is 8 bytes.  To honor the intent of the caller here we coerce this special case 
+                // The caller will coerce all SqlTypes to native CLR types, which means SqlMoney will
+                // coerce to decimal/SQLNUMERICN (via SqlMoney.Value call).  In the case where the original
+                // value was SqlMoney the caller will also pass in the metadata length for the SqlMoney type
+                // which is 8 bytes.  To honor the intent of the caller here we coerce this special case
                 // input back to SqlMoney from decimal/SQLNUMERICN.
                 mt = MetaType.GetMetaTypeFromValue(new SqlMoney((decimal)value));
             }
@@ -7543,7 +7543,7 @@ namespace Microsoft.Data.SqlClient
                         initialLength += 1 /* StateId*/ + StateValueLength(reconnectData._initialState[i].Length);
                     }
                 }
-                int currentLength = 0; // sizeof(DWORD) - length itself                
+                int currentLength = 0; // sizeof(DWORD) - length itself
                 currentLength += 1 + 2 * (reconnectData._initialDatabase == reconnectData._database ? 0 : TdsParserStaticMethods.NullAwareStringLength(reconnectData._database));
                 currentLength += 1 + 2 * (reconnectData._initialLanguage == reconnectData._language ? 0 : TdsParserStaticMethods.NullAwareStringLength(reconnectData._language));
                 currentLength += (reconnectData._collation != null && !SqlCollation.AreSame(reconnectData._collation, reconnectData._initialCollation)) ? 6 : 1;
@@ -7640,7 +7640,7 @@ namespace Microsoft.Data.SqlClient
                     break;
                 case TdsEnums.FedAuthLibrary.SecurityToken:
                     Debug.Assert(fedAuthFeatureData.accessToken != null, "AccessToken should not be null.");
-                    dataLen = 1 + sizeof(int) + fedAuthFeatureData.accessToken.Length; // length of feature data = 1 byte for library and echo, security token length and sizeof(int) for token lengh itself
+                    dataLen = 1 + sizeof(int) + fedAuthFeatureData.accessToken.Length; // length of feature data = 1 byte for library and echo, security token length and sizeof(int) for token lenght itself
                     break;
                 default:
                     Debug.Fail("Unrecognized library type for fedauth feature extension request");
@@ -7972,7 +7972,7 @@ namespace Microsoft.Data.SqlClient
                    25) fNoNBCAndSparse:1,           // set if client does not support NBC and Sparse column
                    26) fUserInstance:1,             // This connection wants to connect to a SQL "user instance"
                    27) fUnknownCollationHandling:1, // This connection can handle unknown collation correctly.
-                   28) fExtension:1                 // Extensions are used                 
+                   28) fExtension:1                 // Extensions are used
                    32 - total
                 */
 
@@ -8218,7 +8218,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Send the access token to the server.
         /// </summary>
-        /// <param name="fedAuthToken">Type encapuslating a Federated Authentication access token.</param>
+        /// <param name="fedAuthToken">Type encapsulating a Federated Authentication access token.</param>
         internal void SendFedAuthToken(SqlFedAuthToken fedAuthToken)
         {
             Debug.Assert(fedAuthToken != null, "fedAuthToken cannot be null");
@@ -8364,7 +8364,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         Debug.Fail("unexpected length (> Int32.MaxValue) returned from dtcReader.GetBytes");
                         // if we hit this case we'll just return a null address so that the user
-                        // will get a transcaction enlistment error in the upper layers
+                        // will get a transaction enlistment error in the upper layers
                     }
 #endif
                 }
@@ -8403,11 +8403,11 @@ namespace Microsoft.Data.SqlClient
 
             // Promote, Commit and Rollback requests for
             // delegated transactions often happen while there is an open result
-            // set, so we need to handle them by using a different MARS session, 
+            // set, so we need to handle them by using a different MARS session,
             // otherwise we'll write on the physical state objects while someone
-            // else is using it.  When we don't have MARS enabled, we need to 
+            // else is using it.  When we don't have MARS enabled, we need to
             // lock the physical state object to synchronize its use at least
-            // until we increment the open results count.  Once it's been 
+            // until we increment the open results count.  Once it's been
             // incremented the delegated transaction requests will fail, so they
             // won't stomp on anything.
 
@@ -8426,7 +8426,7 @@ namespace Microsoft.Data.SqlClient
                 // Temporarily disable async writes
                 _asyncWrite = false;
 
-                // This validation step MUST be done after locking the connection to guarantee we don't 
+                // This validation step MUST be done after locking the connection to guarantee we don't
                 //  accidentally execute after the transaction has completed on a different thread.
                 if (!isDelegateControlRequest)
                 {
@@ -8474,8 +8474,8 @@ namespace Microsoft.Data.SqlClient
 
                         // Only assign the passed in transaction if it is not equal to the current transaction.
                         // And, if it is not equal, the current actually should be null.  Anything else
-                        // is a unexpected state.  The concern here is mainly for the mixed use of 
-                        // T-SQL and API transactions. 
+                        // is a unexpected state.  The concern here is mainly for the mixed use of
+                        // T-SQL and API transactions.
 
                         // Expected states:
                         // 1) _pendingTransaction = null, _currentTransaction = null, non null transaction
@@ -8646,11 +8646,11 @@ namespace Microsoft.Data.SqlClient
 
             // Promote, Commit and Rollback requests for
             // delegated transactions often happen while there is an open result
-            // set, so we need to handle them by using a different MARS session, 
+            // set, so we need to handle them by using a different MARS session,
             // otherwise we'll write on the physical state objects while someone
-            // else is using it.  When we don't have MARS enabled, we need to 
-            // lock the physical state object to synchronize it's use at least 
-            // until we increment the open results count.  Once it's been 
+            // else is using it.  When we don't have MARS enabled, we need to
+            // lock the physical state object to synchronize it's use at least
+            // until we increment the open results count.  Once it's been
             // incremented the delegated transaction requests will fail, so they
             // won't stomp on anything.
 
@@ -8678,7 +8678,7 @@ namespace Microsoft.Data.SqlClient
                     throw ADP.ClosedConnectionError();
                 }
 
-                // This validation step MUST be done after locking the connection to guarantee we don't 
+                // This validation step MUST be done after locking the connection to guarantee we don't
                 //  accidentally execute after the transaction has completed on a different thread.
                 _connHandler.CheckEnlistedTransactionBinding();
 
@@ -8781,11 +8781,11 @@ namespace Microsoft.Data.SqlClient
 
                 // Promote, Commit and Rollback requests for
                 // delegated transactions often happen while there is an open result
-                // set, so we need to handle them by using a different MARS session, 
+                // set, so we need to handle them by using a different MARS session,
                 // otherwise we'll write on the physical state objects while someone
-                // else is using it.  When we don't have MARS enabled, we need to 
+                // else is using it.  When we don't have MARS enabled, we need to
                 // lock the physical state object to synchronize its use at least
-                // until we increment the open results count.  Once it's been 
+                // until we increment the open results count.  Once it's been
                 // incremented the delegated transaction requests will fail, so they
                 // won't stomp on anything.
 
@@ -8803,7 +8803,7 @@ namespace Microsoft.Data.SqlClient
                         throw ADP.ClosedConnectionError();
                     }
 
-                    // This validation step MUST be done after locking the connection to guarantee we don't 
+                    // This validation step MUST be done after locking the connection to guarantee we don't
                     //  accidentally execute after the transaction has completed on a different thread.
                     if (firstCall)
                     {
@@ -9498,7 +9498,7 @@ namespace Microsoft.Data.SqlClient
             );
         }
 
-        // This is in its own method to avoid always allocating the lambda in  TDSExecuteRPCParameter 
+        // This is in its own method to avoid always allocating the lambda in  TDSExecuteRPCParameter
         private void TDSExecuteRPCParameterSetupFlushCompletion(TdsParserStateObject stateObj, TaskCompletionSource<object> completion, Task execFlushTask, bool taskReleaseConnectionLock)
         {
             execFlushTask.ContinueWith(tsk => ExecuteFlushTaskCallback(tsk, stateObj, completion, taskReleaseConnectionLock), TaskScheduler.Default);
@@ -10006,7 +10006,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Loads the column encryptions keys into cache. This will read the master key info, 
+        /// Loads the column encryptions keys into cache. This will read the master key info,
         /// decrypt the CEK and keep it ready for encryption.
         /// </summary>
         /// <returns></returns>
@@ -10183,7 +10183,7 @@ namespace Microsoft.Data.SqlClient
                     // read user type - 4 bytes Yukon, 2 backwards
                     WriteInt(0x0, stateObj);
 
-                    // Write the flags 
+                    // Write the flags
                     ushort flags;
                     flags = (ushort)(md.Updatability << 2);
                     flags |= md.IsNullable ? TdsEnums.Nullable : (ushort)0;
@@ -10267,7 +10267,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Encrypts a column value (for SqlBulkCopy) 
+        /// Encrypts a column value (for SqlBulkCopy)
         /// </summary>
         /// <returns></returns>
         internal object EncryptColumnValue(object value, SqlMetaDataPriv metadata, string column, TdsParserStateObject stateObj, bool isDataFeed, bool isSqlType)
@@ -10289,10 +10289,10 @@ namespace Microsoft.Data.SqlClient
                     // For some datatypes, engine does truncation before storing the value. (For example, when
                     // trying to insert a varbinary(7000) into a varbinary(3000) column). Since we encrypt the
                     // column values, engine has no way to tell the size of the plaintext datatype. Therefore,
-                    // we truncate the values based on target column sizes here before encrypting them. This 
+                    // we truncate the values based on target column sizes here before encrypting them. This
                     // truncation is only needed if we exceed the max column length or if the target column is
                     // not a blob type (eg. varbinary(max)). The actual work of truncating the column happens
-                    // when we normalize and serialize the data buffers. The serialization routine expects us 
+                    // when we normalize and serialize the data buffers. The serialization routine expects us
                     // to report the size of data to be copied out (for serialization). If we underreport the
                     // size, truncation will happen for us!
                     actualLengthInBytes = (isSqlType) ? ((SqlBinary)value).Length : ((byte[])value).Length;
@@ -10662,7 +10662,7 @@ namespace Microsoft.Data.SqlClient
 
             // We may need to update the notification header length if the header is changed in the future
 
-            Debug.Assert(null != notificationRequest, "notificaitonRequest is null");
+            Debug.Assert(null != notificationRequest, "notificationRequest is null");
 
             string callbackId = notificationRequest.UserData;
             string service = notificationRequest.Options;
@@ -10925,7 +10925,7 @@ namespace Microsoft.Data.SqlClient
 
                         if (sqlGuid.IsNull)
                         {
-                            b.Clear(); // this is needed because initlocals may be supressed in framework assemblies meaning the memory is not automaticaly zeroed 
+                            b.Clear(); // this is needed because initlocals may be supressed in framework assemblies meaning the memory is not automaticaly zeroed
                         }
                         else
                         {
@@ -11557,7 +11557,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             if (type.IsPlp)
                             {
-                                WriteInt(actualLength, stateObj);               // chunk length                        
+                                WriteInt(actualLength, stateObj);               // chunk length
                             }
                             return stateObj.WriteByteArray((byte[])value, actualLength, offset, canAccumulate: false);
                         }
@@ -11816,7 +11816,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLIMAGE:
                 case TdsEnums.SQLUDT:
                     {
-                        Debug.Assert(!isDataFeed, "We cannot seriliaze streams");
+                        Debug.Assert(!isDataFeed, "We cannot serilialize streams");
                         Debug.Assert(value is byte[], "Value should be an array of bytes");
 
                         byte[] b = new byte[actualLength];
@@ -11877,7 +11877,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLNTEXT:
                 case TdsEnums.SQLXMLTYPE:
                     {
-                        Debug.Assert(!isDataFeed, "We cannot seriliaze streams");
+                        Debug.Assert(!isDataFeed, "We cannot serilialize streams");
                         Debug.Assert((value is string || value is byte[]), "Value is a byte array or string");
 
                         if (value is byte[])

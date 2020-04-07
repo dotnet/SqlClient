@@ -9,7 +9,7 @@
 //AssemblyID to AssemblyRef and State
 //TypeID to TypeRef and AssemblyId
 //
-//Adding an assembly to this class will NOT enable users to create types from that assembly. Users should explicitely add type details and link types to assemblies.
+//Adding an assembly to this class will NOT enable users to create types from that assembly. Users should explicitly add type details and link types to assemblies.
 // This class also registers for assembly resolve events so that dependent assemblies can be resolved if they are registered.
 //This class does NOT know anything about assembly dependencies. It simply loads assemblies as handed over to it.
 //Users can take advantage of connection pooling by tying this instance to a pooling-aware component.
@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient
     internal sealed class AssemblyCache
     {
         private AssemblyCache()
-        { /* prevent utility class from being insantiated*/
+        { /* prevent utility class from being instantiated*/
         }
 
         internal static int GetLength(Object inst)
