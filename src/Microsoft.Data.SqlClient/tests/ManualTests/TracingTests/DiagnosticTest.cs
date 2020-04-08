@@ -53,7 +53,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             RemoteExecutor.Invoke(() =>
             {
-                Assert.True(true);
+                CollectStatisticsDiagnostics(connectionString =>
+                {
+                    using (SqlConnection conn = new SqlConnection(connectionString))
+                    using (SqlCommand cmd = new SqlCommand())
+                    {
+                        cmd.Connection = conn;
+                        cmd.CommandText = "select 1 / 0;";
+
+                        conn.Open();
+                        try
+                        { var output = cmd.ExecuteScalar(); }
+                        catch { }
+                    }
+                });
+                return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }
 
