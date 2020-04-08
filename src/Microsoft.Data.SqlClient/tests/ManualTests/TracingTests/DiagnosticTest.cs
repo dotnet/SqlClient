@@ -25,27 +25,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public class DiagnosticTest
     {
         private const string BadConnectionString = "data source = bad; initial catalog = bad; uid = bad; password = bad; connection timeout = 1;";
-        private static readonly string s_tcpConnStr =  DataTestUtility.TCPConnectionString ?? string.Empty;
-        
+        private static readonly string s_tcpConnStr = DataTestUtility.TCPConnectionString ?? string.Empty;
+
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void ExecuteScalarTest()
         {
-                RemoteExecutor.Invoke(() =>
+            RemoteExecutor.Invoke(() =>
+            {
+                CollectStatisticsDiagnostics(connectionString =>
                 {
-                    CollectStatisticsDiagnostics(connectionString =>
+                    using (SqlConnection conn = new SqlConnection(connectionString))
+                    using (SqlCommand cmd = new SqlCommand())
                     {
-                        using (SqlConnection conn = new SqlConnection(connectionString))
-                        using (SqlCommand cmd = new SqlCommand())
-                        {
-                            cmd.Connection = conn;
-                            cmd.CommandText = "SELECT [name], [state] FROM [sys].[databases] WHERE [name] = db_name();";
+                        cmd.Connection = conn;
+                        cmd.CommandText = "SELECT [name], [state] FROM [sys].[databases] WHERE [name] = db_name();";
 
-                            conn.Open();
-                            var output = cmd.ExecuteScalar();
-                        }
-                    });
-                    return RemoteExecutor.SuccessExitCode;
-                }).Dispose();
+                        conn.Open();
+                        var output = cmd.ExecuteScalar();
+                    }
+                });
+                return RemoteExecutor.SuccessExitCode;
+            }).Dispose();
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
@@ -105,7 +105,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         {
                             cmd.Connection = conn;
                             cmd.CommandText = "select 1 / 0;";
-                            
+
                             // Limiting the command timeout to 3 seconds. This should be lower than the Process timeout.
                             cmd.CommandTimeout = 3;
                             conn.Open();
@@ -144,7 +144,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                         conn.Open();
                         SqlDataReader reader = cmd.ExecuteReader();
-                        while (reader.Read()) { }
+                        while (reader.Read())
+                        { }
                     }
                 });
                 return RemoteExecutor.SuccessExitCode;
@@ -167,7 +168,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         try
                         {
                             SqlDataReader reader = cmd.ExecuteReader();
-                            while (reader.Read()) { }
+                            while (reader.Read())
+                            { }
                         }
                         catch { }
                     }
@@ -191,7 +193,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                         conn.Open();
                         SqlDataReader reader = cmd.ExecuteReader(CommandBehavior.Default);
-                        while (reader.Read()) { }
+                        while (reader.Read())
+                        { }
                     }
                 });
                 return RemoteExecutor.SuccessExitCode;
@@ -213,7 +216,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                         conn.Open();
                         XmlReader reader = cmd.ExecuteXmlReader();
-                        while (reader.Read()) { }
+                        while (reader.Read())
+                        { }
                     }
                 });
                 return RemoteExecutor.SuccessExitCode;
@@ -236,7 +240,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         try
                         {
                             XmlReader reader = cmd.ExecuteXmlReader();
-                            while (reader.Read()) { }
+                            while (reader.Read())
+                            { }
                         }
                         catch { }
                     }
@@ -281,7 +286,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                         conn.Open();
 
-                        try { var output = await cmd.ExecuteScalarAsync(); }
+                        try
+                        { var output = await cmd.ExecuteScalarAsync(); }
                         catch { }
                     }
                 }).GetAwaiter().GetResult();
@@ -324,7 +330,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         cmd.CommandText = "select 1 / 0;";
 
                         conn.Open();
-                        try { var output = await cmd.ExecuteNonQueryAsync(); }
+                        try
+                        { var output = await cmd.ExecuteNonQueryAsync(); }
                         catch { }
                     }
                 }).GetAwaiter().GetResult();
@@ -347,7 +354,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                         conn.Open();
                         SqlDataReader reader = await cmd.ExecuteReaderAsync();
-                        while (reader.Read()) { }
+                        while (reader.Read())
+                        { }
                     }
                 }).GetAwaiter().GetResult();
                 return RemoteExecutor.SuccessExitCode;
@@ -370,7 +378,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         try
                         {
                             SqlDataReader reader = await cmd.ExecuteReaderAsync();
-                            while (reader.Read()) { }
+                            while (reader.Read())
+                            { }
                         }
                         catch { }
                     }
@@ -394,7 +403,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                         conn.Open();
                         XmlReader reader = await cmd.ExecuteXmlReaderAsync();
-                        while (reader.Read()) { }
+                        while (reader.Read())
+                        { }
                     }
                 }).GetAwaiter().GetResult();
                 return RemoteExecutor.SuccessExitCode;
@@ -417,7 +427,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         try
                         {
                             XmlReader reader = await cmd.ExecuteXmlReaderAsync();
-                            while (reader.Read()) { }
+                            while (reader.Read())
+                            { }
                         }
                         catch { }
                     }
@@ -455,7 +466,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     using (SqlConnection sqlConnection = new SqlConnection(BadConnectionString))
                     {
-                        try { sqlConnection.Open(); } catch { }
+                        try
+                        { sqlConnection.Open(); }
+                        catch { }
                     }
                 });
                 return RemoteExecutor.SuccessExitCode;
@@ -487,7 +500,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     using (SqlConnection sqlConnection = new SqlConnection(BadConnectionString))
                     {
-                        try { await sqlConnection.OpenAsync(); } catch { }
+                        try
+                        { await sqlConnection.OpenAsync(); }
+                        catch { }
                     }
                 }).GetAwaiter().GetResult();
                 return RemoteExecutor.SuccessExitCode;
@@ -499,7 +514,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             bool statsLogged = false;
             bool operationHasError = false;
             Guid beginOperationId = Guid.Empty;
-            
+
             FakeDiagnosticListenerObserver diagnosticListenerObserver = new FakeDiagnosticListenerObserver(kvp =>
                 {
                     IDictionary statistics;
@@ -519,12 +534,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                         Guid connectionId = GetPropertyValueFromType<Guid>(kvp.Value, "ConnectionId");
                         if (sqlCommand.Connection.State == ConnectionState.Open)
-                        { 
+                        {
                             Assert.NotEqual(connectionId, Guid.Empty);
                         }
 
                         beginOperationId = retrievedOperationId;
-                                                                        
+
                         statsLogged = true;
                     }
                     else if (kvp.Key.Equals("Microsoft.Data.SqlClient.WriteCommandAfter"))
@@ -681,13 +696,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
 
                 Console.WriteLine(string.Format("Test: {0} Enabled Listeners", methodName));
-                using (var server = TestTdsServer.StartServerWithQueryEngine(new DiagnosticsQueryEngine(), enableLog:enableServerLogging, methodName: methodName))
+                using (var server = TestTdsServer.StartServerWithQueryEngine(new DiagnosticsQueryEngine(), enableLog: enableServerLogging, methodName: methodName))
                 {
                     Console.WriteLine(string.Format("Test: {0} Started Server", methodName));
                     sqlOperation(server.ConnectionString);
 
                     Console.WriteLine(string.Format("Test: {0} SqlOperation Successful", methodName));
-                    
+
                     Assert.True(statsLogged);
 
                     diagnosticListenerObserver.Disable();
@@ -793,7 +808,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                     Guid connectionId = GetPropertyValueFromType<Guid>(kvp.Value, "ConnectionId");
                     if (sqlConnection.State == ConnectionState.Open)
-                    { 
+                    {
                         Assert.NotEqual(connectionId, Guid.Empty);
                     }
 
@@ -888,7 +903,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             Console.WriteLine(string.Format("Test: {0} Listeners Disposed Successfully", methodName));
         }
-        
+
         private static T GetPropertyValueFromType<T>(object obj, string propName)
         {
             Type type = obj.GetType();
@@ -908,7 +923,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         protected override TDSMessageCollection CreateQueryResponse(ITDSServerSession session, TDSSQLBatchToken batchRequest)
         {
             string lowerBatchText = batchRequest.Text.ToLowerInvariant();
-            
+
             if (lowerBatchText.Contains("1 / 0")) // SELECT 1/0 
             {
                 TDSErrorToken errorToken = new TDSErrorToken(8134, 1, 16, "Divide by zero error encountered.");

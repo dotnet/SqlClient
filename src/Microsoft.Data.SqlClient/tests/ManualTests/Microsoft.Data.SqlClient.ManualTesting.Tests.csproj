@@ -59,9 +59,7 @@
     <Compile Include="AlwaysEncrypted\TestTrustedMasterKeyPaths.cs" />
     <Compile Include="DataCommon\AADUtility.cs" />
     <Compile Include="DataCommon\CheckConnStrSetupFactAttribute.cs" />
-    <Compile Condition="'$(TargetGroup)'=='netcoreapp'" Include="TracingTests\DiagnosticTest.cs" />
     <Compile Include="TracingTests\EventSourceTest.cs" />
-    <Compile Condition="'$(TargetGroup)'=='netcoreapp'" Include="TracingTests\FakeDiagnosticListenerObserver.cs" />
     <Compile Include="SQL\AdapterTest\AdapterTest.cs" />
     <Compile Include="SQL\AsyncTest\BeginExecAsyncTest.cs" />
     <Compile Include="SQL\AsyncTest\BeginExecReaderAsyncTest.cs" />
@@ -224,6 +222,10 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>TCECryptoNativeBaselineRsa.txt</Link>
     </Content>
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetGroup)'=='netcoreapp'">
+    <Compile Include="TracingTests\DiagnosticTest.cs" />
+    <Compile Include="TracingTests\FakeDiagnosticListenerObserver.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ProviderAgnostic\MultipleResultsTest\MultipleResultsTest.bsl" />
