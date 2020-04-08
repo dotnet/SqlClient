@@ -36,7 +36,6 @@ namespace Microsoft.Data.SqlClient
         private SqlInternalConnection _connection;            // the internal connection that is the root of the transaction
         private IsolationLevel _isolationLevel;        // the IsolationLevel of the transaction we delegated to the server
         private SqlInternalTransaction _internalTransaction;   // the SQL Server transaction we're delegating to
-
         private SysTx.Transaction _atomicTransaction;
 
         private bool _active;                // Is the transaction active?
