@@ -297,7 +297,7 @@ namespace Microsoft.Data.SqlClient
             RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
-                // If the connection is dooomed, we can be certain that the
+                // If the connection is doomed, we can be certain that the
                 // transaction will eventually be rolled back, and we shouldn't
                 // attempt to commit it.
                 if (connection.IsConnectionDoomed)

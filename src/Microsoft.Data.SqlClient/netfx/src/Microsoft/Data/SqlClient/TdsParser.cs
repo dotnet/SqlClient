@@ -151,6 +151,7 @@ namespace Microsoft.Data.SqlClient
         // Constants
         const int constBinBufferSize = 4096; // Size of the buffer used to read input parameter of type Stream
         const int constTextBufferSize = 4096; // Size of the buffer (in chars) user to read input parameter of type TextReader
+        private const string enableTruncateSwitch = "Switch.Microsoft.Data.SqlClient.TruncateScaledDecimal"; // for applications that need to maintain backwards compatibility with the previous behavior
 
         // State variables
         internal TdsParserState _state = TdsParserState.Closed; // status flag for connection
@@ -306,6 +307,16 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 return _connHandler;
+            }
+        }
+
+        private static bool EnableTruncateSwitch
+        {
+            get
+            {
+                bool value;
+                value = AppContext.TryGetSwitch(enableTruncateSwitch, out value) ? value : false;
+                return value;
             }
         }
 
@@ -714,7 +725,7 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(IntPtr.Zero == temp, "unexpected syncReadPacket without corresponding SNIPacketRelease");
                 if (TdsEnums.SNI_SUCCESS_IO_PENDING != error)
                 {
-                    Debug.Assert(TdsEnums.SNI_SUCCESS != error, "Unexpected successfull read async on physical connection before enabling MARS!");
+                    Debug.Assert(TdsEnums.SNI_SUCCESS != error, "Unexpected successful read async on physical connection before enabling MARS!");
                     _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
                     ThrowExceptionAndWarning(_physicalStateObj);
                 }
@@ -2046,7 +2057,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     tdsReliabilitySection.Start();
 #endif //DEBUG
-                    return Run(runBehavior, cmdHandler, dataStream, bulkCopyHandler, stateObj);
+                return Run(runBehavior, cmdHandler, dataStream, bulkCopyHandler, stateObj);
 #if DEBUG
                 }
                 finally
@@ -2922,7 +2933,7 @@ namespace Microsoft.Data.SqlClient
                                 return false;
                             }
 
-                            // give the parser the new collation values in case parameters don't specify one          
+                            // give the parser the new collation values in case parameters don't specify one
                             _defaultCollation = env.newCollation;
                             _defaultLCID = env.newCollation.LCID;
 
@@ -7727,7 +7738,8 @@ namespace Microsoft.Data.SqlClient
         {
             if (d.Scale != newScale)
             {
-                return SqlDecimal.AdjustScale(d, newScale - d.Scale, false /* Don't round, truncate.  MDAC 69229 */);
+                bool round = !EnableTruncateSwitch;
+                return SqlDecimal.AdjustScale(d, newScale - d.Scale, round);
             }
 
             return d;
@@ -7739,9 +7751,10 @@ namespace Microsoft.Data.SqlClient
 
             if (newScale != oldScale)
             {
+                bool round = !EnableTruncateSwitch;
                 SqlDecimal num = new SqlDecimal(value);
 
-                num = SqlDecimal.AdjustScale(num, newScale - oldScale, false /* Don't round, truncate.  MDAC 69229 */);
+                num = SqlDecimal.AdjustScale(num, newScale - oldScale, round);
                 return num.Value;
             }
 
@@ -9729,9 +9742,9 @@ namespace Microsoft.Data.SqlClient
                             // if we have an output param, set the value to null so we do not send it across to the server
                             if (param.Direction == ParameterDirection.Output)
                             {
-                                isSqlVal = param.ParamaterIsSqlType;  // We have to forward the TYPE info, we need to know what type we are returning.  Once we null the paramater we will no longer be able to distinguish what type were seeing.
+                                isSqlVal = param.ParameterIsSqlType;  // We have to forward the TYPE info, we need to know what type we are returning.  Once we null the parameter we will no longer be able to distinguish what type were seeing.
                                 param.Value = null;
-                                param.ParamaterIsSqlType = isSqlVal;
+                                param.ParameterIsSqlType = isSqlVal;
                             }
                             else
                             {
@@ -10485,11 +10498,11 @@ namespace Microsoft.Data.SqlClient
             }
             else if (param.Direction == ParameterDirection.Output)
             {
-                bool isCLRType = param.ParamaterIsSqlType;  // We have to forward the TYPE info, we need to know what type we are returning.  Once we null the paramater we will no longer be able to distinguish what type were seeing.
+                bool isCLRType = param.ParameterIsSqlType;  // We have to forward the TYPE info, we need to know what type we are returning.  Once we null the paramater we will no longer be able to distinguish what type were seeing.
                 param.Value = null;
                 value = null;
                 typeCode = ExtendedClrTypeCode.DBNull;
-                param.ParamaterIsSqlType = isCLRType;
+                param.ParameterIsSqlType = isCLRType;
             }
             else
             {
@@ -11582,7 +11595,7 @@ namespace Microsoft.Data.SqlClient
             stateObj.WriteByteArray(actId.Id.ToByteArray(), GUID_SIZE, 0); // Id (Guid)
             WriteUnsignedInt(actId.Sequence, stateObj); // sequence number
 
-            SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.WriteTraceHeaderData|INFO> ActivityID {0}", actId.ToString());
+            SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.WriteTraceHeaderData|INFO> ActivityID {0}", actId);
         }
 
         private void WriteRPCBatchHeaders(TdsParserStateObject stateObj, SqlNotificationRequest notificationRequest)
@@ -12753,7 +12766,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLIMAGE:
                 case TdsEnums.SQLUDT:
                     {
-                        Debug.Assert(!isDataFeed, "We cannot seriliaze streams");
+                        Debug.Assert(!isDataFeed, "We cannot serialize streams");
                         Debug.Assert(value is byte[], "Value should be an array of bytes");
 
                         byte[] b = new byte[actualLength];
@@ -12795,7 +12808,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLBIGVARCHAR:
                 case TdsEnums.SQLTEXT:
                     {
-                        Debug.Assert(!isDataFeed, "We cannot seriliaze streams");
+                        Debug.Assert(!isDataFeed, "We cannot serialize streams");
                         Debug.Assert((value is string || value is byte[]), "Value is a byte array or string");
 
                         if (value is byte[])
@@ -12814,7 +12827,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLNTEXT:
                 case TdsEnums.SQLXMLTYPE:
                     {
-                        Debug.Assert(!isDataFeed, "We cannot seriliaze streams");
+                        Debug.Assert(!isDataFeed, "We cannot serialize streams");
                         Debug.Assert((value is string || value is byte[]), "Value is a byte array or string");
 
                         if (value is byte[])

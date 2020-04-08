@@ -334,7 +334,7 @@ namespace Microsoft.Data.Common
                 {
                     try
                     {
-                        // Enum.ToObject allows only integral and enum values (enums are blocked above), rasing ArgumentException for the rest
+                        // Enum.ToObject allows only integral and enum values (enums are blocked above), raising ArgumentException for the rest
                         eValue = (SqlConnectionAttestationProtocol)Enum.ToObject(typeof(SqlConnectionAttestationProtocol), value);
                     }
                     catch (ArgumentException e)
@@ -529,7 +529,7 @@ namespace Microsoft.Data.Common
                 {
                     try
                     {
-                        // Enum.ToObject allows only integral and enum values (enums are blocked above), rasing ArgumentException for the rest
+                        // Enum.ToObject allows only integral and enum values (enums are blocked above), raising ArgumentException for the rest
                         eValue = (SqlAuthenticationMethod)Enum.ToObject(typeof(SqlAuthenticationMethod), value);
                     }
                     catch (ArgumentException e)
@@ -605,7 +605,7 @@ namespace Microsoft.Data.Common
                 {
                     try
                     {
-                        // Enum.ToObject allows only integral and enum values (enums are blocked above), rasing ArgumentException for the rest
+                        // Enum.ToObject allows only integral and enum values (enums are blocked above), raising ArgumentException for the rest
                         eValue = (SqlConnectionColumnEncryptionSetting)Enum.ToObject(typeof(SqlConnectionColumnEncryptionSetting), value);
                     }
                     catch (ArgumentException e)

@@ -318,7 +318,7 @@ namespace Microsoft.Data.Common
         /// * if the value is from integral type (SByte, Int16, Int32, Int64, Byte, UInt16, UInt32, or UInt64), it will be converted to enum
         /// * if the value is another enum or any other type, it will be blocked with an appropriate ArgumentException
         /// 
-        /// in any case above, if the conerted value is out of valid range, the method raises ArgumentOutOfRangeException.
+        /// in any case above, if the converted value is out of valid range, the method raises ArgumentOutOfRangeException.
         /// </summary>
         /// <returns>PoolBlockingPeriod value in the valid range</returns>
         internal static PoolBlockingPeriod ConvertToPoolBlockingPeriod(string keyword, object value)
@@ -368,7 +368,7 @@ namespace Microsoft.Data.Common
                 {
                     try
                     {
-                        // Enum.ToObject allows only integral and enum values (enums are blocked above), rasing ArgumentException for the rest
+                        // Enum.ToObject allows only integral and enum values (enums are blocked above), raising ArgumentException for the rest
                         eValue = (PoolBlockingPeriod)Enum.ToObject(typeof(PoolBlockingPeriod), value);
                     }
                     catch (ArgumentException e)
@@ -443,9 +443,9 @@ namespace Microsoft.Data.Common
         /// * if the value is from integral type (SByte, Int16, Int32, Int64, Byte, UInt16, UInt32, or UInt64), it will be converted to enum
         /// * if the value is another enum or any other type, it will be blocked with an appropriate ArgumentException
         /// 
-        /// in any case above, if the conerted value is out of valid range, the method raises ArgumentOutOfRangeException.
+        /// in any case above, if the converted value is out of valid range, the method raises ArgumentOutOfRangeException.
         /// </summary>
-        /// <returns>applicaiton intent value in the valid range</returns>
+        /// <returns>application intent value in the valid range</returns>
         internal static ApplicationIntent ConvertToApplicationIntent(string keyword, object value)
         {
             Debug.Assert(null != value, "ConvertToApplicationIntent(null)");
@@ -493,7 +493,7 @@ namespace Microsoft.Data.Common
                 {
                     try
                     {
-                        // Enum.ToObject allows only integral and enum values (enums are blocked above), rasing ArgumentException for the rest
+                        // Enum.ToObject allows only integral and enum values (enums are blocked above), raising ArgumentException for the rest
                         eValue = (ApplicationIntent)Enum.ToObject(typeof(ApplicationIntent), value);
                     }
                     catch (ArgumentException e)
@@ -716,7 +716,7 @@ namespace Microsoft.Data.Common
                 {
                     try
                     {
-                        // Enum.ToObject allows only integral and enum values (enums are blocked above), rasing ArgumentException for the rest
+                        // Enum.ToObject allows only integral and enum values (enums are blocked above), raising ArgumentException for the rest
                         eValue = (SqlAuthenticationMethod)Enum.ToObject(typeof(SqlAuthenticationMethod), value);
                     }
                     catch (ArgumentException e)
@@ -792,7 +792,7 @@ namespace Microsoft.Data.Common
                 {
                     try
                     {
-                        // Enum.ToObject allows only integral and enum values (enums are blocked above), rasing ArgumentException for the rest
+                        // Enum.ToObject allows only integral and enum values (enums are blocked above), raising ArgumentException for the rest
                         eValue = (SqlConnectionColumnEncryptionSetting)Enum.ToObject(typeof(SqlConnectionColumnEncryptionSetting), value);
                     }
                     catch (ArgumentException e)
@@ -935,7 +935,7 @@ namespace Microsoft.Data.Common
                 {
                     try
                     {
-                        // Enum.ToObject allows only integral and enum values (enums are blocked above), rasing ArgumentException for the rest
+                        // Enum.ToObject allows only integral and enum values (enums are blocked above), raising ArgumentException for the rest
                         eValue = (SqlConnectionAttestationProtocol)Enum.ToObject(typeof(SqlConnectionAttestationProtocol), value);
                     }
                     catch (ArgumentException e)

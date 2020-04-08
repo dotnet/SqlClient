@@ -1961,9 +1961,9 @@ namespace Microsoft.Data.Common
         // : DbMetaDataFactory
         //
 
-        static internal Exception AmbigousCollectionName(string collectionName)
+        static internal Exception AmbiguousCollectionName(string collectionName)
         {
-            return Argument(StringsHelper.GetString(Strings.MDF_AmbigousCollectionName, collectionName));
+            return Argument(StringsHelper.GetString(Strings.MDF_AmbiguousCollectionName, collectionName));
         }
 
         static internal Exception CollectionNameIsNotUnique(string collectionName)

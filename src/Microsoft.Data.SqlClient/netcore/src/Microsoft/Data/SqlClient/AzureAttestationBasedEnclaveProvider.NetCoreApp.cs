@@ -117,10 +117,10 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                // As per current design, we want to minimize the number of create session calls. To acheive this we block all the GetEnclaveSession calls until the first call to
+                // As per current design, we want to minimize the number of create session calls. To achieve this we block all the GetEnclaveSession calls until the first call to
                 // GetEnclaveSession -> GetAttestationParameters -> CreateEnclaveSession completes or the event timeout happen.
                 // Case 1: When the first request successfully creates the session, then all outstanding GetEnclaveSession will use the current session.
-                // Case 2: When the first request unable to create the encalve session (may be due to some error or the first request doesn't require enclave computation) then in those case we set the event timeout to 0.
+                // Case 2: When the first request unable to create the enclave session (may be due to some error or the first request doesn't require enclave computation) then in those case we set the event timeout to 0.
                 UpdateEnclaveSessionLockStatus(sqlEnclaveSession);
             }
         }
@@ -134,7 +134,7 @@ namespace Microsoft.Data.SqlClient
 
         #region Internal Class
 
-        // A model class respresenting the deserialization of the byte payload the client
+        // A model class representing the deserialization of the byte payload the client
         // receives from SQL Server while setting up a session.
         // Protocol format:
         // 1. Total Size of the attestation blob as UINT

@@ -178,3 +178,9 @@ Tests can be built and run with custom Target Frameworks. See the below examples
 Managed SNI can be enabled on Windows by enabling the below AppContext switch:
 
 **"Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows"**
+
+## Set truncation on for scaled decimal parameters
+
+Scaled decimal parameter truncation can be enabled by enabling the below AppContext switch:
+
+**"Switch.Microsoft.Data.SqlClient.TruncateScaledDecimal"**

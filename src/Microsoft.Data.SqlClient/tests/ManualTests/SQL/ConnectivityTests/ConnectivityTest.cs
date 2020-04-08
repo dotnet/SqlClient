@@ -278,7 +278,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnectionStringPasswordIncluded))]
-        public static void ConnectionStringPersistantInfoTest()
+        public static void ConnectionStringPersistentInfoTest()
         {
             SqlConnectionStringBuilder connectionStringBuilder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
             connectionStringBuilder.PersistSecurityInfo = false;

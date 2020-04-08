@@ -232,7 +232,7 @@ namespace Microsoft.Data.SqlClient.SNI
                         if (instanceAPIPathRegistryObject == null)
                         {
                             errorState = LocalDBErrorState.NO_SQLUSERINSTANCEDLL_PATH;
-                            SqlClientEventSource.Log.SNITraceEvent("<sc.SNI.LocalDB.Windows.GetUserInstanceDllPath |SNI|ERR > No SQL user instance DLL. Instance API Path REgistry Object Error. state ={0}.", errorState);
+                            SqlClientEventSource.Log.SNITraceEvent("<sc.SNI.LocalDB.Windows.GetUserInstanceDllPath |SNI|ERR > No SQL user instance DLL. Instance API Path Registry Object Error. state ={0}.", errorState);
                             return null;
                         }
 

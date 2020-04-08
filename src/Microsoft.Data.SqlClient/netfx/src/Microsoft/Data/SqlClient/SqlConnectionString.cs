@@ -845,9 +845,9 @@ namespace Microsoft.Data.SqlClient
             return hash;
         }
 
-        static internal bool ValidProtocal(string protocal)
+        static internal bool ValidProtocol(string protocol)
         {
-            switch (protocal)
+            switch (protocol)
             {
                 case TdsEnums.TCP:
                 case TdsEnums.NP:
@@ -855,7 +855,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.LPC:
                     return true;
 
-                //              case TdsEnums.RPC  :  Invalid Protocals
+                //              case TdsEnums.RPC  :  Invalid Protocols
                 //              case TdsEnums.BV   :
                 //              case TdsEnums.ADSP :
                 //              case TdsEnums.SPX  :

@@ -254,7 +254,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             IEnumerator<StePermutation> boundsMD = SteStructuredTypeBoundaries.AllColumnTypesExceptUdts.GetEnumerator(
                         BoundariesTestKeys);
-
             TestTVPPermutations(SteStructuredTypeBoundaries.AllColumnTypesExceptUdts, false);
             //Console.WriteLine("+++++++++++  UDT TVP tests ++++++++++++++");
             //TestTVPPermutations(SteStructuredTypeBoundaries.UdtsOnly, true);
@@ -1163,9 +1162,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 conn.Open();
                 cmd.Connection = conn;
-                //                cmd.Transaction = conn.BeginTransaction();
+                if (DataTestUtility.IsNotAzureServer())
+                {
+                    // Choose the 2628 error message instead of 8152 in SQL Server 2016 & 2017
+                    using (SqlCommand cmdFix = new SqlCommand("DBCC TRACEON(460)", conn))
+                    {
+                        cmdFix.ExecuteNonQuery();
+                    }
+                }
 
-                // and run the command
                 try
                 {
                     using (SqlDataReader rdr = cmd.ExecuteReader())
@@ -1184,13 +1189,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 catch (ArgumentException ae)
                 {
                     Console.WriteLine("ArgumentException: {0}", ae.Message);
-                }
-
-                // And clean up. If an error is thrown, the connection being recycled 
-                //  will roll back the transaction
-                if (null != cmd.Transaction)
-                {
-                    //                    cmd.Transaction.Rollback();
                 }
             }
         }

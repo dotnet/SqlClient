@@ -813,7 +813,7 @@ namespace Microsoft.Data.SqlClient
                 { // single execution/datareader per connection
                     if (_asyncCommandCount > 0)
                     {
-                        throw SQL.MARSUnspportedOnConnection();
+                        throw SQL.MARSUnsupportedOnConnection();
                     }
 
                     reader = FindLiveReader(null);
@@ -2877,7 +2877,7 @@ namespace Microsoft.Data.SqlClient
                             throw SQL.ParsingErrorFeatureId(ParsingErrorState.UnrequestedFeatureAckReceived, featureId);
                         }
 
-                        Debug.Assert(_fedAuthFeatureExtensionData != null, "_fedAuthFeatureExtensionData must not be null when _federatedAuthenticatonRequested == true");
+                        Debug.Assert(_fedAuthFeatureExtensionData != null, "_fedAuthFeatureExtensionData must not be null when _federatedAuthenticationRequested == true");
 
                         switch (_fedAuthFeatureExtensionData.Value.libraryType)
                         {

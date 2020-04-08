@@ -86,8 +86,8 @@ public class Address : INullable, IBinarySerialize
         string str = e.GetString(value.Buffer);
 
         string[] twolines = new string[2];
-        char[] seperator = { '|' };
-        twolines = str.Split(seperator);
+        char[] separator = { '|' };
+        twolines = str.Split(separator);
 
         m_firstline = twolines[0];
         m_secondline = twolines.Length > 1 ? twolines[1] : SqlString.Null;
@@ -146,8 +146,8 @@ public class Address : INullable, IBinarySerialize
         // using || to indicate the separation between
         // address line 1 and 2, assume it won't appear
         // in any address
-        char[] seperator = { '|', '|' };
-        twolines = str.Split(seperator);
+        char[] separator = { '|', '|' };
+        twolines = str.Split(separator);
 
         if (twolines.Length == 2)
             return new Address(twolines[0], twolines[1]);

@@ -194,7 +194,7 @@ namespace Microsoft.Data
 
 
         // Consider: whether we need to keep our own texts from Data_ArgumentNull and Data_ArgumentOutOfRange?
-        // Unfortunately ours and the system ones are not consisten between each other. Try to raise this isue in "URT user comunity"
+        // Unfortunately ours and the system ones are not consistent between each other. Try to raise this issue in "URT user community"
         static public Exception ArgumentNull(string paramName)
         {
             return _ArgumentNull(paramName, StringsHelper.GetString(Strings.Data_ArgumentNull, paramName));
@@ -625,12 +625,12 @@ namespace Microsoft.Data
             return _Data(StringsHelper.GetString(Strings.DataStorage_IComparableNotDefined, typeName));
         }
 
-        static public Exception UDTImplementsIChangeTrackingButnotIRevertible(string typeName)
+        static public Exception UDTImplementsIChangeTrackingButNotIRevertible(string typeName)
         {
             return _InvalidOperation(StringsHelper.GetString(Strings.DataColumn_UDTImplementsIChangeTrackingButnotIRevertible, typeName));
         }
 
-        static public Exception SetAddedAndModifiedCalledOnnonUnchanged()
+        static public Exception SetAddedAndModifiedCalledOnNonUnchanged()
         {
             return _InvalidOperation(StringsHelper.GetString(Strings.DataColumn_SetAddedAndModifiedCalledOnNonUnchanged));
         }
@@ -1421,7 +1421,7 @@ namespace Microsoft.Data
         {
             return _Data(StringsHelper.GetString(Strings.Xml_IsDataSetAttributeMissingInSchema));
         }
-        static public Exception TooManyIsDataSetAtributeInSchema()
+        static public Exception TooManyIsDataSetAttributeInSchema()
         {
             return _Data(StringsHelper.GetString(Strings.Xml_TooManyIsDataSetAtributeInSchema));
         }
@@ -1520,7 +1520,7 @@ namespace Microsoft.Data
         }
 
         //
-        static internal Exception InvalidDuplicateNamedSimpleTypeDelaration(string stName, string errorStr)
+        static internal Exception InvalidDuplicateNamedSimpleTypeDeclaration(string stName, string errorStr)
         {
             return _Argument(StringsHelper.GetString(Strings.NamedSimpleType_InvalidDuplicateNamedSimpleTypeDelaration, stName, errorStr));
         }
