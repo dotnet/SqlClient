@@ -9980,10 +9980,12 @@ namespace Microsoft.Data.SqlClient
 
                                     Debug.Assert(_isYukon, "Invalid DataType UDT for non-Yukon or later server!");
 
+                                    int maxSupportedSize = IsKatmaiOrNewer ? int.MaxValue : short.MaxValue;
+
                                     if (!isNull)
                                     {
                                         // When writing UDT parameter values to the TDS stream, allow sending byte[] or SqlBytes
-                                        // directly to the server and not rejected as invalid. This allows users to handle
+                                        // directly to the server and not reject them as invalid. This allows users to handle
                                         // serialization and deserialization logic without having to have SqlClient be aware of
                                         // the types and without using inefficient text representations.
                                         if (value is byte[] rawBytes)
@@ -10014,19 +10016,15 @@ namespace Microsoft.Data.SqlClient
                                         size = udtVal.Length;
 
                                         //it may be legitimate, but we dont support it yet
-                                        if (size < 0 || (size >= UInt16.MaxValue && maxsize != -1))
-                                            throw new IndexOutOfRangeException();
+                                        if (size < 0 || (size >= maxSupportedSize && maxsize != -1))
+                                        {
+                                            throw SQL.UDTInvalidSize(maxsize, maxSupportedSize);
+                                        }
                                     }
-
-                                    //if this is NULL value, write special null value
-                                    byte[] lenBytes = BitConverter.GetBytes((Int64)size);
-
-                                    if (ADP.IsEmpty(param.UdtTypeName))
-                                        throw SQL.MustSetUdtTypeNameForUdtParams();
 
                                     // Split the input name. TypeName is returned as single 3 part name during DeriveParameters.
                                     // NOTE: ParseUdtTypeName throws if format is incorrect
-                                    String[] names = SqlParameter.ParseTypeName(param.UdtTypeName, true /* is UdtTypeName */);
+                                    String[] names = SqlParameter.ParseTypeName(param.UdtTypeName, isUdtTypeName: true);
                                     if (!ADP.IsEmpty(names[0]) && TdsEnums.MAX_SERVERNAME < names[0].Length)
                                     {
                                         throw ADP.ArgumentOutOfRange("names");

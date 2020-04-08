@@ -817,6 +817,12 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQLUDT_InvalidSqlType, typeName));
         }
+        
+        static internal Exception UDTInvalidSize(int maxSize, int maxSupportedSize)
+        {
+            throw ADP.ArgumentOutOfRange(StringsHelper.GetString(Strings.SQLUDT_InvalidSize, maxSize, maxSupportedSize));
+        }
+
 
         static internal Exception InvalidSqlDbTypeForConstructor(SqlDbType type)
         {
