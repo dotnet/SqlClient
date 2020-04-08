@@ -52,6 +52,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static Dictionary<string, bool> AvailableDatabases;
         private static TraceEventListener TraceListener;
+        public static IEnumerable<string> ConnectionStrings
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(TCPConnectionString))
+                {
+                    yield return TCPConnectionString;
+                }
+                else if (!string.IsNullOrEmpty(NPConnectionString))
+                {
+                    yield return NPConnectionString;
+                }
+                foreach (string connStrAE in AEConnStrings)
+                {
+                    yield return connStrAE;
+                }
+            }
+        }
 
         private class Config
         {
@@ -307,6 +325,30 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 throw new ArgumentOutOfRangeException("the name is too long - SQL Server names are limited to 128");
             }
             return name;
+        }
+
+        public static void DropTable(SqlConnection sqlConnection, string tableName)
+        {
+            using (SqlCommand cmd = new SqlCommand(string.Format("IF (OBJECT_ID('{0}') IS NOT NULL) \n DROP TABLE {0}", tableName), sqlConnection))
+            {
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        public static void DropUserDefinedType(SqlConnection sqlConnection, string typeName)
+        {
+            using (SqlCommand cmd = new SqlCommand(string.Format("IF (TYPE_ID('{0}') IS NOT NULL) \n DROP TYPE {0}", typeName), sqlConnection))
+            {
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        public static void DropStoredProcedure(SqlConnection sqlConnection, string spName)
+        {
+            using (SqlCommand cmd = new SqlCommand(string.Format("IF (OBJECT_ID('{0}') IS NOT NULL) \n DROP PROCEDURE {0}", spName), sqlConnection))
+            {
+                cmd.ExecuteNonQuery();
+            }
         }
 
         public static bool IsLocalDBInstalled() => SupportsLocalDb;

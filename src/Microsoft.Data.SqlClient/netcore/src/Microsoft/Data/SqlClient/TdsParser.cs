@@ -57,6 +57,7 @@ namespace Microsoft.Data.SqlClient
         // Constants
         private const int constBinBufferSize = 4096; // Size of the buffer used to read input parameter of type Stream
         private const int constTextBufferSize = 4096; // Size of the buffer (in chars) user to read input parameter of type TextReader
+        private const string enableTruncateSwitch = "Switch.Microsoft.Data.SqlClient.TruncateScaledDecimal"; // for applications that need to maintain backwards compatibility with the previous behavior
 
         // State variables
         internal TdsParserState _state = TdsParserState.Closed; // status flag for connection
@@ -180,6 +181,16 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 return _connHandler;
+            }
+        }
+
+        private static bool EnableTruncateSwitch
+        {
+            get
+            {
+                bool value;
+                value = AppContext.TryGetSwitch(enableTruncateSwitch, out value) ? value : false;
+                return value;
             }
         }
 
@@ -7004,7 +7015,8 @@ namespace Microsoft.Data.SqlClient
         {
             if (d.Scale != newScale)
             {
-                return SqlDecimal.AdjustScale(d, newScale - d.Scale, false /* Don't round, truncate. */);
+                bool round = !EnableTruncateSwitch;
+                return SqlDecimal.AdjustScale(d, newScale - d.Scale, round);
             }
 
             return d;
@@ -7016,9 +7028,9 @@ namespace Microsoft.Data.SqlClient
 
             if (newScale != oldScale)
             {
+                bool round = !EnableTruncateSwitch;
                 SqlDecimal num = new SqlDecimal(value);
-
-                num = SqlDecimal.AdjustScale(num, newScale - oldScale, false /* Don't round, truncate.  */);
+                num = SqlDecimal.AdjustScale(num, newScale - oldScale, round);
                 return num.Value;
             }
 
