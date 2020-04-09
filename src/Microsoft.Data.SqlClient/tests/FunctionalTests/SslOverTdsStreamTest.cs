@@ -8,7 +8,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
 {
-    public static partial class SslOverTdsStreamTest
+    public static class SslOverTdsStreamTest
     {
         [Theory]
         [InlineData(0),InlineData(3),InlineData(128), InlineData(2048), InlineData(8192)]
@@ -181,7 +181,6 @@ namespace Microsoft.Data.SqlClient.Tests
                     offset += packetBytes;
                 }
             }
-
         }
 
         private static int ReadPacket(Stream tdsStream, Func<Stream, byte[], int, int, int> action, byte[] output)
@@ -331,7 +330,6 @@ namespace Microsoft.Data.SqlClient.Tests
 
         public override ValueTask<int> ReadAsync(Memory<byte> destination, CancellationToken cancellationToken = default)
         {
-
             if (_readLimit > 0)
             {
                 return base.ReadAsync(destination.Slice(0, Math.Min(_readLimit, destination.Length)), cancellationToken);
