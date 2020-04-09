@@ -52,7 +52,7 @@ namespace Microsoft.Data.SqlClient
                         Operation = operation,
                         ConnectionId = sqlCommand.Connection?.ClientConnectionId,
                         Command = sqlCommand,
-                        TransactionId = transaction?.InternalTransaction?.TransactionId,
+                        transaction?.InternalTransaction?.TransactionId,
                         Timestamp = Stopwatch.GetTimestamp()
                     });
 
@@ -74,7 +74,7 @@ namespace Microsoft.Data.SqlClient
                         Operation = operation,
                         ConnectionId = sqlCommand.Connection?.ClientConnectionId,
                         Command = sqlCommand,
-                        TransactionId = transaction?.InternalTransaction?.TransactionId,
+                        transaction?.InternalTransaction?.TransactionId,
                         Statistics = sqlCommand.Statistics?.GetDictionary(),
                         Timestamp = Stopwatch.GetTimestamp()
                     });
@@ -93,7 +93,7 @@ namespace Microsoft.Data.SqlClient
                         Operation = operation,
                         ConnectionId = sqlCommand.Connection?.ClientConnectionId,
                         Command = sqlCommand,
-                        TransactionId = transaction?.InternalTransaction?.TransactionId,
+                        transaction?.InternalTransaction?.TransactionId,
                         Exception = ex,
                         Timestamp = Stopwatch.GetTimestamp()
                     });
@@ -236,7 +236,7 @@ namespace Microsoft.Data.SqlClient
                         Operation = operation,
                         IsolationLevel = isolationLevel,
                         Connection = connection,
-                        TransactionId = transaction?.TransactionId,
+                        transaction?.TransactionId,
                         Timestamp = Stopwatch.GetTimestamp()
                     });
 
@@ -258,7 +258,7 @@ namespace Microsoft.Data.SqlClient
                         Operation = operation,
                         IsolationLevel = isolationLevel,
                         Connection = connection,
-                        TransactionId = transaction?.TransactionId,
+                        transaction?.TransactionId,
                         Timestamp = Stopwatch.GetTimestamp()
                     });
             }
@@ -276,7 +276,7 @@ namespace Microsoft.Data.SqlClient
                         Operation = operation,
                         IsolationLevel = isolationLevel,
                         Connection = connection,
-                        TransactionId = transaction?.TransactionId,
+                        transaction?.TransactionId,
                         Exception = ex,
                         Timestamp = Stopwatch.GetTimestamp()
                     });
@@ -297,7 +297,7 @@ namespace Microsoft.Data.SqlClient
                         Operation = operation,
                         IsolationLevel = isolationLevel,
                         Connection = connection,
-                        TransactionId = transaction?.TransactionId,
+                        transaction?.TransactionId,
                         TransactionName = transactionName,
                         Timestamp = Stopwatch.GetTimestamp()
                     });
@@ -320,7 +320,7 @@ namespace Microsoft.Data.SqlClient
                         Operation = operation,
                         IsolationLevel = isolationLevel,
                         Connection = connection,
-                        TransactionId = transaction?.TransactionId,
+                        transaction?.TransactionId,
                         TransactionName = transactionName,
                         Timestamp = Stopwatch.GetTimestamp()
                     });
@@ -339,7 +339,7 @@ namespace Microsoft.Data.SqlClient
                         Operation = operation,
                         IsolationLevel = isolationLevel,
                         Connection = connection,
-                        TransactionId = transaction?.TransactionId,
+                        transaction?.TransactionId,
                         TransactionName = transactionName,
                         Exception = ex,
                         Timestamp = Stopwatch.GetTimestamp()
