@@ -246,9 +246,9 @@
     <ProjectReference Include="$(TestsPath)tools\Microsoft.DotNet.XUnitExtensions\Microsoft.DotNet.XUnitExtensions.csproj">
       <Name>Microsoft.DotNet.XUnitExtensions</Name>
     </ProjectReference>
-    <ProjectReference Include="..\tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj" />
-    <ProjectReference Include="..\tools\TDS\TDS.Servers\TDS.Servers.csproj" />
-    <ProjectReference Include="..\tools\TDS\TDS\TDS.csproj" />
+    <ProjectReference Include="$(TestsPath)tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj" />
+    <ProjectReference Include="$(TestsPath)tools\TDS\TDS.Servers\TDS.Servers.csproj" />
+    <ProjectReference Include="$(TestsPath)tools\TDS\TDS\TDS.csproj" />
     <ProjectReference Include="SQL\UdtTest\UDTs\Address\Address.csproj">
       <Name>Address</Name>
     </ProjectReference>
