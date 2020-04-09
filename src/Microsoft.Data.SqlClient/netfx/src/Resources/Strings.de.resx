@@ -340,7 +340,7 @@
     <value>Die Schema-Sammlung '{0}' konnte nicht erstellt werden.</value>
   </data>
   <data name="MDF_AmbiguousCollectionName" xml:space="preserve">
-    <value>Der Sammlungsname '{0}' stimmt mit mindestens zwei Sammlungen mit demselben Namen, jedoch anderer Schreibung überein, ohne aber mit diesen exakt übereinzustimmen.</value>
+    <value>The collection name '{0}' matches at least two collections with the same name but with different case, but does not match any of them exactly.</value>
   </data>
   <data name="MDF_CollectionNameISNotUnique" xml:space="preserve">
     <value>Es gibt mehrere Sammlungen mit dem Namen '{0}'.</value>
@@ -2497,7 +2497,7 @@
     <value>"Authentication=Active Directory Integrated" kann nicht mit den Schlüsselwörtern "User ID", "UID", "Password" oder "PWD" für die Verbindungszeichenfolge verwendet werden.</value>
   </data>
   <data name="SQL_InteractiveWithPassword" xml:space="preserve">
-    <value>Cannot use 'Authentication=Active Directory Interactive' with 'Password' or 'PWD' connection string keywords.</value>
+    <value>"Authentication=Active Directory Interactive" kann nicht mit den Schlüsselwörtern "Password" oder "PWD" für die Verbindungszeichenfolge verwendet werden.</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
     <value>"Authentication=Active Directory Integrated" kann nicht verwendet werden, wenn die Eigenschaft "Credential" festgelegt wurde.</value>
@@ -4526,5 +4526,8 @@
   </data>
   <data name="TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage" xml:space="preserve">
     <value>Fehler beim Generieren des Enclave-Pakets. In der Verbindungszeichenfolge wurde kein Nachweisprotokoll angegeben, aber für die Abfrage sind Enclave-Berechnungen erforderlich.</value>
+  </data>
+  <data name="SQLUDT_InvalidSize" xml:space="preserve">
+    <value>UDT size must be less than {1}, size: {0}</value>
   </data>
 </root>

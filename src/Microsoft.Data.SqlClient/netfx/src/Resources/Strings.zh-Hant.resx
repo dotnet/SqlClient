@@ -340,7 +340,7 @@
     <value>無法建置結構描述 '{0}';</value>
   </data>
   <data name="MDF_AmbiguousCollectionName" xml:space="preserve">
-    <value>集合名稱 '{0}' 至少與兩個同名但大小寫不同的名稱相符，但與其中任一個均不完全相符。</value>
+    <value>The collection name '{0}' matches at least two collections with the same name but with different case, but does not match any of them exactly.</value>
   </data>
   <data name="MDF_CollectionNameISNotUnique" xml:space="preserve">
     <value>有多個名為 '{0}' 的集合。</value>
@@ -2497,7 +2497,7 @@
     <value>無法搭配 'User ID'、'UID'、'Password' 或 'PWD' 等連接字串關鍵字使用 'Authentication=Active Directory Integrated'。</value>
   </data>
   <data name="SQL_InteractiveWithPassword" xml:space="preserve">
-    <value>Cannot use 'Authentication=Active Directory Interactive' with 'Password' or 'PWD' connection string keywords.</value>
+    <value>使用 'Authentication=Active Directory Interactive' 時，無法搭配 'Password' 或 'PWD' 連接字串關鍵字一起使用。</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
     <value>如果已設定 Credential 屬性，則無法使用 'Authentication=Active Directory Integrated'。</value>
@@ -4526,5 +4526,8 @@
   </data>
   <data name="TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage" xml:space="preserve">
     <value>產生記憶體保護區套件時發生錯誤。未在連接字串中指定證明通訊協定，但查詢需要記憶體保護區計算。</value>
+  </data>
+  <data name="SQLUDT_InvalidSize" xml:space="preserve">
+    <value>UDT size must be less than {1}, size: {0}</value>
   </data>
 </root>

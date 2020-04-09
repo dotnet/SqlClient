@@ -340,7 +340,7 @@
     <value>스키마 컬렉션 '{0}'을(를) 작성할 수 없습니다.</value>
   </data>
   <data name="MDF_AmbiguousCollectionName" xml:space="preserve">
-    <value>컬렉션 이름 '{0}'이(가) 이름은 같지만 사례는 다른 둘 이상의 컬렉션과 일치합니다. 그러나 모두 정확하게 일치하지는 않습니다.</value>
+    <value>The collection name '{0}' matches at least two collections with the same name but with different case, but does not match any of them exactly.</value>
   </data>
   <data name="MDF_CollectionNameISNotUnique" xml:space="preserve">
     <value>'{0}'(이)라는 컬렉션이 여러 개 있습니다.</value>
@@ -2497,7 +2497,7 @@
     <value>'Authentication=Active Directory Integrated'를 'User ID', 'UID', 'Password' 또는 'PWD' 연결 문자열 키워드와 함께 사용할 수 없습니다.</value>
   </data>
   <data name="SQL_InteractiveWithPassword" xml:space="preserve">
-    <value>Cannot use 'Authentication=Active Directory Interactive' with 'Password' or 'PWD' connection string keywords.</value>
+    <value>'Authentication=Active Directory Interactive'를 'Password' 또는 'PWD' 연결 문자열 키워드와 함께 사용할 수 없습니다.</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
     <value>Credential 속성이 설정된 경우 'Authentication=Active Directory Integrated'를 사용할 수 없습니다.</value>
@@ -4526,5 +4526,8 @@
   </data>
   <data name="TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage" xml:space="preserve">
     <value>enclave 패키지를 생성하는 동안 오류가 발생했습니다. 연결 문자열에 증명 프로토콜이 지정되지 않았지만 쿼리에 enclave 계산이 필요합니다.</value>
+  </data>
+  <data name="SQLUDT_InvalidSize" xml:space="preserve">
+    <value>UDT size must be less than {1}, size: {0}</value>
   </data>
 </root>

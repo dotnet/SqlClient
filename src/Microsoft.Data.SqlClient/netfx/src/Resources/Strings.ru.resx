@@ -340,7 +340,7 @@
     <value>Не удается создать коллекцию схемы "{0}";</value>
   </data>
   <data name="MDF_AmbiguousCollectionName" xml:space="preserve">
-    <value>Имя коллекции "{0}" без учета регистра совпадает по меньшей мере с двумя именами коллекций, но с учетом регистра не совпадает ни с одним из них.</value>
+    <value>The collection name '{0}' matches at least two collections with the same name but with different case, but does not match any of them exactly.</value>
   </data>
   <data name="MDF_CollectionNameISNotUnique" xml:space="preserve">
     <value>Существует несколько коллекций с именем "{0}".</value>
@@ -2497,7 +2497,7 @@
     <value>Невозможно использовать "Authentication=Active Directory Integrated" с ключевыми словами строки подключения "User ID", "UID", "Password" или "PWD".</value>
   </data>
   <data name="SQL_InteractiveWithPassword" xml:space="preserve">
-    <value>Cannot use 'Authentication=Active Directory Interactive' with 'Password' or 'PWD' connection string keywords.</value>
+    <value>Невозможно использовать "Authentication=Active Directory Interactive" с ключевыми словами "Password" или "PWD" в строке подключения.</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
     <value>Не удается использовать "Authentication=Active Directory Integrated", если задано свойство "Credential".</value>
@@ -4526,5 +4526,8 @@
   </data>
   <data name="TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage" xml:space="preserve">
     <value>Возникла ошибка при создании пакета анклава. Запрос требует вычислений на основе анклава, но в строке подключения не указан протокол аттестации.</value>
+  </data>
+  <data name="SQLUDT_InvalidSize" xml:space="preserve">
+    <value>UDT size must be less than {1}, size: {0}</value>
   </data>
 </root>

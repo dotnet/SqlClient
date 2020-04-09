@@ -340,7 +340,7 @@
     <value>无法构建架构集合“{0}”；</value>
   </data>
   <data name="MDF_AmbiguousCollectionName" xml:space="preserve">
-    <value>集合名“{0}”至少与两个同名但是大小写不同的集合匹配，但是不与任何一个完全匹配。</value>
+    <value>The collection name '{0}' matches at least two collections with the same name but with different case, but does not match any of them exactly.</value>
   </data>
   <data name="MDF_CollectionNameISNotUnique" xml:space="preserve">
     <value>有多个名为“{0}”的集合。</value>
@@ -2497,7 +2497,7 @@
     <value>无法对“User ID”、“UID”、“Password”或“PWD”连接字符串关键字使用“Authentication=Active Directory Integrated”。</value>
   </data>
   <data name="SQL_InteractiveWithPassword" xml:space="preserve">
-    <value>Cannot use 'Authentication=Active Directory Interactive' with 'Password' or 'PWD' connection string keywords.</value>
+    <value>无法对 "Password" 或 "PWD" 连接字符串关键字使用 "Authentication=Active Directory Interactive"。</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
     <value>如果设置了 Credential 属性，则无法使用“Authentication=Active Directory Integrated”。</value>
@@ -4526,5 +4526,8 @@
   </data>
   <data name="TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage" xml:space="preserve">
     <value>生成 enclave 包时出错。尚未在连接字符串中指定证明协议，但查询需要 enclave 计算。</value>
+  </data>
+  <data name="SQLUDT_InvalidSize" xml:space="preserve">
+    <value>UDT size must be less than {1}, size: {0}</value>
   </data>
 </root>

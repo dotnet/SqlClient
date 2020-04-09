@@ -340,7 +340,7 @@
     <value>Impossible de créer la collection de schémas '{0}' ;</value>
   </data>
   <data name="MDF_AmbiguousCollectionName" xml:space="preserve">
-    <value>Le nom de collection '{0}' correspond au moins à deux collections dotées du même nom, mais de casse différente, mais cette correspondance n'est pas précise.</value>
+    <value>The collection name '{0}' matches at least two collections with the same name but with different case, but does not match any of them exactly.</value>
   </data>
   <data name="MDF_CollectionNameISNotUnique" xml:space="preserve">
     <value>Plusieurs collections portent le nom '{0}'.</value>
@@ -4526,5 +4526,8 @@
   </data>
   <data name="TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage" xml:space="preserve">
     <value>Une erreur s'est produite lors de la génération du package d'enclave. Le protocole d'attestation n'a pas été spécifié dans la chaîne de connexion, mais la requête nécessite des calculs d'enclave.</value>
+  </data>
+  <data name="SQLUDT_InvalidSize" xml:space="preserve">
+    <value>UDT size must be less than {1}, size: {0}</value>
   </data>
 </root>

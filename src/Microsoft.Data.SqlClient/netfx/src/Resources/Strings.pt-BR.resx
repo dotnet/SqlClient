@@ -340,7 +340,7 @@
     <value>Não é possível criar a coleção de esquemas '{0}';</value>
   </data>
   <data name="MDF_AmbiguousCollectionName" xml:space="preserve">
-    <value>O nome de coleção '{0}' corresponde a pelo menos duas coleções com o mesmo nome, mas com diferença em maiúsculas e minúsculas, mas não corresponde a qualquer uma delas exatamente.</value>
+    <value>The collection name '{0}' matches at least two collections with the same name but with different case, but does not match any of them exactly.</value>
   </data>
   <data name="MDF_CollectionNameISNotUnique" xml:space="preserve">
     <value>Há várias coleções chamadas '{0}'.</value>
@@ -4526,5 +4526,8 @@
   </data>
   <data name="TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage" xml:space="preserve">
     <value>Erro ao gerar o pacote de enclave. O Protocolo de Atestado não foi especificado na cadeia de conexão, mas a consulta exige computações de enclave.</value>
+  </data>
+  <data name="SQLUDT_InvalidSize" xml:space="preserve">
+    <value>UDT size must be less than {1}, size: {0}</value>
   </data>
 </root>
