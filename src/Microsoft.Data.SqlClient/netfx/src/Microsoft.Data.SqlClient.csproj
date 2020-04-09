@@ -93,6 +93,12 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientLogger.cs" >
       <Link>Microsoft\Data\SqlClient\SqlClientLogger.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\Common\ActivityCorrelator.cs">
+      <Link>>Microsoft\Data\Common\ActivityCorrelator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\Sql\SqlNotificationRequest.cs">
+      <Link>Microsoft\Data\Sql\SqlNotificationRequest.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\DataClassification\SensitivityClassification.cs">
       <Link>Microsoft\Data\SqlClient\DataClassification\SensitivityClassification.cs</Link>
     </Compile>
@@ -107,6 +113,9 @@
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContextKey.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContextKey.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationTimeoutRetryHelper.cs">
+      <Link>Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationTimeoutRetryHelper.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\IBinarySerialize.cs">
       <Link>Microsoft\Data\SqlClient\Server\IBinarySerialize.cs</Link>
@@ -183,6 +192,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlSymmetricKeyCache.cs">
       <Link>Microsoft\Data\SqlClient\SqlSymmetricKeyCache.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlTypes\SqlTypeWorkarounds.cs">
+      <Link>Microsoft\Data\SqlTypes\SqlTypeWorkarounds.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Microsoft\Data\Interop\SNINativeMethodWrapper.cs" />
@@ -193,7 +205,6 @@
     <Compile Include="Microsoft\Data\SqlClient\ApplicationIntent.cs" />
     <Compile Include="Microsoft\Data\SqlClient\assemblycache.cs" />
     <Compile Include="Microsoft\Data\SqlClient\AzureAttestationBasedEnclaveProvider.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationTimeoutRetryHelper.cs" />
     <Compile Include="Microsoft\Data\SqlClient\EnclaveDelegate.cs" />
     <Compile Include="Microsoft\Data\SqlClient\EnclaveProviderBase.cs" />
     <Compile Include="Microsoft\Data\SqlClient\EnclaveSessionCache.cs" />
@@ -296,7 +307,6 @@
     <Compile Include="Microsoft\Data\SqlClient\TdsRecordBufferSetter.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsValueSetter.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientWrapperSmiStreamChars.cs" />
-    <Compile Include="Microsoft\Data\SqlTypes\SqlTypeWorkarounds.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\SqlStreamChars.cs" />
     <Compile Include="Microsoft\Data\DataException.cs" />
     <Compile Include="Microsoft\Data\Common\NativeMethods.cs" />
@@ -311,7 +321,6 @@
     <Compile Include="Common\src\Microsoft\Data\Common\MultipartIdentifier.cs" />
     <Compile Include="Common\src\Microsoft\Data\Common\NameValuePermission.cs" />
     <Compile Include="Microsoft\Data\Common\AdapterSwitches.cs" />
-    <Compile Include="Microsoft\Data\Common\ActivityCorrelator.cs" />
     <Compile Include="Microsoft\Data\Common\AdapterUtil.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionOptions.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionStringCommon.cs" />
@@ -368,7 +377,6 @@
     <Compile Include="Microsoft\Data\SqlClient\Server\sqlser.cs" />
     <Compile Include="Microsoft\Data\Sql\SqlGenericUtil.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\sqlnorm.cs" />
-    <Compile Include="Microsoft\Data\Sql\SqlNotificationRequest.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\FieldNameLookup.cs" />
     <Compile Include="Microsoft\Data\OperationAbortedException.cs" />
   </ItemGroup>
