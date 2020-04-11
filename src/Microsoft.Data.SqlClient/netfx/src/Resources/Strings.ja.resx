@@ -340,7 +340,7 @@
     <value>スキーマ コレクション '{0}' を構築できません。</value>
   </data>
   <data name="MDF_AmbiguousCollectionName" xml:space="preserve">
-    <value>The collection name '{0}' matches at least two collections with the same name but with different case, but does not match any of them exactly.</value>
+    <value>コレクション名 '{0}' と同じ名前のコレクションが少なくとも 2 つありますが、大文字と小文字が一致しておらず、このどちらとも完全には名前が一致していません。</value>
   </data>
   <data name="MDF_CollectionNameISNotUnique" xml:space="preserve">
     <value>'{0}' という名前のコレクションが複数あります。</value>

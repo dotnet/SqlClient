@@ -340,7 +340,7 @@
     <value>Impossible de créer la collection de schémas '{0}' ;</value>
   </data>
   <data name="MDF_AmbiguousCollectionName" xml:space="preserve">
-    <value>The collection name '{0}' matches at least two collections with the same name but with different case, but does not match any of them exactly.</value>
+    <value>Le nom de collection '{0}' correspond au moins à deux collections dotées du même nom, mais de casse différente, mais cette correspondance n'est pas précise.</value>
   </data>
   <data name="MDF_CollectionNameISNotUnique" xml:space="preserve">
     <value>Plusieurs collections portent le nom '{0}'.</value>
@@ -2497,7 +2497,7 @@
     <value>Impossible d'utiliser 'Authentication=Active Directory Integrated' avec les mots clés de la chaîne de connexion 'User ID", "UID", "Password" ou "PWD".</value>
   </data>
   <data name="SQL_InteractiveWithPassword" xml:space="preserve">
-    <value>Cannot use 'Authentication=Active Directory Interactive' with 'Password' or 'PWD' connection string keywords.</value>
+    <value>Impossible d'utiliser « Authentication=Active Directory Interactive » avec les mots clés de chaîne de connexion « Password » ou « PWD ».</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
     <value>Impossible d'utiliser 'Authentication=Active Directory Integrated', si la propriété Credential a été définie.</value>

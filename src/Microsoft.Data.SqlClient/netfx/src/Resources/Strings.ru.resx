@@ -340,7 +340,7 @@
     <value>Не удается создать коллекцию схемы "{0}";</value>
   </data>
   <data name="MDF_AmbiguousCollectionName" xml:space="preserve">
-    <value>The collection name '{0}' matches at least two collections with the same name but with different case, but does not match any of them exactly.</value>
+    <value>Имя коллекции "{0}" без учета регистра совпадает по меньшей мере с двумя именами коллекций, но с учетом регистра не совпадает ни с одним из них.</value>
   </data>
   <data name="MDF_CollectionNameISNotUnique" xml:space="preserve">
     <value>Существует несколько коллекций с именем "{0}".</value>

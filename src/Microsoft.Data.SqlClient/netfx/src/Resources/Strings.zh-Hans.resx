@@ -340,7 +340,7 @@
     <value>无法构建架构集合“{0}”；</value>
   </data>
   <data name="MDF_AmbiguousCollectionName" xml:space="preserve">
-    <value>The collection name '{0}' matches at least two collections with the same name but with different case, but does not match any of them exactly.</value>
+    <value>集合名“{0}”至少与两个同名但是大小写不同的集合匹配，但是不与任何一个完全匹配。</value>
   </data>
   <data name="MDF_CollectionNameISNotUnique" xml:space="preserve">
     <value>有多个名为“{0}”的集合。</value>

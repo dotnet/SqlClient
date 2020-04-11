@@ -340,7 +340,7 @@
     <value>無法建置結構描述 '{0}';</value>
   </data>
   <data name="MDF_AmbiguousCollectionName" xml:space="preserve">
-    <value>The collection name '{0}' matches at least two collections with the same name but with different case, but does not match any of them exactly.</value>
+    <value>集合名稱 '{0}' 至少與兩個同名但大小寫不同的名稱相符，但與其中任一個均不完全相符。</value>
   </data>
   <data name="MDF_CollectionNameISNotUnique" xml:space="preserve">
     <value>有多個名為 '{0}' 的集合。</value>
@@ -4528,6 +4528,6 @@
     <value>產生記憶體保護區套件時發生錯誤。未在連接字串中指定證明通訊協定，但查詢需要記憶體保護區計算。</value>
   </data>
   <data name="SQLUDT_InvalidSize" xml:space="preserve">
-    <value>UDT size must be less than {1}, size: {0}</value>
+    <value>UDT 大小必須小於 {1}，大小: {0}</value>
   </data>
 </root>
