@@ -4528,6 +4528,6 @@
     <value>Si è verificato un errore durante la generazione del pacchetto dell'enclave. Il protocollo di attestazione non è stato specificato nella stringa di connessione, ma la query richiede calcoli enclave.</value>
   </data>
   <data name="SQLUDT_InvalidSize" xml:space="preserve">
-    <value>UDT size must be less than {1}, size: {0}</value>
+    <value>Le dimensioni del tipo definito dall'utente (UDT) devono essere inferiori a {1}, dimensioni: {0}</value>
   </data>
 </root>
