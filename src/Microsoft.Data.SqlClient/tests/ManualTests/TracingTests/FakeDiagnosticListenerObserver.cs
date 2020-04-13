@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace Microsoft.Data.SqlClient.Tests
+namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public sealed class FakeDiagnosticListenerObserver : IObserver<DiagnosticListener>
     {

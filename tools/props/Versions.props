@@ -18,7 +18,7 @@
     <MicrosoftIdentityClientVersion>4.7.1</MicrosoftIdentityClientVersion>
     <MicrosoftIdentityModelProtocolsOpenIdConnectVersion>5.6.0</MicrosoftIdentityModelProtocolsOpenIdConnectVersion>
     <MicrosoftIdentityModelJsonWebTokensVersion>5.6.0</MicrosoftIdentityModelJsonWebTokensVersion>
-    <SystemBuffersVersion>4.5.0</SystemBuffersVersion>
+    <SystemBuffersVersion>4.5.1</SystemBuffersVersion>
     <SystemIOVersion>4.3.0</SystemIOVersion>
   </PropertyGroup>
   <!-- NetCore project dependencies -->
@@ -29,7 +29,7 @@
     <SystemDiagnosticsDiagnosticSourceVersion>4.7.0</SystemDiagnosticsDiagnosticSourceVersion>
     <SystemDiagnosticsPerformanceCounterVersion>4.7.0</SystemDiagnosticsPerformanceCounterVersion>
     <SystemGlobalizationVersion>4.3.0</SystemGlobalizationVersion>
-    <SystemMemoryVersion>4.5.3</SystemMemoryVersion>
+    <SystemMemoryVersion>4.5.4</SystemMemoryVersion>
     <SystemResourcesResourceManagerVersion>4.3.0</SystemResourcesResourceManagerVersion>
     <SystemRuntimeCachingVersion>4.7.0</SystemRuntimeCachingVersion>
     <SystemSecurityCryptographyCngVersion>4.7.0</SystemSecurityCryptographyCngVersion>
@@ -58,5 +58,7 @@
     <SystemDataOdbcVersion>4.6.0</SystemDataOdbcVersion>
     <SystemNetSocketsVersion>4.3.0</SystemNetSocketsVersion>
     <XunitVersion>2.4.1</XunitVersion>
+    <MicrosoftDotNetRemoteExecutorVersion>5.0.0-beta.20206.4</MicrosoftDotNetRemoteExecutorVersion>
+    <MicrosoftNETCoreRuntimeCoreCLRVersion>2.0.8</MicrosoftNETCoreRuntimeCoreCLRVersion>
   </PropertyGroup>
 </Project>
