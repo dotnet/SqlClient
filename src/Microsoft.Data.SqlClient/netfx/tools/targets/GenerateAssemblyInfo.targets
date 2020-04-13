@@ -13,19 +13,19 @@
             <AssemblyInfo Include="using System.Runtime.InteropServices%3B" />
             <AssemblyInfo Include="using System.Runtime.Versioning%3B%0A" />
 
-            <AssemblyInfo Include="[assembly: System.CLSCompliantAttribute(true)]" />
-            <AssemblyInfo Include="[assembly: System.Runtime.InteropServices.ComVisibleAttribute(false)]" />
-            <AssemblyInfo Include="[assembly: System.Runtime.Versioning.TargetFrameworkAttribute(&quot;.NETFramework,Version=$(TargetFrameworkVersion)&quot;)]" />
-            <AssemblyInfo Include="[assembly: System.Resources.SatelliteContractVersion(&quot;$(AssemblyVersion)&quot;)]" />
-            <AssemblyInfo Include="[assembly: System.Reflection.AssemblyTitleAttribute(&quot;$(AssemblyName)&quot;)]" />
-            <AssemblyInfo Include="[assembly: System.Reflection.AssemblyDescriptionAttribute(&quot;$(Description)&quot;)]" />
-            <AssemblyInfo Include="[assembly: System.Reflection.AssemblyCompanyAttribute(&quot;$(Company)&quot;)]" />
-            <AssemblyInfo Include="[assembly: System.Reflection.AssemblyProductAttribute(&quot;$(Product)&quot;)]" />
-            <AssemblyInfo Include="[assembly: System.Reflection.AssemblyCopyrightAttribute(&quot;$(Copyright)&quot;)]" />
-            <AssemblyInfo Include="[assembly: System.Reflection.AssemblyVersionAttribute(&quot;$(AssemblyVersion)&quot;)]" />
-            <AssemblyInfo Include="[assembly: System.Reflection.AssemblyFileVersionAttribute(&quot;$(AssemblyFileVersion)&quot;)]" />
-            <AssemblyInfo Include="[assembly: System.Reflection.AssemblyInformationalVersionAttribute(&quot;$(Version)&quot;)]" />
-            <AssemblyInfo Include="[assembly: System.Reflection.AssemblyConfigurationAttribute(&quot;$(Configuration)&quot;)]" />
+            <AssemblyInfo Include="[assembly: CLSCompliant(true)]" />
+            <AssemblyInfo Include="[assembly: ComVisible(false)]" />
+            <AssemblyInfo Include="[assembly: TargetFramework(&quot;.NETFramework,Version=$(TargetFrameworkVersion)&quot;)]" />
+            <AssemblyInfo Include="[assembly: SatelliteContractVersion(&quot;$(AssemblyVersion)&quot;)]" />
+            <AssemblyInfo Include="[assembly: AssemblyTitle(&quot;$(AssemblyName)&quot;)]" />
+            <AssemblyInfo Include="[assembly: AssemblyDescription(&quot;$(Description)&quot;)]" />
+            <AssemblyInfo Include="[assembly: AssemblyCompany(&quot;$(Company)&quot;)]" />
+            <AssemblyInfo Include="[assembly: AssemblyProduct(&quot;$(Product)&quot;)]" />
+            <AssemblyInfo Include="[assembly: AssemblyCopyright(&quot;$(Copyright)&quot;)]" />
+            <AssemblyInfo Include="[assembly: AssemblyVersion(&quot;$(AssemblyVersion)&quot;)]" />
+            <AssemblyInfo Include="[assembly: AssemblyFileVersion(&quot;$(AssemblyFileVersion)&quot;)]" />
+            <AssemblyInfo Include="[assembly: AssemblyInformationalVersion(&quot;$(Version)&quot;)]" />
+            <AssemblyInfo Include="[assembly: AssemblyConfiguration(&quot;$(Configuration)&quot;)]" />
         </ItemGroup>
         <MakeDir Directories="$(IntermediateOutputPath)" />
         <WriteLinesToFile File="$(IntermediateOutputPath)$(AssemblyName).AssemblyInfo.cs" Overwrite="True" Lines="@(AssemblyInfo)" />
