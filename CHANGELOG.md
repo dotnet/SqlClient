@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Stable Release 1.1.2] - 2020-04-15
+
+### Added
+- Allowed passing username with Active Directory Interactive Authentication [#493](https://github.com/dotnet/SqlClient/pull/493) [#516](https://github.com/dotnet/SqlClient/pull/516)
+
+### Fixed
+- Fixed the ConnectionString's password persistence in .NET Core. [#489](https://github.com/dotnet/SqlClient/pull/489)
+- Addressed MARS TDS header containing errors [#510](https://github.com/dotnet/SqlClient/pull/510)
+
+### Changed
+- Updated driver libraries to be CLS Compliant [#522](https://github.com/dotnet/SqlClient/pull/522)
+
+
 ## [Stable Release 1.1.1] - 2020-02-14
 
 ### Fixed
