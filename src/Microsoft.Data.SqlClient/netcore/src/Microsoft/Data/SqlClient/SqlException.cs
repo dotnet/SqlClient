@@ -38,7 +38,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if ("ClientConnectionId" == siEntry.Name)
                 {
-                    _clientConnectionId = (Guid)siEntry.Value;
+                    _clientConnectionId = new Guid(siEntry.Value.ToString());
                     break;
                 }
             }
@@ -49,7 +49,7 @@ namespace Microsoft.Data.SqlClient
         {
             base.GetObjectData(si, context);
             si.AddValue("Errors", null); // Not specifying type to enable serialization of null value of non-serializable type
-            si.AddValue("ClientConnectionId", _clientConnectionId, typeof(Guid));
+            si.AddValue("ClientConnectionId", _clientConnectionId, typeof(object));
 
             // Writing sqlerrors to base exception data table
             for (int i = 0; i < Errors.Count; i++)

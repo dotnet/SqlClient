@@ -40,11 +40,10 @@ namespace Microsoft.Data.SqlClient
             {
                 if ("ClientConnectionId" == siEntry.Name)
                 {
-                    _clientConnectionId = (Guid)siEntry.Value;
+                    _clientConnectionId = new Guid(siEntry.Value.ToString());
                     break;
                 }
             }
-
         }
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/GetObjectData/*' />
@@ -55,7 +54,7 @@ namespace Microsoft.Data.SqlClient
                 throw new ArgumentNullException("si");
             }
             si.AddValue("Errors", _errors, typeof(SqlErrorCollection));
-            si.AddValue("ClientConnectionId", _clientConnectionId, typeof(Guid));
+            si.AddValue("ClientConnectionId", _clientConnectionId, typeof(object));
             base.GetObjectData(si, context);
         }
 
