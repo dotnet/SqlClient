@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient.Server
         private const bool _ = false;
 
         private static bool[,] __isGetterAccessValid = {
-        // Getters as columns (abreviated from XetterTypeCode names)
+        // Getters as columns (abbreviated from XetterTypeCode names)
         // SqlDbTypes as rows
         //   bool, byte, bytes, chars, strng, int16, int32, int64, singl, doubl, sqldec, date,  guid, varmd, Xetr, time, dtost
 /*BigInt*/  { _  ,  _  ,  _   ,  _   ,   _  ,   _  ,  _   ,  X   ,  _   ,  _   ,  _    ,  _  ,   _  ,  _   ,  _  ,  _  ,  _  , },

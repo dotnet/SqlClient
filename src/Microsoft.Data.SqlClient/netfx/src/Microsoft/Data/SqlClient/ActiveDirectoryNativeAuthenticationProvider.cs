@@ -52,6 +52,7 @@ namespace Microsoft.Data.SqlClient
             {
                 result = await app.AcquireTokenInteractive(scopes)
                   .WithUseEmbeddedWebView(true)
+                  .WithLoginHint(parameters.UserId)
                   .ExecuteAsync();
             }
 
@@ -60,7 +61,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <summary>
         /// Checks support for authentication type in lower case.
-        /// Interactive authenticatin added.
+        /// Interactive authentication added.
         /// </summary>
         public override bool IsSupported(SqlAuthenticationMethod authentication)
         {

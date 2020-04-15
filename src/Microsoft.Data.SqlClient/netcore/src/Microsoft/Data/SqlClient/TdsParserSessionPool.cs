@@ -178,7 +178,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (IsDisposed)
                 {
-                    // We're diposed - just clean out the session
+                    // We're disposed - just clean out the session
                     Debug.Assert(_cachedCount == 0, "SessionPool is disposed, but there are still sessions in the cache?");
                     session.Dispose();
                 }

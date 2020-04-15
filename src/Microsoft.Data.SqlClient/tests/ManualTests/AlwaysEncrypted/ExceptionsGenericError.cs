@@ -29,7 +29,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.IsNotAzureServer))]
         [ClassData(typeof(AEConnectionStringProvider))]
-        public void TestDataAdapterAndEncrytionSetting(string connectionString)
+        public void TestDataAdapterAndEncryptionSetting(string connectionString)
         {
             SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder(connectionString);
             // Create a new SqlCommand for select and delete

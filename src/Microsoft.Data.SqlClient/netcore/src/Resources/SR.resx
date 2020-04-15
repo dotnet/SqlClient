@@ -1308,7 +1308,7 @@
   <data name="MDF_MissingDataSourceInformationColumn" xml:space="preserve">
     <value>One of the required DataSourceInformation tables columns is missing.</value>
   </data>
-  <data name="MDF_AmbigousCollectionName" xml:space="preserve">
+  <data name="MDF_AmbiguousCollectionName" xml:space="preserve">
     <value>The collection name '{0}' matches at least two collections with the same name but with different case, but does not match any of them exactly.</value>
   </data>
   <data name="MDF_UnableToBuildCollection" xml:space="preserve">

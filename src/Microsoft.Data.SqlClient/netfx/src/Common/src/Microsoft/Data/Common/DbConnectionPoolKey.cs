@@ -43,14 +43,12 @@ namespace Microsoft.Data.Common
 
         public override bool Equals(object obj)
         {
-            if (obj == null || obj.GetType() != typeof(DbConnectionPoolKey))
+            if (obj == null)
             {
                 return false;
             }
 
-            DbConnectionPoolKey key = obj as DbConnectionPoolKey;
-
-            return (key != null && _connectionString == key._connectionString);
+            return (obj is DbConnectionPoolKey key && _connectionString == key._connectionString);
         }
 
         public override int GetHashCode()

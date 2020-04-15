@@ -3058,7 +3058,7 @@ namespace Microsoft.Data.SqlClient
             // It is guaranteed both secure password and secure change password should fit into the first packet
             // Given current TDS format and implementation it is not possible that one of secure string is the last item and exactly fill up the output buffer
             //  if this ever happens and it is correct situation, the packet needs to be written out after _outBytesUsed is update
-            Debug.Assert((_outBytesUsed + lengthInBytes) < _outBuff.Length, "Passwords cannot be splited into two different packet or the last item which fully fill up _outBuff!!!");
+            Debug.Assert((_outBytesUsed + lengthInBytes) < _outBuff.Length, "Passwords cannot be split into two different packet or the last item which fully fill up _outBuff!!!");
 
             _outBytesUsed += lengthInBytes;
         }
@@ -3377,7 +3377,7 @@ namespace Microsoft.Data.SqlClient
             }
             if (sniError == TdsEnums.SNI_SUCCESS_IO_PENDING)
             {
-                Debug.Assert(!sync, "Completion should be handled in SniManagedWwrapper");
+                Debug.Assert(!sync, "Completion should be handled in SniManagedWrapper");
                 Interlocked.Increment(ref _asyncWriteCount);
                 Debug.Assert(_asyncWriteCount >= 0);
                 if (!canAccumulate)

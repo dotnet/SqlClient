@@ -179,6 +179,12 @@ Managed SNI can be enabled on Windows by enabling the below AppContext switch:
 
 **"Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows"**
 
+## Set truncation on for scaled decimal parameters
+
+Scaled decimal parameter truncation can be enabled by enabling the below AppContext switch:
+
+**"Switch.Microsoft.Data.SqlClient.TruncateScaledDecimal"**
+
 ## Debugging SqlClient on Linux from Windows
 
 For enhanced developer experience, we support debugging SqlClient on Linux from Windows, using the project "**Microsoft.Data.SqlClient.DockerLinuxTest**" that requires "Container Tools" to be enabled in Visual Studio. You may import configuration: [VS19Components.vsconfig](./tools/vsconfig/VS19Components.vsconfig) if not enabled already.
@@ -207,4 +213,5 @@ There may be times where connection cannot be made to SQL Server, we found below
     <OSGroup>Unix</OSGroup>
     <TargetsWindows>false</TargetsWindows>
     <TargetsUnix>true</TargetsUnix>
+  ```
   ```

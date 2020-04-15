@@ -557,7 +557,7 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 // so tdsparser.connect can determine if SqlConnection.UserConnectionOptions
-                // needs to enfoce local host after datasource alias lookup
+                // needs to enforce local host after datasource alias lookup
                 return (null != _expandedAttachDBFilename) && (null == _localDBInstance);
             }
         }
