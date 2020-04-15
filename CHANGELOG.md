@@ -17,7 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Updated driver libraries to be CLS Compliant [#522](https://github.com/dotnet/SqlClient/pull/522)
 
 
-## [Preview Release 2.0.0-preview1.20084.1] - 2020-03-24
+## [Preview Release 2.0.0-preview2.20084.1] - 2020-03-24
 
 ### Added
 - Added support for capturing EventSource traces in .NET Framework, .NET Core, and .NET Standard applications [#399](https://github.com/dotnet/SqlClient/pull/399) [#461](https://github.com/dotnet/SqlClient/pull/461) [#479](https://github.com/dotnet/SqlClient/pull/479) [#483](https://github.com/dotnet/SqlClient/pull/483) [#484](https://github.com/dotnet/SqlClient/pull/484)
