@@ -4528,6 +4528,6 @@
     <value>Une erreur s'est produite lors de la génération du package d'enclave. Le protocole d'attestation n'a pas été spécifié dans la chaîne de connexion, mais la requête nécessite des calculs d'enclave.</value>
   </data>
   <data name="SQLUDT_InvalidSize" xml:space="preserve">
-    <value>UDT size must be less than {1}, size: {0}</value>
+    <value>La taille UDT doit être inférieure à {1}, taille : {0}</value>
   </data>
 </root>
