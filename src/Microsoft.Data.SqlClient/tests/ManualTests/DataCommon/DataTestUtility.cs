@@ -52,24 +52,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static Dictionary<string, bool> AvailableDatabases;
         private static TraceEventListener TraceListener;
-        public static IEnumerable<string> ConnectionStrings
-        {
-            get
-            {
-                if (!string.IsNullOrEmpty(TCPConnectionString))
-                {
-                    yield return TCPConnectionString;
-                }
-                else if (!string.IsNullOrEmpty(NPConnectionString))
-                {
-                    yield return NPConnectionString;
-                }
-                foreach (string connStrAE in AEConnStrings)
-                {
-                    yield return connStrAE;
-                }
-            }
-        }
 
         private class Config
         {
@@ -171,9 +153,35 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     AEConnStrings.Add(TCPConnectionString);
                     AEConnStringsSetup.Add(TCPConnectionString);
                 }
+                if (!string.IsNullOrEmpty(NPConnectionString))
+                {
+                    AEConnStrings.Add(NPConnectionString);
+                    AEConnStringsSetup.Add(NPConnectionString);
+                }
             }
         }
 
+        public static IEnumerable<string> ConnectionStrings
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(TCPConnectionString))
+                {
+                    yield return TCPConnectionString;
+                }
+                if (!string.IsNullOrEmpty(NPConnectionString))
+                {
+                    yield return NPConnectionString;
+                }
+                if (EnclaveEnabled)
+                {
+                    foreach (var connStr in AEConnStrings)
+                    {
+                        yield return connStr;
+                    }
+                }
+            }
+        }
         private static string GenerateAccessToken(string authorityURL, string aADAuthUserID, string aADAuthPassword)
         {
             return AcquireTokenAsync(authorityURL, aADAuthUserID, aADAuthPassword).Result;
