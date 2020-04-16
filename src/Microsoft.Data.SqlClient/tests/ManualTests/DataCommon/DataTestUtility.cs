@@ -164,8 +164,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     yield return TCPConnectionString;
                 }
-                // Named Pipes are not supported on Unix platform
-                if (Environment.OSVersion.Platform != PlatformID.Unix && !string.IsNullOrEmpty(NPConnectionString))
+                // Named Pipes are not supported on Unix platform and for Azure DB
+                if (Environment.OSVersion.Platform != PlatformID.Unix && IsNotAzureServer() && !string.IsNullOrEmpty(NPConnectionString))
                 {
                     yield return NPConnectionString;
                 }
