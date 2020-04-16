@@ -943,7 +943,7 @@ namespace Microsoft.Data.SqlClient
             // between entry into Execute* API and the thread obtaining the stateObject.
             _pendingCancel = false;
 
-            Guid operationId = _diagnosticListener.WriteCommandBefore(this);
+            Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
 
             SqlStatistics statistics = null;
 
@@ -981,11 +981,11 @@ namespace Microsoft.Data.SqlClient
                 WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
                 if (e != null)
                 {
-                    _diagnosticListener.WriteCommandError(operationId, this, e);
+                    _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
                 }
                 else
                 {
-                    _diagnosticListener.WriteCommandAfter(operationId, this);
+                    _diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
                 }
             }
         }
@@ -1027,7 +1027,7 @@ namespace Microsoft.Data.SqlClient
             // between entry into Execute* API and the thread obtaining the stateObject.
             _pendingCancel = false;
 
-            Guid operationId = _diagnosticListener.WriteCommandBefore(this);
+            Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
 
             SqlStatistics statistics = null;
 
@@ -1051,11 +1051,11 @@ namespace Microsoft.Data.SqlClient
                 SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
                 if (e != null)
                 {
-                    _diagnosticListener.WriteCommandError(operationId, this, e);
+                    _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
                 }
                 else
                 {
-                    _diagnosticListener.WriteCommandAfter(operationId, this);
+                    _diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
                 }
             }
         }
@@ -1517,7 +1517,7 @@ namespace Microsoft.Data.SqlClient
             _pendingCancel = false;
             bool success = false;
 
-            Guid operationId = _diagnosticListener.WriteCommandBefore(this);
+            Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
 
             SqlStatistics statistics = null;
             long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlCommand.ExecuteXmlReader|API> {0}", ObjectID);
@@ -1553,11 +1553,11 @@ namespace Microsoft.Data.SqlClient
                 WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
                 if (e != null)
                 {
-                    _diagnosticListener.WriteCommandError(operationId, this, e);
+                    _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
                 }
                 else
                 {
-                    _diagnosticListener.WriteCommandAfter(operationId, this);
+                    _diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
                 }
             }
         }
@@ -1844,7 +1844,7 @@ namespace Microsoft.Data.SqlClient
             // between entry into Execute* API and the thread obtaining the stateObject.
             _pendingCancel = false;
 
-            Guid operationId = _diagnosticListener.WriteCommandBefore(this);
+            Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
 
             SqlStatistics statistics = null;
             bool success = false;
@@ -1873,11 +1873,11 @@ namespace Microsoft.Data.SqlClient
 
                 if (e != null)
                 {
-                    _diagnosticListener.WriteCommandError(operationId, this, e);
+                    _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
                 }
                 else
                 {
-                    _diagnosticListener.WriteCommandAfter(operationId, this);
+                    _diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
                 }
             }
         }
@@ -2248,7 +2248,7 @@ namespace Microsoft.Data.SqlClient
         public override Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
         {
             SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlCommand.ExecuteNonQueryAsync|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
-            Guid operationId = _diagnosticListener.WriteCommandBefore(this);
+            Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
 
             TaskCompletionSource<int> source = new TaskCompletionSource<int>();
 
@@ -2274,7 +2274,7 @@ namespace Microsoft.Data.SqlClient
                     if (t.IsFaulted)
                     {
                         Exception e = t.Exception.InnerException;
-                        _diagnosticListener.WriteCommandError(operationId, this, e);
+                        _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
                         source.SetException(e);
                     }
                     else
@@ -2287,13 +2287,13 @@ namespace Microsoft.Data.SqlClient
                         {
                             source.SetResult(t.Result);
                         }
-                        _diagnosticListener.WriteCommandAfter(operationId, this);
+                        _diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
                     }
                 }, TaskScheduler.Default);
             }
             catch (Exception e)
             {
-                _diagnosticListener.WriteCommandError(operationId, this, e);
+                _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
                 source.SetException(e);
             }
 
@@ -2337,7 +2337,7 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlCommand.ExecuteReaderAsync|API|Correlation> ObjectID {0}, behavior={1}, ActivityID {2}", ObjectID, (int)behavior, ActivityCorrelator.Current);
             Guid operationId = default(Guid);
             if (!_parentOperationStarted)
-                operationId = _diagnosticListener.WriteCommandBefore(this);
+                operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
 
             TaskCompletionSource<SqlDataReader> source = new TaskCompletionSource<SqlDataReader>();
 
@@ -2364,7 +2364,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         Exception e = t.Exception.InnerException;
                         if (!_parentOperationStarted)
-                            _diagnosticListener.WriteCommandError(operationId, this, e);
+                            _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
                         source.SetException(e);
                     }
                     else
@@ -2378,14 +2378,14 @@ namespace Microsoft.Data.SqlClient
                             source.SetResult(t.Result);
                         }
                         if (!_parentOperationStarted)
-                            _diagnosticListener.WriteCommandAfter(operationId, this);
+                            _diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
                     }
                 }, TaskScheduler.Default);
             }
             catch (Exception e)
             {
                 if (!_parentOperationStarted)
-                    _diagnosticListener.WriteCommandError(operationId, this, e);
+                    _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
 
                 source.SetException(e);
             }
@@ -2397,7 +2397,7 @@ namespace Microsoft.Data.SqlClient
         public override Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
         {
             _parentOperationStarted = true;
-            Guid operationId = _diagnosticListener.WriteCommandBefore(this);
+            Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
 
             return ExecuteReaderAsync(cancellationToken).ContinueWith((executeTask) =>
             {
@@ -2408,7 +2408,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if (executeTask.IsFaulted)
                 {
-                    _diagnosticListener.WriteCommandError(operationId, this, executeTask.Exception.InnerException);
+                    _diagnosticListener.WriteCommandError(operationId, this, _transaction, executeTask.Exception.InnerException);
                     source.SetException(executeTask.Exception.InnerException);
                 }
                 else
@@ -2426,7 +2426,7 @@ namespace Microsoft.Data.SqlClient
                             else if (readTask.IsFaulted)
                             {
                                 reader.Dispose();
-                                _diagnosticListener.WriteCommandError(operationId, this, readTask.Exception.InnerException);
+                                _diagnosticListener.WriteCommandError(operationId, this, _transaction, readTask.Exception.InnerException);
                                 source.SetException(readTask.Exception.InnerException);
                             }
                             else
@@ -2454,12 +2454,12 @@ namespace Microsoft.Data.SqlClient
                                 }
                                 if (exception != null)
                                 {
-                                    _diagnosticListener.WriteCommandError(operationId, this, exception);
+                                    _diagnosticListener.WriteCommandError(operationId, this, _transaction, exception);
                                     source.SetException(exception);
                                 }
                                 else
                                 {
-                                    _diagnosticListener.WriteCommandAfter(operationId, this);
+                                    _diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
                                     source.SetResult(result);
                                 }
                             }
@@ -2486,7 +2486,7 @@ namespace Microsoft.Data.SqlClient
         public Task<XmlReader> ExecuteXmlReaderAsync(CancellationToken cancellationToken)
         {
             SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlCommand.ExecuteXmlReaderAsync|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
-            Guid operationId = _diagnosticListener.WriteCommandBefore(this);
+            Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
 
             TaskCompletionSource<XmlReader> source = new TaskCompletionSource<XmlReader>();
 
@@ -2512,7 +2512,7 @@ namespace Microsoft.Data.SqlClient
                     if (t.IsFaulted)
                     {
                         Exception e = t.Exception.InnerException;
-                        _diagnosticListener.WriteCommandError(operationId, this, e);
+                        _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
                         source.SetException(e);
                     }
                     else
@@ -2525,13 +2525,13 @@ namespace Microsoft.Data.SqlClient
                         {
                             source.SetResult(t.Result);
                         }
-                        _diagnosticListener.WriteCommandAfter(operationId, this);
+                        _diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
                     }
                 }, TaskScheduler.Default);
             }
             catch (Exception e)
             {
-                _diagnosticListener.WriteCommandError(operationId, this, e);
+                _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
                 source.SetException(e);
             }
 

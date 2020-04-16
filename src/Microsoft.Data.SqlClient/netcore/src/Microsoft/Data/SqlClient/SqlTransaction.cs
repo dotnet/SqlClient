@@ -137,7 +137,7 @@ namespace Microsoft.Data.SqlClient
         override public void Commit()
         {
             Exception e = null;
-            Guid operationId = s_diagnosticListener.WriteTransactionCommitBefore(_isolationLevel, _connection);
+            Guid operationId = s_diagnosticListener.WriteTransactionCommitBefore(_isolationLevel, _connection, InternalTransaction);
 
             ZombieCheck();
 
@@ -176,11 +176,11 @@ namespace Microsoft.Data.SqlClient
                 SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
                 if (e != null)
                 {
-                    s_diagnosticListener.WriteTransactionCommitError(operationId, _isolationLevel, _connection, e);
+                    s_diagnosticListener.WriteTransactionCommitError(operationId, _isolationLevel, _connection, InternalTransaction, e);
                 }
                 else
                 {
-                    s_diagnosticListener.WriteTransactionCommitAfter(operationId, _isolationLevel, _connection);
+                    s_diagnosticListener.WriteTransactionCommitAfter(operationId, _isolationLevel, _connection, InternalTransaction);
                 }
 
                 _isFromAPI = false;
@@ -204,7 +204,7 @@ namespace Microsoft.Data.SqlClient
         override public void Rollback()
         {
             Exception e = null;
-            Guid operationId = s_diagnosticListener.WriteTransactionRollbackBefore(_isolationLevel, _connection, null);
+            Guid operationId = s_diagnosticListener.WriteTransactionRollbackBefore(_isolationLevel, _connection, InternalTransaction);
 
             if (IsYukonPartialZombie)
             {
@@ -238,11 +238,11 @@ namespace Microsoft.Data.SqlClient
                     SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
                     if (e != null)
                     {
-                        s_diagnosticListener.WriteTransactionRollbackError(operationId, _isolationLevel, _connection, null, e);
+                        s_diagnosticListener.WriteTransactionRollbackError(operationId, _isolationLevel, _connection, InternalTransaction, e);
                     }
                     else
                     {
-                        s_diagnosticListener.WriteTransactionRollbackAfter(operationId, _isolationLevel, _connection, null);
+                        s_diagnosticListener.WriteTransactionRollbackAfter(operationId, _isolationLevel, _connection, InternalTransaction);
                     }
                     _isFromAPI = false;
                 }
@@ -253,7 +253,7 @@ namespace Microsoft.Data.SqlClient
         public void Rollback(string transactionName)
         {
             Exception e = null;
-            Guid operationId = s_diagnosticListener.WriteTransactionRollbackBefore(_isolationLevel, _connection, transactionName);
+            Guid operationId = s_diagnosticListener.WriteTransactionRollbackBefore(_isolationLevel, _connection, InternalTransaction, transactionName);
 
             ZombieCheck();
             long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlTransaction.Rollback|API> {0} transactionName='{1}'", ObjectID, transactionName);
@@ -277,11 +277,11 @@ namespace Microsoft.Data.SqlClient
                 SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
                 if (e != null)
                 {
-                    s_diagnosticListener.WriteTransactionRollbackError(operationId, _isolationLevel, _connection, transactionName, e);
+                    s_diagnosticListener.WriteTransactionRollbackError(operationId, _isolationLevel, _connection, InternalTransaction, e, transactionName);
                 }
                 else
                 {
-                    s_diagnosticListener.WriteTransactionRollbackAfter(operationId, _isolationLevel, _connection, transactionName);
+                    s_diagnosticListener.WriteTransactionRollbackAfter(operationId, _isolationLevel, _connection, InternalTransaction, transactionName);
                 }
 
                 _isFromAPI = false;
