@@ -52,24 +52,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static Dictionary<string, bool> AvailableDatabases;
         private static TraceEventListener TraceListener;
-        public static IEnumerable<string> ConnectionStrings
-        {
-            get
-            {
-                if (!string.IsNullOrEmpty(TCPConnectionString))
-                {
-                    yield return TCPConnectionString;
-                }
-                else if (!string.IsNullOrEmpty(NPConnectionString))
-                {
-                    yield return NPConnectionString;
-                }
-                foreach (string connStrAE in AEConnStrings)
-                {
-                    yield return connStrAE;
-                }
-            }
-        }
 
         private class Config
         {
@@ -174,6 +156,28 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        public static IEnumerable<string> ConnectionStrings
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(TCPConnectionString))
+                {
+                    yield return TCPConnectionString;
+                }
+                // Named Pipes are not supported on Unix platform and for Azure DB
+                if (Environment.OSVersion.Platform != PlatformID.Unix && IsNotAzureServer() && !string.IsNullOrEmpty(NPConnectionString))
+                {
+                    yield return NPConnectionString;
+                }
+                if (EnclaveEnabled)
+                {
+                    foreach (var connStr in AEConnStrings)
+                    {
+                        yield return connStr;
+                    }
+                }
+            }
+        }
         private static string GenerateAccessToken(string authorityURL, string aADAuthUserID, string aADAuthPassword)
         {
             return AcquireTokenAsync(authorityURL, aADAuthUserID, aADAuthPassword).Result;
