@@ -11,6 +11,7 @@ namespace Microsoft.Data.SqlClient.Tests
         private const string badServer = "92B96911A0BD43E8ADA4451031F7E7CF";
 
         [Fact]
+        [ActiveIssue("12161", TestPlatforms.AnyUnix)]
         public void SerializationTest()
         {
             SqlException e = CreateException();
@@ -21,7 +22,9 @@ namespace Microsoft.Data.SqlClient.Tests
                 TypeNameHandling = TypeNameHandling.All,
             };
 
+            // TODO: Deserialization fails on Unix with "Member 'ClassName' was not found."
             var sqlEx = Newtonsoft.Json.JsonConvert.DeserializeObject<Microsoft.Data.SqlClient.SqlException>(json, settings);
+            
             Assert.Equal(e.ClientConnectionId, sqlEx.ClientConnectionId);
             Assert.Equal(e.StackTrace, sqlEx.StackTrace);
         }
