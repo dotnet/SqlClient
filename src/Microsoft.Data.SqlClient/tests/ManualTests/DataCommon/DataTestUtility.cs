@@ -153,11 +153,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     AEConnStrings.Add(TCPConnectionString);
                     AEConnStringsSetup.Add(TCPConnectionString);
                 }
-                if (!string.IsNullOrEmpty(NPConnectionString))
-                {
-                    AEConnStrings.Add(NPConnectionString);
-                    AEConnStringsSetup.Add(NPConnectionString);
-                }
             }
         }
 
