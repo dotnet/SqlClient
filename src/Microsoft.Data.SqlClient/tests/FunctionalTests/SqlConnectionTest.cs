@@ -730,6 +730,23 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Fact]
+        public void ConnectionString_MARS_Synonyms()
+        {
+            SqlConnection cn = null;
+            SqlConnectionStringBuilder builder = null;
+
+            cn = new SqlConnection();
+            cn.ConnectionString = "MultipleActiveResultSets=true";
+            builder = new SqlConnectionStringBuilder(cn.ConnectionString);
+            Assert.True(true == builder.MultipleActiveResultSets);
+
+            cn = new SqlConnection();
+            cn.ConnectionString = "Multiple Active Result Sets=true";
+            builder = new SqlConnectionStringBuilder(cn.ConnectionString);
+            Assert.True(true == builder.MultipleActiveResultSets);
+        }
+
+        [Fact]
         public void ConnectionString_DataSource_Synonyms()
         {
             SqlConnection cn = null;
