@@ -184,3 +184,34 @@ Managed SNI can be enabled on Windows by enabling the below AppContext switch:
 Scaled decimal parameter truncation can be enabled by enabling the below AppContext switch:
 
 **"Switch.Microsoft.Data.SqlClient.TruncateScaledDecimal"**
+
+## Debugging SqlClient on Linux from Windows
+
+For enhanced developer experience, we support debugging SqlClient on Linux from Windows, using the project "**Microsoft.Data.SqlClient.DockerLinuxTest**" that requires "Container Tools" to be enabled in Visual Studio. You may import configuration: [VS19Components.vsconfig](./tools/vsconfig/VS19Components.vsconfig) if not enabled already.
+
+This project is also included in `docker-compose.yml` to demonstrate connectivity with SQL Server docker image.
+
+To run the same:
+1. Build the Solution in Visual Studio
+2. Set  `docker-compose` as Startup Project
+3. Run "Docker-Compose" launch configuration.
+4. You will see similar message in Debug window:
+    ```log
+    Connected to SQL Server v15.00.4023 from Unix 4.19.76.0
+    The program 'dotnet' has exited with code 0 (0x0).
+    ```
+5. Now you can write code in [Program.cs](/src/Microsoft.Data.SqlClient/tests/DockerLinuxTest/Program.cs) to debug SqlClient on Linux!
+
+### Troubleshooting Docker issues
+
+There may be times where connection cannot be made to SQL Server, we found below ideas helpful:
+
+- Clear Docker images to create clean image from time-to-time, and clear docker cache if needed by running `docker system prune` in Command Prompt.
+
+- If you face `sni.dll not found` errors when debugging, try updating below properties in netcore\Microsoft.Data.SqlClient.csproj file and try again:
+  ```xml
+    <OSGroup>Unix</OSGroup>
+    <TargetsWindows>false</TargetsWindows>
+    <TargetsUnix>true</TargetsUnix>
+  ```
+  ```

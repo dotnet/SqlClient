@@ -1,0 +1,18 @@
+version: '3.4'
+
+services:
+  microsoft.data.sqlclient.dockertests:
+    image: ${DOCKER_REGISTRY-}microsoftdatasqlclientdockerlinuxtest
+    build:
+      context: ../
+      dockerfile: src/Microsoft.Data.SqlClient/tests/DockerLinuxTest/Dockerfile
+    depends_on:
+      - microsoft.sqlserver
+
+  microsoft.sqlserver:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    environment:
+      - SA_PASSWORD=P@ssw0rd!123
+      - ACCEPT_EULA=Y
+    ports:
+      - "5434:1433"
