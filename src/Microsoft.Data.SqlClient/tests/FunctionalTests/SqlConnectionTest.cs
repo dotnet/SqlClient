@@ -964,11 +964,11 @@ namespace Microsoft.Data.SqlClient.Tests
             }
             catch (ArgumentException ex)
             {
-                // Invalid value for key 'multipleactiveresultsets'
+                // Invalid value for key 'multiple active result sets'
                 Assert.Equal(typeof(ArgumentException), ex.GetType());
                 Assert.Null(ex.InnerException);
                 Assert.NotNull(ex.Message);
-                Assert.True(ex.Message.IndexOf("'multipleactiveresultsets'") != -1);
+                Assert.True(ex.Message.IndexOf("'multiple active result sets'") != -1);
                 Assert.Null(ex.ParamName);
             }
         }
