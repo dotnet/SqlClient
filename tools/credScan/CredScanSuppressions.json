@@ -1,25 +1,33 @@
 {
-  "tool": "Credential Scanner",
-  "suppressions": [
-    {
-      "file": "TdsServerCertificate.pfx",
-      "_justification": "The dummy certificate used for internal testing"
-    },
-	{
-      "file": "config.ps1",
-      "_justification": "Contains dummy passwords used for internal testing"
-    },
-	{
-      "file": "SqlConnectionBasicTests.cs",
-      "_justification": "Contains dummy passwords used for internal testing"
-    },
-	{
-      "file": "ExceptionTest.cs",
-      "_justification": "Contains dummy passwords used for internal testing"
-    },
-	{
-      "file": "TDSServerArguments.cs",
-      "_justification": "Contains dummy passwords used for internal testing"
-    }
-  ]
+    "tool": "Credential Scanner",
+    "suppressions": [
+        {
+            "file": "TdsServerCertificate.pfx",
+            "_justification": "The dummy certificate used for internal testing"
+        },
+        {
+            "file": "config.ps1",
+            "_justification": "Contains dummy passwords used for internal testing"
+        },
+        {
+            "file": "SqlConnectionBasicTests.cs",
+            "_justification": "Contains dummy passwords used for internal testing"
+        },
+        {
+            "file": "ExceptionTest.cs",
+            "_justification": "Contains dummy passwords used for internal testing"
+        },
+        {
+            "file": "TDSServerArguments.cs",
+            "_justification": "Contains dummy passwords used for internal testing"
+        },
+        {
+            "file": "Program.cs",
+            "_justification": "Contains dummy passwords used for docker testing"
+        },
+        {
+            "file": "docker-compose.yml",
+            "_justification": "Contains dummy passwords used for docker testing"
+        }
+    ]
 }
