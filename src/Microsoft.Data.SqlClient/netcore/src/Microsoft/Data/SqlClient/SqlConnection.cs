@@ -59,10 +59,10 @@ namespace Microsoft.Data.SqlClient
         internal SessionData _recoverySessionData;
         internal bool _suppressStateChangeForReconnection;
         private int _reconnectCount;
-
+#if netcoreapp
         // diagnostics listener
         private static readonly DiagnosticListener s_diagnosticListener = new DiagnosticListener(SqlClientDiagnosticListenerExtensions.DiagnosticListenerName);
-
+#endif
         // Transient Fault handling flag. This is needed to convey to the downstream mechanism of connection establishment, if Transient Fault handling should be used or not
         // The downstream handling of Connection open is the same for idle connection resiliency. Currently we want to apply transient fault handling only to the connections opened
         // using SqlConnection.Open() method. 
@@ -890,7 +890,9 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 ConnectionState previousState = State;
+#if netcoreapp
                 Guid operationId = default(Guid);
+#endif
                 Guid clientConnectionId = default(Guid);
 
                 // during the call to Dispose() there is a redundant call to 
@@ -900,7 +902,9 @@ namespace Microsoft.Data.SqlClient
                 // log entries
                 if (previousState != ConnectionState.Closed)
                 {
+#if netcoreapp
                     operationId = s_diagnosticListener.WriteConnectionCloseBefore(this);
+#endif
                     // we want to cache the ClientConnectionId for After/Error logging, as when the connection 
                     // is closed then we will lose this identifier
                     //
@@ -951,6 +955,7 @@ namespace Microsoft.Data.SqlClient
                     // connection is open, as that's the valid use-case
                     if (previousState != ConnectionState.Closed)
                     {
+#if netcoreapp
                         if (e != null)
                         {
                             s_diagnosticListener.WriteConnectionCloseError(operationId, clientConnectionId, this, e);
@@ -959,6 +964,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             s_diagnosticListener.WriteConnectionCloseAfter(operationId, clientConnectionId, this);
                         }
+#endif
                     }
                 }
             }
@@ -1003,8 +1009,9 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlConnection.Open|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
             try
             {
+#if netcoreapp
                 Guid operationId = s_diagnosticListener.WriteConnectionOpenBefore(this);
-
+#endif
                 PrepareStatisticsForNewConnection();
 
                 SqlStatistics statistics = null;
@@ -1027,7 +1034,7 @@ namespace Microsoft.Data.SqlClient
                 finally
                 {
                     SqlStatistics.StopTimer(statistics);
-
+#if netcoreapp
                     if (e != null)
                     {
                         s_diagnosticListener.WriteConnectionOpenError(operationId, this, e);
@@ -1036,6 +1043,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         s_diagnosticListener.WriteConnectionOpenAfter(operationId, this);
                     }
+#endif
                 }
             }
             finally
@@ -1271,8 +1279,9 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlConnection.OpenAsync|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
             try
             {
+#if netcoreapp
                 Guid operationId = s_diagnosticListener.WriteConnectionOpenBefore(this);
-
+#endif
                 PrepareStatisticsForNewConnection();
 
                 SqlStatistics statistics = null;
@@ -1283,7 +1292,7 @@ namespace Microsoft.Data.SqlClient
                     System.Transactions.Transaction transaction = ADP.GetCurrentTransaction();
                     TaskCompletionSource<DbConnectionInternal> completion = new TaskCompletionSource<DbConnectionInternal>(transaction);
                     TaskCompletionSource<object> result = new TaskCompletionSource<object>();
-
+#if netcoreapp
                     if (s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlAfterOpenConnection) ||
                         s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlErrorOpenConnection))
                     {
@@ -1299,7 +1308,7 @@ namespace Microsoft.Data.SqlClient
                             }
                         }, TaskScheduler.Default);
                     }
-
+#endif
                     if (cancellationToken.IsCancellationRequested)
                     {
                         result.SetCanceled();
@@ -1315,7 +1324,9 @@ namespace Microsoft.Data.SqlClient
                     }
                     catch (Exception e)
                     {
+#if netcoreapp
                         s_diagnosticListener.WriteConnectionOpenError(operationId, this, e);
+#endif
                         result.SetException(e);
                         return result.Task;
                     }
@@ -1341,8 +1352,10 @@ namespace Microsoft.Data.SqlClient
                 }
                 catch (Exception ex)
                 {
+#if netcoreapp
                     s_diagnosticListener.WriteConnectionOpenError(operationId, this, ex);
-                    throw;
+#endif
+                    throw ex;
                 }
                 finally
                 {
@@ -1454,9 +1467,13 @@ namespace Microsoft.Data.SqlClient
 
         private void PrepareStatisticsForNewConnection()
         {
-            if (StatisticsEnabled ||
-                s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlAfterExecuteCommand) ||
+            if (StatisticsEnabled
+#if netcoreapp
+                || s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlAfterExecuteCommand) ||
                 s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlAfterOpenConnection))
+#else
+                )
+#endif
             {
                 if (null == _statistics)
                 {
@@ -1527,8 +1544,12 @@ namespace Microsoft.Data.SqlClient
 
             // The _statistics can change with StatisticsEnabled. Copying to a local variable before checking for a null value.
             SqlStatistics statistics = _statistics;
-            if (StatisticsEnabled ||
-                (s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlAfterExecuteCommand) && statistics != null))
+            if (StatisticsEnabled
+#if netcoreapp
+                || (s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlAfterExecuteCommand) && statistics != null))
+#else
+                )
+#endif
             {
                 ADP.TimerCurrent(out _statistics._openTimestamp);
                 tdsInnerConnection.Parser.Statistics = _statistics;

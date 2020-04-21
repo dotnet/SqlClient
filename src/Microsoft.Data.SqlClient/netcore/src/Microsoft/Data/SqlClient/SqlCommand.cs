@@ -69,8 +69,10 @@ namespace Microsoft.Data.SqlClient
         private static bool _forceInternalEndQuery = false;
 #endif 
 
+#if netcoreapp
         private static readonly DiagnosticListener _diagnosticListener = new DiagnosticListener(SqlClientDiagnosticListenerExtensions.DiagnosticListenerName);
         private bool _parentOperationStarted = false;
+#endif
 
         internal static readonly Action<object> s_cancelIgnoreFailure = CancelIgnoreFailureCallback;
 
@@ -460,8 +462,12 @@ namespace Microsoft.Data.SqlClient
             {
                 if (null != _activeConnection)
                 {
-                    if (_activeConnection.StatisticsEnabled ||
-                        _diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlAfterExecuteCommand))
+                    if (_activeConnection.StatisticsEnabled
+#if netcoreapp
+                        || _diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlAfterExecuteCommand))
+#else
+                        )
+#endif
                     {
                         return _activeConnection.Statistics;
                     }
@@ -942,9 +948,9 @@ namespace Microsoft.Data.SqlClient
             // Reset _pendingCancel upon entry into any Execute - used to synchronize state
             // between entry into Execute* API and the thread obtaining the stateObject.
             _pendingCancel = false;
-
+#if netcoreapp
             Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
-
+#endif
             SqlStatistics statistics = null;
 
             long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlCommand.ExecuteScalar|API> {0}", ObjectID);
@@ -979,6 +985,7 @@ namespace Microsoft.Data.SqlClient
                 SqlStatistics.StopTimer(statistics);
                 SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
                 WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
+#if netcoreapp
                 if (e != null)
                 {
                     _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
@@ -987,6 +994,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     _diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
                 }
+#endif
             }
         }
 
@@ -1026,9 +1034,9 @@ namespace Microsoft.Data.SqlClient
             // Reset _pendingCancel upon entry into any Execute - used to synchronize state
             // between entry into Execute* API and the thread obtaining the stateObject.
             _pendingCancel = false;
-
+#if netcoreapp
             Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
-
+#endif
             SqlStatistics statistics = null;
 
             long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlCommand.ExecuteNonQuery|API> {0}", ObjectID);
@@ -1049,6 +1057,7 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlStatistics.StopTimer(statistics);
                 SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
+#if netcoreapp
                 if (e != null)
                 {
                     _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
@@ -1057,6 +1066,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     _diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
                 }
+#endif
             }
         }
 
@@ -1516,9 +1526,9 @@ namespace Microsoft.Data.SqlClient
             // between entry into Execute* API and the thread obtaining the stateObject.
             _pendingCancel = false;
             bool success = false;
-
+#if netcoreapp
             Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
-
+#endif
             SqlStatistics statistics = null;
             long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlCommand.ExecuteXmlReader|API> {0}", ObjectID);
             SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlCommand.ExecuteXmlReader|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
@@ -1551,6 +1561,7 @@ namespace Microsoft.Data.SqlClient
                 SqlStatistics.StopTimer(statistics);
                 SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
                 WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
+#if netcoreapp
                 if (e != null)
                 {
                     _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
@@ -1559,6 +1570,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     _diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
                 }
+#endif
             }
         }
 
@@ -1843,9 +1855,9 @@ namespace Microsoft.Data.SqlClient
             // Reset _pendingCancel upon entry into any Execute - used to synchronize state
             // between entry into Execute* API and the thread obtaining the stateObject.
             _pendingCancel = false;
-
+#if netcoreapp
             Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
-
+#endif
             SqlStatistics statistics = null;
             bool success = false;
             int? sqlExceptionNumber = null;
@@ -1870,7 +1882,7 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlStatistics.StopTimer(statistics);
                 WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
-
+#if netcoreapp
                 if (e != null)
                 {
                     _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
@@ -1879,6 +1891,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     _diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
                 }
+#endif
             }
         }
 
@@ -2248,8 +2261,9 @@ namespace Microsoft.Data.SqlClient
         public override Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
         {
             SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlCommand.ExecuteNonQueryAsync|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
+#if netcoreapp
             Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
-
+#endif
             TaskCompletionSource<int> source = new TaskCompletionSource<int>();
 
             CancellationTokenRegistration registration = new CancellationTokenRegistration();
@@ -2274,7 +2288,9 @@ namespace Microsoft.Data.SqlClient
                     if (t.IsFaulted)
                     {
                         Exception e = t.Exception.InnerException;
+#if netcoreapp
                         _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
+#endif
                         source.SetException(e);
                     }
                     else
@@ -2287,13 +2303,17 @@ namespace Microsoft.Data.SqlClient
                         {
                             source.SetResult(t.Result);
                         }
+#if netcoreapp
                         _diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
+#endif
                     }
                 }, TaskScheduler.Default);
             }
             catch (Exception e)
             {
+#if netcoreapp
                 _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
+#endif
                 source.SetException(e);
             }
 
@@ -2335,10 +2355,11 @@ namespace Microsoft.Data.SqlClient
         new public Task<SqlDataReader> ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
         {
             SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlCommand.ExecuteReaderAsync|API|Correlation> ObjectID {0}, behavior={1}, ActivityID {2}", ObjectID, (int)behavior, ActivityCorrelator.Current);
+#if netcoreapp
             Guid operationId = default(Guid);
             if (!_parentOperationStarted)
                 operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
-
+#endif
             TaskCompletionSource<SqlDataReader> source = new TaskCompletionSource<SqlDataReader>();
 
             CancellationTokenRegistration registration = new CancellationTokenRegistration();
@@ -2363,8 +2384,10 @@ namespace Microsoft.Data.SqlClient
                     if (t.IsFaulted)
                     {
                         Exception e = t.Exception.InnerException;
+#if netcoreapp
                         if (!_parentOperationStarted)
                             _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
+#endif
                         source.SetException(e);
                     }
                     else
@@ -2377,16 +2400,19 @@ namespace Microsoft.Data.SqlClient
                         {
                             source.SetResult(t.Result);
                         }
+#if netcoreapp
                         if (!_parentOperationStarted)
                             _diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
+#endif
                     }
                 }, TaskScheduler.Default);
             }
             catch (Exception e)
             {
+#if netcoreapp
                 if (!_parentOperationStarted)
                     _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
-
+#endif
                 source.SetException(e);
             }
 
@@ -2396,9 +2422,10 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="CancellationToken"]/*'/>
         public override Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
         {
+#if netcoreapp
             _parentOperationStarted = true;
             Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
-
+#endif
             return ExecuteReaderAsync(cancellationToken).ContinueWith((executeTask) =>
             {
                 TaskCompletionSource<object> source = new TaskCompletionSource<object>();
@@ -2408,7 +2435,9 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if (executeTask.IsFaulted)
                 {
+#if netcoreapp
                     _diagnosticListener.WriteCommandError(operationId, this, _transaction, executeTask.Exception.InnerException);
+#endif 
                     source.SetException(executeTask.Exception.InnerException);
                 }
                 else
@@ -2426,7 +2455,9 @@ namespace Microsoft.Data.SqlClient
                             else if (readTask.IsFaulted)
                             {
                                 reader.Dispose();
+#if netcoreapp
                                 _diagnosticListener.WriteCommandError(operationId, this, _transaction, readTask.Exception.InnerException);
+#endif
                                 source.SetException(readTask.Exception.InnerException);
                             }
                             else
@@ -2454,12 +2485,16 @@ namespace Microsoft.Data.SqlClient
                                 }
                                 if (exception != null)
                                 {
+#if netcoreapp
                                     _diagnosticListener.WriteCommandError(operationId, this, _transaction, exception);
+#endif
                                     source.SetException(exception);
                                 }
                                 else
                                 {
+#if netcoreapp
                                     _diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
+#endif
                                     source.SetResult(result);
                                 }
                             }
@@ -2471,7 +2506,9 @@ namespace Microsoft.Data.SqlClient
                         }
                     }, TaskScheduler.Default);
                 }
+#if netcoreapp
                 _parentOperationStarted = false;
+#endif
                 return source.Task;
             }, TaskScheduler.Default).Unwrap();
         }
@@ -2486,8 +2523,9 @@ namespace Microsoft.Data.SqlClient
         public Task<XmlReader> ExecuteXmlReaderAsync(CancellationToken cancellationToken)
         {
             SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlCommand.ExecuteXmlReaderAsync|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
+#if netcoreapp
             Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
-
+#endif
             TaskCompletionSource<XmlReader> source = new TaskCompletionSource<XmlReader>();
 
             CancellationTokenRegistration registration = new CancellationTokenRegistration();
@@ -2512,7 +2550,9 @@ namespace Microsoft.Data.SqlClient
                     if (t.IsFaulted)
                     {
                         Exception e = t.Exception.InnerException;
+#if netcoreapp
                         _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
+#endif
                         source.SetException(e);
                     }
                     else
@@ -2525,13 +2565,17 @@ namespace Microsoft.Data.SqlClient
                         {
                             source.SetResult(t.Result);
                         }
+#if netcoreapp
                         _diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
+#endif
                     }
                 }, TaskScheduler.Default);
             }
             catch (Exception e)
             {
+#if netcoreapp
                 _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
+#endif
                 source.SetException(e);
             }
 
