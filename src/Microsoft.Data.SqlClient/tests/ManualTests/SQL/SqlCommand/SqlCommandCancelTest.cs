@@ -150,6 +150,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             TimeoutCancel(tcp_connStr);
         }
 
+        [ActiveIssue(12167)]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public static void TimeoutCancelNP()
@@ -238,6 +239,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void TimeoutCancel(string constr)
         {
+            AppContext.SetSwitch("Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", true);
             using (SqlConnection con = new SqlConnection(constr))
             {
                 con.Open();
