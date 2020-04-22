@@ -14,20 +14,29 @@ namespace Microsoft.Data.SqlClient.Tests
 {
     public static class SslOverTdsStreamTest
     {
-        [Theory]
-        [InlineData(0),InlineData(3),InlineData(128), InlineData(2048), InlineData(8192)]
-        public static void ReadWrite(int readLimit)
+        public static TheoryData<int, int, int> PacketSizes
         {
-            const int EncaspulatedPacketCount = 4;
-            const int PassThroughPacketCount = 5;
+            get
+            {
+                const int EncapsulatedPacketCount = 4;
+                const int PassThroughPacketCount = 5;
 
-            SyncTest(EncaspulatedPacketCount, PassThroughPacketCount, readLimit);
-            SyncCoreTest(EncaspulatedPacketCount, PassThroughPacketCount, readLimit);
-            AsyncTest(EncaspulatedPacketCount, PassThroughPacketCount, readLimit);
-            AsyncCoreTest(EncaspulatedPacketCount, PassThroughPacketCount, readLimit);
+                TheoryData<int, int, int> data = new TheoryData<int, int, int>();
+
+                data.Add(EncapsulatedPacketCount, PassThroughPacketCount, 0);
+                data.Add(EncapsulatedPacketCount, PassThroughPacketCount, 2);
+                data.Add(EncapsulatedPacketCount, PassThroughPacketCount, 128);
+                data.Add(EncapsulatedPacketCount, PassThroughPacketCount, 2048);
+                data.Add(EncapsulatedPacketCount, PassThroughPacketCount, 8192);
+
+                return data;
+            }
         }
 
-        private static void SyncTest(int encapsulatedPacketCount, int passthroughPacketCount, int maxPacketReadLength)
+
+        [Theory]
+        [MemberData(nameof(PacketSizes))]
+        public static void SyncTest(int encapsulatedPacketCount, int passthroughPacketCount, int maxPacketReadLength)
         {
             byte[] input;
             byte[] output;
@@ -50,7 +59,9 @@ namespace Microsoft.Data.SqlClient.Tests
             Validate(input, output);
         }
 
-        private static void AsyncTest(int encapsulatedPacketCount, int passthroughPacketCount, int maxPacketReadLength)
+        [Theory]
+        [MemberData(nameof(PacketSizes))]
+        public static void AsyncTest(int encapsulatedPacketCount, int passthroughPacketCount, int maxPacketReadLength)
         {
             byte[] input;
             byte[] output;
@@ -72,7 +83,9 @@ namespace Microsoft.Data.SqlClient.Tests
             Validate(input, output);
         }
 
-        private static void SyncCoreTest(int encapsulatedPacketCount, int passthroughPacketCount, int maxPacketReadLength)
+        [Theory]
+        [MemberData(nameof(PacketSizes))]
+        public static void SyncCoreTest(int encapsulatedPacketCount, int passthroughPacketCount, int maxPacketReadLength)
         {
             byte[] input;
             byte[] output;
@@ -95,7 +108,9 @@ namespace Microsoft.Data.SqlClient.Tests
             Validate(input, output);
         }
 
-        private static void AsyncCoreTest(int encapsulatedPacketCount, int passthroughPacketCount, int maxPacketReadLength)
+        [Theory]
+        [MemberData(nameof(PacketSizes))]
+        public static void AsyncCoreTest(int encapsulatedPacketCount, int passthroughPacketCount, int maxPacketReadLength)
         {
             byte[] input;
             byte[] output;
@@ -137,7 +152,7 @@ namespace Microsoft.Data.SqlClient.Tests
                     Array.Copy(bytes, 0, output, offset, packetBytes);
                     offset += packetBytes;
                 }
-                InvokeFinishHandshake(tdsStream);//tdsStream.FinishHandshake();
+                InvokeFinishHandshake(tdsStream);
                 for (int index = 0; index < passthroughPacketCount; index++)
                 {
                     Array.Clear(bytes, 0, bytes.Length);
@@ -228,7 +243,6 @@ namespace Microsoft.Data.SqlClient.Tests
             byte[] buffer = null;
             using (LimitedMemoryStream stream = new LimitedMemoryStream())
             {
-                //using (SslOverTdsStream tdsStream = new SslOverTdsStream(stream))
                 using (Stream tdsStream = CreateSslOverTdsStream(stream))
                 {
                     for (int index = 0; index < encapsulatedPacketCount; index++)
