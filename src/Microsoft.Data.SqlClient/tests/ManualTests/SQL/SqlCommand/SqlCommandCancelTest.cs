@@ -239,7 +239,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void TimeoutCancel(string constr)
         {
-            AppContext.SetSwitch("Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", true);
             using (SqlConnection con = new SqlConnection(constr))
             {
                 con.Open();
