@@ -150,6 +150,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             TimeoutCancel(tcp_connStr);
         }
 
+        [ActiveIssue(12167)]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public static void TimeoutCancelNP()
