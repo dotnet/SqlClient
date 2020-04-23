@@ -928,6 +928,46 @@ GO
  The <see langword="&lt;system.data.localdb&gt;" /> tag in the app.config file has invalid or unknown elements.</exception>
             <exception cref="T:System.Configuration.ConfigurationErrorsException">There are two entries with the same name in the <see langword="&lt;localdbinstances&gt;" /> section.</exception>
         </Open>
+        <OpenWithOverrides>
+            <param name="overrides">Options to override default connection open behavior.</param>
+            <summary>
+                Opens a database connection with the property settings specified by the <see cref="P:Microsoft.Data.SqlClient.SqlConnection.ConnectionString" />.
+            </summary>
+            <remarks>
+            <format type="text/markdown">
+                <![CDATA[
+
+## Remarks
+ The <xref:Microsoft.Data.SqlClient.SqlConnection> draws an open connection from the connection pool if one is available. Otherwise, it establishes a new connection to an instance of SQL Server. If overrides are specified, the first open attempt will apply the specified overrides to the open action.
+
+> [!NOTE]
+>  If the <xref:Microsoft.Data.SqlClient.SqlConnection> goes out of scope, it is not closed. Therefore, you must explicitly close the connection by calling <xref:Microsoft.Data.SqlClient.SqlConnection.Close%2A>.
+
+> [!NOTE]
+>  If you specify a port number other than 1433 when you are trying to connect to an instance of SQL Server and using a protocol other than TCP/IP, the <xref:Microsoft.Data.SqlClient.SqlConnection.Open%2A> method fails. To specify a port number other than 1433, include "server=machinename,port number" in the connection string, and use the TCP/IP protocol.
+
+> [!NOTE]
+>  The .NET Framework Data Provider for SQL Server requires the Security permission with "Allows calls to unmanaged assemblies" enabled (<xref:System.Security.Permissions.SecurityPermission> with <xref:System.Security.Permissions.SecurityPermissionFlag> set to `UnmanagedCode`) to open a <xref:Microsoft.Data.SqlClient.SqlConnection> with SQL Debugging enabled.
+
+## Examples
+ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection>, opens it, and displays some of its properties. The connection is automatically closed at the end of the `using` block.
+
+ [!code-csharp[SqlConnection_Open Example#1](~/../sqlclient/doc/samples/SqlConnection_Open.cs#1)]
+
+]]>
+            </format>
+            </remarks>
+            <exception cref="T:System.InvalidOperationException">Cannot open a connection without specifying a data source or server.
+
+ or
+
+ The connection is already open.
+            </exception>
+            <exception cref="T:Microsoft.Data.SqlClient.SqlException">A connection-level error occurred while opening the connection. If the <see cref="P:Microsoft.Data.SqlClient.SqlException.Number" /> property contains the value 18487 or 18488, this indicates that the specified password has expired or must be reset. See the <see cref="M:Microsoft.Data.SqlClient.SqlConnection.ChangePassword(System.String,System.String)" /> method for more information.
+
+ The <see langword="&lt;system.data.localdb&gt;" /> tag in the app.config file has invalid or unknown elements.</exception>
+            <exception cref="T:System.Configuration.ConfigurationErrorsException">There are two entries with the same name in the <see langword="&lt;localdbinstances&gt;" /> section.</exception>
+        </OpenWithOverrides>
         <OpenAsync>
             <param name="cancellationToken">The cancellation instruction.</param>
             <summary>An asynchronous version of <see cref="M:Microsoft.Data.SqlClient.SqlConnection.Open" />, which opens a database connection with the property settings specified by the <see cref="P:Microsoft.Data.SqlClient.SqlConnection.ConnectionString" />. The cancellation token can be used to request that the operation be abandoned before the connection timeout elapses.  Exceptions will be propagated via the returned Task. If the connection timeout time elapses without successfully connecting, the returned Task will be marked as faulted with an Exception. The implementation returns a Task without blocking the calling thread for both pooled and non-pooled connections.</summary>
