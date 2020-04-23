@@ -460,8 +460,8 @@ namespace Microsoft.Data.SqlClient
             {
                 if (null != _activeConnection)
                 {
-                    if (_activeConnection.StatisticsEnabled
-                        || _diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlAfterExecuteCommand))
+                    if (_activeConnection.StatisticsEnabled ||
+                        _diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlAfterExecuteCommand))
                     {
                         return _activeConnection.Statistics;
                     }
@@ -942,7 +942,9 @@ namespace Microsoft.Data.SqlClient
             // Reset _pendingCancel upon entry into any Execute - used to synchronize state
             // between entry into Execute* API and the thread obtaining the stateObject.
             _pendingCancel = false;
+
             Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
+
             SqlStatistics statistics = null;
 
             long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlCommand.ExecuteScalar|API> {0}", ObjectID);
@@ -1024,7 +1026,9 @@ namespace Microsoft.Data.SqlClient
             // Reset _pendingCancel upon entry into any Execute - used to synchronize state
             // between entry into Execute* API and the thread obtaining the stateObject.
             _pendingCancel = false;
+
             Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
+
             SqlStatistics statistics = null;
 
             long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlCommand.ExecuteNonQuery|API> {0}", ObjectID);
@@ -1512,7 +1516,9 @@ namespace Microsoft.Data.SqlClient
             // between entry into Execute* API and the thread obtaining the stateObject.
             _pendingCancel = false;
             bool success = false;
+
             Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
+
             SqlStatistics statistics = null;
             long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlCommand.ExecuteXmlReader|API> {0}", ObjectID);
             SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlCommand.ExecuteXmlReader|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
@@ -1837,7 +1843,9 @@ namespace Microsoft.Data.SqlClient
             // Reset _pendingCancel upon entry into any Execute - used to synchronize state
             // between entry into Execute* API and the thread obtaining the stateObject.
             _pendingCancel = false;
+
             Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
+
             SqlStatistics statistics = null;
             bool success = false;
             int? sqlExceptionNumber = null;
@@ -1862,6 +1870,7 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlStatistics.StopTimer(statistics);
                 WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
+
                 if (e != null)
                 {
                     _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
@@ -2240,6 +2249,7 @@ namespace Microsoft.Data.SqlClient
         {
             SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlCommand.ExecuteNonQueryAsync|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
             Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
+
             TaskCompletionSource<int> source = new TaskCompletionSource<int>();
 
             CancellationTokenRegistration registration = new CancellationTokenRegistration();
@@ -2330,8 +2340,8 @@ namespace Microsoft.Data.SqlClient
                 operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
 
             TaskCompletionSource<SqlDataReader> source = new TaskCompletionSource<SqlDataReader>();
-            CancellationTokenRegistration registration = new CancellationTokenRegistration();
 
+            CancellationTokenRegistration registration = new CancellationTokenRegistration();
             if (cancellationToken.CanBeCanceled)
             {
                 if (cancellationToken.IsCancellationRequested)
@@ -2376,6 +2386,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (!_parentOperationStarted)
                     _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
+
                 source.SetException(e);
             }
 
@@ -2387,6 +2398,7 @@ namespace Microsoft.Data.SqlClient
         {
             _parentOperationStarted = true;
             Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
+
             return ExecuteReaderAsync(cancellationToken).ContinueWith((executeTask) =>
             {
                 TaskCompletionSource<object> source = new TaskCompletionSource<object>();
@@ -2477,8 +2489,8 @@ namespace Microsoft.Data.SqlClient
             Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
 
             TaskCompletionSource<XmlReader> source = new TaskCompletionSource<XmlReader>();
-            CancellationTokenRegistration registration = new CancellationTokenRegistration();
 
+            CancellationTokenRegistration registration = new CancellationTokenRegistration();
             if (cancellationToken.CanBeCanceled)
             {
                 if (cancellationToken.IsCancellationRequested)

@@ -1027,6 +1027,7 @@ namespace Microsoft.Data.SqlClient
                 finally
                 {
                     SqlStatistics.StopTimer(statistics);
+
                     if (e != null)
                     {
                         s_diagnosticListener.WriteConnectionOpenError(operationId, this, e);
@@ -1271,6 +1272,7 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 Guid operationId = s_diagnosticListener.WriteConnectionOpenBefore(this);
+
                 PrepareStatisticsForNewConnection();
 
                 SqlStatistics statistics = null;
@@ -1297,11 +1299,13 @@ namespace Microsoft.Data.SqlClient
                             }
                         }, TaskScheduler.Default);
                     }
+
                     if (cancellationToken.IsCancellationRequested)
                     {
                         result.SetCanceled();
                         return result.Task;
                     }
+
 
                     bool completed;
 
@@ -1450,8 +1454,8 @@ namespace Microsoft.Data.SqlClient
 
         private void PrepareStatisticsForNewConnection()
         {
-            if (StatisticsEnabled
-                || s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlAfterExecuteCommand) ||
+            if (StatisticsEnabled ||
+                s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlAfterExecuteCommand) ||
                 s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlAfterOpenConnection))
             {
                 if (null == _statistics)
@@ -1523,8 +1527,8 @@ namespace Microsoft.Data.SqlClient
 
             // The _statistics can change with StatisticsEnabled. Copying to a local variable before checking for a null value.
             SqlStatistics statistics = _statistics;
-            if (StatisticsEnabled
-                || (s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlAfterExecuteCommand) && statistics != null))
+            if (StatisticsEnabled ||
+                (s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlAfterExecuteCommand) && statistics != null))
             {
                 ADP.TimerCurrent(out _statistics._openTimestamp);
                 tdsInnerConnection.Parser.Statistics = _statistics;
@@ -2052,5 +2056,3 @@ namespace Microsoft.Data.SqlClient
         }
     }
 }
-
-

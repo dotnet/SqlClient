@@ -181,6 +181,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     s_diagnosticListener.WriteTransactionCommitAfter(operationId, _isolationLevel, _connection, InternalTransaction);
                 }
+
                 _isFromAPI = false;
             }
         }
@@ -203,6 +204,7 @@ namespace Microsoft.Data.SqlClient
         {
             Exception e = null;
             Guid operationId = s_diagnosticListener.WriteTransactionRollbackBefore(_isolationLevel, _connection, InternalTransaction);
+
             if (IsYukonPartialZombie)
             {
                 // Put something in the trace in case a customer has an issue
@@ -251,6 +253,7 @@ namespace Microsoft.Data.SqlClient
         {
             Exception e = null;
             Guid operationId = s_diagnosticListener.WriteTransactionRollbackBefore(_isolationLevel, _connection, InternalTransaction, transactionName);
+
             ZombieCheck();
             long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlTransaction.Rollback|API> {0} transactionName='{1}'", ObjectID, transactionName);
             SqlStatistics statistics = null;
@@ -279,6 +282,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     s_diagnosticListener.WriteTransactionRollbackAfter(operationId, _isolationLevel, _connection, InternalTransaction, transactionName);
                 }
+
                 _isFromAPI = false;
 
             }
@@ -345,4 +349,3 @@ namespace Microsoft.Data.SqlClient
         }
     }
 }
-
