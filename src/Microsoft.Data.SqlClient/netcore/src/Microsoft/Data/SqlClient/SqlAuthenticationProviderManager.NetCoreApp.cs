@@ -67,7 +67,9 @@ namespace Microsoft.Data.SqlClient
                         throw SQL.CannotCreateAuthProvider(authentication.ToString(), providerSettings.Type, e);
                     }
                     if (!provider.IsSupported(authentication))
+                    {
                         throw SQL.UnsupportedAuthenticationByProvider(authentication.ToString(), providerSettings.Type);
+                    }
 
                     _providers[authentication] = provider;
                     authenticationsWithAppSpecifiedProvider.Add(authentication);
