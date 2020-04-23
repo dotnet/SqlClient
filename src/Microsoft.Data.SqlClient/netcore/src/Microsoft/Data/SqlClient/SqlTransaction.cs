@@ -14,9 +14,7 @@ namespace Microsoft.Data.SqlClient
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/SqlTransaction/*' />
     public sealed class SqlTransaction : DbTransaction
     {
-#if netcoreapp
-        private static readonly DiagnosticListener s_diagnosticListener = new DiagnosticListener(SqlClientDiagnosticListenerExtensions.DiagnosticListenerName);
-#endif
+        private static readonly SqlDiagnosticListener s_diagnosticListener = new SqlDiagnosticListener(SqlClientDiagnosticListenerExtensions.DiagnosticListenerName);
         private static int _objectTypeCount; // EventSource Counter
         internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
         internal readonly IsolationLevel _isolationLevel = IsolationLevel.ReadCommitted;
@@ -138,9 +136,8 @@ namespace Microsoft.Data.SqlClient
         override public void Commit()
         {
             Exception e = null;
-#if netcoreapp
             Guid operationId = s_diagnosticListener.WriteTransactionCommitBefore(_isolationLevel, _connection, InternalTransaction);
-#endif
+
             ZombieCheck();
 
             SqlStatistics statistics = null;
@@ -176,7 +173,6 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlStatistics.StopTimer(statistics);
                 SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
-#if netcoreapp
                 if (e != null)
                 {
                     s_diagnosticListener.WriteTransactionCommitError(operationId, _isolationLevel, _connection, InternalTransaction, e);
@@ -185,7 +181,6 @@ namespace Microsoft.Data.SqlClient
                 {
                     s_diagnosticListener.WriteTransactionCommitAfter(operationId, _isolationLevel, _connection, InternalTransaction);
                 }
-#endif
                 _isFromAPI = false;
             }
         }
@@ -207,9 +202,7 @@ namespace Microsoft.Data.SqlClient
         override public void Rollback()
         {
             Exception e = null;
-#if netcoreapp
             Guid operationId = s_diagnosticListener.WriteTransactionRollbackBefore(_isolationLevel, _connection, InternalTransaction);
-#endif
             if (IsYukonPartialZombie)
             {
                 // Put something in the trace in case a customer has an issue
@@ -240,7 +233,6 @@ namespace Microsoft.Data.SqlClient
                 {
                     SqlStatistics.StopTimer(statistics);
                     SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
-#if netcoreapp
                     if (e != null)
                     {
                         s_diagnosticListener.WriteTransactionRollbackError(operationId, _isolationLevel, _connection, InternalTransaction, e);
@@ -249,7 +241,6 @@ namespace Microsoft.Data.SqlClient
                     {
                         s_diagnosticListener.WriteTransactionRollbackAfter(operationId, _isolationLevel, _connection, InternalTransaction);
                     }
-#endif
                     _isFromAPI = false;
                 }
             }
@@ -259,9 +250,7 @@ namespace Microsoft.Data.SqlClient
         public void Rollback(string transactionName)
         {
             Exception e = null;
-#if netcoreapp
             Guid operationId = s_diagnosticListener.WriteTransactionRollbackBefore(_isolationLevel, _connection, InternalTransaction, transactionName);
-#endif
             ZombieCheck();
             long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlTransaction.Rollback|API> {0} transactionName='{1}'", ObjectID, transactionName);
             SqlStatistics statistics = null;
@@ -282,7 +271,6 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlStatistics.StopTimer(statistics);
                 SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
-#if netcoreapp
                 if (e != null)
                 {
                     s_diagnosticListener.WriteTransactionRollbackError(operationId, _isolationLevel, _connection, InternalTransaction, e, transactionName);
@@ -291,7 +279,6 @@ namespace Microsoft.Data.SqlClient
                 {
                     s_diagnosticListener.WriteTransactionRollbackAfter(operationId, _isolationLevel, _connection, InternalTransaction, transactionName);
                 }
-#endif
                 _isFromAPI = false;
 
             }
