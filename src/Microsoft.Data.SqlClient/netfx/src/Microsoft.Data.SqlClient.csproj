@@ -349,7 +349,7 @@
       <Version>1.1.*</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.Identity.Client">
-      <Version>3.0.8</Version>
+      <Version>4.7.1</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect">
       <version>5.5.0</version>
