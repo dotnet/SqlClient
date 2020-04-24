@@ -1348,7 +1348,7 @@ namespace Microsoft.Data.SqlClient
                 catch (Exception ex)
                 {
                     s_diagnosticListener.WriteConnectionOpenError(operationId, this, ex);
-                    throw ex;
+                    throw;
                 }
                 finally
                 {

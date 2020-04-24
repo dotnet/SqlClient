@@ -13,6 +13,24 @@ namespace Microsoft.Data.SqlClient
     {
         private readonly SqlAuthenticationInitializer _initializer;
 
+        static SqlAuthenticationProviderManager()
+        {
+            var activeDirectoryAuthNativeProvider = new ActiveDirectoryNativeAuthenticationProvider();
+            SqlAuthenticationProviderConfigurationSection configurationSection;
+
+            try
+            {
+                configurationSection = (SqlAuthenticationProviderConfigurationSection)ConfigurationManager.GetSection(SqlAuthenticationProviderConfigurationSection.Name);
+            }
+            catch (ConfigurationErrorsException e)
+            {
+                throw SQL.CannotGetAuthProviderConfig(e);
+            }
+
+            Instance = new SqlAuthenticationProviderManager(configurationSection);
+            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, activeDirectoryAuthNativeProvider);
+        }
+
         /// <summary>
         /// Constructor.
         /// </summary>

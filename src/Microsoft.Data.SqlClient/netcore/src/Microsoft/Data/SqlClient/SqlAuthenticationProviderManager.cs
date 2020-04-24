@@ -10,7 +10,6 @@ using System.Linq;
 
 namespace Microsoft.Data.SqlClient
 {
-
     /// <summary>
     /// Authentication provider manager.
     /// </summary>
@@ -26,28 +25,6 @@ namespace Microsoft.Data.SqlClient
         private readonly SqlClientLogger _sqlAuthLogger = new SqlClientLogger();
 
         public static readonly SqlAuthenticationProviderManager Instance;
-
-        static SqlAuthenticationProviderManager()
-        {
-            var activeDirectoryAuthNativeProvider = new ActiveDirectoryNativeAuthenticationProvider();
-#if netcoreapp
-            SqlAuthenticationProviderConfigurationSection configurationSection;
-
-            try
-            {
-                configurationSection = (SqlAuthenticationProviderConfigurationSection)ConfigurationManager.GetSection(SqlAuthenticationProviderConfigurationSection.Name);
-            }
-            catch (ConfigurationErrorsException e)
-            {
-                throw SQL.CannotGetAuthProviderConfig(e);
-            }
-
-            Instance = new SqlAuthenticationProviderManager(configurationSection);
-#else
-            Instance = new SqlAuthenticationProviderManager();
-#endif
-            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, activeDirectoryAuthNativeProvider);
-        }
 
         /// <summary>
         /// Constructor.

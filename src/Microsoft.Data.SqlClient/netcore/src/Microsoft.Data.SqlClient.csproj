@@ -143,6 +143,7 @@
     <Compile Include="Microsoft.Data.SqlClient.TypeForwards.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netstandard'">
+    <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.NetStandard.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDiagnosticListener.NetStandard.cs" />
     <Compile Include="Microsoft\Data\SqlClient\EnclaveDelegate.NetStandard.cs" />
   </ItemGroup>
