@@ -93,6 +93,21 @@ namespace Microsoft.Data.SqlClient.SNI
             }
         }
 
+        public override uint SChannelProtocol
+        {
+            get
+            {
+                try
+                {
+                    return (uint)_sslStream.SslProtocol;
+                }
+                catch
+                {
+                    return base.SChannelProtocol;
+                }
+            }
+        }
+
         /// <summary>
         /// Constructor
         /// </summary>

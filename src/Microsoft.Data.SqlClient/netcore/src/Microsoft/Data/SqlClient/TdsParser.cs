@@ -882,7 +882,8 @@ namespace Microsoft.Data.SqlClient
                                 info |= TdsEnums.SNI_SSL_IGNORE_CHANNEL_BINDINGS;
                             }
 
-                            error = _physicalStateObj.EnableSsl(ref info);
+                            //TODO: After discover the protocol version, it must be throw as a warning if it's lower than TLS 1.2
+                            error = _physicalStateObj.EnableSsl(ref info, out uint protocol);
 
                             if (error != TdsEnums.SNI_SUCCESS)
                             {

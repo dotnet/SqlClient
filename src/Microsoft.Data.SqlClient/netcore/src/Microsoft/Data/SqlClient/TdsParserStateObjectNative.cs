@@ -297,10 +297,12 @@ namespace Microsoft.Data.SqlClient
         internal override uint EnableMars(ref uint info)
             => SNINativeMethodWrapper.SNIAddProvider(Handle, SNINativeMethodWrapper.ProviderEnum.SMUX_PROV, ref info);
 
-        internal override uint EnableSsl(ref uint info)
+        internal override uint EnableSsl(ref uint info, out uint sChannelProtocol)
         {
             // Add SSL (Encryption) SNI provider.
-            return SNINativeMethodWrapper.SNIAddProvider(Handle, SNINativeMethodWrapper.ProviderEnum.SSL_PROV, ref info);
+            uint result = SNINativeMethodWrapper.SNIAddProvider(Handle, SNINativeMethodWrapper.ProviderEnum.SSL_PROV, ref info);
+            sChannelProtocol = 0; //TODO: Handle.SChannelProtocol;
+            return result;
         }
 
         internal override uint SetConnectionBufferSize(ref uint unsignedPacketSize)
