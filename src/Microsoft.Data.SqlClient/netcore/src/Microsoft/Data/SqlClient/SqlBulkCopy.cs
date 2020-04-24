@@ -218,13 +218,13 @@ namespace Microsoft.Data.SqlClient
                         rowNo = ((DataTable)_dataTableSource).Rows.IndexOf(_rowEnumerator.Current as DataRow);
                         break;
                     case ValueSourceType.DataTable:
-                        rowNo = ((DataTable)_rowSource).Rows.IndexOf(_rowEnumerator.Current as DataRow);                        
+                        rowNo = ((DataTable)_rowSource).Rows.IndexOf(_rowEnumerator.Current as DataRow);
                         break;
                     case ValueSourceType.DbDataReader:
                     case ValueSourceType.IDataReader:
                     case ValueSourceType.Unspecified:
                     default:
-                        return -1;                        
+                        return -1;
                 }
                 return ++rowNo;
             }
@@ -233,6 +233,7 @@ namespace Microsoft.Data.SqlClient
         private TdsParser _parser;
         private TdsParserStateObject _stateObj;
         private List<_ColumnMapping> _sortedColumnMappings;
+        private HashSet<string> _destColumnNames;
 
         private SqlRowsCopiedEventHandler _rowsCopiedEventHandler;
 
@@ -272,6 +273,7 @@ namespace Microsoft.Data.SqlClient
             }
             _connection = connection;
             _columnMappings = new SqlBulkCopyColumnMappingCollection();
+            ColumnOrderHints = new SqlBulkCopyColumnOrderHintCollection();
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/ctor[@name="SqlConnectionAndSqlBulkCopyOptionAndSqlTransactionParameters"]/*'/>
@@ -299,6 +301,7 @@ namespace Microsoft.Data.SqlClient
             }
             _connection = new SqlConnection(connectionString);
             _columnMappings = new SqlBulkCopyColumnMappingCollection();
+            ColumnOrderHints = new SqlBulkCopyColumnOrderHintCollection();
             _ownConnection = true;
         }
 
@@ -366,6 +369,12 @@ namespace Microsoft.Data.SqlClient
             {
                 return _columnMappings;
             }
+        }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/ColumnOrderHints/*'/>
+        public SqlBulkCopyColumnOrderHintCollection ColumnOrderHints
+        {
+            get;
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/DestinationTableName/*'/>
@@ -594,7 +603,6 @@ namespace Microsoft.Data.SqlClient
             int nmatched = 0;  // Number of columns that match and are accepted
             int nrejected = 0; // Number of columns that match but were rejected
             bool rejectColumn; // True if a column is rejected because of an excluded type
-
             bool isInTransaction;
 
             isInTransaction = _connection.HasLocalTransaction;
@@ -603,6 +611,8 @@ namespace Microsoft.Data.SqlClient
             {
                 throw SQL.BulkLoadExistingTransaction();
             }
+
+            _destColumnNames = new HashSet<string>();
 
             // Loop over the metadata for each column
             _SqlMetaDataSet metaDataSet = internalResults[MetaDataResultId].MetaData;
@@ -636,6 +646,7 @@ namespace Microsoft.Data.SqlClient
                         }
 
                         _sortedColumnMappings.Add(new _ColumnMapping(_localColumnMappings[assocId]._internalSourceColumnOrdinal, metadata));
+                        _destColumnNames.Add(metadata.column);
                         nmatched++;
 
                         if (nmatched > 1)
@@ -770,12 +781,13 @@ namespace Microsoft.Data.SqlClient
 
             updateBulkCommandText.Append(")");
 
-            if ((_copyOptions & (
+            if (((_copyOptions & (
                     SqlBulkCopyOptions.KeepNulls
                     | SqlBulkCopyOptions.TableLock
                     | SqlBulkCopyOptions.CheckConstraints
                     | SqlBulkCopyOptions.FireTriggers
                     | SqlBulkCopyOptions.AllowEncryptedValueModifications)) != SqlBulkCopyOptions.Default)
+                    || ColumnOrderHints.Count > 0)
             {
                 bool addSeparator = false; // Insert a comma character if multiple options in list
                 updateBulkCommandText.Append(" with (");
@@ -804,9 +816,47 @@ namespace Microsoft.Data.SqlClient
                     updateBulkCommandText.Append((addSeparator ? ", " : "") + "ALLOW_ENCRYPTED_VALUE_MODIFICATIONS");
                     addSeparator = true;
                 }
+                if (ColumnOrderHints.Count > 0)
+                {
+                    updateBulkCommandText.Append((addSeparator ? ", " : "") + TryGetOrderHintText());
+                }
                 updateBulkCommandText.Append(")");
             }
             return (updateBulkCommandText.ToString());
+        }
+
+        private string TryGetOrderHintText()
+        {
+            StringBuilder orderHintText = new StringBuilder("ORDER(");
+            HashSet<string> columnNames = new HashSet<string>();
+
+            foreach (SqlBulkCopyColumnOrderHint columnOrderHint in ColumnOrderHints)
+            {
+                string columnNameArg = columnOrderHint.Column;
+
+                if (!_destColumnNames.Contains(columnNameArg))
+                {
+                    // column is not valid in the destination table
+                    throw SQL.BulkLoadOrderHintInvalidColumn(columnNameArg);
+                }
+
+                if (!columnNames.Contains(columnNameArg))
+                {
+                    string columnNameEscaped = SqlServerEscapeHelper.EscapeIdentifier(SqlServerEscapeHelper.EscapeStringAsLiteral(columnNameArg));
+                    string sortOrderText = columnOrderHint.SortOrder == SortOrder.Descending ? "DESC" : "ASC";
+                    orderHintText.Append($"{columnNameEscaped} {sortOrderText}, ");
+                    columnNames.Add(columnNameArg);
+                }
+                else
+                {
+                    // duplicate column name
+                    throw SQL.BulkLoadOrderHintDuplicateColumn(columnNameArg);
+                }
+            }
+
+            orderHintText.Length = orderHintText.Length - 2;
+            orderHintText.Append(")");
+            return orderHintText.ToString();
         }
 
         private Task SubmitUpdateBulkCommand(string TDSCommand)
@@ -1295,7 +1345,6 @@ namespace Microsoft.Data.SqlClient
             {
                 throw ADP.ConnectionRequired(method);
             }
-
             if (_ownConnection && _connection.State != ConnectionState.Open)
             {
                 _connection.Open();

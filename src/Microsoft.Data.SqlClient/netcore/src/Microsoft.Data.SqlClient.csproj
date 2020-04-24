@@ -33,7 +33,7 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientEventSource.cs">
       <Link>Microsoft\Data\SqlClient\SqlClientEventSource.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientLogger.cs" >
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientLogger.cs">
       <Link>Microsoft\Data\SqlClient\SqlClientLogger.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\DataClassification\SensitivityClassification.cs">
@@ -57,7 +57,7 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\ColumnEncryptionKeyInfo.cs">
       <Link>Microsoft\Data\SqlClient\ColumnEncryptionKeyInfo.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\OnChangedEventHandler.cs" >
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\OnChangedEventHandler.cs">
       <Link>Microsoft\Data\SqlClient\OnChangedEventHandler.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlAeadAes256CbcHmac256Algorithm.cs">
@@ -83,6 +83,12 @@
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlBulkCopyOptions.cs">
       <Link>Microsoft\Data\SqlClient\SqlBulkCopyOptions.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlBulkCopyColumnOrderHint.cs">
+      <Link>Microsoft\Data\SqlClient\SqlBulkCopyColumnOrderHint.cs</Link>
+    </Compile>  
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlBulkCopyColumnOrderHintCollection.cs">
+      <Link>Microsoft\Data\SqlClient\SqlBulkCopyColumnOrderHintCollection.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientEncryptionAlgorithmFactory.cs">
       <Link>Microsoft\Data\SqlClient\SqlClientEncryptionAlgorithmFactory.cs</Link>
