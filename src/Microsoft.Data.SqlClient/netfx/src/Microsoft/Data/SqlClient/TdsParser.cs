@@ -483,8 +483,7 @@ namespace Microsoft.Data.SqlClient
                               ServerCertificateValidationCallback serverCallback,
                               ClientCertificateRetrievalCallback clientCallback,
                               bool useOriginalAddressInfo,
-                              bool disableTnir,
-                              SqlAuthenticationProviderManager sqlAuthProviderManager)
+                              bool disableTnir)
         {
             if (_state != TdsParserState.Closed)
             {
