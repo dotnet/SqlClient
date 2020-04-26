@@ -227,6 +227,7 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.NetStandard.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDiagnosticListener.NetStandard.cs" />
     <Compile Include="Microsoft\Data\SqlClient\EnclaveDelegate.NetStandard.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SNI\SslOverTdsStream.NetStandard.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netcoreapp'">
     <Compile Include="Microsoft\Data\Common\DbConnectionStringCommon.NetCoreApp.cs" />
@@ -247,6 +248,7 @@
     <Compile Include="Microsoft\Data\SqlClient\AlwaysEncryptedEnclaveProviderUtils.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\EnclaveProviderBase.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\EnclaveSessionCache.NetCoreApp.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SNI\SslOverTdsStream.NetCoreApp.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netcoreapp' AND '$(BuildSimulator)' == 'true'">
     <Compile Include="Microsoft\Data\SqlClient\SimulatorEnclaveProvider.NetCoreApp.cs" />
