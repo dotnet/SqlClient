@@ -182,7 +182,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         tdsReliabilitySection.Start();
 #else
-                {
+                    {
 #endif //DEBUG
                         lock (connection)
                         {
@@ -389,7 +389,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         tdsReliabilitySection.Start();
 #else
-                {
+                    {
 #endif //DEBUG
                         // If the connection is dooomed, we can be certain that the
                         // transaction will eventually be rolled back, and we shouldn't
