@@ -114,7 +114,6 @@ namespace Microsoft.Data.SqlClient.SNI
                 else
                 {
                     byte[] headerBytes = ArrayPool<byte>.Shared.Rent(TdsEnums.HEADER_LEN);
-                    Array.Clear(headerBytes, 0, headerBytes.Length);
 
                     // fetch the packet header to determine how long the packet is
                     int headerBytesRead = 0;
