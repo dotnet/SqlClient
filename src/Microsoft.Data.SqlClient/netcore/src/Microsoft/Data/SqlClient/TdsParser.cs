@@ -2855,7 +2855,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            // _attentionSent set by 'SendAttention'
+            // HasReceivedAttention set above
             // _pendingData set by e.g. 'TdsExecuteSQLBatch'
             // _hasOpenResult always set to true by 'WriteMarsHeader'
             //
