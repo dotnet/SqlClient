@@ -1,0 +1,10 @@
+{
+    "profiles": {
+        "Microsoft.Data.SqlClient.DockerLinuxTest": {
+            "commandName": "Project"
+        },
+        "Docker": {
+            "commandName": "Docker"
+        }
+    }
+}

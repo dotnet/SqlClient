@@ -6876,9 +6876,9 @@ namespace System {
         /// <summary>
         ///   Looks up a localized string similar to The collection name &apos;{0}&apos; matches at least two collections with the same name but with different case, but does not match any of them exactly..
         /// </summary>
-        internal static string MDF_AmbigousCollectionName {
+        internal static string MDF_AmbiguousCollectionName {
             get {
-                return ResourceManager.GetString("MDF_AmbigousCollectionName", resourceCulture);
+                return ResourceManager.GetString("MDF_AmbiguousCollectionName", resourceCulture);
             }
         }
         
@@ -9379,11 +9379,11 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Interactive&apos; with &apos;User ID&apos;, &apos;UID&apos;, &apos;Password&apos; or &apos;PWD&apos; connection string keywords..
+        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Interactive&apos; with &apos;Password&apos; or &apos;PWD&apos; connection string keywords..
         /// </summary>
-        internal static string SQL_InteractiveWithUserIDAndPassword {
+        internal static string SQL_InteractiveWithPassword {
             get {
-                return ResourceManager.GetString("SQL_InteractiveWithUserIDAndPassword", resourceCulture);
+                return ResourceManager.GetString("SQL_InteractiveWithPassword", resourceCulture);
             }
         }
         
@@ -11400,6 +11400,15 @@ namespace System {
         internal static string SQLUDT_InvalidDbId {
             get {
                 return ResourceManager.GetString("SQLUDT_InvalidDbId", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to UDT size must be less than {1}, size: {0}.
+        /// </summary>
+        internal static string SQLUDT_InvalidSize {
+            get {
+                return ResourceManager.GetString("SQLUDT_InvalidSize", resourceCulture);
             }
         }
         

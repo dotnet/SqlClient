@@ -37,7 +37,7 @@ namespace Microsoft.Data.Common
         // a linked list of key/value and their length in _encryptedUsersConnectionString
         readonly private NameValuePair _keychain;
 
-        // track the existance of "password" or "pwd" in the connection string
+        // track the existence of "password" or "pwd" in the connection string
         // not used for anything anymore but must keep it set correct for V1.1 serialization
         readonly private bool _hasPassword;
 
@@ -63,7 +63,7 @@ namespace Microsoft.Data.Common
             : this(connectionOptions, (string)null, KeyRestrictionBehavior.AllowOnly, (Hashtable)null, true)
         {
             // used by DBDataPermission to convert from DbConnectionOptions to DBConnectionString
-            // since backward compatability requires Everett level classes
+            // since backward compatibility requires Everett level classes
         }
 
         private DBConnectionString(DbConnectionOptions connectionOptions, string restrictions, KeyRestrictionBehavior behavior, Hashtable synonyms, bool mustCloneDictionary)
@@ -365,7 +365,7 @@ namespace Microsoft.Data.Common
             switch (_behavior)
             {
                 case KeyRestrictionBehavior.AllowOnly:
-                    // every key must either be in the resticted connection string or in the allowed keywords
+                    // every key must either be in the restricted connection string or in the allowed keywords
                     // keychain may contain duplicates, but it is better than GetEnumerator on _parsetable.Keys
                     for (NameValuePair current = entry.KeyChain; null != current; current = current.Next)
                     {

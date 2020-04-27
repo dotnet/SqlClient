@@ -127,7 +127,7 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 if (!_stream.CanWrite || !_stream.CanRead)
                 {
-                    SqlClientEventSource.Log.SNITraceEvent("<sc.SNI.SNINpHandle.CheckConnection |SNI|ERR> cannot wite or read to/from the stream");
+                    SqlClientEventSource.Log.SNITraceEvent("<sc.SNI.SNINpHandle.CheckConnection |SNI|ERR> cannot write or read to/from the stream");
                     return TdsEnums.SNI_ERROR;
                 }
                 else
@@ -346,7 +346,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
                 catch (InvalidOperationException ioe)
                 {
-                    SqlClientEventSource.Log.SNITraceEvent("<sc.SNI.SNINpHandle.EnableSsl |SNI|ERR>InvalidOperationExceptionn message = {0}.", ioe.Message);
+                    SqlClientEventSource.Log.SNITraceEvent("<sc.SNI.SNINpHandle.EnableSsl |SNI|ERR>InvalidOperationException message = {0}.", ioe.Message);
                     return SNICommon.ReportSNIError(SNIProviders.NP_PROV, SNICommon.InternalExceptionError, ioe);
                 }
                 _stream = _sslStream;

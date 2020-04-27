@@ -339,7 +339,7 @@
   <data name="MDF_UnableToBuildCollection" xml:space="preserve">
     <value>Unable to build schema collection '{0}';</value>
   </data>
-  <data name="MDF_AmbigousCollectionName" xml:space="preserve">
+  <data name="MDF_AmbiguousCollectionName" xml:space="preserve">
     <value>The collection name '{0}' matches at least two collections with the same name but with different case, but does not match any of them exactly.</value>
   </data>
   <data name="MDF_CollectionNameISNotUnique" xml:space="preserve">
@@ -2496,8 +2496,8 @@
   <data name="SQL_IntegratedWithUserIDAndPassword" xml:space="preserve">
     <value>Cannot use 'Authentication=Active Directory Integrated' with 'User ID', 'UID', 'Password' or 'PWD' connection string keywords.</value>
   </data>
-  <data name="SQL_InteractiveWithUserIDAndPassword" xml:space="preserve">
-    <value>Cannot use 'Authentication=Active Directory Interactive' with 'User ID', 'UID', 'Password' or 'PWD' connection string keywords.</value>
+  <data name="SQL_InteractiveWithPassword" xml:space="preserve">
+    <value>Cannot use 'Authentication=Active Directory Interactive' with 'Password' or 'PWD' connection string keywords.</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
     <value>Cannot use 'Authentication=Active Directory Integrated', if the Credential property has been set.</value>
@@ -4526,5 +4526,8 @@
   </data>
   <data name="TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage" xml:space="preserve">
     <value>Error occurred when generating enclave package. Attestation Protocol has not been specified in the connection string, but the query requires enclave computations.</value>
+  </data>
+  <data name="SQLUDT_InvalidSize" xml:space="preserve">
+    <value>UDT size must be less than {1}, size: {0}</value>
   </data>
 </root>

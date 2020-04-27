@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlTypes;
 using Xunit;
@@ -313,6 +314,202 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
             }
         }
+
+        #region Scaled Decimal Parameter & TVP Test
+        [Theory]
+        [ClassData(typeof(ConnectionStringsProvider))]
+        public static void TestScaledDecimalParameter_CommandInsert(string connectionString, bool truncateScaledDecimal)
+        {
+            string tableName = DataTestUtility.GetUniqueNameForSqlServer("TestDecimalParameterCMD");
+            using (SqlConnection connection = InitialDatabaseTable(connectionString, tableName))
+            {
+                try
+                {
+                    using (SqlCommand cmd = connection.CreateCommand())
+                    {
+                        AppContext.SetSwitch(truncateDecimalSwitch, truncateScaledDecimal);
+                        var p = new SqlParameter("@Value", null);
+                        p.Precision = 18;
+                        p.Scale = 2;
+                        cmd.Parameters.Add(p);
+                        for (int i = 0; i < _testValues.Length; i++)
+                        {
+                            p.Value = _testValues[i];
+                            cmd.CommandText = $"INSERT INTO {tableName} (Id, [Value]) VALUES({i}, @Value)";
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                    Assert.True(ValidateInsertedValues(connection, tableName, truncateScaledDecimal), $"Invalid test happened with connection string [{connection.ConnectionString}]");
+                }
+                finally
+                {
+                    DataTestUtility.DropTable(connection, tableName);
+                }
+            }
+        }
+
+        [Theory]
+        [ClassData(typeof(ConnectionStringsProvider))]
+        public static void TestScaledDecimalParameter_BulkCopy(string connectionString, bool truncateScaledDecimal)
+        {
+            string tableName = DataTestUtility.GetUniqueNameForSqlServer("TestDecimalParameterBC");
+            using (SqlConnection connection = InitialDatabaseTable(connectionString, tableName))
+            {
+                try
+                {
+                    using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connection))
+                    {
+                        DataTable table = new DataTable(tableName);
+                        table.Columns.Add("Id", typeof(int));
+                        table.Columns.Add("Value", typeof(decimal));
+                        for (int i = 0; i < _testValues.Length; i++)
+                        {
+                            var newRow = table.NewRow();
+                            newRow["Id"] = i;
+                            newRow["Value"] = _testValues[i];
+                            table.Rows.Add(newRow);
+                        }
+
+                        bulkCopy.DestinationTableName = tableName;
+                        AppContext.SetSwitch(truncateDecimalSwitch, truncateScaledDecimal);
+                        bulkCopy.WriteToServer(table);
+                    }
+                    Assert.True(ValidateInsertedValues(connection, tableName, truncateScaledDecimal), $"Invalid test happened with connection string [{connection.ConnectionString}]");
+                }
+                finally
+                {
+                    DataTestUtility.DropTable(connection, tableName);
+                }
+            }
+        }
+
+        [Theory]
+        [ClassData(typeof(ConnectionStringsProvider))]
+        public static void TestScaledDecimalTVP_CommandSP(string connectionString, bool truncateScaledDecimal)
+        {
+            string tableName = DataTestUtility.GetUniqueNameForSqlServer("TestDecimalParameterBC");
+            string tableTypeName = DataTestUtility.GetUniqueNameForSqlServer("UDTTTestDecimalParameterBC");
+            string spName = DataTestUtility.GetUniqueNameForSqlServer("spTestDecimalParameterBC");
+            using (SqlConnection connection = InitialDatabaseUDTT(connectionString, tableName, tableTypeName, spName))
+            {
+                try
+                {
+                    using (SqlCommand cmd = connection.CreateCommand())
+                    {
+                        var p = new SqlParameter("@tvp", SqlDbType.Structured);
+                        p.TypeName = $"dbo.{tableTypeName}";
+                        cmd.CommandText = spName;
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Parameters.Add(p);
+
+                        DataTable table = new DataTable(tableName);
+                        table.Columns.Add("Id", typeof(int));
+                        table.Columns.Add("Value", typeof(decimal));
+                        for (int i = 0; i < _testValues.Length; i++)
+                        {
+                            var newRow = table.NewRow();
+                            newRow["Id"] = i;
+                            newRow["Value"] = _testValues[i];
+                            table.Rows.Add(newRow);
+                        }
+                        p.Value = table;
+                        AppContext.SetSwitch(truncateDecimalSwitch, truncateScaledDecimal);
+                        cmd.ExecuteNonQuery();
+                    }
+                    // TVP always rounds data without attention to the configuration.
+                    Assert.True(ValidateInsertedValues(connection, tableName, false && truncateScaledDecimal), $"Invalid test happened with connection string [{connection.ConnectionString}]");
+                }
+                finally
+                {
+                    DataTestUtility.DropTable(connection, tableName);
+                    DataTestUtility.DropStoredProcedure(connection, spName);
+                    DataTestUtility.DropUserDefinedType(connection, tableTypeName);
+                }
+            }
+        }
+
+        #region Decimal parameter test setup
+        private static readonly decimal[] _testValues = new[] { 4210862852.8600000000_0000000000m, 19.1560m, 19.1550m, 19.1549m };
+        private static readonly decimal[] _expectedRoundedValues = new[] { 4210862852.86m, 19.16m, 19.16m, 19.15m };
+        private static readonly decimal[] _expectedTruncatedValues = new[] { 4210862852.86m, 19.15m, 19.15m, 19.15m };
+        private const string truncateDecimalSwitch = "Switch.Microsoft.Data.SqlClient.TruncateScaledDecimal";
+
+        private static SqlConnection InitialDatabaseUDTT(string cnnString, string tableName, string tableTypeName, string spName)
+        {
+            SqlConnection connection = new SqlConnection(cnnString);
+            connection.Open();
+            using (SqlCommand cmd = connection.CreateCommand())
+            {
+                cmd.CommandType = CommandType.Text;
+                cmd.CommandText = $"CREATE TABLE {tableName} (Id INT, Value Decimal(38, 2)) \n";
+                cmd.CommandText += $"CREATE TYPE {tableTypeName} AS TABLE (Id INT, Value Decimal(38, 2)) ";
+                cmd.ExecuteNonQuery();
+                cmd.CommandText = $"CREATE PROCEDURE {spName} (@tvp {tableTypeName} READONLY) AS \n INSERT INTO {tableName} (Id, Value) SELECT * FROM @tvp ORDER BY Id";
+                cmd.ExecuteNonQuery();
+            }
+            return connection;
+        }
+
+        private static SqlConnection InitialDatabaseTable(string cnnString, string tableName)
+        {
+            SqlConnection connection = new SqlConnection(cnnString);
+            connection.Open();
+            using (SqlCommand cmd = connection.CreateCommand())
+            {
+                cmd.CommandType = CommandType.Text;
+                cmd.CommandText = $"CREATE TABLE {tableName} (Id INT, Value Decimal(38, 2))";
+                cmd.ExecuteNonQuery();
+            }
+            return connection;
+        }
+
+        private static bool ValidateInsertedValues(SqlConnection connection, string tableName, bool truncateScaledDecimal)
+        {
+            bool exceptionHit;
+            decimal[] expectedValues = truncateScaledDecimal ? _expectedTruncatedValues : _expectedRoundedValues;
+
+            try
+            {
+                using (SqlCommand cmd = connection.CreateCommand())
+                {
+                    // Verify if the data was as same as our expectation.
+                    cmd.CommandText = $"SELECT [Value] FROM {tableName} ORDER BY Id ASC";
+                    cmd.CommandType = CommandType.Text;
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        DataTable dbData = new DataTable();
+                        dbData.Load(reader);
+                        Assert.Equal(expectedValues.Length, dbData.Rows.Count);
+                        for (int i = 0; i < expectedValues.Length; i++)
+                        {
+                            Assert.Equal(expectedValues[i], dbData.Rows[i][0]);
+                        }
+                    }
+                }
+                exceptionHit = false;
+            }
+            catch
+            {
+                exceptionHit = true;
+            }
+            return !exceptionHit;
+        }
+
+        public class ConnectionStringsProvider : IEnumerable<object[]>
+        {
+            public IEnumerator<object[]> GetEnumerator()
+            {
+                foreach (var cnnString in DataTestUtility.ConnectionStrings)
+                {
+                    yield return new object[] { cnnString, false };
+                    yield return new object[] { cnnString, true };
+                }
+            }
+
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        }
+        #endregion
+        #endregion
 
         private enum MyEnum
         {

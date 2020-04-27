@@ -156,6 +156,28 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        public static IEnumerable<string> ConnectionStrings
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(TCPConnectionString))
+                {
+                    yield return TCPConnectionString;
+                }
+                // Named Pipes are not supported on Unix platform and for Azure DB
+                if (Environment.OSVersion.Platform != PlatformID.Unix && IsNotAzureServer() && !string.IsNullOrEmpty(NPConnectionString))
+                {
+                    yield return NPConnectionString;
+                }
+                if (EnclaveEnabled)
+                {
+                    foreach (var connStr in AEConnStrings)
+                    {
+                        yield return connStr;
+                    }
+                }
+            }
+        }
         private static string GenerateAccessToken(string authorityURL, string aADAuthUserID, string aADAuthPassword)
         {
             return AcquireTokenAsync(authorityURL, aADAuthUserID, aADAuthPassword).Result;
@@ -309,6 +331,30 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return name;
         }
 
+        public static void DropTable(SqlConnection sqlConnection, string tableName)
+        {
+            using (SqlCommand cmd = new SqlCommand(string.Format("IF (OBJECT_ID('{0}') IS NOT NULL) \n DROP TABLE {0}", tableName), sqlConnection))
+            {
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        public static void DropUserDefinedType(SqlConnection sqlConnection, string typeName)
+        {
+            using (SqlCommand cmd = new SqlCommand(string.Format("IF (TYPE_ID('{0}') IS NOT NULL) \n DROP TYPE {0}", typeName), sqlConnection))
+            {
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        public static void DropStoredProcedure(SqlConnection sqlConnection, string spName)
+        {
+            using (SqlCommand cmd = new SqlCommand(string.Format("IF (OBJECT_ID('{0}') IS NOT NULL) \n DROP PROCEDURE {0}", spName), sqlConnection))
+            {
+                cmd.ExecuteNonQuery();
+            }
+        }
+
         public static bool IsLocalDBInstalled() => SupportsLocalDb;
 
         public static bool IsIntegratedSecuritySetup() => SupportsIntegratedSecurity;
@@ -434,7 +480,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             try
             {
                 actionThatFails();
-                Console.WriteLine("ERROR: Did not get expected exception");
+                Assert.False(true, "ERROR: Did not get expected exception");
                 return null;
             }
             catch (Exception ex)
@@ -455,7 +501,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             try
             {
                 actionThatFails();
-                Console.WriteLine("ERROR: Did not get expected exception");
+                Assert.False(true, "ERROR: Did not get expected exception");
                 return null;
             }
             catch (Exception ex)
@@ -476,7 +522,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             try
             {
                 actionThatFails();
-                Console.WriteLine("ERROR: Did not get expected exception");
+                Assert.False(true, "ERROR: Did not get expected exception");
                 return null;
             }
             catch (Exception ex)

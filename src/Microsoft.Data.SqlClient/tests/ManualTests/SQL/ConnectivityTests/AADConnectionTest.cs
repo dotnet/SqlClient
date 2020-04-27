@@ -224,14 +224,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
         [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp)]
-        public static void MFAAuthWithCred()
+        public static void MFAAuthWithPassword()
         {
             // connection fails with expected error message.
             string[] AuthKey = { "Authentication" };
             string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, AuthKey) + "Authentication=Active Directory Interactive;";
             ArgumentException e = Assert.Throws<ArgumentException>(() => ConnectAndDisconnect(connStr));
 
-            string expectedMessage = "Cannot use 'Authentication=Active Directory Interactive' with 'User ID', 'UID', 'Password' or 'PWD' connection string keywords.";
+            string expectedMessage = "Cannot use 'Authentication=Active Directory Interactive' with 'Password' or 'PWD' connection string keywords.";
             Assert.Contains(expectedMessage, e.Message);
         }
 
