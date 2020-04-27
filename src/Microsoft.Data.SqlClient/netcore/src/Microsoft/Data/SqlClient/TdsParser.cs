@@ -2859,7 +2859,7 @@ namespace Microsoft.Data.SqlClient
             // _pendingData set by e.g. 'TdsExecuteSQLBatch'
             // _hasOpenResult always set to true by 'WriteMarsHeader'
             //
-            if (!stateObj._attentionSent && !stateObj.HasPendingData && stateObj.HasOpenResult)
+            if (!stateObj.HasReceivedAttention && !stateObj.HasPendingData && stateObj.HasOpenResult)
             {
                 /*
                                 Debug.Assert(!((sqlTransaction != null               && _distributedTransaction != null) ||
