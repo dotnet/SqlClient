@@ -248,37 +248,37 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             DestinationTableNameWithSpecialChar.Test(srcConstr, AddGuid("SqlBulkCopyTest_DestinationTableNameWithSpecialChar"));
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void OrderHintTest()
         {
             OrderHint.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_OrderHint"));
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void OrderHintMissingTargetColumnTest()
         {
             OrderHintMissingTargetColumn.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_OrderHintMissingTargetColumn"));
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void OrderHintDuplicateColumnTest()
         {
             OrderHintDuplicateColumn.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_OrderHintDuplicateColumn"));
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void OrderHintTransactionTest()
         {
             OrderHintTransaction.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_OrderHintTransaction"));
-        }     
-        
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void OrderHintAsyncTest()
         {
             OrderHintAsync.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_OrderHintAsync"));
-        }        
-        
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [ActiveIssue(1)]
         public void OrderHintIdentityColumnTest()
         {
