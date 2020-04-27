@@ -603,6 +603,7 @@ namespace Microsoft.Data.SqlClient
             int nmatched = 0;  // Number of columns that match and are accepted
             int nrejected = 0; // Number of columns that match but were rejected
             bool rejectColumn; // True if a column is rejected because of an excluded type
+            
             bool isInTransaction;
 
             isInTransaction = _connection.HasLocalTransaction;
@@ -1345,6 +1346,7 @@ namespace Microsoft.Data.SqlClient
             {
                 throw ADP.ConnectionRequired(method);
             }
+            
             if (_ownConnection && _connection.State != ConnectionState.Open)
             {
                 _connection.Open();

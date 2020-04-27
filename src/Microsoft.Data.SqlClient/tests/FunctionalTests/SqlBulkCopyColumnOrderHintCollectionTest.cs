@@ -445,7 +445,6 @@ namespace Microsoft.Data.SqlClient.Tests
             collection.Remove(item2);
             collection.Remove(new SqlBulkCopyColumnOrderHint("column3", SortOrder.Descending));
 
-
             IList list = CreateCollection(item1, item2);
 
             list.Remove(item1);
@@ -481,7 +480,6 @@ namespace Microsoft.Data.SqlClient.Tests
             collection.RemoveAt(0);
             Assert.Empty(collection);
 
-
             IList list = CreateCollection(item1, item2, item3);
 
             list.RemoveAt(0);
@@ -503,6 +501,5 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.NotNull(collection.SyncRoot);
             Assert.Same(collection.SyncRoot, collection.SyncRoot);
         }
-
     }
 }

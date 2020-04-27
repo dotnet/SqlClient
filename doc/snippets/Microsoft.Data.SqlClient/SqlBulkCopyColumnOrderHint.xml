@@ -41,7 +41,6 @@ Transact-SQL `INSERT … SELECT` statement to copy the data.
 			</remarks>
 		</SqlBulkCopyColumnOrderHint>
 
-
 		<ctor name="columnStringAndsortOrderSortOrder">
 			<param name="column">
                 The name of the destination column within the destination table.
