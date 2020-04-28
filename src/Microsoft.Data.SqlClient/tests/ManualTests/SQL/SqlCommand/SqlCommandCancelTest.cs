@@ -213,16 +213,29 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [CheckConnStrSetupFact]
-        public static void TCPAttentionPacketTest()
+        public static void TCPAttentionPacketTestTransaction()
         {
             CancelFollowedByTransaction(tcp_connStr);
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [PlatformSpecific(TestPlatforms.Windows)]
-        public static void NPAttentionPacketTest()
+        public static void NPAttentionPacketTestTransaction()
         {
             CancelFollowedByTransaction(np_connStr);
+        }
+
+        [CheckConnStrSetupFact]
+        public static void TCPAttentionPacketTestAlerts()
+        {
+            CancelFollowedByAlert(tcp_connStr);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public static void NPAttentionPacketTestAlerts()
+        {
+            CancelFollowedByAlert(np_connStr);
         }
 
         private static void CancelFollowedByTransaction(string constr)
@@ -238,8 +251,61 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         cmd.Cancel();
                     }
                 }
-                using (var transaction = connection.BeginTransaction())
+                using (SqlTransaction transaction = connection.BeginTransaction())
                 { }
+            }
+        }
+
+        private static void CancelFollowedByAlert(string constr)
+        {
+            var alertName = "myAlert" + Guid.NewGuid().ToString();
+            var n = new Random().Next(1, 100);
+            bool retry = true;
+            int retryAttempt = 0;
+            while (retry && retryAttempt < 3)
+            {
+                try
+                {
+                    using (var conn = new SqlConnection(constr))
+                    {
+                        conn.Open();
+                        using (SqlCommand cmd = conn.CreateCommand())
+                        {
+                            cmd.CommandText = "SELECT @@VERSION";
+                            using (var reader = cmd.ExecuteReader())
+                            {
+                                cmd.Cancel(); // Sends Attention
+                            }
+                        }
+                        using (SqlCommand cmd = conn.CreateCommand())
+                        {
+                            cmd.CommandText = $@"EXEC msdb.dbo.sp_add_alert @name=N'{alertName}',
+                                        @performance_condition = N'SQLServer:General Statistics|User Connections||>|{n}'";
+                            cmd.ExecuteNonQuery();
+                            cmd.CommandText = @"USE [msdb]";
+                            cmd.ExecuteNonQuery();
+                            cmd.CommandText = $@"/****** Object:  Alert [{alertName}] Script Date: {DateTime.Now} ******/
+                IF  EXISTS (SELECT name FROM msdb.dbo.sysalerts WHERE name = N'{alertName}')
+                EXEC msdb.dbo.sp_delete_alert @name=N'{alertName}'";
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    if (retryAttempt >= 3 || e.Message.Contains("The transaction operation cannot be performed"))
+                    {
+                        Assert.False(true, $"Retry Attempt: {retryAttempt} | Unexpected Exception occurred: {e.Message}");
+                    }
+                    else
+                    {
+                        retry = true;
+                        retryAttempt++;
+                        Console.WriteLine($"Retry Attempt : {retryAttempt}");
+                        continue;
+                    }
+                }
+                retry = false;
             }
         }
 
