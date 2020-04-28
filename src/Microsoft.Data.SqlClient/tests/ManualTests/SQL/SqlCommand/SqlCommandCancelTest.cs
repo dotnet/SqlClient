@@ -218,7 +218,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             CancelFollowedByTransaction(tcp_connStr);
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [PlatformSpecific(TestPlatforms.Windows)]
         public static void NPAttentionPacketTest()
         {
             CancelFollowedByTransaction(np_connStr);
