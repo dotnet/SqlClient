@@ -303,7 +303,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         retry = true;
                         retryAttempt++;
-                        Console.WriteLine($"Retry Attempt : {retryAttempt}");
+                        Console.WriteLine($"CancelFollowedByAlert Test retry attempt : {retryAttempt}");
+                        Thread.Sleep(500);
                         continue;
                     }
                 }
