@@ -65,7 +65,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             }
                             finally
                             {
-                                Helpers.TryExecute(dstCmd, "drop table " + dstTable);
+                                DataTestUtility.DropTable(dstConn, dstTable);
                             }
                         }
                     }

@@ -22,10 +22,10 @@ unordered if no hints are provided.
 The column names supplied must be valid column names in the destination table. The order in which hints can be specified is arbitrary. 
 A single column name cannot be specified more than once. 
 
-If the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnMappings%2A> collection is not empty, order hints can only be provided for valid 
+If the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnMappings> collection is not empty, order hints can only be provided for valid 
 destination columns which have been mapped.
 
-If a <xref:Microsoft.Data.SqlClient.SortOrder%2A> of Unspecified is given, an <xref:System.ArgumentException> will be thrown.
+If a <xref:Microsoft.Data.SqlClient.SortOrder> of Unspecified is given, an <xref:System.ArgumentException> will be thrown.
 
 ## Examples
 The following example bulk copies data from a source table in the **AdventureWorks** sample database to a destination table in the same database. 
@@ -40,7 +40,6 @@ Transact-SQL `INSERT … SELECT` statement to copy the data.
 ]]></format>
 			</remarks>
 		</SqlBulkCopyColumnOrderHint>
-
 
 		<ctor name="columnStringAndsortOrderSortOrder">
 			<param name="column">
@@ -114,7 +113,7 @@ Transact-SQL `INSERT … SELECT` statement to copy the data.
 				<format type="text/markdown"><![CDATA[
 
 ## Remarks
-An <xref:System.ArgumentException> will be thrown if a <xref:Microsoft.Data.SqlClient.SortOrder%2A> of Unspecified is given.
+An <xref:System.ArgumentException> will be thrown if a <xref:Microsoft.Data.SqlClient.SortOrder> of Unspecified is given.
 
 The last value set takes precedence.
 

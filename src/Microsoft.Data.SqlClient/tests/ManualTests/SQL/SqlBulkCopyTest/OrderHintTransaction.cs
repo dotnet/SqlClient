@@ -23,12 +23,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (SqlCommand dstCmd = dstConn.CreateCommand())
             {
                 dstConn.Open();
+                SqlTransaction txn = dstConn.BeginTransaction();
+                dstCmd.Transaction = txn;
                 Helpers.TryExecute(dstCmd, initialQuery);
+
                 using (SqlConnection srcConn = new SqlConnection(srcConstr))
                 using (SqlCommand srcCmd = new SqlCommand(sourceQuery, srcConn))
                 {
                     srcConn.Open();
-                    SqlTransaction txn = dstConn.BeginTransaction();
                     using (DbDataReader reader = srcCmd.ExecuteReader())
                     {
                         using (SqlBulkCopy bulkcopy = new SqlBulkCopy(
