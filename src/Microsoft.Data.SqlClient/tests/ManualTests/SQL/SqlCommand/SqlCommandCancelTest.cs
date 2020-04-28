@@ -260,7 +260,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             var alertName = "myAlert" + Guid.NewGuid().ToString();
             // Since Alert conditions are randomly generated, 
-            // we will rety on unexpected error messages to avoid collision in pipelines.
+            // we will retry on unexpected error messages to avoid collision in pipelines.
             var n = new Random().Next(1, 100);
             bool retry = true;
             int retryAttempt = 0;
