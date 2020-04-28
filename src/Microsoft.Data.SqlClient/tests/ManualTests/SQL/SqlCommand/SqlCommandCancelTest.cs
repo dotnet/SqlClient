@@ -212,6 +212,36 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             AsyncCancelDoesNotWait(np_connStr).Wait();
         }
 
+        [CheckConnStrSetupFact]
+        public static void TCPAttentionPacketTest()
+        {
+            CancelFollowedByTransaction(tcp_connStr);
+        }
+
+        [CheckConnStrSetupFact]
+        public static void NPAttentionPacketTest()
+        {
+            CancelFollowedByTransaction(np_connStr);
+        }
+
+        private static void CancelFollowedByTransaction(string constr)
+        {
+            using (SqlConnection connection = new SqlConnection(constr))
+            {
+                connection.Open();
+                using (SqlCommand cmd = connection.CreateCommand())
+                {
+                    cmd.CommandText = @"SELECT @@VERSION";
+                    using (var r = cmd.ExecuteReader())
+                    {
+                        cmd.Cancel();
+                    }
+                }
+                using (var transaction = connection.BeginTransaction())
+                { }
+            }
+        }
+
         private static void MultiThreadedCancel(string constr, bool async)
         {
             using (SqlConnection con = new SqlConnection(constr))
