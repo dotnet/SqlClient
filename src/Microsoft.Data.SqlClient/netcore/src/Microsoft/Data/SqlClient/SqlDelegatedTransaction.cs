@@ -207,7 +207,7 @@ namespace Microsoft.Data.SqlClient
                     throw;
                 }
 
-                //Throw exception only if Transaction is till active and not yet aborted.
+                //Throw exception only if Transaction is still active and not yet aborted.
                 if (promoteException != null && Transaction.TransactionInformation.Status != TransactionStatus.Aborted)
                 {
                     throw SQL.PromotionFailed(promoteException);
@@ -321,7 +321,7 @@ namespace Microsoft.Data.SqlClient
                 RuntimeHelpers.PrepareConstrainedRegions();
                 try
                 {
-                    // If the connection is dooomed, we can be certain that the
+                    // If the connection is doomed, we can be certain that the
                     // transaction will eventually be rolled back, and we shouldn't
                     // attempt to commit it.
                     if (connection.IsConnectionDoomed)
@@ -445,6 +445,7 @@ namespace Microsoft.Data.SqlClient
                         _connection = null;
                     }
                     // Safest approach is to doom this connection, whose transaction has been aborted externally.
+                    // If we want to avoid dooming the connection for performance, state needs to be properly restored. (future TODO)
                     connection.DoomThisConnection();
                 }
             }
