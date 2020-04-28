@@ -225,7 +225,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             CancelFollowedByTransaction(np_connStr);
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public static void TCPAttentionPacketTestAlerts()
         {
             CancelFollowedByAlert(tcp_connStr);
@@ -259,6 +259,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static void CancelFollowedByAlert(string constr)
         {
             var alertName = "myAlert" + Guid.NewGuid().ToString();
+            // Since Alert conditions are randomly generated, 
+            // we will rety on unexpected error messages to avoid collision in pipelines.
             var n = new Random().Next(1, 100);
             bool retry = true;
             int retryAttempt = 0;
