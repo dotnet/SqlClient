@@ -41,7 +41,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                 string sourceColumn = "CustomerID";
                                 string destColumn = "ContactName";
 
-
                                 // column does not exist in destination table
                                 bulkcopy.ColumnOrderHints.Add(nonexistentColumn, SortOrder.Ascending);
 
