@@ -279,7 +279,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
-        [ActiveIssue(1)]
+        [ActiveIssue(12219)]
         public void OrderHintIdentityColumnTest()
         {
             OrderHintIdentityColumn.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_OrderHintIdentityColumn"));
