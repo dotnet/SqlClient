@@ -3337,11 +3337,10 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            // _attentionReceived set above
             // _pendingData set by e.g. 'TdsExecuteSQLBatch'
             // _hasOpenResult always set to true by 'WriteMarsHeader'
             //
-            if (!stateObj._attentionReceived && !stateObj._pendingData && stateObj._hasOpenResult)
+            if (!stateObj._pendingData && stateObj._hasOpenResult)
             {
                 /*
                                 Debug.Assert(!((sqlTransaction != null               && _distributedTransaction != null) ||

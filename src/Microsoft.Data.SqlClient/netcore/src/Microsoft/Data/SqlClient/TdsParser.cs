@@ -2847,6 +2847,8 @@ namespace Microsoft.Data.SqlClient
             ushort status;
             int count;
 
+            stateObj._syncOverAsync = true;
+
             // status
             // command
             // rowcount (valid only if DONE_COUNT bit is set)
@@ -2946,11 +2948,10 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            // HasReceivedAttention set above
             // _pendingData set by e.g. 'TdsExecuteSQLBatch'
             // _hasOpenResult always set to true by 'WriteMarsHeader'
             //
-            if (!stateObj.HasReceivedAttention && !stateObj.HasPendingData && stateObj.HasOpenResult)
+            if (!stateObj.HasPendingData && stateObj.HasOpenResult)
             {
                 /*
                                 Debug.Assert(!((sqlTransaction != null               && _distributedTransaction != null) ||
