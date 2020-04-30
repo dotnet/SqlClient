@@ -344,8 +344,7 @@ namespace Microsoft.Data.SqlClient
             bool trustServerCert,
             bool integratedSecurity,
             bool withFailover,
-            SqlAuthenticationMethod authType,
-            SqlAuthenticationProviderManager sqlAuthProviderManager)
+            SqlAuthenticationMethod authType)
         {
             if (_state != TdsParserState.Closed)
             {

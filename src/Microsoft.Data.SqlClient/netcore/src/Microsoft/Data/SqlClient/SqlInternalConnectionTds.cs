@@ -367,8 +367,7 @@ namespace Microsoft.Data.SqlClient
                 SessionData reconnectSessionData = null,
                 bool applyTransientFaultHandling = false,
                 string accessToken = null,
-                DbConnectionPool pool = null,
-                SqlAuthenticationProviderManager sqlAuthProviderManager = null
+                DbConnectionPool pool = null
                 ) : base(connectionOptions)
 
         {
@@ -403,7 +402,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             _activeDirectoryAuthTimeoutRetryHelper = new ActiveDirectoryAuthenticationTimeoutRetryHelper();
-            _sqlAuthenticationProviderManager = sqlAuthProviderManager ?? SqlAuthenticationProviderManager.Instance;
+            _sqlAuthenticationProviderManager = SqlAuthenticationProviderManager.Instance;
 
             _identity = identity;
             Debug.Assert(newSecurePassword != null || newPassword != null, "cannot have both new secure change password and string based change password to be null");
@@ -1753,8 +1752,7 @@ namespace Microsoft.Data.SqlClient
                             ConnectionOptions.TrustServerCertificate,
                             ConnectionOptions.IntegratedSecurity,
                             withFailover,
-                            ConnectionOptions.Authentication,
-                            _sqlAuthenticationProviderManager);
+                            ConnectionOptions.Authentication);
 
             _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake);
             _timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.LoginBegin);

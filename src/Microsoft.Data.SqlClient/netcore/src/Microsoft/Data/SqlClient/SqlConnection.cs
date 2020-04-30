@@ -61,7 +61,7 @@ namespace Microsoft.Data.SqlClient
         private int _reconnectCount;
 
         // diagnostics listener
-        private static readonly DiagnosticListener s_diagnosticListener = new DiagnosticListener(SqlClientDiagnosticListenerExtensions.DiagnosticListenerName);
+        private static readonly SqlDiagnosticListener s_diagnosticListener = new SqlDiagnosticListener(SqlClientDiagnosticListenerExtensions.DiagnosticListenerName);
 
         // Transient Fault handling flag. This is needed to convey to the downstream mechanism of connection establishment, if Transient Fault handling should be used or not
         // The downstream handling of Connection open is the same for idle connection resiliency. Currently we want to apply transient fault handling only to the connections opened
@@ -2065,5 +2065,3 @@ namespace Microsoft.Data.SqlClient
         }
     }
 }
-
-
