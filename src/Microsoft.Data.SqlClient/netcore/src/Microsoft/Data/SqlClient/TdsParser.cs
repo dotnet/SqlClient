@@ -2756,6 +2756,12 @@ namespace Microsoft.Data.SqlClient
             ushort status;
             int count;
 
+            // This is added back since removing it from here introduces regressions in Managed SNI.
+            // It forces SqlDataReader.ReadAsync() method to run synchronously, 
+            // and will block the calling thread until data is fed from SQL Server.
+            // TODO Investigate better solution to support non-blocking ReadAsync().
+            stateObj._syncOverAsync = true;
+
             // status
             // command
             // rowcount (valid only if DONE_COUNT bit is set)
@@ -2855,11 +2861,10 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            // _attentionSent set by 'SendAttention'
             // _pendingData set by e.g. 'TdsExecuteSQLBatch'
             // _hasOpenResult always set to true by 'WriteMarsHeader'
             //
-            if (!stateObj._attentionSent && !stateObj.HasPendingData && stateObj.HasOpenResult)
+            if (!stateObj.HasPendingData && stateObj.HasOpenResult)
             {
                 /*
                                 Debug.Assert(!((sqlTransaction != null               && _distributedTransaction != null) ||
