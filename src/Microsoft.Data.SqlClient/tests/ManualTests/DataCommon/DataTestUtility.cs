@@ -43,7 +43,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public const string UdtTestDbName = "UdtTestDb";
         public const string AKVKeyName = "TestSqlClientAzureKeyVaultProvider";
-        private const string ManagedNetworkingAppContextSwitch = "Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows";
+        private const string ManagedNetworkingAppContextSwitch = "Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows";
 
         private static readonly string[] AzureSqlServerEndpoints = {".database.windows.net",
                                                                      ".database.cloudapi.de",
