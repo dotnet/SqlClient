@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## [Preview Release 2.0.0-preview3.20122.2] - 2020-05-01
 
 ### Added
-- Allowed passing username with Active Directory Interactive Authentication in .NET Framework [#492](https://github.com/dotnet/SqlClient/pull/492)
+- Allow passing username with Active Directory Interactive Authentication in .NET Framework [#492](https://github.com/dotnet/SqlClient/pull/492)
 - Allow large UDT buffers for .NET Framework [#456](https://github.com/dotnet/SqlClient/pull/456) 
 - Added "Transaction Id" and "Client Version" in Diagnostic Source traces [#515](https://github.com/dotnet/SqlClient/pull/515)
 - Added new `SqlConnectionOverrides` APIs to perform `SqlConnection.Open()` with fail fast option [#463](https://github.com/dotnet/SqlClient/pull/463)
@@ -20,12 +20,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Changes
 - Improved performance by removing unwanted method calls in Event Source tracing [#506](https://github.com/dotnet/SqlClient/pull/506)
-- Removed Diagnostic Source and Configuration Manager dependencies from .NET Standard DLL [#535](https://github.com/dotnet/SqlClient/pull/535)
+- Removed Diagnostic Source and Configuration Manager dependencies from .NET Standard implementation [#535](https://github.com/dotnet/SqlClient/pull/535)
 - Removed redundant calls to `DbConnectionPoolKey.GetType()` [#512](https://github.com/dotnet/SqlClient/pull/512)
 
 ### Breaking Changes
 - Updated driver to perform decimal scale rounding to match SQL Server behavior [#470](https://github.com/dotnet/SqlClient/pull/470)
-- Renamed App Context switch that enables Managed SNI on Windows for .NET Core and .NET Standard [#548](https://github.com/dotnet/SqlClient/pull/548)
+- Standardized App Context switch name that enables Managed SNI on Windows for .NET Core and .NET Standard (break only applies to 2.0 preview releases that introduced the switch) [#548](https://github.com/dotnet/SqlClient/pull/548)
 
 
 ## [Stable Release 1.1.2] - 2020-04-15
