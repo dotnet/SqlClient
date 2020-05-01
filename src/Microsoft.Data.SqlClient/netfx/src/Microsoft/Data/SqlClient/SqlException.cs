@@ -38,9 +38,9 @@ namespace Microsoft.Data.SqlClient
             HResult = HResults.SqlException;
             foreach (SerializationEntry siEntry in si)
             {
-                if ("ClientConnectionId" == siEntry.Name)
+                if (nameof(ClientConnectionId) == siEntry.Name)
                 {
-                    _clientConnectionId = new Guid(siEntry.Value.ToString());
+                    _clientConnectionId = (Guid)si.GetValue(nameof(ClientConnectionId), typeof(Guid));
                     break;
                 }
             }

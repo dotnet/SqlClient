@@ -1,6 +1,8 @@
-﻿using System;
-using System.IO;
-using System.Runtime.Serialization;
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using System;
 using Newtonsoft.Json;
 using Xunit;
 
@@ -15,7 +17,7 @@ namespace Microsoft.Data.SqlClient.Tests
         public void SerializationTest()
         {
             SqlException e = CreateException();
-            string json = Newtonsoft.Json.JsonConvert.SerializeObject(e);
+            string json = JsonConvert.SerializeObject(e);
 
             var settings = new JsonSerializerSettings()
             {
@@ -23,8 +25,8 @@ namespace Microsoft.Data.SqlClient.Tests
             };
 
             // TODO: Deserialization fails on Unix with "Member 'ClassName' was not found."
-            var sqlEx = Newtonsoft.Json.JsonConvert.DeserializeObject<Microsoft.Data.SqlClient.SqlException>(json, settings);
-            
+            var sqlEx = JsonConvert.DeserializeObject<SqlException>(json, settings);
+
             Assert.Equal(e.ClientConnectionId, sqlEx.ClientConnectionId);
             Assert.Equal(e.StackTrace, sqlEx.StackTrace);
         }
@@ -59,8 +61,8 @@ namespace Microsoft.Data.SqlClient.Tests
                 TypeNameHandling = TypeNameHandling.All,
             };
 
-            var sqlEx = Newtonsoft.Json.JsonConvert.DeserializeObject<Microsoft.Data.SqlClient.SqlException>(json, settings);
-            Assert.IsType<Microsoft.Data.SqlClient.SqlException>(sqlEx);
+            var sqlEx = JsonConvert.DeserializeObject<SqlException>(json, settings);
+            Assert.IsType<SqlException>(sqlEx);
             Assert.Equal(clientConnectionId, sqlEx.ClientConnectionId.ToString());
         }
 
@@ -87,7 +89,6 @@ namespace Microsoft.Data.SqlClient.Tests
                     return ex;
                 }
             }
-
             throw new InvalidOperationException("SqlException should have been returned.");
         }
     }
