@@ -2861,8 +2861,8 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            // _pendingData set by e.g. 'TdsExecuteSQLBatch'
-            // _hasOpenResult always set to true by 'WriteMarsHeader'
+            // HasPendingData set by e.g. 'TdsExecuteSQLBatch'
+            // HasOpenResult always set to true by 'WriteMarsHeader'
             //
             if (!stateObj.HasPendingData && stateObj.HasOpenResult)
             {
