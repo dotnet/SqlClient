@@ -120,6 +120,92 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             TimeOutDuringRead(s_connStr);
         }
 
+        [CheckConnStrSetupFact]
+        public static void TCPAttentionPacketTestTransaction()
+        {
+            CancelFollowedByTransaction(s_connStr);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        public static void TCPAttentionPacketTestAlerts()
+        {
+            CancelFollowedByAlert(s_connStr);
+        }
+
+        private static void CancelFollowedByTransaction(string constr)
+        {
+            using (SqlConnection connection = new SqlConnection(constr))
+            {
+                connection.Open();
+                using (SqlCommand cmd = connection.CreateCommand())
+                {
+                    cmd.CommandText = @"SELECT @@VERSION";
+                    using (var r = cmd.ExecuteReader())
+                    {
+                        cmd.Cancel();
+                    }
+                }
+                using (SqlTransaction transaction = connection.BeginTransaction())
+                { }
+            }
+        }
+
+        private static void CancelFollowedByAlert(string constr)
+        {
+            var alertName = "myAlert" + Guid.NewGuid().ToString();
+            // Since Alert conditions are randomly generated, 
+            // we will retry on unexpected error messages to avoid collision in pipelines.
+            var n = new Random().Next(1, 100);
+            bool retry = true;
+            int retryAttempt = 0;
+            while (retry && retryAttempt < 3)
+            {
+                try
+                {
+                    using (var conn = new SqlConnection(constr))
+                    {
+                        conn.Open();
+                        using (SqlCommand cmd = conn.CreateCommand())
+                        {
+                            cmd.CommandText = "SELECT @@VERSION";
+                            using (var reader = cmd.ExecuteReader())
+                            {
+                                cmd.Cancel(); // Sends Attention
+                            }
+                        }
+                        using (SqlCommand cmd = conn.CreateCommand())
+                        {
+                            cmd.CommandText = $@"EXEC msdb.dbo.sp_add_alert @name=N'{alertName}',
+                                        @performance_condition = N'SQLServer:General Statistics|User Connections||>|{n}'";
+                            cmd.ExecuteNonQuery();
+                            cmd.CommandText = @"USE [msdb]";
+                            cmd.ExecuteNonQuery();
+                            cmd.CommandText = $@"/****** Object:  Alert [{alertName}] Script Date: {DateTime.Now} ******/
+                IF  EXISTS (SELECT name FROM msdb.dbo.sysalerts WHERE name = N'{alertName}')
+                EXEC msdb.dbo.sp_delete_alert @name=N'{alertName}'";
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    if (retryAttempt >= 3 || e.Message.Contains("The transaction operation cannot be performed"))
+                    {
+                        Assert.False(true, $"Retry Attempt: {retryAttempt} | Unexpected Exception occurred: {e.Message}");
+                    }
+                    else
+                    {
+                        retry = true;
+                        retryAttempt++;
+                        Console.WriteLine($"CancelFollowedByAlert Test retry attempt : {retryAttempt}");
+                        Thread.Sleep(500);
+                        continue;
+                    }
+                }
+                retry = false;
+            }
+        }
+
         private static void MultiThreadedCancel(string constr, bool async)
         {
             using (SqlConnection con = new SqlConnection(constr))
