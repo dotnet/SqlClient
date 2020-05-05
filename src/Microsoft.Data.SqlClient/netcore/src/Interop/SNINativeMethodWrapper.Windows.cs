@@ -245,7 +245,7 @@ namespace Microsoft.Data.SqlClient
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
         private static extern uint SNIOpenWrapper(
             [In] ref Sni_Consumer_Info pConsumerInfo,
-            [MarshalAs(UnmanagedType.LPStr)] string szConnect,
+            [MarshalAs(UnmanagedType.LPWStr)] string szConnect,
             [In] SNIHandle pConn,
             out IntPtr ppConn,
             [MarshalAs(UnmanagedType.Bool)] bool fSync);
