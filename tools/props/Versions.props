@@ -61,4 +61,8 @@
     <MicrosoftDotNetRemoteExecutorVersion>5.0.0-beta.20206.4</MicrosoftDotNetRemoteExecutorVersion>
     <MicrosoftNETCoreRuntimeCoreCLRVersion>2.0.8</MicrosoftNETCoreRuntimeCoreCLRVersion>
   </PropertyGroup>
+  <PropertyGroup>
+    <TestAKVProviderVersion>$(NugetPackageVersion)</TestAKVProviderVersion>
+    <TestMicrosoftDataSqlClientVersion>$(NugetPackageVersion)</TestMicrosoftDataSqlClientVersion>
+  </PropertyGroup>
 </Project>
