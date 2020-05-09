@@ -40,8 +40,8 @@ use a Transact-SQL `INSERT … SELECT` statement to copy the data.
             </remarks>
         </SqlBulkCopyColumnOrderHintCollection>
 
-        <Add name ="bulkCopyColumnOrderHintParameter">
-            <param name="bulkCopyColumnOrderHint">The <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyOrderHintColumn" /> object that describes the order hint to be added to the collection.</param>
+        <Add name ="columnOrderHintParameter">
+            <param name="columnOrderHint">The <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyOrderHintColumn" /> object that describes the order hint to be added to the collection.</param>
             <summary>Adds the specified order hint to the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection" />.</summary>
             <returns>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> object.</returns>
             <remarks>

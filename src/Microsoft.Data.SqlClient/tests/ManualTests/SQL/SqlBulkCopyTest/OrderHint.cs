@@ -10,19 +10,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class OrderHint
     {
-        private static readonly string destinationTable = null;
         private static readonly string sourceTable = "Customers";
-        private static readonly string initialQueryTemplate = "create table {0} (CustomerID nvarchar(50), CompanyName nvarchar(50), ContactName nvarchar(50)); CREATE CLUSTERED INDEX IX_Test_Table_Customer_ID ON {1} (CustomerID DESC)";
+        private static readonly string initialQueryTemplate = "create table {0} (CustomerID nvarchar(50), CompanyName nvarchar(50), ContactName nvarchar(50)); CREATE CLUSTERED INDEX IX_Test_Table_Customer_ID ON {0} (CustomerID DESC)";
         private static readonly string sourceQueryTemplate = "SELECT CustomerId, CompanyName, ContactName FROM {0}";
         private static readonly string getRowCountQueryTemplate = "SELECT COUNT(*) FROM {0}";
 
-        public static void Test(string srcConstr, string dstConstr, string dstTable)
+        public static void Test(string srcConstr, string dstTable)
         {
-            dstTable = destinationTable != null ? destinationTable : dstTable;
+            srcConstr = (new SqlConnectionStringBuilder(srcConstr) { InitialCatalog = "Northwind" }).ConnectionString;
+            string dstConstr = (new SqlConnectionStringBuilder(srcConstr)).ConnectionString;
             string sourceQuery = string.Format(sourceQueryTemplate, sourceTable);
-            string initialQuery = string.Format(initialQueryTemplate, dstTable, dstTable);
+            string initialQuery = string.Format(initialQueryTemplate, dstTable);
             string getRowCountQuery = string.Format(getRowCountQueryTemplate, sourceTable);
-
+            
             using (SqlConnection dstConn = new SqlConnection(dstConstr))
             using (SqlCommand dstCmd = dstConn.CreateCommand())
             {

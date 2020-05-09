@@ -10,14 +10,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class OrderHintMissingTargetColumn
     {
-        private static readonly string destinationTable = null;
         private static readonly string sourceTable = "Customers";
         private static readonly string initialQueryTemplate = "create table {0} (CustomerID nvarchar(50), CompanyName nvarchar(50), ContactName nvarchar(50))";
         private static readonly string sourceQueryTemplate = "SELECT CustomerID, CompanyName, ContactName FROM {0}";
 
-        public static void Test(string srcConstr, string dstConstr, string dstTable)
+        public static void Test(string srcConstr, string dstTable)
         {
-            dstTable = destinationTable != null ? destinationTable : dstTable;
+            srcConstr = (new SqlConnectionStringBuilder(srcConstr) { InitialCatalog = "Northwind" }).ConnectionString;
+            string dstConstr = (new SqlConnectionStringBuilder(srcConstr)).ConnectionString;
             string initialQuery = string.Format(initialQueryTemplate, dstTable);
             string sourceQuery = string.Format(sourceQueryTemplate, sourceTable);
 
@@ -37,9 +37,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             try
                             {
                                 bulkcopy.DestinationTableName = dstTable;
-                                string nonexistentColumn = "nonexistent column";
-                                string sourceColumn = "CustomerID";
-                                string destColumn = "ContactName";
+                                const string nonexistentColumn = "nonexistent column";
+                                const string sourceColumn = "CustomerID";
+                                const string destColumn = "ContactName";
 
                                 // column does not exist in destination table
                                 bulkcopy.ColumnOrderHints.Add(nonexistentColumn, SortOrder.Ascending);
@@ -51,13 +51,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                     exceptionMessage: expectedErrorMsg);
 
                                 // column does not exist in destination table because of user-defined mapping
+                                bulkcopy.ColumnMappings.Add(sourceColumn, destColumn);
                                 bulkcopy.ColumnOrderHints.RemoveAt(0);
                                 bulkcopy.ColumnOrderHints.Add(sourceColumn, SortOrder.Ascending);
                                 Assert.True(bulkcopy.ColumnOrderHints.Count == 1, "Error adding a column order hint");
 
                                 expectedErrorMsg = string.Format(
                                     SystemDataResourceManager.Instance.SQL_BulkLoadOrderHintInvalidColumn, sourceColumn);
-                                bulkcopy.ColumnMappings.Add(sourceColumn, destColumn);
                                 DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(
                                     () => bulkcopy.WriteToServer(reader),
                                     exceptionMessage: expectedErrorMsg);

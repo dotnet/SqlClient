@@ -11,22 +11,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class OrderHintAsync
     {
-        private static readonly string destinationTable = null;
         private static readonly string sourceTable = "Customers";
         private static readonly string initialQueryTemplate = "create table {0} (CustomerID nvarchar(50), CompanyName nvarchar(50), ContactName nvarchar(50))";
         private static readonly string sourceQueryTemplate = "SELECT CustomerId, CompanyName, ContactName FROM {0}";
         private static readonly string getRowCountQueryTemplate = "SELECT COUNT(*) FROM {0}";
 
-        public static void Test(string srcConstr, string dstConstr, string dstTable)
+        public static void Test(string srcConstr, string dstTable)
         {
-            Task t = TestAsync(srcConstr, dstConstr, dstTable);
+            Task t = TestAsync(srcConstr, dstTable);
             t.Wait();
             Assert.True(t.IsCompleted, "Task did not complete! Status: " + t.Status);
         }
 
-        public static async Task TestAsync(string srcConstr, string dstConstr, string dstTable)
+        public static async Task TestAsync(string srcConstr, string dstTable)
         {
-            dstTable = destinationTable != null ? destinationTable : dstTable;
+            srcConstr = (new SqlConnectionStringBuilder(srcConstr) { InitialCatalog = "Northwind" }).ConnectionString;
+            string dstConstr = (new SqlConnectionStringBuilder(srcConstr)).ConnectionString;
             string sourceQuery = string.Format(sourceQueryTemplate, sourceTable);
             string initialQuery = string.Format(initialQueryTemplate, dstTable);
             string getRowCountQuery = string.Format(getRowCountQueryTemplate, sourceTable);

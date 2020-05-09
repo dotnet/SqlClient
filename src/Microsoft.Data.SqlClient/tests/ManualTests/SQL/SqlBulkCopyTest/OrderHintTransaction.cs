@@ -8,14 +8,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     class OrderHintTransaction
     {
-        private static readonly string destinationTable = null;
         private static readonly string sourceTable = "Customers";
         private static readonly string initialQueryTemplate = "create table {0} (CustomerID nvarchar(50), CompanyName nvarchar(50), ContactName nvarchar(50))";
         private static readonly string sourceQueryTemplate = "SELECT CustomerID, CompanyName, ContactName FROM {0}";
 
-        public static void Test(string srcConstr, string dstConstr, string dstTable)
+        public static void Test(string srcConstr, string dstTable)
         {
-            dstTable = destinationTable != null ? destinationTable : dstTable;
+            srcConstr = (new SqlConnectionStringBuilder(srcConstr) { InitialCatalog = "Northwind" }).ConnectionString;
+            string dstConstr = (new SqlConnectionStringBuilder(srcConstr)).ConnectionString;
             string initialQuery = string.Format(initialQueryTemplate, dstTable);
             string sourceQuery = string.Format(sourceQueryTemplate, sourceTable);
 

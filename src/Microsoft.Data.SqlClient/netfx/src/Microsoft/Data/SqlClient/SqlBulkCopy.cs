@@ -931,29 +931,20 @@ namespace Microsoft.Data.SqlClient
         private string TryGetOrderHintText()
         {
             StringBuilder orderHintText = new StringBuilder("ORDER(");
-            HashSet<string> columnNames = new HashSet<string>();
 
-            foreach (SqlBulkCopyColumnOrderHint columnOrderHint in ColumnOrderHints)
+            foreach (SqlBulkCopyColumnOrderHint orderHint in ColumnOrderHints)
             {
-                string columnNameArg = columnOrderHint.Column;
-
+                string columnNameArg = orderHint.Column;
                 if (!_destColumnNames.Contains(columnNameArg))
                 {
                     // column is not valid in the destination table
                     throw SQL.BulkLoadOrderHintInvalidColumn(columnNameArg);
                 }
-
-                if (!columnNames.Contains(columnNameArg))
+                if (!string.IsNullOrEmpty(columnNameArg))
                 {
                     string columnNameEscaped = SqlServerEscapeHelper.EscapeIdentifier(SqlServerEscapeHelper.EscapeStringAsLiteral(columnNameArg));
-                    string sortOrderText = columnOrderHint.SortOrder == SortOrder.Descending ? "DESC" : "ASC";
+                    string sortOrderText = orderHint.SortOrder == SortOrder.Descending ? "DESC" : "ASC";
                     orderHintText.Append($"{columnNameEscaped} {sortOrderText}, ");
-                    columnNames.Add(columnNameArg);
-                }
-                else
-                {
-                    // duplicate column name
-                    throw SQL.BulkLoadOrderHintDuplicateColumn(columnNameArg);
                 }
             }
 
@@ -2985,18 +2976,18 @@ namespace Microsoft.Data.SqlClient
                 {
                     tdsReliabilitySection.Start();
 #endif //DEBUG
-                if ((cleanupParser) && (_parser != null) && (_stateObj != null))
-                {
-                    _parser._asyncWrite = false;
-                    Task task = _parser.WriteBulkCopyDone(_stateObj);
-                    Debug.Assert(task == null, "Write should not pend when error occurs");
-                    RunParser();
-                }
+                    if ((cleanupParser) && (_parser != null) && (_stateObj != null))
+                    {
+                        _parser._asyncWrite = false;
+                        Task task = _parser.WriteBulkCopyDone(_stateObj);
+                        Debug.Assert(task == null, "Write should not pend when error occurs");
+                        RunParser();
+                    }
 
-                if (_stateObj != null)
-                {
-                    CleanUpStateObject();
-                }
+                    if (_stateObj != null)
+                    {
+                        CleanUpStateObject();
+                    }
 #if DEBUG
                 }
                 finally
