@@ -142,4 +142,3 @@ namespace Microsoft.Data.SqlClient
         }
     }
 }
-
