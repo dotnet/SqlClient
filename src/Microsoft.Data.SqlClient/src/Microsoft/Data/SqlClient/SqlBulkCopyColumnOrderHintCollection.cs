@@ -13,7 +13,7 @@ namespace Microsoft.Data.SqlClient
     {
         internal bool ReadOnly { get; set; }
 
-        private readonly Dictionary<string, SqlBulkCopyColumnOrderHint> _nameToOrderHint = new Dictionary<string, SqlBulkCopyColumnOrderHint>();
+        private readonly HashSet<string> _columnNames = new HashSet<string>();
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/Item/*'/>
         public SqlBulkCopyColumnOrderHint this[int index] => (SqlBulkCopyColumnOrderHint)List[index];
@@ -113,7 +113,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (sender is SqlBulkCopyColumnOrderHint orderHint)
             {
-                if (_nameToOrderHint.ContainsKey(newName))
+                if (_columnNames.Contains(newName))
                 {
                     throw SQL.BulkLoadOrderHintDuplicateColumn(newName);
                 }
@@ -124,11 +124,11 @@ namespace Microsoft.Data.SqlClient
 
         private void RegisterColumnName(SqlBulkCopyColumnOrderHint orderHint, string columnName)
         {
-            if (_nameToOrderHint.ContainsKey(columnName))
+            if (_columnNames.Contains(columnName))
             {
                 throw SQL.BulkLoadOrderHintDuplicateColumn(orderHint.Column);
             }
-            _nameToOrderHint.Add(columnName, orderHint);
+            _columnNames.Add(columnName);
             orderHint.NameChanging += ColumnNameChanging;
         }
 
@@ -136,7 +136,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Contains(orderHint))
             {
-                _nameToOrderHint.Remove(columnName);
+                _columnNames.Remove(columnName);
                 orderHint.NameChanging -= ColumnNameChanging;
             }
         }

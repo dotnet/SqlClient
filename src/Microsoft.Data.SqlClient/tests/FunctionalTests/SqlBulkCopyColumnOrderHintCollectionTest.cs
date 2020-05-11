@@ -532,17 +532,17 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Throws<InvalidOperationException>(() => collection1.Add("column3", SortOrder.Ascending));
             TryAddingDuplicates(collection1, item1, initialCount: 4);
 
-            collection2.Insert(collection2.Count,item2);
+            collection2.Insert(collection2.Count, item2);
             item3.Column = "column5";
-            collection2.Insert(collection2.Count,item3);
-            Assert.Throws<InvalidOperationException>(() => collection1[collection1.IndexOf(item2)].Column=item3.Column);
-            Assert.Throws<InvalidOperationException>(() => collection2[collection2.IndexOf(item2)].Column=item3.Column);
+            collection2.Insert(collection2.Count, item3);
+            Assert.Throws<InvalidOperationException>(() => collection1[collection1.IndexOf(item2)].Column = item3.Column);
+            Assert.Throws<InvalidOperationException>(() => collection2[collection2.IndexOf(item2)].Column = item3.Column);
             TryAddingDuplicates(collection2, item2, initialCount: 3);
 
             collection2.Remove(item2);
             collection2[collection2.IndexOf(item3)].Column = item2.Column;
             Assert.Throws<InvalidOperationException>(() => collection1[collection1.IndexOf(item1)].Column = item2.Column);
-            
+
             collection1.Clear();
             Assert.Empty(collection1);
         }
@@ -571,7 +571,7 @@ namespace Microsoft.Data.SqlClient.Tests
             orderHint.Column = validName;
             collection[collection.IndexOf(orderHint)].Column = validName;
 
-            ValidateCollection(collection, initialCount);
+            Assert.True(ValidateCollection(collection, initialCount));
             orderHint.Column = initialName;
         }
 
@@ -582,13 +582,13 @@ namespace Microsoft.Data.SqlClient.Tests
             HashSet<string> columnNames = new HashSet<string>();
             foreach (SqlBulkCopyColumnOrderHint orderHint in collection)
             {
-                if (columnNames.Contains(orderHint.Column))
+                if (!columnNames.Contains(orderHint.Column))
                 {
-                    return false;
+                    columnNames.Add(orderHint.Column);
                 }
                 else
                 {
-                    columnNames.Add(orderHint.Column);
+                    return false;
                 }
             }
             return true;

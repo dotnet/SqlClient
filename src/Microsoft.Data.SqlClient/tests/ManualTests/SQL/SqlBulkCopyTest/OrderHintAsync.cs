@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Data;
 using System.Data.Common;
 using System.Threading.Tasks;
 using Xunit;
@@ -44,43 +45,39 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         int nRowsInSource = Convert.ToInt32(await srcCmd.ExecuteScalarAsync());
                         srcCmd.CommandText = sourceQuery;
-                        using (SqlBulkCopy bulkcopy = new SqlBulkCopy(dstConn))
+                        using (SqlBulkCopy bulkCopy = new SqlBulkCopy(dstConn))
                         {
-                            bulkcopy.DestinationTableName = dstTable;
+                            bulkCopy.DestinationTableName = dstTable;
 
                             // no hints
                             using (DbDataReader reader = await srcCmd.ExecuteReaderAsync())
                             {
-                                await bulkcopy.WriteToServerAsync(reader);
-                                Helpers.VerifyResults(dstConn, dstTable, 3, nRowsInSource);
+                                await bulkCopy.WriteToServerAsync(reader);
                             }
 
                             // hint for 1 of 3 columns
                             using (DbDataReader reader = await srcCmd.ExecuteReaderAsync())
                             {
-                                bulkcopy.ColumnOrderHints.Add("CustomerID", SortOrder.Ascending);
-                                await bulkcopy.WriteToServerAsync(reader);
-                                Helpers.VerifyResults(dstConn, dstTable, 3, nRowsInSource * 2);
+                                bulkCopy.ColumnOrderHints.Add("CustomerID", SortOrder.Ascending);
+                                await bulkCopy.WriteToServerAsync(reader);
                             }
 
                             // hints for all 3 columns
                             // order of hints is not the same as column order in table
                             using (DbDataReader reader = await srcCmd.ExecuteReaderAsync())
                             {
-                                bulkcopy.ColumnOrderHints.Add("ContactName", SortOrder.Descending);
-                                bulkcopy.ColumnOrderHints.Add("CompanyName", SortOrder.Ascending);
-                                await bulkcopy.WriteToServerAsync(reader);
-                                Helpers.VerifyResults(dstConn, dstTable, 3, nRowsInSource * 3);
+                                bulkCopy.ColumnOrderHints.Add("ContactName", SortOrder.Descending);
+                                bulkCopy.ColumnOrderHints.Add("CompanyName", SortOrder.Ascending);
+                                await bulkCopy.WriteToServerAsync(reader);
                             }
 
                             // add column mappings
                             using (DbDataReader reader = await srcCmd.ExecuteReaderAsync())
                             {
-                                bulkcopy.ColumnMappings.Add(0, 1);
-                                bulkcopy.ColumnMappings.Add(1, 2);
-                                bulkcopy.ColumnMappings.Add(2, 0);
-                                await bulkcopy.WriteToServerAsync(reader);
-                                Helpers.VerifyResults(dstConn, dstTable, 3, nRowsInSource * 4);
+                                bulkCopy.ColumnMappings.Add(0, 1);
+                                bulkCopy.ColumnMappings.Add(1, 2);
+                                bulkCopy.ColumnMappings.Add(2, 0);
+                                await bulkCopy.WriteToServerAsync(reader);
                             }
                         }
 
@@ -97,9 +94,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             using (DbDataReader reader = await srcCmd.ExecuteReaderAsync())
                             {
                                 await bulkcopy.WriteToServerAsync(reader);
-                                Helpers.VerifyResults(dstConn, dstTable, 3, nRowsInSource * 5);
                             }
                         }
+
+                        const int nWriteToServerCalls = 5;
+                        Helpers.VerifyResults(dstConn, dstTable, 3, nRowsInSource * nWriteToServerCalls);
                     }
                     finally
                     {
