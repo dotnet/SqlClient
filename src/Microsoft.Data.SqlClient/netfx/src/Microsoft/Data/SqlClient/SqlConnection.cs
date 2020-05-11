@@ -1829,7 +1829,9 @@ namespace Microsoft.Data.SqlClient
             _applyTransientFaultHandling = (!overrides.HasFlag(SqlConnectionOverrides.OpenWithoutRetry) && retry == null && connectionOptions != null && connectionOptions.ConnectRetryCount > 0);
 
             if (connectionOptions != null &&
-                (connectionOptions.Authentication == SqlAuthenticationMethod.SqlPassword || connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword) &&
+                (connectionOptions.Authentication == SqlAuthenticationMethod.SqlPassword ||
+                    connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword ||
+                    connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal) &&
                 (!connectionOptions.HasUserIdKeyword || !connectionOptions.HasPasswordKeyword) &&
                 _credential == null)
             {

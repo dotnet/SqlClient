@@ -25,5 +25,9 @@
             <summary>The authentication method uses Active Directory Interactive. Available since the .NET Framework 4.7.2 and for .NET Framework applications only.</summary>
             <value>4</value>
         </ActiveDirectoryInteractive>
+        <ActiveDirectoryServicePrincipal>
+            <summary>The authentication method uses Active Directory Service Principal. Use Active Directory Service Principal to connect to a SQL Database using the client ID and secret of a service principal identity.</summary>
+            <value>5</value>
+        </ActiveDirectoryServicePrincipal>
     </members>
 </docs>

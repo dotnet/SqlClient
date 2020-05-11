@@ -15,20 +15,22 @@ namespace Microsoft.Data.SqlClient
 
         static SqlAuthenticationProviderManager()
         {
-            var activeDirectoryAuthNativeProvider = new ActiveDirectoryNativeAuthenticationProvider();
+            var activeDirectoryAuthProvider = new ActiveDirectoryAuthenticationProvider();
             SqlAuthenticationProviderConfigurationSection configurationSection = null;
 
             try
             {
                 configurationSection = (SqlAuthenticationProviderConfigurationSection)ConfigurationManager.GetSection(SqlAuthenticationProviderConfigurationSection.Name);
             }
-            catch (ConfigurationErrorsException)
             {
                 // Don't throw an error for invalid config files
             }
 
             Instance = new SqlAuthenticationProviderManager(configurationSection);
-            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, activeDirectoryAuthNativeProvider);
+            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryIntegrated, activeDirectoryAuthProvider);
+            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, activeDirectoryAuthProvider);
+            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive, activeDirectoryAuthProvider);
+            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal, activeDirectoryAuthProvider);
         }
 
         /// <summary>
@@ -104,8 +106,14 @@ namespace Microsoft.Data.SqlClient
         {
             switch (authentication.ToLowerInvariant())
             {
+                case ActiveDirectoryIntegrated:
+                    return SqlAuthenticationMethod.ActiveDirectoryIntegrated;
                 case ActiveDirectoryPassword:
                     return SqlAuthenticationMethod.ActiveDirectoryPassword;
+                case ActiveDirectoryInteractive:
+                    return SqlAuthenticationMethod.ActiveDirectoryInteractive;
+                case ActiveDirectoryServicePrincipal:
+                    return SqlAuthenticationMethod.ActiveDirectoryServicePrincipal;
                 default:
                     throw SQL.UnsupportedAuthentication(authentication);
             }

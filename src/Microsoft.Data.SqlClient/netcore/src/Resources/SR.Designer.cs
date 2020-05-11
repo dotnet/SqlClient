@@ -3004,6 +3004,24 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot set the Credential property if &apos;Authentication=Active Directory Integrated&apos; has been specified in the connection string..
+        /// </summary>
+        internal static string SQL_SettingCredentialWithIntegrated {
+            get {
+                return ResourceManager.GetString("SQL_SettingCredentialWithIntegrated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Integrated&apos;, if the Credential property has been set..
+        /// </summary>
+        internal static string SQL_SettingIntegratedWithCredential {
+            get {
+                return ResourceManager.GetString("SQL_SettingIntegratedWithCredential", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to A severe error occurred on the current command.  The results, if any, should be discarded..
         /// </summary>
         internal static string SQL_SevereError {

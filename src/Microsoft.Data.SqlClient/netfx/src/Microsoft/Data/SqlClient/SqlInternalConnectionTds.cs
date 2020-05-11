@@ -1489,10 +1489,11 @@ namespace Microsoft.Data.SqlClient
 
             // If the workflow being used is Active Directory Password or Active Directory Integrated and server's prelogin response
             // for FEDAUTHREQUIRED option indicates Federated Authentication is required, we have to insert FedAuth Feature Extension
-            // in Login7, indicating the intent to use Active Directory Authentication Library for SQL Server.
-            if (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword
+            // in Login7, indicating the intent to use Active Directory Authentication for SQL Server.
+            if ((ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
-                || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && _fedAuthRequired))
+                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated
+                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal) && _fedAuthRequired)
             {
                 requestedFeatures |= TdsEnums.FeatureExtension.FedAuth;
                 _federatedAuthenticationInfoRequested = true;
@@ -1878,7 +1879,8 @@ namespace Microsoft.Data.SqlClient
             Boolean isFedAuthEnabled = this._accessTokenInBytes != null ||
                                        connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword ||
                                        connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated ||
-                                       connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive;
+                                       connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive ||
+                                       connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal;
 
             // Check if the user had explicitly specified the TNIR option in the connection string or the connection string builder.
             // If the user has specified the option in the connection string explicitly, then we shouldn't disable TNIR.
@@ -2698,6 +2700,7 @@ namespace Microsoft.Data.SqlClient
                             }
                             break;
                         case SqlAuthenticationMethod.ActiveDirectoryPassword:
+                        case SqlAuthenticationMethod.ActiveDirectoryServicePrincipal:
                             if (_activeDirectoryAuthTimeoutRetryHelper.State == ActiveDirectoryAuthenticationTimeoutRetryState.Retrying)
                             {
                                 fedAuthToken = _activeDirectoryAuthTimeoutRetryHelper.CachedToken;

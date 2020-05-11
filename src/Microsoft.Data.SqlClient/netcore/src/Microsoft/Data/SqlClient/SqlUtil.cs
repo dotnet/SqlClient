@@ -281,6 +281,14 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Argument(System.SRHelper.GetString(SR.SQL_InteractiveWithPassword));
         }
+        static internal Exception SettingIntegratedWithCredential()
+        {
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_SettingIntegratedWithCredential));
+        }
+        static internal Exception SettingCredentialWithIntegratedArgument()
+        {
+            return ADP.Argument(System.SRHelper.GetString(SR.SQL_SettingCredentialWithIntegrated));
+        }
         internal static Exception NullEmptyTransactionName()
         {
             return ADP.Argument(System.SRHelper.GetString(SR.SQL_NullEmptyTransactionName));

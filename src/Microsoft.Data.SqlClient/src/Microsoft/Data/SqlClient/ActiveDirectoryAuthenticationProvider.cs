@@ -12,10 +12,10 @@ namespace Microsoft.Data.SqlClient
     /// <summary>
     /// Default auth provider for AD Integrated.
     /// </summary>
-    internal class ActiveDirectoryNativeAuthenticationProvider : SqlAuthenticationProvider
+    internal class ActiveDirectoryAuthenticationProvider : SqlAuthenticationProvider
     {
         private static readonly string s_defaultScopeSuffix = "/.default";
-        private readonly string _type = typeof(ActiveDirectoryNativeAuthenticationProvider).Name;
+        private readonly string _type = typeof(ActiveDirectoryAuthenticationProvider).Name;
         private readonly SqlClientLogger _logger = new SqlClientLogger();
 
         /// <summary>
@@ -23,22 +23,34 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         public override Task<SqlAuthenticationToken> AcquireTokenAsync(SqlAuthenticationParameters parameters) => Task.Run(async () =>
         {
+            AuthenticationResult result;
+            string scope = parameters.Resource.EndsWith(s_defaultScopeSuffix) ? parameters.Resource : parameters.Resource + s_defaultScopeSuffix;
+            string[] scopes = new string[] { scope };
+
+            if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal)
+            {
+                IConfidentialClientApplication ccApp = ConfidentialClientApplicationBuilder.Create(parameters.UserId)
+                    .WithAuthority(parameters.Authority)
+                    .WithClientSecret(parameters.Password)
+                    .WithClientName(Common.DbConnectionStringDefaults.ApplicationName)
+                    .WithClientVersion(Common.ADP.GetAssemblyVersion().ToString())
+                    .Build();
+
+                result = ccApp.AcquireTokenForClient(scopes).ExecuteAsync().Result;
+                return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
+            }
+
             IPublicClientApplication app = PublicClientApplicationBuilder.Create(ActiveDirectoryAuthentication.AdoClientId)
                 .WithAuthority(parameters.Authority)
                 .WithClientName(Common.DbConnectionStringDefaults.ApplicationName)
                 .WithClientVersion(Common.ADP.GetAssemblyVersion().ToString())
                 .Build();
-            AuthenticationResult result;
-            string scope = parameters.Resource.EndsWith(s_defaultScopeSuffix) ? parameters.Resource : parameters.Resource + s_defaultScopeSuffix;
-            string[] scopes = new string[] { scope };
-
-            // Note: CorrelationId, which existed in ADAL, can not be set in MSAL (yet?).
-            // parameter.ConnectionId was passed as the CorrelationId in ADAL to aid support in troubleshooting.
-            // If/When MSAL adds CorrelationId support, it should be passed from parameters here, too.
 
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
             {
-                result = app.AcquireTokenByIntegratedWindowsAuth(scopes).ExecuteAsync().Result;
+                result = app.AcquireTokenByIntegratedWindowsAuth(scopes)
+                    .WithCorrelationId(parameters.ConnectionId)
+                    .ExecuteAsync().Result;
             }
             else if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryPassword)
             {
@@ -46,14 +58,16 @@ namespace Microsoft.Data.SqlClient
                 foreach (char c in parameters.Password)
                     password.AppendChar(c);
                 password.MakeReadOnly();
-                result = app.AcquireTokenByUsernamePassword(scopes, parameters.UserId, password).ExecuteAsync().Result;
+                result = app.AcquireTokenByUsernamePassword(scopes, parameters.UserId, password)
+                    .WithCorrelationId(parameters.ConnectionId)
+                    .ExecuteAsync().Result;
             }
             else
             {
                 result = await app.AcquireTokenInteractive(scopes)
-                  .WithUseEmbeddedWebView(true)
-                  .WithLoginHint(parameters.UserId)
-                  .ExecuteAsync();
+                    .WithCorrelationId(parameters.ConnectionId)
+                    .WithLoginHint(parameters.UserId)
+                    .ExecuteAsync();
             }
 
             return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
@@ -67,7 +81,8 @@ namespace Microsoft.Data.SqlClient
         {
             return authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated
                 || authentication == SqlAuthenticationMethod.ActiveDirectoryPassword
-                || authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive;
+                || authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
+                || authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal;
         }
 
         public override void BeforeLoad(SqlAuthenticationMethod authentication)
