@@ -516,6 +516,8 @@ namespace Microsoft.Data.SqlClient.Tests
 
             item1.Column = "column1";
             collection1.Add("column2", SortOrder.Ascending);
+            Assert.Throws<InvalidOperationException>(() => item1.Column = "column2");
+            Assert.Equal("column1", item1.Column);
             TryAddingDuplicates(collection1, item1, initialCount: 2);
 
             Assert.Throws<InvalidOperationException>(() => collection1.Add(item1));
