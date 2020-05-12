@@ -150,7 +150,7 @@ echo Building .NET Framework Tests
 
 call :pauseOnError msbuild /p:Configuration="Release" /t:BuildTestsNetFx
 call :pauseOnError dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" /p:Platform="AnyCPU" /p:Configuration="Release" /p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests" -l:trx;LogFileName=..\..\..\..\..\artifacts\Results\project-net46-functional-anycpu.xml
-call :pauseOnError dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" /p:Platform="AnyCPU" /p:Configuration="Release" /p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests" -l:trx;LogFileName=..\..\..\..\..\artifacts\Results\project-ney46-manual-anycpu.xml
+call :pauseOnError dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" /p:Platform="AnyCPU" /p:Configuration="Release" /p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests" -l:trx;LogFileName=..\..\..\..\..\artifacts\Results\project-net46-manual-anycpu.xml
 
 call :pauseOnError msbuild /p:Configuration="Release" /t:BuildTestsNetFx /p:TargetNetFxVersion=net48
 call :pauseOnError dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" /p:Platform="AnyCPU" /p:Configuration="Release" /p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests" -l:trx;LogFileName=..\..\..\..\..\artifacts\Results\project-net48-functional-anycpu.xml
