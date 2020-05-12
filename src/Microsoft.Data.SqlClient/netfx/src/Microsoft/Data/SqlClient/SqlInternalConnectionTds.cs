@@ -2723,7 +2723,7 @@ namespace Microsoft.Data.SqlClient
                             }
                             break;
                         default:
-                            throw new InvalidOperationException($"Failed to get a token with unsupported auth method {ConnectionOptions.Authentication}.");
+                            throw SQL.UnsupportedAuthenticationSpecified(ConnectionOptions.Authentication);
                     }
 
                     Debug.Assert(fedAuthToken.accessToken != null, "AccessToken should not be null.");

@@ -2,7 +2,11 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
+using System.Diagnostics;
+using System.Linq;
 using System.Security;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Identity.Client;
 
@@ -44,6 +48,7 @@ namespace Microsoft.Data.SqlClient
                 .WithAuthority(parameters.Authority)
                 .WithClientName(Common.DbConnectionStringDefaults.ApplicationName)
                 .WithClientVersion(Common.ADP.GetAssemblyVersion().ToString())
+                .WithRedirectUri("http://localhost")
                 .Build();
 
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
@@ -62,16 +67,88 @@ namespace Microsoft.Data.SqlClient
                     .WithCorrelationId(parameters.ConnectionId)
                     .ExecuteAsync().Result;
             }
+            else if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryInteractive)
+            {
+                var accounts = await app.GetAccountsAsync();
+                IAccount account;
+                if (!string.IsNullOrEmpty(parameters.UserId))
+                {
+                    account = accounts.FirstOrDefault(a => parameters.UserId.Equals(a.Username, System.StringComparison.InvariantCultureIgnoreCase));
+                }
+                else
+                {
+                    account = accounts.FirstOrDefault();
+                }
+
+                if (null != account)
+                {
+                    try
+                    {
+                        result = await app.AcquireTokenSilent(scopes, account).ExecuteAsync();
+                    }
+                    catch (MsalUiRequiredException)
+                    {
+                        result = await AcquireTokenInteractive(app, scopes, parameters.ConnectionId, parameters.UserId);
+                    }
+                }
+                else
+                {
+                    result = await AcquireTokenInteractive(app, scopes, parameters.ConnectionId, parameters.UserId);
+                }
+            }
             else
             {
-                result = await app.AcquireTokenInteractive(scopes)
-                    .WithCorrelationId(parameters.ConnectionId)
-                    .WithLoginHint(parameters.UserId)
-                    .ExecuteAsync();
+                throw SQL.UnsupportedAuthenticationSpecified(parameters.AuthenticationMethod);
             }
 
             return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
         });
+
+        private async Task<AuthenticationResult> AcquireTokenInteractive(IPublicClientApplication app, string[] scopes, Guid connectionId, string userId)
+        {
+            CancellationTokenSource cts = new CancellationTokenSource();
+#if netcoreapp
+            /*
+             * On .NET Core, MSAL will start the system browser as a separate process. MSAL does not have control over this browser,
+             * but once the user finishes authentication, the web page is redirected in such a way that MSAL can intercept the Uri.
+             * MSAL cannot detect if the user navigates away or simply closes the browser. Apps using this technique are encouraged
+             * to define a timeout (via CancellationToken). We recommend a timeout of at least a few minutes, to take into account
+             * cases where the user is prompted to change password or perform 2FA.
+             * 
+             * https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/wiki/System-Browser-on-.Net-Core#system-browser-experience
+             */
+            cts.CancelAfter(180000);
+#endif
+            try
+            {
+                return await app.AcquireTokenInteractive(scopes)
+                    /*
+                     * We will use the MSAL Embedded or System web browser which changes by Default in MSAL according to this table:
+                     * 
+                     * Framework        Embedded  System  Default
+                     * -------------------------------------------
+                     * .NET Classic     Yes       Yes^    Embedded
+                     * .NET Core        No        Yes^    System
+                     * .NET Standard    No        No      NONE
+                     * UWP              Yes       No      Embedded
+                     * Xamarin.Android  Yes       Yes     System
+                     * Xamarin.iOS      Yes       Yes     System
+                     * Xamarin.Mac      Yes       No      Embedded
+                     * 
+                     * ^ Requires "http://localhost" redirect URI
+                     * 
+                     * https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/wiki/MSAL.NET-uses-web-browser#at-a-glance
+                     */
+                    //.WithUseEmbeddedWebView(true)
+                    .WithCorrelationId(connectionId)
+                    .WithLoginHint(userId)
+                    .ExecuteAsync(cts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                throw SQL.ActiveDirectoryInteractiveTimeout();
+            }
+        }
 
         /// <summary>
         /// Checks support for authentication type in lower case.

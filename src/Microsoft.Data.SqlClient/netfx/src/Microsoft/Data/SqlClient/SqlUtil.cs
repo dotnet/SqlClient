@@ -421,6 +421,11 @@ namespace Microsoft.Data.SqlClient
             return ADP.NotSupported(StringsHelper.GetString(Strings.SQL_UnsupportedSqlAuthenticationMethod, authentication));
         }
 
+        static internal Exception UnsupportedAuthenticationSpecified(SqlAuthenticationMethod authentication)
+        {
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_UnsupportedAuthenticationSpecified, authentication));
+        }
+
         static internal Exception CannotCreateAuthProvider(string authentication, string type, Exception e)
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_CannotCreateAuthProvider, authentication, type), e);
@@ -454,6 +459,11 @@ namespace Microsoft.Data.SqlClient
         static internal Exception ParameterCannotBeEmpty(string paramName)
         {
             return ADP.ArgumentNull(StringsHelper.GetString(Strings.SQL_ParameterCannotBeEmpty, paramName));
+        }
+
+        static internal Exception ActiveDirectoryInteractiveTimeout()
+        {
+            return ADP.TimeoutException(Strings.SQL_Timeout_Active_Directory_Interactive_Authentication);
         }
 
         //
