@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
         }
 
-        public uint SChannelProtocol => (uint)_lowerHandle.SChannelProtocol;
+        public uint ProtocolVersion => (uint)_lowerHandle.ProtocolVersion;
 
         /// <summary>
         /// Constructor

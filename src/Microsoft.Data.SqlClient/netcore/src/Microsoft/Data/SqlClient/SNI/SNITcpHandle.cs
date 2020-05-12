@@ -93,7 +93,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
         }
 
-        public override uint SChannelProtocol
+        public override uint ProtocolVersion
         {
             get
             {
@@ -103,7 +103,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
                 catch
                 {
-                    return base.SChannelProtocol;
+                    return base.ProtocolVersion;
                 }
             }
         }

@@ -185,10 +185,9 @@ namespace Microsoft.Data.SqlClient.SNI
             return TdsEnums.SNI_ERROR;
         }
 
-        internal override uint EnableSsl(ref uint info, out uint sChannelProtocol)
+        internal override uint EnableSsl(ref uint info)
         {
             uint result = SNIProxy.Singleton.EnableSsl(Handle, info);
-            sChannelProtocol = Handle.SChannelProtocol;
             return result;
         }
 
@@ -205,6 +204,10 @@ namespace Microsoft.Data.SqlClient.SNI
             return 0;
         }
 
-        internal override uint WaitForSSLHandShakeToComplete() => 0;
+        internal override uint WaitForSSLHandShakeToComplete(out uint protocolVersion)
+        {
+            protocolVersion = Handle.ProtocolVersion;
+            return 0;
+        }
     }
 }
