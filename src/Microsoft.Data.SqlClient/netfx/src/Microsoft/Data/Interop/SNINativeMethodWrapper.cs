@@ -18,7 +18,7 @@ namespace Microsoft.Data.SqlClient
 {
     internal static class SNINativeMethodWrapper
     {
-        private const string SNI = "SNI.dll";
+        private const string SNI = "Microsoft.Data.SqlClient.SNI.dll";
 
         private static int s_sniMaxComposedSpnLength = -1;
 

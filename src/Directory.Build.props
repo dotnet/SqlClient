@@ -13,7 +13,7 @@
       "ReferenceType" property supports below options:
 
       "Project" => Build and run tests with Microsoft.Data.SqlClient as Project Reference
-      "Package" => Build and run tests with Microsoft.Data.SqlClient as Package Reference with configured "MicrosoftDataSqlClientVersion" in "Versions.props" file.
+      "Package" => Build and run tests with Microsoft.Data.SqlClient as Package Reference with configured "TestMicrosoftDataSqlClientVersion" in "Versions.props" file.
       "NetStandard" => Build and run tests with Microsoft.Data.SqlClient as Project Reference via .NET Standard Library
       "NetStandardPackage" => Build and run tests with Microsoft.Data.SqlClient as Package Reference via .NET Standard Library
 
