@@ -882,8 +882,7 @@ namespace Microsoft.Data.SqlClient
                                 info |= TdsEnums.SNI_SSL_IGNORE_CHANNEL_BINDINGS;
                             }
 
-                            //TODO: After discover the protocol version, it must be throw as a warning if it's lower than TLS 1.2
-                            error = _physicalStateObj.EnableSsl(ref info, out uint protocol);
+                            error = _physicalStateObj.EnableSsl(ref info);
 
                             if (error != TdsEnums.SNI_SUCCESS)
                             {
@@ -891,7 +890,9 @@ namespace Microsoft.Data.SqlClient
                                 ThrowExceptionAndWarning(_physicalStateObj);
                             }
 
-                            WaitForSSLHandShakeToComplete(ref error);
+                            //TODO: After discover the protocol version, it must be throw as a warning if it's lower than TLS 1.2
+                            WaitForSSLHandShakeToComplete(ref error, out uint protocolVersion);
+                            Console.WriteLine(protocolVersion);
 
                             // create a new packet encryption changes the internal packet size
                             _physicalStateObj.ClearAllWritePackets();
