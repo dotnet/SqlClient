@@ -300,7 +300,8 @@ namespace Microsoft.Data.SqlClient
         internal override uint EnableSsl(ref uint info)
         {
             // Add SSL (Encryption) SNI provider.
-            return SNINativeMethodWrapper.SNIAddProvider(Handle, SNINativeMethodWrapper.ProviderEnum.SSL_PROV, ref info);
+            uint result = SNINativeMethodWrapper.SNIAddProvider(Handle, SNINativeMethodWrapper.ProviderEnum.SSL_PROV, ref info);
+            return result;
         }
 
         internal override uint SetConnectionBufferSize(ref uint unsignedPacketSize)
@@ -309,8 +310,8 @@ namespace Microsoft.Data.SqlClient
         internal override uint GenerateSspiClientContext(byte[] receivedBuff, uint receivedLength, ref byte[] sendBuff, ref uint sendLength, byte[] _sniSpnBuffer)
             => SNINativeMethodWrapper.SNISecGenClientContext(Handle, receivedBuff, receivedLength, sendBuff, ref sendLength, _sniSpnBuffer);
 
-        internal override uint WaitForSSLHandShakeToComplete()
-            => SNINativeMethodWrapper.SNIWaitForSSLHandshakeToComplete(Handle, GetTimeoutRemaining());
+        internal override uint WaitForSSLHandShakeToComplete(out uint protocolVersion)
+            => SNINativeMethodWrapper.SNIWaitForSSLHandshakeToComplete(Handle, GetTimeoutRemaining(), out protocolVersion);
 
         internal override void DisposePacketCache()
         {

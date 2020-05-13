@@ -1199,7 +1199,9 @@ namespace Microsoft.Data.SqlClient
                             // wait for SSL handshake to complete, so that the SSL context is fully negotiated before we try to use its
                             // Channel Bindings as part of the Windows Authentication context build (SSL handshake must complete
                             // before calling SNISecGenClientContext).
-                            error = SNINativeMethodWrapper.SNIWaitForSSLHandshakeToComplete(_physicalStateObj.Handle, _physicalStateObj.GetTimeoutRemaining());
+                            error = SNINativeMethodWrapper.SNIWaitForSSLHandshakeToComplete(_physicalStateObj.Handle, _physicalStateObj.GetTimeoutRemaining(), out uint protocolVersion);
+                            Console.WriteLine(protocolVersion); //TODO: After discover the protocol version, it must be throw as a warning if it's lower than TLS 1.2
+
                             if (error != TdsEnums.SNI_SUCCESS)
                             {
                                 _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
