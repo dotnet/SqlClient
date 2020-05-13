@@ -1,0 +1,17 @@
+<docs>
+    <members name="SqlConnectionOverrides">
+        <SqlConnectionOverrides>
+            <summary>
+                Specifies a value for Overrides.
+            </summary>
+        </SqlConnectionOverrides>
+        <None>
+            <summary>No overrides.</summary>
+            <value>0</value>
+        </None>
+        <OpenWithoutRetry>
+            <summary>Disable transient fault handling during the initial SqlConnection Open attempt.</summary>
+            <value>1</value>
+        </OpenWithoutRetry>
+    </members>
+</docs>

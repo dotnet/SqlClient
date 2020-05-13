@@ -4528,6 +4528,6 @@
     <value>Fehler beim Generieren des Enclave-Pakets. In der Verbindungszeichenfolge wurde kein Nachweisprotokoll angegeben, aber für die Abfrage sind Enclave-Berechnungen erforderlich.</value>
   </data>
   <data name="SQLUDT_InvalidSize" xml:space="preserve">
-    <value>UDT size must be less than {1}, size: {0}</value>
+    <value>Die UDT-Größe muss kleiner als {1} sein. Größe: {0}</value>
   </data>
 </root>

@@ -4528,6 +4528,6 @@
     <value>enclave 패키지를 생성하는 동안 오류가 발생했습니다. 연결 문자열에 증명 프로토콜이 지정되지 않았지만 쿼리에 enclave 계산이 필요합니다.</value>
   </data>
   <data name="SQLUDT_InvalidSize" xml:space="preserve">
-    <value>UDT size must be less than {1}, size: {0}</value>
+    <value>UDT 크기는 {1}보다 작아야 합니다. 크기: {0}</value>
   </data>
 </root>

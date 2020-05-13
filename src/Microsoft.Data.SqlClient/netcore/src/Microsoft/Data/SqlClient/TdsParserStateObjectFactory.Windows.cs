@@ -11,7 +11,7 @@ namespace Microsoft.Data.SqlClient
     {
         public static readonly TdsParserStateObjectFactory Singleton = new TdsParserStateObjectFactory();
 
-        private const string UseManagedNetworkingOnWindows = "Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows";
+        private const string UseManagedNetworkingOnWindows = "Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows";
 
         private static bool shouldUseManagedSNI;
 
