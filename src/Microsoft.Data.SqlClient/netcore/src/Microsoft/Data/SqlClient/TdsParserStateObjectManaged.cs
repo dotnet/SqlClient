@@ -172,7 +172,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
         internal override uint SniGetConnectionId(ref Guid clientConnectionId) => SNIProxy.Singleton.GetConnectionId(Handle, ref clientConnectionId);
 
-        internal override uint DisabeSsl() => SNIProxy.Singleton.DisableSsl(Handle);
+        internal override uint DisableSsl() => SNIProxy.Singleton.DisableSsl(Handle);
 
         internal override uint EnableMars(ref uint info)
         {

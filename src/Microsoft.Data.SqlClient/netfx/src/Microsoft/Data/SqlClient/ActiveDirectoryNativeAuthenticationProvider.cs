@@ -61,7 +61,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <summary>
         /// Checks support for authentication type in lower case.
-        /// Interactive authenticatin added.
+        /// Interactive authentication added.
         /// </summary>
         public override bool IsSupported(SqlAuthenticationMethod authentication)
         {

@@ -133,7 +133,7 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Internal Class
-        // A model class respresenting the deserialization of the byte payload the client
+        // A model class representing the deserialization of the byte payload the client
         // receives from SQL Server while setting up a session.
         // Protocol format:
         // 1. Total Size of the attestation blob as UINT

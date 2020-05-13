@@ -339,7 +339,7 @@
   <data name="MDF_UnableToBuildCollection" xml:space="preserve">
     <value>Não é possível criar a coleção de esquemas '{0}';</value>
   </data>
-  <data name="MDF_AmbigousCollectionName" xml:space="preserve">
+  <data name="MDF_AmbiguousCollectionName" xml:space="preserve">
     <value>O nome de coleção '{0}' corresponde a pelo menos duas coleções com o mesmo nome, mas com diferença em maiúsculas e minúsculas, mas não corresponde a qualquer uma delas exatamente.</value>
   </data>
   <data name="MDF_CollectionNameISNotUnique" xml:space="preserve">
@@ -2496,8 +2496,8 @@
   <data name="SQL_IntegratedWithUserIDAndPassword" xml:space="preserve">
     <value>Não é possível usar 'Authentication=Active Directory Integrated' com as palavras-chave de cadeia de conexão 'User ID', 'UID', 'Password' ou 'PWD'.</value>
   </data>
-  <data name="SQL_InteractiveWithUserIDAndPassword" xml:space="preserve">
-    <value>Não é possível usar 'Authentication=Active Directory Interactive' com as palavras-chave de cadeia de conexão 'User ID', 'UID', 'Password' or 'PWD'.</value>
+  <data name="SQL_InteractiveWithPassword" xml:space="preserve">
+    <value>Não é possível usar 'Authentication=Active Directory Interactive' com as palavras-chave de cadeia de conexão 'Password' ou 'PWD'.</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
     <value>Não é possível usar 'Authentication=Active Directory Integrated' quando a propriedade Credential está definida.</value>
@@ -4526,5 +4526,8 @@
   </data>
   <data name="TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage" xml:space="preserve">
     <value>Erro ao gerar o pacote de enclave. O Protocolo de Atestado não foi especificado na cadeia de conexão, mas a consulta exige computações de enclave.</value>
+  </data>
+  <data name="SQLUDT_InvalidSize" xml:space="preserve">
+    <value>O tamanho do UDT precisa ser menor que {1}. Tamanho: {0}</value>
   </data>
 </root>

@@ -363,9 +363,7 @@ namespace Microsoft.Data.SqlClient
                 DbConnectionPool pool = null,
                 string accessToken = null,
                 SqlClientOriginalNetworkAddressInfo originalNetworkAddressInfo = null,
-                bool applyTransientFaultHandling = false,
-                SqlAuthenticationProviderManager sqlAuthProviderManager = null
-                ) : base(connectionOptions)
+                bool applyTransientFaultHandling = false) : base(connectionOptions)
         {
 
 #if DEBUG
@@ -421,7 +419,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             _activeDirectoryAuthTimeoutRetryHelper = new ActiveDirectoryAuthenticationTimeoutRetryHelper();
-            _sqlAuthenticationProviderManager = sqlAuthProviderManager ?? SqlAuthenticationProviderManager.Instance;
+            _sqlAuthenticationProviderManager = SqlAuthenticationProviderManager.Instance;
 
             _serverCallback = serverCallback;
             _clientCallback = clientCallback;
@@ -813,7 +811,7 @@ namespace Microsoft.Data.SqlClient
                 { // single execution/datareader per connection
                     if (_asyncCommandCount > 0)
                     {
-                        throw SQL.MARSUnspportedOnConnection();
+                        throw SQL.MARSUnsupportedOnConnection();
                     }
 
                     reader = FindLiveReader(null);
@@ -2203,8 +2201,7 @@ namespace Microsoft.Data.SqlClient
                             _serverCallback,
                             _clientCallback,
                             _originalNetworkAddressInfo != null,
-                            disableTnir,
-                            _sqlAuthenticationProviderManager);
+                            disableTnir);
 
             timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake);
             timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.LoginBegin);
@@ -2877,7 +2874,7 @@ namespace Microsoft.Data.SqlClient
                             throw SQL.ParsingErrorFeatureId(ParsingErrorState.UnrequestedFeatureAckReceived, featureId);
                         }
 
-                        Debug.Assert(_fedAuthFeatureExtensionData != null, "_fedAuthFeatureExtensionData must not be null when _federatedAuthenticatonRequested == true");
+                        Debug.Assert(_fedAuthFeatureExtensionData != null, "_fedAuthFeatureExtensionData must not be null when _federatedAuthenticationRequested == true");
 
                         switch (_fedAuthFeatureExtensionData.Value.libraryType)
                         {

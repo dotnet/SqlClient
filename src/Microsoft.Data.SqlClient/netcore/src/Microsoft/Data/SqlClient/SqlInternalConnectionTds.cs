@@ -367,8 +367,7 @@ namespace Microsoft.Data.SqlClient
                 SessionData reconnectSessionData = null,
                 bool applyTransientFaultHandling = false,
                 string accessToken = null,
-                DbConnectionPool pool = null,
-                SqlAuthenticationProviderManager sqlAuthProviderManager = null
+                DbConnectionPool pool = null
                 ) : base(connectionOptions)
 
         {
@@ -403,7 +402,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             _activeDirectoryAuthTimeoutRetryHelper = new ActiveDirectoryAuthenticationTimeoutRetryHelper();
-            _sqlAuthenticationProviderManager = sqlAuthProviderManager ?? SqlAuthenticationProviderManager.Instance;
+            _sqlAuthenticationProviderManager = SqlAuthenticationProviderManager.Instance;
 
             _identity = identity;
             Debug.Assert(newSecurePassword != null || newPassword != null, "cannot have both new secure change password and string based change password to be null");
@@ -688,7 +687,7 @@ namespace Microsoft.Data.SqlClient
                 { // single execution/datareader per connection
                     if (_asyncCommandCount > 0)
                     {
-                        throw SQL.MARSUnspportedOnConnection();
+                        throw SQL.MARSUnsupportedOnConnection();
                     }
 
                     reader = FindLiveReader(null);
@@ -1016,12 +1015,12 @@ namespace Microsoft.Data.SqlClient
                 // set, so we need to handle them by using a different MARS session, 
                 // otherwise we'll write on the physical state objects while someone
                 // else is using it.  When we don't have MARS enabled, we need to 
-                // lock the physical state object to syncronize it's use at least 
+                // lock the physical state object to synchronize it's use at least 
                 // until we increment the open results count.  Once it's been 
                 // incremented the delegated transaction requests will fail, so they
                 // won't stomp on anything.
                 // 
-                // We need to keep this lock through the duration of the TM reqeuest
+                // We need to keep this lock through the duration of the TM request
                 // so that we won't hijack a different request's data stream and a
                 // different request won't hijack ours, so we have a lock here on 
                 // an object that the ExecTMReq will also lock, but since we're on
@@ -1040,7 +1039,7 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
 
-                //  _parser may be nulled out during TdsExecuteTrannsactionManagerRequest.
+                //  _parser may be nulled out during TdsExecuteTransactionManagerRequest.
                 //  Only use local variable after this call.
                 _parser.TdsExecuteTransactionManagerRequest(null, requestType, transactionName, isoLevel,
                     ConnectionOptions.ConnectTimeout, internalTransaction, stateObj, isDelegateControlRequest);
@@ -1753,8 +1752,7 @@ namespace Microsoft.Data.SqlClient
                             ConnectionOptions.TrustServerCertificate,
                             ConnectionOptions.IntegratedSecurity,
                             withFailover,
-                            ConnectionOptions.Authentication,
-                            _sqlAuthenticationProviderManager);
+                            ConnectionOptions.Authentication);
 
             _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake);
             _timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.LoginBegin);
@@ -2411,7 +2409,7 @@ namespace Microsoft.Data.SqlClient
                             throw SQL.ParsingErrorFeatureId(ParsingErrorState.UnrequestedFeatureAckReceived, featureId);
                         }
 
-                        Debug.Assert(_fedAuthFeatureExtensionData != null, "_fedAuthFeatureExtensionData must not be null when _federatedAuthenticatonRequested == true");
+                        Debug.Assert(_fedAuthFeatureExtensionData != null, "_fedAuthFeatureExtensionData must not be null when _federatedAuthenticationRequested == true");
 
                         switch (_fedAuthFeatureExtensionData.Value.libraryType)
                         {

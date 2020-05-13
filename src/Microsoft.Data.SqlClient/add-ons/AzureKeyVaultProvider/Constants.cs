@@ -13,7 +13,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
     internal static class Constants
     {
         /// <summary>
-        /// Hashing algoirthm used for signing
+        /// Hashing algorithm used for signing
         /// </summary>
         internal const string HashingAlgorithm = @"RS256";
 

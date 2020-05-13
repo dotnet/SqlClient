@@ -339,7 +339,7 @@
   <data name="MDF_UnableToBuildCollection" xml:space="preserve">
     <value>Unable to build schema collection '{0}';</value>
   </data>
-  <data name="MDF_AmbigousCollectionName" xml:space="preserve">
+  <data name="MDF_AmbiguousCollectionName" xml:space="preserve">
     <value>The collection name '{0}' matches at least two collections with the same name but with different case, but does not match any of them exactly.</value>
   </data>
   <data name="MDF_CollectionNameISNotUnique" xml:space="preserve">
@@ -4526,5 +4526,8 @@
   </data>
   <data name="TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage" xml:space="preserve">
     <value>Error occurred when generating enclave package. Attestation Protocol has not been specified in the connection string, but the query requires enclave computations.</value>
+  </data>
+  <data name="SQLUDT_InvalidSize" xml:space="preserve">
+    <value>UDT size must be less than {1}, size: {0}</value>
   </data>
 </root>

@@ -241,7 +241,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// <para> Decrypts the symmetric key and saves it in metadata. In addition, intializes 
+        /// <para> Decrypts the symmetric key and saves it in metadata. In addition, initializes 
         /// the SqlClientEncryptionAlgorithm for rapid decryption.</para>
         /// </summary>
         internal static void DecryptSymmetricKey(SqlCipherMetadata md, string serverName)

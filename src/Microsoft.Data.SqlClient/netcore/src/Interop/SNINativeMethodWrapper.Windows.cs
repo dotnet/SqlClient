@@ -11,7 +11,7 @@ namespace Microsoft.Data.SqlClient
 {
     internal static partial class SNINativeMethodWrapper
     {
-        private const string SNI = "sni.dll";
+        private const string SNI = "Microsoft.Data.SqlClient.SNI.dll";
 
         private static int s_sniMaxComposedSpnLength = -1;
 
@@ -245,7 +245,7 @@ namespace Microsoft.Data.SqlClient
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
         private static extern uint SNIOpenWrapper(
             [In] ref Sni_Consumer_Info pConsumerInfo,
-            [MarshalAs(UnmanagedType.LPStr)] string szConnect,
+            [MarshalAs(UnmanagedType.LPWStr)] string szConnect,
             [In] SNIHandle pConn,
             out IntPtr ppConn,
             [MarshalAs(UnmanagedType.Bool)] bool fSync);

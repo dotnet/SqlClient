@@ -1134,7 +1134,7 @@ namespace System.Net.Security
                     }
                 }
 
-                // TODO: (#3114): Optimizations to remove the unnecesary allocation of a CredHandle, remove the AddRef
+                // TODO: (#3114): Optimizations to remove the unnecessary allocation of a CredHandle, remove the AddRef
                 // if refContext was previously null, refactor the code to unify CompleteAuthToken and ApplyControlToken.
                 Interop.SspiCli.CredHandle contextHandle = new Interop.SspiCli.CredHandle();
                 if (refContext != null)

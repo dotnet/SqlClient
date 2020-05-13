@@ -4,7 +4,44 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
-## [Preview Release 2.0.0-preview1.20084.1] - 2020-03-24
+## [Preview Release 2.0.0-preview3.20122.2] - 2020-05-01
+
+### Added
+- Allow passing username with Active Directory Interactive Authentication in .NET Framework [#492](https://github.com/dotnet/SqlClient/pull/492)
+- Allow large UDT buffers for .NET Framework [#456](https://github.com/dotnet/SqlClient/pull/456) 
+- Added "Transaction Id" and "Client Version" in Diagnostic Source traces [#515](https://github.com/dotnet/SqlClient/pull/515)
+- Added new `SqlConnectionOverrides` APIs to perform `SqlConnection.Open()` with fail fast option [#463](https://github.com/dotnet/SqlClient/pull/463)
+
+### Fixed
+- Addressed MARS TDS Header errors by reverting changes to make `SqlDataReader.ReadAsync()` non-blocking [#547](https://github.com/dotnet/SqlClient/pull/547)
+- Fixed driver behavior to not perform enlistment of pooled connection in aborted transaction [#543](https://github.com/dotnet/SqlClient/pull/543)
+- Fixed wrong application domain selected when starting `SqlDependencyListener` [#410](https://github.com/dotnet/SqlClient/pull/410)
+- Added missing refs for `RowCopied` property in `SqlBulkCopy` [#508](https://github.com/dotnet/SqlClient/pull/508)
+
+### Changes
+- Improved performance by removing unwanted method calls in Event Source tracing [#506](https://github.com/dotnet/SqlClient/pull/506)
+- Removed Diagnostic Source and Configuration Manager dependencies from .NET Standard implementation [#535](https://github.com/dotnet/SqlClient/pull/535)
+- Removed redundant calls to `DbConnectionPoolKey.GetType()` [#512](https://github.com/dotnet/SqlClient/pull/512)
+
+### Breaking Changes
+- Updated driver to perform decimal scale rounding to match SQL Server behavior [#470](https://github.com/dotnet/SqlClient/pull/470)
+- Standardized App Context switch name that enables Managed SNI on Windows for .NET Core and .NET Standard (break only applies to 2.0 preview releases that introduced the switch) [#548](https://github.com/dotnet/SqlClient/pull/548)
+
+
+## [Stable Release 1.1.2] - 2020-04-15
+
+### Added
+- Allowed passing username with Active Directory Interactive Authentication [#493](https://github.com/dotnet/SqlClient/pull/493) [#516](https://github.com/dotnet/SqlClient/pull/516)
+
+### Fixed
+- Fixed the ConnectionString's password persistence in .NET Core. [#489](https://github.com/dotnet/SqlClient/pull/489)
+- Addressed MARS TDS header containing errors [#510](https://github.com/dotnet/SqlClient/pull/510)
+
+### Changed
+- Updated driver libraries to be CLS Compliant [#522](https://github.com/dotnet/SqlClient/pull/522)
+
+
+## [Preview Release 2.0.0-preview2.20084.1] - 2020-03-24
 
 ### Added
 - Added support for capturing EventSource traces in .NET Framework, .NET Core, and .NET Standard applications [#399](https://github.com/dotnet/SqlClient/pull/399) [#461](https://github.com/dotnet/SqlClient/pull/461) [#479](https://github.com/dotnet/SqlClient/pull/479) [#483](https://github.com/dotnet/SqlClient/pull/483) [#484](https://github.com/dotnet/SqlClient/pull/484)

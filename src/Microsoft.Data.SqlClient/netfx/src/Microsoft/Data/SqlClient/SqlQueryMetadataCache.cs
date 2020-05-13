@@ -13,7 +13,7 @@ using System.Threading;
 namespace Microsoft.Data.SqlClient
 {
     /// <summary>
-    /// <para> Implements a cache of query paramater metadata that is used to avoid the extra roundtrip to the server for every execution of the same query.</para>
+    /// <para> Implements a cache of query parameter metadata that is used to avoid the extra roundtrip to the server for every execution of the same query.</para>
     /// </summary>
     sealed internal class SqlQueryMetadataCache
     {

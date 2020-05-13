@@ -291,7 +291,7 @@ namespace Microsoft.Data.SqlClient
         internal override uint SniGetConnectionId(ref Guid clientConnectionId)
             => SNINativeMethodWrapper.SniGetConnectionId(Handle, ref clientConnectionId);
 
-        internal override uint DisabeSsl()
+        internal override uint DisableSsl()
             => SNINativeMethodWrapper.SNIRemoveProvider(Handle, SNINativeMethodWrapper.ProviderEnum.SSL_PROV);
 
         internal override uint EnableMars(ref uint info)

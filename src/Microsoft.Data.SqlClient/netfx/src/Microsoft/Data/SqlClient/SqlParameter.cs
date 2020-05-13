@@ -617,7 +617,7 @@ namespace Microsoft.Data.SqlClient
                                             this.Direction);
         }
 
-        internal bool ParamaterIsSqlType
+        internal bool ParameterIsSqlType
         {
             get
             {
@@ -924,7 +924,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if (_sqlBufferReturnValue != null)
                 {
-                    if (ParamaterIsSqlType)
+                    if (ParameterIsSqlType)
                     {
                         return _sqlBufferReturnValue.SqlValue;
                     }
