@@ -75,11 +75,8 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private void WaitForSSLHandShakeToComplete(ref uint error, out uint protocolVersion)
+        private void WaitForSSLHandShakeToComplete(ref uint error, ref int protocolVersion)
         {
-            protocolVersion = 0;
-            if (TdsParserStateObjectFactory.UseManagedSNI)
-                return;
             // in the case where an async connection is made, encryption is used and Windows Authentication is used, 
             // wait for SSL handshake to complete, so that the SSL context is fully negotiated before we try to use its 
             // Channel Bindings as part of the Windows Authentication context build (SSL handshake must complete 

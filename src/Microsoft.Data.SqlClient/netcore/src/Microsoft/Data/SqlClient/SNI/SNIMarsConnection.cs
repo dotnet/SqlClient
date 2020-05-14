@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
         }
 
-        public uint ProtocolVersion => (uint)_lowerHandle.ProtocolVersion;
+        public int ProtocolVersion => _lowerHandle.ProtocolVersion;
 
         /// <summary>
         /// Constructor

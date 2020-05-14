@@ -120,13 +120,13 @@ namespace Microsoft.Data.SqlClient.SNI
             }
         }
 
-        public override uint ProtocolVersion
+        public override int ProtocolVersion
         {
             get
             {
                 try
                 {
-                    return (uint)_sslStream.SslProtocol;
+                    return (int)_sslStream.SslProtocol;
                 }
                 catch
                 {

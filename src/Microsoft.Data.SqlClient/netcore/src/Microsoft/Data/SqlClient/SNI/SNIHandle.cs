@@ -91,7 +91,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <summary>
         /// Gets a value that indicates the security protocol used to authenticate this connection.
         /// </summary>
-        public virtual uint ProtocolVersion { get; } = 0;
+        public virtual int ProtocolVersion { get; } = 0;
 #if DEBUG
         /// <summary>
         /// Test handle for killing underlying connection

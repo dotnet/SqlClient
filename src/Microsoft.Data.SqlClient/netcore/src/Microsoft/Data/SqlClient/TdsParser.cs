@@ -10,6 +10,7 @@ using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Security.Authentication;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -900,9 +901,25 @@ namespace Microsoft.Data.SqlClient
                                 ThrowExceptionAndWarning(_physicalStateObj);
                             }
 
-                            //TODO: After discover the protocol version, it must be throw as a warning if it's lower than TLS 1.2
-                            WaitForSSLHandShakeToComplete(ref error, out uint protocolVersion);
-                            Console.WriteLine(protocolVersion);
+                            int protocolVersion = 0;
+                            WaitForSSLHandShakeToComplete(ref error, ref protocolVersion);
+
+                            string warning = string.Empty;
+                            SslProtocols protocol = (SslProtocols)protocolVersion;
+#pragma warning disable CS0618 // Type or member is obsolete : SSL is depricated
+                            if ((protocol & (SslProtocols.Ssl2 | SslProtocols.Ssl3 | SslProtocols.Tls)) == protocol)
+#pragma warning restore CS0618 // Type or member is obsolete : SSL is depricated
+                            {   //TODO: add the message to the resources!
+                                warning = string.Format("Security warning: {0} has been superseded by the TLS protocol and is provided for backward compatibility only.", protocol.ToString());
+                                ConsoleColor foreground = Console.ForegroundColor;
+                                ConsoleColor background = Console.BackgroundColor;
+                                Console.ForegroundColor = ConsoleColor.Yellow;
+                                Console.BackgroundColor = ConsoleColor.Black;
+                                Console.Out.WriteLine(warning);
+                                SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.ConsumePreLoginHandshake|WAR> {0}, {1}", ObjectID, warning);
+                                Console.ForegroundColor = foreground;
+                                Console.BackgroundColor = background;
+                            }
 
                             // create a new packet encryption changes the internal packet size
                             _physicalStateObj.ClearAllWritePackets();
