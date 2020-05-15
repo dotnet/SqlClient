@@ -9689,6 +9689,8 @@ namespace Microsoft.Data.SqlClient
 
                         // Stream out parameters
                         SqlParameter[] parameters = rpcext.parameters;
+                        
+                        bool isAdvancedTraceOn = SqlClientEventSource.Log.IsAdvancedTraceOn();
 
                         for (int i = (ii == startRpc) ? startParam : 0; i < parameters.Length; i++)
                         {
@@ -9723,7 +9725,7 @@ namespace Microsoft.Data.SqlClient
 
                             if (mt.IsNewKatmaiType)
                             {
-                                WriteSmiParameter(param, i, 0 != (rpcext.paramoptions[i] & TdsEnums.RPC_PARAM_DEFAULT), stateObj);
+                                WriteSmiParameter(param, i, 0 != (rpcext.paramoptions[i] & TdsEnums.RPC_PARAM_DEFAULT), stateObj, isAdvancedTraceOn);
                                 continue;
                             }
 
@@ -10456,7 +10458,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         private static readonly IEnumerable<SqlDataRecord> __tvpEmptyValue = new List<SqlDataRecord>().AsReadOnly();
-        private void WriteSmiParameter(SqlParameter param, int paramIndex, bool sendDefault, TdsParserStateObject stateObj)
+        private void WriteSmiParameter(SqlParameter param, int paramIndex, bool sendDefault, TdsParserStateObject stateObj, bool advancedTraceIsOn)
         {
             //
             // Determine Metadata
@@ -10508,7 +10510,10 @@ namespace Microsoft.Data.SqlClient
             }
 
             var sendDefaultValue = sendDefault ? 1 : 0;
-            SqlClientEventSource.Log.AdvancedTraceEvent("<sc.TdsParser.WriteSmiParameter|ADV> {0}, Sending parameter '{1}', default flag={2}, metadata:{3}", ObjectID, param.ParameterName, sendDefaultValue, metaData.TraceString(3));
+            if (advancedTraceIsOn)
+            {
+                SqlClientEventSource.Log.AdvancedTraceEvent("<sc.TdsParser.WriteSmiParameter|ADV> {0}, Sending parameter '{1}', default flag={2}, metadata:{3}", ObjectID, param.ParameterName, sendDefaultValue, metaData.TraceString(3));
+            }
 
             //
             // Write parameter metadata
