@@ -8872,6 +8872,8 @@ namespace Microsoft.Data.SqlClient
                         // Stream out parameters
                         int parametersLength = rpcext.userParamCount + rpcext.systemParamCount;
 
+                        bool isAdvancedTraceOn = SqlClientEventSource.Log.IsAdvancedTraceOn();
+
                         for (int i = (ii == startRpc) ? startParam : 0; i < parametersLength; i++)
                         {
                             byte options = 0;
@@ -8904,7 +8906,7 @@ namespace Microsoft.Data.SqlClient
 
                             if (mt.IsNewKatmaiType)
                             {
-                                WriteSmiParameter(param, i, 0 != (options & TdsEnums.RPC_PARAM_DEFAULT), stateObj);
+                                WriteSmiParameter(param, i, 0 != (options & TdsEnums.RPC_PARAM_DEFAULT), stateObj, isAdvancedTraceOn);
                                 continue;
                             }
 
@@ -9601,7 +9603,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private void WriteSmiParameter(SqlParameter param, int paramIndex, bool sendDefault, TdsParserStateObject stateObj)
+        private void WriteSmiParameter(SqlParameter param, int paramIndex, bool sendDefault, TdsParserStateObject stateObj, bool advancedTraceIsOn)
         {
             //
             // Determine Metadata
@@ -9651,8 +9653,11 @@ namespace Microsoft.Data.SqlClient
                 typeCode = MetaDataUtilsSmi.DetermineExtendedTypeCodeForUseWithSqlDbType(metaData.SqlDbType, metaData.IsMultiValued, value, null);
             }
 
-            var sendDefaultValue = sendDefault ? 1 : 0;
-            SqlClientEventSource.Log.AdvancedTraceEvent("<sc.TdsParser.WriteSmiParameter|ADV> {0}, Sending parameter '{1}', default flag={2}, metadata:{3}", ObjectID, param.ParameterName, sendDefaultValue, metaData.TraceString(3));
+            if (advancedTraceIsOn)
+            {
+                var sendDefaultValue = sendDefault ? 1 : 0;
+                SqlClientEventSource.Log.AdvancedTraceEvent("<sc.TdsParser.WriteSmiParameter|ADV> {0}, Sending parameter '{1}', default flag={2}, metadata:{3}", ObjectID, param.ParameterName, sendDefaultValue, metaData.TraceString(3));
+            }
 
             //
             // Write parameter metadata
