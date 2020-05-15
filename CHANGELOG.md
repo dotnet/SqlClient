@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## [Stable Release 1.1.3] - 2020-05-15
 
 ### Fixed
-- Fixed driver behavior to not perform enlistment of pooled connection in aborted transaction [#551](https://github.com/dotnet/SqlClient/pull/551)
+- Fixed driver behavior to not perform enlistment of pooled connection on aborted transaction [#551](https://github.com/dotnet/SqlClient/pull/551)
 - Fixed issues introduced with MARS TDS Header fix in last release by reverting original change that caused issues. [#550](https://github.com/dotnet/SqlClient/pull/550)
 
 
