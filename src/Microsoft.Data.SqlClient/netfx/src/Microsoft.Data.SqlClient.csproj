@@ -194,6 +194,8 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Microsoft\Data\Interop\SNINativeManagedWrapperX64.cs" />
+    <Compile Include="Microsoft\Data\Interop\SNINativeManagedWrapperX86.cs" />
     <Compile Include="Microsoft\Data\Interop\SNINativeMethodWrapper.cs" />
     <Compile Include="Microsoft\Data\SqlClient\ActiveDirectoryNativeAuthenticationProvider.cs" />
     <Compile Include="Microsoft\Data\SqlClient\AlwaysEncryptedAttestationException.cs" />
@@ -419,6 +421,8 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Data.SqlClient.SNI">
       <Version>$(MicrosoftDataSqlClientSniVersion)</Version>
+      <PrivateAssets>All</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.Identity.Client">
       <Version>$(MicrosoftIdentityClientVersion)</Version>
