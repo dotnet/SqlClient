@@ -4530,4 +4530,7 @@
   <data name="SQLUDT_InvalidSize" xml:space="preserve">
     <value>UDT size must be less than {1}, size: {0}</value>
   </data>
+  <data name="SEC_ProtocolWarning" xml:space="preserve">
+    <value>Security Warning: The {0} is an unsecured protocol and is provided for backward compatibility only. The recommended protocol is TLS 1.2 and later.</value>
+  </data>
 </root>

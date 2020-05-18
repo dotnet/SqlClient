@@ -1200,12 +1200,24 @@ namespace Microsoft.Data.SqlClient
                             // Channel Bindings as part of the Windows Authentication context build (SSL handshake must complete
                             // before calling SNISecGenClientContext).
                             error = SNINativeMethodWrapper.SNIWaitForSSLHandshakeToComplete(_physicalStateObj.Handle, _physicalStateObj.GetTimeoutRemaining(), out uint protocolVersion);
-                            Console.WriteLine(protocolVersion); //TODO: After discover the protocol version, it must be throw as a warning if it's lower than TLS 1.2
 
                             if (error != TdsEnums.SNI_SUCCESS)
                             {
                                 _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
                                 ThrowExceptionAndWarning(_physicalStateObj);
+                            }
+
+                            string warning = SslProtocolsHelper.GetProtocolWarning(protocolVersion);
+                            if (!string.IsNullOrEmpty(warning))
+                            {
+                                ConsoleColor foreground = Console.ForegroundColor;
+                                ConsoleColor background = Console.BackgroundColor;
+                                Console.ForegroundColor = ConsoleColor.Yellow;
+                                Console.BackgroundColor = ConsoleColor.Black;
+                                Console.Out.WriteLine(warning);
+                                SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.ConsumePreLoginHandshake|WAR> {0}, {1}", ObjectID, warning);
+                                Console.ForegroundColor = foreground;
+                                Console.BackgroundColor = background;
                             }
 
                             // Validate server certificate

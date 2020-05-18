@@ -1421,4 +1421,78 @@ namespace Microsoft.Data.SqlClient
 
         internal static readonly MultiPartTableName Null = new MultiPartTableName(new string[] { null, null, null, null });
     }
+
+    internal static class SslProtocolsHelper
+    {
+        // ptotocol versions from native sni
+        [Flags]
+        private enum NativeProtocols
+        {
+            SP_PROT_SSL2_SERVER = 0x00000004,
+            SP_PROT_SSL2_CLIENT = 0x00000008,
+            SP_PROT_SSL3_SERVER = 0x00000010,
+            SP_PROT_SSL3_CLIENT = 0x00000020,
+            SP_PROT_TLS1_0_SERVER = 0x00000040,
+            SP_PROT_TLS1_0_CLIENT = 0x00000080,
+            SP_PROT_TLS1_1_SERVER = 0x00000100,
+            SP_PROT_TLS1_1_CLIENT = 0x00000200,
+            SP_PROT_TLS1_2_SERVER = 0x00000400,
+            SP_PROT_TLS1_2_CLIENT = 0x00000800,
+            SP_PROT_TLS1_3_SERVER = 0x00001000,
+            SP_PROT_TLS1_3_CLIENT = 0x00002000,
+            SP_PROT_SSL2 = SP_PROT_SSL2_SERVER | SP_PROT_SSL2_CLIENT,
+            SP_PROT_SSL3 = SP_PROT_SSL3_SERVER | SP_PROT_SSL3_CLIENT,
+            SP_PROT_TLS1_0 = SP_PROT_TLS1_0_SERVER | SP_PROT_TLS1_0_CLIENT,
+            SP_PROT_TLS1_1 = SP_PROT_TLS1_1_SERVER | SP_PROT_TLS1_1_CLIENT,
+            SP_PROT_TLS1_2 = SP_PROT_TLS1_2_SERVER | SP_PROT_TLS1_2_CLIENT,
+            SP_PROT_TLS1_3 = SP_PROT_TLS1_3_SERVER | SP_PROT_TLS1_3_CLIENT,
+            SP_PROT_NONE = 0x0
+        }
+
+        private static string ToFriendlyName(this NativeProtocols protocol)
+        {
+            string name;
+
+            if ((protocol & NativeProtocols.SP_PROT_SSL2) == protocol)
+            {
+                name = "SSL 2";
+            }
+            else if ((protocol & NativeProtocols.SP_PROT_SSL3) == protocol)
+            {
+                name = "SSL 3";
+            }
+            else if ((protocol & NativeProtocols.SP_PROT_TLS1_0) == protocol)
+            {
+                name = "TLS 1.0";
+            }
+            else if ((protocol & NativeProtocols.SP_PROT_TLS1_1) == protocol)
+            {
+                name = "TLS 1.1";
+            }
+            else if ((protocol & NativeProtocols.SP_PROT_TLS1_2) == protocol)
+            {
+                name = "TLS 1.2";
+            }
+            else if ((protocol & NativeProtocols.SP_PROT_TLS1_3) == protocol)
+            {
+                name = "TLS 1.3";
+            }
+            else
+            {
+                throw new InvalidOperationException("Unknown protocol.");
+            }
+            return name;
+        }
+
+        public static string GetProtocolWarning(uint protocol)
+        {
+            var nativeProtocol = (NativeProtocols)protocol;
+            string message = string.Empty;
+            if ((nativeProtocol & (NativeProtocols.SP_PROT_SSL2 | NativeProtocols.SP_PROT_SSL3 | NativeProtocols.SP_PROT_TLS1_1)) == nativeProtocol)
+            {
+                message =  StringsHelper.GetString(Strings.SEC_ProtocolWarning, nativeProtocol.ToFriendlyName());
+            }
+            return message;
+        }
+    }
 }
