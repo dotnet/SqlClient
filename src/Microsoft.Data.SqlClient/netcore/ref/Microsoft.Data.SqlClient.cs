@@ -248,7 +248,6 @@ namespace Microsoft.Data.SqlClient
         public string Column { get { throw null; } set { } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHint.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHint"]/SortOrder/*'/>
         public SortOrder SortOrder { get { throw null; } set { } }
-        internal event System.EventHandler<string> NameChanging;
     }
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/SqlBulkCopyColumnOrderHintCollection/*'/>
     public sealed class SqlBulkCopyColumnOrderHintCollection : System.Collections.CollectionBase
