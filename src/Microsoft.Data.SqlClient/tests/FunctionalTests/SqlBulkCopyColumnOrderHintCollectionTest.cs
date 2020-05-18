@@ -498,89 +498,69 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             SqlBulkCopyColumnOrderHintCollection collection1 = CreateCollection();
             SqlBulkCopyColumnOrderHintCollection collection2 = CreateCollection();
-
-            var item1 = new SqlBulkCopyColumnOrderHint("column", SortOrder.Ascending);
-            item1.Column = "column";
-            item1.Column = "column1";
-            Assert.Equal("column1", item1.Column);
+            var item1 = new SqlBulkCopyColumnOrderHint("column1", SortOrder.Ascending);
 
             collection1.Add(item1);
-            collection1[0].Column += "2";
-            item1.Column += "3";
+            item1.Column += "2";
+            collection1[0].Column += "3";
             Assert.Equal("column123", item1.Column);
+            Assert.Throws<InvalidOperationException>(() => collection1.Add(item1));
 
             collection2.Add(item1);
             item1.Column += "4";
+            Assert.Same(collection1[0], collection2[0]);
             Assert.Equal("column1234", collection1[0].Column);
-            Assert.Equal("column1234", collection2[0].Column);
 
             item1.Column = "column1";
             collection1.Add("column2", SortOrder.Ascending);
+            item1.Column = "column1";
+            collection1[0].Column = "column1";
+            collection1[1].Column = "column2";
             Assert.Throws<InvalidOperationException>(() => item1.Column = "column2");
-            Assert.Equal("column1", item1.Column);
-            TryAddingDuplicates(collection1, item1, initialCount: 2);
+            Assert.Throws<InvalidOperationException>(() => collection1[0].Column = "column2");
+            Assert.Throws<InvalidOperationException>(() => collection1[1].Column = "column1");
+            Assert.Throws<InvalidOperationException>(() => collection2[0].Column = "column2");
+            Assert.Equal("column1", collection1[0].Column);
+            Assert.Equal("column2", collection1[1].Column);
+            ValidateCollection(collection1, expectedCount: 2);
 
-            Assert.Throws<InvalidOperationException>(() => collection1.Add(item1));
-            var item2 = new SqlBulkCopyColumnOrderHint("column3", SortOrder.Ascending);
-            collection1.Add(item2);
-            Assert.Throws<InvalidOperationException>(() => item2.Column = "column2");
-            var item3 = new SqlBulkCopyColumnOrderHint("column3", SortOrder.Ascending);
+            Assert.Throws<InvalidOperationException>(() => collection2.Add(collection1[0]));
+            collection2.Add(collection1[1]);
+            var item3 = new SqlBulkCopyColumnOrderHint("column1", SortOrder.Ascending);
             Assert.Throws<InvalidOperationException>(() => collection1.Add(item3));
-            TryAddingDuplicates(collection1, item1, initialCount: 3);
+            item3.Column = "column3";
+            collection1.Add(item3);
+            ValidateCollection(collection1, expectedCount: 3);
+            ValidateCollection(collection2, expectedCount: 2);
 
-            collection1.Add("column4", SortOrder.Ascending);
-            Assert.Throws<InvalidOperationException>(() => collection1.Add("column1", SortOrder.Ascending));
-            Assert.Throws<InvalidOperationException>(() => collection1.Add("column2", SortOrder.Ascending));
-            Assert.Throws<InvalidOperationException>(() => collection1.Add("column3", SortOrder.Ascending));
-            TryAddingDuplicates(collection1, item1, initialCount: 4);
+            Assert.Throws<InvalidOperationException>(() => collection1.Insert(0, new SqlBulkCopyColumnOrderHint("column3", SortOrder.Ascending)));
+            collection1.Insert(0, new SqlBulkCopyColumnOrderHint("column4", SortOrder.Ascending));
+            collection1.Insert(collection1.Count, new SqlBulkCopyColumnOrderHint("column5", SortOrder.Ascending));
+            Assert.Throws<InvalidOperationException>(() => collection1[collection1.IndexOf(item1)].Column = "column4");
+            ValidateCollection(collection1, expectedCount: 5);
 
-            collection2.Insert(collection2.Count, item2);
-            item3.Column = "column5";
-            collection2.Insert(collection2.Count, item3);
-            Assert.Throws<InvalidOperationException>(() => collection1[collection1.IndexOf(item2)].Column = item3.Column);
-            Assert.Throws<InvalidOperationException>(() => collection2[collection2.IndexOf(item2)].Column = item3.Column);
-            TryAddingDuplicates(collection2, item2, initialCount: 3);
-
-            collection2.Remove(item2);
-            collection2[collection2.IndexOf(item3)].Column = item2.Column;
-            Assert.Throws<InvalidOperationException>(() => collection1[collection1.IndexOf(item1)].Column = item2.Column);
+            collection2.Remove(item1);
+            Assert.Throws<InvalidOperationException>(() => collection2[0].Column = item1.Column);
+            collection2[0].Column = "column6";
+            ValidateCollection(collection2, expectedCount: 1);
 
             collection1.Clear();
             Assert.Empty(collection1);
-        }
-
-        // tries to add duplicate column names using different methods
-        private void TryAddingDuplicates(SqlBulkCopyColumnOrderHintCollection collection, SqlBulkCopyColumnOrderHint orderHint, int initialCount)
-        {
-            string initialName = orderHint.Column;
-            string validName = "valid name";
-            string invalidName = collection[collection.Count - 1].Column;
-            SqlBulkCopyColumnOrderHint newHint = new SqlBulkCopyColumnOrderHint(invalidName, SortOrder.Ascending);
-
-            Assert.Throws<InvalidOperationException>(() => orderHint.Column = invalidName);
-            Assert.Throws<InvalidOperationException>(() => collection.Add(orderHint));
-            Assert.Throws<InvalidOperationException>(() => collection.Add(newHint));
-            Assert.Throws<InvalidOperationException>(() => collection.Add(orderHint.Column, SortOrder.Ascending));
-            Assert.Throws<InvalidOperationException>(() => collection.Add(invalidName, SortOrder.Ascending));
-            Assert.Throws<InvalidOperationException>(() => collection.Insert(0, orderHint));
-            Assert.Throws<InvalidOperationException>(() => collection.Insert(collection.Count, newHint));
-
-            collection.Insert(0, new SqlBulkCopyColumnOrderHint(validName, SortOrder.Ascending));
-            Assert.Throws<InvalidOperationException>(() => orderHint.Column = validName);
-            Assert.Throws<InvalidOperationException>(() => collection[0].Column = invalidName);
-
-            collection.RemoveAt(0);
-            orderHint.Column = validName;
-            collection[collection.IndexOf(orderHint)].Column = validName;
-
-            Assert.True(ValidateCollection(collection, initialCount));
-            orderHint.Column = initialName;
+            collection1.Add("column1", SortOrder.Descending);
+            collection1.Add("column2", SortOrder.Descending);
+            collection1.Add("column3", SortOrder.Descending);
+            collection1.Add("column4", SortOrder.Descending);
+            collection1.Add("column5", SortOrder.Descending);
+            collection2[0].Column = collection1[0].Column;
+            Assert.Throws<InvalidOperationException>(() => collection1.Add(collection2[0]));
+            ValidateCollection(collection1, expectedCount: 5);
         }
 
         // verifies that the collection contains no duplicate column names
-        private bool ValidateCollection(SqlBulkCopyColumnOrderHintCollection collection, int expectedCount)
+        private void ValidateCollection(SqlBulkCopyColumnOrderHintCollection collection, int expectedCount)
         {
-            Assert.Equal(expectedCount, collection.Count);
+            Assert.True(expectedCount == collection.Count, "Collection was not the expected size.");
+            bool valid;
             HashSet<string> columnNames = new HashSet<string>();
             foreach (SqlBulkCopyColumnOrderHint orderHint in collection)
             {
@@ -590,10 +570,11 @@ namespace Microsoft.Data.SqlClient.Tests
                 }
                 else
                 {
-                    return false;
+                    valid = false;
                 }
             }
-            return true;
+            valid = true;
+            Assert.True(valid, "Collection contained a duplicate column name.");
         }
     }
 }
