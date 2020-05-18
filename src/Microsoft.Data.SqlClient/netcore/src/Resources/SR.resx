@@ -1863,4 +1863,7 @@
   <data name="SQL_BulkLoadCannotConvertValueWithoutRowNo" xml:space="preserve">
     <value>The given value{0} of type {1} from the data source cannot be converted to type {2} for Column {3} [{4}].</value>
   </data>
+  <data name="SEC_ProtocolWarning" xml:space="preserve">
+    <value>Security Warning: The {0} is an unsecured protocol and is provided for backward compatibility only. The recommended protocol is TLS 1.2 and later.</value>
+  </data>
 </root>

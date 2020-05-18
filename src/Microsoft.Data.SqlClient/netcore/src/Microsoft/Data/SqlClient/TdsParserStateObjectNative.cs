@@ -15,6 +15,7 @@ namespace Microsoft.Data.SqlClient
     internal class TdsParserStateObjectNative : TdsParserStateObject
     {
         // ptotocol versions from native sni
+        [Flags]
         private enum NativeProtocols
         {
             SP_PROT_SSL2_SERVER = 0x00000004,
@@ -29,7 +30,7 @@ namespace Microsoft.Data.SqlClient
             SP_PROT_TLS1_2_CLIENT = 0x00000800,
             SP_PROT_TLS1_3_SERVER = 0x00001000,
             SP_PROT_TLS1_3_CLIENT = 0x00002000,
-            Undefined = 0x0
+            SP_PROT_NONE = 0x0
         }
 
         private SNIHandle _sessionHandle = null;              // the SNI handle we're to work on
@@ -358,15 +359,17 @@ namespace Microsoft.Data.SqlClient
                     protocolVersion = (int)SslProtocols.Tls12;
                     break;
                 /* The SslProtocols.Tls13 is supported by netcoreapp3.1 and later
-                 * Our driver does not support this version yet!
+                 * This driver does not support this version yet!
                 case NativeProtocols.SP_PROT_TLS1_3_SERVER:
                 case NativeProtocols.SP_PROT_TLS1_3_CLIENT:
                     protocolVersion = (int)SslProtocols.Tls13;
                     break;
                 */
-                default:
+                case NativeProtocols.SP_PROT_NONE:
                     protocolVersion = (int)SslProtocols.None;
                     break;
+                default:
+                    throw new InvalidOperationException("Unknown protocol.");
             }
             return returnValue;
         }

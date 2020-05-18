@@ -12,6 +12,7 @@ using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Globalization;
 using System.Security;
+using System.Security.Authentication;
 using System.Text;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlTypes;
@@ -916,5 +917,55 @@ namespace Microsoft.Data.SqlClient
         }
 
         internal static readonly MultiPartTableName Null = new MultiPartTableName(new string[] { null, null, null, null });
+    }
+
+    internal static class SslProtocolsHelper
+    {
+        private static string ToFriendlyName(this SslProtocols protocol)
+        {
+            string name ;
+
+            switch (protocol)
+            {
+#pragma warning disable CS0618 // Type or member is obsolete: SSL is depricated
+                case SslProtocols.Ssl2:
+                    name = "SSL 2";
+                    break;
+                case SslProtocols.Ssl3:
+                    name = "SSL 3";
+                    break;
+#pragma warning restore CS0618 // Type or member is obsolete: SSL is depricated
+                /* The SslProtocols.Tls13 is supported by netcoreapp3.1 and later
+                 * This driver does not support this version yet!
+                case SslProtocols.Tls13:
+                    name = "TLS 1.3";
+                    break;
+                */
+                case SslProtocols.Tls:
+                    name = "TLS 1.0";
+                    break;
+                case SslProtocols.Tls11:
+                    name = "TLS 1.1";
+                    break;
+                case SslProtocols.Tls12:
+                    name = "TLS 1.2";
+                    break;
+                default:
+                    name = protocol.ToString();
+                    break;
+            };
+            return name;
+        }
+        public static string GetProtocolWarning(this SslProtocols protocol)
+        {
+            string message = string.Empty;
+#pragma warning disable CS0618 // Type or member is obsolete : SSL is depricated
+            if ((protocol & (SslProtocols.Ssl2 | SslProtocols.Ssl3 | SslProtocols.Tls | SslProtocols.Tls11)) == protocol)
+#pragma warning restore CS0618 // Type or member is obsolete : SSL is depricated
+            {
+                message = SRHelper.Format(SR.SEC_ProtocolWarning, protocol.ToFriendlyName());
+            }
+            return message;
+        }
     }
 }
