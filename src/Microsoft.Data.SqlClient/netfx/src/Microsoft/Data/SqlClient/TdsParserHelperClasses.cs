@@ -1453,33 +1453,37 @@ namespace Microsoft.Data.SqlClient
         {
             string name;
 
-            if ((protocol & NativeProtocols.SP_PROT_SSL2) == protocol)
-            {
-                name = "SSL 2";
-            }
-            else if ((protocol & NativeProtocols.SP_PROT_SSL3) == protocol)
-            {
-                name = "SSL 3";
-            }
-            else if ((protocol & NativeProtocols.SP_PROT_TLS1_0) == protocol)
-            {
-                name = "TLS 1.0";
-            }
-            else if ((protocol & NativeProtocols.SP_PROT_TLS1_1) == protocol)
-            {
-                name = "TLS 1.1";
-            }
-            else if ((protocol & NativeProtocols.SP_PROT_TLS1_2) == protocol)
-            {
-                name = "TLS 1.2";
-            }
-            else if ((protocol & NativeProtocols.SP_PROT_TLS1_3) == protocol)
+            if (protocol.HasFlag(NativeProtocols.SP_PROT_TLS1_3_CLIENT) || protocol.HasFlag(NativeProtocols.SP_PROT_TLS1_3_SERVER))
             {
                 name = "TLS 1.3";
             }
+            else if (protocol.HasFlag(NativeProtocols.SP_PROT_TLS1_2_CLIENT) || protocol.HasFlag(NativeProtocols.SP_PROT_TLS1_2_SERVER))
+            {
+                name = "TLS 1.2";
+            }
+            else if (protocol.HasFlag(NativeProtocols.SP_PROT_TLS1_1_CLIENT) || protocol.HasFlag(NativeProtocols.SP_PROT_TLS1_1_SERVER))
+            {
+                name = "TLS 1.1";
+            }
+            else if (protocol.HasFlag(NativeProtocols.SP_PROT_TLS1_0_CLIENT) || protocol.HasFlag(NativeProtocols.SP_PROT_TLS1_0_SERVER))
+            {
+                name = "TLS 1.0";
+            }
+            else if (protocol.HasFlag(NativeProtocols.SP_PROT_SSL3_CLIENT) || protocol.HasFlag(NativeProtocols.SP_PROT_SSL3_SERVER))
+            {
+                name = "SSL 3.0";
+            }
+            else if (protocol.HasFlag(NativeProtocols.SP_PROT_SSL2_CLIENT) || protocol.HasFlag(NativeProtocols.SP_PROT_SSL2_SERVER))
+            {
+                name = "SSL 2.0";
+            }
+            else if(protocol.HasFlag(NativeProtocols.SP_PROT_NONE))
+            {
+                name = "None";
+            }
             else
             {
-                throw new InvalidOperationException("Unknown protocol.");
+                throw new ArgumentException(StringsHelper.GetString(StringsHelper.net_invalid_enum, nameof(NativeProtocols)), nameof(NativeProtocols));
             }
             return name;
         }
@@ -1488,9 +1492,9 @@ namespace Microsoft.Data.SqlClient
         {
             var nativeProtocol = (NativeProtocols)protocol;
             string message = string.Empty;
-            if ((nativeProtocol & (NativeProtocols.SP_PROT_SSL2 | NativeProtocols.SP_PROT_SSL3 | NativeProtocols.SP_PROT_TLS1_1)) == nativeProtocol)
+            if ((nativeProtocol & (NativeProtocols.SP_PROT_SSL2 | NativeProtocols.SP_PROT_SSL3 | NativeProtocols.SP_PROT_TLS1_1)) != NativeProtocols.SP_PROT_NONE)
             {
-                message =  StringsHelper.GetString(Strings.SEC_ProtocolWarning, nativeProtocol.ToFriendlyName());
+                message = StringsHelper.GetString(Strings.SEC_ProtocolWarning, nativeProtocol.ToFriendlyName());
             }
             return message;
         }

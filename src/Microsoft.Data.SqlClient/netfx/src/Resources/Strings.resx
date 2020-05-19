@@ -4533,4 +4533,7 @@
   <data name="SEC_ProtocolWarning" xml:space="preserve">
     <value>Security Warning: The {0} is an unsecured protocol and is provided for backward compatibility only. The recommended protocol is TLS 1.2 and later.</value>
   </data>
+  <data name="net_invalid_enum" xml:space="preserve">
+    <value>The specified value is not valid in the '{0}' enumeration.</value>
+  </data>
 </root>
