@@ -419,10 +419,7 @@
     <PackageReference Include="System.Security.Cryptography.Primitives">
       <Version>$(SystemSecurityCryptographyPrimitivesVersion)</Version>
     </PackageReference>
-    <PackageReference Include="Microsoft.Data.SqlClient.SNI.x86" Condition="'$(Platform)'!='x64'">
-      <Version>$(MicrosoftDataSqlClientSniVersion)</Version>
-    </PackageReference>
-    <PackageReference Include="Microsoft.Data.SqlClient.SNI.x64" Condition="'$(Platform)'=='x64'">
+    <PackageReference Include="Microsoft.Data.SqlClient.SNI">
       <Version>$(MicrosoftDataSqlClientSniVersion)</Version>
       <PrivateAssets>All</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
