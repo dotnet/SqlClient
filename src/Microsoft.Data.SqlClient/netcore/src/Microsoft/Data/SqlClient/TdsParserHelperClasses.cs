@@ -923,44 +923,48 @@ namespace Microsoft.Data.SqlClient
     {
         private static string ToFriendlyName(this SslProtocols protocol)
         {
-            string name ;
+            string name;
 
-            switch (protocol)
+            /* The SslProtocols.Tls13 is supported by netcoreapp3.1 and later
+             * This driver does not support this version yet!
+            if ((protocol & SslProtocols.Tls13) == SslProtocols.Tls13)
             {
+                name = "TLS 1.3";
+            }*/
+            if((protocol & SslProtocols.Tls12) == SslProtocols.Tls12)
+            {
+                name = "TLS 1.2";
+            }
+            else if ((protocol & SslProtocols.Tls11) == SslProtocols.Tls11)
+            {
+                name = "TLS 1.1";
+            }
+            else if ((protocol & SslProtocols.Tls) == SslProtocols.Tls)
+            {
+                name = "TLS 1.0";
+            }
 #pragma warning disable CS0618 // Type or member is obsolete: SSL is depricated
-                case SslProtocols.Ssl2:
-                    name = "SSL 2";
-                    break;
-                case SslProtocols.Ssl3:
-                    name = "SSL 3";
-                    break;
-#pragma warning restore CS0618 // Type or member is obsolete: SSL is depricated
-                /* The SslProtocols.Tls13 is supported by netcoreapp3.1 and later
-                 * This driver does not support this version yet!
-                case SslProtocols.Tls13:
-                    name = "TLS 1.3";
-                    break;
-                */
-                case SslProtocols.Tls:
-                    name = "TLS 1.0";
-                    break;
-                case SslProtocols.Tls11:
-                    name = "TLS 1.1";
-                    break;
-                case SslProtocols.Tls12:
-                    name = "TLS 1.2";
-                    break;
-                default:
-                    name = protocol.ToString();
-                    break;
-            };
+            else if ((protocol & SslProtocols.Ssl3) == SslProtocols.Ssl3)
+            {
+                name = "SSL 3.0";
+            }
+            else if ((protocol & SslProtocols.Ssl2) == SslProtocols.Ssl2)
+#pragma warning disable CS0618 // Type or member is obsolete: SSL is depricated
+            {
+                name = "SSL 2.0";
+            }
+            else
+            {
+                name = protocol.ToString();
+            }
+
             return name;
         }
         public static string GetProtocolWarning(this SslProtocols protocol)
         {
             string message = string.Empty;
 #pragma warning disable CS0618 // Type or member is obsolete : SSL is depricated
-            if ((protocol & (SslProtocols.Ssl2 | SslProtocols.Ssl3 | SslProtocols.Tls | SslProtocols.Tls11)) == protocol)
+            if ((protocol & (SslProtocols.Ssl2 | SslProtocols.Ssl3 | SslProtocols.Tls | SslProtocols.Tls11)) != SslProtocols.None)
 #pragma warning restore CS0618 // Type or member is obsolete : SSL is depricated
             {
                 message = SRHelper.Format(SR.SEC_ProtocolWarning, protocol.ToFriendlyName());

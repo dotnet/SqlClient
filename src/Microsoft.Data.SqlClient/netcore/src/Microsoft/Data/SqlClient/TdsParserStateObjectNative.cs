@@ -333,43 +333,43 @@ namespace Microsoft.Data.SqlClient
         internal override uint WaitForSSLHandShakeToComplete(out int protocolVersion)
         {
             uint returnValue = SNINativeMethodWrapper.SNIWaitForSSLHandshakeToComplete(Handle, GetTimeoutRemaining(), out uint nativeProtocolVersion);
-            
-            switch ((NativeProtocols)nativeProtocolVersion)
+            var nativeProtocol = (NativeProtocols)nativeProtocolVersion;
+
+            /* The SslProtocols.Tls13 is supported by netcoreapp3.1 and later
+             * This driver does not support this version yet!
+            if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_3_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_3_SERVER))
             {
-                case NativeProtocols.SP_PROT_SSL2_SERVER:
-                case NativeProtocols.SP_PROT_SSL2_CLIENT:
+                protocolVersion = (int)SslProtocols.Tls13;
+            }*/
+            if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_2_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_2_SERVER))
+            {
+                protocolVersion = (int)SslProtocols.Tls12;
+            }
+            else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_1_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_1_SERVER))
+            {
+                protocolVersion = (int)SslProtocols.Tls11;
+            }
+            else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_0_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_0_SERVER))
+            {
+                protocolVersion = (int)SslProtocols.Tls;
+            }
+            else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_SSL3_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_SSL3_SERVER))
+            {
 #pragma warning disable CS0618 // Type or member is obsolete : SSL is depricated
-                    protocolVersion = (int)SslProtocols.Ssl2;
-                    break;
-                case NativeProtocols.SP_PROT_SSL3_SERVER:
-                case NativeProtocols.SP_PROT_SSL3_CLIENT:
-                    protocolVersion = (int)SslProtocols.Ssl3;
+                protocolVersion = (int)SslProtocols.Ssl3;
+            }
+            else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_SSL2_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_SSL2_SERVER))
+            {
+                protocolVersion = (int)SslProtocols.Ssl2;
 #pragma warning restore CS0618 // Type or member is obsolete : SSL is depricated
-                    break;
-                case NativeProtocols.SP_PROT_TLS1_0_SERVER:
-                case NativeProtocols.SP_PROT_TLS1_0_CLIENT:
-                    protocolVersion = (int)SslProtocols.Tls;
-                    break;
-                case NativeProtocols.SP_PROT_TLS1_1_SERVER:
-                case NativeProtocols.SP_PROT_TLS1_1_CLIENT:
-                    protocolVersion = (int)SslProtocols.Tls11;
-                    break;
-                case NativeProtocols.SP_PROT_TLS1_2_SERVER:
-                case NativeProtocols.SP_PROT_TLS1_2_CLIENT:
-                    protocolVersion = (int)SslProtocols.Tls12;
-                    break;
-                /* The SslProtocols.Tls13 is supported by netcoreapp3.1 and later
-                 * This driver does not support this version yet!
-                case NativeProtocols.SP_PROT_TLS1_3_SERVER:
-                case NativeProtocols.SP_PROT_TLS1_3_CLIENT:
-                    protocolVersion = (int)SslProtocols.Tls13;
-                    break;
-                */
-                case NativeProtocols.SP_PROT_NONE:
-                    protocolVersion = (int)SslProtocols.None;
-                    break;
-                default:
-                    throw new InvalidOperationException("Unknown protocol.");
+            }
+            else if(nativeProtocol.HasFlag(NativeProtocols.SP_PROT_NONE))
+            {
+                protocolVersion = (int)SslProtocols.None;
+            }
+            else
+            {
+                throw new ArgumentException(SRHelper.Format(SRHelper.net_invalid_enum, nameof(NativeProtocols)), nameof(NativeProtocols));
             }
             return returnValue;
         }
