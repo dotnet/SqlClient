@@ -10,7 +10,7 @@ namespace Microsoft.Data.SqlClient
 {
     internal static class SNINativeManagedWrapperX64
     {
-        private const string SNI = "Microsoft.Data.SqlClient.sni.x64.dll";
+        private const string SNI = "Microsoft.Data.SqlClient.SNI.x64.dll";
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNIAddProviderWrapper")]
         internal static extern uint SNIAddProvider(SNIHandle pConn, ProviderEnum ProvNum, [In] ref uint pInfo);
