@@ -251,7 +251,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void OrderHintTest()
         {
-            OrderHint.Test(srcConstr, AddGuid("SqlBulkCopyTest_OrderHint"));
+            OrderHint.Test(srcConstr, AddGuid("SqlBulkCopyTest_OrderHint"), AddGuid("SqlBulkCopyTest_OrderHint2"));
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public void OrderHintAsyncTest()
+        {
+            OrderHintAsync.Test(srcConstr, AddGuid("SqlBulkCopyTest_OrderHintAsync"), AddGuid("SqlBulkCopyTest_OrderHintAsync2"));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
@@ -270,12 +276,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void OrderHintTransactionTest()
         {
             OrderHintTransaction.Test(srcConstr, AddGuid("SqlBulkCopyTest_OrderHintTransaction"));
-        }
-
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public void OrderHintAsyncTest()
-        {
-            OrderHintAsync.Test(srcConstr, AddGuid("SqlBulkCopyTest_OrderHintAsync"));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
