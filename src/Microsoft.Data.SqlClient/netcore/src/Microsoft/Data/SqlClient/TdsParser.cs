@@ -2253,40 +2253,40 @@ namespace Microsoft.Data.SqlClient
                                 }
                             }
 
-                            if (null != dataStream)
+                            byte peekedToken;
+                            if (!stateObj.TryPeekByte(out peekedToken))
+                            { // temporarily cache next byte
+                                return false;
+                            }
+
+                            if (TdsEnums.SQLDATACLASSIFICATION == peekedToken)
                             {
-                                byte peekedToken;
-                                if (!stateObj.TryPeekByte(out peekedToken))
-                                { // temporarily cache next byte
+                                byte dataClassificationToken;
+                                if (!stateObj.TryReadByte(out dataClassificationToken))
+                                {
+                                    return false;
+                                }
+                                Debug.Assert(TdsEnums.SQLDATACLASSIFICATION == dataClassificationToken);
+
+                                SensitivityClassification sensitivityClassification;
+                                if (!TryProcessDataClassification(stateObj, out sensitivityClassification))
+                                {
+                                    return false;
+                                }
+                                if (null != dataStream && !dataStream.TrySetSensitivityClassification(sensitivityClassification))
+                                {
                                     return false;
                                 }
 
-                                if (TdsEnums.SQLDATACLASSIFICATION == peekedToken)
+                                // update peekedToken
+                                if (!stateObj.TryPeekByte(out peekedToken))
                                 {
-                                    byte dataClassificationToken;
-                                    if (!stateObj.TryReadByte(out dataClassificationToken))
-                                    {
-                                        return false;
-                                    }
-                                    Debug.Assert(TdsEnums.SQLDATACLASSIFICATION == dataClassificationToken);
-
-                                    SensitivityClassification sensitivityClassification;
-                                    if (!TryProcessDataClassification(stateObj, out sensitivityClassification))
-                                    {
-                                        return false;
-                                    }
-                                    if (!dataStream.TrySetSensitivityClassification(sensitivityClassification))
-                                    {
-                                        return false;
-                                    }
-
-                                    // update peekedToken
-                                    if (!stateObj.TryPeekByte(out peekedToken))
-                                    {
-                                        return false;
-                                    }
+                                    return false;
                                 }
+                            }
 
+                            if (null != dataStream)
+                            {
                                 if (!dataStream.TrySetMetaData(stateObj._cleanupMetaData, (TdsEnums.SQLTABNAME == peekedToken || TdsEnums.SQLCOLINFO == peekedToken)))
                                 {
                                     return false;
