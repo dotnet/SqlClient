@@ -562,11 +562,10 @@ namespace Microsoft.Data.SqlClient
 
         private _SqlMetaDataSet(_SqlMetaDataSet original)
         {
-            this.id = original.id;
-            // although indexMap is not immutable, in practice it is initialized once and then passed around
-            this._hiddenColumnCount = original._hiddenColumnCount;
-            this._visibleColumnMap = original._visibleColumnMap;
-            this.dbColumnSchema = original.dbColumnSchema;
+            id = original.id;
+            _hiddenColumnCount = original._hiddenColumnCount;
+            _visibleColumnMap = original._visibleColumnMap;
+            dbColumnSchema = original.dbColumnSchema;
             if (original._metaDataArray == null)
             {
                 _metaDataArray = null;
@@ -648,18 +647,17 @@ namespace Microsoft.Data.SqlClient
 
             if (hiddenColumnCount > 0)
             {
-                int[] hiddenColumnMap = new int[Length - hiddenColumnCount];
-
+                int[] visibleColumnMap = new int[Length - hiddenColumnCount];
                 int mapIndex = 0;
                 for (int metaDataIndex = 0; metaDataIndex < Length; metaDataIndex++)
                 {
                     if (!_metaDataArray[metaDataIndex].IsHidden)
                     {
-                        hiddenColumnMap[mapIndex] = metaDataIndex;
+                        visibleColumnMap[mapIndex] = metaDataIndex;
                         mapIndex += 1;
                     }
                 }
-                _visibleColumnMap = hiddenColumnMap;
+                _visibleColumnMap = visibleColumnMap;
             }
             _hiddenColumnCount = hiddenColumnCount;
         }
