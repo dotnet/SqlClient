@@ -4528,6 +4528,6 @@
     <value>生成 enclave 包时出错。尚未在连接字符串中指定证明协议，但查询需要 enclave 计算。</value>
   </data>
   <data name="SQLUDT_InvalidSize" xml:space="preserve">
-    <value>UDT size must be less than {1}, size: {0}</value>
+    <value>UDT 大小必须小于 {1}，大小为 {0}</value>
   </data>
 </root>

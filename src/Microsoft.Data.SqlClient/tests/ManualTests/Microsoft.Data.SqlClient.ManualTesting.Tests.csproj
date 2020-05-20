@@ -65,6 +65,7 @@
     <Compile Include="SQL\SqlBulkCopyTest\OrderHintIdentityColumn.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\OrderHintMissingTargetColumn.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\OrderHintTransaction.cs" />
+    <Compile Include="SQL\DataClassificationTest\DataClassificationTest.cs" />
     <Compile Include="TracingTests\EventSourceTest.cs" />
     <Compile Include="SQL\AdapterTest\AdapterTest.cs" />
     <Compile Include="SQL\AsyncTest\BeginExecAsyncTest.cs" />

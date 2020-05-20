@@ -4528,6 +4528,6 @@
     <value>エンクレーブ パッケージの生成中にエラーが発生しました。接続文字列の中では構成証明プロトコルが指定されていませんが、クエリではエンクレーブ計算が必要です。</value>
   </data>
   <data name="SQLUDT_InvalidSize" xml:space="preserve">
-    <value>UDT size must be less than {1}, size: {0}</value>
+    <value>UDT のサイズは {1} より小さくなければなりません。サイズ: {0}</value>
   </data>
 </root>

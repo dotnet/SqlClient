@@ -4528,6 +4528,6 @@
     <value>Erro ao gerar o pacote de enclave. O Protocolo de Atestado não foi especificado na cadeia de conexão, mas a consulta exige computações de enclave.</value>
   </data>
   <data name="SQLUDT_InvalidSize" xml:space="preserve">
-    <value>UDT size must be less than {1}, size: {0}</value>
+    <value>O tamanho do UDT precisa ser menor que {1}. Tamanho: {0}</value>
   </data>
 </root>

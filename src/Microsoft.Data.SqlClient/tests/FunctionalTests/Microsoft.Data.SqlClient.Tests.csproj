@@ -36,6 +36,7 @@
     <Compile Include="BaseProviderAsyncTest\MockDataReader.cs" />
     <Compile Include="SqlCredentialTest.cs" />
     <Compile Include="SqlDataRecordTest.cs" />
+    <Compile Include="SqlExceptionTest.cs" />
     <Compile Include="SqlParameterTest.cs" />
     <Compile Include="SqlClientFactoryTest.cs" />
     <Compile Include="SqlErrorCollectionTest.cs" />
@@ -59,6 +60,9 @@
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' != 'netcoreapp2.1' AND '$(TargetGroup)' == 'netcoreapp'">
     <PackageReference Include="System.Data.Odbc" Version="$(SystemDataOdbcVersion)" />
+  </ItemGroup>
+  <ItemGroup  Condition="$(TargetFramework.StartsWith('netcoreapp'))">
+    <Compile Include="SslOverTdsStreamTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="$(TestsPath)ManualTests\SQL\UdtTest\UDTs\Address\Address.csproj">
