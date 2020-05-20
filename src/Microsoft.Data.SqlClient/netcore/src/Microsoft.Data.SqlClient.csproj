@@ -3,7 +3,7 @@
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
     <TargetFrameworks>netcoreapp2.1;netcoreapp3.1;netstandard2.0</TargetFrameworks>
     <GeneratePlatformNotSupportedAssemblyMessage Condition="'$(OSGroup)' == 'AnyOS'">SR.PlatformNotSupported_DataSqlClient</GeneratePlatformNotSupportedAssemblyMessage>
-    <OSGroup Condition="'$(OSGroup)' == ''">Windows_NT</OSGroup>
+    <OSGroup Condition="'$(OSGroup)' == ''">$(OS)</OSGroup>
     <TargetsWindows Condition="'$(OSGroup)'=='Windows_NT'">true</TargetsWindows>
     <TargetsUnix Condition="'$(OSGroup)'=='Unix'">true</TargetsUnix>
     <!-- Allow explicit addition of the Compile files instead of all project files to be included by Default -->

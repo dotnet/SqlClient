@@ -36,9 +36,9 @@ namespace Microsoft.Data.SqlClient
             HResult = SqlExceptionHResult;
             foreach (SerializationEntry siEntry in si)
             {
-                if ("ClientConnectionId" == siEntry.Name)
+                if (nameof(ClientConnectionId) == siEntry.Name)
                 {
-                    _clientConnectionId = (Guid)siEntry.Value;
+                    _clientConnectionId = (Guid)si.GetValue(nameof(ClientConnectionId), typeof(Guid));
                     break;
                 }
             }
@@ -49,7 +49,7 @@ namespace Microsoft.Data.SqlClient
         {
             base.GetObjectData(si, context);
             si.AddValue("Errors", null); // Not specifying type to enable serialization of null value of non-serializable type
-            si.AddValue("ClientConnectionId", _clientConnectionId, typeof(Guid));
+            si.AddValue("ClientConnectionId", _clientConnectionId, typeof(object));
 
             // Writing sqlerrors to base exception data table
             for (int i = 0; i < Errors.Count; i++)

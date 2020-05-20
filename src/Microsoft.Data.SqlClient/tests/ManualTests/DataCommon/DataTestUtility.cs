@@ -233,6 +233,31 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return present;
         }
 
+        /// <summary>
+        /// Checks if object SYS.SENSITIVITY_CLASSIFICATIONS exists in SQL Server
+        /// </summary>
+        /// <returns>True, if target SQL Server supports Data Classification</returns>
+        public static bool IsSupportedDataClassification()
+        {
+            try
+            {
+                using (var connection = new SqlConnection(TCPConnectionString))
+                using (var command = new SqlCommand("SELECT * FROM SYS.SENSITIVITY_CLASSIFICATIONS", connection))
+                {
+                    connection.Open();
+                    command.ExecuteNonQuery();
+                }
+            }
+            catch (SqlException e)
+            {
+                // Check for Error 208: Invalid Object Name
+                if (e.Errors != null && e.Errors[0].Number == 208)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
         public static bool IsUdtTestDatabasePresent() => IsDatabasePresent(UdtTestDbName);
 
         public static bool AreConnStringsSetup()
