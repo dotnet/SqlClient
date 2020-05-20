@@ -3,13 +3,14 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class ParallelTransactionsTest
     {
         #region <<Basic Parallel Test>>
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void BasicParallelTest_shouldThrowsUnsupported()
         {
             string connectionString = DataTestUtility.TCPConnectionString;
@@ -65,7 +66,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         #endregion
 
         #region <<MultipleExecutesInSameTransactionTest>>
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void MultipleExecutesInSameTransactionTest_shouldThrowsUnsupported()
         {
             string connectionString = DataTestUtility.TCPConnectionString;
