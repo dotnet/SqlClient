@@ -17,7 +17,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private const int CONCURRENT_COMMANDS = 5;
 
         [ActiveIssue(6643, TestPlatforms.AnyUnix)]
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void TestReaderMars()
         {
             string connectionString =
@@ -49,7 +49,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             TestReaderMarsCase("Case 14: ExecuteReader*5 GC, Connection Close, BeginTransaction.", connectionString, ReaderTestType.ReaderGCConnectionClose, ReaderVerificationType.BeginTransaction);
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void TestTransactionSingle()
         {
             string connectionString =
