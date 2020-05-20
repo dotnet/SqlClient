@@ -560,7 +560,7 @@ namespace Microsoft.Data.SqlClient.Tests
         private void ValidateCollection(SqlBulkCopyColumnOrderHintCollection collection, int expectedCount)
         {
             Assert.True(expectedCount == collection.Count, "Collection was not the expected size.");
-            bool valid;
+            bool valid = true;
             HashSet<string> columnNames = new HashSet<string>();
             foreach (SqlBulkCopyColumnOrderHint orderHint in collection)
             {
@@ -573,7 +573,6 @@ namespace Microsoft.Data.SqlClient.Tests
                     valid = false;
                 }
             }
-            valid = true;
             Assert.True(valid, "Collection contained a duplicate column name.");
         }
     }
