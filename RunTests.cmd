@@ -145,9 +145,12 @@ call :pauseOnError dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTes
 call :pauseOnError dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" /p:Configuration="Release" /p:TestTargetOS="Windowsnetcoreapp" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonwindowstests"  /p:Platform="AnyCPU" /p:TargetNetCoreVersion=netcoreapp5.0 /p:ReferenceType=Project -l:trx;LogFileName=..\..\..\..\..\artifacts\Results\project-netcore5.0-manual-anycpu.xml
 
 
-:: .NET FRAMEWORK LIBRARY TEST CASES
+:: .NET FRAMEWORK REFERENCE TYPE "PROJECT"
 echo Building .NET Framework Tests
-
+call :pauseOnError msbuild /p:Configuration="Release"
+call :pauseOnError msbuild /p:Configuration="Release" /t:BuildAKVNetFx
+call :pauseOnError msbuild /p:Configuration="Release" /t:BuildAKVNetCoreAllOS
+call :pauseOnError msbuild /p:Configuration="Release" /t:GenerateAKVProviderNugetPackage
 call :pauseOnError msbuild /p:Configuration="Release" /t:BuildTestsNetFx
 call :pauseOnError dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" /p:Platform="AnyCPU" /p:Configuration="Release" /p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests" -l:trx;LogFileName=..\..\..\..\..\artifacts\Results\project-net46-functional-anycpu.xml
 call :pauseOnError dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" /p:Platform="AnyCPU" /p:Configuration="Release" /p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests" -l:trx;LogFileName=..\..\..\..\..\artifacts\Results\project-net46-manual-anycpu.xml
@@ -172,6 +175,30 @@ call :pauseOnError msbuild /p:Configuration="Release" /t:BuildTestsNetFx /p:Plat
 call :pauseOnError dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" /p:Platform="Win32" /p:Configuration="Release" /p:TestTargetOS="Windowsnetfx" /p:TargetNetFxVersion=net48 --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests" -l:trx;LogFileName=..\..\..\..\..\artifacts\Results\project-net48-functional-Win32.xml
 call :pauseOnError dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" /p:Platform="Win32" /p:Configuration="Release" /p:TestTargetOS="Windowsnetfx" /p:TargetNetFxVersion=net48 --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests" -l:trx;LogFileName=..\..\..\..\..\artifacts\Results\project-net48-manual-Win32.xml
 
+:: .NET FRAMEWORK  REFERENCE TYPE "PACKAGE"
+call :pauseOnError msbuild /p:Configuration="Release" /t:BuildTestsNetFx /p:ReferenceType=Package
+call :pauseOnError dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" /p:Platform="AnyCPU" /p:Configuration="Release" /p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests"  /p:ReferenceType=Package -l:trx;LogFileName=..\..\..\..\..\artifacts\Results\package-net46-functional-anycpu.xml
+call :pauseOnError dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" /p:Platform="AnyCPU" /p:Configuration="Release" /p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests"  /p:ReferenceType=Package -l:trx;LogFileName=..\..\..\..\..\artifacts\Results\package-net46-manual-anycpu.xml
+
+call :pauseOnError msbuild /p:Configuration="Release" /t:BuildTestsNetFx /p:TargetNetFxVersion=net48 /p:ReferenceType=Package
+call :pauseOnError dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" /p:Platform="AnyCPU" /p:Configuration="Release" /p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests" /p:ReferenceType=Package -l:trx;LogFileName=..\..\..\..\..\artifacts\Results\package-net48-functional-anycpu.xml
+call :pauseOnError dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" /p:Platform="AnyCPU" /p:Configuration="Release" /p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests" /p:ReferenceType=Package -l:trx;LogFileName=..\..\..\..\..\artifacts\Results\package-net48-manual-anycpu.xml
+
+call :pauseOnError msbuild /p:Configuration="Release" /t:BuildTestsNetFx /p:Platform=x64 /p:ReferenceType=Package
+call :pauseOnError dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" /p:Platform="x64" /p:Configuration="Release" /p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests" /p:ReferenceType=Package -l:trx;LogFileName=..\..\..\..\..\artifacts\Results\package-net46-functional-x64.xml
+call :pauseOnError dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" /p:Platform="x64" /p:Configuration="Release" /p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests" /p:ReferenceType=Package -l:trx;LogFileName=..\..\..\..\..\artifacts\Results\package-net46-manual-x64.xml
+
+call :pauseOnError msbuild /p:Configuration="Release" /t:BuildTestsNetFx /p:Platform=x64 /p:TargetNetFxVersion=net48 /p:ReferenceType=Package
+call :pauseOnError dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" /p:Platform="x64" /p:Configuration="Release" /p:TestTargetOS="Windowsnetfx" /p:TargetNetFxVersion=net48 --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests" /p:ReferenceType=Package -l:trx;LogFileName=..\..\..\..\..\artifacts\Results\package-net48-functional-x64.xml
+call :pauseOnError dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" /p:Platform="x64" /p:Configuration="Release" /p:TestTargetOS="Windowsnetfx" /p:TargetNetFxVersion=net48 --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests" /p:ReferenceType=Package -l:trx;LogFileName=..\..\..\..\..\artifacts\Results\package-net48-manual-x64.xml
+
+call :pauseOnError msbuild /p:Configuration="Release" /t:BuildTestsNetFx /p:Platform=Win32 /p:ReferenceType=Package
+call :pauseOnError dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" /p:Platform="Win32" /p:Configuration="Release" /p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests" /p:ReferenceType=Package -l:trx;LogFileName=..\..\..\..\..\artifacts\Results\package-net46-functional-win32.xml
+call :pauseOnError dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" /p:Platform="Win32" /p:Configuration="Release" /p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests" /p:ReferenceType=Package -l:trx;LogFileName=..\..\..\..\..\artifacts\Results\package-net46-manual-win32.xml
+
+call :pauseOnError msbuild /p:Configuration="Release" /t:BuildTestsNetFx /p:Platform=Win32 /p:TargetNetFxVersion=net48 /p:ReferenceType=Package
+call :pauseOnError dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" /p:Platform="Win32" /p:Configuration="Release" /p:TestTargetOS="Windowsnetfx" /p:TargetNetFxVersion=net48 --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests" /p:ReferenceType=Package -l:trx;LogFileName=..\..\..\..\..\artifacts\Results\package-net48-functional-Win32.xml
+call :pauseOnError dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" /p:Platform="Win32" /p:Configuration="Release" /p:TestTargetOS="Windowsnetfx" /p:TargetNetFxVersion=net48 --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests" /p:ReferenceType=Package -l:trx;LogFileName=..\..\..\..\..\artifacts\Results\package-net48-manual-Win32.xml
 
 goto :eof
 
