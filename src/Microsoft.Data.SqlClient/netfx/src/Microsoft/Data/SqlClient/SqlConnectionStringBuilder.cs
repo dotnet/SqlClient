@@ -233,15 +233,21 @@ namespace Microsoft.Data.SqlClient
             hash.Add(DbConnectionStringKeywords.Certificate,						Keywords.Certificate);
 #endif
             hash.Add(DbConnectionStringSynonyms.APP, Keywords.ApplicationName);
+            hash.Add(DbConnectionStringSynonyms.APPLICATIONINTENT, Keywords.ApplicationIntent);
             hash.Add(DbConnectionStringSynonyms.Async, Keywords.AsynchronousProcessing);
             hash.Add(DbConnectionStringSynonyms.EXTENDEDPROPERTIES, Keywords.AttachDBFilename);
             hash.Add(DbConnectionStringSynonyms.INITIALFILENAME, Keywords.AttachDBFilename);
             hash.Add(DbConnectionStringSynonyms.CONNECTIONTIMEOUT, Keywords.ConnectTimeout);
+            hash.Add(DbConnectionStringSynonyms.CONNECTRETRYCOUNT, Keywords.ConnectRetryCount);
+            hash.Add(DbConnectionStringSynonyms.CONNECTRETRYINTERVAL, Keywords.ConnectRetryInterval);
             hash.Add(DbConnectionStringSynonyms.TIMEOUT, Keywords.ConnectTimeout);
             hash.Add(DbConnectionStringSynonyms.LANGUAGE, Keywords.CurrentLanguage);
             hash.Add(DbConnectionStringSynonyms.ADDR, Keywords.DataSource);
             hash.Add(DbConnectionStringSynonyms.ADDRESS, Keywords.DataSource);
+            hash.Add(DbConnectionStringSynonyms.MULTIPLEACTIVERESULTSETS, Keywords.MultipleActiveResultSets);
+            hash.Add(DbConnectionStringSynonyms.MULTISUBNETFAILOVER, Keywords.MultiSubnetFailover);
             hash.Add(DbConnectionStringSynonyms.NETWORKADDRESS, Keywords.DataSource);
+            hash.Add(DbConnectionStringSynonyms.POOLBLOCKINGPERIOD, Keywords.PoolBlockingPeriod);
             hash.Add(DbConnectionStringSynonyms.SERVER, Keywords.DataSource);
             hash.Add(DbConnectionStringSynonyms.DATABASE, Keywords.InitialCatalog);
             hash.Add(DbConnectionStringSynonyms.TRUSTEDCONNECTION, Keywords.IntegratedSecurity);
@@ -250,6 +256,8 @@ namespace Microsoft.Data.SqlClient
             hash.Add(DbConnectionStringSynonyms.NETWORK, Keywords.NetworkLibrary);
             hash.Add(DbConnectionStringSynonyms.Pwd, Keywords.Password);
             hash.Add(DbConnectionStringSynonyms.PERSISTSECURITYINFO, Keywords.PersistSecurityInfo);
+            hash.Add(DbConnectionStringSynonyms.TRANSPARENTNETWORKIPRESOLUTION, Keywords.TransparentNetworkIPResolution);
+            hash.Add(DbConnectionStringSynonyms.TRUSTSERVERCERTIFICATE, Keywords.TrustServerCertificate);
             hash.Add(DbConnectionStringSynonyms.UID, Keywords.UserID);
             hash.Add(DbConnectionStringSynonyms.User, Keywords.UserID);
             hash.Add(DbConnectionStringSynonyms.WSID, Keywords.WorkstationID);
