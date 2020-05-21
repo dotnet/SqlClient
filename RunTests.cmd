@@ -144,7 +144,6 @@ call :pauseOnError msbuild /p:Configuration="Release" /t:BuildTestsNetCore /p:Ta
 call :pauseOnError dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" /p:Configuration="Release" /p:TestTargetOS="Windowsnetcoreapp" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonwindowstests" /p:Platform="AnyCPU" /p:TargetNetCoreVersion=netcoreapp5.0 /p:ReferenceType=Project -l:trx;LogFileName=..\..\..\..\..\artifacts\Results\project-netcore5.0-functional-anycpu.xml
 call :pauseOnError dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" /p:Configuration="Release" /p:TestTargetOS="Windowsnetcoreapp" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonwindowstests"  /p:Platform="AnyCPU" /p:TargetNetCoreVersion=netcoreapp5.0 /p:ReferenceType=Project -l:trx;LogFileName=..\..\..\..\..\artifacts\Results\project-netcore5.0-manual-anycpu.xml
 
-
 :: .NET FRAMEWORK REFERENCE TYPE "PROJECT"
 echo Building .NET Framework Tests
 call :pauseOnError msbuild /p:Configuration="Release"
