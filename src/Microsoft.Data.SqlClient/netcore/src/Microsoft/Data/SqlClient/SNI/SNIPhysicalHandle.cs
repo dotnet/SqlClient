@@ -78,8 +78,6 @@ namespace Microsoft.Data.SqlClient.SNI
         }
 
 #if DEBUG
-        
-        
         private string GetStackParts()
         {
             return string.Join(Environment.NewLine,

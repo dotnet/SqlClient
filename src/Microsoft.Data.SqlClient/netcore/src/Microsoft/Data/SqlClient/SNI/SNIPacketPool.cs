@@ -8,7 +8,7 @@ using System.Threading;
 namespace Microsoft.Data.SqlClient.SNI
 {
     // this is a very simple threadsafe pool derived from the aspnet/extensions default pool implementation
-    // https://github.com/aspnet/Extensions/blob/master/src/ObjectPool/src/DefaultObjectPool.cs
+    // https://github.com/dotnet/extensions/blob/release/3.1/src/ObjectPool/src/DefaultObjectPool.cs
     internal sealed class SNIPacketPool
     {
         private readonly PacketWrapper[] _items;
