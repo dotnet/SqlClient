@@ -15,7 +15,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static DateTime startTime = new DateTime();
         private static Guid clientConnectionId = Guid.Empty;
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void TestRetrieveStatistics()
         {
             startTime = DateTime.Now;

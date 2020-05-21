@@ -23,19 +23,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             RunTestSet(TestCase_AutoEnlistment_TxScopeNonComplete);
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void TestManualEnlistment_Enlist()
         {
             RunTestSet(TestCase_ManualEnlistment_Enlist);
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void TestManualEnlistment_NonEnlist()
         {
             RunTestSet(TestCase_ManualEnlistment_NonEnlist);
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void TestManualEnlistment_Enlist_TxScopeComplete()
         {
             RunTestSet(TestCase_ManualEnlistment_Enlist_TxScopeComplete);

@@ -10,7 +10,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class TransactionTest
     {
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void TestMain()
         {
             new TransactionTestWorker((new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { MultipleActiveResultSets = true }).ConnectionString).StartTest();

@@ -5,12 +5,13 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class SqlAdapterUpdateBatch
     {
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void SqlAdapterTest()
         {
             string tableName = DataTestUtility.GetUniqueNameForSqlServer("Adapter");
