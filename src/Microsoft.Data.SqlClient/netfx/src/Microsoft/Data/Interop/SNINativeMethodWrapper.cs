@@ -18,9 +18,8 @@ namespace Microsoft.Data.SqlClient
 {
     internal static class SNINativeMethodWrapper
     {
-        private const string SNI = "SNI.dll";
-
         private static int s_sniMaxComposedSpnLength = -1;
+        private static readonly bool s_is64bitProcess = Environment.Is64BitProcess;
 
         private const int SniOpenTimeOut = -1; // infinite
 
@@ -51,20 +50,6 @@ namespace Microsoft.Data.SqlClient
         internal const int LocalDBInvalidSqlUserInstanceDllPath = 55;
         internal const int LocalDBFailedToLoadDll = 56;
         internal const int LocalDBBadRuntime = 57;
-
-        static SNINativeMethodWrapper()
-        {
-            var localPath = new Uri(typeof(SNINativeMethodWrapper).Assembly.CodeBase).LocalPath;
-            var localFolder = Path.GetDirectoryName(localPath);
-            var subfolder = Environment.Is64BitProcess ? "\\x64\\" : "\\x86\\";
-
-            IntPtr pDll = LoadLibrary(localFolder + subfolder + SNI);
-            if (pDll == IntPtr.Zero)
-            {
-                throw new System.ComponentModel.Win32Exception("Failed to load " + localFolder + subfolder + SNI,
-                    new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error()));
-            }
-        }
 
         internal static int SniMaxComposedSpnLength
         {
@@ -333,7 +318,7 @@ namespace Microsoft.Data.SqlClient
         };
 
         [StructLayout(LayoutKind.Sequential)]
-        private struct Sni_Consumer_Info
+        internal struct Sni_Consumer_Info
         {
             public int DefaultUserDataLength;
             public IntPtr ConsumerKey;
@@ -347,7 +332,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        private unsafe struct SNI_CLIENT_CONSUMER_INFO
+        internal unsafe struct SNI_CLIENT_CONSUMER_INFO
         {
             public Sni_Consumer_Info ConsumerInfo;
             [MarshalAs(UnmanagedType.LPWStr)]
@@ -393,97 +378,228 @@ namespace Microsoft.Data.SqlClient
         [DllImport("secur32.dll", ExactSpelling = true, SetLastError = true)]
         internal static extern uint QueryContextAttributes(ref CredHandle contextHandle, [In] ContextAttribute attribute, [In] IntPtr buffer);
 
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNIAddProviderWrapper")]
-        internal static extern uint SNIAddProvider(SNIHandle pConn, ProviderEnum ProvNum, [In] ref uint pInfo);
+        internal static uint SNIAddProvider(SNIHandle pConn, ProviderEnum ProvNum, [In] ref uint pInfo)
+        {
+            return s_is64bitProcess ?
+                SNINativeManagedWrapperX64.SNIAddProvider(pConn, ProvNum, ref pInfo) :
+                SNINativeManagedWrapperX86.SNIAddProvider(pConn, ProvNum, ref pInfo);
+        }
 
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNIAddProviderWrapper")]
-        internal static extern uint SNIAddProviderWrapper(SNIHandle pConn, ProviderEnum ProvNum, [In] ref SNICTAIPProviderInfo pInfo);
+        internal static uint SNIAddProviderWrapper(SNIHandle pConn, ProviderEnum ProvNum, [In] ref SNICTAIPProviderInfo pInfo)
+        {
+            return s_is64bitProcess ?
+                SNINativeManagedWrapperX64.SNIAddProviderWrapper(pConn, ProvNum, ref pInfo) :
+                SNINativeManagedWrapperX86.SNIAddProviderWrapper(pConn, ProvNum, ref pInfo);
+        }
 
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNIAddProviderWrapper")]
-        internal static extern uint SNIAddProviderWrapper(SNIHandle pConn, ProviderEnum ProvNum, [In] ref AuthProviderInfo pInfo);
+        internal static uint SNIAddProviderWrapper(SNIHandle pConn, ProviderEnum ProvNum, [In] ref AuthProviderInfo pInfo)
+        {
+            return s_is64bitProcess ?
+                SNINativeManagedWrapperX64.SNIAddProviderWrapper(pConn, ProvNum, ref pInfo) :
+                SNINativeManagedWrapperX86.SNIAddProviderWrapper(pConn, ProvNum, ref pInfo);
+        }
 
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNICheckConnectionWrapper")]
-        internal static extern uint SNICheckConnection([In] SNIHandle pConn);
+        internal static uint SNICheckConnection([In] SNIHandle pConn)
+        {
+            return s_is64bitProcess ?
+                SNINativeManagedWrapperX64.SNICheckConnection(pConn) :
+                SNINativeManagedWrapperX86.SNICheckConnection(pConn);
+        }
 
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNICloseWrapper")]
-        internal static extern uint SNIClose(IntPtr pConn);
+        internal static uint SNIClose(IntPtr pConn)
+        {
+            return s_is64bitProcess ?
+                SNINativeManagedWrapperX64.SNIClose(pConn) :
+                SNINativeManagedWrapperX86.SNIClose(pConn);
+        }
 
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void SNIGetLastError(out SNI_Error pErrorStruct);
+        internal static void SNIGetLastError(out SNI_Error pErrorStruct)
+        {
+            if (s_is64bitProcess)
+            {
+                SNINativeManagedWrapperX64.SNIGetLastError(out pErrorStruct);
+            }
+            else
+            {
+                SNINativeManagedWrapperX86.SNIGetLastError(out pErrorStruct);
+            }
+        }
 
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void SNIPacketRelease(IntPtr pPacket);
+        internal static void SNIPacketRelease(IntPtr pPacket)
+        {
+            if (s_is64bitProcess)
+            {
+                SNINativeManagedWrapperX64.SNIPacketRelease(pPacket);
+            }
+            else
+            {
+                SNINativeManagedWrapperX86.SNIPacketRelease(pPacket);
+            }
+        }
 
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNIPacketResetWrapper")]
-        internal static extern void SNIPacketReset([In] SNIHandle pConn, IOType IOType, SNIPacket pPacket, ConsumerNumber ConsNum);
+        internal static void SNIPacketReset([In] SNIHandle pConn, IOType IOType, SNIPacket pPacket, ConsumerNumber ConsNum)
+        {
+            if (s_is64bitProcess)
+            {
+                SNINativeManagedWrapperX64.SNIPacketReset(pConn, IOType, pPacket, ConsNum);
+            }
+            else
+            {
+                SNINativeManagedWrapperX86.SNIPacketReset(pConn, IOType, pPacket, ConsNum);
+            }
+        }
 
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern uint SNIQueryInfo(QTypes QType, ref uint pbQInfo);
+        internal static uint SNIQueryInfo(QTypes QType, ref uint pbQInfo)
+        {
+            return s_is64bitProcess ?
+                SNINativeManagedWrapperX64.SNIQueryInfo(QType, ref pbQInfo) :
+                SNINativeManagedWrapperX86.SNIQueryInfo(QType, ref pbQInfo);
+        }
 
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern uint SNIQueryInfo(QTypes QType, ref IntPtr pbQInfo);
+        internal static uint SNIQueryInfo(QTypes QType, ref IntPtr pbQInfo)
+        {
+            return s_is64bitProcess ?
+                SNINativeManagedWrapperX64.SNIQueryInfo(QType, ref pbQInfo) :
+                SNINativeManagedWrapperX86.SNIQueryInfo(QType, ref pbQInfo);
+        }
 
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNIReadAsyncWrapper")]
-        internal static extern uint SNIReadAsync(SNIHandle pConn, ref IntPtr ppNewPacket);
+        internal static uint SNIReadAsync(SNIHandle pConn, ref IntPtr ppNewPacket)
+        {
+            return s_is64bitProcess ?
+                SNINativeManagedWrapperX64.SNIReadAsync(pConn, ref ppNewPacket) :
+                SNINativeManagedWrapperX86.SNIReadAsync(pConn, ref ppNewPacket);
+        }
 
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern uint SNIReadSyncOverAsync(SNIHandle pConn, ref IntPtr ppNewPacket, int timeout);
+        internal static uint SNIReadSyncOverAsync(SNIHandle pConn, ref IntPtr ppNewPacket, int timeout)
+        {
+            return s_is64bitProcess ?
+                SNINativeManagedWrapperX64.SNIReadSyncOverAsync(pConn, ref ppNewPacket, timeout) :
+                SNINativeManagedWrapperX86.SNIReadSyncOverAsync(pConn, ref ppNewPacket, timeout);
+        }
 
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNIRemoveProviderWrapper")]
-        internal static extern uint SNIRemoveProvider(SNIHandle pConn, ProviderEnum ProvNum);
+        internal static uint SNIRemoveProvider(SNIHandle pConn, ProviderEnum ProvNum)
+        {
+            return s_is64bitProcess ?
+                SNINativeManagedWrapperX64.SNIRemoveProvider(pConn, ProvNum) :
+                SNINativeManagedWrapperX86.SNIRemoveProvider(pConn, ProvNum);
+        }
 
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern uint SNISecInitPackage(ref uint pcbMaxToken);
+        internal static uint SNISecInitPackage(ref uint pcbMaxToken)
+        {
+            return s_is64bitProcess ?
+                SNINativeManagedWrapperX64.SNISecInitPackage(ref pcbMaxToken) :
+                SNINativeManagedWrapperX86.SNISecInitPackage(ref pcbMaxToken);
+        }
 
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNISetInfoWrapper")]
-        internal static extern uint SNISetInfo(SNIHandle pConn, QTypes QType, [In] ref uint pbQInfo);
+        internal static uint SNISetInfo(SNIHandle pConn, QTypes QType, [In] ref uint pbQInfo)
+        {
+            return s_is64bitProcess ?
+                SNINativeManagedWrapperX64.SNISetInfo(pConn, QType, ref pbQInfo) :
+                SNINativeManagedWrapperX86.SNISetInfo(pConn, QType, ref pbQInfo);
+        }
 
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern uint SNITerminate();
+        internal static uint SNITerminate()
+        {
+            return s_is64bitProcess ?
+                SNINativeManagedWrapperX64.SNITerminate() :
+                SNINativeManagedWrapperX86.SNITerminate();
+        }
 
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNIWaitForSSLHandshakeToCompleteWrapper")]
-        internal static extern uint SNIWaitForSSLHandshakeToComplete([In] SNIHandle pConn, int dwMilliseconds);
+        internal static uint SNIWaitForSSLHandshakeToComplete([In] SNIHandle pConn, int dwMilliseconds)
+        {
+            return s_is64bitProcess ?
+                SNINativeManagedWrapperX64.SNIWaitForSSLHandshakeToComplete(pConn, dwMilliseconds) :
+                SNINativeManagedWrapperX86.SNIWaitForSSLHandshakeToComplete(pConn, dwMilliseconds);
+        }
 
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern uint UnmanagedIsTokenRestricted([In] IntPtr token, [MarshalAs(UnmanagedType.Bool)] out bool isRestricted);
+        internal static uint UnmanagedIsTokenRestricted([In] IntPtr token, [MarshalAs(UnmanagedType.Bool)] out bool isRestricted)
+        {
+            return s_is64bitProcess ?
+                SNINativeManagedWrapperX64.UnmanagedIsTokenRestricted(token, out isRestricted) :
+                SNINativeManagedWrapperX86.UnmanagedIsTokenRestricted(token, out isRestricted);
+        }
 
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-        private static extern uint GetSniMaxComposedSpnLength();
+        private static uint GetSniMaxComposedSpnLength()
+        {
+            return s_is64bitProcess ?
+                SNINativeManagedWrapperX64.GetSniMaxComposedSpnLength() :
+                SNINativeManagedWrapperX86.GetSniMaxComposedSpnLength();
+        }
 
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-        private static extern uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, out Guid pbQInfo);
+        private static uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, out Guid pbQInfo)
+        {
+            return s_is64bitProcess ?
+                SNINativeManagedWrapperX64.SNIGetInfoWrapper(pConn, QType, out pbQInfo) :
+                SNINativeManagedWrapperX86.SNIGetInfoWrapper(pConn, QType, out pbQInfo);
+        }
 
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-        private static extern uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, [MarshalAs(UnmanagedType.Bool)] out bool pbQInfo);
+        private static uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, [MarshalAs(UnmanagedType.Bool)] out bool pbQInfo)
+        {
+            return s_is64bitProcess ?
+                SNINativeManagedWrapperX64.SNIGetInfoWrapper(pConn, QType, out pbQInfo) :
+                SNINativeManagedWrapperX86.SNIGetInfoWrapper(pConn, QType, out pbQInfo);
+        }
 
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-        private static extern uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, ref IntPtr pbQInfo);
+        private static uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, ref IntPtr pbQInfo)
+        {
+            return s_is64bitProcess ?
+                SNINativeManagedWrapperX64.SNIGetInfoWrapper(pConn, QType, ref pbQInfo) :
+                SNINativeManagedWrapperX86.SNIGetInfoWrapper(pConn, QType, ref pbQInfo);
+        }
 
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNIInitialize")]
-        private static extern uint SNIInitialize([In] IntPtr pmo);
+        private static uint SNIInitialize([In] IntPtr pmo)
+        {
+            return s_is64bitProcess ?
+                SNINativeManagedWrapperX64.SNIInitialize(pmo) :
+                SNINativeManagedWrapperX86.SNIInitialize(pmo);
+        }
 
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-        private static extern uint SNIOpenSyncExWrapper(ref SNI_CLIENT_CONSUMER_INFO pClientConsumerInfo, out IntPtr ppConn);
+        private static uint SNIOpenSyncExWrapper(ref SNI_CLIENT_CONSUMER_INFO pClientConsumerInfo, out IntPtr ppConn)
+        {
+            return s_is64bitProcess ?
+                SNINativeManagedWrapperX64.SNIOpenSyncExWrapper(ref pClientConsumerInfo, out ppConn) :
+                SNINativeManagedWrapperX86.SNIOpenSyncExWrapper(ref pClientConsumerInfo, out ppConn);
+        }
 
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-        private static extern uint SNIOpenWrapper(
+        private static uint SNIOpenWrapper(
             [In] ref Sni_Consumer_Info pConsumerInfo,
             [MarshalAs(UnmanagedType.LPWStr)] string szConnect,
             [In] SNIHandle pConn,
             out IntPtr ppConn,
-            [MarshalAs(UnmanagedType.Bool)] bool fSync);
+            [MarshalAs(UnmanagedType.Bool)] bool fSync)
+        {
+            return s_is64bitProcess ?
+                SNINativeManagedWrapperX64.SNIOpenWrapper(ref pConsumerInfo, szConnect, pConn, out ppConn, fSync) :
+                SNINativeManagedWrapperX86.SNIOpenWrapper(ref pConsumerInfo, szConnect, pConn, out ppConn, fSync);
+        }
 
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-        private static extern IntPtr SNIPacketAllocateWrapper([In] SafeHandle pConn, IOType IOType);
+        private static IntPtr SNIPacketAllocateWrapper([In] SafeHandle pConn, IOType IOType)
+        {
+            return s_is64bitProcess ?
+                SNINativeManagedWrapperX64.SNIPacketAllocateWrapper(pConn, IOType) :
+                SNINativeManagedWrapperX86.SNIPacketAllocateWrapper(pConn, IOType);
+        }
 
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-        private static extern uint SNIPacketGetDataWrapper([In] IntPtr packet, [In, Out] byte[] readBuffer, uint readBufferLength, out uint dataSize);
+        private static uint SNIPacketGetDataWrapper([In] IntPtr packet, [In, Out] byte[] readBuffer, uint readBufferLength, out uint dataSize)
+        {
+            return s_is64bitProcess ?
+                SNINativeManagedWrapperX64.SNIPacketGetDataWrapper(packet, readBuffer, readBufferLength, out dataSize) :
+                SNINativeManagedWrapperX86.SNIPacketGetDataWrapper(packet, readBuffer, readBufferLength, out dataSize);
+        }
 
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-        private static extern unsafe void SNIPacketSetData(SNIPacket pPacket, [In] byte* pbBuf, uint cbBuf);
+        private static unsafe void SNIPacketSetData(SNIPacket pPacket, [In] byte* pbBuf, uint cbBuf)
+        {
+            if (s_is64bitProcess)
+            {
+                SNINativeManagedWrapperX64.SNIPacketSetData(pPacket, pbBuf, cbBuf);
+            }
+            else
+            {
+                SNINativeManagedWrapperX86.SNIPacketSetData(pPacket, pbBuf, cbBuf);
+            }
+        }
 
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNISecGenClientContextWrapper")]
-        private static extern unsafe uint SNISecGenClientContextWrapper(
+        private static unsafe uint SNISecGenClientContextWrapper(
             [In] SNIHandle pConn,
             [In, Out] byte[] pIn,
             uint cbIn,
@@ -493,16 +609,33 @@ namespace Microsoft.Data.SqlClient
             byte* szServerInfo,
             uint cbServerInfo,
             [MarshalAsAttribute(UnmanagedType.LPWStr)] string pwszUserName,
-            [MarshalAsAttribute(UnmanagedType.LPWStr)] string pwszPassword);
+            [MarshalAsAttribute(UnmanagedType.LPWStr)] string pwszPassword)
+        {
+            return s_is64bitProcess ?
+                SNINativeManagedWrapperX64.SNISecGenClientContextWrapper(pConn, pIn, cbIn, pOut, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword) :
+                SNINativeManagedWrapperX86.SNISecGenClientContextWrapper(pConn, pIn, cbIn, pOut, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
+        }
 
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-        private static extern uint SNIWriteAsyncWrapper(SNIHandle pConn, [In] SNIPacket pPacket);
+        private static uint SNIWriteAsyncWrapper(SNIHandle pConn, [In] SNIPacket pPacket)
+        {
+            return s_is64bitProcess ?
+                SNINativeManagedWrapperX64.SNIWriteAsyncWrapper(pConn, pPacket) :
+                SNINativeManagedWrapperX86.SNIWriteAsyncWrapper(pConn, pPacket);
+        }
 
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-        private static extern uint SNIWriteSyncOverAsync(SNIHandle pConn, [In] SNIPacket pPacket);
+        private static uint SNIWriteSyncOverAsync(SNIHandle pConn, [In] SNIPacket pPacket)
+        {
+            return s_is64bitProcess ?
+                SNINativeManagedWrapperX64.SNIWriteSyncOverAsync(pConn, pPacket) :
+                SNINativeManagedWrapperX86.SNIWriteSyncOverAsync(pConn, pPacket);
+        }
 
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-        private static extern IntPtr SNIClientCertificateFallbackWrapper(IntPtr pCallbackContext);
+        private static IntPtr SNIClientCertificateFallbackWrapper(IntPtr pCallbackContext)
+        {
+            return s_is64bitProcess ?
+                SNINativeManagedWrapperX64.SNIClientCertificateFallbackWrapper(pCallbackContext) :
+                SNINativeManagedWrapperX86.SNIClientCertificateFallbackWrapper(pCallbackContext);
+        }
         #endregion
 
         internal static uint SNISecGetServerCertificate(SNIHandle pConnectionObject, ref X509Certificate2 certificate)

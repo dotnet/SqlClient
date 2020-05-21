@@ -1,14 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <AssemblyName>FunctionalTests</AssemblyName>
     <TargetGroup Condition="$(TargetFramework.StartsWith('netcoreapp'))">netcoreapp</TargetGroup>
     <TargetGroup Condition="$(TargetFramework.StartsWith('net4'))">netfx</TargetGroup>
     <Configurations>Debug;Release;net46-Release;net46-Debug;netcoreapp2.1-Debug;netcoreapp2.1-Release;netcoreapp3.1-Debug;netcoreapp3.1-Release</Configurations>
     <Platforms>AnyCPU;x86;x64</Platforms>
-    <IntermediateOutputPath>$(ObjFolder)$(Configuration).FunctionalTests</IntermediateOutputPath>
-    <OutputPath>$(BinFolder)$(Configuration).FunctionalTests</OutputPath>
+    <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform).$(AssemblyName)</IntermediateOutputPath>
+    <OutputPath>$(BinFolder)$(Configuration).$(Platform).$(AssemblyName)</OutputPath>
   </PropertyGroup>
-  <ItemGroup>
+  <ItemGroup Condition="!$(ReferenceType.Contains('NetStandard'))">
     <Compile Include="AlwaysEncryptedTests\ConnectionStringBuilderShould.cs" />
     <Compile Include="AlwaysEncryptedTests\DummyKeyStoreProvider.cs" />
     <Compile Include="AlwaysEncryptedTests\ExceptionRegisterKeyStoreProvider.cs" />
@@ -21,6 +22,8 @@
     <Compile Include="AlwaysEncryptedTests\SqlConnectionShould.cs" />
     <Compile Include="AlwaysEncryptedTests\TestFixtures.cs" />
     <Compile Include="AlwaysEncryptedTests\Utility.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <Compile Include="SqlCommandBuilderTest.cs" />
     <Compile Include="SqlBulkCopyTest.cs" />
     <Compile Include="SqlClientMetaDataCollectionNamesTest.cs" />
@@ -52,7 +55,7 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNETTestSdkVersion)" />
     <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="$(SystemDiagnosticsDiagnosticSourceVersion)" />
     <PackageReference Include="Newtonsoft.Json" Version="$(NewtonsoftJsonVersion)" />
-    <Reference Include="System.Transactions" />
+    <Reference Condition="'$(TargetGroup)'=='netfx' OR '$(TargetFramework)'=='netcoreapp2.1'" Include="System.Transactions" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.1'">
     <PackageReference Include="System.Data.Odbc" Version="$(SystemDataOdbcVersion21)" />
@@ -60,7 +63,7 @@
   <ItemGroup Condition="'$(TargetFramework)' != 'netcoreapp2.1' AND '$(TargetGroup)' == 'netcoreapp'">
     <PackageReference Include="System.Data.Odbc" Version="$(SystemDataOdbcVersion)" />
   </ItemGroup>
-  <ItemGroup  Condition="$(TargetFramework.StartsWith('netcoreapp'))">
+  <ItemGroup Condition="$(TargetFramework.StartsWith('netcoreapp'))">
     <Compile Include="SslOverTdsStreamTest.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -82,10 +85,13 @@
     <ProjectReference Include="$(TestsPath)tools\Microsoft.DotNet.XUnitExtensions\Microsoft.DotNet.XUnitExtensions.csproj">
       <Name>Microsoft.DotNet.XUnitExtensions</Name>
     </ProjectReference>
-    <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
-    <ProjectReference Condition="'$(TargetGroup)'=='netfx'" Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
+    <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp' AND $(ReferenceType)=='Project'" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
+    <ProjectReference Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
+    <ProjectReference Condition="!$(ReferenceType.Contains('NetStandard'))" Include="$(AddOnsPath)AzureKeyVaultProvider\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
+    <ProjectReference Condition="$(ReferenceType.Contains('NetStandard'))" Include="$(TestsPath)NSLibrary\Microsoft.Data.SqlClient.NSLibrary.csproj" />
+    <PackageReference Condition="$(ReferenceType)=='Package'" Include="Microsoft.Data.SqlClient" Version="$(TestMicrosoftDataSqlClientVersion)" />
   </ItemGroup>
   <ItemGroup>
-    <None Condition="'$(TargetGroup)'=='netfx'" Include="$(BinFolder)$(Configuration).AnyCPU\Microsoft.Data.SqlClient\netfx\**\SNI.dll" CopyToOutputDirectory="PreserveNewest" />
+    <None Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(BinFolder)$(Configuration).AnyCPU\Microsoft.Data.SqlClient\netfx\**\*SNI*.dll" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

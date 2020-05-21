@@ -667,7 +667,7 @@
     <PackageReference Include="System.Security.Permissions" Version="$(SystemSecurityPermissionsVersion)" />
     <PackageReference Include="System.Security.Principal.Windows" Version="$(SystemSecurityPrincipalWindowsVersion)" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="$(SystemTextEncodingCodePagesVersion)" />
-    <PackageReference Include="runtime.native.System.Data.SqlClient.sni" Version="$(RuntimeNativeSystemDataSqlClientSNIVersion)" />
+    <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" Version="$(MicrosoftDataSqlClientSNIRuntimeVersion)" />
     <PackageReference Condition="$(TargetGroup) == 'netcoreapp' " Include="System.Diagnostics.DiagnosticSource" Version="$(SystemDiagnosticsDiagnosticSourceVersion)" />
     <PackageReference Include="System.Threading.Tasks" Version="$(SystemThreadingTasksVersion)" />
     <PackageReference Include="System.Memory" Version="$(SystemMemoryVersion)" />

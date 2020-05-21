@@ -3,6 +3,11 @@
   
   <!-- Import parent Directory.build.props -->
   <Import Project="..\..\Directory.Build.props" />
+  
+  <PropertyGroup>
+    <ReferenceType Condition="'$(ReferenceType)'==''">Project</ReferenceType>
+  </PropertyGroup>
+
   <Choose>
     <!-- Set Default Target Framework when building for Debug and Release configurations. (Visual Studio) -->
     <When Condition="'$(TestTargetOS)' == '' AND ('$(Configuration)' == 'Debug' OR '$(Configuration)' == 'Release')">
