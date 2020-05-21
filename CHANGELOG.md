@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Preview Release 2.0.0-preview4.20142.4 ] - 2020-05-21
+
+### Added
+- **Microsoft.Data.SqlClient.SNI.runtime** is now the new dependency for Microsoft.Data.SqlClient (.NET Core and .NET Standard) on Windows, that replaces the old library **runtime.native.System.Data.SqlClient.SNI** [#570](https://github.com/dotnet/SqlClient/pull/570)
+- The new **Microsoft.Data.SqlClient.SNI.runtime** dependency adds support for *ARM* platform alongwith already supported *ARM64*, *x64* and *x86* on Windows [#570](https://github.com/dotnet/SqlClient/pull/570)
+- Improved driver performance by introducing managed packet recycling [#389](https://github.com/dotnet/SqlClient/pull/389)
+
+### Fixed
+- Fixed `SqlBulkCopy` to work with database columns containing metadata about sensitivity classification [#568](https://github.com/dotnet/SqlClient/pull/568)
+- Fixed unsafe cast in `SqlException` for `SerializationEntry.Value` 
+- Fixed null reference exceptions in `SqlDelegatedTransaction` methods [#563](https://github.com/dotnet/SqlClient/pull/563)
+
+### Changes
+- Standardized connection string properties for enhanced user experience [#534](https://github.com/dotnet/SqlClient/pull/534)
+- Improved performance by reducing eventsource tracing related allocations from TVP write methods [#557](https://github.com/dotnet/SqlClient/pull/557) [#564](https://github.com/dotnet/SqlClient/pull/564)
+
+### Breaking Changes
+- For .NET Framework applications consuming **Microsoft.Data.SqlClient**, the `SNI.dll` files previously downloaded to `bin\x64` and `bin\x86` folders are now renamed to `Microsoft.Data.SqlClient.SNI.x64.dll` and `Microsoft.Data.SqlClient.SNI.x86.dll` and will be downloaded to `bin` directory, to support auto-loading in application process [#570](https://github.com/dotnet/SqlClient/pull/570). This change is not going to impact client applications unless a direct reference has been made to `SNI.dll` 
+
+
 ## [Stable Release 1.1.3] - 2020-05-15
 
 ### Fixed
