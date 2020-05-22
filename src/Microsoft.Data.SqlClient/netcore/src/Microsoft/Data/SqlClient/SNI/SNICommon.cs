@@ -3,8 +3,11 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.IO;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClient.SNI
 {
@@ -97,6 +100,46 @@ namespace Microsoft.Data.SqlClient.SNI
         SMUX_ACK = 2,       // Acknowledge SMUX packets
         SMUX_FIN = 4,       // End SMUX connection
         SMUX_DATA = 8       // SMUX data packet
+    }
+
+    internal class SslStreamAsync : SslStream
+    {
+        private Task _currentTask;
+
+        #region constructors
+        public SslStreamAsync(Stream innerStream) : base(innerStream)
+        {
+        }
+
+        public SslStreamAsync(Stream innerStream, bool leaveInnerStreamOpen) : base(innerStream, leaveInnerStreamOpen)
+        {
+        }
+
+        public SslStreamAsync(Stream innerStream, bool leaveInnerStreamOpen, RemoteCertificateValidationCallback userCertificateValidationCallback) : base(innerStream, leaveInnerStreamOpen, userCertificateValidationCallback)
+        {
+        }
+
+        public SslStreamAsync(Stream innerStream, bool leaveInnerStreamOpen, RemoteCertificateValidationCallback userCertificateValidationCallback, LocalCertificateSelectionCallback userCertificateSelectionCallback) : base(innerStream, leaveInnerStreamOpen, userCertificateValidationCallback, userCertificateSelectionCallback)
+        {
+        }
+
+        public SslStreamAsync(Stream innerStream, bool leaveInnerStreamOpen, RemoteCertificateValidationCallback userCertificateValidationCallback, LocalCertificateSelectionCallback userCertificateSelectionCallback, EncryptionPolicy encryptionPolicy) : base(innerStream, leaveInnerStreamOpen, userCertificateValidationCallback, userCertificateSelectionCallback, encryptionPolicy)
+        {
+        }
+        #endregion
+
+        /// <summary>
+        /// Prevent the InvalidOperationException
+        /// </summary>
+        public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        {
+            if (_currentTask != null && _currentTask.Status != TaskStatus.RanToCompletion)
+            {
+                _currentTask.Wait(cancellationToken);
+            }
+            _currentTask = base.WriteAsync(buffer, offset, count, cancellationToken);
+            return _currentTask;
+        }
     }
 
     internal class SNICommon

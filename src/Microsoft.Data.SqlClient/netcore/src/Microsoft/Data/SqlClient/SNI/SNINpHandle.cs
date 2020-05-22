@@ -93,7 +93,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
 
                 _sslOverTdsStream = new SslOverTdsStream(_pipeStream);
-                _sslStream = new SslStream(_sslOverTdsStream, true, new RemoteCertificateValidationCallback(ValidateServerCertificate), null);
+                _sslStream = new SslStreamAsync(_sslOverTdsStream, true, new RemoteCertificateValidationCallback(ValidateServerCertificate), null);
 
                 _stream = _pipeStream;
                 _status = TdsEnums.SNI_SUCCESS;
@@ -310,9 +310,9 @@ namespace Microsoft.Data.SqlClient.SNI
         public override uint SendAsync(SNIPacket packet, bool disposePacketAfterSendAsync, SNIAsyncCallback callback = null)
         {
             long scopeID = SqlClientEventSource.Log.SNIScopeEnterEvent("<sc.SNI.SNINpHandle.SendAsync |SNI|SCOPE>");
+            SNIAsyncCallback cb = callback ?? _sendCallback;
             try
             {
-                SNIAsyncCallback cb = callback ?? _sendCallback;
                 packet.WriteToStreamAsync(_stream, cb, SNIProviders.NP_PROV, disposePacketAfterSendAsync);
                 return TdsEnums.SNI_SUCCESS_IO_PENDING;
             }

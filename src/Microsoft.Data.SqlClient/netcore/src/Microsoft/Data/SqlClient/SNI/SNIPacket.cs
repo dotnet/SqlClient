@@ -251,21 +251,25 @@ namespace Microsoft.Data.SqlClient.SNI
         public async void WriteToStreamAsync(Stream stream, SNIAsyncCallback callback, SNIProviders provider, bool disposeAfterWriteAsync = false)
         {
             uint status = TdsEnums.SNI_SUCCESS;
-            try
-            {
-                await stream.WriteAsync(_data, 0, _dataLength, CancellationToken.None).ConfigureAwait(false);
-            }
-            catch (Exception e)
-            {
-                SNILoadHandle.SingletonInstance.LastError = new SNIError(provider, SNICommon.InternalExceptionError, e);
-                status = TdsEnums.SNI_ERROR;
-            }
-            callback(this, status);
 
-            if (disposeAfterWriteAsync)
+            await stream.WriteAsync(_data, 0, _dataLength, CancellationToken.None).ContinueWith(t =>
             {
-                Dispose();
-            }
+                Exception e = t.Exception?.InnerException;
+                if (e != null)
+                {
+                    SNILoadHandle.SingletonInstance.LastError = new SNIError(provider, SNICommon.InternalExceptionError, e);
+                    status = TdsEnums.SNI_ERROR;
+                    Release();
+                }
+                callback(this, status);
+                if (disposeAfterWriteAsync)
+                {
+                    Dispose();
+                }
+            },
+            CancellationToken.None,
+            TaskContinuationOptions.DenyChildAttach,
+            TaskScheduler.Default);
         }
 
         /// <summary>

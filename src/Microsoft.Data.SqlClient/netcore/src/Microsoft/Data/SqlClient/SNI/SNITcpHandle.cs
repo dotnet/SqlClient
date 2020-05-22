@@ -3,8 +3,10 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Data;
 using System.IO;
 using System.Net;
 using System.Net.Security;
@@ -164,7 +166,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 _tcpStream = new NetworkStream(_socket, true);
 
                 _sslOverTdsStream = new SslOverTdsStream(_tcpStream);
-                _sslStream = new SslStream(_sslOverTdsStream, true, new RemoteCertificateValidationCallback(ValidateServerCertificate), null);
+                _sslStream = new SslStreamAsync(_sslOverTdsStream, true, new RemoteCertificateValidationCallback(ValidateServerCertificate), null);
             }
             catch (SocketException se)
             {
@@ -201,7 +203,7 @@ namespace Microsoft.Data.SqlClient.SNI
             Socket[] sockets = new Socket[2];
 
             CancellationTokenSource cts = null;
-            
+
             void Cancel()
             {
                 for (int i = 0; i < sockets.Length; ++i)
@@ -225,7 +227,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
 
             Socket availableSocket = null;
-            try 
+            try
             {
                 for (int i = 0; i < sockets.Length; ++i)
                 {
@@ -577,12 +579,23 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error code</returns>
         public override uint SendAsync(SNIPacket packet, bool disposePacketAfterSendAsync, SNIAsyncCallback callback = null)
         {
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnterEvent("<sc.SNI.SNITcpHandle.SendAsync |SNI|SCOPE>");
+            SNIPacket errorPacket;
             SNIAsyncCallback cb = callback ?? _sendCallback;
-            lock (this)
+            try
             {
                 packet.WriteToStreamAsync(_stream, cb, SNIProviders.TCP_PROV, disposePacketAfterSendAsync);
+                return TdsEnums.SNI_SUCCESS_IO_PENDING;
             }
-            return TdsEnums.SNI_SUCCESS_IO_PENDING;
+            catch (Exception e) when (e is ObjectDisposedException || e is InvalidOperationException || e is IOException)
+            {
+                errorPacket = packet;
+                return ReportErrorAndReleasePacket(errorPacket, e);
+            }
+            finally
+            {
+                SqlClientEventSource.Log.SNIScopeLeaveEvent(scopeID);
+            }
         }
 
         /// <summary>
