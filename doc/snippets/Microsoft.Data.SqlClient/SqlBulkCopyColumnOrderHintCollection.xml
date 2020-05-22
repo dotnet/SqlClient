@@ -74,7 +74,7 @@ it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to c
 
 ## Examples
 The following example bulk copies data from a source table in the **AdventureWorks** sample database to a destination table in the same database. 
-A SqlBulkCopyColumnOrderHint object is added to the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnOrderHints> by providing the destination column name and its sort order.
+A SqlBulkCopyColumnOrderHint object is added to the <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection> by providing the destination column name and its sort order.
 
 > [!IMPORTANT]
 > This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md). 
