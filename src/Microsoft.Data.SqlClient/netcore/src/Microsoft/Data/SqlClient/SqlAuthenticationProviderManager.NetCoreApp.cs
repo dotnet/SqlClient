@@ -22,9 +22,9 @@ namespace Microsoft.Data.SqlClient
             {
                 configurationSection = (SqlAuthenticationProviderConfigurationSection)ConfigurationManager.GetSection(SqlAuthenticationProviderConfigurationSection.Name);
             }
-            catch (ConfigurationErrorsException e)
+            catch (ConfigurationErrorsException)
             {
-                throw SQL.CannotGetAuthProviderConfig(e);
+                configurationSection = null;
             }
 
             Instance = new SqlAuthenticationProviderManager(configurationSection);
