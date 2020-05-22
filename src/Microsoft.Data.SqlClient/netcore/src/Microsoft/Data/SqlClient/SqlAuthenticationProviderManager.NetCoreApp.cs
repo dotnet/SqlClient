@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient
         static SqlAuthenticationProviderManager()
         {
             var activeDirectoryAuthNativeProvider = new ActiveDirectoryNativeAuthenticationProvider();
-            SqlAuthenticationProviderConfigurationSection configurationSection;
+            SqlAuthenticationProviderConfigurationSection configurationSection = null;
 
             try
             {
@@ -24,7 +24,7 @@ namespace Microsoft.Data.SqlClient
             }
             catch (ConfigurationErrorsException)
             {
-                configurationSection = null;
+                // Don't throw an error for invalid config files
             }
 
             Instance = new SqlAuthenticationProviderManager(configurationSection);
