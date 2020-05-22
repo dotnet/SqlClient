@@ -6,7 +6,6 @@ using System.Diagnostics;
 
 namespace Microsoft.Data.SqlClient.Server
 {
-
     internal class SmiEventSink_Default : SmiEventSink
     {
 
@@ -268,19 +267,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (null == _parent)
             {
-                if (Bid.AdvancedOn)
-                {
-                    Bid.Trace("<sc.SmiEventSink_Default.MessagePosted|ADV> %d#, number=%d state=%d errorClass=%d server='%ls' message='%ls' procedure='%ls' linenumber=%d.\n",
-                                0,
-                                number,
-                                state,
-                                errorClass,
-                                (null != server) ? server : "<null>",
-                                (null != message) ? message : "<null>",
-                                (null != procedure) ? procedure : "<null>",
-                                lineNumber
-                                );
-                }
+                SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SmiEventSink_Default.MessagePosted|ADV> {0}, number={1} state={2} errorClass={3} server='{4}' message='{5}' procedure='{6}' linenumber={7}.", 0, number, state, errorClass, server ?? "<null>", message ?? "<null>", procedure ?? "<null>", lineNumber);
                 SqlError error = new SqlError(number, state, errorClass, server, message, procedure, lineNumber);
 
                 if (error.Class < TdsEnums.MIN_ERROR_CLASS)
@@ -338,7 +325,7 @@ namespace Microsoft.Data.SqlClient.Server
             _parent.StatementCompleted(rowsAffected);
         }
 
-        // Called when a transaction is commited (ENVCHANGE token)
+        // Called when a transaction is committed (ENVCHANGE token)
         internal override void TransactionCommitted(long transactionId)
         {
             if (null == _parent)
@@ -348,7 +335,7 @@ namespace Microsoft.Data.SqlClient.Server
             _parent.TransactionCommitted(transactionId);
         }
 
-        // Called when a transaction is commited (ENVCHANGE token)
+        // Called when a transaction is committed (ENVCHANGE token)
         internal override void TransactionDefected(long transactionId)
         {
             if (null == _parent)
@@ -358,7 +345,7 @@ namespace Microsoft.Data.SqlClient.Server
             _parent.TransactionDefected(transactionId);
         }
 
-        // Called when a transaction is commited (ENVCHANGE token)
+        // Called when a transaction is committed (ENVCHANGE token)
         internal override void TransactionEnlisted(long transactionId)
         {
             if (null == _parent)

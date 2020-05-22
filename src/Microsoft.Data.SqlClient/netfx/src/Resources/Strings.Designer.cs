@@ -19,7 +19,7 @@ namespace System {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Strings {
@@ -6876,9 +6876,9 @@ namespace System {
         /// <summary>
         ///   Looks up a localized string similar to The collection name &apos;{0}&apos; matches at least two collections with the same name but with different case, but does not match any of them exactly..
         /// </summary>
-        internal static string MDF_AmbigousCollectionName {
+        internal static string MDF_AmbiguousCollectionName {
             get {
-                return ResourceManager.GetString("MDF_AmbigousCollectionName", resourceCulture);
+                return ResourceManager.GetString("MDF_AmbiguousCollectionName", resourceCulture);
             }
         }
         
@@ -8776,7 +8776,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to A transport-level error has occured during SSPI handshake..
+        ///   Looks up a localized string similar to A transport-level error has occurred during SSPI handshake..
         /// </summary>
         internal static string Snix_ProcessSspi {
             get {
@@ -8857,11 +8857,20 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The given value of type {0} from the data source cannot be converted to type {1} of the specified target column..
+        ///   Looks up a localized string similar to The given value{0} of type {1} from the data source cannot be converted to type {2} for Column {3} [{4}] Row {5}..
         /// </summary>
         internal static string SQL_BulkLoadCannotConvertValue {
             get {
                 return ResourceManager.GetString("SQL_BulkLoadCannotConvertValue", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The given value{0} of type {1} from the data source cannot be converted to type {2} for Column {3} [{4}]..
+        /// </summary>
+        internal static string SQL_BulkLoadCannotConvertValueWithoutRowNo {
+            get {
+                return ResourceManager.GetString("SQL_BulkLoadCannotConvertValueWithoutRowNo", resourceCulture);
             }
         }
         
@@ -9370,11 +9379,11 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Interactive&apos; with &apos;User ID&apos;, &apos;UID&apos;, &apos;Password&apos; or &apos;PWD&apos; connection string keywords..
+        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Interactive&apos; with &apos;Password&apos; or &apos;PWD&apos; connection string keywords..
         /// </summary>
-        internal static string SQL_InteractiveWithUserIDAndPassword {
+        internal static string SQL_InteractiveWithPassword {
             get {
-                return ResourceManager.GetString("SQL_InteractiveWithUserIDAndPassword", resourceCulture);
+                return ResourceManager.GetString("SQL_InteractiveWithPassword", resourceCulture);
             }
         }
         
@@ -10072,7 +10081,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to This failure occured while attempting to connect to the {0} server..
+        ///   Looks up a localized string similar to This failure occurred while attempting to connect to the {0} server..
         /// </summary>
         internal static string SQL_Timeout_FailoverInfo {
             get {
@@ -11395,6 +11404,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to UDT size must be less than {1}, size: {0}.
+        /// </summary>
+        internal static string SQLUDT_InvalidSize {
+            get {
+                return ResourceManager.GetString("SQLUDT_InvalidSize", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Specified type is not registered on the target server.{0}..
         /// </summary>
         internal static string SQLUDT_InvalidSqlType {
@@ -11665,11 +11683,20 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Error occured when generating enclave package. Attestation Protocol has not been specified in the connection string, but the query requires enclave computations..
+        ///   Looks up a localized string similar to Error occurred when generating enclave package. Attestation Protocol has not been specified in the connection string, but the query requires enclave computations..
         /// </summary>
         internal static string TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage {
             get {
                 return ResourceManager.GetString("TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You have specified the attestation protocol in the connection string, but the SQL Server instance in use does not support enclave based computations..
+        /// </summary>
+        internal static string TCE_AttestationProtocolNotSupported {
+            get {
+                return ResourceManager.GetString("TCE_AttestationProtocolNotSupported", resourceCulture);
             }
         }
         
@@ -11679,6 +11706,15 @@ namespace System {
         internal static string TCE_AttestationProtocolNotSupportEnclaveType {
             get {
                 return ResourceManager.GetString("TCE_AttestationProtocolNotSupportEnclaveType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You have specified the enclave attestation URL in the connection string, but the SQL Server instance in use does not support enclave based computations..
+        /// </summary>
+        internal static string TCE_AttestationURLNotSupported {
+            get {
+                return ResourceManager.GetString("TCE_AttestationURLNotSupported", resourceCulture);
             }
         }
         
@@ -11962,7 +11998,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to You have specified the enclave attestation URL in the connection string, but the SQL Server instance in use does not support enclave based computations..
+        ///   Looks up a localized string similar to You have specified the enclave attestation URL and attestation protocol in the connection string, but the SQL Server instance in use does not support enclave based computations..
         /// </summary>
         internal static string TCE_EnclaveComputationsNotSupported {
             get {
@@ -12439,7 +12475,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Error occured when generating enclave package. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is &apos;{0}&apos;. .
+        ///   Looks up a localized string similar to Error occurred when generating enclave package. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is &apos;{0}&apos;. .
         /// </summary>
         internal static string TCE_NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage {
             get {
@@ -12448,7 +12484,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Error occured when reading &apos;{0}&apos; resultset. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is &apos;{1}&apos;. .
+        ///   Looks up a localized string similar to Error occurred when reading &apos;{0}&apos; resultset. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is &apos;{1}&apos;. .
         /// </summary>
         internal static string TCE_NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe {
             get {

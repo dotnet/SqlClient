@@ -64,7 +64,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             InitDataValues();
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void SimpleFillTest()
         {
             using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
@@ -85,7 +85,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void PrepUnprepTest()
         {
             // share the connection
@@ -171,7 +171,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void SqlVariantTest()
         {
             string tableName = DataTestUtility.GenerateObjectName();
@@ -265,7 +265,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void ParameterTest_AllTypes()
         {
             string procName = DataTestUtility.GenerateObjectName();
@@ -477,7 +477,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void ParameterTest_InOut()
         {
             string procName = DataTestUtility.GetUniqueName("P");
@@ -574,7 +574,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void UpdateTest()
         {
             using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
@@ -658,7 +658,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // these next texts verify that 'bulk' operations work.  If each command type modifies more than three rows, then we do a Prep/Exec instead of
         // adhoc ExecuteSql.
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void BulkUpdateTest()
         {
             using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
@@ -755,7 +755,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // Makes sure that we can refresh an identity column in the dataSet
         // for a newly inserted row
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void UpdateRefreshTest()
         {
             string createIdentTable =
@@ -849,7 +849,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void UpdateNullTest()
         {
             string tableName = DataTestUtility.GenerateObjectName();
@@ -905,7 +905,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void UpdateOffsetTest()
         {
             string tableName = DataTestUtility.GenerateObjectName();
@@ -977,7 +977,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void SelectAllTest()
         {
             // Test exceptions
@@ -990,7 +990,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // AutoGen test
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void AutoGenUpdateTest()
         {
             using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
@@ -1061,7 +1061,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void AutoGenErrorTest()
         {
             string createIdentTable =
@@ -1106,7 +1106,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // These next tests verify that 'bulk' operations work. If each command type modifies more than three rows, then we do a Prep/Exec instead of
         // adhoc ExecuteSql.
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void AutoGenBulkUpdateTest()
         {
             using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
@@ -1195,7 +1195,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void TestDeriveParameters()
         {
             string procName = "Test_EmployeeSalesByCountry_" + _randomGuid + "";
@@ -1256,7 +1256,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void TestReadOnlyColumnMetadata()
         {
             using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))

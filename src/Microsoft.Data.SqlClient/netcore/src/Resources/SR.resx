@@ -167,7 +167,7 @@
   </data>
   <data name="ADP_InvalidDataDirectory" xml:space="preserve">
     <value>The DataDirectory substitute is not a string.</value>
-  </data>  
+  </data>
   <data name="ADP_InvalidEnumerationValue" xml:space="preserve">
     <value>The {0} enumeration value, {1}, is invalid.</value>
   </data>
@@ -625,7 +625,7 @@
     <value>Mappings must be either all name or all ordinal based.</value>
   </data>
   <data name="SQL_BulkLoadCannotConvertValue" xml:space="preserve">
-    <value>The given value of type {0} from the data source cannot be converted to type {1} of the specified target column.</value>
+    <value>The given value{0} of type {1} from the data source cannot be converted to type {2} for Column {3} [{4}] Row {5}.</value>
   </data>
   <data name="SQL_BulkLoadNonMatchingColumnMapping" xml:space="preserve">
     <value>The given ColumnMapping does not match up with any column in the source or destination.</value>
@@ -1308,7 +1308,7 @@
   <data name="MDF_MissingDataSourceInformationColumn" xml:space="preserve">
     <value>One of the required DataSourceInformation tables columns is missing.</value>
   </data>
-  <data name="MDF_AmbigousCollectionName" xml:space="preserve">
+  <data name="MDF_AmbiguousCollectionName" xml:space="preserve">
     <value>The collection name '{0}' matches at least two collections with the same name but with different case, but does not match any of them exactly.</value>
   </data>
   <data name="MDF_UnableToBuildCollection" xml:space="preserve">
@@ -1654,7 +1654,13 @@
     <value>Invalid key store provider name specified. Key store provider names cannot be null or empty.</value>
   </data>
   <data name="TCE_EnclaveComputationsNotSupported" xml:space="preserve">
+    <value>You have specified the enclave attestation URL and attestation protocol in the connection string, but the SQL Server instance in use does not support enclave based computations.</value>
+  </data>
+  <data name="TCE_AttestationURLNotSupported" xml:space="preserve">
     <value>You have specified the enclave attestation URL in the connection string, but the SQL Server instance in use does not support enclave based computations.</value>
+  </data>
+  <data name="TCE_AttestationProtocolNotSupported" xml:space="preserve">
+    <value>You have specified the attestation protocol in the connection string, but the SQL Server instance in use does not support enclave based computations.</value>
   </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
     <value>No enclave provider found for enclave type '{0}' and attestation protocol '{1}'. Please specify the correct attestation protocol in the connection string.</value>
@@ -1690,10 +1696,10 @@
     <value>Internal Error. The given key id '{0}' is not valid. Error occurred when converting the key id to unsigned short. Error Message: {1}</value>
   </data>
   <data name="TCE_NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage" xml:space="preserve">
-    <value>Error occured when generating enclave package. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is '{0}'.</value>
+    <value>Error occurred when generating enclave package. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is '{0}'.</value>
   </data>
   <data name="TCE_NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe" xml:space="preserve">
-    <value>Error occured when reading '{0}' resultset. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is '{1}'.</value>
+    <value>Error occurred when reading '{0}' resultset. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is '{1}'.</value>
   </data>
   <data name="TCE_NotSupportedByServer" xml:space="preserve">
     <value>{0} instance in use does not support column encryption.</value>
@@ -1849,6 +1855,12 @@
     <value>Failed to initialize connection. The attestation protocol '{0}' does not support the enclave type '{1}'.</value>
   </data>
   <data name="TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage" xml:space="preserve">
-    <value>Error occured when generating enclave package. Attestation Protocol has not been specified in the connection string, but the query requires enclave computations.</value>
+    <value>Error occurred when generating enclave package. Attestation Protocol has not been specified in the connection string, but the query requires enclave computations.</value>
+  </data>
+  <data name="SQLUDT_InvalidSize" xml:space="preserve">
+    <value>UDT size must be less than {1}, size: {0}</value>
+  </data>
+  <data name="SQL_BulkLoadCannotConvertValueWithoutRowNo" xml:space="preserve">
+    <value>The given value{0} of type {1} from the data source cannot be converted to type {2} for Column {3} [{4}].</value>
   </data>
 </root>

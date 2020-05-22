@@ -63,7 +63,10 @@ namespace Microsoft.Data.SqlClient
         public override bool Equals(object obj)
         {
             SqlConnectionPoolKey key = obj as SqlConnectionPoolKey;
-            return (key != null && _credential == key._credential && ConnectionString == key.ConnectionString && Object.ReferenceEquals(_accessToken, key._accessToken));
+            return (key != null
+                && _credential == key._credential
+                && ConnectionString == key.ConnectionString
+                && string.CompareOrdinal(_accessToken, key._accessToken) == 0);
         }
 
         public override int GetHashCode()

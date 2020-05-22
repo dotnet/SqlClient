@@ -356,7 +356,7 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.InvalidOperation(System.SRHelper.GetString(SR.TCE_BatchedUpdateColumnEncryptionSettingMismatch, "SqlCommandColumnEncryptionSetting", "SelectCommand", "InsertCommand", "UpdateCommand", "DeleteCommand"));
         }
-        internal static Exception MARSUnspportedOnConnection()
+        internal static Exception MARSUnsupportedOnConnection()
         {
             return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_MarsUnsupportedOnConnection));
         }
@@ -739,6 +739,12 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Argument(System.SRHelper.GetString(SR.SQLUDT_InvalidSqlType, typeName));
         }
+
+        internal static Exception UDTInvalidSize(int maxSize, int maxSupportedSize)
+        {
+            throw ADP.ArgumentOutOfRange(System.SRHelper.GetString(SR.SQLUDT_InvalidSize, maxSize, maxSupportedSize));
+        }
+
         internal static Exception InvalidSqlDbTypeForConstructor(SqlDbType type)
         {
             return ADP.Argument(System.SRHelper.GetString(SR.SqlMetaData_InvalidSqlDbTypeForConstructorFormat, type.ToString()));
@@ -806,9 +812,21 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_BulkLoadMappingsNamesOrOrdinalsOnly));
         }
-        internal static Exception BulkLoadCannotConvertValue(Type sourcetype, MetaType metatype, Exception e)
+        internal static Exception BulkLoadCannotConvertValue(Type sourcetype, MetaType metatype, int ordinal, int rowNumber, bool isEncrypted, string columnName, string value, Exception e)
         {
-            return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_BulkLoadCannotConvertValue, sourcetype.Name, metatype.TypeName), e);
+            string quotedValue = string.Empty;
+            if (!isEncrypted)
+            {
+                quotedValue = string.Format(" '{0}'", (value.Length > 100 ? value.Substring(0, 100) : value));
+            }
+            if (rowNumber == -1)
+            {
+                return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_BulkLoadCannotConvertValueWithoutRowNo, quotedValue, sourcetype.Name, metatype.TypeName, ordinal, columnName), e);
+            }
+            else
+            {
+                return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_BulkLoadCannotConvertValue, quotedValue, sourcetype.Name, metatype.TypeName, ordinal, columnName, rowNumber), e);
+            }
         }
         internal static Exception BulkLoadNonMatchingColumnMapping()
         {
@@ -909,7 +927,7 @@ namespace Microsoft.Data.SqlClient
         //
 
         /// <summary>
-        /// used to block two scenarios if MultiSubnetFailover is true: 
+        /// used to block two scenarios if MultiSubnetFailover is true:
         /// * server-provided failover partner - raising SqlException in this case
         /// * connection string with failover partner and MultiSubnetFailover=true - raising argument one in this case with the same message
         /// </summary>
@@ -1406,9 +1424,9 @@ namespace Microsoft.Data.SqlClient
             return ADP.Argument(System.SRHelper.GetString(SR.TCE_ProcEncryptionMetaDataMissing, "sp_describe_parameter_encryption", procedureName));
         }
 
-        internal static Exception UnableToVerifyColumnMasterKeySignature(Exception innerExeption)
+        internal static Exception UnableToVerifyColumnMasterKeySignature(Exception innerException)
         {
-            return ADP.InvalidOperation(System.SRHelper.GetString(SR.TCE_UnableToVerifyColumnMasterKeySignature, innerExeption.Message), innerExeption);
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.TCE_UnableToVerifyColumnMasterKeySignature, innerException.Message), innerException);
         }
 
         internal static Exception ColumnMasterKeySignatureVerificationFailed(string cmkPath)
@@ -1442,14 +1460,14 @@ namespace Microsoft.Data.SqlClient
 
         #region Always Encrypted - Errors from secure channel Communication
 
-        internal static Exception ExceptionWhenGeneratingEnclavePackage(Exception innerExeption)
+        internal static Exception ExceptionWhenGeneratingEnclavePackage(Exception innerException)
         {
-            return ADP.InvalidOperation(System.SRHelper.GetString(SR.TCE_ExceptionWhenGeneratingEnclavePackage, innerExeption.Message), innerExeption);
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.TCE_ExceptionWhenGeneratingEnclavePackage, innerException.Message), innerException);
         }
 
-        internal static Exception FailedToEncryptRegisterRulesBytePackage(Exception innerExeption)
+        internal static Exception FailedToEncryptRegisterRulesBytePackage(Exception innerException)
         {
-            return ADP.InvalidOperation(System.SRHelper.GetString(SR.TCE_FailedToEncryptRegisterRulesBytePackage, innerExeption.Message), innerExeption);
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.TCE_FailedToEncryptRegisterRulesBytePackage, innerException.Message), innerException);
         }
 
         internal static Exception InvalidKeyIdUnableToCastToUnsignedShort(int keyId, Exception innerException)
@@ -1706,6 +1724,16 @@ namespace Microsoft.Data.SqlClient
             return ADP.InvalidOperation(System.SRHelper.GetString(SR.TCE_EnclaveComputationsNotSupported));
         }
 
+        internal static Exception AttestationURLNotSupported()
+        {
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.TCE_AttestationURLNotSupported));
+        }
+
+        internal static Exception AttestationProtocolNotSupported()
+        {
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.TCE_AttestationProtocolNotSupported));
+        }
+
         internal static Exception EnclaveTypeNotReturned()
         {
             return ADP.InvalidOperation(System.SRHelper.GetString(SR.TCE_EnclaveTypeNotReturned));
@@ -1935,7 +1963,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <summary>
         /// Escape a string as a TSQL literal, wrapping it around with single quotes.
-        /// Use this method to escape input strings to prevent SQL injection 
+        /// Use this method to escape input strings to prevent SQL injection
         /// and to get correct behavior for embedded quotes.
         /// </summary>
         /// <param name="input">unescaped string</param>

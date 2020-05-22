@@ -10,7 +10,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
-    public static class ConnectivityParametersTest
+    public static class ConnectivityTest
     {
         private const string COL_SPID = "SPID";
         private const string COL_PROGRAM_NAME = "ProgramName";
@@ -26,7 +26,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly string s_selectTableCmd = $"SELECT COUNT(*) FROM {s_tableName}";
         private static readonly string s_dropDatabaseCmd = $"DROP DATABASE {s_databaseName}";
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void EnvironmentHostNameTest()
         {
             SqlConnectionStringBuilder builder = (new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { Pooling = true });
@@ -71,7 +71,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.True(false, "No non-empty hostname found for the application");
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ConnectionTimeoutTestWithThread()
         {
             const int timeoutSec = 5;
@@ -105,7 +105,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.True(timeElapsed < threshold);
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ProcessIdTest()
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
@@ -207,9 +207,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 DataTestUtility.RunNonQuery(s_dbConnectionString, s_createTableCmd);
 
                 // Kill all the connections and set Database to SINGLE_USER Mode.
-                DataTestUtility.RunNonQuery(s_connectionString, s_alterDatabaseSingleCmd);
+                DataTestUtility.RunNonQuery(s_connectionString, s_alterDatabaseSingleCmd, 4);
                 // Set Database back to MULTI_USER Mode
-                DataTestUtility.RunNonQuery(s_connectionString, s_alterDatabaseMultiCmd);
+                DataTestUtility.RunNonQuery(s_connectionString, s_alterDatabaseMultiCmd, 4);
 
                 // Execute SELECT statement.
                 DataTestUtility.RunNonQuery(s_dbConnectionString, s_selectTableCmd);
@@ -222,8 +222,119 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             finally
             {
                 // Kill all the connections, set Database to SINGLE_USER Mode and drop Database
-                DataTestUtility.RunNonQuery(s_connectionString, s_alterDatabaseSingleCmd);
-                DataTestUtility.RunNonQuery(s_connectionString, s_dropDatabaseCmd);
+                DataTestUtility.RunNonQuery(s_connectionString, s_alterDatabaseSingleCmd, 4);
+                DataTestUtility.RunNonQuery(s_connectionString, s_dropDatabaseCmd, 4);
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void ConnectionResiliencyTest()
+        {
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
+            builder.ConnectRetryCount = 0;
+            builder.ConnectRetryInterval = 5;
+
+            // No connection resiliency
+            using (SqlConnection conn = new SqlConnection(builder.ConnectionString))
+            {
+                conn.Open();
+                InternalConnectionWrapper wrapper = new InternalConnectionWrapper(conn, true, builder.ConnectionString);
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = "SELECT TOP 1 * FROM dbo.Employees";
+                    wrapper.KillConnectionByTSql();
+                    bool cmdSuccess = false;
+                    try
+                    {
+                        cmd.ExecuteScalar();
+                        cmdSuccess = true;
+                    }
+                    // Windows always throws SqlException. Unix sometimes throws AggregateException against Azure SQL DB.
+                    catch (Exception ex) when (ex is SqlException || ex is AggregateException) { }
+                    Assert.False(cmdSuccess);
+                }
+            }
+
+            builder.ConnectRetryCount = 2;
+            using (SqlConnection conn = new SqlConnection(builder.ConnectionString))
+            {
+                conn.Open();
+                InternalConnectionWrapper wrapper = new InternalConnectionWrapper(conn, true, builder.ConnectionString);
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = "SELECT TOP 1 * FROM dbo.Employees";
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                        while (reader.Read())
+                        { }
+
+                    wrapper.KillConnectionByTSql();
+
+                    // Connection resiliency should reconnect transparently
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                        while (reader.Read())
+                        { }
+                }
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnectionStringPasswordIncluded))]
+        public static void ConnectionStringPersistentInfoTest()
+        {
+            SqlConnectionStringBuilder connectionStringBuilder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
+            connectionStringBuilder.PersistSecurityInfo = false;
+            string cnnString = connectionStringBuilder.ConnectionString;
+
+            connectionStringBuilder.Clear();
+            using (SqlConnection sqlCnn = new SqlConnection(cnnString))
+            {
+                sqlCnn.Open();
+                connectionStringBuilder.ConnectionString = sqlCnn.ConnectionString;
+                Assert.True(connectionStringBuilder.Password == string.Empty, "Password must not persist according to set the PersistSecurityInfo by false!");
+            }
+
+            connectionStringBuilder.ConnectionString = DataTestUtility.TCPConnectionString;
+            connectionStringBuilder.PersistSecurityInfo = true;
+            cnnString = connectionStringBuilder.ConnectionString;
+
+            connectionStringBuilder.Clear();
+            using (SqlConnection sqlCnn = new SqlConnection(cnnString))
+            {
+                sqlCnn.Open();
+                connectionStringBuilder.ConnectionString = sqlCnn.ConnectionString;
+                Assert.True(connectionStringBuilder.Password != string.Empty, "Password must persist according to set the PersistSecurityInfo by true!");
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void ConnectionOpenDisableRetry()
+        {
+            using (SqlConnection sqlConnection = new SqlConnection((new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { InitialCatalog = "DoesNotExist0982532435423", Pooling = false }).ConnectionString))
+            {
+                TimeSpan duration;
+                DateTime start = DateTime.Now;
+                try
+                {
+                    sqlConnection.Open(SqlConnectionOverrides.OpenWithoutRetry);
+                    Assert.True(false, "Connection succeeded to database that should not exist.");
+                }
+                catch (SqlException)
+                {
+                    duration = DateTime.Now - start;
+                    Assert.True(duration.TotalSeconds < 2, $"Connection Open() without retries took longer than expected. Expected < 2 sec. Took {duration.TotalSeconds} sec.");
+                }
+
+                start = DateTime.Now;
+                try
+                {
+                    sqlConnection.Open();
+                    Assert.True(false, "Connection succeeded to database that should not exist.");
+                }
+                catch (SqlException)
+                {
+                    duration = DateTime.Now - start;
+                    //Should not fail fast due to transient fault handling when DB does not exist
+                    Assert.True(duration.TotalSeconds > 5, $"Connection Open() with retries took less time than expected. Expect > 5 sec with transient fault handling. Took {duration.TotalSeconds} sec.");
+                }
             }
         }
     }

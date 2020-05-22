@@ -29,6 +29,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             databaseObjects.AddRange(columnEncryptionKeys);
 
             List<Table> tables = CreateTables(columnEncryptionKeys);
+
             databaseObjects.AddRange(tables);
 
             base.SetupDatabase();

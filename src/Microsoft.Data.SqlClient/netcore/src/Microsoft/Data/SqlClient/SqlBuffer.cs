@@ -1228,10 +1228,10 @@ namespace Microsoft.Data.SqlClient
         // [Field]As<T> method explanation:
         // these methods are used to bridge generic to non-generic access to value type fields on the storage struct
         // where typeof(T) == typeof(field) 
-        //   1) RyuJIT will recognise the pattern of (T)(object)T as being redundant and eliminate 
+        //   1) RyuJIT will recognize the pattern of (T)(object)T as being redundant and eliminate 
         //   the T and object casts leaving T, so while this looks like it will put every value type instance in a box the 
         //   enerated assembly will be short and direct
-        //   2) another jit may not recognise the pattern and should emit the code as seen. this will box and then unbox the
+        //   2) another jit may not recognize the pattern and should emit the code as seen. this will box and then unbox the
         //   value type which is no worse than the mechanism that this code replaces
         // where typeof(T) != typeof(field)
         //   the jit will emit all the cast operations as written. this will put the value into a box and then attempt to

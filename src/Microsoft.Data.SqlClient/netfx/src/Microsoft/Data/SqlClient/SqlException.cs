@@ -38,25 +38,31 @@ namespace Microsoft.Data.SqlClient
             HResult = HResults.SqlException;
             foreach (SerializationEntry siEntry in si)
             {
-                if ("ClientConnectionId" == siEntry.Name)
+                if (nameof(ClientConnectionId) == siEntry.Name)
                 {
-                    _clientConnectionId = (Guid)siEntry.Value;
+                    _clientConnectionId = (Guid)si.GetValue(nameof(ClientConnectionId), typeof(Guid));
                     break;
                 }
             }
-
         }
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/GetObjectData/*' />
         override public void GetObjectData(SerializationInfo si, StreamingContext context)
         {
-            if (null == si)
-            {
-                throw new ArgumentNullException("si");
-            }
-            si.AddValue("Errors", _errors, typeof(SqlErrorCollection));
-            si.AddValue("ClientConnectionId", _clientConnectionId, typeof(Guid));
             base.GetObjectData(si, context);
+            si.AddValue("Errors", null); // Not specifying type to enable serialization of null value of non-serializable type
+            si.AddValue("ClientConnectionId", _clientConnectionId, typeof(object));
+
+            // Writing sqlerrors to base exception data table
+            for (int i = 0; i < Errors.Count; i++)
+            {
+                string key = "SqlError " + (i + 1);
+                if (Data.Contains(key))
+                {
+                    Data.Remove(key);
+                }
+                Data.Add(key, Errors[i].ToString());
+            }
         }
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/Errors/*' />

@@ -19,7 +19,7 @@ namespace System {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class SR {
@@ -889,7 +889,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The validation of an attestation token failed. The token signature does not match the signature omputed using a public key retrieved from the attestation public key endpoint at &apos;{0}&apos;. Verify the DNS apping for the endpoint. If correct, contact Customer Support Services..
+        ///   Looks up a localized string similar to The validation of an attestation token failed. The token signature does not match the signature computed using a public key retrieved from the attestation public key endpoint at &apos;{0}&apos;. Verify the DNS mapping for the endpoint. If correct, contact Customer Support Services..
         /// </summary>
         internal static string AttestationTokenSignatureValidationFailed {
             get {
@@ -1143,9 +1143,9 @@ namespace System {
         /// <summary>
         ///   Looks up a localized string similar to The collection name &apos;{0}&apos; matches at least two collections with the same name but with different case, but does not match any of them exactly..
         /// </summary>
-        internal static string MDF_AmbigousCollectionName {
+        internal static string MDF_AmbiguousCollectionName {
             get {
-                return ResourceManager.GetString("MDF_AmbigousCollectionName", resourceCulture);
+                return ResourceManager.GetString("MDF_AmbiguousCollectionName", resourceCulture);
             }
         }
         
@@ -2140,11 +2140,20 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The given value of type {0} from the data source cannot be converted to type {1} of the specified target column..
+        ///   Looks up a localized string similar to The given value{0} of type {1} from the data source cannot be converted to type {2} for Column {3} [{4}] Row {5}..
         /// </summary>
         internal static string SQL_BulkLoadCannotConvertValue {
             get {
                 return ResourceManager.GetString("SQL_BulkLoadCannotConvertValue", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The given value{0} of type {1} from the data source cannot be converted to type {2} for Column {3} [{4}]..
+        /// </summary>
+        internal static string SQL_BulkLoadCannotConvertValueWithoutRowNo {
+            get {
+                return ResourceManager.GetString("SQL_BulkLoadCannotConvertValueWithoutRowNo", resourceCulture);
             }
         }
         
@@ -3994,6 +4003,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to UDT size must be less than {1}, size: {0}.
+        /// </summary>
+        internal static string SQLUDT_InvalidSize {
+            get {
+                return ResourceManager.GetString("SQLUDT_InvalidSize", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Specified type is not registered on the target server. {0}..
         /// </summary>
         internal static string SQLUDT_InvalidSqlType {
@@ -4071,6 +4089,42 @@ namespace System {
         internal static string TCE_AttestationInfoNotReturnedFromSQLServer {
             get {
                 return ResourceManager.GetString("TCE_AttestationInfoNotReturnedFromSQLServer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Error occurred when generating enclave package. Attestation Protocol has not been specified in the connection string, but the query requires enclave computations..
+        /// </summary>
+        internal static string TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage {
+            get {
+                return ResourceManager.GetString("TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You have specified the attestation protocol in the connection string, but the SQL Server instance in use does not support enclave based computations..
+        /// </summary>
+        internal static string TCE_AttestationProtocolNotSupported {
+            get {
+                return ResourceManager.GetString("TCE_AttestationProtocolNotSupported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to initialize connection. The attestation protocol &apos;{0}&apos; does not support the enclave type &apos;{1}&apos;..
+        /// </summary>
+        internal static string TCE_AttestationProtocolNotSupportEnclaveType {
+            get {
+                return ResourceManager.GetString("TCE_AttestationProtocolNotSupportEnclaveType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You have specified the enclave attestation URL in the connection string, but the SQL Server instance in use does not support enclave based computations..
+        /// </summary>
+        internal static string TCE_AttestationURLNotSupported {
+            get {
+                return ResourceManager.GetString("TCE_AttestationURLNotSupported", resourceCulture);
             }
         }
         
@@ -4179,6 +4233,15 @@ namespace System {
         internal static string TCE_ColumnMasterKeySignatureVerificationFailed {
             get {
                 return ResourceManager.GetString("TCE_ColumnMasterKeySignatureVerificationFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Specifies an attestation protocol for its corresponding enclave attestation service..
+        /// </summary>
+        internal static string TCE_DbConnectionString_AttestationProtocol {
+            get {
+                return ResourceManager.GetString("TCE_DbConnectionString_AttestationProtocol", resourceCulture);
             }
         }
         
@@ -4327,7 +4390,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to You have specified the enclave attestation URL in the connection string, but the SQL Server instance in use does not support enclave based computations..
+        ///   Looks up a localized string similar to You have specified the enclave attestation URL and attestation protocol in the connection string, but the SQL Server instance in use does not support enclave based computations..
         /// </summary>
         internal static string TCE_EnclaveComputationsNotSupported {
             get {
@@ -4336,50 +4399,14 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to No enclave provider found for enclave type &apos;{0}&apos;. Please specify the provider in the application configuration..
+        ///   Looks up a localized string similar to No enclave provider found for enclave type &apos;{0}&apos; and attestation protocol &apos;{1}&apos;. Please specify the correct attestation protocol in the connection string..
         /// </summary>
         internal static string TCE_EnclaveProviderNotFound {
             get {
                 return ResourceManager.GetString("TCE_EnclaveProviderNotFound", resourceCulture);
             }
         }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Specifies an attestation protocol for its corresponding enclave attestation service.
-        /// </summary>
-        internal static string TCE_DbConnectionString_AttestationProtocol {
-            get {
-                return ResourceManager.GetString("TCE_DbConnectionString_AttestationProtocol", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        /// Looks up a localized string similar to The enclave type '{0}' returned from the server is not supported.
-        /// </summary>
-        internal static string TCE_EnclaveTypeNotSupported {
-            get {
-                return ResourceManager.GetString("TCE_EnclaveTypeNotSupported", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        /// Looks up a localized string similar to Failed to initialize connection. The attestation protocol '{0}' does not support the enclave type '{1}'.
-        /// </summary>
-        internal static string TCE_AttestationProtocolNotSupportEnclaveType {
-            get {
-                return ResourceManager.GetString("TCE_AttestationProtocolNotSupportEnclaveType", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        /// Looks up a localized string similar to Error occured when generating enclave package. Attestation Protocol has not been specified in the connection string, but the query requires enclave computations.
-        /// </summary>
-        internal static string TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage {
-            get {
-                return ResourceManager.GetString("TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage", resourceCulture);
-            }
-        }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Executing a query requires enclave computations, but the application configuration is missing the enclave provider section..
         /// </summary>
@@ -4395,6 +4422,15 @@ namespace System {
         internal static string TCE_EnclaveTypeNotReturned {
             get {
                 return ResourceManager.GetString("TCE_EnclaveTypeNotReturned", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The enclave type &apos;{0}&apos; returned from the server is not supported..
+        /// </summary>
+        internal static string TCE_EnclaveTypeNotSupported {
+            get {
+                return ResourceManager.GetString("TCE_EnclaveTypeNotSupported", resourceCulture);
             }
         }
         
@@ -4831,7 +4867,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Error occured when generating enclave package. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is &apos;{0}&apos;..
+        ///   Looks up a localized string similar to Error occurred when generating enclave package. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is &apos;{0}&apos;..
         /// </summary>
         internal static string TCE_NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage {
             get {
@@ -4840,7 +4876,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Error occured when reading &apos;{0}&apos; resultset. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is &apos;{1}&apos;..
+        ///   Looks up a localized string similar to Error occurred when reading &apos;{0}&apos; resultset. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is &apos;{1}&apos;..
         /// </summary>
         internal static string TCE_NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe {
             get {

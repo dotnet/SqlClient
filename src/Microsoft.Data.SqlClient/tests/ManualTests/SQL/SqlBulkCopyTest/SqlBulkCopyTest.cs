@@ -212,25 +212,25 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             CopyWithEventAsync.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_AsyncTest4")); //Async + Rows + Notification
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void CopyAllFromReaderCancelAsyncTest()
         {
             CopyAllFromReaderCancelAsync.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_AsyncTest5")); //Async + Reader + cancellation token
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void CopyAllFromReaderConnectionClosedAsyncTest()
         {
             CopyAllFromReaderConnectionClosedAsync.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_AsyncTest6")); //Async + Reader + Connection closed
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void CopyAllFromReaderConnectionClosedOnEventAsyncTest()
         {
             CopyAllFromReaderConnectionClosedOnEventAsync.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_AsyncTest7")); //Async + Reader + Connection closed during the event
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void TransactionTestAsyncTest()
         {
             TransactionTestAsync.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_TransactionTestAsync")); //Async + Transaction rollback

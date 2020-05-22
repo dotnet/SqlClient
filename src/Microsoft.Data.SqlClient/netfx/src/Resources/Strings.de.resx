@@ -339,7 +339,7 @@
   <data name="MDF_UnableToBuildCollection" xml:space="preserve">
     <value>Die Schema-Sammlung '{0}' konnte nicht erstellt werden.</value>
   </data>
-  <data name="MDF_AmbigousCollectionName" xml:space="preserve">
+  <data name="MDF_AmbiguousCollectionName" xml:space="preserve">
     <value>Der Sammlungsname '{0}' stimmt mit mindestens zwei Sammlungen mit demselben Namen, jedoch anderer Schreibung überein, ohne aber mit diesen exakt übereinzustimmen.</value>
   </data>
   <data name="MDF_CollectionNameISNotUnique" xml:space="preserve">
@@ -1948,7 +1948,7 @@
     <value>Diesem Befehl ist bereits ein geöffnetes SqlResultSet zugeordnet, das zuerst geschlossen werden muss.</value>
   </data>
   <data name="ADP_OpenReaderExists" xml:space="preserve">
-    <value>Diesem {0}-Element ist bereits ein geöffneter DataReader zugeordnet, der zuerst geschlossen werden muss.</value>
+    <value>Diesem {0}selement ist bereits ein geöffneter DataReader zugeordnet, der zuerst geschlossen werden muss.</value>
   </data>
   <data name="ADP_DeriveParametersNotSupported" xml:space="preserve">
     <value>{0} DeriveParameters unterstützen nur CommandType.StoredProcedure, nicht CommandType.{1}.</value>
@@ -2496,8 +2496,8 @@
   <data name="SQL_IntegratedWithUserIDAndPassword" xml:space="preserve">
     <value>"Authentication=Active Directory Integrated" kann nicht mit den Schlüsselwörtern "User ID", "UID", "Password" oder "PWD" für die Verbindungszeichenfolge verwendet werden.</value>
   </data>
-  <data name="SQL_InteractiveWithUserIDAndPassword" xml:space="preserve">
-    <value>"Authentication=Active Directory Interactive" kann nicht mit den Schlüsselwörtern "User ID", "UID", "Password" oder "PWD" für die Verbindungszeichenfolge verwendet werden.</value>
+  <data name="SQL_InteractiveWithPassword" xml:space="preserve">
+    <value>"Authentication=Active Directory Interactive" kann nicht mit den Schlüsselwörtern "Password" oder "PWD" für die Verbindungszeichenfolge verwendet werden.</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
     <value>"Authentication=Active Directory Integrated" kann nicht verwendet werden, wenn die Eigenschaft "Credential" festgelegt wurde.</value>
@@ -2809,7 +2809,10 @@
     <value>Zuordnungen müssen entweder vollständig auf dem Namen oder der Ordinalzahl basieren.</value>
   </data>
   <data name="SQL_BulkLoadCannotConvertValue" xml:space="preserve">
-    <value>Der angegebene Wert vom Typ {0} aus der Datenquelle kann nicht in Typ {1} der angegebenen Zielspalte konvertiert werden.</value>
+    <value>Der angegebene Wert "{0}" vom Typ "{1}" aus der Datenquelle kann für Spalte "{3} [{4}]", Zeile "{5}" nicht in den Typ "{2}" konvertiert werden.</value>
+  </data>
+  <data name="SQL_BulkLoadCannotConvertValueWithoutRowNo" xml:space="preserve">
+    <value>Der angegebene Wert "{0}" vom Typ "{1}" aus der Datenquelle kann für Spalte "{3} [{4}]" nicht in den Typ "{2}" konvertiert werden.</value>
   </data>
   <data name="SQL_BulkLoadNonMatchingColumnMapping" xml:space="preserve">
     <value>Die angegebene ColumnMapping stimmt mit keiner Spalte in der Quelle oder dem Ziel überein.</value>
@@ -4309,10 +4312,10 @@
     <value>Interner Fehler. SqlColumnEncryptionEnclaveProviderName darf nicht NULL oder leer sein.</value>
   </data>
   <data name="TCE_NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe" xml:space="preserve">
-    <value>Fehler beim Lesen des Resultsets "{0}". Die Nachweis-URL wurde nicht in der Verbindungszeichenfolge angegeben, aber die Abfrage erfordert Enclave-Berechnungen. Der Enclave-Typ lautet "{1}".</value>
+    <value>Fehler beim Lesen des Resultsets "{0}". In der Verbindungszeichenfolge wurde keine Nachweis-URL angegeben, aber für die Abfrage sind Enclave-Berechnungen erforderlich. Der Enclave-Typ lautet "{1}". </value>
   </data>
   <data name="TCE_NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage" xml:space="preserve">
-    <value>Fehler beim Generieren des Enclave-Pakets. Die Nachweis-URL wurde nicht in der Verbindungszeichenfolge angegeben, aber die Abfrage erfordert Enclave-Berechnungen. Der Enclave-Typ lautet "{0}".</value>
+    <value>Fehler beim Generieren des Enclave-Pakets. In der Verbindungszeichenfolge wurde keine Nachweis-URL angegeben, aber für die Abfrage sind Enclave-Berechnungen erforderlich. Der Enclave-Typ lautet "{0}". </value>
   </data>
   <data name="TCE_EnclaveTypeNullForEnclaveBasedQuery" xml:space="preserve">
     <value>Interner Fehler. Beim Ausführen einer Abfrage, die Enclave-Berechnungen erfordert, war der von SQL Server empfangene Enclave-Typ leer oder NULL.</value>
@@ -4336,7 +4339,13 @@
     <value>Verwendete {0}-Instanz unterstützt die Spaltenverschlüsselung nicht.</value>
   </data>
   <data name="TCE_EnclaveComputationsNotSupported" xml:space="preserve">
+    <value>Sie haben die Enclave-Nachweis-URL und das Nachweisprotokoll in der Verbindungszeichenfolge angegeben, aber die verwendete SQL Server-Instanz unterstützt keine auf Enclave basierenden Berechnungen.</value>
+  </data>
+  <data name="TCE_AttestationURLNotSupported" xml:space="preserve">
     <value>Sie haben die Enclave-Nachweis-URL in der Verbindungszeichenfolge angegeben, aber die SQL Server-Instanz unterstützt keine Enclave-basierten Berechnungen.</value>
+  </data>
+  <data name="TCE_AttestationProtocolNotSupported" xml:space="preserve">
+    <value>Sie haben das Nachweisprotokoll in der Verbindungszeichenfolge angegeben, aber die verwendete SQL Server-Instanz unterstützt keine auf Enclave basierenden Berechnungen.</value>
   </data>
   <data name="TCE_EnclaveTypeNotReturned" xml:space="preserve">
     <value>Sie haben die Enclave-Nachweis-URL in der Verbindungszeichenfolge angegeben, aber die SQL Server-Instanz hat keinen Enclave-Typ zurückgegeben. Stellen Sie sicher, dass der Enclave-Typ ordnungsgemäß in Ihrer Instanz konfiguriert wurde.</value>
@@ -4517,5 +4526,8 @@
   </data>
   <data name="TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage" xml:space="preserve">
     <value>Fehler beim Generieren des Enclave-Pakets. In der Verbindungszeichenfolge wurde kein Nachweisprotokoll angegeben, aber für die Abfrage sind Enclave-Berechnungen erforderlich.</value>
+  </data>
+  <data name="SQLUDT_InvalidSize" xml:space="preserve">
+    <value>Die UDT-Größe muss kleiner als {1} sein. Größe: {0}</value>
   </data>
 </root>

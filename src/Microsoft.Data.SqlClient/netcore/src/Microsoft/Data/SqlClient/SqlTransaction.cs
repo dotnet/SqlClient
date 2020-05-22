@@ -11,11 +11,12 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/SqlTransaction/*' />
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/SqlTransaction/*' />
     public sealed class SqlTransaction : DbTransaction
     {
-        private static readonly DiagnosticListener s_diagnosticListener = new DiagnosticListener(SqlClientDiagnosticListenerExtensions.DiagnosticListenerName);
-
+        private static readonly SqlDiagnosticListener s_diagnosticListener = new SqlDiagnosticListener(SqlClientDiagnosticListenerExtensions.DiagnosticListenerName);
+        private static int _objectTypeCount; // EventSource Counter
+        internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
         internal readonly IsolationLevel _isolationLevel = IsolationLevel.ReadCommitted;
 
         private SqlInternalTransaction _internalTransaction;
@@ -45,7 +46,7 @@ namespace Microsoft.Data.SqlClient
         // PROPERTIES
         ////////////////////////////////////////////////////////////////////////////////////////
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Connection/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Connection/*' />
         new public SqlConnection Connection
         {
             get
@@ -61,7 +62,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/DbConnection/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/DbConnection/*' />
         override protected DbConnection DbConnection
         {
             get
@@ -78,7 +79,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/IsolationLevel/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/IsolationLevel/*' />
         override public IsolationLevel IsolationLevel
         {
             get
@@ -104,6 +105,13 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        internal int ObjectID
+        {
+            get
+            {
+                return _objectID;
+            }
+        }
 
         internal SqlStatistics Statistics
         {
@@ -124,15 +132,17 @@ namespace Microsoft.Data.SqlClient
         // PUBLIC METHODS
         ////////////////////////////////////////////////////////////////////////////////////////
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Commit/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Commit/*' />
         override public void Commit()
         {
             Exception e = null;
-            Guid operationId = s_diagnosticListener.WriteTransactionCommitBefore(_isolationLevel, _connection);
+            Guid operationId = s_diagnosticListener.WriteTransactionCommitBefore(_isolationLevel, _connection, InternalTransaction);
 
             ZombieCheck();
 
             SqlStatistics statistics = null;
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlTransaction.Commit|API> {0}", ObjectID);
+            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlTransaction.Commit|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
@@ -161,22 +171,22 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
+                SqlStatistics.StopTimer(statistics);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
                 if (e != null)
                 {
-                    s_diagnosticListener.WriteTransactionCommitError(operationId, _isolationLevel, _connection, e);
+                    s_diagnosticListener.WriteTransactionCommitError(operationId, _isolationLevel, _connection, InternalTransaction, e);
                 }
                 else
                 {
-                    s_diagnosticListener.WriteTransactionCommitAfter(operationId, _isolationLevel, _connection);
+                    s_diagnosticListener.WriteTransactionCommitAfter(operationId, _isolationLevel, _connection, InternalTransaction);
                 }
 
                 _isFromAPI = false;
-
-                SqlStatistics.StopTimer(statistics);
             }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/DisposeDisposing/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/DisposeDisposing/*' />
         protected override void Dispose(bool disposing)
         {
             if (disposing)
@@ -189,15 +199,16 @@ namespace Microsoft.Data.SqlClient
             base.Dispose(disposing);
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Rollback2/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Rollback2/*' />
         override public void Rollback()
         {
             Exception e = null;
-            Guid operationId = s_diagnosticListener.WriteTransactionRollbackBefore(_isolationLevel, _connection, null);
+            Guid operationId = s_diagnosticListener.WriteTransactionRollbackBefore(_isolationLevel, _connection, InternalTransaction);
 
             if (IsYukonPartialZombie)
             {
                 // Put something in the trace in case a customer has an issue
+                SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlTransaction.Rollback|ADV> {0} partial zombie no rollback required", ObjectID);
                 _internalTransaction = null; // yukon zombification
             }
             else
@@ -205,6 +216,8 @@ namespace Microsoft.Data.SqlClient
                 ZombieCheck();
 
                 SqlStatistics statistics = null;
+                long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlTransaction.Rollback|API> {0}", ObjectID);
+                SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlTransaction.Rollback|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
                 try
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
@@ -220,29 +233,29 @@ namespace Microsoft.Data.SqlClient
                 }
                 finally
                 {
+                    SqlStatistics.StopTimer(statistics);
+                    SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
                     if (e != null)
                     {
-                        s_diagnosticListener.WriteTransactionRollbackError(operationId, _isolationLevel, _connection, null, e);
+                        s_diagnosticListener.WriteTransactionRollbackError(operationId, _isolationLevel, _connection, InternalTransaction, e);
                     }
                     else
                     {
-                        s_diagnosticListener.WriteTransactionRollbackAfter(operationId, _isolationLevel, _connection, null);
+                        s_diagnosticListener.WriteTransactionRollbackAfter(operationId, _isolationLevel, _connection, InternalTransaction);
                     }
                     _isFromAPI = false;
-
-                    SqlStatistics.StopTimer(statistics);
                 }
             }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/RollbackTransactionName/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/RollbackTransactionName/*' />
         public void Rollback(string transactionName)
         {
             Exception e = null;
-            Guid operationId = s_diagnosticListener.WriteTransactionRollbackBefore(_isolationLevel, _connection, transactionName);
+            Guid operationId = s_diagnosticListener.WriteTransactionRollbackBefore(_isolationLevel, _connection, InternalTransaction, transactionName);
 
             ZombieCheck();
-
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlTransaction.Rollback|API> {0} transactionName='{1}'", ObjectID, transactionName);
             SqlStatistics statistics = null;
             try
             {
@@ -259,27 +272,29 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
+                SqlStatistics.StopTimer(statistics);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
                 if (e != null)
                 {
-                    s_diagnosticListener.WriteTransactionRollbackError(operationId, _isolationLevel, _connection, transactionName, e);
+                    s_diagnosticListener.WriteTransactionRollbackError(operationId, _isolationLevel, _connection, InternalTransaction, e, transactionName);
                 }
                 else
                 {
-                    s_diagnosticListener.WriteTransactionRollbackAfter(operationId, _isolationLevel, _connection, transactionName);
+                    s_diagnosticListener.WriteTransactionRollbackAfter(operationId, _isolationLevel, _connection, InternalTransaction, transactionName);
                 }
 
                 _isFromAPI = false;
 
-                SqlStatistics.StopTimer(statistics);
             }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Save/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Save/*' />
         public void Save(string savePointName)
         {
             ZombieCheck();
 
             SqlStatistics statistics = null;
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlTransaction.Save|API> {0} savePointName='{1}'", ObjectID, savePointName);
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
@@ -289,6 +304,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlStatistics.StopTimer(statistics);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
@@ -304,7 +320,11 @@ namespace Microsoft.Data.SqlClient
             //                 Of course, if the connection is already closed, 
             //                 then we're free to zombify...
             SqlInternalConnection internalConnection = (_connection.InnerConnection as SqlInternalConnection);
-            if (internalConnection == null || _isFromAPI)
+            if (null != internalConnection && !_isFromAPI)
+            {
+                SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlTransaction.Zombie|ADV> {0} yukon deferred zombie", ObjectID);
+            }
+            else
             {
                 _internalTransaction = null; // pre-yukon zombification
             }
@@ -329,4 +349,3 @@ namespace Microsoft.Data.SqlClient
         }
     }
 }
-

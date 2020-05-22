@@ -235,7 +235,7 @@ namespace Microsoft.Data.SqlClient.Server
                     x_defaultColumnSortOrder, x_defaultSortOrdinal);
         }
 
-        // Most general constructor, should be able to intialize all SqlMetaData fields.(Used by SqlParameter)
+        // Most general constructor, should be able to initialize all SqlMetaData fields.(Used by SqlParameter)
         internal SqlMetaData(String name,
                               SqlDbType sqlDBType,
                               long maxLength,
@@ -507,7 +507,7 @@ namespace Microsoft.Data.SqlClient.Server
 
             ValidateSortOrder(columnSortOrder, sortOrdinal);
 
-            // Check for absense of explicitly-allowed types to avoid unexpected additions when new types are added
+            // Check for absence of explicitly-allowed types to avoid unexpected additions when new types are added
             if (!(SqlDbType.BigInt == dbType ||
                     SqlDbType.Bit == dbType ||
                     SqlDbType.DateTime == dbType ||

@@ -43,7 +43,7 @@ namespace Microsoft.Data.Common
         static internal extern IntPtr MapViewOfFile(IntPtr hFileMappingObject, int dwDesiredAccess, int dwFileOffsetHigh, int dwFileOffsetLow, IntPtr dwNumberOfBytesToMap);
 
         // OpenFileMappingA contains a security venerability, in the unicode->ansi conversion 
-        // Its possible to spoof the directory and construct ../ sequeences,  See FxCop Warrning
+        // Its possible to spoof the directory and construct ../ sequences,  See FxCop Warning
         // Specify marshaling for pinvoke string arguments
         [DllImport(ExternDll.Kernel32, CharSet = System.Runtime.InteropServices.CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
         //        [DllImport(ExternDll.Kernel32, CharSet=System.Runtime.InteropServices.CharSet.Ansi)]
@@ -51,7 +51,7 @@ namespace Microsoft.Data.Common
         static internal extern IntPtr OpenFileMappingA(int dwDesiredAccess, bool bInheritHandle, [MarshalAs(UnmanagedType.LPStr)] string lpName);
 
         // CreateFileMappingA contains a security venerability, in the unicode->ansi conversion 
-        // Its possible to spoof the directory and construct ../ sequeences,  See FxCop Warrning
+        // Its possible to spoof the directory and construct ../ sequences,  See FxCop Warning
         // Specify marshaling for pinvoke string arguments        
         [DllImport(ExternDll.Kernel32, CharSet = System.Runtime.InteropServices.CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
         //        [DllImport(ExternDll.Kernel32, CharSet=System.Runtime.InteropServices.CharSet.Ansi)]

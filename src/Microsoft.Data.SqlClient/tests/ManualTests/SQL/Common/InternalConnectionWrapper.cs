@@ -23,7 +23,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         /// <param name="connection">Live outer connection to grab the inner connection from</param>
         /// <param name="supportKillByTSql">If true then we will query the server for this connection's SPID details (to be used in the KillConnectionByTSql method)</param>
-        public InternalConnectionWrapper(SqlConnection connection, bool supportKillByTSql = false)
+        public InternalConnectionWrapper(SqlConnection connection, bool supportKillByTSql = false, string originalConnectionString = "")
         {
             if (connection == null)
                 throw new ArgumentNullException(nameof(connection));
@@ -33,6 +33,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             if (supportKillByTSql)
             {
+                SqlConnectionStringBuilder csb = new SqlConnectionStringBuilder(ConnectionString);
+                if (!csb.IntegratedSecurity &&
+                    string.IsNullOrWhiteSpace(originalConnectionString))
+                {
+                    throw new ArgumentException("Must provide originalConnectionString if using supportKillByTSql and not using Integrated Security.");
+                }
+                else if (!string.IsNullOrWhiteSpace(originalConnectionString))
+                {
+                    ConnectionString = originalConnectionString;
+                }
+
                 // Save the SPID for later use
                 using (SqlCommand command = new SqlCommand("SELECT @@SPID", connection))
                 {

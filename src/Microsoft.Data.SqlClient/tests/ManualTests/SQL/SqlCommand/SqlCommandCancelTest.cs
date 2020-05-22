@@ -13,30 +13,59 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public static class SqlCommandCancelTest
     {
         // Shrink the packet size - this should make timeouts more likely
-        private static readonly string s_connStr = (new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { PacketSize = 512 }).ConnectionString;
+        private static readonly string tcp_connStr = (new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { PacketSize = 512 }).ConnectionString;
+        private static readonly string np_connStr = (new SqlConnectionStringBuilder(DataTestUtility.NPConnectionString) { PacketSize = 512 }).ConnectionString;
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void PlainCancelTest()
         {
-            PlainCancel(s_connStr);
+            PlainCancel(tcp_connStr);
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public static void PlainCancelTestNP()
+        {
+            PlainCancel(np_connStr);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void PlainMARSCancelTest()
         {
-            PlainCancel((new SqlConnectionStringBuilder(s_connStr) { MultipleActiveResultSets = true }).ConnectionString);
+            PlainCancel((new SqlConnectionStringBuilder(tcp_connStr) { MultipleActiveResultSets = true }).ConnectionString);
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public static void PlainMARSCancelTestNP()
+        {
+            PlainCancel((new SqlConnectionStringBuilder(np_connStr) { MultipleActiveResultSets = true }).ConnectionString);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void PlainCancelTestAsync()
         {
-            PlainCancelAsync(s_connStr);
+            PlainCancelAsync(tcp_connStr);
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public static void PlainCancelTestAsyncNP()
+        {
+            PlainCancelAsync(np_connStr);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void PlainMARSCancelTestAsync()
         {
-            PlainCancelAsync((new SqlConnectionStringBuilder(s_connStr) { MultipleActiveResultSets = true }).ConnectionString);
+            PlainCancelAsync((new SqlConnectionStringBuilder(tcp_connStr) { MultipleActiveResultSets = true }).ConnectionString);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public static void PlainMARSCancelTestAsyncNP()
+        {
+            PlainCancelAsync((new SqlConnectionStringBuilder(np_connStr) { MultipleActiveResultSets = true }).ConnectionString);
         }
 
         private static void PlainCancel(string connString)
@@ -89,35 +118,198 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void MultiThreadedCancel_NonAsync()
         {
-            MultiThreadedCancel(s_connStr, false);
+            MultiThreadedCancel(tcp_connStr, false);
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public static void MultiThreadedCancel_NonAsyncNP()
+        {
+            MultiThreadedCancel(np_connStr, false);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void MultiThreadedCancel_Async()
         {
-            MultiThreadedCancel(s_connStr, true);
+            MultiThreadedCancel(tcp_connStr, true);
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public static void MultiThreadedCancel_AsyncNP()
+        {
+            MultiThreadedCancel(np_connStr, true);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void TimeoutCancel()
         {
-            TimeoutCancel(s_connStr);
+            TimeoutCancel(tcp_connStr);
         }
 
-        [CheckConnStrSetupFact]
+        [ActiveIssue(12167)]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public static void TimeoutCancelNP()
+        {
+            TimeoutCancel(np_connStr);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void CancelAndDisposePreparedCommand()
         {
-            CancelAndDisposePreparedCommand(s_connStr);
+            CancelAndDisposePreparedCommand(tcp_connStr);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public static void CancelAndDisposePreparedCommandNP()
+        {
+            CancelAndDisposePreparedCommand(np_connStr);
         }
 
         [ActiveIssue(5541)]
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void TimeOutDuringRead()
         {
-            TimeOutDuringRead(s_connStr);
+            TimeOutDuringRead(tcp_connStr);
+        }
+
+        [ActiveIssue(5541)]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public static void TimeOutDuringReadNP()
+        {
+            TimeOutDuringRead(np_connStr);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void CancelDoesNotWait()
+        {
+            CancelDoesNotWait(tcp_connStr);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public static void CancelDoesNotWaitNP()
+        {
+            CancelDoesNotWait(np_connStr);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void AsyncCancelDoesNotWait()
+        {
+            AsyncCancelDoesNotWait(tcp_connStr).Wait();
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public static void AsyncCancelDoesNotWaitNP()
+        {
+            AsyncCancelDoesNotWait(np_connStr).Wait();
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void TCPAttentionPacketTestTransaction()
+        {
+            CancelFollowedByTransaction(tcp_connStr);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public static void NPAttentionPacketTestTransaction()
+        {
+            CancelFollowedByTransaction(np_connStr);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        public static void TCPAttentionPacketTestAlerts()
+        {
+            CancelFollowedByAlert(tcp_connStr);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public static void NPAttentionPacketTestAlerts()
+        {
+            CancelFollowedByAlert(np_connStr);
+        }
+
+        private static void CancelFollowedByTransaction(string constr)
+        {
+            using (SqlConnection connection = new SqlConnection(constr))
+            {
+                connection.Open();
+                using (SqlCommand cmd = connection.CreateCommand())
+                {
+                    cmd.CommandText = @"SELECT @@VERSION";
+                    using (var r = cmd.ExecuteReader())
+                    {
+                        cmd.Cancel();
+                    }
+                }
+                using (SqlTransaction transaction = connection.BeginTransaction())
+                { }
+            }
+        }
+
+        private static void CancelFollowedByAlert(string constr)
+        {
+            var alertName = "myAlert" + Guid.NewGuid().ToString();
+            // Since Alert conditions are randomly generated, 
+            // we will retry on unexpected error messages to avoid collision in pipelines.
+            var n = new Random().Next(1, 100);
+            bool retry = true;
+            int retryAttempt = 0;
+            while (retry && retryAttempt < 3)
+            {
+                try
+                {
+                    using (var conn = new SqlConnection(constr))
+                    {
+                        conn.Open();
+                        using (SqlCommand cmd = conn.CreateCommand())
+                        {
+                            cmd.CommandText = "SELECT @@VERSION";
+                            using (var reader = cmd.ExecuteReader())
+                            {
+                                cmd.Cancel(); // Sends Attention
+                            }
+                        }
+                        using (SqlCommand cmd = conn.CreateCommand())
+                        {
+                            cmd.CommandText = $@"EXEC msdb.dbo.sp_add_alert @name=N'{alertName}',
+                                        @performance_condition = N'SQLServer:General Statistics|User Connections||>|{n}'";
+                            cmd.ExecuteNonQuery();
+                            cmd.CommandText = @"USE [msdb]";
+                            cmd.ExecuteNonQuery();
+                            cmd.CommandText = $@"/****** Object:  Alert [{alertName}] Script Date: {DateTime.Now} ******/
+                IF  EXISTS (SELECT name FROM msdb.dbo.sysalerts WHERE name = N'{alertName}')
+                EXEC msdb.dbo.sp_delete_alert @name=N'{alertName}'";
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    if (retryAttempt >= 3 || e.Message.Contains("The transaction operation cannot be performed"))
+                    {
+                        Assert.False(true, $"Retry Attempt: {retryAttempt} | Unexpected Exception occurred: {e.Message}");
+                    }
+                    else
+                    {
+                        retry = true;
+                        retryAttempt++;
+                        Console.WriteLine($"CancelFollowedByAlert Test retry attempt : {retryAttempt}");
+                        Thread.Sleep(500);
+                        continue;
+                    }
+                }
+                retry = false;
+            }
         }
 
         private static void MultiThreadedCancel(string constr, bool async)
@@ -125,21 +317,23 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (SqlConnection con = new SqlConnection(constr))
             {
                 con.Open();
-                var command = con.CreateCommand();
-                command.CommandText = "select * from orders; waitfor delay '00:00:08'; select * from customers";
+                using (var command = con.CreateCommand())
+                {
+                    command.CommandText = "select * from orders; waitfor delay '00:00:08'; select * from customers";
 
-                Barrier threadsReady = new Barrier(2);
-                object state = new Tuple<bool, SqlCommand, Barrier>(async, command, threadsReady);
+                    Barrier threadsReady = new Barrier(2);
+                    object state = new Tuple<bool, SqlCommand, Barrier>(async, command, threadsReady);
 
-                Task[] tasks = new Task[2];
-                tasks[0] = new Task(ExecuteCommandCancelExpected, state);
-                tasks[1] = new Task(CancelSharedCommand, state);
-                tasks[0].Start();
-                tasks[1].Start();
+                    Task[] tasks = new Task[2];
+                    tasks[0] = new Task(ExecuteCommandCancelExpected, state);
+                    tasks[1] = new Task(CancelSharedCommand, state);
+                    tasks[0].Start();
+                    tasks[1].Start();
 
-                Task.WaitAll(tasks, 15 * 1000);
+                    Task.WaitAll(tasks, 15 * 1000);
 
-                SqlCommandCancelTest.VerifyConnection(command);
+                    SqlCommandCancelTest.VerifyConnection(command);
+                }
             }
         }
 
@@ -148,15 +342,23 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (SqlConnection con = new SqlConnection(constr))
             {
                 con.Open();
-                SqlCommand cmd = con.CreateCommand();
-                cmd.CommandTimeout = 1;
-                cmd.CommandText = "WAITFOR DELAY '00:00:30';select * from Customers";
+                using (SqlCommand cmd = con.CreateCommand())
+                {
+                    cmd.CommandTimeout = 1;
+                    cmd.CommandText = "WAITFOR DELAY '00:00:20';select * from Customers";
 
-                string errorMessage = SystemDataResourceManager.Instance.SQL_Timeout_Execution;
-                DataTestUtility.ExpectFailure<SqlException>(() => cmd.ExecuteReader(), new string[] { errorMessage });
+                    string errorMessage = SystemDataResourceManager.Instance.SQL_Timeout_Execution;
+                    DataTestUtility.ExpectFailure<SqlException>(() => ExecuteReaderOnCmd(cmd), new string[] { errorMessage });
 
-                VerifyConnection(cmd);
+                    VerifyConnection(cmd);
+                }
             }
+        }
+
+        private static void ExecuteReaderOnCmd(SqlCommand cmd)
+        {
+            using (SqlDataReader reader = cmd.ExecuteReader())
+            { }
         }
 
         //InvalidOperationException from connection.Dispose if that connection has prepared command cancelled during reading of data
@@ -253,33 +455,98 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     // Start the command
                     conn.Open();
-                    SqlCommand cmd = new SqlCommand("SELECT @p", conn);
-                    cmd.Parameters.AddWithValue("p", new byte[20000]);
-                    SqlDataReader reader = cmd.ExecuteReader();
-                    reader.Read();
+                    using (SqlCommand cmd = new SqlCommand("SELECT @p", conn))
+                    {
+                        cmd.Parameters.AddWithValue("p", new byte[20000]);
+                        using (SqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            reader.Read();
 
-                    // Tweak the timeout to 1ms, stop the proxy from proxying and then try GetValue (which should timeout)
-                    reader.SetDefaultTimeout(1);
-                    proxy.PauseCopying();
-                    string errorMessage = SystemDataResourceManager.Instance.SQL_Timeout_Execution;
-                    Exception exception = Assert.Throws<SqlException>(() => reader.GetValue(0));
-                    Assert.Contains(errorMessage, exception.Message);
+                            // Tweak the timeout to 1ms, stop the proxy from proxying and then try GetValue (which should timeout)
+                            reader.SetDefaultTimeout(1);
+                            proxy.PauseCopying();
+                            string errorMessage = SystemDataResourceManager.Instance.SQL_Timeout_Execution;
+                            Exception exception = Assert.Throws<SqlException>(() => reader.GetValue(0));
+                            Assert.Contains(errorMessage, exception.Message);
 
-                    // Return everything to normal and close
-                    proxy.ResumeCopying();
-                    reader.SetDefaultTimeout(30000);
-                    reader.Dispose();
+                            // Return everything to normal and close
+                            proxy.ResumeCopying();
+                            reader.SetDefaultTimeout(30000);
+                            reader.Dispose();
+                        }
+                    }
                 }
-
-                proxy.Stop();
             }
             catch
             {
                 // In case of error, stop the proxy and dump its logs (hopefully this will help with debugging
                 proxy.Stop();
                 Console.WriteLine(proxy.GetServerEventLog());
-                Assert.True(false, "Error while reading through proxy");
                 throw;
+            }
+            finally
+            {
+                proxy.Stop();
+            }
+        }
+
+        private static void CancelDoesNotWait(string connStr)
+        {
+            const int delaySeconds = 30;
+            const int cancelSeconds = 1;
+
+            using (SqlConnection conn = new SqlConnection(connStr))
+            using (var cmd = new SqlCommand($"WAITFOR DELAY '00:00:{delaySeconds:D2}'", conn))
+            {
+                conn.Open();
+
+                // Cancel after 2 seconds as sometimes total time elapsed can be .99 in case of 1 second that causes random failures
+                Task.Delay(TimeSpan.FromSeconds(cancelSeconds + 1))
+                    .ContinueWith(t => cmd.Cancel());
+
+                DateTime started = DateTime.UtcNow;
+                DateTime ended = DateTime.UtcNow;
+                Exception exception = null;
+                try
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                catch (Exception ex)
+                {
+                    exception = ex;
+                }
+                ended = DateTime.UtcNow;
+
+                Assert.NotNull(exception);
+                Assert.InRange((ended - started).TotalSeconds, cancelSeconds, delaySeconds - 1);
+            }
+        }
+
+        private static async Task AsyncCancelDoesNotWait(string connStr)
+        {
+            const int delaySeconds = 30;
+            const int cancelSeconds = 1;
+
+            using (SqlConnection conn = new SqlConnection(connStr))
+            using (var cmd = new SqlCommand($"WAITFOR DELAY '00:00:{delaySeconds:D2}'", conn))
+            {
+                await conn.OpenAsync();
+
+                DateTime started = DateTime.UtcNow;
+                Exception exception = null;
+                try
+                {
+                    // Cancel after 2 seconds as sometimes total time elapsed can be .99 in case of 1 second that causes random failures
+                    await cmd.ExecuteNonQueryAsync(new CancellationTokenSource(2000).Token);
+                }
+                catch (Exception ex)
+                {
+                    exception = ex;
+                }
+                DateTime ended = DateTime.UtcNow;
+
+                Assert.NotNull(exception);
+                Assert.InRange((ended - started).TotalSeconds, cancelSeconds, delaySeconds - 1);
             }
         }
     }

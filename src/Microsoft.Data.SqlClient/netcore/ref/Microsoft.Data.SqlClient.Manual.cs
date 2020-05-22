@@ -12,7 +12,7 @@ namespace Microsoft.Data.SqlClient
     }
     public sealed partial class SqlConnection : System.Data.Common.DbConnection
     {
-        // SqlConection expects IDisposable methods to be implemented via System.ComponentModel.Component, which it no longer inherits from
+        // SqlConnection expects IDisposable methods to be implemented via System.ComponentModel.Component, which it no longer inherits from
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Dispose/*'/>
         override protected void Dispose(bool disposing) { }
     }

@@ -234,7 +234,7 @@ namespace Microsoft.Data.Common
                                     {
                                         hasMatch = true;
                                         // adding a break statement is tempting, but wrong
-                                        // user can safetly extend their restrictions for current rule to include missing keyword
+                                        // user can safely extend their restrictions for current rule to include missing keyword
                                         // i.e. Add("provider=sqloledb;integrated security=sspi", "data provider=", KeyRestrictionBehavior.AllowOnly);
                                         // i.e. Add("data provider=msdatashape;provider=sqloledb;integrated security=sspi", "", KeyRestrictionBehavior.AllowOnly);
                                     }
@@ -259,7 +259,7 @@ namespace Microsoft.Data.Common
             if (null != entry)
             {
                 // also checking !hasMatch is tempting, but wrong
-                // user can safetly extend their restrictions for current rule to include missing keyword
+                // user can safely extend their restrictions for current rule to include missing keyword
                 // i.e. Add("provider=sqloledb;integrated security=sspi", "data provider=", KeyRestrictionBehavior.AllowOnly);
                 // i.e. Add("provider=sqloledb;", "integrated security=;", KeyRestrictionBehavior.AllowOnly);
                 hasMatch = entry.IsSupersetOf(parsetable);

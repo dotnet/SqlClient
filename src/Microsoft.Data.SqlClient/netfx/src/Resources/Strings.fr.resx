@@ -339,7 +339,7 @@
   <data name="MDF_UnableToBuildCollection" xml:space="preserve">
     <value>Impossible de créer la collection de schémas '{0}' ;</value>
   </data>
-  <data name="MDF_AmbigousCollectionName" xml:space="preserve">
+  <data name="MDF_AmbiguousCollectionName" xml:space="preserve">
     <value>Le nom de collection '{0}' correspond au moins à deux collections dotées du même nom, mais de casse différente, mais cette correspondance n'est pas précise.</value>
   </data>
   <data name="MDF_CollectionNameISNotUnique" xml:space="preserve">
@@ -2496,8 +2496,8 @@
   <data name="SQL_IntegratedWithUserIDAndPassword" xml:space="preserve">
     <value>Impossible d'utiliser 'Authentication=Active Directory Integrated' avec les mots clés de la chaîne de connexion 'User ID", "UID", "Password" ou "PWD".</value>
   </data>
-  <data name="SQL_InteractiveWithUserIDAndPassword" xml:space="preserve">
-    <value>Impossible d'utiliser 'Authentication=Active Directory Interactive' avec les mots clés de chaîne de connexion 'User ID', 'UID', 'Password' et 'PWD'.</value>
+  <data name="SQL_InteractiveWithPassword" xml:space="preserve">
+    <value>Impossible d'utiliser « Authentication=Active Directory Interactive » avec les mots clés de chaîne de connexion « Password » ou « PWD ».</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
     <value>Impossible d'utiliser 'Authentication=Active Directory Integrated', si la propriété Credential a été définie.</value>
@@ -2809,7 +2809,10 @@
     <value>Les mappages doivent tous être basés sur un nom ou un ordinal.</value>
   </data>
   <data name="SQL_BulkLoadCannotConvertValue" xml:space="preserve">
-    <value>Impossible de convertir la valeur de type {0} fournie pour la source de données en type {1} de la colonne cible spécifiée.</value>
+    <value>La valeur donnée {0} de type {1} à partir de la source de données ne peut pas être convertie en type {2} pour la colonne {3} [{4}], ligne {5}.</value>
+  </data>
+  <data name="SQL_BulkLoadCannotConvertValueWithoutRowNo" xml:space="preserve">
+    <value>La valeur donnée {0} de type {1} à partir de la source de données ne peut pas être convertie en type {2} pour la colonne {3} [{4}].</value>
   </data>
   <data name="SQL_BulkLoadNonMatchingColumnMapping" xml:space="preserve">
     <value>Le ColumnMapping fourni ne correspond à aucune colonne de la source ou de la destination.</value>
@@ -4309,10 +4312,10 @@
     <value>Erreur interne. SqlColumnEncryptionEnclaveProviderName ne peut pas avoir une valeur null ou être vide.</value>
   </data>
   <data name="TCE_NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe" xml:space="preserve">
-    <value>Une erreur s'est produite durant la lecture du jeu de résultats '{0}'. L'URL d'attestation n'a pas été spécifiée dans la chaîne de connexion alors que la requête nécessite des calculs d'enclave. Le type d'enclave est '{1}'. </value>
+    <value>Une erreur s'est produite lors de la lecture du jeu de résultats « {0} ». L'URL d'attestation n'a pas été spécifiée dans la chaîne de connexion, mais la requête nécessite des calculs d'enclave. Le type d'enclave est « {1} ». </value>
   </data>
   <data name="TCE_NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage" xml:space="preserve">
-    <value>Une erreur s'est produite durant la génération du package de l'enclave. L'URL d'attestation n'a pas été spécifiée dans la chaîne de connexion alors que la requête nécessite des calculs d'enclave. Le type d'enclave est '{0}'. </value>
+    <value>Une erreur s'est produite lors de la génération du package d'enclave. L'URL d'attestation n'a pas été spécifiée dans la chaîne de connexion, mais la requête nécessite des calculs d'enclave. Le type d'enclave est « {0} ». </value>
   </data>
   <data name="TCE_EnclaveTypeNullForEnclaveBasedQuery" xml:space="preserve">
     <value>Erreur interne. Le type d'enclave reçu de la part de SQL Server a une valeur null ou est vide durant l'exécution d'une requête qui nécessite des calculs d'enclave.</value>
@@ -4336,7 +4339,13 @@
     <value>L’instance {0} utilisée ne prend pas en charge le chiffrement de colonne.</value>
   </data>
   <data name="TCE_EnclaveComputationsNotSupported" xml:space="preserve">
+    <value>Vous avez spécifié l'URL d'attestation et le protocole d'attestation de l'enclave dans la chaîne de connexion, alors que l'instance SQL Server utilisée ne prend pas en charge les calculs basés sur des enclaves.</value>
+  </data>
+  <data name="TCE_AttestationURLNotSupported" xml:space="preserve">
     <value>Vous avez spécifié l'URL d'attestation d'enclave dans la chaîne de connexion, mais l'instance SQL Server utilisée ne prend pas en charge les calculs basés sur des enclaves.</value>
+  </data>
+  <data name="TCE_AttestationProtocolNotSupported" xml:space="preserve">
+    <value>Vous avez spécifié le protocole d'attestation dans la chaîne de connexion, mais l'instance SQL Server utilisée ne prend pas en charge les calculs basés sur des enclaves.</value>
   </data>
   <data name="TCE_EnclaveTypeNotReturned" xml:space="preserve">
     <value>Vous avez spécifié l'URL d'attestation d'enclave dans la chaîne de connexion, mais l'instance SQL Server n'a pas retourné de type d'enclave. Vérifiez que le type d'enclave est correctement configuré dans votre instance.</value>
@@ -4516,6 +4525,9 @@
     <value>L'initialisation de la connexion a échoué. Le protocole d'attestation « {0} » ne prend pas en charge le type d'enclave « {1} ».</value>
   </data>
   <data name="TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage" xml:space="preserve">
-    <value>Une erreur s'est produite pendant la génération du package d'enclave. Le protocole d'attestation n'a pas été spécifié dans la chaîne de connexion, mais la requête nécessite des calculs d'enclave.</value>
+    <value>Une erreur s'est produite lors de la génération du package d'enclave. Le protocole d'attestation n'a pas été spécifié dans la chaîne de connexion, mais la requête nécessite des calculs d'enclave.</value>
+  </data>
+  <data name="SQLUDT_InvalidSize" xml:space="preserve">
+    <value>La taille UDT doit être inférieure à {1}, taille : {0}</value>
   </data>
 </root>

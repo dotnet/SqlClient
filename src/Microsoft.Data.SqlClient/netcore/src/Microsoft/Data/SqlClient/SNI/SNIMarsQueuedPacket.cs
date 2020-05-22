@@ -7,10 +7,10 @@ namespace Microsoft.Data.SqlClient.SNI
     /// <summary>
     /// Mars queued packet
     /// </summary>
-    internal class SNIMarsQueuedPacket
+    internal sealed class SNIMarsQueuedPacket
     {
-        private SNIPacket _packet;
-        private SNIAsyncCallback _callback;
+        private readonly SNIPacket _packet;
+        private readonly SNIAsyncCallback _callback;
 
         /// <summary>
         /// Constructor
@@ -23,36 +23,8 @@ namespace Microsoft.Data.SqlClient.SNI
             _callback = callback;
         }
 
-        /// <summary>
-        /// SNI packet
-        /// </summary>
-        public SNIPacket Packet
-        {
-            get
-            {
-                return _packet;
-            }
+        public SNIPacket Packet => _packet;
 
-            set
-            {
-                _packet = value;
-            }
-        }
-
-        /// <summary>
-        /// Completion callback
-        /// </summary>
-        public SNIAsyncCallback Callback
-        {
-            get
-            {
-                return _callback;
-            }
-
-            set
-            {
-                _callback = value;
-            }
-        }
+        public SNIAsyncCallback Callback => _callback;
     }
 }

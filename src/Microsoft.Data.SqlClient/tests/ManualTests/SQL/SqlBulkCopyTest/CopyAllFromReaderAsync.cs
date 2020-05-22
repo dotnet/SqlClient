@@ -49,8 +49,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                 bulkcopy.DestinationTableName = dstTable;
 
                                 await bulkcopy.WriteToServerAsync(reader);
+                                await outputSemaphore.WaitAsync();
+                                
+                                DataTestUtility.AssertEqualsWithDescription(bulkcopy.RowsCopied, 5, "Unexpected number of rows.");
                             }
-                            await outputSemaphore.WaitAsync();
                             Helpers.VerifyResults(dstConn, dstTable, 3, 5);
                         }
                     }

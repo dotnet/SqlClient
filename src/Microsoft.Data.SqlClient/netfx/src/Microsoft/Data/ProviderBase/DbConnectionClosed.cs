@@ -13,7 +13,6 @@ namespace Microsoft.Data.ProviderBase
 
     abstract internal class DbConnectionClosed : DbConnectionInternal
     {
-
         // Construct an "empty" connection
         protected DbConnectionClosed(ConnectionState state, bool hidePassword, bool allowSetConnectionString) : base(state, hidePassword, allowSetConnectionString)
         {
@@ -167,7 +166,6 @@ namespace Microsoft.Data.ProviderBase
     sealed internal class DbConnectionClosedPreviouslyOpened : DbConnectionClosed
     {
         // Closed Connection, Has Previously Been Opened
-
         internal static readonly DbConnectionInternal SingletonInstance = new DbConnectionClosedPreviouslyOpened();   // singleton object
 
         private DbConnectionClosedPreviouslyOpened() : base(ConnectionState.Closed, true, true)

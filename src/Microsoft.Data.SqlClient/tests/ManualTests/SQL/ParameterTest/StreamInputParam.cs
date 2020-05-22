@@ -472,7 +472,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                     catch (AggregateException ae)
                     {
-                        if (ae.InnerException is InvalidOperationException)
+                        if (ae.InnerException is InvalidOperationException ||
+                            (ae.InnerException is SqlException &&
+                             ae.InnerException.Message.Contains("Operation cancelled by user.")))
                         {
                             Console.WriteLine("PASS: Task is cancelled");
                         }
@@ -518,7 +520,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                     catch (AggregateException ae)
                     {
-                        if (ae.InnerException is InvalidOperationException)
+                        if (ae.InnerException is InvalidOperationException ||
+                            (ae.InnerException is SqlException &&
+                             ae.InnerException.Message.Contains("Operation cancelled by user.")))
                         {
                             Console.WriteLine("PASS: Task is cancelled");
                         }
@@ -557,7 +561,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                     catch (AggregateException ae)
                     {
-                        if (ae.InnerException is InvalidOperationException)
+                        if (ae.InnerException is InvalidOperationException ||
+                            (ae.InnerException is SqlException &&
+                             ae.InnerException.Message.Contains("Operation cancelled by user.")))
                         {
                             Console.WriteLine("PASS: Task is cancelled");
                         }

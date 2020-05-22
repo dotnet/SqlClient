@@ -1809,10 +1809,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     }
                 }
             }
-
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp)]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestExecuteXmlReader(string connection)
@@ -1822,7 +1820,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             IList<object> values = GetValues(dataHint: 60);
             int numberOfRows = 10;
 
-            // Insert a bunch of rows in to the table.
+            // Insert a bunch of rows in to the table.	
             int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
             Assert.True(rowsAffected == numberOfRows, "number of rows affected is unexpected.");
 
@@ -1830,12 +1828,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             {
                 sqlConnection.Open();
 
-                // select the set of rows that were inserted just now.
+                // select the set of rows that were inserted just now.	
                 using (SqlCommand sqlCommand = new SqlCommand($"SELECT LastName FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId FOR XML AUTO;", sqlConnection, transaction: null, columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
                 {
                     if (DataTestUtility.EnclaveEnabled)
                     {
-                        //Increase Time out for enclave-enabled server.
+                        //Increase Time out for enclave-enabled server.	
                         sqlCommand.CommandTimeout = 90;
                     }
                     sqlCommand.Parameters.Add(@"CustomerId", SqlDbType.Int);
@@ -1849,11 +1847,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                     var ex = Assert.Throws<SqlException>(() => sqlCommand.ExecuteXmlReader());
                     Assert.Equal($"'FOR XML' clause is unsupported for encrypted columns.{Environment.NewLine}Statement(s) could not be prepared.", ex.Message);
-
-                    //string xmlResult;
-                    IAsyncResult asyncResult = sqlCommand.BeginExecuteXmlReader();
-
-                    Assert.Throws<SqlException>(() => sqlCommand.EndExecuteXmlReader(asyncResult));
                 }
             }
         }

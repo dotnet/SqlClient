@@ -363,9 +363,9 @@ namespace Microsoft.Data.Common
             return Argument(System.SRHelper.GetString(SR.MDF_UnsupportedVersion, collectionName));
         }
 
-        internal static Exception AmbigousCollectionName(string collectionName)
+        internal static Exception AmbiguousCollectionName(string collectionName)
         {
-            return Argument(System.SRHelper.GetString(SR.MDF_AmbigousCollectionName, collectionName));
+            return Argument(System.SRHelper.GetString(SR.MDF_AmbiguousCollectionName, collectionName));
         }
 
         internal static Exception PrepareParameterSize(DbCommand cmd)

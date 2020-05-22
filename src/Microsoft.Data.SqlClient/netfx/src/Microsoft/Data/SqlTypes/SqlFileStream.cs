@@ -12,6 +12,7 @@ using Microsoft.Win32.SafeHandles;
 using System.Diagnostics;
 using System.Runtime.Versioning;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data.SqlTypes
 {
@@ -22,8 +23,8 @@ namespace Microsoft.Data.SqlTypes
         //   TransactionContext accessors as virtual methods. Doing so now on a sealed class
         //   generates a compiler error (CS0549)
 
-        // For BID tracing output
-        private static int _objectTypeCount; // Bid counter
+        // For EventTrace output
+        private static int _objectTypeCount; // EventSource counter
         internal readonly int ObjectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
 
         // from System.IO.FileStream implementation
@@ -64,10 +65,7 @@ namespace Microsoft.Data.SqlTypes
                 Int64 allocationSize
             )
         {
-
-            IntPtr hscp;
-            Bid.ScopeEnter(out hscp, "<sc.SqlFileStream.ctor|API> %d# access=%d options=%d path='%ls' ", ObjectID, (int)access, (int)options, path);
-
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlFileStream.ctor|API> {0} access={1} options={2} path='{3}'", ObjectID, (int)access, (int)options, path);
             try
             {
                 //-----------------------------------------------------------------
@@ -92,7 +90,7 @@ namespace Microsoft.Data.SqlTypes
             }
             finally
             {
-                Bid.ScopeLeave(ref hscp);
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
             }
         }
 
@@ -618,7 +616,7 @@ namespace Microsoft.Data.SqlTypes
             //-----------------------------------------------------------------
 
             // normalize the provided path
-            //   * compress path to remove any occurences of '.' or '..'
+            //   * compress path to remove any occurrences of '.' or '..'
             //   * trim whitespace from the beginning and end of the path
             //   * ensure that the path starts with '\\'
             //   * ensure that the path does not start with '\\.\'
@@ -715,8 +713,8 @@ namespace Microsoft.Data.SqlTypes
                 UnsafeNativeMethods.SetErrorModeWrapper(UnsafeNativeMethods.SEM_FAILCRITICALERRORS, out oldMode);
                 try
                 {
-                    Bid.Trace("<sc.SqlFileStream.OpenSqlFileStream|ADV> %d#, desiredAccess=0x%08x, allocationSize=%I64d, fileAttributes=0x%08x, shareAccess=0x%08x, dwCreateDisposition=0x%08x, createOptions=0x%08x\n",
-                        ObjectID, (int)nDesiredAccess, allocationSize, 0, (int)shareAccess, dwCreateDisposition, dwCreateOptions);
+                    SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlFileStream.OpenSqlFileStream|ADV> {0}, desiredAccess=0x{1}, allocationSize={2}, " +
+                       "fileAttributes=0x{3}, shareAccess=0x{4}, dwCreateDisposition=0x{5}, createOptions=0x{ dwCreateOptions}", ObjectID, (int)nDesiredAccess, allocationSize, 0, (int)shareAccess, dwCreateDisposition);
 
                     retval = UnsafeNativeMethods.NtCreateFile(out hFile, nDesiredAccess,
                         ref oa, out ioStatusBlock, ref allocationSize,

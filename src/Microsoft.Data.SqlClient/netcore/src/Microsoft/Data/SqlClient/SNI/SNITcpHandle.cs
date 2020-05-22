@@ -20,10 +20,11 @@ namespace Microsoft.Data.SqlClient.SNI
     /// <summary>
     /// TCP connection handle
     /// </summary>
-    internal class SNITCPHandle : SNIHandle
+    internal sealed class SNITCPHandle : SNIPhysicalHandle
     {
         private readonly string _targetServer;
         private readonly object _callbackObject;
+        private readonly object _sendSync;
         private readonly Socket _socket;
         private NetworkStream _tcpStream;
 
@@ -104,6 +105,7 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             _callbackObject = callbackObject;
             _targetServer = serverName;
+            _sendSync = new object();
 
             try
             {
@@ -432,24 +434,52 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error code</returns>
         public override uint Send(SNIPacket packet)
         {
-            lock (this)
+            bool releaseLock = false;
+            try
             {
-                try
+                // is the packet is marked out out-of-band (attention packets only) it must be
+                // sent immediately even if a send of recieve operation is already in progress
+                // because out of band packets are used to cancel ongoing operations
+                // so try to take the lock if possible but continue even if it can't be taken
+                if (packet.IsOutOfBand)
                 {
-                    packet.WriteToStream(_stream);
-                    return TdsEnums.SNI_SUCCESS;
+                    Monitor.TryEnter(this, ref releaseLock);
                 }
-                catch (ObjectDisposedException ode)
+                else
                 {
-                    return ReportTcpSNIError(ode);
+                    Monitor.Enter(this);
+                    releaseLock = true;
                 }
-                catch (SocketException se)
+
+                // this lock ensures that two packets are not being written to the transport at the same time
+                // so that sending a standard and an out-of-band packet are both written atomically no data is 
+                // interleaved
+                lock (_sendSync)
                 {
-                    return ReportTcpSNIError(se);
+                    try
+                    {
+                        packet.WriteToStream(_stream);
+                        return TdsEnums.SNI_SUCCESS;
+                    }
+                    catch (ObjectDisposedException ode)
+                    {
+                        return ReportTcpSNIError(ode);
+                    }
+                    catch (SocketException se)
+                    {
+                        return ReportTcpSNIError(se);
+                    }
+                    catch (IOException ioe)
+                    {
+                        return ReportTcpSNIError(ioe);
+                    }
                 }
-                catch (IOException ioe)
+            }
+            finally
+            {
+                if (releaseLock)
                 {
-                    return ReportTcpSNIError(ioe);
+                    Monitor.Exit(this);
                 }
             }
         }
@@ -462,6 +492,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error code</returns>
         public override uint Receive(out SNIPacket packet, int timeoutInMilliseconds)
         {
+            SNIPacket errorPacket;
             lock (this)
             {
                 packet = null;
@@ -482,29 +513,37 @@ namespace Microsoft.Data.SqlClient.SNI
                         return TdsEnums.SNI_WAIT_TIMEOUT;
                     }
 
-                    packet = new SNIPacket(_bufferSize);
+                    packet = RentPacket(headerSize: 0, dataSize: _bufferSize);
                     packet.ReadFromStream(_stream);
 
                     if (packet.Length == 0)
                     {
+                        errorPacket = packet;
+                        packet = null;
                         var e = new Win32Exception();
-                        return ReportErrorAndReleasePacket(packet, (uint)e.NativeErrorCode, 0, e.Message);
+                        return ReportErrorAndReleasePacket(errorPacket, (uint)e.NativeErrorCode, 0, e.Message);
                     }
 
                     return TdsEnums.SNI_SUCCESS;
                 }
                 catch (ObjectDisposedException ode)
                 {
-                    return ReportErrorAndReleasePacket(packet, ode);
+                    errorPacket = packet;
+                    packet = null;
+                    return ReportErrorAndReleasePacket(errorPacket, ode);
                 }
                 catch (SocketException se)
                 {
-                    return ReportErrorAndReleasePacket(packet, se);
+                    errorPacket = packet;
+                    packet = null;
+                    return ReportErrorAndReleasePacket(errorPacket, se);
                 }
                 catch (IOException ioe)
                 {
-                    uint errorCode = ReportErrorAndReleasePacket(packet, ioe);
-                    if (ioe.InnerException is SocketException && ((SocketException)(ioe.InnerException)).SocketErrorCode == SocketError.TimedOut)
+                    errorPacket = packet;
+                    packet = null;
+                    uint errorCode = ReportErrorAndReleasePacket(errorPacket, ioe);
+                    if (ioe.InnerException is SocketException socketException && socketException.SocketErrorCode == SocketError.TimedOut)
                     {
                         errorCode = TdsEnums.SNI_WAIT_TIMEOUT;
                     }
@@ -533,15 +572,14 @@ namespace Microsoft.Data.SqlClient.SNI
         /// Send a packet asynchronously
         /// </summary>
         /// <param name="packet">SNI packet</param>
-        /// <param name="disposePacketAfterSendAsync"></param>
         /// <param name="callback">Completion callback</param>
         /// <returns>SNI error code</returns>
-        public override uint SendAsync(SNIPacket packet, bool disposePacketAfterSendAsync, SNIAsyncCallback callback = null)
+        public override uint SendAsync(SNIPacket packet, SNIAsyncCallback callback = null)
         {
             SNIAsyncCallback cb = callback ?? _sendCallback;
             lock (this)
             {
-                packet.WriteToStreamAsync(_stream, cb, SNIProviders.TCP_PROV, disposePacketAfterSendAsync);
+                packet.WriteToStreamAsync(_stream, cb, SNIProviders.TCP_PROV);
             }
             return TdsEnums.SNI_SUCCESS_IO_PENDING;
         }
@@ -553,7 +591,8 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error code</returns>
         public override uint ReceiveAsync(ref SNIPacket packet)
         {
-            packet = new SNIPacket(_bufferSize);
+            SNIPacket errorPacket;
+            packet = RentPacket(headerSize: 0, dataSize: _bufferSize);
 
             try
             {
@@ -562,7 +601,9 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             catch (Exception e) when (e is ObjectDisposedException || e is SocketException || e is IOException)
             {
-                return ReportErrorAndReleasePacket(packet, e);
+                errorPacket = packet;
+                packet = null;
+                return ReportErrorAndReleasePacket(errorPacket, e);
             }
         }
 
@@ -617,7 +658,7 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             if (packet != null)
             {
-                packet.Release();
+                ReturnPacket(packet);
             }
             return ReportTcpSNIError(sniException);
         }
@@ -626,7 +667,7 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             if (packet != null)
             {
-                packet.Release();
+                ReturnPacket(packet);
             }
             return ReportTcpSNIError(nativeError, sniError, errorMessage);
         }
@@ -640,5 +681,15 @@ namespace Microsoft.Data.SqlClient.SNI
             _socket.Shutdown(SocketShutdown.Both);
         }
 #endif
+
+        internal static void SetKeepAliveValues(ref Socket socket)
+        {
+
+#if NETCORE3
+            socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
+            socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveInterval, 1);
+            socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveTime, 30);
+#endif
+        }
     }
 }
