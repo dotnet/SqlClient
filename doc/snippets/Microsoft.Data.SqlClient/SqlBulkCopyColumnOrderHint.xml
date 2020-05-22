@@ -83,8 +83,6 @@ Transact-SQL `INSERT … SELECT` statement to copy the data.
 
 An <xref:System.ArgumentException> will be thrown if a null or empty string is given.
 
-The last value set takes precedence.
-
 ## Examples
 The following example bulk copies data from a source table in the **AdventureWorks** sample database to a destination table in the same database.
 A SqlBulkCopyColumnOrderHint object is used to define the sort order for the ProductNumber destination column.
@@ -113,8 +111,6 @@ Transact-SQL `INSERT … SELECT` statement to copy the data.
 
 ## Remarks
 An <xref:System.ArgumentException> will be thrown if a <xref:Microsoft.Data.SqlClient.SortOrder> of Unspecified is given.
-
-The last value set takes precedence.
 
 ## Examples
 The following example bulk copies data from a source table in the **AdventureWorks** sample database to a destination table in the same database.
