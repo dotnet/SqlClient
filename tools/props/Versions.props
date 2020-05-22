@@ -9,7 +9,7 @@
   </PropertyGroup>
   <!-- NetFx project dependencies -->
   <PropertyGroup>
-    <MicrosoftDataSqlClientSniVersion>1.1.*</MicrosoftDataSqlClientSniVersion>    
+    <MicrosoftDataSqlClientSniVersion>2.0.0-preview1.20141.10</MicrosoftDataSqlClientSniVersion>    
     <SystemSecurityCryptographyAlgorithmsVersion>4.3.1</SystemSecurityCryptographyAlgorithmsVersion>
     <SystemSecurityCryptographyPrimitivesVersion>4.3.0</SystemSecurityCryptographyPrimitivesVersion>
   </PropertyGroup>
@@ -24,7 +24,7 @@
   <!-- NetCore project dependencies -->
   <PropertyGroup>
     <MicrosoftWin32RegistryVersion>4.7.0</MicrosoftWin32RegistryVersion>
-    <RuntimeNativeSystemDataSqlClientSNIVersion>4.4.0</RuntimeNativeSystemDataSqlClientSNIVersion>
+    <MicrosoftDataSqlClientSNIRuntimeVersion>2.0.0-preview1.20141.10</MicrosoftDataSqlClientSNIRuntimeVersion>
     <SystemConfigurationConfigurationManagerVersion>4.7.0</SystemConfigurationConfigurationManagerVersion>
     <SystemDiagnosticsDiagnosticSourceVersion>4.7.0</SystemDiagnosticsDiagnosticSourceVersion>
     <SystemDiagnosticsPerformanceCounterVersion>4.7.0</SystemDiagnosticsPerformanceCounterVersion>
@@ -60,5 +60,9 @@
     <XunitVersion>2.4.1</XunitVersion>
     <MicrosoftDotNetRemoteExecutorVersion>5.0.0-beta.20206.4</MicrosoftDotNetRemoteExecutorVersion>
     <MicrosoftNETCoreRuntimeCoreCLRVersion>2.0.8</MicrosoftNETCoreRuntimeCoreCLRVersion>
+  </PropertyGroup>
+  <PropertyGroup>
+    <TestAKVProviderVersion>$(NugetPackageVersion)</TestAKVProviderVersion>
+    <TestMicrosoftDataSqlClientVersion>$(NugetPackageVersion)</TestMicrosoftDataSqlClientVersion>
   </PropertyGroup>
 </Project>

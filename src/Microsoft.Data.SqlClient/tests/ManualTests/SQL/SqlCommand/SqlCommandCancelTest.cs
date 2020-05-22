@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly string tcp_connStr = (new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { PacketSize = 512 }).ConnectionString;
         private static readonly string np_connStr = (new SqlConnectionStringBuilder(DataTestUtility.NPConnectionString) { PacketSize = 512 }).ConnectionString;
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void PlainCancelTest()
         {
             PlainCancel(tcp_connStr);
@@ -29,7 +29,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             PlainCancel(np_connStr);
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void PlainMARSCancelTest()
         {
             PlainCancel((new SqlConnectionStringBuilder(tcp_connStr) { MultipleActiveResultSets = true }).ConnectionString);
@@ -42,7 +42,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             PlainCancel((new SqlConnectionStringBuilder(np_connStr) { MultipleActiveResultSets = true }).ConnectionString);
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void PlainCancelTestAsync()
         {
             PlainCancelAsync(tcp_connStr);
@@ -55,7 +55,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             PlainCancelAsync(np_connStr);
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void PlainMARSCancelTestAsync()
         {
             PlainCancelAsync((new SqlConnectionStringBuilder(tcp_connStr) { MultipleActiveResultSets = true }).ConnectionString);
@@ -118,7 +118,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void MultiThreadedCancel_NonAsync()
         {
             MultiThreadedCancel(tcp_connStr, false);
@@ -131,7 +131,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             MultiThreadedCancel(np_connStr, false);
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void MultiThreadedCancel_Async()
         {
             MultiThreadedCancel(tcp_connStr, true);
@@ -144,7 +144,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             MultiThreadedCancel(np_connStr, true);
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void TimeoutCancel()
         {
             TimeoutCancel(tcp_connStr);
@@ -158,7 +158,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             TimeoutCancel(np_connStr);
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void CancelAndDisposePreparedCommand()
         {
             CancelAndDisposePreparedCommand(tcp_connStr);
@@ -172,7 +172,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ActiveIssue(5541)]
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void TimeOutDuringRead()
         {
             TimeOutDuringRead(tcp_connStr);
@@ -186,7 +186,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             TimeOutDuringRead(np_connStr);
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void CancelDoesNotWait()
         {
             CancelDoesNotWait(tcp_connStr);
@@ -199,7 +199,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             CancelDoesNotWait(np_connStr);
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void AsyncCancelDoesNotWait()
         {
             AsyncCancelDoesNotWait(tcp_connStr).Wait();
@@ -212,7 +212,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             AsyncCancelDoesNotWait(np_connStr).Wait();
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void TCPAttentionPacketTestTransaction()
         {
             CancelFollowedByTransaction(tcp_connStr);

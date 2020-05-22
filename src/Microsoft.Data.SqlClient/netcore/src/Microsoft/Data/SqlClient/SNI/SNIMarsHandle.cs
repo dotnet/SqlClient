@@ -26,6 +26,7 @@ namespace Microsoft.Data.SqlClient.SNI
         private readonly ManualResetEventSlim _packetEvent = new ManualResetEventSlim(false);
         private readonly ManualResetEventSlim _ackEvent = new ManualResetEventSlim(false);
         private readonly SNISMUXHeader _currentHeader = new SNISMUXHeader();
+        private readonly SNIAsyncCallback _handleSendCompleteCallback;
 
         private uint _sendHighwater = 4;
         private int _asyncReceives = 0;
@@ -79,6 +80,7 @@ namespace Microsoft.Data.SqlClient.SNI
             _sessionId = sessionId;
             _connection = connection;
             _callbackObject = callbackObject;
+            _handleSendCompleteCallback = HandleSendComplete;
             SendControlPacket(SNISMUXFlags.SMUX_SYN);
             _status = TdsEnums.SNI_SUCCESS;
         }
@@ -92,7 +94,7 @@ namespace Microsoft.Data.SqlClient.SNI
             long scopeID = SqlClientEventSource.Log.SNIScopeEnterEvent("<sc.SNI.SNIMarsHandle.SendControlPacket |SNI|INFO|SCOPE>");
             try
             {
-                SNIPacket packet = new SNIPacket(headerSize: SNISMUXHeader.HEADER_LENGTH, dataSize: 0);
+                SNIPacket packet = RentPacket(headerSize: SNISMUXHeader.HEADER_LENGTH, dataSize: 0);
 
                 lock (this)
                 {
@@ -102,6 +104,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
 
                 _connection.Send(packet);
+                ReturnPacket(packet);
             }
             finally
             {
@@ -263,17 +266,16 @@ namespace Microsoft.Data.SqlClient.SNI
         /// Send a packet asynchronously
         /// </summary>
         /// <param name="packet">SNI packet</param>
-        /// <param name="disposePacketAfterSendAsync"></param>
         /// <param name="callback">Completion callback</param>
         /// <returns>SNI error code</returns>
-        public override uint SendAsync(SNIPacket packet, bool disposePacketAfterSendAsync, SNIAsyncCallback callback = null)
+        public override uint SendAsync(SNIPacket packet, SNIAsyncCallback callback = null)
         {
             long scopeID = SqlClientEventSource.Log.SNIScopeEnterEvent("<sc.SNI.SNIMarsHandle.SendAsync |SNI|INFO|SCOPE>");
             try
             {
                 lock (this)
                 {
-                    _sendPacketQueue.Enqueue(new SNIMarsQueuedPacket(packet, callback != null ? callback : HandleSendComplete));
+                    _sendPacketQueue.Enqueue(new SNIMarsQueuedPacket(packet, callback ?? _handleSendCompleteCallback));
                 }
 
                 SendPendingPackets();
@@ -340,13 +342,17 @@ namespace Microsoft.Data.SqlClient.SNI
             long scopeID = SqlClientEventSource.Log.SNIScopeEnterEvent("<sc.SNI.SNIMarsHandle.HandleReceiveError |SNI|INFO|SCOPE>");
             try
             {
+                // SNIMarsHandle should only receive calls to this function from the SNIMarsConnection aggregator class
+                // which should handle ownership of the packet because the individual mars handles are not aware of 
+                // each other and cannot know if they are the last one in the list and that it is safe to return the packet
+
                 lock (_receivedPacketQueue)
                 {
                     _connectionError = SNILoadHandle.SingletonInstance.LastError;
                     _packetEvent.Set();
                 }
 
-            ((TdsParserStateObject)_callbackObject).ReadAsyncCallback(PacketHandle.FromManagedPacket(packet), 1);
+                ((TdsParserStateObject)_callbackObject).ReadAsyncCallback(PacketHandle.FromManagedPacket(packet), 1);
             }
             finally
             {
@@ -370,6 +376,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
                     ((TdsParserStateObject)_callbackObject).WriteAsyncCallback(PacketHandle.FromManagedPacket(packet), sniErrorCode);
                 }
+                _connection.ReturnPacket(packet);
             }
             finally
             {
@@ -432,6 +439,8 @@ namespace Microsoft.Data.SqlClient.SNI
 
                         ((TdsParserStateObject)_callbackObject).ReadAsyncCallback(PacketHandle.FromManagedPacket(packet), 0);
                     }
+
+                    _connection.ReturnPacket(packet);
                 }
 
                 lock (this)
@@ -556,21 +565,14 @@ namespace Microsoft.Data.SqlClient.SNI
         {
         }
 
-        /// <summary>
-        /// Enable SSL
-        /// </summary>
-        public override uint EnableSsl(uint options)
-        {
-            return _connection.EnableSsl(options);
-        }
+        public override uint EnableSsl(uint options) => _connection.EnableSsl(options);
 
-        /// <summary>
-        /// Disable SSL
-        /// </summary>
-        public override void DisableSsl()
-        {
-            _connection.DisableSsl();
-        }
+        public override void DisableSsl() => _connection.DisableSsl();
+
+        public override SNIPacket RentPacket(int headerSize, int dataSize) => _connection.RentPacket(headerSize, dataSize);
+
+        public override void ReturnPacket(SNIPacket packet) => _connection.ReturnPacket(packet);
+
 
 #if DEBUG
         /// <summary>

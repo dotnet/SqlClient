@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient.SNI
     /// <summary>
     /// Named Pipe connection handle
     /// </summary>
-    internal sealed class SNINpHandle : SNIHandle
+    internal sealed class SNINpHandle : SNIPhysicalHandle
     {
         internal const string DefaultPipePath = @"sql\query"; // e.g. \\HOSTNAME\pipe\sql\query
         private const int MAX_PIPE_INSTANCES = 255;
@@ -179,7 +179,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     packet = null;
                     try
                     {
-                        packet = new SNIPacket(headerSize: 0, dataSize: _bufferSize);
+                        packet = RentPacket(headerSize: 0, dataSize: _bufferSize);
                         packet.ReadFromStream(_stream);
 
                         if (packet.Length == 0)
@@ -220,7 +220,7 @@ namespace Microsoft.Data.SqlClient.SNI
             try
             {
                 SNIPacket errorPacket;
-                packet = new SNIPacket(headerSize: 0, dataSize: _bufferSize);
+                packet = RentPacket(headerSize: 0, dataSize: _bufferSize);
 
                 try
                 {
@@ -307,13 +307,13 @@ namespace Microsoft.Data.SqlClient.SNI
             }
         }
 
-        public override uint SendAsync(SNIPacket packet, bool disposePacketAfterSendAsync, SNIAsyncCallback callback = null)
+        public override uint SendAsync(SNIPacket packet, SNIAsyncCallback callback = null)
         {
             long scopeID = SqlClientEventSource.Log.SNIScopeEnterEvent("<sc.SNI.SNINpHandle.SendAsync |SNI|SCOPE>");
             try
             {
                 SNIAsyncCallback cb = callback ?? _sendCallback;
-                packet.WriteToStreamAsync(_stream, cb, SNIProviders.NP_PROV, disposePacketAfterSendAsync);
+                packet.WriteToStreamAsync(_stream, cb, SNIProviders.NP_PROV);
                 return TdsEnums.SNI_SUCCESS_IO_PENDING;
             }
             finally
@@ -407,7 +407,7 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             if (packet != null)
             {
-                packet.Release();
+                ReturnPacket(packet);
             }
             return SNICommon.ReportSNIError(SNIProviders.NP_PROV, SNICommon.InternalExceptionError, sniException);
         }
@@ -416,7 +416,7 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             if (packet != null)
             {
-                packet.Release();
+                ReturnPacket(packet);
             }
             return SNICommon.ReportSNIError(SNIProviders.NP_PROV, nativeError, sniError, errorMessage);
         }
