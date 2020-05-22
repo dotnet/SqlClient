@@ -115,7 +115,7 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 lock (this)
                 {
-                    return _lowerHandle.SendAsync(packet, false, callback);
+                    return _lowerHandle.SendAsync(packet, callback);
                 }
             }
             finally
@@ -136,7 +136,7 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 if (packet != null)
                 {
-                    packet.Release();
+                    ReturnPacket(packet);
                     packet = null;
                 }
 
@@ -188,7 +188,8 @@ namespace Microsoft.Data.SqlClient.SNI
                     handle.HandleReceiveError(packet);
                 }
             }
-            packet?.Release();
+            Debug.Assert(!packet.IsInvalid, "packet was returned by MarsConnection child, child sessions should not release the packet");
+            ReturnPacket(packet);
         }
 
         /// <summary>
@@ -258,7 +259,7 @@ namespace Microsoft.Data.SqlClient.SNI
                             _currentHeader.Read(_headerBytes);
 
                             _dataBytesLeft = (int)_currentHeader.length;
-                            _currentPacket = new SNIPacket(headerSize: 0, dataSize: (int)_currentHeader.length);
+                            _currentPacket = _lowerHandle.RentPacket(headerSize: 0, dataSize: (int)_currentHeader.length);
                         }
 
                         currentHeader = _currentHeader;
@@ -322,6 +323,11 @@ namespace Microsoft.Data.SqlClient.SNI
                         {
                             SNICommon.ReportSNIError(SNIProviders.SMUX_PROV, SNICommon.InternalExceptionError, e);
                         }
+
+                        Debug.Assert(_currentPacket == currentPacket, "current and _current are not the same");
+                        ReturnPacket(currentPacket);
+                        currentPacket = null;
+                        _currentPacket = null;
                     }
 
                     lock (this)
@@ -377,6 +383,16 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 SqlClientEventSource.Log.SNIScopeLeaveEvent(scopeID);
             }
+        }
+
+        public SNIPacket RentPacket(int headerSize, int dataSize)
+        {
+            return _lowerHandle.RentPacket(headerSize, dataSize);
+        }
+
+        public void ReturnPacket(SNIPacket packet)
+        {
+            _lowerHandle.ReturnPacket(packet);
         }
 
 #if DEBUG

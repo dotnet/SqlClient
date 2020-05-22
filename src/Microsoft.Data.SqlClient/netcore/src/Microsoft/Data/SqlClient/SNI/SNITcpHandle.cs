@@ -3,10 +3,8 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
 using System.IO;
 using System.Net;
 using System.Net.Security;
@@ -22,7 +20,7 @@ namespace Microsoft.Data.SqlClient.SNI
     /// <summary>
     /// TCP connection handle
     /// </summary>
-    internal sealed class SNITCPHandle : SNIHandle
+    internal sealed class SNITCPHandle : SNIPhysicalHandle
     {
         private readonly string _targetServer;
         private readonly object _callbackObject;
@@ -515,7 +513,7 @@ namespace Microsoft.Data.SqlClient.SNI
                         return TdsEnums.SNI_WAIT_TIMEOUT;
                     }
 
-                    packet = new SNIPacket(headerSize: 0, dataSize: _bufferSize);
+                    packet = RentPacket(headerSize: 0, dataSize: _bufferSize);
                     packet.ReadFromStream(_stream);
 
                     if (packet.Length == 0)
@@ -574,17 +572,16 @@ namespace Microsoft.Data.SqlClient.SNI
         /// Send a packet asynchronously
         /// </summary>
         /// <param name="packet">SNI packet</param>
-        /// <param name="disposePacketAfterSendAsync"></param>
         /// <param name="callback">Completion callback</param>
         /// <returns>SNI error code</returns>
-        public override uint SendAsync(SNIPacket packet, bool disposePacketAfterSendAsync, SNIAsyncCallback callback = null)
+        public override uint SendAsync(SNIPacket packet, SNIAsyncCallback callback = null)
         {
             long scopeID = SqlClientEventSource.Log.SNIScopeEnterEvent("<sc.SNI.SNITcpHandle.SendAsync |SNI|SCOPE>");
             SNIPacket errorPacket;
             SNIAsyncCallback cb = callback ?? _sendCallback;
             try
             {
-                packet.WriteToStreamAsync(_stream, cb, SNIProviders.TCP_PROV, disposePacketAfterSendAsync);
+                packet.WriteToStreamAsync(_stream, cb, SNIProviders.TCP_PROV);
                 return TdsEnums.SNI_SUCCESS_IO_PENDING;
             }
             catch (Exception e) when (e is ObjectDisposedException || e is InvalidOperationException || e is IOException)
@@ -606,7 +603,7 @@ namespace Microsoft.Data.SqlClient.SNI
         public override uint ReceiveAsync(ref SNIPacket packet)
         {
             SNIPacket errorPacket;
-            packet = new SNIPacket(headerSize: 0, dataSize: _bufferSize);
+            packet = RentPacket(headerSize: 0, dataSize: _bufferSize);
 
             try
             {
@@ -672,7 +669,7 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             if (packet != null)
             {
-                packet.Release();
+                ReturnPacket(packet);
             }
             return ReportTcpSNIError(sniException);
         }
@@ -681,7 +678,7 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             if (packet != null)
             {
-                packet.Release();
+                ReturnPacket(packet);
             }
             return ReportTcpSNIError(nativeError, sniError, errorMessage);
         }
