@@ -128,9 +128,7 @@ namespace Microsoft.Data.SqlClient.SNI
         }
         #endregion
 
-        /// <summary>
-        /// Prevent the InvalidOperationException
-        /// </summary>
+        // Prevent the WriteAsync's collision
         public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
             if (_currentTask != null && _currentTask.Status != TaskStatus.RanToCompletion)
