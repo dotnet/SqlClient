@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal("ForeignKeys", SqlClientMetaDataCollectionNames.ForeignKeys);
             Assert.Equal("IndexColumns", SqlClientMetaDataCollectionNames.IndexColumns);
             Assert.Equal("Indexes", SqlClientMetaDataCollectionNames.Indexes);
-            Assert.Equal("Parameters", SqlClientMetaDataCollectionNames.Parameters);
+            Assert.Equal("ProcedureParameters", SqlClientMetaDataCollectionNames.ProcedureParameters);
             Assert.Equal("ProcedureColumns", SqlClientMetaDataCollectionNames.ProcedureColumns);
             Assert.Equal("Procedures", SqlClientMetaDataCollectionNames.Procedures);
             Assert.Equal("Tables", SqlClientMetaDataCollectionNames.Tables);

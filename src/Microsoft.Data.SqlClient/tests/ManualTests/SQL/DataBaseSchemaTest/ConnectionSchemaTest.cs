@@ -23,6 +23,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             VerifySchemaTable(SqlClientMetaDataCollectionNames.Procedures, new string[] { "ROUTINE_SCHEMA", "ROUTINE_NAME", "ROUTINE_TYPE" });
         }
 
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void GetAllProcedureParametersFromSchema()
+        {
+            VerifySchemaTable(SqlClientMetaDataCollectionNames.ProcedureParameters, new string[] { "PARAMETER_MODE", "PARAMETER_NAME" });
+        }
+
         private static void VerifySchemaTable(string schemaItemName, string[] testColumnNames)
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
@@ -36,8 +42,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 connection.Open();
                 DataTable table = connection.GetSchema(schemaItemName);
 
-                // Display the contents of the table.  
-                Assert.InRange<int>(table.Rows.Count, 1, int.MaxValue);
+                // Display the contents of the table.
+                // For ProcedureParameters, we may get table.Rows.Count = 0 according to database setup
+                if (SqlClientMetaDataCollectionNames.ProcedureParameters != schemaItemName)
+                {
+                    Assert.InRange<int>(table.Rows.Count, 1, int.MaxValue);
+                }
 
                 // Get all table columns 
                 HashSet<string> columnNames = new HashSet<string>();
