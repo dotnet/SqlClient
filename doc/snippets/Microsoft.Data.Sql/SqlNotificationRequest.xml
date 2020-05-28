@@ -11,7 +11,7 @@ This class provides low-level access to the query notification services exposed 
 
 ]]></format>
             </remarks>
-            <related type="Article" href="~/docs/framework/data/adonet/sql/query-notifications-in-sql-server.md">Using Query Notifications</related>
+            <related type="Article" href="/dotnet/framework/data/adonet/sql/query-notifications-in-sql-server">Using Query Notifications</related>
         </SqlNotificationRequest>
         <ctor1>
             <summary>Creates a new instance of the <see cref="T:Microsoft.Data.Sql.SqlNotificationRequest" /> class with default values.</summary>
@@ -23,7 +23,7 @@ If the parameterless constructor is used to create a <xref:Microsoft.Data.Sql.Sq
 
 ]]></format>
             </remarks>
-            <related type="Article" href="~/docs/framework/data/adonet/sql/query-notifications-in-sql-server.md">Using Query Notifications</related>
+            <related type="Article" href="/dotnet/framework/data/adonet/sql/query-notifications-in-sql-server">Using Query Notifications</related>
         </ctor1>
         <ctor2>
             <param name="userData">A string that contains an application-specific identifier for this notification. It is not used by the notifications infrastructure, but it allows you to associate notifications with the application state. The value indicated in this parameter is included in the Service Broker queue message.</param>
@@ -40,7 +40,7 @@ This constructor allows you to initialize a new <xref:Microsoft.Data.Sql.SqlNoti
             </remarks>
             <exception cref="T:System.ArgumentNullException">The value of the <paramref name="options" /> parameter is NULL.</exception>
             <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="options" /> or <paramref name="userData" /> parameter is longer than <see langword="uint16.MaxValue" /> or the value in the <paramref name="timeout" /> parameter is less than zero.</exception>
-            <related type="Article" href="~/docs/framework/data/adonet/sql/query-notifications-in-sql-server.md">Using Query Notifications</related>
+            <related type="Article" href="/dotnet/framework/data/adonet/sql/query-notifications-in-sql-server">Using Query Notifications</related>
         </ctor2>
         <Options>
             <summary>Gets or sets the SQL Server Service Broker service name where notification messages are posted.</summary>
@@ -64,7 +64,7 @@ The SQL Server Service Broker service must be previously configured on the serve
             </remarks>
             <exception cref="T:System.ArgumentNullException">The value is NULL.</exception>
             <exception cref="T:System.ArgumentException">The value is longer than <see langword="uint16.MaxValue" />.</exception>
-            <related type="Article" href="~/docs/framework/data/adonet/sql/query-notifications-in-sql-server.md">Using Query Notifications</related>
+            <related type="Article" href="/dotnet/framework/data/adonet/sql/query-notifications-in-sql-server">Using Query Notifications</related>
         </Options>
         <Timeout>
             <summary>Gets or sets a value that specifies how long SQL Server waits for a change to occur before the operation times out.</summary>
@@ -78,7 +78,7 @@ After the time-out period expires, the notification is sent even if no change ta
 ]]></format>
             </remarks>
             <exception cref="T:System.ArgumentOutOfRangeException">The value is less than zero.</exception>
-            <related type="Article" href="~/docs/framework/data/adonet/sql/query-notifications-in-sql-server.md">Using Query Notifications</related>
+            <related type="Article" href="/dotnet/framework/data/adonet/sql/query-notifications-in-sql-server">Using Query Notifications</related>
         </Timeout>
         <UserData>    
             <summary>Gets or sets an application-specific identifier for this notification.</summary>
@@ -92,7 +92,7 @@ This value is not used by the notifications infrastructure. Instead, it is a mec
 ]]></format>
             </remarks>
             <exception cref="T:System.ArgumentException">The value is longer than <see langword="uint16.MaxValue" />.</exception>
-            <related type="Article" href="~/docs/framework/data/adonet/sql/query-notifications-in-sql-server.md">Using Query Notifications</related>
+            <related type="Article" href="/dotnet/framework/data/adonet/sql/query-notifications-in-sql-server">Using Query Notifications</related>
         </UserData>
     </members>
 </docs>

@@ -86,10 +86,10 @@ Integrated Security=True
             <exception cref="T:System.ArgumentException">The supplied <paramref name="connectionString" /> is not valid.</exception>
         </ctorConnectionString>
         <ApplicationIntent>
-            <summary>Declares the application workload type when connecting to a database in an SQL Server Availability Group. You can set the value of this property with <see cref="T:Microsoft.Data.SqlClient.ApplicationIntent" />. For more information about SqlClient support for Always On Availability Groups, see [SqlClient Support for High Availability, Disaster Recovery](~/docs/framework/data/adonet/sql/sqlclient-support-for-high-availability-disaster-recovery.md).</summary>
+            <summary>Declares the application workload type when connecting to a database in an SQL Server Availability Group. You can set the value of this property with <see cref="T:Microsoft.Data.SqlClient.ApplicationIntent" />. For more information about SqlClient support for Always On Availability Groups, see [SqlClient Support for High Availability, Disaster Recovery](/dotnet/framework/data/adonet/sql/sqlclient-support-for-high-availability-disaster-recovery).</summary>
             <value>Returns the current value of the property (a value of type <see cref="T:Microsoft.Data.SqlClient.ApplicationIntent" />).</value>
             <remarks>To be added.</remarks>
-            <related type="Article" href="~/docs/framework/data/adonet/ado-net-overview.md">ADO.NET Overview</related>
+            <related type="Article" href="/dotnet/framework/data/adonet/ado-net-overview">ADO.NET Overview</related>
         </ApplicationIntent>
         <ApplicationName>
             <summary>Gets or sets the name of the application associated with the connection string.</summary>
@@ -165,7 +165,7 @@ Modified: Data Source=(local);Initial Catalog=AdventureWorks;Integrated Security
             </remarks>
             <exception cref="T:System.ArgumentNullException">To set the value to null, use <see cref="F:System.DBNull.Value" />.</exception>
             <related type="Article" href="https://msdn.microsoft.com/library/745c5f95-2f02-4674-b378-6d51a7ec2490">Working with Connection Strings</related>
-            <related type="Article" href="~/docs/framework/data/adonet/ado-net-overview.md">ADO.NET Overview</related>
+            <related type="Article" href="/dotnet/framework/data/adonet/ado-net-overview">ADO.NET Overview</related>
         </AttachDBFilename>
         <Authentication>
             <summary>Gets the authentication of the connection string.</summary>
@@ -337,7 +337,7 @@ False
  ]]></format>
             </remarks>
             <related type="Article" href="https://msdn.microsoft.com/library/745c5f95-2f02-4674-b378-6d51a7ec2490">Working with Connection Strings</related>
-            <related type="Article" href="~/docs/framework/data/adonet/ado-net-overview.md">ADO.NET Overview</related>
+            <related type="Article" href="/dotnet/framework/data/adonet/ado-net-overview">ADO.NET Overview</related>
         </Encrypt>
         <Enlist>
             <summary>Gets or sets a Boolean value that indicates whether the SQL Server connection pooler automatically enlists the connection in the creation thread's current transaction context.</summary>
@@ -410,7 +410,7 @@ False
             <see langword="true" /> in every case, because the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> supplies a fixed-size collection of key/value pairs.</value>
             <remarks>To be added.</remarks>
             <related type="Article" href="https://msdn.microsoft.com/library/745c5f95-2f02-4674-b378-6d51a7ec2490">Working with Connection Strings</related>
-            <related type="Article" href="~/docs/framework/data/adonet/ado-net-overview.md">ADO.NET Overview</related>
+            <related type="Article" href="/dotnet/framework/data/adonet/ado-net-overview">ADO.NET Overview</related>
         </IsFixedSize>
         <Item>
             <param name="keyword">The key of the item to get or set.</param>
@@ -513,7 +513,7 @@ False
             </remarks>
         </MultipleActiveResultSets>
         <MultiSubnetFailover>
-            <summary>If your application is connecting to an AlwaysOn availability group (AG) on different subnets, setting MultiSubnetFailover=true provides faster detection of and connection to the (currently) active server. For more information about SqlClient support for Always On Availability Groups, see [SqlClient Support for High Availability, Disaster Recovery](~/docs/framework/data/adonet/sql/sqlclient-support-for-high-availability-disaster-recovery.md).</summary>
+            <summary>If your application is connecting to an AlwaysOn availability group (AG) on different subnets, setting MultiSubnetFailover=true provides faster detection of and connection to the (currently) active server. For more information about SqlClient support for Always On Availability Groups, see [SqlClient Support for High Availability, Disaster Recovery](/dotnet/framework/data/adonet/sql/sqlclient-support-for-high-availability-disaster-recovery).</summary>
             <value>Returns <see cref="T:System.Boolean" /> indicating the current value of the property.</value>
             <remarks>To be added.</remarks>
         </MultiSubnetFailover>
@@ -850,7 +850,7 @@ Unable to retrieve value for null key.
  This property corresponds to the "User Instance" key within the connection string.  
   
 > [!NOTE]
->  This feature is available only with the SQL Server Express Edition. For more information on user instances, see [SQL Server Express User Instances](~/docs/framework/data/adonet/sql/sql-server-express-user-instances.md).
+>  This feature is available only with the SQL Server Express Edition. For more information on user instances, see [SQL Server Express User Instances](/dotnet/framework/data/adonet/sql/sql-server-express-user-instances).
   
  ]]></format>
             </remarks>

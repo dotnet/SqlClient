@@ -15,7 +15,7 @@ Specifying the FILESTREAM attribute on a `varbinary(max)` column causes SQL Serv
 
 The <xref:Microsoft.Data.SqlTypes.SqlFileStream> class is derived from the <xref:System.IO.Stream> class, which represents an abstraction of a sequence of bytes from some arbitrary data source such as a file or a block of memory. You can read from a FILESTREAM by transferring data from a stream into a data structure such as an array of bytes. You can write to a FILESTREAM by transferring the data from a data structure into a stream. You can also seek within the stream, which allows you to query and modify data at the current position within the stream.  
 
-For conceptual documentation and code examples, see [FILESTREAM Data](~/docs/framework/data/adonet/sql/filestream-data.md).  
+For conceptual documentation and code examples, see [FILESTREAM Data](/dotnet/framework/data/adonet/sql/filestream-data).  
 
 For documentation about setting up and configuring FILESTREAM data on SQL Server,  see [Designing and Implementing FILESTREAM Storage](https://go.microsoft.com/fwlink/?LinkId=121499) in SQL Server 2008 Books Online.  
 
@@ -48,7 +48,7 @@ The following table lists the code access security (CAS) permissions that all ca
 |Write|<xref:System.Security.Permissions.FileIOPermissionAccess.Write>|  
 |ReadWrite|<xref:System.Security.Permissions.FileIOPermissionAccess.Read> and <xref:System.Security.Permissions.FileIOPermissionAccess.Write>|  
 
-For more information about CAS, see [Code Access Security and ADO.NET](~/docs/framework/data/adonet/code-access-security.md).  
+For more information about CAS, see [Code Access Security and ADO.NET](/dotnet/framework/data/adonet/code-access-security).  
 
 If an exception is thrown, any open transactions should be rolled back. Otherwise, data loss can occur.  
 
@@ -94,7 +94,7 @@ The following table lists the code access security (CAS) permissions that all ca
 |Write|<xref:System.Security.Permissions.FileIOPermissionAccess.Write>|  
 |ReadWrite|<xref:System.Security.Permissions.FileIOPermissionAccess.Read> and <xref:System.Security.Permissions.FileIOPermissionAccess.Write>|  
 
-For more information about CAS, see [Code Access Security and ADO.NET](~/docs/framework/data/adonet/code-access-security.md).  
+For more information about CAS, see [Code Access Security and ADO.NET](/dotnet/framework/data/adonet/code-access-security).  
 
 If an exception is thrown, any open transactions should be rolled back. Otherwise, data loss can occur.  
 
