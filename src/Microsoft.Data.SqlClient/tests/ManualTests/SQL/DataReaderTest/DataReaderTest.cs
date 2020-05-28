@@ -152,10 +152,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             var databaseName = DataTestUtility.GetUniqueName("DB");
             // Remove square brackets
             var dbName = databaseName.Substring(1, databaseName.Length - 2);
-            try
+
+            using (SqlConnection con = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlCommand cmd = con.CreateCommand())
             {
-                using (SqlConnection con = new SqlConnection(DataTestUtility.TCPConnectionString))
-                using (SqlCommand cmd = con.CreateCommand())
+                try
                 {
                     con.Open();
 
@@ -176,27 +177,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             reader.Read();
                             Assert.Equal(data, reader.GetString(0));
                         }
-                        dbCon.Close();
                     }
 
                     // Let connection close safely before dropping database for slow servers.
                     Thread.Sleep(500);
                 }
-            }
-            catch (SqlException e)
-            {
-                Assert.True(false, $"Unexpected Exception occurred: {e.Message}");
-            }
-            finally
-            {
-                using (SqlConnection con = new SqlConnection(DataTestUtility.TCPConnectionString))
-                using (SqlCommand cmd = con.CreateCommand())
+                catch (SqlException e)
                 {
-                    con.Open();
-
+                    Assert.True(false, $"Unexpected Exception occurred: {e.Message}");
+                }
+                finally
+                {
                     cmd.CommandText = $"DROP DATABASE {databaseName}";
                     cmd.ExecuteNonQuery();
-
                 }
             }
         }
