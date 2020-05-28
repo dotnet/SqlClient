@@ -2056,7 +2056,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     tdsReliabilitySection.Start();
 #endif //DEBUG
-                return Run(runBehavior, cmdHandler, dataStream, bulkCopyHandler, stateObj);
+                    return Run(runBehavior, cmdHandler, dataStream, bulkCopyHandler, stateObj);
 #if DEBUG
                 }
                 finally
@@ -2949,12 +2949,11 @@ namespace Microsoft.Data.SqlClient
                             }
                             else
                             {
-
                                 if (newCodePage != _defaultCodePage)
                                 {
                                     _defaultCodePage = newCodePage;
-                                    _defaultEncoding = System.Text.Encoding.GetEncoding(_defaultCodePage);
                                 }
+                                _defaultEncoding = System.Text.Encoding.GetEncoding(_defaultCodePage);
                             }
                         }
 
@@ -9689,7 +9688,7 @@ namespace Microsoft.Data.SqlClient
 
                         // Stream out parameters
                         SqlParameter[] parameters = rpcext.parameters;
-                        
+
                         bool isAdvancedTraceOn = SqlClientEventSource.Log.IsAdvancedTraceOn();
 
                         for (int i = (ii == startRpc) ? startParam : 0; i < parameters.Length; i++)

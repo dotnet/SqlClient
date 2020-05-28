@@ -2606,8 +2606,8 @@ namespace Microsoft.Data.SqlClient
                                 if (newCodePage != _defaultCodePage)
                                 {
                                     _defaultCodePage = newCodePage;
-                                    _defaultEncoding = System.Text.Encoding.GetEncoding(_defaultCodePage);
                                 }
+                                _defaultEncoding = System.Text.Encoding.GetEncoding(_defaultCodePage);
                             }
                             _defaultLCID = env.newCollation.LCID;
                         }
