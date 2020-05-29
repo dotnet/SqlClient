@@ -4536,6 +4536,9 @@
   <data name="SQL_BulkLoadOrderHintDuplicateColumn" xml:space="preserve">
     <value>The column '{0}' was specified more than once.</value>
   </data>
+  <data name="SQL_BulkLoadOrderHintInaccessible" xml:space="preserve">
+    <value>The order hint collection is in use and cannot be accessed at this time.</value>
+  </data>
   <data name="SQL_BulkLoadOrderHintInvalidColumn" xml:space="preserve">
     <value>The sorted column '{0}' is not valid in the destination table.</value>
   </data>

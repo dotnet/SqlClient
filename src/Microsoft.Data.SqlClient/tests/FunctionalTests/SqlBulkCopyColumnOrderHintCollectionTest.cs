@@ -23,6 +23,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
             foreach (SqlBulkCopyColumnOrderHint orderHint in orderHints)
             {
+                Debug.Assert(orderHints != null);
                 collection.Add(orderHint);
             }
 

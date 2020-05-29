@@ -11,6 +11,8 @@ namespace Microsoft.Data.SqlClient
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/SqlBulkCopyColumnOrderHintCollection/*'/>
     public sealed class SqlBulkCopyColumnOrderHintCollection : CollectionBase
     {
+        internal bool ReadOnly { get; set; }
+
         private readonly HashSet<string> _columnNames = new HashSet<string>();
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/Item/*'/>
@@ -19,9 +21,10 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/Add[@name="columnOrderHintParameter"]/*'/>
         public SqlBulkCopyColumnOrderHint Add(SqlBulkCopyColumnOrderHint columnOrderHint)
         {
+            AssertWriteAccess();
             if (columnOrderHint == null)
             {
-                throw new ArgumentNullException(nameof(columnOrderHint));
+                throw new ArgumentNullException();
             }
             if (string.IsNullOrEmpty(columnOrderHint.Column) ||
                 columnOrderHint.SortOrder == SortOrder.Unspecified)
@@ -36,12 +39,22 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/Add[@name="columnStringAndsortOrderSortOrder"]/*'/>
         public SqlBulkCopyColumnOrderHint Add(string column, SortOrder sortOrder)
         {
+            AssertWriteAccess();
             return Add(new SqlBulkCopyColumnOrderHint(column, sortOrder));
+        }
+
+        private void AssertWriteAccess()
+        {
+            if (ReadOnly)
+            {
+                throw SQL.BulkLoadOrderHintInaccessible();
+            }
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/Clear/*'/>
         public new void Clear()
         {
+            AssertWriteAccess();
             foreach (SqlBulkCopyColumnOrderHint orderHint in InnerList)
             {
                 UnregisterColumnName(orderHint, orderHint.Column);
@@ -59,35 +72,38 @@ namespace Microsoft.Data.SqlClient
         public int IndexOf(SqlBulkCopyColumnOrderHint value) => InnerList.IndexOf(value);
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/Insert/*'/>
-        public void Insert(int index, SqlBulkCopyColumnOrderHint columnOrderHint)
+        public void Insert(int index, SqlBulkCopyColumnOrderHint value)
         {
+            AssertWriteAccess();
             // Try inserting into an invalid index to throw an exception
             if (index < 0 || index > InnerList.Count)
             {
-                InnerList.Insert(index, columnOrderHint);
+                InnerList.Insert(index, value);
             }
-            if (columnOrderHint == null)
+            if (value == null)
             {
-                throw new ArgumentNullException(nameof(columnOrderHint));
+                throw new ArgumentNullException();
             }
-            RegisterColumnName(columnOrderHint, columnOrderHint.Column);
-            InnerList.Insert(index, columnOrderHint);
+            RegisterColumnName(value, value.Column);
+            InnerList.Insert(index, value);
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/Remove/*'/>
-        public void Remove(SqlBulkCopyColumnOrderHint columnOrderHint)
+        public void Remove(SqlBulkCopyColumnOrderHint value)
         {
-            if (columnOrderHint == null)
+            AssertWriteAccess();
+            if (value == null)
             {
-                throw new ArgumentNullException(nameof(columnOrderHint));
+                throw new ArgumentNullException();
             }
-            UnregisterColumnName(columnOrderHint, columnOrderHint.Column);
-            InnerList.Remove(columnOrderHint);
+            UnregisterColumnName(value, value.Column);
+            InnerList.Remove(value);
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/RemoveAt/*'/>
         public new void RemoveAt(int index)
         {
+            AssertWriteAccess();
             var orderHint = (SqlBulkCopyColumnOrderHint)InnerList[index];
             UnregisterColumnName(orderHint, orderHint.Column);
             base.RemoveAt(index);

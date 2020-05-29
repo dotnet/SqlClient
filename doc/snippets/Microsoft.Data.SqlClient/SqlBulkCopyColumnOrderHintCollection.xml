@@ -138,7 +138,7 @@ Transact-SQL `INSERT … SELECT` statement to copy the data.
         <Insert>
             <param name="index">Integer value of the location within the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection" /> at which to insert the new 
             <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" />.</param>
-            <param name="columnOrderHint">
+            <param name="value">
             <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> object to be inserted in the collection.</param>
             <summary>Insert a new <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> at the index specified.</summary>
             <remarks>The order in which column order hints can be added is arbitrary.</remarks>
@@ -150,7 +150,7 @@ Transact-SQL `INSERT … SELECT` statement to copy the data.
             <remarks>To be added.</remarks>
         </Item>
         <Remove>
-            <param name="columnOrderHint">
+            <param name="value">
             <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> object to be removed from the collection.</param>
             <summary>Removes the specified <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> element from the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection" />.</summary>
             <remarks>
