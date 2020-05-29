@@ -17,13 +17,14 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal("IndexColumns", SqlClientMetaDataCollectionNames.IndexColumns);
             Assert.Equal("Indexes", SqlClientMetaDataCollectionNames.Indexes);
             Assert.Equal("ProcedureParameters", SqlClientMetaDataCollectionNames.ProcedureParameters);
-            Assert.Equal("ProcedureColumns", SqlClientMetaDataCollectionNames.ProcedureColumns);
             Assert.Equal("Procedures", SqlClientMetaDataCollectionNames.Procedures);
             Assert.Equal("Tables", SqlClientMetaDataCollectionNames.Tables);
             Assert.Equal("UserDefinedTypes", SqlClientMetaDataCollectionNames.UserDefinedTypes);
             Assert.Equal("Users", SqlClientMetaDataCollectionNames.Users);
             Assert.Equal("ViewColumns", SqlClientMetaDataCollectionNames.ViewColumns);
             Assert.Equal("Views", SqlClientMetaDataCollectionNames.Views);
+            Assert.Equal("AllColumns", SqlClientMetaDataCollectionNames.AllColumns);
+            Assert.Equal("ColumnSetColumns", SqlClientMetaDataCollectionNames.ColumnSetColumns);
         }
     }
 }
