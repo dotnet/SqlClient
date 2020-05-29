@@ -267,9 +267,9 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/IndexOf/*'/>
         public int IndexOf(SqlBulkCopyColumnOrderHint value) { throw null; }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/Insert/*'/>
-        public void Insert(int index, SqlBulkCopyColumnOrderHint value) { }
+        public void Insert(int index, SqlBulkCopyColumnOrderHint columnOrderHint) { }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/Remove/*'/>
-        public void Remove(SqlBulkCopyColumnOrderHint value) { }
+        public void Remove(SqlBulkCopyColumnOrderHint columnOrderHint) { }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/RemoveAt/*'/>
         public new void RemoveAt(int index) { }
     }

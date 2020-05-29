@@ -6,7 +6,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
@@ -23,7 +22,6 @@ namespace Microsoft.Data.SqlClient.Tests
 
             foreach (SqlBulkCopyColumnOrderHint orderHint in orderHints)
             {
-                Debug.Assert(orderHints != null);
                 collection.Add(orderHint);
             }
 

@@ -9019,15 +9019,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The order hint collection is in use and cannot be accessed at this time..
-        /// </summary>
-        internal static string SQL_BulkLoadOrderHintInaccessible {
-            get {
-                return ResourceManager.GetString("SQL_BulkLoadOrderHintInaccessible", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The sorted column &apos;{0}&apos; is not valid in the destination table..
         /// </summary>
         internal static string SQL_BulkLoadOrderHintInvalidColumn {
