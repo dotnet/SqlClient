@@ -11,7 +11,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         private static Assembly mds = Assembly.GetAssembly(typeof(SqlConnection));
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void TestByteArrayParameters()
         {
             string tableName = DataTestUtility.GetUniqueNameForSqlServer("CMD");

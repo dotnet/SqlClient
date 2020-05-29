@@ -4,8 +4,8 @@
     <AssemblyName>Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider</AssemblyName>
     <AddOnName>AzureKeyVaultProvider</AddOnName>
     <ProjectGuid>{9073ABEF-92E0-4702-BB23-2C99CEF9BDD7}</ProjectGuid>
-    <TargetGroup Condition="'$(TargetFramework)'=='netcoreapp2.1'">netcoreapp</TargetGroup>
-    <TargetGroup Condition="'$(TargetFramework)'=='net46'">netfx</TargetGroup>
+    <TargetGroup Condition="$(TargetFramework.StartsWith('netcoreapp'))">netcoreapp</TargetGroup>
+    <TargetGroup Condition="$(TargetFramework.StartsWith('net4'))">netfx</TargetGroup>
     <Configurations>Debug;Release;net46-Release;net46-Debug;netcoreapp2.1-Debug;netcoreapp2.1-Release;</Configurations>
     <Platforms>AnyCPU;x86;x64</Platforms>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)\$(AddOnName)</IntermediateOutputPath>
@@ -17,8 +17,9 @@
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
-    <ProjectReference Condition="'$(TargetGroup)'=='netfx'" Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
+    <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp' AND !$(ReferenceType.Contains('Package'))" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
+    <ProjectReference Condition="'$(TargetGroup)'=='netfx' AND !$(ReferenceType.Contains('Package'))" Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
+    <PackageReference Condition="$(ReferenceType)=='Package'" Include="Microsoft.Data.SqlClient" Version="$(TestMicrosoftDataSqlClientVersion)" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.KeyVault" Version="$(MicrosoftAzureKeyVaultVersion)" />

@@ -10,6 +10,6 @@
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.9.10" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\netcore\src\Microsoft.Data.SqlClient.csproj" />
+    <ProjectReference Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
   </ItemGroup>
 </Project>

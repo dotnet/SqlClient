@@ -271,7 +271,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 conn.Dispose();
                 throw;
             }
-            
+
             SqlConnection.ClearPool(conn);
             return conn;
         }
@@ -281,11 +281,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         /// </summary>
         public static string GetConnectionString(bool fTceEnabled, SqlConnectionStringBuilder sb, bool fSuppressAttestation = false)
         {
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
-            builder.DataSource = sb.DataSource;
-            builder.InitialCatalog = sb.InitialCatalog;
-            builder.UserID = sb.UserID;
-            builder.Password = sb.Password;
+            SqlConnectionStringBuilder builder = sb;
             if (fTceEnabled)
             {
                 builder.ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Enabled;

@@ -12,7 +12,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public static class DDAsyncTest
     {
         [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void OpenConnection_WithAsyncTrue_ThrowsNotSupportedException()
         {
             //Fails on NetCore
@@ -21,7 +21,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp)]
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void OpenConnection_WithAsyncTrue()
         {
             // Passes on NetFx
@@ -30,7 +30,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         #region <<ExecuteCommand_WithNewConnection>>
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ExecuteCommand_WithNewConnection_ShouldPerformAsyncByDefault()
         {
             var executedProcessList = new List<string>();
@@ -75,7 +75,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         #endregion
 
         #region <<ExecuteCommand_WithSharedConnection>>
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ExecuteCommand_WithSharedConnection_ShouldPerformAsyncByDefault()
         {
             var executedProcessList = new List<string>();

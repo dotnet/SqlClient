@@ -617,7 +617,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ctorConnectionString/*'/>
         public SqlConnectionStringBuilder(string connectionString) { }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ApplicationIntent/*'/>
-        [System.ComponentModel.DisplayNameAttribute("ApplicationIntent")]
+        [System.ComponentModel.DisplayNameAttribute("Application Intent")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public Microsoft.Data.SqlClient.ApplicationIntent ApplicationIntent { get { throw null; } set { } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ApplicationName/*'/>
@@ -634,11 +634,11 @@ namespace Microsoft.Data.SqlClient
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public Microsoft.Data.SqlClient.SqlAuthenticationMethod Authentication { get { throw null; } set { } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectRetryCount/*'/>
-        [System.ComponentModel.DisplayNameAttribute("ConnectRetryCount")]
+        [System.ComponentModel.DisplayNameAttribute("Connect Retry Count")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public int ConnectRetryCount { get { throw null; } set { } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectRetryInterval/*'/>
-        [System.ComponentModel.DisplayNameAttribute("ConnectRetryInterval")]
+        [System.ComponentModel.DisplayNameAttribute("Connect Retry Interval")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public int ConnectRetryInterval { get { throw null; } set { } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectTimeout/*'/>
@@ -692,11 +692,11 @@ namespace Microsoft.Data.SqlClient
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public int MinPoolSize { get { throw null; } set { } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/MultipleActiveResultSets/*'/>
-        [System.ComponentModel.DisplayNameAttribute("MultipleActiveResultSets")]
+        [System.ComponentModel.DisplayNameAttribute("Multiple Active Result Sets")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public bool MultipleActiveResultSets { get { throw null; } set { } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/MultiSubnetFailover/*'/>
-        [System.ComponentModel.DisplayNameAttribute("MultiSubnetFailover")]
+        [System.ComponentModel.DisplayNameAttribute("Multi Subnet Failover")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public bool MultiSubnetFailover { get { throw null; } set { } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/PacketSize/*'/>
@@ -725,7 +725,7 @@ namespace Microsoft.Data.SqlClient
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public string TransactionBinding { get { throw null; } set { } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TrustServerCertificate/*'/>
-        [System.ComponentModel.DisplayNameAttribute("TrustServerCertificate")]
+        [System.ComponentModel.DisplayNameAttribute("Trust Server Certificate")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public bool TrustServerCertificate { get { throw null; } set { } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TypeSystemVersion/*'/>

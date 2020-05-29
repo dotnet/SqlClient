@@ -3,7 +3,7 @@
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
     <TargetFrameworks>netcoreapp2.1;netcoreapp3.1;netstandard2.0</TargetFrameworks>
     <GeneratePlatformNotSupportedAssemblyMessage Condition="'$(OSGroup)' == 'AnyOS'">SR.PlatformNotSupported_DataSqlClient</GeneratePlatformNotSupportedAssemblyMessage>
-    <OSGroup Condition="'$(OSGroup)' == ''">Windows_NT</OSGroup>
+    <OSGroup Condition="'$(OSGroup)' == ''">$(OS)</OSGroup>
     <TargetsWindows Condition="'$(OSGroup)'=='Windows_NT'">true</TargetsWindows>
     <TargetsUnix Condition="'$(OSGroup)'=='Unix'">true</TargetsUnix>
     <!-- Allow explicit addition of the Compile files instead of all project files to be included by Default -->
@@ -343,6 +343,8 @@
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIMarsQueuedPacket.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNINpHandle.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIPacket.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SNI\SNIPacketPool.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SNI\SNIPhysicalHandle.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIProxy.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNITcpHandle.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SslOverTdsStream.cs" />
@@ -427,7 +429,7 @@
     <Compile Include="$(CommonPath)\Interop\Windows\NtDll\Interop.RtlNtStatusToDosError.cs">
       <Link>Common\Interop\Windows\Interop.RtlNtStatusToDosError.cs</Link>
     </Compile>
-    <Compile Include="Microsoft\Data\SQLTypes\SqlFileStream.Windows.cs" />
+    <Compile Include="Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs" />
   </ItemGroup>
   <!-- Manage the SNI toggle for Windows netstandard and UWP -->
   <ItemGroup Condition="('$(TargetGroup)' == 'netstandard' OR '$(TargetGroup)' == 'netcoreapp') AND '$(TargetsWindows)' == 'true'">
@@ -665,7 +667,7 @@
     <PackageReference Include="System.Security.Permissions" Version="$(SystemSecurityPermissionsVersion)" />
     <PackageReference Include="System.Security.Principal.Windows" Version="$(SystemSecurityPrincipalWindowsVersion)" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="$(SystemTextEncodingCodePagesVersion)" />
-    <PackageReference Include="runtime.native.System.Data.SqlClient.sni" Version="$(RuntimeNativeSystemDataSqlClientSNIVersion)" />
+    <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" Version="$(MicrosoftDataSqlClientSNIRuntimeVersion)" />
     <PackageReference Condition="$(TargetGroup) == 'netcoreapp' " Include="System.Diagnostics.DiagnosticSource" Version="$(SystemDiagnosticsDiagnosticSourceVersion)" />
     <PackageReference Include="System.Threading.Tasks" Version="$(SystemThreadingTasksVersion)" />
     <PackageReference Include="System.Memory" Version="$(SystemMemoryVersion)" />
