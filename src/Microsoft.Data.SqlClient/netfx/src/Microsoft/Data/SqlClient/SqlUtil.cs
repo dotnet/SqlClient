@@ -1005,10 +1005,6 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_BulkLoadInvalidOrderHint));
         }
-        internal static Exception BulkLoadOrderHintInaccessible()
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_BulkLoadOrderHintInaccessible));
-        }
         internal static Exception BulkLoadOrderHintInvalidColumn(string columnName)
         {
             return ADP.InvalidOperation(string.Format(StringsHelper.GetString(Strings.SQL_BulkLoadOrderHintInvalidColumn), columnName));

@@ -1866,9 +1866,6 @@
   <data name="SQL_BulkLoadUnspecifiedSortOrder" xml:space="preserve">
     <value>A column order hint cannot have an unspecified sort order.</value>
   </data>
-  <data name="SQL_BulkLoadOrderHintInaccessible" xml:space="preserve">
-    <value>The order hint collection is in use and cannot be accessed at this time.</value>
-  </data>
   <data name="SQL_BulkLoadInvalidOrderHint" xml:space="preserve">
     <value>The given column order hint is not valid.</value>
   </data>
