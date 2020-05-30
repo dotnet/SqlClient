@@ -4725,6 +4725,9 @@ namespace Microsoft.Data.SqlClient
                                 ADP.TraceExceptionWithoutRethrow(e);
                             }
                             break;
+                        case 0x43f:
+                            codePage = 1251;  // Kazakh code page based on SQL Server
+                            break;
                         default:
                             break;
                     }
