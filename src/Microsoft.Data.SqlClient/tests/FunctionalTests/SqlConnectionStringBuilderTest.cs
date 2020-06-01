@@ -73,7 +73,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("Authentication = ActiveDirectoryIntegrated ")]
         [InlineData("Authentication = Active Directory Interactive ")]
         [InlineData("Authentication = ActiveDirectoryInteractive ")]
-        [InlineData("Context Connection = true")]
+        [InlineData("Context Connection = false")]
         [InlineData("Network Library = dbmssocn")]
         [InlineData("Network = dbnmpntw")]
         [InlineData("Net = dbmsrpcn")]
