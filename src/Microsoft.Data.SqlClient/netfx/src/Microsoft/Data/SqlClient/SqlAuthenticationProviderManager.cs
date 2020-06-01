@@ -30,9 +30,10 @@ namespace Microsoft.Data.SqlClient
             {
                 configurationSection = (SqlAuthenticationProviderConfigurationSection)ConfigurationManager.GetSection(SqlAuthenticationProviderConfigurationSection.Name);
             }
-            catch (ConfigurationErrorsException)
+            catch (ConfigurationErrorsException e)
             {
                 // Don't throw an error for invalid config files
+                SqlClientEventSource.Log.TraceEvent("ConfigurationManager failed to load due to configuration errors: {0}", e);
             }
             Instance = new SqlAuthenticationProviderManager(configurationSection);
             Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryIntegrated, activeDirectoryAuthProvider);
