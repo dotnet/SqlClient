@@ -1102,7 +1102,7 @@ namespace Microsoft.Data.SqlClient
 
     internal class ActiveDirectoryAuthentication
     {
-        internal const string AdoClientId = "4d079b4c-cab7-4b7c-a115-8fd51b6f8239";
+        internal const string AdoClientId = "2fd908ad-0664-4344-b9be-cd3e8b574c38";
         internal const string MSALGetAccessTokenFunctionName = "AcquireToken";
     }
 

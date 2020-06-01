@@ -48,7 +48,18 @@ namespace Microsoft.Data.SqlClient
                 .WithAuthority(parameters.Authority)
                 .WithClientName(Common.DbConnectionStringDefaults.ApplicationName)
                 .WithClientVersion(Common.ADP.GetAssemblyVersion().ToString())
+#if netcoreapp
                 .WithRedirectUri("http://localhost")
+#else
+                /* 
+                 * Today, MSAL.NET uses another redirect URI by default in desktop applications that run on Windows
+                 * (urn:ietf:wg:oauth:2.0:oob). In the future, we'll want to change this default, so we recommend
+                 * that you use https://login.microsoftonline.com/common/oauth2/nativeclient.
+                 * 
+                 * https://docs.microsoft.com/en-us/azure/active-directory/develop/scenario-desktop-app-registration#redirect-uris
+                 */
+                .WithRedirectUri("https://login.microsoftonline.com/oauth2/nativeclient")
+#endif
                 .Build();
 
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
