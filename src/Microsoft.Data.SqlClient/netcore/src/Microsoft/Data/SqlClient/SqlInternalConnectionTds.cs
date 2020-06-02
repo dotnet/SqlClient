@@ -1649,9 +1649,9 @@ namespace Microsoft.Data.SqlClient
                         // If it is read-only routing - we did not supply AppIntent=RO (it should be checked before)
                         // If it is something else, not known yet (future server) - this client is not designed to support this.                    
                         // In any case, server should not have sent the routing info.
+                        SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.LoginWithFailover> Routed to {0}", RoutingInfo.ServerName);
                         throw SQL.ROR_UnexpectedRoutingInfo(this);
                     }
-                    SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.LoginWithFailover> Routed to {0}", RoutingInfo.ServerName);
                     break; // leave the while loop -- we've successfully connected
                 }
                 catch (SqlException sqlex)
