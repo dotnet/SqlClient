@@ -114,7 +114,7 @@ namespace Microsoft.Data.SqlClient
         private static class SYNONYM
         {
             // application intent
-            internal const string APPLICATIONINTENT = "ApplicationIntent";
+            internal const string APPLICATIONINTENT = "applicationintent";
             // application name
             internal const string APP = "app";
             internal const string Async = "async";

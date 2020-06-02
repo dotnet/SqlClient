@@ -1124,7 +1124,7 @@ namespace Microsoft.Data.Common
         internal const string APP = "app";
 
         //internal const string ApplicationIntent    = APPLICATIONINTENT;
-        internal const string APPLICATIONINTENT = "ApplicationIntent";
+        internal const string APPLICATIONINTENT = "applicationintent";
 
         //internal const string AttachDBFilename       = EXTENDEDPROPERTIES+","+INITIALFILENAME;
         internal const string EXTENDEDPROPERTIES = "extended properties";
@@ -1135,10 +1135,10 @@ namespace Microsoft.Data.Common
         internal const string TIMEOUT = "timeout";
 
         //internal const string ConnectRetryCount = CONNECTRETRYCOUNT;
-        internal const string CONNECTRETRYCOUNT = "ConnectRetryCount";
+        internal const string CONNECTRETRYCOUNT = "connectretrycount";
 
         //internal const string ConnectRetryInterval = CONNECTRETRYINTERVAL;
-        internal const string CONNECTRETRYINTERVAL = "ConnectRetryInterval";
+        internal const string CONNECTRETRYINTERVAL = "connectretryinterval";
 
         //internal const string CurrentLanguage        = LANGUAGE;
         internal const string LANGUAGE = "language";
@@ -1160,17 +1160,17 @@ namespace Microsoft.Data.Common
         internal const string ConnectionLifetime = "connection lifetime";
 
         //internal const string MultipleActiveResultSets    = MULTIPLEACTIVERESULTSETS;
-        internal const string MULTIPLEACTIVERESULTSETS = "MultipleActiveResultSets";
+        internal const string MULTIPLEACTIVERESULTSETS = "multipleactiveresultsets";
 
         //internal const string MultiSubnetFailover = MULTISUBNETFAILOVER;
-        internal const string MULTISUBNETFAILOVER = "MultiSubnetFailover";
+        internal const string MULTISUBNETFAILOVER = "multisubnetfailover";
         
         //internal const string NetworkLibrary         = NET+","+NETWORK;
         internal const string NET = "net";
         internal const string NETWORK = "network";
 
         //internal const string PoolBlockingPeriod = POOLBLOCKINGPERIOD;
-        internal const string POOLBLOCKINGPERIOD = "PoolBlockingPeriod";
+        internal const string POOLBLOCKINGPERIOD = "poolblockingperiod";
         
         internal const string WorkaroundOracleBug914652 = "Workaround Oracle Bug 914652";
 
@@ -1181,10 +1181,10 @@ namespace Microsoft.Data.Common
         internal const string PERSISTSECURITYINFO = "persistsecurityinfo";
 
         //internal const string TrustServerCertificate = TRUSTSERVERCERTIFICATE;
-        internal const string TRUSTSERVERCERTIFICATE = "TrustServerCertificate";
+        internal const string TRUSTSERVERCERTIFICATE = "trustservercertificate";
 
         //internal const string TransparentNetworkIPResolution = TRANSPARENTNETWORKIPRESOLUTION;
-        internal const string TRANSPARENTNETWORKIPRESOLUTION = "TransparentNetworkIPResolution";
+        internal const string TRANSPARENTNETWORKIPRESOLUTION = "transparentnetworkipresolution";
 
         //internal const string UserID                 = UID+","+User;
         internal const string UID = "uid";
