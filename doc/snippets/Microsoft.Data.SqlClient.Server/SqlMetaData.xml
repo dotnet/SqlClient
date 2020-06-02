@@ -218,7 +218,7 @@ The following are the default values assigned to `dbType`, depending on the `Sql
                 <format type="text/markdown"><![CDATA[  
   
 ## Remarks  
-For more information, see [Table-Valued Parameters](~/docs/framework/data/adonet/sql/table-valued-parameters.md).  
+For more information, see [Table-Valued Parameters](/dotnet/framework/data/adonet/sql/table-valued-parameters).  
 
 ]]></format>
             </remarks>
@@ -236,7 +236,7 @@ For more information, see [Table-Valued Parameters](~/docs/framework/data/adonet
                 <format type="text/markdown"><![CDATA[  
 
 ## Remarks  
-For more information, see [Table-Valued Parameters](~/docs/framework/data/adonet/sql/table-valued-parameters.md).  
+For more information, see [Table-Valued Parameters](/dotnet/framework/data/adonet/sql/table-valued-parameters).  
 
 ]]></format>
             </remarks>
@@ -255,7 +255,7 @@ For more information, see [Table-Valued Parameters](~/docs/framework/data/adonet
                 <format type="text/markdown"><![CDATA[  
 
 ## Remarks  
-For more information, see [Table-Valued Parameters](~/docs/framework/data/adonet/sql/table-valued-parameters.md).  
+For more information, see [Table-Valued Parameters](/dotnet/framework/data/adonet/sql/table-valued-parameters).  
 
 ]]></format>
             </remarks>
@@ -321,7 +321,7 @@ The following are the default values assigned to `dbType`, depending on the `Sql
                 <format type="text/markdown"><![CDATA[  
   
 ## Remarks  
-For more information, see [Table-Valued Parameters](~/docs/framework/data/adonet/sql/table-valued-parameters.md).  
+For more information, see [Table-Valued Parameters](/dotnet/framework/data/adonet/sql/table-valued-parameters).  
 
 ]]></format>
             </remarks>
@@ -341,7 +341,7 @@ For more information, see [Table-Valued Parameters](~/docs/framework/data/adonet
                 <format type="text/markdown"><![CDATA[  
 
 ## Remarks  
-For more information, see [Table-Valued Parameters](~/docs/framework/data/adonet/sql/table-valued-parameters.md).  
+For more information, see [Table-Valued Parameters](/dotnet/framework/data/adonet/sql/table-valued-parameters).  
 
 ]]></format>
             </remarks>
@@ -361,7 +361,7 @@ For more information, see [Table-Valued Parameters](~/docs/framework/data/adonet
                 <format type="text/markdown"><![CDATA[  
 
 ## Remarks  
-For more information, see [Table-Valued Parameters](~/docs/framework/data/adonet/sql/table-valued-parameters.md).  
+For more information, see [Table-Valued Parameters](/dotnet/framework/data/adonet/sql/table-valued-parameters).  
 
 ]]></format>
             </remarks>
@@ -384,7 +384,7 @@ For more information, see [Table-Valued Parameters](~/docs/framework/data/adonet
                 <format type="text/markdown"><![CDATA[  
   
 ## Remarks  
-For more information, see [Table-Valued Parameters](~/docs/framework/data/adonet/sql/table-valued-parameters.md).  
+For more information, see [Table-Valued Parameters](/dotnet/framework/data/adonet/sql/table-valued-parameters).  
 
 ]]></format>
             </remarks>
@@ -692,7 +692,7 @@ The default is `FALSE`.
 
 This property can only be set in one of the <xref:Microsoft.Data.SqlClient.Server.SqlMetaData> constructors.  
 
-For more information, see [Table-Valued Parameters](~/docs/framework/data/adonet/sql/table-valued-parameters.md).  
+For more information, see [Table-Valued Parameters](/dotnet/framework/data/adonet/sql/table-valued-parameters).  
 
 ]]></format>
             </remarks>
@@ -777,7 +777,7 @@ Returns 0 if the scale of the underlying column type is not defined.
 ## Remarks  
 This property can only be set in one of the <xref:Microsoft.Data.SqlClient.Server.SqlMetaData> constructors.  
 
-For more information, see [Table-Valued Parameters](~/docs/framework/data/adonet/sql/table-valued-parameters.md).  
+For more information, see [Table-Valued Parameters](/dotnet/framework/data/adonet/sql/table-valued-parameters).  
 
 ]]></format>
             </remarks>
@@ -793,7 +793,7 @@ The default is 1.
 
 This property can only be set in one of the <xref:Microsoft.Data.SqlClient.Server.SqlMetaData> constructors.  
 
-For more information, see [Table-Valued Parameters](~/docs/framework/data/adonet/sql/table-valued-parameters.md).  
+For more information, see [Table-Valued Parameters](/dotnet/framework/data/adonet/sql/table-valued-parameters).  
 
 ]]></format>
             </remarks>
