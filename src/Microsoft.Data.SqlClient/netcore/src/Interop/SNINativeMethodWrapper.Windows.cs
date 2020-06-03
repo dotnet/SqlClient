@@ -162,6 +162,20 @@ namespace Microsoft.Data.SqlClient
             public TransparentNetworkResolutionMode transparentNetworkResolution;
             public int totalTimeout;
             public bool isAzureSqlServerEndpoint;
+            public SNI_DNSCache_Info DNSCacheInfo;
+        }
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        internal struct SNI_DNSCache_Info
+        {
+            [MarshalAs(UnmanagedType.LPWStr)]
+            public string wszCachedFQDN;
+            [MarshalAs(UnmanagedType.LPWStr)]
+            public string wszCachedTcpIPv4;
+            [MarshalAs(UnmanagedType.LPWStr)]
+            public string wszCachedTcpIPv6;
+            [MarshalAs(UnmanagedType.LPWStr)]
+            public string wszCachedTcpPort;
         }
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
@@ -248,7 +262,8 @@ namespace Microsoft.Data.SqlClient
             [MarshalAs(UnmanagedType.LPWStr)] string szConnect,
             [In] SNIHandle pConn,
             out IntPtr ppConn,
-            [MarshalAs(UnmanagedType.Bool)] bool fSync);
+            [MarshalAs(UnmanagedType.Bool)] bool fSync,
+            [In] ref SNI_DNSCache_Info pDNSCachedInfo);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr SNIPacketAllocateWrapper([In] SafeHandle pConn, IOType IOType);
@@ -295,7 +310,13 @@ namespace Microsoft.Data.SqlClient
             Sni_Consumer_Info native_consumerInfo = new Sni_Consumer_Info();
             MarshalConsumerInfo(consumerInfo, ref native_consumerInfo);
 
-            return SNIOpenWrapper(ref native_consumerInfo, "session:", parent, out pConn, fSync);
+            SNI_DNSCache_Info native_cachedDNSInfo = new SNI_DNSCache_Info();
+            native_cachedDNSInfo.wszCachedFQDN = null;
+            native_cachedDNSInfo.wszCachedTcpIPv4 = null;
+            native_cachedDNSInfo.wszCachedTcpIPv6 = null;
+            native_cachedDNSInfo.wszCachedTcpPort = null;
+
+            return SNIOpenWrapper(ref native_consumerInfo, "session:", parent, out pConn, fSync, ref native_cachedDNSInfo);
         }
 
         internal static unsafe uint SNIOpenSyncEx(ConsumerInfo consumerInfo, string constring, ref IntPtr pConn, byte[] spnBuffer, byte[] instanceName, bool fOverrideCache, bool fSync, int timeout, bool fParallel)
@@ -320,6 +341,11 @@ namespace Microsoft.Data.SqlClient
                 clientConsumerInfo.transparentNetworkResolution = TransparentNetworkResolutionMode.DisabledMode;
                 clientConsumerInfo.totalTimeout = SniOpenTimeOut;
                 clientConsumerInfo.isAzureSqlServerEndpoint = ADP.IsAzureSqlServerEndpoint(constring);
+
+                clientConsumerInfo.DNSCacheInfo.wszCachedFQDN = null;
+                clientConsumerInfo.DNSCacheInfo.wszCachedTcpIPv4 = null;
+                clientConsumerInfo.DNSCacheInfo.wszCachedTcpIPv6 = null;
+                clientConsumerInfo.DNSCacheInfo.wszCachedTcpPort = null;
 
                 if (spnBuffer != null)
                 {

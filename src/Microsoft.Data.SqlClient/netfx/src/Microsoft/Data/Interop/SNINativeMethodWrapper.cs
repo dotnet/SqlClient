@@ -352,6 +352,20 @@ namespace Microsoft.Data.SqlClient
             public TransparentNetworkResolutionMode transparentNetworkResolution;
             public int totalTimeout;
             public bool isAzureSqlServerEndpoint;
+            public SNI_DNSCache_Info DNSCacheInfo;
+        }
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        internal struct SNI_DNSCache_Info
+        {
+            [MarshalAs(UnmanagedType.LPWStr)]
+            public string wszCachedFQDN;
+            [MarshalAs(UnmanagedType.LPWStr)]
+            public string wszCachedTcpIPv4;
+            [MarshalAs(UnmanagedType.LPWStr)]
+            public string wszCachedTcpIPv6;
+            [MarshalAs(UnmanagedType.LPWStr)]
+            public string wszCachedTcpPort;
         }
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
@@ -566,11 +580,12 @@ namespace Microsoft.Data.SqlClient
             [MarshalAs(UnmanagedType.LPWStr)] string szConnect,
             [In] SNIHandle pConn,
             out IntPtr ppConn,
-            [MarshalAs(UnmanagedType.Bool)] bool fSync)
+            [MarshalAs(UnmanagedType.Bool)] bool fSync,
+            [In] ref SNI_DNSCache_Info pDNSCachedInfo)
         {
             return s_is64bitProcess ?
-                SNINativeManagedWrapperX64.SNIOpenWrapper(ref pConsumerInfo, szConnect, pConn, out ppConn, fSync) :
-                SNINativeManagedWrapperX86.SNIOpenWrapper(ref pConsumerInfo, szConnect, pConn, out ppConn, fSync);
+                SNINativeManagedWrapperX64.SNIOpenWrapper(ref pConsumerInfo, szConnect, pConn, out ppConn, fSync, ref pDNSCachedInfo) :
+                SNINativeManagedWrapperX86.SNIOpenWrapper(ref pConsumerInfo, szConnect, pConn, out ppConn, fSync, ref pDNSCachedInfo);
         }
 
         private static IntPtr SNIPacketAllocateWrapper([In] SafeHandle pConn, IOType IOType)
@@ -699,7 +714,13 @@ namespace Microsoft.Data.SqlClient
             Sni_Consumer_Info native_consumerInfo = new Sni_Consumer_Info();
             MarshalConsumerInfo(consumerInfo, ref native_consumerInfo);
 
-            return SNIOpenWrapper(ref native_consumerInfo, "session:", parent, out pConn, fSync);
+            SNI_DNSCache_Info native_cachedDNSInfo = new SNI_DNSCache_Info();
+            native_cachedDNSInfo.wszCachedFQDN = null;
+            native_cachedDNSInfo.wszCachedTcpIPv4 = null;
+            native_cachedDNSInfo.wszCachedTcpIPv6 = null;
+            native_cachedDNSInfo.wszCachedTcpPort = null;
+
+            return SNIOpenWrapper(ref native_consumerInfo, "session:", parent, out pConn, fSync, ref native_cachedDNSInfo);
         }
 
         internal static unsafe uint SNIOpenSyncEx(ConsumerInfo consumerInfo, string constring, ref IntPtr pConn, byte[] spnBuffer, byte[] instanceName, bool fOverrideCache, bool fSync, int timeout, bool fParallel, Int32 transparentNetworkResolutionStateNo, Int32 totalTimeout, Boolean isAzureSqlServerEndpoint)
@@ -736,6 +757,11 @@ namespace Microsoft.Data.SqlClient
                         break;
                 };
                 clientConsumerInfo.totalTimeout = totalTimeout;
+
+                clientConsumerInfo.DNSCacheInfo.wszCachedFQDN = null;
+                clientConsumerInfo.DNSCacheInfo.wszCachedTcpIPv4 = null;
+                clientConsumerInfo.DNSCacheInfo.wszCachedTcpIPv6 = null;
+                clientConsumerInfo.DNSCacheInfo.wszCachedTcpPort = null;
 
                 if (spnBuffer != null)
                 {

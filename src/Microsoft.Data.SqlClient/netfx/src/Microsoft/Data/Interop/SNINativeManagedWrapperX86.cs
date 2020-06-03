@@ -90,7 +90,8 @@ namespace Microsoft.Data.SqlClient
             [MarshalAs(UnmanagedType.LPWStr)] string szConnect,
             [In] SNIHandle pConn,
             out IntPtr ppConn,
-            [MarshalAs(UnmanagedType.Bool)] bool fSync);
+            [MarshalAs(UnmanagedType.Bool)] bool fSync,
+            [In] ref SNI_DNSCache_Info pDNSCachedInfo);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr SNIPacketAllocateWrapper([In] SafeHandle pConn, IOType IOType);
