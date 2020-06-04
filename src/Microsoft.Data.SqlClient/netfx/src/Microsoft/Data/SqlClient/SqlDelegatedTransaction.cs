@@ -268,7 +268,7 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 // The transaction was aborted externally, doom the connection to make sure it's eventually rolled back and log the same.
-                SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.Promote|RES|CPOOL> {0}, Connection {1}, aborted before promote.", ObjectID, connection.ObjectID);
+                SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.Promote|RES|CPOOL> {0}, Connection null, aborted before promoting.", ObjectID);
             }
             return returnValue;
         }
@@ -364,7 +364,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // The transaction was aborted, report that to SysTx and log the same.
                 enlistment.Aborted();
-                SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.Rollback|RES|CPOOL> {0}, Connection {1}, aborted before rollback.", ObjectID, connection.ObjectID);
+                SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.Rollback|RES|CPOOL> {0}, Connection null, aborted before rollback.", ObjectID);
             }
         }
 
@@ -501,7 +501,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // The transaction was aborted before we could commit, report that to SysTx and log the same.
                 enlistment.Aborted();
-                SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.SinglePhaseCommit|RES|CPOOL> {0}, Connection {1}, aborted before commit.", ObjectID, connection.ObjectID);
+                SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.SinglePhaseCommit|RES|CPOOL> {0}, Connection null, aborted before commit.", ObjectID);
             }
         }
 

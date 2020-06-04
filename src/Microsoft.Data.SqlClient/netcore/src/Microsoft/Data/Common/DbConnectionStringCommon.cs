@@ -677,7 +677,7 @@ namespace Microsoft.Data.Common
         // internal const string NamedConnection = "Named Connection";
 
         // SqlClient
-        internal const string ApplicationIntent = "ApplicationIntent";
+        internal const string ApplicationIntent = "Application Intent";
         internal const string ApplicationName = "Application Name";
         internal const string AsynchronousProcessing = "Asynchronous Processing";
         internal const string AttachDBFilename = "AttachDbFilename";
@@ -688,18 +688,18 @@ namespace Microsoft.Data.Common
         internal const string Encrypt = "Encrypt";
         internal const string FailoverPartner = "Failover Partner";
         internal const string InitialCatalog = "Initial Catalog";
-        internal const string MultipleActiveResultSets = "MultipleActiveResultSets";
-        internal const string MultiSubnetFailover = "MultiSubnetFailover";
+        internal const string MultipleActiveResultSets = "Multiple Active Result Sets";
+        internal const string MultiSubnetFailover = "Multi Subnet Failover";
         internal const string NetworkLibrary = "Network Library";
         internal const string PacketSize = "Packet Size";
         internal const string Replication = "Replication";
         internal const string TransactionBinding = "Transaction Binding";
-        internal const string TrustServerCertificate = "TrustServerCertificate";
+        internal const string TrustServerCertificate = "Trust Server Certificate";
         internal const string TypeSystemVersion = "Type System Version";
         internal const string UserInstance = "User Instance";
         internal const string WorkstationID = "Workstation ID";
-        internal const string ConnectRetryCount = "ConnectRetryCount";
-        internal const string ConnectRetryInterval = "ConnectRetryInterval";
+        internal const string ConnectRetryCount = "Connect Retry Count";
+        internal const string ConnectRetryInterval = "Connect Retry Interval";
         internal const string Authentication = "Authentication";
         internal const string ColumnEncryptionSetting = "Column Encryption Setting";
         internal const string EnclaveAttestationUrl = "Enclave Attestation Url";
@@ -720,7 +720,7 @@ namespace Microsoft.Data.Common
         internal const string Pooling = "Pooling";
         internal const string MinPoolSize = "Min Pool Size";
 #if netcoreapp
-        internal const string PoolBlockingPeriod = "PoolBlockingPeriod";
+        internal const string PoolBlockingPeriod = "Pool Blocking Period";
 #endif
     }
 
@@ -732,6 +732,9 @@ namespace Microsoft.Data.Common
         //internal const string ApplicationName        = APP;
         internal const string APP = "app";
 
+        //internal const string ApplicationIntent    = APPLICATIONINTENT;
+        internal const string APPLICATIONINTENT = "ApplicationIntent";
+
         //internal const string AttachDBFilename       = EXTENDEDPROPERTIES+","+INITIALFILENAME;
         internal const string EXTENDEDPROPERTIES = "extended properties";
         internal const string INITIALFILENAME = "initial file name";
@@ -739,6 +742,12 @@ namespace Microsoft.Data.Common
         //internal const string ConnectTimeout         = CONNECTIONTIMEOUT+","+TIMEOUT;
         internal const string CONNECTIONTIMEOUT = "connection timeout";
         internal const string TIMEOUT = "timeout";
+
+        //internal const string ConnectRetryCount = CONNECTRETRYCOUNT;
+        internal const string CONNECTRETRYCOUNT = "ConnectRetryCount";
+
+        //internal const string ConnectRetryInterval = CONNECTRETRYINTERVAL;
+        internal const string CONNECTRETRYINTERVAL = "ConnectRetryInterval";
 
         //internal const string CurrentLanguage        = LANGUAGE;
         internal const string LANGUAGE = "language";
@@ -759,16 +768,29 @@ namespace Microsoft.Data.Common
         //internal const string LoadBalanceTimeout     = ConnectionLifetime;
         internal const string ConnectionLifetime = "connection lifetime";
 
+        //internal const string MultipleActiveResultSets    = MULTIPLEACTIVERESULTSETS;
+        internal const string MULTIPLEACTIVERESULTSETS = "MultipleActiveResultSets";
+
+        //internal const string MultiSubnetFailover = MULTISUBNETFAILOVER;
+        internal const string MULTISUBNETFAILOVER = "MultiSubnetFailover";
+        
         //internal const string NetworkLibrary         = NET+","+NETWORK;
         internal const string NET = "net";
         internal const string NETWORK = "network";
 
+#if netcoreapp
+        //internal const string PoolBlockingPeriod = POOLBLOCKINGPERIOD;
+        internal const string POOLBLOCKINGPERIOD = "PoolBlockingPeriod";
+#endif
 
         //internal const string Password               = Pwd;
         internal const string Pwd = "pwd";
 
         //internal const string PersistSecurityInfo    = PERSISTSECURITYINFO;
         internal const string PERSISTSECURITYINFO = "persistsecurityinfo";
+
+        //internal const string TrustServerCertificate = TRUSTSERVERCERTIFICATE;
+        internal const string TRUSTSERVERCERTIFICATE = "TrustServerCertificate";
 
         //internal const string UserID                 = UID+","+User;
         internal const string UID = "uid";

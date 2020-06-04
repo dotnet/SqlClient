@@ -65,11 +65,11 @@ namespace Microsoft.Data.SqlClient
         // keys must be lowercase!
         internal static class KEY
         {
-            internal const string ApplicationIntent = "applicationintent";
+            internal const string ApplicationIntent = "application intent";
             internal const string Application_Name = "application name";
             internal const string AsynchronousProcessing = "asynchronous processing";
             internal const string AttachDBFilename = "attachdbfilename";
-            internal const string PoolBlockingPeriod = "poolblockingperiod";
+            internal const string PoolBlockingPeriod = "pool blocking period";
             internal const string ColumnEncryptionSetting = "column encryption setting";
             internal const string EnclaveAttestationUrl = "enclave attestation url";
             internal const string AttestationProtocol = "attestation protocol";
@@ -84,25 +84,25 @@ namespace Microsoft.Data.SqlClient
             internal const string Initial_Catalog = "initial catalog";
             internal const string Integrated_Security = "integrated security";
             internal const string Load_Balance_Timeout = "load balance timeout";
-            internal const string MARS = "multipleactiveresultsets";
+            internal const string MARS = "multiple active result sets";
             internal const string Max_Pool_Size = "max pool size";
             internal const string Min_Pool_Size = "min pool size";
-            internal const string MultiSubnetFailover = "multisubnetfailover";
-            internal const string TransparentNetworkIPResolution = "transparentnetworkipresolution";
+            internal const string MultiSubnetFailover = "multi subnet failover";
+            internal const string TransparentNetworkIPResolution = "transparent network ip resolution";
             internal const string Network_Library = "network library";
             internal const string Packet_Size = "packet size";
             internal const string Password = "password";
             internal const string Persist_Security_Info = "persist security info";
             internal const string Pooling = "pooling";
             internal const string TransactionBinding = "transaction binding";
-            internal const string TrustServerCertificate = "trustservercertificate";
+            internal const string TrustServerCertificate = "trust server certificate";
             internal const string Type_System_Version = "type system version";
             internal const string User_ID = "user id";
             internal const string User_Instance = "user instance";
             internal const string Workstation_Id = "workstation id";
             internal const string Replication = "replication";
-            internal const string Connect_Retry_Count = "connectretrycount";
-            internal const string Connect_Retry_Interval = "connectretryinterval";
+            internal const string Connect_Retry_Count = "connect retry count";
+            internal const string Connect_Retry_Interval = "connect retry interval";
             internal const string Authentication = "authentication";
 #if ADONET_CERT_AUTH            
             internal const string Certificate						= "certificate";
@@ -113,12 +113,18 @@ namespace Microsoft.Data.SqlClient
 
         private static class SYNONYM
         {
+            // application intent
+            internal const string APPLICATIONINTENT = "applicationintent";
             // application name
             internal const string APP = "app";
             internal const string Async = "async";
             // attachDBFilename
             internal const string EXTENDED_PROPERTIES = "extended properties";
             internal const string INITIAL_FILE_NAME = "initial file name";
+            // connect retry count
+            internal const string CONNECTRETRYCOUNT = "connectretrycount";
+            // connect retry interval
+            internal const string CONNECTRETRYINTERVAL = "connectretryinterval";
             // connect timeout
             internal const string CONNECTION_TIMEOUT = "connection timeout";
             internal const string TIMEOUT = "timeout";
@@ -135,6 +141,10 @@ namespace Microsoft.Data.SqlClient
             internal const string TRUSTED_CONNECTION = "trusted_connection";
             // load balance timeout
             internal const string Connection_Lifetime = "connection lifetime";
+            // multiple active result sets
+            internal const string MULTIPLEACTIVERESULTSETS = "multipleactiveresultsets";
+            // multi subnet failover
+            internal const string MULTISUBNETFAILOVER = "multisubnetfailover";
             // network library
             internal const string NET = "net";
             internal const string NETWORK = "network";
@@ -142,6 +152,12 @@ namespace Microsoft.Data.SqlClient
             internal const string Pwd = "pwd";
             // persist security info
             internal const string PERSISTSECURITYINFO = "persistsecurityinfo";
+            // pool blocking period
+            internal const string POOLBLOCKINGPERIOD = "poolblockingperiod";
+            // transparent network ip resolution
+            internal const string TRANSPARENTNETWORKIPRESOLUTION = "transparentnetworkipresolution";
+            // trust server certificate
+            internal const string TRUSTSERVERCERTIFICATE = "trustservercertificate";
             // user id
             internal const string UID = "uid";
             internal const string User = "user";
@@ -151,7 +167,7 @@ namespace Microsoft.Data.SqlClient
             // make sure to update SynonymCount value below when adding or removing synonyms
         }
 
-        internal const int SynonymCount = 21;
+        internal const int SynonymCount = 29;
 
         // the following are all inserted as keys into the _netlibMapping hash
         internal static class NETLIB
@@ -399,8 +415,8 @@ namespace Microsoft.Data.SqlClient
             ValidateValueLength(_dataSource, TdsEnums.MAXLEN_SERVERNAME, KEY.Data_Source);
             ValidateValueLength(_failoverPartner, TdsEnums.MAXLEN_SERVERNAME, KEY.FailoverPartner);
             ValidateValueLength(_initialCatalog, TdsEnums.MAXLEN_DATABASE, KEY.Initial_Catalog);
-            ValidateValueLength(_password, TdsEnums.MAXLEN_PASSWORD, KEY.Password);
-            ValidateValueLength(_userID, TdsEnums.MAXLEN_USERNAME, KEY.User_ID);
+            ValidateValueLength(_password, TdsEnums.MAXLEN_CLIENTSECRET, KEY.Password);
+            ValidateValueLength(_userID, TdsEnums.MAXLEN_CLIENTID, KEY.User_ID);
             if (null != _workstationId)
             {
                 ValidateValueLength(_workstationId, TdsEnums.MAXLEN_HOSTNAME, KEY.Workstation_Id);
@@ -779,15 +795,20 @@ namespace Microsoft.Data.SqlClient
 #if ADONET_CERT_AUTH                
                 hash.Add(KEY.Certificate,                    KEY.Certificate);
 #endif
+                hash.Add(SYNONYM.APPLICATIONINTENT, KEY.ApplicationIntent);
                 hash.Add(SYNONYM.APP, KEY.Application_Name);
                 hash.Add(SYNONYM.Async, KEY.AsynchronousProcessing);
                 hash.Add(SYNONYM.EXTENDED_PROPERTIES, KEY.AttachDBFilename);
                 hash.Add(SYNONYM.INITIAL_FILE_NAME, KEY.AttachDBFilename);
                 hash.Add(SYNONYM.CONNECTION_TIMEOUT, KEY.Connect_Timeout);
+                hash.Add(SYNONYM.CONNECTRETRYCOUNT, KEY.Connect_Retry_Count);
+                hash.Add(SYNONYM.CONNECTRETRYINTERVAL, KEY.Connect_Retry_Interval);
                 hash.Add(SYNONYM.TIMEOUT, KEY.Connect_Timeout);
                 hash.Add(SYNONYM.LANGUAGE, KEY.Current_Language);
                 hash.Add(SYNONYM.ADDR, KEY.Data_Source);
                 hash.Add(SYNONYM.ADDRESS, KEY.Data_Source);
+                hash.Add(SYNONYM.MULTIPLEACTIVERESULTSETS, KEY.MARS);
+                hash.Add(SYNONYM.MULTISUBNETFAILOVER, KEY.MultiSubnetFailover);
                 hash.Add(SYNONYM.NETWORK_ADDRESS, KEY.Data_Source);
                 hash.Add(SYNONYM.SERVER, KEY.Data_Source);
                 hash.Add(SYNONYM.DATABASE, KEY.Initial_Catalog);
@@ -796,7 +817,10 @@ namespace Microsoft.Data.SqlClient
                 hash.Add(SYNONYM.NET, KEY.Network_Library);
                 hash.Add(SYNONYM.NETWORK, KEY.Network_Library);
                 hash.Add(SYNONYM.Pwd, KEY.Password);
+                hash.Add(SYNONYM.POOLBLOCKINGPERIOD, KEY.PoolBlockingPeriod);
                 hash.Add(SYNONYM.PERSISTSECURITYINFO, KEY.Persist_Security_Info);
+                hash.Add(SYNONYM.TRANSPARENTNETWORKIPRESOLUTION, KEY.TransparentNetworkIPResolution);
+                hash.Add(SYNONYM.TRUSTSERVERCERTIFICATE, KEY.TrustServerCertificate);
                 hash.Add(SYNONYM.UID, KEY.User_ID);
                 hash.Add(SYNONYM.User, KEY.User_ID);
                 hash.Add(SYNONYM.WSID, KEY.Workstation_Id);

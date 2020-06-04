@@ -11,7 +11,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public static class AsyncTest
     {
         [ActiveIssue(5533)]
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void TestReadAsyncTimeConsumed()
         {
             const string sql = "SET NOCOUNT ON"

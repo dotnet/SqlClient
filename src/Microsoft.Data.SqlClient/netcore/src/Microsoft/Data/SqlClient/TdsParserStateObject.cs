@@ -3465,7 +3465,7 @@ namespace Microsoft.Data.SqlClient
 
                 try
                 {
-                    // Dev11 #344723: SqlClient stress hang System_Data!Tcp::ReadSync via a call to SqlDataReader::Close
+                    // Dev11 #344723: SqlClient stress test suspends System_Data!Tcp::ReadSync via a call to SqlDataReader::Close
                     // Set _attentionSending to true before sending attention and reset after setting _attentionSent
                     // This prevents a race condition between receiving the attention ACK and setting _attentionSent
                     _attentionSending = true;

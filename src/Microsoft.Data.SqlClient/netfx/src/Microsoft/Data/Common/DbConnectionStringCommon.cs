@@ -1069,7 +1069,7 @@ namespace Microsoft.Data.Common
         internal const string OmitOracleConnectionName = "Omit Oracle Connection Name";
 
         // SqlClient
-        internal const string ApplicationIntent = "ApplicationIntent";
+        internal const string ApplicationIntent = "Application Intent";
         internal const string ApplicationName = "Application Name";
         internal const string AsynchronousProcessing = "Asynchronous Processing";
         internal const string AttachDBFilename = "AttachDbFilename";
@@ -1080,25 +1080,25 @@ namespace Microsoft.Data.Common
         internal const string Encrypt = "Encrypt";
         internal const string FailoverPartner = "Failover Partner";
         internal const string InitialCatalog = "Initial Catalog";
-        internal const string MultipleActiveResultSets = "MultipleActiveResultSets";
-        internal const string MultiSubnetFailover = "MultiSubnetFailover";
-        internal const string TransparentNetworkIPResolution = "TransparentNetworkIPResolution";
+        internal const string MultipleActiveResultSets = "Multiple Active Result Sets";
+        internal const string MultiSubnetFailover = "Multi Subnet Failover";
+        internal const string TransparentNetworkIPResolution = "Transparent Network IP Resolution";
         internal const string NetworkLibrary = "Network Library";
         internal const string PacketSize = "Packet Size";
         internal const string Replication = "Replication";
         internal const string TransactionBinding = "Transaction Binding";
-        internal const string TrustServerCertificate = "TrustServerCertificate";
+        internal const string TrustServerCertificate = "Trust Server Certificate";
         internal const string TypeSystemVersion = "Type System Version";
         internal const string UserInstance = "User Instance";
         internal const string WorkstationID = "Workstation ID";
-        internal const string ConnectRetryCount = "ConnectRetryCount";
-        internal const string ConnectRetryInterval = "ConnectRetryInterval";
+        internal const string ConnectRetryCount = "Connect Retry Count";
+        internal const string ConnectRetryInterval = "Connect Retry Interval";
         internal const string Authentication = "Authentication";
         internal const string Certificate = "Certificate";
         internal const string ColumnEncryptionSetting = "Column Encryption Setting";
         internal const string EnclaveAttestationUrl = "Enclave Attestation Url";
         internal const string AttestationProtocol = "Attestation Protocol";
-        internal const string PoolBlockingPeriod = "PoolBlockingPeriod";
+        internal const string PoolBlockingPeriod = "Pool Blocking Period";
 
         // common keywords (OleDb, OracleClient, SqlClient)
         internal const string DataSource = "Data Source";
@@ -1123,6 +1123,9 @@ namespace Microsoft.Data.Common
         //internal const string ApplicationName        = APP;
         internal const string APP = "app";
 
+        //internal const string ApplicationIntent    = APPLICATIONINTENT;
+        internal const string APPLICATIONINTENT = "applicationintent";
+
         //internal const string AttachDBFilename       = EXTENDEDPROPERTIES+","+INITIALFILENAME;
         internal const string EXTENDEDPROPERTIES = "extended properties";
         internal const string INITIALFILENAME = "initial file name";
@@ -1130,6 +1133,12 @@ namespace Microsoft.Data.Common
         //internal const string ConnectTimeout         = CONNECTIONTIMEOUT+","+TIMEOUT;
         internal const string CONNECTIONTIMEOUT = "connection timeout";
         internal const string TIMEOUT = "timeout";
+
+        //internal const string ConnectRetryCount = CONNECTRETRYCOUNT;
+        internal const string CONNECTRETRYCOUNT = "connectretrycount";
+
+        //internal const string ConnectRetryInterval = CONNECTRETRYINTERVAL;
+        internal const string CONNECTRETRYINTERVAL = "connectretryinterval";
 
         //internal const string CurrentLanguage        = LANGUAGE;
         internal const string LANGUAGE = "language";
@@ -1150,10 +1159,19 @@ namespace Microsoft.Data.Common
         //internal const string LoadBalanceTimeout     = ConnectionLifetime;
         internal const string ConnectionLifetime = "connection lifetime";
 
+        //internal const string MultipleActiveResultSets    = MULTIPLEACTIVERESULTSETS;
+        internal const string MULTIPLEACTIVERESULTSETS = "multipleactiveresultsets";
+
+        //internal const string MultiSubnetFailover = MULTISUBNETFAILOVER;
+        internal const string MULTISUBNETFAILOVER = "multisubnetfailover";
+        
         //internal const string NetworkLibrary         = NET+","+NETWORK;
         internal const string NET = "net";
         internal const string NETWORK = "network";
 
+        //internal const string PoolBlockingPeriod = POOLBLOCKINGPERIOD;
+        internal const string POOLBLOCKINGPERIOD = "poolblockingperiod";
+        
         internal const string WorkaroundOracleBug914652 = "Workaround Oracle Bug 914652";
 
         //internal const string Password               = Pwd;
@@ -1161,6 +1179,12 @@ namespace Microsoft.Data.Common
 
         //internal const string PersistSecurityInfo    = PERSISTSECURITYINFO;
         internal const string PERSISTSECURITYINFO = "persistsecurityinfo";
+
+        //internal const string TrustServerCertificate = TRUSTSERVERCERTIFICATE;
+        internal const string TRUSTSERVERCERTIFICATE = "trustservercertificate";
+
+        //internal const string TransparentNetworkIPResolution = TRANSPARENTNETWORKIPRESOLUTION;
+        internal const string TRANSPARENTNETWORKIPRESOLUTION = "transparentnetworkipresolution";
 
         //internal const string UserID                 = UID+","+User;
         internal const string UID = "uid";

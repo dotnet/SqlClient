@@ -12,10 +12,10 @@ ARG PROJFILE=$PROJNAME".csproj"
 ARG DLLFILE=$PROJNAME".dll"
 
 WORKDIR /sqlclient/src/Microsoft.Data.SqlClient/tests/DockerLinuxTest
-RUN dotnet build $PROJFILE -c Release -o /app/build -p:OSGroup=Unix -p:GenerateDocumentationFile=false
+RUN dotnet build $PROJFILE -c Release -o /app/build 
 
 FROM build AS publish
-RUN dotnet publish $PROJFILE -c Release -o /app/publish -p:OSGroup=Unix -p:GenerateDocumentationFile=false
+RUN dotnet publish $PROJFILE -c Release -o /app/publish
 
 FROM base AS final
 WORKDIR /app

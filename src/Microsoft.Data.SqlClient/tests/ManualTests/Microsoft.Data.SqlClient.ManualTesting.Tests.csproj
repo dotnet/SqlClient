@@ -61,7 +61,7 @@
       <Link>Common\System\Collections\DictionaryExtensions.cs</Link>
     </Compile>
     <Compile Include="DataCommon\AADUtility.cs" />
-    <Compile Include="DataCommon\CheckConnStrSetupFactAttribute.cs" />
+    <Compile Include="SQL\DataClassificationTest\DataClassificationTest.cs" />
     <Compile Include="TracingTests\EventSourceTest.cs" />
     <Compile Include="SQL\AdapterTest\AdapterTest.cs" />
     <Compile Include="SQL\AsyncTest\BeginExecAsyncTest.cs" />
@@ -286,6 +286,6 @@
     <PackageReference Condition="'$(TargetGroup)' == 'netcoreapp'" Include="Microsoft.DotNet.RemoteExecutor" Version="$(MicrosoftDotnetRemoteExecutorVersion)" />
   </ItemGroup>
   <ItemGroup>
-    <None Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(BinFolder)$(Configuration).AnyCPU\Microsoft.Data.SqlClient\netfx\**\SNI.dll" CopyToOutputDirectory="PreserveNewest" />
+    <None Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(BinFolder)$(Configuration).AnyCPU\Microsoft.Data.SqlClient\netfx\**\*SNI*.dll" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

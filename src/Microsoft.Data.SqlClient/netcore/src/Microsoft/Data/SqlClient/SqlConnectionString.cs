@@ -57,12 +57,12 @@ namespace Microsoft.Data.SqlClient
         // keys must be lowercase!
         internal static class KEY
         {
-            internal const string ApplicationIntent = "applicationintent";
+            internal const string ApplicationIntent = "application intent";
             internal const string Application_Name = "application name";
             internal const string AsynchronousProcessing = "asynchronous processing";
             internal const string AttachDBFilename = "attachdbfilename";
 #if netcoreapp
-            internal const string PoolBlockingPeriod = "poolblockingperiod";
+            internal const string PoolBlockingPeriod = "pool blocking period";
 #endif
             internal const string ColumnEncryptionSetting = "column encryption setting";
             internal const string EnclaveAttestationUrl = "enclave attestation url";
@@ -78,31 +78,32 @@ namespace Microsoft.Data.SqlClient
             internal const string Initial_Catalog = "initial catalog";
             internal const string Integrated_Security = "integrated security";
             internal const string Load_Balance_Timeout = "load balance timeout";
-            internal const string MARS = "multipleactiveresultsets";
+            internal const string MARS = "multiple active result sets";
             internal const string Max_Pool_Size = "max pool size";
             internal const string Min_Pool_Size = "min pool size";
-            internal const string MultiSubnetFailover = "multisubnetfailover";
+            internal const string MultiSubnetFailover = "multi subnet failover";
             internal const string Network_Library = "network library";
             internal const string Packet_Size = "packet size";
             internal const string Password = "password";
             internal const string Persist_Security_Info = "persist security info";
             internal const string Pooling = "pooling";
             internal const string TransactionBinding = "transaction binding";
-            internal const string TrustServerCertificate = "trustservercertificate";
+            internal const string TrustServerCertificate = "trust server certificate";
             internal const string Type_System_Version = "type system version";
             internal const string User_ID = "user id";
             internal const string User_Instance = "user instance";
             internal const string Workstation_Id = "workstation id";
             internal const string Replication = "replication";
-            internal const string Connect_Retry_Count = "connectretrycount";
-            internal const string Connect_Retry_Interval = "connectretryinterval";
+            internal const string Connect_Retry_Count = "connect retry count";
+            internal const string Connect_Retry_Interval = "connect retry interval";
             internal const string Authentication = "authentication";
         }
 
         // Constant for the number of duplicate options in the connection string
-
         private static class SYNONYM
         {
+            //application intent
+            internal const string APPLICATIONINTENT = "applicationintent";
             // application name
             internal const string APP = "app";
             internal const string Async = "async";
@@ -123,15 +124,29 @@ namespace Microsoft.Data.SqlClient
             internal const string DATABASE = "database";
             // integrated security
             internal const string TRUSTED_CONNECTION = "trusted_connection";
+            //connect retry count
+            internal const string CONNECTRETRYCOUNT = "connectretrycount";
+            //connect retry interval
+            internal const string CONNECTRETRYINTERVAL = "connectretryinterval";
             // load balance timeout
             internal const string Connection_Lifetime = "connection lifetime";
+            // multiple active result sets
+            internal const string MULTIPLEACTIVERESULTSETS = "multipleactiveresultsets";
+            // multi subnet failover
+            internal const string MULTISUBNETFAILOVER = "multisubnetfailover";
             // network library
             internal const string NET = "net";
             internal const string NETWORK = "network";
+#if netcoreapp
+            // pool blocking period
+            internal const string POOLBLOCKINGPERIOD = "poolblockingperiod";
+#endif
             // password
             internal const string Pwd = "pwd";
             // persist security info
             internal const string PERSISTSECURITYINFO = "persistsecurityinfo";
+            // trust server certificate
+            internal const string TRUSTSERVERCERTIFICATE = "trustservercertificate";
             // user id
             internal const string UID = "uid";
             internal const string User = "user";
@@ -140,9 +155,12 @@ namespace Microsoft.Data.SqlClient
             // make sure to update SynonymCount value below when adding or removing synonyms
         }
 
-        internal const int SynonymCount = 18;
+#if netcoreapp
+        internal const int SynonymCount = 25;
+#else
+        internal const int SynonymCount = 24;
+#endif
         internal const int DeprecatedSynonymCount = 3;
-
 
         internal enum TypeSystem
         {
@@ -314,8 +332,8 @@ namespace Microsoft.Data.SqlClient
             ValidateValueLength(_dataSource, TdsEnums.MAXLEN_SERVERNAME, KEY.Data_Source);
             ValidateValueLength(_failoverPartner, TdsEnums.MAXLEN_SERVERNAME, KEY.FailoverPartner);
             ValidateValueLength(_initialCatalog, TdsEnums.MAXLEN_DATABASE, KEY.Initial_Catalog);
-            ValidateValueLength(_password, TdsEnums.MAXLEN_PASSWORD, KEY.Password);
-            ValidateValueLength(_userID, TdsEnums.MAXLEN_USERNAME, KEY.User_ID);
+            ValidateValueLength(_password, TdsEnums.MAXLEN_CLIENTSECRET, KEY.Password);
+            ValidateValueLength(_userID, TdsEnums.MAXLEN_CLIENTID, KEY.User_ID);
             if (null != _workstationId)
             {
                 ValidateValueLength(_workstationId, TdsEnums.MAXLEN_HOSTNAME, KEY.Workstation_Id);
@@ -566,7 +584,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (null != _expandedAttachDBFilename)
             {
-                return  ExpandAttachDbFileName(_expandedAttachDBFilename);
+                return ExpandAttachDbFileName(_expandedAttachDBFilename);
             }
             else
             {
@@ -650,15 +668,23 @@ namespace Microsoft.Data.SqlClient
                     { KEY.Authentication, KEY.Authentication },
 
                     { SYNONYM.APP, KEY.Application_Name },
+                    { SYNONYM.APPLICATIONINTENT, KEY.ApplicationIntent },
                     { SYNONYM.Async, KEY.AsynchronousProcessing },
                     { SYNONYM.EXTENDED_PROPERTIES, KEY.AttachDBFilename },
                     { SYNONYM.INITIAL_FILE_NAME, KEY.AttachDBFilename },
+                    { SYNONYM.CONNECTRETRYCOUNT, KEY.Connect_Retry_Count },
+                    { SYNONYM.CONNECTRETRYINTERVAL, KEY.Connect_Retry_Interval },
                     { SYNONYM.CONNECTION_TIMEOUT, KEY.Connect_Timeout },
                     { SYNONYM.TIMEOUT, KEY.Connect_Timeout },
                     { SYNONYM.LANGUAGE, KEY.Current_Language },
                     { SYNONYM.ADDR, KEY.Data_Source },
                     { SYNONYM.ADDRESS, KEY.Data_Source },
+                    { SYNONYM.MULTIPLEACTIVERESULTSETS, KEY.MARS },
+                    { SYNONYM.MULTISUBNETFAILOVER, KEY.MultiSubnetFailover },
                     { SYNONYM.NETWORK_ADDRESS, KEY.Data_Source },
+#if netcoreapp
+                    { SYNONYM.POOLBLOCKINGPERIOD, KEY.PoolBlockingPeriod},
+#endif
                     { SYNONYM.SERVER, KEY.Data_Source },
                     { SYNONYM.DATABASE, KEY.Initial_Catalog },
                     { SYNONYM.TRUSTED_CONNECTION, KEY.Integrated_Security },
@@ -667,6 +693,7 @@ namespace Microsoft.Data.SqlClient
                     { SYNONYM.NETWORK, KEY.Network_Library },
                     { SYNONYM.Pwd, KEY.Password },
                     { SYNONYM.PERSISTSECURITYINFO, KEY.Persist_Security_Info },
+                    { SYNONYM.TRUSTSERVERCERTIFICATE, KEY.TrustServerCertificate },
                     { SYNONYM.UID, KEY.User_ID },
                     { SYNONYM.User, KEY.User_ID },
                     { SYNONYM.WSID, KEY.Workstation_Id }
@@ -843,7 +870,7 @@ namespace Microsoft.Data.SqlClient
             }
             catch (FormatException e)
             {
-                 throw ADP.InvalidConnectionOptionValue(KEY.AttestationProtocol, e);
+                throw ADP.InvalidConnectionOptionValue(KEY.AttestationProtocol, e);
             }
             catch (OverflowException e)
             {

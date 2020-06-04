@@ -5,7 +5,6 @@ This document provides all the necessary details to build the driver and run tes
 ## Visual Studio Pre-Requisites
 
 This project should be ideally built with Visual Studio 2017+ for the best compatibility. Use either of the two environments with their required set of compoenents as mentioned below:
-- **Visual Studio 2017** with imported components: [VS17Components](/tools/vsconfig/VS17Components.vsconfig)
 - **Visual Studio 2019** with imported components: [VS19Components](/tools/vsconfig/VS19Components.vsconfig)
 
 Once the environment is setup properly, execute the desired set of commands below from the _root_ folder to perform the respective operations:
@@ -115,6 +114,7 @@ Manual Tests require the below setup to run:
 |SupportsLocalDb | (Optional) Whether or not a LocalDb instance of SQL Server is installed on the machine running the tests. |`true` OR `false`|
 |SupportsIntegratedSecurity | (Optional) Whether or not the USER running tests has integrated security access to the target SQL Server.| `true` OR `false`|
 |SupportsFileStream | (Optional) Whether or not FileStream is enabled on SQL Server| `true` OR `false`|
+|UseManagedSNIOnWindows | (Optional) Enables testing with Managed SNI on Windows| `true` OR `false`|
 
 Commands to run tests:
 
@@ -140,7 +140,53 @@ Unix (`netcoreapp`):
 
 ## Run A Single Test
 ```bash
-> dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" /p:Platform="AnyCPU" /p:Configuration="Debug" /p:TestTargetOS="Windowsnetcoreapp" --no-build -v n --filter "FullyQualifiedName=Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.CspProviderExt.TestKeysFromCertificatesCreatedWithMultipleCryptoProviders"
+> dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" /p:Platform="AnyCPU" /p:Configuration="Release" /p:TestTargetOS="Windowsnetcoreapp" --no-build -v n --filter "FullyQualifiedName=Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.CspProviderExt.TestKeysFromCertificatesCreatedWithMultipleCryptoProviders"
+```
+
+## Testing with Custom ReferenceType
+
+Tests can be built and run with custom "Reference Type" property that enables different styles of testing:
+
+- "Project" => Build and run tests with Microsoft.Data.SqlClient as Project Reference
+- "Package" => Build and run tests with Microsoft.Data.SqlClient as Package Reference with configured "TestMicrosoftDataSqlClientVersion" in "Versions.props" file.
+- "NetStandard" => Build and run tests with Microsoft.Data.SqlClient as Project Reference via .NET Standard Library
+- "NetStandardPackage" => Build and run tests with Microsoft.Data.SqlClient as Package Reference via .NET Standard Library
+
+> ************** IMPORTANT NOTE BEFORE PROCEEDING WITH "PACKAGE" AND "NETSTANDARDPACKAGE" REFERENCE TYPES ***************
+> CREATE A NUGET PACKAGE WITH BELOW COMMAND AND ADD TO LOCAL FOLDER + UPDATE NUGET CONFIG FILE TO READ FROM THAT LOCATION 
+> ```
+> > msbuild /p:configuration=Release
+> ```
+
+### Building Tests:
+
+For .NET Core, all 4 reference types are supported:
+
+```bash
+> msbuild /t:BuildTestsNetCore /p:ReferenceType=Project
+# Default setting uses Project Reference.
+
+> msbuild /t:BuildTestsNetCore /p:ReferenceType=Package
+
+> msbuild /t:BuildTestsNetCore /p:ReferenceType=NetStandard
+
+> msbuild /t:BuildTestsNetCore /p:ReferenceType=NetStandardPackage
+```
+
+For .NET Framework, below reference types are supported:
+
+```bash
+> msbuild /t:BuildTestsNetCore /p:ReferenceType=Project
+# Default setting uses Project Reference.
+
+> msbuild /t:BuildTestsNetCore /p:ReferenceType=Package
+```
+
+### Running Tests:
+
+Provide property to `dotnet test` commands for testing desired reference type.
+```
+dotnet test /p:ReferenceType=Project ...
 ```
 
 ## Testing with Custom TargetFramework
@@ -213,5 +259,4 @@ There may be times where connection cannot be made to SQL Server, we found below
     <OSGroup>Unix</OSGroup>
     <TargetsWindows>false</TargetsWindows>
     <TargetsUnix>true</TargetsUnix>
-  ```
   ```

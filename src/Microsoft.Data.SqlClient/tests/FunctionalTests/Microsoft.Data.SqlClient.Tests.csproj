@@ -39,6 +39,7 @@
     <Compile Include="BaseProviderAsyncTest\MockDataReader.cs" />
     <Compile Include="SqlCredentialTest.cs" />
     <Compile Include="SqlDataRecordTest.cs" />
+    <Compile Include="SqlExceptionTest.cs" />
     <Compile Include="SqlParameterTest.cs" />
     <Compile Include="SqlClientFactoryTest.cs" />
     <Compile Include="SqlErrorCollectionTest.cs" />
@@ -91,6 +92,6 @@
     <PackageReference Condition="$(ReferenceType)=='Package'" Include="Microsoft.Data.SqlClient" Version="$(TestMicrosoftDataSqlClientVersion)" />
   </ItemGroup>
   <ItemGroup>
-    <None Condition="'$(TargetGroup)'=='netfx' AND !$(ReferenceType.Contains('Package'))" Include="$(BinFolder)$(Configuration).AnyCPU\Microsoft.Data.SqlClient\netfx\**\SNI.dll" CopyToOutputDirectory="PreserveNewest" />
+    <None Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(BinFolder)$(Configuration).AnyCPU\Microsoft.Data.SqlClient\netfx\**\*SNI*.dll" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
