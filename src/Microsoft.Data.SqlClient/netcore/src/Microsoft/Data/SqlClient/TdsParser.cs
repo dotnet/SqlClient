@@ -10,6 +10,7 @@ using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Reflection;
 using System.Security.Authentication;
 using System.Text;
 using System.Threading;
@@ -20,6 +21,7 @@ using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.DataClassification;
 using Microsoft.Data.SqlClient.Server;
 using Microsoft.Data.SqlTypes;
+using Newtonsoft.Json.Serialization;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -40,6 +42,9 @@ namespace Microsoft.Data.SqlClient
     internal sealed partial class TdsParser
     {
         private static int _objectTypeCount; // EventSource counter
+        private readonly SqlClientLogger _logger = new SqlClientLogger();
+        private readonly string _typeName;
+
         internal readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
         internal int ObjectID => _objectID;
 
@@ -175,6 +180,7 @@ namespace Microsoft.Data.SqlClient
 
             _physicalStateObj = TdsParserStateObjectFactory.Singleton.CreateTdsParserStateObject(this);
             DataClassificationVersion = TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED;
+            _typeName = GetType().Name;
         }
 
         internal SqlInternalConnectionTds Connection
@@ -905,17 +911,10 @@ namespace Microsoft.Data.SqlClient
                             WaitForSSLHandShakeToComplete(ref error, ref protocolVersion);
 
                             SslProtocols protocol = (SslProtocols)protocolVersion;
-                            string warning = protocol.GetProtocolWarning();
-                            if(!string.IsNullOrEmpty(warning))
+                            string warningMessage = protocol.GetProtocolWarning();
+                            if(!string.IsNullOrEmpty(warningMessage))
                             {
-                                ConsoleColor foreground = Console.ForegroundColor;
-                                ConsoleColor background = Console.BackgroundColor;
-                                Console.ForegroundColor = ConsoleColor.Yellow;
-                                Console.BackgroundColor = ConsoleColor.Black;
-                                Console.Out.WriteLine(warning);
-                                SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.ConsumePreLoginHandshake|WAR> {0}, {1}", ObjectID, warning);
-                                Console.ForegroundColor = foreground;
-                                Console.BackgroundColor = background;
+                                _logger.LogWarning(_typeName, MethodBase.GetCurrentMethod().Name, warningMessage);
                             }
 
                             // create a new packet encryption changes the internal packet size

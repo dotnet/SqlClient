@@ -9,6 +9,7 @@ using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
@@ -30,6 +31,9 @@ namespace Microsoft.Data.SqlClient
     sealed internal class TdsParser
     {
         private static int _objectTypeCount; // EventSource Counter
+        private readonly SqlClientLogger _logger = new SqlClientLogger();
+        private readonly string _typeName;
+
         internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
 
         static Task completedTask;
@@ -300,6 +304,7 @@ namespace Microsoft.Data.SqlClient
             _fMARS = MARS; // may change during Connect to pre Yukon servers
             _physicalStateObj = new TdsParserStateObject(this);
             DataClassificationVersion = TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED;
+            _typeName = GetType().Name;
         }
 
         internal SqlInternalConnectionTds Connection
@@ -1207,17 +1212,10 @@ namespace Microsoft.Data.SqlClient
                                 ThrowExceptionAndWarning(_physicalStateObj);
                             }
 
-                            string warning = SslProtocolsHelper.GetProtocolWarning(protocolVersion);
-                            if (!string.IsNullOrEmpty(warning))
+                            string warningMessage = SslProtocolsHelper.GetProtocolWarning(protocolVersion);
+                            if (!string.IsNullOrEmpty(warningMessage))
                             {
-                                ConsoleColor foreground = Console.ForegroundColor;
-                                ConsoleColor background = Console.BackgroundColor;
-                                Console.ForegroundColor = ConsoleColor.Yellow;
-                                Console.BackgroundColor = ConsoleColor.Black;
-                                Console.Out.WriteLine(warning);
-                                SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.ConsumePreLoginHandshake|WAR> {0}, {1}", ObjectID, warning);
-                                Console.ForegroundColor = foreground;
-                                Console.BackgroundColor = background;
+                                _logger.LogWarning(_typeName, MethodBase.GetCurrentMethod().Name, warningMessage);
                             }
 
                             // Validate server certificate
