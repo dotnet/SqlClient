@@ -95,6 +95,7 @@ Transact-SQL `INSERT … SELECT` statement to copy the data.
 [!code-csharp[SqlBulkCopy.ColumnOrderHintColumn#1](~/../sqlclient/doc/samples/SqlBulkCopy_ColumnOrderHintColumn.cs#1)]
 ]]></format>
 			</remarks>
+		    <exception cref="T:System.ArgumentException">The value is null or empty.</exception>
 		</Column>
 
 		<SortOrder>
@@ -124,6 +125,7 @@ Transact-SQL `INSERT … SELECT` statement to copy the data.
 [!code-csharp[SqlBulkCopy.ColumnOrderHintSortOrder#1](~/../sqlclient/doc/samples/SqlBulkCopy_ColumnOrderHintSortOrder.cs#1)]
 ]]></format>
 			</remarks>
+			<exception cref="T:System.ArgumentException">The sort order cannot be unspecified for a column order hint.</exception>
 		</SortOrder>
 	</members>
 </docs>

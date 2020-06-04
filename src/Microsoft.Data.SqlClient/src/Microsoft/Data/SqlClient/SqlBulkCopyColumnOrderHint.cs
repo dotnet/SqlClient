@@ -27,15 +27,15 @@ namespace Microsoft.Data.SqlClient
             get => _columnName ?? string.Empty;
             set
             {
+                if (string.IsNullOrEmpty(value))
+                {
+                    throw SQL.BulkLoadNullEmptyColumnName(nameof(Column));
+                }
                 // Do nothing if column name is the same
-                if (!string.IsNullOrEmpty(value) && _columnName != value)
+                if (_columnName != value)
                 {
                     OnNameChanging(value);
                     _columnName = value;
-                }
-                else if (string.IsNullOrEmpty(value))
-                {
-                    throw SQL.BulkLoadNullEmptyColumnName(nameof(Column));
                 }
             }
         }

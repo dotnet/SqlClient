@@ -60,6 +60,7 @@ it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to c
 ]]>
 </format>
             </remarks>
+			<exception cref="T:System.ArgumentException">The value is null.</exception>
         </Add>
 
         <Add name="columnStringAndsortOrderSortOrder">
@@ -142,12 +143,15 @@ Transact-SQL `INSERT … SELECT` statement to copy the data.
             <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> object to be inserted in the collection.</param>
             <summary>Insert a new <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> at the index specified.</summary>
             <remarks>The order in which column order hints can be added is arbitrary.</remarks>
+			<exception cref="T:System.ArgumentOutOfRangeException: ">The index is less than zero or greater than <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection.Count" />.</exception>
+			<exception cref="T:System.ArgumentNullException">A null column order hint cannot be added to the collection.</exception>
         </Insert>
         <Item>
             <param name="index">The zero-based index of the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> to find.</param>
             <summary>Gets the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> object at the specified index.</summary>
             <value>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> object.</value>
             <remarks>To be added.</remarks>
+			<exception cref="T:System.ArgumentOutOfRangeException: ">The index must be non-negative and less than the size of the collection.</exception>
         </Item>
         <Remove>
             <param name="columnOrderHint">
@@ -180,6 +184,7 @@ Transact-SQL `INSERT … SELECT` statement to copy the data.
 
 ]]></format>
             </remarks>
+			<exception cref="T:System.ArgumentNullException">The value is null.</exception>
         </Remove>
         <RemoveAt>
             <param name="index">The zero-based index of the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> object to be removed from the collection.</param>
@@ -211,6 +216,7 @@ Transact-SQL `INSERT … SELECT` statement to copy the data.
 
 ]]></format>
             </remarks>
+			<exception cref="T:System.ArgumentOutOfRangeException: ">The index must be non-negative and less than the size of the collection.</exception>
         </RemoveAt>
         <IsSynchronized>
             <summary>Gets a value indicating whether access to the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection"/> is synchronized (thread safe).</summary>

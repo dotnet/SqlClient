@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
         private static SqlBulkCopyColumnOrderHintCollection CreateCollection(params SqlBulkCopyColumnOrderHint[] orderHints)
         {
-            Debug.Assert(orderHints != null);
+            Assert.NotNull(orderHints);
 
             SqlBulkCopyColumnOrderHintCollection collection = CreateCollection();
 
@@ -140,10 +140,10 @@ namespace Microsoft.Data.SqlClient.Tests
 
             // The following operations should really throw ArgumentException due to the
             // mismatched types, but do not throw in the full framework.
-            string bogus = "Bogus";
-            list[0] = bogus;
-            list.Add(bogus);
-            list.Insert(0, bogus);
+            string foo = "foo";
+            list[0] = foo;
+            list.Add(foo);
+            list.Insert(0, foo);
         }
 
         [Fact]
