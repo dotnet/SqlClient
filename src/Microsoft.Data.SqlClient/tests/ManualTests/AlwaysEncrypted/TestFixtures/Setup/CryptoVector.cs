@@ -41,7 +41,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
         /// </summary>
         RsaKeyPair,
         /// <summary>
-        /// Special case of RSA test vector, which holds a PFX, password = @"P@zzw0rD!SqlvN3x+"
+        /// Special case of RSA test vector, which holds a PFX
         /// </summary>
         RsaPfx,
     }

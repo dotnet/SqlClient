@@ -24,7 +24,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
     public class DiagnosticTest
     {
-        private const string BadConnectionString = "data source = bad; initial catalog = bad; uid = bad; password = bad; connection timeout = 1;";
+        private const string BadConnectionString = "data source = bad; initial catalog = bad; integrated security = true; connection timeout = 1;";
         private static readonly string s_tcpConnStr = DataTestUtility.TCPConnectionString ?? string.Empty;
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
