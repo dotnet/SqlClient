@@ -548,6 +548,11 @@ the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> object's `Finalize` method.
 			<remarks>
 				To be added.
 			</remarks>
+			<exception cref="T:System.InvalidOperationException">
+				A 
+				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> 
+				did not specify a valid destination column name.
+			</exception>
 		</WriteToServer>
 		<WriteToServer name="IDataReaderParameter">
 			<param name="reader">
@@ -590,6 +595,11 @@ Transact-SQL `INSERT … SELECT` statement to copy the data.
 [!code-csharp[SqlBulkCopy.ConnectionString#1](~/../sqlclient/doc/samples/SqlBulkCopy_ConnectionString.cs#1)]
 ]]></format>
 			</remarks>
+			<exception cref="T:System.InvalidOperationException">
+				A 
+				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> 
+				did not specify a valid destination column name.
+			</exception>
 		</WriteToServer>
 		<WriteToServer name="DataTableParameter">
 			<param name="table">
@@ -628,6 +638,11 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
 [!code-csharp[SqlBulkCopy.DataTable#1](~/../sqlclient/doc/samples/SqlBulkCopy_DataTable.cs#1)]
 ]]></format>
 			</remarks>
+			<exception cref="T:System.InvalidOperationException">
+				A 
+				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> 
+				did not specify a valid destination column name.
+			</exception>
 			<related type="Article" href="https://msdn.microsoft.com/library/83a7a0d2-8018-4354-97b9-0b1d99f8342b">
 				Performing Bulk Copy Operations
 			</related>
@@ -682,6 +697,11 @@ The <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer%2A> method is calle
 [!code-csharp[SqlBulkCopy.DataRowState#1](~/../sqlclient/doc/samples/SqlBulkCopy_DataRowState.cs#1)]
 ]]></format>
 			</remarks>
+			<exception cref="T:System.InvalidOperationException">
+				A 
+				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> 
+				did not specify a valid destination column name.
+			</exception>
 		</WriteToServer>
 		<WriteToServer name="DataRowParameter">
 			<param name="rows">An array of <see cref="T:System.Data.DataRow" /> objects that will be copied to the destination table.</param>
@@ -706,6 +726,11 @@ In this example, a <xref:System.Data.DataTable> is created at run time. A single
 
 ]]></format>
 			</remarks>
+			<exception cref="T:System.InvalidOperationException">
+				A 
+				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> 
+				did not specify a valid destination column name.
+			</exception>
 		</WriteToServer>
 		<WriteToServerAsync name="DataRowParameter">
 			<param name="rows">
@@ -758,6 +783,10 @@ For more information about asynchronous programming in the .NET Framework Data P
 				object is closed before method execution.
 				<see langword="Context Connection=true" />
 				is specified in the connection string.
+
+				A 
+				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> 
+				did not specify a valid destination column name.
 			</exception>
 			<exception cref="T:Microsoft.Data.SqlClient.SqlException">
 				Returned in the task object, any error returned by SQL Server that occurred while opening the connection.
@@ -815,6 +844,9 @@ For more information about asynchronous programming in the .NET Framework Data P
 				object is closed before method execution.
 				<see langword="Context Connection=true" />
 				is specified in the connection string.
+				A 
+				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> 
+				did not specify a valid destination column name.
 			</exception>
 			<exception cref="T:Microsoft.Data.SqlClient.SqlException">
 				Returned in the task object, any error returned by SQL Server that occurred while opening the connection.
@@ -875,6 +907,9 @@ For more information about asynchronous programming in the .NET Framework Data P
 				returned.
 				<see langword="Context Connection=true" />
 				is specified in the connection string.
+				A 
+				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> 
+				did not specify a valid destination column name.
 			</exception>
 			<exception cref="T:Microsoft.Data.SqlClient.SqlException">
 				Returned in the task object, any error returned by SQL Server that occurred while opening the connection.
@@ -978,6 +1013,10 @@ For more information about asynchronous programming in the .NET Framework Data P
 				returned.
 				<see langword="Context Connection=true" />
 				is specified in the connection string.
+
+				A 
+				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> 
+				did not specify a valid destination column name.
 			</exception>
 			<exception cref="T:Microsoft.Data.SqlClient.SqlException">
 				Returned in the task object, any error returned by SQL Server that occurred while opening the connection.
@@ -1055,6 +1094,10 @@ For more information about asynchronous programming in the .NET Framework Data P
 				returned.
 				<see langword="Context Connection=true" />
 				is specified in the connection string.
+
+				A 
+				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> 
+				did not specify a valid destination column name.
 			</exception>
 			<exception cref="T:Microsoft.Data.SqlClient.SqlException">
 				Returned in the task object, any error returned by SQL Server that occurred while opening the connection.
@@ -1112,8 +1155,12 @@ For more information about asynchronous programming in the .NET Framework Data P
 				object is closed before method execution.
 				<see langword="Context Connection=true" />
 				is specified in the connection string.
-			</exception>
-			<exception cref="T:Microsoft.Data.SqlClient.SqlException">
+
+				A 
+				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> 
+				did not specify a valid destination column name.
+			</exception>l
+			<exception cref="T:Microsoft.Data.SqlCient.SqlException">
 				Returned in the task object, any error returned by SQL Server that occurred while opening the connection.
 			</exception>
 		</WriteToServerAsync>
@@ -1178,6 +1225,10 @@ For more information about asynchronous programming in the .NET Framework Data P
 				object is closed before method execution.
 				<see langword="Context Connection=true" />
 				is specified in the connection string.
+
+				A 
+				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> 
+				did not specify a valid destination column name.
 			</exception>
 			<exception cref="T:Microsoft.Data.SqlClient.SqlException">
 				Returned in the task object, any error returned by SQL Server that occurred while opening the connection.
@@ -1237,6 +1288,10 @@ For more information about asynchronous programming in the .NET Framework Data P
 				object is closed before method execution.
 				<see langword="Context Connection=true" />
 				is specified in the connection string.
+
+				A 
+				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> 
+				did not specify a valid destination column name.
 			</exception>
 			<exception cref="T:Microsoft.Data.SqlClient.SqlException">
 				Returned in the task object, any error returned by SQL Server that occurred while opening the connection.
@@ -1309,6 +1364,10 @@ For more information about asynchronous programming in the .NET Framework Data P
 				object is closed before method execution.
 				<see langword="Context Connection=true" />
 				is specified in the connection string.
+
+				A 
+				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> 
+				did not specify a valid destination column name.
 			</exception>
 			<exception cref="T:Microsoft.Data.SqlClient.SqlException">
 				Returned in the task object, any error returned by SQL Server that occurred while opening the connection.
