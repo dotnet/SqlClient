@@ -8,12 +8,12 @@ namespace Microsoft.Data.SqlClient
     {
         static SqlAuthenticationProviderManager()
         {
-            var activeDirectoryAuthNativeProvider = new ActiveDirectoryAuthenticationProvider();
+            var activeDirectoryAuthProvider = new ActiveDirectoryAuthenticationProvider();
             Instance = new SqlAuthenticationProviderManager();
-            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, activeDirectoryAuthNativeProvider);
-            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryIntegrated, activeDirectoryAuthNativeProvider);
-            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive, activeDirectoryAuthNativeProvider);
-            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal, activeDirectoryAuthNativeProvider);
+            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, activeDirectoryAuthProvider);
+            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryIntegrated, activeDirectoryAuthProvider);
+            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive, activeDirectoryAuthProvider);
+            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal, activeDirectoryAuthProvider);
         }
     }
 }
