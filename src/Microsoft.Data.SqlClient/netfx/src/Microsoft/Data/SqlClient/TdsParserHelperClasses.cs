@@ -1424,7 +1424,7 @@ namespace Microsoft.Data.SqlClient
 
     internal static class SslProtocolsHelper
     {
-        // ptotocol versions from native sni
+        // protocol versions from native sni
         [Flags]
         private enum NativeProtocols
         {

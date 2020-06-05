@@ -1429,7 +1429,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Security Warning: The &apos;{0}&apos; is an unsecured protocol and is provided for backward compatibility only. The recommended protocol is TLS 1.2 and later..
+        ///   Looks up a localized string similar to Security Warning: The negotiated &apos;{0}&apos; is an insecured protocol and is supported for backward compatibility only. The recommended protocol is TLS 1.2 and later..
         /// </summary>
         internal static string SEC_ProtocolWarning {
             get {

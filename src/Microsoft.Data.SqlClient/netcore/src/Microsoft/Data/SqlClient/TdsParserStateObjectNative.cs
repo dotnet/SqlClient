@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClient
 {
     internal class TdsParserStateObjectNative : TdsParserStateObject
     {
-        // ptotocol versions from native sni
+        // protocol versions from native sni
         [Flags]
         private enum NativeProtocols
         {
