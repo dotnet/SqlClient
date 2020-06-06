@@ -2599,15 +2599,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Interactive&apos; without &apos;User ID&apos; or &apos;UID&apos; connection string keywords..
-        /// </summary>
-        internal static string SQL_InteractiveWithoutUserID {
-            get {
-                return ResourceManager.GetString("SQL_InteractiveWithoutUserID", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Interactive&apos; with &apos;Password&apos; or &apos;PWD&apos; connection string keywords..
         /// </summary>
         internal static string SQL_InteractiveWithPassword {

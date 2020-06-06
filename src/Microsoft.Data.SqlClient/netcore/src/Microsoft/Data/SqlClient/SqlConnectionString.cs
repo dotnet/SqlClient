@@ -458,11 +458,6 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.IntegratedWithUserIDAndPassword();
             }
 
-            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive && !HasUserIdKeyword)
-            {
-                throw SQL.InteractiveWithoutUserID();
-            }
-
             if (Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive && HasPasswordKeyword)
             {
                 throw SQL.InteractiveWithPassword();

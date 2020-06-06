@@ -408,9 +408,6 @@
   <data name="SQL_InteractiveWithPassword" xml:space="preserve">
     <value>Cannot use 'Authentication=Active Directory Interactive' with 'Password' or 'PWD' connection string keywords.</value>
   </data>
-  <data name="SQL_InteractiveWithoutUserID" xml:space="preserve">
-    <value>Cannot use 'Authentication=Active Directory Interactive' without 'User ID' or 'UID' connection string keywords.</value>
-  </data>
   <data name="SQL_EncryptionNotSupportedByClient" xml:space="preserve">
     <value>The instance of SQL Server you attempted to connect to requires encryption but this machine does not support it.</value>
   </data>

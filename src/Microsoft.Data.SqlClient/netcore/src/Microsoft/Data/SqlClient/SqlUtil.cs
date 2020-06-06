@@ -273,10 +273,6 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Argument(System.SRHelper.GetString(SR.SQL_IntegratedWithUserIDAndPassword));
         }
-        internal static Exception InteractiveWithoutUserID()
-        {
-            return ADP.Argument(System.SRHelper.GetString(SR.SQL_InteractiveWithoutUserID));
-        }
         internal static Exception InteractiveWithPassword()
         {
             return ADP.Argument(System.SRHelper.GetString(SR.SQL_InteractiveWithPassword));
