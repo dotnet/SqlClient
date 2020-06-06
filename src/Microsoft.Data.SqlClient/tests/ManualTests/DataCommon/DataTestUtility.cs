@@ -41,6 +41,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly bool SupportsFileStream = false;
         public static readonly bool UseManagedSNIOnWindows = false;
 
+        public static readonly string DNSCachingConnString = null;
+        public static readonly string DNSCachingServerCR = null;  // this is for the control ring
+        public static readonly string DNSCachingServerTR = null;  // this is for the tenant ring
+        public static readonly bool IsDNSCachingSupportedCR = false;  // this is for the control ring
+        public static readonly bool IsDNSCachingSupportedTR = false;  // this is for the tenant ring
+
         public const string UdtTestDbName = "UdtTestDb";
         public const string AKVKeyName = "TestSqlClientAzureKeyVaultProvider";
         private const string ManagedNetworkingAppContextSwitch = "Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows";
@@ -71,6 +77,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             public bool SupportsLocalDb = false;
             public bool SupportsFileStream = false;
             public bool UseManagedSNIOnWindows = false;
+            public string DNSCachingConnString = null;
+            public string DNSCachingServerCR = null;  // this is for the control ring
+            public string DNSCachingServerTR = null;  // this is for the tenant ring
+            public bool IsDNSCachingSupportedCR = false;  // this is for the control ring
+            public bool IsDNSCachingSupportedTR = false;  // this is for the tenant ring
         }
 
         static DataTestUtility()
@@ -93,6 +104,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 EnclaveEnabled = c.EnclaveEnabled;
                 TracingEnabled = c.TracingEnabled;
                 UseManagedSNIOnWindows = c.UseManagedSNIOnWindows;
+
+                DNSCachingConnString = c.DNSCachingConnString;
+                DNSCachingServerCR = c.DNSCachingServerCR;
+                DNSCachingServerTR = c.DNSCachingServerTR;
+                IsDNSCachingSupportedCR = c.IsDNSCachingSupportedCR;
+                IsDNSCachingSupportedTR = c.IsDNSCachingSupportedTR;
 
                 if (TracingEnabled)
                 {
@@ -258,6 +275,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             return true;
         }
+
+        public static bool IsDNSCachingSetup() => !string.IsNullOrEmpty(DNSCachingConnString);
+
         public static bool IsUdtTestDatabasePresent() => IsDatabasePresent(UdtTestDbName);
 
         public static bool AreConnStringsSetup()
