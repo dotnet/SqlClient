@@ -27,6 +27,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string TCPConnectionStringAASSGX = null;
         public static readonly string AADAuthorityURL = null;
         public static readonly string AADPasswordConnectionString = null;
+        public static readonly string AADServicePrincipalId = null;
+        public static readonly string AADServicePrincipalSecret = null;
         public static readonly string AADAccessToken = null;
         public static readonly string AKVBaseUrl = null;
         public static readonly string AKVUrl = null;
@@ -62,6 +64,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             public string TCPConnectionStringAASSGX = null;
             public string AADAuthorityURL = null;
             public string AADPasswordConnectionString = null;
+            public string AADServicePrincipalId = null;
+            public string AADServicePrincipalSecret = null;
             public string AzureKeyVaultURL = null;
             public string AzureKeyVaultClientId = null;
             public string AzureKeyVaultClientSecret = null;
@@ -87,6 +91,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 TCPConnectionStringAASSGX = c.TCPConnectionStringAASSGX;
                 AADAuthorityURL = c.AADAuthorityURL;
                 AADPasswordConnectionString = c.AADPasswordConnectionString;
+                AADServicePrincipalId = c.AADServicePrincipalId;
+                AADServicePrincipalSecret = c.AADServicePrincipalSecret;
                 SupportsLocalDb = c.SupportsLocalDb;
                 SupportsIntegratedSecurity = c.SupportsIntegratedSecurity;
                 SupportsFileStream = c.SupportsFileStream;
@@ -273,6 +279,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool IsAADPasswordConnStrSetup()
         {
             return !string.IsNullOrEmpty(AADPasswordConnectionString);
+        }
+
+        public static bool IsAADServicePrincipalSetup()
+        {
+            return !string.IsNullOrEmpty(AADServicePrincipalId) && !string.IsNullOrEmpty(AADServicePrincipalSecret);
         }
 
         public static bool IsAADAuthorityURLSetup()

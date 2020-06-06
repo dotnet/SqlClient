@@ -8,6 +8,8 @@
     "TracingEnabled": false,
     "AADAuthorityURL": "",
     "AADPasswordConnectionString": "",
+    "AADServicePrincipalId": "",
+    "AADServicePrincipalSecret": "",
     "AzureKeyVaultURL": "",
     "AzureKeyVaultClientId": "",
     "AzureKeyVaultClientSecret": "",
