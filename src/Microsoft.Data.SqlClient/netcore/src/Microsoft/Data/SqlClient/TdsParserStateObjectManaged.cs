@@ -49,9 +49,9 @@ namespace Microsoft.Data.SqlClient.SNI
         protected override uint SNIPacketGetData(PacketHandle packet, byte[] _inBuff, ref uint dataSize)
             => SNIProxy.Singleton.PacketGetData(packet.ManagedPacket, _inBuff, ref dataSize);
 
-        internal override void CreatePhysicalSNIHandle(string serverName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[] spnBuffer, bool flushCache, bool async, bool parallel, bool isIntegratedSecurity)
+        internal override void CreatePhysicalSNIHandle(string serverName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[] spnBuffer, bool flushCache, bool async, bool parallel, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo, bool isIntegratedSecurity)
         {
-            _sessionHandle = SNIProxy.Singleton.CreateConnectionHandle(this, serverName, ignoreSniOpenTimeout, timerExpire, out instanceName, ref spnBuffer, flushCache, async, parallel, isIntegratedSecurity);
+            _sessionHandle = SNIProxy.Singleton.CreateConnectionHandle(this, serverName, ignoreSniOpenTimeout, timerExpire, out instanceName, ref spnBuffer, flushCache, async, parallel, isIntegratedSecurity, cachedFQDN, ref pendingDNSInfo);
             if (_sessionHandle == null)
             {
                 _parser.ProcessSNIError(this);
@@ -61,6 +61,12 @@ namespace Microsoft.Data.SqlClient.SNI
                 // Create call backs and allocate to the session handle
                 _sessionHandle.SetAsyncCallbacks(ReadAsyncCallback, WriteAsyncCallback);
             }
+        }
+
+        // The assignment will be happened right after we resolve DNS in managed SNI layer
+        internal override void AssignPendingDNSInfo(string userProtocol, string DNSCacheKey, ref SQLDNSInfo pendingDNSInfo)
+        {
+            // No-op
         }
 
         internal void ReadAsyncCallback(SNIPacket packet, uint error)

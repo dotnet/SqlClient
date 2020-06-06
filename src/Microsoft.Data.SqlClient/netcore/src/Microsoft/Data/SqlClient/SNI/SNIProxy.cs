@@ -263,8 +263,10 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="async">Asynchronous connection</param>
         /// <param name="parallel">Attempt parallel connects</param>
         /// <param name="isIntegratedSecurity"></param>
+        /// <param name="cachedFQDN">Used for DNS Cache</param>
+        /// <param name="pendingDNSInfo">Used for DNS Cache</param>
         /// <returns>SNI handle</returns>
-        public SNIHandle CreateConnectionHandle(object callbackObject, string fullServerName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[] spnBuffer, bool flushCache, bool async, bool parallel, bool isIntegratedSecurity)
+        public SNIHandle CreateConnectionHandle(object callbackObject, string fullServerName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[] spnBuffer, bool flushCache, bool async, bool parallel, bool isIntegratedSecurity, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
         {
             instanceName = new byte[1];
 
@@ -291,7 +293,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 case DataSource.Protocol.Admin:
                 case DataSource.Protocol.None: // default to using tcp if no protocol is provided
                 case DataSource.Protocol.TCP:
-                    sniHandle = CreateTcpHandle(details, timerExpire, callbackObject, parallel);
+                    sniHandle = CreateTcpHandle(details, timerExpire, callbackObject, parallel, cachedFQDN, ref pendingDNSInfo);
                     break;
                 case DataSource.Protocol.NP:
                     sniHandle = CreateNpHandle(details, timerExpire, callbackObject, parallel);
@@ -373,8 +375,10 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="timerExpire">Timer expiration</param>
         /// <param name="callbackObject">Asynchronous I/O callback object</param>
         /// <param name="parallel">Should MultiSubnetFailover be used</param>
+        /// <param name="cachedFQDN">Key for DNS Cache</param>
+        /// <param name="pendingDNSInfo">Used for DNS Cache</param>
         /// <returns>SNITCPHandle</returns>
-        private SNITCPHandle CreateTcpHandle(DataSource details, long timerExpire, object callbackObject, bool parallel)
+        private SNITCPHandle CreateTcpHandle(DataSource details, long timerExpire, object callbackObject, bool parallel, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
         {
             // TCP Format: 
             // tcp:<host name>\<instance name>
@@ -412,7 +416,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 port = isAdminConnection ? DefaultSqlServerDacPort : DefaultSqlServerPort;
             }
 
-            return new SNITCPHandle(hostName, port, timerExpire, callbackObject, parallel);
+            return new SNITCPHandle(hostName, port, timerExpire, callbackObject, parallel, cachedFQDN, ref pendingDNSInfo);
         }
 
 

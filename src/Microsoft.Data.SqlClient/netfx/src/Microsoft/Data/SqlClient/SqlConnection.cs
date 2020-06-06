@@ -711,6 +711,54 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// 
+        /// for internal test only
+        /// 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        internal string SQLDNSCachingSupportedState
+        {
+            get
+            {
+                SqlInternalConnectionTds innerConnection = (InnerConnection as SqlInternalConnectionTds);
+                string result;
+
+                if (null != innerConnection)
+                {
+                    result = innerConnection.IsSQLDNSCachingSupported ? "true": "false";
+                }
+                else
+                {
+                    result = "innerConnection is null!";
+                }
+
+                return result;
+            }
+        }
+
+        /// 
+        /// for internal test only
+        /// 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        internal string SQLDNSCachingSupportedStateBeforeRedirect
+        {
+            get
+            {
+                SqlInternalConnectionTds innerConnection = (InnerConnection as SqlInternalConnectionTds);
+                string result;
+
+                if (null != innerConnection)
+                {
+                    result = innerConnection.IsDNSCachingBeforeRedirectSupported ? "true": "false";
+                }
+                else
+                {
+                    result = "innerConnection is null!";
+                }
+
+                return result;
+            }
+        }
+
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/DataSource/*' />
         [
         Browsable(true),
