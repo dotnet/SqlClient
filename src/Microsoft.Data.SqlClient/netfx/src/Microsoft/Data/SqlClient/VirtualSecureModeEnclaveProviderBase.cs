@@ -237,7 +237,9 @@ namespace Microsoft.Data.SqlClient
                 chain.ChainPolicy.ExtraStore.Add(cert);
             }
 
+//#pragma warning disable IA5352 // Certificates are not published to a Certificate Revocation List when revoked so this check cannot be made
             chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+//#pragma warning restore IA5352
 
             if (!chain.Build(healthReportCert))
             {
