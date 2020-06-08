@@ -1,0 +1,3 @@
+- task: CmdLine@2
+  inputs:
+    script: 'SET'
