@@ -627,7 +627,6 @@ namespace Microsoft.Data.SqlClient
                 SqlClientEventSource.Log.NotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP> AppDomain.CurrentDomain.FriendlyName: {0}", AppDomain.CurrentDomain.FriendlyName);
 #endif
                 BinaryFormatter formatter = new BinaryFormatter();
-                formatter.Binder = new SqlDependencyProcessDispatcherSerializationBinder();
                 MemoryStream stream = new MemoryStream(nativeStorage);
                 _processDispatcher = GetDeserializedObject(formatter, stream); // Deserialize and set for appdomain.
                 SqlClientEventSource.Log.NotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP> processDispatcher obtained, ID: {0}", _processDispatcher.ObjectID);
@@ -653,6 +652,7 @@ namespace Microsoft.Data.SqlClient
         [SecurityPermission(SecurityAction.Assert, Flags = SecurityPermissionFlag.SerializationFormatter)]
         private static SqlDependencyProcessDispatcher GetDeserializedObject(BinaryFormatter formatter, MemoryStream stream)
         {
+            formatter.Binder = new SqlDependencyProcessDispatcherSerializationBinder();
             object result = formatter.Deserialize(stream);
             Debug.Assert(result.GetType() == typeof(SqlDependencyProcessDispatcher), "Unexpected type stored in native!");
             return (SqlDependencyProcessDispatcher)result;
