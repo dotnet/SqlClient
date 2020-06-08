@@ -9856,11 +9856,29 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot set the Credential property if &apos;Authentication=Active Directory Interactive&apos; has been specified in the connection string..
+        /// </summary>
+        internal static string SQL_SettingCredentialWithInteractive {
+            get {
+                return ResourceManager.GetString("SQL_SettingCredentialWithInteractive", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Integrated&apos;, if the Credential property has been set..
         /// </summary>
         internal static string SQL_SettingIntegratedWithCredential {
             get {
                 return ResourceManager.GetString("SQL_SettingIntegratedWithCredential", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Interactive&apos;, if the Credential property has been set..
+        /// </summary>
+        internal static string SQL_SettingInteractiveWithCredential {
+            get {
+                return ResourceManager.GetString("SQL_SettingInteractiveWithCredential", resourceCulture);
             }
         }
         

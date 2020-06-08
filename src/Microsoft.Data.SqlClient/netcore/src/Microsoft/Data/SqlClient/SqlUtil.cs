@@ -281,9 +281,25 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_SettingIntegratedWithCredential));
         }
+        static internal Exception SettingInteractiveWithCredential()
+        {
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_SettingInteractiveWithCredential));
+        }
         static internal Exception SettingCredentialWithIntegratedArgument()
         {
             return ADP.Argument(System.SRHelper.GetString(SR.SQL_SettingCredentialWithIntegrated));
+        }
+        static internal Exception SettingCredentialWithInteractiveArgument()
+        {
+            return ADP.Argument(System.SRHelper.GetString(SR.SQL_SettingCredentialWithInteractive));
+        }
+        static internal Exception SettingCredentialWithIntegratedInvalid()
+        {
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_SettingCredentialWithIntegrated));
+        }
+        static internal Exception SettingCredentialWithInteractiveInvalid()
+        {
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_SettingCredentialWithInteractive));
         }
         internal static Exception NullEmptyTransactionName()
         {

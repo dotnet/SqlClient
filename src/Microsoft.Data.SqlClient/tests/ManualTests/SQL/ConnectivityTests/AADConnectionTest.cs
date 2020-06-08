@@ -271,7 +271,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             string expectedMessage = "cannot determine the username";
 
-            Assert.Contains(e.InnerException.InnerException.InnerException.Message, expectedMessage);
+            Assert.Contains(expectedMessage, e.InnerException.InnerException.InnerException.Message);
         }
 
         [ConditionalFact(nameof(IsAADConnStringsSetup))]

@@ -2195,12 +2195,7 @@ namespace Microsoft.Data.SqlClient
                     switch (ConnectionOptions.Authentication)
                     {
                         case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
-                            if (_credential != null && !string.IsNullOrEmpty(_credential.UserId))
-                            {
-                                username = _credential.UserId;
-                                authParamsBuilder.WithUserId(username);
-                            }
-                            else if (!string.IsNullOrEmpty(ConnectionOptions.UserID))
+                            if (!string.IsNullOrEmpty(ConnectionOptions.UserID))
                             {
                                 username = ConnectionOptions.UserID;
                                 authParamsBuilder.WithUserId(username);

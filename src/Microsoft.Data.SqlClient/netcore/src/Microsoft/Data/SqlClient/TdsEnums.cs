@@ -246,6 +246,7 @@ namespace Microsoft.Data.SqlClient
         public const byte MSALWORKFLOW_ACTIVEDIRECTORYPASSWORD = 0x01;
         public const byte MSALWORKFLOW_ACTIVEDIRECTORYINTEGRATED = 0x02;
         public const byte MSALWORKFLOW_ACTIVEDIRECTORYINTERACTIVE = 0x03;
+        public const byte MSALWORKFLOW_ACTIVEDIRECTORYSERVICEPRINCIPAL = 0x04;
 
         public enum ActiveDirectoryWorkflow : byte
         {

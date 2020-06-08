@@ -335,13 +335,25 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SettingIntegratedWithCredential));
         }
+        static internal Exception SettingInteractiveWithCredential()
+        {
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SettingInteractiveWithCredential));
+        }
         static internal Exception SettingCredentialWithIntegratedArgument()
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_SettingCredentialWithIntegrated));
         }
+        static internal Exception SettingCredentialWithInteractiveArgument()
+        {
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_SettingCredentialWithInteractive));
+        }
         static internal Exception SettingCredentialWithIntegratedInvalid()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SettingCredentialWithIntegrated));
+        }
+        static internal Exception SettingCredentialWithInteractiveInvalid()
+        {
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SettingCredentialWithInteractive));
         }
         static internal Exception InvalidSQLServerVersionUnknown()
         {
