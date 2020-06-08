@@ -1968,6 +1968,17 @@ namespace Microsoft.Data.SqlClient
             Statistics.UpdateStatistics();
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RetrieveInternalInfo/*' />
+        public IDictionary<string, object> RetrieveInternalInfo()
+        {
+            IDictionary<string, object> internalDictionary = new Dictionary<string, object>();
+
+            internalDictionary.Add("SQLDNSCachingSupportedState", SQLDNSCachingSupportedState);
+            internalDictionary.Add("SQLDNSCachingSupportedStateBeforeRedirect", SQLDNSCachingSupportedStateBeforeRedirect);
+
+            return internalDictionary;
+        }
+
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/System.ICloneable.Clone/*' />
         object ICloneable.Clone() => new SqlConnection(this);
 

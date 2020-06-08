@@ -29,13 +29,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 connection.Open();
 
-                string isSupportedStateTR = (string)typeof(SqlConnection).GetProperty("SQLDNSCachingSupportedState", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(connection);
-                string isSupportedStateCR = (string)typeof(SqlConnection).GetProperty("SQLDNSCachingSupportedStateBeforeRedirect", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(connection);
+                IDictionary<string, object> dictionary = connection.RetrieveInternalInfo();
+                bool ret = dictionary.TryGetValue("SQLDNSCachingSupportedState", out object val);
+                ret = dictionary.TryGetValue("SQLDNSCachingSupportedStateBeforeRedirect", out object valBeforeRedirect);
+                string isSupportedStateTR = (string)val;
+                string isSupportedStateCR = (string)valBeforeRedirect;
                 Assert.Equal(expectedDNSCachingSupportedCR, isSupportedStateCR);
                 Assert.Equal(expectedDNSCachingSupportedTR, isSupportedStateTR);
             }
         }
-
         
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsDNSCachingSetup))]
         public void DNSCachingGetDNSInfo()
