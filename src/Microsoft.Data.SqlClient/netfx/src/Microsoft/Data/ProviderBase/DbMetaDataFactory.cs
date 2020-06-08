@@ -549,7 +549,7 @@ namespace Microsoft.Data.ProviderBase
         {
             _metaDataCollectionsDataSet = new DataSet();
             _metaDataCollectionsDataSet.Locale = System.Globalization.CultureInfo.InvariantCulture;
-            _metaDataCollectionsDataSet.ReadXml(XmlStream, XmlReadMode.Auto);
+            _metaDataCollectionsDataSet.ReadXml(XmlStream, XmlReadMode.ReadSchema);
         }
 
         virtual protected DataTable PrepareCollection(String collectionName, String[] restrictions, DbConnection connection)

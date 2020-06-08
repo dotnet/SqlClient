@@ -626,7 +626,8 @@ namespace Microsoft.Data.SqlClient
 #if DEBUG       // Possibly expensive, limit to debug.
                 SqlClientEventSource.Log.NotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP> AppDomain.CurrentDomain.FriendlyName: {0}", AppDomain.CurrentDomain.FriendlyName);
 #endif
-                BinaryFormatter formatter = new BinaryFormatter() { Binder = new SqlDependencyProcessDispatcherSerializationBinder() };
+                BinaryFormatter formatter = new BinaryFormatter();
+                formatter.Binder = new SqlDependencyProcessDispatcherSerializationBinder();
                 MemoryStream stream = new MemoryStream(nativeStorage);
                 _processDispatcher = GetDeserializedObject(formatter, stream); // Deserialize and set for appdomain.
                 SqlClientEventSource.Log.NotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP> processDispatcher obtained, ID: {0}", _processDispatcher.ObjectID);
