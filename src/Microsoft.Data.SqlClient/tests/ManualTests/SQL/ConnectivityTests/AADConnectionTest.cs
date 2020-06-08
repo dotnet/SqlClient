@@ -246,9 +246,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Contains(expectedMessage, e.InnerException.InnerException.InnerException.Message);
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp)]
+        [PlatformSpecific(TestPlatforms.Windows)]
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
-        public static void EmptyCredInConnStrAADPasswordNetFx()
+        public static void EmptyCredInConnStrAADPassword()
         {
             // connection fails with expected error message.
             string[] removeKeys = { "User ID", "Password", "UID", "PWD" };
@@ -260,18 +260,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Contains(expectedMessage, e.InnerException.InnerException.InnerException.Message);
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
+        [PlatformSpecific(TestPlatforms.AnyUnix)]
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
-        public static void EmptyCredInConnStrAADPasswordNetCore()
+        public static void EmptyCredInConnStrAADPasswordAnyUnix()
         {
             // connection fails with expected error message.
             string[] removeKeys = { "User ID", "Password", "UID", "PWD" };
             string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, removeKeys) + "User ID=; Password=;";
             AggregateException e = Assert.Throws<AggregateException>(() => ConnectAndDisconnect(connStr));
 
-            string expectedMessage = "Could not identify the user logged into the OS";
+            string expectedMessage = "cannot determine the username";
 
-            Assert.Contains(expectedMessage, e.InnerException.InnerException.InnerException.Message);
+            Assert.Contains(e.InnerException.InnerException.InnerException.Message, expectedMessage);
         }
 
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
