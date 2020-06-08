@@ -1267,7 +1267,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                     }
 
                     // Create a new XmlTextReader on the Message node value.
-                    using (XmlTextReader xmlMessageReader = new XmlTextReader(xmlReader.Value, XmlNodeType.Element, null) { DtdProcessing = DtdProcessing.Ignore })
+                    using (XmlTextReader xmlMessageReader = new XmlTextReader(xmlReader.Value, XmlNodeType.Element, null) { DtdProcessing = DtdProcessing.Prohibit })
                     {
                         // Proceed to the Text Node.
                         if (!xmlMessageReader.Read())

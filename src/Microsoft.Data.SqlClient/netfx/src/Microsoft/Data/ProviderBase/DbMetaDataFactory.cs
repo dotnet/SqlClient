@@ -550,8 +550,7 @@ namespace Microsoft.Data.ProviderBase
         {
             _metaDataCollectionsDataSet = new DataSet();
             _metaDataCollectionsDataSet.Locale = System.Globalization.CultureInfo.InvariantCulture;
-            XmlReader reader = XmlReader.Create(XmlStream);
-            _metaDataCollectionsDataSet.ReadXml(reader);
+            _metaDataCollectionsDataSet.ReadXml(XmlReader.Create(XmlStream, new XmlReaderSettings() { XmlResolver = null, }));
         }
 
         virtual protected DataTable PrepareCollection(String collectionName, String[] restrictions, DbConnection connection)
