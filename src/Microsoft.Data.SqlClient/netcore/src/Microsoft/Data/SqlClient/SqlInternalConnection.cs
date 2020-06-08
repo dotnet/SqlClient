@@ -247,6 +247,7 @@ namespace Microsoft.Data.SqlClient
 
         override protected void Deactivate()
         {
+            SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlInternalConnection.Deactivate|ADV> {0} deactivating", ObjectID);
             try
             {
                 SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlInternalConnection.Deactivate|ADV> {0} deactivating", ObjectID);
@@ -332,6 +333,7 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlInternalConnection.EnlistNonNull|ADV> {0}, transaction {1}.", ObjectID, tx.GetHashCode());
             bool hasDelegatedTransaction = false;
 
+            SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlInternalConnection.EnlistNonNull|ADV> {0}, attempting to delegate", ObjectID);
             // Promotable transactions are only supported on Yukon
             // servers or newer.
             SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlInternalConnection.EnlistNonNull|ADV> {0}, attempting to delegate", ObjectID);
