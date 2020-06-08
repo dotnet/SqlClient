@@ -2195,7 +2195,21 @@ namespace Microsoft.Data.SqlClient
                     switch (ConnectionOptions.Authentication)
                     {
                         case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
-                            username = TdsEnums.NTAUTHORITYANONYMOUSLOGON;
+                            if (_credential != null && !string.IsNullOrEmpty(_credential.UserId))
+                            {
+                                username = _credential.UserId;
+                                authParamsBuilder.WithUserId(username);
+                            }
+                            else if (!string.IsNullOrEmpty(ConnectionOptions.UserID))
+                            {
+                                username = ConnectionOptions.UserID;
+                                authParamsBuilder.WithUserId(username);
+                            }
+                            else
+                            {
+                                username = TdsEnums.NTAUTHORITYANONYMOUSLOGON;
+                            }
+
                             if (_activeDirectoryAuthTimeoutRetryHelper.State == ActiveDirectoryAuthenticationTimeoutRetryState.Retrying)
                             {
                                 fedAuthToken = _activeDirectoryAuthTimeoutRetryHelper.CachedToken;

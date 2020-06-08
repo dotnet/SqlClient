@@ -64,9 +64,19 @@ namespace Microsoft.Data.SqlClient
 
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
             {
-                result = app.AcquireTokenByIntegratedWindowsAuth(scopes)
-                    .WithCorrelationId(parameters.ConnectionId)
-                    .ExecuteAsync().Result;
+                if (!string.IsNullOrEmpty(parameters.UserId))
+                {
+                    result = app.AcquireTokenByIntegratedWindowsAuth(scopes)
+                        .WithCorrelationId(parameters.ConnectionId)
+                        .WithUsername(parameters.UserId)
+                        .ExecuteAsync().Result;
+                }
+                else
+                {
+                    result = app.AcquireTokenByIntegratedWindowsAuth(scopes)
+                        .WithCorrelationId(parameters.ConnectionId)
+                        .ExecuteAsync().Result;
+                }
             }
             else if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryPassword)
             {
