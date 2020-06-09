@@ -1219,7 +1219,6 @@ namespace Microsoft.Data.SqlClient
                             }
 
                             // Validate server certificate
-                            //
                             if (serverCallback != null)
                             {
                                 X509Certificate2 serverCert = null;

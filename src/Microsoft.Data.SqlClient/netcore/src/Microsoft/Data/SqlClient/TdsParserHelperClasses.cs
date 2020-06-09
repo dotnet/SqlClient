@@ -961,6 +961,11 @@ namespace Microsoft.Data.SqlClient
             return name;
         }
 
+        /// <summary>
+        /// check the negotiated secure protocol if it's under TLS 1.2
+        /// </summary>
+        /// <param name="protocol"></param>
+        /// <returns>Localized warning message</returns>
         public static string GetProtocolWarning(this SslProtocols protocol)
         {
             string message = string.Empty;
