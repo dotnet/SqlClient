@@ -89,7 +89,7 @@ namespace Microsoft.Data.SqlClient
 
     #region Models
 
-    // A model class respresenting the deserialization of the byte payload the client
+    // A model class representing the deserialization of the byte payload the client
     // receives from SQL Server while setting up a session.
     internal class AttestationInfo
     {

@@ -11,7 +11,7 @@ namespace Microsoft.Data.SqlTypes
     internal sealed class SQLResource
     {
 
-        private SQLResource() { /* prevent utility class from being insantiated*/ }
+        private SQLResource() { /* prevent utility class from being instantiated*/ }
 
         internal static readonly String NullString = StringsHelper.GetString(Strings.SqlMisc_NullString);
 

@@ -2,17 +2,22 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+// #define TRACE_HISTORY // this is used for advanced debugging when you need to trace the entire lifetime of a single packet, be very careful with it
+
 using System;
 using System.Buffers;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClient.SNI
 {
     /// <summary>
     /// SNI Packet
     /// </summary>
-    internal sealed partial class SNIPacket
+    internal sealed class SNIPacket
     {
         private int _dataLength; // the length of the data in the data segment, advanced by Append-ing data, does not include smux header length
         private int _dataCapacity; // the total capacity requested, if the array is rented this may be less than the _data.Length, does not include smux header length
@@ -21,22 +26,74 @@ namespace Microsoft.Data.SqlClient.SNI
                                    // _headerOffset is not needed because it is always 0
         private byte[] _data;
         private SNIAsyncCallback _completionCallback;
+        private readonly Action<Task<int>, object> _readCallback;
+#if DEBUG
+        internal readonly int _id;  // in debug mode every packet is assigned a unique id so that the entire lifetime can be tracked when debugging
+        /// refcount = 0 means that a packet should only exist in the pool
+        /// refcount = 1 means that a packet is active
+        /// refcount > 1 means that a packet has been reused in some way and is a serious error
+        internal int _refCount;
+        internal readonly SNIHandle _owner; // used in debug builds to check that packets are being returned to the correct pool
+        internal string _traceTag; // used in debug builds to assist tracing what steps the packet has been through
 
-        public SNIPacket(int headerSize, int dataSize)
+        [DebuggerDisplay("{Action.ToString(),nq}")]
+        internal struct History
         {
-            Allocate(headerSize, dataSize);
+            public enum Direction
+            {
+                Rent=0,
+                Return=1,
+            }
+
+            public Direction Action;
+            public int RefCount;
+            public string Stack;
         }
-        public bool HasCompletionCallback => !(_completionCallback is null);
+
+        internal List<History> _history = null;
 
         /// <summary>
-        /// Dispose Packet data
+        /// uses the packet refcount in debug mode to identify if the packet is considered active
+        /// it is an error to use a packet which is not active in any function outside the pool implementation
         /// </summary>
-        public void Dispose() => Release();
+        public bool IsActive => _refCount == 1;
+
+        public SNIPacket(SNIHandle owner,int id)
+            : this()
+        {
+#if TRACE_HISTORY
+            _history = new List<Activity>();
+#endif
+            _id = id;
+            _owner = owner;
+        }
+
+        // the finalizer is only included in debug builds and is used to ensure that all packets are correctly recycled
+        // it is not an error if a packet is dropped but it is undesirable so all efforts should be made to make sure we
+        // do not drop them for the GC to pick up
+        ~SNIPacket()
+        {
+            if (_data != null)
+            {
+                Debug.Fail($@"finalizer called for unreleased SNIPacket, tag: {_traceTag}");
+            }
+        }
+
+#endif
+        public SNIPacket()
+        {
+            _readCallback = ReadFromStreamAsyncContinuation;
+        }
 
         /// <summary>
         /// Length of data left to process
         /// </summary>
         public int DataLeft => (_dataLength - _dataOffset);
+
+        /// <summary>
+        /// Indicates that the packet should be sent out of band bypassing the normal send-recieve lock
+        /// </summary>
+        public bool IsOutOfBand { get; set; }
 
         /// <summary>
         /// Length of data
@@ -49,6 +106,8 @@ namespace Microsoft.Data.SqlClient.SNI
         public bool IsInvalid => _data is null;
 
         public int ReservedHeaderSize => _headerLength;
+
+        public bool HasCompletionCallback => !(_completionCallback is null);
 
         /// <summary>
         /// Set async completion callback
@@ -73,7 +132,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         /// <param name="headerLength">Length of packet header</param>
         /// <param name="dataLength">Length of byte array to be allocated</param>
-        private void Allocate(int headerLength, int dataLength)
+        public void Allocate(int headerLength, int dataLength)
         {
             _data = ArrayPool<byte>.Shared.Rent(headerLength + dataLength);
             _dataCapacity = dataLength;
@@ -174,6 +233,7 @@ namespace Microsoft.Data.SqlClient.SNI
             _dataOffset = 0;
             _headerLength = 0;
             _completionCallback = null;
+            IsOutOfBand = false;
         }
 
         /// <summary>
@@ -186,6 +246,47 @@ namespace Microsoft.Data.SqlClient.SNI
         }
 
         /// <summary>
+        /// Read data from a stream asynchronously
+        /// </summary>
+        /// <param name="stream">Stream to read from</param>
+        /// <param name="callback">Completion callback</param>
+        public void ReadFromStreamAsync(Stream stream, SNIAsyncCallback callback)
+        {
+            stream.ReadAsync(_data, 0, _dataCapacity, CancellationToken.None)
+                .ContinueWith(
+                    continuationAction: _readCallback,
+                    state: callback,
+                    CancellationToken.None,
+                    TaskContinuationOptions.DenyChildAttach,
+                    TaskScheduler.Default
+                );
+        }
+
+        private void ReadFromStreamAsyncContinuation(Task<int> t, object state)
+        {
+            SNIAsyncCallback callback = (SNIAsyncCallback)state;
+            bool error = false;
+            Exception e = t.Exception?.InnerException;
+            if (e != null)
+            {
+                SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.TCP_PROV, SNICommon.InternalExceptionError, e);
+                error = true;
+            }
+            else
+            {
+                _dataLength = t.Result;
+
+                if (_dataLength == 0)
+                {
+                    SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.TCP_PROV, 0, SNICommon.ConnTerminatedError, string.Empty);
+                    error = true;
+                }
+            }
+
+            callback(this, error ? TdsEnums.SNI_ERROR : TdsEnums.SNI_SUCCESS);
+        }
+
+        /// <summary>
         /// Write data to a stream synchronously
         /// </summary>
         /// <param name="stream">Stream to write to</param>
@@ -195,44 +296,24 @@ namespace Microsoft.Data.SqlClient.SNI
         }
 
         /// <summary>
-        /// Get hash code
+        /// Write data to a stream asynchronously
         /// </summary>
-        /// <returns>Hash code</returns>
-        public override int GetHashCode()
+        /// <param name="stream">Stream to write to</param>
+        /// <param name="callback">SNI Asynchronous Callback</param>
+        /// <param name="provider">SNI provider identifier</param>
+        public async void WriteToStreamAsync(Stream stream, SNIAsyncCallback callback, SNIProviders provider)
         {
-            return base.GetHashCode();
-        }
-
-        /// <summary>
-        /// Check packet equality
-        /// </summary>
-        /// <param name="obj"></param>
-        /// <returns>true if equal</returns>
-        public override bool Equals(object obj)
-        {
-            SNIPacket packet = obj as SNIPacket;
-
-            if (packet != null)
+            uint status = TdsEnums.SNI_SUCCESS;
+            try
             {
-                return Equals(packet);
+                await stream.WriteAsync(_data, 0, _dataLength, CancellationToken.None).ConfigureAwait(false);
             }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Check packet equality
-        /// </summary>
-        /// <param name="packet"></param>
-        /// <returns>true if equal</returns>
-        public bool Equals(SNIPacket packet)
-        {
-            if (packet != null)
+            catch (Exception e)
             {
-                return ReferenceEquals(packet, this);
+                SNILoadHandle.SingletonInstance.LastError = new SNIError(provider, SNICommon.InternalExceptionError, e);
+                status = TdsEnums.SNI_ERROR;
             }
-
-            return false;
+            callback(this, status);
         }
     }
 }

@@ -603,8 +603,8 @@ namespace Microsoft.Data.SqlClient
         // Login data validation Rules
         //
         internal const ushort MAXLEN_HOSTNAME = 128; // the client machine name
-        internal const ushort MAXLEN_USERNAME = 128; // the client user id
-        internal const ushort MAXLEN_PASSWORD = 128; // the password supplied by the client
+        internal const ushort MAXLEN_CLIENTID = 128; 
+        internal const ushort MAXLEN_CLIENTSECRET = 128; 
         internal const ushort MAXLEN_APPNAME = 128; // the client application name
         internal const ushort MAXLEN_SERVERNAME = 128; // the server name
         internal const ushort MAXLEN_CLIENTINTERFACE = 128; // the interface library name
@@ -947,7 +947,9 @@ namespace Microsoft.Data.SqlClient
         internal const int AEAD_AES_256_CBC_HMAC_SHA256 = 2;
         internal const string ENCLAVE_TYPE_VBS = "VBS";
         internal const string ENCLAVE_TYPE_SGX = "SGX";
-
+#if ENCLAVE_SIMULATOR
+        internal const string ENCLAVE_TYPE_SIMULATOR = "SIMULATOR";
+#endif
         // TCE Param names for exec handling
         internal const string TCE_PARAM_CIPHERTEXT = "cipherText";
         internal const string TCE_PARAM_CIPHER_ALGORITHM_ID = "cipherAlgorithmId";
@@ -1021,6 +1023,16 @@ namespace Microsoft.Data.SqlClient
         Enabled,
     }
 
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionOverrides.xml' path='docs/members[@name="SqlConnectionOverrides"]/SqlConnectionOverrides/*' />
+    [Flags]
+    public enum SqlConnectionOverrides
+    {
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionOverrides.xml' path='docs/members[@name="SqlConnectionOverrides"]/None/*' />
+        None = 0,
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionOverrides.xml' path='docs/members[@name="SqlConnectionOverrides"]/OpenWithoutRetry/*' />
+        OpenWithoutRetry = 1,
+    }
+
     /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlCommandColumnEncryptionSetting.xml' path='docs/members[@name="SqlCommandColumnEncryptionSetting"]/SqlCommandColumnEncryptionSetting/*' />
     public enum SqlCommandColumnEncryptionSetting
     {
@@ -1045,6 +1057,11 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/AAS/*' />
         AAS = 1,
+
+#if ENCLAVE_SIMULATOR
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/SIM/*' />
+        SIM = 2,
+#endif
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/HGS/*' />
         HGS = 3
@@ -1112,7 +1129,7 @@ namespace Microsoft.Data.SqlClient
         ParameterOrdinal = 0,
         ParameterName,
         ColumnEncryptionAlgorithm,
-        ColumnEncrytionType,
+        ColumnEncryptionType,
         ColumnEncryptionKeyOrdinal,
         NormalizationRuleVersion,
     }

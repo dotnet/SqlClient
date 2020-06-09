@@ -339,7 +339,7 @@
   <data name="MDF_UnableToBuildCollection" xml:space="preserve">
     <value>스키마 컬렉션 '{0}'을(를) 작성할 수 없습니다.</value>
   </data>
-  <data name="MDF_AmbigousCollectionName" xml:space="preserve">
+  <data name="MDF_AmbiguousCollectionName" xml:space="preserve">
     <value>컬렉션 이름 '{0}'이(가) 이름은 같지만 사례는 다른 둘 이상의 컬렉션과 일치합니다. 그러나 모두 정확하게 일치하지는 않습니다.</value>
   </data>
   <data name="MDF_CollectionNameISNotUnique" xml:space="preserve">
@@ -2496,8 +2496,8 @@
   <data name="SQL_IntegratedWithUserIDAndPassword" xml:space="preserve">
     <value>'Authentication=Active Directory Integrated'를 'User ID', 'UID', 'Password' 또는 'PWD' 연결 문자열 키워드와 함께 사용할 수 없습니다.</value>
   </data>
-  <data name="SQL_InteractiveWithUserIDAndPassword" xml:space="preserve">
-    <value>'Authentication=Active Directory Interactive'를 'User ID', 'UID', 'Password' 또는 'PWD' 연결 문자열 키워드와 함께 사용할 수 없습니다.</value>
+  <data name="SQL_InteractiveWithPassword" xml:space="preserve">
+    <value>'Authentication=Active Directory Interactive'를 'Password' 또는 'PWD' 연결 문자열 키워드와 함께 사용할 수 없습니다.</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
     <value>Credential 속성이 설정된 경우 'Authentication=Active Directory Integrated'를 사용할 수 없습니다.</value>
@@ -2809,7 +2809,10 @@
     <value>매핑은 모든 이름 또는 모든 서수 기반이어야 합니다.</value>
   </data>
   <data name="SQL_BulkLoadCannotConvertValue" xml:space="preserve">
-    <value>데이터 원본의 유형 {0}에 지정된 값을 지정된 대상 열의 유형 {1}(으)로 변환할 수 없습니다.</value>
+    <value>데이터 원본에서 {1} 형식의 지정된 값 {0}을(를) 열 {3} [{4}] 행 {5}에 대한 {2} 형식으로 변환할 수 없습니다.</value>
+  </data>
+  <data name="SQL_BulkLoadCannotConvertValueWithoutRowNo" xml:space="preserve">
+    <value>데이터 원본에서 {1} 형식의 지정된 값 {0}을(를) 열 {3} [{4}]에 대한 {2} 형식으로 변환할 수 없습니다.</value>
   </data>
   <data name="SQL_BulkLoadNonMatchingColumnMapping" xml:space="preserve">
     <value>지정된 ColumnMapping이 원본 또는 대상의 열과 일치하지 않습니다.</value>
@@ -4309,10 +4312,10 @@
     <value>내부 오류입니다. SqlColumnEncryptionEnclaveProviderName은 null이거나 비워둘 수 없습니다.</value>
   </data>
   <data name="TCE_NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe" xml:space="preserve">
-    <value>'{0}' 결과 집합을 읽을 때 오류가 발생했습니다. 증명 URL이 연결 문자열에 지정되지 않았지만 쿼리에 enclave 계산이 필요합니다. enclave 형식은 '{1}'입니다. </value>
+    <value>'{0}' 결과 집합을 읽는 동안 오류가 발생했습니다. 연결 문자열에 증명 URL이 지정되지 않았지만 쿼리에 enclave 계산이 필요합니다. enclave 형식은 '{1}'입니다. </value>
   </data>
   <data name="TCE_NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage" xml:space="preserve">
-    <value>enclave 패키지를 생성할 때 오류가 발생했습니다. 증명 URL이 연결 문자열에 지정되지 않았지만 쿼리에 enclave 계산이 필요합니다. enclave 형식은 '{0}'입니다. </value>
+    <value>enclave 패키지를 생성하는 동안 오류가 발생했습니다. 연결 문자열에 증명 URL이 지정되지 않았지만 쿼리에 enclave 계산이 필요합니다. enclave 형식은 '{0}'입니다. </value>
   </data>
   <data name="TCE_EnclaveTypeNullForEnclaveBasedQuery" xml:space="preserve">
     <value>내부 오류가 발생했습니다. enclave 계산이 필요한 쿼리를 실행할 때 SQL Server에서 수신된 enclave 형식이 null이거나 비어 있습니다.</value>
@@ -4336,7 +4339,13 @@
     <value>사용 중인 {0} 인스턴스에서 열 암호화를 지원하지 않습니다.</value>
   </data>
   <data name="TCE_EnclaveComputationsNotSupported" xml:space="preserve">
+    <value>연결 문자열에 enclave 증명 URL 및 증명 프로토콜을 지정했지만 사용 중인 SQL Server 인스턴스가 enclave 기반 계산을 지원하지 않습니다.</value>
+  </data>
+  <data name="TCE_AttestationURLNotSupported" xml:space="preserve">
     <value>연결 문자열에 enclave 증명 URL을 지정했지만 사용 중인 SQL Server 인스턴스가 enclave 기반 계산을 지원하지 않습니다.</value>
+  </data>
+  <data name="TCE_AttestationProtocolNotSupported" xml:space="preserve">
+    <value>연결 문자열에 증명 프로토콜을 지정했지만 사용 중인 SQL Server 인스턴스가 enclave 기반 계산을 지원하지 않습니다.</value>
   </data>
   <data name="TCE_EnclaveTypeNotReturned" xml:space="preserve">
     <value>연결 문자열에 enclave 증명 URL을 지정했지만 SQL Server 인스턴스는 enclave 형식을 반환하지 않았습니다. enclave 형식이 인스턴스에 올바르게 구성되어 있는지 확인하세요.</value>
@@ -4517,5 +4526,8 @@
   </data>
   <data name="TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage" xml:space="preserve">
     <value>enclave 패키지를 생성하는 동안 오류가 발생했습니다. 연결 문자열에 증명 프로토콜이 지정되지 않았지만 쿼리에 enclave 계산이 필요합니다.</value>
+  </data>
+  <data name="SQLUDT_InvalidSize" xml:space="preserve">
+    <value>UDT 크기는 {1}보다 작아야 합니다. 크기: {0}</value>
   </data>
 </root>

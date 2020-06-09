@@ -367,8 +367,7 @@ namespace Microsoft.Data.SqlClient
                 SessionData reconnectSessionData = null,
                 bool applyTransientFaultHandling = false,
                 string accessToken = null,
-                DbConnectionPool pool = null,
-                SqlAuthenticationProviderManager sqlAuthProviderManager = null
+                DbConnectionPool pool = null
                 ) : base(connectionOptions)
 
         {
@@ -403,7 +402,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             _activeDirectoryAuthTimeoutRetryHelper = new ActiveDirectoryAuthenticationTimeoutRetryHelper();
-            _sqlAuthenticationProviderManager = sqlAuthProviderManager ?? SqlAuthenticationProviderManager.Instance;
+            _sqlAuthenticationProviderManager = SqlAuthenticationProviderManager.Instance;
 
             _identity = identity;
             Debug.Assert(newSecurePassword != null || newPassword != null, "cannot have both new secure change password and string based change password to be null");
@@ -462,6 +461,7 @@ namespace Microsoft.Data.SqlClient
                 ThreadHasParserLockForClose = false;
                 _parserLock.Release();
             }
+            SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlInternalConnectionTds.ctor|ADV> {0}, constructed new TDS internal connection", ObjectID);
         }
 
         // Returns true if the Sql error is a transient.
@@ -645,6 +645,7 @@ namespace Microsoft.Data.SqlClient
 
         public override void Dispose()
         {
+            SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlInternalConnectionTds.Dispose|ADV> {0} disposing", ObjectID);
             try
             {
                 TdsParser parser = Interlocked.Exchange(ref _parser, null);  // guard against multiple concurrent dispose calls -- Delegated Transactions might cause this.
@@ -686,7 +687,7 @@ namespace Microsoft.Data.SqlClient
                 { // single execution/datareader per connection
                     if (_asyncCommandCount > 0)
                     {
-                        throw SQL.MARSUnspportedOnConnection();
+                        throw SQL.MARSUnsupportedOnConnection();
                     }
 
                     reader = FindLiveReader(null);
@@ -1014,12 +1015,12 @@ namespace Microsoft.Data.SqlClient
                 // set, so we need to handle them by using a different MARS session, 
                 // otherwise we'll write on the physical state objects while someone
                 // else is using it.  When we don't have MARS enabled, we need to 
-                // lock the physical state object to syncronize it's use at least 
+                // lock the physical state object to synchronize it's use at least 
                 // until we increment the open results count.  Once it's been 
                 // incremented the delegated transaction requests will fail, so they
                 // won't stomp on anything.
                 // 
-                // We need to keep this lock through the duration of the TM reqeuest
+                // We need to keep this lock through the duration of the TM request
                 // so that we won't hijack a different request's data stream and a
                 // different request won't hijack ours, so we have a lock here on 
                 // an object that the ExecTMReq will also lock, but since we're on
@@ -1038,7 +1039,7 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
 
-                //  _parser may be nulled out during TdsExecuteTrannsactionManagerRequest.
+                //  _parser may be nulled out during TdsExecuteTransactionManagerRequest.
                 //  Only use local variable after this call.
                 _parser.TdsExecuteTransactionManagerRequest(null, requestType, transactionName, isoLevel,
                     ConnectionOptions.ConnectTimeout, internalTransaction, stateObj, isDelegateControlRequest);
@@ -1088,10 +1089,17 @@ namespace Microsoft.Data.SqlClient
             _parser.Run(RunBehavior.UntilDone, null, null, null, _parser._physicalStateObj);
 
             if (RoutingInfo == null)
-            { // ROR should not affect state of connection recovery
+            {
+                // ROR should not affect state of connection recovery
                 if (_federatedAuthenticationRequested && !_federatedAuthenticationAcknowledged)
                 {
+                    SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.CompleteLogin|ERR> {0}, Server did not acknowledge the federated authentication request", ObjectID);
                     throw SQL.ParsingError(ParsingErrorState.FedAuthNotAcknowledged);
+                }
+                if (_federatedAuthenticationInfoRequested && !_federatedAuthenticationInfoReceived)
+                {
+                    SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.CompleteLogin|ERR> {0}, Server never sent the requested federated authentication info", ObjectID);
+                    throw SQL.ParsingError(ParsingErrorState.FedAuthInfoNotReceived);
                 }
                 if (!_sessionRecoveryAcknowledged)
                 {
@@ -1127,6 +1135,7 @@ namespace Microsoft.Data.SqlClient
             _parser.EnableMars();
 
             _fConnectionOpen = true; // mark connection as open
+            SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlInternalConnectionTds.CompleteLogin|ADV> Post-Login Phase: Server connection obtained.");
 
             // for non-pooled connections, enlist in a distributed transaction
             // if present - and user specified to enlist
@@ -1241,6 +1250,8 @@ namespace Microsoft.Data.SqlClient
 
         private void LoginFailure()
         {
+            SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.LoginFailure|RES|CPOOL> {0}", ObjectID);
+
             // If the parser was allocated and we failed, then we must have failed on
             // either the Connect or Login, either way we should call Disconnect.
             // Disconnect can be called if the connection is already closed - becomes
@@ -1355,7 +1366,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(object.ReferenceEquals(connectionOptions, this.ConnectionOptions), "ConnectionOptions argument and property must be the same"); // consider removing the argument
             int routingAttempts = 0;
             ServerInfo originalServerInfo = serverInfo; // serverInfo may end up pointing to new object due to routing, original object is used to set CurrentDatasource
-
+            SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlInternalConnectionTds.LoginNoFailover|ADV> {0}, host={1}", ObjectID, serverInfo.UserServerName);
             int sleepInterval = 100;  //milliseconds to sleep (back off) between attempts.
 
             ResolveExtendedServerName(serverInfo, !redirectedUserInstance, connectionOptions);
@@ -1424,6 +1435,7 @@ namespace Microsoft.Data.SqlClient
 
                     if (RoutingInfo != null)
                     {
+                        SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.LoginNoFailover> Routed to {0}", serverInfo.ExtendedServerName);
                         if (routingAttempts > 0)
                         {
                             throw SQL.ROR_RecursiveRoutingNotSupported(this);
@@ -1504,6 +1516,7 @@ namespace Microsoft.Data.SqlClient
 
                 // Sleep for a bit to prevent clogging the network with requests, 
                 //  then update sleep interval for next iteration (max 1 second interval)
+                SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlInternalConnectionTds.LoginNoFailover|ADV> {0}, sleeping {1}[milisec]", ObjectID, sleepInterval);
                 Thread.Sleep(sleepInterval);
                 sleepInterval = (sleepInterval < 500) ? sleepInterval * 2 : 1000;
             }
@@ -1547,6 +1560,7 @@ namespace Microsoft.Data.SqlClient
             )
         {
             Debug.Assert(!connectionOptions.MultiSubnetFailover, "MultiSubnetFailover should not be set if failover partner is used");
+            SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlInternalConnectionTds.LoginWithFailover|ADV> {0}, useFailover={1}[bool], primary={2}, failover={3}", ObjectID, useFailoverHost, primaryServerInfo.UserServerName, failoverHost ?? "null");
 
             int sleepInterval = 100;  //milliseconds to sleep (back off) between attempts.
             long timeoutUnitInterval;
@@ -1605,6 +1619,7 @@ namespace Microsoft.Data.SqlClient
                     // Primary server may give us a different failover partner than the connection string indicates.  Update it
                     if (null != ServerProvidedFailOverPartner && failoverServerInfo.ResolvedServerName != ServerProvidedFailOverPartner)
                     {
+                        SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlInternalConnectionTds.LoginWithFailover|ADV> {0}, new failover partner={1}", ObjectID, ServerProvidedFailOverPartner);
                         failoverServerInfo.SetDerivedNames(string.Empty, ServerProvidedFailOverPartner);
                     }
                     currentServerInfo = failoverServerInfo;
@@ -1634,9 +1649,9 @@ namespace Microsoft.Data.SqlClient
                         // If it is read-only routing - we did not supply AppIntent=RO (it should be checked before)
                         // If it is something else, not known yet (future server) - this client is not designed to support this.                    
                         // In any case, server should not have sent the routing info.
+                        SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.LoginWithFailover> Routed to {0}", RoutingInfo.ServerName);
                         throw SQL.ROR_UnexpectedRoutingInfo(this);
                     }
-
                     break; // leave the while loop -- we've successfully connected
                 }
                 catch (SqlException sqlex)
@@ -1669,6 +1684,7 @@ namespace Microsoft.Data.SqlClient
                 //  the network with requests, then update sleep interval for next iteration (max 1 second interval)
                 if (1 == attemptNumber % 2)
                 {
+                    SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlInternalConnectionTds.LoginWithFailover|ADV> {0}, sleeping {1}[milisec]", ObjectID, sleepInterval);
                     Thread.Sleep(sleepInterval);
                     sleepInterval = (sleepInterval < 500) ? sleepInterval * 2 : 1000;
                 }
@@ -1723,6 +1739,7 @@ namespace Microsoft.Data.SqlClient
                                 TimeoutTimer timeout,
                                 bool withFailover = false)
         {
+            SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlInternalConnectionTds.AttemptOneLogin|ADV> {0}, timout={1}[msec], server={2}", ObjectID, timeout.MillisecondsRemaining, serverInfo.ExtendedServerName);
             RoutingInfo = null; // forget routing information 
 
             _parser._physicalStateObj.SniContext = SniContext.Snix_Connect;
@@ -1735,8 +1752,7 @@ namespace Microsoft.Data.SqlClient
                             ConnectionOptions.TrustServerCertificate,
                             ConnectionOptions.IntegratedSecurity,
                             withFailover,
-                            ConnectionOptions.Authentication,
-                            _sqlAuthenticationProviderManager);
+                            ConnectionOptions.Authentication);
 
             _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake);
             _timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.LoginBegin);
@@ -1758,7 +1774,7 @@ namespace Microsoft.Data.SqlClient
         // PREPARED COMMAND METHODS
         ////////////////////////////////////////////////////////////////////////////////////////
 
-        protected override object ObtainAdditionalLocksForClose()
+        protected override bool ObtainAdditionalLocksForClose()
         {
             bool obtainParserLock = !ThreadHasParserLockForClose;
             Debug.Assert(obtainParserLock || _parserLock.ThreadMayHaveLock(), "Thread claims to have lock, but lock is not taken");
@@ -1770,10 +1786,9 @@ namespace Microsoft.Data.SqlClient
             return obtainParserLock;
         }
 
-        protected override void ReleaseAdditionalLocksForClose(object lockToken)
+        protected override void ReleaseAdditionalLocksForClose(bool lockToken)
         {
-            Debug.Assert(lockToken is bool, "Lock token should be boolean");
-            if ((bool)lockToken)
+            if (lockToken)
             {
                 ThreadHasParserLockForClose = false;
                 _parserLock.Release();
@@ -1826,6 +1841,7 @@ namespace Microsoft.Data.SqlClient
         internal void BreakConnection()
         {
             var connection = Connection;
+            SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.BreakConnection|RES|CPOOL> {0}, Breaking connection.", ObjectID);
             DoomThisConnection();   // Mark connection as unusable, so it will be destroyed
             if (null != connection)
             {
@@ -1931,6 +1947,7 @@ namespace Microsoft.Data.SqlClient
                     break;
 
                 case TdsEnums.ENV_ROUTING:
+                    SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnEnvChange|ADV> {0}, Received routing info", ObjectID);
                     if (string.IsNullOrEmpty(rec.newRoutingInfo.ServerName) || rec.newRoutingInfo.Protocol != 0 || rec.newRoutingInfo.Port == 0)
                     {
                         throw SQL.ROR_InvalidRoutingInfo(this);
@@ -1973,7 +1990,7 @@ namespace Microsoft.Data.SqlClient
                          "Credentials aren't provided for calling MSAL");
             Debug.Assert(fedAuthInfo != null, "info should not be null.");
             Debug.Assert(_dbConnectionPoolAuthenticationContextKey == null, "_dbConnectionPoolAuthenticationContextKey should be null.");
-
+            SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFedAuthInfo> {0}, Generating federated authentication token", ObjectID);
             DbConnectionPoolAuthenticationContext dbConnectionPoolAuthenticationContext = null;
 
             // We want to refresh the token without taking a lock on the context, allowed when the access token is expiring within the next 10 mins.
@@ -2004,6 +2021,9 @@ namespace Microsoft.Data.SqlClient
                     // And on successful login, try to update the cache with the new token.
                     if (contextValidity <= _dbAuthenticationContextUnLockedRefreshTimeSpan)
                     {
+                        SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFedAuthInfo> {0}, " +
+                           "The expiration time is less than 10 mins, so trying to get new access token regardless of if an other thread is also trying to update it." +
+                           "The expiration time is {1}. Current Time is {2}.", ObjectID, dbConnectionPoolAuthenticationContext.ExpirationTime.ToLongTimeString(), DateTime.UtcNow.ToLongTimeString());
                         attemptRefreshTokenUnLocked = true;
                     }
 
@@ -2023,6 +2043,10 @@ namespace Microsoft.Data.SqlClient
                     // If a thread is already doing the refresh, just use the existing token in the cache and proceed.
                     else if (contextValidity <= _dbAuthenticationContextLockedRefreshTimeSpan)
                     {
+                        SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFedAuthInfo|ADV> {0}, " +
+                            "The authentication context needs a refresh.The expiration time is {1}. " +
+                            "Current Time is {2}.", ObjectID, dbConnectionPoolAuthenticationContext.ExpirationTime.ToLongTimeString(), DateTime.UtcNow.ToLongTimeString());
+
                         // Call the function which tries to acquire a lock over the authentication context before trying to update.
                         // If the lock could not be obtained, it will return false, without attempting to fetch a new token.
                         attemptRefreshTokenLocked = TryGetFedAuthTokenLocked(fedAuthInfo, dbConnectionPoolAuthenticationContext, out fedAuthToken);
@@ -2031,7 +2055,14 @@ namespace Microsoft.Data.SqlClient
                         // If there was an exception in retrieving the new token, TryGetFedAuthTokenLocked should have thrown, so we won't be here.
                         Debug.Assert(!attemptRefreshTokenLocked || fedAuthToken != null, "Either Lock should not have been obtained or fedAuthToken should not be null.");
                         Debug.Assert(!attemptRefreshTokenLocked || _newDbConnectionPoolAuthenticationContext != null, "Either Lock should not have been obtained or _newDbConnectionPoolAuthenticationContext should not be null.");
+
+                        // Indicate in EventSource Trace that we are successful with the update.
+                        if (attemptRefreshTokenLocked)
+                        {
+                            SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFedAuthInfo> {0}, The attempt to get a new access token succeeded under the locked mode.", ObjectID);
+                        }
                     }
+                    SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFedAuthInfo> {0}, Found an authentication context in the cache that does not need a refresh at this time. Re-using the cached token.", ObjectID);
                 }
             }
 
@@ -2091,7 +2122,14 @@ namespace Microsoft.Data.SqlClient
                 // Else some other thread is already updating it, so just proceed forward with the existing token in the cache.
                 if (dbConnectionPoolAuthenticationContext.LockToUpdate())
                 {
+                    SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.TryGetFedAuthTokenLocked> {0}, " +
+                                        "Acquired the lock to update the authentication context.The expiration time is {1}. " +
+                                        "Current Time is {2}.", ObjectID, dbConnectionPoolAuthenticationContext.ExpirationTime.ToLongTimeString(), DateTime.UtcNow.ToLongTimeString());
                     authenticationContextLocked = true;
+                }
+                else
+                {
+                    SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.TryGetFedAuthTokenLocked> {0}, Refreshing the context is already in progress by another thread.", ObjectID);
                 }
 
                 if (authenticationContextLocked)
@@ -2249,6 +2287,7 @@ namespace Microsoft.Data.SqlClient
                         || _timeout.IsExpired
                         || _timeout.MillisecondsRemaining <= sleepInterval)
                     {
+                        SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.GetFedAuthToken.MSALException error:> {0}", msalException.ErrorCode);
                         // Error[0]
                         SqlErrorCollection sqlErs = new SqlErrorCollection();
                         sqlErs.Add(new SqlError(0, (byte)0x00, (byte)TdsEnums.MIN_ERROR_CLASS, ConnectionOptions.DataSource, SRHelper.GetString(SR.SQL_MSALFailure, username, ConnectionOptions.Authentication.ToString("G")), ActiveDirectoryAuthentication.MSALGetAccessTokenFunctionName, 0));
@@ -2266,6 +2305,9 @@ namespace Microsoft.Data.SqlClient
                         throw exc;
                     }
 
+                    SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlInternalConnectionTds.GetFedAuthToken|ADV> {0}, sleeping {1}[Milliseconds]", ObjectID, sleepInterval);
+                    SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlInternalConnectionTds.GetFedAuthToken|ADV> {0}, remaining {1}[Milliseconds]", ObjectID, _timeout.MillisecondsRemaining);
+
                     Thread.Sleep(sleepInterval);
                     sleepInterval *= 2;
                 }
@@ -2280,7 +2322,7 @@ namespace Microsoft.Data.SqlClient
                 DateTime expirationTime = DateTime.FromFileTimeUtc(fedAuthToken.expirationFileTime);
                 _newDbConnectionPoolAuthenticationContext = new DbConnectionPoolAuthenticationContext(fedAuthToken.accessToken, expirationTime);
             }
-
+            SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.GetFedAuthToken> {0}, Finished generating federated authentication token.", ObjectID);
             return fedAuthToken;
         }
 
@@ -2344,8 +2386,10 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.FEATUREEXT_GLOBALTRANSACTIONS:
                     {
+                        SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for GlobalTransactions", ObjectID);
                         if (data.Length < 1)
                         {
+                            SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown version number for GlobalTransactions", ObjectID);
                             throw SQL.ParsingError();
                         }
 
@@ -2358,12 +2402,14 @@ namespace Microsoft.Data.SqlClient
                     }
                 case TdsEnums.FEATUREEXT_FEDAUTH:
                     {
+                        SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for federated authentication", ObjectID);
                         if (!_federatedAuthenticationRequested)
                         {
+                            SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Did not request federated authentication", ObjectID);
                             throw SQL.ParsingErrorFeatureId(ParsingErrorState.UnrequestedFeatureAckReceived, featureId);
                         }
 
-                        Debug.Assert(_fedAuthFeatureExtensionData != null, "_fedAuthFeatureExtensionData must not be null when _federatedAuthenticatonRequested == true");
+                        Debug.Assert(_fedAuthFeatureExtensionData != null, "_fedAuthFeatureExtensionData must not be null when _federatedAuthenticationRequested == true");
 
                         switch (_fedAuthFeatureExtensionData.Value.libraryType)
                         {
@@ -2372,27 +2418,56 @@ namespace Microsoft.Data.SqlClient
                                 // The server shouldn't have sent any additional data with the ack (like a nonce)
                                 if (data.Length != 0)
                                 {
+                                    SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Federated authentication feature extension ack for MSAL and Security Token includes extra data", ObjectID);
                                     throw SQL.ParsingError(ParsingErrorState.FedAuthFeatureAckContainsExtraData);
                                 }
                                 break;
 
                             default:
                                 Debug.Fail("Unknown _fedAuthLibrary type");
+                                SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Attempting to use unknown federated authentication library", ObjectID);
                                 throw SQL.ParsingErrorLibraryType(ParsingErrorState.FedAuthFeatureAckUnknownLibraryType, (int)_fedAuthFeatureExtensionData.Value.libraryType);
                         }
                         _federatedAuthenticationAcknowledged = true;
+
+                        // If a new authentication context was used as part of this login attempt, try to update the new context in the cache, i.e.dbConnectionPool.AuthenticationContexts.
+                        // ChooseAuthenticationContextToUpdate will take care that only the context which has more validity will remain in the cache, based on the Update logic.
+                        if (_newDbConnectionPoolAuthenticationContext != null)
+                        {
+                            Debug.Assert(_dbConnectionPool != null, "_dbConnectionPool should not be null when _newDbConnectionPoolAuthenticationContext != null.");
+
+                            DbConnectionPoolAuthenticationContext newAuthenticationContextInCacheAfterAddOrUpdate = _dbConnectionPool.AuthenticationContexts.AddOrUpdate(_dbConnectionPoolAuthenticationContextKey, _newDbConnectionPoolAuthenticationContext,
+                                                                                 (key, oldValue) => DbConnectionPoolAuthenticationContext.ChooseAuthenticationContextToUpdate(oldValue, _newDbConnectionPoolAuthenticationContext));
+
+                            Debug.Assert(newAuthenticationContextInCacheAfterAddOrUpdate != null, "newAuthenticationContextInCacheAfterAddOrUpdate should not be null.");
+#if DEBUG
+                            // For debug purposes, assert and trace if we ended up updating the cache with the new one or some other thread's context won the expiration race.
+                            if (newAuthenticationContextInCacheAfterAddOrUpdate == _newDbConnectionPoolAuthenticationContext)
+                            {
+                                SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Updated the new dbAuthenticationContext in the _dbConnectionPool.AuthenticationContexts.", ObjectID);
+                            }
+                            else
+                            {
+                                SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, AddOrUpdate attempted on _dbConnectionPool.AuthenticationContexts, but it did not update the new value.", ObjectID);
+                            }
+#endif
+                        }
+
                         break;
                     }
                 case TdsEnums.FEATUREEXT_TCE:
                     {
+                        SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for TCE", ObjectID);
                         if (data.Length < 1)
                         {
+                            SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown version number for TCE", ObjectID);
                             throw SQL.ParsingError(ParsingErrorState.TceUnknownVersion);
                         }
 
                         byte supportedTceVersion = data[0];
                         if (0 == supportedTceVersion || supportedTceVersion > TdsEnums.MAX_SUPPORTED_TCE_VERSION)
                         {
+                            SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Invalid version number for TCE", ObjectID);
                             throw SQL.ParsingErrorValue(ParsingErrorState.TceInvalidVersion, supportedTceVersion);
                         }
 
@@ -2406,32 +2481,37 @@ namespace Microsoft.Data.SqlClient
                             // Extract the type of enclave being used by the server.
                             _parser.EnclaveType = Encoding.Unicode.GetString(data, 2, (data.Length - 2));
                         }
-
                         break;
                     }
 
                 case TdsEnums.FEATUREEXT_UTF8SUPPORT:
                     {
+                        SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for UTF8 support", ObjectID);
                         if (data.Length < 1)
                         {
+                            SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown value for UTF8 support", ObjectID);
                             throw SQL.ParsingError();
                         }
                         break;
                     }
                 case TdsEnums.FEATUREEXT_DATACLASSIFICATION:
                     {
+                        SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for DATACLASSIFICATION", ObjectID);
                         if (data.Length < 1)
                         {
+                            SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown token for DATACLASSIFICATION", ObjectID);
                             throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
                         }
                         byte supportedDataClassificationVersion = data[0];
                         if ((0 == supportedDataClassificationVersion) || (supportedDataClassificationVersion > TdsEnums.MAX_SUPPORTED_DATA_CLASSIFICATION_VERSION))
                         {
+                            SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Invalid version number for DATACLASSIFICATION", ObjectID);
                             throw SQL.ParsingErrorValue(ParsingErrorState.DataClassificationInvalidVersion, supportedDataClassificationVersion);
                         }
 
                         if (data.Length != 2)
                         {
+                            SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown token for DATACLASSIFICATION", ObjectID);
                             throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
                         }
                         byte enabled = data[1];

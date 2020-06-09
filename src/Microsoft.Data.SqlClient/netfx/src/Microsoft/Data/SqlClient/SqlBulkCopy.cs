@@ -24,11 +24,9 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
-    // -------------------------------------------------------------------------------------------------
-    // this internal class helps us to associate the metadata (from the target)
-    // with columnordinals (from the source)
-    //
-    sealed internal class _ColumnMapping
+    // This internal class helps us to associate the metadata from the target.
+    // with ColumnOrdinals from the source.
+    internal sealed class _ColumnMapping
     {
         internal int _sourceColumnOrdinal;
         internal _SqlMetaData _metadata;
@@ -71,12 +69,12 @@ namespace Microsoft.Data.SqlClient
     sealed internal class Result
     {
         private _SqlMetaDataSet _metadata;
-        private ArrayList _rowset;
+        private List<Row> _rowset;
 
         internal Result(_SqlMetaDataSet metadata)
         {
             this._metadata = metadata;
-            this._rowset = new ArrayList();
+            this._rowset = new List<Row>();
         }
 
         internal int Count
@@ -113,7 +111,7 @@ namespace Microsoft.Data.SqlClient
     //
     sealed internal class BulkCopySimpleResultSet
     {
-        private ArrayList _results;                   // the list of results
+        private List<Result> _results;                   // the list of results
         private Result resultSet;                     // the current result
         private int[] indexmap;                       // associates columnids with indexes in the rowarray
 
@@ -121,7 +119,7 @@ namespace Microsoft.Data.SqlClient
         //
         internal BulkCopySimpleResultSet()
         {
-            _results = new ArrayList();
+            _results = new List<Result>();
         }
 
         // indexer
@@ -266,13 +264,37 @@ namespace Microsoft.Data.SqlClient
         private DataRowState _rowStateToSkip;
         private IEnumerator _rowEnumerator;
 
+        private int RowNumber
+        {
+            get
+            {
+                int rowNo;
+
+                switch (_rowSourceType)
+                {
+                    case ValueSourceType.RowArray:
+                        rowNo = ((DataTable)_dataTableSource).Rows.IndexOf(_rowEnumerator.Current as DataRow);
+                        break;
+                    case ValueSourceType.DataTable:
+                        rowNo = ((DataTable)_rowSource).Rows.IndexOf(_rowEnumerator.Current as DataRow);
+                        break;
+                    case ValueSourceType.DbDataReader:
+                    case ValueSourceType.IDataReader:
+                    case ValueSourceType.Unspecified:
+                    default:
+                        return -1;
+                }
+                return ++rowNo;
+            }
+        }
+
         private TdsParser _parser;
         private TdsParserStateObject _stateObj;
         private List<_ColumnMapping> _sortedColumnMappings;
 
         private SqlRowsCopiedEventHandler _rowsCopiedEventHandler;
 
-        private static int _objectTypeCount; // Bid counter
+        private static int _objectTypeCount; // EventSource Counter
         internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
 
         //newly added member variables for Async modification, m = member variable to bcp
@@ -471,6 +493,15 @@ namespace Microsoft.Data.SqlClient
 
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/RowsCopied/*'/>
+        public int RowsCopied
+        {
+            get
+            {
+                return _rowsCopied;
+            }
+        }
+
         internal SqlStatistics Statistics
         {
             get
@@ -593,10 +624,8 @@ namespace Microsoft.Data.SqlClient
         private Task<BulkCopySimpleResultSet> CreateAndExecuteInitialQueryAsync(out BulkCopySimpleResultSet result)
         {
             string TDSCommand = CreateInitialQuery();
-
-            Bid.Trace("<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|INFO> Initial Query: '%ls' \n", TDSCommand);
-            Bid.CorrelationTrace("<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|Info|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
-
+            SqlClientEventSource.Log.TraceEvent("<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|INFO> Initial Query: '{0}'", TDSCommand);
+            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|Info|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
             Task executeTask = _parser.TdsExecuteSQLBatch(TDSCommand, this.BulkCopyTimeout, null, _stateObj, sync: !_isAsyncBulkCopy, callerHasConnectionLock: true);
 
             if (executeTask == null)
@@ -886,8 +915,7 @@ namespace Microsoft.Data.SqlClient
         //
         private Task SubmitUpdateBulkCommand(string TDSCommand)
         {
-            Bid.CorrelationTrace("<sc.SqlBulkCopy.SubmitUpdateBulkCommand|Info|Correlation> ObjectID%d#, ActivityID %ls\n", ObjectID);
-
+            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlBulkCopy.SubmitUpdateBulkCommand|Info|Correlation> ObjectID{0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
             Task executeTask = _parser.TdsExecuteSQLBatch(TDSCommand, this.BulkCopyTimeout, null, _stateObj, sync: !_isAsyncBulkCopy, callerHasConnectionLock: true);
 
             if (executeTask == null)
@@ -1595,14 +1623,14 @@ namespace Microsoft.Data.SqlClient
                         mt = MetaType.GetMetaTypeFromSqlDbType(type.SqlDbType, false);
                         value = SqlParameter.CoerceValue(value, mt, out coercedToDataFeed, out typeChanged, false);
 
-                        // Convert Source Decimal Percision and Scale to Destination Percision and Scale
+                        // Convert Source Decimal Precision and Scale to Destination Precision and Scale
                         // Fix Bug: 385971 sql decimal data could get corrupted on insert if the scale of
-                        // the source and destination weren't the same.  The BCP protocal, specifies the
+                        // the source and destination weren't the same.  The BCP protocol, specifies the
                         // scale of the incoming data in the insert statement, we just tell the server we
-                        // are inserting the same scale back. This then created a bug inside the BCP opperation
-                        // if the scales didn't match.  The fix is to do the same thing that SQL Paramater does,
+                        // are inserting the same scale back. This then created a bug inside the BCP operation
+                        // if the scales didn't match.  The fix is to do the same thing that SQL Parameter does,
                         // and adjust the scale before writing.  In Orcas is scale adjustment should be removed from
-                        // SqlParamater and SqlBulkCopy and Isoloated inside SqlParamater.CoerceValue, but becouse of
+                        // SqlParameter and SqlBulkCopy and Isolated inside SqlParameter.CoerceValue, but because of
                         // where we are in the cycle, the changes must be kept at minimum, so I'm just bringing the
                         // code over to SqlBulkCopy.
 
@@ -1629,18 +1657,18 @@ namespace Microsoft.Data.SqlClient
                             }
                             catch (SqlTruncateException)
                             {
-                                throw SQL.BulkLoadCannotConvertValue(value.GetType(), mt, ADP.ParameterValueOutOfRange(sqlValue));
+                                throw SQL.BulkLoadCannotConvertValue(value.GetType(), mt, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), ADP.ParameterValueOutOfRange(sqlValue));
                             }
                             catch (Exception e)
                             {
-                                throw SQL.BulkLoadCannotConvertValue(value.GetType(), mt, e);
+                                throw SQL.BulkLoadCannotConvertValue(value.GetType(), mt, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), e);
                             }
                         }
 
-                        // Perf: It is more effecient to write a SqlDecimal than a decimal since we need to break it into its 'bits' when writing
+                        // Perf: It is more efficient to write a SqlDecimal than a decimal since we need to break it into its 'bits' when writing
                         value = sqlValue;
                         isSqlType = true;
-                        typeChanged = false;    // Setting this to false as SqlParameter.CoerceValue will only set it to true when coverting to a CLR type           
+                        typeChanged = false;    // Setting this to false as SqlParameter.CoerceValue will only set it to true when converting to a CLR type           
                         break;
 
                     case TdsEnums.SQLINTN:
@@ -1722,7 +1750,7 @@ namespace Microsoft.Data.SqlClient
 
                     default:
                         Debug.Assert(false, "Unknown TdsType!" + type.NullableType.ToString("x2", (IFormatProvider)null));
-                        throw SQL.BulkLoadCannotConvertValue(value.GetType(), type, null);
+                        throw SQL.BulkLoadCannotConvertValue(value.GetType(), type, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), null);
                 }
 
                 if (typeChanged)
@@ -1739,7 +1767,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw;
                 }
-                throw SQL.BulkLoadCannotConvertValue(value.GetType(), type, e);
+                throw SQL.BulkLoadCannotConvertValue(value.GetType(), type, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), e);
             }
         }
 
@@ -2222,7 +2250,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     try
                     {
-                        AbortTransaction(); // if there is one, on success transactions will be commited
+                        AbortTransaction(); // if there is one, on success transactions will be committed
                     }
                     finally
                     {
@@ -2517,7 +2545,7 @@ namespace Microsoft.Data.SqlClient
                             // it's also the user's chance to cause an exception ...
                             _stateObj.BcpLock = true;
                             abortOperation = FireRowsCopiedEvent(_rowsCopied);
-                            Bid.Trace("<sc.SqlBulkCopy.WriteToServerInternal|INFO> \n");
+                            SqlClientEventSource.Log.TraceEvent("<sc.SqlBulkCopy.WriteToServerInternal|{0}>", "INFO");
 
                             // just in case some pathological person closes the target connection ...
                             if (ConnectionState.Open != _connection.State)
@@ -2710,7 +2738,7 @@ namespace Microsoft.Data.SqlClient
                     SqlInternalConnectionTds internalConnection = _connection.GetOpenTdsConnection();
 
                     if (IsCopyOption(SqlBulkCopyOptions.UseInternalTransaction))
-                    { //internal trasaction is started prior to each batch if the Option is set.
+                    { //internal transaction is started prior to each batch if the Option is set.
                         internalConnection.ThreadHasParserLockForClose = true;     // In case of error, tell the connection we already have the parser lock
                         try
                         {
@@ -2906,18 +2934,18 @@ namespace Microsoft.Data.SqlClient
                 {
                     tdsReliabilitySection.Start();
 #endif //DEBUG
-                    if ((cleanupParser) && (_parser != null) && (_stateObj != null))
-                    {
-                        _parser._asyncWrite = false;
-                        Task task = _parser.WriteBulkCopyDone(_stateObj);
-                        Debug.Assert(task == null, "Write should not pend when error occurs");
-                        RunParser();
-                    }
+                if ((cleanupParser) && (_parser != null) && (_stateObj != null))
+                {
+                    _parser._asyncWrite = false;
+                    Task task = _parser.WriteBulkCopyDone(_stateObj);
+                    Debug.Assert(task == null, "Write should not pend when error occurs");
+                    RunParser();
+                }
 
-                    if (_stateObj != null)
-                    {
-                        CleanUpStateObject();
-                    }
+                if (_stateObj != null)
+                {
+                    CleanUpStateObject();
+                }
 #if DEBUG
                 }
                 finally

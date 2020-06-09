@@ -3,16 +3,16 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.SqlTypes;
+using System.Diagnostics.Tracing;
 using System.Globalization;
 using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Text;
+using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Identity.Client;
 using Newtonsoft.Json;
 using Xunit;
 
@@ -25,8 +25,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string TCPConnectionStringHGSVBS = null;
         public static readonly string TCPConnectionStringAASVBS = null;
         public static readonly string TCPConnectionStringAASSGX = null;
-        public static readonly string AADAccessToken = null;
+        public static readonly string AADAuthorityURL = null;
         public static readonly string AADPasswordConnectionString = null;
+        public static readonly string AADAccessToken = null;
         public static readonly string AKVBaseUrl = null;
         public static readonly string AKVUrl = null;
         public static readonly string AKVClientId = null;
@@ -34,16 +35,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static List<string> AEConnStrings = new List<string>();
         public static List<string> AEConnStringsSetup = new List<string>();
         public static readonly bool EnclaveEnabled = false;
+        public static readonly bool TracingEnabled = false;
         public static readonly bool SupportsIntegratedSecurity = false;
         public static readonly bool SupportsLocalDb = false;
         public static readonly bool SupportsFileStream = false;
+        public static readonly bool UseManagedSNIOnWindows = false;
 
         public const string UdtTestDbName = "UdtTestDb";
         public const string AKVKeyName = "TestSqlClientAzureKeyVaultProvider";
-
-        private static readonly Assembly MdsAssembly = typeof(Microsoft.Data.SqlClient.SqlConnection).GetTypeInfo().Assembly;
-        private static readonly Type TdsParserStateObjectFactoryInstance = MdsAssembly?.GetType("Microsoft.Data.SqlClient.TdsParserStateObjectFactory");
-        private static readonly PropertyInfo UseManagedSni = TdsParserStateObjectFactoryInstance?.GetProperty("UseManagedSNI", BindingFlags.Static | BindingFlags.Public);
+        private const string ManagedNetworkingAppContextSwitch = "Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows";
 
         private static readonly string[] AzureSqlServerEndpoints = {".database.windows.net",
                                                                      ".database.cloudapi.de",
@@ -51,6 +51,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                                                      ".database.chinacloudapi.cn"};
 
         private static Dictionary<string, bool> AvailableDatabases;
+        private static TraceEventListener TraceListener;
 
         private class Config
         {
@@ -59,15 +60,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             public string TCPConnectionStringHGSVBS = null;
             public string TCPConnectionStringAASVBS = null;
             public string TCPConnectionStringAASSGX = null;
-            public string AADAccessToken = null;
+            public string AADAuthorityURL = null;
             public string AADPasswordConnectionString = null;
             public string AzureKeyVaultURL = null;
             public string AzureKeyVaultClientId = null;
             public string AzureKeyVaultClientSecret = null;
             public bool EnclaveEnabled = false;
+            public bool TracingEnabled = false;
             public bool SupportsIntegratedSecurity = false;
             public bool SupportsLocalDb = false;
             public bool SupportsFileStream = false;
+            public bool UseManagedSNIOnWindows = false;
         }
 
         static DataTestUtility()
@@ -82,12 +85,32 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 TCPConnectionStringHGSVBS = c.TCPConnectionStringHGSVBS;
                 TCPConnectionStringAASVBS = c.TCPConnectionStringAASVBS;
                 TCPConnectionStringAASSGX = c.TCPConnectionStringAASSGX;
-                AADAccessToken = c.AADAccessToken;
+                AADAuthorityURL = c.AADAuthorityURL;
                 AADPasswordConnectionString = c.AADPasswordConnectionString;
                 SupportsLocalDb = c.SupportsLocalDb;
                 SupportsIntegratedSecurity = c.SupportsIntegratedSecurity;
                 SupportsFileStream = c.SupportsFileStream;
                 EnclaveEnabled = c.EnclaveEnabled;
+                TracingEnabled = c.TracingEnabled;
+                UseManagedSNIOnWindows = c.UseManagedSNIOnWindows;
+
+                if (TracingEnabled)
+                {
+                    TraceListener = new DataTestUtility.TraceEventListener();
+                }
+
+                if (UseManagedSNIOnWindows)
+                {
+                    AppContext.SetSwitch(ManagedNetworkingAppContextSwitch, true);
+                    Console.WriteLine($"App Context switch {ManagedNetworkingAppContextSwitch} enabled on {Environment.OSVersion}");
+                }
+
+                if (IsAADPasswordConnStrSetup() && IsAADAuthorityURLSetup())
+                {
+                    string username = RetrieveValueFromConnStr(AADPasswordConnectionString, new string[] { "User ID", "UID" });
+                    string password = RetrieveValueFromConnStr(AADPasswordConnectionString, new string[] { "Password", "PWD" });
+                    AADAccessToken = GenerateAccessToken(AADAuthorityURL, username, password);
+                }
 
                 string url = c.AzureKeyVaultURL;
                 Uri AKVBaseUri = null;
@@ -133,6 +156,63 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        public static IEnumerable<string> ConnectionStrings
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(TCPConnectionString))
+                {
+                    yield return TCPConnectionString;
+                }
+                // Named Pipes are not supported on Unix platform and for Azure DB
+                if (Environment.OSVersion.Platform != PlatformID.Unix && IsNotAzureServer() && !string.IsNullOrEmpty(NPConnectionString))
+                {
+                    yield return NPConnectionString;
+                }
+                if (EnclaveEnabled)
+                {
+                    foreach (var connStr in AEConnStrings)
+                    {
+                        yield return connStr;
+                    }
+                }
+            }
+        }
+        private static string GenerateAccessToken(string authorityURL, string aADAuthUserID, string aADAuthPassword)
+        {
+            return AcquireTokenAsync(authorityURL, aADAuthUserID, aADAuthPassword).Result;
+        }
+
+        private static Task<string> AcquireTokenAsync(string authorityURL, string userID, string password) => Task.Run(() =>
+        {
+            // The below properties are set specific to test configurations.
+            string scope = "https://database.windows.net//.default";
+            string applicationName = "Microsoft Data SqlClient Manual Tests";
+            string clientVersion = "1.0.0.0";
+            string adoClientId = "4d079b4c-cab7-4b7c-a115-8fd51b6f8239";
+
+            IPublicClientApplication app = PublicClientApplicationBuilder.Create(adoClientId)
+                .WithAuthority(authorityURL)
+                .WithClientName(applicationName)
+                .WithClientVersion(clientVersion)
+                .Build();
+            AuthenticationResult result;
+            string[] scopes = new string[] { scope };
+
+            // Note: CorrelationId, which existed in ADAL, can not be set in MSAL (yet?).
+            // parameter.ConnectionId was passed as the CorrelationId in ADAL to aid support in troubleshooting.
+            // If/When MSAL adds CorrelationId support, it should be passed from parameters here, too.
+
+            SecureString securePassword = new SecureString();
+
+            foreach (char c in password)
+                securePassword.AppendChar(c);
+            securePassword.MakeReadOnly();
+            result = app.AcquireTokenByUsernamePassword(scopes, userID, securePassword).ExecuteAsync().Result;
+
+            return result.AccessToken;
+        });
+
         public static bool IsDatabasePresent(string name)
         {
             AvailableDatabases = AvailableDatabases ?? new Dictionary<string, bool>();
@@ -153,6 +233,31 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return present;
         }
 
+        /// <summary>
+        /// Checks if object SYS.SENSITIVITY_CLASSIFICATIONS exists in SQL Server
+        /// </summary>
+        /// <returns>True, if target SQL Server supports Data Classification</returns>
+        public static bool IsSupportedDataClassification()
+        {
+            try
+            {
+                using (var connection = new SqlConnection(TCPConnectionString))
+                using (var command = new SqlCommand("SELECT * FROM SYS.SENSITIVITY_CLASSIFICATIONS", connection))
+                {
+                    connection.Open();
+                    command.ExecuteNonQuery();
+                }
+            }
+            catch (SqlException e)
+            {
+                // Check for Error 208: Invalid Object Name
+                if (e.Errors != null && e.Errors[0].Number == 208)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
         public static bool IsUdtTestDatabasePresent() => IsDatabasePresent(UdtTestDbName);
 
         public static bool AreConnStringsSetup()
@@ -170,6 +275,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return !string.IsNullOrEmpty(AADPasswordConnectionString);
         }
 
+        public static bool IsAADAuthorityURLSetup()
+        {
+            return !string.IsNullOrEmpty(AADAuthorityURL);
+        }
+
         public static bool IsNotAzureServer()
         {
             return AreConnStringsSetup() ? !DataTestUtility.IsAzureSqlServer(new SqlConnectionStringBuilder((DataTestUtility.TCPConnectionString)).DataSource) : true;
@@ -180,7 +290,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return !string.IsNullOrEmpty(AKVUrl) && !string.IsNullOrEmpty(AKVClientId) && !string.IsNullOrEmpty(AKVClientSecret);
         }
 
-        public static bool IsUsingManagedSNI() => (bool)(UseManagedSni?.GetValue(null) ?? false);
+        public static bool IsUsingManagedSNI() => UseManagedSNIOnWindows;
 
         public static bool IsUsingNativeSNI() => !IsUsingManagedSNI();
 
@@ -207,6 +317,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
             }
             return retval;
+        }
+
+        public static bool IsTCPConnectionStringPasswordIncluded()
+        {
+            return RetrieveValueFromConnStr(TCPConnectionString, new string[] { "Password", "PWD" }) != string.Empty;
         }
 
         // the name length will be no more then (16 + prefix.Length + escapeLeft.Length + escapeRight.Length)
@@ -241,16 +356,41 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return name;
         }
 
+        public static void DropTable(SqlConnection sqlConnection, string tableName)
+        {
+            using (SqlCommand cmd = new SqlCommand(string.Format("IF (OBJECT_ID('{0}') IS NOT NULL) \n DROP TABLE {0}", tableName), sqlConnection))
+            {
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        public static void DropUserDefinedType(SqlConnection sqlConnection, string typeName)
+        {
+            using (SqlCommand cmd = new SqlCommand(string.Format("IF (TYPE_ID('{0}') IS NOT NULL) \n DROP TYPE {0}", typeName), sqlConnection))
+            {
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        public static void DropStoredProcedure(SqlConnection sqlConnection, string spName)
+        {
+            using (SqlCommand cmd = new SqlCommand(string.Format("IF (OBJECT_ID('{0}') IS NOT NULL) \n DROP PROCEDURE {0}", spName), sqlConnection))
+            {
+                cmd.ExecuteNonQuery();
+            }
+        }
+
         public static bool IsLocalDBInstalled() => SupportsLocalDb;
 
         public static bool IsIntegratedSecuritySetup() => SupportsIntegratedSecurity;
 
         public static string GetAccessToken()
         {
-            return AADAccessToken;
+            // Creates a new Object Reference of Access Token - See GitHub Issue 438
+            return (null != AADAccessToken) ? new string(AADAccessToken.ToCharArray()) : null;
         }
 
-        public static bool IsAccessTokenSetup() => string.IsNullOrEmpty(GetAccessToken()) ? false : true;
+        public static bool IsAccessTokenSetup() => !string.IsNullOrEmpty(GetAccessToken());
 
         public static bool IsFileStreamSetup() => SupportsFileStream;
 
@@ -365,7 +505,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             try
             {
                 actionThatFails();
-                Console.WriteLine("ERROR: Did not get expected exception");
+                Assert.False(true, "ERROR: Did not get expected exception");
                 return null;
             }
             catch (Exception ex)
@@ -386,7 +526,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             try
             {
                 actionThatFails();
-                Console.WriteLine("ERROR: Did not get expected exception");
+                Assert.False(true, "ERROR: Did not get expected exception");
                 return null;
             }
             catch (Exception ex)
@@ -407,7 +547,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             try
             {
                 actionThatFails();
-                Console.WriteLine("ERROR: Did not get expected exception");
+                Assert.False(true, "ERROR: Did not get expected exception");
                 return null;
             }
             catch (Exception ex)
@@ -498,6 +638,98 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (SqlCommand cmd = new SqlCommand(string.Format("IF EXISTS (SELECT * FROM sys.objects WHERE name = '{0}') \n DROP FUNCTION {0}", funcName), sqlConnection))
             {
                 cmd.ExecuteNonQuery();
+            }
+        }
+
+        public static string GetValueString(object paramValue)
+        {
+            if (paramValue.GetType() == typeof(DateTimeOffset))
+            {
+                return ((DateTimeOffset)paramValue).ToString("M/d/yyyy hh:mm:ss tt zzz");
+            }
+            else if (paramValue.GetType() == typeof(DateTime))
+            {
+                return ((DateTime)paramValue).ToString("M/d/yyyy hh:mm:ss tt");
+            }
+            else if (paramValue.GetType() == typeof(SqlDateTime))
+            {
+                return ((SqlDateTime)paramValue).Value.ToString("M/d/yyyy hh:mm:ss tt");
+            }
+
+            return paramValue.ToString();
+        }
+
+        public static string RemoveKeysInConnStr(string connStr, string[] keysToRemove)
+        {
+            // tokenize connection string and remove input keys.
+            string res = "";
+            if (connStr != null && keysToRemove != null)
+            {
+                string[] keys = connStr.Split(';');
+                foreach (var key in keys)
+                {
+                    if (!string.IsNullOrEmpty(key.Trim()))
+                    {
+                        bool removeKey = false;
+                        foreach (var keyToRemove in keysToRemove)
+                        {
+                            if (key.Trim().ToLower().StartsWith(keyToRemove.Trim().ToLower()))
+                            {
+                                removeKey = true;
+                                break;
+                            }
+                        }
+                        if (!removeKey)
+                        {
+                            res += key + ";";
+                        }
+                    }
+                }
+            }
+            return res;
+        }
+
+        public static string RetrieveValueFromConnStr(string connStr, string[] keywords)
+        {
+            // tokenize connection string and retrieve value for a specific key.
+            string res = "";
+            if (connStr != null && keywords != null)
+            {
+                string[] keys = connStr.Split(';');
+                foreach (var key in keys)
+                {
+                    foreach (var keyword in keywords)
+                    {
+                        if (!string.IsNullOrEmpty(key.Trim()))
+                        {
+                            if (key.Trim().ToLower().StartsWith(keyword.Trim().ToLower()))
+                            {
+                                res = key.Substring(key.IndexOf('=') + 1).Trim();
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            return res;
+        }
+
+        public class TraceEventListener : EventListener
+        {
+            public List<int> IDs = new List<int>();
+
+            protected override void OnEventSourceCreated(EventSource eventSource)
+            {
+                if (eventSource.Name.Equals("Microsoft.Data.SqlClient.EventSource"))
+                {
+                    // Collect all traces for better code coverage
+                    EnableEvents(eventSource, EventLevel.Informational, EventKeywords.All);
+                }
+            }
+
+            protected override void OnEventWritten(EventWrittenEventArgs eventData)
+            {
+                IDs.Add(eventData.EventId);
             }
         }
     }

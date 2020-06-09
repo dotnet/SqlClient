@@ -23,7 +23,10 @@ namespace Microsoft.Data.SqlClient
         private DbConnectionInternal _innerConnection;
         private int _closeCount;
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctor2/*' />
+        private static int _objectTypeCount; // EventSource Counter
+        internal readonly int ObjectID = Interlocked.Increment(ref _objectTypeCount);
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctor2/*' />
         public SqlConnection() : base()
         {
             GC.SuppressFinalize(this);
@@ -57,6 +60,7 @@ namespace Microsoft.Data.SqlClient
 
         private string ConnectionString_Get()
         {
+            SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionHelper.ConnectionString_Get|API> {0}", ObjectID);
             bool hidePassword = InnerConnection.ShouldHidePassword;
             DbConnectionOptions connectionOptions = UserConnectionOptions;
             return ((null != connectionOptions) ? connectionOptions.UsersConnectionString(hidePassword) : "");
@@ -82,6 +86,8 @@ namespace Microsoft.Data.SqlClient
             {
                 throw ADP.OpenConnectionPropertySet(nameof(ConnectionString), connectionInternal.State);
             }
+            string cstr = ((null != connectionOptions) ? connectionOptions.UsersConnectionStringForTrace() : "");
+            SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionHelper.ConnectionString_Set|API> {0}, '{1}'", ObjectID, cstr);
         }
 
         internal DbConnectionInternal InnerConnection
@@ -123,6 +129,18 @@ namespace Microsoft.Data.SqlClient
                 Interlocked.CompareExchange(ref _innerConnection, DbConnectionClosedPreviouslyOpened.SingletonInstance, innerConnection);
                 innerConnection.DoomThisConnection();
             }
+
+            // NOTE: we put the tracing last, because the ToString() calls (and
+            // the SqlClientEventSource.SqlClientEventSource.Log.Trace, for that matter) have no reliability contract and
+            // will end the reliable try...
+            if (e is OutOfMemoryException)
+            {
+                SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionHelper.Abort|RES|INFO|CPOOL> {0}, Aborting operation due to asynchronous exception: {'OutOfMemory'}", ObjectID);
+            }
+            else
+            {
+                SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionHelper.Abort|RES|INFO|CPOOL> {0}, Aborting operation due to asynchronous exception: {1}", ObjectID, e);
+            }
         }
 
         internal void AddWeakReference(object value, int tag)
@@ -130,17 +148,25 @@ namespace Microsoft.Data.SqlClient
             InnerConnection.AddWeakReference(value, tag);
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CreateDbCommand/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CreateDbCommand/*' />
         override protected DbCommand CreateDbCommand()
         {
-            DbCommand command = null;
-            DbProviderFactory providerFactory = ConnectionFactory.ProviderFactory;
-            command = providerFactory.CreateCommand();
-            command.Connection = this;
-            return command;
+            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<prov.DbConnectionHelper.CreateDbCommand|API> {0}", ObjectID);
+            try
+            {
+                DbCommand command = null;
+                DbProviderFactory providerFactory = ConnectionFactory.ProviderFactory;
+                command = providerFactory.CreateCommand();
+                command.Connection = this;
+                return command;
+            }
+            finally
+            {
+                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
+            }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Dispose/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Dispose/*' />
         override protected void Dispose(bool disposing)
         {
             if (disposing)
@@ -155,9 +181,11 @@ namespace Microsoft.Data.SqlClient
 
         partial void RepairInnerConnection();
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/EnlistTransaction/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/EnlistTransaction/*' />
         public override void EnlistTransaction(Transaction transaction)
         {
+            SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionHelper.EnlistTransaction|RES|TRAN> {0}, Connection enlisting in a transaction.", ObjectID);
+
             // If we're currently enlisted in a transaction and we were called
             // on the EnlistTransaction method (Whidbey) we're not allowed to
             // enlist in a different transaction.

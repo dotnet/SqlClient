@@ -1,0 +1,3 @@
+version: '3.4'
+services:
+  microsoft.data.sqlclient.dockertests:

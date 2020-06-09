@@ -318,7 +318,7 @@ namespace Microsoft.Data.Common
         /// * if the value is from integral type (SByte, Int16, Int32, Int64, Byte, UInt16, UInt32, or UInt64), it will be converted to enum
         /// * if the value is another enum or any other type, it will be blocked with an appropriate ArgumentException
         /// 
-        /// in any case above, if the conerted value is out of valid range, the method raises ArgumentOutOfRangeException.
+        /// in any case above, if the converted value is out of valid range, the method raises ArgumentOutOfRangeException.
         /// </summary>
         /// <returns>PoolBlockingPeriod value in the valid range</returns>
         internal static PoolBlockingPeriod ConvertToPoolBlockingPeriod(string keyword, object value)
@@ -368,7 +368,7 @@ namespace Microsoft.Data.Common
                 {
                     try
                     {
-                        // Enum.ToObject allows only integral and enum values (enums are blocked above), rasing ArgumentException for the rest
+                        // Enum.ToObject allows only integral and enum values (enums are blocked above), raising ArgumentException for the rest
                         eValue = (PoolBlockingPeriod)Enum.ToObject(typeof(PoolBlockingPeriod), value);
                     }
                     catch (ArgumentException e)
@@ -443,9 +443,9 @@ namespace Microsoft.Data.Common
         /// * if the value is from integral type (SByte, Int16, Int32, Int64, Byte, UInt16, UInt32, or UInt64), it will be converted to enum
         /// * if the value is another enum or any other type, it will be blocked with an appropriate ArgumentException
         /// 
-        /// in any case above, if the conerted value is out of valid range, the method raises ArgumentOutOfRangeException.
+        /// in any case above, if the converted value is out of valid range, the method raises ArgumentOutOfRangeException.
         /// </summary>
-        /// <returns>applicaiton intent value in the valid range</returns>
+        /// <returns>application intent value in the valid range</returns>
         internal static ApplicationIntent ConvertToApplicationIntent(string keyword, object value)
         {
             Debug.Assert(null != value, "ConvertToApplicationIntent(null)");
@@ -493,7 +493,7 @@ namespace Microsoft.Data.Common
                 {
                     try
                     {
-                        // Enum.ToObject allows only integral and enum values (enums are blocked above), rasing ArgumentException for the rest
+                        // Enum.ToObject allows only integral and enum values (enums are blocked above), raising ArgumentException for the rest
                         eValue = (ApplicationIntent)Enum.ToObject(typeof(ApplicationIntent), value);
                     }
                     catch (ArgumentException e)
@@ -716,7 +716,7 @@ namespace Microsoft.Data.Common
                 {
                     try
                     {
-                        // Enum.ToObject allows only integral and enum values (enums are blocked above), rasing ArgumentException for the rest
+                        // Enum.ToObject allows only integral and enum values (enums are blocked above), raising ArgumentException for the rest
                         eValue = (SqlAuthenticationMethod)Enum.ToObject(typeof(SqlAuthenticationMethod), value);
                     }
                     catch (ArgumentException e)
@@ -792,7 +792,7 @@ namespace Microsoft.Data.Common
                 {
                     try
                     {
-                        // Enum.ToObject allows only integral and enum values (enums are blocked above), rasing ArgumentException for the rest
+                        // Enum.ToObject allows only integral and enum values (enums are blocked above), raising ArgumentException for the rest
                         eValue = (SqlConnectionColumnEncryptionSetting)Enum.ToObject(typeof(SqlConnectionColumnEncryptionSetting), value);
                     }
                     catch (ArgumentException e)
@@ -822,6 +822,9 @@ namespace Microsoft.Data.Common
         /// </summary>
         const string AttestationProtocolHGS = "HGS";
         const string AttestationProtocolAAS = "AAS";
+#if ENCLAVE_SIMULATOR
+        const string AttestationProtocolSIM = "SIM";
+#endif
 
         /// <summary>
         ///  Convert a string value to the corresponding SqlConnectionAttestationProtocol
@@ -841,6 +844,13 @@ namespace Microsoft.Data.Common
                 result = SqlConnectionAttestationProtocol.AAS;
                 return true;
             }
+#if ENCLAVE_SIMULATOR
+            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, AttestationProtocolSIM))
+            {
+                result = SqlConnectionAttestationProtocol.SIM;
+                return true;
+            }
+#endif
             else
             {
                 result = DbConnectionStringDefaults.AttestationProtocol;
@@ -850,11 +860,18 @@ namespace Microsoft.Data.Common
 
         internal static bool IsValidAttestationProtocol(SqlConnectionAttestationProtocol value)
         {
+#if ENCLAVE_SIMULATOR
+            Debug.Assert(Enum.GetNames(typeof(SqlConnectionAttestationProtocol)).Length == 4, "SqlConnectionAttestationProtocol enum has changed, update needed");
+            return value == SqlConnectionAttestationProtocol.NotSpecified
+                || value == SqlConnectionAttestationProtocol.HGS
+                || value == SqlConnectionAttestationProtocol.AAS
+                || value == SqlConnectionAttestationProtocol.SIM;
+#else
             Debug.Assert(Enum.GetNames(typeof(SqlConnectionAttestationProtocol)).Length == 3, "SqlConnectionAttestationProtocol enum has changed, update needed");
             return value == SqlConnectionAttestationProtocol.NotSpecified
                 || value == SqlConnectionAttestationProtocol.HGS
                 || value == SqlConnectionAttestationProtocol.AAS;
-
+#endif
         }
 
         internal static string AttestationProtocolToString(SqlConnectionAttestationProtocol value)
@@ -867,6 +884,10 @@ namespace Microsoft.Data.Common
                     return AttestationProtocolHGS;
                 case SqlConnectionAttestationProtocol.AAS:
                     return AttestationProtocolAAS;
+#if ENCLAVE_SIMULATOR
+                case SqlConnectionAttestationProtocol.SIM:
+                    return AttestationProtocolSIM;
+#endif
                 default:
                     return null;
             }
@@ -914,7 +935,7 @@ namespace Microsoft.Data.Common
                 {
                     try
                     {
-                        // Enum.ToObject allows only integral and enum values (enums are blocked above), rasing ArgumentException for the rest
+                        // Enum.ToObject allows only integral and enum values (enums are blocked above), raising ArgumentException for the rest
                         eValue = (SqlConnectionAttestationProtocol)Enum.ToObject(typeof(SqlConnectionAttestationProtocol), value);
                     }
                     catch (ArgumentException e)
@@ -1048,7 +1069,7 @@ namespace Microsoft.Data.Common
         internal const string OmitOracleConnectionName = "Omit Oracle Connection Name";
 
         // SqlClient
-        internal const string ApplicationIntent = "ApplicationIntent";
+        internal const string ApplicationIntent = "Application Intent";
         internal const string ApplicationName = "Application Name";
         internal const string AsynchronousProcessing = "Asynchronous Processing";
         internal const string AttachDBFilename = "AttachDbFilename";
@@ -1059,25 +1080,25 @@ namespace Microsoft.Data.Common
         internal const string Encrypt = "Encrypt";
         internal const string FailoverPartner = "Failover Partner";
         internal const string InitialCatalog = "Initial Catalog";
-        internal const string MultipleActiveResultSets = "MultipleActiveResultSets";
-        internal const string MultiSubnetFailover = "MultiSubnetFailover";
-        internal const string TransparentNetworkIPResolution = "TransparentNetworkIPResolution";
+        internal const string MultipleActiveResultSets = "Multiple Active Result Sets";
+        internal const string MultiSubnetFailover = "Multi Subnet Failover";
+        internal const string TransparentNetworkIPResolution = "Transparent Network IP Resolution";
         internal const string NetworkLibrary = "Network Library";
         internal const string PacketSize = "Packet Size";
         internal const string Replication = "Replication";
         internal const string TransactionBinding = "Transaction Binding";
-        internal const string TrustServerCertificate = "TrustServerCertificate";
+        internal const string TrustServerCertificate = "Trust Server Certificate";
         internal const string TypeSystemVersion = "Type System Version";
         internal const string UserInstance = "User Instance";
         internal const string WorkstationID = "Workstation ID";
-        internal const string ConnectRetryCount = "ConnectRetryCount";
-        internal const string ConnectRetryInterval = "ConnectRetryInterval";
+        internal const string ConnectRetryCount = "Connect Retry Count";
+        internal const string ConnectRetryInterval = "Connect Retry Interval";
         internal const string Authentication = "Authentication";
         internal const string Certificate = "Certificate";
         internal const string ColumnEncryptionSetting = "Column Encryption Setting";
         internal const string EnclaveAttestationUrl = "Enclave Attestation Url";
         internal const string AttestationProtocol = "Attestation Protocol";
-        internal const string PoolBlockingPeriod = "PoolBlockingPeriod";
+        internal const string PoolBlockingPeriod = "Pool Blocking Period";
 
         // common keywords (OleDb, OracleClient, SqlClient)
         internal const string DataSource = "Data Source";
@@ -1102,6 +1123,9 @@ namespace Microsoft.Data.Common
         //internal const string ApplicationName        = APP;
         internal const string APP = "app";
 
+        //internal const string ApplicationIntent    = APPLICATIONINTENT;
+        internal const string APPLICATIONINTENT = "applicationintent";
+
         //internal const string AttachDBFilename       = EXTENDEDPROPERTIES+","+INITIALFILENAME;
         internal const string EXTENDEDPROPERTIES = "extended properties";
         internal const string INITIALFILENAME = "initial file name";
@@ -1109,6 +1133,12 @@ namespace Microsoft.Data.Common
         //internal const string ConnectTimeout         = CONNECTIONTIMEOUT+","+TIMEOUT;
         internal const string CONNECTIONTIMEOUT = "connection timeout";
         internal const string TIMEOUT = "timeout";
+
+        //internal const string ConnectRetryCount = CONNECTRETRYCOUNT;
+        internal const string CONNECTRETRYCOUNT = "connectretrycount";
+
+        //internal const string ConnectRetryInterval = CONNECTRETRYINTERVAL;
+        internal const string CONNECTRETRYINTERVAL = "connectretryinterval";
 
         //internal const string CurrentLanguage        = LANGUAGE;
         internal const string LANGUAGE = "language";
@@ -1129,10 +1159,19 @@ namespace Microsoft.Data.Common
         //internal const string LoadBalanceTimeout     = ConnectionLifetime;
         internal const string ConnectionLifetime = "connection lifetime";
 
+        //internal const string MultipleActiveResultSets    = MULTIPLEACTIVERESULTSETS;
+        internal const string MULTIPLEACTIVERESULTSETS = "multipleactiveresultsets";
+
+        //internal const string MultiSubnetFailover = MULTISUBNETFAILOVER;
+        internal const string MULTISUBNETFAILOVER = "multisubnetfailover";
+        
         //internal const string NetworkLibrary         = NET+","+NETWORK;
         internal const string NET = "net";
         internal const string NETWORK = "network";
 
+        //internal const string PoolBlockingPeriod = POOLBLOCKINGPERIOD;
+        internal const string POOLBLOCKINGPERIOD = "poolblockingperiod";
+        
         internal const string WorkaroundOracleBug914652 = "Workaround Oracle Bug 914652";
 
         //internal const string Password               = Pwd;
@@ -1140,6 +1179,12 @@ namespace Microsoft.Data.Common
 
         //internal const string PersistSecurityInfo    = PERSISTSECURITYINFO;
         internal const string PERSISTSECURITYINFO = "persistsecurityinfo";
+
+        //internal const string TrustServerCertificate = TRUSTSERVERCERTIFICATE;
+        internal const string TRUSTSERVERCERTIFICATE = "trustservercertificate";
+
+        //internal const string TransparentNetworkIPResolution = TRANSPARENTNETWORKIPRESOLUTION;
+        internal const string TRANSPARENTNETWORKIPRESOLUTION = "transparentnetworkipresolution";
 
         //internal const string UserID                 = UID+","+User;
         internal const string UID = "uid";

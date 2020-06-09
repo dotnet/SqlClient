@@ -11,30 +11,74 @@ namespace Microsoft.Data.SqlClient.Tests
     {
 
         [Theory]
-        [InlineData("Data Source= randomserver.sys.local")]
-        [InlineData("Data Source= randomserver.sys.local; uid = a; pwd = b")]
+        [InlineData("Application Name = .Net Tests")]
+        [InlineData("Application Intent = ReadOnly")]
+        [InlineData("ApplicationIntent = ReadOnly")]
+        [InlineData("Attestation Protocol = HGS")]
+        [InlineData("Authentication = Active Directory Password ")]
+        [InlineData("Authentication = ActiveDirectoryPassword ")]
+        [InlineData("ConnectRetryCount = 5")]
+        [InlineData("Connect Retry Count = 0")]
+        [InlineData("ConnectRetryInterval = 10")]
+        [InlineData("Connect Retry Interval = 20")]
+        [InlineData("Connect Timeout = 30")]
+        [InlineData("Connection Timeout = 5")]
+        [InlineData("Connection Lifetime = 30")]
+        [InlineData("Load Balance Timeout = 0")]
+        [InlineData("Current Language = true")]
+        [InlineData("Timeout = 0")]
+        [InlineData("Column Encryption Setting = Enabled")]
+        [InlineData("Data Source = randomserver.sys.local")]
+        [InlineData("Address = np:localhost")]
+        [InlineData("Network Address = (localdb)\\myInstance")]
+        [InlineData("Server = randomserver.sys.local; uid = a; pwd = b")]
+        [InlineData("Addr = randomserver.sys.local; User Id = a; Password = b")]
+        [InlineData("Database = master")]
+        [InlineData("Enclave Attestation Url = http://dymmyurl")]
+        [InlineData("Encrypt = true")]
+        [InlineData("Enlist = false")]
+        [InlineData("Initial Catalog = Northwind; Failover Partner = randomserver.sys.local")]
+        [InlineData("Initial Catalog = Northwind")]
+        [InlineData("Integrated Security = true")]
+        [InlineData("Trusted_Connection = false")]
+        [InlineData("Max Pool Size = 50")]
+        [InlineData("Min Pool Size = 20")]
+        [InlineData("MultipleActiveResultSets = true")]
+        [InlineData("Multiple Active Result Sets = false")]
+        [InlineData("Multi Subnet Failover = true")]
+        [InlineData("Packet Size = 12000")]
+        [InlineData("Password = some@pass#!@123")]
+        [InlineData("Persist Security Info = false")]
+        [InlineData("PersistSecurityInfo = true")]
+        [InlineData("Pooling = no")]
+        [InlineData("Pooling = false")]
+        [InlineData("PoolBlockingPeriod = Auto")]
+        [InlineData("PoolBlockingperiod = NeverBlock")]
+        [InlineData("Replication = true")]
+        [InlineData("Transaction Binding = Explicit Unbind")]
+        [InlineData("Trust Server Certificate = true")]
+        [InlineData("TrustServerCertificate = false")]
+        [InlineData("Type System Version = Latest")]
+        [InlineData("User Instance = true")]
         [InlineData("Workstation ID = myworkstation")]
         [InlineData("WSID = myworkstation")]
-        [InlineData("Application Name = .Net Tests")]
-        [InlineData("Pooling = false")]
         public void ConnectionStringTests(string connectionString)
         {
             ExecuteConnectionStringTests(connectionString);
         }
 
         [Theory]
-        [InlineData("PoolBlockingPeriod = Auto")]
-        [InlineData("PoolBlockingperiod = NeverBlock")]
-        public void ConnectionStringTestsNetCoreApp(string connectionString)
-        {
-            ExecuteConnectionStringTests(connectionString);
-        }
-
-        [Theory]
-        [InlineData("Authentication = Active Directory Password ")]
+        [InlineData("Asynchronous Processing = True")]
         [InlineData("Authentication = Active Directory Integrated ")]
-        [InlineData("Authentication = ActiveDirectoryPassword ")]
         [InlineData("Authentication = ActiveDirectoryIntegrated ")]
+        [InlineData("Authentication = Active Directory Interactive ")]
+        [InlineData("Authentication = ActiveDirectoryInteractive ")]
+        [InlineData("Context Connection = false")]
+        [InlineData("Network Library = dbmssocn")]
+        [InlineData("Network = dbnmpntw")]
+        [InlineData("Net = dbmsrpcn")]
+        [InlineData("TransparentNetworkIPResolution = false")]
+        [InlineData("Transparent Network IP Resolution = true")]
         [SkipOnTargetFramework(~TargetFrameworkMonikers.NetFramework)]
         public void ConnectionStringTestsNetFx(string connectionString)
         {
@@ -103,7 +147,10 @@ namespace Microsoft.Data.SqlClient.Tests
                 Assert.Equal(valueBuilder1, valueBuilder2);
                 Assert.True(builder2.ContainsKey(key));
             }
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                Assert.NotNull(connection);
+            }
         }
-
     }
 }

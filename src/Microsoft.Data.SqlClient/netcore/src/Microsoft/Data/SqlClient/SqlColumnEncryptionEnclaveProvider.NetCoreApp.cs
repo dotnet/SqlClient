@@ -16,9 +16,11 @@ namespace Microsoft.Data.SqlClient
         /// <param name="clientDiffieHellmanKey">A Diffie-Hellman algorithm object encapsulating a client-side key pair.</param>
         /// <param name="attestationUrl">The endpoint of an attestation service for attesting the enclave.</param>
         /// <param name="servername">The name of the SQL Server instance containing the enclave.</param>
+        /// <param name="customData">The set of extra data needed for attestating the enclave.</param>
+        /// <param name="customDataLength">The length of the extra data needed for attestating the enclave.</param>
         /// <param name="sqlEnclaveSession">The requested enclave session or null if the provider does not implement session caching.</param>
         /// <param name="counter">A counter that the enclave provider is expected to increment each time SqlClient retrieves the session from the cache. The purpose of this field is to prevent replay attacks.</param>
-        public abstract void CreateEnclaveSession(byte[] enclaveAttestationInfo, ECDiffieHellmanCng clientDiffieHellmanKey, string attestationUrl, string servername,
+        public abstract void CreateEnclaveSession(byte[] enclaveAttestationInfo, ECDiffieHellmanCng clientDiffieHellmanKey, string attestationUrl, string servername, byte[] customData, int customDataLength,
             out SqlEnclaveSession sqlEnclaveSession, out long counter);
     }
 }

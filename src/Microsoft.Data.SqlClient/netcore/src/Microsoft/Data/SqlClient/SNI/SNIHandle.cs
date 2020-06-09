@@ -40,10 +40,9 @@ namespace Microsoft.Data.SqlClient.SNI
         /// Send a packet asynchronously
         /// </summary>
         /// <param name="packet">SNI packet</param>
-        /// <param name="disposePacketAfterSendAsync"></param>
         /// <param name="callback">Completion callback</param>
         /// <returns>SNI error code</returns>
-        public abstract uint SendAsync(SNIPacket packet, bool disposePacketAfterSendAsync, SNIAsyncCallback callback = null);
+        public abstract uint SendAsync(SNIPacket packet, SNIAsyncCallback callback = null);
 
         /// <summary>
         /// Receive a packet synchronously
@@ -87,6 +86,11 @@ namespace Microsoft.Data.SqlClient.SNI
         public abstract Guid ConnectionId { get; }
 
         public virtual int ReserveHeaderSize => 0;
+
+        public abstract SNIPacket RentPacket(int headerSize, int dataSize);
+
+        public abstract void ReturnPacket(SNIPacket packet);
+
 #if DEBUG
         /// <summary>
         /// Test handle for killing underlying connection

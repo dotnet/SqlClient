@@ -22,6 +22,9 @@ namespace Microsoft.Data.SqlClient
 
     internal abstract class TdsParserStateObject
     {
+        private static int _objectTypeCount; // EventSource counter
+        internal readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
+
         [Flags]
         internal enum SnapshottedStateFlags : byte
         {
@@ -34,6 +37,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         private const int AttentionTimeoutSeconds = 5;
+
+        private static readonly ContextCallback s_readAdyncCallbackComplete = ReadAsyncCallbackComplete;
 
         // Ticks to consider a connection "good" after a successful I/O (10,000 ticks = 1 ms)
         // The resolution of the timer is typically in the range 10 to 16 milliseconds according to msdn.
@@ -92,7 +97,7 @@ namespace Microsoft.Data.SqlClient
         internal volatile bool _fResetEventOwned;           // ResetEvent serializing call to sp_reset_connection
         internal volatile bool _fResetConnectionSent;       // For multiple packet execute
         internal bool _bulkCopyOpperationInProgress;        // Set to true during bulk copy and used to turn toggle write timeouts.
-        internal bool _bulkCopyWriteTimeout;                // Set to trun when _bulkCopyOpeperationInProgress is trun and write timeout happens
+        internal bool _bulkCopyWriteTimeout;                // Set to trun when _bulkCopyOperationInProgress is trun and write timeout happens
 
         // SNI variables
         /// <summary>
@@ -365,7 +370,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal abstract uint DisabeSsl();
+        internal abstract uint DisableSsl();
 
         internal bool HasOwner
         {
@@ -535,7 +540,8 @@ namespace Microsoft.Data.SqlClient
                     return false;
                 }
 
-
+                SqlClientEventSource.Log.AdvancedTraceEvent("<sc.TdsParserStateObject.NullBitmap.Initialize|INFO|ADV> {0}, NBCROW bitmap received, column count = {1}", stateObj.ObjectID, columnsCount);
+                SqlClientEventSource.Log.AdvancedTraceBinEvent("<sc.TdsParserStateObject.NullBitmap.Initialize|INFO|ADV> NBCROW bitmap data: ", _nullBitmap, (ushort)_nullBitmap.Length);
                 return true;
             }
 
@@ -863,9 +869,8 @@ namespace Microsoft.Data.SqlClient
         internal int DecrementPendingCallbacks(bool release)
         {
             int remaining = Interlocked.Decrement(ref _pendingCallbacks);
-
+            SqlClientEventSource.Log.AdvancedTraceEvent("<sc.TdsParserStateObject.DecrementPendingCallbacks|ADV> {0}, after decrementing _pendingCallbacks: {1}", ObjectID, _pendingCallbacks);
             FreeGcHandle(remaining, release);
-
             // NOTE: TdsParserSessionPool may call DecrementPendingCallbacks on a TdsParserStateObject which is already disposed
             // This is not dangerous (since the stateObj is no longer in use), but we need to add a workaround in the assert for it
             Debug.Assert((remaining == -1 && SessionHandle.IsNull) || (0 <= remaining && remaining < 3), $"_pendingCallbacks values is invalid after decrementing: {remaining}");
@@ -2003,7 +2008,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 if (_longlenleft == 0)
-                { 
+                {
                     // Read the next chunk or cleanup state if hit the end
                     if (!TryReadPlpLength(false, out ignored))
                     {
@@ -2824,7 +2829,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (_executionContext != null)
                         {
-                            ExecutionContext.Run(_executionContext, (state) => source.TrySetResult(null), null);
+                            ExecutionContext.Run(_executionContext, s_readAdyncCallbackComplete, source);
                         }
                         else
                         {
@@ -2846,6 +2851,12 @@ namespace Microsoft.Data.SqlClient
 
                 AssertValidState();
             }
+        }
+
+        private static void ReadAsyncCallbackComplete(object state)
+        {
+            TaskCompletionSource<object> source = (TaskCompletionSource<object>)state;
+            source.TrySetResult(null);
         }
 
         protected abstract bool CheckPacket(PacketHandle packet, TaskCompletionSource<object> source);
@@ -3454,7 +3465,7 @@ namespace Microsoft.Data.SqlClient
 
                 try
                 {
-                    // Dev11 #344723: SqlClient stress hang System_Data!Tcp::ReadSync via a call to SqlDataReader::Close
+                    // Dev11 #344723: SqlClient stress test suspends System_Data!Tcp::ReadSync via a call to SqlDataReader::Close
                     // Set _attentionSending to true before sending attention and reset after setting _attentionSent
                     // This prevents a race condition between receiving the attention ACK and setting _attentionSent
                     _attentionSending = true;
@@ -3715,6 +3726,42 @@ namespace Microsoft.Data.SqlClient
         }
 
         protected abstract PacketHandle EmptyReadPacket { get; }
+        internal int ObjectID => _objectID;
+
+        internal int PreAttentionErrorCount
+        {
+            get
+            {
+                int count = 0;
+                lock (_errorAndWarningsLock)
+                {
+                    if (_preAttentionErrors != null)
+                    {
+                        count = _preAttentionErrors.Count;
+                    }
+                }
+                return count;
+            }
+        }
+
+        /// <summary>
+        /// Gets the number of errors currently in the pre-attention warning collection
+        /// </summary>
+        internal int PreAttentionWarningCount
+        {
+            get
+            {
+                int count = 0;
+                lock (_errorAndWarningsLock)
+                {
+                    if (_preAttentionWarnings != null)
+                    {
+                        count = _preAttentionWarnings.Count;
+                    }
+                }
+                return count;
+            }
+        }
 
         /// <summary>
         /// Gets the full list of errors and warnings (including the pre-attention ones), then wipes all error and warning lists

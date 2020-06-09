@@ -129,7 +129,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 #endif
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void MARSSyncBusyReaderTest()
         {
             using (SqlConnection conn = new SqlConnection(_connStr))
@@ -173,7 +173,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void MARSSyncExecuteNonQueryTest()
         {
             using (SqlConnection conn = new SqlConnection(_connStr))
@@ -195,7 +195,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void MARSSyncExecuteReaderTest1()
         {
             using (SqlConnection conn = new SqlConnection(_connStr))
@@ -247,7 +247,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void MARSSyncExecuteReaderTest2()
         {
             using (SqlConnection conn = new SqlConnection(_connStr))
@@ -270,7 +270,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void MARSSyncExecuteReaderTest3()
         {
             using (SqlConnection conn = new SqlConnection(_connStr))
@@ -305,7 +305,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void MARSSyncExecuteReaderTest4()
         {
             using (SqlConnection conn = new SqlConnection(_connStr))
@@ -328,7 +328,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void MARSMultiDataReaderErrTest()
         {
             string queryString = "SELECT TOP 3 OrderID, CustomerID FROM dbo.Orders";

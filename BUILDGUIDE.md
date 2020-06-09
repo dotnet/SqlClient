@@ -5,7 +5,6 @@ This document provides all the necessary details to build the driver and run tes
 ## Visual Studio Pre-Requisites
 
 This project should be ideally built with Visual Studio 2017+ for the best compatibility. Use either of the two environments with their required set of compoenents as mentioned below:
-- **Visual Studio 2017** with imported components: [VS17Components](/tools/vsconfig/VS17Components.vsconfig)
 - **Visual Studio 2019** with imported components: [VS19Components](/tools/vsconfig/VS19Components.vsconfig)
 
 Once the environment is setup properly, execute the desired set of commands below from the _root_ folder to perform the respective operations:
@@ -100,14 +99,14 @@ Unix (`netcoreapp`):
 ### Pre-Requisites for running Manual tests:
 Manual Tests require the below setup to run:
 * SQL Server with enabled Shared Memory, TCP and Named Pipes Protocols and access to the Client OS.
-* Databases "NORTHWIND" and "UdtTestDb" present in SQL Server, created using SQL scripts [createNorthwindDb.sql](tools\testsql\createNorthwindDb.sql) and [createUdtTestDb.sql](tools\testsql\createUdtTestDb.sql).
-* Make a copy of the configuration file [config.default.json](src\Microsoft.Data.SqlClient\tests\ManualTests\config.default.json) and rename it to `config.json`. Update the values in `config.json`:
+* Databases "NORTHWIND" and "UdtTestDb" present in SQL Server, created using SQL scripts [createNorthwindDb.sql](tools/testsql/createNorthwindDb.sql) and [createUdtTestDb.sql](tools/testsql/createUdtTestDb.sql).
+* Make a copy of the configuration file [config.default.json](src/Microsoft.Data.SqlClient/tests/ManualTests/config.default.json) and rename it to `config.json`. Update the values in `config.json`:
 
 |Property|Description|Value|
 |------|--------|-------------------|
 |TCPConnectionString | Connection String for a TCP enabled SQL Server instance. | `Server={servername};Database={Database_Name};Trusted_Connection=True;` <br/> OR `Data Source={servername};Initial Catalog={Database_Name};Integrated Security=True;`|
 |NPConnectionString | Connection String for a Named Pipes enabled SQL Server instance.| `Server=\\{servername}\pipe\sql\query;Database={Database_Name};Trusted_Connection=True;` <br/> OR <br/> `Data Source=np:{servername};Initial Catalog={Database_Name};Integrated Security=True;`|
-|AADAccessToken | (Optional) Contains the Access Token to be used for tests.| _<OAuth 2.0 Access Token>_ |
+|AADAuthorityURL | (Optional) Identifies the OAuth2 authority resource for `Server` specified in `AADPasswordConnectionString` | `https://login.windows.net/<tenant>`, where `<tenant>` is the tenant ID of the Azure Active Directory (Azure AD) tenant |
 |AADPasswordConnectionString | (Optional) Connection String for testing Azure Active Directory Password Authentication. | `Data Source={server.database.windows.net}; Initial Catalog={Azure_DB_Name};Authentication=Active Directory Password; User ID={AAD_User}; Password={AAD_User_Password};`|
 |AzureKeyVaultURL | (Optional) Azure Key Vault Identifier URL | `https://{keyvaultname}.vault.azure.net/` |
 |AzureKeyVaultClientId | (Optional) "Application (client) ID" of an Active Directory registered application, granted access to the Azure Key Vault specified in `AZURE_KEY_VAULT_URL`. Requires the key permissions Get, List, Import, Decrypt, Encrypt, Unwrap, Wrap, Verify, and Sign. | _{Client Application ID}_ |
@@ -115,6 +114,7 @@ Manual Tests require the below setup to run:
 |SupportsLocalDb | (Optional) Whether or not a LocalDb instance of SQL Server is installed on the machine running the tests. |`true` OR `false`|
 |SupportsIntegratedSecurity | (Optional) Whether or not the USER running tests has integrated security access to the target SQL Server.| `true` OR `false`|
 |SupportsFileStream | (Optional) Whether or not FileStream is enabled on SQL Server| `true` OR `false`|
+|UseManagedSNIOnWindows | (Optional) Enables testing with Managed SNI on Windows| `true` OR `false`|
 
 Commands to run tests:
 
@@ -140,7 +140,53 @@ Unix (`netcoreapp`):
 
 ## Run A Single Test
 ```bash
-> dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" /p:Platform="AnyCPU" /p:Configuration="Debug" /p:TestTargetOS="Windowsnetcoreapp" --no-build -v n --filter "FullyQualifiedName=Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.CspProviderExt.TestKeysFromCertificatesCreatedWithMultipleCryptoProviders"
+> dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" /p:Platform="AnyCPU" /p:Configuration="Release" /p:TestTargetOS="Windowsnetcoreapp" --no-build -v n --filter "FullyQualifiedName=Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.CspProviderExt.TestKeysFromCertificatesCreatedWithMultipleCryptoProviders"
+```
+
+## Testing with Custom ReferenceType
+
+Tests can be built and run with custom "Reference Type" property that enables different styles of testing:
+
+- "Project" => Build and run tests with Microsoft.Data.SqlClient as Project Reference
+- "Package" => Build and run tests with Microsoft.Data.SqlClient as Package Reference with configured "TestMicrosoftDataSqlClientVersion" in "Versions.props" file.
+- "NetStandard" => Build and run tests with Microsoft.Data.SqlClient as Project Reference via .NET Standard Library
+- "NetStandardPackage" => Build and run tests with Microsoft.Data.SqlClient as Package Reference via .NET Standard Library
+
+> ************** IMPORTANT NOTE BEFORE PROCEEDING WITH "PACKAGE" AND "NETSTANDARDPACKAGE" REFERENCE TYPES ***************
+> CREATE A NUGET PACKAGE WITH BELOW COMMAND AND ADD TO LOCAL FOLDER + UPDATE NUGET CONFIG FILE TO READ FROM THAT LOCATION 
+> ```
+> > msbuild /p:configuration=Release
+> ```
+
+### Building Tests:
+
+For .NET Core, all 4 reference types are supported:
+
+```bash
+> msbuild /t:BuildTestsNetCore /p:ReferenceType=Project
+# Default setting uses Project Reference.
+
+> msbuild /t:BuildTestsNetCore /p:ReferenceType=Package
+
+> msbuild /t:BuildTestsNetCore /p:ReferenceType=NetStandard
+
+> msbuild /t:BuildTestsNetCore /p:ReferenceType=NetStandardPackage
+```
+
+For .NET Framework, below reference types are supported:
+
+```bash
+> msbuild /t:BuildTestsNetCore /p:ReferenceType=Project
+# Default setting uses Project Reference.
+
+> msbuild /t:BuildTestsNetCore /p:ReferenceType=Package
+```
+
+### Running Tests:
+
+Provide property to `dotnet test` commands for testing desired reference type.
+```
+dotnet test /p:ReferenceType=Project ...
 ```
 
 ## Testing with Custom TargetFramework
@@ -160,6 +206,7 @@ Tests can be built and run with custom Target Frameworks. See the below examples
 # Build the tests for custom TargetFramework (.NET Core)
 # Applicable values: netcoreapp2.1 | netcoreapp2.2 | netcoreapp3.0
 ```
+
 ### Running Tests:
 
 ```bash
@@ -171,3 +218,45 @@ Tests can be built and run with custom Target Frameworks. See the below examples
 # Use above property to run Functional Tests with custom TargetFramework (.NET Core)
 # Applicable values: netcoreapp2.1 | netcoreapp2.2 | netcoreapp3.0
 ```
+
+## Using Managed SNI on Windows
+
+Managed SNI can be enabled on Windows by enabling the below AppContext switch:
+
+**"Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows"**
+
+## Set truncation on for scaled decimal parameters
+
+Scaled decimal parameter truncation can be enabled by enabling the below AppContext switch:
+
+**"Switch.Microsoft.Data.SqlClient.TruncateScaledDecimal"**
+
+## Debugging SqlClient on Linux from Windows
+
+For enhanced developer experience, we support debugging SqlClient on Linux from Windows, using the project "**Microsoft.Data.SqlClient.DockerLinuxTest**" that requires "Container Tools" to be enabled in Visual Studio. You may import configuration: [VS19Components.vsconfig](./tools/vsconfig/VS19Components.vsconfig) if not enabled already.
+
+This project is also included in `docker-compose.yml` to demonstrate connectivity with SQL Server docker image.
+
+To run the same:
+1. Build the Solution in Visual Studio
+2. Set  `docker-compose` as Startup Project
+3. Run "Docker-Compose" launch configuration.
+4. You will see similar message in Debug window:
+    ```log
+    Connected to SQL Server v15.00.4023 from Unix 4.19.76.0
+    The program 'dotnet' has exited with code 0 (0x0).
+    ```
+5. Now you can write code in [Program.cs](/src/Microsoft.Data.SqlClient/tests/DockerLinuxTest/Program.cs) to debug SqlClient on Linux!
+
+### Troubleshooting Docker issues
+
+There may be times where connection cannot be made to SQL Server, we found below ideas helpful:
+
+- Clear Docker images to create clean image from time-to-time, and clear docker cache if needed by running `docker system prune` in Command Prompt.
+
+- If you face `sni.dll not found` errors when debugging, try updating below properties in netcore\Microsoft.Data.SqlClient.csproj file and try again:
+  ```xml
+    <OSGroup>Unix</OSGroup>
+    <TargetsWindows>false</TargetsWindows>
+    <TargetsUnix>true</TargetsUnix>
+  ```

@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
@@ -60,15 +59,21 @@ namespace Microsoft.Data.SqlClient.SNI
             else if (async)
             {
                 // Create call backs and allocate to the session handle
-                SNIAsyncCallback ReceiveAsyncCallbackDispatcher = new SNIAsyncCallback(ReadAsyncCallback);
-                SNIAsyncCallback SendAsyncCallbackDispatcher = new SNIAsyncCallback(WriteAsyncCallback);
-                _sessionHandle.SetAsyncCallbacks(ReceiveAsyncCallbackDispatcher, SendAsyncCallbackDispatcher);
+                _sessionHandle.SetAsyncCallbacks(ReadAsyncCallback, WriteAsyncCallback);
             }
         }
 
-        internal void ReadAsyncCallback(SNIPacket packet, uint error) => ReadAsyncCallback(IntPtr.Zero, PacketHandle.FromManagedPacket(packet), error);
+        internal void ReadAsyncCallback(SNIPacket packet, uint error)
+        {
+            ReadAsyncCallback(IntPtr.Zero, PacketHandle.FromManagedPacket(packet), error);
+            _sessionHandle.ReturnPacket(packet);
+        }
 
-        internal void WriteAsyncCallback(SNIPacket packet, uint sniError) => WriteAsyncCallback(IntPtr.Zero, PacketHandle.FromManagedPacket(packet), sniError);
+        internal void WriteAsyncCallback(SNIPacket packet, uint sniError)
+        {
+            WriteAsyncCallback(IntPtr.Zero, PacketHandle.FromManagedPacket(packet), sniError);
+            _sessionHandle.ReturnPacket(packet);
+        }
 
         protected override void RemovePacketFromPendingList(PacketHandle packet)
         {
@@ -110,8 +115,7 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 throw ADP.ClosedConnectionError();
             }
-            SNIPacket packet = null;
-            error = SNIProxy.Singleton.ReadSyncOverAsync(handle, out packet, timeoutRemaining);
+            error = SNIProxy.Singleton.ReadSyncOverAsync(handle, out SNIPacket packet, timeoutRemaining);
             return PacketHandle.FromManagedPacket(packet);
         }
 
@@ -119,7 +123,15 @@ namespace Microsoft.Data.SqlClient.SNI
 
         internal override bool IsPacketEmpty(PacketHandle packet) => packet.ManagedPacket == null;
 
-        internal override void ReleasePacket(PacketHandle syncReadPacket) => syncReadPacket.ManagedPacket?.Release();
+        internal override void ReleasePacket(PacketHandle syncReadPacket)
+        {
+            SNIPacket packet = syncReadPacket.ManagedPacket;
+            if (packet != null)
+            {
+                SNIHandle handle = Handle;
+                handle.ReturnPacket(packet);
+            }
+        }
 
         internal override uint CheckConnection()
         {
@@ -136,7 +148,11 @@ namespace Microsoft.Data.SqlClient.SNI
         internal override PacketHandle CreateAndSetAttentionPacket()
         {
             PacketHandle packetHandle = GetResetWritePacket(TdsEnums.HEADER_LEN);
+#if DEBUG
+            Debug.Assert(packetHandle.ManagedPacket.IsActive, "rental packet is not active a serious pooling error may have occured");
+#endif
             SetPacketData(packetHandle, SQL.AttentionHeader, TdsEnums.HEADER_LEN);
+            packetHandle.ManagedPacket.IsOutOfBand = true;
             return packetHandle;
         }
 
@@ -158,8 +174,12 @@ namespace Microsoft.Data.SqlClient.SNI
 
         internal override PacketHandle GetResetWritePacket(int dataSize)
         {
-            var packet = new SNIPacket(headerSize: _sessionHandle.ReserveHeaderSize, dataSize: dataSize);
-            Debug.Assert(packet.ReservedHeaderSize == _sessionHandle.ReserveHeaderSize, "failed to reserve header");
+            SNIHandle handle = Handle;
+            SNIPacket packet = handle.RentPacket(headerSize: handle.ReserveHeaderSize, dataSize: dataSize);
+#if DEBUG
+            Debug.Assert(packet.IsActive, "packet is not active, a serious pooling error may have occured");
+#endif
+            Debug.Assert(packet.ReservedHeaderSize == handle.ReserveHeaderSize, "failed to reserve header");
             return PacketHandle.FromManagedPacket(packet);
         }
 
@@ -172,7 +192,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
         internal override uint SniGetConnectionId(ref Guid clientConnectionId) => SNIProxy.Singleton.GetConnectionId(Handle, ref clientConnectionId);
 
-        internal override uint DisabeSsl() => SNIProxy.Singleton.DisableSsl(Handle);
+        internal override uint DisableSsl() => SNIProxy.Singleton.DisableSsl(Handle);
 
         internal override uint EnableMars(ref uint info)
         {

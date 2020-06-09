@@ -22,7 +22,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private const string warningInfoMessage = "Test of info messages";
         private const string orderIdQuery = "select orderid from orders where orderid < 10250";
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void WarningTest()
         {
             Action<object, SqlInfoMessageEventArgs> warningCallback =
@@ -151,6 +151,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public static void ExceptionTests()
         {
+            // Added to avoid random failures of Pool exhaustion
+            SqlConnection.ClearAllPools();
+
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
 
             // tests improper server name thrown from constructor of tdsparser
@@ -179,7 +182,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             VerifyConnectionFailure<SqlException>(() => GenerateConnectionException(badBuilder.ConnectionString), errorMessage, (ex) => VerifyException(ex, 1, 18456, 1, 14));
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void VariousExceptionTests()
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
@@ -205,7 +208,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void IndependentConnectionExceptionTest()
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
@@ -224,7 +227,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [CheckConnStrSetupFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void EnclavesConnectionExceptionTest()
+        {
+            string connectionStringWithAttestationProtocol = DataTestUtility.TCPConnectionString + ";Attestation Protocol = HGS;";
+            string connectionStringWithAttestationURL = DataTestUtility.TCPConnectionString + ";Enclave Attestation URL = https://dummyURL;";
+            string connectionStringWithEnclave = connectionStringWithAttestationURL + ";Attestation Protocol = HGS;";
+
+            InvalidOperationException e1 = Assert.Throws<InvalidOperationException>(() => new SqlConnection(connectionStringWithAttestationURL).Open());
+            Assert.Contains("You have specified the enclave attestation URL in the connection string", e1.Message);
+
+            InvalidOperationException e2 = Assert.Throws<InvalidOperationException>(() => new SqlConnection(connectionStringWithAttestationProtocol).Open());
+            Assert.Contains("You have specified the attestation protocol in the connection string", e2.Message);
+
+            InvalidOperationException e3 = Assert.Throws<InvalidOperationException>(() => new SqlConnection(connectionStringWithEnclave).Open());
+            Assert.Contains("You have specified the enclave attestation URL and attestation protocol in the connection string", e3.Message);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static async Task UnobservedTaskExceptionTest()
         {
             List<Exception> exceptionsSeen = new List<Exception>();

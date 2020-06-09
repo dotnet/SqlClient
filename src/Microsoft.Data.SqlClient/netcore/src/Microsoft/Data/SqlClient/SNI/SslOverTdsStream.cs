@@ -64,7 +64,7 @@ namespace Microsoft.Data.SqlClient.SNI
             => WriteInternal(buffer, offset, count, CancellationToken.None, async: false).Wait();
 
         /// <summary>
-        /// Write Buffer Asynchronosly
+        /// Write Buffer Asynchronously
         /// </summary>
         /// <param name="buffer"></param>
         /// <param name="offset"></param>
@@ -75,7 +75,7 @@ namespace Microsoft.Data.SqlClient.SNI
             => WriteInternal(buffer, offset, count, token, async: true);
 
         /// <summary>
-        /// Read Buffer Asynchronosly
+        /// Read Buffer Asynchronously
         /// </summary>
         /// <param name="buffer"></param>
         /// <param name="offset"></param>
@@ -86,7 +86,7 @@ namespace Microsoft.Data.SqlClient.SNI
             => ReadInternal(buffer, offset, count, token, async: true);
 
         /// <summary>
-        /// Read Internal is called synchronosly when async is false
+        /// Read Internal is called synchronously when async is false
         /// </summary>
         private async Task<int> ReadInternal(byte[] buffer, int offset, int count, CancellationToken token, bool async)
         {
@@ -104,9 +104,16 @@ namespace Microsoft.Data.SqlClient.SNI
                     // Account for split packets
                     while (readBytes < TdsEnums.HEADER_LEN)
                     {
-                        readBytes += async ?
+                        var readBytesForHeader = async ?
                             await _stream.ReadAsync(packetData, readBytes, TdsEnums.HEADER_LEN - readBytes, token).ConfigureAwait(false) :
                             _stream.Read(packetData, readBytes, TdsEnums.HEADER_LEN - readBytes);
+
+                        if (readBytesForHeader == 0)
+                        {
+                            throw new EndOfStreamException("End of stream reached");
+                        }
+
+                        readBytes += readBytesForHeader;
                     }
 
                     _packetBytes = (packetData[TdsEnums.HEADER_LEN_FIELD_OFFSET] << 8) | packetData[TdsEnums.HEADER_LEN_FIELD_OFFSET + 1];
@@ -145,7 +152,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
             while (count > 0)
             {
-                // During the SSL negotiation phase, SSL is tunnelled over TDS packet type 0x12. After
+                // During the SSL negotiation phase, SSL is tunneled over TDS packet type 0x12. After
                 // negotiation, the underlying socket only sees SSL frames.
                 //
                 if (_encapsulate)

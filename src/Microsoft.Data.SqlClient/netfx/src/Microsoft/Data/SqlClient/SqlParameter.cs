@@ -617,7 +617,7 @@ namespace Microsoft.Data.SqlClient
                                             this.Direction);
         }
 
-        internal bool ParamaterIsSqlType
+        internal bool ParameterIsSqlType
         {
             get
             {
@@ -924,7 +924,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if (_sqlBufferReturnValue != null)
                 {
-                    if (ParamaterIsSqlType)
+                    if (ParameterIsSqlType)
                     {
                         return _sqlBufferReturnValue.SqlValue;
                     }
@@ -1615,7 +1615,8 @@ namespace Microsoft.Data.SqlClient
                 //      2) no ordinals outside continuous range from 0 to fieldcount - 1 are allowed
                 //      3) no duplicate ordinals are allowed
                 // But assert no holes to be sure.
-                foreach (SmiExtendedMetaData md in fields) {
+                foreach (SmiExtendedMetaData md in fields)
+                {
                     Debug.Assert(null != md, "Shouldn't be able to have holes, since original loop algorithm prevents such.");
                 }
 #endif

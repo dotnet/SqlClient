@@ -7,6 +7,8 @@ namespace Microsoft.Data.ProviderBase
     using System.Collections.Concurrent;
     using System.Diagnostics;
     using Microsoft.Data.Common;
+    using Microsoft.Data.SqlClient;
+
 
     // set_ConnectionString calls DbConnectionFactory.GetConnectionPoolGroup
     // when not found a new pool entry is created and potentially added
@@ -37,14 +39,14 @@ namespace Microsoft.Data.ProviderBase
         private DbConnectionPoolGroupProviderInfo _providerInfo;
         private DbMetaDataFactory _metaDataFactory;
 
-        private static int _objectTypeCount; // Bid counter
+        private static int _objectTypeCount; // EventSource counter
         internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
 
         // always lock this before changing _state, we don't want to move out of the 'Disabled' state
         // PoolGroupStateUninitialized = 0;
         private const int PoolGroupStateActive = 1; // initial state, GetPoolGroup from cache, connection Open
         private const int PoolGroupStateIdle = 2; // all pools are pruned via Clear
-        private const int PoolGroupStateDisabled = 4; // factory pool entry prunning method
+        private const int PoolGroupStateDisabled = 4; // factory pool entry pruning method
 
         internal DbConnectionPoolGroup(DbConnectionOptions connectionOptions, DbConnectionPoolKey key, DbConnectionPoolGroupOptions poolGroupOptions)
         {
@@ -271,7 +273,7 @@ namespace Microsoft.Data.ProviderBase
             if (PoolGroupStateIdle == _state)
             {
                 _state = PoolGroupStateActive;
-                Bid.Trace("<prov.DbConnectionPoolGroup.ClearInternal|RES|INFO|CPOOL> %d#, Active\n", ObjectID);
+                SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionPoolGroup.ClearInternal|RES|INFO|CPOOL> {0}, Active", ObjectID);
             }
             return (PoolGroupStateActive == _state);
         }
@@ -333,14 +335,15 @@ namespace Microsoft.Data.ProviderBase
                     if (PoolGroupStateActive == _state)
                     {
                         _state = PoolGroupStateIdle;
-                        Bid.Trace("<prov.DbConnectionPoolGroup.ClearInternal|RES|INFO|CPOOL> %d#, Idle\n", ObjectID);
+                        SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionPoolGroup.ClearInternal|RES|INFO|CPOOL> {0}, Idle", ObjectID);
                     }
                     else if (PoolGroupStateIdle == _state)
                     {
                         _state = PoolGroupStateDisabled;
-                        Bid.Trace("<prov.DbConnectionPoolGroup.ReadyToRemove|RES|INFO|CPOOL> %d#, Disabled\n", ObjectID);
+                        SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionPoolGroup.ReadyToRemove|RES|INFO|CPOOL> {0}, Disabled", ObjectID);
                     }
                 }
+
                 return (PoolGroupStateDisabled == _state);
             }
         }

@@ -14,26 +14,26 @@ namespace Microsoft.Data.SqlClient.Server
 
     // DESIGN NOTES
     //
-    //  The following classes are a tight inheritance heirarchy, and are not designed for
+    //  The following classes are a tight inheritance hierarchy, and are not designed for
     //  being inherited outside of this file.  Instances are guaranteed to be immutable, and
     //  outside classes rely on this fact.
     //
     //  The various levels may not all be used outside of this file, but for clarity of purpose
-    //  they are all usefull distinctions to make.
+    //  they are all useful distinctions to make.
     //
-    //  In general, moving lower in the type heirarchy exposes less portable values.  Thus,
+    //  In general, moving lower in the type hierarchy exposes less portable values.  Thus,
     //  the root metadata can be readily shared across different (MSSQL) servers and clients,
     //  while QueryMetaData has attributes tied to a specific query, running against specific
     //  data storage on a specific server.
     //
-    //  The SmiMetaData heirarchy does not do data validation on retail builds!  It will assert
+    //  The SmiMetaData hierarchy does not do data validation on retail builds!  It will assert
     //  that the values passed to it have been validated externally, however.
     //
 
 
     // SmiMetaData
     //
-    //  Root of the heirarchy.
+    //  Root of the hierarchy.
     //  Represents the minimal amount of metadata required to represent any Sql Server datum
     //  without any references to any particular server or schema (thus, no server-specific multi-part names).
     //  It could be used to communicate solely between two disconnected clients, for instance.
@@ -864,7 +864,7 @@ namespace Microsoft.Data.SqlClient.Server
     internal class SmiExtendedMetaData : SmiMetaData
     {
 
-        private string _name;           // context-dependant identifier, ie. parameter name for parameters, column name for columns, etc.
+        private string _name;           // context-dependent identifier, ie. parameter name for parameters, column name for columns, etc.
 
         // three-part name for typed xml schema and for udt names
         private string _typeSpecificNamePart1;
@@ -1228,7 +1228,7 @@ namespace Microsoft.Data.SqlClient.Server
 
     // SmiStorageMetaData
     //
-    //  This class represents the addition of storage-level attributes to the heirarchy (i.e. attributes from 
+    //  This class represents the addition of storage-level attributes to the hierarchy (i.e. attributes from 
     //  underlying table, source variables, or whatever).
     //
     //  Most values use Null (either IsNullable == true or CLR null) to indicate "Not specified" state.  Selection
