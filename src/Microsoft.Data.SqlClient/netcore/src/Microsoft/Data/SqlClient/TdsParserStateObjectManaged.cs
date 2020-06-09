@@ -205,11 +205,7 @@ namespace Microsoft.Data.SqlClient.SNI
             return TdsEnums.SNI_ERROR;
         }
 
-        internal override uint EnableSsl(ref uint info)
-        {
-            uint result = SNIProxy.Singleton.EnableSsl(Handle, info);
-            return result;
-        }
+        internal override uint EnableSsl(ref uint info) => SNIProxy.Singleton.EnableSsl(Handle, info);
 
         internal override uint SetConnectionBufferSize(ref uint unsignedPacketSize) => SNIProxy.Singleton.SetConnectionBufferSize(Handle, unsignedPacketSize);
 

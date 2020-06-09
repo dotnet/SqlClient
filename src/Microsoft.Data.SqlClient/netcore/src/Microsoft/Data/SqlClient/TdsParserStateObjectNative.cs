@@ -320,8 +320,7 @@ namespace Microsoft.Data.SqlClient
         internal override uint EnableSsl(ref uint info)
         {
             // Add SSL (Encryption) SNI provider.
-            uint result = SNINativeMethodWrapper.SNIAddProvider(Handle, SNINativeMethodWrapper.ProviderEnum.SSL_PROV, ref info);
-            return result;
+            return SNINativeMethodWrapper.SNIAddProvider(Handle, SNINativeMethodWrapper.ProviderEnum.SSL_PROV, ref info);
         }
 
         internal override uint SetConnectionBufferSize(ref uint unsignedPacketSize)
