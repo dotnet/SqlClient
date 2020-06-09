@@ -364,6 +364,14 @@ namespace Microsoft.Data.SqlClient
                 ThrowExceptionAndWarning(_physicalStateObj);
                 Debug.Fail("SNI returned status != success, but no error thrown?");
             }
+
+            if (integratedSecurity || authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
+            {
+                LoadSSPILibrary();
+                // now allocate proper length of buffer
+                _sniSpnBuffer = new byte[SNINativeMethodWrapper.SniMaxComposedSpnLength];
+                SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> SSPI or Active Directory Authentication Library for SQL Server based integrated authentication", "SEC");
+            }
             else
             {
                 _sniSpnBuffer = null;
@@ -388,14 +396,6 @@ namespace Microsoft.Data.SqlClient
                         SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> SQL authentication", "SEC");
                         break;
                 }
-            }
-
-            _sniSpnBuffer = null;
-
-            if (integratedSecurity)
-            {
-                LoadSSPILibrary();
-                SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> SSPI or Active Directory Authentication Library for SQL Server based integrated authentication", "SEC");
             }
 
             byte[] instanceName = null;

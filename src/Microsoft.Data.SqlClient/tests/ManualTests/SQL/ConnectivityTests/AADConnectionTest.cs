@@ -320,6 +320,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Contains(expectedMessage, e.Message);
         }
 
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsIntegratedSecuritySetup), nameof(DataTestUtility.AreConnStringsSetup)) ]
+        public static void ADInteractiveUsingSSPI()
+        {
+            // test Passes with correct connection string.
+            string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD", "Trusted_Connection", "Integrated Security" };
+            string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.TCPConnectionString, removeKeys) +
+                $"Authentication=Active Directory Integrated;";
+            ConnectAndDisconnect(connStr);
+        }
+
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
         public static void ConnectionSpeed()
         {

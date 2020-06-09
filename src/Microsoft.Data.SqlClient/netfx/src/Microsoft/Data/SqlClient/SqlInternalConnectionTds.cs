@@ -1469,7 +1469,8 @@ namespace Microsoft.Data.SqlClient
             login.serverName = server.UserServerName;
 
             login.useReplication = ConnectionOptions.Replication;
-            login.useSSPI = ConnectionOptions.IntegratedSecurity;
+            login.useSSPI = ConnectionOptions.IntegratedSecurity
+                                     || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && !_fedAuthRequired);
             login.packetSize = _currentPacketSize;
             login.newPassword = newPassword;
             login.readOnlyIntent = ConnectionOptions.ApplicationIntent == ApplicationIntent.ReadOnly;
@@ -1486,13 +1487,13 @@ namespace Microsoft.Data.SqlClient
                 _sessionRecoveryRequested = true;
             }
 
-            // If the workflow being used is Active Directory Password or Active Directory Integrated and server's prelogin response
+            // If the workflow being used is Active Directory Password/Integrated/Interactive/Service Principal and server's prelogin response
             // for FEDAUTHREQUIRED option indicates Federated Authentication is required, we have to insert FedAuth Feature Extension
             // in Login7, indicating the intent to use Active Directory Authentication for SQL Server.
-            if ((ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword
+            if (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
-                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated
-                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal) && _fedAuthRequired)
+                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
+                || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && _fedAuthRequired))
             {
                 requestedFeatures |= TdsEnums.FeatureExtension.FedAuth;
                 _federatedAuthenticationInfoRequested = true;
