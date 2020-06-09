@@ -1469,7 +1469,7 @@ namespace Microsoft.Data.SqlClient
             login.serverName = server.UserServerName;
 
             login.useReplication = ConnectionOptions.Replication;
-            login.useSSPI = ConnectionOptions.IntegratedSecurity
+            login.useSSPI = ConnectionOptions.IntegratedSecurity  // Treat AD Integrated like Windows integrated when against a non-FedAuth endpoint
                                      || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && !_fedAuthRequired);
             login.packetSize = _currentPacketSize;
             login.newPassword = newPassword;
@@ -1487,11 +1487,13 @@ namespace Microsoft.Data.SqlClient
                 _sessionRecoveryRequested = true;
             }
 
-            // If the workflow being used is Active Directory Password or Active Directory Integrated and server's prelogin response
+            // If the workflow being used is Active Directory Password/Integrated/Interactive/Service Principal and server's prelogin response
             // for FEDAUTHREQUIRED option indicates Federated Authentication is required, we have to insert FedAuth Feature Extension
-            // in Login7, indicating the intent to use Active Directory Authentication Library for SQL Server.
+            // in Login7, indicating the intent to use Active Directory Authentication for SQL Server.
             if (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
+                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
+                // Since AD Integrated may be acting like Windows integrated, additionally check _fedAuthRequired
                 || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && _fedAuthRequired))
             {
                 requestedFeatures |= TdsEnums.FeatureExtension.FedAuth;
@@ -1878,7 +1880,8 @@ namespace Microsoft.Data.SqlClient
             Boolean isFedAuthEnabled = this._accessTokenInBytes != null ||
                                        connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword ||
                                        connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated ||
-                                       connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive;
+                                       connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive ||
+                                       connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal;
 
             // Check if the user had explicitly specified the TNIR option in the connection string or the connection string builder.
             // If the user has specified the option in the connection string explicitly, then we shouldn't disable TNIR.
@@ -2698,6 +2701,7 @@ namespace Microsoft.Data.SqlClient
                             }
                             break;
                         case SqlAuthenticationMethod.ActiveDirectoryPassword:
+                        case SqlAuthenticationMethod.ActiveDirectoryServicePrincipal:
                             if (_activeDirectoryAuthTimeoutRetryHelper.State == ActiveDirectoryAuthenticationTimeoutRetryState.Retrying)
                             {
                                 fedAuthToken = _activeDirectoryAuthTimeoutRetryHelper.CachedToken;
@@ -2720,7 +2724,7 @@ namespace Microsoft.Data.SqlClient
                             }
                             break;
                         default:
-                            throw new InvalidOperationException($"Failed to get a token with unsupported auth method {ConnectionOptions.Authentication}.");
+                            throw SQL.UnsupportedAuthenticationSpecified(ConnectionOptions.Authentication);
                     }
 
                     Debug.Assert(fedAuthToken.accessToken != null, "AccessToken should not be null.");
