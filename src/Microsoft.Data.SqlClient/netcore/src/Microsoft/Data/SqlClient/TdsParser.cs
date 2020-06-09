@@ -8192,10 +8192,11 @@ namespace Microsoft.Data.SqlClient
                 {
                     if ((requestedFeatures & TdsEnums.FeatureExtension.SessionRecovery) != 0)
                     {
-                        length += WriteSessionRecoveryFeatureRequest(recoverySessionData, true);
+                        WriteSessionRecoveryFeatureRequest(recoverySessionData, true);
                     }
                     if ((requestedFeatures & TdsEnums.FeatureExtension.FedAuth) != 0)
                     {
+                        SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.TdsLogin|{0}> Sending federated authentication feature request", "SEC");
                         Debug.Assert(fedAuthFeatureExtensionData != null, "fedAuthFeatureExtensionData should not null.");
                         WriteFedAuthFeatureRequest(fedAuthFeatureExtensionData.Value, write: true);
                     }
