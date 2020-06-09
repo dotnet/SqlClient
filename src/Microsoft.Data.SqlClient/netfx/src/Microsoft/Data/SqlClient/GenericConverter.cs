@@ -1,4 +1,8 @@
-﻿using System;
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using System;
 using System.Collections.Generic;
 using System.Data.SqlTypes;
 using System.Linq;
@@ -15,6 +19,9 @@ namespace Microsoft.Data.SqlClient
             return GenericConverterHelper<TIn, TOut>.Convert(value);
         }
 
+        /// <summary>
+        /// Note: this file is inherently different because the .NET Core JIT can leverage some better "smarts" to optimize out unnecessary casts
+        /// </summary>
         private static class GenericConverterHelper<TIn, TOut>
         {
             /// <summary>

@@ -137,28 +137,27 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Enum for specifying SqlDataReader.Get / IDataReader Get method used
-        [Flags]
         private enum ValueMethod
         {
-            GetValue = 0,
-            SqlTypeSqlDecimal = 1,
-            SqlTypeSqlDouble = 1 << 1,
-            SqlTypeSqlSingle = 1 << 2,
-            DataFeedStream = 1 << 3,
-            DataFeedText = 1 << 4,
-            DataFeedXml = 1 << 5,
-            GetInt32 = 1 << 6,
-            GetString = 1 << 7,
-            GetDouble = 1 << 8,
-            GetDecimal = 1 << 9,
-            GetInt16 = 1 << 10,
-            GetInt64 = 1 << 11,
-            GetChar = 1 << 12,
-            GetByte = 1 << 13,
-            GetBoolean = 1 << 14,
-            GetDateTime = 1 << 15,
-            GetGuid = 1 << 16,
-            GetFloat = 1 << 17
+            GetValue,
+            SqlTypeSqlDecimal,
+            SqlTypeSqlDouble,
+            SqlTypeSqlSingle,
+            DataFeedStream,
+            DataFeedText,
+            DataFeedXml,
+            GetInt32,
+            GetString,
+            GetDouble,
+            GetDecimal,
+            GetInt16,
+            GetInt64,
+            GetChar,
+            GetByte,
+            GetBoolean,
+            GetDateTime,
+            GetGuid,
+            GetFloat
         }
 
         // Used to hold column metadata for SqlDataReader case
@@ -1339,8 +1338,16 @@ namespace Microsoft.Data.SqlClient
                 isSqlType = false;
                 isDataFeed = false;
 
-                Type t = ((IDataReader)_rowSource).GetFieldType(ordinal);
-                
+                Type t = null;
+                try
+                {
+                    t = ((IDataReader)_rowSource).GetFieldType(ordinal);
+                }
+                catch
+                {
+                    // do some error logging here??
+                }
+
                 if (t == typeof(bool))
                 {
                     method = ValueMethod.GetBoolean;

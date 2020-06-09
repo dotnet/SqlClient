@@ -8,36 +8,57 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
 {
+    public class DecimalTheoryData: TheoryData<decimal>
+    {
+        public DecimalTheoryData()
+        {
+            Add(-100);
+            Add(0);
+            Add(.75m);
+            Add(525);
+        }
+    }
     public class GenericConverterTests
     {
-        [Fact]
-        public void ObjectConversionSuccessful()
+        [Theory]
+        [ClassData(typeof(DecimalTheoryData))]
+        public void ObjectToDecimal_ConversionSuccessful(decimal val)
         {
-            object test = 0m;
+            object objVal = val;
 
-            decimal converted = GenericConverter.Convert<object, decimal>(test);
+            decimal converted = GenericConverter.Convert<object, decimal>(objVal);
 
-            Assert.Equal(test, converted);
+            Assert.Equal(val, converted);
         }
 
         [Fact]
-        public void SelfConversionSuccessful()
+        public void ObjectToString_ConversionSuccessful()
         {
-            decimal test = 0m;
+            string testVal = "abcd1234";
 
-            decimal converted = GenericConverter.Convert<decimal, decimal>(test);
+            string converted = GenericConverter.Convert<object, string>(testVal);
 
-            Assert.Equal(test, converted);
+            Assert.Equal(testVal, converted);
         }
 
-        [Fact]
-        public void AssignableConversionSuccessful()
+        [Theory]
+        [ClassData(typeof(DecimalTheoryData))]
+        public void SelfConversionSuccessful(decimal val)
         {
-            SqlDecimal test = 0m;
+            decimal converted = GenericConverter.Convert<decimal, decimal>(val);
 
-            decimal converted = GenericConverter.Convert<SqlDecimal, decimal>(test);
+            Assert.Equal(val, converted);
+        }
 
-            Assert.Equal(test, converted);
+        [Theory]
+        [ClassData(typeof(DecimalTheoryData))]
+        public void AssignableConversionSuccessful(decimal val)
+        {
+            SqlDecimal sqlVal = new SqlDecimal(val);
+
+            decimal converted = GenericConverter.Convert<SqlDecimal, decimal>(sqlVal);
+
+            Assert.Equal(val, converted);
         }
     }
 }
