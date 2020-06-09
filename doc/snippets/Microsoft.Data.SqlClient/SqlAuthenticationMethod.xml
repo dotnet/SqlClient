@@ -22,7 +22,7 @@
             <value>3</value>
         </ActiveDirectoryIntegrated>
         <ActiveDirectoryInteractive>
-            <summary>The authentication method uses Active Directory Interactive. Use Active Directory Interactive to connecto to a SQL Database with an interactive authentication flow.</summary>
+            <summary>The authentication method uses Active Directory Interactive. Use Active Directory Interactive to connect to a SQL Database with an interactive authentication flow.</summary>
             <value>4</value>
         </ActiveDirectoryInteractive>
         <ActiveDirectoryServicePrincipal>
