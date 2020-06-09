@@ -15,7 +15,7 @@ The following console application demonstrates how to load data using the <xref=
 In this example, a <xref=Microsoft.Data.SqlClient.SqlDataReader> is used to copy data from the **Production.Product** table in the SQL Server **AdventureWorks** database to a similar table in the same database.
 
 > [!IMPORTANT]
-> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md).
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/dotnet/framework/data/adonet/sql/bulk-copy-example-setup).
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance,
 it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 
@@ -55,7 +55,7 @@ Note that the source data does not have to be located on SQL Server; you can use
 <xref:System.Data.DataTable>.
 
 > [!IMPORTANT]
-> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md).
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/dotnet/framework/data/adonet/sql/bulk-copy-example-setup).
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a
 Transact-SQL `INSERT … SELECT` statement to copy the data.
 
@@ -102,13 +102,13 @@ Transact-SQL `INSERT … SELECT` statement to copy the data.
 ## Remarks
 If options include `UseInternalTransaction` and the `externalTransaction` argument is not null, an **InvalidArgumentException** is thrown.
 
-For examples demonstrating how to use `SqlBulkCopy` in a transaction, see [Transaction and Bulk Copy Operations](~/docs/framework/data/adonet/sql/transaction-and-bulk-copy-operations.md).
+For examples demonstrating how to use `SqlBulkCopy` in a transaction, see [Transaction and Bulk Copy Operations](/dotnet/framework/data/adonet/sql/transaction-and-bulk-copy-operations).
 ]]></format>
 			</remarks>
 			<related type="Article" href="https://msdn.microsoft.com/library/83a7a0d2-8018-4354-97b9-0b1d99f8342b">
 				Performing Bulk Copy Operations
 			</related>
-			<related type="Article" href="~/docs/framework/data/adonet/ado-net-overview.md">
+			<related type="Article" href="/dotnet/framework/data/adonet/ado-net-overview">
 				ADO.NET Overview
 			</related>
 		</ctor>
@@ -152,7 +152,7 @@ In this example, the source data is first read from a SQL Server table to a <xre
 The source data does not have to be located on SQL Server; you can use any data source that can be read to an <xref:System.Data.IDataReader> or loaded to a <xref:System.Data.DataTable>.
 
 > [!IMPORTANT]
-> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md).
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/dotnet/framework/data/adonet/sql/bulk-copy-example-setup).
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance,
 it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 
@@ -216,7 +216,7 @@ Then run the sample again without emptying the table. An exception is thrown and
 added because of primary key constraint violations.
 
 > [!IMPORTANT]
-> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md). This code is provided to
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/dotnet/framework/data/adonet/sql/bulk-copy-example-setup). This code is provided to
 demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement
 to copy the data.
 
@@ -252,10 +252,10 @@ operations on the same <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instance use 
 
 ## Examples
 The following console application demonstrates how to bulk load data in batches of 50 rows. For an example illustrating how <xref:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize>
-works with a transaction, see [Transaction and Bulk Copy Operations](~/docs/framework/data/adonet/sql/transaction-and-bulk-copy-operations.md).
+works with a transaction, see [Transaction and Bulk Copy Operations](/dotnet/framework/data/adonet/sql/transaction-and-bulk-copy-operations).
 
 > [!IMPORTANT]
-> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md).
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/dotnet/framework/data/adonet/sql/bulk-copy-example-setup).
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance,
 it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 
@@ -284,7 +284,7 @@ In this example, the source data is first read from a SQL Server table to a <xre
 The source data does not have to be located on SQL Server; you can use any data source that can be read to an <xref:System.Data.IDataReader> or loaded to a <xref:System.Data.DataTable>.
 
 > [!IMPORTANT]
-> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md).
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/dotnet/framework/data/adonet/sql/bulk-copy-example-setup).
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a
 Transact-SQL `INSERT … SELECT` statement to copy the data.
 
@@ -307,7 +307,7 @@ Note that open <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instances are closed 
 The following example uses the same <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instance to add sales orders and their associated details to two destination tables. Because the **AdventureWorks** sales order tables are large, the sample reads only orders placed by a certain account number and bulk copies those orders and details to the destination tables. The <xref:Microsoft.Data.SqlClient.SqlBulkCopy.Close> method is used only after both bulk copy operations are complete.
 
 > [!IMPORTANT]
-> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md). This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/dotnet/framework/data/adonet/sql/bulk-copy-example-setup). This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 
 [!code-csharp[SqlBulkCopy.OrdersDetails#1](~/../sqlclient/doc/samples/SqlBulkCopy_OrdersDetails.cs#1)]
 ]]></format>
@@ -388,7 +388,7 @@ In this example, the connection is first used to read data from a SQL Server tab
 be located on SQL Server; you can use any data source that can be read to an <xref:System.Data.IDataReader> or loaded to a <xref:System.Data.DataTable>.
 
 > [!IMPORTANT]
-> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md).
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/dotnet/framework/data/adonet/sql/bulk-copy-example-setup).
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance,
 it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 [!code-csharp[SqlBulkCopy.Single#1](~/../sqlclient/doc/samples/SqlBulkCopy_Single.cs#1)]
@@ -423,7 +423,7 @@ In this example, the connection is first used to read data from a SQL Server tab
 Note that the source data does not have to be located on SQL Server; you can use any data source that can be read to an <xref:System.Data.IDataReader> or loaded to a <xref:System.Data.DataTable>.
 
 > [!IMPORTANT]
-> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md). This code is provided to
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/dotnet/framework/data/adonet/sql/bulk-copy-example-setup). This code is provided to
 demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT`
 statement to copy the data.
 
@@ -448,7 +448,7 @@ Note that the settings of <xref:Microsoft.Data.SqlClient.SqlBulkCopy.NotifyAfter
 You cannot call SqlBulkCopy.Close (<xref:Microsoft.Data.SqlClient.SqlBulkCopy.Close>) or SqlConnection.Close (<xref:Microsoft.Data.SqlClient.SqlConnection.Close>) from this event.
 Doing this will cause an <xref:System.InvalidOperationException> being thrown, and the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> object state will not change. If the user wants to cancel the
 operation from the event, the <xref:Microsoft.Data.SqlClient.SqlRowsCopiedEventArgs.Abort> property of the <xref:Microsoft.Data.SqlClient.SqlRowsCopiedEventArgs> can be used.
-(See [Transaction and Bulk Copy Operations](~/docs/framework/data/adonet/sql/transaction-and-bulk-copy-operations.md) for examples that use the
+(See [Transaction and Bulk Copy Operations](/dotnet/framework/data/adonet/sql/transaction-and-bulk-copy-operations) for examples that use the
 <xref:Microsoft.Data.SqlClient.SqlRowsCopiedEventArgs.Abort> property.)
 
 No action, such as transaction activity, is supported in the connection during the execution of the bulk copy operation, and it is recommended that you not use the same connection used
@@ -463,7 +463,7 @@ In this example, the connection is first used to read data from a SQL Server tab
 SQL Server; you can use any data source that can be read to an <xref:System.Data.IDataReader> or loaded to a <xref:System.Data.DataTable>.
 
 > [!IMPORTANT]
-> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md).
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/dotnet/framework/data/adonet/sql/bulk-copy-example-setup).
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier
 and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 
@@ -503,8 +503,8 @@ Call `Dispose` when you are finished using the <xref:Microsoft.Data.SqlClient.Sq
 After calling `Dispose`, you must release all references to the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> so the garbage collector can reclaim the memory that the
 <xref:Microsoft.Data.SqlClient.SqlBulkCopy> was occupying.
 
-For more information, see [Cleaning Up Unmanaged Resources](~/docs/standard/garbage-collection/unmanaged.md) and
-[Implementing a Dispose Method](~/docs/standard/garbage-collection/implementing-dispose.md).
+For more information, see [Cleaning Up Unmanaged Resources](/dotnet/standard/garbage-collection/unmanaged) and
+[Implementing a Dispose Method](/dotnet/standard/garbage-collection/implementing-dispose).
 
 > [!NOTE]
 > Always call `Dispose` before you release your last reference to the <xref:Microsoft.Data.SqlClient.SqlBulkCopy>. Otherwise, the resources it is using will not be freed until the garbage collector calls
@@ -565,7 +565,7 @@ The <xref:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnMappings> collection maps f
 The following console application demonstrates how to bulk load data from a <xref:Microsoft.Data.SqlClient.SqlDataReader>. The destination table is a table in the **AdventureWorks** database.
 
 > [!IMPORTANT]
-> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md). This code is provided
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/dotnet/framework/data/adonet/sql/bulk-copy-example-setup). This code is provided
 to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a
 Transact-SQL `INSERT … SELECT` statement to copy the data.
 
@@ -604,7 +604,7 @@ The following Console application demonstrates how to bulk load data from a <xre
 In this example, a <xref:System.Data.DataTable> is created at run time and is the source of the `SqlBulkCopy` operation.
 
 > [!IMPORTANT]
->  This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md).
+>  This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/dotnet/framework/data/adonet/sql/bulk-copy-example-setup).
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 
 [!code-csharp[SqlBulkCopy.DataTable#1](~/../sqlclient/doc/samples/SqlBulkCopy_DataTable.cs#1)]
@@ -613,7 +613,7 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
 			<related type="Article" href="https://msdn.microsoft.com/library/83a7a0d2-8018-4354-97b9-0b1d99f8342b">
 				Performing Bulk Copy Operations
 			</related>
-			<related type="Article" href="~/docs/framework/data/adonet/ado-net-overview.md">
+			<related type="Article" href="/dotnet/framework/data/adonet/ado-net-overview">
 				ADO.NET Overview
 			</related>
 		</WriteToServer>
@@ -659,7 +659,7 @@ In this example, a <xref:System.Data.DataTable> is created at run time and three
 The <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer%2A> method is called with a `DataRowState.Unchanged` `rowState` argument, so only the two unchanged rows are bulk copied to the destination.
 
 > [!IMPORTANT]
-> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md). This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/dotnet/framework/data/adonet/sql/bulk-copy-example-setup). This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 
 [!code-csharp[SqlBulkCopy.DataRowState#1](~/../sqlclient/doc/samples/SqlBulkCopy_DataRowState.cs#1)]
 ]]></format>
@@ -682,7 +682,7 @@ The following console application demonstrates how to bulk load data from a <xre
 In this example, a <xref:System.Data.DataTable> is created at run time. A single row is selected from the <xref:System.Data.DataTable> to copy to the destination table.  
 
 > [!IMPORTANT]
->  This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md). This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.  
+>  This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/dotnet/framework/data/adonet/sql/bulk-copy-example-setup). This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.  
 
 [!code-csharp[SqlBulkCopy.RowArray#1](~/../sqlclient/doc/samples/SqlBulkCopy_RowArray.cs#1)]
 
@@ -713,7 +713,7 @@ In this example, a <xref:System.Data.DataTable> is created at run time. A single
 			<remarks>
 				<format type="text/markdown"><![CDATA[
 
-For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](~/docs/framework/data/adonet/asynchronous-programming.md).
+For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](/dotnet/framework/data/adonet/asynchronous-programming).
 ]]></format>
 			</remarks>
 			<exception cref="T:System.InvalidOperationException">
@@ -777,7 +777,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 			<remarks>
 				<format type="text/markdown"><![CDATA[
 
-For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](~/docs/framework/data/adonet/asynchronous-programming.md).
+For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](/dotnet/framework/data/adonet/asynchronous-programming).
 ]]></format>
 			</remarks>
 			<exception cref="T:System.InvalidOperationException">
@@ -824,7 +824,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 			</returns>
 			<remarks>
 				<format type="text/markdown"><![CDATA[
-For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](~/docs/framework/data/adonet/asynchronous-programming.md).
+For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](/dotnet/framework/data/adonet/asynchronous-programming).
 ]]></format>
 			</remarks>
 			<exception cref="T:System.InvalidOperationException">
@@ -918,7 +918,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 			<remarks>
 				<format type="text/markdown"><![CDATA[
 
-For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](~/docs/framework/data/adonet/asynchronous-programming.md).
+For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](/dotnet/framework/data/adonet/asynchronous-programming).
 ]]></format>
 			</remarks>
 			<exception cref="T:System.InvalidOperationException">
@@ -996,7 +996,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 			<remarks>
 				<format type="text/markdown"><![CDATA[
 
-For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](~/docs/framework/data/adonet/asynchronous-programming.md).
+For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](/dotnet/framework/data/adonet/asynchronous-programming).
 ]]></format>
 			</remarks>
 			<exception cref="T:System.InvalidOperationException">
@@ -1065,7 +1065,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 			<remarks>
 				<format type="text/markdown"><![CDATA[
 
-For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](~/docs/framework/data/adonet/asynchronous-programming.md).
+For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](/dotnet/framework/data/adonet/asynchronous-programming).
 ]]></format>
 			</remarks>
 			<exception cref="T:System.InvalidOperationException">
@@ -1131,7 +1131,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 			<remarks>
 				<format type="text/markdown"><![CDATA[
 
-For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](~/docs/framework/data/adonet/asynchronous-programming.md).
+For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](/dotnet/framework/data/adonet/asynchronous-programming).
 ]]></format>
 			</remarks>
 			<exception cref="T:System.InvalidOperationException">
@@ -1190,7 +1190,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 			<remarks>
 				<format type="text/markdown"><![CDATA[
 
-For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](~/docs/framework/data/adonet/asynchronous-programming.md).
+For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](/dotnet/framework/data/adonet/asynchronous-programming).
 ]]></format>
 			</remarks>
 			<exception cref="T:System.InvalidOperationException">
@@ -1262,7 +1262,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 			<remarks>
 				<format type="text/markdown"><![CDATA[
 
-For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](~/docs/framework/data/adonet/asynchronous-programming.md).
+For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](/dotnet/framework/data/adonet/asynchronous-programming).
 ]]></format>
 			</remarks>
 			<exception cref="T:System.InvalidOperationException">

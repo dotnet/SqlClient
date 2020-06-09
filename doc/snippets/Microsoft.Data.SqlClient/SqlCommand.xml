@@ -254,7 +254,7 @@ The following console application creates updates data within the **AdventureWor
 				<see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" />
 				was set to
 				<see cref="T:System.IO.Stream" />
-				. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 				
 				-or-
 				
@@ -281,7 +281,7 @@ The following console application creates updates data within the **AdventureWor
 				
 				-or-
 				
-				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.InvalidOperationException">
 				The name/value pair "Asynchronous Processing=true" was not included within the connection string defining the connection for this
@@ -292,7 +292,7 @@ The following console application creates updates data within the **AdventureWor
 				
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
-				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.IO.IOException">
 				An error occurred in a
@@ -301,7 +301,7 @@ The following console application creates updates data within the **AdventureWor
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.ObjectDisposedException">
 				The
@@ -310,7 +310,7 @@ The following console application creates updates data within the **AdventureWor
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 		</BeginExecuteNonQuery>
 		<BeginExecuteNonQuery name="AsyncCallbackAndStateObject">
@@ -373,7 +373,7 @@ To set up this example, create a new Windows application. Put a <xref:System.Win
 				<see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" />
 				was set to
 				<see cref="T:System.IO.Stream" />
-				. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 				
 				-or-
 				
@@ -400,7 +400,7 @@ To set up this example, create a new Windows application. Put a <xref:System.Win
 				
 				-or-
 				
-				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.InvalidOperationException">
 				The name/value pair "Asynchronous Processing=true" was not included within the connection string defining the connection for this
@@ -411,7 +411,7 @@ To set up this example, create a new Windows application. Put a <xref:System.Win
 				
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
-				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 		</BeginExecuteNonQuery>
 		<BeginExecuteReader name="default">
@@ -457,7 +457,7 @@ The following console application starts the process of retrieving a data reader
 				<see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" />
 				was set to
 				<see cref="T:System.IO.Stream" />
-				. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 				
 				-or-
 				
@@ -484,7 +484,7 @@ The following console application starts the process of retrieving a data reader
 				
 				-or-
 				
-				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.InvalidOperationException">
 				The name/value pair "Asynchronous Processing=true" was not included within the connection string defining the connection for this
@@ -495,7 +495,7 @@ The following console application starts the process of retrieving a data reader
 				
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
-				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.IO.IOException">
 				An error occurred in a
@@ -504,7 +504,7 @@ The following console application starts the process of retrieving a data reader
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.ObjectDisposedException">
 				The
@@ -513,7 +513,7 @@ The following console application starts the process of retrieving a data reader
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 		</BeginExecuteReader>
 		<BeginExecuteReader name="CommandBehavior">
@@ -570,7 +570,7 @@ This example also passes the `CommandBehavior.CloseConnection` and `CommandBehav
 				<see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" />
 				was set to
 				<see cref="T:System.IO.Stream" />
-				. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 				
 				-or-
 				
@@ -597,7 +597,7 @@ This example also passes the `CommandBehavior.CloseConnection` and `CommandBehav
 				
 				-or-
 				
-				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.InvalidOperationException">
 				The name/value pair "Asynchronous Processing=true" was not included within the connection string defining the connection for this
@@ -608,7 +608,7 @@ This example also passes the `CommandBehavior.CloseConnection` and `CommandBehav
 				
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
-				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.IO.IOException">
 				An error occurred in a
@@ -617,7 +617,7 @@ This example also passes the `CommandBehavior.CloseConnection` and `CommandBehav
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.ObjectDisposedException">
 				The
@@ -626,7 +626,7 @@ This example also passes the `CommandBehavior.CloseConnection` and `CommandBehav
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 		</BeginExecuteReader>
 		<BeginExecuteReader name="AsyncCallbackAndstateObject">
@@ -694,7 +694,7 @@ To set up this example, create a new Windows application. Put a <xref:System.Win
 				<see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" />
 				was set to
 				<see cref="T:System.IO.Stream" />
-				. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 				
 				-or-
 				
@@ -721,7 +721,7 @@ To set up this example, create a new Windows application. Put a <xref:System.Win
 				
 				-or-
 				
-				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.InvalidOperationException">
 				The name/value pair "Asynchronous Processing=true" was not included within the connection string defining the connection for this
@@ -732,7 +732,7 @@ To set up this example, create a new Windows application. Put a <xref:System.Win
 				
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
-				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.IO.IOException">
 				An error occurred in a
@@ -741,7 +741,7 @@ To set up this example, create a new Windows application. Put a <xref:System.Win
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.ObjectDisposedException">
 				The
@@ -750,7 +750,7 @@ To set up this example, create a new Windows application. Put a <xref:System.Win
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 		</BeginExecuteReader>
 		<BeginExecuteReader name="AsyncCallbackAndstateObjectAndCommandBehavior">
@@ -829,7 +829,7 @@ This example passes the `CommandBehavior.CloseConnection` value in the `behavior
 				<see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" />
 				was set to
 				<see cref="T:System.IO.Stream" />
-				. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 				
 				-or-
 				
@@ -856,7 +856,7 @@ This example passes the `CommandBehavior.CloseConnection` value in the `behavior
 				
 				-or-
 				
-				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.InvalidOperationException">
 				The name/value pair "Asynchronous Processing=true" was not included within the connection string defining the connection for this
@@ -867,7 +867,7 @@ This example passes the `CommandBehavior.CloseConnection` value in the `behavior
 				
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
-				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.IO.IOException">
 				An error occurred in a
@@ -876,7 +876,7 @@ This example passes the `CommandBehavior.CloseConnection` value in the `behavior
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.ObjectDisposedException">
 				The
@@ -885,7 +885,7 @@ This example passes the `CommandBehavior.CloseConnection` value in the `behavior
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 		</BeginExecuteReader>
 		<BeginExecuteXmlReader name="default">
@@ -943,7 +943,7 @@ The following console application starts the process of retrieving XML data asyn
 				<see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" />
 				was set to
 				<see cref="T:System.IO.Stream" />
-				. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 				
 				-or-
 				
@@ -970,7 +970,7 @@ The following console application starts the process of retrieving XML data asyn
 				
 				-or-
 				
-				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.InvalidOperationException">
 				The name/value pair "Asynchronous Processing=true" was not included within the connection string defining the connection for this
@@ -981,7 +981,7 @@ The following console application starts the process of retrieving XML data asyn
 				
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
-				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.IO.IOException">
 				An error occurred in a
@@ -990,7 +990,7 @@ The following console application starts the process of retrieving XML data asyn
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.ObjectDisposedException">
 				The
@@ -999,7 +999,7 @@ The following console application starts the process of retrieving XML data asyn
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 		</BeginExecuteXmlReader>
 		<BeginExecuteXmlReader name="AsyncCallbackAndstateObject">
@@ -1077,7 +1077,7 @@ To set up this example, create a new Windows application. Put a <xref:System.Win
 				<see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" />
 				was set to
 				<see cref="T:System.IO.Stream" />
-				. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 				
 				-or-
 				
@@ -1104,7 +1104,7 @@ To set up this example, create a new Windows application. Put a <xref:System.Win
 				
 				-or-
 				
-				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.InvalidOperationException">
 				The name/value pair "Asynchronous Processing=true" was not included within the connection string defining the connection for this
@@ -1115,7 +1115,7 @@ To set up this example, create a new Windows application. Put a <xref:System.Win
 				
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
-				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.IO.IOException">
 				An error occurred in a
@@ -1124,7 +1124,7 @@ To set up this example, create a new Windows application. Put a <xref:System.Win
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.ObjectDisposedException">
 				The
@@ -1133,7 +1133,7 @@ To set up this example, create a new Windows application. Put a <xref:System.Win
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<altmember cref="M:Microsoft.Data.SqlClient.SqlCommand.EndExecuteXmlReader(System.IAsyncResult)" />
 			<altmember cref="M:Microsoft.Data.SqlClient.SqlCommand.ExecuteXmlReader" />
@@ -1205,7 +1205,7 @@ The Microsoft .NET Framework Data Provider for SQL Server does not support the q
 SELECT * FROM dbo.Customers WHERE CustomerID = @CustomerID
 ```
 
-For more information, see [Configuring Parameters and Parameter Data Types](~/docs/framework/data/adonet/configuring-parameters-and-parameter-data-types.md).
+For more information, see [Configuring Parameters and Parameter Data Types](/dotnet/framework/data/adonet/configuring-parameters-and-parameter-data-types).
 
 ## Examples
 The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and sets some of its properties.
@@ -1264,7 +1264,7 @@ The Microsoft .NET Framework Data Provider for SQL Server does not support the q
 
 SELECT * FROM Customers WHERE CustomerID = @CustomerID
 
-For more information, see [Configuring Parameters and Parameter Data Types](~/docs/framework/data/adonet/configuring-parameters-and-parameter-data-types.md).
+For more information, see [Configuring Parameters and Parameter Data Types](/dotnet/framework/data/adonet/configuring-parameters-and-parameter-data-types).
 
 ## Examples
 The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and sets some of its properties.
@@ -1613,7 +1613,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and t
 				<see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" />
 				was set to
 				<see cref="T:System.IO.Stream" />
-				. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 				
 				-or-
 				
@@ -1640,7 +1640,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and t
 				
 				-or-
 				
-				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.IO.IOException">
 				An error occurred in a
@@ -1649,12 +1649,12 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and t
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.InvalidOperationException">
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
-				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.ObjectDisposedException">
 				The
@@ -1663,7 +1663,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and t
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 		</ExecuteNonQuery>
 		<ExecuteNonQueryAsync name="CancellationToken">
@@ -1682,7 +1682,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and t
 				<format type="text/markdown"><![CDATA[
 
 ## Remarks
-For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](~/docs/framework/data/adonet/asynchronous-programming.md).
+For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](/dotnet/framework/data/adonet/asynchronous-programming).
 ]]></format>
 			</remarks>
 			<exception cref="T:System.InvalidCastException">
@@ -1692,7 +1692,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				<see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" />
 				was set to
 				<see cref="T:System.IO.Stream" />
-				. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 				
 				-or-
 				
@@ -1723,7 +1723,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
-				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 				
 				-or-
 				<see langword="Context Connection=true" />
@@ -1734,7 +1734,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				
 				-or-
 				
-				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.IO.IOException">
 				An error occurred in a
@@ -1743,7 +1743,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.ObjectDisposedException">
 				The
@@ -1752,7 +1752,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 		</ExecuteNonQueryAsync>
 		<ExecuteReader name="default">
@@ -1797,7 +1797,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand>, and 
 				<see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" />
 				was set to
 				<see cref="T:System.IO.Stream" />
-				. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 				
 				-or-
 				
@@ -1824,7 +1824,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand>, and 
 				
 				-or-
 				
-				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.InvalidOperationException">
 				The current state of the connection is closed.
@@ -1837,7 +1837,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand>, and 
 				
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
-				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.IO.IOException">
 				An error occurred in a
@@ -1846,7 +1846,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand>, and 
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.ObjectDisposedException">
 				The
@@ -1855,7 +1855,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand>, and 
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 		</ExecuteReader>
 		<ExecuteReader name="CommandBehavior">
@@ -1906,7 +1906,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand>, and 
 				<see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" />
 				was set to
 				<see cref="T:System.IO.Stream" />
-				. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 				
 				-or-
 				
@@ -1929,7 +1929,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand>, and 
 				.
 			</exception>
 			<exception cref="T:Microsoft.Data.SqlClient.SqlException">
-				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.IO.IOException">
 				An error occurred in a
@@ -1938,12 +1938,12 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand>, and 
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.InvalidOperationException">
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
-				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.ObjectDisposedException">
 				The
@@ -1952,7 +1952,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand>, and 
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 		</ExecuteReader>
 		<ExecuteReaderAsync name="default">
@@ -1974,7 +1974,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand>, and 
 				<format type="text/markdown"><![CDATA[
 
 ## Remarks
-For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](~/docs/framework/data/adonet/asynchronous-programming.md).
+For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](/dotnet/framework/data/adonet/asynchronous-programming).
 ]]></format>
 			</remarks>
 			<exception cref="T:System.InvalidCastException">
@@ -1984,7 +1984,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				<see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" />
 				was set to
 				<see cref="T:System.IO.Stream" />
-				. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 				
 				-or-
 				
@@ -2020,7 +2020,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
-				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 				
 				-or-
 				<see langword="Context Connection=true" />
@@ -2031,7 +2031,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				
 				-or-
 				
-				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.IO.IOException">
 				An error occurred in a
@@ -2040,7 +2040,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.ObjectDisposedException">
 				The
@@ -2049,7 +2049,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 		</ExecuteReaderAsync>
 		<ExecuteReaderAsync name="CommandBehavior">
@@ -2078,7 +2078,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				<format type="text/markdown"><![CDATA[
 
 ## Remarks
-For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](~/docs/framework/data/adonet/asynchronous-programming.md).
+For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](/dotnet/framework/data/adonet/asynchronous-programming).
 ]]></format>
 			</remarks>
 			<exception cref="T:System.InvalidCastException">
@@ -2088,7 +2088,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				<see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" />
 				was set to
 				<see cref="T:System.IO.Stream" />
-				. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 				
 				-or-
 				
@@ -2122,7 +2122,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				
 				-or-
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
-				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 				
 				-or-
 				<see langword="Context Connection=true" />
@@ -2133,7 +2133,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				
 				-or-
 				
-				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.IO.IOException">
 				An error occurred in a
@@ -2142,7 +2142,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.ObjectDisposedException">
 				The
@@ -2151,7 +2151,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 		</ExecuteReaderAsync>
 		<ExecuteReaderAsync name="CancellationToken">
@@ -2178,7 +2178,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				<format type="text/markdown">
 					<![CDATA[
 					## Remarks
-					For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](~/docs/framework/data/adonet/asynchronous-programming.md).
+					For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](/dotnet/framework/data/adonet/asynchronous-programming).
 					]]>
 				</format>
 			</remarks>
@@ -2189,7 +2189,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				<see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" />
 				was set to
 				<see cref="T:System.IO.Stream" />
-				. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 				
 				-or-
 				
@@ -2225,7 +2225,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
-				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 				
 				-or-
 				<see langword="Context Connection=true" />
@@ -2236,7 +2236,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				
 				-or-
 				
-				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.IO.IOException">
 				An error occurred in a
@@ -2245,7 +2245,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.ObjectDisposedException">
 				The
@@ -2254,7 +2254,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 		</ExecuteReaderAsync>
 		<ExecuteReaderAsync name="commandBehaviorAndCancellationToken">
@@ -2286,7 +2286,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				<format type="text/markdown"><![CDATA[
 				
 ## Remarks
-For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](~/docs/framework/data/adonet/asynchronous-programming.md).
+For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](/dotnet/framework/data/adonet/asynchronous-programming).
 ]]></format>
 			</remarks>
 			<exception cref="T:System.InvalidCastException">
@@ -2296,7 +2296,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				<see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" />
 				was set to
 				<see cref="T:System.IO.Stream" />
-				. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 				
 				-or-
 				
@@ -2332,7 +2332,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
-				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 				
 				-or-
 				<see langword="Context Connection=true" />
@@ -2343,7 +2343,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				
 				-or-
 				
-				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.IO.IOException">
 				An error occurred in a
@@ -2352,7 +2352,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.ObjectDisposedException">
 				The
@@ -2361,7 +2361,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 		</ExecuteReaderAsync>
 		<ExecuteScalar>
@@ -2399,7 +2399,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and t
 				<see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" />
 				was set to
 				<see cref="T:System.IO.Stream" />
-				. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 				
 				-or-
 				
@@ -2426,12 +2426,12 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and t
 				
 				-or-
 				
-				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.InvalidOperationException">
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
-				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.IO.IOException">
 				An error occurred in a
@@ -2440,7 +2440,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and t
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.ObjectDisposedException">
 				The
@@ -2449,7 +2449,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and t
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 		</ExecuteScalar>
 		<ExecuteScalarAsync name="CancellationToken">
@@ -2470,7 +2470,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and t
 				<format type="text/markdown"><![CDATA[
 
 ## Remarks
-For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](~/docs/framework/data/adonet/asynchronous-programming.md).
+For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](/dotnet/framework/data/adonet/asynchronous-programming).
 ]]></format>
 			</remarks>
 			<exception cref="T:System.InvalidCastException">
@@ -2480,7 +2480,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				<see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" />
 				was set to
 				<see cref="T:System.IO.Stream" />
-				. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 				
 				-or-
 				
@@ -2511,7 +2511,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
-				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 				
 				-or-
 				<see langword="Context Connection=true" />
@@ -2522,7 +2522,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				
 				-or-
 				
-				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.IO.IOException">
 				An error occurred in a
@@ -2531,7 +2531,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.ObjectDisposedException">
 				The
@@ -2540,7 +2540,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 		</ExecuteScalarAsync>
 		<ExecuteXmlReader name="default">
@@ -2590,7 +2590,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and t
 				<see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" />
 				was set to
 				<see cref="T:System.IO.Stream" />
-				. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 				
 				-or-
 				
@@ -2617,12 +2617,12 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and t
 				
 				-or-
 				
-				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.InvalidOperationException">
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
-				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.IO.IOException">
 				An error occurred in a
@@ -2631,7 +2631,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and t
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.ObjectDisposedException">
 				The
@@ -2640,7 +2640,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and t
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 		</ExecuteXmlReader>
 		<ExecuteXmlReaderAsync name="default">
@@ -2665,7 +2665,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and t
 
 ## Remarks
 The **XmlReader** returned by this method does not support asynchronous operations.
-For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](~/docs/framework/data/adonet/asynchronous-programming.md).
+For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](/dotnet/framework/data/adonet/asynchronous-programming).
 ]]></format>
 			</remarks>
 			<exception cref="T:System.InvalidCastException">
@@ -2675,7 +2675,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				<see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" />
 				was set to
 				<see cref="T:System.IO.Stream" />
-				. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 				
 				-or-
 				
@@ -2706,7 +2706,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
-				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 				
 				-or-
 				<see langword="Context Connection=true" />
@@ -2717,7 +2717,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				
 				-or-
 				
-				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.IO.IOException">
 				An error occurred in a
@@ -2726,7 +2726,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.ObjectDisposedException">
 				The
@@ -2735,7 +2735,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 		</ExecuteXmlReaderAsync>
 		<ExecuteXmlReaderAsync name="CancellationToken">
@@ -2763,7 +2763,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 
 ## Remarks
 The **XmlReader** returned by this method does not support asynchronous operations.
-For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](~/docs/framework/data/adonet/asynchronous-programming.md).
+For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](/dotnet/framework/data/adonet/asynchronous-programming).
 ]]></format>
 			</remarks>
 			<exception cref="T:System.InvalidCastException">
@@ -2773,7 +2773,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				<see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" />
 				was set to
 				<see cref="T:System.IO.Stream" />
-				. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 				
 				-or-
 				
@@ -2804,7 +2804,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
-				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 				
 				-or-
 				<see langword="Context Connection=true" />
@@ -2815,7 +2815,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				
 				-or-
 				
-				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.IO.IOException">
 				An error occurred in a
@@ -2824,7 +2824,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.ObjectDisposedException">
 				The
@@ -2833,7 +2833,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				<see cref="T:System.Xml.XmlReader" />
 				or
 				<see cref="T:System.IO.TextReader" />
-				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).
+				object was closed during a streaming operation.  For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 		</ExecuteXmlReaderAsync>
 		<Notification>
@@ -2897,7 +2897,7 @@ SELECT * FROM Customers WHERE CustomerID = @CustomerID
 > [!NOTE]
 > If the parameters in the collection do not match the requirements of the query to be executed, an error may result.
 
-For more information, see [Configuring Parameters and Parameter Data Types](~/docs/framework/data/adonet/configuring-parameters-and-parameter-data-types.md).
+For more information, see [Configuring Parameters and Parameter Data Types](/dotnet/framework/data/adonet/configuring-parameters-and-parameter-data-types).
 
 ## Examples
 The following example demonstrates how to create a <xref:Microsoft.Data.SqlClient.SqlCommand> and add parameters to the <xref:Microsoft.Data.SqlClient.SqlParameterCollection>.
@@ -3000,7 +3000,7 @@ You cannot set the <xref:Microsoft.Data.SqlClient.SqlCommand.Transaction%2A> pro
 ## Remarks
 The default <xref:System.Data.UpdateRowSource> value is **Both** unless the command is automatically generated (as in the case of the <xref:Microsoft.Data.SqlClient.SqlCommandBuilder>), in which case the default is **None**.
 
-For more information about using the **UpdatedRowSource** property, see [DataAdapter Parameters](~/docs/framework/data/adonet/dataadapter-parameters.md).
+For more information about using the **UpdatedRowSource** property, see [DataAdapter Parameters](/dotnet/framework/data/adonet/dataadapter-parameters).
 ]]></format>
 			</remarks>
 		</UpdatedRowSource>
