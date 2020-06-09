@@ -74,24 +74,24 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
     </frameworkAssemblies>
     <references>
       <group targetFramework="net46">
-        <reference file="Microsoft.Data.SqlClient.dll" />
-        <reference file="Microsoft.Data.SqlClient.pdb" />
-        <reference file="Microsoft.Data.SqlClient.xml" />
+          <reference file="Microsoft.Data.SqlClient.dll" />
+          <reference file="Microsoft.Data.SqlClient.pdb" />
+          <reference file="Microsoft.Data.SqlClient.xml" />
       </group>
       <group targetFramework="netcoreapp2.1">
-        <reference file="Microsoft.Data.SqlClient.dll" />
-        <reference file="Microsoft.Data.SqlClient.pdb" />
-        <reference file="Microsoft.Data.SqlClient.xml" />
+          <reference file="Microsoft.Data.SqlClient.dll" />
+          <reference file="Microsoft.Data.SqlClient.pdb" />
+          <reference file="Microsoft.Data.SqlClient.xml" />
       </group>
       <group targetFramework="netcoreapp3.1">
-        <reference file="Microsoft.Data.SqlClient.dll" />
-        <reference file="Microsoft.Data.SqlClient.pdb" />
-        <reference file="Microsoft.Data.SqlClient.xml" />
+          <reference file="Microsoft.Data.SqlClient.dll" />
+          <reference file="Microsoft.Data.SqlClient.pdb" />
+          <reference file="Microsoft.Data.SqlClient.xml" />
       </group>
       <group targetFramework="netstandard2.0">
-        <reference file="Microsoft.Data.SqlClient.dll" />
-        <reference file="Microsoft.Data.SqlClient.pdb" />
-        <reference file="Microsoft.Data.SqlClient.xml" />
+          <reference file="Microsoft.Data.SqlClient.dll" />
+          <reference file="Microsoft.Data.SqlClient.pdb" />
+          <reference file="Microsoft.Data.SqlClient.xml" />
       </group>
     </references>
   </metadata>
