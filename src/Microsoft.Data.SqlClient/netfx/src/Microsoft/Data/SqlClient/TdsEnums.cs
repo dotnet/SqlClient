@@ -238,12 +238,14 @@ namespace Microsoft.Data.SqlClient
         public const byte MSALWORKFLOW_ACTIVEDIRECTORYPASSWORD = 0x01;
         public const byte MSALWORKFLOW_ACTIVEDIRECTORYINTEGRATED = 0x02;
         public const byte MSALWORKFLOW_ACTIVEDIRECTORYINTERACTIVE = 0x03;
+        public const byte MSALWORKFLOW_ACTIVEDIRECTORYSERVICEPRINCIPAL = 0x01; // Using the Password byte as that is the closest we have
 
         public enum ActiveDirectoryWorkflow : byte
         {
             Password = MSALWORKFLOW_ACTIVEDIRECTORYPASSWORD,
             Integrated = MSALWORKFLOW_ACTIVEDIRECTORYINTEGRATED,
             Interactive = MSALWORKFLOW_ACTIVEDIRECTORYINTERACTIVE,
+            ServicePrincipal = MSALWORKFLOW_ACTIVEDIRECTORYSERVICEPRINCIPAL,
         }
 
         // The string used for username in the error message when Authentication = Active Directory Integrated with FedAuth is used, if authentication fails.
@@ -1084,6 +1086,9 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryInteractive/*'/>
         ActiveDirectoryInteractive,
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryServicePrincipal/*'/>
+        ActiveDirectoryServicePrincipal,
 #if ADONET_CERT_AUTH
         SqlCertificate
 #endif        
@@ -1099,7 +1104,7 @@ namespace Microsoft.Data.SqlClient
 
     internal class ActiveDirectoryAuthentication
     {
-        internal const string AdoClientId = "4d079b4c-cab7-4b7c-a115-8fd51b6f8239";
+        internal const string AdoClientId = "2fd908ad-0664-4344-b9be-cd3e8b574c38";
         internal const string MSALGetAccessTokenFunctionName = "AcquireToken";
     }
 

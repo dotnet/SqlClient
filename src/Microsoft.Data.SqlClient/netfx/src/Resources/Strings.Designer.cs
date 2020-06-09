@@ -9856,11 +9856,29 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot set the Credential property if &apos;Authentication=Active Directory Interactive&apos; has been specified in the connection string..
+        /// </summary>
+        internal static string SQL_SettingCredentialWithInteractive {
+            get {
+                return ResourceManager.GetString("SQL_SettingCredentialWithInteractive", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Integrated&apos;, if the Credential property has been set..
         /// </summary>
         internal static string SQL_SettingIntegratedWithCredential {
             get {
                 return ResourceManager.GetString("SQL_SettingIntegratedWithCredential", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Interactive&apos;, if the Credential property has been set..
+        /// </summary>
+        internal static string SQL_SettingInteractiveWithCredential {
+            get {
+                return ResourceManager.GetString("SQL_SettingInteractiveWithCredential", resourceCulture);
             }
         }
         
@@ -10072,6 +10090,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Active Directory Interactive authentication timed out. The user took too long to respond to the authentication request..
+        /// </summary>
+        internal static string SQL_Timeout_Active_Directory_Interactive_Authentication {
+            get {
+                return ResourceManager.GetString("SQL_Timeout_Active_Directory_Interactive_Authentication", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Execution Timeout Expired.  The timeout period elapsed prior to completion of the operation or the server is not responding..
         /// </summary>
         internal static string SQL_Timeout_Execution {
@@ -10239,6 +10266,15 @@ namespace System {
         internal static string SQL_UnsupportedAuthenticationByProvider {
             get {
                 return ResourceManager.GetString("SQL_UnsupportedAuthenticationByProvider", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unsupported authentication specified in this context: {0}.
+        /// </summary>
+        internal static string SQL_UnsupportedAuthenticationSpecified {
+            get {
+                return ResourceManager.GetString("SQL_UnsupportedAuthenticationSpecified", resourceCulture);
             }
         }
         

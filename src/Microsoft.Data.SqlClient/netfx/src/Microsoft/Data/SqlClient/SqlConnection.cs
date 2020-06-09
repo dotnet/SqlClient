@@ -321,6 +321,11 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.SettingCredentialWithIntegratedArgument();
                 }
 
+                if (UsesActiveDirectoryInteractive(connectionOptions))
+                {
+                    throw SQL.SettingCredentialWithInteractiveArgument();
+                }
+
                 Credential = credential;
             }
             // else
@@ -505,6 +510,11 @@ namespace Microsoft.Data.SqlClient
             return opt != null ? opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated : false;
         }
 
+        private bool UsesActiveDirectoryInteractive(SqlConnectionString opt)
+        {
+            return opt != null ? opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive : false;
+        }
+
         private bool UsesAuthentication(SqlConnectionString opt)
         {
             return opt != null ? opt.Authentication != SqlAuthenticationMethod.NotSpecified : false;
@@ -648,12 +658,16 @@ namespace Microsoft.Data.SqlClient
                     SqlConnectionString connectionOptions = new SqlConnectionString(value);
                     if (_credential != null)
                     {
-                        // Check for Credential being used with Authentication=ActiveDirectoryIntegrated. Since a different error string is used
+                        // Check for Credential being used with Authentication=ActiveDirectoryIntegrated/ActiveDirectoryInteractive. Since a different error string is used
                         // for this case in ConnectionString setter vs in Credential setter, check for this error case before calling
                         // CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential, which is common to both setters.
                         if (UsesActiveDirectoryIntegrated(connectionOptions))
                         {
                             throw SQL.SettingIntegratedWithCredential();
+                        }
+                        else if (UsesActiveDirectoryInteractive(connectionOptions))
+                        {
+                            throw SQL.SettingInteractiveWithCredential();
                         }
 
                         CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential(connectionOptions);
@@ -909,12 +923,16 @@ namespace Microsoft.Data.SqlClient
                 // check if the usage of credential has any conflict with the keys used in connection string
                 if (value != null)
                 {
-                    // Check for Credential being used with Authentication=ActiveDirectoryIntegrated. Since a different error string is used
+                    // Check for Credential being used with Authentication=ActiveDirectoryIntegrated/ActiveDirectoryInteractive. Since a different error string is used
                     // for this case in ConnectionString setter vs in Credential setter, check for this error case before calling
                     // CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential, which is common to both setters.
                     if (UsesActiveDirectoryIntegrated((SqlConnectionString)ConnectionOptions))
                     {
                         throw SQL.SettingCredentialWithIntegratedInvalid();
+                    }
+                    else if (UsesActiveDirectoryInteractive((SqlConnectionString)ConnectionOptions))
+                    {
+                        throw SQL.SettingCredentialWithInteractiveInvalid();
                     }
 
                     CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential((SqlConnectionString)ConnectionOptions);
@@ -1829,7 +1847,9 @@ namespace Microsoft.Data.SqlClient
             _applyTransientFaultHandling = (!overrides.HasFlag(SqlConnectionOverrides.OpenWithoutRetry) && retry == null && connectionOptions != null && connectionOptions.ConnectRetryCount > 0);
 
             if (connectionOptions != null &&
-                (connectionOptions.Authentication == SqlAuthenticationMethod.SqlPassword || connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword) &&
+                (connectionOptions.Authentication == SqlAuthenticationMethod.SqlPassword ||
+                    connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword ||
+                    connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal) &&
                 (!connectionOptions.HasUserIdKeyword || !connectionOptions.HasPasswordKeyword) &&
                 _credential == null)
             {

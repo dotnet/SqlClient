@@ -60,6 +60,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationTimeoutRetryHelper.cs">
       <Link>Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationTimeoutRetryHelper.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProvider.cs">
+      <Link>Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProvider.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\IBinarySerialize.cs">
       <Link>Microsoft\Data\SqlClient\Server\IBinarySerialize.cs</Link>
     </Compile>
@@ -253,7 +256,6 @@
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPool.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolOptions.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\ActiveDirectoryNativeAuthenticationProvider.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationToken.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\InvalidUdtException.cs" />

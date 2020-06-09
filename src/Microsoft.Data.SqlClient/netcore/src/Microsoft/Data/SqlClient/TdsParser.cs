@@ -367,28 +367,33 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 _sniSpnBuffer = null;
-                if (authType == SqlAuthenticationMethod.ActiveDirectoryPassword)
+                switch (authType)
                 {
-                    SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> Active Directory Password authentication", "SEC");
-                }
-                else if (authType == SqlAuthenticationMethod.SqlPassword)
-                {
-
-                    SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> SQL Password authentication", "SEC");
-                }
-                else if (authType == SqlAuthenticationMethod.ActiveDirectoryInteractive)
-                {
-                    SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> Active Directory Interactive authentication", "SEC");
-                }
-                else
-                {
-                    SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> SQL authentication", "SEC");
+                    case SqlAuthenticationMethod.ActiveDirectoryPassword:
+                        SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> Active Directory Password authentication", "SEC");
+                        break;
+                    case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
+                        SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> Active Directory Integrated authentication", "SEC");
+                        break;
+                    case SqlAuthenticationMethod.ActiveDirectoryInteractive:
+                        SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> Active Directory Interactive authentication", "SEC");
+                        break;
+                    case SqlAuthenticationMethod.ActiveDirectoryServicePrincipal:
+                        SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> Active Directory Service Principal authentication", "SEC");
+                        break;
+                    case SqlAuthenticationMethod.SqlPassword:
+                        SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> SQL Password authentication", "SEC");
+                        break;
+                    default:
+                        SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> SQL authentication", "SEC");
+                        break;
                 }
             }
 
             _sniSpnBuffer = null;
 
-            if (integratedSecurity)
+            // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
+            if (integratedSecurity || authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
             {
                 LoadSSPILibrary();
                 SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> SSPI or Active Directory Authentication Library for SQL Server based integrated authentication", "SEC");
@@ -402,8 +407,9 @@ namespace Microsoft.Data.SqlClient
 
             bool fParallel = _connHandler.ConnectionOptions.MultiSubnetFailover;
 
+            // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
             _physicalStateObj.CreatePhysicalSNIHandle(serverInfo.ExtendedServerName, ignoreSniOpenTimeout, timerExpire,
-                        out instanceName, ref _sniSpnBuffer, false, true, fParallel, integratedSecurity);
+                        out instanceName, ref _sniSpnBuffer, false, true, fParallel, integratedSecurity || authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated);
 
             if (TdsEnums.SNI_SUCCESS != _physicalStateObj.Status)
             {
@@ -956,8 +962,12 @@ namespace Microsoft.Data.SqlClient
                             throw SQL.ParsingErrorValue(ParsingErrorState.FedAuthRequiredPreLoginResponseInvalidValue, (int)payload[payloadOffset]);
                         }
 
-                        // We must NOT use the response for the FEDAUTHREQUIRED PreLogin option, if AccessToken is not null, meaning token based authentication is used.
-                        if (_connHandler.ConnectionOptions != null || _connHandler._accessTokenInBytes != null)
+                        // We must NOT use the response for the FEDAUTHREQUIRED PreLogin option, if the connection string option
+                        // was not using the new Authentication keyword or in other words, if Authentication=NotSpecified
+                        // Or AccessToken is not null, mean token based authentication is used.
+                        if ((_connHandler.ConnectionOptions != null
+                            && _connHandler.ConnectionOptions.Authentication != SqlAuthenticationMethod.NotSpecified)
+                            || _connHandler._accessTokenInBytes != null)
                         {
                             fedAuthRequired = payload[payloadOffset] == 0x01 ? true : false;
                         }
@@ -1331,7 +1341,7 @@ namespace Microsoft.Data.SqlClient
                 SqlClientEventSource.Log.AdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > SNI Native Error Code = {0}", win32ErrorCode);
                 if (details.sniErrorNumber == 0)
                 {
-                    // Provider error. The message from provider is preceded with non-localizable info from SNI
+                    // Provider error. The message from provider is preceeded with non-localizable info from SNI
                     // strip provider info from SNI
                     //
                     int iColon = errorMessage.IndexOf(':');
@@ -2072,7 +2082,7 @@ namespace Microsoft.Data.SqlClient
                                 return false;
                             }
 
-                            // read will call run until dataReady. Must not read any data if returnimmetiately set
+                            // read will call run until dataReady. Must not read any data if ReturnImmediately set
                             if (RunBehavior.ReturnImmediately != (RunBehavior.ReturnImmediately & runBehavior))
                             {
                                 ushort altRowId;
@@ -3705,7 +3715,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.TryProcessFedAuthInfo> Processed FEDAUTHINFO token stream: {0}", tempFedAuthInfo.ToString());
-            if (String.IsNullOrWhiteSpace(tempFedAuthInfo.stsurl) || String.IsNullOrWhiteSpace(tempFedAuthInfo.spn))
+            if (string.IsNullOrWhiteSpace(tempFedAuthInfo.stsurl) || string.IsNullOrWhiteSpace(tempFedAuthInfo.spn))
             {
                 // We should be receiving both stsurl and spn
                 SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.TryProcessFedAuthInfo|{0}> FEDAUTHINFO token stream does not contain both STSURL and SPN.", "ERR");
@@ -7656,7 +7666,7 @@ namespace Microsoft.Data.SqlClient
                     break;
                 case TdsEnums.FedAuthLibrary.SecurityToken:
                     Debug.Assert(fedAuthFeatureData.accessToken != null, "AccessToken should not be null.");
-                    dataLen = 1 + sizeof(int) + fedAuthFeatureData.accessToken.Length; // length of feature data = 1 byte for library and echo, security token length and sizeof(int) for token lenght itself
+                    dataLen = 1 + sizeof(int) + fedAuthFeatureData.accessToken.Length; // length of feature data = 1 byte for library and echo, security token length and sizeof(int) for token length itself
                     break;
                 default:
                     Debug.Fail("Unrecognized library type for fedauth feature extension request");
@@ -7710,6 +7720,9 @@ namespace Microsoft.Data.SqlClient
                                 break;
                             case SqlAuthenticationMethod.ActiveDirectoryInteractive:
                                 workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYINTERACTIVE;
+                                break;
+                            case SqlAuthenticationMethod.ActiveDirectoryServicePrincipal:
+                                workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYSERVICEPRINCIPAL;
                                 break;
                             default:
                                 Debug.Assert(false, "Unrecognized Authentication type for fedauth MSAL request");
@@ -8181,10 +8194,11 @@ namespace Microsoft.Data.SqlClient
                 {
                     if ((requestedFeatures & TdsEnums.FeatureExtension.SessionRecovery) != 0)
                     {
-                        length += WriteSessionRecoveryFeatureRequest(recoverySessionData, true);
+                        WriteSessionRecoveryFeatureRequest(recoverySessionData, true);
                     }
                     if ((requestedFeatures & TdsEnums.FeatureExtension.FedAuth) != 0)
                     {
+                        SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.TdsLogin|{0}> Sending federated authentication feature request", "SEC");
                         Debug.Assert(fedAuthFeatureExtensionData != null, "fedAuthFeatureExtensionData should not null.");
                         WriteFedAuthFeatureRequest(fedAuthFeatureExtensionData.Value, write: true);
                     }
@@ -8198,7 +8212,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     if ((requestedFeatures & TdsEnums.FeatureExtension.DataClassification) != 0)
                     {
-                        length += WriteDataClassificationFeatureRequest(true);
+                        WriteDataClassificationFeatureRequest(true);
                     }
                     if ((requestedFeatures & TdsEnums.FeatureExtension.UTF8Support) != 0)
                     {
@@ -8407,8 +8421,7 @@ namespace Microsoft.Data.SqlClient
                     int timeout,
                     SqlInternalTransaction transaction,
                     TdsParserStateObject stateObj,
-                    bool isDelegateControlRequest
-        )
+                    bool isDelegateControlRequest)
         {
             Debug.Assert(this == stateObj.Parser, "different parsers");
 
@@ -11837,7 +11850,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLIMAGE:
                 case TdsEnums.SQLUDT:
                     {
-                        Debug.Assert(!isDataFeed, "We cannot serilialize streams");
+                        Debug.Assert(!isDataFeed, "We cannot serialize streams");
                         Debug.Assert(value is byte[], "Value should be an array of bytes");
 
                         byte[] b = new byte[actualLength];
@@ -11879,7 +11892,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLBIGVARCHAR:
                 case TdsEnums.SQLTEXT:
                     {
-                        Debug.Assert(!isDataFeed, "We cannot seriliaze streams");
+                        Debug.Assert(!isDataFeed, "We cannot serialize streams");
                         Debug.Assert((value is string || value is byte[]), "Value is a byte array or string");
 
                         if (value is byte[])
@@ -11898,7 +11911,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLNTEXT:
                 case TdsEnums.SQLXMLTYPE:
                     {
-                        Debug.Assert(!isDataFeed, "We cannot serilialize streams");
+                        Debug.Assert(!isDataFeed, "We cannot serialize streams");
                         Debug.Assert((value is string || value is byte[]), "Value is a byte array or string");
 
                         if (value is byte[])
@@ -12237,7 +12250,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Reads the next chunk in a nvarchar(max) data stream.
-        // This call must be preceded by a call to ReadPlpLength or ReadDataLength.
+        // This call must be preceeded by a call to ReadPlpLength or ReadDataLength.
         // Will not start reading into the next chunk if bytes requested is larger than
         // the current chunk length. Do another ReadPlpLength, ReadPlpUnicodeChars in that case.
         // Returns the actual chars read
@@ -12285,7 +12298,7 @@ namespace Microsoft.Data.SqlClient
 
         // Reads the requested number of chars from a plp data stream, or the entire data if
         // requested length is -1 or larger than the actual length of data. First call to this method
-        //  should be preceded by a call to ReadPlpLength or ReadDataLength.
+        //  should be preceeded by a call to ReadPlpLength or ReadDataLength.
         // Returns the actual chars read.
         internal bool TryReadPlpUnicodeChars(ref char[] buff, int offst, int len, TdsParserStateObject stateObj, out int totalCharsRead)
         {

@@ -507,6 +507,7 @@ namespace Microsoft.Data.SqlClient
             if (connHandler.ConnectionOptions.LocalDBInstance != null)
                 LocalDBAPI.CreateLocalDBInstance(connHandler.ConnectionOptions.LocalDBInstance);
 
+            // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
             if (integratedSecurity || authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
             {
                 LoadSSPILibrary();
@@ -517,22 +518,26 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 _sniSpnBuffer = null;
-                if (authType == SqlAuthenticationMethod.ActiveDirectoryPassword)
+                switch (authType)
                 {
-                    SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> Active Directory Password authentication", "SEC");
-                }
-                else if (authType == SqlAuthenticationMethod.SqlPassword)
-                {
-
-                    SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> SQL Password authentication", "SEC");
-                }
-                else if (authType == SqlAuthenticationMethod.ActiveDirectoryInteractive)
-                {
-                    SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> Active Directory Interactive authentication", "SEC");
-                }
-                else
-                {
-                    SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> SQL authentication", "SEC");
+                    case SqlAuthenticationMethod.ActiveDirectoryPassword:
+                        SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> Active Directory Password authentication", "SEC");
+                        break;
+                    case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
+                        SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> Active Directory Integrated authentication", "SEC");
+                        break;
+                    case SqlAuthenticationMethod.ActiveDirectoryInteractive:
+                        SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> Active Directory Interactive authentication", "SEC");
+                        break;
+                    case SqlAuthenticationMethod.ActiveDirectoryServicePrincipal:
+                        SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> Active Directory Service Principal authentication", "SEC");
+                        break;
+                    case SqlAuthenticationMethod.SqlPassword:
+                        SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> SQL Password authentication", "SEC");
+                        break;
+                    default:
+                        SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> SQL authentication", "SEC");
+                        break;
                 }
             }
 
@@ -8434,6 +8439,9 @@ namespace Microsoft.Data.SqlClient
                                 break;
                             case SqlAuthenticationMethod.ActiveDirectoryInteractive:
                                 workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYINTERACTIVE;
+                                break;
+                            case SqlAuthenticationMethod.ActiveDirectoryServicePrincipal:
+                                workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYSERVICEPRINCIPAL;
                                 break;
                             default:
                                 Debug.Assert(false, "Unrecognized Authentication type for fedauth MSAL request");

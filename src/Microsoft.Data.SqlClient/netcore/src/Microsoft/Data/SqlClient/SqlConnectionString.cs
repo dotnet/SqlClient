@@ -453,14 +453,9 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.AuthenticationAndIntegratedSecurity();
             }
 
-            if (Authentication == SqlClient.SqlAuthenticationMethod.ActiveDirectoryIntegrated && (HasUserIdKeyword || HasPasswordKeyword))
+            if (Authentication == SqlClient.SqlAuthenticationMethod.ActiveDirectoryIntegrated && HasPasswordKeyword)
             {
-                throw SQL.IntegratedWithUserIDAndPassword();
-            }
-
-            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive && !HasUserIdKeyword)
-            {
-                throw SQL.InteractiveWithoutUserID();
+                throw SQL.IntegratedWithPassword();
             }
 
             if (Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive && HasPasswordKeyword)

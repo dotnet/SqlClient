@@ -402,14 +402,11 @@
   <data name="SQL_AuthenticationAndIntegratedSecurity" xml:space="preserve">
     <value>Cannot use 'Authentication' with 'Integrated Security'.</value>
   </data>
-  <data name="SQL_IntegratedWithUserIDAndPassword" xml:space="preserve">
-    <value>Cannot use 'Authentication=Active Directory Integrated' with 'User ID', 'UID', 'Password' or 'PWD' connection string keywords.</value>
+  <data name="SQL_IntegratedWithPassword" xml:space="preserve">
+    <value>Cannot use 'Authentication=Active Directory Integrated' with 'Password' or 'PWD' connection string keywords.</value>
   </data>
   <data name="SQL_InteractiveWithPassword" xml:space="preserve">
-    <value>Cannot use 'Authentication=Active Directory Interactive' with 'PWD' connection string keywords.</value>
-  </data>
-  <data name="SQL_InteractiveWithoutUserID" xml:space="preserve">
-    <value>Cannot use 'Authentication=Active Directory Interactive' without 'User ID' or 'UID' connection string keywords.</value>
+    <value>Cannot use 'Authentication=Active Directory Interactive' with 'Password' or 'PWD' connection string keywords.</value>
   </data>
   <data name="SQL_EncryptionNotSupportedByClient" xml:space="preserve">
     <value>The instance of SQL Server you attempted to connect to requires encryption but this machine does not support it.</value>
@@ -1862,5 +1859,23 @@
   </data>
   <data name="SQL_BulkLoadCannotConvertValueWithoutRowNo" xml:space="preserve">
     <value>The given value{0} of type {1} from the data source cannot be converted to type {2} for Column {3} [{4}].</value>
+  </data>
+  <data name="SQL_SettingCredentialWithIntegrated" xml:space="preserve">
+    <value>Cannot set the Credential property if 'Authentication=Active Directory Integrated' has been specified in the connection string.</value>
+  </data>
+  <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
+    <value>Cannot use 'Authentication=Active Directory Integrated', if the Credential property has been set.</value>
+  </data>
+  <data name="SQL_UnsupportedAuthenticationSpecified" xml:space="preserve">
+    <value>Unsupported authentication specified in this context: {0}</value>
+  </data>
+  <data name="SQL_Timeout_Active_Directory_Interactive_Authentication" xml:space="preserve">
+    <value>Active Directory Interactive authentication timed out. The user took too long to respond to the authentication request.</value>
+  </data>
+  <data name="SQL_SettingCredentialWithInteractive" xml:space="preserve">
+    <value>Cannot set the Credential property if 'Authentication=Active Directory Interactive' has been specified in the connection string.</value>
+  </data>
+  <data name="SQL_SettingInteractiveWithCredential" xml:space="preserve">
+    <value>Cannot use 'Authentication=Active Directory Interactive', if the Credential property has been set.</value>
   </data>
 </root>
