@@ -36,14 +36,14 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/Add[@name="columnStringAndsortOrderSortOrder"]/*'/>
         public SqlBulkCopyColumnOrderHint Add(string column, SortOrder sortOrder) => Add(new SqlBulkCopyColumnOrderHint(column, sortOrder));
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/Clear/*'/>
-        public new void Clear()
+#pragma warning disable CS1591 // XML comment not needed. Method is not part of public API and class is sealed
+        protected override void OnClear()
+#pragma warning restore CS1591 
         {
             foreach (SqlBulkCopyColumnOrderHint orderHint in InnerList)
             {
                 UnregisterColumnName(orderHint, orderHint.Column);
             }
-            base.Clear();
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/Contains/*'/>
@@ -78,16 +78,22 @@ namespace Microsoft.Data.SqlClient
             {
                 throw new ArgumentNullException(nameof(columnOrderHint));
             }
-            UnregisterColumnName(columnOrderHint, columnOrderHint.Column);
-            InnerList.Remove(columnOrderHint);
+            // OnRemove only works with the List instance and not the InnerList instance
+            List.Remove(columnOrderHint);
         }
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/RemoveAt/*'/>
-        public new void RemoveAt(int index)
+#pragma warning disable CS1591 // XML comment not needed. Method is not part of public API and class is sealed
+        protected override void OnRemove(int index, object value)
+#pragma warning restore CS1591 
         {
-            var orderHint = (SqlBulkCopyColumnOrderHint)InnerList[index];
-            UnregisterColumnName(orderHint, orderHint.Column);
-            base.RemoveAt(index);
+            if (value is SqlBulkCopyColumnOrderHint orderHint)
+            {
+                UnregisterColumnName(orderHint, orderHint.Column);
+            }
+            else
+            {
+                throw new ArgumentNullException(nameof(orderHint));
+            }
         }
 
         private void ColumnNameChanging(object sender, string newName)

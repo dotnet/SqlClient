@@ -233,7 +233,6 @@ namespace Microsoft.Data.SqlClient
         private TdsParser _parser;
         private TdsParserStateObject _stateObj;
         private List<_ColumnMapping> _sortedColumnMappings;
-        private HashSet<string> _destColumnNames;
 
         private SqlRowsCopiedEventHandler _rowsCopiedEventHandler;
 
@@ -613,7 +612,7 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.BulkLoadExistingTransaction();
             }
 
-            _destColumnNames = new HashSet<string>();
+            HashSet<string> destColumnNames = new HashSet<string>();
 
             // Loop over the metadata for each column
             _SqlMetaDataSet metaDataSet = internalResults[MetaDataResultId].MetaData;
@@ -647,7 +646,7 @@ namespace Microsoft.Data.SqlClient
                         }
 
                         _sortedColumnMappings.Add(new _ColumnMapping(_localColumnMappings[assocId]._internalSourceColumnOrdinal, metadata));
-                        _destColumnNames.Add(metadata.column);
+                        destColumnNames.Add(metadata.column);
                         nmatched++;
 
                         if (nmatched > 1)
@@ -819,21 +818,21 @@ namespace Microsoft.Data.SqlClient
                 }
                 if (ColumnOrderHints.Count > 0)
                 {
-                    updateBulkCommandText.Append((addSeparator ? ", " : "") + TryGetOrderHintText());
+                    updateBulkCommandText.Append((addSeparator ? ", " : "") + TryGetOrderHintText(destColumnNames));
                 }
                 updateBulkCommandText.Append(")");
             }
             return (updateBulkCommandText.ToString());
         }
 
-        private string TryGetOrderHintText()
+        private string TryGetOrderHintText(HashSet<string> destColumnNames)
         {
             StringBuilder orderHintText = new StringBuilder("ORDER(");
 
             foreach (SqlBulkCopyColumnOrderHint orderHint in ColumnOrderHints)
             {
                 string columnNameArg = orderHint.Column;
-                if (!_destColumnNames.Contains(columnNameArg))
+                if (!destColumnNames.Contains(columnNameArg))
                 {
                     // column is not valid in the destination table
                     throw SQL.BulkLoadOrderHintInvalidColumn(columnNameArg);

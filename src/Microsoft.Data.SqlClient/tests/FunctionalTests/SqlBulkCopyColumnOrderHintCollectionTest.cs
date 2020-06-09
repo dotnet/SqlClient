@@ -428,11 +428,8 @@ namespace Microsoft.Data.SqlClient.Tests
             collection.Remove(item2);
             Assert.Empty(collection);
 
-            // The explicit implementation of IList.Remove throws ArgumentException if
-            // the item isn't in the collection, but the public Remove method does not
-            // throw in the full framework.
-            collection.Remove(item2);
-            collection.Remove(new SqlBulkCopyColumnOrderHint("column3", SortOrder.Descending));
+            AssertExtensions.Throws<ArgumentException>(() => collection.Remove(item2));
+            AssertExtensions.Throws<ArgumentException>(() => collection.Remove(new SqlBulkCopyColumnOrderHint("column3", SortOrder.Descending)));
 
             IList list = CreateCollection(item1, item2);
 
@@ -547,10 +544,19 @@ namespace Microsoft.Data.SqlClient.Tests
             collection1.Add("column1", SortOrder.Descending);
             collection1.Add("column2", SortOrder.Descending);
             collection1.Add("column3", SortOrder.Descending);
-            collection1.Add("column4", SortOrder.Descending);
-            collection1.Add("column5", SortOrder.Descending);
             collection2[0].Column = collection1[0].Column;
             Assert.Throws<InvalidOperationException>(() => collection1.Add(collection2[0]));
+            ValidateCollection(collection1, expectedCount: 3);
+            collection1.RemoveAt(0);
+            collection1.Add(collection2[0]);
+            collection1.Remove(collection1[collection1.Count - 1]);
+            collection1.RemoveAt(1);
+            collection1.Remove(collection1[collection1.Count - 1]);
+            collection1.Add("column1", SortOrder.Descending);
+            collection1.Add("column2", SortOrder.Descending);
+            collection1.Add("column3", SortOrder.Descending);
+            collection1.Add("column4", SortOrder.Descending);
+            collection1.Add("column5", SortOrder.Descending);
             ValidateCollection(collection1, expectedCount: 5);
         }
 
