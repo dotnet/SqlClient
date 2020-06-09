@@ -42,7 +42,6 @@
           <param name="method">The logging method.</param>
           <param name="message">The message to be logged.</param>
           <summary>Logs warning through a specified method of the current instance type.</summary>
-          <remarks>To be added.</remarks>
         </LogWarning>
     </members>
 </docs>
