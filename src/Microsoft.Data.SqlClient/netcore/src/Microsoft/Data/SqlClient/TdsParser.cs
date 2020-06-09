@@ -392,6 +392,7 @@ namespace Microsoft.Data.SqlClient
 
             _sniSpnBuffer = null;
 
+            // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
             if (integratedSecurity || authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
             {
                 LoadSSPILibrary();
@@ -406,6 +407,7 @@ namespace Microsoft.Data.SqlClient
 
             bool fParallel = _connHandler.ConnectionOptions.MultiSubnetFailover;
 
+            // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
             _physicalStateObj.CreatePhysicalSNIHandle(serverInfo.ExtendedServerName, ignoreSniOpenTimeout, timerExpire,
                         out instanceName, ref _sniSpnBuffer, false, true, fParallel, integratedSecurity || authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated);
 

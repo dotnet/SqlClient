@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClient
             catch (ConfigurationErrorsException e)
             {
                 // Don't throw an error for invalid config files
-                SqlClientEventSource.Log.TraceEvent("ConfigurationManager failed to load due to configuration errors: {0}", e);
+                SqlClientEventSource.Log.TraceEvent("Unable to load custom SqlAuthenticationProviders. ConfigurationManager failed to load due to configuration errors: {0}", e);
             }
             Instance = new SqlAuthenticationProviderManager(configurationSection);
             Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryIntegrated, activeDirectoryAuthProvider);
