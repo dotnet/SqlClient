@@ -107,7 +107,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <summary>
         /// Indicates if the parameter encryption metadata received by sp_describe_parameter_encryption.
-        /// For unencrypted parameters, the encryption metadata should still be sent (and will indicate
+        /// For unencrypted parameters, the encryption metadata should still be sent (and will indicate 
         /// that no encryption is needed).
         /// </summary>
         internal bool HasReceivedMetadata { get; set; }
@@ -407,7 +407,7 @@ namespace Microsoft.Data.SqlClient
             long actualLen = GetActualSize();
             long maxLen = this.Size;
 
-            // GetActualSize returns bytes length, but smi expects char length for
+            // GetActualSize returns bytes length, but smi expects char length for 
             //  character types, so adjust
             if (!mt.IsLong)
             {

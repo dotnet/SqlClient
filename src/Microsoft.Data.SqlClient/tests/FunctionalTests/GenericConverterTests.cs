@@ -25,9 +25,7 @@ namespace Microsoft.Data.SqlClient.Tests
         public void ObjectToDecimal_ConversionSuccessful(decimal val)
         {
             object objVal = val;
-
             decimal converted = GenericConverter.Convert<object, decimal>(objVal);
-
             Assert.Equal(val, converted);
         }
 
@@ -35,9 +33,7 @@ namespace Microsoft.Data.SqlClient.Tests
         public void ObjectToString_ConversionSuccessful()
         {
             string testVal = "abcd1234";
-
             string converted = GenericConverter.Convert<object, string>(testVal);
-
             Assert.Equal(testVal, converted);
         }
 
@@ -46,7 +42,6 @@ namespace Microsoft.Data.SqlClient.Tests
         public void SelfConversionSuccessful(decimal val)
         {
             decimal converted = GenericConverter.Convert<decimal, decimal>(val);
-
             Assert.Equal(val, converted);
         }
 
@@ -55,9 +50,7 @@ namespace Microsoft.Data.SqlClient.Tests
         public void AssignableConversionSuccessful(decimal val)
         {
             SqlDecimal sqlVal = new SqlDecimal(val);
-
             decimal converted = GenericConverter.Convert<SqlDecimal, decimal>(sqlVal);
-
             Assert.Equal(val, converted);
         }
     }
