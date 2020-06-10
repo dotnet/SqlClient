@@ -36,9 +36,10 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/Add[@name="columnStringAndsortOrderSortOrder"]/*'/>
         public SqlBulkCopyColumnOrderHint Add(string column, SortOrder sortOrder) => Add(new SqlBulkCopyColumnOrderHint(column, sortOrder));
 
-#pragma warning disable CS1591 // XML comment not needed. Method is not part of public API and class is sealed
+        /// <summary>
+        /// Invoked before the collection is cleared using Clear(). Unregisters each order hint.
+        /// </summary>
         protected override void OnClear()
-#pragma warning restore CS1591 
         {
             foreach (SqlBulkCopyColumnOrderHint orderHint in InnerList)
             {
@@ -82,9 +83,10 @@ namespace Microsoft.Data.SqlClient
             List.Remove(columnOrderHint);
         }
 
-#pragma warning disable CS1591 // XML comment not needed. Method is not part of public API and class is sealed
+        /// <summary>
+        /// Invoked before the order hint is removed using Remove() or RemoveAt(). Unregisters the order hint,
+        /// </summary>
         protected override void OnRemove(int index, object value)
-#pragma warning restore CS1591 
         {
             if (value is SqlBulkCopyColumnOrderHint orderHint)
             {
