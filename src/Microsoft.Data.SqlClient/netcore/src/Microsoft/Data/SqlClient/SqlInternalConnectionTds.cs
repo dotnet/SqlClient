@@ -1300,8 +1300,8 @@ namespace Microsoft.Data.SqlClient
             // The GLOBALTRANSACTIONS, DATACLASSIFICATION, TCE, and UTF8 support features are implicitly requested
             requestedFeatures |= TdsEnums.FeatureExtension.GlobalTransactions | TdsEnums.FeatureExtension.DataClassification | TdsEnums.FeatureExtension.Tce | TdsEnums.FeatureExtension.UTF8Support;
 
-            // The AzureSQLDNSCaching feature is implicitly set
-            requestedFeatures |= TdsEnums.FeatureExtension.AzureSQLDNSCaching;
+            // The SQLDNSCaching feature is implicitly set
+            requestedFeatures |= TdsEnums.FeatureExtension.SQLDNSCaching;
 
             _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData);
         }
@@ -2388,7 +2388,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (RoutingInfo != null)
             {
-                if (TdsEnums.FEATUREEXT_AZURESQLDNSCACHING != featureId) {
+                if (TdsEnums.FEATUREEXT_SQLDNSCACHING != featureId) {
                     return;
                 }
             }
@@ -2580,13 +2580,13 @@ namespace Microsoft.Data.SqlClient
                         break;
                     }
 
-                case TdsEnums.FEATUREEXT_AZURESQLDNSCACHING:
+                case TdsEnums.FEATUREEXT_SQLDNSCACHING:
                     {
-                        SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for AZURESQLDNSCACHING", ObjectID);
+                        SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for SQLDNSCACHING", ObjectID);
 
                         if (data.Length < 1)
                         {
-                            SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown token for AZURESQLDNSCACHING", ObjectID);
+                            SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown token for SQLDNSCACHING", ObjectID);
                             throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
                         }
 
@@ -2747,4 +2747,3 @@ namespace Microsoft.Data.SqlClient
         }
     }
 }
-

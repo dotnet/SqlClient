@@ -44,7 +44,7 @@ namespace Microsoft.Data.SqlClient
             SNINativeMethodWrapper.ConsumerInfo myInfo = CreateConsumerInfo(async);
 
             SQLDNSInfo cachedDNSInfo;
-            bool ret = SQLDNSCache.Instance.GetDNSInfo(_parser.FQDNforDNSCahce, out cachedDNSInfo);
+            bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(_parser.FQDNforDNSCahce, out cachedDNSInfo);
 
             _sessionHandle = new SNIHandle(myInfo, nativeSNIObject.Handle, cachedDNSInfo);
         }
@@ -150,7 +150,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             SQLDNSInfo cachedDNSInfo;
-            bool ret = SQLDNSCache.Instance.GetDNSInfo(cachedFQDN, out cachedDNSInfo);
+            bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(cachedFQDN, out cachedDNSInfo);
 
             _sessionHandle = new SNIHandle(myInfo, serverName, spnBuffer, ignoreSniOpenTimeout, checked((int)timeout), out instanceName, flushCache, !async, fParallel, cachedDNSInfo);
         }

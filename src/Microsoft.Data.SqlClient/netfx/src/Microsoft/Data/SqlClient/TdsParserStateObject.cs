@@ -296,7 +296,7 @@ namespace Microsoft.Data.SqlClient
             SNINativeMethodWrapper.ConsumerInfo myInfo = CreateConsumerInfo(async);
             
             SQLDNSInfo cachedDNSInfo;
-            bool ret = SQLDNSCache.Instance.GetDNSInfo(_parser.FQDNforDNSCahce, out cachedDNSInfo);
+            bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(_parser.FQDNforDNSCahce, out cachedDNSInfo);
 
             _sessionHandle = new SNIHandle(myInfo, physicalConnection, cachedDNSInfo);
             if (_sessionHandle.Status != TdsEnums.SNI_SUCCESS)
@@ -850,7 +850,7 @@ namespace Microsoft.Data.SqlClient
             // serverName : serverInfo.ExtendedServerName
             // may not use this serverName as key
             SQLDNSInfo cachedDNSInfo;
-            bool ret = SQLDNSCache.Instance.GetDNSInfo(cachedFQDN, out cachedDNSInfo);
+            bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(cachedFQDN, out cachedDNSInfo);
 
             _sessionHandle = new SNIHandle(myInfo, serverName, spnBuffer, ignoreSniOpenTimeout, checked((int)timeout), out instanceName, flushCache, !async, fParallel, transparentNetworkResolutionState, totalTimeout, cachedDNSInfo);
         }

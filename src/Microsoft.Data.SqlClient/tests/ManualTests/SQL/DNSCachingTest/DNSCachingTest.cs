@@ -14,9 +14,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public class DNSCachingTest
     {
         public static Assembly systemData = Assembly.GetAssembly(typeof(SqlConnection));
-        public static Type SQLDNSCacheType = systemData.GetType("Microsoft.Data.SqlClient.SQLDNSCache");
+        public static Type SQLFallbackDNSCacheType = systemData.GetType("Microsoft.Data.SqlClient.SQLFallbackDNSCache");
         public static Type SQLDNSInfoType = systemData.GetType("Microsoft.Data.SqlClient.SQLDNSInfo");
-        public static MethodInfo SQLDNSCacheGetDNSInfo = SQLDNSCacheType.GetMethod("GetDNSInfo", BindingFlags.Instance | BindingFlags.NonPublic);
+        public static MethodInfo SQLFallbackDNSCacheGetDNSInfo = SQLFallbackDNSCacheType.GetMethod("GetDNSInfo", BindingFlags.Instance | BindingFlags.NonPublic);
         
         
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsDNSCachingSetup))]
@@ -47,7 +47,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 connection.Open();
             }
 
-            var SQLDNSCacheInstance = SQLDNSCacheType.GetProperty("Instance", BindingFlags.Static | BindingFlags.Public).GetValue(null);
+            var SQLFallbackDNSCacheInstance = SQLFallbackDNSCacheType.GetProperty("Instance", BindingFlags.Static | BindingFlags.Public).GetValue(null);
             
             var serverList = new List<KeyValuePair<string, bool>>();
             serverList.Add(new KeyValuePair<string, bool>(DataTestUtility.DNSCachingServerCR, DataTestUtility.IsDNSCachingSupportedCR));
@@ -61,7 +61,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 if (!string.IsNullOrEmpty(server.Key))
                 {
                     parameters = new object[] { server.Key, null };
-                    ret = (bool)SQLDNSCacheGetDNSInfo.Invoke(SQLDNSCacheInstance, parameters);
+                    ret = (bool)SQLFallbackDNSCacheGetDNSInfo.Invoke(SQLFallbackDNSCacheInstance, parameters);
 
                     if (server.Value)
                     {

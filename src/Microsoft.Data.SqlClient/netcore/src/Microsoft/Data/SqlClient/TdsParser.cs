@@ -3107,13 +3107,13 @@ namespace Microsoft.Data.SqlClient
             bool ret = false;
             if (_connHandler._cleanSQLDNSCaching)
             {
-                ret = SQLDNSCache.Instance.DeleteDNSInfo(FQDNforDNSCahce);
+                ret = SQLFallbackDNSCache.Instance.DeleteDNSInfo(FQDNforDNSCahce);
             }
 
             if ( _connHandler.IsSQLDNSCachingSupported && _connHandler.pendingSQLDNSObject != null 
-                    && !SQLDNSCache.Instance.IsDuplicate(_connHandler.pendingSQLDNSObject))
+                    && !SQLFallbackDNSCache.Instance.IsDuplicate(_connHandler.pendingSQLDNSObject))
             {
-                ret = SQLDNSCache.Instance.AddDNSInfo(_connHandler.pendingSQLDNSObject);
+                ret = SQLFallbackDNSCache.Instance.AddDNSInfo(_connHandler.pendingSQLDNSObject);
                 _connHandler.pendingSQLDNSObject = null;
             }
 
@@ -7830,14 +7830,14 @@ namespace Microsoft.Data.SqlClient
             return len;
         }
 
-        internal int WriteAzureSQLDNSCachingFeatureRequest(bool write /* if false just calculates the length */)
+        internal int WriteSQLDNSCachingFeatureRequest(bool write /* if false just calculates the length */)
         {
             int len = 5; // 1byte = featureID, 4bytes = featureData length
 
             if (write)
             {
                 // Write Feature ID
-                _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_AZURESQLDNSCACHING);
+                _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_SQLDNSCACHING);
                 WriteInt(0, _physicalStateObj); // we don't send any data
             }
 
@@ -8001,9 +8001,9 @@ namespace Microsoft.Data.SqlClient
                     length += WriteUTF8SupportFeatureRequest(false);
                 }
 
-                if ((requestedFeatures & TdsEnums.FeatureExtension.AzureSQLDNSCaching) != 0)
+                if ((requestedFeatures & TdsEnums.FeatureExtension.SQLDNSCaching) != 0)
                 {
-                    length += WriteAzureSQLDNSCachingFeatureRequest(false);
+                    length += WriteSQLDNSCachingFeatureRequest(false);
                 }
 
                 length++; // for terminator
@@ -8267,9 +8267,9 @@ namespace Microsoft.Data.SqlClient
                         WriteUTF8SupportFeatureRequest(true);
                     }
 
-                    if ((requestedFeatures & TdsEnums.FeatureExtension.AzureSQLDNSCaching) != 0)
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.SQLDNSCaching) != 0)
                     {
-                        WriteAzureSQLDNSCachingFeatureRequest(true);
+                        WriteSQLDNSCachingFeatureRequest(true);
                     }
 
                     _physicalStateObj.WriteByte(0xFF); // terminator

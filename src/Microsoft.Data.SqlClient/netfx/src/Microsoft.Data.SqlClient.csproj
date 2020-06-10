@@ -192,8 +192,8 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlTypes\SqlTypeWorkarounds.cs">
       <Link>Microsoft\Data\SqlTypes\SqlTypeWorkarounds.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SQLDNSCache.cs">
-      <Link>Microsoft\Data\SqlClient\SQLDNSCache.cs</Link>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SQLFallbackDNSCache.cs">
+      <Link>Microsoft\Data\SqlClient\SQLFallbackDNSCache.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>

@@ -147,7 +147,7 @@ namespace Microsoft.Data.SqlClient
         private bool _serverSupportsDNSCaching = false;
 
         /// <summary>
-        /// Get or set if AzureSQLDNSCaching FeatureExtAck is supported by the server.
+        /// Get or set if SQLDNSCaching FeatureExtAck is supported by the server.
         /// </summary>
         internal bool IsSQLDNSCachingSupported
         {
@@ -181,7 +181,7 @@ namespace Microsoft.Data.SqlClient
         private bool DNSCachingBeforeRedirect = false;
 
         /// <summary>
-        /// Get or set if the control ring send redirect token and AzureSQLDNSCaching FeatureExtAck with true
+        /// Get or set if the control ring send redirect token and SQLDNSCaching FeatureExtAck with true
         /// </summary>
         internal bool IsDNSCachingBeforeRedirectSupported
         {
@@ -1583,8 +1583,8 @@ namespace Microsoft.Data.SqlClient
                 requestedFeatures |= TdsEnums.FeatureExtension.AzureSQLSupport;
             }
 
-            // The AzureSQLDNSCaching feature is implicitly set
-            requestedFeatures |= TdsEnums.FeatureExtension.AzureSQLDNSCaching;
+            // The SQLDNSCaching feature is implicitly set
+            requestedFeatures |= TdsEnums.FeatureExtension.SQLDNSCaching;
 
             _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, _originalNetworkAddressInfo);
         }
@@ -2869,7 +2869,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (_routingInfo != null)
             {
-                if (TdsEnums.FEATUREEXT_AZURESQLDNSCACHING != featureId) {
+                if (TdsEnums.FEATUREEXT_SQLDNSCACHING != featureId) {
                     return;
                 }
             }
@@ -3087,13 +3087,13 @@ namespace Microsoft.Data.SqlClient
                         break;
                     }
 
-                case TdsEnums.FEATUREEXT_AZURESQLDNSCACHING:
+                case TdsEnums.FEATUREEXT_SQLDNSCACHING:
                     {
-                        SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for AZURESQLDNSCACHING", ObjectID);
+                        SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for SQLDNSCACHING", ObjectID);
 
                         if (data.Length < 1)
                         {
-                            SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown token for AZURESQLDNSCACHING", ObjectID);
+                            SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown token for SQLDNSCACHING", ObjectID);
                             throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
                         }
 
@@ -3255,4 +3255,3 @@ namespace Microsoft.Data.SqlClient
         }
     }
 }
-

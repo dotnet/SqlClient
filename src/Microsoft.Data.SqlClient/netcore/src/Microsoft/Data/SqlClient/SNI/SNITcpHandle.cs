@@ -110,7 +110,7 @@ namespace Microsoft.Data.SqlClient.SNI
             _sendSync = new object();
 
             SQLDNSInfo cachedDNSInfo;
-            bool hasCachedDNSInfo = SQLDNSCache.Instance.GetDNSInfo(cachedFQDN, out cachedDNSInfo);
+            bool hasCachedDNSInfo = SQLFallbackDNSCache.Instance.GetDNSInfo(cachedFQDN, out cachedDNSInfo);
 
             try
             {

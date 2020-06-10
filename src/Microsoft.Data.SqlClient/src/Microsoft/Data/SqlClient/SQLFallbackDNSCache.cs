@@ -7,16 +7,16 @@ using System.Collections.Concurrent;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal class SQLDNSCache
+    internal class SQLFallbackDNSCache
     {
-        private static readonly SQLDNSCache _SQLDNSCache = new SQLDNSCache();
+        private static readonly SQLFallbackDNSCache _SQLFallbackDNSCache = new SQLFallbackDNSCache();
         private static readonly int initialCapacity = 101;   // give some prime number here according to MSDN docs. It will be resized if reached capacity. 
         private ConcurrentDictionary<string, SQLDNSInfo> DNSInfoCache;
 
         // singleton instance
-        public static SQLDNSCache Instance { get { return _SQLDNSCache; } }
+        public static SQLFallbackDNSCache Instance { get { return _SQLFallbackDNSCache; } }
 
-        private SQLDNSCache()
+        private SQLFallbackDNSCache()
         {
             int level = 4 * Environment.ProcessorCount;
             DNSInfoCache = new ConcurrentDictionary<string, SQLDNSInfo>(concurrencyLevel: level,
