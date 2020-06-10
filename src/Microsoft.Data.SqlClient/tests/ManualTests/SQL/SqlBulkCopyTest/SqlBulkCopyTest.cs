@@ -247,5 +247,42 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             DestinationTableNameWithSpecialChar.Test(srcConstr, AddGuid("SqlBulkCopyTest_DestinationTableNameWithSpecialChar"));
         }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public void OrderHintTest()
+        {
+            OrderHint.Test(srcConstr, AddGuid("SqlBulkCopyTest_OrderHint"), AddGuid("SqlBulkCopyTest_OrderHint2"));
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public void OrderHintAsyncTest()
+        {
+            OrderHintAsync.Test(srcConstr, AddGuid("SqlBulkCopyTest_OrderHintAsync"), AddGuid("SqlBulkCopyTest_OrderHintAsync2"));
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public void OrderHintMissingTargetColumnTest()
+        {
+            OrderHintMissingTargetColumn.Test(srcConstr, AddGuid("SqlBulkCopyTest_OrderHintMissingTargetColumn"));
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public void OrderHintDuplicateColumnTest()
+        {
+            OrderHintDuplicateColumn.Test(srcConstr, AddGuid("SqlBulkCopyTest_OrderHintDuplicateColumn"));
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public void OrderHintTransactionTest()
+        {
+            OrderHintTransaction.Test(srcConstr, AddGuid("SqlBulkCopyTest_OrderHintTransaction"));
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ActiveIssue(12219)]
+        public void OrderHintIdentityColumnTest()
+        {
+            OrderHintIdentityColumn.Test(srcConstr, AddGuid("SqlBulkCopyTest_OrderHintIdentityColumn"));
+        }
     }
 }

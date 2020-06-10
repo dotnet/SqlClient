@@ -61,6 +61,12 @@
       <Link>Common\System\Collections\DictionaryExtensions.cs</Link>
     </Compile>
     <Compile Include="DataCommon\AADUtility.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\OrderHint.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\OrderHintAsync.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\OrderHintDuplicateColumn.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\OrderHintIdentityColumn.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\OrderHintMissingTargetColumn.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\OrderHintTransaction.cs" />
     <Compile Include="SQL\DataClassificationTest\DataClassificationTest.cs" />
     <Compile Include="TracingTests\EventSourceTest.cs" />
     <Compile Include="SQL\AdapterTest\AdapterTest.cs" />

@@ -7063,6 +7063,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The specified value is not valid in the &apos;{0}&apos; enumeration..
+        /// </summary>
+        internal static string net_invalid_enum {
+            get {
+                return ResourceManager.GetString("net_invalid_enum", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to DateType column for field &apos;{0}&apos; in schema table is null.  DataType must be non-null..
         /// </summary>
         internal static string NullSchemaTableDataTypeNotSupported {
@@ -8083,6 +8092,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Security Warning: The negotiated &apos;{0}&apos; is an insecured protocol and is supported for backward compatibility only. The recommended protocol is TLS 1.2 and later..
+        /// </summary>
+        internal static string SEC_ProtocolWarning {
+            get {
+                return ResourceManager.GetString("SEC_ProtocolWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to I/O Error detected in read/write operation.
         /// </summary>
         internal static string SNI_ERROR_1 {
@@ -8911,6 +8929,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The given column order hint is not valid..
+        /// </summary>
+        internal static string SQL_BulkLoadInvalidOrderHint {
+            get {
+                return ResourceManager.GetString("SQL_BulkLoadInvalidOrderHint", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Timeout Value &apos;{0}&apos; is less than 0..
         /// </summary>
         internal static string SQL_BulkLoadInvalidTimeout {
@@ -9001,6 +9028,24 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The column &apos;{0}&apos; was specified more than once..
+        /// </summary>
+        internal static string SQL_BulkLoadOrderHintDuplicateColumn {
+            get {
+                return ResourceManager.GetString("SQL_BulkLoadOrderHintDuplicateColumn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The sorted column &apos;{0}&apos; is not valid in the destination table..
+        /// </summary>
+        internal static string SQL_BulkLoadOrderHintInvalidColumn {
+            get {
+                return ResourceManager.GetString("SQL_BulkLoadOrderHintInvalidColumn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Attempt to invoke bulk copy on an object that has a pending operation..
         /// </summary>
         internal static string SQL_BulkLoadPendingOperation {
@@ -9015,6 +9060,15 @@ namespace System {
         internal static string SQL_BulkLoadStringTooLong {
             get {
                 return ResourceManager.GetString("SQL_BulkLoadStringTooLong", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to A column order hint cannot have an unspecified sort order..
+        /// </summary>
+        internal static string SQL_BulkLoadUnspecifiedSortOrder {
+            get {
+                return ResourceManager.GetString("SQL_BulkLoadUnspecifiedSortOrder", resourceCulture);
             }
         }
         
