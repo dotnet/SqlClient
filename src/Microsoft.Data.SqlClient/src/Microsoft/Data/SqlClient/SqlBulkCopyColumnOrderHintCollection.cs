@@ -84,7 +84,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Invoked before the order hint is removed using Remove() or RemoveAt(). Unregisters the order hint,
+        /// Invoked before the order hint is removed using Remove() or RemoveAt(). Unregisters the order hint.
         /// </summary>
         protected override void OnRemove(int index, object value)
         {
