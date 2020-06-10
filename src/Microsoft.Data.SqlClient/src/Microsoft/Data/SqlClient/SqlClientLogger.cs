@@ -32,7 +32,6 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientLogger.xml' path='docs/members[@name="SqlClientLogger"]/LogError/*'/>
         public void LogError(string type, string method, string message)
         {
-            Console.Out.WriteLine(message);
             SqlClientEventSource.Log.TraceEvent("<sc|{0}|{1}|{2}>{3}", type, method, LogLevel.Error, message);
         }
 

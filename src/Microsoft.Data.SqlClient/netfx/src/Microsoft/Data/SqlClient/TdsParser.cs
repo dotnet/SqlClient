@@ -1223,6 +1223,7 @@ namespace Microsoft.Data.SqlClient
                             string warningMessage = SslProtocolsHelper.GetProtocolWarning(protocolVersion);
                             if (!string.IsNullOrEmpty(warningMessage))
                             {
+                                // This logs console warning of insecure protocol in use.
                                 _logger.LogWarning(_typeName, MethodBase.GetCurrentMethod().Name, warningMessage);
                             }
 
@@ -9717,7 +9718,7 @@ namespace Microsoft.Data.SqlClient
 
                         // Stream out parameters
                         SqlParameter[] parameters = rpcext.parameters;
-                        
+
                         bool isAdvancedTraceOn = SqlClientEventSource.Log.IsAdvancedTraceOn();
 
                         for (int i = (ii == startRpc) ? startParam : 0; i < parameters.Length; i++)
