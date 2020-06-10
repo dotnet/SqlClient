@@ -4268,6 +4268,9 @@ namespace Microsoft.Data.SqlClient
                             {
                             }
                             break;
+                        case 0x43f:
+                            codePage = 1251;  // Kazakh code page based on SQL Server
+                            break;
                         default:
                             break;
                     }
