@@ -1487,12 +1487,13 @@ namespace Microsoft.Data.SqlClient
                 _sessionRecoveryRequested = true;
             }
 
-            // If the workflow being used is Active Directory Password/Integrated/Interactive/Service Principal and server's prelogin response
+            // If the workflow being used is Active Directory Password/Integrated/Interactive/Service Principal/Device Code Flow and server's prelogin response
             // for FEDAUTHREQUIRED option indicates Federated Authentication is required, we have to insert FedAuth Feature Extension
             // in Login7, indicating the intent to use Active Directory Authentication for SQL Server.
             if (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
+                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
                 // Since AD Integrated may be acting like Windows integrated, additionally check _fedAuthRequired
                 || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && _fedAuthRequired))
             {
@@ -1881,7 +1882,8 @@ namespace Microsoft.Data.SqlClient
                                        connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword ||
                                        connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated ||
                                        connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive ||
-                                       connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal;
+                                       connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal ||
+                                       connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow;
 
             // Check if the user had explicitly specified the TNIR option in the connection string or the connection string builder.
             // If the user has specified the option in the connection string explicitly, then we shouldn't disable TNIR.
@@ -2467,6 +2469,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert((ConnectionOptions.HasUserIdKeyword && ConnectionOptions.HasPasswordKeyword)
                          || _credential != null
                          || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
+                         || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
                          || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && _fedAuthRequired),
                          "Credentials aren't provided for calling MSAL");
             Debug.Assert(fedAuthInfo != null, "info should not be null.");
@@ -2689,6 +2692,7 @@ namespace Microsoft.Data.SqlClient
                             }
                             break;
                         case SqlAuthenticationMethod.ActiveDirectoryInteractive:
+                        case SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow:
                             if (_activeDirectoryAuthTimeoutRetryHelper.State == ActiveDirectoryAuthenticationTimeoutRetryState.Retrying)
                             {
                                 fedAuthToken = _activeDirectoryAuthTimeoutRetryHelper.CachedToken;

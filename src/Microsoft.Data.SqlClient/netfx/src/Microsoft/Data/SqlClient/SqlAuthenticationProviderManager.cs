@@ -21,6 +21,7 @@ namespace Microsoft.Data.SqlClient
         private const string ActiveDirectoryIntegrated = "active directory integrated";
         private const string ActiveDirectoryInteractive = "active directory interactive";
         private const string ActiveDirectoryServicePrincipal = "active directory service principal";
+        private const string ActiveDirectoryDeviceCodeFlow = "active directory device code flow";
 
         static SqlAuthenticationProviderManager()
         {
@@ -40,6 +41,7 @@ namespace Microsoft.Data.SqlClient
             Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, activeDirectoryAuthProvider);
             Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive, activeDirectoryAuthProvider);
             Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal, activeDirectoryAuthProvider);
+            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, activeDirectoryAuthProvider);
         }
         public static readonly SqlAuthenticationProviderManager Instance;
 
@@ -176,6 +178,8 @@ namespace Microsoft.Data.SqlClient
                     return SqlAuthenticationMethod.ActiveDirectoryInteractive;
                 case ActiveDirectoryServicePrincipal:
                     return SqlAuthenticationMethod.ActiveDirectoryServicePrincipal;
+                case ActiveDirectoryDeviceCodeFlow:
+                    return SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow;
                 default:
                     throw SQL.UnsupportedAuthentication(authentication);
             }

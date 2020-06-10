@@ -1217,6 +1217,7 @@ namespace Microsoft.Data.SqlClient
             // in Login7, indicating the intent to use Active Directory Authentication for SQL Server.
             if (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
+                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
                 // Since AD Integrated may be acting like Windows integrated, additionally check _fedAuthRequired
                 || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && _fedAuthRequired))
@@ -2020,6 +2021,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert((ConnectionOptions.HasUserIdKeyword && ConnectionOptions.HasPasswordKeyword)
                          || _credential != null
                          || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
+                         || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
                          || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && _fedAuthRequired),
                          "Credentials aren't provided for calling MSAL");
             Debug.Assert(fedAuthInfo != null, "info should not be null.");
@@ -2251,6 +2253,7 @@ namespace Microsoft.Data.SqlClient
                             }
                             break;
                         case SqlAuthenticationMethod.ActiveDirectoryInteractive:
+                        case SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow:
                             if (_activeDirectoryAuthTimeoutRetryHelper.State == ActiveDirectoryAuthenticationTimeoutRetryState.Retrying)
                             {
                                 fedAuthToken = _activeDirectoryAuthTimeoutRetryHelper.CachedToken;

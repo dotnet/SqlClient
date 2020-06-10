@@ -277,6 +277,10 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Argument(System.SRHelper.GetString(SR.SQL_InteractiveWithPassword));
         }
+        internal static Exception DeviceFlowWithUsernamePassword()
+        {
+            return ADP.Argument(System.SRHelper.GetString(SR.SQL_DeviceFlowWithUsernamePassword));
+        }
         static internal Exception SettingIntegratedWithCredential()
         {
             return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_SettingIntegratedWithCredential));
@@ -284,6 +288,10 @@ namespace Microsoft.Data.SqlClient
         static internal Exception SettingInteractiveWithCredential()
         {
             return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_SettingInteractiveWithCredential));
+        }
+        static internal Exception SettingDeviceFlowWithCredential()
+        {
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_SettingDeviceFlowWithCredential));
         }
         static internal Exception SettingCredentialWithIntegratedArgument()
         {
@@ -293,6 +301,10 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Argument(System.SRHelper.GetString(SR.SQL_SettingCredentialWithInteractive));
         }
+        static internal Exception SettingCredentialWithDeviceFlowArgument()
+        {
+            return ADP.Argument(System.SRHelper.GetString(SR.SQL_SettingCredentialWithDeviceFlow));
+        }
         static internal Exception SettingCredentialWithIntegratedInvalid()
         {
             return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_SettingCredentialWithIntegrated));
@@ -300,6 +312,10 @@ namespace Microsoft.Data.SqlClient
         static internal Exception SettingCredentialWithInteractiveInvalid()
         {
             return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_SettingCredentialWithInteractive));
+        }
+        static internal Exception SettingCredentialWithDeviceFlowInvalid()
+        {
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_SettingCredentialWithDeviceFlow));
         }
         internal static Exception NullEmptyTransactionName()
         {
@@ -445,6 +461,11 @@ namespace Microsoft.Data.SqlClient
         internal static Exception ActiveDirectoryInteractiveTimeout()
         {
             return ADP.TimeoutException(SR.SQL_Timeout_Active_Directory_Interactive_Authentication);
+        }
+
+        internal static Exception ActiveDirectoryDeviceFlowTimeout()
+        {
+            return ADP.TimeoutException(SR.SQL_Timeout_Active_Directory_DeviceFlow_Authentication);
         }
 
 
