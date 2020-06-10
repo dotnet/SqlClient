@@ -1429,6 +1429,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Security Warning: The negotiated &apos;{0}&apos; is an insecured protocol and is supported for backward compatibility only. The recommended protocol is TLS 1.2 and later..
+        /// </summary>
+        internal static string SEC_ProtocolWarning {
+            get {
+                return ResourceManager.GetString("SEC_ProtocolWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to I/O Error detected in read/write operation.
         /// </summary>
         internal static string SNI_ERROR_1 {

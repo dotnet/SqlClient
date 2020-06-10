@@ -47,6 +47,8 @@ namespace Microsoft.Data.SqlClient.SNI
 
         public override int ReserveHeaderSize => SNISMUXHeader.HEADER_LENGTH;
 
+        public override int ProtocolVersion => _connection.ProtocolVersion;
+
         /// <summary>
         /// Dispose object
         /// </summary>

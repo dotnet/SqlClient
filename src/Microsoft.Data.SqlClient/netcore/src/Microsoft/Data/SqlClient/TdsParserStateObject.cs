@@ -774,7 +774,7 @@ namespace Microsoft.Data.SqlClient
 
         internal abstract uint EnableSsl(ref uint info);
 
-        internal abstract uint WaitForSSLHandShakeToComplete();
+        internal abstract uint WaitForSSLHandShakeToComplete(out int protocolVersion);
 
         internal abstract void Dispose();
 

@@ -1860,6 +1860,9 @@
   <data name="SQL_BulkLoadCannotConvertValueWithoutRowNo" xml:space="preserve">
     <value>The given value{0} of type {1} from the data source cannot be converted to type {2} for Column {3} [{4}].</value>
   </data>
+  <data name="SEC_ProtocolWarning" xml:space="preserve">
+    <value>Security Warning: The negotiated {0} is an insecure protocol and is supported for backward compatibility only. The recommended protocol version is TLS 1.2 and later.</value>
+  </data>
   <data name="SQL_BulkLoadUnspecifiedSortOrder" xml:space="preserve">
     <value>A column order hint cannot have an unspecified sort order.</value>
   </data>

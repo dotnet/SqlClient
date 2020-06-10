@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
+
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientLogger.xml' path='docs/members[@name="SqlClientLogger"]/SqlClientLogger/*'/>
@@ -10,7 +12,8 @@ namespace Microsoft.Data.SqlClient
         internal enum LogLevel
         {
             Info = 0,
-            Error,
+            Warning,
+            Error    
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientLogger.xml' path='docs/members[@name="SqlClientLogger"]/LogInfo/*'/>
@@ -19,10 +22,18 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TraceEvent("<sc|{0}|{1}|{2}>{3}", type, method, LogLevel.Info, message);
         }
 
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientLogger.xml' path='docs/members[@name="SqlClientLogger"]/LogWarning/*'/>
+        public void LogWarning(string type, string method, string message)
+        {
+            Console.Out.WriteLine(message);
+            SqlClientEventSource.Log.TraceEvent("<sc|{0}|{1}|{2}>{3}", type, method, LogLevel.Warning, message);
+        }
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientLogger.xml' path='docs/members[@name="SqlClientLogger"]/LogError/*'/>
         public void LogError(string type, string method, string message)
         {
-            SqlClientEventSource.Log.TraceEvent("<sc|{0}|{1}|{2}>{3}", type, method, LogLevel.Info, message);
+            Console.Out.WriteLine(message);
+            SqlClientEventSource.Log.TraceEvent("<sc|{0}|{1}|{2}>{3}", type, method, LogLevel.Error, message);
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientLogger.xml' path='docs/members[@name="SqlClientLogger"]/LogAssert/*'/>

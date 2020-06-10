@@ -9,6 +9,7 @@ using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
@@ -30,6 +31,9 @@ namespace Microsoft.Data.SqlClient
     sealed internal class TdsParser
     {
         private static int _objectTypeCount; // EventSource Counter
+        private readonly SqlClientLogger _logger = new SqlClientLogger();
+        private readonly string _typeName;
+
         internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
 
         static Task completedTask;
@@ -300,6 +304,7 @@ namespace Microsoft.Data.SqlClient
             _fMARS = MARS; // may change during Connect to pre Yukon servers
             _physicalStateObj = new TdsParserStateObject(this);
             DataClassificationVersion = TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED;
+            _typeName = GetType().Name;
         }
 
         internal SqlInternalConnectionTds Connection
@@ -1204,15 +1209,21 @@ namespace Microsoft.Data.SqlClient
                             // wait for SSL handshake to complete, so that the SSL context is fully negotiated before we try to use its
                             // Channel Bindings as part of the Windows Authentication context build (SSL handshake must complete
                             // before calling SNISecGenClientContext).
-                            error = SNINativeMethodWrapper.SNIWaitForSSLHandshakeToComplete(_physicalStateObj.Handle, _physicalStateObj.GetTimeoutRemaining());
+                            error = SNINativeMethodWrapper.SNIWaitForSSLHandshakeToComplete(_physicalStateObj.Handle, _physicalStateObj.GetTimeoutRemaining(), out uint protocolVersion);
+
                             if (error != TdsEnums.SNI_SUCCESS)
                             {
                                 _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
                                 ThrowExceptionAndWarning(_physicalStateObj);
                             }
 
+                            string warningMessage = SslProtocolsHelper.GetProtocolWarning(protocolVersion);
+                            if (!string.IsNullOrEmpty(warningMessage))
+                            {
+                                _logger.LogWarning(_typeName, MethodBase.GetCurrentMethod().Name, warningMessage);
+                            }
+
                             // Validate server certificate
-                            //
                             if (serverCallback != null)
                             {
                                 X509Certificate2 serverCert = null;

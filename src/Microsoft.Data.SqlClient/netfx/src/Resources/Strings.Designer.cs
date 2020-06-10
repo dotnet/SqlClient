@@ -7063,6 +7063,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The specified value is not valid in the &apos;{0}&apos; enumeration..
+        /// </summary>
+        internal static string net_invalid_enum {
+            get {
+                return ResourceManager.GetString("net_invalid_enum", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to DateType column for field &apos;{0}&apos; in schema table is null.  DataType must be non-null..
         /// </summary>
         internal static string NullSchemaTableDataTypeNotSupported {
@@ -8079,6 +8088,15 @@ namespace System {
         internal static string RecordManager_MinimumCapacity {
             get {
                 return ResourceManager.GetString("RecordManager_MinimumCapacity", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Security Warning: The negotiated &apos;{0}&apos; is an insecured protocol and is supported for backward compatibility only. The recommended protocol is TLS 1.2 and later..
+        /// </summary>
+        internal static string SEC_ProtocolWarning {
+            get {
+                return ResourceManager.GetString("SEC_ProtocolWarning", resourceCulture);
             }
         }
         

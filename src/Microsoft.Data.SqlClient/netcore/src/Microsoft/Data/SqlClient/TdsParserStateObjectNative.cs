@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Security.Authentication;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
 
@@ -13,6 +14,25 @@ namespace Microsoft.Data.SqlClient
 {
     internal class TdsParserStateObjectNative : TdsParserStateObject
     {
+        // protocol versions from native sni
+        [Flags]
+        private enum NativeProtocols
+        {
+            SP_PROT_SSL2_SERVER = 0x00000004,
+            SP_PROT_SSL2_CLIENT = 0x00000008,
+            SP_PROT_SSL3_SERVER = 0x00000010,
+            SP_PROT_SSL3_CLIENT = 0x00000020,
+            SP_PROT_TLS1_0_SERVER = 0x00000040,
+            SP_PROT_TLS1_0_CLIENT = 0x00000080,
+            SP_PROT_TLS1_1_SERVER = 0x00000100,
+            SP_PROT_TLS1_1_CLIENT = 0x00000200,
+            SP_PROT_TLS1_2_SERVER = 0x00000400,
+            SP_PROT_TLS1_2_CLIENT = 0x00000800,
+            SP_PROT_TLS1_3_SERVER = 0x00001000,
+            SP_PROT_TLS1_3_CLIENT = 0x00002000,
+            SP_PROT_NONE = 0x0
+        }
+
         private SNIHandle _sessionHandle = null;              // the SNI handle we're to work on
 
         private SNIPacket _sniPacket = null;                // Will have to re-vamp this for MARS
@@ -309,8 +329,49 @@ namespace Microsoft.Data.SqlClient
         internal override uint GenerateSspiClientContext(byte[] receivedBuff, uint receivedLength, ref byte[] sendBuff, ref uint sendLength, byte[] _sniSpnBuffer)
             => SNINativeMethodWrapper.SNISecGenClientContext(Handle, receivedBuff, receivedLength, sendBuff, ref sendLength, _sniSpnBuffer);
 
-        internal override uint WaitForSSLHandShakeToComplete()
-            => SNINativeMethodWrapper.SNIWaitForSSLHandshakeToComplete(Handle, GetTimeoutRemaining());
+        internal override uint WaitForSSLHandShakeToComplete(out int protocolVersion)
+        {
+            uint returnValue = SNINativeMethodWrapper.SNIWaitForSSLHandshakeToComplete(Handle, GetTimeoutRemaining(), out uint nativeProtocolVersion);
+            var nativeProtocol = (NativeProtocols)nativeProtocolVersion;
+
+            /* The SslProtocols.Tls13 is supported by netcoreapp3.1 and later
+             * This driver does not support this version yet!
+            if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_3_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_3_SERVER))
+            {
+                protocolVersion = (int)SslProtocols.Tls13;
+            }*/
+            if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_2_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_2_SERVER))
+            {
+                protocolVersion = (int)SslProtocols.Tls12;
+            }
+            else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_1_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_1_SERVER))
+            {
+                protocolVersion = (int)SslProtocols.Tls11;
+            }
+            else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_0_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_0_SERVER))
+            {
+                protocolVersion = (int)SslProtocols.Tls;
+            }
+            else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_SSL3_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_SSL3_SERVER))
+            {
+#pragma warning disable CS0618 // Type or member is obsolete : SSL is depricated
+                protocolVersion = (int)SslProtocols.Ssl3;
+            }
+            else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_SSL2_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_SSL2_SERVER))
+            {
+                protocolVersion = (int)SslProtocols.Ssl2;
+#pragma warning restore CS0618 // Type or member is obsolete : SSL is depricated
+            }
+            else if(nativeProtocol.HasFlag(NativeProtocols.SP_PROT_NONE))
+            {
+                protocolVersion = (int)SslProtocols.None;
+            }
+            else
+            {
+                throw new ArgumentException(SRHelper.Format(SRHelper.net_invalid_enum, nameof(NativeProtocols)), nameof(NativeProtocols));
+            }
+            return returnValue;
+        }
 
         internal override void DisposePacketCache()
         {
