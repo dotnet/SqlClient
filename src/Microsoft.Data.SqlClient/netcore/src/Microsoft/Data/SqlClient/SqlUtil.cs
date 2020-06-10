@@ -269,17 +269,37 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Argument(System.SRHelper.GetString(SR.SQL_AuthenticationAndIntegratedSecurity));
         }
-        internal static Exception IntegratedWithUserIDAndPassword()
+        internal static Exception IntegratedWithPassword()
         {
-            return ADP.Argument(System.SRHelper.GetString(SR.SQL_IntegratedWithUserIDAndPassword));
-        }
-        internal static Exception InteractiveWithoutUserID()
-        {
-            return ADP.Argument(System.SRHelper.GetString(SR.SQL_InteractiveWithoutUserID));
+            return ADP.Argument(System.SRHelper.GetString(SR.SQL_IntegratedWithPassword));
         }
         internal static Exception InteractiveWithPassword()
         {
             return ADP.Argument(System.SRHelper.GetString(SR.SQL_InteractiveWithPassword));
+        }
+        static internal Exception SettingIntegratedWithCredential()
+        {
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_SettingIntegratedWithCredential));
+        }
+        static internal Exception SettingInteractiveWithCredential()
+        {
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_SettingInteractiveWithCredential));
+        }
+        static internal Exception SettingCredentialWithIntegratedArgument()
+        {
+            return ADP.Argument(System.SRHelper.GetString(SR.SQL_SettingCredentialWithIntegrated));
+        }
+        static internal Exception SettingCredentialWithInteractiveArgument()
+        {
+            return ADP.Argument(System.SRHelper.GetString(SR.SQL_SettingCredentialWithInteractive));
+        }
+        static internal Exception SettingCredentialWithIntegratedInvalid()
+        {
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_SettingCredentialWithIntegrated));
+        }
+        static internal Exception SettingCredentialWithInteractiveInvalid()
+        {
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_SettingCredentialWithInteractive));
         }
         internal static Exception NullEmptyTransactionName()
         {
@@ -382,6 +402,11 @@ namespace Microsoft.Data.SqlClient
             return ADP.NotSupported(System.SRHelper.GetString(SR.SQL_UnsupportedSqlAuthenticationMethod, authentication));
         }
 
+        internal static Exception UnsupportedAuthenticationSpecified(SqlAuthenticationMethod authentication)
+        {
+            return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_UnsupportedAuthenticationSpecified, authentication));
+        }
+
         internal static Exception CannotCreateAuthProvider(string authentication, string type, Exception e)
         {
             return ADP.Argument(System.SRHelper.GetString(SR.SQL_CannotCreateAuthProvider, authentication, type), e);
@@ -416,6 +441,12 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.ArgumentNull(System.SRHelper.GetString(SR.SQL_ParameterCannotBeEmpty, paramName));
         }
+
+        internal static Exception ActiveDirectoryInteractiveTimeout()
+        {
+            return ADP.TimeoutException(SR.SQL_Timeout_Active_Directory_Interactive_Authentication);
+        }
+
 
         //
         // SQL.DataCommand
@@ -839,6 +870,26 @@ namespace Microsoft.Data.SqlClient
         internal static Exception BulkLoadNonMatchingColumnName(string columnName, Exception e)
         {
             return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_BulkLoadNonMatchingColumnName, columnName), e);
+        }
+        internal static Exception BulkLoadNullEmptyColumnName(string paramName)
+        {
+            return ADP.Argument(string.Format(System.SRHelper.GetString(SR.SQL_ParameterCannotBeEmpty), paramName));
+        }
+        internal static Exception BulkLoadUnspecifiedSortOrder()
+        {
+            return ADP.Argument(System.SRHelper.GetString(SR.SQL_BulkLoadUnspecifiedSortOrder));
+        }
+        internal static Exception BulkLoadInvalidOrderHint()
+        {
+            return ADP.Argument(System.SRHelper.GetString(SR.SQL_BulkLoadInvalidOrderHint));
+        }   
+        internal static Exception BulkLoadOrderHintInvalidColumn(string columnName)
+        {
+            return ADP.InvalidOperation(string.Format(System.SRHelper.GetString(SR.SQL_BulkLoadOrderHintInvalidColumn), columnName));
+        }      
+        internal static Exception BulkLoadOrderHintDuplicateColumn(string columnName)
+        {
+            return ADP.InvalidOperation(string.Format(System.SRHelper.GetString(SR.SQL_BulkLoadOrderHintDuplicateColumn), columnName));
         }
         internal static Exception BulkLoadStringTooLong(string tableName, string columnName, string truncatedValue)
         {

@@ -335,13 +335,25 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SettingIntegratedWithCredential));
         }
+        static internal Exception SettingInteractiveWithCredential()
+        {
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SettingInteractiveWithCredential));
+        }
         static internal Exception SettingCredentialWithIntegratedArgument()
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_SettingCredentialWithIntegrated));
         }
+        static internal Exception SettingCredentialWithInteractiveArgument()
+        {
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_SettingCredentialWithInteractive));
+        }
         static internal Exception SettingCredentialWithIntegratedInvalid()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SettingCredentialWithIntegrated));
+        }
+        static internal Exception SettingCredentialWithInteractiveInvalid()
+        {
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SettingCredentialWithInteractive));
         }
         static internal Exception InvalidSQLServerVersionUnknown()
         {
@@ -421,6 +433,11 @@ namespace Microsoft.Data.SqlClient
             return ADP.NotSupported(StringsHelper.GetString(Strings.SQL_UnsupportedSqlAuthenticationMethod, authentication));
         }
 
+        static internal Exception UnsupportedAuthenticationSpecified(SqlAuthenticationMethod authentication)
+        {
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_UnsupportedAuthenticationSpecified, authentication));
+        }
+
         static internal Exception CannotCreateAuthProvider(string authentication, string type, Exception e)
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_CannotCreateAuthProvider, authentication, type), e);
@@ -454,6 +471,11 @@ namespace Microsoft.Data.SqlClient
         static internal Exception ParameterCannotBeEmpty(string paramName)
         {
             return ADP.ArgumentNull(StringsHelper.GetString(Strings.SQL_ParameterCannotBeEmpty, paramName));
+        }
+
+        static internal Exception ActiveDirectoryInteractiveTimeout()
+        {
+            return ADP.TimeoutException(Strings.SQL_Timeout_Active_Directory_Interactive_Authentication);
         }
 
         //
@@ -992,6 +1014,26 @@ namespace Microsoft.Data.SqlClient
         static internal Exception BulkLoadNonMatchingColumnName(string columnName, Exception e)
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_BulkLoadNonMatchingColumnName, columnName), e);
+        }
+        internal static Exception BulkLoadNullEmptyColumnName(string paramName)
+        {
+            return ADP.Argument(string.Format(StringsHelper.GetString(Strings.SQL_ParameterCannotBeEmpty), paramName));
+        }
+        internal static Exception BulkLoadUnspecifiedSortOrder()
+        {
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_BulkLoadUnspecifiedSortOrder));
+        }
+        internal static Exception BulkLoadInvalidOrderHint()
+        {
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_BulkLoadInvalidOrderHint));
+        }
+        internal static Exception BulkLoadOrderHintInvalidColumn(string columnName)
+        {
+            return ADP.InvalidOperation(string.Format(StringsHelper.GetString(Strings.SQL_BulkLoadOrderHintInvalidColumn), columnName));
+        }
+        internal static Exception BulkLoadOrderHintDuplicateColumn(string columnName)
+        {
+            return ADP.InvalidOperation(string.Format(StringsHelper.GetString(Strings.SQL_BulkLoadOrderHintDuplicateColumn), columnName));
         }
         static internal Exception BulkLoadStringTooLong(string tableName, string columnName, string truncatedValue)
         {

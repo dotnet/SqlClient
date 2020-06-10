@@ -37,5 +37,11 @@
             <summary>Logs information through a specified method of the current instance type.</summary>
             <remarks>To be added.</remarks>
         </LogInfo>
+        <LogWarning>
+          <param name="type">The type to be logged.</param>
+          <param name="method">The logging method.</param>
+          <param name="message">The message to be logged.</param>
+          <summary>Logs warning through a specified method of the current instance type.</summary>
+        </LogWarning>
     </members>
 </docs>

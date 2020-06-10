@@ -210,7 +210,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
-        [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp)]
         public static void IntegratedAuthWithCred()
         {
             // connection fails with expected error message.
@@ -218,12 +217,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, AuthKey) + "Authentication=Active Directory Integrated;";
             ArgumentException e = Assert.Throws<ArgumentException>(() => ConnectAndDisconnect(connStr));
 
-            string expectedMessage = "Cannot use 'Authentication=Active Directory Integrated' with 'User ID', 'UID', 'Password' or 'PWD' connection string keywords.";
-            Assert.Contains(expectedMessage, e.Message);
+            string[] expectedMessage = { "Cannot use 'Authentication=Active Directory Integrated' with 'User ID', 'UID', 'Password' or 'PWD' connection string keywords.", //netfx
+                "Cannot use 'Authentication=Active Directory Integrated' with 'Password' or 'PWD' connection string keywords." }; //netcore
+            Assert.Contains(e.Message, expectedMessage);
         }
 
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
-        [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp)]
         public static void MFAAuthWithPassword()
         {
             // connection fails with expected error message.
@@ -247,9 +246,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Contains(expectedMessage, e.InnerException.InnerException.InnerException.Message);
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp)]
+        [PlatformSpecific(TestPlatforms.Windows)]
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
-        public static void EmptyCredInConnStrAADPasswordNetFx()
+        public static void EmptyCredInConnStrAADPassword()
         {
             // connection fails with expected error message.
             string[] removeKeys = { "User ID", "Password", "UID", "PWD" };
@@ -261,16 +260,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Contains(expectedMessage, e.InnerException.InnerException.InnerException.Message);
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
+        [PlatformSpecific(TestPlatforms.AnyUnix)]
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
-        public static void EmptyCredInConnStrAADPasswordNetCore()
+        public static void EmptyCredInConnStrAADPasswordAnyUnix()
         {
             // connection fails with expected error message.
             string[] removeKeys = { "User ID", "Password", "UID", "PWD" };
             string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, removeKeys) + "User ID=; Password=;";
             AggregateException e = Assert.Throws<AggregateException>(() => ConnectAndDisconnect(connStr));
 
-            string expectedMessage = "Could not identify the user logged into the OS";
+            string expectedMessage = "cannot determine the username";
 
             Assert.Contains(expectedMessage, e.InnerException.InnerException.InnerException.Message);
         }
@@ -300,6 +299,35 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             string expectedMessage = "Either Credential or both 'User ID' and 'Password' (or 'UID' and 'PWD') connection string keywords must be specified, if 'Authentication=Active Directory Password'.";
             Assert.Contains(expectedMessage, e.Message);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAADServicePrincipalSetup))]
+        public static void NoCredentialsActiveDirectoryServicePrincipal()
+        {
+            // test Passes with correct connection string.
+            string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
+            string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, removeKeys) +
+                $"Authentication=Active Directory Service Principal; User ID={DataTestUtility.AADServicePrincipalId}; Password={DataTestUtility.AADServicePrincipalSecret};";
+            ConnectAndDisconnect(connStr);
+
+            // connection fails with expected error message.
+            string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
+            string connStrWithNoCred = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) +
+                "Authentication=Active Directory Service Principal;";
+            InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => ConnectAndDisconnect(connStrWithNoCred));
+
+            string expectedMessage = "Either Credential or both 'User ID' and 'Password' (or 'UID' and 'PWD') connection string keywords must be specified, if 'Authentication=Active Directory Service Principal'.";
+            Assert.Contains(expectedMessage, e.Message);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsIntegratedSecuritySetup), nameof(DataTestUtility.AreConnStringsSetup)) ]
+        public static void ADInteractiveUsingSSPI()
+        {
+            // test Passes with correct connection string.
+            string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD", "Trusted_Connection", "Integrated Security" };
+            string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.TCPConnectionString, removeKeys) +
+                $"Authentication=Active Directory Integrated;";
+            ConnectAndDisconnect(connStr);
         }
 
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
