@@ -45,11 +45,5 @@
             <returns>Represents an asynchronous operation that returns the AD authentication token.</returns>
             <remarks>To be added.</remarks>
         </AcquireTokenAsync>
-        <AcquireTokenAsync2>
-            <param name="parameters">The Active Directory authentication parameters passed by the driver to authentication providers.</param>
-            <param name="deviceCodeResultCallback">The callback function that receives Device Code Flow Result with Device Code that is used for authentication by 'Active Directory Device Code Flow' authentication provider.</param>
-            <summary>Acquires a security token from the authority.</summary>
-            <returns>Represents an asynchronous operation that returns the AD authentication token.</returns>
-        </AcquireTokenAsync2>
     </members>
 </docs>

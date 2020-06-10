@@ -30,7 +30,7 @@
             <value>5</value>
         </ActiveDirectoryServicePrincipal>
         <ActiveDirectoryDeviceCodeFlow>
-            <summary>The authentication method uses Active Directory Device Code Flow. Use Active Directory Device Code Flow to connect to a SQL Database from devices and operating systems that do not provide a Web browser, using another device to perform Interactive authentication.</summary>
+            <summary>The authentication method uses Active Directory Device Code Flow. Use Active Directory Device Code Flow to connect to a SQL Database from devices and operating systems that do not provide a Web browser, using another device to perform interactive authentication.</summary>
             <value>6</value>
         </ActiveDirectoryDeviceCodeFlow>
     </members>

@@ -12,7 +12,7 @@ namespace CustomAuthenticationProviderExamples
     /// </summary>
     public class CustomDeviceCodeFlowAzureAuthenticationProvider : SqlAuthenticationProvider
     {
-        public async override Task<SqlAuthenticationToken> AcquireTokenAsync(SqlAuthenticationParameters parameters)
+        public override async Task<SqlAuthenticationToken> AcquireTokenAsync(SqlAuthenticationParameters parameters)
         {
             string clientId = "my-client-id";
             string clientName = "My Application Name";
@@ -31,14 +31,7 @@ namespace CustomAuthenticationProviderExamples
             return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
         }
 
-        public override bool IsSupported(SqlAuthenticationMethod authenticationMethod)
-        {
-            if (authenticationMethod.Equals(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow))
-            {
-                return true;
-            }
-            return false;
-        }
+        public override bool IsSupported(SqlAuthenticationMethod authenticationMethod) => authenticationMethod.Equals(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow);
 
         private Task CustomDeviceFlowCallback(DeviceCodeResult result)
         {
