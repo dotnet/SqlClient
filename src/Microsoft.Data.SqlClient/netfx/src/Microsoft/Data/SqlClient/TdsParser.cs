@@ -681,6 +681,9 @@ namespace Microsoft.Data.SqlClient
             return;
         }
 
+        // Retrieve the IP and port number from native SNI for TCP protocol. The IP information is stored temporarily in the
+        // pendingSQLDNSObject but not in the DNS Cache at this point. We only add items to the DNS Cache after we receive the 
+        // IsSupported flag as true in the feature ext ack from server.
         internal void AssignPendingDNSInfo(string userProtocol, string DNSCacheKey)
         {
             UInt32 result;

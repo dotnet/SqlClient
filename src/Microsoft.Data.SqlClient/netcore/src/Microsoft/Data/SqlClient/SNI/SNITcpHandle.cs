@@ -127,6 +127,9 @@ namespace Microsoft.Data.SqlClient.SNI
 
                 bool reportError = true;
 
+                // We will always first try to connect with serverName as before and let the DNS server to resolve the serverName.
+                // If the DSN resolution fails, we will try with IPs in the DNS cache if existed. We try with IPv4 first and followed by IPv6 if 
+                // IPv4 fails. The exceptions will be throw to upper level and be handled as before.
                 try
                 {
                     if (parallel)
@@ -225,6 +228,9 @@ namespace Microsoft.Data.SqlClient.SNI
             _status = TdsEnums.SNI_SUCCESS;
         }
 
+        // Connect to server with hostName and port in parellel mode.
+        // The IP information will be collected temporarily as the pendingDNSInfo but is not stored in the DNS cache at this point.
+        // Only write to the DNS cache when we receive IsSupported flag as true in the Feature Ext Ack from server.
         private Socket TryConnectParallel(string hostName, int port, TimeSpan ts, bool isInfiniteTimeOut, ref bool callerReportError, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
         {
             Socket availableSocket = null;
@@ -276,6 +282,9 @@ namespace Microsoft.Data.SqlClient.SNI
 
         }
 
+        // Connect to server with hostName and port.
+        // The IP information will be collected temporarily as the pendingDNSInfo but is not stored in the DNS cache at this point.
+        // Only write to the DNS cache when we receive IsSupported flag as true in the Feature Ext Ack from server.
         private static Socket Connect(string serverName, int port, TimeSpan timeout, bool isInfiniteTimeout, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
         {
             IPAddress[] ipAddresses = Dns.GetHostAddresses(serverName);

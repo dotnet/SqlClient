@@ -563,7 +563,6 @@ namespace Microsoft.Data.SqlClient
                 SNINativeManagedWrapperX86.SNIGetInfoWrapper(pConn, QType, ref pbQInfo);
         }
 
-        // kz start
         private static uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, out ushort portNum)
         {
             return s_is64bitProcess ?
@@ -584,7 +583,6 @@ namespace Microsoft.Data.SqlClient
                 SNINativeManagedWrapperX64.SNIGetInfoWrapper(pConn, QType, out provNum) :
                 SNINativeManagedWrapperX86.SNIGetInfoWrapper(pConn, QType, out provNum);
         }
-        // kz end
 
         private static uint SNIInitialize([In] IntPtr pmo)
         {
@@ -727,8 +725,7 @@ namespace Microsoft.Data.SqlClient
         {
             return SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_CONNID, out connId);
         }
-      
-        // kz start  
+       
         internal static uint SniGetProviderNumber(SNIHandle pConn, ref ProviderEnum provNum)
         {
             return SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_PROVIDERNUM, out provNum);
@@ -755,8 +752,6 @@ namespace Microsoft.Data.SqlClient
 
             return ret;
         }
-
-        // kz end
 
         internal static uint SNIInitialize()
         {

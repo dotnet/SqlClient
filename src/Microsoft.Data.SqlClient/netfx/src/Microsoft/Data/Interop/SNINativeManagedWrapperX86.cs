@@ -79,7 +79,6 @@ namespace Microsoft.Data.SqlClient
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
         internal static extern uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, ref IntPtr pbQInfo);
 
-        // kz start
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
         internal static extern uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, out ushort portNum);
 
@@ -88,7 +87,6 @@ namespace Microsoft.Data.SqlClient
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
         internal static extern uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, out ProviderEnum provNum);
-        // kz end
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNIInitialize")]
         internal static extern uint SNIInitialize([In] IntPtr pmo);

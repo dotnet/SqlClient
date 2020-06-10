@@ -10,7 +10,7 @@ namespace Microsoft.Data.SqlClient
     internal class SQLDNSCache
     {
         private static readonly SQLDNSCache _SQLDNSCache = new SQLDNSCache();
-        private static readonly int initialCapacity = 100;
+        private static readonly int initialCapacity = 101;   // give some prime number here according to MSDN docs. It will be resized if reached capacity. 
         private ConcurrentDictionary<string, SQLDNSInfo> DNSInfoCache;
 
         // singleton instance
@@ -66,7 +66,6 @@ namespace Microsoft.Data.SqlClient
 
             return false;
         }
-
     }
 
     internal class SQLDNSInfo

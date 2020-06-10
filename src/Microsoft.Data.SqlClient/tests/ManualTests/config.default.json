@@ -14,10 +14,5 @@
     "SupportsIntegratedSecurity": true,
     "SupportsLocalDb": false,
     "SupportsFileStream": false,
-    "UseManagedSNIOnWindows": false,
-    "DNSCachingConnString": "",
-    "DNSCachingServerCR": "",
-    "DNSCachingServerTR": "",
-    "IsDNSCachingSupportedCR": false,
-    "IsDNSCachingSupportedTR": false
+    "UseManagedSNIOnWindows": false
 }

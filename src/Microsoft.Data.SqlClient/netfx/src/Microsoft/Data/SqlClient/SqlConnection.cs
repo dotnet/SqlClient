@@ -712,7 +712,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// 
-        /// for internal test only
+        /// To indicate the IsSupported flag sent by the server for DNS Caching. This property is for internal testing only.
         /// 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         internal string SQLDNSCachingSupportedState
@@ -736,7 +736,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// 
-        /// for internal test only
+        /// To indicate the IsSupported flag sent by the server for DNS Caching before redirection. This property is for internal testing only.
         /// 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         internal string SQLDNSCachingSupportedStateBeforeRedirect
