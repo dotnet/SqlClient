@@ -4530,4 +4530,34 @@
   <data name="SQLUDT_InvalidSize" xml:space="preserve">
     <value>UDT 大小必須小於 {1}，大小: {0}</value>
   </data>
+  <data name="SEC_ProtocolWarning" xml:space="preserve">
+    <value>Security Warning: The negotiated {0} is an insecure protocol and is supported for backward compatibility only. The recommended protocol version is TLS 1.2 and later.</value>
+  </data>
+  <data name="net_invalid_enum" xml:space="preserve">
+    <value>The specified value is not valid in the '{0}' enumeration.</value>
+  </data>
+  <data name="SQL_BulkLoadInvalidOrderHint" xml:space="preserve">
+    <value>The given column order hint is not valid.</value>
+  </data>
+  <data name="SQL_BulkLoadOrderHintDuplicateColumn" xml:space="preserve">
+    <value>The column '{0}' was specified more than once.</value>
+  </data>
+  <data name="SQL_BulkLoadOrderHintInvalidColumn" xml:space="preserve">
+    <value>The sorted column '{0}' is not valid in the destination table.</value>
+  </data>
+  <data name="SQL_BulkLoadUnspecifiedSortOrder" xml:space="preserve">
+    <value>A column order hint cannot have an unspecified sort order.</value>
+  </data>
+  <data name="SQL_UnsupportedAuthenticationSpecified" xml:space="preserve">
+    <value>Unsupported authentication specified in this context: {0}</value>
+  </data>
+  <data name="SQL_Timeout_Active_Directory_Interactive_Authentication" xml:space="preserve">
+    <value>Active Directory Interactive authentication timed out. The user took too long to respond to the authentication request.</value>
+  </data>
+  <data name="SQL_SettingInteractiveWithCredential" xml:space="preserve">
+    <value>Cannot use 'Authentication=Active Directory Interactive', if the Credential property has been set.</value>
+  </data>
+  <data name="SQL_SettingCredentialWithInteractive" xml:space="preserve">
+    <value>Cannot set the Credential property if 'Authentication=Active Directory Interactive' has been specified in the connection string.</value>
+  </data>
 </root>
