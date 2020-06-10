@@ -520,11 +520,12 @@ namespace Microsoft.Data.Common
         const string ActiveDirectoryPasswordString = "Active Directory Password";
         const string ActiveDirectoryIntegratedString = "Active Directory Integrated";
         const string ActiveDirectoryInteractiveString = "Active Directory Interactive";
+        const string ActiveDirectoryServicePrincipalString = "Active Directory Service Principal";
         const string SqlCertificateString = "Sql Certificate";
 
         internal static bool TryConvertToAuthenticationType(string value, out SqlAuthenticationMethod result)
         {
-            Debug.Assert(Enum.GetNames(typeof(SqlAuthenticationMethod)).Length == 5, "SqlAuthenticationMethod enum has changed, update needed");
+            Debug.Assert(Enum.GetNames(typeof(SqlAuthenticationMethod)).Length == 6, "SqlAuthenticationMethod enum has changed, update needed");
 
             bool isSuccess = false;
 
@@ -550,6 +551,12 @@ namespace Microsoft.Data.Common
                 || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.ActiveDirectoryInteractive, CultureInfo.InvariantCulture)))
             {
                 result = SqlAuthenticationMethod.ActiveDirectoryInteractive;
+                isSuccess = true;
+            }
+            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, ActiveDirectoryServicePrincipalString)
+                || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal, CultureInfo.InvariantCulture)))
+            {
+                result = SqlAuthenticationMethod.ActiveDirectoryServicePrincipal;
                 isSuccess = true;
             }
 #if ADONET_CERT_AUTH            
@@ -634,11 +641,12 @@ namespace Microsoft.Data.Common
 
         internal static bool IsValidAuthenticationTypeValue(SqlAuthenticationMethod value)
         {
-            Debug.Assert(Enum.GetNames(typeof(SqlAuthenticationMethod)).Length == 5, "SqlAuthenticationMethod enum has changed, update needed");
+            Debug.Assert(Enum.GetNames(typeof(SqlAuthenticationMethod)).Length == 6, "SqlAuthenticationMethod enum has changed, update needed");
             return value == SqlAuthenticationMethod.SqlPassword
                 || value == SqlAuthenticationMethod.ActiveDirectoryPassword
                 || value == SqlAuthenticationMethod.ActiveDirectoryIntegrated
                 || value == SqlAuthenticationMethod.ActiveDirectoryInteractive
+                || value == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
 #if ADONET_CERT_AUTH                
                 || value == SqlAuthenticationMethod.SqlCertificate
 #endif                
@@ -659,6 +667,8 @@ namespace Microsoft.Data.Common
                     return ActiveDirectoryIntegratedString;
                 case SqlAuthenticationMethod.ActiveDirectoryInteractive:
                     return ActiveDirectoryInteractiveString;
+                case SqlAuthenticationMethod.ActiveDirectoryServicePrincipal:
+                    return ActiveDirectoryServicePrincipalString;
 #if ADONET_CERT_AUTH
                 case SqlAuthenticationMethod.SqlCertificate:
                     return SqlCertificateString;

@@ -4,7 +4,6 @@
 
 using Microsoft.Data.Common;
 using System;
-using System.Data.Common;
 using System.Diagnostics;
 
 namespace Microsoft.Data.ProviderBase
@@ -24,6 +23,7 @@ namespace Microsoft.Data.ProviderBase
         //-------------------
         private long _timerExpire;
         private bool _isInfiniteTimeout;
+        private long _originalTimerTicks;
 
         //-------------------
         // Timeout-setting methods
@@ -59,7 +59,8 @@ namespace Microsoft.Data.ProviderBase
             //--------------------
             // Method body
             var timeout = new TimeoutTimer();
-            timeout._timerExpire = checked(ADP.TimerCurrent() + (milliseconds * TimeSpan.TicksPerMillisecond));
+            timeout._originalTimerTicks = milliseconds * TimeSpan.TicksPerMillisecond;
+            timeout._timerExpire = checked(ADP.TimerCurrent() + timeout._originalTimerTicks);
             timeout._isInfiniteTimeout = false;
 
             //---------------------
@@ -88,11 +89,27 @@ namespace Microsoft.Data.ProviderBase
             else
             {
                 // Stash current time + timeout
-                _timerExpire = checked(ADP.TimerCurrent() + ADP.TimerFromSeconds(seconds));
+                _originalTimerTicks = ADP.TimerFromSeconds(seconds);
+                _timerExpire = checked(ADP.TimerCurrent() + _originalTimerTicks);
                 _isInfiniteTimeout = false;
             }
+
             //---------------------
             // Postconditions:None
+        }
+
+        // Reset timer to original duration.
+        internal void Reset()
+        {
+            if (InfiniteTimeout == _originalTimerTicks)
+            {
+                _isInfiniteTimeout = true;
+            }
+            else
+            {
+                _timerExpire = checked(ADP.TimerCurrent() + _originalTimerTicks);
+                _isInfiniteTimeout = false;
+            }
         }
 
         //-------------------

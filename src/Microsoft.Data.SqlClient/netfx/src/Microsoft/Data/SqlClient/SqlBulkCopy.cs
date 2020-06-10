@@ -333,6 +333,7 @@ namespace Microsoft.Data.SqlClient
             }
             _connection = connection;
             _columnMappings = new SqlBulkCopyColumnMappingCollection();
+            ColumnOrderHints = new SqlBulkCopyColumnOrderHintCollection();
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/ctor[@name="SqlConnectionAndSqlBulkCopyOptionAndSqlTransactionParameters"]/*'/>
@@ -361,6 +362,7 @@ namespace Microsoft.Data.SqlClient
             }
             _connection = new SqlConnection(connectionString);
             _columnMappings = new SqlBulkCopyColumnMappingCollection();
+            ColumnOrderHints = new SqlBulkCopyColumnOrderHintCollection();
             _ownConnection = true;
         }
 
@@ -428,6 +430,12 @@ namespace Microsoft.Data.SqlClient
             {
                 return _columnMappings;
             }
+        }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/ColumnOrderHints/*'/>
+        public SqlBulkCopyColumnOrderHintCollection ColumnOrderHints
+        {
+            get;
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/DestinationTableName/*'/>
@@ -692,6 +700,8 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.BulkLoadExistingTransaction();
             }
 
+            HashSet<string> destColumnNames = new HashSet<string>();
+
             // loop over the metadata for each column
             //
             _SqlMetaDataSet metaDataSet = internalResults[MetaDataResultId].MetaData;
@@ -726,6 +736,7 @@ namespace Microsoft.Data.SqlClient
                         }
 
                         _sortedColumnMappings.Add(new _ColumnMapping(_localColumnMappings[assocId]._internalSourceColumnOrdinal, metadata));
+                        destColumnNames.Add(metadata.column);
                         nmatched++;
 
                         if (nmatched > 1)
@@ -872,12 +883,13 @@ namespace Microsoft.Data.SqlClient
 
             updateBulkCommandText.Append(")");
 
-            if ((_copyOptions & (
+            if (((_copyOptions & (
                     SqlBulkCopyOptions.KeepNulls
                     | SqlBulkCopyOptions.TableLock
                     | SqlBulkCopyOptions.CheckConstraints
                     | SqlBulkCopyOptions.FireTriggers
                     | SqlBulkCopyOptions.AllowEncryptedValueModifications)) != SqlBulkCopyOptions.Default)
+                    || ColumnOrderHints.Count > 0)
             {
                 bool addSeparator = false;  // insert a comma character if multiple options in list ...
                 updateBulkCommandText.Append(" with (");
@@ -906,9 +918,38 @@ namespace Microsoft.Data.SqlClient
                     updateBulkCommandText.Append((addSeparator ? ", " : "") + "ALLOW_ENCRYPTED_VALUE_MODIFICATIONS");
                     addSeparator = true;
                 }
+                if (ColumnOrderHints.Count > 0)
+                {
+                    updateBulkCommandText.Append((addSeparator ? ", " : "") + TryGetOrderHintText(destColumnNames));
+                }
                 updateBulkCommandText.Append(")");
             }
             return (updateBulkCommandText.ToString());
+        }
+
+        private string TryGetOrderHintText(HashSet<string> destColumnNames)
+        {
+            StringBuilder orderHintText = new StringBuilder("ORDER(");
+
+            foreach (SqlBulkCopyColumnOrderHint orderHint in ColumnOrderHints)
+            {
+                string columnNameArg = orderHint.Column;
+                if (!destColumnNames.Contains(columnNameArg))
+                {
+                    // column is not valid in the destination table
+                    throw SQL.BulkLoadOrderHintInvalidColumn(columnNameArg);
+                }
+                if (!string.IsNullOrEmpty(columnNameArg))
+                {
+                    string columnNameEscaped = SqlServerEscapeHelper.EscapeIdentifier(SqlServerEscapeHelper.EscapeStringAsLiteral(columnNameArg));
+                    string sortOrderText = orderHint.SortOrder == SortOrder.Descending ? "DESC" : "ASC";
+                    orderHintText.Append($"{columnNameEscaped} {sortOrderText}, ");
+                }
+            }
+
+            orderHintText.Length = orderHintText.Length - 2;
+            orderHintText.Append(")");
+            return orderHintText.ToString();
         }
 
         // submitts the updatebulk command
@@ -2934,18 +2975,18 @@ namespace Microsoft.Data.SqlClient
                 {
                     tdsReliabilitySection.Start();
 #endif //DEBUG
-                if ((cleanupParser) && (_parser != null) && (_stateObj != null))
-                {
-                    _parser._asyncWrite = false;
-                    Task task = _parser.WriteBulkCopyDone(_stateObj);
-                    Debug.Assert(task == null, "Write should not pend when error occurs");
-                    RunParser();
-                }
+                    if ((cleanupParser) && (_parser != null) && (_stateObj != null))
+                    {
+                        _parser._asyncWrite = false;
+                        Task task = _parser.WriteBulkCopyDone(_stateObj);
+                        Debug.Assert(task == null, "Write should not pend when error occurs");
+                        RunParser();
+                    }
 
-                if (_stateObj != null)
-                {
-                    CleanUpStateObject();
-                }
+                    if (_stateObj != null)
+                    {
+                        CleanUpStateObject();
+                    }
 #if DEBUG
                 }
                 finally

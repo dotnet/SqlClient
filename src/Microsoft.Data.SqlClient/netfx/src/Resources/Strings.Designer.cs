@@ -8929,6 +8929,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The given column order hint is not valid..
+        /// </summary>
+        internal static string SQL_BulkLoadInvalidOrderHint {
+            get {
+                return ResourceManager.GetString("SQL_BulkLoadInvalidOrderHint", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Timeout Value &apos;{0}&apos; is less than 0..
         /// </summary>
         internal static string SQL_BulkLoadInvalidTimeout {
@@ -9019,6 +9028,24 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The column &apos;{0}&apos; was specified more than once..
+        /// </summary>
+        internal static string SQL_BulkLoadOrderHintDuplicateColumn {
+            get {
+                return ResourceManager.GetString("SQL_BulkLoadOrderHintDuplicateColumn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The sorted column &apos;{0}&apos; is not valid in the destination table..
+        /// </summary>
+        internal static string SQL_BulkLoadOrderHintInvalidColumn {
+            get {
+                return ResourceManager.GetString("SQL_BulkLoadOrderHintInvalidColumn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Attempt to invoke bulk copy on an object that has a pending operation..
         /// </summary>
         internal static string SQL_BulkLoadPendingOperation {
@@ -9033,6 +9060,15 @@ namespace System {
         internal static string SQL_BulkLoadStringTooLong {
             get {
                 return ResourceManager.GetString("SQL_BulkLoadStringTooLong", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to A column order hint cannot have an unspecified sort order..
+        /// </summary>
+        internal static string SQL_BulkLoadUnspecifiedSortOrder {
+            get {
+                return ResourceManager.GetString("SQL_BulkLoadUnspecifiedSortOrder", resourceCulture);
             }
         }
         
@@ -9874,11 +9910,29 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot set the Credential property if &apos;Authentication=Active Directory Interactive&apos; has been specified in the connection string..
+        /// </summary>
+        internal static string SQL_SettingCredentialWithInteractive {
+            get {
+                return ResourceManager.GetString("SQL_SettingCredentialWithInteractive", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Integrated&apos;, if the Credential property has been set..
         /// </summary>
         internal static string SQL_SettingIntegratedWithCredential {
             get {
                 return ResourceManager.GetString("SQL_SettingIntegratedWithCredential", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Interactive&apos;, if the Credential property has been set..
+        /// </summary>
+        internal static string SQL_SettingInteractiveWithCredential {
+            get {
+                return ResourceManager.GetString("SQL_SettingInteractiveWithCredential", resourceCulture);
             }
         }
         
@@ -10090,6 +10144,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Active Directory Interactive authentication timed out. The user took too long to respond to the authentication request..
+        /// </summary>
+        internal static string SQL_Timeout_Active_Directory_Interactive_Authentication {
+            get {
+                return ResourceManager.GetString("SQL_Timeout_Active_Directory_Interactive_Authentication", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Execution Timeout Expired.  The timeout period elapsed prior to completion of the operation or the server is not responding..
         /// </summary>
         internal static string SQL_Timeout_Execution {
@@ -10257,6 +10320,15 @@ namespace System {
         internal static string SQL_UnsupportedAuthenticationByProvider {
             get {
                 return ResourceManager.GetString("SQL_UnsupportedAuthenticationByProvider", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unsupported authentication specified in this context: {0}.
+        /// </summary>
+        internal static string SQL_UnsupportedAuthenticationSpecified {
+            get {
+                return ResourceManager.GetString("SQL_UnsupportedAuthenticationSpecified", resourceCulture);
             }
         }
         

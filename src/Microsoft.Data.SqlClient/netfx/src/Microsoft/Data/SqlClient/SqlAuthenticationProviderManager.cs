@@ -20,23 +20,26 @@ namespace Microsoft.Data.SqlClient
         private const string ActiveDirectoryPassword = "active directory password";
         private const string ActiveDirectoryIntegrated = "active directory integrated";
         private const string ActiveDirectoryInteractive = "active directory interactive";
+        private const string ActiveDirectoryServicePrincipal = "active directory service principal";
 
         static SqlAuthenticationProviderManager()
         {
-            var activeDirectoryAuthNativeProvider = new ActiveDirectoryNativeAuthenticationProvider();
+            var activeDirectoryAuthProvider = new ActiveDirectoryAuthenticationProvider();
             SqlAuthenticationProviderConfigurationSection configurationSection = null;
             try
             {
                 configurationSection = (SqlAuthenticationProviderConfigurationSection)ConfigurationManager.GetSection(SqlAuthenticationProviderConfigurationSection.Name);
             }
-            catch (ConfigurationErrorsException)
+            catch (ConfigurationErrorsException e)
             {
                 // Don't throw an error for invalid config files
+                SqlClientEventSource.Log.TraceEvent("Unable to load custom SqlAuthenticationProviders. ConfigurationManager failed to load due to configuration errors: {0}", e);
             }
             Instance = new SqlAuthenticationProviderManager(configurationSection);
-            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryIntegrated, activeDirectoryAuthNativeProvider);
-            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, activeDirectoryAuthNativeProvider);
-            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive, activeDirectoryAuthNativeProvider);
+            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryIntegrated, activeDirectoryAuthProvider);
+            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, activeDirectoryAuthProvider);
+            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive, activeDirectoryAuthProvider);
+            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal, activeDirectoryAuthProvider);
         }
         public static readonly SqlAuthenticationProviderManager Instance;
 
@@ -171,6 +174,8 @@ namespace Microsoft.Data.SqlClient
                     return SqlAuthenticationMethod.ActiveDirectoryPassword;
                 case ActiveDirectoryInteractive:
                     return SqlAuthenticationMethod.ActiveDirectoryInteractive;
+                case ActiveDirectoryServicePrincipal:
+                    return SqlAuthenticationMethod.ActiveDirectoryServicePrincipal;
                 default:
                     throw SQL.UnsupportedAuthentication(authentication);
             }
