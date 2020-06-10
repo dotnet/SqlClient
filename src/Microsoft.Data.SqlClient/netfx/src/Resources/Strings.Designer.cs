@@ -8911,6 +8911,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The given column order hint is not valid..
+        /// </summary>
+        internal static string SQL_BulkLoadInvalidOrderHint {
+            get {
+                return ResourceManager.GetString("SQL_BulkLoadInvalidOrderHint", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Timeout Value &apos;{0}&apos; is less than 0..
         /// </summary>
         internal static string SQL_BulkLoadInvalidTimeout {
@@ -9001,6 +9010,24 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The column &apos;{0}&apos; was specified more than once..
+        /// </summary>
+        internal static string SQL_BulkLoadOrderHintDuplicateColumn {
+            get {
+                return ResourceManager.GetString("SQL_BulkLoadOrderHintDuplicateColumn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The sorted column &apos;{0}&apos; is not valid in the destination table..
+        /// </summary>
+        internal static string SQL_BulkLoadOrderHintInvalidColumn {
+            get {
+                return ResourceManager.GetString("SQL_BulkLoadOrderHintInvalidColumn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Attempt to invoke bulk copy on an object that has a pending operation..
         /// </summary>
         internal static string SQL_BulkLoadPendingOperation {
@@ -9015,6 +9042,15 @@ namespace System {
         internal static string SQL_BulkLoadStringTooLong {
             get {
                 return ResourceManager.GetString("SQL_BulkLoadStringTooLong", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to A column order hint cannot have an unspecified sort order..
+        /// </summary>
+        internal static string SQL_BulkLoadUnspecifiedSortOrder {
+            get {
+                return ResourceManager.GetString("SQL_BulkLoadUnspecifiedSortOrder", resourceCulture);
             }
         }
         

@@ -4530,6 +4530,18 @@
   <data name="SQLUDT_InvalidSize" xml:space="preserve">
     <value>UDT size must be less than {1}, size: {0}</value>
   </data>
+  <data name="SQL_BulkLoadInvalidOrderHint" xml:space="preserve">
+    <value>The given column order hint is not valid.</value>
+  </data>
+  <data name="SQL_BulkLoadOrderHintDuplicateColumn" xml:space="preserve">
+    <value>The column '{0}' was specified more than once.</value>
+  </data>
+  <data name="SQL_BulkLoadOrderHintInvalidColumn" xml:space="preserve">
+    <value>The sorted column '{0}' is not valid in the destination table.</value>
+  </data>
+  <data name="SQL_BulkLoadUnspecifiedSortOrder" xml:space="preserve">
+    <value>A column order hint cannot have an unspecified sort order.</value>
+  </data>
   <data name="SQL_UnsupportedAuthenticationSpecified" xml:space="preserve">
     <value>Unsupported authentication specified in this context: {0}</value>
   </data>

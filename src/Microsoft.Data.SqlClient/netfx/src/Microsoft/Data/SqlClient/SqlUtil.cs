@@ -1015,6 +1015,26 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_BulkLoadNonMatchingColumnName, columnName), e);
         }
+        internal static Exception BulkLoadNullEmptyColumnName(string paramName)
+        {
+            return ADP.Argument(string.Format(StringsHelper.GetString(Strings.SQL_ParameterCannotBeEmpty), paramName));
+        }
+        internal static Exception BulkLoadUnspecifiedSortOrder()
+        {
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_BulkLoadUnspecifiedSortOrder));
+        }
+        internal static Exception BulkLoadInvalidOrderHint()
+        {
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_BulkLoadInvalidOrderHint));
+        }
+        internal static Exception BulkLoadOrderHintInvalidColumn(string columnName)
+        {
+            return ADP.InvalidOperation(string.Format(StringsHelper.GetString(Strings.SQL_BulkLoadOrderHintInvalidColumn), columnName));
+        }
+        internal static Exception BulkLoadOrderHintDuplicateColumn(string columnName)
+        {
+            return ADP.InvalidOperation(string.Format(StringsHelper.GetString(Strings.SQL_BulkLoadOrderHintDuplicateColumn), columnName));
+        }
         static internal Exception BulkLoadStringTooLong(string tableName, string columnName, string truncatedValue)
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_BulkLoadStringTooLong, tableName, columnName, truncatedValue));
