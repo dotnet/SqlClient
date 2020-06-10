@@ -10,8 +10,6 @@ using System.Configuration;
 
 namespace Microsoft.Data.SqlClient
 {
-
-
     /// <summary>
     /// Authentication provider manager.
     /// </summary>

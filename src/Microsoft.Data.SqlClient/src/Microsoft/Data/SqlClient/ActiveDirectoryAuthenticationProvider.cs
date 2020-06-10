@@ -23,20 +23,11 @@ namespace Microsoft.Data.SqlClient
         private readonly SqlClientLogger _logger = new SqlClientLogger();
 
         /// <summary>
-        /// Get Token
-        /// </summary>
-        /// <param name="parameters"></param>
-        /// <returns>Authentication token</returns>
-        public override Task<SqlAuthenticationToken> AcquireTokenAsync(SqlAuthenticationParameters parameters) =>
-            AcquireTokenAsync(parameters, DefaultDeviceFlowCallback);
-
-        /// <summary>
         /// Get token.
         /// </summary>
         /// <param name="parameters"></param>
-        /// <param name="deviceCodeResultCallback"></param>
         /// <returns>Authentication token</returns>
-        public override Task<SqlAuthenticationToken> AcquireTokenAsync(SqlAuthenticationParameters parameters, Func<DeviceCodeResult, Task> deviceCodeResultCallback) => Task.Run(async () =>
+        public override Task<SqlAuthenticationToken> AcquireTokenAsync(SqlAuthenticationParameters parameters) => Task.Run(async () =>
         {
             AuthenticationResult result;
             string scope = parameters.Resource.EndsWith(s_defaultScopeSuffix) ? parameters.Resource : parameters.Resource + s_defaultScopeSuffix;
@@ -125,12 +116,12 @@ namespace Microsoft.Data.SqlClient
                     }
                     catch (MsalUiRequiredException)
                     {
-                        result = await AcquireTokenInteractiveDeviceFlow(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod, deviceCodeResultCallback);
+                        result = await AcquireTokenInteractiveDeviceFlow(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod);
                     }
                 }
                 else
                 {
-                    result = await AcquireTokenInteractiveDeviceFlow(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod, deviceCodeResultCallback);
+                    result = await AcquireTokenInteractiveDeviceFlow(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod);
                 }
             }
             else
@@ -142,7 +133,7 @@ namespace Microsoft.Data.SqlClient
         });
 
         private async Task<AuthenticationResult> AcquireTokenInteractiveDeviceFlow(IPublicClientApplication app, string[] scopes, Guid connectionId, string userId,
-            SqlAuthenticationMethod authenticationMethod, Func<DeviceCodeResult, Task> deviceCodeResultCallback)
+            SqlAuthenticationMethod authenticationMethod)
         {
             CancellationTokenSource cts = new CancellationTokenSource();
 #if netcoreapp
@@ -187,7 +178,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     AuthenticationResult result = await app.AcquireTokenWithDeviceCode(scopes,
-                    deviceCodeResult => deviceCodeResultCallback(deviceCodeResult)).ExecuteAsync();
+                    deviceCodeResult => DeviceFlowCallback(deviceCodeResult)).ExecuteAsync();
                     return result;
                 }
             }
@@ -199,7 +190,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private Task DefaultDeviceFlowCallback(DeviceCodeResult result)
+        private Task DeviceFlowCallback(DeviceCodeResult result)
         {
             // This will print the message on the console which tells the user where to go sign-in using 
             // a separate browser and the code to enter once they sign in.
