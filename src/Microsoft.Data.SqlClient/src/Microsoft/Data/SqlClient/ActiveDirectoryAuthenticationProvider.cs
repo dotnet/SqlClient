@@ -178,7 +178,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     AuthenticationResult result = await app.AcquireTokenWithDeviceCode(scopes,
-                    deviceCodeResult => DeviceFlowCallback(deviceCodeResult)).ExecuteAsync();
+                        deviceCodeResult => DeviceFlowCallback(deviceCodeResult)).ExecuteAsync();
                     return result;
                 }
             }

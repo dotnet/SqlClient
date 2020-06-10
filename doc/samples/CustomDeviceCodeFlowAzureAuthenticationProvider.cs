@@ -7,8 +7,8 @@ using Microsoft.Data.SqlClient;
 namespace CustomAuthenticationProviderExamples
 {
     /// <summary>
-    /// Example demonstrating creating custom device code flow authentication provider and attaching it with the driver.
-    /// This is helpful for applications that wish to override Callback of Device Code Result as implemented by SqlClient driver.
+    /// Example demonstrating creating a custom device code flow authentication provider and attaching it to the driver.
+    /// This is helpful for applications that wish to override the Callback for the Device Code Result implemented by the SqlClient driver.
     /// </summary>
     public class CustomDeviceCodeFlowAzureAuthenticationProvider : SqlAuthenticationProvider
     {
