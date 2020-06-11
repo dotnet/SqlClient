@@ -10,7 +10,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
 {
-    public class AADTests
+    public class AADAuthenticationTests
     {
         private SqlConnectionStringBuilder _builder;
         private SqlCredential _credential = null;
