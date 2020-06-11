@@ -19,4 +19,7 @@
     <Compile Include="Microsoft.Data.SqlClient.NetCoreApp.cs" />
     <PackageReference Include="System.Security.Cryptography.Cng" Version="$(SystemSecurityCryptographyCngVersion)" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Identity.Client" Version="$(MicrosoftIdentityClientVersion)" />
+  </ItemGroup>
 </Project>

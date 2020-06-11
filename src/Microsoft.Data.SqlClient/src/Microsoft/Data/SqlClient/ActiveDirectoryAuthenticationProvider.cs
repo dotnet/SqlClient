@@ -12,7 +12,7 @@ using Microsoft.Identity.Client;
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ActiveDirectoryAuthenticationProvider/*'/>
-    public class ActiveDirectoryAuthenticationProvider : SqlAuthenticationProvider
+    public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationProvider
     {
         private static readonly string s_defaultScopeSuffix = "/.default";
         private readonly string _type = typeof(ActiveDirectoryAuthenticationProvider).Name;
