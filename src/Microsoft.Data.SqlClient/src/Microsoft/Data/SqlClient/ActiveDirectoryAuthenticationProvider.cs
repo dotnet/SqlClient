@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Security;
 using System.Threading;
@@ -12,21 +11,24 @@ using Microsoft.Identity.Client;
 
 namespace Microsoft.Data.SqlClient
 {
-
-    /// <summary>
-    /// Default auth provider for AD Integrated.
-    /// </summary>
-    internal class ActiveDirectoryAuthenticationProvider : SqlAuthenticationProvider
+    /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ActiveDirectoryAuthenticationProvider/*'/>
+    public class ActiveDirectoryAuthenticationProvider : SqlAuthenticationProvider
     {
         private static readonly string s_defaultScopeSuffix = "/.default";
         private readonly string _type = typeof(ActiveDirectoryAuthenticationProvider).Name;
         private readonly SqlClientLogger _logger = new SqlClientLogger();
+        private Func<DeviceCodeResult, Task> _deviceCodeFlowCallback;
 
-        /// <summary>
-        /// Get token.
-        /// </summary>
-        /// <param name="parameters"></param>
-        /// <returns>Authentication token</returns>
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor/*'/>
+        public ActiveDirectoryAuthenticationProvider() => new ActiveDirectoryAuthenticationProvider(DefaultDeviceFlowCallback);
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor2/*'/>
+        public ActiveDirectoryAuthenticationProvider(Func<DeviceCodeResult, Task> deviceCodeFlowCallbackMethod)
+        {
+            this._deviceCodeFlowCallback = deviceCodeFlowCallbackMethod;
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/AcquireTokenAsync/*'/>
         public override Task<SqlAuthenticationToken> AcquireTokenAsync(SqlAuthenticationParameters parameters) => Task.Run(async () =>
         {
             AuthenticationResult result;
@@ -178,7 +180,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     AuthenticationResult result = await app.AcquireTokenWithDeviceCode(scopes,
-                        deviceCodeResult => DeviceFlowCallback(deviceCodeResult)).ExecuteAsync();
+                        deviceCodeResult => _deviceCodeFlowCallback(deviceCodeResult)).ExecuteAsync();
                     return result;
                 }
             }
@@ -190,7 +192,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private Task DeviceFlowCallback(DeviceCodeResult result)
+        private Task DefaultDeviceFlowCallback(DeviceCodeResult result)
         {
             // This will print the message on the console which tells the user where to go sign-in using 
             // a separate browser and the code to enter once they sign in.
@@ -206,10 +208,13 @@ namespace Microsoft.Data.SqlClient
             return Task.FromResult(0);
         }
 
-        /// <summary>
-        /// Checks support for authentication type in lower case.
-        /// Interactive authentication added.
-        /// </summary>
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/SetDeviceCodeFlowCallback/*'/>
+        public void SetDeviceCodeFlowCallback(Func<DeviceCodeResult, Task> deviceCodeFlowCallbackMethod)
+        {
+            _deviceCodeFlowCallback = deviceCodeFlowCallbackMethod;
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/IsSupported/*'/>
         public override bool IsSupported(SqlAuthenticationMethod authentication)
         {
             return authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated
@@ -219,11 +224,13 @@ namespace Microsoft.Data.SqlClient
                 || authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow;
         }
 
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/BeforeLoad/*'/>
         public override void BeforeLoad(SqlAuthenticationMethod authentication)
         {
             _logger.LogInfo(_type, "BeforeLoad", $"being loaded into SqlAuthProviders for {authentication}.");
         }
 
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/BeforeUnload/*'/>
         public override void BeforeUnload(SqlAuthenticationMethod authentication)
         {
             _logger.LogInfo(_type, "BeforeUnload", $"being unloaded from SqlAuthProviders for {authentication}.");

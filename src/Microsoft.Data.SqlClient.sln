@@ -78,6 +78,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Data.Sql", "Micro
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Data.SqlClient", "Microsoft.Data.SqlClient", "{C05F4FFE-6A14-4409-AA0A-10630BE4F1EE}"
 	ProjectSection(SolutionItems) = preProject
+		..\doc\snippets\Microsoft.Data.SqlClient\ActiveDirectoryAuthenticationProvider.xml = ..\doc\snippets\Microsoft.Data.SqlClient\ActiveDirectoryAuthenticationProvider.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\ApplicationIntent.xml = ..\doc\snippets\Microsoft.Data.SqlClient\ApplicationIntent.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\OnChangeEventHandler.xml = ..\doc\snippets\Microsoft.Data.SqlClient\OnChangeEventHandler.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\PoolBlockingPeriod.xml = ..\doc\snippets\Microsoft.Data.SqlClient\PoolBlockingPeriod.xml
