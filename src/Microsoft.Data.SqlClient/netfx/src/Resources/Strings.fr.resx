@@ -4531,7 +4531,7 @@
     <value>La taille UDT doit être inférieure à {1}, taille : {0}</value>
   </data>
   <data name="SEC_ProtocolWarning" xml:space="preserve">
-    <value>Security Warning: The negotiated {0} is an insecure protocol and is supported for backward compatibility only. The recommended protocol version is TLS 1.2 and later.</value>
+    <value>Avertissement de sécurité : Le {0} négocié est un protocole non sécurisé qui est pris en charge uniquement à des fins de compatibilité descendante. La version de protocole recommandée est TLS 1.2 et ultérieur.</value>
   </data>
   <data name="net_invalid_enum" xml:space="preserve">
     <value>La valeur spécifiée n'est pas valide dans l'énumération '{0}'.</value>
