@@ -4534,30 +4534,30 @@
     <value>Security Warning: The negotiated {0} is an insecure protocol and is supported for backward compatibility only. The recommended protocol version is TLS 1.2 and later.</value>
   </data>
   <data name="net_invalid_enum" xml:space="preserve">
-    <value>The specified value is not valid in the '{0}' enumeration.</value>
+    <value>La valeur spécifiée n'est pas valide dans l'énumération '{0}'.</value>
   </data>
   <data name="SQL_BulkLoadInvalidOrderHint" xml:space="preserve">
-    <value>The given column order hint is not valid.</value>
+    <value>L'indicateur d'ordre de colonnes donné n'est pas valide.</value>
   </data>
   <data name="SQL_BulkLoadOrderHintDuplicateColumn" xml:space="preserve">
-    <value>The column '{0}' was specified more than once.</value>
+    <value>La colonne « {0} » a été spécifiée plusieurs fois.</value>
   </data>
   <data name="SQL_BulkLoadOrderHintInvalidColumn" xml:space="preserve">
-    <value>The sorted column '{0}' is not valid in the destination table.</value>
+    <value>La colonne « {0} » triée n'est pas valide dans la table de destination.</value>
   </data>
   <data name="SQL_BulkLoadUnspecifiedSortOrder" xml:space="preserve">
-    <value>A column order hint cannot have an unspecified sort order.</value>
+    <value>Un indicateur d'ordre de tri de colonne ne peut pas avoir un ordre de tri non spécifié.</value>
   </data>
   <data name="SQL_UnsupportedAuthenticationSpecified" xml:space="preserve">
-    <value>Unsupported authentication specified in this context: {0}</value>
+    <value>Authentification non prise en charge spécifiée dans ce contexte : {0}</value>
   </data>
   <data name="SQL_Timeout_Active_Directory_Interactive_Authentication" xml:space="preserve">
-    <value>Active Directory Interactive authentication timed out. The user took too long to respond to the authentication request.</value>
+    <value>L'authentification interactive Active Directory a expiré. L'utilisateur a mis trop de temps à répondre à la demande d'authentification.</value>
   </data>
   <data name="SQL_SettingInteractiveWithCredential" xml:space="preserve">
-    <value>Cannot use 'Authentication=Active Directory Interactive', if the Credential property has been set.</value>
+    <value>Impossible d'utiliser « Authentication=Active Directory Interactive », si la propriété Credential a été définie.</value>
   </data>
   <data name="SQL_SettingCredentialWithInteractive" xml:space="preserve">
-    <value>Cannot set the Credential property if 'Authentication=Active Directory Interactive' has been specified in the connection string.</value>
+    <value>Impossible de définir la propriété Credential si « Authentication=Active Directory Interactive » a été spécifié dans la chaîne de connexion.</value>
   </data>
 </root>

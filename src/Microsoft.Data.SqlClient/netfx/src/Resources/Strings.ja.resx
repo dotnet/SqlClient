@@ -4534,7 +4534,7 @@
     <value>Security Warning: The negotiated {0} is an insecure protocol and is supported for backward compatibility only. The recommended protocol version is TLS 1.2 and later.</value>
   </data>
   <data name="net_invalid_enum" xml:space="preserve">
-    <value>The specified value is not valid in the '{0}' enumeration.</value>
+    <value>指定された値は '{0}' 列挙で有効ではありません。</value>
   </data>
   <data name="SQL_BulkLoadInvalidOrderHint" xml:space="preserve">
     <value>The given column order hint is not valid.</value>
