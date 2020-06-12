@@ -11,6 +11,7 @@ namespace Microsoft.Data.ProviderBase
     using System.Diagnostics;
     using System.Globalization;
     using System.IO;
+    using System.Xml;
     using Microsoft.Data.Common;
 
     internal class DbMetaDataFactory
@@ -549,7 +550,9 @@ namespace Microsoft.Data.ProviderBase
         {
             _metaDataCollectionsDataSet = new DataSet();
             _metaDataCollectionsDataSet.Locale = System.Globalization.CultureInfo.InvariantCulture;
-            _metaDataCollectionsDataSet.ReadXml(XmlStream);
+            // Reading from a stream has security implications. Create an XmlReader and do not allow the 
+            // XmlReader to open any external resources by setting the XmlResolver property to null.
+            _metaDataCollectionsDataSet.ReadXml(XmlReader.Create(XmlStream, new XmlReaderSettings() { XmlResolver = null }));
         }
 
         virtual protected DataTable PrepareCollection(String collectionName, String[] restrictions, DbConnection connection)
