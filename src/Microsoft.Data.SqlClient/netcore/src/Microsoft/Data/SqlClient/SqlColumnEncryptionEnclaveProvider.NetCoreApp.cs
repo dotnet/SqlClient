@@ -9,7 +9,7 @@ namespace Microsoft.Data.SqlClient
     /// <summary>
     /// The base class that defines the interface for enclave providers for Always Encrypted. An enclave is a protected region of memory inside SQL Server, used for computations on encrypted columns. An enclave provider encapsulates the client-side implementation details of the enclave attestation protocol as well as the logic for creating and caching enclave sessions.
     /// </summary>
-    public abstract partial class SqlColumnEncryptionEnclaveProvider
+    internal abstract partial class SqlColumnEncryptionEnclaveProvider
     {
         /// Performs enclave attestation, generates a symmetric key for the session, creates a an enclave session and stores the session information in the cache.
         /// <param name="enclaveAttestationInfo">The information the provider uses to attest the enclave and generate a symmetric key for the session. The format of this information is specific to the enclave attestation protocol.</param>
@@ -20,7 +20,7 @@ namespace Microsoft.Data.SqlClient
         /// <param name="customDataLength">The length of the extra data needed for attestating the enclave.</param>
         /// <param name="sqlEnclaveSession">The requested enclave session or null if the provider does not implement session caching.</param>
         /// <param name="counter">A counter that the enclave provider is expected to increment each time SqlClient retrieves the session from the cache. The purpose of this field is to prevent replay attacks.</param>
-        public abstract void CreateEnclaveSession(byte[] enclaveAttestationInfo, ECDiffieHellmanCng clientDiffieHellmanKey, string attestationUrl, string servername, byte[] customData, int customDataLength,
+        internal abstract void CreateEnclaveSession(byte[] enclaveAttestationInfo, ECDiffieHellmanCng clientDiffieHellmanKey, string attestationUrl, string servername, byte[] customData, int customDataLength,
             out SqlEnclaveSession sqlEnclaveSession, out long counter);
     }
 }
