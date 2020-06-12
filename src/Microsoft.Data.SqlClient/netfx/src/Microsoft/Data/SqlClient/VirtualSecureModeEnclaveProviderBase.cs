@@ -82,7 +82,7 @@ namespace Microsoft.Data.SqlClient
 
         #endregion
 
-        #region Public methods
+        #region Internal methods
 
         // When overridden in a derived class, looks up an existing enclave session information in the enclave session cache.
         // If the enclave provider doesn't implement enclave session caching, this method is expected to return null in the sqlEnclaveSession parameter.

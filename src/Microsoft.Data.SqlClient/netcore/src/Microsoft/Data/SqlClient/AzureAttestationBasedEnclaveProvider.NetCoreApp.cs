@@ -62,7 +62,7 @@ namespace Microsoft.Data.SqlClient
         private static readonly MemoryCache OpenIdConnectConfigurationCache = new MemoryCache("OpenIdConnectConfigurationCache");
         #endregion
 
-        #region Public methods
+        #region Internal methods
         // When overridden in a derived class, looks up an existing enclave session information in the enclave session cache.
         // If the enclave provider doesn't implement enclave session caching, this method is expected to return null in the sqlEnclaveSession parameter.
         internal override void GetEnclaveSession(string servername, string attestationUrl, bool generateCustomData, out SqlEnclaveSession sqlEnclaveSession, out long counter, out byte[] customData, out int customDataLength)
