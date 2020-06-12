@@ -550,6 +550,8 @@ namespace Microsoft.Data.ProviderBase
         {
             _metaDataCollectionsDataSet = new DataSet();
             _metaDataCollectionsDataSet.Locale = System.Globalization.CultureInfo.InvariantCulture;
+            // Reading from a stream has security implications. Create an XmlReader and do not allow the 
+            // XmlReader to open any external resources by setting the XmlResolver property to null.
             _metaDataCollectionsDataSet.ReadXml(XmlReader.Create(XmlStream, new XmlReaderSettings() { XmlResolver = null }));
         }
 

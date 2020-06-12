@@ -249,6 +249,8 @@ namespace Microsoft.Data.SqlClient
         {
             public override Type BindToType(string assemblyName, string typeName)
             {
+                // Deserializing an unexpected type can inject objects with malicious side effects.
+                // If the type is unexpected, throw an exception to stop deserialization.
                 if (typeName == nameof(SqlDependencyProcessDispatcher))
                 {
                     return typeof(SqlDependencyProcessDispatcher);
@@ -652,6 +654,7 @@ namespace Microsoft.Data.SqlClient
         [SecurityPermission(SecurityAction.Assert, Flags = SecurityPermissionFlag.SerializationFormatter)]
         private static SqlDependencyProcessDispatcher GetDeserializedObject(BinaryFormatter formatter, MemoryStream stream)
         {
+            // Use a custom SerializationBinder to restrict deserialized types to SqlDependencyProcessDispatcher.
             formatter.Binder = new SqlDependencyProcessDispatcherSerializationBinder();
             object result = formatter.Deserialize(stream);
             Debug.Assert(result.GetType() == typeof(SqlDependencyProcessDispatcher), "Unexpected type stored in native!");
