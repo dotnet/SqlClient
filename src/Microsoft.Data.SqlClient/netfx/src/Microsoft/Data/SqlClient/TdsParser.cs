@@ -1296,6 +1296,7 @@ namespace Microsoft.Data.SqlClient
                             string warningMessage = SslProtocolsHelper.GetProtocolWarning(protocolVersion);
                             if (!string.IsNullOrEmpty(warningMessage))
                             {
+                                // This logs console warning of insecure protocol in use.
                                 _logger.LogWarning(_typeName, MethodBase.GetCurrentMethod().Name, warningMessage);
                             }
 
