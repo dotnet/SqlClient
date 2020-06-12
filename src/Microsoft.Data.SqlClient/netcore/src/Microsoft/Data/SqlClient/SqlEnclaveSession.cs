@@ -5,7 +5,7 @@
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlEnclaveSession.xml' path='docs/members[@name="SqlEnclaveSession"]/SqlEnclaveSession/*' />
-    public class SqlEnclaveSession
+    internal class SqlEnclaveSession
     {
 
         private static readonly string _sessionKeyName = "SessionKey";
@@ -14,10 +14,10 @@ namespace Microsoft.Data.SqlClient
         private readonly byte[] _sessionKey;
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlEnclaveSession.xml' path='docs/members[@name="SqlEnclaveSession"]/SessionId/*' />
-        public long SessionId { get; }
+        internal long SessionId { get; }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlEnclaveSession.xml' path='docs/members[@name="SqlEnclaveSession"]/GetSessionKey/*' />
-        public byte[] GetSessionKey()
+        internal byte[] GetSessionKey()
         {
             return Clone(_sessionKey);
         }
@@ -41,7 +41,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlEnclaveSession.xml' path='docs/members[@name="SqlEnclaveSession"]/ctor/*' />
-        public SqlEnclaveSession(byte[] sessionKey, long sessionId/*, long counter*/)
+        internal SqlEnclaveSession(byte[] sessionKey, long sessionId/*, long counter*/)
         {
             if (null == sessionKey)
             {

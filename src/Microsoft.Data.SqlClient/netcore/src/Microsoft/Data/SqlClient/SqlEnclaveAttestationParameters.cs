@@ -5,15 +5,15 @@
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlEnclaveAttestationParameters.xml' path='docs/members[@name="SqlEnclaveAttestationParameters"]/SqlEnclaveAttestationParameters/*' />
-    public partial class SqlEnclaveAttestationParameters
+    internal partial class SqlEnclaveAttestationParameters
     {
         private readonly byte[] _input = null;
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlEnclaveAttestationParameters.xml' path='docs/members[@name="SqlEnclaveAttestationParameters"]/Protocol/*' />
-        public int Protocol { get; }
+        internal int Protocol { get; }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlEnclaveAttestationParameters.xml' path='docs/members[@name="SqlEnclaveAttestationParameters"]/GetInput/*' />
-        public byte[] GetInput()
+        internal byte[] GetInput()
         {
             return Clone(_input);
         }
