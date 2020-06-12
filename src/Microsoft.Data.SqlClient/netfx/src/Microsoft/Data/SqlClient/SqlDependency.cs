@@ -242,7 +242,7 @@ namespace Microsoft.Data.SqlClient
         // ----------------------------------------
 
         // ----------------------------------------
-        // Private class for restricting allowed types from deserializaiton.
+        // Private class for restricting allowed types from deserialization.
         // ----------------------------------------
 
         private class SqlDependencyProcessDispatcherSerializationBinder : SerializationBinder
