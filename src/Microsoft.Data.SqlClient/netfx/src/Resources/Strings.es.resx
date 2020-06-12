@@ -4537,7 +4537,7 @@
     <value>El valor especificado no es válido en la enumeración '{0}'.</value>
   </data>
   <data name="SQL_BulkLoadInvalidOrderHint" xml:space="preserve">
-    <value>The given column order hint is not valid.</value>
+    <value>La sugerencia de orden de columna especificada no es válida.</value>
   </data>
   <data name="SQL_BulkLoadOrderHintDuplicateColumn" xml:space="preserve">
     <value>The column '{0}' was specified more than once.</value>
@@ -4546,7 +4546,7 @@
     <value>The sorted column '{0}' is not valid in the destination table.</value>
   </data>
   <data name="SQL_BulkLoadUnspecifiedSortOrder" xml:space="preserve">
-    <value>A column order hint cannot have an unspecified sort order.</value>
+    <value>Una sugerencia de orden de columnas no puede tener un criterio de ordenación no especificado.</value>
   </data>
   <data name="SQL_UnsupportedAuthenticationSpecified" xml:space="preserve">
     <value>Unsupported authentication specified in this context: {0}</value>

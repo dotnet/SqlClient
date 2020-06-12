@@ -4531,33 +4531,33 @@
     <value>UDT 大小必須小於 {1}，大小: {0}</value>
   </data>
   <data name="SEC_ProtocolWarning" xml:space="preserve">
-    <value>Security Warning: The negotiated {0} is an insecure protocol and is supported for backward compatibility only. The recommended protocol version is TLS 1.2 and later.</value>
+    <value>安全性警告: 交涉的 {0} 是不安全的通訊協定，僅支援回溯相容性。建議的通訊協定版本為 TLS 1.2 及更新版本。</value>
   </data>
   <data name="net_invalid_enum" xml:space="preserve">
     <value>指定值在 '{0}' 列舉中是無效的。</value>
   </data>
   <data name="SQL_BulkLoadInvalidOrderHint" xml:space="preserve">
-    <value>The given column order hint is not valid.</value>
+    <value>指定的資料行順序提示無效。</value>
   </data>
   <data name="SQL_BulkLoadOrderHintDuplicateColumn" xml:space="preserve">
-    <value>The column '{0}' was specified more than once.</value>
+    <value>多次指定資料行 '{0}'。</value>
   </data>
   <data name="SQL_BulkLoadOrderHintInvalidColumn" xml:space="preserve">
-    <value>The sorted column '{0}' is not valid in the destination table.</value>
+    <value>目的地資料表中的排序資料行 '{0}' 無效。</value>
   </data>
   <data name="SQL_BulkLoadUnspecifiedSortOrder" xml:space="preserve">
-    <value>A column order hint cannot have an unspecified sort order.</value>
+    <value>資料行順序提示不能有未指定的排序次序。</value>
   </data>
   <data name="SQL_UnsupportedAuthenticationSpecified" xml:space="preserve">
-    <value>Unsupported authentication specified in this context: {0}</value>
+    <value>在此內容 {0} 中指定了不支援的驗證</value>
   </data>
   <data name="SQL_Timeout_Active_Directory_Interactive_Authentication" xml:space="preserve">
-    <value>Active Directory Interactive authentication timed out. The user took too long to respond to the authentication request.</value>
+    <value>Active Directory 互動式驗證逾時。使用者回應驗證要求所花的時間過長。</value>
   </data>
   <data name="SQL_SettingInteractiveWithCredential" xml:space="preserve">
-    <value>Cannot use 'Authentication=Active Directory Interactive', if the Credential property has been set.</value>
+    <value>如果已設定 Credential 屬性，就無法使用 'Authentication=Active Directory Interactive'。</value>
   </data>
   <data name="SQL_SettingCredentialWithInteractive" xml:space="preserve">
-    <value>Cannot set the Credential property if 'Authentication=Active Directory Interactive' has been specified in the connection string.</value>
+    <value>如果連接字串中已指定 'Authentication=Active Directory Interactive'，則無法設定 Credential 屬性。</value>
   </data>
 </root>
