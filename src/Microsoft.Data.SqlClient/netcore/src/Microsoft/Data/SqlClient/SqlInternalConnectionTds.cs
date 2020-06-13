@@ -2651,7 +2651,7 @@ namespace Microsoft.Data.SqlClient
                             _cleanSQLDNSCaching = true;
                         }
 
-                        // need to add more steps for phrase 2
+                        // need to add more steps for phase 2
                         // get IPv4 + IPv6 + Port number 
                         // not put them in the DNS cache at this point but need to store them somewhere
                         // generate pendingSQLDNSObject and turn on IsSQLDNSRetryEnabled flag
