@@ -1064,7 +1064,10 @@ GO
 ## Remarks  
  When this method is called, the values retrieved are those at the current point in time. If you continue using the connection, the values are incorrect. You need to re-execute the method to obtain the most current values.
  
- Supported internal properties: `SQLDNSCachingSupportedState` and `SQLDNSCachingSupportedStateBeforeRedirect`.
+ |Supported internal properties|Type|Information provided|Return value|
+ |-----------------------------|---------|----------------------------|------------|
+ |`SQLDNSCachingSupportedState`|string|To indicate the IsSupported flag sent by the server for DNS Caching|"true", "false", "innerConnection is null!"|
+ |`SQLDNSCachingSupportedStateBeforeRedirect`|string|To indicate the IsSupported flag sent by the server for DNS Caching before redirection.|"true", "false", "innerConnection is null!"|
   
  ]]></format>
             </remarks>
