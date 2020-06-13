@@ -4531,7 +4531,7 @@
     <value>El tamaño de UDT debe ser menor que {1}; tamaño: {0}</value>
   </data>
   <data name="SEC_ProtocolWarning" xml:space="preserve">
-    <value>Security Warning: The negotiated {0} is an insecure protocol and is supported for backward compatibility only. The recommended protocol version is TLS 1.2 and later.</value>
+    <value>Advertencia de seguridad: el elemento {0} negociado es un protocolo inseguro y solo se admite por compatibilidad con versiones anteriores. La versión recomendada del protocolo es TLS 1.2 y versiones posteriores.</value>
   </data>
   <data name="net_invalid_enum" xml:space="preserve">
     <value>El valor especificado no es válido en la enumeración '{0}'.</value>
@@ -4540,24 +4540,24 @@
     <value>La sugerencia de orden de columna especificada no es válida.</value>
   </data>
   <data name="SQL_BulkLoadOrderHintDuplicateColumn" xml:space="preserve">
-    <value>The column '{0}' was specified more than once.</value>
+    <value>Una columna "{0}" se ha especificado más de una vez.</value>
   </data>
   <data name="SQL_BulkLoadOrderHintInvalidColumn" xml:space="preserve">
-    <value>The sorted column '{0}' is not valid in the destination table.</value>
+    <value>La columna ordenada "{0}" no se encuentra en la tabla de destino.</value>
   </data>
   <data name="SQL_BulkLoadUnspecifiedSortOrder" xml:space="preserve">
     <value>Una sugerencia de orden de columnas no puede tener un criterio de ordenación no especificado.</value>
   </data>
   <data name="SQL_UnsupportedAuthenticationSpecified" xml:space="preserve">
-    <value>Unsupported authentication specified in this context: {0}</value>
+    <value>Se ha especificado una autenticación no admitida en este contexto: {0}</value>
   </data>
   <data name="SQL_Timeout_Active_Directory_Interactive_Authentication" xml:space="preserve">
-    <value>Active Directory Interactive authentication timed out. The user took too long to respond to the authentication request.</value>
+    <value>Se ha agotado el tiempo de espera de la autenticación interactiva de Active Directory. El usuario tardó demasiado en responder a la solicitud de autenticación.</value>
   </data>
   <data name="SQL_SettingInteractiveWithCredential" xml:space="preserve">
-    <value>Cannot use 'Authentication=Active Directory Interactive', if the Credential property has been set.</value>
+    <value>No se puede usar "Authentication=Active Directory Interactive" si se ha establecido la propiedad Credential.</value>
   </data>
   <data name="SQL_SettingCredentialWithInteractive" xml:space="preserve">
-    <value>Cannot set the Credential property if 'Authentication=Active Directory Interactive' has been specified in the connection string.</value>
+    <value>No se puede establecer la propiedad Credential si se ha especificado "Authentication=Active Directory Interactive" en la cadena de conexión.</value>
   </data>
 </root>
