@@ -10,8 +10,8 @@ namespace Microsoft.Data.SqlClient
     internal class EnclavePackage
     {
 
-        public SqlEnclaveSession EnclaveSession { get; }
-        public byte[] EnclavePackageBytes { get; }
+        internal SqlEnclaveSession EnclaveSession { get; }
+        internal byte[] EnclavePackageBytes { get; }
 
         /// <summary>
         /// Constructor

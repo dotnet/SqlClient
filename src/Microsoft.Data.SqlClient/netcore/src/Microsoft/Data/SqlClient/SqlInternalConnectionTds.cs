@@ -1194,7 +1194,8 @@ namespace Microsoft.Data.SqlClient
             login.serverName = server.UserServerName;
 
             login.useReplication = ConnectionOptions.Replication;
-            login.useSSPI = ConnectionOptions.IntegratedSecurity;
+            login.useSSPI = ConnectionOptions.IntegratedSecurity  // Treat AD Integrated like Windows integrated when against a non-FedAuth endpoint
+                                     || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && !_fedAuthRequired);
             login.packetSize = _currentPacketSize;
             login.newPassword = newPassword;
             login.readOnlyIntent = ConnectionOptions.ApplicationIntent == ApplicationIntent.ReadOnly;
@@ -1211,11 +1212,13 @@ namespace Microsoft.Data.SqlClient
                 _sessionRecoveryRequested = true;
             }
 
-            // If the workflow being used is Active Directory Password or Active Directory Integrated and server's prelogin response
+            // If the workflow being used is Active Directory Password/Integrated/Interactive/Service Principal and server's prelogin response
             // for FEDAUTHREQUIRED option indicates Federated Authentication is required, we have to insert FedAuth Feature Extension
-            // in Login7, indicating the intent to use Active Directory Authentication Library for SQL Server.
+            // in Login7, indicating the intent to use Active Directory Authentication for SQL Server.
             if (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
+                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
+                // Since AD Integrated may be acting like Windows integrated, additionally check _fedAuthRequired
                 || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && _fedAuthRequired))
             {
                 requestedFeatures |= TdsEnums.FeatureExtension.FedAuth;
@@ -1388,11 +1391,11 @@ namespace Microsoft.Data.SqlClient
             // Only three ways out of this loop:
             //  1) Successfully connected
             //  2) Parser threw exception while main timer was expired
-            //  3) Parser threw logon failure-related exception 
+            //  3) Parser threw logon failure-related exception
             //  4) Parser threw exception in post-initial connect code,
             //      such as pre-login handshake or during actual logon. (parser state != Closed)
             //
-            //  Of these methods, only #1 exits normally. This preserves the call stack on the exception 
+            //  Of these methods, only #1 exits normally. This preserves the call stack on the exception
             //  back into the parser for the error cases.
             int attemptNumber = 0;
             TimeoutTimer intervalTimer = null;
@@ -1469,6 +1472,11 @@ namespace Microsoft.Data.SqlClient
                 }
                 catch (SqlException sqlex)
                 {
+                    if (AttemptRetryADAuthWithTimeoutError(sqlex, connectionOptions, timeout))
+                    {
+                        continue;
+                    }
+
                     if (null == _parser
                             || TdsParserState.Closed != _parser.State
                             || IsDoNotRetryConnectError(sqlex)
@@ -1520,6 +1528,7 @@ namespace Microsoft.Data.SqlClient
                 Thread.Sleep(sleepInterval);
                 sleepInterval = (sleepInterval < 500) ? sleepInterval * 2 : 1000;
             }
+            _activeDirectoryAuthTimeoutRetryHelper.State = ActiveDirectoryAuthenticationTimeoutRetryState.HasLoggedIn;
 
             if (null != PoolGroupProviderInfo)
             {
@@ -1529,6 +1538,25 @@ namespace Microsoft.Data.SqlClient
                 PoolGroupProviderInfo.FailoverCheck(this, false, connectionOptions, ServerProvidedFailOverPartner);
             }
             CurrentDataSource = originalServerInfo.UserServerName;
+        }
+
+        // With possible MFA support in all AD auth providers, the duration for acquiring a token can be unpredictable.
+        // If a timeout error (client or server) happened, we silently retry if a cached token exists from a previous auth attempt (see GetFedAuthToken)
+        private bool AttemptRetryADAuthWithTimeoutError(SqlException sqlex, SqlConnectionString connectionOptions, TimeoutTimer timeout)
+        {
+            if (!_activeDirectoryAuthTimeoutRetryHelper.CanRetryWithSqlException(sqlex))
+            {
+                return false;
+            }
+            // Reset client-side timeout.
+            timeout.Reset();
+            // When server timeout, the auth context key was already created. Clean it up here.
+            _dbConnectionPoolAuthenticationContextKey = null;
+            // When server timeout, connection is doomed. Reset here to allow reconnect.
+            UnDoomThisConnection();
+            // Change retry state so it only retries once for timeout error.
+            _activeDirectoryAuthTimeoutRetryHelper.State = ActiveDirectoryAuthenticationTimeoutRetryState.Retrying;
+            return true;
         }
 
         // Attempt to login to a host that has a failover partner
@@ -1656,6 +1684,11 @@ namespace Microsoft.Data.SqlClient
                 }
                 catch (SqlException sqlex)
                 {
+                    if (AttemptRetryADAuthWithTimeoutError(sqlex, connectionOptions, timeout))
+                    {
+                        continue;
+                    }
+
                     if (IsDoNotRetryConnectError(sqlex)
                             || timeout.IsExpired)
                     {       // no more time to try again
@@ -1680,7 +1713,7 @@ namespace Microsoft.Data.SqlClient
 
                 // We only get here when we failed to connect, but are going to re-try
 
-                // After trying to connect to both servers fails, sleep for a bit to prevent clogging 
+                // After trying to connect to both servers fails, sleep for a bit to prevent clogging
                 //  the network with requests, then update sleep interval for next iteration (max 1 second interval)
                 if (1 == attemptNumber % 2)
                 {
@@ -1695,6 +1728,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // If we get here, connection/login succeeded!  Just a few more checks & record-keeping
+            _activeDirectoryAuthTimeoutRetryHelper.State = ActiveDirectoryAuthenticationTimeoutRetryState.HasLoggedIn;
 
             // if connected to failover host, but said host doesn't have DbMirroring set up, throw an error
             if (useFailoverHost && null == ServerProvidedFailOverPartner)
@@ -1705,7 +1739,7 @@ namespace Microsoft.Data.SqlClient
             if (null != PoolGroupProviderInfo)
             {
                 // We must wait for CompleteLogin to finish for to have the
-                // env change from the server to know its designated failover 
+                // env change from the server to know its designated failover
                 // partner; save this information in _currentFailoverPartner.
                 PoolGroupProviderInfo.FailoverCheck(this, useFailoverHost, connectionOptions, ServerProvidedFailOverPartner);
             }
@@ -1935,7 +1969,7 @@ namespace Microsoft.Data.SqlClient
                     break;
 
                 case TdsEnums.ENV_SPRESETCONNECTIONACK:
-                    // connection is being reset 
+                    // connection is being reset
                     if (_currentSessionData != null)
                     {
                         _currentSessionData.Reset();
@@ -2194,7 +2228,18 @@ namespace Microsoft.Data.SqlClient
                     switch (ConnectionOptions.Authentication)
                     {
                         case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
-                            username = TdsEnums.NTAUTHORITYANONYMOUSLOGON;
+                            // In some scenarios for .NET Core, MSAL cannot detect the current user and needs it passed in
+                            // for Integrated auth. Allow the user/application to pass it in to work around those scenarios.
+                            if (!string.IsNullOrEmpty(ConnectionOptions.UserID))
+                            {
+                                username = ConnectionOptions.UserID;
+                                authParamsBuilder.WithUserId(username);
+                            }
+                            else
+                            {
+                                username = TdsEnums.NTAUTHORITYANONYMOUSLOGON;
+                            }
+
                             if (_activeDirectoryAuthTimeoutRetryHelper.State == ActiveDirectoryAuthenticationTimeoutRetryState.Retrying)
                             {
                                 fedAuthToken = _activeDirectoryAuthTimeoutRetryHelper.CachedToken;
@@ -2218,6 +2263,7 @@ namespace Microsoft.Data.SqlClient
                             }
                             break;
                         case SqlAuthenticationMethod.ActiveDirectoryPassword:
+                        case SqlAuthenticationMethod.ActiveDirectoryServicePrincipal:
                             if (_activeDirectoryAuthTimeoutRetryHelper.State == ActiveDirectoryAuthenticationTimeoutRetryState.Retrying)
                             {
                                 fedAuthToken = _activeDirectoryAuthTimeoutRetryHelper.CachedToken;
@@ -2240,7 +2286,7 @@ namespace Microsoft.Data.SqlClient
                             }
                             break;
                         default:
-                            throw new InvalidOperationException($"Failed to get a token with unsupported auth method {ConnectionOptions.Authentication}.");
+                            throw SQL.UnsupportedAuthenticationSpecified(ConnectionOptions.Authentication);
                     }
 
                     Debug.Assert(fedAuthToken.accessToken != null, "AccessToken should not be null.");
@@ -2567,7 +2613,7 @@ namespace Microsoft.Data.SqlClient
         internal string ExtendedServerName { get; private set; } // the resolved servername with protocol
         internal string ResolvedServerName { get; private set; } // the resolved servername only
         internal string ResolvedDatabaseName { get; private set; } // name of target database after resolution
-        internal string UserProtocol { get; private set; } // the user specified protocol        
+        internal string UserProtocol { get; private set; } // the user specified protocol
 
         // The original user-supplied server name from the connection string.
         // If connection string has no Data Source, the value is set to string.Empty.
@@ -2587,7 +2633,7 @@ namespace Microsoft.Data.SqlClient
 
         internal readonly string PreRoutingServerName;
 
-        // Initialize server info from connection options, 
+        // Initialize server info from connection options,
         internal ServerInfo(SqlConnectionString userOptions) : this(userOptions, userOptions.DataSource) { }
 
         // Initialize server info from connection options, but override DataSource with given server name

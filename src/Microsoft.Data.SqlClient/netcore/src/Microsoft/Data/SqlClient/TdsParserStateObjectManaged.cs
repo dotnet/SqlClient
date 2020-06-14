@@ -220,6 +220,10 @@ namespace Microsoft.Data.SqlClient.SNI
             return 0;
         }
 
-        internal override uint WaitForSSLHandShakeToComplete() => 0;
+        internal override uint WaitForSSLHandShakeToComplete(out int protocolVersion)
+        {
+            protocolVersion = Handle.ProtocolVersion;
+            return 0;
+        }
     }
 }

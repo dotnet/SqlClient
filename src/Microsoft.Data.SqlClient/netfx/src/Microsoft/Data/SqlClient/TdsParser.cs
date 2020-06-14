@@ -9,6 +9,7 @@ using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
@@ -30,6 +31,9 @@ namespace Microsoft.Data.SqlClient
     sealed internal class TdsParser
     {
         private static int _objectTypeCount; // EventSource Counter
+        private readonly SqlClientLogger _logger = new SqlClientLogger();
+        private readonly string _typeName;
+
         internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
 
         static Task completedTask;
@@ -300,6 +304,7 @@ namespace Microsoft.Data.SqlClient
             _fMARS = MARS; // may change during Connect to pre Yukon servers
             _physicalStateObj = new TdsParserStateObject(this);
             DataClassificationVersion = TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED;
+            _typeName = GetType().Name;
         }
 
         internal SqlInternalConnectionTds Connection
@@ -507,6 +512,7 @@ namespace Microsoft.Data.SqlClient
             if (connHandler.ConnectionOptions.LocalDBInstance != null)
                 LocalDBAPI.CreateLocalDBInstance(connHandler.ConnectionOptions.LocalDBInstance);
 
+            // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
             if (integratedSecurity || authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
             {
                 LoadSSPILibrary();
@@ -517,22 +523,26 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 _sniSpnBuffer = null;
-                if (authType == SqlAuthenticationMethod.ActiveDirectoryPassword)
+                switch (authType)
                 {
-                    SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> Active Directory Password authentication", "SEC");
-                }
-                else if (authType == SqlAuthenticationMethod.SqlPassword)
-                {
-
-                    SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> SQL Password authentication", "SEC");
-                }
-                else if (authType == SqlAuthenticationMethod.ActiveDirectoryInteractive)
-                {
-                    SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> Active Directory Interactive authentication", "SEC");
-                }
-                else
-                {
-                    SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> SQL authentication", "SEC");
+                    case SqlAuthenticationMethod.ActiveDirectoryPassword:
+                        SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> Active Directory Password authentication", "SEC");
+                        break;
+                    case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
+                        SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> Active Directory Integrated authentication", "SEC");
+                        break;
+                    case SqlAuthenticationMethod.ActiveDirectoryInteractive:
+                        SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> Active Directory Interactive authentication", "SEC");
+                        break;
+                    case SqlAuthenticationMethod.ActiveDirectoryServicePrincipal:
+                        SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> Active Directory Service Principal authentication", "SEC");
+                        break;
+                    case SqlAuthenticationMethod.SqlPassword:
+                        SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> SQL Password authentication", "SEC");
+                        break;
+                    default:
+                        SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> SQL authentication", "SEC");
+                        break;
                 }
             }
 
@@ -1199,15 +1209,21 @@ namespace Microsoft.Data.SqlClient
                             // wait for SSL handshake to complete, so that the SSL context is fully negotiated before we try to use its
                             // Channel Bindings as part of the Windows Authentication context build (SSL handshake must complete
                             // before calling SNISecGenClientContext).
-                            error = SNINativeMethodWrapper.SNIWaitForSSLHandshakeToComplete(_physicalStateObj.Handle, _physicalStateObj.GetTimeoutRemaining());
+                            error = SNINativeMethodWrapper.SNIWaitForSSLHandshakeToComplete(_physicalStateObj.Handle, _physicalStateObj.GetTimeoutRemaining(), out uint protocolVersion);
+
                             if (error != TdsEnums.SNI_SUCCESS)
                             {
                                 _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
                                 ThrowExceptionAndWarning(_physicalStateObj);
                             }
 
+                            string warningMessage = SslProtocolsHelper.GetProtocolWarning(protocolVersion);
+                            if (!string.IsNullOrEmpty(warningMessage))
+                            {
+                                _logger.LogWarning(_typeName, MethodBase.GetCurrentMethod().Name, warningMessage);
+                            }
+
                             // Validate server certificate
-                            //
                             if (serverCallback != null)
                             {
                                 X509Certificate2 serverCert = null;
@@ -4724,6 +4740,9 @@ namespace Microsoft.Data.SqlClient
                             {
                                 ADP.TraceExceptionWithoutRethrow(e);
                             }
+                            break;
+                        case 0x43f:
+                            codePage = 1251;  // Kazakh code page based on SQL Server
                             break;
                         default:
                             break;
@@ -8434,6 +8453,9 @@ namespace Microsoft.Data.SqlClient
                                 break;
                             case SqlAuthenticationMethod.ActiveDirectoryInteractive:
                                 workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYINTERACTIVE;
+                                break;
+                            case SqlAuthenticationMethod.ActiveDirectoryServicePrincipal:
+                                workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYSERVICEPRINCIPAL;
                                 break;
                             default:
                                 Debug.Assert(false, "Unrecognized Authentication type for fedauth MSAL request");

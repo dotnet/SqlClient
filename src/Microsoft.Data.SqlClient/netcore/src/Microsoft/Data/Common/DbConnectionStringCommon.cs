@@ -100,10 +100,13 @@ namespace Microsoft.Data.Common
         private const string ApplicationIntentReadOnlyString = "ReadOnly";
         const string SqlPasswordString = "Sql Password";
         const string ActiveDirectoryPasswordString = "Active Directory Password";
+        const string ActiveDirectoryIntegratedString = "Active Directory Integrated";
+        const string ActiveDirectoryInteractiveString = "Active Directory Interactive";
+        const string ActiveDirectoryServicePrincipalString = "Active Directory Service Principal";
 
         internal static bool TryConvertToAuthenticationType(string value, out SqlAuthenticationMethod result)
         {
-            Debug.Assert(Enum.GetNames(typeof(SqlAuthenticationMethod)).Length == 5, "SqlAuthenticationMethod enum has changed, update needed");
+            Debug.Assert(Enum.GetNames(typeof(SqlAuthenticationMethod)).Length == 6, "SqlAuthenticationMethod enum has changed, update needed");
 
             bool isSuccess = false;
 
@@ -117,6 +120,24 @@ namespace Microsoft.Data.Common
                 || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.ActiveDirectoryPassword, CultureInfo.InvariantCulture)))
             {
                 result = SqlAuthenticationMethod.ActiveDirectoryPassword;
+                isSuccess = true;
+            }
+            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, ActiveDirectoryIntegratedString)
+                || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.ActiveDirectoryIntegrated, CultureInfo.InvariantCulture)))
+            {
+                result = SqlAuthenticationMethod.ActiveDirectoryIntegrated;
+                isSuccess = true;
+            }
+            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, ActiveDirectoryInteractiveString)
+                || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.ActiveDirectoryInteractive, CultureInfo.InvariantCulture)))
+            {
+                result = SqlAuthenticationMethod.ActiveDirectoryInteractive;
+                isSuccess = true;
+            }
+            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, ActiveDirectoryServicePrincipalString)
+                || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal, CultureInfo.InvariantCulture)))
+            {
+                result = SqlAuthenticationMethod.ActiveDirectoryServicePrincipal;
                 isSuccess = true;
             }
             else
@@ -459,11 +480,12 @@ namespace Microsoft.Data.Common
 
         internal static bool IsValidAuthenticationTypeValue(SqlAuthenticationMethod value)
         {
-            Debug.Assert(Enum.GetNames(typeof(SqlAuthenticationMethod)).Length == 5, "SqlAuthenticationMethod enum has changed, update needed");
+            Debug.Assert(Enum.GetNames(typeof(SqlAuthenticationMethod)).Length == 6, "SqlAuthenticationMethod enum has changed, update needed");
             return value == SqlAuthenticationMethod.SqlPassword
                 || value == SqlAuthenticationMethod.ActiveDirectoryPassword
                 || value == SqlAuthenticationMethod.ActiveDirectoryIntegrated
                 || value == SqlAuthenticationMethod.ActiveDirectoryInteractive
+                || value == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
                 || value == SqlAuthenticationMethod.NotSpecified;
         }
 
@@ -477,6 +499,12 @@ namespace Microsoft.Data.Common
                     return SqlPasswordString;
                 case SqlAuthenticationMethod.ActiveDirectoryPassword:
                     return ActiveDirectoryPasswordString;
+                case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
+                    return ActiveDirectoryIntegratedString;
+                case SqlAuthenticationMethod.ActiveDirectoryInteractive:
+                    return ActiveDirectoryInteractiveString;
+                case SqlAuthenticationMethod.ActiveDirectoryServicePrincipal:
+                    return ActiveDirectoryServicePrincipalString;
                 default:
                     return null;
             }
