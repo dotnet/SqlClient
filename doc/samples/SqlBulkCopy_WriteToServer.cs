@@ -54,6 +54,10 @@ class Program
                     {
                         // Write from the source to the destination.
                         bulkCopy.WriteToServer(reader);
+                        // Print the number of rows processed using the 
+                        // RowsCopied property.
+                        Console.WriteLine("{0} rows were processed.",
+                            bulkCopy.RowsCopied);
                     }
                     catch (Exception ex)
                     {
@@ -81,8 +85,8 @@ class Program
     }
 
     private static string GetConnectionString()
-        // To avoid storing the sourceConnection string in your code, 
-        // you can retrieve it from a configuration file. 
+    // To avoid storing the sourceConnection string in your code, 
+    // you can retrieve it from a configuration file. 
     {
         return "Data Source=(local); " +
             " Integrated Security=true;" +

@@ -78,6 +78,10 @@ class Program
                 }
                 catch (Exception ex)
                 {
+                    // Print the number of rows processed using the 
+                    // RowsCopied property.
+                    Console.WriteLine("{0} rows were processed.",
+                        bulkCopy.RowsCopied);
                     Console.WriteLine(ex.Message);
                 }
                 finally
@@ -88,6 +92,8 @@ class Program
 
             // Perform a final count on the destination 
             // table to see how many rows were added.
+            // Note that for this scenario, the value will 
+			// not be equal to the RowsCopied property.
             long countEnd = System.Convert.ToInt32(
                 commandRowCount.ExecuteScalar());
             Console.WriteLine("Ending row count = {0}", countEnd);
@@ -98,8 +104,8 @@ class Program
     }
 
     private static string GetConnectionString()
-        // To avoid storing the sourceConnection string in your code, 
-        // you can retrieve it from a configuration file. 
+    // To avoid storing the sourceConnection string in your code, 
+    // you can retrieve it from a configuration file. 
     {
         return "Data Source=(local); " +
             " Integrated Security=true;" +
