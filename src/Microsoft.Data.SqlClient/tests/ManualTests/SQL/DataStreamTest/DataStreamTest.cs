@@ -37,6 +37,97 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             RunAllTestsForSingleServer(DataTestUtility.TCPConnectionString);
         }
 
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async Task AsyncMultiPacketStreamRead()
+        {
+            int packetSize = 514; // force small packet size so we can quickly check multi packet reads
+
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
+            builder.PacketSize = 514;
+            string connectionString = builder.ToString();
+
+            byte[] inputData = null;
+            byte[] outputData = null;
+            string tableName = DataTestUtility.GetUniqueNameForSqlServer("data");
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+
+                try
+                {
+                    inputData = CreateBinaryTable(connection, tableName, packetSize);
+
+                    using (SqlCommand command = new SqlCommand($"SELECT foo FROM {tableName}", connection))
+                    using (SqlDataReader reader = await command.ExecuteReaderAsync(System.Data.CommandBehavior.SequentialAccess))
+                    {
+                        await reader.ReadAsync();
+
+                        using (Stream stream = reader.GetStream(0))
+                        using (CancellationTokenSource cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(60)))
+                        using (MemoryStream memory = new MemoryStream(16 * 1024))
+                        {
+                            await stream.CopyToAsync(memory, 37, cancellationTokenSource.Token); // prime number sized buffer to cause many cross packet partial reads
+                            outputData = memory.ToArray();
+                        }
+                    }
+                }
+                finally
+                {
+                    DataTestUtility.DropTable(connection, tableName);
+                }
+            }
+
+            Assert.NotNull(outputData);
+            int sharedLength = Math.Min(inputData.Length, outputData.Length);
+            if (sharedLength < outputData.Length)
+            {
+                Assert.False(true, $"output is longer than input, input={inputData.Length} bytes, output={outputData.Length} bytes");
+            }
+            if (sharedLength < inputData.Length)
+            {
+                Assert.False(true, $"input is longer than output, input={inputData.Length} bytes, output={outputData.Length} bytes");
+            }
+            for (int index = 0; index < sharedLength; index++)
+            {
+                if (inputData[index] != outputData[index]) // avoid formatting the output string unless there is a difference
+                {
+                    Assert.True(false, $"input and output differ at index {index}, input={inputData[index]}, output={outputData[index]}");
+                }
+            }
+
+        }
+
+        private static byte[] CreateBinaryTable(SqlConnection connection, string tableName, int packetSize)
+        {
+            byte[] pattern = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 };
+            byte[] data = new byte[packetSize * 10];
+            int position = 0;
+            while (position < data.Length)
+            {
+                int copyCount = Math.Min(pattern.Length, data.Length - position);
+                Array.Copy(pattern, 0, data, position, copyCount);
+                position += copyCount;
+            }
+
+            using (var cmd = connection.CreateCommand())
+            {
+                cmd.CommandText = $@"
+IF OBJECT_ID('dbo.{tableName}', 'U') IS NOT NULL
+DROP TABLE {tableName}; 
+CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
+";
+                cmd.ExecuteNonQuery();
+
+                cmd.CommandText = $"INSERT INTO {tableName} (id, foo) VALUES (@id, @foo)";
+                cmd.Parameters.AddWithValue("id", 1);
+                cmd.Parameters.AddWithValue("foo", data);
+                cmd.ExecuteNonQuery();
+            }
+
+            return data;
+        }
+
         private static void RunAllTestsForSingleServer(string connectionString, bool usingNamePipes = false)
         {
             RowBuffer(connectionString);
@@ -1811,7 +1902,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             SqlDataReader reader = cmd.ExecuteReader(System.Data.CommandBehavior.SequentialAccess);
                             for (int i = 0; i < streamXeventCount && reader.Read(); i++)
                             {
-                                Int32 colType = reader.GetInt32(0);
+                                int colType = reader.GetInt32(0);
                                 int cb = (int)reader.GetBytes(1, 0, null, 0, 0);
 
                                 byte[] bytes = new byte[cb];
