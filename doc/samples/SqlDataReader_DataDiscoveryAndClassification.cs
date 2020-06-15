@@ -39,7 +39,7 @@ class Program
     /// <summary>
     /// Verifies if SQL Data Discovery and Classification feature is available on the target server.
     /// </summary>
-    /// <param name="command">The SqlCommand to work with.</param>
+    /// <param name="connection">The SqlConnection to work with.</param>
     /// <returns>True if the target SQL Server supports the feature and false otherwise.</returns>
     public static bool DataClassificationSupported(SqlConnection connection)
     {
@@ -64,7 +64,7 @@ class Program
     /// <summary>
     /// Creates a temporary table for this sample program and sets tags for Sensitivity Classification.
     /// </summary>
-    /// <param name="command">The SqlCommand to work with.</param>
+    /// <param name="connection">The SqlConnection to work with.</param>
     private static void CreateTable(SqlConnection connection)
     {
         SqlCommand command = new SqlCommand(null, connection);
@@ -102,7 +102,7 @@ class Program
     /// <summary>
     /// Run query to fetch result set from target table.
     /// </summary>
-    /// <param name="command">The SqlCommand to work with.</param>
+    /// <param name="connection">The SqlConnection to work with.</param>
     private static void RunTests(SqlConnection connection)
     {
         SqlCommand command = new SqlCommand(null, connection);
@@ -116,7 +116,7 @@ class Program
     /// <summary>
     /// Prints Sensitivity Classification data as received in the result set.
     /// </summary>
-    /// <param name="sqlCommand">The SqlCommand to work with.</param>
+    /// <param name="reader">The SqlDataReader to work with.</param>
     private static void PrintSensitivityClassification(SqlDataReader reader)
     {
         if (reader.SensitivityClassification != null)
@@ -148,7 +148,7 @@ class Program
     /// <summary>
     /// Deletes the table created for this sample program.
     /// </summary>
-    /// <param name="command">The SqlCommand to work with.</param>
+    /// <param name="connection">The SqlConnection to work with.</param>
     private static void DropTable(SqlConnection connection)
     {
         SqlCommand command = new SqlCommand(null, connection);
