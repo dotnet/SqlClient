@@ -4531,33 +4531,33 @@
     <value>Le dimensioni del tipo definito dall'utente (UDT) devono essere inferiori a {1}, dimensioni: {0}</value>
   </data>
   <data name="SEC_ProtocolWarning" xml:space="preserve">
-    <value>Security Warning: The negotiated {0} is an insecure protocol and is supported for backward compatibility only. The recommended protocol version is TLS 1.2 and later.</value>
+    <value>Avviso di sicurezza: Il protocollo negoziato {0} è un protocollo non sicuro ed è supportato solo per la compatibilità con le versioni precedenti. La versione consigliata del protocollo è TLS 1.2 e versioni successive.</value>
   </data>
   <data name="net_invalid_enum" xml:space="preserve">
     <value>Valore specificato non valido nell'enumerazione '{0}'.</value>
   </data>
   <data name="SQL_BulkLoadInvalidOrderHint" xml:space="preserve">
-    <value>The given column order hint is not valid.</value>
+    <value>L'hint per l'ordine colonne specificato non è valido.</value>
   </data>
   <data name="SQL_BulkLoadOrderHintDuplicateColumn" xml:space="preserve">
-    <value>The column '{0}' was specified more than once.</value>
+    <value>La colonna '{0}' è stata specificata più di una volta.</value>
   </data>
   <data name="SQL_BulkLoadOrderHintInvalidColumn" xml:space="preserve">
-    <value>The sorted column '{0}' is not valid in the destination table.</value>
+    <value>La colonna ordinata '{0}' non è valida nella tabella di destinazione.</value>
   </data>
   <data name="SQL_BulkLoadUnspecifiedSortOrder" xml:space="preserve">
-    <value>A column order hint cannot have an unspecified sort order.</value>
+    <value>Un hint per l'ordine colonne non può avere un ordinamento non specificato.</value>
   </data>
   <data name="SQL_UnsupportedAuthenticationSpecified" xml:space="preserve">
-    <value>Unsupported authentication specified in this context: {0}</value>
+    <value>Autenticazione non supportata specificata in questo contesto: {0}</value>
   </data>
   <data name="SQL_Timeout_Active_Directory_Interactive_Authentication" xml:space="preserve">
-    <value>Active Directory Interactive authentication timed out. The user took too long to respond to the authentication request.</value>
+    <value>Timeout dell'autenticazione di Active Directory interattivo. L'utente ha impiegato troppo tempo per rispondere alla richiesta di autenticazione.</value>
   </data>
   <data name="SQL_SettingInteractiveWithCredential" xml:space="preserve">
-    <value>Cannot use 'Authentication=Active Directory Interactive', if the Credential property has been set.</value>
+    <value>Non è possibile usare 'Authentication=Active Directory Interactive' se è stata impostata la proprietà Credential.</value>
   </data>
   <data name="SQL_SettingCredentialWithInteractive" xml:space="preserve">
-    <value>Cannot set the Credential property if 'Authentication=Active Directory Interactive' has been specified in the connection string.</value>
+    <value>Non è possibile impostare la proprietà Credential se nella stringa di connessione è stato specificato 'Authentication=Active Directory Interactive'.</value>
   </data>
 </root>
