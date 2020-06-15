@@ -14,24 +14,25 @@ class Program
         string connectionString = "Data Source=localhost; Integrated Security=true; Initial Catalog=AdventureWorks;";
 
         // Open a connection to the AdventureWorks database.
-        using SqlConnection connection = new SqlConnection(connectionString);
-        connection.Open();
+        using (SqlConnection connection = new SqlConnection(connectionString))
+        {
+            connection.Open();
 
-        using SqlCommand command = connection.CreateCommand();
-        try
-        {
-            // Check if the target SQL Server supports Data Discovery and Classification.
-            if (DataClassificationSupported(command))
+            try
             {
-                // Create the temporary table and retrieve its Data Discovery and Classification information.
-                CreateTable(command);
-                RunTests(command);
+                // Check if the target SQL Server supports Data Discovery and Classification.
+                if (DataClassificationSupported(connection))
+                {
+                    // Create the temporary table and retrieve its Data Discovery and Classification information.
+                    CreateTable(connection);
+                    RunTests(connection);
+                }
             }
-        }
-        finally
-        {
-            // Drop the temporary table.
-            DropTable(command);
+            finally
+            {
+                // Drop the temporary table.
+                DropTable(connection);
+            }
         }
     }
 
@@ -40,10 +41,11 @@ class Program
     /// </summary>
     /// <param name="command">The SqlCommand to work with.</param>
     /// <returns>True if the target SQL Server supports the feature and false otherwise.</returns>
-    public static bool DataClassificationSupported(SqlCommand command)
+    public static bool DataClassificationSupported(SqlConnection connection)
     {
         try
         {
+            SqlCommand command = new SqlCommand(null, connection);
             command.CommandText = "SELECT * FROM SYS.SENSITIVITY_CLASSIFICATIONS";
             command.ExecuteNonQuery();
         }
@@ -63,8 +65,10 @@ class Program
     /// Creates a temporary table for this sample program and sets tags for Sensitivity Classification.
     /// </summary>
     /// <param name="command">The SqlCommand to work with.</param>
-    private static void CreateTable(SqlCommand command)
+    private static void CreateTable(SqlConnection connection)
     {
+        SqlCommand command = new SqlCommand(null, connection);
+
         // Creates table for storing Supplier data.
         command.CommandText = $"CREATE TABLE {tableName} ("
             + "[Id] [int] IDENTITY(1,1) NOT NULL,"
@@ -99,11 +103,14 @@ class Program
     /// Run query to fetch result set from target table.
     /// </summary>
     /// <param name="command">The SqlCommand to work with.</param>
-    private static void RunTests(SqlCommand command)
+    private static void RunTests(SqlConnection connection)
     {
+        SqlCommand command = new SqlCommand(null, connection);
         command.CommandText = $"SELECT * FROM {tableName}";
-        using SqlDataReader reader = command.ExecuteReader();
-        PrintSensitivityClassification(reader);
+        using (SqlDataReader reader = command.ExecuteReader())
+        {
+            PrintSensitivityClassification(reader);
+        }
     }
 
     /// <summary>
@@ -142,8 +149,9 @@ class Program
     /// Deletes the table created for this sample program.
     /// </summary>
     /// <param name="command">The SqlCommand to work with.</param>
-    private static void DropTable(SqlCommand command)
+    private static void DropTable(SqlConnection connection)
     {
+        SqlCommand command = new SqlCommand(null, connection);
         command.CommandText = $"DROP TABLE {tableName}";
         command.ExecuteNonQuery();
     }

@@ -93,7 +93,7 @@ class Program
             // Perform a final count on the destination 
             // table to see how many rows were added.
             // Note that for this scenario, the value will 
-			// not be equal to the RowsCopied property.
+            // not be equal to the RowsCopied property.
             long countEnd = System.Convert.ToInt32(
                 commandRowCount.ExecuteScalar());
             Console.WriteLine("Ending row count = {0}", countEnd);

@@ -5,15 +5,16 @@ using Microsoft.Data.SqlClient;
 
 // This listener class will listen for events from the SqlClientEventSource class.
 // SqlClientEventSource is an implementation of the EventSource class which gives 
-// it the ability to create events for Event Tracing for Windows (ETW).
+// it the ability to create events.
 public class SqlClientListener : EventListener
 {
     protected override void OnEventSourceCreated(EventSource eventSource)
     {
-        // Only enable ETW events from SqlClientEventSource.
+        // Only enable events from SqlClientEventSource.
         if (eventSource.Name.Equals("Microsoft.Data.SqlClient.EventSource"))
         {
-            // Capture basic application flow events.
+            // Use EventKeyWord 2 to capture basic application flow events.
+            // See the above table for all available keywords.
             EnableEvents(eventSource, EventLevel.Informational, (EventKeywords)2);
         }
     }
@@ -38,19 +39,21 @@ class Program
                 "Initial Catalog=AdventureWorks; Integrated Security=true";
 
             // Open a connection to the AdventureWorks database.
-            using SqlConnection connection = new SqlConnection(connectionString);
-            connection.Open();
-
-            string sql = "SELECT * FROM Sales.Currency";
-            SqlCommand command = new SqlCommand(sql, connection);
-
-            // Perform a data operation on the server.
-            SqlDataReader reader = command.ExecuteReader();
-            while (reader.Read())
+            using (SqlConnection connection = new SqlConnection(connectionString))
             {
-                // Read the data.
+                connection.Open();
+
+                string sql = "SELECT * FROM Sales.Currency";
+                SqlCommand command = new SqlCommand(sql, connection);
+
+                // Perform a data operation on the server.
+                SqlDataReader reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    // Read the data.
+                }
+                reader.Close();
             }
-            reader.Close();
         }
     }
 }
