@@ -4531,33 +4531,33 @@
     <value>Размер пользовательского типа должен быть меньше {1}, текущий размер: {0}.</value>
   </data>
   <data name="SEC_ProtocolWarning" xml:space="preserve">
-    <value>Security Warning: The negotiated {0} is an insecure protocol and is supported for backward compatibility only. The recommended protocol version is TLS 1.2 and later.</value>
+    <value>Предупреждение системы безопасности: согласованный {0} является незащищенным протоколом и поддерживается только в целях обратной совместимости. Рекомендуемая версия протокола — TLS 1.2 или более поздняя.</value>
   </data>
   <data name="net_invalid_enum" xml:space="preserve">
     <value>Указанное значение недействительно в перечислении '{0}'.</value>
   </data>
   <data name="SQL_BulkLoadInvalidOrderHint" xml:space="preserve">
-    <value>The given column order hint is not valid.</value>
+    <value>Задано недопустимое указание порядка столбцов.</value>
   </data>
   <data name="SQL_BulkLoadOrderHintDuplicateColumn" xml:space="preserve">
-    <value>The column '{0}' was specified more than once.</value>
+    <value>Столбец "{0}" был указан несколько раз.</value>
   </data>
   <data name="SQL_BulkLoadOrderHintInvalidColumn" xml:space="preserve">
-    <value>The sorted column '{0}' is not valid in the destination table.</value>
+    <value>Отсортированный столбец "{0}" недопустим в конечной таблице.</value>
   </data>
   <data name="SQL_BulkLoadUnspecifiedSortOrder" xml:space="preserve">
-    <value>A column order hint cannot have an unspecified sort order.</value>
+    <value>Указание порядка столбцов не может иметь неопределенный порядок сортировки.</value>
   </data>
   <data name="SQL_UnsupportedAuthenticationSpecified" xml:space="preserve">
-    <value>Unsupported authentication specified in this context: {0}</value>
+    <value>Указан неподдерживаемый в этом контексте режим проверки подлинности: {0}</value>
   </data>
   <data name="SQL_Timeout_Active_Directory_Interactive_Authentication" xml:space="preserve">
-    <value>Active Directory Interactive authentication timed out. The user took too long to respond to the authentication request.</value>
+    <value>Истекло время ожидания интерактивной проверки подлинности Active Directory. Пользователь слишком долго не отвечал на запрос проверки подлинности.</value>
   </data>
   <data name="SQL_SettingInteractiveWithCredential" xml:space="preserve">
-    <value>Cannot use 'Authentication=Active Directory Interactive', if the Credential property has been set.</value>
+    <value>Невозможно использовать Authentication=Active Directory Interactive, если задано свойство Credential.</value>
   </data>
   <data name="SQL_SettingCredentialWithInteractive" xml:space="preserve">
-    <value>Cannot set the Credential property if 'Authentication=Active Directory Interactive' has been specified in the connection string.</value>
+    <value>Не удается задать свойство Credential, если в строке подключения указано Authentication=Active Directory Interactive.</value>
   </data>
 </root>
