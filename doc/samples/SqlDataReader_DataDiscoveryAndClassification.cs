@@ -1,4 +1,5 @@
-﻿using System;
+﻿// <Snippet1>
+using System;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.DataClassification;
 
@@ -9,7 +10,7 @@ class Program
 
     public static void Main()
     {
-        // To avoid storing the sourceConnection string in your code, you can retrieve it from a configuration file. 
+        // To avoid storing the connection string in your code, you can retrieve it from a configuration file. 
         string connectionString = "Data Source=localhost; Integrated Security=true; Initial Catalog=AdventureWorks;";
 
         // Open a connection to the AdventureWorks database.
@@ -43,7 +44,7 @@ class Program
     {
         try
         {
-            command.CommandText = "SELECT* FROM SYS.SENSITIVITY_CLASSIFICATIONS";
+            command.CommandText = "SELECT * FROM SYS.SENSITIVITY_CLASSIFICATIONS";
             command.ExecuteNonQuery();
         }
         catch (SqlException e)
@@ -147,3 +148,4 @@ class Program
         command.ExecuteNonQuery();
     }
 }
+// </Snippet1>

@@ -1,4 +1,5 @@
-﻿using System;
+﻿// <Snippet1>
+using System;
 using System.Diagnostics.Tracing;
 using Microsoft.Data.SqlClient;
 
@@ -53,3 +54,4 @@ class Program
         }
     }
 }
+// </Snippet1>
