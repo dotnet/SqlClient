@@ -4,7 +4,7 @@ This document provides all the necessary details to build the driver and run tes
 
 ## Visual Studio Pre-Requisites
 
-This project should be built with Visual Studio 2019+ for the best compatibility. The required set of components are as provided in below file:
+This project should be built with Visual Studio 2019+ for the best compatibility. The required set of components are provided in the below file:
 - **Visual Studio 2019** with imported components: [VS19Components](/tools/vsconfig/VS19Components.vsconfig)
 
 Once the environment is setup properly, execute the desired set of commands below from the _root_ folder to perform the respective operations:
@@ -257,7 +257,7 @@ There may be times where connection cannot be made to SQL Server, we found below
 
 - Clear Docker images to create clean image from time-to-time, and clear docker cache if needed by running `docker system prune` in Command Prompt.
 
-- If you face `Microsoft.Data.SqlClient.SNI.dll not found` errors when debugging, try updating below properties in netcore\Microsoft.Data.SqlClient.csproj file and try again:
+- If you face `Microsoft.Data.SqlClient.SNI.dll not found` errors when debugging, try updating the below properties in the netcore\Microsoft.Data.SqlClient.csproj file and try again:
   ```xml
     <OSGroup>Unix</OSGroup>
     <TargetsWindows>false</TargetsWindows>
