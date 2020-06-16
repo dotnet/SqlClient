@@ -4531,28 +4531,28 @@
     <value>UDT 大小必须小于 {1}，大小为 {0}</value>
   </data>
   <data name="SEC_ProtocolWarning" xml:space="preserve">
-    <value>Security Warning: The negotiated {0} is an insecure protocol and is supported for backward compatibility only. The recommended protocol version is TLS 1.2 and later.</value>
+    <value>安全警告:协商的 {0} 是非安全协议，只有在为了实现向后兼容性才受支持。建议的协议版本为 TLS 1.2 及更高版本。</value>
   </data>
   <data name="net_invalid_enum" xml:space="preserve">
     <value>指定的值在“{0}”枚举中无效。</value>
   </data>
   <data name="SQL_BulkLoadInvalidOrderHint" xml:space="preserve">
-    <value>The given column order hint is not valid.</value>
+    <value>给定的列排序顺序提示无效。</value>
   </data>
   <data name="SQL_BulkLoadOrderHintDuplicateColumn" xml:space="preserve">
-    <value>The column '{0}' was specified more than once.</value>
+    <value>列“{0}”被指定了多次。</value>
   </data>
   <data name="SQL_BulkLoadOrderHintInvalidColumn" xml:space="preserve">
     <value>已排序的列“{0}”在目标表中无效。</value>
   </data>
   <data name="SQL_BulkLoadUnspecifiedSortOrder" xml:space="preserve">
-    <value>A column order hint cannot have an unspecified sort order.</value>
+    <value>列排序顺序提示不得包含未指定的排序顺序。</value>
   </data>
   <data name="SQL_UnsupportedAuthenticationSpecified" xml:space="preserve">
     <value>在此上下文中指定的身份验证不受支持: {0}</value>
   </data>
   <data name="SQL_Timeout_Active_Directory_Interactive_Authentication" xml:space="preserve">
-    <value>Active Directory Interactive authentication timed out. The user took too long to respond to the authentication request.</value>
+    <value>Active Directory 交互式身份验证超时。用户响应身份验证请求的时间过长。</value>
   </data>
   <data name="SQL_SettingInteractiveWithCredential" xml:space="preserve">
     <value>如果设置了 Credential 属性，则无法使用 "Authentication=Active Directory Interactive"。</value>
