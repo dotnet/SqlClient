@@ -725,6 +725,54 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// 
+        /// To indicate the IsSupported flag sent by the server for DNS Caching. This property is for internal testing only.
+        /// 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        internal string SQLDNSCachingSupportedState
+        {
+            get
+            {
+                SqlInternalConnectionTds innerConnection = (InnerConnection as SqlInternalConnectionTds);
+                string result;
+
+                if (null != innerConnection)
+                {
+                    result = innerConnection.IsSQLDNSCachingSupported ? "true": "false";
+                }
+                else
+                {
+                    result = "innerConnection is null!";
+                }
+
+                return result;
+            }
+        }
+
+        /// 
+        /// To indicate the IsSupported flag sent by the server for DNS Caching before redirection. This property is for internal testing only.
+        /// 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        internal string SQLDNSCachingSupportedStateBeforeRedirect
+        {
+            get
+            {
+                SqlInternalConnectionTds innerConnection = (InnerConnection as SqlInternalConnectionTds);
+                string result;
+
+                if (null != innerConnection)
+                {
+                    result = innerConnection.IsDNSCachingBeforeRedirectSupported ? "true": "false";
+                }
+                else
+                {
+                    result = "innerConnection is null!";
+                }
+
+                return result;
+            }
+        }
+
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/DataSource/*' />
         [
         Browsable(true),
@@ -2673,6 +2721,17 @@ namespace Microsoft.Data.SqlClient
             }
             // delegate the rest of the work to the SqlStatistics class
             Statistics.UpdateStatistics();
+        }
+
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RetrieveInternalInfo/*' />
+        public IDictionary<string, object> RetrieveInternalInfo()
+        {
+            IDictionary<string, object> internalDictionary = new Dictionary<string, object>();
+
+            internalDictionary.Add("SQLDNSCachingSupportedState", SQLDNSCachingSupportedState);
+            internalDictionary.Add("SQLDNSCachingSupportedStateBeforeRedirect", SQLDNSCachingSupportedStateBeforeRedirect);
+
+            return internalDictionary;
         }
 
         //

@@ -116,11 +116,16 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="timerExpire">Connection timer expiration</param>
         /// <param name="callbackObject">Callback object</param>
         /// <param name="parallel">Parallel executions</param>
-        public SNITCPHandle(string serverName, int port, long timerExpire, object callbackObject, bool parallel)
+        /// <param name="cachedFQDN">Key for DNS Cache</param>
+        /// <param name="pendingDNSInfo">Used for DNS Cache</param>
+        public SNITCPHandle(string serverName, int port, long timerExpire, object callbackObject, bool parallel, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
         {
             _callbackObject = callbackObject;
             _targetServer = serverName;
             _sendSync = new object();
+
+            SQLDNSInfo cachedDNSInfo;
+            bool hasCachedDNSInfo = SQLFallbackDNSCache.Instance.GetDNSInfo(cachedFQDN, out cachedDNSInfo);
 
             try
             {
@@ -135,33 +140,71 @@ namespace Microsoft.Data.SqlClient.SNI
                     ts = ts.Ticks < 0 ? TimeSpan.FromTicks(0) : ts;
                 }
 
-                Task<Socket> connectTask;
-                if (parallel)
+                bool reportError = true;
+
+                // We will always first try to connect with serverName as before and let the DNS server to resolve the serverName.
+                // If the DSN resolution fails, we will try with IPs in the DNS cache if existed. We try with IPv4 first and followed by IPv6 if 
+                // IPv4 fails. The exceptions will be throw to upper level and be handled as before.
+                try
                 {
-                    Task<IPAddress[]> serverAddrTask = Dns.GetHostAddressesAsync(serverName);
-                    serverAddrTask.Wait(ts);
-                    IPAddress[] serverAddresses = serverAddrTask.Result;
-
-                    if (serverAddresses.Length > MaxParallelIpAddresses)
+                    if (parallel)
                     {
-                        // Fail if above 64 to match legacy behavior
-                        ReportTcpSNIError(0, SNICommon.MultiSubnetFailoverWithMoreThan64IPs, string.Empty);
-                        return;
+                        _socket = TryConnectParallel(serverName, port, ts, isInfiniteTimeOut, ref reportError, cachedFQDN, ref pendingDNSInfo);
                     }
-
-                    connectTask = ParallelConnectAsync(serverAddresses, port);
-
-                    if (!(isInfiniteTimeOut ? connectTask.Wait(-1) : connectTask.Wait(ts)))
+                    else
                     {
-                        ReportTcpSNIError(0, SNICommon.ConnOpenFailedError, string.Empty);
-                        return;
+                        _socket = Connect(serverName, port, ts, isInfiniteTimeOut, cachedFQDN, ref pendingDNSInfo);
                     }
-
-                    _socket = connectTask.Result;
                 }
-                else
+                catch (Exception ex)
                 {
-                    _socket = Connect(serverName, port, ts, isInfiniteTimeOut);
+                    // Retry with cached IP address
+                    if (ex is SocketException || ex is ArgumentException || ex is AggregateException)
+                    {                       
+                        if (hasCachedDNSInfo == false)
+                        {
+                            throw;
+                        }
+                        else
+                        {
+                            int portRetry = String.IsNullOrEmpty(cachedDNSInfo.Port) ? port : Int32.Parse(cachedDNSInfo.Port); 
+
+                            try
+                            {
+                                if (parallel)
+                                {
+                                    _socket = TryConnectParallel(cachedDNSInfo.AddrIPv4, portRetry, ts, isInfiniteTimeOut, ref reportError, cachedFQDN, ref pendingDNSInfo);
+                                }
+                                else
+                                {
+                                    _socket = Connect(cachedDNSInfo.AddrIPv4, portRetry, ts, isInfiniteTimeOut, cachedFQDN, ref pendingDNSInfo);
+                                }
+                            }
+                            catch(Exception exRetry)
+                            {
+                                if (exRetry is SocketException || exRetry is ArgumentNullException 
+                                    || exRetry is ArgumentException || exRetry is ArgumentOutOfRangeException || exRetry is AggregateException)
+                                {
+                                    if (parallel)
+                                    {
+                                        _socket = TryConnectParallel(cachedDNSInfo.AddrIPv6, portRetry, ts, isInfiniteTimeOut, ref reportError, cachedFQDN, ref pendingDNSInfo);
+                                    }
+                                    else
+                                    {
+                                        _socket = Connect(cachedDNSInfo.AddrIPv6, portRetry, ts, isInfiniteTimeOut, cachedFQDN, ref pendingDNSInfo);
+                                    }
+                                }
+                                else
+                                {
+                                    throw;
+                                }
+                            }
+                        }                        
+                    }
+                    else
+                    {
+                        throw;
+                    }
                 }
 
                 if (_socket == null || !_socket.Connected)
@@ -171,7 +214,11 @@ namespace Microsoft.Data.SqlClient.SNI
                         _socket.Dispose();
                         _socket = null;
                     }
-                    ReportTcpSNIError(0, SNICommon.ConnOpenFailedError, string.Empty);
+
+                    if (reportError)
+                    {
+                        ReportTcpSNIError(0, SNICommon.ConnOpenFailedError, string.Empty);
+                    }
                     return;
                 }
 
@@ -196,9 +243,70 @@ namespace Microsoft.Data.SqlClient.SNI
             _status = TdsEnums.SNI_SUCCESS;
         }
 
-        private static Socket Connect(string serverName, int port, TimeSpan timeout, bool isInfiniteTimeout)
+        // Connect to server with hostName and port in parellel mode.
+        // The IP information will be collected temporarily as the pendingDNSInfo but is not stored in the DNS cache at this point.
+        // Only write to the DNS cache when we receive IsSupported flag as true in the Feature Ext Ack from server.
+        private Socket TryConnectParallel(string hostName, int port, TimeSpan ts, bool isInfiniteTimeOut, ref bool callerReportError, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
+        {
+            Socket availableSocket = null;
+            Task<Socket> connectTask;
+
+            Task<IPAddress[]> serverAddrTask = Dns.GetHostAddressesAsync(hostName);
+            serverAddrTask.Wait(ts);
+            IPAddress[] serverAddresses = serverAddrTask.Result;
+
+            if (serverAddresses.Length > MaxParallelIpAddresses)
+            {
+                // Fail if above 64 to match legacy behavior
+                callerReportError = false;
+                ReportTcpSNIError(0, SNICommon.MultiSubnetFailoverWithMoreThan64IPs, string.Empty);
+                return availableSocket;
+            }
+
+            string IPv4String = null;
+            string IPv6String = null;
+
+            foreach (IPAddress ipAddress in serverAddresses)
+            {
+                if (ipAddress.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    IPv4String = ipAddress.ToString();
+                }
+                else if (ipAddress.AddressFamily == AddressFamily.InterNetworkV6)
+                {
+                    IPv6String = ipAddress.ToString();
+                }
+            }
+
+            if (IPv4String != null || IPv6String != null)
+            {
+                pendingDNSInfo = new SQLDNSInfo(cachedFQDN, IPv4String, IPv6String, port.ToString());
+            }
+
+            connectTask = ParallelConnectAsync(serverAddresses, port);
+
+            if (!(isInfiniteTimeOut ? connectTask.Wait(-1) : connectTask.Wait(ts)))
+            {
+                callerReportError = false;
+                ReportTcpSNIError(0, SNICommon.ConnOpenFailedError, string.Empty);
+                return availableSocket;
+            }
+
+            availableSocket = connectTask.Result;
+            return availableSocket;
+
+        }
+
+        // Connect to server with hostName and port.
+        // The IP information will be collected temporarily as the pendingDNSInfo but is not stored in the DNS cache at this point.
+        // Only write to the DNS cache when we receive IsSupported flag as true in the Feature Ext Ack from server.
+        private static Socket Connect(string serverName, int port, TimeSpan timeout, bool isInfiniteTimeout, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
         {
             IPAddress[] ipAddresses = Dns.GetHostAddresses(serverName);
+
+            string IPv4String = null;
+            string IPv6String = null;
+
             IPAddress serverIPv4 = null;
             IPAddress serverIPv6 = null;
             foreach (IPAddress ipAddress in ipAddresses)
@@ -206,14 +314,21 @@ namespace Microsoft.Data.SqlClient.SNI
                 if (ipAddress.AddressFamily == AddressFamily.InterNetwork)
                 {
                     serverIPv4 = ipAddress;
+                    IPv4String = ipAddress.ToString();
                 }
                 else if (ipAddress.AddressFamily == AddressFamily.InterNetworkV6)
                 {
                     serverIPv6 = ipAddress;
+                    IPv6String = ipAddress.ToString();
                 }
             }
             ipAddresses = new IPAddress[] { serverIPv4, serverIPv6 };
             Socket[] sockets = new Socket[2];
+
+            if (IPv4String != null || IPv6String != null)
+            {
+                pendingDNSInfo = new SQLDNSInfo(cachedFQDN, IPv4String, IPv6String, port.ToString());
+            }
 
             CancellationTokenSource cts = null;
             

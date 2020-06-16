@@ -128,6 +128,61 @@ namespace Microsoft.Data.SqlClient
         private readonly ActiveDirectoryAuthenticationTimeoutRetryHelper _activeDirectoryAuthTimeoutRetryHelper;
         private readonly SqlAuthenticationProviderManager _sqlAuthenticationProviderManager;
 
+        internal bool _cleanSQLDNSCaching = false;
+
+        private bool _serverSupportsDNSCaching = false;
+
+        /// <summary>
+        /// Get or set if SQLDNSCaching is supported by the server.
+        /// </summary>
+        internal bool IsSQLDNSCachingSupported
+        {
+            get
+            {
+                return _serverSupportsDNSCaching;
+            }
+            set
+            {
+                _serverSupportsDNSCaching = value;
+            }
+        }
+
+        private bool _SQLDNSRetryEnabled = false;
+
+        /// <summary>
+        /// Get or set if we need retrying with IP received from FeatureExtAck.
+        /// </summary>
+        internal bool IsSQLDNSRetryEnabled
+        {
+            get
+            {
+                return _SQLDNSRetryEnabled;
+            }
+            set
+            {
+                _SQLDNSRetryEnabled = value;
+            }
+        }
+
+        private bool _DNSCachingBeforeRedirect = false;
+
+        /// <summary>
+        /// Get or set if the control ring send redirect token and feature ext ack with true for DNSCaching
+        /// </summary>
+        internal bool IsDNSCachingBeforeRedirectSupported
+        {
+            get
+            {
+                return _DNSCachingBeforeRedirect;
+            }
+            set
+            {
+                _DNSCachingBeforeRedirect = value;
+            }
+        }
+
+       internal SQLDNSInfo pendingSQLDNSObject = null;   
+
         // TCE flags
         internal byte _tceVersionSupported;
 
@@ -1247,6 +1302,9 @@ namespace Microsoft.Data.SqlClient
 
             // The GLOBALTRANSACTIONS, DATACLASSIFICATION, TCE, and UTF8 support features are implicitly requested
             requestedFeatures |= TdsEnums.FeatureExtension.GlobalTransactions | TdsEnums.FeatureExtension.DataClassification | TdsEnums.FeatureExtension.Tce | TdsEnums.FeatureExtension.UTF8Support;
+
+            // The SQLDNSCaching feature is implicitly set
+            requestedFeatures |= TdsEnums.FeatureExtension.SQLDNSCaching;
 
             _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData);
         }
@@ -2376,8 +2434,11 @@ namespace Microsoft.Data.SqlClient
         {
             if (RoutingInfo != null)
             {
-                return;
+                if (TdsEnums.FEATUREEXT_SQLDNSCACHING != featureId) {
+                    return;
+                }
             }
+            
             switch (featureId)
             {
                 case TdsEnums.FEATUREEXT_SRECOVERY:
@@ -2564,6 +2625,40 @@ namespace Microsoft.Data.SqlClient
                         _parser.DataClassificationVersion = (enabled == 0) ? TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED : supportedDataClassificationVersion;
                         break;
                     }
+
+                case TdsEnums.FEATUREEXT_SQLDNSCACHING:
+                    {
+                        SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for SQLDNSCACHING", ObjectID);
+
+                        if (data.Length < 1)
+                        {
+                            SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown token for SQLDNSCACHING", ObjectID);
+                            throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+                        }
+
+                        if (1 == data[0]) {
+                            IsSQLDNSCachingSupported = true;
+                            _cleanSQLDNSCaching = false;
+                            
+                            if (RoutingInfo != null)
+                            {
+                                IsDNSCachingBeforeRedirectSupported = true;
+                            }
+                        }
+                        else {
+                            // we receive the IsSupported whose value is 0
+                            IsSQLDNSCachingSupported = false;
+                            _cleanSQLDNSCaching = true;
+                        }
+
+                        // need to add more steps for phase 2
+                        // get IPv4 + IPv6 + Port number 
+                        // not put them in the DNS cache at this point but need to store them somewhere
+                        // generate pendingSQLDNSObject and turn on IsSQLDNSRetryEnabled flag
+
+                        break;
+                    }
+
                 default:
                     {
                         // Unknown feature ack 
@@ -2698,4 +2793,3 @@ namespace Microsoft.Data.SqlClient
         }
     }
 }
-

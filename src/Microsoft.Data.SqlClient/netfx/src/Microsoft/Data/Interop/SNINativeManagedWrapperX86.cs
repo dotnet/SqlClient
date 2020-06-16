@@ -4,6 +4,7 @@
 
 using System;
 using System.Runtime.InteropServices;
+using System.Text;
 using static Microsoft.Data.SqlClient.SNINativeMethodWrapper;
 
 namespace Microsoft.Data.SqlClient
@@ -78,6 +79,15 @@ namespace Microsoft.Data.SqlClient
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
         internal static extern uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, ref IntPtr pbQInfo);
 
+        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, out ushort portNum);
+
+        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
+        internal static extern uint SNIGetPeerAddrStrWrapper([In] SNIHandle pConn, int bufferSize, StringBuilder addrBuffer, out uint addrLen);        
+
+        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, out ProviderEnum provNum);
+
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNIInitialize")]
         internal static extern uint SNIInitialize([In] IntPtr pmo);
 
@@ -90,7 +100,8 @@ namespace Microsoft.Data.SqlClient
             [MarshalAs(UnmanagedType.LPWStr)] string szConnect,
             [In] SNIHandle pConn,
             out IntPtr ppConn,
-            [MarshalAs(UnmanagedType.Bool)] bool fSync);
+            [MarshalAs(UnmanagedType.Bool)] bool fSync,
+            [In] ref SNI_DNSCache_Info pDNSCachedInfo);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr SNIPacketAllocateWrapper([In] SafeHandle pConn, IOType IOType);

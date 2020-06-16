@@ -163,6 +163,9 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal string EnclaveType { get; set; }
 
+        internal bool isTcpProtocol { get; set; }
+        internal string FQDNforDNSCahce { get; set; }
+
         /// <summary>
         /// Get if data classification is enabled by the server.
         /// </summary>
@@ -362,6 +365,9 @@ namespace Microsoft.Data.SqlClient
             _connHandler = connHandler;
             _loginWithFailover = withFailover;
 
+            // Clean up IsSQLDNSCachingSupported flag from previous status
+            _connHandler.IsSQLDNSCachingSupported = false;
+
             uint sniStatus = TdsParserStateObjectFactory.Singleton.SNIStatus;
 
             if (sniStatus != TdsEnums.SNI_SUCCESS)
@@ -414,9 +420,19 @@ namespace Microsoft.Data.SqlClient
 
             bool fParallel = _connHandler.ConnectionOptions.MultiSubnetFailover;
 
+            FQDNforDNSCahce = serverInfo.ResolvedServerName;
+
+            int commaPos = FQDNforDNSCahce.IndexOf(",");
+            if (commaPos != -1)
+            {
+                FQDNforDNSCahce = FQDNforDNSCahce.Substring(0, commaPos);
+            }
+
+            _connHandler.pendingSQLDNSObject = null;
+
             // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
             _physicalStateObj.CreatePhysicalSNIHandle(serverInfo.ExtendedServerName, ignoreSniOpenTimeout, timerExpire,
-                        out instanceName, ref _sniSpnBuffer, false, true, fParallel, integratedSecurity || authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated);
+                        out instanceName, ref _sniSpnBuffer, false, true, fParallel, FQDNforDNSCahce, ref _connHandler.pendingSQLDNSObject, integratedSecurity || authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated);
 
             if (TdsEnums.SNI_SUCCESS != _physicalStateObj.Status)
             {
@@ -455,6 +471,13 @@ namespace Microsoft.Data.SqlClient
 
             uint result = _physicalStateObj.SniGetConnectionId(ref _connHandler._clientConnectionId);
             Debug.Assert(result == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetConnectionId");
+            
+            if (null == _connHandler.pendingSQLDNSObject)
+            {
+                // for DNS Caching phase 1
+                _physicalStateObj.AssignPendingDNSInfo(serverInfo.UserProtocol, FQDNforDNSCahce, ref _connHandler.pendingSQLDNSObject);
+            }
+            
             SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> Sending prelogin handshake", "SEC");
             SendPreLoginHandshake(instanceName, encrypt);
 
@@ -473,7 +496,7 @@ namespace Microsoft.Data.SqlClient
                 // On Instance failure re-connect and flush SNI named instance cache.
                 _physicalStateObj.SniContext = SniContext.Snix_Connect;
 
-                _physicalStateObj.CreatePhysicalSNIHandle(serverInfo.ExtendedServerName, ignoreSniOpenTimeout, timerExpire, out instanceName, ref _sniSpnBuffer, true, true, fParallel, integratedSecurity);
+                _physicalStateObj.CreatePhysicalSNIHandle(serverInfo.ExtendedServerName, ignoreSniOpenTimeout, timerExpire, out instanceName, ref _sniSpnBuffer, true, true, fParallel, FQDNforDNSCahce, ref _connHandler.pendingSQLDNSObject, integratedSecurity);
 
                 if (TdsEnums.SNI_SUCCESS != _physicalStateObj.Status)
                 {
@@ -486,6 +509,12 @@ namespace Microsoft.Data.SqlClient
 
                 Debug.Assert(retCode == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetConnectionId");
                 SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> Sending prelogin handshake", "SEC");
+
+                if (null == _connHandler.pendingSQLDNSObject)
+                {
+                    // for DNS Caching phase 1
+                    _physicalStateObj.AssignPendingDNSInfo(serverInfo.UserProtocol, FQDNforDNSCahce, ref _connHandler.pendingSQLDNSObject);
+                }
 
                 SendPreLoginHandshake(instanceName, encrypt);
                 status = ConsumePreLoginHandshake(encrypt, trustServerCert, integratedSecurity, out marsCapable, out _connHandler._fedAuthRequired);
@@ -918,8 +947,9 @@ namespace Microsoft.Data.SqlClient
 
                             SslProtocols protocol = (SslProtocols)protocolVersion;
                             string warningMessage = protocol.GetProtocolWarning();
-                            if(!string.IsNullOrEmpty(warningMessage))
+                            if (!string.IsNullOrEmpty(warningMessage))
                             {
+                                // This logs console warning of insecure protocol in use.
                                 _logger.LogWarning(_typeName, MethodBase.GetCurrentMethod().Name, warningMessage);
                             }
 
@@ -3098,6 +3128,20 @@ namespace Microsoft.Data.SqlClient
                     _connHandler.OnFeatureExtAck(featureId, data);
                 }
             } while (featureId != TdsEnums.FEATUREEXT_TERMINATOR);
+
+            // Write to DNS Cache or clean up DNS Cache for TCP protocol
+            bool ret = false;
+            if (_connHandler._cleanSQLDNSCaching)
+            {
+                ret = SQLFallbackDNSCache.Instance.DeleteDNSInfo(FQDNforDNSCahce);
+            }
+
+            if ( _connHandler.IsSQLDNSCachingSupported && _connHandler.pendingSQLDNSObject != null 
+                    && !SQLFallbackDNSCache.Instance.IsDuplicate(_connHandler.pendingSQLDNSObject))
+            {
+                ret = SQLFallbackDNSCache.Instance.AddDNSInfo(_connHandler.pendingSQLDNSObject);
+                _connHandler.pendingSQLDNSObject = null;
+            }
 
             // Check if column encryption was on and feature wasn't acknowledged and we aren't going to be routed to another server.
             if (Connection.RoutingInfo == null
@@ -7818,6 +7862,20 @@ namespace Microsoft.Data.SqlClient
             return len;
         }
 
+        internal int WriteSQLDNSCachingFeatureRequest(bool write /* if false just calculates the length */)
+        {
+            int len = 5; // 1byte = featureID, 4bytes = featureData length
+
+            if (write)
+            {
+                // Write Feature ID
+                _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_SQLDNSCACHING);
+                WriteInt(0, _physicalStateObj); // we don't send any data
+            }
+
+            return len;
+        }
+
         internal void TdsLogin(SqlLogin rec, TdsEnums.FeatureExtension requestedFeatures, SessionData recoverySessionData, FederatedAuthenticationFeatureExtensionData? fedAuthFeatureExtensionData)
         {
             _physicalStateObj.SetTimeoutSeconds(rec.timeout);
@@ -7973,6 +8031,11 @@ namespace Microsoft.Data.SqlClient
                 if ((requestedFeatures & TdsEnums.FeatureExtension.UTF8Support) != 0)
                 {
                     length += WriteUTF8SupportFeatureRequest(false);
+                }
+
+                if ((requestedFeatures & TdsEnums.FeatureExtension.SQLDNSCaching) != 0)
+                {
+                    length += WriteSQLDNSCachingFeatureRequest(false);
                 }
 
                 length++; // for terminator
@@ -8235,6 +8298,11 @@ namespace Microsoft.Data.SqlClient
                     if ((requestedFeatures & TdsEnums.FeatureExtension.UTF8Support) != 0)
                     {
                         WriteUTF8SupportFeatureRequest(true);
+                    }
+
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.SQLDNSCaching) != 0)
+                    {
+                        WriteSQLDNSCachingFeatureRequest(true);
                     }
 
                     _physicalStateObj.WriteByte(0xFF); // terminator

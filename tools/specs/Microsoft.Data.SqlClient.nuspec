@@ -27,13 +27,13 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
     <tags>sqlclient microsoft.data.sqlclient</tags>
     <dependencies>
       <group targetFramework="net46">
-        <dependency id="Microsoft.Data.SqlClient.SNI" version="2.0.0-preview1.20141.10" />
+        <dependency id="Microsoft.Data.SqlClient.SNI" version="2.0.0" />
         <dependency id="Microsoft.Identity.Client" version="4.14.0" />
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="5.6.0" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="5.6.0" />
       </group>
       <group targetFramework="netcoreapp2.1">
-        <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="2.0.0-preview1.20141.10" exclude="Compile" />
+        <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="2.0.0" exclude="Compile" />
         <dependency id="Microsoft.Win32.Registry" version="4.7.0" exclude="Compile" />
         <dependency id="System.Security.Principal.Windows" version="4.7.0" exclude="Compile" />
         <dependency id="System.Text.Encoding.CodePages" version="4.7.0" exclude="Compile" />
@@ -45,7 +45,7 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="5.6.0" />
       </group>
       <group targetFramework="netcoreapp3.1">
-        <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="2.0.0-preview1.20141.10" exclude="Compile" />
+        <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="2.0.0" exclude="Compile" />
         <dependency id="Microsoft.Win32.Registry" version="4.7.0" exclude="Compile" />
         <dependency id="System.Security.Principal.Windows" version="4.7.0" exclude="Compile" />
         <dependency id="System.Text.Encoding.CodePages" version="4.7.0" exclude="Compile" />
@@ -57,7 +57,7 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="5.6.0" />
       </group>
       <group targetFramework="netstandard2.0">
-        <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="2.0.0-preview1.20141.10" exclude="Compile" />
+        <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="2.0.0" exclude="Compile" />
         <dependency id="Microsoft.Win32.Registry" version="4.7.0" exclude="Compile" />
         <dependency id="System.Buffers" version="4.5.1" exclude="Compile" />
         <dependency id="System.Memory" version="4.5.4" exclude="Compile" />
