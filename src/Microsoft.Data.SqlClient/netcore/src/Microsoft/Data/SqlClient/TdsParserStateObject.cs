@@ -2827,32 +2827,61 @@ namespace Microsoft.Data.SqlClient
                 int pendingCallbacks = DecrementPendingCallbacks(false); // may dispose of GC handle.
                 if ((processFinallyBlock) && (source != null) && (pendingCallbacks < 2))
                 {
+                    // this callback should be running on the SNITaskScheduler so force execution back onto the default scheduler which uses the threadpool
                     if (error == 0)
                     {
-                        if (_executionContext != null)
-                        {
-                            ExecutionContext.Run(_executionContext, s_readAdyncCallbackComplete, source);
-                        }
-                        else
-                        {
-                            source.TrySetResult(null);
-                        }
+                       
+                        Task.Factory.StartNew(
+                            RunStandardAsyncCallback,
+                            state: source,
+                            CancellationToken.None,
+                            TaskCreationOptions.DenyChildAttach,
+                            TaskScheduler.Default
+                        );
                     }
                     else
                     {
-                        if (_executionContext != null)
-                        {
-                            ExecutionContext.Run(_executionContext, (state) => ReadAsyncCallbackCaptureException(source), null);
-                        }
-                        else
-                        {
-                            ReadAsyncCallbackCaptureException(source);
-                        }
+                        //NewMethod1(source);
+                        Task.Factory.StartNew(
+                            RunExceptionAsyncCallback,
+                            state: source,
+                            CancellationToken.None,
+                            TaskCreationOptions.DenyChildAttach,
+                            TaskScheduler.Default
+                        );
                     }
                 }
 
                 AssertValidState();
             }
+        }
+
+        private Task RunExceptionAsyncCallback(object state)
+        {
+            if (_executionContext != null)
+            {
+                ExecutionContext.Run(_executionContext, state2 => ReadAsyncCallbackCaptureException(state2 as TaskCompletionSource<object>), state);
+            }
+            else
+            {
+                TaskCompletionSource<object> source = state as TaskCompletionSource<object>;
+                ReadAsyncCallbackCaptureException(source);
+            }
+            return Task.CompletedTask;
+        }
+
+        private Task RunStandardAsyncCallback(object state)
+        {
+            if (_executionContext != null)
+            {
+                ExecutionContext.Run(_executionContext, s_readAdyncCallbackComplete, state);
+            }
+            else
+            {
+                TaskCompletionSource<object> source = state as TaskCompletionSource<object>;
+                source.TrySetResult(null);
+            }
+            return Task.CompletedTask;
         }
 
         private static void ReadAsyncCallbackComplete(object state)

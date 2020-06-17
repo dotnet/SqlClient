@@ -258,7 +258,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     state: callback,
                     CancellationToken.None,
                     TaskContinuationOptions.DenyChildAttach,
-                    TaskScheduler.Default
+                    SNITaskScheduler.Instance
                 );
         }
 
