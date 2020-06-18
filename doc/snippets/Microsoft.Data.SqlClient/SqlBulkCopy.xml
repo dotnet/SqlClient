@@ -1160,7 +1160,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> 
 				did not specify a valid destination column name.
 			</exception>
-			<exception cref="T:Microsoft.Data.SqlCient.SqlException">
+			<exception cref="T:Microsoft.Data.SqlClient.SqlException">
 				Returned in the task object, any error returned by SQL Server that occurred while opening the connection.
 			</exception>
 		</WriteToServerAsync>
