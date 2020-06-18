@@ -2809,10 +2809,10 @@
     <value>Zuordnungen müssen entweder vollständig auf dem Namen oder der Ordinalzahl basieren.</value>
   </data>
   <data name="SQL_BulkLoadCannotConvertValue" xml:space="preserve">
-    <value>Der angegebene Wert "{0}" vom Typ "{1}" aus der Datenquelle kann für Spalte "{3} [{4}]", Zeile "{5}" nicht in den Typ "{2}" konvertiert werden.</value>
+    <value>Der angegebene Wert{0} vom Typ "{1}" aus der Datenquelle kann für Spalte {3} [{4}], Zeile {5} nicht in den Typ "{2}" konvertiert werden.</value>
   </data>
   <data name="SQL_BulkLoadCannotConvertValueWithoutRowNo" xml:space="preserve">
-    <value>Der angegebene Wert "{0}" vom Typ "{1}" aus der Datenquelle kann für Spalte "{3} [{4}]" nicht in den Typ "{2}" konvertiert werden.</value>
+    <value>Der angegebene Wert{0} vom Typ "{1}" aus der Datenquelle kann für Spalte {3} [{4}] nicht in den Typ "{2}" konvertiert werden.</value>
   </data>
   <data name="SQL_BulkLoadNonMatchingColumnMapping" xml:space="preserve">
     <value>Die angegebene ColumnMapping stimmt mit keiner Spalte in der Quelle oder dem Ziel überein.</value>
