@@ -2,9 +2,9 @@
 <Project ToolsVersion="Latest" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <AssemblyFileVersion Condition="'$(AssemblyFileVersion)' == ''">1.0.0.0</AssemblyFileVersion>
-    <AssemblyVersion>$(AssemblyFileVersion)</AssemblyVersion>
+    <AssemblyVersion>2.0.20168.4</AssemblyVersion>
     <MicrosoftDotNetGenAPIPackageVersion>1.0.0-beta.18578.2</MicrosoftDotNetGenAPIPackageVersion>
-    <NugetPackageVersion Condition="'$(NugetPackageVersion)' == ''">2.0.0-dev</NugetPackageVersion>
+    <NugetPackageVersion Condition="'$(NugetPackageVersion)' == ''">2.1.0-dev</NugetPackageVersion>
     <Version>$(NugetPackageVersion)</Version>
   </PropertyGroup>
   <!-- NetFx project dependencies -->
