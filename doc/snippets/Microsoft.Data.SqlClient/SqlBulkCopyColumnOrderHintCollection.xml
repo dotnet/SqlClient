@@ -143,7 +143,7 @@ Transact-SQL `INSERT … SELECT` statement to copy the data.
             <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> object to be inserted in the collection.</param>
             <summary>Insert a new <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> at the index specified.</summary>
             <remarks>The order in which column order hints can be added is arbitrary.</remarks>
-			<exception cref="T:System.ArgumentOutOfRangeException">The index is less than zero or greater than <see cref="T:System.Collections.CollectionBase.Count" />.</exception>
+			<exception cref="T:System.ArgumentOutOfRangeException">The index is less than zero or greater than the size of the collection.</exception>
 			<exception cref="T:System.ArgumentNullException">A null column order hint cannot be added to the collection.</exception>
         </Insert>
         <Item>
