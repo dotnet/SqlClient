@@ -25,8 +25,8 @@ If a <xref:Microsoft.Data.SqlClient.SortOrder> of Unspecified is given, an <xref
 ## Examples  
 
 The following example bulk copies data from a source table in the **AdventureWorks** sample database to a destination table in the same database. 
-<xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint> are added to the <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection> for the 
-<xref:Microsoft.Data.SqlClient.SqlBulkCopy> object to specify order hints for the bulk copy.  
+<xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint>s are added to the <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection> of the 
+<xref:Microsoft.Data.SqlClient.SqlBulkCopy> object to specify order hints for the bulk copy operation.  
 
 > [!IMPORTANT]
 > This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md). 
@@ -48,7 +48,7 @@ use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 
 ## Examples
 The following example bulk copies data from a source table in the **AdventureWorks** sample database to a destination table in the same database. 
-A SqlBulkCopyColumnOrderHint object is used to define the sort order for the ProductNumber destination column.
+A SqlBulkCopyColumnOrderHint object is used to define the sort order for the **ProductNumber** destination column.
 
 > [!IMPORTANT]
 > This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md). 
@@ -164,6 +164,7 @@ Transact-SQL `INSERT … SELECT` statement to copy the data.
 The Remove method is most commonly used when you use a single <xref:Microsoft.Data.SqlClient.SqlBulkCopy> 
 instance to process more than one bulk copy operation. If you create column order hints for one bulk copy operation, you must clear the 
 <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection> after the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer%2A> method and before processing the next bulk copy.   
+
 You can clear the entire collection by using the 
 <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection.Clear> method, or remove hints individually using the Remove method or the <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection.RemoveAt%2A> method.  
 
