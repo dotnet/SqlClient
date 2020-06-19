@@ -22,9 +22,9 @@ namespace Microsoft.Data.SqlClient
 
         // When overridden in a derived class, looks up an existing enclave session information in the enclave session cache.
         // If the enclave provider doesn't implement enclave session caching, this method is expected to return null in the sqlEnclaveSession parameter.
-        public override void GetEnclaveSession(string servername, string attestationUrl, bool generateCustomData, out SqlEnclaveSession sqlEnclaveSession, out long counter, out byte[] customData, out int customDataLength)
+        public override void GetEnclaveSession(string servername, string attestationUrl, string database, bool generateCustomData, out SqlEnclaveSession sqlEnclaveSession, out long counter, out byte[] customData, out int customDataLength)
         {
-            GetEnclaveSessionHelper(servername, attestationUrl, false, out sqlEnclaveSession, out counter, out customData, out customDataLength);
+            GetEnclaveSessionHelper(servername, attestationUrl, database, false, out sqlEnclaveSession, out counter, out customData, out customDataLength);
         }
 
         // Gets the information that SqlClient subsequently uses to initiate the process of attesting the enclave and to establish a secure session with the enclave.
@@ -39,7 +39,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // When overridden in a derived class, performs enclave attestation, generates a symmetric key for the session, creates a an enclave session and stores the session information in the cache.
-        public override void CreateEnclaveSession(byte[] attestationInfo, ECDiffieHellmanCng clientDHKey, string attestationUrl, string servername, byte[] customData, int customDataLength, out SqlEnclaveSession sqlEnclaveSession, out long counter)
+        public override void CreateEnclaveSession(byte[] attestationInfo, ECDiffieHellmanCng clientDHKey, string attestationUrl, string servername, string database, byte[] customData, int customDataLength, out SqlEnclaveSession sqlEnclaveSession, out long counter)
         {
             ////for simulator: enclave does not send public key, and sends an empty attestation info
             //// The only non-trivial content it sends is the session setup info (DH pubkey of enclave)
@@ -49,7 +49,7 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 ThreadRetryCache.Remove(Thread.CurrentThread.ManagedThreadId.ToString());
-                sqlEnclaveSession = GetEnclaveSessionFromCache(servername, attestationUrl, out counter);
+                sqlEnclaveSession = GetEnclaveSessionFromCache(servername, attestationUrl, database, out counter);
 
                 if (sqlEnclaveSession == null)
                 {
@@ -88,7 +88,7 @@ namespace Microsoft.Data.SqlClient
                         CngKey k = CngKey.Import(trustedModuleDHPublicKey, CngKeyBlobFormat.EccPublicBlob);
                         byte[] sharedSecret = clientDHKey.DeriveKeyMaterial(k);
                         long sessionId = BitConverter.ToInt64(enclaveSessionHandle, 0);
-                        sqlEnclaveSession = AddEnclaveSessionToCache(attestationUrl, servername, sharedSecret, sessionId, out counter);
+                        sqlEnclaveSession = AddEnclaveSessionToCache(attestationUrl, servername, database, sharedSecret, sessionId, out counter);
                     }
                     else
                     {
@@ -107,10 +107,11 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="serverName">The name of the SQL Server instance containing the enclave.</param>
         /// <param name="enclaveAttestationUrl">The endpoint of an attestation service, SqlClient contacts to attest the enclave.</param>
+        /// <param name="database">The database that SqlClient contacts to.</param>
         /// <param name="enclaveSessionToInvalidate">The session to be invalidated.</param>
-        public override void InvalidateEnclaveSession(string serverName, string enclaveAttestationUrl, SqlEnclaveSession enclaveSessionToInvalidate)
+        public override void InvalidateEnclaveSession(string serverName, string enclaveAttestationUrl, string database, SqlEnclaveSession enclaveSessionToInvalidate)
         {
-            InvalidateEnclaveSessionHelper(serverName, enclaveAttestationUrl, enclaveSessionToInvalidate);
+            InvalidateEnclaveSessionHelper(serverName, enclaveAttestationUrl, database, enclaveSessionToInvalidate);
         }
     }
 }
