@@ -14,7 +14,6 @@ namespace Microsoft.Data.SqlClient
 
     internal sealed class SqlBuffer
     {
-
         internal enum StorageType
         {
             Empty = 0,
@@ -42,55 +41,67 @@ namespace Microsoft.Data.SqlClient
         internal struct DateTimeInfo
         {
             // This is used to store DateTime
-            internal Int32 daypart;
-            internal Int32 timepart;
+            internal int daypart;
+            internal int timepart;
         }
 
         internal struct NumericInfo
         {
             // This is used to store Decimal data
-            internal Int32 data1;
-            internal Int32 data2;
-            internal Int32 data3;
-            internal Int32 data4;
-            internal Byte precision;
-            internal Byte scale;
-            internal Boolean positive;
+            internal int data1;
+            internal int data2;
+            internal int data3;
+            internal int data4;
+            internal byte precision;
+            internal byte scale;
+            internal bool positive;
         }
 
         internal struct TimeInfo
         {
-            internal Int64 ticks;
+            internal long ticks;
             internal byte scale;
         }
 
         internal struct DateTime2Info
         {
-            internal Int32 date;
+            internal int date;
             internal TimeInfo timeInfo;
         }
 
         internal struct DateTimeOffsetInfo
         {
             internal DateTime2Info dateTime2Info;
-            internal Int16 offset;
+            internal short offset;
         }
 
         [StructLayout(LayoutKind.Explicit)]
         internal struct Storage
         {
-            [FieldOffset(0)] internal Boolean _boolean;
-            [FieldOffset(0)] internal Byte _byte;
-            [FieldOffset(0)] internal DateTimeInfo _dateTimeInfo;
-            [FieldOffset(0)] internal Double _double;
-            [FieldOffset(0)] internal NumericInfo _numericInfo;
-            [FieldOffset(0)] internal Int16 _int16;
-            [FieldOffset(0)] internal Int32 _int32;
-            [FieldOffset(0)] internal Int64 _int64;     // also used to store Money, UtcDateTime, Date , and Time
-            [FieldOffset(0)] internal Single _single;
-            [FieldOffset(0)] internal TimeInfo _timeInfo;
-            [FieldOffset(0)] internal DateTime2Info _dateTime2Info;
-            [FieldOffset(0)] internal DateTimeOffsetInfo _dateTimeOffsetInfo;
+            [FieldOffset(0)]
+            internal bool _boolean;
+            [FieldOffset(0)]
+            internal byte _byte;
+            [FieldOffset(0)]
+            internal DateTimeInfo _dateTimeInfo;
+            [FieldOffset(0)]
+            internal double _double;
+            [FieldOffset(0)]
+            internal NumericInfo _numericInfo;
+            [FieldOffset(0)]
+            internal short _int16;
+            [FieldOffset(0)]
+            internal int _int32;
+            [FieldOffset(0)]
+            internal long _int64;     // also used to store Money, UtcDateTime, Date , and Time
+            [FieldOffset(0)]
+            internal float _single;
+            [FieldOffset(0)]
+            internal TimeInfo _timeInfo;
+            [FieldOffset(0)]
+            internal DateTime2Info _dateTime2Info;
+            [FieldOffset(0)]
+            internal DateTimeOffsetInfo _dateTimeOffsetInfo;
         }
 
         private bool _isNull;
@@ -134,7 +145,7 @@ namespace Microsoft.Data.SqlClient
             get { return _type; }
         }
 
-        internal Boolean Boolean
+        internal bool Boolean
         {
             get
             {
@@ -144,7 +155,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     return _value._boolean;
                 }
-                return (Boolean)this.Value; // anything else we haven't thought of goes through boxing.
+                return (bool)this.Value; // anything else we haven't thought of goes through boxing.
             }
             set
             {
@@ -155,7 +166,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal Byte Byte
+        internal byte Byte
         {
             get
             {
@@ -165,7 +176,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     return _value._byte;
                 }
-                return (Byte)this.Value; // anything else we haven't thought of goes through boxing.
+                return (byte)this.Value; // anything else we haven't thought of goes through boxing.
             }
             set
             {
@@ -176,7 +187,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal Byte[] ByteArray
+        internal byte[] ByteArray
         {
             get
             {
@@ -201,13 +212,13 @@ namespace Microsoft.Data.SqlClient
                 }
                 if (StorageType.DateTime == _type)
                 {
-                    return SqlTypes.SqlTypeWorkarounds.SqlDateTimeToDateTime(_value._dateTimeInfo.daypart, _value._dateTimeInfo.timepart);
+                    return SqlTypeWorkarounds.SqlDateTimeToDateTime(_value._dateTimeInfo.daypart, _value._dateTimeInfo.timepart);
                 }
                 return (DateTime)this.Value; // anything else we haven't thought of goes through boxing.
             }
         }
 
-        internal Decimal Decimal
+        internal decimal Decimal
         {
             get
             {
@@ -219,7 +230,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         throw new OverflowException(SQLResource.ConversionOverflowMessage);
                     }
-                    return new Decimal(_value._numericInfo.data1, _value._numericInfo.data2, _value._numericInfo.data3, !_value._numericInfo.positive, _value._numericInfo.scale);
+                    return new decimal(_value._numericInfo.data1, _value._numericInfo.data2, _value._numericInfo.data3, !_value._numericInfo.positive, _value._numericInfo.scale);
                 }
                 if (StorageType.Money == _type)
                 {
@@ -230,13 +241,13 @@ namespace Microsoft.Data.SqlClient
                         isNegative = true;
                         l = -l;
                     }
-                    return new Decimal((int)(l & 0xffffffff), (int)(l >> 32), 0, isNegative, 4);
+                    return new decimal((int)(l & 0xffffffff), (int)(l >> 32), 0, isNegative, 4);
                 }
-                return (Decimal)this.Value; // anything else we haven't thought of goes through boxing.
+                return (decimal)this.Value; // anything else we haven't thought of goes through boxing.
             }
         }
 
-        internal Double Double
+        internal double Double
         {
             get
             {
@@ -246,7 +257,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     return _value._double;
                 }
-                return (Double)this.Value; // anything else we haven't thought of goes through boxing.
+                return (double)this.Value; // anything else we haven't thought of goes through boxing.
             }
             set
             {
@@ -267,7 +278,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal Int16 Int16
+        internal short Int16
         {
             get
             {
@@ -277,7 +288,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     return _value._int16;
                 }
-                return (Int16)this.Value; // anything else we haven't thought of goes through boxing.
+                return (short)this.Value; // anything else we haven't thought of goes through boxing.
             }
             set
             {
@@ -288,7 +299,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal Int32 Int32
+        internal int Int32
         {
             get
             {
@@ -298,7 +309,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     return _value._int32;
                 }
-                return (Int32)this.Value; // anything else we haven't thought of goes through boxing.
+                return (int)this.Value; // anything else we haven't thought of goes through boxing.
             }
             set
             {
@@ -309,7 +320,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal Int64 Int64
+        internal long Int64
         {
             get
             {
@@ -319,7 +330,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     return _value._int64;
                 }
-                return (Int64)this.Value; // anything else we haven't thought of goes through boxing.
+                return (long)this.Value; // anything else we haven't thought of goes through boxing.
             }
             set
             {
@@ -330,7 +341,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal Single Single
+        internal float Single
         {
             get
             {
@@ -340,7 +351,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     return _value._single;
                 }
-                return (Single)this.Value; // anything else we haven't thought of goes through boxing.
+                return (float)this.Value; // anything else we haven't thought of goes through boxing.
             }
             set
             {
@@ -351,7 +362,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal String String
+        internal string String
         {
             get
             {
@@ -359,18 +370,18 @@ namespace Microsoft.Data.SqlClient
 
                 if (StorageType.String == _type)
                 {
-                    return (String)_object;
+                    return (string)_object;
                 }
                 else if (StorageType.SqlCachedBuffer == _type)
                 {
                     return ((SqlCachedBuffer)(_object)).ToString();
                 }
-                return (String)this.Value; // anything else we haven't thought of goes through boxing.
+                return (string)this.Value; // anything else we haven't thought of goes through boxing.
             }
         }
 
-        // use static list of format strings indexed by scale for perf!
-        private static string[] __katmaiDateTimeOffsetFormatByScale = new string[] {
+        // use static list of format strings indexed by scale for perf
+        private static string[] s_katmaiDateTimeOffsetFormatByScale = new string[] {
                 "yyyy-MM-dd HH:mm:ss zzz",
                 "yyyy-MM-dd HH:mm:ss.f zzz",
                 "yyyy-MM-dd HH:mm:ss.ff zzz",
@@ -381,7 +392,7 @@ namespace Microsoft.Data.SqlClient
                 "yyyy-MM-dd HH:mm:ss.fffffff zzz",
         };
 
-        private static string[] __katmaiDateTime2FormatByScale = new string[] {
+        private static string[] s_katmaiDateTime2FormatByScale = new string[] {
                 "yyyy-MM-dd HH:mm:ss",
                 "yyyy-MM-dd HH:mm:ss.f",
                 "yyyy-MM-dd HH:mm:ss.ff",
@@ -392,7 +403,7 @@ namespace Microsoft.Data.SqlClient
                 "yyyy-MM-dd HH:mm:ss.fffffff",
         };
 
-        private static string[] __katmaiTimeFormatByScale = new string[] {
+        private static string[] s_katmaiTimeFormatByScale = new string[] {
                 "HH:mm:ss",
                 "HH:mm:ss.f",
                 "HH:mm:ss.ff",
@@ -416,20 +427,20 @@ namespace Microsoft.Data.SqlClient
                 if (StorageType.Time == _type)
                 {
                     byte scale = _value._timeInfo.scale;
-                    return new DateTime(_value._timeInfo.ticks).ToString(__katmaiTimeFormatByScale[scale], DateTimeFormatInfo.InvariantInfo);
+                    return new DateTime(_value._timeInfo.ticks).ToString(s_katmaiTimeFormatByScale[scale], DateTimeFormatInfo.InvariantInfo);
                 }
                 if (StorageType.DateTime2 == _type)
                 {
                     byte scale = _value._dateTime2Info.timeInfo.scale;
-                    return this.DateTime.ToString(__katmaiDateTime2FormatByScale[scale], DateTimeFormatInfo.InvariantInfo);
+                    return this.DateTime.ToString(s_katmaiDateTime2FormatByScale[scale], DateTimeFormatInfo.InvariantInfo);
                 }
                 if (StorageType.DateTimeOffset == _type)
                 {
                     DateTimeOffset dto = this.DateTimeOffset;
                     byte scale = _value._dateTimeOffsetInfo.dateTime2Info.timeInfo.scale;
-                    return dto.ToString(__katmaiDateTimeOffsetFormatByScale[scale], DateTimeFormatInfo.InvariantInfo);
+                    return dto.ToString(s_katmaiDateTimeOffsetFormatByScale[scale], DateTimeFormatInfo.InvariantInfo);
                 }
-                return (String)this.Value; // anything else we haven't thought of goes through boxing.
+                return (string)this.Value; // anything else we haven't thought of goes through boxing.
             }
         }
 
@@ -750,8 +761,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         return SqlString.Null;
                     }
-                    return new SqlString((String)_object);
-
+                    return new SqlString((string)_object);
                 }
                 else if (StorageType.SqlCachedBuffer == _type)
                 {
@@ -796,6 +806,7 @@ namespace Microsoft.Data.SqlClient
                         return SqlSingle;
                     case StorageType.String:
                         return SqlString;
+
                     case StorageType.SqlCachedBuffer:
                         {
                             SqlCachedBuffer data = (SqlCachedBuffer)(_object);
@@ -811,14 +822,13 @@ namespace Microsoft.Data.SqlClient
                         return _object;
 
                     case StorageType.SqlXml:
+                        if (_isNull)
                         {
-                            if (_isNull)
-                            {
-                                return SqlXml.Null;
-                            }
-                            Debug.Assert(null != _object);
-                            return (SqlXml)_object;
+                            return SqlXml.Null;
                         }
+                        Debug.Assert(null != _object);
+                        return (SqlXml)_object;
+
                     case StorageType.Date:
                     case StorageType.DateTime2:
                         if (_isNull)
@@ -826,12 +836,14 @@ namespace Microsoft.Data.SqlClient
                             return DBNull.Value;
                         }
                         return DateTime;
+
                     case StorageType.DateTimeOffset:
                         if (_isNull)
                         {
                             return DBNull.Value;
                         }
                         return DateTimeOffset;
+
                     case StorageType.Time:
                         if (_isNull)
                         {
@@ -842,6 +854,9 @@ namespace Microsoft.Data.SqlClient
                 return null; // need to return the value as an object of some SQL type
             }
         }
+
+        private static readonly object s_cachedTrueObject = true;
+        private static readonly object s_cachedFalseObject = false;
 
         internal object Value
         {
@@ -856,7 +871,7 @@ namespace Microsoft.Data.SqlClient
                     case StorageType.Empty:
                         return DBNull.Value;
                     case StorageType.Boolean:
-                        return Boolean;
+                        return Boolean ? s_cachedTrueObject : s_cachedFalseObject;
                     case StorageType.Byte:
                         return Byte;
                     case StorageType.DateTime:
@@ -914,75 +929,76 @@ namespace Microsoft.Data.SqlClient
             {
                 switch (_type)
                 {
-                    case SqlBuffer.StorageType.Empty:
+                    case StorageType.Empty:
                         return null;
-                    case SqlBuffer.StorageType.Boolean:
+                    case StorageType.Boolean:
                         return typeof(SqlBoolean);
-                    case SqlBuffer.StorageType.Byte:
+                    case StorageType.Byte:
                         return typeof(SqlByte);
-                    case SqlBuffer.StorageType.DateTime:
+                    case StorageType.DateTime:
                         return typeof(SqlDateTime);
-                    case SqlBuffer.StorageType.Decimal:
+                    case StorageType.Decimal:
                         return typeof(SqlDecimal);
-                    case SqlBuffer.StorageType.Double:
+                    case StorageType.Double:
                         return typeof(SqlDouble);
-                    case SqlBuffer.StorageType.Int16:
+                    case StorageType.Int16:
                         return typeof(SqlInt16);
-                    case SqlBuffer.StorageType.Int32:
+                    case StorageType.Int32:
                         return typeof(SqlInt32);
-                    case SqlBuffer.StorageType.Int64:
+                    case StorageType.Int64:
                         return typeof(SqlInt64);
-                    case SqlBuffer.StorageType.Money:
+                    case StorageType.Money:
                         return typeof(SqlMoney);
-                    case SqlBuffer.StorageType.Single:
+                    case StorageType.Single:
                         return typeof(SqlSingle);
-                    case SqlBuffer.StorageType.String:
+                    case StorageType.String:
                         return typeof(SqlString);
-                    case SqlBuffer.StorageType.SqlCachedBuffer:
+                    case StorageType.SqlCachedBuffer:
                         return typeof(SqlString);
-                    case SqlBuffer.StorageType.SqlBinary:
+                    case StorageType.SqlBinary:
                         return typeof(object);
-                    case SqlBuffer.StorageType.SqlGuid:
-                        return typeof(object);
-                    case SqlBuffer.StorageType.SqlXml:
+                    case StorageType.SqlGuid:
+                        return typeof(SqlGuid);
+                    case StorageType.SqlXml:
                         return typeof(SqlXml);
+                        // Date DateTime2 and DateTimeOffset have no direct Sql type to contain them
                 }
             }
             else
             { //Is CLR Type
                 switch (_type)
                 {
-                    case SqlBuffer.StorageType.Empty:
+                    case StorageType.Empty:
                         return null;
-                    case SqlBuffer.StorageType.Boolean:
-                        return typeof(Boolean);
-                    case SqlBuffer.StorageType.Byte:
-                        return typeof(Byte);
-                    case SqlBuffer.StorageType.DateTime:
+                    case StorageType.Boolean:
+                        return typeof(bool);
+                    case StorageType.Byte:
+                        return typeof(byte);
+                    case StorageType.DateTime:
                         return typeof(DateTime);
-                    case SqlBuffer.StorageType.Decimal:
-                        return typeof(Decimal);
-                    case SqlBuffer.StorageType.Double:
-                        return typeof(Double);
-                    case SqlBuffer.StorageType.Int16:
-                        return typeof(Int16);
-                    case SqlBuffer.StorageType.Int32:
-                        return typeof(Int32);
-                    case SqlBuffer.StorageType.Int64:
-                        return typeof(Int64);
-                    case SqlBuffer.StorageType.Money:
-                        return typeof(Decimal);
-                    case SqlBuffer.StorageType.Single:
-                        return typeof(Single);
-                    case SqlBuffer.StorageType.String:
-                        return typeof(String);
-                    case SqlBuffer.StorageType.SqlBinary:
-                        return typeof(Byte[]);
-                    case SqlBuffer.StorageType.SqlCachedBuffer:
+                    case StorageType.Decimal:
+                        return typeof(decimal);
+                    case StorageType.Double:
+                        return typeof(double);
+                    case StorageType.Int16:
+                        return typeof(short);
+                    case StorageType.Int32:
+                        return typeof(int);
+                    case StorageType.Int64:
+                        return typeof(long);
+                    case StorageType.Money:
+                        return typeof(decimal);
+                    case StorageType.Single:
+                        return typeof(float);
+                    case StorageType.String:
                         return typeof(string);
-                    case SqlBuffer.StorageType.SqlGuid:
+                    case StorageType.SqlBinary:
+                        return typeof(byte[]);
+                    case StorageType.SqlCachedBuffer:
+                        return typeof(string);
+                    case StorageType.SqlGuid:
                         return typeof(Guid);
-                    case SqlBuffer.StorageType.SqlXml:
+                    case StorageType.SqlXml:
                         return typeof(string);
                 }
             }
@@ -1153,7 +1169,7 @@ namespace Microsoft.Data.SqlClient
             _value._dateTimeOffsetInfo.dateTime2Info.timeInfo.ticks = utcDateTime.TimeOfDay.Ticks;
             _value._dateTimeOffsetInfo.dateTime2Info.timeInfo.scale = scale;
             _value._dateTimeOffsetInfo.dateTime2Info.date = utcDateTime.Subtract(DateTime.MinValue).Days;
-            _value._dateTimeOffsetInfo.offset = (Int16)dateTimeOffset.Offset.TotalMinutes;
+            _value._dateTimeOffsetInfo.offset = (short)dateTimeOffset.Offset.TotalMinutes;
             _isNull = false;
         }
 
@@ -1180,7 +1196,7 @@ namespace Microsoft.Data.SqlClient
             timeInfo.scale = denormalizedScale;
         }
 
-        private static Int32 GetDateFromByteArray(byte[] buf, int offset)
+        private static int GetDateFromByteArray(byte[] buf, int offset)
         {
             return buf[offset] + (buf[offset + 1] << 8) + (buf[offset + 2] << 16);
         }
