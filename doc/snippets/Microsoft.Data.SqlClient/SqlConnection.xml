@@ -1057,7 +1057,7 @@ GO
         </RetrieveStatistics>
         <RetrieveInternalInfo>
             <summary>Returns a name value pair collection of internal properties at the point in time the method is called.</summary>
-            <returns>Returns a reference of type <see cref="T:System.Collections.Generic.IDictionary" /> of (string, object) items.</returns>
+            <returns>Returns a reference of type <see cref="T:System.Collections.Generic.IDictionary`2" /> of (string, object) items.</returns>
             <remarks>
             <format type="text/markdown"><![CDATA[  
   
