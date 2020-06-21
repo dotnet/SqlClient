@@ -38,6 +38,7 @@ namespace Microsoft.Data.SqlClient
             internal const bool MARS = false;
             internal const int Max_Pool_Size = 100;
             internal const int Min_Pool_Size = 0;
+            internal const int Pool_Idle_Timeout = ADP.DefaultPoolIdleTimeout;
             internal const bool MultiSubnetFailover = DbConnectionStringDefaults.MultiSubnetFailover;
             internal static readonly bool TransparentNetworkIPResolution = DbConnectionStringDefaults.TransparentNetworkIPResolution;
             internal const string Network_Library = "";
@@ -87,6 +88,7 @@ namespace Microsoft.Data.SqlClient
             internal const string MARS = "multiple active result sets";
             internal const string Max_Pool_Size = "max pool size";
             internal const string Min_Pool_Size = "min pool size";
+            internal const string Pool_Idle_Timeout = "pool idle timeout";
             internal const string MultiSubnetFailover = "multi subnet failover";
             internal const string TransparentNetworkIPResolution = "transparent network ip resolution";
             internal const string Network_Library = "network library";
@@ -239,6 +241,7 @@ namespace Microsoft.Data.SqlClient
         private readonly int _loadBalanceTimeout;
         private readonly int _maxPoolSize;
         private readonly int _minPoolSize;
+        private readonly int _poolIdleTimeout;
         private readonly int _packetSize;
         private readonly int _connectRetryCount;
         private readonly int _connectRetryInterval;
@@ -299,6 +302,7 @@ namespace Microsoft.Data.SqlClient
             _loadBalanceTimeout = ConvertValueToInt32(KEY.Load_Balance_Timeout, DEFAULT.Load_Balance_Timeout);
             _maxPoolSize = ConvertValueToInt32(KEY.Max_Pool_Size, DEFAULT.Max_Pool_Size);
             _minPoolSize = ConvertValueToInt32(KEY.Min_Pool_Size, DEFAULT.Min_Pool_Size);
+            _poolIdleTimeout = ConvertValueToInt32(KEY.Pool_Idle_Timeout, DEFAULT.Pool_Idle_Timeout);
             _packetSize = ConvertValueToInt32(KEY.Packet_Size, DEFAULT.Packet_Size);
             _connectRetryCount = ConvertValueToInt32(KEY.Connect_Retry_Count, DEFAULT.Connect_Retry_Count);
             _connectRetryInterval = ConvertValueToInt32(KEY.Connect_Retry_Interval, DEFAULT.Connect_Retry_Interval);
@@ -388,6 +392,10 @@ namespace Microsoft.Data.SqlClient
             if (_maxPoolSize < _minPoolSize)
             {
                 throw ADP.InvalidMinMaxPoolSizeValues();
+            }
+            if (_poolIdleTimeout < -1)
+            {
+                throw ADP.InvalidConnectionOptionValue(KEY.Pool_Idle_Timeout);
             }
 
             if ((_packetSize < TdsEnums.MIN_PACKET_SIZE) || (TdsEnums.MAX_PACKET_SIZE < _packetSize))
@@ -601,6 +609,7 @@ namespace Microsoft.Data.SqlClient
             _poolBlockingPeriod = connectionOptions._poolBlockingPeriod;
             _maxPoolSize = connectionOptions._maxPoolSize;
             _minPoolSize = connectionOptions._minPoolSize;
+            _poolIdleTimeout = connectionOptions._poolIdleTimeout;
             _multiSubnetFailover = connectionOptions._multiSubnetFailover;
             _transparentNetworkIPResolution = connectionOptions._transparentNetworkIPResolution;
             _packetSize = connectionOptions._packetSize;
@@ -670,6 +679,7 @@ namespace Microsoft.Data.SqlClient
         internal int LoadBalanceTimeout { get { return _loadBalanceTimeout; } }
         internal int MaxPoolSize { get { return _maxPoolSize; } }
         internal int MinPoolSize { get { return _minPoolSize; } }
+        internal int PoolIdleTimeout { get { return _poolIdleTimeout; } }
         internal int PacketSize { get { return _packetSize; } }
         internal int ConnectRetryCount { get { return _connectRetryCount; } }
         internal int ConnectRetryInterval { get { return _connectRetryInterval; } }
@@ -772,6 +782,7 @@ namespace Microsoft.Data.SqlClient
                 hash.Add(KEY.MARS, KEY.MARS);
                 hash.Add(KEY.Max_Pool_Size, KEY.Max_Pool_Size);
                 hash.Add(KEY.Min_Pool_Size, KEY.Min_Pool_Size);
+                hash.Add(KEY.Pool_Idle_Timeout, KEY.Pool_Idle_Timeout);
                 hash.Add(KEY.MultiSubnetFailover, KEY.MultiSubnetFailover);
                 hash.Add(KEY.TransparentNetworkIPResolution, KEY.TransparentNetworkIPResolution);
                 hash.Add(KEY.Network_Library, KEY.Network_Library);

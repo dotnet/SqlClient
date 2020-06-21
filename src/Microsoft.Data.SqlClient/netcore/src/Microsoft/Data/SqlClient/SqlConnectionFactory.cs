@@ -187,12 +187,13 @@ namespace Microsoft.Data.SqlClient
                     SqlClientEventSource.Log.TraceEvent("<sc.SqlConnectionFactory.CreateConnectionPoolGroupOptions>Set connection pool CreateTimeout={0} when AD Interactive is in use.", connectionTimeout);
                 }
                 poolingOptions = new DbConnectionPoolGroupOptions(
-                                                opt.IntegratedSecurity,
-                                                opt.MinPoolSize,
-                                                opt.MaxPoolSize,
-                                                connectionTimeout,
-                                                opt.LoadBalanceTimeout,
-                                                opt.Enlist);
+                                                    opt.IntegratedSecurity,
+                                                    opt.MinPoolSize,
+                                                    opt.MaxPoolSize,
+                                                    opt.PoolIdleTimeout,
+                                                    connectionTimeout,
+                                                    opt.LoadBalanceTimeout,
+                                                    opt.Enlist);
             }
             return poolingOptions;
         }

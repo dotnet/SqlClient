@@ -30,6 +30,8 @@ namespace Microsoft.Data.Common
 
         internal const CompareOptions DefaultCompareOptions = CompareOptions.IgnoreKanaType | CompareOptions.IgnoreWidth | CompareOptions.IgnoreCase;
         internal const int DefaultConnectionTimeout = DbConnectionStringDefaults.ConnectTimeout;
+        
+        internal const int DefaultPoolIdleTimeout = DbConnectionStringDefaults.PoolIdleTimeout;
 
         static private void TraceException(string trace, Exception e)
         {

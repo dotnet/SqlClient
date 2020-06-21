@@ -52,6 +52,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("PersistSecurityInfo = true")]
         [InlineData("Pooling = no")]
         [InlineData("Pooling = false")]
+        [InlineData("Pool Idle Timeout = 5")]
         [InlineData("PoolBlockingPeriod = Auto")]
         [InlineData("PoolBlockingperiod = NeverBlock")]
         [InlineData("Replication = true")]

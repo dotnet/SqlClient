@@ -199,6 +199,7 @@ namespace Microsoft.Data.SqlClient
                                                     opt.IntegratedSecurity || opt.UsesCertificate || opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated,
                                                     opt.MinPoolSize,
                                                     opt.MaxPoolSize,
+                                                    opt.PoolIdleTimeout,
                                                     connectionTimeout,
                                                     opt.LoadBalanceTimeout,
                                                     opt.Enlist);

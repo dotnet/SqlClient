@@ -11,6 +11,7 @@ namespace Microsoft.Data.ProviderBase
         private readonly bool _poolByIdentity;
         private readonly int _minPoolSize;
         private readonly int _maxPoolSize;
+        private readonly int _poolIdleTimeout;
         private readonly int _creationTimeout;
         private readonly TimeSpan _loadBalanceTimeout;
         private readonly bool _hasTransactionAffinity;
@@ -20,6 +21,7 @@ namespace Microsoft.Data.ProviderBase
                                         bool poolByIdentity,
                                         int minPoolSize,
                                         int maxPoolSize,
+                                        int poolIdleTimeout,
                                         int creationTimeout,
                                         int loadBalanceTimeout,
                                         bool hasTransactionAffinity
@@ -28,6 +30,7 @@ namespace Microsoft.Data.ProviderBase
             _poolByIdentity = poolByIdentity;
             _minPoolSize = minPoolSize;
             _maxPoolSize = maxPoolSize;
+            _poolIdleTimeout = poolIdleTimeout;
             _creationTimeout = creationTimeout;
 
             if (0 != loadBalanceTimeout)
@@ -58,6 +61,10 @@ namespace Microsoft.Data.ProviderBase
         public int MinPoolSize
         {
             get { return _minPoolSize; }
+        }
+        public int PoolIdleTimeout
+        {
+            get { return _poolIdleTimeout; }
         }
         public bool PoolByIdentity
         {
