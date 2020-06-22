@@ -143,7 +143,8 @@ namespace Microsoft.Data.SqlClient
             out byte[] instanceName,
             bool flushCache,
             bool fSync,
-            bool fParallel)
+            bool fParallel,
+            SQLDNSInfo cachedDNSInfo)
             : base(IntPtr.Zero, true)
         {
             try
@@ -158,18 +159,18 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 _status = SNINativeMethodWrapper.SNIOpenSyncEx(myInfo, serverName, ref base.handle,
-                            spnBuffer, instanceName, flushCache, fSync, timeout, fParallel);
+                            spnBuffer, instanceName, flushCache, fSync, timeout, fParallel, cachedDNSInfo);
             }
         }
 
         // constructs SNI Handle for MARS session
-        internal SNIHandle(SNINativeMethodWrapper.ConsumerInfo myInfo, SNIHandle parent) : base(IntPtr.Zero, true)
+        internal SNIHandle(SNINativeMethodWrapper.ConsumerInfo myInfo, SNIHandle parent, SQLDNSInfo cachedDNSInfo) : base(IntPtr.Zero, true)
         {
             try
             { }
             finally
             {
-                _status = SNINativeMethodWrapper.SNIOpenMarsSession(myInfo, parent, ref base.handle, parent._fSync);
+                _status = SNINativeMethodWrapper.SNIOpenMarsSession(myInfo, parent, ref base.handle, parent._fSync, cachedDNSInfo);
             }
         }
 

@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 using System.Security.Authentication;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
+using System.Net;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -61,7 +62,62 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(physicalConnection is TdsParserStateObjectNative, "Expected a stateObject of type " + this.GetType());
             TdsParserStateObjectNative nativeSNIObject = physicalConnection as TdsParserStateObjectNative;
             SNINativeMethodWrapper.ConsumerInfo myInfo = CreateConsumerInfo(async);
-            _sessionHandle = new SNIHandle(myInfo, nativeSNIObject.Handle);
+
+            SQLDNSInfo cachedDNSInfo;
+            bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(_parser.FQDNforDNSCahce, out cachedDNSInfo);
+
+            _sessionHandle = new SNIHandle(myInfo, nativeSNIObject.Handle, cachedDNSInfo);
+        }
+
+        internal override void AssignPendingDNSInfo(string userProtocol, string DNSCacheKey, ref SQLDNSInfo pendingDNSInfo)
+        {
+            uint result;
+            ushort portFromSNI = 0;
+            string IPStringFromSNI = string.Empty;
+            IPAddress IPFromSNI;
+            _parser.isTcpProtocol = false;
+            SNINativeMethodWrapper.ProviderEnum providerNumber = SNINativeMethodWrapper.ProviderEnum.INVALID_PROV;
+
+            if (string.IsNullOrEmpty(userProtocol))
+            {
+                
+                result = SNINativeMethodWrapper.SniGetProviderNumber(Handle, ref providerNumber);
+                Debug.Assert(result == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetProviderNumber");
+                _parser.isTcpProtocol = (providerNumber == SNINativeMethodWrapper.ProviderEnum.TCP_PROV);
+            }
+            else if (userProtocol == TdsEnums.TCP) 
+            {
+                _parser.isTcpProtocol = true;
+            }
+
+            // serverInfo.UserProtocol could be empty
+            if (_parser.isTcpProtocol)
+            {
+                result = SNINativeMethodWrapper.SniGetConnectionPort(Handle, ref portFromSNI);
+                Debug.Assert(result == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetConnectionPort");
+
+
+                result = SNINativeMethodWrapper.SniGetConnectionIPString(Handle, ref IPStringFromSNI);
+                Debug.Assert(result == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetConnectionIPString");
+
+                pendingDNSInfo = new SQLDNSInfo(DNSCacheKey, null, null, portFromSNI.ToString());
+
+                if (IPAddress.TryParse(IPStringFromSNI, out IPFromSNI))
+                {
+                    if (System.Net.Sockets.AddressFamily.InterNetwork == IPFromSNI.AddressFamily)
+                    {
+                        pendingDNSInfo.AddrIPv4 = IPStringFromSNI;
+                    }
+                    else if (System.Net.Sockets.AddressFamily.InterNetworkV6 == IPFromSNI.AddressFamily)
+                    {
+                        pendingDNSInfo.AddrIPv6 = IPStringFromSNI;
+                    }
+                }
+            }
+            else
+            {
+                pendingDNSInfo = null;
+            }
         }
 
         private SNINativeMethodWrapper.ConsumerInfo CreateConsumerInfo(bool async)
@@ -82,7 +138,7 @@ namespace Microsoft.Data.SqlClient
             return myInfo;
         }
 
-        internal override void CreatePhysicalSNIHandle(string serverName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[] spnBuffer, bool flushCache, bool async, bool fParallel, bool isIntegratedSecurity)
+        internal override void CreatePhysicalSNIHandle(string serverName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[] spnBuffer, bool flushCache, bool async, bool fParallel, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo, bool isIntegratedSecurity)
         {
             // We assume that the loadSSPILibrary has been called already. now allocate proper length of buffer
             spnBuffer = null;
@@ -113,7 +169,10 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            _sessionHandle = new SNIHandle(myInfo, serverName, spnBuffer, ignoreSniOpenTimeout, checked((int)timeout), out instanceName, flushCache, !async, fParallel);
+            SQLDNSInfo cachedDNSInfo;
+            bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(cachedFQDN, out cachedDNSInfo);
+
+            _sessionHandle = new SNIHandle(myInfo, serverName, spnBuffer, ignoreSniOpenTimeout, checked((int)timeout), out instanceName, flushCache, !async, fParallel, cachedDNSInfo);
         }
 
         protected override uint SNIPacketGetData(PacketHandle packet, byte[] _inBuff, ref uint dataSize)

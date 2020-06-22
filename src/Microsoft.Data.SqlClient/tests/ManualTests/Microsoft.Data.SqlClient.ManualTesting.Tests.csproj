@@ -195,6 +195,7 @@
     <Compile Include="SQL\Utf8SupportTest\Utf8SupportTest.cs" />
     <Compile Include="SQL\WeakRefTest\WeakRefTest.cs" />
     <Compile Include="SQL\WeakRefTestYukonSpecific\WeakRefTestYukonSpecific.cs" />
+    <Compile Include="SQL\DNSCachingTest\DNSCachingTest.cs" />
     <Compile Include="TracingTests\TestTdsServer.cs" />
     <Compile Include="XUnitAssemblyAttributes.cs" />
     <Content Include="DDBasics\DDDataTypesTest\data.xml">

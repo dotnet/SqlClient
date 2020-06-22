@@ -6,6 +6,7 @@ using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
 using System;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -19,6 +20,8 @@ namespace Microsoft.Data.SqlClient
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         internal delegate void SqlAsyncCallbackDelegate(IntPtr m_ConsKey, IntPtr pPacket, uint dwError);
+
+        internal const int SniIP6AddrStringBufferLength = 48; // from SNI layer
 
         internal static int SniMaxComposedSpnLength
         {
@@ -162,6 +165,20 @@ namespace Microsoft.Data.SqlClient
             public TransparentNetworkResolutionMode transparentNetworkResolution;
             public int totalTimeout;
             public bool isAzureSqlServerEndpoint;
+            public SNI_DNSCache_Info DNSCacheInfo;
+        }
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        internal struct SNI_DNSCache_Info
+        {
+            [MarshalAs(UnmanagedType.LPWStr)]
+            public string wszCachedFQDN;
+            [MarshalAs(UnmanagedType.LPWStr)]
+            public string wszCachedTcpIPv4;
+            [MarshalAs(UnmanagedType.LPWStr)]
+            public string wszCachedTcpIPv6;
+            [MarshalAs(UnmanagedType.LPWStr)]
+            public string wszCachedTcpPort;
         }
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
@@ -237,6 +254,15 @@ namespace Microsoft.Data.SqlClient
         private static extern uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, out Guid pbQInfo);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
+        private static extern uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, out ushort portNum);
+
+        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
+        private static extern uint SNIGetPeerAddrStrWrapper([In] SNIHandle pConn, int bufferSize, StringBuilder addrBuffer, out uint addrLen);
+
+        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
+        private static extern uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, out ProviderEnum provNum);
+
+        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
         private static extern uint SNIInitialize([In] IntPtr pmo);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
@@ -248,7 +274,8 @@ namespace Microsoft.Data.SqlClient
             [MarshalAs(UnmanagedType.LPWStr)] string szConnect,
             [In] SNIHandle pConn,
             out IntPtr ppConn,
-            [MarshalAs(UnmanagedType.Bool)] bool fSync);
+            [MarshalAs(UnmanagedType.Bool)] bool fSync,
+            [In] ref SNI_DNSCache_Info pDNSCachedInfo);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr SNIPacketAllocateWrapper([In] SafeHandle pConn, IOType IOType);
@@ -283,22 +310,53 @@ namespace Microsoft.Data.SqlClient
         {
             return SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_CONNID, out connId);
         }
+       
+        internal static uint SniGetProviderNumber(SNIHandle pConn, ref ProviderEnum provNum)
+        {
+            return SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_PROVIDERNUM, out provNum);
+        }
+        
+        internal static uint SniGetConnectionPort(SNIHandle pConn, ref ushort portNum)
+        {
+            return SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_PEERPORT, out portNum);
+        }
+
+        internal static uint SniGetConnectionIPString(SNIHandle pConn, ref string connIPStr)
+        {
+            UInt32 ret;
+            uint connIPLen = 0;
+
+            int bufferSize = SniIP6AddrStringBufferLength;
+            StringBuilder addrBuffer = new StringBuilder(bufferSize);
+
+            ret = SNIGetPeerAddrStrWrapper(pConn, bufferSize, addrBuffer, out connIPLen);
+
+            connIPStr = addrBuffer.ToString(0, Convert.ToInt32(connIPLen));
+
+            return ret;
+        }
 
         internal static uint SNIInitialize()
         {
             return SNIInitialize(IntPtr.Zero);
         }
 
-        internal static unsafe uint SNIOpenMarsSession(ConsumerInfo consumerInfo, SNIHandle parent, ref IntPtr pConn, bool fSync)
+        internal static unsafe uint SNIOpenMarsSession(ConsumerInfo consumerInfo, SNIHandle parent, ref IntPtr pConn, bool fSync, SQLDNSInfo cachedDNSInfo)
         {
             // initialize consumer info for MARS
             Sni_Consumer_Info native_consumerInfo = new Sni_Consumer_Info();
             MarshalConsumerInfo(consumerInfo, ref native_consumerInfo);
 
-            return SNIOpenWrapper(ref native_consumerInfo, "session:", parent, out pConn, fSync);
+            SNI_DNSCache_Info native_cachedDNSInfo = new SNI_DNSCache_Info();
+            native_cachedDNSInfo.wszCachedFQDN = cachedDNSInfo?.FQDN;
+            native_cachedDNSInfo.wszCachedTcpIPv4 = cachedDNSInfo?.AddrIPv4;
+            native_cachedDNSInfo.wszCachedTcpIPv6 = cachedDNSInfo?.AddrIPv6;
+            native_cachedDNSInfo.wszCachedTcpPort = cachedDNSInfo?.Port;
+
+            return SNIOpenWrapper(ref native_consumerInfo, "session:", parent, out pConn, fSync, ref native_cachedDNSInfo);
         }
 
-        internal static unsafe uint SNIOpenSyncEx(ConsumerInfo consumerInfo, string constring, ref IntPtr pConn, byte[] spnBuffer, byte[] instanceName, bool fOverrideCache, bool fSync, int timeout, bool fParallel)
+        internal static unsafe uint SNIOpenSyncEx(ConsumerInfo consumerInfo, string constring, ref IntPtr pConn, byte[] spnBuffer, byte[] instanceName, bool fOverrideCache, bool fSync, int timeout, bool fParallel, SQLDNSInfo cachedDNSInfo)
         {
             fixed (byte* pin_instanceName = &instanceName[0])
             {
@@ -320,6 +378,11 @@ namespace Microsoft.Data.SqlClient
                 clientConsumerInfo.transparentNetworkResolution = TransparentNetworkResolutionMode.DisabledMode;
                 clientConsumerInfo.totalTimeout = SniOpenTimeOut;
                 clientConsumerInfo.isAzureSqlServerEndpoint = ADP.IsAzureSqlServerEndpoint(constring);
+
+                clientConsumerInfo.DNSCacheInfo.wszCachedFQDN = cachedDNSInfo?.FQDN;
+                clientConsumerInfo.DNSCacheInfo.wszCachedTcpIPv4 = cachedDNSInfo?.AddrIPv4;
+                clientConsumerInfo.DNSCacheInfo.wszCachedTcpIPv6 = cachedDNSInfo?.AddrIPv6;
+                clientConsumerInfo.DNSCacheInfo.wszCachedTcpPort = cachedDNSInfo?.Port;
 
                 if (spnBuffer != null)
                 {

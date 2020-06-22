@@ -477,20 +477,6 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/VerifyColumnMasterKeyMetadata/*'/>
         public override bool VerifyColumnMasterKeyMetadata(string masterKeyPath, bool allowEnclaveComputations, byte[] signature) { throw null; }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionEnclaveProvider.xml' path='docs/members[@name="SqlColumnEncryptionEnclaveProvider"]/SqlColumnEncryptionEnclaveProvider/*'/>
-    public abstract partial class SqlColumnEncryptionEnclaveProvider
-    {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionEnclaveProvider.xml' path='docs/members[@name="SqlColumnEncryptionEnclaveProvider"]/ctor/*'/>
-        protected SqlColumnEncryptionEnclaveProvider() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionEnclaveProvider.xml' path='docs/members[@name="SqlColumnEncryptionEnclaveProvider"]/CreateEnclaveSession/*'/>
-        public abstract void CreateEnclaveSession(byte[] enclaveAttestationInfo, System.Security.Cryptography.ECDiffieHellmanCng clientDiffieHellmanKey, string attestationUrl, string servername, byte[] customData, int customDataLength, out Microsoft.Data.SqlClient.SqlEnclaveSession sqlEnclaveSession, out long counter);
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionEnclaveProvider.xml' path='docs/members[@name="SqlColumnEncryptionEnclaveProvider"]/GetAttestationParameters/*'/>
-        public abstract Microsoft.Data.SqlClient.SqlEnclaveAttestationParameters GetAttestationParameters(string attestationUrl, byte[] customData, int customDataLength);
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionEnclaveProvider.xml' path='docs/members[@name="SqlColumnEncryptionEnclaveProvider"]/GetEnclaveSession/*'/>
-        public abstract void GetEnclaveSession(string serverName, string attestationUrl, bool generateCustomData, out Microsoft.Data.SqlClient.SqlEnclaveSession sqlEnclaveSession, out long counter, out byte[] customData, out int customDataLength);
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionEnclaveProvider.xml' path='docs/members[@name="SqlColumnEncryptionEnclaveProvider"]/InvalidateEnclaveSession/*'/>
-        public abstract void InvalidateEnclaveSession(string serverName, string enclaveAttestationUrl, Microsoft.Data.SqlClient.SqlEnclaveSession enclaveSession);
-    }
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionKeyStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionKeyStoreProvider"]/SqlColumnEncryptionKeyStoreProvider/*'/>
     public abstract partial class SqlColumnEncryptionKeyStoreProvider
     {
@@ -847,6 +833,9 @@ namespace Microsoft.Data.SqlClient
         public void ResetStatistics() { }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RetrieveStatistics/*'/>
         public System.Collections.IDictionary RetrieveStatistics() { throw null; }
+
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RetrieveInternalInfo/*'/>
+        public System.Collections.Generic.IDictionary<string, object> RetrieveInternalInfo() { throw null; }
     }
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionColumnEncryptionSetting.xml' path='docs/members[@name="SqlConnectionColumnEncryptionSetting"]/SqlConnectionColumnEncryptionSetting/*'/>
     public enum SqlConnectionColumnEncryptionSetting
@@ -1332,28 +1321,6 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/StopConnectionStringQueue/*'/>
         [System.Security.Permissions.HostProtectionAttribute(System.Security.Permissions.SecurityAction.LinkDemand, ExternalThreading = true)]
         public static bool Stop(string connectionString, string queue) { throw null; }
-    }
-    /// <include file='.\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlEnclaveAttestationParameters.xml' path='docs/members[@name="SqlEnclaveAttestationParameters"]/SqlEnclaveAttestationParameters/*' />
-    public partial class SqlEnclaveAttestationParameters
-    {
-        /// <include file='.\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlEnclaveAttestationParameters.xml' path='docs/members[@name="SqlEnclaveAttestationParameters"]/ctor/*' />
-        public SqlEnclaveAttestationParameters(int protocol, byte[] input, System.Security.Cryptography.ECDiffieHellmanCng clientDiffieHellmanKey) { }
-        /// <include file='.\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlEnclaveAttestationParameters.xml' path='docs/members[@name="SqlEnclaveAttestationParameters"]/ClientDiffieHellmanKey/*' />
-        public System.Security.Cryptography.ECDiffieHellmanCng ClientDiffieHellmanKey { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
-        /// <include file='.\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlEnclaveAttestationParameters.xml' path='docs/members[@name="SqlEnclaveAttestationParameters"]/Protocol/*' />
-        public int Protocol { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
-        /// <include file='.\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlEnclaveAttestationParameters.xml' path='docs/members[@name="SqlEnclaveAttestationParameters"]/GetInput/*' />
-        public byte[] GetInput() { throw null; }
-    }
-    /// <include file='.\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlEnclaveSession.xml' path='docs/members[@name="SqlEnclaveSession"]/SqlEnclaveSession/*' />
-    public partial class SqlEnclaveSession
-    {
-        /// <include file='.\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlEnclaveSession.xml' path='docs/members[@name="SqlEnclaveSession"]/ctor/*' />
-        public SqlEnclaveSession(byte[] sessionKey, long sessionId) { }
-        /// <include file='.\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlEnclaveSession.xml' path='docs/members[@name="SqlEnclaveSession"]/SessionId/*' />
-        public long SessionId { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
-        /// <include file='.\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlEnclaveSession.xml' path='docs/members[@name="SqlEnclaveSession"]/GetSessionKey/*' />
-        public byte[] GetSessionKey() { throw null; }
     }
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlError.xml' path='docs/members[@name="SqlError"]/SqlError/*'/>
     public sealed partial class SqlError

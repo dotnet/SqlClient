@@ -1055,6 +1055,23 @@ GO
  ]]></format>
             </remarks>
         </RetrieveStatistics>
+        <RetrieveInternalInfo>
+            <summary>Returns a name value pair collection of internal properties at the point in time the method is called.</summary>
+            <returns>Returns a reference of type <see cref="T:System.Collections.Generic.IDictionary" /> of (string, object) items.</returns>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+ When this method is called, the values retrieved are those at the current point in time. If you continue using the connection, the values are incorrect. You need to re-execute the method to obtain the most current values.
+ 
+ |Supported internal properties|Type|Information provided|Return value|
+ |-----------------------------|---------|----------------------------|------------|
+ |`SQLDNSCachingSupportedState`|string|To indicate the IsSupported flag sent by the server for DNS Caching|"true", "false", "innerConnection is null!"|
+ |`SQLDNSCachingSupportedStateBeforeRedirect`|string|To indicate the IsSupported flag sent by the server for DNS Caching before redirection.|"true", "false", "innerConnection is null!"|
+  
+ ]]></format>
+            </remarks>
+        </RetrieveInternalInfo>
         <ServerVersion>
             <summary>Gets a string that contains the version of the instance of SQL Server to which the client is connected.</summary>
             <value>The version of the instance of SQL Server.</value>

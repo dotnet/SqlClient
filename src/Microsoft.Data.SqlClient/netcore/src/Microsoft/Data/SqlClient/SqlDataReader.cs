@@ -4517,14 +4517,23 @@ namespace Microsoft.Data.SqlClient
             SetTimeout(_defaultTimeoutMilliseconds);
 
             // Try to read without any continuations (all the data may already be in the stateObj's buffer)
-            if (!TryGetBytesInternalSequential(context.columnIndex, context.buffer, context.index, context.length, out bytesRead))
+            bool filledBuffer = context._reader.TryGetBytesInternalSequential(
+                context.columnIndex,
+                context.buffer,
+                context.index + context.totalBytesRead,
+                context.length - context.totalBytesRead,
+                out bytesRead
+            );
+            context.totalBytesRead += bytesRead;
+            Debug.Assert(context.totalBytesRead <= context.length, "Read more bytes than required");
+
+            if (!filledBuffer)
             {
                 // This will be the 'state' for the callback
-                int totalBytesRead = bytesRead;
-
                 if (!isContinuation)
                 {
                     // This is the first async operation which is happening - setup the _currentTask and timeout
+                    Debug.Assert(context._source==null, "context._source should not be non-null when trying to change to async");
                     source = new TaskCompletionSource<int>();
                     Task original = Interlocked.CompareExchange(ref _currentTask, source.Task, null);
                     if (original != null)
@@ -4532,7 +4541,7 @@ namespace Microsoft.Data.SqlClient
                         source.SetException(ADP.ExceptionWithStackTrace(ADP.AsyncOperationPending()));
                         return source.Task;
                     }
-
+                    context._source = source;
                     // Check if cancellation due to close is requested (this needs to be done after setting _currentTask)
                     if (_cancelAsyncOnCloseToken.IsCancellationRequested)
                     {
@@ -4561,7 +4570,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    Debug.Assert(context._source != null, "context.source should not be null when continuing");
+                    Debug.Assert(context._source != null, "context._source should not be null when continuing");
                     // setup for cleanup/completing
                     retryTask.ContinueWith(
                         continuationAction: AAsyncCallContext<int>.s_completeCallback,

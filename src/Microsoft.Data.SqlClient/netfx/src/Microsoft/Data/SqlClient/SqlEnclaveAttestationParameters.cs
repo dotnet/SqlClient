@@ -8,7 +8,7 @@ namespace Microsoft.Data.SqlClient
 {
 
     /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlEnclaveAttestationParameters.xml' path='docs/members[@name="SqlEnclaveAttestationParameters"]/SqlEnclaveAttestationParameters/*' />
-    public class SqlEnclaveAttestationParameters
+    internal class SqlEnclaveAttestationParameters
     {
 
         private static readonly string _clientDiffieHellmanKeyName = "ClientDiffieHellmanKey";
@@ -18,14 +18,14 @@ namespace Microsoft.Data.SqlClient
         private readonly byte[] _input;
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlEnclaveAttestationParameters.xml' path='docs/members[@name="SqlEnclaveAttestationParameters"]/Protocol/*' />
-        public int Protocol { get; }
+        internal int Protocol { get; }
 
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlEnclaveAttestationParameters.xml' path='docs/members[@name="SqlEnclaveAttestationParameters"]/ClientDiffieHellmanKey/*' />
-        public ECDiffieHellmanCng ClientDiffieHellmanKey { get; }
+        internal ECDiffieHellmanCng ClientDiffieHellmanKey { get; }
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlEnclaveAttestationParameters.xml' path='docs/members[@name="SqlEnclaveAttestationParameters"]/GetInput/*' />
-        public byte[] GetInput()
+        internal byte[] GetInput()
         {
             return Clone(_input);
         }
@@ -54,7 +54,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlEnclaveAttestationParameters.xml' path='docs/members[@name="SqlEnclaveAttestationParameters"]/ctor/*' />
-        public SqlEnclaveAttestationParameters(int protocol, byte[] input, ECDiffieHellmanCng clientDiffieHellmanKey)
+        internal SqlEnclaveAttestationParameters(int protocol, byte[] input, ECDiffieHellmanCng clientDiffieHellmanKey)
         {
             if (null == clientDiffieHellmanKey)
             { throw SQL.NullArgumentInConstructorInternal(_clientDiffieHellmanKeyName, _className); }
