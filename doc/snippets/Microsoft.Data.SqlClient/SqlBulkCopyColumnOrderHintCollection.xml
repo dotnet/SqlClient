@@ -25,8 +25,8 @@ If a <xref:Microsoft.Data.SqlClient.SortOrder> of Unspecified is given, an <xref
 ## Examples  
 
 The following example bulk copies data from a source table in the **AdventureWorks** sample database to a destination table in the same database. 
-<xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint> are added to the <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection> for the 
-<xref:Microsoft.Data.SqlClient.SqlBulkCopy> object to specify order hints for the bulk copy.  
+<xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint>s are added to the <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection> of the 
+<xref:Microsoft.Data.SqlClient.SqlBulkCopy> object to specify order hints for the bulk copy operation.  
 
 > [!IMPORTANT]
 > This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md). 
@@ -40,7 +40,7 @@ use a Transact-SQL `INSERT … SELECT` statement to copy the data.
         </SqlBulkCopyColumnOrderHintCollection>
 
         <Add name ="columnOrderHintParameter">
-            <param name="columnOrderHint">The <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyOrderHintColumn" /> object that describes the order hint to be added to the collection.</param>
+            <param name="columnOrderHint">The <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> object that describes the order hint to be added to the collection.</param>
             <summary>Adds the specified order hint to the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection" />.</summary>
             <returns>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> object.</returns>
             <remarks>
@@ -48,7 +48,7 @@ use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 
 ## Examples
 The following example bulk copies data from a source table in the **AdventureWorks** sample database to a destination table in the same database. 
-A SqlBulkCopyColumnOrderHint object is used to define the sort order for the ProductNumber destination column.
+A SqlBulkCopyColumnOrderHint object is used to define the sort order for the **ProductNumber** destination column.
 
 > [!IMPORTANT]
 > This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md). 
@@ -143,7 +143,7 @@ Transact-SQL `INSERT … SELECT` statement to copy the data.
             <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> object to be inserted in the collection.</param>
             <summary>Insert a new <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> at the index specified.</summary>
             <remarks>The order in which column order hints can be added is arbitrary.</remarks>
-			<exception cref="T:System.ArgumentOutOfRangeException: ">The index is less than zero or greater than <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection.Count" />.</exception>
+			<exception cref="T:System.ArgumentOutOfRangeException">The index is less than zero or greater than the size of the collection.</exception>
 			<exception cref="T:System.ArgumentNullException">A null column order hint cannot be added to the collection.</exception>
         </Insert>
         <Item>
@@ -151,7 +151,7 @@ Transact-SQL `INSERT … SELECT` statement to copy the data.
             <summary>Gets the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> object at the specified index.</summary>
             <value>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> object.</value>
             <remarks>To be added.</remarks>
-			<exception cref="T:System.ArgumentOutOfRangeException: ">The index must be non-negative and less than the size of the collection.</exception>
+			<exception cref="T:System.ArgumentOutOfRangeException">The index must be non-negative and less than the size of the collection.</exception>
         </Item>
         <Remove>
             <param name="columnOrderHint">
@@ -161,12 +161,12 @@ Transact-SQL `INSERT … SELECT` statement to copy the data.
                 <format type="text/markdown"><![CDATA[  
     
 ## Remarks  
-The <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection.Remove> method is most commonly used when you use a single <xref:Microsoft.Data.SqlClient.SqlBulkCopy> 
+The Remove method is most commonly used when you use a single <xref:Microsoft.Data.SqlClient.SqlBulkCopy> 
 instance to process more than one bulk copy operation. If you create column order hints for one bulk copy operation, you must clear the 
-<xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection> after the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer> method and before processing the next bulk copy.   
+<xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection> after the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer%2A> method and before processing the next bulk copy.   
+
 You can clear the entire collection by using the 
-<xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection.Clear> method, or remove hints individually using the <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection.Remove> 
-method or the <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection.RemoveAt> method.  
+<xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection.Clear> method, or remove hints individually using the Remove method or the <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection.RemoveAt%2A> method.  
 
 Performing several bulk copies using the same <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instance will usually be more efficient from a performance point of view than using a separate 
 <xref:Microsoft.Data.SqlClient.SqlBulkCopy> for each operation.   
@@ -216,7 +216,7 @@ Transact-SQL `INSERT … SELECT` statement to copy the data.
 
 ]]></format>
             </remarks>
-			<exception cref="T:System.ArgumentOutOfRangeException: ">The index must be non-negative and less than the size of the collection.</exception>
+			<exception cref="T:System.ArgumentOutOfRangeException">The index must be non-negative and less than the size of the collection.</exception>
         </RemoveAt>
         <IsSynchronized>
             <summary>Gets a value indicating whether access to the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection"/> is synchronized (thread safe).</summary>
