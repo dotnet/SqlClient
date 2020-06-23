@@ -210,10 +210,30 @@ Modified: Data Source=(local);Initial Catalog=AdventureWorks;Integrated Security
         <ConnectRetryCount>
             <summary>The number of reconnections attempted after identifying that there was an idle connection failure. This must be an integer between 0 and 255. Default is 1. Set to 0 to disable reconnecting on idle connection failures. An <see cref="T:System.ArgumentException" /> will be thrown if set to a value outside of the allowed range.</summary>
             <value>The number of reconnections attempted after identifying that there was an idle connection failure.</value>
+            <remarks>
+              <format type="text/markdown">
+                <![CDATA[  
+  
+  ## Remarks  
+   This property corresponds to the "Connect Retry Count" key within the <xref:Microsoft.Data.SqlClient.SqlConnection> connection string.
+  
+   ]]>
+              </format>
+            </remarks>
         </ConnectRetryCount>
         <ConnectRetryInterval>
             <summary>Amount of time (in seconds) between each reconnection attempt after identifying that there was an idle connection failure. This must be an integer between 1 and 60. The default is 10 seconds. An <see cref="T:System.ArgumentException" /> will be thrown if set to a value outside of the allowed range.</summary>
             <value>Amount of time (in seconds) between each reconnection attempt after identifying that there was an idle connection failure.</value>
+            <remarks>
+              <format type="text/markdown">
+                <![CDATA[  
+  
+    ## Remarks  
+     This property corresponds to the "Connect Retry Interval" key within the <xref:Microsoft.Data.SqlClient.SqlConnection> connection string.
+  
+     ]]>
+              </format>
+            </remarks>
         </ConnectRetryInterval>
         <ConnectTimeout>
             <summary>Gets or sets the length of time (in seconds) to wait for a connection to the server before terminating the attempt and generating an error.</summary>
@@ -500,7 +520,7 @@ False
             <format type="text/markdown"><![CDATA[  
   
 ## Remarks  
- This property corresponds to the "MultipleActiveResultSets" key within the connection string.  
+ This property corresponds to the "Multiple Active Result Sets" key within the connection string.  
   
    
   
@@ -582,10 +602,13 @@ False
             <summary>The blocking period behavior for a connection pool.</summary>
             <value>The available blocking period settings.</value>
             <remarks>
-            <format type="text/markdown"><![CDATA[  
+            <format type="text/markdown">
+              <![CDATA[  
   
 ## Remarks  
- When connection pooling is enabled and  a timeout error or other login error occurs, an exception will be thrown and subsequent connection attempts will fail for the next five seconds, the "blocking period". If the application attempts to connect within the blocking period, the first exception will be thrown again. Subsequent failures after a blocking period ends will result in a new blocking period that is twice as long as the previous blocking period, up to a maximum of one minute.  
+ This property corresponds to the "Pool Blocking Period" key within the connection string.
+ 
+ When connection pooling is enabled and a timeout error or other login error occurs, an exception will be thrown and subsequent connection attempts will fail for the next five seconds, the "blocking period". If the application attempts to connect within the blocking period, the first exception will be thrown again. Subsequent failures after a blocking period ends will result in a new blocking period that is twice as long as the previous blocking period, up to a maximum of one minute.  
   
  Attempting to connect to Azure SQL databases can fail with transient errors which are typically recovered within a few seconds. However, with the connection pool blocking period behavior, you may not be able to reach your database for extensive periods even though the database is  available. This is especially problematic for apps that need to render fast. The **PoolBlockingPeriod** enables you to select the blocking period best suited for your app. See the <xref:Microsoft.Data.SqlClient.PoolBlockingPeriod> enumeration for available settings.  
   
@@ -721,9 +744,9 @@ Database = AdventureWorks
             <format type="text/markdown"><![CDATA[  
   
 ## Remarks  
- If the `MultiSubnetFailover` key is set to `true`, `TransparentNetworkIPResolution` is ignored.  
+ If the `Multi Subnet Failover` key is set to `true`, `Transparent Network IP Resolution` is ignored.  
   
- If the `Failover Partner` key is set, `TransparentNetworkIPResolution` is ignored.  
+ If the `Failover Partner` key is set, `Transparent Network IP Resolution` is ignored.  
   
  The value of this key must be `true`, `false`, `yes`, or `no`.  
   
@@ -757,7 +780,7 @@ Database = AdventureWorks
             <format type="text/markdown"><![CDATA[  
   
 ## Remarks  
- When `TrustServerCertificate` is set to `true`, the transport layer will use SSL to encrypt the channel and bypass walking the certificate chain to validate trust. If `TrustServerCertificate` is set to `true` and encryption is turned on, the encryption level specified on the server will be used even if `Encrypt` is set to `false`. The connection will fail otherwise.  
+ When `Trust Server Certificate` is set to `true`, the transport layer will use SSL to encrypt the channel and bypass walking the certificate chain to validate trust. If `Trust Server Certificate` is set to `true` and encryption is enforced by target server, the encryption level specified on the server will be used even if `Encrypt` is set to `false`. The connection will fail otherwise.
   
  For more information, see [Encryption Hierarchy](/sql/relational-databases/security/encryption/encryption-hierarchy) and [Using Encryption Without Validation](/sql/relational-databases/native-client/features/using-encryption-without-validation).
   
@@ -774,9 +797,7 @@ Database = AdventureWorks
             <format type="text/markdown"><![CDATA[  
   
 ## Remarks  
- The <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.TryGetValue%2A> method lets developers safely retrieve a value from a <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> without needing to verify that the supplied key name is a valid key name. Because **TryGetValue** does not raise an exception when you call it, passing in a nonexistent key, you do not have to look for a key before retrieving its value.  Calling **TryGetValue** with a nonexistent key will place the value null (`Nothing` in Visual Basic) in the `value` parameter.  
-  
-   
+ The <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.TryGetValue%2A> method lets developers safely retrieve a value from a <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> without needing to verify that the supplied key name is a valid key name. Because **TryGetValue** does not raise an exception when you call it, passing in a nonexistent key, you do not have to look for a key before retrieving its value.  Calling **TryGetValue** with a nonexistent key will place the value null (`Nothing` in Visual Basic) in the `value` parameter.
   
 ## Examples  
  The following example demonstrates the behavior of the **TryGetValue** method.  
