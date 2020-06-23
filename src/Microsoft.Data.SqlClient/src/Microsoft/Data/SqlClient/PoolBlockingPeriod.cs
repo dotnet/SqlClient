@@ -4,10 +4,10 @@
 
 namespace Microsoft.Data.SqlClient
 {
+    /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/PoolBlockingPeriod.xml' path='docs/members[@name="PoolBlockingPeriod"]/PoolBlockingPeriod/*'/>
 #if NETFRAMEWORK
     [System.Serializable]
-#endif
-    /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/PoolBlockingPeriod.xml' path='docs/members[@name="PoolBlockingPeriod"]/PoolBlockingPeriod/*'/>
+#endif    
     public enum PoolBlockingPeriod
     {
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/PoolBlockingPeriod.xml' path='docs/members[@name="PoolBlockingPeriod"]/Auto/*'/>
