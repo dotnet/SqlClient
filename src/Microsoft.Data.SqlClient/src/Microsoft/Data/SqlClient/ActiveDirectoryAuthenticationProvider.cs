@@ -8,6 +8,7 @@ using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Identity.Client;
+using Microsoft.Identity.Client.Extensibility;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -18,6 +19,7 @@ namespace Microsoft.Data.SqlClient
         private readonly string _type = typeof(ActiveDirectoryAuthenticationProvider).Name;
         private readonly SqlClientLogger _logger = new SqlClientLogger();
         private Func<DeviceCodeResult, Task> _deviceCodeFlowCallback;
+        private ICustomWebUi customWebUI = null;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor/*'/>
         public ActiveDirectoryAuthenticationProvider() => new ActiveDirectoryAuthenticationProvider(DefaultDeviceFlowCallback);
@@ -27,6 +29,26 @@ namespace Microsoft.Data.SqlClient
         {
             SetDeviceCodeFlowCallback(deviceCodeFlowCallbackMethod);
         }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/SetDeviceCodeFlowCallback/*'/>
+        public void SetDeviceCodeFlowCallback(Func<DeviceCodeResult, Task> deviceCodeFlowCallbackMethod) => _deviceCodeFlowCallback = deviceCodeFlowCallbackMethod;
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/SetCustomWebUI/*'/>
+        public void SetCustomWebUI(ICustomWebUi customWebUi) => this.customWebUI = customWebUi;
+
+#if netstandard
+        private Func<object> parentActivityOrWindowFunc = null;
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/SetParentActivityOrWindowFunc/*'/>
+        public void SetParentActivityOrWindowFunc(Func<object> parentActivityOrWindowFunc) => this.parentActivityOrWindowFunc = parentActivityOrWindowFunc;
+#endif
+
+#if netfx
+        private Func<System.Windows.Forms.IWin32Window> iWin32WindowFunc = null;
+        
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/SetIWin32WindowFunc/*'/>
+        public void SetIWin32WindowFunc(Func<System.Windows.Forms.IWin32Window> iWin32WindowFunc) => this.iWin32WindowFunc = iWin32WindowFunc;
+#endif
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/AcquireTokenAsync/*'/>
         public override Task<SqlAuthenticationToken> AcquireTokenAsync(SqlAuthenticationParameters parameters) => Task.Run(async () =>
@@ -63,12 +85,44 @@ namespace Microsoft.Data.SqlClient
                 redirectURI = "http://localhost";
             }
 #endif
-            IPublicClientApplication app = PublicClientApplicationBuilder.Create(ActiveDirectoryAuthentication.AdoClientId)
+            IPublicClientApplication app;
+
+#if netstandard
+            if (parentActivityOrWindowFunc != null)
+            {
+                app = PublicClientApplicationBuilder.Create(ActiveDirectoryAuthentication.AdoClientId)
+                .WithAuthority(parameters.Authority)
+                .WithClientName(Common.DbConnectionStringDefaults.ApplicationName)
+                .WithClientVersion(Common.ADP.GetAssemblyVersion().ToString())
+                .WithRedirectUri(redirectURI)
+                .WithParentActivityOrWindow(parentActivityOrWindowFunc)
+                .Build();
+            }
+#endif
+#if netfx
+            if (iWin32WindowFunc != null)
+            {
+                app = PublicClientApplicationBuilder.Create(ActiveDirectoryAuthentication.AdoClientId)
+                .WithAuthority(parameters.Authority)
+                .WithClientName(Common.DbConnectionStringDefaults.ApplicationName)
+                .WithClientVersion(Common.ADP.GetAssemblyVersion().ToString())
+                .WithRedirectUri(redirectURI)
+                .WithParentActivityOrWindow(iWin32WindowFunc)
+                .Build();
+            }
+#endif
+#if !netcoreapp
+            else
+#endif
+            {
+
+                app = PublicClientApplicationBuilder.Create(ActiveDirectoryAuthentication.AdoClientId)
                 .WithAuthority(parameters.Authority)
                 .WithClientName(Common.DbConnectionStringDefaults.ApplicationName)
                 .WithClientVersion(Common.ADP.GetAssemblyVersion().ToString())
                 .WithRedirectUri(redirectURI)
                 .Build();
+            }
 
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
             {
@@ -134,6 +188,7 @@ namespace Microsoft.Data.SqlClient
             return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
         });
 
+
         private async Task<AuthenticationResult> AcquireTokenInteractiveDeviceFlow(IPublicClientApplication app, string[] scopes, Guid connectionId, string userId,
             SqlAuthenticationMethod authenticationMethod)
         {
@@ -154,7 +209,16 @@ namespace Microsoft.Data.SqlClient
             {
                 if (authenticationMethod == SqlAuthenticationMethod.ActiveDirectoryInteractive)
                 {
-                    return await app.AcquireTokenInteractive(scopes)
+                    if (customWebUI != null)
+                    {
+                        return await app.AcquireTokenInteractive(scopes)
+                            .WithCorrelationId(connectionId)
+                            .WithCustomWebUi(customWebUI)
+                            .WithLoginHint(userId)
+                            .ExecuteAsync(cts.Token);
+                    }
+                    else
+                    {
                         /*
                          * We will use the MSAL Embedded or System web browser which changes by Default in MSAL according to this table:
                          * 
@@ -172,10 +236,11 @@ namespace Microsoft.Data.SqlClient
                          * 
                          * https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/wiki/MSAL.NET-uses-web-browser#at-a-glance
                          */
-                        //.WithUseEmbeddedWebView(true)
-                        .WithCorrelationId(connectionId)
-                        .WithLoginHint(userId)
-                        .ExecuteAsync(cts.Token);
+                        return await app.AcquireTokenInteractive(scopes)
+                            .WithCorrelationId(connectionId)
+                            .WithLoginHint(userId)
+                            .ExecuteAsync(cts.Token);
+                    }
                 }
                 else
                 {
@@ -207,9 +272,6 @@ namespace Microsoft.Data.SqlClient
             Console.WriteLine(result.Message);
             return Task.FromResult(0);
         }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/SetDeviceCodeFlowCallback/*'/>
-        public void SetDeviceCodeFlowCallback(Func<DeviceCodeResult, Task> deviceCodeFlowCallbackMethod) => _deviceCodeFlowCallback = deviceCodeFlowCallbackMethod;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/IsSupported/*'/>
         public override bool IsSupported(SqlAuthenticationMethod authentication)

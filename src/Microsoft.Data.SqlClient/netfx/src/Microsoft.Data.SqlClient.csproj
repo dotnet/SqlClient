@@ -20,6 +20,7 @@
     <!-- ResolveComReferenceSilent suppresses warnings thrown due to the inclusion of mscoree.
      We should remove ResolveComReferenceSilent as soon as we can remove the dependency on mscoree. -->
     <ResolveComReferenceSilent>True</ResolveComReferenceSilent>
+    <DefineConstants>$(DefineConstants);netfx;</DefineConstants>
   </PropertyGroup>
   <PropertyGroup>
     <!-- CSC Compiler Options -->

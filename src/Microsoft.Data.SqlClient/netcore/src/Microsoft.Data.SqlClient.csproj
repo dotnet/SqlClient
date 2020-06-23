@@ -21,6 +21,9 @@
   <PropertyGroup Condition="'$(TargetGroup)' == 'netcoreapp'">
     <DefineConstants>$(DefineConstants);netcoreapp;</DefineConstants>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetGroup)' == 'netstandard'">
+    <DefineConstants>$(DefineConstants);netstandard;</DefineConstants>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(TargetGroup)' == 'netcoreapp' AND '$(TargetFramework)' != 'netcoreapp2.1'">
     <DefineConstants>$(DefineConstants);NETCORE3</DefineConstants>
   </PropertyGroup>
