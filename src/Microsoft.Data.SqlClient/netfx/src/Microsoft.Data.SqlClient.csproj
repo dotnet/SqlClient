@@ -71,6 +71,9 @@
     <DebugType>Pdbonly</DebugType>
     <Optimize>True</Optimize>
   </PropertyGroup>
+  <PropertyGroup>
+    <DefineConstants>$(DefineConstants);NETFRAMEWORK;</DefineConstants>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
