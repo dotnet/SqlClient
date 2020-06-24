@@ -623,7 +623,7 @@ namespace Microsoft.Data.SqlClient
 
             UInt32 result = SNINativeMethodWrapper.SniGetConnectionId(_physicalStateObj.Handle, ref _connHandler._clientConnectionId);
             Debug.Assert(result == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetConnectionId");
-  
+
             // for DNS Caching phase 1
             AssignPendingDNSInfo(serverInfo.UserProtocol, FQDNforDNSCahce);
 
@@ -705,12 +705,12 @@ namespace Microsoft.Data.SqlClient
 
             if (string.IsNullOrEmpty(userProtocol))
             {
-                
+
                 result = SNINativeMethodWrapper.SniGetProviderNumber(_physicalStateObj.Handle, ref providerNumber);
                 Debug.Assert(result == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetProviderNumber");
                 isTcpProtocol = (providerNumber == SNINativeMethodWrapper.ProviderEnum.TCP_PROV);
             }
-            else if (userProtocol == TdsEnums.TCP) 
+            else if (userProtocol == TdsEnums.TCP)
             {
                 isTcpProtocol = true;
             }
@@ -3558,7 +3558,7 @@ namespace Microsoft.Data.SqlClient
                 ret = SQLFallbackDNSCache.Instance.DeleteDNSInfo(FQDNforDNSCahce);
             }
 
-            if ( _connHandler.IsSQLDNSCachingSupported && _connHandler.pendingSQLDNSObject != null 
+            if (_connHandler.IsSQLDNSCachingSupported && _connHandler.pendingSQLDNSObject != null
                     && !SQLFallbackDNSCache.Instance.IsDuplicate(_connHandler.pendingSQLDNSObject))
             {
                 ret = SQLFallbackDNSCache.Instance.AddDNSInfo(_connHandler.pendingSQLDNSObject);
@@ -3777,6 +3777,21 @@ namespace Microsoft.Data.SqlClient
                 informationTypes.Add(new InformationType(informationType, id));
             }
 
+            // get sensitivity rank
+            Int32 sensitivityRank = (int)SensitivityRank.NOT_DEFINED;
+            if (_connHandler._supportedDataClassificationVersion > TdsEnums.DATA_CLASSIFICATION_VERSION_WITHOUT_RANK_SUPPORT)
+            {
+                if (!stateObj.TryReadInt32(out sensitivityRank))
+                {
+                    return false;
+                }
+                Console.WriteLine(sensitivityRank);
+                if (!Enum.IsDefined(typeof(SensitivityRank), sensitivityRank))
+                {
+                    return false;
+                }
+            }
+
             // get the per column classification data (corresponds to order of output columns for query)
             UInt16 numResultColumns;
             if (!stateObj.TryReadUInt16(out numResultColumns))
@@ -3827,14 +3842,27 @@ namespace Microsoft.Data.SqlClient
                         informationType = informationTypes[informationTypeIndex];
                     }
 
+                    // get sensitivity rank
+                    Int32 sensitivityRankProperty = (int)SensitivityRank.NOT_DEFINED;
+                    if (_connHandler._supportedDataClassificationVersion > TdsEnums.DATA_CLASSIFICATION_VERSION_WITHOUT_RANK_SUPPORT)
+                    {
+                        if (!stateObj.TryReadInt32(out sensitivityRankProperty))
+                        {
+                            return false;
+                        }
+                        if (!Enum.IsDefined(typeof(SensitivityRank), sensitivityRankProperty))
+                        {
+                            return false;
+                        }
+                    }
+
                     // add sentivity properties for the source
-                    sensitivityProperties.Add(new SensitivityProperty(label, informationType));
+                    sensitivityProperties.Add(new SensitivityProperty(label, informationType, (SensitivityRank)sensitivityRankProperty));
                 }
                 columnSensitivities.Add(new ColumnSensitivity(sensitivityProperties));
             }
 
-            sensitivityClassification = new SensitivityClassification(labels, informationTypes, columnSensitivities);
-
+            sensitivityClassification = new SensitivityClassification(labels, informationTypes, columnSensitivities, (SensitivityRank)sensitivityRank);
             return true;
         }
 
@@ -9828,7 +9856,7 @@ namespace Microsoft.Data.SqlClient
 
                         // Stream out parameters
                         SqlParameter[] parameters = rpcext.parameters;
-                        
+
                         bool isAdvancedTraceOn = SqlClientEventSource.Log.IsAdvancedTraceOn();
 
                         for (int i = (ii == startRpc) ? startParam : 0; i < parameters.Length; i++)
