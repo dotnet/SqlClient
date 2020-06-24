@@ -60,6 +60,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationTimeoutRetryHelper.cs">
       <Link>Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationTimeoutRetryHelper.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\ApplicationIntent.cs">
+      <Link>Microsoft\Data\SqlClient\ApplicationIntent.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProvider.cs">
       <Link>Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProvider.cs</Link>
     </Compile>
@@ -71,6 +74,24 @@
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\OnChangedEventHandler.cs">
       <Link>Microsoft\Data\SqlClient\OnChangedEventHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\ParameterPeekAheadValue.cs">
+      <Link>Microsoft\Data\SqlClient\ParameterPeekAheadValue.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\PoolBlockingPeriod.cs">
+      <Link>Microsoft\Data\SqlClient\PoolBlockingPeriod.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\RowsCopiedEventArgs.cs">
+      <Link>Microsoft\Data\SqlClient\RowsCopiedEventArgs.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\RowsCopiedEventHandler.cs">
+      <Link>Microsoft\Data\SqlClient\RowsCopiedEventHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SortOrder.cs">
+      <Link>Microsoft\Data\SqlClient\SortOrder.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlAuthenticationToken.cs">
+      <Link>Microsoft\Data\SqlClient\SqlAuthenticationToken.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlAeadAes256CbcHmac256Algorithm.cs">
       <Link>Microsoft\Data\SqlClient\SqlAeadAes256CbcHmac256Algorithm.cs</Link>
@@ -93,6 +114,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlAuthenticationProvider.cs">
       <Link>Microsoft\Data\SqlClient\SqlAuthenticationProvider.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlBulkCopyColumnMapping.cs">
+      <Link>Microsoft\Data\SqlClient\SqlBulkCopyColumnMapping.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlBulkCopyOptions.cs">
       <Link>Microsoft\Data\SqlClient\SqlBulkCopyOptions.cs</Link>
     </Compile>
@@ -102,8 +126,14 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlBulkCopyColumnOrderHintCollection.cs">
       <Link>Microsoft\Data\SqlClient\SqlBulkCopyColumnOrderHintCollection.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientEncryptionAlgorithm.cs">
+      <Link>Microsoft\Data\SqlClient\SqlClientEncryptionAlgorithm.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientEncryptionAlgorithmFactory.cs">
       <Link>Microsoft\Data\SqlClient\SqlClientEncryptionAlgorithmFactory.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientEncryptionAlgorithmFactoryList.cs">
+      <Link>Microsoft\Data\SqlClient\SqlClientEncryptionAlgorithmFactoryList.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientEncryptionType.cs">
       <Link>Microsoft\Data\SqlClient\SqlClientEncryptionType.cs</Link>
@@ -166,7 +196,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionString.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionStringBuilder.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDiagnosticListener.NetCoreApp.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\PoolBlockingPeriod.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlEnclaveAttestationParameters.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\EnclaveDelegate.NetCoreApp.cs" />
@@ -266,7 +295,6 @@
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolOptions.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationToken.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\InvalidUdtException.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SqlFunctionAttribute.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SqlMetaData.cs" />
@@ -275,15 +303,9 @@
     <Compile Include="Microsoft\Data\SqlClient\Server\SqlSer.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SqlUserDefinedAggregateAttribute.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SqlUserDefinedTypeAttribute.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\ApplicationIntent.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\ParameterPeekAheadValue.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\RowsCopiedEventArgs.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\RowsCopiedEventHandler.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SortOrder.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBuffer.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopy.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopyColumnMapping.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopyColumnMappingCollection.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlCachedBuffer.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientDiagnosticListenerExtensions.cs" />
@@ -366,10 +388,8 @@
     <Compile Include="Interop\SNINativeMethodWrapper.Common.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlCredential.cs" />
     <Compile Include="Microsoft\Data\SqlClient\AlwaysEncryptedHelperClasses.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlClientEncryptionAlgorithm.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlSecurityUtility.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SignatureVerificationCache.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlClientEncryptionAlgorithmFactoryList.cs" />
     <Compile Include="Microsoft\Data\SqlClient\EnclavePackage.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlEnclaveSession.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlQueryMetadataCache.cs" />
