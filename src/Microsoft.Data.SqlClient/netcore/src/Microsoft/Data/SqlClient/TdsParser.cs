@@ -3364,7 +3364,6 @@ namespace Microsoft.Data.SqlClient
                 {
                     return false;
                 }
-                Console.WriteLine(sensitivityRank);
                 if (!Enum.IsDefined(typeof(SensitivityRank), sensitivityRank))
                 {
                     return false;

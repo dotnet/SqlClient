@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         private static string s_tableName;
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsSupportedDataClassification))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsSupportedDataClassification))]
         public static void TestDataClassificationResultSetRank()
         {
             s_tableName = DataTestUtility.GetUniqueNameForSqlServer("DC");
@@ -37,7 +37,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsSupportedDataClassification))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsSupportedDataClassification))]
         public static void TestDataClassificationResultSet()
         {
             s_tableName = DataTestUtility.GetUniqueNameForSqlServer("DC");
@@ -218,7 +218,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             sqlCommand.ExecuteNonQuery();
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsSupportedDataClassification))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsSupportedDataClassification))]
         public static void TestDataClassificationBulkCopy()
         {
             var data = new DataTable("Company");
