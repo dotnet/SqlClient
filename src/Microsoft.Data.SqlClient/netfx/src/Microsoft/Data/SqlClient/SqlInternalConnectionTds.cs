@@ -145,8 +145,6 @@ namespace Microsoft.Data.SqlClient
         internal bool _cleanSQLDNSCaching = false;
         private bool _serverSupportsDNSCaching = false;
 
-        internal byte _supportedDataClassificationVersion = TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED;
-
         /// <summary>
         /// Get or set if SQLDNSCaching FeatureExtAck is supported by the server.
         /// </summary>
@@ -3063,11 +3061,11 @@ namespace Microsoft.Data.SqlClient
 
                             throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
                         }
-                        _supportedDataClassificationVersion = data[0];
-                        if ((0 == _supportedDataClassificationVersion) || (_supportedDataClassificationVersion > TdsEnums.MAX_SUPPORTED_DATA_CLASSIFICATION_VERSION))
+                        byte supportedDataClassificationVersion = data[0];
+                        if ((0 == supportedDataClassificationVersion) || (supportedDataClassificationVersion > TdsEnums.DATA_CLASSIFICATION_VERSION_MAX_SUPPORTED))
                         {
                             SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Invalid version number for DATACLASSIFICATION", ObjectID);
-                            throw SQL.ParsingErrorValue(ParsingErrorState.DataClassificationInvalidVersion, _supportedDataClassificationVersion);
+                            throw SQL.ParsingErrorValue(ParsingErrorState.DataClassificationInvalidVersion, supportedDataClassificationVersion);
                         }
 
                         if (data.Length != 2)
@@ -3076,7 +3074,7 @@ namespace Microsoft.Data.SqlClient
                             throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
                         }
                         byte enabled = data[1];
-                        _parser.DataClassificationVersion = (enabled == 0) ? TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED : _supportedDataClassificationVersion;
+                        _parser.DataClassificationVersion = (enabled == 0) ? TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED : supportedDataClassificationVersion;
                         break;
                     }
 
