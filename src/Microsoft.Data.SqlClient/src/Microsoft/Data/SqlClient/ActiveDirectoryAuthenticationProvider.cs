@@ -115,7 +115,6 @@ namespace Microsoft.Data.SqlClient
             else
 #endif
             {
-
                 app = PublicClientApplicationBuilder.Create(ActiveDirectoryAuthentication.AdoClientId)
                 .WithAuthority(parameters.Authority)
                 .WithClientName(Common.DbConnectionStringDefaults.ApplicationName)
@@ -153,7 +152,7 @@ namespace Microsoft.Data.SqlClient
             else if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryInteractive ||
                      parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)
             {
-                var accounts = await app.GetAccountsAsync();
+                System.Collections.Generic.IEnumerable<IAccount> accounts = await app.GetAccountsAsync();
                 IAccount account;
                 if (!string.IsNullOrEmpty(parameters.UserId))
                 {
