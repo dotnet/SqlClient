@@ -245,11 +245,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             $" [CompanyId] [uniqueidentifier] NOT NULL," +
                             $" [CompanyName][nvarchar](255) NOT NULL," +
                             $" [Email] [nvarchar](50) NULL," +
-                            $" [CompanyType] [int] not null," +
-                            $" CONSTRAINT[PK_Company] PRIMARY KEY CLUSTERED (" +
-                            $"      [CompanyId] ASC" +
-                            $"      ) WITH(STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON[PRIMARY]" +
-                            $"  ) ON[PRIMARY]";
+                            $" [CompanyType] [int] not null)";
                         sqlCommand.ExecuteNonQuery();
                         sqlCommand.CommandText = $"ADD SENSITIVITY CLASSIFICATION TO {tableName}.CompanyName WITH (label = 'Confidential', label_id = 'c185460f-4e20-4b89-9876-ae95f07ba087', information_type = 'Contact Info', information_type_id = '5c503e21-22c6-81fa-620b-f369b8ec38d1');";
                         sqlCommand.CommandText = $"ADD SENSITIVITY CLASSIFICATION TO {tableName}.Email WITH (label = 'Confidential', label_id = 'c185460f-4e20-4b89-9876-ae95f07ba087', information_type = 'Contact Info', information_type_id = '5c503e21-22c6-81fa-620b-f369b8ec38d1', rank = HIGH);";
