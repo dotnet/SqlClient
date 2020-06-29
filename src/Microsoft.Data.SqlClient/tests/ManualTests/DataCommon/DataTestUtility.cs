@@ -32,6 +32,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string AADAccessToken = null;
         public static readonly string AKVBaseUrl = null;
         public static readonly string AKVUrl = null;
+        public static readonly string AKVTenantId = null;
         public static readonly string AKVClientId = null;
         public static readonly string AKVClientSecret = null;
         public static List<string> AEConnStrings = new List<string>();
@@ -42,6 +43,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly bool SupportsLocalDb = false;
         public static readonly bool SupportsFileStream = false;
         public static readonly bool UseManagedSNIOnWindows = false;
+        public static Uri AKVBaseUri = null;
 
         public static readonly string DNSCachingConnString = null;
         public static readonly string DNSCachingServerCR = null;  // this is for the control ring
@@ -75,6 +77,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             public string AzureKeyVaultURL = null;
             public string AzureKeyVaultClientId = null;
             public string AzureKeyVaultClientSecret = null;
+            public string AzureKeyVaultTenantId = null;
             public bool EnclaveEnabled = false;
             public bool TracingEnabled = false;
             public bool SupportsIntegratedSecurity = false;
@@ -136,14 +139,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
 
                 string url = c.AzureKeyVaultURL;
-                Uri AKVBaseUri = null;
+
                 if (!string.IsNullOrEmpty(url) && Uri.TryCreate(url, UriKind.Absolute, out AKVBaseUri))
                 {
                     AKVBaseUri = new Uri(AKVBaseUri, "/");
                     AKVBaseUrl = AKVBaseUri.AbsoluteUri;
                     AKVUrl = (new Uri(AKVBaseUri, $"/keys/{AKVKeyName}")).AbsoluteUri;
                 }
-
+                AKVTenantId = c.AzureKeyVaultTenantId;
                 AKVClientId = c.AzureKeyVaultClientId;
                 AKVClientSecret = c.AzureKeyVaultClientSecret;
             }
@@ -318,7 +321,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsAKVSetupAvailable()
         {
-            return !string.IsNullOrEmpty(AKVUrl) && !string.IsNullOrEmpty(AKVClientId) && !string.IsNullOrEmpty(AKVClientSecret);
+            return !string.IsNullOrEmpty(AKVUrl) && !string.IsNullOrEmpty(AKVClientId) && !string.IsNullOrEmpty(AKVClientSecret) && !string.IsNullOrEmpty(AKVTenantId);
         }
 
         public static bool IsUsingManagedSNI() => UseManagedSNIOnWindows;
