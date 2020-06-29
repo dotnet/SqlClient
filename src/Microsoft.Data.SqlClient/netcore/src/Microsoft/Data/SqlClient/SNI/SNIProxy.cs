@@ -365,6 +365,10 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 serverSpn += ":" + portOrInstanceName;
             }
+            else
+            {
+                serverSpn += ":1433";
+            }
             return Encoding.UTF8.GetBytes(serverSpn);
         }
 
