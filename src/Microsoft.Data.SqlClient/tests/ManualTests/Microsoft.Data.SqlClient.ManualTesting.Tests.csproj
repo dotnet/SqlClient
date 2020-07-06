@@ -16,12 +16,19 @@
   <Target Name="CopyConfig" BeforeTargets="Compile">
     <Copy SourceFiles="config.default.json" DestinationFiles="config.json" Condition="!Exists('config.json')" />
   </Target>
-  <ItemGroup Condition="!$(ReferenceType.Contains('NetStandard'))">
+  <!-- Azure Key Vault provider is not compatible with .NET Framework 4.6 and can only be used with .NET Framework 4.6.1 and above. -->
+  <ItemGroup Condition="$(TargetFramework) != 'net46' AND !$(ReferenceType.Contains('NetStandard'))">
     <Compile Include="AlwaysEncrypted\AKVTests.cs" />
+    <Compile Include="AlwaysEncrypted\ExceptionTestAKVStore.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\AKVTestTable.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\AkvColumnMasterKey.cs" />
+    <Compile Include="AlwaysEncrypted\AKVUnitTests.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyAzureKeyVault.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="!$(ReferenceType.Contains('NetStandard'))">
     <Compile Include="AlwaysEncrypted\ApiShould.cs" />
     <Compile Include="AlwaysEncrypted\BulkCopyAEErrorMessage.cs" />
     <Compile Include="AlwaysEncrypted\BulkCopyAE.cs" />
-    <Compile Include="AlwaysEncrypted\ExceptionTestAKVStore.cs" />
     <Compile Include="AlwaysEncrypted\CoreCryptoTests.cs" />
     <Compile Include="AlwaysEncrypted\End2EndSmokeTests.cs" />
     <Compile Include="AlwaysEncrypted\CspProviderExt.cs" />
@@ -32,14 +39,12 @@
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\BulkCopyAEErrorMessageTestTable.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\BulkCopyTruncationTables.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\SqlNullValuesTable.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\AKVTestTable.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ApiTestTable.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\BulkCopyAETestTable.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ColumnEncryptionKey.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ColumnMasterKey.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CryptoNativeBaselineReader.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CryptoVector.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\AkvColumnMasterKey.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CspColumnMasterKey.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CspProviderColumnMasterKey.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\DbObject.cs" />
@@ -47,7 +52,6 @@
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\IDroppable.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\SqlParameterPropertiesTable.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategy.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyAzureKeyVault.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyCertStoreProvider.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\Table.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CertificateUtility.cs" />
@@ -60,7 +64,6 @@
     <Compile Include="$(CommonTestPath)\System\Collections\DictionaryExtensions.cs">
       <Link>Common\System\Collections\DictionaryExtensions.cs</Link>
     </Compile>
-    <Compile Include="AlwaysEncrypted\AKVUnitTests.cs" />
     <Compile Include="DataCommon\AADUtility.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\OrderHint.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\OrderHintAsync.cs" />
@@ -278,15 +281,18 @@
     </ProjectReference>
     <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp' AND $(ReferenceType)=='Project'" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
     <ProjectReference Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
-    <ProjectReference Condition="!$(ReferenceType.Contains('NetStandard'))" Include="$(AddOnsPath)AzureKeyVaultProvider\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
     <ProjectReference Condition="$(ReferenceType.Contains('NetStandard'))" Include="$(TestsPath)NSLibrary\Microsoft.Data.SqlClient.NSLibrary.csproj" />
     <PackageReference Condition="$(ReferenceType)=='Package'" Include="Microsoft.Data.SqlClient" Version="$(TestMicrosoftDataSqlClientVersion)" />
   </ItemGroup>
-  <ItemGroup>
+  <!-- Azure Key Vault provider is not compatible with .NET Framework 4.6 and can only be used with .NET Framework 4.6.1 and above. -->
+  <ItemGroup Condition="$(TargetFramework) != 'net46'">
+    <ProjectReference Condition="!$(ReferenceType.Contains('NetStandard'))" Include="$(AddOnsPath)AzureKeyVaultProvider\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
     <PackageReference Include="Azure.Identity" Version="$(AzureIdentityVersion)" />
-    <PackageReference Include="System.Runtime.Caching" Version="$(SystemRuntimeCachingVersion)" />
     <PackageReference Condition="$(ReferenceType.Contains('Package'))" Include="Microsoft.Identity.Client" Version="$(MicrosoftIdentityClientVersion)" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="$(MicrosoftIdentityModelClientsActiveDirectoryVersion)" />
+    <PackageReference Include="System.Runtime.Caching" Version="$(SystemRuntimeCachingVersion)" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNETTestSdkVersion)" />
     <PackageReference Include="System.Linq.Expressions" Version="$(SystemLinqExpressionsVersion)" />
     <PackageReference Include="System.Net.Sockets" Version="$(SystemNetSocketsVersion)" />

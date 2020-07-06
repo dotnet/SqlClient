@@ -11,10 +11,11 @@ using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
+#if !NET46
 using Azure;
 using Azure.Identity;
 using Azure.Security.KeyVault.Keys;
-
+#endif
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     class CertificateUtility
@@ -132,6 +133,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 }
             }
 
+#if NET46
+            return certificate;
+        }
+#else
             if (DataTestUtility.IsAKVSetupAvailable())
             {
                 SetupAKVKeysAsync().Wait();
@@ -174,7 +179,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 keyClient.CreateRsaKey(rsaKeyOptions);
             }
         }
-
+#endif
 
         /// <summary>
         /// Removes a certificate from the local certificate store (useful for test cleanup).
