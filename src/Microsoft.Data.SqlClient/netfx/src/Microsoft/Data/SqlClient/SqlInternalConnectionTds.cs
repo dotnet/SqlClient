@@ -2638,6 +2638,7 @@ namespace Microsoft.Data.SqlClient
                 // If the code flow is here, then we are re-using the context from the cache for this connection attempt and not
                 // generating a new access token on this thread.
                 _fedAuthToken.accessToken = dbConnectionPoolAuthenticationContext.AccessToken;
+                _fedAuthToken.expirationFileTime = dbConnectionPoolAuthenticationContext.ExpirationTime.ToFileTime();
             }
 
             Debug.Assert(_fedAuthToken != null && _fedAuthToken.accessToken != null, "_fedAuthToken and _fedAuthToken.accessToken cannot be null.");
