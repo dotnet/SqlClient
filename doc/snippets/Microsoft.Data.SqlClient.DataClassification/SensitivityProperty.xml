@@ -26,7 +26,7 @@
               <![CDATA[
 
 ## Remarks
-A relative ranking of the sensitivity of a query or of a column that is part of percolumn data. Available values are as below:
+A relative sensitivity ranking of a column that is part of percolumn data. Available values are as below:
 
 | Sensitivity Rank | Description |
 | --- | --- |

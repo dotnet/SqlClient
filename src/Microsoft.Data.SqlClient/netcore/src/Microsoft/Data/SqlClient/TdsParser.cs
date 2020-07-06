@@ -3416,7 +3416,7 @@ namespace Microsoft.Data.SqlClient
                         }
                     }
 
-                    // add sentivity properties for the source
+                    // add sensitivity properties for the source
                     sensitivityProperties.Add(new SensitivityProperty(label, informationType, (SensitivityRank)sensitivityRankProperty));
                 }
                 columnSensitivities.Add(new ColumnSensitivity(sensitivityProperties));
