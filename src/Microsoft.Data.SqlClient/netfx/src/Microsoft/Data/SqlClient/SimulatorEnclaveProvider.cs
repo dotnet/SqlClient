@@ -107,7 +107,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="serverName">The name of the SQL Server instance containing the enclave.</param>
         /// <param name="enclaveAttestationUrl">The endpoint of an attestation service, SqlClient contacts to attest the enclave.</param>
-        /// <param name="database">The database that SqlClient contacts to.</param>
+        /// <param name="database">The database that SqlClient contacts to request an enclave session.</param>
         /// <param name="enclaveSessionToInvalidate">The session to be invalidated.</param>
         internal override void InvalidateEnclaveSession(string serverName, string enclaveAttestationUrl, string database, SqlEnclaveSession enclaveSessionToInvalidate)
         {
