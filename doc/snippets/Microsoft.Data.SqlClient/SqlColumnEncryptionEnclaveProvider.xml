@@ -53,7 +53,7 @@ the enclave attestation protocol as well as the logic for creating and caching e
         <InvalidateEnclaveSession>
             <param name="serverName">The name of the SQL Server instance containing the enclave.</param>
             <param name="enclaveAttestationUrl">The endpoint of an attestation service, SqlClient contacts to attest the enclave.</param>
-            <param name="database">The database that SqlClient contacts to.</param>
+            <param name="database">The database that SqlClient contacts to request an enclave session.</param>
             <param name="enclaveSession">The session to be invalidated.</param>
             <summary>When overridden in a derived class, looks up and evicts an enclave session from the enclave session cache, if the provider implements session caching.</summary>
             <remarks>To be added.</remarks>
