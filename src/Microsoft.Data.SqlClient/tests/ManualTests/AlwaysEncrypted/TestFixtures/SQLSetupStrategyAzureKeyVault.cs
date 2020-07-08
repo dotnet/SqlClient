@@ -11,7 +11,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     public class SQLSetupStrategyAzureKeyVault : SQLSetupStrategy
     {
-        private static bool isAKVProviderRegistered = false;
+        internal static bool isAKVProviderRegistered = false;
 
         public Table AKVTestTable { get; private set; }
         public SqlColumnEncryptionAzureKeyVaultProvider AkvStoreProvider;

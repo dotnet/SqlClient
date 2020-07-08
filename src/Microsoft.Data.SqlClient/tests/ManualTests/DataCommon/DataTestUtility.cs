@@ -289,7 +289,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsDNSCachingSetup() => !string.IsNullOrEmpty(DNSCachingConnString);
 
-        public static bool IsEnclaveAzureDatabaseSetup() => !string.IsNullOrEmpty(EnclaveAzureDatabaseConnString);
+        public static bool IsEnclaveAzureDatabaseSetup()
+        {
+            return EnclaveEnabled && !string.IsNullOrEmpty(EnclaveAzureDatabaseConnString);
+        }  
 
         public static bool IsUdtTestDatabasePresent() => IsDatabasePresent(UdtTestDbName);
 

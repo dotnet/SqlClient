@@ -13,6 +13,7 @@ using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
+    // This test class is for internal use only
     public class EnclaveAzureDatabaseTests : IDisposable
     {
         private ColumnMasterKey akvColumnMasterKey;
@@ -23,16 +24,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
              
         public EnclaveAzureDatabaseTests()
         {
-            if (DataTestUtility.IsEnclaveAzureDatabaseSetup() && DataTestUtility.EnclaveEnabled)
+            if (DataTestUtility.IsEnclaveAzureDatabaseSetup())
             {
                 // Initialize AKV provider
                 sqlColumnEncryptionAzureKeyVaultProvider = new SqlColumnEncryptionAzureKeyVaultProvider(AADUtility.AzureActiveDirectoryAuthenticationCallback);
 
-                // Register AKV provider
-                SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders: new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>(capacity: 1, comparer: StringComparer.OrdinalIgnoreCase)
-                {
-                    { SqlColumnEncryptionAzureKeyVaultProvider.ProviderName, sqlColumnEncryptionAzureKeyVaultProvider}
-                });
+                if (!SQLSetupStrategyAzureKeyVault.isAKVProviderRegistered) 
+                {                    
+                    // Register AKV provider
+                    SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders: new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>(capacity: 1, comparer: StringComparer.OrdinalIgnoreCase)
+                    {
+                        { SqlColumnEncryptionAzureKeyVaultProvider.ProviderName, sqlColumnEncryptionAzureKeyVaultProvider}
+                    });
+
+                    SQLSetupStrategyAzureKeyVault.isAKVProviderRegistered = true;
+                }               
 
                 akvColumnMasterKey = new AkvColumnMasterKey(DatabaseHelper.GenerateUniqueName("AKVCMK"), akvUrl: DataTestUtility.AKVUrl, sqlColumnEncryptionAzureKeyVaultProvider, DataTestUtility.EnclaveEnabled);
                 databaseObjects.Add(akvColumnMasterKey);
@@ -66,28 +72,25 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsEnclaveAzureDatabaseSetup))]
         public void ConnectToAzureDatabaseWithEnclave()
         {
-            if (DataTestUtility.EnclaveEnabled)
+            string tableName = DatabaseHelper.GenerateUniqueName("AzureTable");
+
+            foreach (string connString in connStrings)
             {
-                string tableName = DatabaseHelper.GenerateUniqueName("AzureTable");
-
-                foreach (string connString in connStrings)
+                using (SqlConnection sqlConnection = new SqlConnection(connString))
                 {
-                    using (SqlConnection sqlConnection = new SqlConnection(connString))
+                    sqlConnection.Open();
+
+                    Customer customer = new Customer(1, @"Microsoft", @"Corporation");
+
+                    try
                     {
-                        sqlConnection.Open();
-
-                        Customer customer = new Customer(1, @"Microsoft", @"Corporation");
-
-                        try
-                        {
-                            CreateTable(sqlConnection, akvColumnEncryptionKey.Name, tableName);
-                            InsertData(sqlConnection, tableName, customer);
-                            VerifyData(sqlConnection, tableName, customer);
-                        }
-                        finally
-                        {
-                            DropTableIfExists(sqlConnection, tableName);
-                        }
+                        CreateTable(sqlConnection, akvColumnEncryptionKey.Name, tableName);
+                        InsertData(sqlConnection, tableName, customer);
+                        VerifyData(sqlConnection, tableName, customer);
+                    }
+                    finally
+                    {
+                        DropTableIfExists(sqlConnection, tableName);
                     }
                 }
             }
@@ -165,7 +168,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         public void Dispose()
         {
-            if (DataTestUtility.IsEnclaveAzureDatabaseSetup() && DataTestUtility.EnclaveEnabled)
+            if (DataTestUtility.IsEnclaveAzureDatabaseSetup())
             {
                 databaseObjects.Reverse();
                 foreach (string connStr in connStrings)
