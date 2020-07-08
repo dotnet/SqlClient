@@ -69,7 +69,7 @@ namespace Microsoft.Data.SqlClient
         // Generates the cache key for the enclave session cache
         private string GenerateCacheKey(string serverName, string attestationUrl, string database)
         {
-            return (serverName + database + attestationUrl).ToLowerInvariant();
+            return (serverName + '+' + database + attestationUrl).ToLowerInvariant();
         }
     }
 }
