@@ -15,6 +15,8 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 {
     internal class AzureKeyVaultProviderTokenCredential : TokenCredential
     {
+        private const string Bearer = "Bearer ";
+
         private AuthenticationCallback Callback { get; set; }
 
         private string Authority { get; set; }
@@ -24,14 +26,39 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         internal AzureKeyVaultProviderTokenCredential(AuthenticationCallback authenticationCallback, string masterKeyPath)
         {
             Callback = authenticationCallback;
-            HttpClient httpClient = new HttpClient();
-            HttpResponseMessage response = httpClient.GetAsync(masterKeyPath).GetAwaiter().GetResult();
-            string challenge = response?.Headers.WwwAuthenticate.FirstOrDefault()?.ToString();
-            string trimmedChallenge = ValidateChallenge(challenge);
-            string[] pairs = trimmedChallenge.Split(new string[] { "," }, StringSplitOptions.RemoveEmptyEntries);
+            using (HttpClient httpClient = new HttpClient())
+            {
+                HttpResponseMessage response = httpClient.GetAsync(masterKeyPath).GetAwaiter().GetResult();
+                string challenge = response?.Headers.WwwAuthenticate.FirstOrDefault()?.ToString();
+                string trimmedChallenge = ValidateChallenge(challenge);
+                string[] pairs = trimmedChallenge.Split(new string[] { "," }, StringSplitOptions.RemoveEmptyEntries);
 
-            Authority = pairs[0].Split('=')[1].Trim().Trim(new char[] { '\"' });
-            Resource = pairs[1].Split('=')[1].Trim().Trim(new char[] { '\"' });
+                if (pairs != null && pairs.Length > 0)
+                {
+                    for (int i = 0; i < pairs.Length; i++)
+                    {
+                        string[] pair = pairs[i]?.Split('=');
+
+                        if (pair.Length == 2)
+                        {
+                            string key = pair[0]?.Trim().Trim(new char[] { '\"' });
+                            string value = pair[1]?.Trim().Trim(new char[] { '\"' });
+
+                            if (!string.IsNullOrEmpty(key))
+                            {
+                                if (key.Equals("authorization", StringComparison.InvariantCultureIgnoreCase))
+                                {
+                                    Authority = value;
+                                }
+                                else if (key.Equals("resource", StringComparison.InvariantCultureIgnoreCase))
+                                {
+                                    Resource = value;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         public override AccessToken GetToken(TokenRequestContext requestContext, CancellationToken cancellationToken)
@@ -49,16 +76,15 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 
         private static string ValidateChallenge(string challenge)
         {
-            const string bearer = "Bearer ";
             if (string.IsNullOrEmpty(challenge))
-                throw new ArgumentNullException("challenge");
+                throw new ArgumentNullException(nameof(challenge));
 
             string trimmedChallenge = challenge.Trim();
 
-            if (!trimmedChallenge.StartsWith(bearer))
-                throw new ArgumentException("Challenge is not Bearer", "challenge");
+            if (!trimmedChallenge.StartsWith(Bearer))
+                throw new ArgumentException("Challenge is not Bearer", nameof(challenge));
 
-            return trimmedChallenge.Substring(bearer.Length);
+            return trimmedChallenge.Substring(Bearer.Length);
         }
     }
 }

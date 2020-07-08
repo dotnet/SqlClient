@@ -6,6 +6,7 @@ using Azure.Core;
 using Azure.Security.KeyVault.Keys;
 using Azure.Security.KeyVault.Keys.Cryptography;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Threading.Tasks;
@@ -34,24 +35,24 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <summary>
         /// A mapping of the KeyClient objects to the corresponding Azure Key Vault URI
         /// </summary>
-        private readonly Dictionary<Uri, KeyClient> keyClientDictionary = new Dictionary<Uri, KeyClient>();
+        private readonly ConcurrentDictionary<Uri, KeyClient> keyClientDictionary = new ConcurrentDictionary<Uri, KeyClient>();
 
         /// <summary>
         /// Holds references to the fetch key tasks and maps them to their corresponding Azure Key Vault Key Identifier (URI).
         /// These tasks will be used for returning the key in the event that the fetch task has not finished depositing the 
         /// key into the key dictionary.
         /// </summary>
-        private readonly Dictionary<string, Task<Azure.Response<KeyVaultKey>>> _keyFetchTaskDictionary = new Dictionary<string, Task<Azure.Response<KeyVaultKey>>>();
+        private readonly ConcurrentDictionary<string, Task<Azure.Response<KeyVaultKey>>> _keyFetchTaskDictionary = new ConcurrentDictionary<string, Task<Azure.Response<KeyVaultKey>>>();
 
         /// <summary>
         /// Holds references to the Azure Key Vault keys and maps them to their corresponding Azure Key Vault Key Identifier (URI).
         /// </summary>
-        private readonly Dictionary<string, KeyVaultKey> _keyDictionary = new Dictionary<string, KeyVaultKey>();
+        private readonly ConcurrentDictionary<string, KeyVaultKey> _keyDictionary = new ConcurrentDictionary<string, KeyVaultKey>();
 
         /// <summary>
         /// Holds references to the Azure Key Vault CryptographyClient objects and maps them to their corresponding Azure Key Vault Key Identifier (URI).
         /// </summary>
-        private readonly Dictionary<string, CryptographyClient> cryptoClientDictionary = new Dictionary<string, CryptographyClient>();
+        private readonly ConcurrentDictionary<string, CryptographyClient> cryptoClientDictionary = new ConcurrentDictionary<string, CryptographyClient>();
 
         /// <summary>
         /// Constructs a new KeyCryptographer

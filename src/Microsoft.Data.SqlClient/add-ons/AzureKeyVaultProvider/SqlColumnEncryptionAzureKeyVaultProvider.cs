@@ -288,10 +288,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 
             // Construct the encryptedColumnEncryptionKey
             // Format is 
-            //          version + keyPathLength + ciphertextLength + ciphertext + keyPath + signature
-            //
-            // We currently only support one version
-            byte[] version = new byte[] { s_firstVersion[0] };
+            //          s_firstVersion + keyPathLength + ciphertextLength + ciphertext + keyPath + signature
 
             // Get the Unicode encoded bytes of cultureinvariant lower case masterKeyPath
             byte[] masterKeyPathBytes = Encoding.Unicode.GetBytes(masterKeyPath.ToLowerInvariant());
@@ -308,7 +305,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 
             // Compute hash
             // SHA-2-256(version + keyPathLength + ciphertextLength + keyPath + ciphertext) 
-            byte[] hash = version.Concat(keyPathLength).Concat(cipherTextLength).Concat(masterKeyPathBytes).Concat(cipherText).ToArray();
+            byte[] hash = s_firstVersion.Concat(keyPathLength).Concat(cipherTextLength).Concat(masterKeyPathBytes).Concat(cipherText).ToArray();
 
             // Sign the hash
             byte[] signature = KeyCryptographer.SignData(hash, masterKeyPath);
