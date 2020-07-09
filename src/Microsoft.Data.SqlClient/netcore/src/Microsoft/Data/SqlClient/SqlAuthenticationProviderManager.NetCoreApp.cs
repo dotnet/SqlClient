@@ -15,8 +15,8 @@ namespace Microsoft.Data.SqlClient
 
         static SqlAuthenticationProviderManager()
         {
-            var activeDirectoryAuthNativeProvider = new ActiveDirectoryNativeAuthenticationProvider();
-            SqlAuthenticationProviderConfigurationSection configurationSection;
+            var activeDirectoryAuthProvider = new ActiveDirectoryAuthenticationProvider();
+            SqlAuthenticationProviderConfigurationSection configurationSection = null;
 
             try
             {
@@ -24,11 +24,15 @@ namespace Microsoft.Data.SqlClient
             }
             catch (ConfigurationErrorsException e)
             {
-                throw SQL.CannotGetAuthProviderConfig(e);
+                // Don't throw an error for invalid config files
+                SqlClientEventSource.Log.TraceEvent("Unable to load custom SqlAuthenticationProviders. ConfigurationManager failed to load due to configuration errors: {0}", e);
             }
 
             Instance = new SqlAuthenticationProviderManager(configurationSection);
-            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, activeDirectoryAuthNativeProvider);
+            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryIntegrated, activeDirectoryAuthProvider);
+            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, activeDirectoryAuthProvider);
+            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive, activeDirectoryAuthProvider);
+            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal, activeDirectoryAuthProvider);
         }
 
         /// <summary>
@@ -104,8 +108,14 @@ namespace Microsoft.Data.SqlClient
         {
             switch (authentication.ToLowerInvariant())
             {
+                case ActiveDirectoryIntegrated:
+                    return SqlAuthenticationMethod.ActiveDirectoryIntegrated;
                 case ActiveDirectoryPassword:
                     return SqlAuthenticationMethod.ActiveDirectoryPassword;
+                case ActiveDirectoryInteractive:
+                    return SqlAuthenticationMethod.ActiveDirectoryInteractive;
+                case ActiveDirectoryServicePrincipal:
+                    return SqlAuthenticationMethod.ActiveDirectoryServicePrincipal;
                 default:
                     throw SQL.UnsupportedAuthentication(authentication);
             }

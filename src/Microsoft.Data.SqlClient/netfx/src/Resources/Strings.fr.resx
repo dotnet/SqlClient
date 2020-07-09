@@ -4530,4 +4530,34 @@
   <data name="SQLUDT_InvalidSize" xml:space="preserve">
     <value>La taille UDT doit être inférieure à {1}, taille : {0}</value>
   </data>
+  <data name="SEC_ProtocolWarning" xml:space="preserve">
+    <value>Avertissement de sécurité : Le {0} négocié est un protocole non sécurisé qui est pris en charge uniquement à des fins de compatibilité descendante. La version de protocole recommandée est TLS 1.2 et ultérieur.</value>
+  </data>
+  <data name="net_invalid_enum" xml:space="preserve">
+    <value>La valeur spécifiée n'est pas valide dans l'énumération '{0}'.</value>
+  </data>
+  <data name="SQL_BulkLoadInvalidOrderHint" xml:space="preserve">
+    <value>L'indicateur d'ordre de colonnes donné n'est pas valide.</value>
+  </data>
+  <data name="SQL_BulkLoadOrderHintDuplicateColumn" xml:space="preserve">
+    <value>La colonne « {0} » a été spécifiée plusieurs fois.</value>
+  </data>
+  <data name="SQL_BulkLoadOrderHintInvalidColumn" xml:space="preserve">
+    <value>La colonne « {0} » triée n'est pas valide dans la table de destination.</value>
+  </data>
+  <data name="SQL_BulkLoadUnspecifiedSortOrder" xml:space="preserve">
+    <value>Un indicateur d'ordre de tri de colonne ne peut pas avoir un ordre de tri non spécifié.</value>
+  </data>
+  <data name="SQL_UnsupportedAuthenticationSpecified" xml:space="preserve">
+    <value>Authentification non prise en charge spécifiée dans ce contexte : {0}</value>
+  </data>
+  <data name="SQL_Timeout_Active_Directory_Interactive_Authentication" xml:space="preserve">
+    <value>L'authentification interactive Active Directory a expiré. L'utilisateur a mis trop de temps à répondre à la demande d'authentification.</value>
+  </data>
+  <data name="SQL_SettingInteractiveWithCredential" xml:space="preserve">
+    <value>Impossible d'utiliser « Authentication=Active Directory Interactive », si la propriété Credential a été définie.</value>
+  </data>
+  <data name="SQL_SettingCredentialWithInteractive" xml:space="preserve">
+    <value>Impossible de définir la propriété Credential si « Authentication=Active Directory Interactive » a été spécifié dans la chaîne de connexion.</value>
+  </data>
 </root>

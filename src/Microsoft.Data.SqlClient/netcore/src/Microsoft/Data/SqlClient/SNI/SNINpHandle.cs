@@ -120,6 +120,21 @@ namespace Microsoft.Data.SqlClient.SNI
             }
         }
 
+        public override int ProtocolVersion
+        {
+            get
+            {
+                try
+                {
+                    return (int)_sslStream.SslProtocol;
+                }
+                catch
+                {
+                    return base.ProtocolVersion;
+                }
+            }
+        }
+
         public override uint CheckConnection()
         {
             long scopeID = SqlClientEventSource.Log.SNIScopeEnterEvent("<sc.SNI.SNINpHandle.CheckConnection |SNI|INFO>");

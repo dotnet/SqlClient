@@ -15,7 +15,7 @@ The following console application demonstrates how to load data using the <xref=
 In this example, a <xref=Microsoft.Data.SqlClient.SqlDataReader> is used to copy data from the **Production.Product** table in the SQL Server **AdventureWorks** database to a similar table in the same database.
 
 > [!IMPORTANT]
-> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md).
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/dotnet/framework/data/adonet/sql/bulk-copy-example-setup).
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance,
 it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 
@@ -55,7 +55,7 @@ Note that the source data does not have to be located on SQL Server; you can use
 <xref:System.Data.DataTable>.
 
 > [!IMPORTANT]
-> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md).
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/dotnet/framework/data/adonet/sql/bulk-copy-example-setup).
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a
 Transact-SQL `INSERT … SELECT` statement to copy the data.
 
@@ -102,13 +102,13 @@ Transact-SQL `INSERT … SELECT` statement to copy the data.
 ## Remarks
 If options include `UseInternalTransaction` and the `externalTransaction` argument is not null, an **InvalidArgumentException** is thrown.
 
-For examples demonstrating how to use `SqlBulkCopy` in a transaction, see [Transaction and Bulk Copy Operations](~/docs/framework/data/adonet/sql/transaction-and-bulk-copy-operations.md).
+For examples demonstrating how to use `SqlBulkCopy` in a transaction, see [Transaction and Bulk Copy Operations](/dotnet/framework/data/adonet/sql/transaction-and-bulk-copy-operations).
 ]]></format>
 			</remarks>
 			<related type="Article" href="https://msdn.microsoft.com/library/83a7a0d2-8018-4354-97b9-0b1d99f8342b">
 				Performing Bulk Copy Operations
 			</related>
-			<related type="Article" href="~/docs/framework/data/adonet/ado-net-overview.md">
+			<related type="Article" href="/dotnet/framework/data/adonet/ado-net-overview">
 				ADO.NET Overview
 			</related>
 		</ctor>
@@ -152,7 +152,7 @@ In this example, the source data is first read from a SQL Server table to a <xre
 The source data does not have to be located on SQL Server; you can use any data source that can be read to an <xref:System.Data.IDataReader> or loaded to a <xref:System.Data.DataTable>.
 
 > [!IMPORTANT]
-> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md).
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/dotnet/framework/data/adonet/sql/bulk-copy-example-setup).
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance,
 it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 
@@ -216,7 +216,7 @@ Then run the sample again without emptying the table. An exception is thrown and
 added because of primary key constraint violations.
 
 > [!IMPORTANT]
-> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md). This code is provided to
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/dotnet/framework/data/adonet/sql/bulk-copy-example-setup). This code is provided to
 demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement
 to copy the data.
 
@@ -252,10 +252,10 @@ operations on the same <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instance use 
 
 ## Examples
 The following console application demonstrates how to bulk load data in batches of 50 rows. For an example illustrating how <xref:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize>
-works with a transaction, see [Transaction and Bulk Copy Operations](~/docs/framework/data/adonet/sql/transaction-and-bulk-copy-operations.md).
+works with a transaction, see [Transaction and Bulk Copy Operations](/dotnet/framework/data/adonet/sql/transaction-and-bulk-copy-operations).
 
 > [!IMPORTANT]
-> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md).
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/dotnet/framework/data/adonet/sql/bulk-copy-example-setup).
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance,
 it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 
@@ -284,7 +284,7 @@ In this example, the source data is first read from a SQL Server table to a <xre
 The source data does not have to be located on SQL Server; you can use any data source that can be read to an <xref:System.Data.IDataReader> or loaded to a <xref:System.Data.DataTable>.
 
 > [!IMPORTANT]
-> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md).
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/dotnet/framework/data/adonet/sql/bulk-copy-example-setup).
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a
 Transact-SQL `INSERT … SELECT` statement to copy the data.
 
@@ -307,7 +307,7 @@ Note that open <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instances are closed 
 The following example uses the same <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instance to add sales orders and their associated details to two destination tables. Because the **AdventureWorks** sales order tables are large, the sample reads only orders placed by a certain account number and bulk copies those orders and details to the destination tables. The <xref:Microsoft.Data.SqlClient.SqlBulkCopy.Close> method is used only after both bulk copy operations are complete.
 
 > [!IMPORTANT]
-> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md). This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/dotnet/framework/data/adonet/sql/bulk-copy-example-setup). This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 
 [!code-csharp[SqlBulkCopy.OrdersDetails#1](~/../sqlclient/doc/samples/SqlBulkCopy_OrdersDetails.cs#1)]
 ]]></format>
@@ -360,6 +360,24 @@ During the execution of a bulk copy operation, this collection can be accessed, 
 ]]></format>
 			</remarks>
 		</ColumnMappings>
+        <ColumnOrderHints>
+			<summary>
+				Returns a collection of
+				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" />
+				items. Column order hints describe the sort order of columns in the clustered index of the destination table.
+			</summary>
+			<value>
+				A collection of column order hints. By default, it is an empty collection.
+			</value>
+			<remarks>
+				<format type="text/markdown"><![CDATA[
+                
+## Remarks
+SqlBulkCopy's performance is improved if the data being imported is sorted according to the clustered index on the table, if any. 
+If the data is sorted in an order that differs from the order of a clustered index key or if there is no clustered index on the table, the order hint is ignored.
+]]></format>
+			</remarks>
+		</ColumnOrderHints>
 		<DestinationTableName>
 			<summary>
 				Name of the destination table on the server.
@@ -373,7 +391,7 @@ During the execution of a bulk copy operation, this collection can be accessed, 
 				<format type="text/markdown"><![CDATA[
 ## Remarks
 If <xref:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName> has not been set when <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer%2A> is called, an <xref:System.ArgumentNullException>
-is thrown.  If <xref:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName> is modified while a <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer%2A> operation is running,
+is thrown. If <xref:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName> is modified while a <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer%2A> operation is running,
 the change does not affect the current operation. The new <xref:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName> value is used the next time a <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer%2A> method is called.
 
 <xref:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName> is a three-part name (`<database>.<owningschema>.<name>`). You can qualify the table name with its database and owning schema if you choose.
@@ -388,7 +406,7 @@ In this example, the connection is first used to read data from a SQL Server tab
 be located on SQL Server; you can use any data source that can be read to an <xref:System.Data.IDataReader> or loaded to a <xref:System.Data.DataTable>.
 
 > [!IMPORTANT]
-> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md).
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/dotnet/framework/data/adonet/sql/bulk-copy-example-setup).
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance,
 it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 [!code-csharp[SqlBulkCopy.Single#1](~/../sqlclient/doc/samples/SqlBulkCopy_Single.cs#1)]
@@ -423,7 +441,7 @@ In this example, the connection is first used to read data from a SQL Server tab
 Note that the source data does not have to be located on SQL Server; you can use any data source that can be read to an <xref:System.Data.IDataReader> or loaded to a <xref:System.Data.DataTable>.
 
 > [!IMPORTANT]
-> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md). This code is provided to
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/dotnet/framework/data/adonet/sql/bulk-copy-example-setup). This code is provided to
 demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT`
 statement to copy the data.
 
@@ -448,7 +466,7 @@ Note that the settings of <xref:Microsoft.Data.SqlClient.SqlBulkCopy.NotifyAfter
 You cannot call SqlBulkCopy.Close (<xref:Microsoft.Data.SqlClient.SqlBulkCopy.Close>) or SqlConnection.Close (<xref:Microsoft.Data.SqlClient.SqlConnection.Close>) from this event.
 Doing this will cause an <xref:System.InvalidOperationException> being thrown, and the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> object state will not change. If the user wants to cancel the
 operation from the event, the <xref:Microsoft.Data.SqlClient.SqlRowsCopiedEventArgs.Abort> property of the <xref:Microsoft.Data.SqlClient.SqlRowsCopiedEventArgs> can be used.
-(See [Transaction and Bulk Copy Operations](~/docs/framework/data/adonet/sql/transaction-and-bulk-copy-operations.md) for examples that use the
+(See [Transaction and Bulk Copy Operations](/dotnet/framework/data/adonet/sql/transaction-and-bulk-copy-operations) for examples that use the
 <xref:Microsoft.Data.SqlClient.SqlRowsCopiedEventArgs.Abort> property.)
 
 No action, such as transaction activity, is supported in the connection during the execution of the bulk copy operation, and it is recommended that you not use the same connection used
@@ -463,7 +481,7 @@ In this example, the connection is first used to read data from a SQL Server tab
 SQL Server; you can use any data source that can be read to an <xref:System.Data.IDataReader> or loaded to a <xref:System.Data.DataTable>.
 
 > [!IMPORTANT]
-> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md).
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/dotnet/framework/data/adonet/sql/bulk-copy-example-setup).
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier
 and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 
@@ -503,8 +521,8 @@ Call `Dispose` when you are finished using the <xref:Microsoft.Data.SqlClient.Sq
 After calling `Dispose`, you must release all references to the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> so the garbage collector can reclaim the memory that the
 <xref:Microsoft.Data.SqlClient.SqlBulkCopy> was occupying.
 
-For more information, see [Cleaning Up Unmanaged Resources](~/docs/standard/garbage-collection/unmanaged.md) and
-[Implementing a Dispose Method](~/docs/standard/garbage-collection/implementing-dispose.md).
+For more information, see [Cleaning Up Unmanaged Resources](/dotnet/standard/garbage-collection/unmanaged) and
+[Implementing a Dispose Method](/dotnet/standard/garbage-collection/implementing-dispose).
 
 > [!NOTE]
 > Always call `Dispose` before you release your last reference to the <xref:Microsoft.Data.SqlClient.SqlBulkCopy>. Otherwise, the resources it is using will not be freed until the garbage collector calls
@@ -530,6 +548,11 @@ the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> object's `Finalize` method.
 			<remarks>
 				To be added.
 			</remarks>
+			<exception cref="T:System.InvalidOperationException">
+				A 
+				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> 
+				did not specify a valid destination column name.
+			</exception>
 		</WriteToServer>
 		<WriteToServer name="IDataReaderParameter">
 			<param name="reader">
@@ -565,13 +588,18 @@ The <xref:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnMappings> collection maps f
 The following console application demonstrates how to bulk load data from a <xref:Microsoft.Data.SqlClient.SqlDataReader>. The destination table is a table in the **AdventureWorks** database.
 
 > [!IMPORTANT]
-> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md). This code is provided
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/dotnet/framework/data/adonet/sql/bulk-copy-example-setup). This code is provided
 to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a
 Transact-SQL `INSERT … SELECT` statement to copy the data.
 
 [!code-csharp[SqlBulkCopy.ConnectionString#1](~/../sqlclient/doc/samples/SqlBulkCopy_ConnectionString.cs#1)]
 ]]></format>
 			</remarks>
+			<exception cref="T:System.InvalidOperationException">
+				A 
+				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> 
+				did not specify a valid destination column name.
+			</exception>
 		</WriteToServer>
 		<WriteToServer name="DataTableParameter">
 			<param name="table">
@@ -604,16 +632,21 @@ The following Console application demonstrates how to bulk load data from a <xre
 In this example, a <xref:System.Data.DataTable> is created at run time and is the source of the `SqlBulkCopy` operation.
 
 > [!IMPORTANT]
->  This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md).
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/dotnet/framework/data/adonet/sql/bulk-copy-example-setup).
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 
 [!code-csharp[SqlBulkCopy.DataTable#1](~/../sqlclient/doc/samples/SqlBulkCopy_DataTable.cs#1)]
 ]]></format>
 			</remarks>
+			<exception cref="T:System.InvalidOperationException">
+				A 
+				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> 
+				did not specify a valid destination column name.
+			</exception>
 			<related type="Article" href="https://msdn.microsoft.com/library/83a7a0d2-8018-4354-97b9-0b1d99f8342b">
 				Performing Bulk Copy Operations
 			</related>
-			<related type="Article" href="~/docs/framework/data/adonet/ado-net-overview.md">
+			<related type="Article" href="/dotnet/framework/data/adonet/ado-net-overview">
 				ADO.NET Overview
 			</related>
 		</WriteToServer>
@@ -659,11 +692,16 @@ In this example, a <xref:System.Data.DataTable> is created at run time and three
 The <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer%2A> method is called with a `DataRowState.Unchanged` `rowState` argument, so only the two unchanged rows are bulk copied to the destination.
 
 > [!IMPORTANT]
-> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md). This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/dotnet/framework/data/adonet/sql/bulk-copy-example-setup). This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 
 [!code-csharp[SqlBulkCopy.DataRowState#1](~/../sqlclient/doc/samples/SqlBulkCopy_DataRowState.cs#1)]
 ]]></format>
 			</remarks>
+			<exception cref="T:System.InvalidOperationException">
+				A 
+				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> 
+				did not specify a valid destination column name.
+			</exception>
 		</WriteToServer>
 		<WriteToServer name="DataRowParameter">
 			<param name="rows">An array of <see cref="T:System.Data.DataRow" /> objects that will be copied to the destination table.</param>
@@ -682,12 +720,17 @@ The following console application demonstrates how to bulk load data from a <xre
 In this example, a <xref:System.Data.DataTable> is created at run time. A single row is selected from the <xref:System.Data.DataTable> to copy to the destination table.  
 
 > [!IMPORTANT]
->  This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](~/docs/framework/data/adonet/sql/bulk-copy-example-setup.md). This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.  
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/dotnet/framework/data/adonet/sql/bulk-copy-example-setup). This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.  
 
 [!code-csharp[SqlBulkCopy.RowArray#1](~/../sqlclient/doc/samples/SqlBulkCopy_RowArray.cs#1)]
 
 ]]></format>
 			</remarks>
+			<exception cref="T:System.InvalidOperationException">
+				A 
+				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> 
+				did not specify a valid destination column name.
+			</exception>
 		</WriteToServer>
 		<WriteToServerAsync name="DataRowParameter">
 			<param name="rows">
@@ -697,8 +740,7 @@ In this example, a <xref:System.Data.DataTable> is created at run time. A single
 			</param>
 			<summary>
 				The asynchronous version of
-				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataRow[])" />
-				,
+				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataRow[])" />, 
 				which copies all rows from the supplied
 				<see cref="T:System.Data.DataRow" />
 				array to a destination table specified by the
@@ -713,13 +755,13 @@ In this example, a <xref:System.Data.DataTable> is created at run time. A single
 			<remarks>
 				<format type="text/markdown"><![CDATA[
 
-For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](~/docs/framework/data/adonet/asynchronous-programming.md).
+For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](/dotnet/framework/data/adonet/asynchronous-programming).
 ]]></format>
 			</remarks>
 			<exception cref="T:System.InvalidOperationException">
 				Calling
 				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataRow[])" />
-				multiple times for the same instance before task completion.  Calling
+				multiple times for the same instance before task completion. Calling
 				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataRow[])" />
 				and
 				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataRow[])" />
@@ -740,6 +782,10 @@ For more information about asynchronous programming in the .NET Framework Data P
 				object is closed before method execution.
 				<see langword="Context Connection=true" />
 				is specified in the connection string.
+
+				A 
+				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> 
+				did not specify a valid destination column name.
 			</exception>
 			<exception cref="T:Microsoft.Data.SqlClient.SqlException">
 				Returned in the task object, any error returned by SQL Server that occurred while opening the connection.
@@ -755,13 +801,12 @@ For more information about asynchronous programming in the .NET Framework Data P
 				The cancellation instruction. A
 				<see cref="P:System.Threading.CancellationToken.None" />
 				value in this parameter makes this method equivalent to
-				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable)" />
-				.
+				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable)" />.
 			</param>
 			<summary>
 				The asynchronous version of
-				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataRow[])" />
-				, which copies all rows from the supplied
+				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataRow[])" />, 
+				which copies all rows from the supplied
 				<see cref="T:System.Data.DataRow" />
 				array to a destination table specified by the
 				<see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName" />
@@ -769,7 +814,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" />
 				object.
 				
-				The cancellation token can be used to request that the operation be abandoned before the command timeout elapses.  Exceptions will be reported via the returned Task object.
+				The cancellation token can be used to request that the operation be abandoned before the command timeout elapses. Exceptions will be reported via the returned Task object.
 			</summary>
 			<returns>
 				A task representing the asynchronous operation.
@@ -777,26 +822,40 @@ For more information about asynchronous programming in the .NET Framework Data P
 			<remarks>
 				<format type="text/markdown"><![CDATA[
 
-For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](~/docs/framework/data/adonet/asynchronous-programming.md).
+For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](/dotnet/framework/data/adonet/asynchronous-programming).
 ]]></format>
 			</remarks>
 			<exception cref="T:System.InvalidOperationException">
 				Calling
 				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataRow[])" />
-				multiple times for the same instance before
-				task completion.  Calling
+				multiple times for the same instance before task completion. 
+				
+				Calling
 				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataRow[])" />
 				and
 				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataRow[])" />
-				for the same instance before task completion.  The connection drops or is closed during
+				for the same instance before task completion. 
+				
+				The connection drops or is closed during
 				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataRow[])" />
-				execution.  Returned in the task object, the
+				execution. 
+				
+				Returned in the task object, the
 				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" />
-				object was closed during the method execution.  Returned in the task object, there was a connection pool timeout.  Returned in the task object, the
+				object was closed during the method execution. 
+				
+				Returned in the task object, there was a connection pool timeout. 
+				
+				Returned in the task object, the
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
 				object is closed before method execution.
+
 				<see langword="Context Connection=true" />
 				is specified in the connection string.
+
+				A 
+				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> 
+				did not specify a valid destination column name.
 			</exception>
 			<exception cref="T:Microsoft.Data.SqlClient.SqlException">
 				Returned in the task object, any error returned by SQL Server that occurred while opening the connection.
@@ -810,8 +869,8 @@ For more information about asynchronous programming in the .NET Framework Data P
 			</param>
 			<summary>
 				The asynchronous version of
-				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.IDataReader)" />
-				, which copies all rows in the supplied
+				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.IDataReader)" />, 
+				which copies all rows in the supplied
 				<see cref="T:System.Data.IDataReader" />
 				to a destination table specified by the
 				<see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName" />
@@ -824,39 +883,50 @@ For more information about asynchronous programming in the .NET Framework Data P
 			</returns>
 			<remarks>
 				<format type="text/markdown"><![CDATA[
-For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](~/docs/framework/data/adonet/asynchronous-programming.md).
+For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](/dotnet/framework/data/adonet/asynchronous-programming).
 ]]></format>
 			</remarks>
 			<exception cref="T:System.InvalidOperationException">
 				Calling
 				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.IDataReader)" />
-				multiple times for the same instance before task completion.  Calling
+				multiple times for the same instance before task completion.
+				
+				Calling
 				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.IDataReader)" />
 				and
 				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.IDataReader)" />
 				for the same instance before task completion.
+				
 				The connection drops or is closed during
 				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.IDataReader)" />
 				execution.
+				
 				Returned in the task object, the
 				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" />
 				object was closed during the method execution.
+				
 				Returned in the task object, there was a connection pool timeout.
+				
 				Returned in the task object, the
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
 				object is closed before method execution.
+				
 				The
 				<see cref="T:System.Data.IDataReader" />
 				was closed before the completed
 				<see cref="T:System.Threading.Tasks.Task" />
 				returned.
+				
 				The
-				<see cref="T:System.Data.IDataReader" />
-				's associated connection was closed before the completed
+				<see cref="T:System.Data.IDataReader" />'s associated connection was closed before the completed
 				<see cref="T:System.Threading.Tasks.Task" />
 				returned.
 				<see langword="Context Connection=true" />
 				is specified in the connection string.
+
+				A 
+				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> 
+				did not specify a valid destination column name.
 			</exception>
 			<exception cref="T:Microsoft.Data.SqlClient.SqlException">
 				Returned in the task object, any error returned by SQL Server that occurred while opening the connection.
@@ -872,24 +942,23 @@ For more information about asynchronous programming in the .NET Framework Data P
 				The cancellation instruction. A
 				<see cref="P:System.Threading.CancellationToken.None" />
 				value in this parameter makes this method equivalent to
-				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.Common.DbDataReader)" />
-				.
+				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.Common.DbDataReader)" />.
 			</param>
 			<summary>
 				The asynchronous version of
-				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.Common.DbDataReader)" />
-				, which copies all rows from the supplied
+				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.Common.DbDataReader)" />, 
+				which copies all rows from the supplied
 				<see cref="T:System.Data.Common.DbDataReader" />
 				array to a destination table specified by the
 				<see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName" />
 				property of the
 				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" />
 				object.
+
+				The cancellation token can be used to request that the operation be abandoned before the command timeout elapses. Exceptions will be reported via the returned Task object.
 			</summary>
 			<returns>
-				Returns
-				<see cref="T:System.Threading.Tasks.Task" />
-				.
+				A task representing the asynchronous operation.
 			</returns>
 			<remarks>
 				To be added.
@@ -903,8 +972,8 @@ For more information about asynchronous programming in the .NET Framework Data P
 			</param>
 			<summary>
 				The asynchronous version of
-				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.IDataReader)" />
-				, which copies all rows in the supplied
+				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.IDataReader)" />, 
+				which copies all rows in the supplied
 				<see cref="T:System.Data.IDataReader" />
 				to a destination table specified by the
 				<see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName" />
@@ -918,7 +987,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 			<remarks>
 				<format type="text/markdown"><![CDATA[
 
-For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](~/docs/framework/data/adonet/asynchronous-programming.md).
+For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](/dotnet/framework/data/adonet/asynchronous-programming).
 ]]></format>
 			</remarks>
 			<exception cref="T:System.InvalidOperationException">
@@ -954,12 +1023,15 @@ For more information about asynchronous programming in the .NET Framework Data P
 				returned.
 				
 				The
-				<see cref="T:System.Data.IDataReader" />
-				's associated connection was closed before the completed
+				<see cref="T:System.Data.IDataReader" />'s associated connection was closed before the completed
 				<see cref="T:System.Threading.Tasks.Task" />
 				returned.
 				<see langword="Context Connection=true" />
 				is specified in the connection string.
+
+				A 
+				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> 
+				did not specify a valid destination column name.
 			</exception>
 			<exception cref="T:Microsoft.Data.SqlClient.SqlException">
 				Returned in the task object, any error returned by SQL Server that occurred while opening the connection.
@@ -975,20 +1047,20 @@ For more information about asynchronous programming in the .NET Framework Data P
 				The cancellation instruction. A
 				<see cref="P:System.Threading.CancellationToken.None" />
 				value in this parameter makes this method equivalent to
-				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable)" />
-				.
+				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable)" />.
 			</param>
 			<summary>
 				The asynchronous version of
-				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.IDataReader)" />
-				, which copies all rows in the supplied
+				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.IDataReader)" />, 
+				which copies all rows in the supplied
 				<see cref="T:System.Data.IDataReader" />
 				to a destination table specified by the
 				<see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName" />
 				property of the
 				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" />
 				object.
-				The cancellation token can be used to request that the operation be abandoned before the command timeout elapses.  Exceptions will be reported via the returned Task object.
+
+				The cancellation token can be used to request that the operation be abandoned before the command timeout elapses. Exceptions will be reported via the returned Task object.
 			</summary>
 			<returns>
 				A task representing the asynchronous operation.
@@ -996,7 +1068,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 			<remarks>
 				<format type="text/markdown"><![CDATA[
 
-For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](~/docs/framework/data/adonet/asynchronous-programming.md).
+For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](/dotnet/framework/data/adonet/asynchronous-programming).
 ]]></format>
 			</remarks>
 			<exception cref="T:System.InvalidOperationException">
@@ -1031,12 +1103,15 @@ For more information about asynchronous programming in the .NET Framework Data P
 				returned.
 				
 				The
-				<see cref="T:System.Data.IDataReader" />
-				's associated connection was closed before the completed
+				<see cref="T:System.Data.IDataReader" />'s associated connection was closed before the completed
 				<see cref="T:System.Threading.Tasks.Task" />
 				returned.
 				<see langword="Context Connection=true" />
 				is specified in the connection string.
+
+				A 
+				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> 
+				did not specify a valid destination column name.
 			</exception>
 			<exception cref="T:Microsoft.Data.SqlClient.SqlException">
 				Returned in the task object, any error returned by SQL Server that occurred while opening the connection.
@@ -1050,8 +1125,8 @@ For more information about asynchronous programming in the .NET Framework Data P
 			</param>
 			<summary>
 				The asynchronous version of
-				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataTable)" />
-				, which copies all rows in the supplied
+				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataTable)" />, 
+				which copies all rows in the supplied
 				<see cref="T:System.Data.DataTable" />
 				to a destination table specified by the
 				<see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName" />
@@ -1065,7 +1140,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 			<remarks>
 				<format type="text/markdown"><![CDATA[
 
-For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](~/docs/framework/data/adonet/asynchronous-programming.md).
+For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](/dotnet/framework/data/adonet/asynchronous-programming).
 ]]></format>
 			</remarks>
 			<exception cref="T:System.InvalidOperationException">
@@ -1094,6 +1169,10 @@ For more information about asynchronous programming in the .NET Framework Data P
 				object is closed before method execution.
 				<see langword="Context Connection=true" />
 				is specified in the connection string.
+
+				A 
+				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> 
+				did not specify a valid destination column name.
 			</exception>
 			<exception cref="T:Microsoft.Data.SqlClient.SqlException">
 				Returned in the task object, any error returned by SQL Server that occurred while opening the connection.
@@ -1109,13 +1188,12 @@ For more information about asynchronous programming in the .NET Framework Data P
 				The cancellation instruction. A
 				<see cref="P:System.Threading.CancellationToken.None" />
 				value in this parameter makes this method equivalent to
-				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable)" />
-				.
+				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable)" />.
 			</param>
 			<summary>
 				The asynchronous version of
-				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataTable)" />
-				, which copies all rows in the supplied
+				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataTable)" />, 
+				which copies all rows in the supplied
 				<see cref="T:System.Data.DataTable" />
 				to a destination table specified by the
 				<see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName" />
@@ -1123,7 +1201,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" />
 				object.
 				
-				The cancellation token can be used to request that the operation be abandoned before the command timeout elapses.  Exceptions will be reported via the returned Task object.
+				The cancellation token can be used to request that the operation be abandoned before the command timeout elapses. Exceptions will be reported via the returned Task object.
 			</summary>
 			<returns>
 				A task representing the asynchronous operation.
@@ -1131,7 +1209,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 			<remarks>
 				<format type="text/markdown"><![CDATA[
 
-For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](~/docs/framework/data/adonet/asynchronous-programming.md).
+For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](/dotnet/framework/data/adonet/asynchronous-programming).
 ]]></format>
 			</remarks>
 			<exception cref="T:System.InvalidOperationException">
@@ -1160,6 +1238,10 @@ For more information about asynchronous programming in the .NET Framework Data P
 				object is closed before method execution.
 				<see langword="Context Connection=true" />
 				is specified in the connection string.
+
+				A 
+				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> 
+				did not specify a valid destination column name.
 			</exception>
 			<exception cref="T:Microsoft.Data.SqlClient.SqlException">
 				Returned in the task object, any error returned by SQL Server that occurred while opening the connection.
@@ -1178,8 +1260,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 			</param>
 			<summary>
 				The asynchronous version of
-				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataTable,System.Data.DataRowState)" />
-				,
+				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataTable,System.Data.DataRowState)" />, 
 				which copies only rows that match the supplied row state in the supplied
 				<see cref="T:System.Data.DataTable" /> to a destination table specified by the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName" />
 				property of the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object.
@@ -1190,7 +1271,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 			<remarks>
 				<format type="text/markdown"><![CDATA[
 
-For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](~/docs/framework/data/adonet/asynchronous-programming.md).
+For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](/dotnet/framework/data/adonet/asynchronous-programming).
 ]]></format>
 			</remarks>
 			<exception cref="T:System.InvalidOperationException">
@@ -1219,6 +1300,10 @@ For more information about asynchronous programming in the .NET Framework Data P
 				object is closed before method execution.
 				<see langword="Context Connection=true" />
 				is specified in the connection string.
+
+				A 
+				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> 
+				did not specify a valid destination column name.
 			</exception>
 			<exception cref="T:Microsoft.Data.SqlClient.SqlException">
 				Returned in the task object, any error returned by SQL Server that occurred while opening the connection.
@@ -1239,13 +1324,11 @@ For more information about asynchronous programming in the .NET Framework Data P
 				The cancellation instruction. A
 				<see cref="P:System.Threading.CancellationToken.None" />
 				value in this parameter makes this method equivalent to
-				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable)" />
-				.
+				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable)" />.
 			</param>
 			<summary>
 				The asynchronous version of
-				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataTable,System.Data.DataRowState)" />
-				,
+				<see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataTable,System.Data.DataRowState)" />, 
 				which copies only rows that match the supplied row state in the supplied
 				<see cref="T:System.Data.DataTable" />
 				to a destination table specified by the
@@ -1254,7 +1337,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" />
 				object.
 				
-				The cancellation token can be used to request that the operation be abandoned before the command timeout elapses.  Exceptions will be reported via the returned Task object.\
+				The cancellation token can be used to request that the operation be abandoned before the command timeout elapses. Exceptions will be reported via the returned Task object.
 			</summary>
 			<returns>
 				A task representing the asynchronous operation.
@@ -1262,7 +1345,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 			<remarks>
 				<format type="text/markdown"><![CDATA[
 
-For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](~/docs/framework/data/adonet/asynchronous-programming.md).
+For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](/dotnet/framework/data/adonet/asynchronous-programming).
 ]]></format>
 			</remarks>
 			<exception cref="T:System.InvalidOperationException">
@@ -1291,6 +1374,10 @@ For more information about asynchronous programming in the .NET Framework Data P
 				object is closed before method execution.
 				<see langword="Context Connection=true" />
 				is specified in the connection string.
+
+				A 
+				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> 
+				did not specify a valid destination column name.
 			</exception>
 			<exception cref="T:Microsoft.Data.SqlClient.SqlException">
 				Returned in the task object, any error returned by SQL Server that occurred while opening the connection.

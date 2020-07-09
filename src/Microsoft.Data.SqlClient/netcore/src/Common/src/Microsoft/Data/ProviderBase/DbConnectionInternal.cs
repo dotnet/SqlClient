@@ -259,6 +259,12 @@ namespace Microsoft.Data.ProviderBase
             SqlClientEventSource.Log.PoolerTraceEvent("<prov.DbConnectionInternal.DoomThisConnection|RES|INFO|CPOOL> {0}, Dooming", ObjectID);
         }
 
+        // Reset connection doomed status so it can be re-connected and pooled.
+        protected internal void UnDoomThisConnection()
+        {
+            _connectionIsDoomed = false;
+        }
+
         protected internal virtual DataTable GetSchema(DbConnectionFactory factory, DbConnectionPoolGroup poolGroup, DbConnection outerConnection, string collectionName, string[] restrictions)
         {
             Debug.Assert(outerConnection != null, "outerConnection may not be null.");

@@ -4530,4 +4530,34 @@
   <data name="SQLUDT_InvalidSize" xml:space="preserve">
     <value>UDT 크기는 {1}보다 작아야 합니다. 크기: {0}</value>
   </data>
+  <data name="SEC_ProtocolWarning" xml:space="preserve">
+    <value>보안 경고: 협상된 {0}은(는) 안전하지 않은 프로토콜이며 이전 버전과의 호환성을 위해서만 지원됩니다. 권장 프로토콜 버전은 TLS 1.2 이상입니다.</value>
+  </data>
+  <data name="net_invalid_enum" xml:space="preserve">
+    <value>지정한 값은 '{0}' 열거형에 사용할 수 없습니다.</value>
+  </data>
+  <data name="SQL_BulkLoadInvalidOrderHint" xml:space="preserve">
+    <value>지정된 열 순서 힌트가 잘못되었습니다.</value>
+  </data>
+  <data name="SQL_BulkLoadOrderHintDuplicateColumn" xml:space="preserve">
+    <value>'{0}' 열이 두 번 이상 지정되었습니다.</value>
+  </data>
+  <data name="SQL_BulkLoadOrderHintInvalidColumn" xml:space="preserve">
+    <value>정렬된 열 '{0}'은(는) 대상 테이블에서 유효하지 않습니다.</value>
+  </data>
+  <data name="SQL_BulkLoadUnspecifiedSortOrder" xml:space="preserve">
+    <value>열 순서 힌트에는 지정되지 않은 정렬 순서를 사용할 수 없습니다.</value>
+  </data>
+  <data name="SQL_UnsupportedAuthenticationSpecified" xml:space="preserve">
+    <value>이 컨텍스트에 지원되지 않는 인증이 지정됨: {0}</value>
+  </data>
+  <data name="SQL_Timeout_Active_Directory_Interactive_Authentication" xml:space="preserve">
+    <value>Active Directory Interactive 인증 시간이 초과되었습니다. 사용자가 인증 요청에 응답하는 데 시간이 너무 오래 걸렸습니다.</value>
+  </data>
+  <data name="SQL_SettingInteractiveWithCredential" xml:space="preserve">
+    <value>Credential 속성이 설정된 경우 'Authentication=Active Directory Interactive'를 사용할 수 없습니다.</value>
+  </data>
+  <data name="SQL_SettingCredentialWithInteractive" xml:space="preserve">
+    <value>'Authentication=Active Directory Interactive'가 연결 문자열에 지정된 경우 Credential 속성을 설정할 수 없습니다.</value>
+  </data>
 </root>

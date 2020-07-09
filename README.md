@@ -24,9 +24,9 @@ The Microsoft.Data.SqlClient NuGet package is available on [NuGet.org](https://w
 
 ## SNI Package References
 
-For the .NET Framework driver on Windows, a package reference to [Microsoft.Data.SqlClient.SNI](https://www.nuget.org/packages/Microsoft.Data.SqlClient.SNI/) loads `x64` and `x86` native `SNI.dll` libraries into the client's build directories.
+For the .NET Framework driver on Windows, a package reference to [Microsoft.Data.SqlClient.SNI](https://www.nuget.org/packages/Microsoft.Data.SqlClient.SNI/) loads native `Microsoft.Data.SqlClient.SNI.x64.dll` and `Microsoft.Data.SqlClient.SNI.x86.dll` libraries into the client's build directories.
 
-For the .NET Core driver on Windows, a package reference to [runtime.native.System.Data.SqlClient.sni](https://www.nuget.org/packages/runtime.native.System.Data.SqlClient.sni/) loads `arm64`, `x64` and `x86` native `SNI.dll` libraries into the client's build directories.
+For the .NET Core driver on Windows, a package reference to [Microsoft.Data.SqlClient.SNI.runtime](https://www.nuget.org/packages/Microsoft.Data.SqlClient.SNI.runtime/) loads `arm`, `arm64`, `x64` and `x86` native `Microsoft.Data.SqlClient.SNI.dll` libraries into the client's build directories.
 
 ## Helpful Links
 
@@ -48,9 +48,10 @@ We thank you for your continuous support in improving the SqlClient library!
 
 - Wraith ([@Wraith2](https://github.com/Wraith2))
 - Erik Ejlskov Jensen ([@ErikEJ](https://github.com/ErikEJ))
+- Simon Cropp ([@SimonCropp](https://github.com/SimonCropp))
 - Stefán Jökull Sigurðarson ([@stebet](https://github.com/stebet))
-- Stephen Toub ([@stephentoub](https://github.com/stephentoub))
 - Shay Rojansky ([@roji](https://github.com/roji))
+- Stephen Toub ([@stephentoub](https://github.com/stephentoub))
 - Rasmus Melchior Jacobsen ([@rmja](https://github.com/rmja))
 - Phillip Haydon ([@phillip-haydon](https://github.com/phillip-haydon))
 - Robin Sue ([@Suchiman](https://github.com/Suchiman))

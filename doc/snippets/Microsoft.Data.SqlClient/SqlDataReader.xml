@@ -41,7 +41,7 @@
  The `Close` method populates the values for output parameters, return values and `RecordsAffected` on the <xref:Microsoft.Data.SqlClient.SqlDataReader> by consuming any pending results. This may be a long operation depending on the amount of data to be consumed. If output values, return values, and `RecordsAffected` are not important to your application, the time to close may be shortened by calling the <xref:Microsoft.Data.SqlClient.SqlCommand.Cancel%2A> method of the associated <xref:Microsoft.Data.SqlClient.SqlCommand> object before the `Close` method is called.
   
 > [!CAUTION]
->  Do not call `Close` or `Dispose` on a Connection, a DataReader, or any other managed object in the `Finalize` method of your class. In a finalizer, you should only release unmanaged resources that your class owns directly. If your class does not own any unmanaged resources, do not include a `Finalize` method in your class definition. For more information, see [Garbage Collection](~/docs/standard/garbage-collection/index.md).  
+>  Do not call `Close` or `Dispose` on a Connection, a DataReader, or any other managed object in the `Finalize` method of your class. In a finalizer, you should only release unmanaged resources that your class owns directly. If your class does not own any unmanaged resources, do not include a `Finalize` method in your class definition. For more information, see [Garbage Collection](/dotnet/standard/garbage-collection/).  
   
    
   
@@ -334,7 +334,7 @@
 |SqlInt64|SqlMoney|SqlSingle|SqlString|  
 |String|UDT, which can be any CLR type marked with <xref:Microsoft.Data.SqlClient.Server.SqlUserDefinedTypeAttribute>.|||  
   
- For more information, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).  
+ For more information, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).  
   
  ]]></format>
             </remarks>
@@ -374,7 +374,7 @@
 |SqlInt64|SqlMoney|SqlSingle|SqlString|  
 |String|UDT, which can be any CLR type marked with <xref:Microsoft.Data.SqlClient.Server.SqlUserDefinedTypeAttribute>.|||  
   
- For more information, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).  
+ For more information, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).  
   
  ]]></format>
             </remarks>
@@ -837,7 +837,7 @@
   
  When the connection property `ContextConnection=true`, <xref:Microsoft.Data.SqlClient.SqlDataReader.GetStream%2A> only supports synchronous data retrieval for both sequential (<xref:System.Data.CommandBehavior.SequentialAccess>) and non-sequential (<xref:System.Data.CommandBehavior.Default>) access.  
   
- For more information, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).  
+ For more information, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).  
   
  ]]></format>
             </remarks>
@@ -893,7 +893,7 @@
   
  When the connection property `ContextConnection=true`, <xref:Microsoft.Data.SqlClient.SqlDataReader.GetTextReader%2A> only supports synchronous data retrieval for both sequential (<xref:System.Data.CommandBehavior.SequentialAccess>) and non-sequential (<xref:System.Data.CommandBehavior.Default>) access.  
   
- For more information, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).  
+ For more information, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).  
   
  ]]></format>
             </remarks>
@@ -988,7 +988,7 @@
   
  <xref:Microsoft.Data.SqlClient.SqlDataReader.GetChars%2A> will raise an <xref:System.InvalidOperationException> exception when used on an object returned by <xref:Microsoft.Data.SqlClient.SqlDataReader.GetXmlReader%2A> when <xref:System.Data.CommandBehavior.SequentialAccess> is in effect.  
   
- For more information, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).  
+ For more information, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).  
   
  ]]></format>
             </remarks>
@@ -1065,7 +1065,7 @@
             <format type="text/markdown"><![CDATA[  
   
 ## Remarks  
- For more information, see [SqlClient Streaming Support](~/docs/framework/data/adonet/sqlclient-streaming-support.md).  
+ For more information, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).  
   
  ]]></format>
             </remarks>
@@ -1133,7 +1133,7 @@
             <format type="text/markdown"><![CDATA[  
   
 ## Remarks  
- For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](~/docs/framework/data/adonet/asynchronous-programming.md).  
+ For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](/dotnet/framework/data/adonet/asynchronous-programming).  
   
  ]]></format>
             </remarks>
@@ -1177,7 +1177,7 @@
 ## Remarks  
  If the `behavior` parameter of <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteReaderAsync%2A> is set to `Default`, <xref:Microsoft.Data.SqlClient.SqlDataReader.ReadAsync%2A> reads the entire row before returning the Task.  
   
- For more information, including code samples, about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](~/docs/framework/data/adonet/asynchronous-programming.md).  
+ For more information, including code samples, about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](/dotnet/framework/data/adonet/asynchronous-programming).  
   
  ]]></format>
             </remarks>

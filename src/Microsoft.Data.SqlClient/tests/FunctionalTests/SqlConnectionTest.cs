@@ -4,12 +4,19 @@
 
 using System;
 using System.Data;
+using System.Collections.Generic;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
 {
     public partial class SqlConnectionTest
     {
+        private static readonly string[] s_retrieveInternalInfoKeys = 
+        {
+            "SQLDNSCachingSupportedState",
+            "SQLDNSCachingSupportedStateBeforeRedirect"
+        };
+
         [Fact]
         public void Constructor1()
         {
@@ -1211,6 +1218,48 @@ namespace Microsoft.Data.SqlClient.Tests
                 Assert.Null(ex.InnerException);
                 Assert.NotNull(ex.Message);
             }
+        }
+
+        [Fact]
+        public void RetrieveInternalInfo_Success()
+        {
+            SqlConnection cn = new SqlConnection();
+            IDictionary<string, object> d = cn.RetrieveInternalInfo();
+
+            Assert.NotNull(d);
+        }
+
+        [Fact]
+        public void RetrieveInternalInfo_ExpectedKeysInDictionary_Success()
+        {
+            SqlConnection cn = new SqlConnection();
+            IDictionary<string, object> d = cn.RetrieveInternalInfo();
+
+            Assert.NotEmpty(d);
+            Assert.Equal(s_retrieveInternalInfoKeys.Length, d.Count);
+
+            Assert.NotEmpty(d.Keys);
+            Assert.Equal(s_retrieveInternalInfoKeys.Length, d.Keys.Count);
+
+            Assert.NotEmpty(d.Values);
+            Assert.Equal(s_retrieveInternalInfoKeys.Length, d.Values.Count);
+
+            foreach(string key in s_retrieveInternalInfoKeys)
+            {
+                Assert.True(d.ContainsKey(key));
+
+                d.TryGetValue(key, out object value);
+                Assert.NotNull(value);
+                Assert.IsType<string>(value);
+            }
+        }
+
+        [Fact]
+        public void RetrieveInternalInfo_UnexpectedKeysInDictionary_Success()
+        {
+            SqlConnection cn = new SqlConnection();
+            IDictionary<string, object> d = cn.RetrieveInternalInfo();
+            Assert.False(d.ContainsKey("Foo"));
         }
     }
 }

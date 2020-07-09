@@ -142,6 +142,61 @@ namespace Microsoft.Data.SqlClient
         ClientCertificateRetrievalCallback _clientCallback;
         SqlClientOriginalNetworkAddressInfo _originalNetworkAddressInfo;
 
+        internal bool _cleanSQLDNSCaching = false;
+
+        private bool _serverSupportsDNSCaching = false;
+
+        /// <summary>
+        /// Get or set if SQLDNSCaching FeatureExtAck is supported by the server.
+        /// </summary>
+        internal bool IsSQLDNSCachingSupported
+        {
+            get
+            {
+                return _serverSupportsDNSCaching;
+            }
+            set
+            {
+                _serverSupportsDNSCaching = value;
+            }
+        }
+
+        private bool _SQLDNSRetryEnabled = false;
+
+        /// <summary>
+        /// Get or set if we need retrying with IP received from FeatureExtAck.
+        /// </summary>
+        internal bool IsSQLDNSRetryEnabled
+        {
+            get
+            {
+                return _SQLDNSRetryEnabled;
+            }
+            set
+            {
+                _SQLDNSRetryEnabled = value;
+            }
+        }
+
+        private bool DNSCachingBeforeRedirect = false;
+
+        /// <summary>
+        /// Get or set if the control ring send redirect token and SQLDNSCaching FeatureExtAck with true
+        /// </summary>
+        internal bool IsDNSCachingBeforeRedirectSupported
+        {
+            get
+            {
+                return DNSCachingBeforeRedirect;
+            }
+            set
+            {
+                DNSCachingBeforeRedirect = value;
+            }
+        }
+
+        internal SQLDNSInfo pendingSQLDNSObject = null;
+
         // TCE flags
         internal byte _tceVersionSupported;
 
@@ -1469,7 +1524,7 @@ namespace Microsoft.Data.SqlClient
             login.serverName = server.UserServerName;
 
             login.useReplication = ConnectionOptions.Replication;
-            login.useSSPI = ConnectionOptions.IntegratedSecurity
+            login.useSSPI = ConnectionOptions.IntegratedSecurity  // Treat AD Integrated like Windows integrated when against a non-FedAuth endpoint
                                      || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && !_fedAuthRequired);
             login.packetSize = _currentPacketSize;
             login.newPassword = newPassword;
@@ -1487,11 +1542,13 @@ namespace Microsoft.Data.SqlClient
                 _sessionRecoveryRequested = true;
             }
 
-            // If the workflow being used is Active Directory Password or Active Directory Integrated and server's prelogin response
+            // If the workflow being used is Active Directory Password/Integrated/Interactive/Service Principal and server's prelogin response
             // for FEDAUTHREQUIRED option indicates Federated Authentication is required, we have to insert FedAuth Feature Extension
-            // in Login7, indicating the intent to use Active Directory Authentication Library for SQL Server.
+            // in Login7, indicating the intent to use Active Directory Authentication for SQL Server.
             if (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
+                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
+                // Since AD Integrated may be acting like Windows integrated, additionally check _fedAuthRequired
                 || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && _fedAuthRequired))
             {
                 requestedFeatures |= TdsEnums.FeatureExtension.FedAuth;
@@ -1527,6 +1584,9 @@ namespace Microsoft.Data.SqlClient
             {
                 requestedFeatures |= TdsEnums.FeatureExtension.AzureSQLSupport;
             }
+
+            // The SQLDNSCaching feature is implicitly set
+            requestedFeatures |= TdsEnums.FeatureExtension.SQLDNSCaching;
 
             _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, _originalNetworkAddressInfo);
         }
@@ -1878,7 +1938,8 @@ namespace Microsoft.Data.SqlClient
             Boolean isFedAuthEnabled = this._accessTokenInBytes != null ||
                                        connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword ||
                                        connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated ||
-                                       connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive;
+                                       connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive ||
+                                       connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal;
 
             // Check if the user had explicitly specified the TNIR option in the connection string or the connection string builder.
             // If the user has specified the option in the connection string explicitly, then we shouldn't disable TNIR.
@@ -2698,6 +2759,7 @@ namespace Microsoft.Data.SqlClient
                             }
                             break;
                         case SqlAuthenticationMethod.ActiveDirectoryPassword:
+                        case SqlAuthenticationMethod.ActiveDirectoryServicePrincipal:
                             if (_activeDirectoryAuthTimeoutRetryHelper.State == ActiveDirectoryAuthenticationTimeoutRetryState.Retrying)
                             {
                                 fedAuthToken = _activeDirectoryAuthTimeoutRetryHelper.CachedToken;
@@ -2720,7 +2782,7 @@ namespace Microsoft.Data.SqlClient
                             }
                             break;
                         default:
-                            throw new InvalidOperationException($"Failed to get a token with unsupported auth method {ConnectionOptions.Authentication}.");
+                            throw SQL.UnsupportedAuthenticationSpecified(ConnectionOptions.Authentication);
                     }
 
                     Debug.Assert(fedAuthToken.accessToken != null, "AccessToken should not be null.");
@@ -2811,8 +2873,11 @@ namespace Microsoft.Data.SqlClient
         {
             if (_routingInfo != null)
             {
-                return;
+                if (TdsEnums.FEATUREEXT_SQLDNSCACHING != featureId) {
+                    return;
+                }
             }
+
             switch (featureId)
             {
                 case TdsEnums.FEATUREEXT_SRECOVERY:
@@ -3026,6 +3091,40 @@ namespace Microsoft.Data.SqlClient
                         break;
                     }
 
+                case TdsEnums.FEATUREEXT_SQLDNSCACHING:
+                    {
+                        SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for SQLDNSCACHING", ObjectID);
+
+                        if (data.Length < 1)
+                        {
+                            SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown token for SQLDNSCACHING", ObjectID);
+                            throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+                        }
+
+                        if (1 == data[0]) {
+                            IsSQLDNSCachingSupported = true;
+                            _cleanSQLDNSCaching = false;
+                            
+                            if (_routingInfo != null)
+                            {
+                                IsDNSCachingBeforeRedirectSupported = true;
+                            }
+                        }
+                        else {
+                            // we receive the IsSupported whose value is 0
+                            IsSQLDNSCachingSupported = false;
+                            _cleanSQLDNSCaching = true;
+                        }
+
+                        // need to add more steps for phrase 2
+                        // get IPv4 + IPv6 + Port number 
+                        // not put them in the DNS cache at this point but need to store them somewhere
+
+                        // generate pendingSQLDNSObject and turn on IsSQLDNSRetryEnabled flag
+
+                        break;
+                    }
+
                 default:
                     {
                         // Unknown feature ack
@@ -3160,4 +3259,3 @@ namespace Microsoft.Data.SqlClient
         }
     }
 }
-

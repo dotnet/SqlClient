@@ -4,7 +4,7 @@ This document provides all the necessary details to build the driver and run tes
 
 ## Visual Studio Pre-Requisites
 
-This project should be ideally built with Visual Studio 2017+ for the best compatibility. Use either of the two environments with their required set of compoenents as mentioned below:
+This project should be built with Visual Studio 2019+ for the best compatibility. The required set of components are provided in the below file:
 - **Visual Studio 2019** with imported components: [VS19Components](/tools/vsconfig/VS19Components.vsconfig)
 
 Once the environment is setup properly, execute the desired set of commands below from the _root_ folder to perform the respective operations:
@@ -106,8 +106,11 @@ Manual Tests require the below setup to run:
 |------|--------|-------------------|
 |TCPConnectionString | Connection String for a TCP enabled SQL Server instance. | `Server={servername};Database={Database_Name};Trusted_Connection=True;` <br/> OR `Data Source={servername};Initial Catalog={Database_Name};Integrated Security=True;`|
 |NPConnectionString | Connection String for a Named Pipes enabled SQL Server instance.| `Server=\\{servername}\pipe\sql\query;Database={Database_Name};Trusted_Connection=True;` <br/> OR <br/> `Data Source=np:{servername};Initial Catalog={Database_Name};Integrated Security=True;`|
+|TCPConnectionStringHGSVBS | (Optional) Connection String for a TCP enabled SQL Server with Host Guardian Service (HGS) attestation protocol configuration. | `Server=tcp:{servername}; Database={Database_Name}; UID={UID}; PWD={PWD}; Attestation Protocol = HGS; Enclave Attestation Url = {AttestationURL};`|
 |AADAuthorityURL | (Optional) Identifies the OAuth2 authority resource for `Server` specified in `AADPasswordConnectionString` | `https://login.windows.net/<tenant>`, where `<tenant>` is the tenant ID of the Azure Active Directory (Azure AD) tenant |
 |AADPasswordConnectionString | (Optional) Connection String for testing Azure Active Directory Password Authentication. | `Data Source={server.database.windows.net}; Initial Catalog={Azure_DB_Name};Authentication=Active Directory Password; User ID={AAD_User}; Password={AAD_User_Password};`|
+|AADSecurePrincipalId | (Optional) The Application Id of a registered application which has been granted permission to the database defined in the AADPasswordConnectionString. | {Application ID} |
+|AADSecurePrincipalSecret | (Optional) A Secret defined for a registered application which has been granted permission to the database defined in the AADPasswordConnectionString. | {Secret} |
 |AzureKeyVaultURL | (Optional) Azure Key Vault Identifier URL | `https://{keyvaultname}.vault.azure.net/` |
 |AzureKeyVaultClientId | (Optional) "Application (client) ID" of an Active Directory registered application, granted access to the Azure Key Vault specified in `AZURE_KEY_VAULT_URL`. Requires the key permissions Get, List, Import, Decrypt, Encrypt, Unwrap, Wrap, Verify, and Sign. | _{Client Application ID}_ |
 |AzureKeyVaultClientSecret | (Optional) "Client Secret" of the Active Directory registered application, granted access to the Azure Key Vault specified in `AZURE_KEY_VAULT_URL` | _{Client Application Secret}_ |
@@ -176,10 +179,10 @@ For .NET Core, all 4 reference types are supported:
 For .NET Framework, below reference types are supported:
 
 ```bash
-> msbuild /t:BuildTestsNetCore /p:ReferenceType=Project
+> msbuild /t:BuildTestsNetFx /p:ReferenceType=Project
 # Default setting uses Project Reference.
 
-> msbuild /t:BuildTestsNetCore /p:ReferenceType=Package
+> msbuild /t:BuildTestsNetFx /p:ReferenceType=Package
 ```
 
 ### Running Tests:
@@ -202,9 +205,9 @@ Tests can be built and run with custom Target Frameworks. See the below examples
 ```
 
 ```bash
-> msbuild /t:BuildTestsNetCore /p:TargetNetCoreVersion=netcoreapp3.0
+> msbuild /t:BuildTestsNetCore /p:TargetNetCoreVersion=netcoreapp3.1
 # Build the tests for custom TargetFramework (.NET Core)
-# Applicable values: netcoreapp2.1 | netcoreapp2.2 | netcoreapp3.0
+# Applicable values: netcoreapp2.1 | netcoreapp2.2 | netcoreapp3.1 | netcoreapp5.0
 ```
 
 ### Running Tests:
@@ -214,9 +217,9 @@ Tests can be built and run with custom Target Frameworks. See the below examples
 # Use above property to run Functional Tests with custom TargetFramework (.NET Framework)
 # Applicable values: net46 (Default) | net461 | net462 | net47 | net471  net472 | net48
 
-> dotnet test /p:TargetNetCoreVersion=netcoreapp3.0 ...
+> dotnet test /p:TargetNetCoreVersion=netcoreapp3.1 ...
 # Use above property to run Functional Tests with custom TargetFramework (.NET Core)
-# Applicable values: netcoreapp2.1 | netcoreapp2.2 | netcoreapp3.0
+# Applicable values: netcoreapp2.1 | netcoreapp2.2 | netcoreapp3.1 | netcoreapp5.0
 ```
 
 ## Using Managed SNI on Windows
@@ -254,7 +257,7 @@ There may be times where connection cannot be made to SQL Server, we found below
 
 - Clear Docker images to create clean image from time-to-time, and clear docker cache if needed by running `docker system prune` in Command Prompt.
 
-- If you face `sni.dll not found` errors when debugging, try updating below properties in netcore\Microsoft.Data.SqlClient.csproj file and try again:
+- If you face `Microsoft.Data.SqlClient.SNI.dll not found` errors when debugging, try updating the below properties in the netcore\Microsoft.Data.SqlClient.csproj file and try again:
   ```xml
     <OSGroup>Unix</OSGroup>
     <TargetsWindows>false</TargetsWindows>

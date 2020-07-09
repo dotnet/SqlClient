@@ -3412,7 +3412,7 @@ namespace Microsoft.Data.SqlClient
                             return true;
                     }
 
-                    // Dev11 Bug 316483:Hang on SqlDataReader::TryHasMoreResults using MARS
+                    // Dev11 Bug 316483: Stuck at SqlDataReader::TryHasMoreResults using MARS
                     // http://vstfdevdiv:8080/web/wi.aspx?pcguid=22f9acc9-569a-41ff-b6ac-fac1b6370209&id=316483
                     // TryRun() will immediately return if the TdsParser is closed\broken, causing us to enter an infinite loop
                     // Instead, we will throw a closed connection exception
@@ -3497,7 +3497,7 @@ namespace Microsoft.Data.SqlClient
                             ParsedDoneToken = true;
                         }
 
-                        // Dev11 Bug 316483:Hang on SqlDataReader::TryHasMoreResults using MARS
+                        // Dev11 Bug 316483: Stuck at SqlDataReader::TryHasMoreResults when using MARS
                         // http://vstfdevdiv:8080/web/wi.aspx?pcguid=22f9acc9-569a-41ff-b6ac-fac1b6370209&id=316483
                         // TryRun() will immediately return if the TdsParser is closed\broken, causing us to enter an infinite loop
                         // Instead, we will throw a closed connection exception

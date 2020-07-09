@@ -24,14 +24,10 @@
             <summary>A constant for use with the **GetSchema** method that represents the **Indexes** collection.</summary>
             <remarks>To be added.</remarks>
         </Indexes>
-        <Parameters>
-            <summary>A constant for use with the **GetSchema** method that represents the **Parameters** collection.</summary>
+        <ProcedureParameters>
+            <summary>A constant for use with the **GetSchema** method that represents the **ProcedureParameters** collection.</summary>
             <remarks>To be added.</remarks>
-        </Parameters>
-        <ProcedureColumns>
-            <summary>A constant for use with the **GetSchema** method that represents the **ProcedureColumns** collection.</summary>
-            <remarks>To be added.</remarks>
-        </ProcedureColumns>
+        </ProcedureParameters>
         <Procedures>
             <summary>A constant for use with the **GetSchema** method that represents the **Procedures** collection.</summary>
             <remarks>To be added.</remarks>
@@ -56,5 +52,13 @@
             <summary>A constant for use with the **GetSchema** method that represents the **Views** collection.</summary>
             <remarks>To be added.</remarks>
         </Views>
+        <AllColumns>
+            <summary>A constant for use with the **GetSchema** method that represents the **AllColumns** collection.</summary>
+            <remarks>To be added.</remarks>
+        </AllColumns>
+        <ColumnSetColumns>
+            <summary>A constant for use with the **GetSchema** method that represents the **ColumnSetColumns** collection.</summary>
+            <remarks>To be added.</remarks>
+        </ColumnSetColumns>
     </members>
 </docs>

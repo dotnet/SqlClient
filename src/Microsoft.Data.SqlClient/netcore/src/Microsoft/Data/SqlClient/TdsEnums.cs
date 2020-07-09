@@ -214,6 +214,7 @@ namespace Microsoft.Data.SqlClient
         public const byte FEATUREEXT_AZURESQLSUPPORT = 0x08;
         public const byte FEATUREEXT_DATACLASSIFICATION = 0x09;
         public const byte FEATUREEXT_UTF8SUPPORT = 0x0A;
+        public const byte FEATUREEXT_SQLDNSCACHING = 0x0B;
 
         [Flags]
         public enum FeatureExtension : uint
@@ -226,6 +227,7 @@ namespace Microsoft.Data.SqlClient
             AzureSQLSupport = 1 << (TdsEnums.FEATUREEXT_AZURESQLSUPPORT - 1),
             DataClassification = 1 << (TdsEnums.FEATUREEXT_DATACLASSIFICATION - 1),
             UTF8Support = 1 << (TdsEnums.FEATUREEXT_UTF8SUPPORT - 1),
+            SQLDNSCaching = 1 << (TdsEnums.FEATUREEXT_SQLDNSCACHING - 1)
         }
 
         public const uint UTF8_IN_TDSCOLLATION = 0x4000000;
@@ -246,12 +248,14 @@ namespace Microsoft.Data.SqlClient
         public const byte MSALWORKFLOW_ACTIVEDIRECTORYPASSWORD = 0x01;
         public const byte MSALWORKFLOW_ACTIVEDIRECTORYINTEGRATED = 0x02;
         public const byte MSALWORKFLOW_ACTIVEDIRECTORYINTERACTIVE = 0x03;
+        public const byte MSALWORKFLOW_ACTIVEDIRECTORYSERVICEPRINCIPAL = 0x01; // Using the Password byte as that is the closest we have
 
         public enum ActiveDirectoryWorkflow : byte
         {
             Password = MSALWORKFLOW_ACTIVEDIRECTORYPASSWORD,
             Integrated = MSALWORKFLOW_ACTIVEDIRECTORYINTEGRATED,
             Interactive = MSALWORKFLOW_ACTIVEDIRECTORYINTERACTIVE,
+            ServicePrincipal = MSALWORKFLOW_ACTIVEDIRECTORYSERVICEPRINCIPAL,
         }
 
         // The string used for username in the error message when Authentication = Active Directory Integrated with FedAuth is used, if authentication fails.
@@ -603,8 +607,8 @@ namespace Microsoft.Data.SqlClient
         // Login data validation Rules
         //
         internal const ushort MAXLEN_HOSTNAME = 128; // the client machine name
-        internal const ushort MAXLEN_USERNAME = 128; // the client user id
-        internal const ushort MAXLEN_PASSWORD = 128; // the password supplied by the client
+        internal const ushort MAXLEN_CLIENTID = 128;
+        internal const ushort MAXLEN_CLIENTSECRET = 128;
         internal const ushort MAXLEN_APPNAME = 128; // the client application name
         internal const ushort MAXLEN_SERVERNAME = 128; // the server name
         internal const ushort MAXLEN_CLIENTINTERFACE = 128; // the interface library name
@@ -1121,7 +1125,10 @@ namespace Microsoft.Data.SqlClient
         ActiveDirectoryIntegrated,
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryInteractive/*'/>
-        ActiveDirectoryInteractive
+        ActiveDirectoryInteractive,
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryServicePrincipal/*'/>
+        ActiveDirectoryServicePrincipal,
     }
     // This enum indicates the state of TransparentNetworkIPResolution
     // The first attempt when TNIR is on should be sequential. If the first attempt failes next attempts should be parallel.
@@ -1134,7 +1141,7 @@ namespace Microsoft.Data.SqlClient
 
     internal class ActiveDirectoryAuthentication
     {
-        internal const string AdoClientId = "4d079b4c-cab7-4b7c-a115-8fd51b6f8239";
+        internal const string AdoClientId = "2fd908ad-0664-4344-b9be-cd3e8b574c38";
         internal const string MSALGetAccessTokenFunctionName = "AcquireToken";
     }
 

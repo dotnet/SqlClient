@@ -5,6 +5,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Text;
+using System.Threading;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -140,6 +141,60 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     // drop the temp table to release its resources
                     cmd.CommandText = "DROP TABLE " + tempTableName;
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        public static void CollatedDataReaderTest()
+        {
+            var databaseName = DataTestUtility.GetUniqueName("DB");
+            // Remove square brackets
+            var dbName = databaseName.Substring(1, databaseName.Length - 2);
+
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+            {
+                InitialCatalog = dbName,
+                Pooling = false
+            };
+
+            using (SqlConnection con = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlCommand cmd = con.CreateCommand())
+            {
+                try
+                {
+                    con.Open();
+
+                    // Create collated database
+                    cmd.CommandText = $"CREATE DATABASE {databaseName} COLLATE KAZAKH_90_CI_AI";
+                    cmd.ExecuteNonQuery();
+
+                    //Create connection without pooling in order to delete database later.
+                    using (SqlConnection dbCon = new SqlConnection(builder.ConnectionString))
+                    using (SqlCommand dbCmd = dbCon.CreateCommand())
+                    {
+                        var data = "TestData";
+
+                        dbCon.Open();
+                        dbCmd.CommandText = $"SELECT '{data}'";
+                        using (SqlDataReader reader = dbCmd.ExecuteReader())
+                        {
+                            reader.Read();
+                            Assert.Equal(data, reader.GetString(0));
+                        }
+                    }
+
+                    // Let connection close safely before dropping database for slow servers.
+                    Thread.Sleep(500);
+                }
+                catch (SqlException e)
+                {
+                    Assert.True(false, $"Unexpected Exception occurred: {e.Message}");
+                }
+                finally
+                {
+                    cmd.CommandText = $"DROP DATABASE {databaseName}";
                     cmd.ExecuteNonQuery();
                 }
             }

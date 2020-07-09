@@ -6,13 +6,34 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Security.Authentication;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
+using System.Net;
 
 namespace Microsoft.Data.SqlClient
 {
     internal class TdsParserStateObjectNative : TdsParserStateObject
     {
+        // protocol versions from native sni
+        [Flags]
+        private enum NativeProtocols
+        {
+            SP_PROT_SSL2_SERVER = 0x00000004,
+            SP_PROT_SSL2_CLIENT = 0x00000008,
+            SP_PROT_SSL3_SERVER = 0x00000010,
+            SP_PROT_SSL3_CLIENT = 0x00000020,
+            SP_PROT_TLS1_0_SERVER = 0x00000040,
+            SP_PROT_TLS1_0_CLIENT = 0x00000080,
+            SP_PROT_TLS1_1_SERVER = 0x00000100,
+            SP_PROT_TLS1_1_CLIENT = 0x00000200,
+            SP_PROT_TLS1_2_SERVER = 0x00000400,
+            SP_PROT_TLS1_2_CLIENT = 0x00000800,
+            SP_PROT_TLS1_3_SERVER = 0x00001000,
+            SP_PROT_TLS1_3_CLIENT = 0x00002000,
+            SP_PROT_NONE = 0x0
+        }
+
         private SNIHandle _sessionHandle = null;              // the SNI handle we're to work on
 
         private SNIPacket _sniPacket = null;                // Will have to re-vamp this for MARS
@@ -41,7 +62,62 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(physicalConnection is TdsParserStateObjectNative, "Expected a stateObject of type " + this.GetType());
             TdsParserStateObjectNative nativeSNIObject = physicalConnection as TdsParserStateObjectNative;
             SNINativeMethodWrapper.ConsumerInfo myInfo = CreateConsumerInfo(async);
-            _sessionHandle = new SNIHandle(myInfo, nativeSNIObject.Handle);
+
+            SQLDNSInfo cachedDNSInfo;
+            bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(_parser.FQDNforDNSCahce, out cachedDNSInfo);
+
+            _sessionHandle = new SNIHandle(myInfo, nativeSNIObject.Handle, cachedDNSInfo);
+        }
+
+        internal override void AssignPendingDNSInfo(string userProtocol, string DNSCacheKey, ref SQLDNSInfo pendingDNSInfo)
+        {
+            uint result;
+            ushort portFromSNI = 0;
+            string IPStringFromSNI = string.Empty;
+            IPAddress IPFromSNI;
+            _parser.isTcpProtocol = false;
+            SNINativeMethodWrapper.ProviderEnum providerNumber = SNINativeMethodWrapper.ProviderEnum.INVALID_PROV;
+
+            if (string.IsNullOrEmpty(userProtocol))
+            {
+                
+                result = SNINativeMethodWrapper.SniGetProviderNumber(Handle, ref providerNumber);
+                Debug.Assert(result == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetProviderNumber");
+                _parser.isTcpProtocol = (providerNumber == SNINativeMethodWrapper.ProviderEnum.TCP_PROV);
+            }
+            else if (userProtocol == TdsEnums.TCP) 
+            {
+                _parser.isTcpProtocol = true;
+            }
+
+            // serverInfo.UserProtocol could be empty
+            if (_parser.isTcpProtocol)
+            {
+                result = SNINativeMethodWrapper.SniGetConnectionPort(Handle, ref portFromSNI);
+                Debug.Assert(result == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetConnectionPort");
+
+
+                result = SNINativeMethodWrapper.SniGetConnectionIPString(Handle, ref IPStringFromSNI);
+                Debug.Assert(result == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetConnectionIPString");
+
+                pendingDNSInfo = new SQLDNSInfo(DNSCacheKey, null, null, portFromSNI.ToString());
+
+                if (IPAddress.TryParse(IPStringFromSNI, out IPFromSNI))
+                {
+                    if (System.Net.Sockets.AddressFamily.InterNetwork == IPFromSNI.AddressFamily)
+                    {
+                        pendingDNSInfo.AddrIPv4 = IPStringFromSNI;
+                    }
+                    else if (System.Net.Sockets.AddressFamily.InterNetworkV6 == IPFromSNI.AddressFamily)
+                    {
+                        pendingDNSInfo.AddrIPv6 = IPStringFromSNI;
+                    }
+                }
+            }
+            else
+            {
+                pendingDNSInfo = null;
+            }
         }
 
         private SNINativeMethodWrapper.ConsumerInfo CreateConsumerInfo(bool async)
@@ -62,7 +138,7 @@ namespace Microsoft.Data.SqlClient
             return myInfo;
         }
 
-        internal override void CreatePhysicalSNIHandle(string serverName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[] spnBuffer, bool flushCache, bool async, bool fParallel, bool isIntegratedSecurity)
+        internal override void CreatePhysicalSNIHandle(string serverName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[] spnBuffer, bool flushCache, bool async, bool fParallel, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo, bool isIntegratedSecurity)
         {
             // We assume that the loadSSPILibrary has been called already. now allocate proper length of buffer
             spnBuffer = null;
@@ -93,7 +169,10 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            _sessionHandle = new SNIHandle(myInfo, serverName, spnBuffer, ignoreSniOpenTimeout, checked((int)timeout), out instanceName, flushCache, !async, fParallel);
+            SQLDNSInfo cachedDNSInfo;
+            bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(cachedFQDN, out cachedDNSInfo);
+
+            _sessionHandle = new SNIHandle(myInfo, serverName, spnBuffer, ignoreSniOpenTimeout, checked((int)timeout), out instanceName, flushCache, !async, fParallel, cachedDNSInfo);
         }
 
         protected override uint SNIPacketGetData(PacketHandle packet, byte[] _inBuff, ref uint dataSize)
@@ -309,8 +388,49 @@ namespace Microsoft.Data.SqlClient
         internal override uint GenerateSspiClientContext(byte[] receivedBuff, uint receivedLength, ref byte[] sendBuff, ref uint sendLength, byte[] _sniSpnBuffer)
             => SNINativeMethodWrapper.SNISecGenClientContext(Handle, receivedBuff, receivedLength, sendBuff, ref sendLength, _sniSpnBuffer);
 
-        internal override uint WaitForSSLHandShakeToComplete()
-            => SNINativeMethodWrapper.SNIWaitForSSLHandshakeToComplete(Handle, GetTimeoutRemaining());
+        internal override uint WaitForSSLHandShakeToComplete(out int protocolVersion)
+        {
+            uint returnValue = SNINativeMethodWrapper.SNIWaitForSSLHandshakeToComplete(Handle, GetTimeoutRemaining(), out uint nativeProtocolVersion);
+            var nativeProtocol = (NativeProtocols)nativeProtocolVersion;
+
+            /* The SslProtocols.Tls13 is supported by netcoreapp3.1 and later
+             * This driver does not support this version yet!
+            if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_3_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_3_SERVER))
+            {
+                protocolVersion = (int)SslProtocols.Tls13;
+            }*/
+            if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_2_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_2_SERVER))
+            {
+                protocolVersion = (int)SslProtocols.Tls12;
+            }
+            else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_1_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_1_SERVER))
+            {
+                protocolVersion = (int)SslProtocols.Tls11;
+            }
+            else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_0_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_0_SERVER))
+            {
+                protocolVersion = (int)SslProtocols.Tls;
+            }
+            else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_SSL3_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_SSL3_SERVER))
+            {
+#pragma warning disable CS0618 // Type or member is obsolete : SSL is depricated
+                protocolVersion = (int)SslProtocols.Ssl3;
+            }
+            else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_SSL2_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_SSL2_SERVER))
+            {
+                protocolVersion = (int)SslProtocols.Ssl2;
+#pragma warning restore CS0618 // Type or member is obsolete : SSL is depricated
+            }
+            else if(nativeProtocol.HasFlag(NativeProtocols.SP_PROT_NONE))
+            {
+                protocolVersion = (int)SslProtocols.None;
+            }
+            else
+            {
+                throw new ArgumentException(SRHelper.Format(SRHelper.net_invalid_enum, nameof(NativeProtocols)), nameof(NativeProtocols));
+            }
+            return returnValue;
+        }
 
         internal override void DisposePacketCache()
         {
