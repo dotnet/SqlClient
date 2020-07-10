@@ -5,16 +5,22 @@
 using System;
 using System.Runtime.Serialization;
 
+#if NETFRAMEWORK
+using SR = System.Strings;
+#endif
+
 namespace Microsoft.Data
 {
-    /// <include file='../../../../../../doc/snippets/Microsoft.Data/OperationAbortedException.xml' path='docs/members[@name="OperationAbortedException"]/OperationAbortedException/*' />
+    /// <include file='../../../../../doc/snippets/Microsoft.Data/OperationAbortedException.xml' path='docs/members[@name="OperationAbortedException"]/OperationAbortedException/*' />
     [Serializable]
     [System.Runtime.CompilerServices.TypeForwardedFrom("System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")]
     public sealed class OperationAbortedException : SystemException
     {
+        private const int OperationAbortedHResult = unchecked((int)0x80131936);
+
         private OperationAbortedException(string message, Exception innerException) : base(message, innerException)
         {
-            HResult = unchecked((int)0x80131936);
+            HResult = OperationAbortedHResult;
         }
 
         private OperationAbortedException(SerializationInfo info, StreamingContext context) : base(info, context)

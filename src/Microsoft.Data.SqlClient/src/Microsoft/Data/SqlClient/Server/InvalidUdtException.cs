@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -6,34 +6,42 @@ using System;
 using System.Runtime.Serialization;
 using Microsoft.Data.Common;
 
+#if NETFRAMEWORK
+using SRHelper = Microsoft.Data.StringsHelper;
+using SR = System.Strings;
+#endif
+
 namespace Microsoft.Data.SqlClient.Server
 {
-    /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\InvalidUdtException.xml' path='docs/members[@name="InvalidUdtException"]/InvalidUdtException/*' />
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/InvalidUdtException.xml' path='docs/members[@name="InvalidUdtException"]/InvalidUdtException/*' />
     [Serializable]
     public sealed class InvalidUdtException : SystemException
     {
+        private const int InvalidUdtHResult = unchecked((int)0x80131937);
 
         internal InvalidUdtException() : base()
         {
-            HResult = HResults.InvalidUdt;
+            HResult = InvalidUdtHResult;
         }
 
-        internal InvalidUdtException(String message) : base(message)
+        internal InvalidUdtException(string message) : base(message)
         {
-            HResult = HResults.InvalidUdt;
+            HResult = InvalidUdtHResult;
         }
 
-        internal InvalidUdtException(String message, Exception innerException) : base(message, innerException)
+        internal InvalidUdtException(string message, Exception innerException) : base(message, innerException)
         {
-            HResult = HResults.InvalidUdt;
+            HResult = InvalidUdtHResult;
         }
 
         private InvalidUdtException(SerializationInfo si, StreamingContext sc) : base(si, sc)
         {
         }
 
-        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\InvalidUdtException.xml' path='docs/members[@name="InvalidUdtException"]/GetObjectData/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/InvalidUdtException.xml' path='docs/members[@name="InvalidUdtException"]/GetObjectData/*' />
+#if NETFRAMEWORK
         [System.Security.Permissions.SecurityPermissionAttribute(System.Security.Permissions.SecurityAction.LinkDemand, Flags = System.Security.Permissions.SecurityPermissionFlag.SerializationFormatter)]
+#endif
         public override void GetObjectData(SerializationInfo si, StreamingContext context)
         {
             base.GetObjectData(si, context);
@@ -41,8 +49,8 @@ namespace Microsoft.Data.SqlClient.Server
 
         internal static InvalidUdtException Create(Type udtType, string resourceReason)
         {
-            string reason = StringsHelper.GetString(resourceReason);
-            string message = StringsHelper.GetString(Strings.SqlUdt_InvalidUdtMessage, udtType.FullName, reason);
+            string reason = SRHelper.GetString(resourceReason);
+            string message = SRHelper.GetString(SR.SqlUdt_InvalidUdtMessage, udtType.FullName, reason);
             InvalidUdtException e = new InvalidUdtException(message);
             ADP.TraceExceptionAsReturnValue(e);
             return e;
