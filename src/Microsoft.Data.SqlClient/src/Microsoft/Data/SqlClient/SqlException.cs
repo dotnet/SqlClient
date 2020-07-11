@@ -9,33 +9,36 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.Serialization;
 using System.Text;
-using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/SqlException/*' />
+    /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/SqlException/*' />
     [Serializable]
-    public sealed class SqlException : System.Data.Common.DbException
+    [System.Runtime.CompilerServices.TypeForwardedFrom("System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")]
+    public sealed partial class SqlException : System.Data.Common.DbException
     {
         private const string OriginalClientConnectionIdKey = "OriginalClientConnectionId";
         private const string RoutingDestinationKey = "RoutingDestination";
+        private const int SqlExceptionHResult = unchecked((int)0x80131904);
 
         private SqlErrorCollection _errors;
         [System.Runtime.Serialization.OptionalFieldAttribute(VersionAdded = 4)]
         private Guid _clientConnectionId = Guid.Empty;
 
+        // Do not serialize this field! It is used to indicate that no reconnection attempts are required
+        internal bool _doNotReconnect = false;
+
         private SqlException(string message, SqlErrorCollection errorCollection, Exception innerException, Guid conId) : base(message, innerException)
         {
-            HResult = HResults.SqlException;
+            HResult = SqlExceptionHResult;
             _errors = errorCollection;
             _clientConnectionId = conId;
         }
 
-        // runtime will call even if private...
         private SqlException(SerializationInfo si, StreamingContext sc) : base(si, sc)
         {
             _errors = (SqlErrorCollection)si.GetValue("Errors", typeof(SqlErrorCollection));
-            HResult = HResults.SqlException;
+            HResult = SqlExceptionHResult;
             foreach (SerializationEntry siEntry in si)
             {
                 if (nameof(ClientConnectionId) == siEntry.Name)
@@ -46,8 +49,8 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/GetObjectData/*' />
-        override public void GetObjectData(SerializationInfo si, StreamingContext context)
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/GetObjectData/*' />
+        public override void GetObjectData(SerializationInfo si, StreamingContext context)
         {
             base.GetObjectData(si, context);
             si.AddValue("Errors", null); // Not specifying type to enable serialization of null value of non-serializable type
@@ -65,10 +68,8 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/Errors/*' />
-        [
-        DesignerSerializationVisibility(DesignerSerializationVisibility.Content)
-        ]
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/Errors/*' />
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
         public SqlErrorCollection Errors
         {
             get
@@ -81,64 +82,58 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/ClientConnectionId/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/ClientConnectionId/*' />
         public Guid ClientConnectionId
         {
             get
             {
-                return this._clientConnectionId;
+                return _clientConnectionId;
             }
         }
 
-        /*virtual protected*/
-        private bool ShouldSerializeErrors()
-        { // MDAC 65548
-            return ((null != _errors) && (0 < _errors.Count));
-        }
-
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/Class/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Class/*' />
         public byte Class
         {
-            get { return this.Errors[0].Class; }
+            get { return Errors.Count > 0 ? Errors[0].Class : default; }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/LineNumber/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/LineNumber/*' />
         public int LineNumber
         {
-            get { return this.Errors[0].LineNumber; }
+            get { return Errors.Count > 0 ? Errors[0].LineNumber : default; }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/Number/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Number/*' />
         public int Number
         {
-            get { return this.Errors[0].Number; }
+            get { return Errors.Count > 0 ? Errors[0].Number : default; }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/Procedure/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Procedure/*' />
         public string Procedure
         {
-            get { return this.Errors[0].Procedure; }
+            get { return Errors.Count > 0 ? Errors[0].Procedure : default; }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/Server/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Server/*' />
         public string Server
         {
-            get { return this.Errors[0].Server; }
+            get { return Errors.Count > 0 ? Errors[0].Server : default; }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/State/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/State/*' />
         public byte State
         {
-            get { return this.Errors[0].State; }
+            get { return Errors.Count > 0 ? Errors[0].State : default; }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/Source/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Source/*' />
         override public string Source
         {
-            get { return this.Errors[0].Source; }
+            get { return Errors.Count > 0 ? Errors[0].Source : default; }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/ToString/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/ToString/*' />
         public override string ToString()
         {
             StringBuilder sb = new StringBuilder(base.ToString());
@@ -146,7 +141,7 @@ namespace Microsoft.Data.SqlClient
             sb.AppendFormat(SQLMessage.ExClientConnectionId(), _clientConnectionId);
 
             // Append the error number, state and class if the server provided it
-            if (Number != 0)
+            if (Errors.Count > 0 && Number != 0)
             {
                 sb.AppendLine();
                 sb.AppendFormat(SQLMessage.ExErrorNumberStateClass(), Number, State, Class);
@@ -169,15 +164,15 @@ namespace Microsoft.Data.SqlClient
             return sb.ToString();
         }
 
-        static internal SqlException CreateException(SqlErrorCollection errorCollection, string serverVersion)
+        internal static SqlException CreateException(SqlErrorCollection errorCollection, string serverVersion)
         {
             return CreateException(errorCollection, serverVersion, Guid.Empty);
         }
 
-        static internal SqlException CreateException(SqlErrorCollection errorCollection, string serverVersion, SqlInternalConnectionTds internalConnection, Exception innerException = null)
+        internal static SqlException CreateException(SqlErrorCollection errorCollection, string serverVersion, SqlInternalConnectionTds internalConnection, Exception innerException = null)
         {
             Guid connectionId = (internalConnection == null) ? Guid.Empty : internalConnection._clientConnectionId;
-            var exception = CreateException(errorCollection, serverVersion, connectionId, innerException);
+            SqlException exception = CreateException(errorCollection, serverVersion, connectionId, innerException);
 
             if (internalConnection != null)
             {
@@ -195,11 +190,10 @@ namespace Microsoft.Data.SqlClient
             return exception;
         }
 
-        static internal SqlException CreateException(SqlErrorCollection errorCollection, string serverVersion, Guid conId, Exception innerException = null)
+        internal static SqlException CreateException(SqlErrorCollection errorCollection, string serverVersion, Guid conId, Exception innerException = null)
         {
             Debug.Assert(null != errorCollection && errorCollection.Count > 0, "no errorCollection?");
 
-            // concat all messages together MDAC 65533
             StringBuilder message = new StringBuilder();
             for (int i = 0; i < errorCollection.Count; i++)
             {
@@ -219,7 +213,7 @@ namespace Microsoft.Data.SqlClient
 
             exception.Data.Add("HelpLink.ProdName", "Microsoft SQL Server");
 
-            if (!ADP.IsEmpty(serverVersion))
+            if (!string.IsNullOrEmpty(serverVersion))
             {
                 exception.Data.Add("HelpLink.ProdVer", serverVersion);
             }
@@ -234,14 +228,15 @@ namespace Microsoft.Data.SqlClient
         internal SqlException InternalClone()
         {
             SqlException exception = new SqlException(Message, _errors, InnerException, _clientConnectionId);
-            if (this.Data != null)
-                foreach (DictionaryEntry entry in this.Data)
+            if (Data != null)
+            {
+                foreach (DictionaryEntry entry in Data)
+                {
                     exception.Data.Add(entry.Key, entry.Value);
-            exception._doNotReconnect = this._doNotReconnect;
+                }
+            }
+            exception._doNotReconnect = _doNotReconnect;
             return exception;
         }
-
-        // Do not serialize this field! It is used to indicate that no reconnection attempts are required
-        internal bool _doNotReconnect = false;
     }
 }

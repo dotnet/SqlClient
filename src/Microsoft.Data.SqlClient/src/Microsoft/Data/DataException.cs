@@ -6,6 +6,11 @@ using System;
 using System.Diagnostics;
 using Microsoft.Data.SqlClient;
 
+#if NETFRAMEWORK
+using SRHelper = Microsoft.Data.StringsHelper;
+using SR = System.Strings;
+#endif
+
 namespace Microsoft.Data
 {
     // These functions are major point of localization.
@@ -25,8 +30,7 @@ namespace Microsoft.Data
         // The resource Data.txt will ensure proper string text based on the appropriate
         // locale.
 
-        static private void TraceException(
-           string trace, Exception e)
+        static private void TraceException(string trace, Exception e)
         {
             Debug.Assert(null != e, "TraceException: null Exception");
             if (null != e)
@@ -41,18 +45,16 @@ namespace Microsoft.Data
             TraceException("<comm.ADP.TraceException|ERR|THROW> Message='{0}'", e);
         }
 
-        //
-        // COM+ exceptions
-        //
         internal static ArgumentException _Argument(string error)
         {
             ArgumentException e = new ArgumentException(error);
             ExceptionBuilder.TraceExceptionAsReturnValue(e);
             return e;
         }
+
         public static Exception InvalidOffsetLength()
         {
             return _Argument(SRHelper.GetString(SR.Data_InvalidOffsetLength));
         }
-    }// ExceptionBuilder
+    }
 }
