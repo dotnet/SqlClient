@@ -1980,7 +1980,7 @@ namespace Microsoft.Data.SqlClient
         {
             // Connection exists,  schedule removal, will be added to ref collection after calling ValidateAndReconnect
             return outerTask.ContinueWith(
-                continuationFunction: (task,state) =>
+                continuationFunction: (task, state) =>
                 {
                     Tuple<SqlConnection, object> parameters = (Tuple<SqlConnection, object>)state;
                     SqlConnection connection = parameters.Item1;

@@ -189,19 +189,19 @@ namespace Microsoft.Data.ProviderBase
             CancellationTokenSource source = parameters.Item1;
             source.Dispose();
 
-            TaskCompletionSource<DbConnectionInternal> retryCompletionSrouce = parameters.Item2;
+            TaskCompletionSource<DbConnectionInternal> retryCompletionSource = parameters.Item2;
 
             if (task.IsCanceled)
             {
-                retryCompletionSrouce.TrySetException(ADP.ExceptionWithStackTrace(ADP.NonPooledOpenTimeout()));
+                retryCompletionSource.TrySetException(ADP.ExceptionWithStackTrace(ADP.NonPooledOpenTimeout()));
             }
             else if (task.IsFaulted)
             {
-                retryCompletionSrouce.TrySetException(task.Exception.InnerException);
+                retryCompletionSource.TrySetException(task.Exception.InnerException);
             }
             else
             {
-                if (!retryCompletionSrouce.TrySetResult(task.Result))
+                if (!retryCompletionSource.TrySetResult(task.Result))
                 {
                     // The outer TaskCompletionSource was already completed
                     // Which means that we don't know if someone has messed with the outer connection in the middle of creation
