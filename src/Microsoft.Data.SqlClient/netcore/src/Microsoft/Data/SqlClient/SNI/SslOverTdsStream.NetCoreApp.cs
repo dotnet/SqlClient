@@ -33,136 +33,56 @@ namespace Microsoft.Data.SqlClient.SNI
 
         public override int Read(Span<byte> buffer)
         {
-            if (_encapsulate)
+            if (!_encapsulate)
             {
-                if (_packetBytes > 0)
+                return _stream.Read(buffer);
+            }
+
+            if (_packetBytes > 0)
+            {
+                // there are queued bytes from a previous packet available
+                // work out how many of the remaining bytes we can consume
+                int wantedCount = Math.Min(buffer.Length, _packetBytes);
+                int readCount = _stream.Read(buffer.Slice(0, wantedCount));
+                if (readCount == 0)
                 {
-                    // there are queued bytes from a previous packet available
-                    // work out how many of the remaining bytes we can consume
-                    int wantedCount = Math.Min(buffer.Length, _packetBytes);
-                    int readCount = _stream.Read(buffer.Slice(0, wantedCount));
-                    if (readCount == 0)
+                    // 0 means the connection was closed, tell the caller
+                    return 0;
+                }
+                _packetBytes -= readCount;
+                return readCount;
+            }
+            else
+            {
+                Span<byte> headerBytes = stackalloc byte[TdsEnums.HEADER_LEN];
+
+                // fetch the packet header to determine how long the packet is
+                int headerBytesRead = 0;
+                do
+                {
+                    int headerBytesReadIteration = _stream.Read(headerBytes.Slice(headerBytesRead, TdsEnums.HEADER_LEN - headerBytesRead));
+                    if (headerBytesReadIteration == 0)
                     {
                         // 0 means the connection was closed, tell the caller
                         return 0;
                     }
-                    _packetBytes -= readCount;
-                    return readCount;
-                }
-                else
-                {
-                    Span<byte> headerBytes = stackalloc byte[TdsEnums.HEADER_LEN];
+                    headerBytesRead += headerBytesReadIteration;
+                } while (headerBytesRead < TdsEnums.HEADER_LEN);
 
-                    // fetch the packet header to determine how long the packet is
-                    int headerBytesRead = 0;
-                    do
-                    {
-                        int headerBytesReadIteration = _stream.Read(headerBytes.Slice(headerBytesRead, (TdsEnums.HEADER_LEN - headerBytesRead)));
-                        if (headerBytesReadIteration == 0)
-                        {
-                            // 0 means the connection was closed, tell the caller
-                            return 0;
-                        }
-                        headerBytesRead += headerBytesReadIteration;
-                    } while (headerBytesRead < TdsEnums.HEADER_LEN);
+                // read the packet data size from the header and store it in case it is needed for a subsequent call
+                _packetBytes = ((headerBytes[TdsEnums.HEADER_LEN_FIELD_OFFSET] << 8) | headerBytes[TdsEnums.HEADER_LEN_FIELD_OFFSET + 1]) - TdsEnums.HEADER_LEN;
 
-                    // read the packet data size from the header and store it in case it is needed for a subsequent call
-                    _packetBytes = ((headerBytes[TdsEnums.HEADER_LEN_FIELD_OFFSET] << 8) | headerBytes[TdsEnums.HEADER_LEN_FIELD_OFFSET + 1]) - TdsEnums.HEADER_LEN;
-
-                    // read as much from the packet as the caller can accept
-                    int packetBytesRead = _stream.Read(buffer.Slice(0, Math.Min(buffer.Length, _packetBytes)));
-                    _packetBytes -= packetBytesRead;
-                    return packetBytesRead;
-                }
+                // read as much from the packet as the caller can accept
+                int packetBytesRead = _stream.Read(buffer.Slice(0, Math.Min(buffer.Length, _packetBytes)));
+                _packetBytes -= packetBytesRead;
+                return packetBytesRead;
             }
-            else
-            {
-                return _stream.Read(buffer);
-            }
+
         }
 
         public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
         {
-            if (_encapsulate)
-            {
-                if (_packetBytes > 0)
-                {
-                    // there are queued bytes from a previous packet available
-                    // work out how many of the remaining bytes we can consume
-                    int wantedCount = Math.Min(buffer.Length, _packetBytes);
-
-                    int readCount;
-                    {
-                        ValueTask<int> remainderReadValueTask = _stream.ReadAsync(buffer.Slice(0, wantedCount), cancellationToken);
-                        if (remainderReadValueTask.IsCompletedSuccessfully)
-                        {
-                            readCount = remainderReadValueTask.Result;
-                        }
-                        else
-                        {
-                            readCount = await remainderReadValueTask.AsTask().ConfigureAwait(false);
-                        }
-                    }
-                    if (readCount == 0)
-                    {
-                        // 0 means the connection was closed, tell the caller
-                        return 0;
-                    }
-                    _packetBytes -= readCount;
-                    return readCount;
-                }
-                else
-                {
-                    byte[] headerBytes = ArrayPool<byte>.Shared.Rent(TdsEnums.HEADER_LEN);
-
-                    // fetch the packet header to determine how long the packet is
-                    int headerBytesRead = 0;
-                    do
-                    {
-                        int headerBytesReadIteration;
-                        {
-                            ValueTask<int> headerReadValueTask = _stream.ReadAsync(headerBytes.AsMemory(headerBytesRead, (TdsEnums.HEADER_LEN - headerBytesRead)), cancellationToken);
-                            if (headerReadValueTask.IsCompletedSuccessfully)
-                            {
-                                headerBytesReadIteration = headerReadValueTask.Result;
-                            }
-                            else
-                            {
-                                headerBytesReadIteration = await headerReadValueTask.AsTask().ConfigureAwait(false);
-                            }
-                        }
-                        if (headerBytesReadIteration == 0)
-                        {
-                            // 0 means the connection was closed, cleanup the rented array and then tell the caller
-                            ArrayPool<byte>.Shared.Return(headerBytes, clearArray: true);
-                            return 0;
-                        }
-                        headerBytesRead += headerBytesReadIteration;
-                    } while (headerBytesRead < TdsEnums.HEADER_LEN);
-
-                    // read the packet data size from the header and store it in case it is needed for a subsequent call
-                    _packetBytes = ((headerBytes[TdsEnums.HEADER_LEN_FIELD_OFFSET] << 8) | headerBytes[TdsEnums.HEADER_LEN_FIELD_OFFSET + 1]) - TdsEnums.HEADER_LEN;
-
-                    ArrayPool<byte>.Shared.Return(headerBytes, clearArray: true);
-
-                    // read as much from the packet as the caller can accept
-                    int packetBytesRead;
-                    {
-                        ValueTask<int> packetReadValueTask = _stream.ReadAsync(buffer.Slice(0, Math.Min(buffer.Length, _packetBytes)), cancellationToken);
-                        if (packetReadValueTask.IsCompletedSuccessfully)
-                        {
-                            packetBytesRead = packetReadValueTask.Result;
-                        }
-                        else
-                        {
-                            packetBytesRead = await packetReadValueTask.AsTask().ConfigureAwait(false);
-                        }
-                    }
-                    _packetBytes -= packetBytesRead;
-                    return packetBytesRead;
-                }
-            }
-            else
+            if (!_encapsulate)
             {
                 int read;
                 {
@@ -173,21 +93,105 @@ namespace Microsoft.Data.SqlClient.SNI
                     }
                     else
                     {
-                        read = await readValueTask.AsTask().ConfigureAwait(false);
+                        read = await readValueTask.ConfigureAwait(false);
                     }
                 }
                 return read;
             }
+
+            if (_packetBytes > 0)
+            {
+                // there are queued bytes from a previous packet available
+                // work out how many of the remaining bytes we can consume
+                int wantedCount = Math.Min(buffer.Length, _packetBytes);
+
+                int readCount;
+                {
+                    ValueTask<int> remainderReadValueTask = _stream.ReadAsync(buffer.Slice(0, wantedCount), cancellationToken);
+                    if (remainderReadValueTask.IsCompletedSuccessfully)
+                    {
+                        readCount = remainderReadValueTask.Result;
+                    }
+                    else
+                    {
+                        readCount = await remainderReadValueTask.ConfigureAwait(false);
+                    }
+                }
+                if (readCount == 0)
+                {
+                    // 0 means the connection was closed, tell the caller
+                    return 0;
+                }
+                _packetBytes -= readCount;
+                return readCount;
+            }
+            else
+            {
+                byte[] headerBytes = ArrayPool<byte>.Shared.Rent(TdsEnums.HEADER_LEN);
+
+                // fetch the packet header to determine how long the packet is
+                int headerBytesRead = 0;
+                do
+                {
+                    int headerBytesReadIteration;
+                    {
+                        ValueTask<int> headerReadValueTask = _stream.ReadAsync(headerBytes.AsMemory(headerBytesRead, (TdsEnums.HEADER_LEN - headerBytesRead)), cancellationToken);
+                        if (headerReadValueTask.IsCompletedSuccessfully)
+                        {
+                            headerBytesReadIteration = headerReadValueTask.Result;
+                        }
+                        else
+                        {
+                            headerBytesReadIteration = await headerReadValueTask.ConfigureAwait(false);
+                        }
+                    }
+                    if (headerBytesReadIteration == 0)
+                    {
+                        // 0 means the connection was closed, cleanup the rented array and then tell the caller
+                        ArrayPool<byte>.Shared.Return(headerBytes, clearArray: true);
+                        return 0;
+                    }
+                    headerBytesRead += headerBytesReadIteration;
+                } while (headerBytesRead < TdsEnums.HEADER_LEN);
+
+                // read the packet data size from the header and store it in case it is needed for a subsequent call
+                _packetBytes = ((headerBytes[TdsEnums.HEADER_LEN_FIELD_OFFSET] << 8) | headerBytes[TdsEnums.HEADER_LEN_FIELD_OFFSET + 1]) - TdsEnums.HEADER_LEN;
+
+                ArrayPool<byte>.Shared.Return(headerBytes, clearArray: true);
+
+                // read as much from the packet as the caller can accept
+                int packetBytesRead;
+                {
+                    ValueTask<int> packetReadValueTask = _stream.ReadAsync(buffer.Slice(0, Math.Min(buffer.Length, _packetBytes)), cancellationToken);
+                    if (packetReadValueTask.IsCompletedSuccessfully)
+                    {
+                        packetBytesRead = packetReadValueTask.Result;
+                    }
+                    else
+                    {
+                        packetBytesRead = await packetReadValueTask.ConfigureAwait(false);
+                    }
+                }
+                _packetBytes -= packetBytesRead;
+                return packetBytesRead;
+            }
+
         }
 
         public override void Write(ReadOnlySpan<byte> buffer)
         {
             // During the SSL negotiation phase, SSL is tunnelled over TDS packet type 0x12. After
             // negotiation, the underlying socket only sees SSL frames.
-            if (_encapsulate)
+            if (!_encapsulate)
             {
-                ReadOnlySpan<byte> remaining = buffer;
-                byte[] packetBuffer = null;
+                _stream.Write(buffer);
+                _stream.Flush();
+            }
+
+            ReadOnlySpan<byte> remaining = buffer;
+            byte[] packetBuffer = null;
+            try
+            {
                 while (remaining.Length > 0)
                 {
                     int dataLength = Math.Min(PACKET_SIZE_WITHOUT_HEADER, remaining.Length);
@@ -213,24 +217,37 @@ namespace Microsoft.Data.SqlClient.SNI
 
                     remaining = remaining.Slice(dataLength);
                 }
+            }
+            finally
+            {
                 if (packetBuffer != null)
                 {
                     ArrayPool<byte>.Shared.Return(packetBuffer, clearArray: true);
                 }
             }
-            else
-            {
-                _stream.Write(buffer);
-                _stream.Flush();
-            }
         }
 
         public override async ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
         {
-            if (_encapsulate)
+            if (!_encapsulate)
             {
-                ReadOnlyMemory<byte> remaining = buffer;
-                byte[] packetBuffer = null;
+                {
+                    ValueTask valueTask = _stream.WriteAsync(buffer, cancellationToken);
+                    if (!valueTask.IsCompletedSuccessfully)
+                    {
+                        await valueTask.ConfigureAwait(false);
+                    }
+                }
+                Task flushTask = _stream.FlushAsync();
+                if (flushTask.IsCompletedSuccessfully)
+                {
+                    await flushTask.ConfigureAwait(false);
+                }
+            }
+            ReadOnlyMemory<byte> remaining = buffer;
+            byte[] packetBuffer = null;
+            try
+            {
                 while (remaining.Length > 0)
                 {
                     int dataLength = Math.Min(PACKET_SIZE_WITHOUT_HEADER, remaining.Length);
@@ -254,7 +271,7 @@ namespace Microsoft.Data.SqlClient.SNI
                         ValueTask packetWriteValueTask = _stream.WriteAsync(new ReadOnlyMemory<byte>(packetBuffer, 0, packetLength), cancellationToken);
                         if (!packetWriteValueTask.IsCompletedSuccessfully)
                         {
-                            await packetWriteValueTask.AsTask().ConfigureAwait(false);
+                            await packetWriteValueTask.ConfigureAwait(false);
                         }
                     }
 
@@ -263,24 +280,12 @@ namespace Microsoft.Data.SqlClient.SNI
 
                     remaining = remaining.Slice(dataLength);
                 }
+            }
+            finally
+            {
                 if (packetBuffer != null)
                 {
                     ArrayPool<byte>.Shared.Return(packetBuffer, clearArray: true);
-                }
-            }
-            else
-            {
-                {
-                    ValueTask valueTask = _stream.WriteAsync(buffer, cancellationToken);
-                    if (!valueTask.IsCompletedSuccessfully)
-                    {
-                        await valueTask.AsTask().ConfigureAwait(false);
-                    }
-                }
-                Task flushTask = _stream.FlushAsync();
-                if (flushTask.IsCompletedSuccessfully)
-                {
-                    await flushTask.ConfigureAwait(false);
                 }
             }
         }
