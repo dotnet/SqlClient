@@ -1023,8 +1023,8 @@ namespace Microsoft.Data.SqlClient
             {   // Special case for Xml types (since we need to convert SqlXml into a string)
                 try
                 {
-                    typeChanged = true;
                     // Assume that the type changed
+                    typeChanged = true;
                     if ((typeof(string) == destinationType.ClassType))
                     {
                         // For Xml data, destination Type is always string
