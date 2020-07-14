@@ -62,6 +62,7 @@
     </Compile>
     <Compile Include="DataCommon\AADUtility.cs" />
     <Compile Include="SQL\DataClassificationTest\DataClassificationTest.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\GenericsBencmark.cs" />
     <Compile Include="TracingTests\EventSourceTest.cs" />
     <Compile Include="SQL\AdapterTest\AdapterTest.cs" />
     <Compile Include="SQL\AsyncTest\BeginExecAsyncTest.cs" />
