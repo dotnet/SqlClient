@@ -87,10 +87,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.MicrosoftDataSqlClient.te
                 InitialCatalog = DB,
             }.ToString();
 
-            using var masterc = new SqlConnection(masterCs);
-            using var c = new SqlConnection(_connString);
-
             // these were using Dapper in cmeyertons benchmark project
+            //using var masterc = new SqlConnection(masterCs);
+            //using var c = new SqlConnection(_connString);
+
             //masterc.Execute(@$"
             //    DROP DATABASE IF EXISTS {DB};
             //    CREATE DATABASE {DB};
@@ -179,13 +179,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.MicrosoftDataSqlClient.te
         {
             reader.Close(); // this resets the reader
 
-            using var bc = new SqlBulkCopy(_connString, Microsoft.Data.SqlClient.SqlBulkCopyOptions.TableLock);
+            using (var bc = new SqlBulkCopy(_connString, SqlBulkCopyOptions.TableLock))
+            {
+                bc.BatchSize = _count;
+                bc.DestinationTableName = tableName;
+                bc.BulkCopyTimeout = 60;
 
-            bc.BatchSize = _count;
-            bc.DestinationTableName = tableName;
-            bc.BulkCopyTimeout = 60;
-
-            bc.WriteToServer(reader);
+                bc.WriteToServer(reader);
+            }
         }
 
         //all code here and below is a custom data reader implementation to support the benchmark.
