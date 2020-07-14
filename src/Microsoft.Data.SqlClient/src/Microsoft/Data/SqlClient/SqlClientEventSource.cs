@@ -8,7 +8,7 @@ using System.Threading;
 namespace Microsoft.Data.SqlClient
 {
     [EventSource(Name = "Microsoft.Data.SqlClient.EventSource")]
-    internal class SqlClientEventSource : EventSource
+    internal partial class SqlClientEventSource : EventSource
     {
         // Defines the singleton instance for the Resources ETW provider
         internal static readonly SqlClientEventSource Log = new SqlClientEventSource();
