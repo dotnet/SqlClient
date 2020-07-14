@@ -45,7 +45,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.MicrosoftDataSqlClient.te
 
     //[SimpleJob(launchCount: 1)]
     //[MarkdownExporter, RankColumn, MemoryDiagnoser]
-    public class GenericsBencmark
+    public class GenericsBenchmark
     {
         
         private const string DB = "cmeyertons_benchmark";
@@ -74,7 +74,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.MicrosoftDataSqlClient.te
             public bool BoolColumn { get; } = true;
         }
 
-        static GenericsBencmark()
+        static GenericsBenchmark()
         {
             var csb = new SqlConnectionStringBuilder()
             {

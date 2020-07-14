@@ -1026,7 +1026,7 @@ namespace Microsoft.Data.SqlClient
                         }
                         else
                         {
-                            if (_currentRowMetadata[sourceOrdinal].Method == ValueMethod.GetValue || rowSourceAsIDataReader.IsDBNull(sourceOrdinal))
+                            if (_currentRowMetadata[destRowIndex].Method == ValueMethod.GetValue || rowSourceAsIDataReader.IsDBNull(sourceOrdinal))
                             {
                                 object columnValue = rowSourceAsIDataReader.GetValue(sourceOrdinal);
                                 ADP.IsNullOrSqlType(columnValue, out isNull, out isSqlType);
