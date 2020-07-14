@@ -1015,11 +1015,13 @@ namespace Microsoft.Data.SqlClient
                 ? value.GetType() // only call GetType if we know boxing has already occurred.
                 : typeof(T);
 
+            var typeChanged = false;
+
             if ((typeof(object) != destinationType.ClassType) &&
                     (currentType != destinationType.ClassType) &&
                     ((currentType != destinationType.SqlType) || (SqlDbType.Xml == destinationType.SqlDbType)))
             {   // Special case for Xml types (since we need to convert SqlXml into a string)
-
+                typeChanged = true;
                 try
                 {
                     // Assume that the type changed
@@ -1033,7 +1035,7 @@ namespace Microsoft.Data.SqlClient
                         }
                         else if (typeof(SqlString) == currentType)
                         {
-                            return false;
+                            typeChanged = false;   // Do nothing
                         }
                         else if (value is XmlReader xmlReader)
                         {
@@ -1071,7 +1073,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else if ((typeof(SqlBytes) == currentType) && (typeof(byte[]) == destinationType.ClassType))
                     {
-                        return false;// Do nothing
+                        typeChanged = false;    // Do nothing
                     }
                     else if ((typeof(string) == currentType) && (SqlDbType.Time == destinationType.SqlDbType))
                     {
@@ -1091,7 +1093,7 @@ namespace Microsoft.Data.SqlClient
                                 value is System.Collections.Generic.IEnumerable<SqlDataRecord>))
                     {
                         // no conversion for TVPs.
-                        return false;
+                        typeChanged = false;
                     }
                     else if (destinationType.ClassType == typeof(byte[]) && allowStreaming && value is Stream stream)
                     {
@@ -1112,16 +1114,12 @@ namespace Microsoft.Data.SqlClient
 
                     throw ADP.ParameterConversionFailed(value, destinationType.ClassType, e);
                 }
-
-                Debug.Assert(allowStreaming || !coercedToDataFeed, "Streaming is not allowed, but type was coerced into a data feed");
-                Debug.Assert(value.GetType() != currentType, "Incorrect value for typeChanged");
-
-                return true;
             }
-            else
-            {
-                return false;
-            }
+
+            Debug.Assert(allowStreaming || !coercedToDataFeed, "Streaming is not allowed, but type was coerced into a data feed");
+            Debug.Assert(value.GetType() != currentType, "Incorrect value for typeChanged");
+
+            return typeChanged;
         }
 
         internal void FixStreamDataForNonPLP()
