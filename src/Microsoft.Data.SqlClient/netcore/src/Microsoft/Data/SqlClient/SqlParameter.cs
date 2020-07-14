@@ -1021,17 +1021,16 @@ namespace Microsoft.Data.SqlClient
                     (currentType != destinationType.ClassType) &&
                     ((currentType != destinationType.SqlType) || (SqlDbType.Xml == destinationType.SqlDbType)))
             {   // Special case for Xml types (since we need to convert SqlXml into a string)
-                typeChanged = true;
                 try
                 {
+                    typeChanged = true;
                     // Assume that the type changed
                     if ((typeof(string) == destinationType.ClassType))
                     {
                         // For Xml data, destination Type is always string
                         if (typeof(SqlXml) == currentType)
                         {
-                            var xmlValue = GenericConverter.Convert<T, SqlXml>(value);
-                            objValue = MetaType.GetStringFromXml(xmlValue.CreateReader());
+                            objValue = MetaType.GetStringFromXml(GenericConverter.Convert<T, SqlXml>(value).CreateReader());
                         }
                         else if (typeof(SqlString) == currentType)
                         {
@@ -1117,8 +1116,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             Debug.Assert(allowStreaming || !coercedToDataFeed, "Streaming is not allowed, but type was coerced into a data feed");
-            Debug.Assert(value.GetType() != currentType, "Incorrect value for typeChanged");
-
+            Debug.Assert(value.GetType() == currentType ^ typeChanged, "Incorrect value for typeChanged");
             return typeChanged;
         }
 
