@@ -136,6 +136,18 @@ namespace Microsoft.Data.SqlClient
         private bool _serverSupportsDNSCaching = false;
 
         /// <summary>
+        /// Returns buffer time allowed before access token expiry to continue using the access token.
+        /// </summary>
+        private int accessTokenExpirationBufferTime
+        {
+            get
+            {
+                return (ConnectionOptions.ConnectTimeout == ADP.InfiniteConnectionTimeout || ConnectionOptions.ConnectTimeout >= ADP.MaxBufferAccessTokenExpiry)
+                    ? ADP.MaxBufferAccessTokenExpiry : ConnectionOptions.ConnectTimeout;
+            }
+        }
+
+        /// <summary>
         /// Get or set if SQLDNSCaching is supported by the server.
         /// </summary>
         internal bool IsSQLDNSCachingSupported
@@ -688,13 +700,13 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Validates if federated authentication is used, Access Token used by this connection is active for the next 10 minutes.
+        /// Validates if federated authentication is used, Access Token used by this connection is active for the value of 'accessTokenExpirationBufferTime'.
         /// </summary>
         internal override bool IsAccessTokenExpired
         {
             get
             {
-                return _federatedAuthenticationInfoRequested && DateTime.FromFileTimeUtc(_fedAuthToken.expirationFileTime) < DateTime.UtcNow.AddMinutes(10d);
+                return _federatedAuthenticationInfoRequested && DateTime.FromFileTimeUtc(_fedAuthToken.expirationFileTime) < DateTime.UtcNow.AddSeconds(accessTokenExpirationBufferTime);
             }
         }
 
@@ -1069,10 +1081,10 @@ namespace Microsoft.Data.SqlClient
                         ThreadHasParserLockForClose = false;
                         _parserLock.Release();
                         releaseConnectionLock = false;
-                    }, 0);
+                    }, ADP.InfiniteConnectionTimeout);
                     if (reconnectTask != null)
                     {
-                        AsyncHelper.WaitForCompletion(reconnectTask, 0); // there is no specific timeout for BeginTransaction, uses ConnectTimeout
+                        AsyncHelper.WaitForCompletion(reconnectTask, ADP.InfiniteConnectionTimeout); // there is no specific timeout for BeginTransaction, uses ConnectTimeout
                         internalTransaction.ConnectionHasBeenRestored = true;
                         return;
                     }
