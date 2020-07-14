@@ -10,7 +10,6 @@
     <OutputPath>$(BinFolder)$(Configuration).$(Platform).$(AssemblyName)</OutputPath>
   </PropertyGroup>
   <ItemGroup Condition="!$(ReferenceType.Contains('NetStandard'))">
-    <Compile Include="..\..\netfx\src\Microsoft\Data\SqlClient\GenericConverter.cs" Link="GenericConverter.cs" />
     <Compile Include="AlwaysEncryptedTests\ConnectionStringBuilderShould.cs" />
     <Compile Include="AlwaysEncryptedTests\DummyKeyStoreProvider.cs" />
     <Compile Include="AlwaysEncryptedTests\ExceptionRegisterKeyStoreProvider.cs" />

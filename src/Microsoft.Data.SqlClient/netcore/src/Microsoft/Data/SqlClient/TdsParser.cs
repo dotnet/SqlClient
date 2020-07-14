@@ -10444,7 +10444,6 @@ namespace Microsoft.Data.SqlClient
                 MetaType metatype = metadata.metaType;
                 int ccb = 0;
                 int ccbStringBytes = 0;
-                object objValue = null;
 
                 if (isNull)
                 {
@@ -10510,9 +10509,10 @@ namespace Microsoft.Data.SqlClient
                             break;
                         case TdsEnums.SQLXMLTYPE:
                             // Value here could be string or XmlReader
-                            if (value is XmlReader xr)
+                            // the XmlReader scenario can only occur when T is object (enforced during SqlBulkCopy.ReadWriteColumnValueAsync)
+                            if (typeof(T) == typeof(object) && value is XmlReader xr)
                             {
-                                objValue = MetaType.GetStringFromXml(xr);
+                                value = GenericConverter.Convert<string, T>(MetaType.GetStringFromXml(xr));
                             }
                             ccb = (isSqlType
                                     ? GenericConverter.Convert<T, SqlString>(value).Value.Length
@@ -10570,11 +10570,8 @@ namespace Microsoft.Data.SqlClient
                 else if (metatype.SqlDbType != SqlDbType.Udt || metatype.IsLong)
                 {
                     // we only have to consider a conversion from above in this case.
+                    internalWriteTask = WriteValue(value, metatype, metadata.scale, ccb, ccbStringBytes, 0, stateObj, metadata.length, isDataFeed);
 
-                    internalWriteTask = objValue != null
-                        ? WriteValue(objValue, metatype, metadata.scale, ccb, ccbStringBytes, 0, stateObj, metadata.length, isDataFeed)
-                        : WriteValue(value, metatype, metadata.scale, ccb, ccbStringBytes, 0, stateObj, metadata.length, isDataFeed)
-                    ;
                     if ((internalWriteTask == null) && (_asyncWrite))
                     {
                         internalWriteTask = stateObj.WaitForAccumulatedWrites();

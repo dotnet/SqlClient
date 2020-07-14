@@ -1015,113 +1015,113 @@ namespace Microsoft.Data.SqlClient
                 ? value.GetType() // only call GetType if we know boxing has already occurred.
                 : typeof(T);
 
-            if (typeof(object) == destinationType.ClassType ||
-                    currentType == destinationType.ClassType ||
-                    currentType == destinationType.SqlType && SqlDbType.Xml != destinationType.SqlDbType)
-            // Special case for Xml types (since we need to convert SqlXml into a string)
-            {
-                return false;
-            }
+            if ((typeof(object) != destinationType.ClassType) &&
+                    (currentType != destinationType.ClassType) &&
+                    ((currentType != destinationType.SqlType) || (SqlDbType.Xml == destinationType.SqlDbType)))
+            {   // Special case for Xml types (since we need to convert SqlXml into a string)
 
-            try
-            {
-                // Assume that the type changed
-                if ((typeof(string) == destinationType.ClassType))
+                try
                 {
-                    // For Xml data, destination Type is always string
-                    if (typeof(SqlXml) == currentType)
+                    // Assume that the type changed
+                    if ((typeof(string) == destinationType.ClassType))
                     {
-                        var xmlValue = GenericConverter.Convert<T, SqlXml>(value);
-                        objValue = MetaType.GetStringFromXml(xmlValue.CreateReader());
-                    }
-                    else if (typeof(SqlString) == currentType)
-                    {
-                        return false;
-                    }
-                    else if (value is XmlReader xmlReader)
-                    {
-                        if (allowStreaming)
+                        // For Xml data, destination Type is always string
+                        if (typeof(SqlXml) == currentType)
+                        {
+                            var xmlValue = GenericConverter.Convert<T, SqlXml>(value);
+                            objValue = MetaType.GetStringFromXml(xmlValue.CreateReader());
+                        }
+                        else if (typeof(SqlString) == currentType)
+                        {
+                            return false;
+                        }
+                        else if (value is XmlReader xmlReader)
+                        {
+                            if (allowStreaming)
+                            {
+                                coercedToDataFeed = true;
+                                objValue = new XmlDataFeed(xmlReader);
+                            }
+                            else
+                            {
+                                objValue = MetaType.GetStringFromXml(xmlReader);
+                            }
+                        }
+                        else if (typeof(char[]) == currentType)
+                        {
+                            objValue = new string(GenericConverter.Convert<T, char[]>(value));
+                        }
+                        else if (typeof(SqlChars) == currentType)
+                        {
+                            objValue = new string(GenericConverter.Convert<T, SqlChars>(value).Value);
+                        }
+                        else if (value is TextReader tr && allowStreaming)
                         {
                             coercedToDataFeed = true;
-                            objValue = new XmlDataFeed(xmlReader);
+                            objValue = new TextDataFeed(tr);
                         }
                         else
                         {
-                            objValue = MetaType.GetStringFromXml(xmlReader);
+                            objValue = Convert.ChangeType(value, destinationType.ClassType, (IFormatProvider)null);
                         }
                     }
-                    else if (typeof(char[]) == currentType)
+                    else if ((DbType.Currency == destinationType.DbType) && (typeof(string) == currentType))
                     {
-                        var charArrayValue = GenericConverter.Convert<T, char[]>(value);
-                        objValue = new string(charArrayValue);
+                        objValue = decimal.Parse(GenericConverter.Convert<T, string>(value), NumberStyles.Currency, (IFormatProvider)null);
                     }
-                    else if (typeof(SqlChars) == currentType)
+                    else if ((typeof(SqlBytes) == currentType) && (typeof(byte[]) == destinationType.ClassType))
                     {
-                        var sqlCharsValue = GenericConverter.Convert<T, SqlChars>(value);
-                        objValue = new string(sqlCharsValue.Value);
+                        return false;// Do nothing
                     }
-                    else if (value is TextReader tr && allowStreaming)
+                    else if ((typeof(string) == currentType) && (SqlDbType.Time == destinationType.SqlDbType))
+                    {
+                        objValue = TimeSpan.Parse(GenericConverter.Convert<T, string>(value));
+                    }
+                    else if ((typeof(string) == currentType) && (SqlDbType.DateTimeOffset == destinationType.SqlDbType))
+                    {
+                        objValue = DateTimeOffset.Parse(GenericConverter.Convert<T, string>(value), (IFormatProvider)null);
+                    }
+                    else if ((typeof(DateTime) == currentType) && (SqlDbType.DateTimeOffset == destinationType.SqlDbType))
+                    {
+                        objValue = new DateTimeOffset(GenericConverter.Convert<T, DateTime>(value));
+                    }
+                    else if (TdsEnums.SQLTABLE == destinationType.TDSType && (
+                                value is DataTable ||
+                                value is DbDataReader ||
+                                value is System.Collections.Generic.IEnumerable<SqlDataRecord>))
+                    {
+                        // no conversion for TVPs.
+                        return false;
+                    }
+                    else if (destinationType.ClassType == typeof(byte[]) && allowStreaming && value is Stream stream)
                     {
                         coercedToDataFeed = true;
-                        objValue = new TextDataFeed(tr);
+                        objValue = new StreamDataFeed(stream);
                     }
                     else
                     {
                         objValue = Convert.ChangeType(value, destinationType.ClassType, (IFormatProvider)null);
                     }
                 }
-                else if ((DbType.Currency == destinationType.DbType) && (typeof(string) == currentType))
+                catch (Exception e)
                 {
-                    objValue = decimal.Parse(GenericConverter.Convert<T, string>(value), NumberStyles.Currency, (IFormatProvider)null);
+                    if (!ADP.IsCatchableExceptionType(e))
+                    {
+                        throw;
+                    }
+
+                    throw ADP.ParameterConversionFailed(value, destinationType.ClassType, e);
                 }
-                else if ((typeof(SqlBytes) == currentType) && (typeof(byte[]) == destinationType.ClassType))
-                {
-                    return false;// Do nothing
-                }
-                else if ((typeof(string) == currentType) && (SqlDbType.Time == destinationType.SqlDbType))
-                {
-                    objValue = TimeSpan.Parse(GenericConverter.Convert<T, string>(value));
-                }
-                else if ((typeof(string) == currentType) && (SqlDbType.DateTimeOffset == destinationType.SqlDbType))
-                {
-                    objValue = DateTimeOffset.Parse(GenericConverter.Convert<T, string>(value), (IFormatProvider)null);
-                }
-                else if ((typeof(DateTime) == currentType) && (SqlDbType.DateTimeOffset == destinationType.SqlDbType))
-                {
-                    objValue = new DateTimeOffset(GenericConverter.Convert<T, DateTime>(value));
-                }
-                else if (TdsEnums.SQLTABLE == destinationType.TDSType && (
-                            value is DataTable ||
-                            value is DbDataReader ||
-                            value is System.Collections.Generic.IEnumerable<SqlDataRecord>))
-                {
-                    // no conversion for TVPs.
-                    return false;
-                }
-                else if (destinationType.ClassType == typeof(byte[]) && allowStreaming && value is Stream stream)
-                {
-                    coercedToDataFeed = true;
-                    objValue = new StreamDataFeed(stream);
-                }
-                else
-                {
-                    objValue = Convert.ChangeType(value, destinationType.ClassType, (IFormatProvider)null);
-                }
+
+                Debug.Assert(allowStreaming || !coercedToDataFeed, "Streaming is not allowed, but type was coerced into a data feed");
+                Debug.Assert(value.GetType() != currentType, "Incorrect value for typeChanged");
+
+                return true;
             }
-            catch (Exception e)
+            else
             {
-                if (!ADP.IsCatchableExceptionType(e))
-                {
-                    throw;
-                }
-
-                throw ADP.ParameterConversionFailed(value, destinationType.ClassType, e);
+                return false;
             }
-
-            Debug.Assert(allowStreaming || !coercedToDataFeed, "Streaming is not allowed, but type was coerced into a data feed");
-            Debug.Assert(value.GetType() != currentType, "Incorrect value for typeChanged");
-
-            return true;
         }
 
         internal void FixStreamDataForNonPLP()

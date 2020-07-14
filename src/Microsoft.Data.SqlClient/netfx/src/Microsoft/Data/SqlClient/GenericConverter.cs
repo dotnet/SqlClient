@@ -3,12 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections.Generic;
-using System.Data.SqlTypes;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -42,5 +37,4 @@ namespace Microsoft.Data.SqlClient
             }
         }
     }
-    
 }
