@@ -702,13 +702,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Validates if federated authentication is used, Access Token used by this connection is active for the value of 'accessTokenExpirationBufferTime'.
         /// </summary>
-        internal override bool IsAccessTokenExpired
-        {
-            get
-            {
-                return _federatedAuthenticationInfoRequested && DateTime.FromFileTimeUtc(_fedAuthToken.expirationFileTime) < DateTime.UtcNow.AddSeconds(accessTokenExpirationBufferTime);
-            }
-        }
+        internal override bool IsAccessTokenExpired => _federatedAuthenticationInfoRequested && DateTime.FromFileTimeUtc(_fedAuthToken.expirationFileTime) < DateTime.UtcNow.AddSeconds(accessTokenExpirationBufferTime);
 
         ////////////////////////////////////////////////////////////////////////////////////////
         // GENERAL METHODS
