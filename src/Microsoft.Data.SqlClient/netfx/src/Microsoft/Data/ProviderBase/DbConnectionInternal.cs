@@ -381,7 +381,8 @@ namespace Microsoft.Data.ProviderBase
                 return _state;
             }
         }
-        virtual internal bool IsAccessTokenExpired => false;
+
+        internal virtual bool IsAccessTokenExpired => false;
 
         abstract protected void Activate(SysTx.Transaction transaction);
 

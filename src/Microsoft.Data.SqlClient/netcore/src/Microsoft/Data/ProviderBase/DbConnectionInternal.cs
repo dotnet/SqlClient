@@ -203,7 +203,8 @@ namespace Microsoft.Data.ProviderBase
             }
         }
 
-        virtual internal bool IsAccessTokenExpired => false;
+        internal virtual bool IsAccessTokenExpired => false;
+
         abstract protected void Activate(Transaction transaction);
 
         internal void ActivateConnection(Transaction transaction)
