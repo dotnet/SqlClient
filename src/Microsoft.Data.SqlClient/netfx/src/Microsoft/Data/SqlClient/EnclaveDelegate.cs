@@ -42,7 +42,7 @@ namespace Microsoft.Data.SqlClient
         /// <param name="enclaveType">enclave type</param>
         /// <param name="serverName">server name</param>
         /// <param name="enclaveAttestationUrl">url for attestation endpoint</param>
-        /// <param name="database">The database that SqlClient contacts to.</param>
+        /// <param name="database">The database that SqlClient contacts to request an enclave session.</param>
         /// <returns></returns>
         internal EnclavePackage GenerateEnclavePackage(SqlConnectionAttestationProtocol attestationProtocol, Dictionary<int, SqlTceCipherInfoEntry> keysTobeSentToEnclave, string queryText, string enclaveType, string serverName, string enclaveAttestationUrl, string database)
         {
@@ -160,7 +160,7 @@ namespace Microsoft.Data.SqlClient
         /// <param name="enclaveType">enclave type</param>
         /// <param name="serverName">servername</param>
         /// <param name="attestationUrl">attestation url for attestation service endpoint</param>
-        /// <param name="database">The database that SqlClient contacts to.</param>
+        /// <param name="database">The database that SqlClient contacts to request an enclave session.</param>
         /// <param name="attestationInfo">attestation info from SQL Server</param>
         /// <param name="attestationParameters">attestation parameters</param>
         /// <param name="customData">A set of extra data needed for attestating the enclave.</param>
