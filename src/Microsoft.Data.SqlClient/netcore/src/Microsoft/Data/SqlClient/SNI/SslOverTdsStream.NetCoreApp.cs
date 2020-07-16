@@ -186,6 +186,7 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 _stream.Write(buffer);
                 _stream.Flush();
+                return;
             }
 
             ReadOnlySpan<byte> remaining = buffer;
@@ -243,7 +244,9 @@ namespace Microsoft.Data.SqlClient.SNI
                 {
                     await flushTask.ConfigureAwait(false);
                 }
+                return;
             }
+
             ReadOnlyMemory<byte> remaining = buffer;
             byte[] packetBuffer = null;
             try
