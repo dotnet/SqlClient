@@ -8,7 +8,7 @@ using System.Collections.ObjectModel;
 namespace Microsoft.Data.SqlClient.DataClassification
 {
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/Label.xml' path='docs/members[@name="Label"]/Label/*' />
-    public class Label
+    public sealed class Label
     {
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/Label.xml' path='docs/members[@name="Label"]/Name/*' />
         public string Name { get; private set; }
@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient.DataClassification
     }
 
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/InformationType.xml' path='docs/members[@name="InformationType"]/InformationType/*' />
-    public class InformationType
+    public sealed class InformationType
     {
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/InformationType.xml' path='docs/members[@name="InformationType"]/Name/*' />
         public string Name { get; private set; }
@@ -59,7 +59,7 @@ namespace Microsoft.Data.SqlClient.DataClassification
     }
 
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityProperty.xml' path='docs/members[@name="SensitivityProperty"]/SensitivityProperty/*' />
-    public class SensitivityProperty
+    public sealed class SensitivityProperty
     {
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityProperty.xml' path='docs/members[@name="SensitivityProperty"]/Label/*' />
         public Label Label { get; private set; }
@@ -80,7 +80,7 @@ namespace Microsoft.Data.SqlClient.DataClassification
     }
 
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/ColumnSensitivity.xml' path='docs/members[@name="ColumnSensitivity"]/ColumnSensitivity/*' />
-    public class ColumnSensitivity
+    public sealed class ColumnSensitivity
     {
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/ColumnSensitivity.xml' path='docs/members[@name="ColumnSensitivity"]/GetSensitivityProperties/*' />
         public ReadOnlyCollection<SensitivityProperty> SensitivityProperties { get; private set; }
@@ -93,7 +93,7 @@ namespace Microsoft.Data.SqlClient.DataClassification
     }
 
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityClassification.xml' path='docs/members[@name="SensitivityClassification"]/SensitivityClassification/*' />
-    public class SensitivityClassification
+    public sealed class SensitivityClassification
     {
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityClassification.xml' path='docs/members[@name="SensitivityClassification"]/Labels/*' />
         public ReadOnlyCollection<Label> Labels { get; private set; }
