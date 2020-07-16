@@ -938,7 +938,8 @@ namespace Microsoft.Data.SqlClient
 
         // Data Classification constants
         internal const byte DATA_CLASSIFICATION_NOT_ENABLED = 0x00;
-        internal const byte MAX_SUPPORTED_DATA_CLASSIFICATION_VERSION = 0x01;
+        internal const byte DATA_CLASSIFICATION_VERSION_WITHOUT_RANK_SUPPORT = 0x01;
+        internal const byte DATA_CLASSIFICATION_VERSION_MAX_SUPPORTED = 0x02;
 
         // TCE Related constants
         internal const byte MAX_SUPPORTED_TCE_VERSION = 0x02; // max version

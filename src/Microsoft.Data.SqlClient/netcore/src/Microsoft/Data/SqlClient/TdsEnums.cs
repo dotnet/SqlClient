@@ -933,7 +933,8 @@ namespace Microsoft.Data.SqlClient
 
         // Data Classification constants
         internal const byte DATA_CLASSIFICATION_NOT_ENABLED = 0x00;
-        internal const byte MAX_SUPPORTED_DATA_CLASSIFICATION_VERSION = 0x01;
+        internal const byte DATA_CLASSIFICATION_VERSION_WITHOUT_RANK_SUPPORT = 0x01;
+        internal const byte DATA_CLASSIFICATION_VERSION_MAX_SUPPORTED = 0x02;
 
         // Needed for UapAot, since we cannot use Enum.GetName() on SniContext.
         // Enum.GetName() uses reflection, which is blocked on UapAot for internal types

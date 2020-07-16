@@ -143,7 +143,6 @@ namespace Microsoft.Data.SqlClient
         SqlClientOriginalNetworkAddressInfo _originalNetworkAddressInfo;
 
         internal bool _cleanSQLDNSCaching = false;
-
         private bool _serverSupportsDNSCaching = false;
 
         /// <summary>
@@ -3063,7 +3062,7 @@ namespace Microsoft.Data.SqlClient
                             throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
                         }
                         byte supportedDataClassificationVersion = data[0];
-                        if ((0 == supportedDataClassificationVersion) || (supportedDataClassificationVersion > TdsEnums.MAX_SUPPORTED_DATA_CLASSIFICATION_VERSION))
+                        if ((0 == supportedDataClassificationVersion) || (supportedDataClassificationVersion > TdsEnums.DATA_CLASSIFICATION_VERSION_MAX_SUPPORTED))
                         {
                             SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Invalid version number for DATACLASSIFICATION", ObjectID);
                             throw SQL.ParsingErrorValue(ParsingErrorState.DataClassificationInvalidVersion, supportedDataClassificationVersion);
