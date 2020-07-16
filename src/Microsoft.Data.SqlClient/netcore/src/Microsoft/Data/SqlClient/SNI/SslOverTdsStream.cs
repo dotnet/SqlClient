@@ -36,7 +36,11 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <summary>
         /// Finish SSL handshake. Stop encapsulating in TDS.
         /// </summary>
-        public void FinishHandshake() => _encapsulate = false;
+        public void FinishHandshake()
+        {
+            _encapsulate = false;
+            SqlClientEventSource.Log.SNITraceEvent("<sc.SNI.SslOverTdsStream.FinishHandshake |SNI|INFO> switched from encapsulation to passthrough mode");
+        }
 
         /// <summary>
         /// Set stream length. 
