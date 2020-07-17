@@ -410,7 +410,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     return 0;
                 }
-                return (md.VisibleColumnCount);
+                return md.VisibleColumnCount;
             }
         }
 

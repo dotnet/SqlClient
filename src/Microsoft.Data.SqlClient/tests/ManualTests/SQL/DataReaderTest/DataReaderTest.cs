@@ -230,10 +230,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void CheckHiddenColumns()
         {
-            // hidden columns can be found by using CommandBehavious.KeyInfo or at the sql level
+            // hidden columns can be found by using CommandBehavior.KeyInfo or at the sql level
             // by using the FOR BROWSE option. These features return the column information requested and
             // also include any key information required to be able to find the row containing the data
-            // requested. The additional key infomration is provided as hidden columns and can be seen using
+            // requested. The additional key information is provided as hidden columns and can be seen using
             // the difference between VisibleFieldCount and FieldCount on the reader
 
             string tempTableName = DataTestUtility.GenerateObjectName();
