@@ -34,10 +34,11 @@
       <param name="iWin32WindowFunc">A function to return the current window.</param>
       <summary>Sets a reference to the current <see cref="T:System.Windows.Forms.IWin32Window" /> that triggers the browser to be shown. Used to center the browser pop-up onto this window."</summary>
     </SetIWin32WindowFunc>
-    <SetCustomWebUI>
-      <param name="customWebUi">Customer implementation for the Web UI</param>
-      <summary>Sets a custom Web UI that will let the user sign-in with Azure Active Directory, present consent if needed, and get back the authorization code. Applicable when working with Active Directory Interactive authentication.</summary>
-    </SetCustomWebUI>
+    <SetAcquireAuthorizationCodeAsyncCallback>
+      <param name="acquireAuthorizationCodeAsyncCallback">The callback method to be called by MSAL.NET to delegate the authentication code Web with the Secure Token Service (STS).</param>
+      <summary>Sets a callback method which is invoked with a custom Web UI instance that will let the user sign-in with Azure Active Directory, present consent if needed, and get back the authorization code. Applicable when working with Active Directory Interactive authentication.</summary>
+      <remarks>The "authorizationUri" is crafted to leverage PKCE in order to protect the token from a man in the middle attack. Only MSAL.NET can redeem the code. In the event of cancellation, the implementer should return <see cref="T:System.OperationCanceledException" />.</remarks>
+    </SetAcquireAuthorizationCodeAsyncCallback>
     <BeforeLoad>
       <param name="authentication">The authentication method.</param>
       <summary>This method is called immediately before the provider is added to authentication provider registry. </summary>

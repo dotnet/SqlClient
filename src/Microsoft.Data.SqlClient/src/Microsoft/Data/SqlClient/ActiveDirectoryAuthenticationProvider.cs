@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient
         private readonly string _type = typeof(ActiveDirectoryAuthenticationProvider).Name;
         private readonly SqlClientLogger _logger = new SqlClientLogger();
         private Func<DeviceCodeResult, Task> _deviceCodeFlowCallback;
-        private ICustomWebUi customWebUI = null;
+        private ICustomWebUi _customWebUI = null;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor/*'/>
         public ActiveDirectoryAuthenticationProvider() => new ActiveDirectoryAuthenticationProvider(DefaultDeviceFlowCallback);
@@ -33,8 +33,30 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/SetDeviceCodeFlowCallback/*'/>
         public void SetDeviceCodeFlowCallback(Func<DeviceCodeResult, Task> deviceCodeFlowCallbackMethod) => _deviceCodeFlowCallback = deviceCodeFlowCallbackMethod;
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/SetCustomWebUI/*'/>
-        public void SetCustomWebUI(ICustomWebUi customWebUi) => this.customWebUI = customWebUi;
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/SetAcquireAuthorizationCodeAsyncCallback/*'/>
+        public void SetAcquireAuthorizationCodeAsyncCallback(Func<Uri, Uri, CancellationToken, Task<Uri>> acquireAuthorizationCodeAsyncCallback) => _customWebUI = new CustomWebUi(acquireAuthorizationCodeAsyncCallback);
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/IsSupported/*'/>
+        public override bool IsSupported(SqlAuthenticationMethod authentication)
+        {
+            return authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated
+                || authentication == SqlAuthenticationMethod.ActiveDirectoryPassword
+                || authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
+                || authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
+                || authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow;
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/BeforeLoad/*'/>
+        public override void BeforeLoad(SqlAuthenticationMethod authentication)
+        {
+            _logger.LogInfo(_type, "BeforeLoad", $"being loaded into SqlAuthProviders for {authentication}.");
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/BeforeUnload/*'/>
+        public override void BeforeUnload(SqlAuthenticationMethod authentication)
+        {
+            _logger.LogInfo(_type, "BeforeUnload", $"being unloaded from SqlAuthProviders for {authentication}.");
+        }
 
 #if netstandard
         private Func<object> parentActivityOrWindowFunc = null;
@@ -44,10 +66,10 @@ namespace Microsoft.Data.SqlClient
 #endif
 
 #if netfx
-        private Func<System.Windows.Forms.IWin32Window> iWin32WindowFunc = null;
-        
+        private Func<System.Windows.Forms.IWin32Window> _iWin32WindowFunc = null;
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/SetIWin32WindowFunc/*'/>
-        public void SetIWin32WindowFunc(Func<System.Windows.Forms.IWin32Window> iWin32WindowFunc) => this.iWin32WindowFunc = iWin32WindowFunc;
+        public void SetIWin32WindowFunc(Func<System.Windows.Forms.IWin32Window> iWin32WindowFunc) => this._iWin32WindowFunc = iWin32WindowFunc;
 #endif
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/AcquireTokenAsync/*'/>
@@ -100,14 +122,14 @@ namespace Microsoft.Data.SqlClient
             }
 #endif
 #if netfx
-            if (iWin32WindowFunc != null)
+            if (_iWin32WindowFunc != null)
             {
                 app = PublicClientApplicationBuilder.Create(ActiveDirectoryAuthentication.AdoClientId)
                 .WithAuthority(parameters.Authority)
                 .WithClientName(Common.DbConnectionStringDefaults.ApplicationName)
                 .WithClientVersion(Common.ADP.GetAssemblyVersion().ToString())
                 .WithRedirectUri(redirectURI)
-                .WithParentActivityOrWindow(iWin32WindowFunc)
+                .WithParentActivityOrWindow(_iWin32WindowFunc)
                 .Build();
             }
 #endif
@@ -208,11 +230,11 @@ namespace Microsoft.Data.SqlClient
             {
                 if (authenticationMethod == SqlAuthenticationMethod.ActiveDirectoryInteractive)
                 {
-                    if (customWebUI != null)
+                    if (_customWebUI != null)
                     {
                         return await app.AcquireTokenInteractive(scopes)
                             .WithCorrelationId(connectionId)
-                            .WithCustomWebUi(customWebUI)
+                            .WithCustomWebUi(_customWebUI)
                             .WithLoginHint(userId)
                             .ExecuteAsync(cts.Token);
                     }
@@ -272,26 +294,14 @@ namespace Microsoft.Data.SqlClient
             return Task.FromResult(0);
         }
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/IsSupported/*'/>
-        public override bool IsSupported(SqlAuthenticationMethod authentication)
+        private class CustomWebUi : ICustomWebUi
         {
-            return authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated
-                || authentication == SqlAuthenticationMethod.ActiveDirectoryPassword
-                || authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
-                || authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
-                || authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow;
-        }
+            private readonly Func<Uri, Uri, CancellationToken, Task<Uri>> _acquireAuthorizationCodeAsyncCallback;
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/BeforeLoad/*'/>
-        public override void BeforeLoad(SqlAuthenticationMethod authentication)
-        {
-            _logger.LogInfo(_type, "BeforeLoad", $"being loaded into SqlAuthProviders for {authentication}.");
-        }
+            internal CustomWebUi(Func<Uri, Uri, CancellationToken, Task<Uri>> acquireAuthorizationCodeAsyncCallback) => _acquireAuthorizationCodeAsyncCallback = acquireAuthorizationCodeAsyncCallback;
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/BeforeUnload/*'/>
-        public override void BeforeUnload(SqlAuthenticationMethod authentication)
-        {
-            _logger.LogInfo(_type, "BeforeUnload", $"being unloaded from SqlAuthProviders for {authentication}.");
+            public Task<Uri> AcquireAuthorizationCodeAsync(Uri authorizationUri, Uri redirectUri, CancellationToken cancellationToken)
+                => _acquireAuthorizationCodeAsyncCallback.Invoke(authorizationUri, redirectUri, cancellationToken);
         }
     }
 }
