@@ -23,19 +23,9 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         private TokenCredential TokenCredential { get; set; }
 
         /// <summary>
-        /// AuthenticationCallback to be used with the KeyClient for legacy support.
-        /// </summary>
-        private AuthenticationCallback AuthenticationCallback { get; set; }
-
-        /// <summary>
-        /// A flag to determine whether to use AuthenticationCallback with the KeyClient for legacy support.
-        /// </summary>
-        private readonly bool isUsingLegacyAuthentication = false;
-
-        /// <summary>
         /// A mapping of the KeyClient objects to the corresponding Azure Key Vault URI
         /// </summary>
-        private readonly ConcurrentDictionary<Uri, KeyClient> keyClientDictionary = new ConcurrentDictionary<Uri, KeyClient>();
+        private readonly ConcurrentDictionary<Uri, KeyClient> _keyClientDictionary = new ConcurrentDictionary<Uri, KeyClient>();
 
         /// <summary>
         /// Holds references to the fetch key tasks and maps them to their corresponding Azure Key Vault Key Identifier (URI).
@@ -52,7 +42,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <summary>
         /// Holds references to the Azure Key Vault CryptographyClient objects and maps them to their corresponding Azure Key Vault Key Identifier (URI).
         /// </summary>
-        private readonly ConcurrentDictionary<string, CryptographyClient> cryptoClientDictionary = new ConcurrentDictionary<string, CryptographyClient>();
+        private readonly ConcurrentDictionary<string, CryptographyClient> _cryptoClientDictionary = new ConcurrentDictionary<string, CryptographyClient>();
 
         /// <summary>
         /// Constructs a new KeyCryptographer
@@ -63,12 +53,6 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             TokenCredential = tokenCredential;
         }
 
-        internal AzureSqlKeyCryptographer(AuthenticationCallback authenticationCallback)
-        {
-            AuthenticationCallback = authenticationCallback;
-            isUsingLegacyAuthentication = true;
-        }
-
         /// <summary>
         /// Adds the key, specified by the Key Identifier URI, to the cache.
         /// </summary>
@@ -77,11 +61,6 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         {
             if (TheKeyHasNotBeenCached(keyIdentifierUri))
             {
-                if (isUsingLegacyAuthentication)
-                {
-                    TokenCredential = new AzureKeyVaultProviderTokenCredential(AuthenticationCallback, keyIdentifierUri);
-                }
-
                 ParseAKVPath(keyIdentifierUri, out Uri vaultUri, out string keyName);
                 CreateKeyClient(vaultUri);
                 FetchKey(vaultUri, keyName, keyIdentifierUri);
@@ -99,12 +78,14 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         {
             if (_keyDictionary.ContainsKey(keyIdentifierUri))
             {
-                return _keyDictionary[keyIdentifierUri];
+                _keyDictionary.TryGetValue(keyIdentifierUri, out KeyVaultKey key);
+                return key;
             }
 
             if (_keyFetchTaskDictionary.ContainsKey(keyIdentifierUri))
             {
-                return Task.Run(() => _keyFetchTaskDictionary[keyIdentifierUri]).Result;
+                _keyFetchTaskDictionary.TryGetValue(keyIdentifierUri, out Task<Azure.Response<KeyVaultKey>> task);
+                return Task.Run(() => task).GetAwaiter().GetResult();
             }
 
             // Not a public exception - not likely to occur.
@@ -153,13 +134,14 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 
         private CryptographyClient GetCryptographyClient(string keyIdentifierUri)
         {
-            if (cryptoClientDictionary.ContainsKey(keyIdentifierUri))
+            if (_cryptoClientDictionary.ContainsKey(keyIdentifierUri))
             {
-                return cryptoClientDictionary[keyIdentifierUri];
+                _cryptoClientDictionary.TryGetValue(keyIdentifierUri, out CryptographyClient client);
+                return client;
             }
 
             CryptographyClient cryptographyClient = new CryptographyClient(GetKey(keyIdentifierUri).Id, TokenCredential);
-            cryptoClientDictionary[keyIdentifierUri] = cryptographyClient;
+            _cryptoClientDictionary.AddOrUpdate(keyIdentifierUri, cryptographyClient, (k, v) => cryptographyClient);
 
             return cryptographyClient;
         }
@@ -172,23 +154,27 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <param name="keyResourceUri">The Azure Key Vault key identifier</param>
         private void FetchKey(Uri vaultUri, string keyName, string keyResourceUri)
         {
-            var fetchKeyTask = FetchKeyFromKeyVault(vaultUri, keyName);
-            _keyFetchTaskDictionary[keyResourceUri] = fetchKeyTask;
+            Task<Azure.Response<KeyVaultKey>> fetchKeyTask = FetchKeyFromKeyVault(vaultUri, keyName);
+            _keyFetchTaskDictionary.AddOrUpdate(keyResourceUri, fetchKeyTask, (k, v) => fetchKeyTask);
 
             fetchKeyTask
-                .ContinueWith(k => ValidateRsaKey(k.Result))
-                .ContinueWith(k => _keyDictionary[keyResourceUri] = k.Result);
+                .ContinueWith(k => ValidateRsaKey(k.GetAwaiter().GetResult()))
+                .ContinueWith(k => _keyDictionary.AddOrUpdate(keyResourceUri, k.GetAwaiter().GetResult(), (key, v) => k.GetAwaiter().GetResult()));
 
             Task.Run(() => fetchKeyTask);
         }
 
         /// <summary>
-        /// Looks up the KeyClient object by it's URI and then fethces the key by name.
+        /// Looks up the KeyClient object by it's URI and then fetches the key by name.
         /// </summary>
         /// <param name="vaultUri">The Azure Key Vault URI</param>
         /// <param name="keyName">Then name of the key</param>
         /// <returns></returns>
-        private Task<Azure.Response<KeyVaultKey>> FetchKeyFromKeyVault(Uri vaultUri, string keyName) => keyClientDictionary[vaultUri].GetKeyAsync(keyName);
+        private Task<Azure.Response<KeyVaultKey>> FetchKeyFromKeyVault(Uri vaultUri, string keyName)
+        {
+            _keyClientDictionary.TryGetValue(vaultUri, out KeyClient keyClient);
+            return keyClient.GetKeyAsync(keyName);
+        }
 
         /// <summary>
         /// Validates that a key is of type RSA
@@ -211,9 +197,9 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <param name="vaultUri">The Azure Key Vault URI</param>
         private void CreateKeyClient(Uri vaultUri)
         {
-            if (!keyClientDictionary.ContainsKey(vaultUri))
+            if (!_keyClientDictionary.ContainsKey(vaultUri))
             {
-                keyClientDictionary[vaultUri] = new KeyClient(vaultUri, TokenCredential);
+                _keyClientDictionary.AddOrUpdate(vaultUri, new KeyClient(vaultUri, TokenCredential), (k, v) => new KeyClient(vaultUri, TokenCredential));
             }
         }
 

@@ -78,43 +78,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 
         #endregion
 
-        /// <summary>
-        /// Constructor that takes a callback function to authenticate to AAD. This is used by KeyVaultClient at runtime 
-        /// to authenticate to Azure Key Vault.
-        /// </summary>
-        /// <param name="authenticationCallback">Callback function used for authenticating to AAD.</param>
-        public SqlColumnEncryptionAzureKeyVaultProvider(AuthenticationCallback authenticationCallback) :
-            this(authenticationCallback, Constants.AzureKeyVaultPublicDomainNames)
-        { }
-
-        /// <summary>
-        /// Constructor that takes a callback function to authenticate to AAD and a trusted endpoint. 
-        /// </summary>
-        /// <param name="authenticationCallback">Callback function used for authenticating to AAD.</param>
-        /// <param name="trustedEndPoint">TrustedEndpoint is used to validate the master key path</param>
-        public SqlColumnEncryptionAzureKeyVaultProvider(AuthenticationCallback authenticationCallback, string trustedEndPoint) :
-            this(authenticationCallback, new[] { trustedEndPoint })
-        { }
-
-        /// <summary>
-        /// Constructor that takes a callback function to authenticate to AAD and an array of trusted endpoints. The callback function 
-        /// is used by KeyVaultClient at runtime to authenticate to Azure Key Vault.
-        /// </summary>
-        /// <param name="authenticationCallback">Callback function used for authenticating to AAD.</param>
-        /// <param name="trustedEndPoints">TrustedEndpoints are used to validate the master key path</param>
-        public SqlColumnEncryptionAzureKeyVaultProvider(AuthenticationCallback authenticationCallback, string[] trustedEndPoints)
-        {
-            ValidateNotNull(authenticationCallback, nameof(authenticationCallback));
-            ValidateNotNull(trustedEndPoints, nameof(trustedEndPoints));
-            ValidateNotEmpty(trustedEndPoints, nameof(trustedEndPoints));
-            ValidateNotNullOrWhitespaceForEach(trustedEndPoints, nameof(trustedEndPoints));
-
-            KeyCryptographer = new AzureSqlKeyCryptographer(authenticationCallback);
-            TrustedEndPoints = trustedEndPoints;
-        }
-
-        // New constructors
-
+        #region Constructors
         /// <summary>
         /// Constructor that takes an implementation of Token Credential that is capable of providing an OAuth Token.
         /// </summary>
@@ -148,6 +112,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             KeyCryptographer = new AzureSqlKeyCryptographer(tokenCredential);
             TrustedEndPoints = trustedEndPoints;
         }
+        #endregion
 
         #region Public methods
 
@@ -247,15 +212,15 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             // Get signature
             byte[] signature = encryptedColumnEncryptionKey.Skip(currentIndex).Take(signatureLength).ToArray();
 
-            // Compute the hash to validate the signature
-            byte[] hash = encryptedColumnEncryptionKey.Take(encryptedColumnEncryptionKey.Length - signatureLength).ToArray();
+            // Compute the message to validate the signature
+            byte[] message = encryptedColumnEncryptionKey.Take(encryptedColumnEncryptionKey.Length - signatureLength).ToArray();
 
-            if (null == hash)
+            if (null == message)
             {
                 throw new CryptographicException(Strings.NullHash);
             }
 
-            if (!KeyCryptographer.VerifyData(hash, signature, masterKeyPath))
+            if (!KeyCryptographer.VerifyData(message, signature, masterKeyPath))
             {
                 throw new ArgumentException(string.Format(CultureInfo.InvariantCulture, Strings.InvalidSignatureTemplate,
                                                             masterKeyPath),
@@ -303,21 +268,21 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
                 throw new CryptographicException(Strings.CipherTextLengthMismatch);
             }
 
-            // Compute hash
+            // Compute message
             // SHA-2-256(version + keyPathLength + ciphertextLength + keyPath + ciphertext) 
-            byte[] hash = s_firstVersion.Concat(keyPathLength).Concat(cipherTextLength).Concat(masterKeyPathBytes).Concat(cipherText).ToArray();
+            byte[] message = s_firstVersion.Concat(keyPathLength).Concat(cipherTextLength).Concat(masterKeyPathBytes).Concat(cipherText).ToArray();
 
-            // Sign the hash
-            byte[] signature = KeyCryptographer.SignData(hash, masterKeyPath);
+            // Sign the message
+            byte[] signature = KeyCryptographer.SignData(message, masterKeyPath);
 
             if (signature.Length != keySizeInBytes)
             {
                 throw new CryptographicException(Strings.HashLengthMismatch);
             }
 
-            ValidateSignature(masterKeyPath, hash, signature);
+            ValidateSignature(masterKeyPath, message, signature);
 
-            return hash.Concat(signature).ToArray();
+            return message.Concat(signature).ToArray();
         }
 
         #endregion

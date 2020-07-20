@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             };
 
         /// <summary>
-        /// Always Encrypted Param names for exec handling
+        /// Always Encrypted Parameter names for exec handling
         /// </summary>
         internal const string AeParamColumnEncryptionKey = "columnEncryptionKey";
         internal const string AeParamEncryptionAlgorithm = "encryptionAlgorithm";

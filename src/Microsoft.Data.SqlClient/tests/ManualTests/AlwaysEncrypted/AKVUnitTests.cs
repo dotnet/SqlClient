@@ -6,6 +6,10 @@ using Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Azure.Identity;
 using Xunit;
+using Azure.Core;
+using System.Threading;
+using System.Net.Http;
+using System.Linq;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
@@ -17,7 +21,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void BackwardCompatibilityWithAuthenticationCallbackWorks()
         {
-            SqlColumnEncryptionAzureKeyVaultProvider akvProvider = new SqlColumnEncryptionAzureKeyVaultProvider(AzureActiveDirectoryAuthenticationCallback);
+            SqlColumnEncryptionAzureKeyVaultProvider akvProvider = new SqlColumnEncryptionAzureKeyVaultProvider(new ChallengeBasedTokenCredential());
             byte[] encryptedCek = akvProvider.EncryptColumnEncryptionKey(DataTestUtility.AKVUrl, EncryptionAlgorithm, ColumnEncryptionKey);
             byte[] decryptedCek = akvProvider.DecryptColumnEncryptionKey(DataTestUtility.AKVUrl, EncryptionAlgorithm, encryptedCek);
 
@@ -40,7 +44,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             ClientSecretCredential clientSecretCredential = new ClientSecretCredential(DataTestUtility.AKVTenantId, DataTestUtility.AKVClientId, DataTestUtility.AKVClientSecret);
             SqlColumnEncryptionAzureKeyVaultProvider newAkvProvider = new SqlColumnEncryptionAzureKeyVaultProvider(clientSecretCredential);
-            SqlColumnEncryptionAzureKeyVaultProvider oldAkvProvider = new SqlColumnEncryptionAzureKeyVaultProvider(AzureActiveDirectoryAuthenticationCallback);
+            SqlColumnEncryptionAzureKeyVaultProvider oldAkvProvider = new SqlColumnEncryptionAzureKeyVaultProvider(new ChallengeBasedTokenCredential());
 
             byte[] encryptedCekWithNewProvider = newAkvProvider.EncryptColumnEncryptionKey(DataTestUtility.AKVUrl, EncryptionAlgorithm, ColumnEncryptionKey);
             byte[] decryptedCekWithOldProvider = oldAkvProvider.DecryptColumnEncryptionKey(DataTestUtility.AKVUrl, EncryptionAlgorithm, encryptedCekWithNewProvider);
@@ -51,17 +55,31 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.Equal(ColumnEncryptionKey, decryptedCekWithNewProvider);
         }
 
-        public static async Task<string> AzureActiveDirectoryAuthenticationCallback(string authority, string resource, string scope)
+        internal class ChallengeBasedTokenCredential : TokenCredential
         {
-            var authContext = new AuthenticationContext(authority);
-            ClientCredential clientCred = new ClientCredential(DataTestUtility.AKVClientId, DataTestUtility.AKVClientSecret);
-            AuthenticationResult result = await authContext.AcquireTokenAsync(resource, clientCred);
-            if (result == null)
+            public override AccessToken GetToken(TokenRequestContext requestContext, CancellationToken cancellationToken)
             {
-                throw new InvalidOperationException($"Failed to retrieve an access token for {resource}");
+                throw new NotImplementedException();
             }
 
-            return result.AccessToken;
+            public override async ValueTask<AccessToken> GetTokenAsync(TokenRequestContext requestContext, CancellationToken cancellationToken)
+            {
+                throw new NotImplementedException();
+            }
+
+            private static string ValidateChallenge(string challenge)
+            {
+                string Bearer = "Bearer ";
+                if (string.IsNullOrEmpty(challenge))
+                    throw new ArgumentNullException(nameof(challenge));
+
+                string trimmedChallenge = challenge.Trim();
+
+                if (!trimmedChallenge.StartsWith(Bearer))
+                    throw new ArgumentException("Challenge is not Bearer", nameof(challenge));
+
+                return trimmedChallenge.Substring(Bearer.Length);
+            }
         }
     }
 }
