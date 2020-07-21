@@ -12,6 +12,21 @@ namespace Microsoft.Data.SqlClient
     {
         private bool _traceLoggingProviderEnabled = false;
 
+        /// <summary>
+        /// Captures application flow traces from native networking implementation
+        /// </summary>
+        private const EventCommand SNINativeTrace = (EventCommand)8192;
+
+        /// <summary>
+        /// Captures scope trace events from native networking implementation
+        /// </summary>
+        private const EventCommand SNINativeScope = (EventCommand)16384;
+
+        /// <summary>
+        /// Disables all event tracing in native networking implementation
+        /// </summary>
+        private const EventCommand SNINativeDisable = (EventCommand)32768;
+
         protected override void OnEventCommand(EventCommandEventArgs e)
         {
             // Internally, EventSource.EnableEvents sends an event command, with a reserved value of 0, -2, or -3.
@@ -21,13 +36,13 @@ namespace Microsoft.Data.SqlClient
 
             // Only register the provider if it's not already registered. Registering a provider that is already
             // registered can lead to unpredictable behaviour.
-            if (!_traceLoggingProviderEnabled && e.Command > 0 && (e.Command & ((EventCommand)8192 | (EventCommand)16384)) != 0)
+            if (!_traceLoggingProviderEnabled && e.Command > 0 && (e.Command & (SNINativeTrace | SNINativeScope)) != 0)
             {
-                int eventKeyword = (int)(e.Command & ((EventCommand)8192 | (EventCommand)16384));
+                int eventKeyword = (int)(e.Command & (SNINativeTrace | SNINativeScope));
                 _traceLoggingProviderEnabled = SNINativeMethodWrapper.RegisterTraceProvider(eventKeyword);
                 Debug.Assert(_traceLoggingProviderEnabled, "Failed to enable TraceLogging provider.");
             }
-            else if (_traceLoggingProviderEnabled && (e.Command == (EventCommand)32768))
+            else if (_traceLoggingProviderEnabled && (e.Command == SNINativeDisable))
             {
                 // Only unregister the provider if it's currently registered.
                 SNINativeMethodWrapper.UnregisterTraceProvider();
