@@ -738,7 +738,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (null != innerConnection)
                 {
-                    result = innerConnection.IsSQLDNSCachingSupported ? "true": "false";
+                    result = innerConnection.IsSQLDNSCachingSupported ? "true" : "false";
                 }
                 else
                 {
@@ -762,7 +762,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (null != innerConnection)
                 {
-                    result = innerConnection.IsDNSCachingBeforeRedirectSupported ? "true": "false";
+                    result = innerConnection.IsDNSCachingBeforeRedirectSupported ? "true" : "false";
                 }
                 else
                 {
@@ -886,7 +886,8 @@ namespace Microsoft.Data.SqlClient
         ]
         public int ServerProcessId
         {
-            get => State.Equals(ConnectionState.Open) ? GetOpenTdsConnection().ServerProcessId : 0;
+            get => State.Equals(ConnectionState.Open) | State.Equals(ConnectionState.Executing) | State.Equals(ConnectionState.Fetching) ?
+                GetOpenTdsConnection().ServerProcessId : 0;
         }
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/State/*' />
