@@ -304,12 +304,12 @@ namespace Microsoft.Data.SqlClient
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
         private static extern uint SNIWriteSyncOverAsync(SNIHandle pConn, [In] SNIPacket pPacket);
-       
-		[DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-		internal static extern bool RegisterTraceProviderWrapper(int eventKeyword);
-
-		[DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-		internal static extern void UnregisterTraceProviderWrapper();
+        
+        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern bool RegisterTraceProviderWrapper(int eventKeyword);
+        
+        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void UnregisterTraceProviderWrapper();
 	    #endregion
 
         internal static uint SniGetConnectionId(SNIHandle pConn, ref Guid connId)
