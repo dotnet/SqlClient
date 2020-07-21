@@ -1099,7 +1099,7 @@ GO
       <ServerProcessId>
         <summary>Gets the server process Id (SPID) of the active connection.</summary>
         <value>The server process Id (SPID) of the active connection.</value>
-        <remarks>Returns 0 if the connection is inactive on client side.</remarks>
+        <remarks>Returns 0 if the connection is inactive on the client side.</remarks>
       </ServerProcessId>
         <State>
             <summary>Indicates the state of the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> during the most recent network operation performed on the connection.</summary>

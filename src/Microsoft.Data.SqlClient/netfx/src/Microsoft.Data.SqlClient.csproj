@@ -444,10 +444,10 @@
   </ItemGroup>
   <!-- Resources  -->
   <ItemGroup>
-    <Compile Include="Resources\Strings.Designer.cs">
+    <Compile Include="Resources\$(ResxFileName).Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
-      <DependentUpon>Strings.resx</DependentUpon>
+      <DependentUpon>$(ResxFileName).resx</DependentUpon>
     </Compile>
     <Compile Include="Resources\$(ResxFileName)Helper.cs" />
     <EmbeddedResource Include="Resources\$(ResxFileName).resx">
