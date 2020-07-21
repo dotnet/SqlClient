@@ -26,7 +26,7 @@
       <summary>Sets the callback method, overriding the default implementation that processes the result when performing 'Active Directory Device Code Flow' authentication.</summary>
     </SetDeviceCodeFlowCallback>
     <SetParentActivityOrWindowFunc>
-      <param name="parentActivityOrWindowFunc">The parent as an object, in order to be used from shared NetStandard assemblies.</param>
+      <param name="parentActivityOrWindowFunc">The parent as an object, in order to be used from shared .NET Standard assemblies.</param>
       <summary>Sets a reference to the ViewController (if using Xamarin.iOS), Activity (if using Xamarin.Android) IWin32Window or IntPtr (if using .NET Framework). Used for invoking the browser for Active Directory Interactive authentication.</summary>
       <remarks>Mandatory to be set only on Android. See https://aka.ms/msal-net-android-activity for further documentation and details.</remarks>
     </SetParentActivityOrWindowFunc>
@@ -35,7 +35,7 @@
       <summary>Sets a reference to the current <see cref="T:System.Windows.Forms.IWin32Window" /> that triggers the browser to be shown. Used to center the browser pop-up onto this window."</summary>
     </SetIWin32WindowFunc>
     <SetAcquireAuthorizationCodeAsyncCallback>
-      <param name="acquireAuthorizationCodeAsyncCallback">The callback method to be called by MSAL.NET to delegate the authentication code Web with the Secure Token Service (STS).</param>
+      <param name="acquireAuthorizationCodeAsyncCallback">The callback method to be called by MSAL.NET to delegate the Web user interface with the Secure Token Service (STS).</param>
       <summary>Sets a callback method which is invoked with a custom Web UI instance that will let the user sign-in with Azure Active Directory, present consent if needed, and get back the authorization code. Applicable when working with Active Directory Interactive authentication.</summary>
       <remarks>The "authorizationUri" is crafted to leverage PKCE in order to protect the token from a man in the middle attack. Only MSAL.NET can redeem the code. In the event of cancellation, the implementer should return <see cref="T:System.OperationCanceledException" />.</remarks>
     </SetAcquireAuthorizationCodeAsyncCallback>
