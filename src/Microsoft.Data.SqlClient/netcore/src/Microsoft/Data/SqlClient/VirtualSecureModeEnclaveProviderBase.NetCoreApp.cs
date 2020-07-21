@@ -86,9 +86,9 @@ namespace Microsoft.Data.SqlClient
 
         // When overridden in a derived class, looks up an existing enclave session information in the enclave session cache.
         // If the enclave provider doesn't implement enclave session caching, this method is expected to return null in the sqlEnclaveSession parameter.
-        internal override void GetEnclaveSession(string servername, string attestationUrl, bool generateCustomData, out SqlEnclaveSession sqlEnclaveSession, out long counter, out byte[] customData, out int customDataLength)
+        internal override void GetEnclaveSession(string servername, string attestationUrl, string database, bool generateCustomData, out SqlEnclaveSession sqlEnclaveSession, out long counter, out byte[] customData, out int customDataLength)
         {
-            GetEnclaveSessionHelper(servername, attestationUrl, false, out sqlEnclaveSession, out counter, out customData, out customDataLength);
+            GetEnclaveSessionHelper(servername, attestationUrl, database, false, out sqlEnclaveSession, out counter, out customData, out customDataLength);
         }
 
         // Gets the information that SqlClient subsequently uses to initiate the process of attesting the enclave and to establish a secure session with the enclave.
@@ -101,14 +101,14 @@ namespace Microsoft.Data.SqlClient
         }
 
         // When overridden in a derived class, performs enclave attestation, generates a symmetric key for the session, creates a an enclave session and stores the session information in the cache.
-        internal override void CreateEnclaveSession(byte[] attestationInfo, ECDiffieHellmanCng clientDHKey, string attestationUrl, string servername, byte[] customData, int customDataLength, out SqlEnclaveSession sqlEnclaveSession, out long counter)
+        internal override void CreateEnclaveSession(byte[] attestationInfo, ECDiffieHellmanCng clientDHKey, string attestationUrl, string servername, string database, byte[] customData, int customDataLength, out SqlEnclaveSession sqlEnclaveSession, out long counter)
         {
             sqlEnclaveSession = null;
             counter = 0;
             try
             {
                 ThreadRetryCache.Remove(Thread.CurrentThread.ManagedThreadId.ToString());
-                sqlEnclaveSession = GetEnclaveSessionFromCache(servername, attestationUrl, out counter);
+                sqlEnclaveSession = GetEnclaveSessionFromCache(servername, attestationUrl, database, out counter);
                 if (sqlEnclaveSession == null)
                 {
                     if (!string.IsNullOrEmpty(attestationUrl))
@@ -126,7 +126,7 @@ namespace Microsoft.Data.SqlClient
                         byte[] sharedSecret = GetSharedSecret(info.Identity, info.EnclaveDHInfo, clientDHKey);
 
                         // add session to cache
-                        sqlEnclaveSession = AddEnclaveSessionToCache(attestationUrl, servername, sharedSecret, info.SessionId, out counter);
+                        sqlEnclaveSession = AddEnclaveSessionToCache(attestationUrl, servername, database, sharedSecret, info.SessionId, out counter);
                     }
                     else
                     {
@@ -141,9 +141,9 @@ namespace Microsoft.Data.SqlClient
         }
 
         // When overridden in a derived class, looks up and evicts an enclave session from the enclave session cache, if the provider implements session caching.
-        internal override void InvalidateEnclaveSession(string serverName, string enclaveAttestationUrl, SqlEnclaveSession enclaveSessionToInvalidate)
+        internal override void InvalidateEnclaveSession(string serverName, string enclaveAttestationUrl, string database, SqlEnclaveSession enclaveSessionToInvalidate)
         {
-            InvalidateEnclaveSessionHelper(serverName, enclaveAttestationUrl, enclaveSessionToInvalidate);
+            InvalidateEnclaveSessionHelper(serverName, enclaveAttestationUrl, database, enclaveSessionToInvalidate);
         }
 
         #endregion

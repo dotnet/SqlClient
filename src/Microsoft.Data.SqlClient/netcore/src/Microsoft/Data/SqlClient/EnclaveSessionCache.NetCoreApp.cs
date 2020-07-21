@@ -22,23 +22,23 @@ namespace Microsoft.Data.SqlClient
         private static int enclaveCacheTimeOutInHours = 8;
 
         // Retrieves a SqlEnclaveSession from the cache
-        internal SqlEnclaveSession GetEnclaveSession(string servername, string attestationUrl, out long counter)
+        internal SqlEnclaveSession GetEnclaveSession(string servername, string attestationUrl, string database, out long counter)
         {
-            string cacheKey = GenerateCacheKey(servername, attestationUrl);
+            string cacheKey = GenerateCacheKey(servername, attestationUrl, database);
             SqlEnclaveSession enclaveSession = enclaveMemoryCache[cacheKey] as SqlEnclaveSession;
             counter = Interlocked.Increment(ref _counter);
             return enclaveSession;
         }
 
         // Invalidates a SqlEnclaveSession entry in the cache
-        internal void InvalidateSession(string serverName, string enclaveAttestationUrl, SqlEnclaveSession enclaveSessionToInvalidate)
+        internal void InvalidateSession(string serverName, string enclaveAttestationUrl, string database, SqlEnclaveSession enclaveSessionToInvalidate)
         {
-            string cacheKey = GenerateCacheKey(serverName, enclaveAttestationUrl);
+            string cacheKey = GenerateCacheKey(serverName, enclaveAttestationUrl, database);
 
             lock (enclaveCacheLock)
             {
                 long counter;
-                SqlEnclaveSession enclaveSession = GetEnclaveSession(serverName, enclaveAttestationUrl, out counter);
+                SqlEnclaveSession enclaveSession = GetEnclaveSession(serverName, enclaveAttestationUrl, database, out counter);
 
                 if (enclaveSession != null && enclaveSession.SessionId == enclaveSessionToInvalidate.SessionId)
                 {
@@ -52,9 +52,9 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Creates a new SqlEnclaveSession and adds it to the cache
-        internal SqlEnclaveSession CreateSession(string attestationUrl, string serverName, byte[] sharedSecret, long sessionId, out long counter)
+        internal SqlEnclaveSession CreateSession(string attestationUrl, string serverName, string database, byte[] sharedSecret, long sessionId, out long counter)
         {
-            string cacheKey = GenerateCacheKey(serverName, attestationUrl);
+            string cacheKey = GenerateCacheKey(serverName, attestationUrl, database);
             SqlEnclaveSession enclaveSession = null;
             lock (enclaveCacheLock)
             {
@@ -67,9 +67,9 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Generates the cache key for the enclave session cache
-        private string GenerateCacheKey(string serverName, string attestationUrl)
+        private string GenerateCacheKey(string serverName, string attestationUrl, string database)
         {
-            return (serverName + attestationUrl).ToLowerInvariant();
+            return (serverName + '+' + database + attestationUrl).ToLowerInvariant();
         }
     }
 }
