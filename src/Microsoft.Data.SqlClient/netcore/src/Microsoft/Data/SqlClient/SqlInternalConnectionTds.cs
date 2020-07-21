@@ -544,6 +544,8 @@ namespace Microsoft.Data.SqlClient
             {
                 if (s_transientErrors.Contains(error.Number))
                 {
+                    // When server timeouts, connection is doomed. Reset here to allow reconnect.
+                    UnDoomThisConnection();
                     return true;
                 }
             }
@@ -1628,7 +1630,7 @@ namespace Microsoft.Data.SqlClient
             timeout.Reset();
             // When server timeout, the auth context key was already created. Clean it up here.
             _dbConnectionPoolAuthenticationContextKey = null;
-            // When server timeout, connection is doomed. Reset here to allow reconnect.
+            // When server timeouts, connection is doomed. Reset here to allow reconnect.
             UnDoomThisConnection();
             // Change retry state so it only retries once for timeout error.
             _activeDirectoryAuthTimeoutRetryHelper.State = ActiveDirectoryAuthenticationTimeoutRetryState.Retrying;
