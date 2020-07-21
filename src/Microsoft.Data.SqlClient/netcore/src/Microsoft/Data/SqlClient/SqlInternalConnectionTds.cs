@@ -123,6 +123,9 @@ namespace Microsoft.Data.SqlClient
         internal bool _federatedAuthenticationAcknowledged;
         internal bool _federatedAuthenticationInfoRequested; // Keep this distinct from _federatedAuthenticationRequested, since some fedauth library types may not need more info
         internal bool _federatedAuthenticationInfoReceived;
+
+        // The Federated Authentication returned by TryGetFedAuthTokenLocked or GetFedAuthToken.
+        SqlFedAuthToken _fedAuthToken = null;
         internal byte[] _accessTokenInBytes;
 
         private readonly ActiveDirectoryAuthenticationTimeoutRetryHelper _activeDirectoryAuthTimeoutRetryHelper;
@@ -130,6 +133,18 @@ namespace Microsoft.Data.SqlClient
 
         internal bool _cleanSQLDNSCaching = false;
         private bool _serverSupportsDNSCaching = false;
+
+        /// <summary>
+        /// Returns buffer time allowed before access token expiry to continue using the access token.
+        /// </summary>
+        private int accessTokenExpirationBufferTime
+        {
+            get
+            {
+                return (ConnectionOptions.ConnectTimeout == ADP.InfiniteConnectionTimeout || ConnectionOptions.ConnectTimeout >= ADP.MaxBufferAccessTokenExpiry)
+                    ? ADP.MaxBufferAccessTokenExpiry : ConnectionOptions.ConnectTimeout;
+            }
+        }
 
         /// <summary>
         /// Get or set if SQLDNSCaching is supported by the server.
@@ -180,7 +195,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-       internal SQLDNSInfo pendingSQLDNSObject = null;   
+        internal SQLDNSInfo pendingSQLDNSObject = null;
 
         // TCE flags
         internal byte _tceVersionSupported;
@@ -683,6 +698,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <summary>
+        /// Validates if federated authentication is used, Access Token used by this connection is active for the value of 'accessTokenExpirationBufferTime'.
+        /// </summary>
+        internal override bool IsAccessTokenExpired => _federatedAuthenticationInfoRequested && DateTime.FromFileTimeUtc(_fedAuthToken.expirationFileTime) < DateTime.UtcNow.AddSeconds(accessTokenExpirationBufferTime);
 
         ////////////////////////////////////////////////////////////////////////////////////////
         // GENERAL METHODS
@@ -1055,10 +1074,10 @@ namespace Microsoft.Data.SqlClient
                         ThreadHasParserLockForClose = false;
                         _parserLock.Release();
                         releaseConnectionLock = false;
-                    }, 0);
+                    }, ADP.InfiniteConnectionTimeout);
                     if (reconnectTask != null)
                     {
-                        AsyncHelper.WaitForCompletion(reconnectTask, 0); // there is no specific timeout for BeginTransaction, uses ConnectTimeout
+                        AsyncHelper.WaitForCompletion(reconnectTask, ADP.InfiniteConnectionTimeout); // there is no specific timeout for BeginTransaction, uses ConnectTimeout
                         internalTransaction.ConnectionHasBeenRestored = true;
                         return;
                     }
@@ -2090,8 +2109,6 @@ namespace Microsoft.Data.SqlClient
             // We want to refresh the token, if taking the lock on the authentication context is successful.
             bool attemptRefreshTokenLocked = false;
 
-            // The Federated Authentication returned by TryGetFedAuthTokenLocked or GetFedAuthToken.
-            SqlFedAuthToken fedAuthToken = null;
 
             if (_dbConnectionPool != null)
             {
@@ -2126,7 +2143,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else if (_forceExpiryLocked)
                     {
-                        attemptRefreshTokenLocked = TryGetFedAuthTokenLocked(fedAuthInfo, dbConnectionPoolAuthenticationContext, out fedAuthToken);
+                        attemptRefreshTokenLocked = TryGetFedAuthTokenLocked(fedAuthInfo, dbConnectionPoolAuthenticationContext, out _fedAuthToken);
                     }
 #endif
 
@@ -2140,11 +2157,11 @@ namespace Microsoft.Data.SqlClient
 
                         // Call the function which tries to acquire a lock over the authentication context before trying to update.
                         // If the lock could not be obtained, it will return false, without attempting to fetch a new token.
-                        attemptRefreshTokenLocked = TryGetFedAuthTokenLocked(fedAuthInfo, dbConnectionPoolAuthenticationContext, out fedAuthToken);
+                        attemptRefreshTokenLocked = TryGetFedAuthTokenLocked(fedAuthInfo, dbConnectionPoolAuthenticationContext, out _fedAuthToken);
 
                         // If TryGetFedAuthTokenLocked returns true, it means lock was obtained and fedAuthToken should not be null.
                         // If there was an exception in retrieving the new token, TryGetFedAuthTokenLocked should have thrown, so we won't be here.
-                        Debug.Assert(!attemptRefreshTokenLocked || fedAuthToken != null, "Either Lock should not have been obtained or fedAuthToken should not be null.");
+                        Debug.Assert(!attemptRefreshTokenLocked || _fedAuthToken != null, "Either Lock should not have been obtained or fedAuthToken should not be null.");
                         Debug.Assert(!attemptRefreshTokenLocked || _newDbConnectionPoolAuthenticationContext != null, "Either Lock should not have been obtained or _newDbConnectionPoolAuthenticationContext should not be null.");
 
                         // Indicate in EventSource Trace that we are successful with the update.
@@ -2161,8 +2178,8 @@ namespace Microsoft.Data.SqlClient
             if (dbConnectionPoolAuthenticationContext == null || attemptRefreshTokenUnLocked)
             {
                 // Get the Federated Authentication Token.
-                fedAuthToken = GetFedAuthToken(fedAuthInfo);
-                Debug.Assert(fedAuthToken != null, "fedAuthToken should not be null.");
+                _fedAuthToken = GetFedAuthToken(fedAuthInfo);
+                Debug.Assert(_fedAuthToken != null, "fedAuthToken should not be null.");
 
                 if (_dbConnectionPool != null)
                 {
@@ -2173,18 +2190,19 @@ namespace Microsoft.Data.SqlClient
             else if (!attemptRefreshTokenLocked)
             {
                 Debug.Assert(dbConnectionPoolAuthenticationContext != null, "dbConnectionPoolAuthenticationContext should not be null.");
-                Debug.Assert(fedAuthToken == null, "fedAuthToken should be null in this case.");
+                Debug.Assert(_fedAuthToken == null, "fedAuthToken should be null in this case.");
                 Debug.Assert(_newDbConnectionPoolAuthenticationContext == null, "_newDbConnectionPoolAuthenticationContext should be null.");
 
-                fedAuthToken = new SqlFedAuthToken();
+                _fedAuthToken = new SqlFedAuthToken();
 
                 // If the code flow is here, then we are re-using the context from the cache for this connection attempt and not
                 // generating a new access token on this thread.
-                fedAuthToken.accessToken = dbConnectionPoolAuthenticationContext.AccessToken;
+                _fedAuthToken.accessToken = dbConnectionPoolAuthenticationContext.AccessToken;
+                _fedAuthToken.expirationFileTime = dbConnectionPoolAuthenticationContext.ExpirationTime.ToFileTime();
             }
 
-            Debug.Assert(fedAuthToken != null && fedAuthToken.accessToken != null, "fedAuthToken and fedAuthToken.accessToken cannot be null.");
-            _parser.SendFedAuthToken(fedAuthToken);
+            Debug.Assert(_fedAuthToken != null && _fedAuthToken.accessToken != null, "fedAuthToken and fedAuthToken.accessToken cannot be null.");
+            _parser.SendFedAuthToken(_fedAuthToken);
         }
 
         /// <summary>
@@ -2259,7 +2277,7 @@ namespace Microsoft.Data.SqlClient
             int numberOfAttempts = 0;
 
             // Object that will be returned to the caller, containing all required data about the token.
-            SqlFedAuthToken fedAuthToken = new SqlFedAuthToken();
+            _fedAuthToken = new SqlFedAuthToken();
 
             // Username to use in error messages.
             string username = null;
@@ -2299,31 +2317,31 @@ namespace Microsoft.Data.SqlClient
 
                             if (_activeDirectoryAuthTimeoutRetryHelper.State == ActiveDirectoryAuthenticationTimeoutRetryState.Retrying)
                             {
-                                fedAuthToken = _activeDirectoryAuthTimeoutRetryHelper.CachedToken;
+                                _fedAuthToken = _activeDirectoryAuthTimeoutRetryHelper.CachedToken;
                             }
                             else
                             {
-                                Task.Run(() => fedAuthToken = authProvider.AcquireTokenAsync(authParamsBuilder).Result.ToSqlFedAuthToken()).Wait();
-                                _activeDirectoryAuthTimeoutRetryHelper.CachedToken = fedAuthToken;
+                                Task.Run(() => _fedAuthToken = authProvider.AcquireTokenAsync(authParamsBuilder).Result.ToSqlFedAuthToken()).Wait();
+                                _activeDirectoryAuthTimeoutRetryHelper.CachedToken = _fedAuthToken;
                             }
                             break;
                         case SqlAuthenticationMethod.ActiveDirectoryInteractive:
                             if (_activeDirectoryAuthTimeoutRetryHelper.State == ActiveDirectoryAuthenticationTimeoutRetryState.Retrying)
                             {
-                                fedAuthToken = _activeDirectoryAuthTimeoutRetryHelper.CachedToken;
+                                _fedAuthToken = _activeDirectoryAuthTimeoutRetryHelper.CachedToken;
                             }
                             else
                             {
                                 authParamsBuilder.WithUserId(ConnectionOptions.UserID);
-                                Task.Run(() => fedAuthToken = authProvider.AcquireTokenAsync(authParamsBuilder).Result.ToSqlFedAuthToken()).Wait();
-                                _activeDirectoryAuthTimeoutRetryHelper.CachedToken = fedAuthToken;
+                                Task.Run(() => _fedAuthToken = authProvider.AcquireTokenAsync(authParamsBuilder).Result.ToSqlFedAuthToken()).Wait();
+                                _activeDirectoryAuthTimeoutRetryHelper.CachedToken = _fedAuthToken;
                             }
                             break;
                         case SqlAuthenticationMethod.ActiveDirectoryPassword:
                         case SqlAuthenticationMethod.ActiveDirectoryServicePrincipal:
                             if (_activeDirectoryAuthTimeoutRetryHelper.State == ActiveDirectoryAuthenticationTimeoutRetryState.Retrying)
                             {
-                                fedAuthToken = _activeDirectoryAuthTimeoutRetryHelper.CachedToken;
+                                _fedAuthToken = _activeDirectoryAuthTimeoutRetryHelper.CachedToken;
                             }
                             else
                             {
@@ -2331,22 +2349,22 @@ namespace Microsoft.Data.SqlClient
                                 {
                                     username = _credential.UserId;
                                     authParamsBuilder.WithUserId(username).WithPassword(_credential.Password);
-                                    Task.Run(() => fedAuthToken = authProvider.AcquireTokenAsync(authParamsBuilder).Result.ToSqlFedAuthToken()).Wait();
+                                    Task.Run(() => _fedAuthToken = authProvider.AcquireTokenAsync(authParamsBuilder).Result.ToSqlFedAuthToken()).Wait();
                                 }
                                 else
                                 {
                                     username = ConnectionOptions.UserID;
                                     authParamsBuilder.WithUserId(username).WithPassword(ConnectionOptions.Password);
-                                    Task.Run(() => fedAuthToken = authProvider.AcquireTokenAsync(authParamsBuilder).Result.ToSqlFedAuthToken()).Wait();
+                                    Task.Run(() => _fedAuthToken = authProvider.AcquireTokenAsync(authParamsBuilder).Result.ToSqlFedAuthToken()).Wait();
                                 }
-                                _activeDirectoryAuthTimeoutRetryHelper.CachedToken = fedAuthToken;
+                                _activeDirectoryAuthTimeoutRetryHelper.CachedToken = _fedAuthToken;
                             }
                             break;
                         default:
                             throw SQL.UnsupportedAuthenticationSpecified(ConnectionOptions.Authentication);
                     }
 
-                    Debug.Assert(fedAuthToken.accessToken != null, "AccessToken should not be null.");
+                    Debug.Assert(_fedAuthToken.accessToken != null, "AccessToken should not be null.");
 #if DEBUG
                     if (_forceMsalRetry)
                     {
@@ -2416,28 +2434,29 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            Debug.Assert(fedAuthToken != null, "fedAuthToken should not be null.");
-            Debug.Assert(fedAuthToken.accessToken != null && fedAuthToken.accessToken.Length > 0, "fedAuthToken.accessToken should not be null or empty.");
+            Debug.Assert(_fedAuthToken != null, "fedAuthToken should not be null.");
+            Debug.Assert(_fedAuthToken.accessToken != null && _fedAuthToken.accessToken.Length > 0, "fedAuthToken.accessToken should not be null or empty.");
 
             // Store the newly generated token in _newDbConnectionPoolAuthenticationContext, only if using pooling.
             if (_dbConnectionPool != null)
             {
-                DateTime expirationTime = DateTime.FromFileTimeUtc(fedAuthToken.expirationFileTime);
-                _newDbConnectionPoolAuthenticationContext = new DbConnectionPoolAuthenticationContext(fedAuthToken.accessToken, expirationTime);
+                DateTime expirationTime = DateTime.FromFileTimeUtc(_fedAuthToken.expirationFileTime);
+                _newDbConnectionPoolAuthenticationContext = new DbConnectionPoolAuthenticationContext(_fedAuthToken.accessToken, expirationTime);
             }
             SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.GetFedAuthToken> {0}, Finished generating federated authentication token.", ObjectID);
-            return fedAuthToken;
+            return _fedAuthToken;
         }
 
         internal void OnFeatureExtAck(int featureId, byte[] data)
         {
             if (RoutingInfo != null)
             {
-                if (TdsEnums.FEATUREEXT_SQLDNSCACHING != featureId) {
+                if (TdsEnums.FEATUREEXT_SQLDNSCACHING != featureId)
+                {
                     return;
                 }
             }
-            
+
             switch (featureId)
             {
                 case TdsEnums.FEATUREEXT_SRECOVERY:
@@ -2635,16 +2654,18 @@ namespace Microsoft.Data.SqlClient
                             throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
                         }
 
-                        if (1 == data[0]) {
+                        if (1 == data[0])
+                        {
                             IsSQLDNSCachingSupported = true;
                             _cleanSQLDNSCaching = false;
-                            
+
                             if (RoutingInfo != null)
                             {
                                 IsDNSCachingBeforeRedirectSupported = true;
                             }
                         }
-                        else {
+                        else
+                        {
                             // we receive the IsSupported whose value is 0
                             IsSQLDNSCachingSupported = false;
                             _cleanSQLDNSCaching = true;
