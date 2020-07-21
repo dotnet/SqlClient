@@ -236,7 +236,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void ConnectionResiliencyTest()
+        public static void ConnectionResiliencySPIDTest()
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
             builder.ConnectRetryCount = 0;
@@ -264,23 +264,37 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             builder.ConnectRetryCount = 2;
+            // Also check SPID changes with connection resiliency
             using (SqlConnection conn = new SqlConnection(builder.ConnectionString))
             {
                 conn.Open();
+                int clientSPID = conn.ServerProcessId;
+                int serverSPID = 0;
                 InternalConnectionWrapper wrapper = new InternalConnectionWrapper(conn, true, builder.ConnectionString);
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "SELECT TOP 1 * FROM dbo.Employees";
+                    cmd.CommandText = "SELECT @@SPID";
                     using (SqlDataReader reader = cmd.ExecuteReader())
                         while (reader.Read())
-                        { }
+                        {
+                            serverSPID = reader.GetInt16(0);
+                        }
+
+                    Assert.Equal(serverSPID, clientSPID);
+                    // Also check SPID after query execution
+                    Assert.Equal(serverSPID, conn.ServerProcessId);
 
                     wrapper.KillConnectionByTSql();
 
                     // Connection resiliency should reconnect transparently
                     using (SqlDataReader reader = cmd.ExecuteReader())
                         while (reader.Read())
-                        { }
+                        {
+                            serverSPID = reader.GetInt16(0);
+                        }
+
+                    // SPID should match server's SPID
+                    Assert.Equal(serverSPID, conn.ServerProcessId);
                 }
             }
         }
