@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (SqlConnection sqlConnection = new SqlConnection(builder.ConnectionString))
             {
                 sqlConnection.Open();
-                int sqlclientSPID = sqlConnection.ServerProcessId;
+                int sqlClientSPID = sqlConnection.ServerProcessId;
                 int sessionSpid;
 
                 using (SqlCommand cmd = new SqlCommand("SELECT @@SPID", sqlConnection))
@@ -44,8 +44,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     reader.Read();
                     sessionSpid = reader.GetInt16(0);
                 }
+                // Confirm Server process id is same as result of SELECT @@SPID
+                Assert.Equal(sessionSpid, sqlClientSPID);
 
-                Assert.Equal(sqlclientSPID, sessionSpid);
+                // Confirm once again SPID on SqlConnection directly
+                Assert.Equal(sessionSpid, sqlConnection.ServerProcessId);
 
                 using (SqlCommand command = new SqlCommand("sp_who2", sqlConnection))
                 using (SqlDataReader reader = command.ExecuteReader())
@@ -70,6 +73,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         }
                     }
                 }
+                // Confirm Server Process Id stays the same after query execution
+                Assert.Equal(sessionSpid, sqlConnection.ServerProcessId);
             }
             Assert.True(false, "No non-empty hostname found for the application");
         }
