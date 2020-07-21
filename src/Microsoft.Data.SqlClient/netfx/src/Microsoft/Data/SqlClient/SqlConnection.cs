@@ -878,6 +878,17 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ServerProcessId/*' />
+        [
+        Browsable(false),
+        DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
+        ResDescription(StringsHelper.ResourceNames.SqlConnection_ServerProcessId),
+        ]
+        public int ServerProcessId
+        {
+            get => State.Equals(ConnectionState.Open) ? GetOpenTdsConnection().ServerProcessId : 0;
+        }
+
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/State/*' />
         [
         Browsable(false),

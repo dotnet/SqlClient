@@ -27,7 +27,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly string s_dropDatabaseCmd = $"DROP DATABASE {s_databaseName}";
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void EnvironmentHostNameTest()
+        public static void EnvironmentHostNameSPIDTest()
         {
             SqlConnectionStringBuilder builder = (new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { Pooling = true });
             builder.ApplicationName = "HostNameTest";
@@ -35,6 +35,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (SqlConnection sqlConnection = new SqlConnection(builder.ConnectionString))
             {
                 sqlConnection.Open();
+                int sqlclientSPID = sqlConnection.ServerProcessId;
                 int sessionSpid;
 
                 using (SqlCommand cmd = new SqlCommand("SELECT @@SPID", sqlConnection))
@@ -43,6 +44,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     reader.Read();
                     sessionSpid = reader.GetInt16(0);
                 }
+
+                Assert.Equal(sqlclientSPID, sessionSpid);
 
                 using (SqlCommand command = new SqlCommand("sp_who2", sqlConnection))
                 using (SqlDataReader reader = command.ExecuteReader())
@@ -55,7 +58,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         int spidOrdinal = reader.GetOrdinal(COL_SPID);
                         string spid = reader.GetString(spidOrdinal);
 
-                        if (programName != null && programName.Trim().Equals(builder.ApplicationName) && Int16.Parse(spid) == sessionSpid)
+                        if (programName != null && programName.Trim().Equals(builder.ApplicationName) && short.Parse(spid) == sessionSpid)
                         {
                             // Get the hostname
                             int hostnameOrdinal = reader.GetOrdinal(COL_HOSTNAME);
@@ -106,11 +109,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void ProcessIdTest()
+        public static void LocalProcessIdTest()
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
             string sqlProviderName = builder.ApplicationName;
-            string sqlProviderProcessID = System.Diagnostics.Process.GetCurrentProcess().Id.ToString();
+            string sqlProviderProcessID = Process.GetCurrentProcess().Id.ToString();
 
             using (SqlConnection sqlConnection = new SqlConnection(builder.ConnectionString))
             {
