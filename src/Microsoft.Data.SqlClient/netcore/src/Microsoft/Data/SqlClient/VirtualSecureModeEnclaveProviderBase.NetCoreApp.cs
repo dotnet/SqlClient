@@ -5,6 +5,7 @@
 using System;
 using System.Linq;
 using System.Runtime.Caching;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
@@ -94,14 +95,14 @@ namespace Microsoft.Data.SqlClient
         // Gets the information that SqlClient subsequently uses to initiate the process of attesting the enclave and to establish a secure session with the enclave.
         internal override SqlEnclaveAttestationParameters GetAttestationParameters(string attestationUrl, byte[] customData, int customDataLength)
         {
-            ECDiffieHellmanCng clientDHKey = new ECDiffieHellmanCng(DiffieHellmanKeySize);
-            clientDHKey.KeyDerivationFunction = ECDiffieHellmanKeyDerivationFunction.Hash;
-            clientDHKey.HashAlgorithm = CngAlgorithm.Sha256;
+            ECDiffieHellman clientDHKey = ECDiffieHellman.Create();
+            clientDHKey.KeySize = DiffieHellmanKeySize;
+
             return new SqlEnclaveAttestationParameters(VsmHGSProtocolId, new byte[] { }, clientDHKey);
         }
 
         // When overridden in a derived class, performs enclave attestation, generates a symmetric key for the session, creates a an enclave session and stores the session information in the cache.
-        internal override void CreateEnclaveSession(byte[] attestationInfo, ECDiffieHellmanCng clientDHKey, string attestationUrl, string servername, byte[] customData, int customDataLength, out SqlEnclaveSession sqlEnclaveSession, out long counter)
+        internal override void CreateEnclaveSession(byte[] attestationInfo, ECDiffieHellman clientDHKey, string attestationUrl, string servername, byte[] customData, int customDataLength, out SqlEnclaveSession sqlEnclaveSession, out long counter)
         {
             sqlEnclaveSession = null;
             counter = 0;
@@ -349,18 +350,74 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Derives the shared secret between the client and enclave.
-        private byte[] GetSharedSecret(EnclavePublicKey enclavePublicKey, EnclaveDiffieHellmanInfo enclaveDHInfo, ECDiffieHellmanCng clientDHKey)
+        private byte[] GetSharedSecret(EnclavePublicKey enclavePublicKey, EnclaveDiffieHellmanInfo enclaveDHInfo, ECDiffieHellman clientDHKey)
         {
             // Perform signature verification. The enclave's DiffieHellman public key was signed by the enclave's RSA public key.
-            CngKey cngkey = CngKey.Import(enclavePublicKey.PublicKey, CngKeyBlobFormat.GenericPublicBlob);
-            RSACng rsacng = new RSACng(cngkey);
-            if (!rsacng.VerifyData(enclaveDHInfo.PublicKey, enclaveDHInfo.PublicKeySignature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1))
+            RSAParameters rsaParams = RSAKeyBlobToParams(enclavePublicKey.PublicKey);
+            RSA rsa = RSA.Create(rsaParams);
+
+            if (!rsa.VerifyData(enclaveDHInfo.PublicKey, enclaveDHInfo.PublicKeySignature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1))
             {
                 throw new ArgumentException(SR.GetSharedSecretFailed);
             }
 
-            CngKey key = CngKey.Import(enclaveDHInfo.PublicKey, CngKeyBlobFormat.GenericPublicBlob);
-            return clientDHKey.DeriveKeyMaterial(key);
+            ECParameters ecParams = ECCKeyBlobToParams(enclaveDHInfo.PublicKey);
+            ECDiffieHellman enclaveDHKey = ECDiffieHellman.Create(ecParams);
+
+            return clientDHKey.DeriveKeyMaterial(enclaveDHKey.PublicKey);
+        }
+
+        // Extracts the public key's modulus and exponent from the key blob
+
+        // this works on windows because the win32 api uses the bcrypt structures
+        // will it work on linux? 
+        // according to odbc docs, the modulus is always 512 bytes for a VBS-HGS enclave response
+        // so it should work for any vbs-hgs enclave provider...
+        private RSAParameters RSAKeyBlobToParams(byte[] keyBlob)
+        {
+            // The RSA public key blob is structured as follows:
+            //     BCRYPT_RSAKEY_BLOB   header
+            //     byte[cbPublicExp]    publicExponent      - Exponent
+            //     byte[cbModulus]      modulus             - Modulus
+
+            // The exponent is the final 3 bytes in the header
+            // The modulus is the final 512 bytes in the key blob
+            const int modulusSize = 512;
+            const int exponentSize = 3;
+            int BcryptRsaKeyBlobHeaderSize = keyBlob.Length - modulusSize;
+            int exponentOffset = BcryptRsaKeyBlobHeaderSize - exponentSize;
+            int modulusOffset = exponentOffset + exponentSize;
+
+            return new RSAParameters()
+            {
+                Exponent = keyBlob.Skip(exponentOffset).Take(exponentSize).ToArray(),
+                Modulus = keyBlob.Skip(modulusOffset).Take(modulusSize).ToArray()
+            };
+        }
+
+        // Extracts the public key's X and Y coordinate
+        private ECParameters ECCKeyBlobToParams(byte[] keyBlob)
+        {
+            // The ECC public key blob is structured as follows:
+            //     BCRYPT_ECCKEY_BLOB   header
+            //     byte[cbKey]    X     - X coordinate 
+            //     byte[cbKey]    Y     - Y coordinate
+
+            // The size of each key is found after the first 4 byes (magic number)
+            const int keySizeOffset = 4;
+            int keySize = BitConverter.ToInt32(keyBlob, keySizeOffset);
+            int keyOffset = keySizeOffset + sizeof(int);
+
+            return new ECParameters
+            {
+                // should we read the magic bytes and set it based on that?
+                //Curve = ECCurve.NamedCurves.nistP384,
+                Q = new ECPoint
+                {
+                    X = keyBlob.Skip(keyOffset).Take(keySize).ToArray(),
+                    Y = keyBlob.Skip(keyOffset + keySize).Take(keySize).ToArray()
+                },
+            };
         }
 
         #endregion
