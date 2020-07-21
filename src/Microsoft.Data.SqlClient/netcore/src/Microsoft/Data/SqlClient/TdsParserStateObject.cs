@@ -2844,7 +2844,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (_executionContext != null)
                         {
-                            ExecutionContext.Run(_executionContext, (state) => ReadAsyncCallbackCaptureException(source), null);
+                            ExecutionContext.Run(_executionContext, state => ReadAsyncCallbackCaptureException((TaskCompletionSource<object>)state), source);
                         }
                         else
                         {
