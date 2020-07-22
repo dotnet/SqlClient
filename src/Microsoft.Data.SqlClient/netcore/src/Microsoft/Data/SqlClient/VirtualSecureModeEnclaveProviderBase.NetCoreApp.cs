@@ -5,7 +5,6 @@
 using System;
 using System.Linq;
 using System.Runtime.Caching;
-using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
@@ -296,15 +295,13 @@ namespace Microsoft.Data.SqlClient
             }
 
             // IDK_S is contained in healthReport cert public key
-            RSA rsacsp = healthReportCert.GetRSAPublicKey();
-            RSAParameters rsaparams = rsacsp.ExportParameters(includePrivateParameters: false);
-            RSACng rsacng = new RSACng();
-            rsacng.ImportParameters(rsaparams);
-
-            if (!rsacng.VerifyData(enclaveReportPackage.ReportAsBytes, enclaveReportPackage.SignatureBlob, HashAlgorithmName.SHA256, RSASignaturePadding.Pss))
+            using (RSA rsa = healthReportCert.GetRSAPublicKey())
             {
-                throw new ArgumentException(SR.VerifyEnclaveReportFailed);
-
+                RSAParameters rsaparams = rsa.ExportParameters(includePrivateParameters: false);
+                if (!rsa.VerifyData(enclaveReportPackage.ReportAsBytes, enclaveReportPackage.SignatureBlob, HashAlgorithmName.SHA256, RSASignaturePadding.Pss))
+                {
+                    throw new ArgumentException(SR.VerifyEnclaveReportFailed);
+                }
             }
         }
 
@@ -354,72 +351,18 @@ namespace Microsoft.Data.SqlClient
         {
             // Perform signature verification. The enclave's DiffieHellman public key was signed by the enclave's RSA public key.
             RSAParameters rsaParams = RSAKeyBlobToParams(enclavePublicKey.PublicKey);
-            RSA rsa = RSA.Create(rsaParams);
-
-            if (!rsa.VerifyData(enclaveDHInfo.PublicKey, enclaveDHInfo.PublicKeySignature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1))
+            using (RSA rsa = RSA.Create(rsaParams))
             {
-                throw new ArgumentException(SR.GetSharedSecretFailed);
+                if (!rsa.VerifyData(enclaveDHInfo.PublicKey, enclaveDHInfo.PublicKeySignature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1))
+                {
+                    throw new ArgumentException(SR.GetSharedSecretFailed);
+                }
             }
 
             ECParameters ecParams = ECCKeyBlobToParams(enclaveDHInfo.PublicKey);
             ECDiffieHellman enclaveDHKey = ECDiffieHellman.Create(ecParams);
-
-            return clientDHKey.DeriveKeyMaterial(enclaveDHKey.PublicKey);
+            return clientDHKey.DeriveKeyFromHash(enclaveDHKey.PublicKey, HashAlgorithmName.SHA256);
         }
-
-        // Extracts the public key's modulus and exponent from the key blob
-
-        // this works on windows because the win32 api uses the bcrypt structures
-        // will it work on linux? 
-        // according to odbc docs, the modulus is always 512 bytes for a VBS-HGS enclave response
-        // so it should work for any vbs-hgs enclave provider...
-        private RSAParameters RSAKeyBlobToParams(byte[] keyBlob)
-        {
-            // The RSA public key blob is structured as follows:
-            //     BCRYPT_RSAKEY_BLOB   header
-            //     byte[cbPublicExp]    publicExponent      - Exponent
-            //     byte[cbModulus]      modulus             - Modulus
-
-            // The exponent is the final 3 bytes in the header
-            // The modulus is the final 512 bytes in the key blob
-            const int modulusSize = 512;
-            const int exponentSize = 3;
-            int BcryptRsaKeyBlobHeaderSize = keyBlob.Length - modulusSize;
-            int exponentOffset = BcryptRsaKeyBlobHeaderSize - exponentSize;
-            int modulusOffset = exponentOffset + exponentSize;
-
-            return new RSAParameters()
-            {
-                Exponent = keyBlob.Skip(exponentOffset).Take(exponentSize).ToArray(),
-                Modulus = keyBlob.Skip(modulusOffset).Take(modulusSize).ToArray()
-            };
-        }
-
-        // Extracts the public key's X and Y coordinate
-        private ECParameters ECCKeyBlobToParams(byte[] keyBlob)
-        {
-            // The ECC public key blob is structured as follows:
-            //     BCRYPT_ECCKEY_BLOB   header
-            //     byte[cbKey]    X     - X coordinate 
-            //     byte[cbKey]    Y     - Y coordinate
-
-            // The size of each key is found after the first 4 byes (magic number)
-            const int keySizeOffset = 4;
-            int keySize = BitConverter.ToInt32(keyBlob, keySizeOffset);
-            int keyOffset = keySizeOffset + sizeof(int);
-
-            return new ECParameters
-            {
-                // should we read the magic bytes and set it based on that?
-                //Curve = ECCurve.NamedCurves.nistP384,
-                Q = new ECPoint
-                {
-                    X = keyBlob.Skip(keyOffset).Take(keySize).ToArray(),
-                    Y = keyBlob.Skip(keyOffset + keySize).Take(keySize).ToArray()
-                },
-            };
-        }
-
         #endregion
     }
 }
