@@ -1528,6 +1528,13 @@ namespace Microsoft.Data.ProviderBase
                     {
                         Marshal.ThrowExceptionForHR(releaseSemaphoreResult); // will only throw if (hresult < 0)
                     }
+
+                    // Do not use this pooled connection if access token is about to expire soon before we can connect.
+                    if (null != obj && obj.IsAccessTokenExpired)
+                    {
+                        DestroyObject(obj);
+                        obj = null;
+                    }
                 } while (null == obj);
             }
 

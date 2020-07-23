@@ -99,6 +99,7 @@ namespace Microsoft.Data.SqlClient
                 comparer: StringComparer.OrdinalIgnoreCase);
 
         private static readonly Action<object> s_openAsyncCancel = OpenAsyncCancel;
+        private static readonly Action<Task<object>, object> s_openAsyncComplete = OpenAsyncComplete;
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionKeyCacheTtl/*' />
         public static TimeSpan ColumnEncryptionKeyCacheTtl { get; set; } = TimeSpan.FromHours(2);
@@ -574,7 +575,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (null != innerConnection)
                 {
-                    result = innerConnection.IsSQLDNSCachingSupported ? "true": "false";
+                    result = innerConnection.IsSQLDNSCachingSupported ? "true" : "false";
                 }
                 else
                 {
@@ -597,7 +598,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (null != innerConnection)
                 {
-                    result = innerConnection.IsDNSCachingBeforeRedirectSupported ? "true": "false";
+                    result = innerConnection.IsDNSCachingBeforeRedirectSupported ? "true" : "false";
                 }
                 else
                 {
@@ -682,6 +683,13 @@ namespace Microsoft.Data.SqlClient
         public override string ServerVersion
         {
             get => GetOpenTdsConnection().ServerVersion;
+        }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ServerProcessId/*' />
+        public int ServerProcessId
+        {
+            get => State.Equals(ConnectionState.Open) | State.Equals(ConnectionState.Executing) | State.Equals(ConnectionState.Fetching) ?
+                GetOpenTdsConnection().ServerProcessId : 0;
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/State/*' />
@@ -1398,22 +1406,16 @@ namespace Microsoft.Data.SqlClient
 
                     System.Transactions.Transaction transaction = ADP.GetCurrentTransaction();
                     TaskCompletionSource<DbConnectionInternal> completion = new TaskCompletionSource<DbConnectionInternal>(transaction);
-                    TaskCompletionSource<object> result = new TaskCompletionSource<object>();
+                    TaskCompletionSource<object> result = new TaskCompletionSource<object>(state: this);
 
                     if (s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlAfterOpenConnection) ||
                         s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlErrorOpenConnection))
                     {
-                        result.Task.ContinueWith((t) =>
-                        {
-                            if (t.Exception != null)
-                            {
-                                s_diagnosticListener.WriteConnectionOpenError(operationId, this, t.Exception);
-                            }
-                            else
-                            {
-                                s_diagnosticListener.WriteConnectionOpenAfter(operationId, this);
-                            }
-                        }, TaskScheduler.Default);
+                        result.Task.ContinueWith(
+                            continuationAction: s_openAsyncComplete, 
+                            state: operationId, // connection is passed in TaskCompletionSource async state
+                            scheduler: TaskScheduler.Default
+                        );
                     }
 
                     if (cancellationToken.IsCancellationRequested)
@@ -1468,6 +1470,20 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlClientEventSource.Log.PoolerScopeLeaveEvent(scopeID);
+            }
+        }
+
+        private static void OpenAsyncComplete(Task<object> task, object state)
+        {
+            Guid operationId = (Guid)state;
+            SqlConnection connection = (SqlConnection)task.AsyncState;
+            if (task.Exception != null)
+            {
+                s_diagnosticListener.WriteConnectionOpenError(operationId, connection, task.Exception);
+            }
+            else
+            {
+                s_diagnosticListener.WriteConnectionOpenAfter(operationId, connection);
             }
         }
 
@@ -1985,14 +2001,22 @@ namespace Microsoft.Data.SqlClient
         // this only happens once per connection
         // SxS: using named file mapping APIs
 
-        internal void RegisterForConnectionCloseNotification<T>(ref Task<T> outerTask, object value, int tag)
+        internal Task<T> RegisterForConnectionCloseNotification<T>(Task<T> outerTask, object value, int tag)
         {
             // Connection exists,  schedule removal, will be added to ref collection after calling ValidateAndReconnect
-            outerTask = outerTask.ContinueWith(task =>
-            {
-                RemoveWeakReference(value);
-                return task;
-            }, TaskScheduler.Default).Unwrap();
+            return outerTask.ContinueWith(
+                continuationFunction: (task, state) =>
+                {
+                    Tuple<SqlConnection, object> parameters = (Tuple<SqlConnection, object>)state;
+                    SqlConnection connection = parameters.Item1;
+                    object obj = parameters.Item2;
+
+                    connection.RemoveWeakReference(obj);
+                    return task;
+                }, 
+                state: Tuple.Create(this, value),
+                scheduler: TaskScheduler.Default
+           ).Unwrap();
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ResetStatistics/*' />

@@ -67,6 +67,7 @@ namespace Microsoft.Data.SqlClient
         // header constants
         public const int HEADER_LEN = 8;
         public const int HEADER_LEN_FIELD_OFFSET = 2;
+        public const int SPID_OFFSET = 4;
         public const int YUKON_HEADER_LEN = 12; //Yukon headers also include a MARS session id
         public const int MARS_ID_OFFSET = 8;
         public const int HEADERTYPE_QNOTIFICATION = 1;
@@ -940,7 +941,8 @@ namespace Microsoft.Data.SqlClient
 
         // Data Classification constants
         internal const byte DATA_CLASSIFICATION_NOT_ENABLED = 0x00;
-        internal const byte MAX_SUPPORTED_DATA_CLASSIFICATION_VERSION = 0x01;
+        internal const byte DATA_CLASSIFICATION_VERSION_WITHOUT_RANK_SUPPORT = 0x01;
+        internal const byte DATA_CLASSIFICATION_VERSION_MAX_SUPPORTED = 0x02;
 
         // TCE Related constants
         internal const byte MAX_SUPPORTED_TCE_VERSION = 0x02; // max version

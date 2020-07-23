@@ -29,7 +29,10 @@ namespace Microsoft.Data.Common
         internal static Task<bool> FalseTask => _falseTask ?? (_falseTask = Task.FromResult(false));
 
         internal const CompareOptions DefaultCompareOptions = CompareOptions.IgnoreKanaType | CompareOptions.IgnoreWidth | CompareOptions.IgnoreCase;
+        
         internal const int DefaultConnectionTimeout = DbConnectionStringDefaults.ConnectTimeout;
+        internal const int InfiniteConnectionTimeout = 0; // infinite connection timeout identifier in seconds
+        internal const int MaxBufferAccessTokenExpiry = 600; // max duration for buffer in seconds
 
         static private void TraceException(string trace, Exception e)
         {
