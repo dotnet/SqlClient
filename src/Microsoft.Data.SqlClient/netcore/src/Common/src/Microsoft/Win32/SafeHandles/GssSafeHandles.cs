@@ -6,6 +6,7 @@ using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
+using static Interop.NetSecurityNative;
 
 namespace Microsoft.Win32.SafeHandles
 {
@@ -17,15 +18,13 @@ namespace Microsoft.Win32.SafeHandles
         public static SafeGssNameHandle CreateUser(string name)
         {
             Debug.Assert(!string.IsNullOrEmpty(name), "Invalid user name passed to SafeGssNameHandle create");
-            SafeGssNameHandle retHandle;
-            Interop.NetSecurityNative.Status minorStatus;
-            Interop.NetSecurityNative.Status status = Interop.NetSecurityNative.ImportUserName(
-                out minorStatus, name, Encoding.UTF8.GetByteCount(name), out retHandle);
+            Status status = ImportUserName(
+                out Status minorStatus, name, Encoding.UTF8.GetByteCount(name), out SafeGssNameHandle retHandle);
 
-            if (status != Interop.NetSecurityNative.Status.GSS_S_COMPLETE)
+            if (status != Status.GSS_S_COMPLETE)
             {
                 retHandle.Dispose();
-                throw new Interop.NetSecurityNative.GssApiException(status, minorStatus);
+                throw new GssApiException(status, minorStatus);
             }
 
             return retHandle;
@@ -34,15 +33,13 @@ namespace Microsoft.Win32.SafeHandles
         public static SafeGssNameHandle CreatePrincipal(string name)
         {
             Debug.Assert(!string.IsNullOrEmpty(name), "Invalid principal passed to SafeGssNameHandle create");
-            SafeGssNameHandle retHandle;
-            Interop.NetSecurityNative.Status minorStatus;
-            Interop.NetSecurityNative.Status status = Interop.NetSecurityNative.ImportPrincipalName(
-                out minorStatus, name, Encoding.UTF8.GetByteCount(name), out retHandle);
+            Status status = ImportPrincipalName(
+                out Status minorStatus, name, Encoding.UTF8.GetByteCount(name), out SafeGssNameHandle retHandle);
 
-            if (status != Interop.NetSecurityNative.Status.GSS_S_COMPLETE)
+            if (status != Status.GSS_S_COMPLETE)
             {
                 retHandle.Dispose();
-                throw new Interop.NetSecurityNative.GssApiException(status, minorStatus);
+                throw new GssApiException(status, minorStatus);
             }
 
             return retHandle;
@@ -55,16 +52,12 @@ namespace Microsoft.Win32.SafeHandles
 
         protected override bool ReleaseHandle()
         {
-            Interop.NetSecurityNative.Status minorStatus;
-            Interop.NetSecurityNative.Status status = Interop.NetSecurityNative.ReleaseName(out minorStatus, ref handle);
+            Status status = ReleaseName(out _, ref handle);
             SetHandle(IntPtr.Zero);
-            return status == Interop.NetSecurityNative.Status.GSS_S_COMPLETE;
+            return status == Status.GSS_S_COMPLETE;
         }
 
-        private SafeGssNameHandle()
-            : base(IntPtr.Zero, true)
-        {
-        }
+        private SafeGssNameHandle() : base(IntPtr.Zero, true) { }
     }
 
     /// <summary>
@@ -86,21 +79,21 @@ namespace Microsoft.Win32.SafeHandles
             SafeGssCredHandle retHandle = null;
             using (SafeGssNameHandle userHandle = SafeGssNameHandle.CreateUser(username))
             {
-                Interop.NetSecurityNative.Status status;
-                Interop.NetSecurityNative.Status minorStatus;
+                Status status;
+                Status minorStatus;
                 if (string.IsNullOrEmpty(password))
                 {
-                    status = Interop.NetSecurityNative.InitiateCredSpNego(out minorStatus, userHandle, out retHandle);
+                    status = InitiateCredSpNego(out minorStatus, userHandle, out retHandle);
                 }
                 else
                 {
-                    status = Interop.NetSecurityNative.InitiateCredWithPassword(out minorStatus, isNtlmOnly, userHandle, password, Encoding.UTF8.GetByteCount(password), out retHandle);
+                    status = InitiateCredWithPassword(out minorStatus, isNtlmOnly, userHandle, password, Encoding.UTF8.GetByteCount(password), out retHandle);
                 }
 
-                if (status != Interop.NetSecurityNative.Status.GSS_S_COMPLETE)
+                if (status != Status.GSS_S_COMPLETE)
                 {
                     retHandle.Dispose();
-                    throw new Interop.NetSecurityNative.GssApiException(status, minorStatus);
+                    throw new GssApiException(status, minorStatus);
                 }
             }
 
@@ -119,19 +112,15 @@ namespace Microsoft.Win32.SafeHandles
 
         protected override bool ReleaseHandle()
         {
-            Interop.NetSecurityNative.Status minorStatus;
-            Interop.NetSecurityNative.Status status = Interop.NetSecurityNative.ReleaseCred(out minorStatus, ref handle);
+            Status status = ReleaseCred(out _, ref handle);
             SetHandle(IntPtr.Zero);
-            return status == Interop.NetSecurityNative.Status.GSS_S_COMPLETE;
+            return status == Status.GSS_S_COMPLETE;
         }
     }
 
     internal sealed class SafeGssContextHandle : SafeHandle
     {
-        public SafeGssContextHandle()
-            : base(IntPtr.Zero, true)
-        {
-        }
+        public SafeGssContextHandle() : base(IntPtr.Zero, true) { }
 
         public override bool IsInvalid
         {
@@ -140,10 +129,9 @@ namespace Microsoft.Win32.SafeHandles
 
         protected override bool ReleaseHandle()
         {
-            Interop.NetSecurityNative.Status minorStatus;
-            Interop.NetSecurityNative.Status status = Interop.NetSecurityNative.DeleteSecContext(out minorStatus, ref handle);
+            Status status = DeleteSecContext(out _, ref handle);
             SetHandle(IntPtr.Zero);
-            return status == Interop.NetSecurityNative.Status.GSS_S_COMPLETE;
+            return status == Status.GSS_S_COMPLETE;
         }
     }
 }
