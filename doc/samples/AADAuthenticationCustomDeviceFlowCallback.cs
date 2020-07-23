@@ -19,9 +19,9 @@ namespace CustomAuthenticationProviderExamples
             }
         }
 
-        private Task CustomDeviceFlowCallback(DeviceCodeResult result)
+        private static Task CustomDeviceFlowCallback(DeviceCodeResult result)
         {
-            // Provide custon logic to process result information and read device code.
+            // Provide custom logic to process result information and read device code.
             Console.WriteLine(result.Message);
             return Task.FromResult(0);
         }

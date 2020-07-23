@@ -193,12 +193,12 @@ namespace Microsoft.Data.SqlClient
                     }
                     catch (MsalUiRequiredException)
                     {
-                        result = await AcquireTokenInteractiveDeviceFlow(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod);
+                        result = await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod);
                     }
                 }
                 else
                 {
-                    result = await AcquireTokenInteractiveDeviceFlow(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod);
+                    result = await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod);
                 }
             }
             else
@@ -210,7 +210,7 @@ namespace Microsoft.Data.SqlClient
         });
 
 
-        private async Task<AuthenticationResult> AcquireTokenInteractiveDeviceFlow(IPublicClientApplication app, string[] scopes, Guid connectionId, string userId,
+        private async Task<AuthenticationResult> AcquireTokenInteractiveDeviceFlowAsync(IPublicClientApplication app, string[] scopes, Guid connectionId, string userId,
             SqlAuthenticationMethod authenticationMethod)
         {
             CancellationTokenSource cts = new CancellationTokenSource();
