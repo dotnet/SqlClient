@@ -692,6 +692,14 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        public int ServerProcessId
+        {
+            get
+            {
+                return Parser._physicalStateObj._spid;
+            }
+        }
+
         protected override bool UnbindOnTransactionCompletion
         {
             get

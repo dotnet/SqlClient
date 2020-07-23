@@ -803,6 +803,13 @@ namespace Microsoft.Data.SqlClient
                        (short)_loginAck.minorVersion, _loginAck.buildNum));
             }
         }
+        public int ServerProcessId
+        {
+            get
+            {
+                return Parser._physicalStateObj._spid;
+            }
+        }
 
         /// <summary>
         /// Get boolean that specifies whether an enlisted transaction can be unbound from

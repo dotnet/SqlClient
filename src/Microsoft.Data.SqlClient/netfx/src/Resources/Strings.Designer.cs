@@ -8092,7 +8092,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Security Warning: The negotiated &apos;{0}&apos; is an insecured protocol and is supported for backward compatibility only. The recommended protocol is TLS 1.2 and later..
+        ///   Looks up a localized string similar to Security Warning: The negotiated {0} is an insecure protocol and is supported for backward compatibility only. The recommended protocol version is TLS 1.2 and later..
         /// </summary>
         internal static string SEC_ProtocolWarning {
             get {
@@ -10536,6 +10536,15 @@ namespace System {
         internal static string SqlConnection_Replication {
             get {
                 return ResourceManager.GetString("SqlConnection_Replication", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Server Process Id (SPID) of the active connection..
+        /// </summary>
+        internal static string SqlConnection_ServerProcessId {
+            get {
+                return ResourceManager.GetString("SqlConnection_ServerProcessId", resourceCulture);
             }
         }
         
