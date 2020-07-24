@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Linq;
 using System.Runtime.Caching;
 using System.Security.Cryptography;
 using System.Threading;
@@ -210,86 +209,6 @@ namespace Microsoft.Data.SqlClient
         protected SqlEnclaveSession AddEnclaveSessionToCache(string attestationUrl, string servername, byte[] sharedSecret, long sessionId, out long counter)
         {
             return SessionCache.CreateSession(attestationUrl, servername, sharedSecret, sessionId, out counter);
-        }
-
-        // Extracts the public key's modulus and exponent from the key blob
-        protected RSAParameters RSAKeyBlobToParams(byte[] keyBlob)
-        {
-            Console.WriteLine("RSAKeyBlobToParams");
-            // The RSA public key blob is structured as follows:
-            //     BCRYPT_RSAKEY_BLOB   header
-            //     byte[cbPublicExp]    publicExponent      - Exponent
-            //     byte[cbModulus]      modulus             - Modulus
-
-            // The exponent is the final 3 bytes in the header
-            // The modulus is the final 512 bytes in the key blob
-            const int modulusSize = 512;
-            const int exponentSize = 3;
-            int BcryptRsaKeyBlobHeaderSize = keyBlob.Length - modulusSize;
-            int exponentOffset = BcryptRsaKeyBlobHeaderSize - exponentSize;
-            int modulusOffset = exponentOffset + exponentSize;
-
-            return new RSAParameters()
-            {
-                Exponent = keyBlob.Skip(exponentOffset).Take(exponentSize).ToArray(),
-                Modulus = keyBlob.Skip(modulusOffset).Take(modulusSize).ToArray()
-            };
-        }
-
-        // Extracts the public key's X and Y coordinate from the key blob
-        protected ECParameters ECCKeyBlobToParams(byte[] keyBlob)
-        {
-            Console.WriteLine("ECCKeyBlobToParams");
-            // The ECC public key blob is structured as follows:
-            //     BCRYPT_ECCKEY_BLOB   header
-            //     byte[cbKey]    X     - X coordinate 
-            //     byte[cbKey]    Y     - Y coordinate
-
-            // The size of each key is found after the first 4 byes (magic number)
-            const int keySizeOffset = 4;
-            int keySize = BitConverter.ToInt32(keyBlob, keySizeOffset);
-            int keyOffset = keySizeOffset + sizeof(int);
-
-            return new ECParameters
-            {
-                Curve = ECCurve.NamedCurves.nistP384,
-                Q = new ECPoint
-                {
-                    X = keyBlob.Skip(keyOffset).Take(keySize).ToArray(),
-                    Y = keyBlob.Skip(keyOffset + keySize).Take(keySize).ToArray()
-                },
-            };
-        }
-
-        // ECDiffieHellmanPublicKey.ToByteArray() is not supported in Unix so we have to
-        // serialize it in the BCRYPT_ECCKEY_BLOB  format
-        public static byte[] PublicKeyToECCKeyBlob(ECDiffieHellmanPublicKey publicKey)
-        {
-            Console.WriteLine("PublicKeyToECCKeyBlob");
-            // Size of a BCRYPT_ECCKEY_BLOB = 104 bytes
-            // header 8 bytes, key 96 bytes (48 bytes each coordinate)
-            const int headerSize = 8;
-            const int KeySize = 48;
-            const int keyBlobSize = 104;
-            byte[] keyBlob = new byte[keyBlobSize];
-
-            // magic number
-            keyBlob[0] = 0x45;
-            keyBlob[1] = 0x43;
-            keyBlob[2] = 0x4b;
-            keyBlob[3] = 0x33;
-            // key size
-            keyBlob[4] = KeySize;
-            keyBlob[5] = 0x00;
-            keyBlob[6] = 0x00;
-            keyBlob[7] = 0x00;
-
-            ECParameters ecParams = publicKey.ExportParameters();
-            // copy x coordinate
-            Array.Copy(ecParams.Q.X, 0, keyBlob, headerSize, KeySize);
-            // copy y coordinate
-            Array.Copy(ecParams.Q.Y, 0, keyBlob, headerSize + KeySize, KeySize);
-            return keyBlob;
         }
     }
     #endregion

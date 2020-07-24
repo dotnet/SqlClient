@@ -350,7 +350,7 @@ namespace Microsoft.Data.SqlClient
         private byte[] GetSharedSecret(EnclavePublicKey enclavePublicKey, EnclaveDiffieHellmanInfo enclaveDHInfo, ECDiffieHellman clientDHKey)
         {
             // Perform signature verification. The enclave's DiffieHellman public key was signed by the enclave's RSA public key.
-            RSAParameters rsaParams = RSAKeyBlobToParams(enclavePublicKey.PublicKey);
+            RSAParameters rsaParams = KeyConverter.RSAPublicKeyBlobToParams(enclavePublicKey.PublicKey);
             using (RSA rsa = RSA.Create(rsaParams))
             {
                 if (!rsa.VerifyData(enclaveDHInfo.PublicKey, enclaveDHInfo.PublicKeySignature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1))
@@ -359,9 +359,8 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            ECParameters ecParams = ECCKeyBlobToParams(enclaveDHInfo.PublicKey);
+            ECParameters ecParams = KeyConverter.ECCPublicKeyBlobToParams(enclaveDHInfo.PublicKey);
             ECDiffieHellman enclaveDHKey = ECDiffieHellman.Create(ecParams);
-
             return clientDHKey.DeriveKeyFromHash(enclaveDHKey.PublicKey, HashAlgorithmName.SHA256);
         }
         #endregion

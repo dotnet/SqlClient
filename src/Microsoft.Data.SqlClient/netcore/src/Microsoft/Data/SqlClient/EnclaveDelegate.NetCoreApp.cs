@@ -47,7 +47,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // clientDHPublicKey
-            byte[] clientDHPublicKey = EnclaveProviderBase.PublicKeyToECCKeyBlob(sqlEnclaveAttestationParameters.ClientDiffieHellmanKey.PublicKey);
+            byte[] clientDHPublicKey = KeyConverter.ECDHPublicKeyToECCKeyBlob(sqlEnclaveAttestationParameters.ClientDiffieHellmanKey.PublicKey);
 
             // clientDHPublicKey length
             clientDHPublicKeyLengthBytes = GetUintBytes(enclaveType, clientDHPublicKey.Length, "clientDHPublicKeyLength");
