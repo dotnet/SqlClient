@@ -4560,4 +4560,7 @@
   <data name="SQL_SettingCredentialWithInteractive" xml:space="preserve">
     <value>No se puede establecer la propiedad Credential si se ha especificado "Authentication=Active Directory Interactive" en la cadena de conexión.</value>
   </data>
+  <data name="SqlConnection_ServerProcessId" xml:space="preserve">
+    <value>Server Process Id (SPID) of the active connection.</value>
+  </data>
 </root>

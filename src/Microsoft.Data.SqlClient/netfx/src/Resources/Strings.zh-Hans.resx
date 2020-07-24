@@ -4560,4 +4560,7 @@
   <data name="SQL_SettingCredentialWithInteractive" xml:space="preserve">
     <value>如果在连接字符串中指定了 "Authentication=Active Directory Interactive"，则无法设置 Credential 属性。</value>
   </data>
+  <data name="SqlConnection_ServerProcessId" xml:space="preserve">
+    <value>Server Process Id (SPID) of the active connection.</value>
+  </data>
 </root>

@@ -4560,4 +4560,7 @@
   <data name="SQL_SettingCredentialWithInteractive" xml:space="preserve">
     <value>'Authentication=Active Directory Interactive'가 연결 문자열에 지정된 경우 Credential 속성을 설정할 수 없습니다.</value>
   </data>
+  <data name="SqlConnection_ServerProcessId" xml:space="preserve">
+    <value>Server Process Id (SPID) of the active connection.</value>
+  </data>
 </root>
