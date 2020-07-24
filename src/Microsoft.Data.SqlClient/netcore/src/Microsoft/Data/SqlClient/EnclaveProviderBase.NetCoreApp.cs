@@ -258,6 +258,36 @@ namespace Microsoft.Data.SqlClient
                 },
             };
         }
+
+        // ECDiffieHellmanPublicKey.ToByteArray() is not supported in Unix so we have to
+        // serialize it in the BCRYPT_ECCKEY_BLOB  format
+        public static byte[] PublicKeyToECCKeyBlob(ECDiffieHellmanPublicKey publicKey)
+        {
+            // Size of a BCRYPT_ECCKEY_BLOB = 104 bytes
+            // header 8 bytes, key 96 bytes (48 bytes each coordinate)
+            const int headerSize = 8;
+            const int KeySize = 48;
+            const int keyBlobSize = 104;
+            byte[] keyBlob = new byte[keyBlobSize];
+
+            // magic number
+            keyBlob[0] = 0x45;
+            keyBlob[1] = 0x43;
+            keyBlob[2] = 0x4b;
+            keyBlob[3] = 0x33;
+            // key size
+            keyBlob[4] = KeySize;
+            keyBlob[5] = 0x00;
+            keyBlob[6] = 0x00;
+            keyBlob[7] = 0x00;
+
+            ECParameters ecParams = publicKey.ExportParameters();
+            // copy x coordinate
+            Array.Copy(ecParams.Q.X, 0, keyBlob, headerSize, KeySize);
+            // copy y coordinate
+            Array.Copy(ecParams.Q.Y, 0, keyBlob, headerSize + KeySize, KeySize);
+            return keyBlob;
+        }
     }
     #endregion
 }
