@@ -361,6 +361,7 @@ namespace Microsoft.Data.SqlClient
 
             ECParameters ecParams = ECCKeyBlobToParams(enclaveDHInfo.PublicKey);
             ECDiffieHellman enclaveDHKey = ECDiffieHellman.Create(ecParams);
+
             return clientDHKey.DeriveKeyFromHash(enclaveDHKey.PublicKey, HashAlgorithmName.SHA256);
         }
         #endregion
