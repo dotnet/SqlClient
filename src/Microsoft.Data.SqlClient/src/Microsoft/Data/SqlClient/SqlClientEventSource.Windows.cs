@@ -29,7 +29,7 @@ namespace Microsoft.Data.SqlClient
 
         protected override void OnEventCommand(EventCommandEventArgs e)
         {
-            // Internally, EventSource.EnableEvents sends an event command, with a reserved value of 0, -2, or -3.
+            // Internally, EventListener.EnableEvents sends an event command, with a reserved value of 0, -2, or -3.
             // When a command is sent via EnableEvents or SendCommand, check if it is a user-defined value
             // to enable or disable event tracing in sni.dll.
             // If registration fails, all write and unregister commands will be a no-op.
