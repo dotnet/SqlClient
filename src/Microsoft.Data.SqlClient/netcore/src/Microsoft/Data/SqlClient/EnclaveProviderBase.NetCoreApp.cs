@@ -215,6 +215,7 @@ namespace Microsoft.Data.SqlClient
         // Extracts the public key's modulus and exponent from the key blob
         protected RSAParameters RSAKeyBlobToParams(byte[] keyBlob)
         {
+            Console.WriteLine("RSAKeyBlobToParams");
             // The RSA public key blob is structured as follows:
             //     BCRYPT_RSAKEY_BLOB   header
             //     byte[cbPublicExp]    publicExponent      - Exponent
@@ -238,6 +239,7 @@ namespace Microsoft.Data.SqlClient
         // Extracts the public key's X and Y coordinate from the key blob
         protected ECParameters ECCKeyBlobToParams(byte[] keyBlob)
         {
+            Console.WriteLine("ECCKeyBlobToParams");
             // The ECC public key blob is structured as follows:
             //     BCRYPT_ECCKEY_BLOB   header
             //     byte[cbKey]    X     - X coordinate 
@@ -263,6 +265,7 @@ namespace Microsoft.Data.SqlClient
         // serialize it in the BCRYPT_ECCKEY_BLOB  format
         public static byte[] PublicKeyToECCKeyBlob(ECDiffieHellmanPublicKey publicKey)
         {
+            Console.WriteLine("PublicKeyToECCKeyBlob");
             // Size of a BCRYPT_ECCKEY_BLOB = 104 bytes
             // header 8 bytes, key 96 bytes (48 bytes each coordinate)
             const int headerSize = 8;
