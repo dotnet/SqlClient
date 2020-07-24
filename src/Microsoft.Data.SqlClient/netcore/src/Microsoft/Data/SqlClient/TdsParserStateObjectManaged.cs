@@ -222,7 +222,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 _sspiClientContextStatus = new SspiClientContextStatus();
             }
             
-            // SNIProxy.GetInstance().GenSspiClientContext(_sspiClientContextStatus, receivedBuff, ref sendBuff, _sniSpnBuffer);
+            SNIProxy.GetInstance().GenSspiClientContext(_sspiClientContextStatus, receivedBuff, ref sendBuff, _sniSpnBuffer);
             sendLength = (uint)(sendBuff != null ? sendBuff.Length : 0);
             return 0;
         }
