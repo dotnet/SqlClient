@@ -297,7 +297,6 @@ namespace Microsoft.Data.SqlClient
             // IDK_S is contained in healthReport cert public key
             using (RSA rsa = healthReportCert.GetRSAPublicKey())
             {
-                RSAParameters rsaparams = rsa.ExportParameters(includePrivateParameters: false);
                 if (!rsa.VerifyData(enclaveReportPackage.ReportAsBytes, enclaveReportPackage.SignatureBlob, HashAlgorithmName.SHA256, RSASignaturePadding.Pss))
                 {
                     throw new ArgumentException(SR.VerifyEnclaveReportFailed);

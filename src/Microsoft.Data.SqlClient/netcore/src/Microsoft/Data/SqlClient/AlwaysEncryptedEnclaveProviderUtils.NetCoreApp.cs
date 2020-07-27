@@ -133,9 +133,8 @@ namespace Microsoft.Data.SqlClient
             keyBlob[7] = 0x00;
 
             ECParameters ecParams = publicKey.ExportParameters();
-            // copy x coordinate
+            // copy x and y coordinates to key blob
             Array.Copy(ecParams.Q.X, 0, keyBlob, headerSize, KeySize);
-            // copy y coordinate
             Array.Copy(ecParams.Q.Y, 0, keyBlob, headerSize + KeySize, KeySize);
             return keyBlob;
         }
