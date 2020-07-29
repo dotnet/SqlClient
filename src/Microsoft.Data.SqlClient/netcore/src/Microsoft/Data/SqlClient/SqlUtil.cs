@@ -279,7 +279,7 @@ namespace Microsoft.Data.SqlClient
         }
         internal static Exception DeviceFlowWithUsernamePassword()
         {
-            return ADP.Argument(System.SRHelper.GetString(SR.SQL_DeviceFlowWithUsernamePassword));
+            return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_DeviceFlowWithUsernamePassword));
         }
         static internal Exception SettingIntegratedWithCredential()
         {
@@ -291,7 +291,7 @@ namespace Microsoft.Data.SqlClient
         }
         static internal Exception SettingDeviceFlowWithCredential()
         {
-            return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_SettingDeviceFlowWithCredential));
+            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_SettingDeviceFlowWithCredential));
         }
         static internal Exception SettingCredentialWithIntegratedArgument()
         {
@@ -303,7 +303,7 @@ namespace Microsoft.Data.SqlClient
         }
         static internal Exception SettingCredentialWithDeviceFlowArgument()
         {
-            return ADP.Argument(System.SRHelper.GetString(SR.SQL_SettingCredentialWithDeviceFlow));
+            return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_SettingCredentialWithDeviceFlow));
         }
         static internal Exception SettingCredentialWithIntegratedInvalid()
         {
@@ -315,7 +315,7 @@ namespace Microsoft.Data.SqlClient
         }
         static internal Exception SettingCredentialWithDeviceFlowInvalid()
         {
-            return ADP.InvalidOperation(System.SRHelper.GetString(SR.SQL_SettingCredentialWithDeviceFlow));
+            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_SettingCredentialWithDeviceFlow));
         }
         internal static Exception NullEmptyTransactionName()
         {
@@ -465,7 +465,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static Exception ActiveDirectoryDeviceFlowTimeout()
         {
-            return ADP.TimeoutException(SR.SQL_Timeout_Active_Directory_DeviceFlow_Authentication);
+            return ADP.TimeoutException(Strings.SQL_Timeout_Active_Directory_DeviceFlow_Authentication);
         }
 
 
