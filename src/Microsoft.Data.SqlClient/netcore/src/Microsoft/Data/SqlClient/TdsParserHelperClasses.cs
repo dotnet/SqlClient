@@ -907,7 +907,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (null != _multipartName)
             {
-                string[] parts = MultipartIdentifier.ParseMultipartIdentifier(_multipartName, "[\"", "]\"", SR.SQL_TDSParserTableName, false);
+                string[] parts = MultipartIdentifier.ParseMultipartIdentifier(_multipartName, "[\"", "]\"", Strings.SQL_TDSParserTableName, false);
                 _serverName = parts[0];
                 _catalogName = parts[1];
                 _schemaName = parts[2];
@@ -973,7 +973,7 @@ namespace Microsoft.Data.SqlClient
             if ((protocol & (SslProtocols.Ssl2 | SslProtocols.Ssl3 | SslProtocols.Tls | SslProtocols.Tls11)) != SslProtocols.None)
 #pragma warning restore CS0618 // Type or member is obsolete : SSL is depricated
             {
-                message = SRHelper.Format(SR.SEC_ProtocolWarning, protocol.ToFriendlyName());
+                message = StringsHelper.Format(Strings.SEC_ProtocolWarning, protocol.ToFriendlyName());
             }
             return message;
         }

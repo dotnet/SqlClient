@@ -200,7 +200,7 @@ namespace Microsoft.Data.Common
 
         internal static ArgumentOutOfRangeException NotSupportedEnumerationValue(Type type, string value, string method)
         {
-            return ArgumentOutOfRange(System.SRHelper.Format(SR.ADP_NotSupportedEnumerationValue, type.Name, value, method), type.Name);
+            return ArgumentOutOfRange(System.StringsHelper.Format(Strings.ADP_NotSupportedEnumerationValue, type.Name, value, method), type.Name);
         }
 
         internal static InvalidOperationException DataAdapter(string error)
@@ -215,21 +215,21 @@ namespace Microsoft.Data.Common
 
         internal static ArgumentException InvalidMultipartName(string property, string value)
         {
-            ArgumentException e = new ArgumentException(System.SRHelper.Format(SR.ADP_InvalidMultipartName, property, value));
+            ArgumentException e = new ArgumentException(System.StringsHelper.Format(Strings.ADP_InvalidMultipartName, property, value));
             TraceExceptionAsReturnValue(e);
             return e;
         }
 
         internal static ArgumentException InvalidMultipartNameIncorrectUsageOfQuotes(string property, string value)
         {
-            ArgumentException e = new ArgumentException(System.SRHelper.Format(SR.ADP_InvalidMultipartNameQuoteUsage, property, value));
+            ArgumentException e = new ArgumentException(System.StringsHelper.Format(Strings.ADP_InvalidMultipartNameQuoteUsage, property, value));
             TraceExceptionAsReturnValue(e);
             return e;
         }
 
         internal static ArgumentException InvalidMultipartNameToManyParts(string property, string value, int limit)
         {
-            ArgumentException e = new ArgumentException(System.SRHelper.Format(SR.ADP_InvalidMultipartNameToManyParts, property, value, limit));
+            ArgumentException e = new ArgumentException(System.StringsHelper.Format(Strings.ADP_InvalidMultipartNameToManyParts, property, value, limit));
             TraceExceptionAsReturnValue(e);
             return e;
         }
@@ -286,7 +286,7 @@ namespace Microsoft.Data.Common
         // Invalid Enumeration
         internal static ArgumentOutOfRangeException InvalidEnumerationValue(Type type, int value)
         {
-            return ArgumentOutOfRange(System.SRHelper.Format(SR.ADP_InvalidEnumerationValue, type.Name, value.ToString(CultureInfo.InvariantCulture)), type.Name);
+            return ArgumentOutOfRange(System.StringsHelper.Format(Strings.ADP_InvalidEnumerationValue, type.Name, value.ToString(CultureInfo.InvariantCulture)), type.Name);
         }
 
         //
@@ -294,15 +294,15 @@ namespace Microsoft.Data.Common
         //
         internal static ArgumentException ConnectionStringSyntax(int index)
         {
-            return Argument(System.SRHelper.Format(SR.ADP_ConnectionStringSyntax, index));
+            return Argument(System.StringsHelper.Format(Strings.ADP_ConnectionStringSyntax, index));
         }
         internal static ArgumentException KeywordNotSupported(string keyword)
         {
-            return Argument(System.SRHelper.Format(SR.ADP_KeywordNotSupported, keyword));
+            return Argument(System.StringsHelper.Format(Strings.ADP_KeywordNotSupported, keyword));
         }
         internal static ArgumentException ConvertFailed(Type fromType, Type toType, Exception innerException)
         {
-            return ADP.Argument(System.SRHelper.Format(SR.SqlConvert_ConvertFailed, fromType.FullName, toType.FullName), innerException);
+            return ADP.Argument(System.StringsHelper.Format(Strings.SqlConvert_ConvertFailed, fromType.FullName, toType.FullName), innerException);
         }
 
         //
@@ -314,11 +314,11 @@ namespace Microsoft.Data.Common
         }
         internal static Exception InvalidConnectionOptionValue(string key, Exception inner)
         {
-            return Argument(System.SRHelper.Format(SR.ADP_InvalidConnectionOptionValue, key), inner);
+            return Argument(System.StringsHelper.Format(Strings.ADP_InvalidConnectionOptionValue, key), inner);
         }
         static internal InvalidOperationException InvalidDataDirectory()
         {
-            InvalidOperationException e = new InvalidOperationException(SR.ADP_InvalidDataDirectory);
+            InvalidOperationException e = new InvalidOperationException(Strings.ADP_InvalidDataDirectory);
             return e;
         }
 
@@ -327,23 +327,23 @@ namespace Microsoft.Data.Common
         //
         internal static ArgumentException CollectionRemoveInvalidObject(Type itemType, ICollection collection)
         {
-            return Argument(System.SRHelper.Format(SR.ADP_CollectionRemoveInvalidObject, itemType.Name, collection.GetType().Name));
+            return Argument(System.StringsHelper.Format(Strings.ADP_CollectionRemoveInvalidObject, itemType.Name, collection.GetType().Name));
         }
         internal static ArgumentNullException CollectionNullValue(string parameter, Type collection, Type itemType)
         {
-            return ArgumentNull(parameter, System.SRHelper.Format(SR.ADP_CollectionNullValue, collection.Name, itemType.Name));
+            return ArgumentNull(parameter, System.StringsHelper.Format(Strings.ADP_CollectionNullValue, collection.Name, itemType.Name));
         }
         internal static IndexOutOfRangeException CollectionIndexInt32(int index, Type collection, int count)
         {
-            return IndexOutOfRange(System.SRHelper.Format(SR.ADP_CollectionIndexInt32, index.ToString(CultureInfo.InvariantCulture), collection.Name, count.ToString(CultureInfo.InvariantCulture)));
+            return IndexOutOfRange(System.StringsHelper.Format(Strings.ADP_CollectionIndexInt32, index.ToString(CultureInfo.InvariantCulture), collection.Name, count.ToString(CultureInfo.InvariantCulture)));
         }
         internal static IndexOutOfRangeException CollectionIndexString(Type itemType, string propertyName, string propertyValue, Type collection)
         {
-            return IndexOutOfRange(System.SRHelper.Format(SR.ADP_CollectionIndexString, itemType.Name, propertyName, propertyValue, collection.Name));
+            return IndexOutOfRange(System.StringsHelper.Format(Strings.ADP_CollectionIndexString, itemType.Name, propertyName, propertyValue, collection.Name));
         }
         internal static InvalidCastException CollectionInvalidType(Type collection, Type itemType, object invalidValue)
         {
-            return InvalidCast(System.SRHelper.Format(SR.ADP_CollectionInvalidType, collection.Name, itemType.Name, invalidValue.GetType().Name));
+            return InvalidCast(System.StringsHelper.Format(Strings.ADP_CollectionInvalidType, collection.Name, itemType.Name, invalidValue.GetType().Name));
         }
 
         //
@@ -355,17 +355,17 @@ namespace Microsoft.Data.Common
             {
                 case (ConnectionState.Closed):
                 case (ConnectionState.Connecting | ConnectionState.Broken): // treated the same as closed
-                    return SR.ADP_ConnectionStateMsg_Closed;
+                    return Strings.ADP_ConnectionStateMsg_Closed;
                 case (ConnectionState.Connecting):
-                    return SR.ADP_ConnectionStateMsg_Connecting;
+                    return Strings.ADP_ConnectionStateMsg_Connecting;
                 case (ConnectionState.Open):
-                    return SR.ADP_ConnectionStateMsg_Open;
+                    return Strings.ADP_ConnectionStateMsg_Open;
                 case (ConnectionState.Open | ConnectionState.Executing):
-                    return SR.ADP_ConnectionStateMsg_OpenExecuting;
+                    return Strings.ADP_ConnectionStateMsg_OpenExecuting;
                 case (ConnectionState.Open | ConnectionState.Fetching):
-                    return SR.ADP_ConnectionStateMsg_OpenFetching;
+                    return Strings.ADP_ConnectionStateMsg_OpenFetching;
                 default:
-                    return System.SRHelper.Format(SR.ADP_ConnectionStateMsg, state.ToString());
+                    return System.StringsHelper.Format(Strings.ADP_ConnectionStateMsg, state.ToString());
             }
         }
 
@@ -374,7 +374,7 @@ namespace Microsoft.Data.Common
         //
         internal static Exception StreamClosed([CallerMemberName] string method = "")
         {
-            return InvalidOperation(System.SRHelper.Format(SR.ADP_StreamClosed, method));
+            return InvalidOperation(System.StringsHelper.Format(Strings.ADP_StreamClosed, method));
         }
 
         internal static string BuildQuotedString(string quotePrefix, string quoteSuffix, string unQuotedString)
@@ -424,11 +424,11 @@ namespace Microsoft.Data.Common
         //
         internal static ArgumentException ParametersIsNotParent(Type parameterType, ICollection collection)
         {
-            return Argument(System.SRHelper.Format(SR.ADP_CollectionIsNotParent, parameterType.Name, collection.GetType().Name));
+            return Argument(System.StringsHelper.Format(Strings.ADP_CollectionIsNotParent, parameterType.Name, collection.GetType().Name));
         }
         internal static ArgumentException ParametersIsParent(Type parameterType, ICollection collection)
         {
-            return Argument(System.SRHelper.Format(SR.ADP_CollectionIsNotParent, parameterType.Name, collection.GetType().Name));
+            return Argument(System.StringsHelper.Format(Strings.ADP_CollectionIsNotParent, parameterType.Name, collection.GetType().Name));
         }
 
 
@@ -474,7 +474,7 @@ namespace Microsoft.Data.Common
 
         internal static Exception InternalError(InternalErrorCode internalError)
         {
-            return InvalidOperation(System.SRHelper.Format(SR.ADP_InternalProviderError, (int)internalError));
+            return InvalidOperation(System.StringsHelper.Format(Strings.ADP_InternalProviderError, (int)internalError));
         }
 
         //
@@ -482,23 +482,23 @@ namespace Microsoft.Data.Common
         //
         internal static Exception DataReaderClosed([CallerMemberName] string method = "")
         {
-            return InvalidOperation(System.SRHelper.Format(SR.ADP_DataReaderClosed, method));
+            return InvalidOperation(System.StringsHelper.Format(Strings.ADP_DataReaderClosed, method));
         }
         internal static ArgumentOutOfRangeException InvalidSourceBufferIndex(int maxLen, long srcOffset, string parameterName)
         {
-            return ArgumentOutOfRange(System.SRHelper.Format(SR.ADP_InvalidSourceBufferIndex, maxLen.ToString(CultureInfo.InvariantCulture), srcOffset.ToString(CultureInfo.InvariantCulture)), parameterName);
+            return ArgumentOutOfRange(System.StringsHelper.Format(Strings.ADP_InvalidSourceBufferIndex, maxLen.ToString(CultureInfo.InvariantCulture), srcOffset.ToString(CultureInfo.InvariantCulture)), parameterName);
         }
         internal static ArgumentOutOfRangeException InvalidDestinationBufferIndex(int maxLen, int dstOffset, string parameterName)
         {
-            return ArgumentOutOfRange(System.SRHelper.Format(SR.ADP_InvalidDestinationBufferIndex, maxLen.ToString(CultureInfo.InvariantCulture), dstOffset.ToString(CultureInfo.InvariantCulture)), parameterName);
+            return ArgumentOutOfRange(System.StringsHelper.Format(Strings.ADP_InvalidDestinationBufferIndex, maxLen.ToString(CultureInfo.InvariantCulture), dstOffset.ToString(CultureInfo.InvariantCulture)), parameterName);
         }
         internal static IndexOutOfRangeException InvalidBufferSizeOrIndex(int numBytes, int bufferIndex)
         {
-            return IndexOutOfRange(System.SRHelper.Format(SR.SQL_InvalidBufferSizeOrIndex, numBytes.ToString(CultureInfo.InvariantCulture), bufferIndex.ToString(CultureInfo.InvariantCulture)));
+            return IndexOutOfRange(System.StringsHelper.Format(Strings.SQL_InvalidBufferSizeOrIndex, numBytes.ToString(CultureInfo.InvariantCulture), bufferIndex.ToString(CultureInfo.InvariantCulture)));
         }
         internal static Exception InvalidDataLength(long length)
         {
-            return IndexOutOfRange(System.SRHelper.Format(SR.SQL_InvalidDataLength, length.ToString(CultureInfo.InvariantCulture)));
+            return IndexOutOfRange(System.StringsHelper.Format(Strings.SQL_InvalidDataLength, length.ToString(CultureInfo.InvariantCulture)));
         }
 
         internal static bool CompareInsensitiveInvariant(string strvalue, string strconst) =>
@@ -520,7 +520,7 @@ namespace Microsoft.Data.Common
 
         internal static Exception InvalidSeekOrigin(string parameterName)
         {
-            return ArgumentOutOfRange(SR.ADP_InvalidSeekOrigin, parameterName);
+            return ArgumentOutOfRange(Strings.ADP_InvalidSeekOrigin, parameterName);
         }
 
         internal static void SetCurrentTransaction(Transaction transaction)

@@ -61,7 +61,7 @@ internal static partial class Interop
             {
                 if (innerContext.IsInvalid)
                 {
-                    throw CreateSslException(SR.net_allocate_ssl_context_failed);
+                    throw CreateSslException(Strings.net_allocate_ssl_context_failed);
                 }
 
                 // Configure allowed protocols. It's ok to use DangerousGetHandle here without AddRef/Release as we just
@@ -80,7 +80,7 @@ internal static partial class Interop
                 if (!Ssl.SetEncryptionPolicy(innerContext, policy))
                 {
                     Crypto.ErrClearError();
-                    throw new PlatformNotSupportedException(SR.Format(SR.net_ssl_encryptionpolicy_notsupported, policy));
+                    throw new PlatformNotSupportedException(Strings.Format(Strings.net_ssl_encryptionpolicy_notsupported, policy));
                 }
 
                 bool hasCertificateAndKey =
@@ -111,7 +111,7 @@ internal static partial class Interop
                         {
                             if (Interop.Ssl.SslCtxSetAlpnProtos(innerContext, sslAuthenticationOptions.ApplicationProtocols) != 0)
                             {
-                                throw CreateSslException(SR.net_alpn_config_failed);
+                                throw CreateSslException(Strings.net_alpn_config_failed);
                             }
                         }
                     }
@@ -121,7 +121,7 @@ internal static partial class Interop
                     if (context.IsInvalid)
                     {
                         context.Dispose();
-                        throw CreateSslException(SR.net_allocate_ssl_context_failed);
+                        throw CreateSslException(Strings.net_allocate_ssl_context_failed);
                     }
 
                     if (!sslAuthenticationOptions.IsServer)
@@ -147,7 +147,7 @@ internal static partial class Interop
                                 using (X509Chain chain = TLSCertificateExtensions.BuildNewChain(cert, includeClientApplicationPolicy: false))
                                 {
                                     if (chain != null && !Ssl.AddExtraChainCertificates(context, chain))
-                                        throw CreateSslException(SR.net_ssl_use_cert_failed);
+                                        throw CreateSslException(Strings.net_ssl_use_cert_failed);
                                 }
                             }
                         }
@@ -196,7 +196,7 @@ internal static partial class Interop
 
                 if ((retVal != -1) || (error != Ssl.SslErrorCode.SSL_ERROR_WANT_READ))
                 {
-                    throw new SslException(SR.Format(SR.net_ssl_handshake_failed_error, error), innerError);
+                    throw new SslException(Strings.Format(Strings.net_ssl_handshake_failed_error, error), innerError);
                 }
             }
 
@@ -259,7 +259,7 @@ internal static partial class Interop
                         break;
 
                     default:
-                        throw new SslException(SR.Format(SR.net_ssl_encrypt_failed, errorCode), innerError);
+                        throw new SslException(Strings.Format(Strings.net_ssl_encrypt_failed, errorCode), innerError);
                 }
             }
             else
@@ -328,7 +328,7 @@ internal static partial class Interop
                         break;
 
                     default:
-                        throw new SslException(SR.Format(SR.net_ssl_decrypt_failed, errorCode), innerError);
+                        throw new SslException(Strings.Format(Strings.net_ssl_decrypt_failed, errorCode), innerError);
                 }
             }
 
@@ -358,7 +358,7 @@ internal static partial class Interop
 
             if (0 == certHashLength)
             {
-                throw CreateSslException(SR.net_ssl_get_channel_binding_token_failed);
+                throw CreateSslException(Strings.net_ssl_get_channel_binding_token_failed);
             }
 
             bindingHandle.SetCertHashLength(certHashLength);
@@ -430,7 +430,7 @@ internal static partial class Interop
             int bytes = Crypto.BioRead(bio, buffer, count);
             if (bytes != count)
             {
-                throw CreateSslException(SR.net_ssl_read_bio_failed_error);
+                throw CreateSslException(Strings.net_ssl_read_bio_failed_error);
             }
             return bytes;
         }
@@ -453,7 +453,7 @@ internal static partial class Interop
 
             if (bytes != count)
             {
-                throw CreateSslException(SR.net_ssl_write_bio_failed_error);
+                throw CreateSslException(Strings.net_ssl_write_bio_failed_error);
             }
             return bytes;
         }
@@ -496,14 +496,14 @@ internal static partial class Interop
 
             if (1 != retVal)
             {
-                throw CreateSslException(SR.net_ssl_use_cert_failed);
+                throw CreateSslException(Strings.net_ssl_use_cert_failed);
             }
 
             retVal = Ssl.SslCtxUsePrivateKey(contextPtr, keyPtr);
 
             if (1 != retVal)
             {
-                throw CreateSslException(SR.net_ssl_use_private_key_failed);
+                throw CreateSslException(Strings.net_ssl_use_private_key_failed);
             }
 
             //check private key
@@ -511,7 +511,7 @@ internal static partial class Interop
 
             if (1 != retVal)
             {
-                throw CreateSslException(SR.net_ssl_check_private_key_failed);
+                throw CreateSslException(Strings.net_ssl_check_private_key_failed);
             }
         }
 
@@ -520,7 +520,7 @@ internal static partial class Interop
             // Capture last error to be consistent with CreateOpenSslCryptographicException
             ulong errorVal = Crypto.ErrPeekLastError();
             Crypto.ErrClearError();
-            string msg = SR.Format(message, Marshal.PtrToStringAnsi(Crypto.ErrReasonErrorString(errorVal)));
+            string msg = Strings.Format(message, Marshal.PtrToStringAnsi(Crypto.ErrReasonErrorString(errorVal)));
             return new SslException(msg, (int)errorVal);
         }
 
@@ -547,7 +547,7 @@ internal static partial class Interop
             }
 
             public SslException(int error)
-                : this(SR.Format(SR.net_generic_operation_failed, error))
+                : this(Strings.Format(Strings.net_generic_operation_failed, error))
             {
                 HResult = error;
             }

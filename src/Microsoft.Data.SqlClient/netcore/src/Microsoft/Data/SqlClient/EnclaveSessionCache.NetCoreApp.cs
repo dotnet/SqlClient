@@ -45,7 +45,7 @@ namespace Microsoft.Data.SqlClient
                     SqlEnclaveSession enclaveSessionRemoved = enclaveMemoryCache.Remove(cacheKey) as SqlEnclaveSession;
                     if (enclaveSessionRemoved == null)
                     {
-                        throw new InvalidOperationException(SR.EnclaveSessionInvalidationFailed);
+                        throw new InvalidOperationException(Strings.EnclaveSessionInvalidationFailed);
                     }
                 }
             }

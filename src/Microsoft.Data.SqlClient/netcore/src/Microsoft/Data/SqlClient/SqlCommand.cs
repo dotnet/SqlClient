@@ -2793,7 +2793,7 @@ namespace Microsoft.Data.SqlClient
             ValidateCommand(false /*not async*/, nameof(DeriveParameters));
 
             // Use common parser for SqlClient and OleDb - parse into 4 parts - Server, Catalog, Schema, ProcedureName
-            string[] parsedSProc = MultipartIdentifier.ParseMultipartIdentifier(CommandText, "[\"", "]\"", SR.SQL_SqlCommandCommandText, false);
+            string[] parsedSProc = MultipartIdentifier.ParseMultipartIdentifier(CommandText, "[\"", "]\"", Strings.SQL_SqlCommandCommandText, false);
             if (null == parsedSProc[3] || string.IsNullOrEmpty(parsedSProc[3]))
             {
                 throw ADP.NoStoredProcedureExists(CommandText);

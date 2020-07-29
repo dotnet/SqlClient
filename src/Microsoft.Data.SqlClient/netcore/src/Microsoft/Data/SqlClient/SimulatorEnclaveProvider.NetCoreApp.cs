@@ -92,7 +92,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        throw new AlwaysEncryptedAttestationException(SR.FailToCreateEnclaveSession);
+                        throw new AlwaysEncryptedAttestationException(Strings.FailToCreateEnclaveSession);
                     }
                 }
             }

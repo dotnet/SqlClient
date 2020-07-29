@@ -26,11 +26,11 @@ namespace Microsoft.Data
             OperationAbortedException e;
             if (inner == null)
             {
-                e = new OperationAbortedException(SR.ADP_OperationAborted, null);
+                e = new OperationAbortedException(Strings.ADP_OperationAborted, null);
             }
             else
             {
-                e = new OperationAbortedException(SR.ADP_OperationAbortedExceptionMessage, inner);
+                e = new OperationAbortedException(Strings.ADP_OperationAbortedExceptionMessage, inner);
             }
             return e;
         }

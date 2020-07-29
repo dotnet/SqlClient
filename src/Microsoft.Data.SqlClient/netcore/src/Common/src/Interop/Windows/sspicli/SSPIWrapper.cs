@@ -81,7 +81,7 @@ namespace System.Net
 
             if (throwIfMissing)
             {
-                throw new NotSupportedException(SR.net_securitypackagesupport);
+                throw new NotSupportedException(Strings.net_securitypackagesupport);
             }
 
             return null;
@@ -101,7 +101,7 @@ namespace System.Net
             if (errorCode != 0)
             {
                 if (NetEventSource.IsEnabled)
-                    NetEventSource.Error(null, System.SRHelper.Format(SR.net_log_operation_failed_with_error, nameof(AcquireDefaultCredential), $"0x{errorCode:X}"));
+                    NetEventSource.Error(null, System.StringsHelper.Format(Strings.net_log_operation_failed_with_error, nameof(AcquireDefaultCredential), $"0x{errorCode:X}"));
                 throw new Win32Exception(errorCode);
             }
             return outCredential;
@@ -118,7 +118,7 @@ namespace System.Net
             if (errorCode != 0)
             {
                 if (NetEventSource.IsEnabled)
-                    NetEventSource.Error(null, System.SRHelper.Format(SR.net_log_operation_failed_with_error, nameof(AcquireCredentialsHandle), $"0x{errorCode:X}"));
+                    NetEventSource.Error(null, System.StringsHelper.Format(Strings.net_log_operation_failed_with_error, nameof(AcquireCredentialsHandle), $"0x{errorCode:X}"));
                 throw new Win32Exception(errorCode);
             }
 
@@ -143,7 +143,7 @@ namespace System.Net
             if (errorCode != 0)
             {
                 if (NetEventSource.IsEnabled)
-                    NetEventSource.Error(null, System.SRHelper.Format(SR.net_log_operation_failed_with_error, nameof(AcquireCredentialsHandle), $"0x{errorCode:X}"));
+                    NetEventSource.Error(null, System.StringsHelper.Format(Strings.net_log_operation_failed_with_error, nameof(AcquireCredentialsHandle), $"0x{errorCode:X}"));
                 throw new Win32Exception(errorCode);
             }
 
@@ -295,7 +295,7 @@ namespace System.Net
 
                         default:
                             NetEventSource.Fail(null, $"Unknown OP: {op}");
-                            throw NotImplemented.ByDesignWithMessage(SR.net_MethodNotImplementedException);
+                            throw NotImplemented.ByDesignWithMessage(Strings.net_MethodNotImplementedException);
                     }
 
                     // Marshalling back returned sizes / data.
@@ -359,11 +359,11 @@ namespace System.Net
                     {
                         if (errorCode == Interop.SspiCli.SEC_I_RENEGOTIATE)
                         {
-                            NetEventSource.Error(null, System.SRHelper.Format(SR.event_OperationReturnedSomething, op, "SEC_I_RENEGOTIATE"));
+                            NetEventSource.Error(null, System.StringsHelper.Format(Strings.event_OperationReturnedSomething, op, "SEC_I_RENEGOTIATE"));
                         }
                         else
                         {
-                            NetEventSource.Error(null, System.SRHelper.Format(SR.net_log_operation_failed_with_error, op, $"0x{0:X}"));
+                            NetEventSource.Error(null, System.StringsHelper.Format(Strings.net_log_operation_failed_with_error, op, $"0x{0:X}"));
                         }
                     }
 
@@ -466,7 +466,7 @@ namespace System.Net
                     break;
 
                 default:
-                    throw new ArgumentException(System.SRHelper.Format(SR.net_invalid_enum, nameof(contextAttribute)), nameof(contextAttribute));
+                    throw new ArgumentException(System.StringsHelper.Format(Strings.net_invalid_enum, nameof(contextAttribute)), nameof(contextAttribute));
             }
 
             SafeHandle sspiHandle = null;
