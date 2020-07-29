@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
 
@@ -33,6 +34,13 @@ namespace Microsoft.Data.SqlClient
             // to enable or disable event tracing in sni.dll.
             // If registration fails, all write and unregister commands will be a no-op.
 
+            // If managed networking is enabled, don't call native wrapper methods
+#if netcoreapp
+            if (AppContext.TryGetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", out bool isEnabled) && isEnabled)
+            {
+                return;
+            }
+#endif
             // Only register the provider if it's not already registered. Registering a provider that is already
             // registered can lead to unpredictable behaviour.
             if (!_traceLoggingProviderEnabled && e.Command > 0 && (e.Command & (SNINativeTrace | SNINativeScope)) != 0)
