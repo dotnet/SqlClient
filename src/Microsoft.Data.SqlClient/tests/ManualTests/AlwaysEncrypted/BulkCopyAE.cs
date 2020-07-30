@@ -4,6 +4,7 @@
 
 using System;
 using System.Data;
+using System.Runtime.InteropServices;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
 using Xunit;
 
@@ -11,19 +12,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     /// <summary>
     /// Always Encrypted public API Manual tests.
-    /// TODO: These tests are marked as Windows only for now but should be run for all platforms once the Master Key is accessible to this app from Azure Key Vault.
     /// </summary>
-    //[PlatformSpecific(TestPlatforms.Windows)]
-    public class BulkCopyAE : IClassFixture<SQLSetupStrategyAzureKeyVault>, IDisposable
+    public class BulkCopyAE : IDisposable
     {
-        private SQLSetupStrategyAzureKeyVault fixture;
+        private SQLSetupStrategy fixture;
 
         private readonly string tableName;
 
-        public BulkCopyAE(SQLSetupStrategyAzureKeyVault fixture)
+        public BulkCopyAE(SQLSetupStrategy fixture)
         {
-            this.fixture = fixture;
-            tableName = fixture.BulkCopyAETestTable.Name;
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                fixture = new SQLSetupStrategyCertStoreProvider();
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                fixture = new SQLSetupStrategyAzureKeyVault();
+            }
+            tableName = fixture.ApiTestTable.Name;
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
