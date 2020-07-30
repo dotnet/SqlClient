@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         private readonly string tableName;
 
-        public BulkCopyAE(SQLSetupStrategy fixture)
+        public BulkCopyAE()
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
