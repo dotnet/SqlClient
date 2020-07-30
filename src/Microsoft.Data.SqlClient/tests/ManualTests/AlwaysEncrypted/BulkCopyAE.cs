@@ -29,7 +29,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             {
                 fixture = new SQLSetupStrategyAzureKeyVault();
             }
-            tableName = fixture.ApiTestTable.Name;
+            tableName = fixture.BulkCopyAETestTable.Name;
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
