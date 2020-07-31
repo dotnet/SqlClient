@@ -18,9 +18,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     /// <summary>
     /// Always Encrypted public API Manual tests.
-    /// TODO: These tests are marked as Windows only for now but should be run for all platforms once the Master Key is accessible to this app from Azure Key Vault.
     /// </summary>
-    //[PlatformSpecific(TestPlatforms.Windows)]
     public class ApiShould : IClassFixture<PlatformSpecificTestContext>, IDisposable
     {
         private SQLSetupStrategy fixture;
