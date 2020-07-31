@@ -255,7 +255,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
     }
 
-
     // Use this class as the fixture for AE tests to ensure only one platform-specific fixture
     // is created for each test class
     public class PlatformSpecificTestContext

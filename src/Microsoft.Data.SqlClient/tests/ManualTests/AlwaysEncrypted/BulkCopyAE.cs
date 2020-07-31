@@ -56,7 +56,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 bulkCopy.WriteToServer(dataTable);
 
                 string queryString = "SELECT * FROM [" + tableName + "];";
-
                 SqlCommand command = new SqlCommand(queryString, connection);
                 SqlDataReader reader = command.ExecuteReader();
                 reader.Read();

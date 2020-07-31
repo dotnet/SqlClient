@@ -757,14 +757,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                     // select the set of rows that were inserted just now.
                     using (SqlCommand sqlCommand = new SqlCommand(
-                        // remove customerid from the where clause and the test passes
                         cmdText: $"SELECT CustomerId, FirstName, LastName FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
                         connection: sqlConnection,
                         transaction: null,
                         columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
                     {
                         sqlCommand.Parameters.AddWithValue(@"FirstName", values[1]);
-                        // comment this out to make test pass
                         sqlCommand.Parameters.AddWithValue(@"CustomerId", values[0]);
 
                         IAsyncResult asyncResult = sqlCommand.BeginExecuteReader(commandBehavior);
