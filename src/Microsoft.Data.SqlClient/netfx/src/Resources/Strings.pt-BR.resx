@@ -2500,7 +2500,7 @@
     <value>Não é possível usar 'Authentication=Active Directory Interactive' com as palavras-chave de cadeia de conexão 'Password' ou 'PWD'.</value>
   </data>
   <data name="SQL_DeviceFlowWithUsernamePassword" xml:space="preserve">
-    <value>Cannot use 'Authentication=Active Directory Device Code Flow' with 'User ID', 'UID', 'Password' or 'PWD' connection string keywords.</value>
+    <value>Não é possível usar 'Authentication=Active Directory Device Code Flow' com as palavras-chave de cadeia de conexão 'User ID', 'UID', 'Password' ou 'PWD'.</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
     <value>Não é possível usar 'Authentication=Active Directory Integrated' quando a propriedade Credential está definida.</value>
@@ -4564,15 +4564,15 @@
     <value>Não é possível definir a propriedade Credential quando 'Authentication=Active Directory Interactive' é especificado na cadeia de conexão.</value>
   </data>
   <data name="SqlConnection_ServerProcessId" xml:space="preserve">
-    <value>Server Process Id (SPID) of the active connection.</value>
+    <value>SPID (ID do Processo do Servidor) da conexão ativa.</value>
   </data>
   <data name="SQL_Timeout_Active_Directory_DeviceFlow_Authentication" xml:space="preserve">
-    <value>Active Directory Device Code Flow authentication timed out. The user took too long to respond to the authentication request.</value>
+    <value>A autenticação de Fluxo de Código de Dispositivo do Active Directory atingiu o tempo limite. O usuário demorou muito tempo para responder à solicitação de autenticação.</value>
   </data>
   <data name="SQL_SettingCredentialWithDeviceFlow" xml:space="preserve">
-    <value>Cannot set the Credential property if 'Authentication=Active Directory Device Code Flow' has been specified in the connection string.</value>
+    <value>Não é possível definir a propriedade Credential quando 'Authentication=Active Directory Device Code Flow' está especificado na cadeia de conexão.</value>
   </data>
   <data name="SQL_SettingDeviceFlowWithCredential" xml:space="preserve">
-    <value>Cannot use 'Authentication=Active Directory Device Code Flow', if the Credential property has been set.</value>
+    <value>Não é possível usar 'Authentication=Active Directory Device Code Flow' quando a propriedade Credential está configurada.</value>
   </data>
 </root>

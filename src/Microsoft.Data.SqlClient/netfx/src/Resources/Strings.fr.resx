@@ -4564,7 +4564,7 @@
     <value>Impossible de définir la propriété Credential si « Authentication=Active Directory Interactive » a été spécifié dans la chaîne de connexion.</value>
   </data>
   <data name="SqlConnection_ServerProcessId" xml:space="preserve">
-    <value>Server Process Id (SPID) of the active connection.</value>
+    <value>ID de processus serveur (SPID) de la connexion active.</value>
   </data>
   <data name="SQL_Timeout_Active_Directory_DeviceFlow_Authentication" xml:space="preserve">
     <value>Active Directory Device Code Flow authentication timed out. The user took too long to respond to the authentication request.</value>
