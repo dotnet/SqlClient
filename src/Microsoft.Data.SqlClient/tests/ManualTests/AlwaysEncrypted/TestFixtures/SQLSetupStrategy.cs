@@ -257,12 +257,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
     public class PlatformSpecificTestContext
     {
-        private SQLSetupStrategy certStoreFixture = new SQLSetupStrategyCertStoreProvider();
-        private SQLSetupStrategy akvFixture = new SQLSetupStrategyAzureKeyVault();
+        private SQLSetupStrategy certStoreFixture;
+        private SQLSetupStrategy akvFixture;
+
+        public PlatformSpecificTestContext()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                certStoreFixture = new SQLSetupStrategyCertStoreProvider();
+            }
+            else
+            {
+                akvFixture = new SQLSetupStrategyAzureKeyVault();
+            }
+        }
 
         public SQLSetupStrategy Fixture
         {
-            get => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? certStoreFixture : akvFixture;
+            get => certStoreFixture ?? akvFixture;
         }
     }
 }

@@ -27,9 +27,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         private readonly string tableName;
 
-        public ApiShould(PlatformSpecificTestContext testContext)
+        public ApiShould(PlatformSpecificTestContext context)
         {
-            fixture = testContext.Fixture;
+            fixture = context.Fixture;
             tableName = fixture.ApiTestTable.Name;
         }
 
