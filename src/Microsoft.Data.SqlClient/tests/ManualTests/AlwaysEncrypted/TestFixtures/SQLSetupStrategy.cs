@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.TestFixtures.Setup;
@@ -251,6 +252,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     databaseObjects.ForEach(o => o.Drop(sqlConnection));
                 }
             }
+        }
+    }
+
+    public class PlatformSpecificTestContext
+    {
+        private SQLSetupStrategy certStoreFixture = new SQLSetupStrategyCertStoreProvider();
+        private SQLSetupStrategy akvFixture = new SQLSetupStrategyAzureKeyVault();
+
+        public SQLSetupStrategy Fixture
+        {
+            get => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? certStoreFixture : akvFixture;
         }
     }
 }

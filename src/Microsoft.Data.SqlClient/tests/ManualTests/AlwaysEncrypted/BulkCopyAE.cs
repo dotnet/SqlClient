@@ -4,7 +4,6 @@
 
 using System;
 using System.Data;
-using System.Runtime.InteropServices;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
 using Xunit;
 
@@ -12,23 +11,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     /// <summary>
     /// Always Encrypted public API Manual tests.
+    /// TODO: These tests are marked as Windows only for now but should be run for all platforms once the Master Key is accessible to this app from Azure Key Vault.
     /// </summary>
-    public class BulkCopyAE : IDisposable
+    [PlatformSpecific(TestPlatforms.Windows)]
+    public class BulkCopyAE : IClassFixture<SQLSetupStrategyCertStoreProvider>, IDisposable
     {
-        private SQLSetupStrategy fixture;
+        private SQLSetupStrategyCertStoreProvider fixture;
 
         private readonly string tableName;
 
-        public BulkCopyAE()
+        public BulkCopyAE(SQLSetupStrategyCertStoreProvider fixture)
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                fixture = new SQLSetupStrategyCertStoreProvider();
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                fixture = new SQLSetupStrategyAzureKeyVault();
-            }
+            this.fixture = fixture;
             tableName = fixture.BulkCopyAETestTable.Name;
         }
 
@@ -40,7 +34,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             dataTable.Columns.Add("c1", typeof(string));
 
             var dataRow = dataTable.NewRow();
-            String result = "stringValue";
+            string result = "stringValue";
             dataRow["c1"] = result;
             dataTable.Rows.Add(dataRow);
             dataTable.AcceptChanges();
@@ -64,6 +58,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 bulkCopy.WriteToServer(dataTable);
 
                 string queryString = "SELECT * FROM [" + tableName + "];";
+
                 SqlCommand command = new SqlCommand(queryString, connection);
                 SqlDataReader reader = command.ExecuteReader();
                 reader.Read();

@@ -8,7 +8,6 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
@@ -19,23 +18,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     /// <summary>
     /// Always Encrypted public API Manual tests.
+    /// TODO: These tests are marked as Windows only for now but should be run for all platforms once the Master Key is accessible to this app from Azure Key Vault.
     /// </summary>
-    public class ApiShould : IDisposable
+    //[PlatformSpecific(TestPlatforms.Windows)]
+    public class ApiShould : IClassFixture<PlatformSpecificTestContext>, IDisposable
     {
         private SQLSetupStrategy fixture;
 
         private readonly string tableName;
 
-        public ApiShould()
+        public ApiShould(PlatformSpecificTestContext testContext)
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                fixture = new SQLSetupStrategyCertStoreProvider();
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                fixture = new SQLSetupStrategyAzureKeyVault();
-            }
+            fixture = testContext.Fixture;
             tableName = fixture.ApiTestTable.Name;
         }
 
@@ -765,12 +759,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                     // select the set of rows that were inserted just now.
                     using (SqlCommand sqlCommand = new SqlCommand(
+                        // remove customerid from the where clause and the test passes
                         cmdText: $"SELECT CustomerId, FirstName, LastName FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
                         connection: sqlConnection,
                         transaction: null,
                         columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
                     {
                         sqlCommand.Parameters.AddWithValue(@"FirstName", values[1]);
+                        // comment this out to make test pass
                         sqlCommand.Parameters.AddWithValue(@"CustomerId", values[0]);
 
                         IAsyncResult asyncResult = sqlCommand.BeginExecuteReader(commandBehavior);
