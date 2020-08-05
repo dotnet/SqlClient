@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
-    <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
+    <TargetFrameworks>netcoreapp2.1;netcoreapp3.1;netstandard2.0;netstandard2.1</TargetFrameworks>
     <GeneratePlatformNotSupportedAssemblyMessage Condition="'$(OSGroup)' == 'AnyOS'">SR.PlatformNotSupported_DataSqlClient</GeneratePlatformNotSupportedAssemblyMessage>
     <OSGroup Condition="'$(OSGroup)' == ''">$(OS)</OSGroup>
     <TargetsWindows Condition="'$(OSGroup)'=='Windows_NT'">true</TargetsWindows>
@@ -229,6 +229,8 @@
 	<ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netstandard'">
 		<Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.NetStandard.cs" />
 		<Compile Include="Microsoft\Data\SqlClient\SqlDiagnosticListener.NetStandard.cs" />
+		<Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.NetStandard.cs" />
+		<Compile Include="Microsoft\Data\SqlClient\TdsParser.NetStandard.cs" />
 	</ItemGroup>
 	<ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetFramework)' != 'netstandard2.0'">
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.NetCoreApp.cs" />
@@ -254,10 +256,6 @@
   </ItemGroup>
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netcoreapp' AND '$(BuildSimulator)' == 'true'">
     <Compile Include="Microsoft\Data\SqlClient\SimulatorEnclaveProvider.NetCoreApp.cs" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netstandard'">
-    <Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.NetStandard.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParser.NetStandard.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS'">
     <Compile Include="Microsoft\Data\SqlClient\Server\MetadataUtilsSmi.cs" />
