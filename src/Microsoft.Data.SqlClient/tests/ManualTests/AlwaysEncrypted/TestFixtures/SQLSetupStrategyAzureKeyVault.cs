@@ -18,7 +18,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         public SQLSetupStrategyAzureKeyVault() : base()
         {
-            AkvStoreProvider = new SqlColumnEncryptionAzureKeyVaultProvider(authenticationCallback: AADUtility.AzureActiveDirectoryAuthenticationCallback);
+            AkvStoreProvider = new SqlColumnEncryptionAzureKeyVaultProvider(new SqlClientCustomTokenCredential());
 
             if (!isAKVProviderRegistered)
             {
