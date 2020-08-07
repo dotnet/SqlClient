@@ -317,7 +317,7 @@ namespace Microsoft.Data.Common
         /// * if the value is from type PoolBlockingPeriod, it will be used as is
         /// * if the value is from integral type (SByte, Int16, Int32, Int64, Byte, UInt16, UInt32, or UInt64), it will be converted to enum
         /// * if the value is another enum or any other type, it will be blocked with an appropriate ArgumentException
-        /// 
+        ///
         /// in any case above, if the converted value is out of valid range, the method raises ArgumentOutOfRangeException.
         /// </summary>
         /// <returns>PoolBlockingPeriod value in the valid range</returns>
@@ -373,7 +373,7 @@ namespace Microsoft.Data.Common
                     }
                     catch (ArgumentException e)
                     {
-                        // to be consistent with the messages we send in case of wrong type usage, replace 
+                        // to be consistent with the messages we send in case of wrong type usage, replace
                         // the error with our exception, and keep the original one as inner one for troubleshooting
                         throw ADP.ConvertFailed(value.GetType(), typeof(PoolBlockingPeriod), e);
                     }
@@ -442,7 +442,7 @@ namespace Microsoft.Data.Common
         /// * if the value is from type ApplicationIntent, it will be used as is
         /// * if the value is from integral type (SByte, Int16, Int32, Int64, Byte, UInt16, UInt32, or UInt64), it will be converted to enum
         /// * if the value is another enum or any other type, it will be blocked with an appropriate ArgumentException
-        /// 
+        ///
         /// in any case above, if the converted value is out of valid range, the method raises ArgumentOutOfRangeException.
         /// </summary>
         /// <returns>application intent value in the valid range</returns>
@@ -498,7 +498,7 @@ namespace Microsoft.Data.Common
                     }
                     catch (ArgumentException e)
                     {
-                        // to be consistent with the messages we send in case of wrong type usage, replace 
+                        // to be consistent with the messages we send in case of wrong type usage, replace
                         // the error with our exception, and keep the original one as inner one for troubleshooting
                         throw ADP.ConvertFailed(value.GetType(), typeof(ApplicationIntent), e);
                     }
@@ -522,6 +522,7 @@ namespace Microsoft.Data.Common
         const string ActiveDirectoryInteractiveString = "Active Directory Interactive";
         const string ActiveDirectoryServicePrincipalString = "Active Directory Service Principal";
         const string ActiveDirectoryDeviceCodeFlowString = "Active Directory Device Code Flow";
+        const string ActiveDirectoryManagedIdentityString = "Active Directory Managed Identity";
         const string SqlCertificateString = "Sql Certificate";
 
         internal static bool TryConvertToAuthenticationType(string value, out SqlAuthenticationMethod result)
@@ -566,7 +567,13 @@ namespace Microsoft.Data.Common
                 result = SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow;
                 isSuccess = true;
             }
-#if ADONET_CERT_AUTH            
+            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, ActiveDirectoryManagedIdentityString)
+                || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity, CultureInfo.InvariantCulture)))
+            {
+                result = SqlAuthenticationMethod.ActiveDirectoryManagedIdentity;
+                isSuccess = true;
+            }
+#if ADONET_CERT_AUTH
             else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, SqlCertificateString)
                 || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.SqlCertificate, CultureInfo.InvariantCulture))) {
                 result = SqlAuthenticationMethod.SqlCertificate;
@@ -655,9 +662,10 @@ namespace Microsoft.Data.Common
                 || value == SqlAuthenticationMethod.ActiveDirectoryInteractive
                 || value == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
                 || value == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
-#if ADONET_CERT_AUTH                
+                || value == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
+#if ADONET_CERT_AUTH
                 || value == SqlAuthenticationMethod.SqlCertificate
-#endif                
+#endif
                 || value == SqlAuthenticationMethod.NotSpecified;
         }
 
@@ -679,11 +687,12 @@ namespace Microsoft.Data.Common
                     return ActiveDirectoryServicePrincipalString;
                 case SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow:
                     return ActiveDirectoryDeviceCodeFlowString;
+                case SqlAuthenticationMethod.ActiveDirectoryManagedIdentity:
+                    return ActiveDirectoryManagedIdentityString;
 #if ADONET_CERT_AUTH
                 case SqlAuthenticationMethod.SqlCertificate:
                     return SqlCertificateString;
 #endif
-
                 default:
                     return null;
             }
@@ -741,7 +750,7 @@ namespace Microsoft.Data.Common
                     }
                     catch (ArgumentException e)
                     {
-                        // to be consistent with the messages we send in case of wrong type usage, replace 
+                        // to be consistent with the messages we send in case of wrong type usage, replace
                         // the error with our exception, and keep the original one as inner one for troubleshooting
                         throw ADP.ConvertFailed(value.GetType(), typeof(SqlAuthenticationMethod), e);
                     }
@@ -817,7 +826,7 @@ namespace Microsoft.Data.Common
                     }
                     catch (ArgumentException e)
                     {
-                        // to be consistent with the messages we send in case of wrong type usage, replace 
+                        // to be consistent with the messages we send in case of wrong type usage, replace
                         // the error with our exception, and keep the original one as inner one for troubleshooting
                         throw ADP.ConvertFailed(value.GetType(), typeof(SqlConnectionColumnEncryptionSetting), e);
                     }
@@ -960,7 +969,7 @@ namespace Microsoft.Data.Common
                     }
                     catch (ArgumentException e)
                     {
-                        // to be consistent with the messages we send in case of wrong type usage, replace 
+                        // to be consistent with the messages we send in case of wrong type usage, replace
                         // the error with our exception, and keep the original one as inner one for troubleshooting
                         throw ADP.ConvertFailed(value.GetType(), typeof(SqlConnectionAttestationProtocol), e);
                     }
@@ -1184,14 +1193,14 @@ namespace Microsoft.Data.Common
 
         //internal const string MultiSubnetFailover = MULTISUBNETFAILOVER;
         internal const string MULTISUBNETFAILOVER = "multisubnetfailover";
-        
+
         //internal const string NetworkLibrary         = NET+","+NETWORK;
         internal const string NET = "net";
         internal const string NETWORK = "network";
 
         //internal const string PoolBlockingPeriod = POOLBLOCKINGPERIOD;
         internal const string POOLBLOCKINGPERIOD = "poolblockingperiod";
-        
+
         internal const string WorkaroundOracleBug914652 = "Workaround Oracle Bug 914652";
 
         //internal const string Password               = Pwd;

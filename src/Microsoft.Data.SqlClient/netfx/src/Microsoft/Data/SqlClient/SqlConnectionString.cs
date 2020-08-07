@@ -104,7 +104,7 @@ namespace Microsoft.Data.SqlClient
             internal const string Connect_Retry_Count = "connect retry count";
             internal const string Connect_Retry_Interval = "connect retry interval";
             internal const string Authentication = "authentication";
-#if ADONET_CERT_AUTH            
+#if ADONET_CERT_AUTH
             internal const string Certificate						= "certificate";
 #endif
         }
@@ -248,12 +248,12 @@ namespace Microsoft.Data.SqlClient
         private readonly string _attachDBFileName;
         private readonly string _currentLanguage;
         private readonly string _dataSource;
-        private readonly string _localDBInstance; // created based on datasource, set to NULL if datasource is not LocalDB 
+        private readonly string _localDBInstance; // created based on datasource, set to NULL if datasource is not LocalDB
         private readonly string _failoverPartner;
         private readonly string _initialCatalog;
         private readonly string _password;
         private readonly string _userID;
-#if ADONET_CERT_AUTH        
+#if ADONET_CERT_AUTH
         private readonly string _certificate;
 #endif
         private readonly string _networkLibrary;
@@ -319,7 +319,7 @@ namespace Microsoft.Data.SqlClient
             _enclaveAttestationUrl = ConvertValueToString(KEY.EnclaveAttestationUrl, DEFAULT.EnclaveAttestationUrl);
             _attestationProtocol = ConvertValueToAttestationProtocol();
 
-#if ADONET_CERT_AUTH            
+#if ADONET_CERT_AUTH
             _certificate = ConvertValueToString(KEY.Certificate,         DEFAULT.Certificate);
 #endif
 
@@ -332,7 +332,7 @@ namespace Microsoft.Data.SqlClient
 
             if (_contextConnection)
             {
-                // We have to be running in the engine for you to request a 
+                // We have to be running in the engine for you to request a
                 // context connection.
 
                 if (!runningInProc)
@@ -340,7 +340,7 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.ContextUnavailableOutOfProc();
                 }
 
-                // When using a context connection, we need to ensure that no 
+                // When using a context connection, we need to ensure that no
                 // other connection string keywords are specified.
 
                 foreach (DictionaryEntry entry in Parsetable)
@@ -556,19 +556,24 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.DeviceFlowWithUsernamePassword();
             }
 
+            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity && (HasUserIdKeyword || HasPasswordKeyword))
+            {
+                throw SQL.ManagedIdentityWithUsernamePassword();
+            }
+
 #if ADONET_CERT_AUTH
-            
+
             if (!DbConnectionStringBuilderUtil.IsValidCertificateValue(_certificate)) {
                 throw ADP.InvalidConnectionOptionValue(KEY.Certificate);
             }
 
             if (!string.IsNullOrEmpty(_certificate)) {
-                
+
                 if (Authentication == SqlClient.SqlAuthenticationMethod.NotSpecified && !_integratedSecurity) {
                     _authType = SqlClient.SqlAuthenticationMethod.SqlCertificate;
                 }
 
-                if (Authentication == SqlClient.SqlAuthenticationMethod.SqlCertificate && (HasUserIdKeyword || HasPasswordKeyword || _integratedSecurity)) { 
+                if (Authentication == SqlClient.SqlAuthenticationMethod.SqlCertificate && (HasUserIdKeyword || HasPasswordKeyword || _integratedSecurity)) {
                     throw SQL.InvalidCertAuth();
                 }
             }
@@ -631,7 +636,7 @@ namespace Microsoft.Data.SqlClient
             _columnEncryptionSetting = connectionOptions._columnEncryptionSetting;
             _enclaveAttestationUrl = connectionOptions._enclaveAttestationUrl;
             _attestationProtocol = connectionOptions._attestationProtocol;
-#if ADONET_CERT_AUTH            
+#if ADONET_CERT_AUTH
             _certificate              = connectionOptions._certificate;
 #endif
             ValidateValueLength(_dataSource, TdsEnums.MAXLEN_SERVERNAME, KEY.Data_Source);
@@ -659,7 +664,7 @@ namespace Microsoft.Data.SqlClient
         internal SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting { get { return _columnEncryptionSetting; } }
         internal string EnclaveAttestationUrl { get { return _enclaveAttestationUrl; } }
         internal SqlConnectionAttestationProtocol AttestationProtocol { get { return _attestationProtocol; } }
-#if ADONET_CERT_AUTH        
+#if ADONET_CERT_AUTH
         internal string Certificate { get { return _certificate; } }
         internal bool UsesCertificate { get { return _authType == SqlClient.SqlAuthenticationMethod.SqlCertificate; } }
 #else
@@ -797,7 +802,7 @@ namespace Microsoft.Data.SqlClient
                 hash.Add(KEY.Connect_Retry_Count, KEY.Connect_Retry_Count);
                 hash.Add(KEY.Connect_Retry_Interval, KEY.Connect_Retry_Interval);
                 hash.Add(KEY.Authentication, KEY.Authentication);
-#if ADONET_CERT_AUTH                
+#if ADONET_CERT_AUTH
                 hash.Add(KEY.Certificate,                    KEY.Certificate);
 #endif
                 hash.Add(SYNONYM.APPLICATIONINTENT, KEY.ApplicationIntent);

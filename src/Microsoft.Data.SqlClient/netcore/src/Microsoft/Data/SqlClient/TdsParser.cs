@@ -397,6 +397,9 @@ namespace Microsoft.Data.SqlClient
                     case SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow:
                         SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> Active Directory Device Code Flow authentication", "SEC");
                         break;
+                    case SqlAuthenticationMethod.ActiveDirectoryManagedIdentity:
+                        SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> Active Directory Managed Identity authentication", "SEC");
+                        break;
                     case SqlAuthenticationMethod.SqlPassword:
                         SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> SQL Password authentication", "SEC");
                         break;
@@ -2905,7 +2908,7 @@ namespace Microsoft.Data.SqlClient
             int count;
 
             // This is added back since removing it from here introduces regressions in Managed SNI.
-            // It forces SqlDataReader.ReadAsync() method to run synchronously, 
+            // It forces SqlDataReader.ReadAsync() method to run synchronously,
             // and will block the calling thread until data is fed from SQL Server.
             // TODO Investigate better solution to support non-blocking ReadAsync().
             stateObj._syncOverAsync = true;
@@ -7794,6 +7797,9 @@ namespace Microsoft.Data.SqlClient
                                 break;
                             case SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow:
                                 workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYDEVICECODEFLOW;
+                                break;
+                            case SqlAuthenticationMethod.ActiveDirectoryManagedIdentity:
+                                workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYMANAGEDIDENTITY;
                                 break;
                             default:
                                 Debug.Assert(false, "Unrecognized Authentication type for fedauth MSAL request");

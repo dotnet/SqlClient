@@ -1587,6 +1587,18 @@ namespace Microsoft.Data.SqlClient
                         fedAuthRequiredPreLoginResponse = _fedAuthRequired
                     };
             }
+            if (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity)
+            {
+                requestedFeatures |= TdsEnums.FeatureExtension.FedAuth;
+                _federatedAuthenticationInfoRequested = true;
+                _fedAuthFeatureExtensionData =
+                    new FederatedAuthenticationFeatureExtensionData
+                    {
+                        libraryType = TdsEnums.FedAuthLibrary.SecurityToken,
+                        authentication = ConnectionOptions.Authentication,
+                        fedAuthRequiredPreLoginResponse = _fedAuthRequired
+                    };
+            }
             if (_accessTokenInBytes != null)
             {
                 requestedFeatures |= TdsEnums.FeatureExtension.FedAuth;
@@ -1966,7 +1978,8 @@ namespace Microsoft.Data.SqlClient
                                        connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated ||
                                        connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive ||
                                        connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal ||
-                                       connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow;
+                                       connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow ||
+                                       connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity;
 
             // Check if the user had explicitly specified the TNIR option in the connection string or the connection string builder.
             // If the user has specified the option in the connection string explicitly, then we shouldn't disable TNIR.
@@ -2552,6 +2565,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert((ConnectionOptions.HasUserIdKeyword && ConnectionOptions.HasPasswordKeyword)
                          || _credential != null
                          || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
+                         || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
                          || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
                          || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && _fedAuthRequired),
                          "Credentials aren't provided for calling MSAL");
@@ -2761,6 +2775,7 @@ namespace Microsoft.Data.SqlClient
                     switch (ConnectionOptions.Authentication)
                     {
                         case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
+                        case SqlAuthenticationMethod.ActiveDirectoryManagedIdentity:
                             username = TdsEnums.NTAUTHORITYANONYMOUSLOGON;
                             if (_activeDirectoryAuthTimeoutRetryHelper.State == ActiveDirectoryAuthenticationTimeoutRetryState.Retrying)
                             {
@@ -3147,7 +3162,7 @@ namespace Microsoft.Data.SqlClient
                         }
 
                         // need to add more steps for phrase 2
-                        // get IPv4 + IPv6 + Port number 
+                        // get IPv4 + IPv6 + Port number
                         // not put them in the DNS cache at this point but need to store them somewhere
 
                         // generate pendingSQLDNSObject and turn on IsSQLDNSRetryEnabled flag

@@ -104,6 +104,7 @@ namespace Microsoft.Data.Common
         const string ActiveDirectoryInteractiveString = "Active Directory Interactive";
         const string ActiveDirectoryServicePrincipalString = "Active Directory Service Principal";
         const string ActiveDirectoryDeviceCodeFlowString = "Active Directory Device Code Flow";
+        const string ActiveDirectoryManagedIdentityString = "Active Directory Managed Identity";
 
         internal static bool TryConvertToAuthenticationType(string value, out SqlAuthenticationMethod result)
         {
@@ -145,6 +146,12 @@ namespace Microsoft.Data.Common
                 || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, CultureInfo.InvariantCulture)))
             {
                 result = SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow;
+                isSuccess = true;
+            }
+            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, ActiveDirectoryManagedIdentityString)
+                || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity, CultureInfo.InvariantCulture)))
+            {
+                result = SqlAuthenticationMethod.ActiveDirectoryManagedIdentity;
                 isSuccess = true;
             }
             else
@@ -367,7 +374,7 @@ namespace Microsoft.Data.Common
                     }
                     catch (ArgumentException e)
                     {
-                        // to be consistent with the messages we send in case of wrong type usage, replace 
+                        // to be consistent with the messages we send in case of wrong type usage, replace
                         // the error with our exception, and keep the original one as inner one for troubleshooting
                         throw ADP.ConvertFailed(value.GetType(), typeof(SqlConnectionAttestationProtocol), e);
                     }
@@ -411,7 +418,7 @@ namespace Microsoft.Data.Common
         /// * if the value is from type ApplicationIntent, it will be used as is
         /// * if the value is from integral type (SByte, Int16, Int32, Int64, Byte, UInt16, UInt32, or UInt64), it will be converted to enum
         /// * if the value is another enum or any other type, it will be blocked with an appropriate ArgumentException
-        /// 
+        ///
         /// in any case above, if the converted value is out of valid range, the method raises ArgumentOutOfRangeException.
         /// </summary>
         /// <returns>application intent value in the valid range</returns>
@@ -467,7 +474,7 @@ namespace Microsoft.Data.Common
                     }
                     catch (ArgumentException e)
                     {
-                        // to be consistent with the messages we send in case of wrong type usage, replace 
+                        // to be consistent with the messages we send in case of wrong type usage, replace
                         // the error with our exception, and keep the original one as inner one for troubleshooting
                         throw ADP.ConvertFailed(value.GetType(), typeof(ApplicationIntent), e);
                     }
@@ -494,6 +501,7 @@ namespace Microsoft.Data.Common
                 || value == SqlAuthenticationMethod.ActiveDirectoryInteractive
                 || value == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
                 || value == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
+                || value == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
                 || value == SqlAuthenticationMethod.NotSpecified;
         }
 
@@ -515,6 +523,8 @@ namespace Microsoft.Data.Common
                     return ActiveDirectoryServicePrincipalString;
                 case SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow:
                     return ActiveDirectoryDeviceCodeFlowString;
+                case SqlAuthenticationMethod.ActiveDirectoryManagedIdentity:
+                    return ActiveDirectoryManagedIdentityString;
                 default:
                     return null;
             }
@@ -572,7 +582,7 @@ namespace Microsoft.Data.Common
                     }
                     catch (ArgumentException e)
                     {
-                        // to be consistent with the messages we send in case of wrong type usage, replace 
+                        // to be consistent with the messages we send in case of wrong type usage, replace
                         // the error with our exception, and keep the original one as inner one for troubleshooting
                         throw ADP.ConvertFailed(value.GetType(), typeof(SqlAuthenticationMethod), e);
                     }
@@ -648,7 +658,7 @@ namespace Microsoft.Data.Common
                     }
                     catch (ArgumentException e)
                     {
-                        // to be consistent with the messages we send in case of wrong type usage, replace 
+                        // to be consistent with the messages we send in case of wrong type usage, replace
                         // the error with our exception, and keep the original one as inner one for troubleshooting
                         throw ADP.ConvertFailed(value.GetType(), typeof(SqlConnectionColumnEncryptionSetting), e);
                     }
@@ -811,7 +821,7 @@ namespace Microsoft.Data.Common
 
         //internal const string MultiSubnetFailover = MULTISUBNETFAILOVER;
         internal const string MULTISUBNETFAILOVER = "MultiSubnetFailover";
-        
+
         //internal const string NetworkLibrary         = NET+","+NETWORK;
         internal const string NET = "net";
         internal const string NETWORK = "network";

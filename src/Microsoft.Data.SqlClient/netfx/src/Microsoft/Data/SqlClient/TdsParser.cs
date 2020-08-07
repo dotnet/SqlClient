@@ -548,6 +548,9 @@ namespace Microsoft.Data.SqlClient
                     case SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow:
                         SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> Active Directory Device Code Flow authentication", "SEC");
                         break;
+                    case SqlAuthenticationMethod.ActiveDirectoryManagedIdentity:
+                        SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> Active Directory Managed Identity authentication", "SEC");
+                        break;
                     case SqlAuthenticationMethod.SqlPassword:
                         SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> SQL Password authentication", "SEC");
                         break;
@@ -695,7 +698,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Retrieve the IP and port number from native SNI for TCP protocol. The IP information is stored temporarily in the
-        // pendingSQLDNSObject but not in the DNS Cache at this point. We only add items to the DNS Cache after we receive the 
+        // pendingSQLDNSObject but not in the DNS Cache at this point. We only add items to the DNS Cache after we receive the
         // IsSupported flag as true in the feature ext ack from server.
         internal void AssignPendingDNSInfo(string userProtocol, string DNSCacheKey)
         {
@@ -8562,6 +8565,9 @@ namespace Microsoft.Data.SqlClient
                                 break;
                             case SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow:
                                 workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYDEVICECODEFLOW;
+                                break;
+                            case SqlAuthenticationMethod.ActiveDirectoryManagedIdentity:
+                                workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYMANAGEDIDENTITY;
                                 break;
                             default:
                                 Debug.Assert(false, "Unrecognized Authentication type for fedauth MSAL request");

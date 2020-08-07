@@ -3,8 +3,11 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Identity.Client;
@@ -43,7 +46,8 @@ namespace Microsoft.Data.SqlClient
                 || authentication == SqlAuthenticationMethod.ActiveDirectoryPassword
                 || authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
                 || authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
-                || authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow;
+                || authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
+                || authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity;
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/BeforeLoad/*'/>
@@ -92,17 +96,17 @@ namespace Microsoft.Data.SqlClient
                 return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
             }
 
-            /* 
+            /*
              * Today, MSAL.NET uses another redirect URI by default in desktop applications that run on Windows
              * (urn:ietf:wg:oauth:2.0:oob). In the future, we'll want to change this default, so we recommend
              * that you use https://login.microsoftonline.com/common/oauth2/nativeclient.
-             * 
+             *
              * https://docs.microsoft.com/en-us/azure/active-directory/develop/scenario-desktop-app-registration#redirect-uris
              */
             string redirectURI = "https://login.microsoftonline.com/common/oauth2/nativeclient";
 
 #if netcoreapp
-            if(parameters.AuthenticationMethod != SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)
+            if (parameters.AuthenticationMethod != SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)
             {
                 redirectURI = "http://localhost";
             }
@@ -152,14 +156,15 @@ namespace Microsoft.Data.SqlClient
                     result = app.AcquireTokenByIntegratedWindowsAuth(scopes)
                         .WithCorrelationId(parameters.ConnectionId)
                         .WithUsername(parameters.UserId)
-                        .ExecuteAsync().Result;
+                        .ExecuteAsync().GetAwaiter().GetResult();
                 }
                 else
                 {
                     result = app.AcquireTokenByIntegratedWindowsAuth(scopes)
                         .WithCorrelationId(parameters.ConnectionId)
-                        .ExecuteAsync().Result;
+                        .ExecuteAsync().GetAwaiter().GetResult();
                 }
+                return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
             }
             else if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryPassword)
             {
@@ -169,7 +174,8 @@ namespace Microsoft.Data.SqlClient
                 password.MakeReadOnly();
                 result = app.AcquireTokenByUsernamePassword(scopes, parameters.UserId, password)
                     .WithCorrelationId(parameters.ConnectionId)
-                    .ExecuteAsync().Result;
+                    .ExecuteAsync().GetAwaiter().GetResult();
+                return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
             }
             else if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryInteractive ||
                      parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)
@@ -200,15 +206,60 @@ namespace Microsoft.Data.SqlClient
                 {
                     result = await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod);
                 }
+                return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
+
+            }
+            else if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity)
+            {
+                return await AcquireManagedIdentityTokenIMDSAsync(parameters);
             }
             else
             {
                 throw SQL.UnsupportedAuthenticationSpecified(parameters.AuthenticationMethod);
             }
-
-            return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
         });
 
+        private async Task<SqlAuthenticationToken> AcquireManagedIdentityTokenIMDSAsync(SqlAuthenticationParameters parameters)
+        {
+            string accessToken = "";
+            // IMDS upgrade time can take up to 70s
+            int imdsUpgradeTimeInMs = 70 * 1000;
+            string msiEndpoint = Environment.GetEnvironmentVariable("MSI_ENDPOINT");
+            string msiSecret = Environment.GetEnvironmentVariable("MSI_SECRET");
+
+            StringBuilder urlString = new StringBuilder();
+            int retry = 1, maxRetry = 1;
+            int[] retrySlots;
+
+            /*
+             * isAzureFunction is used for identifying if the current client application is running in a Virtual Machine
+             * (without MSI environment variables) or App Service/Function (with MSI environment variables) as the APIs to
+             * be called for acquiring MSI Token are different for both cases.
+            */
+            bool isAzureFunction = null != msiEndpoint && !string.IsNullOrEmpty(msiEndpoint)
+                                && null != msiSecret && !string.IsNullOrEmpty(msiSecret);
+
+            if(isAzureFunction)
+            {
+                urlString.Append(msiEndpoint).Append("?api-version=2019-08-01&resource=").Append(parameters.Resource);
+            }
+            else
+            {
+                urlString.Append(ActiveDirectoryAuthentication.AZURE_IMDS_REST_URL).Append("&resource=").Append(parameters.Resource);
+                // Retry acquiring access token upto 20 times due to possible IMDS upgrade (Applies to VM only)
+                maxRetry = ActiveDirectoryAuthentication.AZURE_IMDS_MAX_RETRY;
+            }
+
+            retrySlots = new int[maxRetry];
+            // Simplified variant of Exponential BackOff
+            for (int x = 0; x < maxRetry; x++)
+            {
+                retrySlots[x] = TdsEnums.INTERNAL_SERVER_ERROR * ((2 << 1) - 1) / 1000;
+            }
+
+            DateTime expiresOn = DateTime.UtcNow;
+            return new SqlAuthenticationToken(accessToken, new DateTimeOffset(expiresOn));
+        }
 
         private async Task<AuthenticationResult> AcquireTokenInteractiveDeviceFlowAsync(IPublicClientApplication app, string[] scopes, Guid connectionId, string userId,
             SqlAuthenticationMethod authenticationMethod)
@@ -221,7 +272,7 @@ namespace Microsoft.Data.SqlClient
              * MSAL cannot detect if the user navigates away or simply closes the browser. Apps using this technique are encouraged
              * to define a timeout (via CancellationToken). We recommend a timeout of at least a few minutes, to take into account
              * cases where the user is prompted to change password or perform 2FA.
-             * 
+             *
              * https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/wiki/System-Browser-on-.Net-Core#system-browser-experience
              */
             cts.CancelAfter(180000);
@@ -242,7 +293,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         /*
                          * We will use the MSAL Embedded or System web browser which changes by Default in MSAL according to this table:
-                         * 
+                         *
                          * Framework        Embedded  System  Default
                          * -------------------------------------------
                          * .NET Classic     Yes       Yes^    Embedded
@@ -252,9 +303,9 @@ namespace Microsoft.Data.SqlClient
                          * Xamarin.Android  Yes       Yes     System
                          * Xamarin.iOS      Yes       Yes     System
                          * Xamarin.Mac      Yes       No      Embedded
-                         * 
+                         *
                          * ^ Requires "http://localhost" redirect URI
-                         * 
+                         *
                          * https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/wiki/MSAL.NET-uses-web-browser#at-a-glance
                          */
                         return await app.AcquireTokenInteractive(scopes)
@@ -280,11 +331,11 @@ namespace Microsoft.Data.SqlClient
 
         private Task DefaultDeviceFlowCallback(DeviceCodeResult result)
         {
-            // This will print the message on the console which tells the user where to go sign-in using 
+            // This will print the message on the console which tells the user where to go sign-in using
             // a separate browser and the code to enter once they sign in.
             // The AcquireTokenWithDeviceCode() method will poll the server after firing this
             // device code callback to look for the successful login of the user via that browser.
-            // This background polling (whose interval and timeout data is also provided as fields in the 
+            // This background polling (whose interval and timeout data is also provided as fields in the
             // deviceCodeCallback class) will occur until:
             // * The user has successfully logged in via browser and entered the proper code
             // * The timeout specified by the server for the lifetime of this code (typically ~15 minutes) has been reached
