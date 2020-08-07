@@ -18,6 +18,7 @@
   </Target>
   <!-- Azure Key Vault provider is not compatible with .NET Framework 4.6 and can only be used with .NET Framework 4.6.1 and above. -->
   <ItemGroup Condition="$(TargetFramework) != 'net46' AND !$(ReferenceType.Contains('NetStandard'))">
+    <Compile Include="DataCommon\SqlClientCustomTokenCredential.cs" />
     <Compile Include="AlwaysEncrypted\AKVTests.cs" />
     <Compile Include="AlwaysEncrypted\ExceptionTestAKVStore.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\AKVTestTable.cs" />
@@ -64,7 +65,6 @@
     <Compile Include="$(CommonTestPath)\System\Collections\DictionaryExtensions.cs">
       <Link>Common\System\Collections\DictionaryExtensions.cs</Link>
     </Compile>
-    <Compile Include="DataCommon\SqlClientCustomTokenCredential.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\OrderHint.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\OrderHintAsync.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\OrderHintDuplicateColumn.cs" />
