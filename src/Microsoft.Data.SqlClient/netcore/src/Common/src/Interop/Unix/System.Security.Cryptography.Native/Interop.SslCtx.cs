@@ -51,7 +51,7 @@ internal static partial class Interop
             {
                 if (protocol.Protocol.Length == 0 || protocol.Protocol.Length > byte.MaxValue)
                 {
-                    throw new ArgumentException(SR.net_ssl_app_protocols_invalid, nameof(applicationProtocols));
+                    throw new ArgumentException(Strings.net_ssl_app_protocols_invalid, nameof(applicationProtocols));
                 }
 
                 protocolSize += protocol.Protocol.Length + 1;

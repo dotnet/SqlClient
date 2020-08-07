@@ -1381,9 +1381,9 @@ namespace Microsoft.Data.SqlClient
 
                 string sniContextEnumName = TdsEnums.GetSniContextEnumName(stateObj.SniContext);
 
-                string sqlContextInfo = SRHelper.GetResourceString(sniContextEnumName);
+                string sqlContextInfo = StringsHelper.GetResourceString(sniContextEnumName);
                 string providerRid = string.Format("SNI_PN{0}", details.provider);
-                string providerName = SRHelper.GetResourceString(providerRid);
+                string providerName = StringsHelper.GetResourceString(providerRid);
                 Debug.Assert(!string.IsNullOrEmpty(providerName), $"invalid providerResourceId '{providerRid}'");
                 uint win32ErrorCode = details.nativeError;
                 SqlClientEventSource.Log.AdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > SNI Native Error Code = {0}", win32ErrorCode);
@@ -5308,7 +5308,7 @@ namespace Microsoft.Data.SqlClient
                     buffer[map[i]] = data.SqlValue;
                     if (stateObj._longlen != 0)
                     {
-                        throw new SqlTruncateException(SRHelper.GetString(SR.SqlMisc_TruncationMaxDataMessage));
+                        throw new SqlTruncateException(StringsHelper.GetString(Strings.SqlMisc_TruncationMaxDataMessage));
                     }
                 }
                 data.Clear();

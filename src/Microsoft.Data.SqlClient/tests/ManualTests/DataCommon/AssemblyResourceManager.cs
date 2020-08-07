@@ -63,11 +63,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             else
             {
-#if netcoreapp
-                var type = _resourceAssembly.GetType("System.SR");
-#else
                 var type = _resourceAssembly.GetType("System.Strings");
-#endif
                 var info = type.GetProperty(resourceName, BindingFlags.NonPublic | BindingFlags.Static);
 
                 result = null;
