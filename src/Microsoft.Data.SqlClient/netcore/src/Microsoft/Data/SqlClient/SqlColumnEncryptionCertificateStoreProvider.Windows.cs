@@ -482,7 +482,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Decrypt the text using specified certificate.
+        /// Decrypt the data using specified certificate.
         /// </summary>
         /// <param name="cipherText">Text to decrypt.</param>
         /// <param name="certificate">Certificate object.</param>
