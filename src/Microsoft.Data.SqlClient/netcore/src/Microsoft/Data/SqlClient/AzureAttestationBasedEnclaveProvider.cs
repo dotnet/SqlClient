@@ -73,6 +73,7 @@ namespace Microsoft.Data.SqlClient
         // Gets the information that SqlClient subsequently uses to initiate the process of attesting the enclave and to establish a secure session with the enclave.
         internal override SqlEnclaveAttestationParameters GetAttestationParameters(string attestationUrl, byte[] customData, int customDataLength)
         {
+            // The key derivation function and hash algorithm name are specified when key derivation is performed
             ECDiffieHellman clientDHKey = ECDiffieHellman.Create();
             clientDHKey.KeySize = DiffieHellmanKeySize;
             byte[] attestationParam = PrepareAttestationParameters(attestationUrl, customData, customDataLength);
