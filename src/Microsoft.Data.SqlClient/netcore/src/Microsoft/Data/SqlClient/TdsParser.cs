@@ -394,6 +394,9 @@ namespace Microsoft.Data.SqlClient
                     case SqlAuthenticationMethod.ActiveDirectoryServicePrincipal:
                         SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> Active Directory Service Principal authentication", "SEC");
                         break;
+                    case SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow:
+                        SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> Active Directory Device Code Flow authentication", "SEC");
+                        break;
                     case SqlAuthenticationMethod.SqlPassword:
                         SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> SQL Password authentication", "SEC");
                         break;
@@ -471,13 +474,13 @@ namespace Microsoft.Data.SqlClient
 
             uint result = _physicalStateObj.SniGetConnectionId(ref _connHandler._clientConnectionId);
             Debug.Assert(result == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetConnectionId");
-            
+
             if (null == _connHandler.pendingSQLDNSObject)
             {
                 // for DNS Caching phase 1
                 _physicalStateObj.AssignPendingDNSInfo(serverInfo.UserProtocol, FQDNforDNSCahce, ref _connHandler.pendingSQLDNSObject);
             }
-            
+
             SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.Connect|{0}> Sending prelogin handshake", "SEC");
             SendPreLoginHandshake(instanceName, encrypt);
 
@@ -1378,9 +1381,9 @@ namespace Microsoft.Data.SqlClient
 
                 string sniContextEnumName = TdsEnums.GetSniContextEnumName(stateObj.SniContext);
 
-                string sqlContextInfo = SRHelper.GetResourceString(sniContextEnumName);
+                string sqlContextInfo = StringsHelper.GetResourceString(sniContextEnumName);
                 string providerRid = string.Format("SNI_PN{0}", details.provider);
-                string providerName = SRHelper.GetResourceString(providerRid);
+                string providerName = StringsHelper.GetResourceString(providerRid);
                 Debug.Assert(!string.IsNullOrEmpty(providerName), $"invalid providerResourceId '{providerRid}'");
                 uint win32ErrorCode = details.nativeError;
                 SqlClientEventSource.Log.AdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > SNI Native Error Code = {0}", win32ErrorCode);
@@ -3136,7 +3139,7 @@ namespace Microsoft.Data.SqlClient
                 ret = SQLFallbackDNSCache.Instance.DeleteDNSInfo(FQDNforDNSCahce);
             }
 
-            if ( _connHandler.IsSQLDNSCachingSupported && _connHandler.pendingSQLDNSObject != null 
+            if (_connHandler.IsSQLDNSCachingSupported && _connHandler.pendingSQLDNSObject != null
                     && !SQLFallbackDNSCache.Instance.IsDuplicate(_connHandler.pendingSQLDNSObject))
             {
                 ret = SQLFallbackDNSCache.Instance.AddDNSInfo(_connHandler.pendingSQLDNSObject);
@@ -3313,7 +3316,7 @@ namespace Microsoft.Data.SqlClient
 
         private bool TryProcessDataClassification(TdsParserStateObject stateObj, out SensitivityClassification sensitivityClassification)
         {
-            if (this.DataClassificationVersion == 0)
+            if (DataClassificationVersion == 0)
             {
                 throw SQL.ParsingError(ParsingErrorState.DataClassificationNotExpected);
             }
@@ -3321,17 +3324,14 @@ namespace Microsoft.Data.SqlClient
             sensitivityClassification = null;
 
             // get the labels
-            UInt16 numLabels;
-            if (!stateObj.TryReadUInt16(out numLabels))
+            if (!stateObj.TryReadUInt16(out ushort numLabels))
             {
                 return false;
             }
             var labels = new List<Label>(numLabels);
-            for (UInt16 i = 0; i < numLabels; i++)
+            for (ushort i = 0; i < numLabels; i++)
             {
-                string label;
-                string id;
-                if (!TryReadSensitivityLabel(stateObj, out label, out id))
+                if (!TryReadSensitivityLabel(stateObj, out string label, out string id))
                 {
                     return false;
                 }
@@ -3339,49 +3339,53 @@ namespace Microsoft.Data.SqlClient
             }
 
             // get the information types
-            UInt16 numInformationTypes;
-            if (!stateObj.TryReadUInt16(out numInformationTypes))
+            if (!stateObj.TryReadUInt16(out ushort numInformationTypes))
             {
                 return false;
             }
             var informationTypes = new List<InformationType>(numInformationTypes);
-            for (UInt16 i = 0; i < numInformationTypes; i++)
+            for (ushort i = 0; i < numInformationTypes; i++)
             {
-                string informationType;
-                string id;
-                if (!TryReadSensitivityInformationType(stateObj, out informationType, out id))
+                if (!TryReadSensitivityInformationType(stateObj, out string informationType, out string id))
                 {
                     return false;
                 }
                 informationTypes.Add(new InformationType(informationType, id));
             }
 
+            // get sensitivity rank
+            int sensitivityRank = (int)SensitivityRank.NOT_DEFINED;
+            if (DataClassificationVersion > TdsEnums.DATA_CLASSIFICATION_VERSION_WITHOUT_RANK_SUPPORT)
+            {
+                if (!stateObj.TryReadInt32(out sensitivityRank) || !Enum.IsDefined(typeof(SensitivityRank), sensitivityRank))
+                {
+                    return false;
+                }
+            }
+
             // get the per column classification data (corresponds to order of output columns for query)
-            UInt16 numResultColumns;
-            if (!stateObj.TryReadUInt16(out numResultColumns))
+            if (!stateObj.TryReadUInt16(out ushort numResultColumns))
             {
                 return false;
             }
             var columnSensitivities = new List<ColumnSensitivity>(numResultColumns);
-            for (UInt16 columnNum = 0; columnNum < numResultColumns; columnNum++)
+            for (ushort columnNum = 0; columnNum < numResultColumns; columnNum++)
             {
                 // get sensitivity properties for all the different sources which were used in generating the column output
-                UInt16 numSources;
-                if (!stateObj.TryReadUInt16(out numSources))
+                if (!stateObj.TryReadUInt16(out ushort numSources))
                 {
                     return false;
                 }
                 var sensitivityProperties = new List<SensitivityProperty>(numSources);
-                for (UInt16 sourceNum = 0; sourceNum < numSources; sourceNum++)
+                for (ushort sourceNum = 0; sourceNum < numSources; sourceNum++)
                 {
                     // get the label index and then lookup label to use for source
-                    UInt16 labelIndex;
-                    if (!stateObj.TryReadUInt16(out labelIndex))
+                    if (!stateObj.TryReadUInt16(out ushort labelIndex))
                     {
                         return false;
                     }
                     Label label = null;
-                    if (labelIndex != UInt16.MaxValue)
+                    if (labelIndex != ushort.MaxValue)
                     {
                         if (labelIndex >= labels.Count)
                         {
@@ -3391,13 +3395,12 @@ namespace Microsoft.Data.SqlClient
                     }
 
                     // get the information type index and then lookup information type to use for source
-                    UInt16 informationTypeIndex;
-                    if (!stateObj.TryReadUInt16(out informationTypeIndex))
+                    if (!stateObj.TryReadUInt16(out ushort informationTypeIndex))
                     {
                         return false;
                     }
                     InformationType informationType = null;
-                    if (informationTypeIndex != UInt16.MaxValue)
+                    if (informationTypeIndex != ushort.MaxValue)
                     {
                         if (informationTypeIndex >= informationTypes.Count)
                         {
@@ -3406,14 +3409,23 @@ namespace Microsoft.Data.SqlClient
                         informationType = informationTypes[informationTypeIndex];
                     }
 
-                    // add sentivity properties for the source
-                    sensitivityProperties.Add(new SensitivityProperty(label, informationType));
+                    // get sensitivity rank
+                    int sensitivityRankProperty = (int)SensitivityRank.NOT_DEFINED;
+                    if (DataClassificationVersion > TdsEnums.DATA_CLASSIFICATION_VERSION_WITHOUT_RANK_SUPPORT)
+                    {
+                        if (!stateObj.TryReadInt32(out sensitivityRankProperty) || !Enum.IsDefined(typeof(SensitivityRank), sensitivityRankProperty))
+                        {
+                            return false;
+                        }
+                    }
+
+                    // add sensitivity properties for the source
+                    sensitivityProperties.Add(new SensitivityProperty(label, informationType, (SensitivityRank)sensitivityRankProperty));
                 }
                 columnSensitivities.Add(new ColumnSensitivity(sensitivityProperties));
             }
 
-            sensitivityClassification = new SensitivityClassification(labels, informationTypes, columnSensitivities);
-
+            sensitivityClassification = new SensitivityClassification(labels, informationTypes, columnSensitivities, (SensitivityRank)sensitivityRank);
             return true;
         }
 
@@ -4435,7 +4447,6 @@ namespace Microsoft.Data.SqlClient
             metaData = null;
 
             _SqlMetaDataSet altMetaDataSet = new _SqlMetaDataSet(cColumns, null);
-            int[] indexMap = new int[cColumns];
 
             if (!stateObj.TryReadUInt16(out altMetaDataSet.id))
             {
@@ -4479,12 +4490,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     return false;
                 }
-
-                indexMap[i] = i;
             }
-
-            altMetaDataSet.indexMap = indexMap;
-            altMetaDataSet.visibleColumns = cColumns;
 
             metaData = altMetaDataSet;
             return true;
@@ -5296,7 +5302,7 @@ namespace Microsoft.Data.SqlClient
                     buffer[map[i]] = data.SqlValue;
                     if (stateObj._longlen != 0)
                     {
-                        throw new SqlTruncateException(SRHelper.GetString(SR.SqlMisc_TruncationMaxDataMessage));
+                        throw new SqlTruncateException(StringsHelper.GetString(Strings.SqlMisc_TruncationMaxDataMessage));
                     }
                 }
                 data.Clear();
@@ -7786,6 +7792,9 @@ namespace Microsoft.Data.SqlClient
                             case SqlAuthenticationMethod.ActiveDirectoryServicePrincipal:
                                 workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYSERVICEPRINCIPAL;
                                 break;
+                            case SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow:
+                                workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYDEVICECODEFLOW;
+                                break;
                             default:
                                 Debug.Assert(false, "Unrecognized Authentication type for fedauth MSAL request");
                                 break;
@@ -7829,7 +7838,7 @@ namespace Microsoft.Data.SqlClient
                 // Write Feature ID, length of the version# field and Sensitivity Classification Version#
                 _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_DATACLASSIFICATION);
                 WriteInt(1, _physicalStateObj);
-                _physicalStateObj.WriteByte(TdsEnums.MAX_SUPPORTED_DATA_CLASSIFICATION_VERSION);
+                _physicalStateObj.WriteByte(TdsEnums.DATA_CLASSIFICATION_VERSION_MAX_SUPPORTED);
             }
 
             return len; // size of data written

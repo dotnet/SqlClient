@@ -2499,6 +2499,9 @@
   <data name="SQL_InteractiveWithPassword" xml:space="preserve">
     <value>无法对 "Password" 或 "PWD" 连接字符串关键字使用 "Authentication=Active Directory Interactive"。</value>
   </data>
+  <data name="SQL_DeviceFlowWithUsernamePassword" xml:space="preserve">
+    <value>无法结合使用 "Authentication=Active Directory Device Code Flow" 与 "User ID"、"UID"、"Password" 或 "PWD" 连接字符串关键字。</value>
+  </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
     <value>如果设置了 Credential 属性，则无法使用“Authentication=Active Directory Integrated”。</value>
   </data>
@@ -4559,5 +4562,17 @@
   </data>
   <data name="SQL_SettingCredentialWithInteractive" xml:space="preserve">
     <value>如果在连接字符串中指定了 "Authentication=Active Directory Interactive"，则无法设置 Credential 属性。</value>
+  </data>
+  <data name="SqlConnection_ServerProcessId" xml:space="preserve">
+    <value>活动连接的服务器进程 ID (SPID)。</value>
+  </data>
+  <data name="SQL_Timeout_Active_Directory_DeviceFlow_Authentication" xml:space="preserve">
+    <value>Active Directory 设备代码流身份验证超时。用户响应身份验证请求的时间过长。</value>
+  </data>
+  <data name="SQL_SettingCredentialWithDeviceFlow" xml:space="preserve">
+    <value>如果在连接字符串中指定了 "Authentication=Active Directory Device Code Flow"，则无法设置 Credential 属性。</value>
+  </data>
+  <data name="SQL_SettingDeviceFlowWithCredential" xml:space="preserve">
+    <value>如果设置了 Credential 属性，则无法使用 "Authentication=Active Directory Device Code Flow"。</value>
   </data>
 </root>

@@ -238,7 +238,7 @@ namespace Microsoft.Data.SqlClient.Server
                 n = new BinaryOrderedUdtNormalizer(t, false);
             }
             if (n == null)
-                throw new Exception(SRHelper.GetString(SR.SQL_CannotCreateNormalizer, t.FullName));
+                throw new Exception(StringsHelper.GetString(Strings.SQL_CannotCreateNormalizer, t.FullName));
             n._skipNormalize = false;
             return n;
         }

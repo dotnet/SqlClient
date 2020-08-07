@@ -4,11 +4,13 @@
 
 using System;
 using System.Security;
+using System.Threading.Tasks;
+using Microsoft.Identity.Client;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
 {
-    public class AADAccessTokenTest
+    public class AADAuthenticationTests
     {
         private SqlConnectionStringBuilder _builder;
         private SqlCredential _credential = null;
@@ -38,12 +40,27 @@ namespace Microsoft.Data.SqlClient.Tests
             InvalidCombinationCheck(_credential);
         }
 
+
         private void InvalidCombinationCheck(SqlCredential credential)
         {
             using (SqlConnection connection = new SqlConnection(_builder.ConnectionString, credential))
             {
                 Assert.Throws<InvalidOperationException>(() => connection.AccessToken = "SampleAccessToken");
             }
+        }
+
+        [Fact]
+        public void CustomActiveDirectoryProviderTest()
+        {
+            SqlAuthenticationProvider authProvider = new ActiveDirectoryAuthenticationProvider(CustomDeviceFlowCallback);
+            SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, authProvider);
+            Assert.Equal(authProvider, SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
+        }
+
+        private Task CustomDeviceFlowCallback(DeviceCodeResult result)
+        {
+            Console.WriteLine(result.Message);
+            return Task.FromResult(0);
         }
     }
 }

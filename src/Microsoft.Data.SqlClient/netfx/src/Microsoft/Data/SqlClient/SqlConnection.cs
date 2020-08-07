@@ -326,6 +326,11 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.SettingCredentialWithInteractiveArgument();
                 }
 
+                if (UsesActiveDirectoryDeviceCodeFlow(connectionOptions))
+                {
+                    throw SQL.SettingCredentialWithDeviceFlowArgument();
+                }
+
                 Credential = credential;
             }
             // else
@@ -515,6 +520,11 @@ namespace Microsoft.Data.SqlClient
             return opt != null ? opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive : false;
         }
 
+        private bool UsesActiveDirectoryDeviceCodeFlow(SqlConnectionString opt)
+        {
+            return opt != null ? opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow : false;
+        }
+
         private bool UsesAuthentication(SqlConnectionString opt)
         {
             return opt != null ? opt.Authentication != SqlAuthenticationMethod.NotSpecified : false;
@@ -658,7 +668,7 @@ namespace Microsoft.Data.SqlClient
                     SqlConnectionString connectionOptions = new SqlConnectionString(value);
                     if (_credential != null)
                     {
-                        // Check for Credential being used with Authentication=ActiveDirectoryIntegrated/ActiveDirectoryInteractive. Since a different error string is used
+                        // Check for Credential being used with Authentication=ActiveDirectoryIntegrated/ActiveDirectoryInteractive/ActiveDirectoryDeviceCodeFlow. Since a different error string is used
                         // for this case in ConnectionString setter vs in Credential setter, check for this error case before calling
                         // CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential, which is common to both setters.
                         if (UsesActiveDirectoryIntegrated(connectionOptions))
@@ -668,6 +678,10 @@ namespace Microsoft.Data.SqlClient
                         else if (UsesActiveDirectoryInteractive(connectionOptions))
                         {
                             throw SQL.SettingInteractiveWithCredential();
+                        }
+                        else if (UsesActiveDirectoryDeviceCodeFlow(connectionOptions))
+                        {
+                            throw SQL.SettingDeviceFlowWithCredential();
                         }
 
                         CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential(connectionOptions);
@@ -738,7 +752,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (null != innerConnection)
                 {
-                    result = innerConnection.IsSQLDNSCachingSupported ? "true": "false";
+                    result = innerConnection.IsSQLDNSCachingSupported ? "true" : "false";
                 }
                 else
                 {
@@ -762,7 +776,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (null != innerConnection)
                 {
-                    result = innerConnection.IsDNSCachingBeforeRedirectSupported ? "true": "false";
+                    result = innerConnection.IsDNSCachingBeforeRedirectSupported ? "true" : "false";
                 }
                 else
                 {
@@ -878,6 +892,18 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ServerProcessId/*' />
+        [
+        Browsable(false),
+        DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
+        ResDescription(StringsHelper.ResourceNames.SqlConnection_ServerProcessId),
+        ]
+        public int ServerProcessId
+        {
+            get => State.Equals(ConnectionState.Open) | State.Equals(ConnectionState.Executing) | State.Equals(ConnectionState.Fetching) ?
+                GetOpenTdsConnection().ServerProcessId : 0;
+        }
+
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/State/*' />
         [
         Browsable(false),
@@ -971,7 +997,7 @@ namespace Microsoft.Data.SqlClient
                 // check if the usage of credential has any conflict with the keys used in connection string
                 if (value != null)
                 {
-                    // Check for Credential being used with Authentication=ActiveDirectoryIntegrated/ActiveDirectoryInteractive. Since a different error string is used
+                    // Check for Credential being used with Authentication=ActiveDirectoryIntegrated/ActiveDirectoryInteractive/ActiveDirectoryDeviceCodeFlow. Since a different error string is used
                     // for this case in ConnectionString setter vs in Credential setter, check for this error case before calling
                     // CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential, which is common to both setters.
                     if (UsesActiveDirectoryIntegrated((SqlConnectionString)ConnectionOptions))
@@ -981,6 +1007,10 @@ namespace Microsoft.Data.SqlClient
                     else if (UsesActiveDirectoryInteractive((SqlConnectionString)ConnectionOptions))
                     {
                         throw SQL.SettingCredentialWithInteractiveInvalid();
+                    }
+                    else if (UsesActiveDirectoryDeviceCodeFlow((SqlConnectionString)ConnectionOptions))
+                    {
+                        throw SQL.SettingCredentialWithDeviceFlowInvalid();
                     }
 
                     CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential((SqlConnectionString)ConnectionOptions);

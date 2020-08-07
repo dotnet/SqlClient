@@ -119,14 +119,14 @@ internal static partial class Interop
                 if (isDirectory)
                 {
                     return !string.IsNullOrEmpty(path) ?
-                        new DirectoryNotFoundException(SR.Format(SR.IO_PathNotFound_Path, path)) :
-                        new DirectoryNotFoundException(SR.IO_PathNotFound_NoPathName);
+                        new DirectoryNotFoundException(Strings.Format(Strings.IO_PathNotFound_Path, path)) :
+                        new DirectoryNotFoundException(Strings.IO_PathNotFound_NoPathName);
                 }
                 else
                 {
                     return !string.IsNullOrEmpty(path) ?
-                        new FileNotFoundException(SR.Format(SR.IO_FileNotFound_FileName, path), path) :
-                        new FileNotFoundException(SR.IO_FileNotFound);
+                        new FileNotFoundException(Strings.Format(Strings.IO_FileNotFound_FileName, path), path) :
+                        new FileNotFoundException(Strings.IO_FileNotFound);
                 }
 
             case Error.EACCES:
@@ -134,29 +134,29 @@ internal static partial class Interop
             case Error.EPERM:
                 Exception inner = GetIOException(errorInfo);
                 return !string.IsNullOrEmpty(path) ?
-                    new UnauthorizedAccessException(SR.Format(SR.UnauthorizedAccess_IODenied_Path, path), inner) :
-                    new UnauthorizedAccessException(SR.UnauthorizedAccess_IODenied_NoPathName, inner);
+                    new UnauthorizedAccessException(Strings.Format(Strings.UnauthorizedAccess_IODenied_Path, path), inner) :
+                    new UnauthorizedAccessException(Strings.UnauthorizedAccess_IODenied_NoPathName, inner);
 
             case Error.ENAMETOOLONG:
                 return !string.IsNullOrEmpty(path) ?
-                    new PathTooLongException(SR.Format(SR.IO_PathTooLong_Path, path)) :
-                    new PathTooLongException(SR.IO_PathTooLong);
+                    new PathTooLongException(Strings.Format(Strings.IO_PathTooLong_Path, path)) :
+                    new PathTooLongException(Strings.IO_PathTooLong);
 
             case Error.EWOULDBLOCK:
                 return !string.IsNullOrEmpty(path) ?
-                    new IOException(SR.Format(SR.IO_SharingViolation_File, path), errorInfo.RawErrno) :
-                    new IOException(SR.IO_SharingViolation_NoFileName, errorInfo.RawErrno);
+                    new IOException(Strings.Format(Strings.IO_SharingViolation_File, path), errorInfo.RawErrno) :
+                    new IOException(Strings.IO_SharingViolation_NoFileName, errorInfo.RawErrno);
 
             case Error.ECANCELED:
                 return new OperationCanceledException();
 
             case Error.EFBIG:
-                return new ArgumentOutOfRangeException("value", SR.ArgumentOutOfRange_FileLengthTooBig);
+                return new ArgumentOutOfRangeException("value", Strings.ArgumentOutOfRange_FileLengthTooBig);
 
             case Error.EEXIST:
                 if (!string.IsNullOrEmpty(path))
                 {
-                    return new IOException(SR.Format(SR.IO_FileExists_Name, path), errorInfo.RawErrno);
+                    return new IOException(Strings.Format(Strings.IO_FileExists_Name, path), errorInfo.RawErrno);
                 }
                 goto default;
 

@@ -8,64 +8,64 @@ namespace Microsoft.Data.SqlTypes
 {
     internal static class SQLResource
     {
-        internal static string NullString => SR.SqlMisc_NullString;
+        internal static string NullString => Strings.SqlMisc_NullString;
 
-        internal static string MessageString => SR.SqlMisc_MessageString;
+        internal static string MessageString => Strings.SqlMisc_MessageString;
 
-        internal static string ArithOverflowMessage => SR.SqlMisc_ArithOverflowMessage;
+        internal static string ArithOverflowMessage => Strings.SqlMisc_ArithOverflowMessage;
 
-        internal static string DivideByZeroMessage => SR.SqlMisc_DivideByZeroMessage;
+        internal static string DivideByZeroMessage => Strings.SqlMisc_DivideByZeroMessage;
 
-        internal static string NullValueMessage => SR.SqlMisc_NullValueMessage;
+        internal static string NullValueMessage => Strings.SqlMisc_NullValueMessage;
 
-        internal static string TruncationMessage => SR.SqlMisc_TruncationMessage;
+        internal static string TruncationMessage => Strings.SqlMisc_TruncationMessage;
 
-        internal static string DateTimeOverflowMessage => SR.SqlMisc_DateTimeOverflowMessage;
+        internal static string DateTimeOverflowMessage => Strings.SqlMisc_DateTimeOverflowMessage;
 
-        internal static string ConcatDiffCollationMessage => SR.SqlMisc_ConcatDiffCollationMessage;
+        internal static string ConcatDiffCollationMessage => Strings.SqlMisc_ConcatDiffCollationMessage;
 
-        internal static string CompareDiffCollationMessage => SR.SqlMisc_CompareDiffCollationMessage;
+        internal static string CompareDiffCollationMessage => Strings.SqlMisc_CompareDiffCollationMessage;
 
-        internal static string InvalidFlagMessage => SR.SqlMisc_InvalidFlagMessage;
+        internal static string InvalidFlagMessage => Strings.SqlMisc_InvalidFlagMessage;
 
-        internal static string NumeToDecOverflowMessage => SR.SqlMisc_NumeToDecOverflowMessage;
+        internal static string NumeToDecOverflowMessage => Strings.SqlMisc_NumeToDecOverflowMessage;
 
-        internal static string ConversionOverflowMessage => SR.SqlMisc_ConversionOverflowMessage;
+        internal static string ConversionOverflowMessage => Strings.SqlMisc_ConversionOverflowMessage;
 
-        internal static string InvalidDateTimeMessage => SR.SqlMisc_InvalidDateTimeMessage;
+        internal static string InvalidDateTimeMessage => Strings.SqlMisc_InvalidDateTimeMessage;
 
-        internal static string TimeZoneSpecifiedMessage => SR.SqlMisc_TimeZoneSpecifiedMessage;
+        internal static string TimeZoneSpecifiedMessage => Strings.SqlMisc_TimeZoneSpecifiedMessage;
 
-        internal static string InvalidArraySizeMessage => SR.SqlMisc_InvalidArraySizeMessage;
+        internal static string InvalidArraySizeMessage => Strings.SqlMisc_InvalidArraySizeMessage;
 
-        internal static string InvalidPrecScaleMessage => SR.SqlMisc_InvalidPrecScaleMessage;
+        internal static string InvalidPrecScaleMessage => Strings.SqlMisc_InvalidPrecScaleMessage;
 
-        internal static string FormatMessage => SR.SqlMisc_FormatMessage;
+        internal static string FormatMessage => Strings.SqlMisc_FormatMessage;
 
-        internal static string NotFilledMessage => SR.SqlMisc_NotFilledMessage;
+        internal static string NotFilledMessage => Strings.SqlMisc_NotFilledMessage;
 
-        internal static string AlreadyFilledMessage => SR.SqlMisc_AlreadyFilledMessage;
+        internal static string AlreadyFilledMessage => Strings.SqlMisc_AlreadyFilledMessage;
 
-        internal static string ClosedXmlReaderMessage => SR.SqlMisc_ClosedXmlReaderMessage;
+        internal static string ClosedXmlReaderMessage => Strings.SqlMisc_ClosedXmlReaderMessage;
 
         internal static string InvalidOpStreamClosed(string method)
         {
-            return System.SRHelper.Format(SR.SqlMisc_InvalidOpStreamClosed, method);
+            return System.StringsHelper.Format(Strings.SqlMisc_InvalidOpStreamClosed, method);
         }
 
         internal static string InvalidOpStreamNonWritable(string method)
         {
-            return System.SRHelper.Format(SR.SqlMisc_InvalidOpStreamNonWritable, method);
+            return System.StringsHelper.Format(Strings.SqlMisc_InvalidOpStreamNonWritable, method);
         }
 
         internal static string InvalidOpStreamNonReadable(string method)
         {
-            return System.SRHelper.Format(SR.SqlMisc_InvalidOpStreamNonReadable, method);
+            return System.StringsHelper.Format(Strings.SqlMisc_InvalidOpStreamNonReadable, method);
         }
 
         internal static string InvalidOpStreamNonSeekable(string method)
         {
-            return System.SRHelper.Format(SR.SqlMisc_InvalidOpStreamNonSeekable, method);
+            return System.StringsHelper.Format(Strings.SqlMisc_InvalidOpStreamNonSeekable, method);
         }
     } // SqlResource
 } // namespace System

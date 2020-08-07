@@ -39,7 +39,7 @@ namespace Microsoft.Data
                                 // SNI checks for LocalDBFormatMessage during DLL loading, so it is practically impossible to get this error.
                                 int hResult = Marshal.GetLastWin32Error();
                                 SqlClientEventSource.Log.TraceEvent("<sc.LocalDBAPI.LocalDBFormatMessage> GetProcAddress for LocalDBFormatMessage error 0x{0}", hResult);
-                                throw CreateLocalDBException(errorMessage: SR.LocalDB_MethodNotFound);
+                                throw CreateLocalDBException(errorMessage: Strings.LocalDB_MethodNotFound);
                             }
                             s_localDBFormatMessage = Marshal.GetDelegateForFunctionPointer<LocalDBFormatMessageDelegate>(functionAddr);
                         }
@@ -83,12 +83,12 @@ namespace Microsoft.Data
                     if (hResult >= 0)
                         return buffer.ToString();
                     else
-                        return string.Format(CultureInfo.CurrentCulture, "{0} (0x{1:X}).", SR.LocalDB_UnobtainableMessage, hResult);
+                        return string.Format(CultureInfo.CurrentCulture, "{0} (0x{1:X}).", Strings.LocalDB_UnobtainableMessage, hResult);
                 }
             }
             catch (SqlException exc)
             {
-                return string.Format(CultureInfo.CurrentCulture, "{0} ({1}).", SR.LocalDB_UnobtainableMessage, exc.Message);
+                return string.Format(CultureInfo.CurrentCulture, "{0} ({1}).", Strings.LocalDB_UnobtainableMessage, exc.Message);
             }
         }
 

@@ -427,7 +427,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                throw new ArgumentException(SRHelper.Format(SRHelper.net_invalid_enum, nameof(NativeProtocols)), nameof(NativeProtocols));
+                throw new ArgumentException(StringsHelper.Format(StringsHelper.net_invalid_enum, nameof(NativeProtocols)), nameof(NativeProtocols));
             }
             return returnValue;
         }

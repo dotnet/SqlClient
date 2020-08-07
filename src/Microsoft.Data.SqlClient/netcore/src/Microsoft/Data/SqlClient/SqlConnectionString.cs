@@ -462,6 +462,11 @@ namespace Microsoft.Data.SqlClient
             {
                 throw SQL.InteractiveWithPassword();
             }
+
+            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow && (HasUserIdKeyword || HasPasswordKeyword))
+            {
+                throw SQL.DeviceFlowWithUsernamePassword();
+            }
         }
 
         // This c-tor is used to create SSE and user instance connection strings when user instance is set to true
