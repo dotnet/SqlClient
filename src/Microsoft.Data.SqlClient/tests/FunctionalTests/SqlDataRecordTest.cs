@@ -18,6 +18,11 @@ namespace Microsoft.Data.SqlClient.Tests
         [Fact]
         public void SqlRecordFillTest()
         {
+            // Explicitly set the culture because the default culture for some environments 
+            // (eg Ubuntu 18.04) throws an exception when comparing SqlStrings
+            // TODO: investigate culture support for Ubuntu 18.04
+            System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en-US");
+
             SqlMetaData[] metaData = new SqlMetaData[]
             {
                 new SqlMetaData("col1", SqlDbType.Bit),
