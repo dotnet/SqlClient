@@ -3506,7 +3506,7 @@ namespace Microsoft.Data.SqlClient
                             uint sniError;
                             _parser._asyncWrite = false; // stop async write 
                             SNIWritePacket(attnPacket, out sniError, canAccumulate: false, callerHasConnectionLock: false);
-                            SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.SendAttention|{0}> Send Attention ASync.", "Info");
+                            SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.SendAttention|INFO> Send Attention ASync.");
                         }
                         finally
                         {
