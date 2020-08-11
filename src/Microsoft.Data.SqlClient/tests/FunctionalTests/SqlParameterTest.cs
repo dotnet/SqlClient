@@ -1479,10 +1479,7 @@ namespace Microsoft.Data.SqlClient.Tests
         public void SqlTypes_SqlString()
         {
             SqlParameter parameter;
-            // Explicitly set the culture because the default culture for some environments 
-            // (eg Ubuntu 18.04) throws an exception when comparing SqlStrings
-            // TODO: investigate culture support for Ubuntu 18.04
-            SqlString value = new SqlString("XA", new System.Globalization.CultureInfo("en-US").LCID);
+            SqlString value = new SqlString("XA");
 
             parameter = new SqlParameter();
             parameter.SqlValue = value;
