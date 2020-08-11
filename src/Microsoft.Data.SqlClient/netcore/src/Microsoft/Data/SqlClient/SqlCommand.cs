@@ -448,7 +448,6 @@ namespace Microsoft.Data.SqlClient
                         }
                     }
                 }
-
                 _activeConnection = value;
                 SqlClientEventSource.Log.TraceEvent("<sc.SqlCommand.set_Connection|API> {0}, {1}", ObjectID, (null != value) ? value.ObjectID : -1);
             }
