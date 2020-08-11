@@ -300,7 +300,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsTraceEnabled())
             {
-                Trace(string.Format(message, args0, args1, args2));
+                Trace(string.Format(message, args0.ToString(), args1.ToString(), args2.ToString()));
             }
         }
 
@@ -309,7 +309,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsTraceEnabled())
             {
-                Trace(string.Format(message, args0, args1, args2, args3));
+                Trace(string.Format(message, args0.ToString(), args1.ToString(), args2.ToString(), args3.ToString()));
             }
         }
 
@@ -318,7 +318,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsTraceEnabled())
             {
-                Trace(string.Format(message, args0, args1, args2, args3, args4, args5));
+                Trace(string.Format(message, args0.ToString(), args1.ToString(), args2.ToString(), args3.ToString(), args4.ToString(), args5.ToString()));
             }
         }
         #endregion
@@ -399,7 +399,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsNotificationTraceEnabled())
             {
-                NotificationTrace(string.Format(message, args0));
+                NotificationTrace(string.Format(message, args0.ToString()));
             }
         }
 
@@ -408,7 +408,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsNotificationTraceEnabled())
             {
-                NotificationTrace(string.Format(message, args0, args1));
+                NotificationTrace(string.Format(message, args0.ToString(), args1.ToString()));
             }
         }
 
@@ -417,7 +417,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsNotificationTraceEnabled())
             {
-                NotificationTrace(string.Format(message, args0, args1, args2));
+                NotificationTrace(string.Format(message, args0.ToString(), args1.ToString(), args2.ToString()));
             }
         }
 
@@ -426,7 +426,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsNotificationTraceEnabled())
             {
-                NotificationTrace(string.Format(message, args0, args1, args2, args3));
+                NotificationTrace(string.Format(message, args0.ToString(), args1.ToString(), args2.ToString(), args3.ToString()));
             }
         }
         #endregion
@@ -556,7 +556,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsAdvancedTraceOn())
             {
-                AdvancedTrace(string.Format(message, args0));
+                AdvancedTrace(string.Format(message, args0.ToString()));
             }
         }
 
@@ -565,7 +565,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsAdvancedTraceOn())
             {
-                AdvancedTrace(string.Format(message, args0, args1));
+                AdvancedTrace(string.Format(message, args0.ToString(), args1.ToString()));
             }
         }
 
@@ -574,7 +574,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsAdvancedTraceOn())
             {
-                AdvancedTrace(string.Format(message, args0, args1, args2));
+                AdvancedTrace(string.Format(message, args0.ToString(), args1.ToString(), args2.ToString()));
             }
         }
 
@@ -583,7 +583,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsAdvancedTraceOn())
             {
-                AdvancedTrace(string.Format(message, args0, args1, args2, args3));
+                AdvancedTrace(string.Format(message, args0.ToString(), args1.ToString(), args2.ToString(), args3.ToString()));
             }
         }
 

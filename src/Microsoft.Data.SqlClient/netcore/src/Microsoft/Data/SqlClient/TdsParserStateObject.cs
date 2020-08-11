@@ -3487,35 +3487,35 @@ namespace Microsoft.Data.SqlClient
                     if (!_skipSendAttention)
                     {
 #endif
-                    // Take lock and send attention
-                    bool releaseLock = false;
-                    if ((mustTakeWriteLock) && (!_parser.Connection.ThreadHasParserLockForClose))
-                    {
-                        releaseLock = true;
-                        _parser.Connection._parserLock.Wait(canReleaseFromAnyThread: false);
-                        _parser.Connection.ThreadHasParserLockForClose = true;
-                    }
-                    try
-                    {
-                        // Check again (just in case the connection was closed while we were waiting)
-                        if (_parser.State == TdsParserState.Closed || _parser.State == TdsParserState.Broken)
+                        // Take lock and send attention
+                        bool releaseLock = false;
+                        if ((mustTakeWriteLock) && (!_parser.Connection.ThreadHasParserLockForClose))
                         {
-                            return;
+                            releaseLock = true;
+                            _parser.Connection._parserLock.Wait(canReleaseFromAnyThread: false);
+                            _parser.Connection.ThreadHasParserLockForClose = true;
                         }
+                        try
+                        {
+                            // Check again (just in case the connection was closed while we were waiting)
+                            if (_parser.State == TdsParserState.Closed || _parser.State == TdsParserState.Broken)
+                            {
+                                return;
+                            }
 
-                        uint sniError;
-                        _parser._asyncWrite = false; // stop async write 
-                        SNIWritePacket(attnPacket, out sniError, canAccumulate: false, callerHasConnectionLock: false);
-                        SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.SendAttention|{0}> Send Attention ASync.", "Info");
-                    }
-                    finally
-                    {
-                        if (releaseLock)
-                        {
-                            _parser.Connection.ThreadHasParserLockForClose = false;
-                            _parser.Connection._parserLock.Release();
+                            uint sniError;
+                            _parser._asyncWrite = false; // stop async write 
+                            SNIWritePacket(attnPacket, out sniError, canAccumulate: false, callerHasConnectionLock: false);
+                            SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.SendAttention|{0}> Send Attention ASync.", "Info");
                         }
-                    }
+                        finally
+                        {
+                            if (releaseLock)
+                            {
+                                _parser.Connection.ThreadHasParserLockForClose = false;
+                                _parser.Connection._parserLock.Release();
+                            }
+                        }
 #if DEBUG
                     }
 #endif
@@ -3529,7 +3529,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 SqlClientEventSource.Log.AdvancedTraceBinEvent("<sc.TdsParser.WritePacket|INFO|ADV>  Packet sent", _outBuff, (ushort)_outBytesUsed);
-                SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.SendAttention|{0}> Attention sent to the server.", "Info");
+                SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.SendAttention|INFO> Attention sent to the server.");
 
                 AssertValidState();
             }

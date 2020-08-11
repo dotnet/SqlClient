@@ -758,7 +758,7 @@ namespace Microsoft.Data.ProviderBase
                         }
                     }
                 }
-                SqlClientEventSource.Log.PoolerTraceEvent("<prov.DbConnectionPool.CreateObject|RES|CPOOL> {0}, Connection {1}, Added to pool.", ObjectID, newObj != null ? newObj?.ObjectID.ToString() ?? "null" : "null");
+                SqlClientEventSource.Log.PoolerTraceEvent("<prov.DbConnectionPool.CreateObject|RES|CPOOL> {0}, Connection {1}, Added to pool.", ObjectID, newObj != null ? newObj?.ObjectID ?? 0 : -1);
 
                 // Reset the error wait:
                 _errorWait = ERROR_WAIT_DEFAULT;
@@ -1287,7 +1287,7 @@ namespace Microsoft.Data.ProviderBase
                     }
 
                     // Do not use this pooled connection if access token is about to expire soon before we can connect.
-                    if(null != obj && obj.IsAccessTokenExpired)
+                    if (null != obj && obj.IsAccessTokenExpired)
                     {
                         DestroyObject(obj);
                         obj = null;

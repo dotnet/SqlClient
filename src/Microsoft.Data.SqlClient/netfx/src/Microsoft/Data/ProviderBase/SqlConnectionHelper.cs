@@ -131,8 +131,7 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.OpenConnectionPropertySet(ADP.ConnectionString, connectionInternal.State);
             }
 
-            string cstr = ((null != connectionOptions) ? connectionOptions.UsersConnectionStringForTrace() : "");
-            SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionHelper.ConnectionString_Set|API> {0}, '{1}'", ObjectID, cstr);
+            SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionHelper.ConnectionString_Set|API> {0}, '{1}'", ObjectID, (null != connectionOptions) ? connectionOptions.UsersConnectionStringForTrace() : "");
         }
 
         internal DbConnectionInternal InnerConnection
@@ -186,7 +185,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionHelper.Abort|RES|INFO|CPOOL> {0}, Aborting operation due to asynchronous exception: {1}", ObjectID, e.ToString());
+                SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionHelper.Abort|RES|INFO|CPOOL> {0}, Aborting operation due to asynchronous exception: {1}", ObjectID, e);
             }
         }
 

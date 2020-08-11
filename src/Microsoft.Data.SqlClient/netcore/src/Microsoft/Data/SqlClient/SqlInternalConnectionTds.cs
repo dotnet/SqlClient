@@ -2141,9 +2141,12 @@ namespace Microsoft.Data.SqlClient
                     // And on successful login, try to update the cache with the new token.
                     if (contextValidity <= _dbAuthenticationContextUnLockedRefreshTimeSpan)
                     {
-                        SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFedAuthInfo> {0}, " +
-                           "The expiration time is less than 10 mins, so trying to get new access token regardless of if an other thread is also trying to update it." +
-                           "The expiration time is {1}. Current Time is {2}.", ObjectID, dbConnectionPoolAuthenticationContext.ExpirationTime.ToLongTimeString(), DateTime.UtcNow.ToLongTimeString());
+                        if (SqlClientEventSource.Log.IsTraceEnabled())
+                        {
+                            SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFedAuthInfo> {0}, " +
+                               "The expiration time is less than 10 mins, so trying to get new access token regardless of if an other thread is also trying to update it." +
+                               "The expiration time is {1}. Current Time is {2}.", ObjectID, dbConnectionPoolAuthenticationContext.ExpirationTime.ToLongTimeString(), DateTime.UtcNow.ToLongTimeString());
+                        }
                         attemptRefreshTokenUnLocked = true;
                     }
 
@@ -2163,9 +2166,12 @@ namespace Microsoft.Data.SqlClient
                     // If a thread is already doing the refresh, just use the existing token in the cache and proceed.
                     else if (contextValidity <= _dbAuthenticationContextLockedRefreshTimeSpan)
                     {
-                        SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFedAuthInfo|ADV> {0}, " +
-                            "The authentication context needs a refresh.The expiration time is {1}. " +
-                            "Current Time is {2}.", ObjectID, dbConnectionPoolAuthenticationContext.ExpirationTime.ToLongTimeString(), DateTime.UtcNow.ToLongTimeString());
+                        if (SqlClientEventSource.Log.IsAdvancedTraceOn())
+                        {
+                            SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFedAuthInfo|ADV> {0}, " +
+                                "The authentication context needs a refresh.The expiration time is {1}. " +
+                                "Current Time is {2}.", ObjectID, dbConnectionPoolAuthenticationContext.ExpirationTime.ToLongTimeString(), DateTime.UtcNow.ToLongTimeString());
+                        }
 
                         // Call the function which tries to acquire a lock over the authentication context before trying to update.
                         // If the lock could not be obtained, it will return false, without attempting to fetch a new token.
@@ -2243,9 +2249,12 @@ namespace Microsoft.Data.SqlClient
                 // Else some other thread is already updating it, so just proceed forward with the existing token in the cache.
                 if (dbConnectionPoolAuthenticationContext.LockToUpdate())
                 {
-                    SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.TryGetFedAuthTokenLocked> {0}, " +
-                                        "Acquired the lock to update the authentication context.The expiration time is {1}. " +
-                                        "Current Time is {2}.", ObjectID, dbConnectionPoolAuthenticationContext.ExpirationTime.ToLongTimeString(), DateTime.UtcNow.ToLongTimeString());
+                    if (SqlClientEventSource.Log.IsTraceEnabled())
+                    {
+                        SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.TryGetFedAuthTokenLocked> {0}, " +
+                                            "Acquired the lock to update the authentication context.The expiration time is {1}. " +
+                                            "Current Time is {2}.", ObjectID, dbConnectionPoolAuthenticationContext.ExpirationTime.ToLongTimeString(), DateTime.UtcNow.ToLongTimeString());
+                    }
                     authenticationContextLocked = true;
                 }
                 else

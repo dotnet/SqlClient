@@ -886,7 +886,7 @@ namespace Microsoft.Data.ProviderBase
                         }
                     }
                 }
-                SqlClientEventSource.Log.PoolerTraceEvent("<prov.DbConnectionPool.CreateObject|RES|CPOOL> {0}, Connection {1}, Added to pool.", ObjectID, newObj != null ? newObj?.ObjectID.ToString() ?? "null" : "null");
+                SqlClientEventSource.Log.PoolerTraceEvent("<prov.DbConnectionPool.CreateObject|RES|CPOOL> {0}, Connection {1}, Added to pool.", ObjectID, newObj != null ? newObj?.ObjectID ?? 0 : -1);
 
                 // Reset the error wait:
                 _errorWait = ERROR_WAIT_DEFAULT;

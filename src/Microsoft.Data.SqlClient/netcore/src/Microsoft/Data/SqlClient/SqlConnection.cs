@@ -1198,7 +1198,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (ctoken.IsCancellationRequested)
                     {
-                        SqlClientEventSource.Log.TraceEvent("<sc.SqlConnection.ReconnectAsync|INFO> Original ClientConnectionID: {0} - reconnection cancelled.", _originalConnectionId.ToString());
+                        SqlClientEventSource.Log.TraceEvent("<sc.SqlConnection.ReconnectAsync|INFO> Original ClientConnectionID: {0} - reconnection cancelled.", _originalConnectionId);
                         return;
                     }
                     try
@@ -1217,7 +1217,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             ForceNewConnection = false;
                         }
-                        SqlClientEventSource.Log.TraceEvent("<sc.SqlConnection.ReconnectIfNeeded|INFO> Reconnection succeeded.  ClientConnectionID {0} -> {1}", _originalConnectionId.ToString(), ClientConnectionId.ToString());
+                        SqlClientEventSource.Log.TraceEvent("<sc.SqlConnection.ReconnectIfNeeded|INFO> Reconnection succeeded.  ClientConnectionID {0} -> {1}", _originalConnectionId, ClientConnectionId);
                         return;
                     }
                     catch (SqlException e)
@@ -1225,7 +1225,7 @@ namespace Microsoft.Data.SqlClient
                         SqlClientEventSource.Log.TraceEvent("<sc.SqlConnection.ReconnectAsyncINFO> Original ClientConnectionID {0} - reconnection attempt failed error {1}", _originalConnectionId, e.Message);
                         if (attempt == retryCount - 1)
                         {
-                            SqlClientEventSource.Log.TraceEvent("<sc.SqlConnection.ReconnectAsync|INFO> Original ClientConnectionID {0} - give up reconnection", _originalConnectionId.ToString());
+                            SqlClientEventSource.Log.TraceEvent("<sc.SqlConnection.ReconnectAsync|INFO> Original ClientConnectionID {0} - give up reconnection", _originalConnectionId);
                             throw SQL.CR_AllAttemptsFailed(e, _originalConnectionId);
                         }
                         if (timeout > 0 && ADP.TimerRemaining(commandTimeoutExpiration) < ADP.TimerFromSeconds(ConnectRetryInterval))
@@ -1298,7 +1298,7 @@ namespace Microsoft.Data.SqlClient
                                         {
                                             // could change since the first check, but now is stable since connection is know to be broken
                                             _originalConnectionId = ClientConnectionId;
-                                            SqlClientEventSource.Log.TraceEvent("<sc.SqlConnection.ReconnectIfNeeded|INFO> Connection ClientConnectionID {0} is invalid, reconnecting", _originalConnectionId.ToString());
+                                            SqlClientEventSource.Log.TraceEvent("<sc.SqlConnection.ReconnectIfNeeded|INFO> Connection ClientConnectionID {0} is invalid, reconnecting", _originalConnectionId);
                                             _recoverySessionData = cData;
                                             if (beforeDisconnect != null)
                                             {
@@ -1412,7 +1412,7 @@ namespace Microsoft.Data.SqlClient
                         s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlErrorOpenConnection))
                     {
                         result.Task.ContinueWith(
-                            continuationAction: s_openAsyncComplete, 
+                            continuationAction: s_openAsyncComplete,
                             state: operationId, // connection is passed in TaskCompletionSource async state
                             scheduler: TaskScheduler.Default
                         );
@@ -2013,7 +2013,7 @@ namespace Microsoft.Data.SqlClient
 
                     connection.RemoveWeakReference(obj);
                     return task;
-                }, 
+                },
                 state: Tuple.Create(this, value),
                 scheduler: TaskScheduler.Default
            ).Unwrap();
@@ -2096,7 +2096,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (asmRef.Version != TypeSystemAssemblyVersion && SqlClientEventSource.Log.IsTraceEnabled())
                 {
-                    SqlClientEventSource.Log.TraceEvent("<sc.SqlConnection.ResolveTypeAssembly> SQL CLR type version change: Server sent {0}, client will instantiate {1}", asmRef.Version.ToString(), TypeSystemAssemblyVersion.ToString());
+                    SqlClientEventSource.Log.TraceEvent("<sc.SqlConnection.ResolveTypeAssembly> SQL CLR type version change: Server sent {0}, client will instantiate {1}", asmRef.Version, TypeSystemAssemblyVersion);
                 }
                 asmRef.Version = TypeSystemAssemblyVersion;
             }

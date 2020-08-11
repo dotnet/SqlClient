@@ -86,8 +86,10 @@ namespace Microsoft.Data.SqlClient
             {
                 throw ADP.OpenConnectionPropertySet(nameof(ConnectionString), connectionInternal.State);
             }
-            string cstr = ((null != connectionOptions) ? connectionOptions.UsersConnectionStringForTrace() : "");
-            SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionHelper.ConnectionString_Set|API> {0}, '{1}'", ObjectID, cstr);
+            if (SqlClientEventSource.Log.IsTraceEnabled())
+            {
+                SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionHelper.ConnectionString_Set|API> {0}, '{1}'", ObjectID, (null != connectionOptions) ? connectionOptions.UsersConnectionStringForTrace() : "");
+            }
         }
 
         internal DbConnectionInternal InnerConnection

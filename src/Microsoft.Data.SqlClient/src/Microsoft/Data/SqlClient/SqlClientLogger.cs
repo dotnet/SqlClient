@@ -13,7 +13,7 @@ namespace Microsoft.Data.SqlClient
         {
             Info = 0,
             Warning,
-            Error    
+            Error
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientLogger.xml' path='docs/members[@name="SqlClientLogger"]/LogInfo/*'/>

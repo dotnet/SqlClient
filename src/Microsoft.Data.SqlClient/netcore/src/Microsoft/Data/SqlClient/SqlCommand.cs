@@ -2202,16 +2202,16 @@ namespace Microsoft.Data.SqlClient
         }
 
         private void CreateLocalCompletionTask(
-            CommandBehavior behavior, 
-            object stateObject, 
-            int timeout, 
+            CommandBehavior behavior,
+            object stateObject,
+            int timeout,
             bool usedCache,
-            bool asyncWrite, 
-            TaskCompletionSource<object> globalCompletion, 
-            TaskCompletionSource<object> localCompletion, 
+            bool asyncWrite,
+            TaskCompletionSource<object> globalCompletion,
+            TaskCompletionSource<object> localCompletion,
             Func<SqlCommand, IAsyncResult, bool, string, object> endFunc,
-            Func<SqlCommand, CommandBehavior, AsyncCallback, object, int, bool, bool, IAsyncResult> retryFunc, 
-            string endMethod, 
+            Func<SqlCommand, CommandBehavior, AsyncCallback, object, int, bool, bool, IAsyncResult> retryFunc,
+            string endMethod,
             long firstAttemptStart
         )
         {
@@ -2493,14 +2493,14 @@ namespace Microsoft.Data.SqlClient
                 {
                     context = new ExecuteReaderAsyncCallContext();
                 }
-                context.Set(this, source, registration,behavior, operationId);
+                context.Set(this, source, registration, behavior, operationId);
 
                 Task<SqlDataReader>.Factory.FromAsync(
-                    beginMethod: s_beginExecuteReaderAsync, 
+                    beginMethod: s_beginExecuteReaderAsync,
                     endMethod: s_endExecuteReaderAsync,
                     state: context
                 ).ContinueWith(
-                    continuationAction: s_cleanupExecuteReaderAsync, 
+                    continuationAction: s_cleanupExecuteReaderAsync,
                     TaskScheduler.Default
                 );
             }

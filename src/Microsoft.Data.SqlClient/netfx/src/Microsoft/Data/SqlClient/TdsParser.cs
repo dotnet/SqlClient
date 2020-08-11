@@ -1060,7 +1060,7 @@ namespace Microsoft.Data.SqlClient
                         offset += actIdSize;
                         optionDataSize += actIdSize;
 
-                        SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.SendPreLoginHandshake|INFO> ClientConnectionID {0}, ActivityID {1}", _connHandler._clientConnectionId.ToString(), actId.ToString());
+                        SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.SendPreLoginHandshake|INFO> ClientConnectionID {0}, ActivityID {1}", _connHandler._clientConnectionId, actId);
                         break;
 
                     case (int)PreLoginOptions.FEDAUTHREQUIRED:
@@ -1574,6 +1574,7 @@ namespace Microsoft.Data.SqlClient
             // be copied to the end of the error collection so that the user may see all the errors and also the
             // warnings that occurred.
             // can be deleted)
+            //_errorAndWarningsLock lock is implemented inside GetFullErrorAndWarningCollection
             SqlErrorCollection temp = stateObj.GetFullErrorAndWarningCollection(out breakConnection);
 
             Debug.Assert(temp.Count > 0, "TdsParser::ThrowExceptionAndWarning called with no exceptions or warnings!");
@@ -1618,7 +1619,6 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            // call OnError outside of _ErrorCollectionLock to avoid deadlock
             if (exception != null)
             {
                 if (breakConnection)
@@ -2152,7 +2152,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     tdsReliabilitySection.Start();
 #endif //DEBUG
-                return Run(runBehavior, cmdHandler, dataStream, bulkCopyHandler, stateObj);
+                    return Run(runBehavior, cmdHandler, dataStream, bulkCopyHandler, stateObj);
 #if DEBUG
                 }
                 finally
@@ -4133,17 +4133,20 @@ namespace Microsoft.Data.SqlClient
             }
 
             tokenLen -= sizeof(uint); // remaining length is shortened since we read optCount
-            SqlClientEventSource.Log.AdvancedTraceEvent("<sc.TdsParser.TryProcessFedAuthInfo|ADV> CountOfInfoIDs = {0}", optionsCount.ToString(CultureInfo.InvariantCulture));
-
+            if (SqlClientEventSource.Log.IsAdvancedTraceOn())
+            {
+                SqlClientEventSource.Log.AdvancedTraceEvent("<sc.TdsParser.TryProcessFedAuthInfo|ADV> CountOfInfoIDs = {0}", optionsCount.ToString(CultureInfo.InvariantCulture));
+            }
             if (tokenLen > 0)
             {
                 // read the rest of the token
                 byte[] tokenData = new byte[tokenLen];
                 int totalRead = 0;
                 bool successfulRead = stateObj.TryReadByteArray(tokenData, 0, tokenLen, out totalRead);
-
-                SqlClientEventSource.Log.AdvancedTraceEvent("<sc.TdsParser.TryProcessFedAuthInfo|ADV> Read rest of FEDAUTHINFO token stream: {0}", BitConverter.ToString(tokenData, 0, totalRead));
-
+                if (SqlClientEventSource.Log.IsAdvancedTraceOn())
+                {
+                    SqlClientEventSource.Log.AdvancedTraceEvent("<sc.TdsParser.TryProcessFedAuthInfo|ADV> Read rest of FEDAUTHINFO token stream: {0}", BitConverter.ToString(tokenData, 0, totalRead));
+                }
                 if (!successfulRead || totalRead != tokenLen)
                 {
                     SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.TryProcessFedAuthInfo|ERR> Failed to read FEDAUTHINFO token stream. Attempted to read {0} bytes, actually read {1}", tokenLen, totalRead);
@@ -4167,7 +4170,10 @@ namespace Microsoft.Data.SqlClient
                     byte id = tokenData[currentOptionOffset];
                     uint dataLen = BitConverter.ToUInt32(tokenData, checked((int)(currentOptionOffset + 1)));
                     uint dataOffset = BitConverter.ToUInt32(tokenData, checked((int)(currentOptionOffset + 5)));
-                    SqlClientEventSource.Log.AdvancedTraceEvent("<sc.TdsParser.TryProcessFedAuthInfo> FedAuthInfoOpt: ID={0}, DataLen={1}, Offset={2}", id, dataLen.ToString(CultureInfo.InvariantCulture), dataOffset.ToString(CultureInfo.InvariantCulture));
+                    if (SqlClientEventSource.Log.IsAdvancedTraceOn())
+                    {
+                        SqlClientEventSource.Log.AdvancedTraceEvent("<sc.TdsParser.TryProcessFedAuthInfo> FedAuthInfoOpt: ID={0}, DataLen={1}, Offset={2}", id, dataLen.ToString(CultureInfo.InvariantCulture), dataOffset.ToString(CultureInfo.InvariantCulture));
+                    }
 
                     // offset is measured from optCount, so subtract to make offset measured
                     // from the beginning of tokenData
@@ -4222,7 +4228,7 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.ParsingErrorLength(ParsingErrorState.FedAuthInfoLengthTooShortForData, tokenLen);
             }
 
-            SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.TryProcessFedAuthInfo> Processed FEDAUTHINFO token stream: {0}", tempFedAuthInfo.ToString());
+            SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.TryProcessFedAuthInfo> Processed FEDAUTHINFO token stream: {0}", tempFedAuthInfo);
             if (string.IsNullOrWhiteSpace(tempFedAuthInfo.stsurl) || string.IsNullOrWhiteSpace(tempFedAuthInfo.spn))
             {
                 // We should be receiving both stsurl and spn
@@ -9582,7 +9588,7 @@ namespace Microsoft.Data.SqlClient
         internal void FailureCleanup(TdsParserStateObject stateObj, Exception e)
         {
             int old_outputPacketNumber = stateObj._outputPacketNumber;
-            SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.FailureCleanup|ERR> Exception caught on ExecuteXXX: '{0}'", e.ToString());
+            SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.FailureCleanup|ERR> Exception caught on ExecuteXXX: '{0}'", e);
 
             if (stateObj.HasOpenResult)
             { // SQL BU DT 383773 - need to decrement openResultCount if operation failed.
