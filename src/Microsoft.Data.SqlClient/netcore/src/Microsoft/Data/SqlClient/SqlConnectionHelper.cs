@@ -63,7 +63,11 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionHelper.ConnectionString_Get|API> {0}", ObjectID);
             bool hidePassword = InnerConnection.ShouldHidePassword;
             DbConnectionOptions connectionOptions = UserConnectionOptions;
-            return ((null != connectionOptions) ? connectionOptions.UsersConnectionString(hidePassword) : "");
+            if (connectionOptions is SqlConnectionString sqlOptions)
+            {
+                return sqlOptions.UsersConnectionString(hidePassword);
+            }
+            return "";
         }
 
         private void ConnectionString_Set(DbConnectionPoolKey key)
@@ -229,7 +233,7 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(DbConnectionClosedConnecting.SingletonInstance == _innerConnection, "not connecting");
             DbConnectionPoolGroup poolGroup = PoolGroup;
-            DbConnectionOptions connectionOptions = ((null != poolGroup) ? poolGroup.ConnectionOptions : null);
+            SqlConnectionString connectionOptions = ((null != poolGroup) ? poolGroup.ConnectionOptions : null) as SqlConnectionString;
             if ((null == connectionOptions) || connectionOptions.IsEmpty)
             {
                 throw ADP.NoConnectionString();
