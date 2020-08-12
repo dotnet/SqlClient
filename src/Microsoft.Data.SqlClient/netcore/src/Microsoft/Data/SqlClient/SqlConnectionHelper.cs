@@ -90,7 +90,7 @@ namespace Microsoft.Data.SqlClient
             {
                 throw ADP.OpenConnectionPropertySet(nameof(ConnectionString), connectionInternal.State);
             }
-            string cstr = ((null != connectionOptions) ? connectionOptions.UsersConnectionStringForTrace() : "");
+            string cstr = ((null != connectionOptions && connectionOptions is SqlConnectionString sqlConnectionOptions) ? sqlConnectionOptions.UsersConnectionStringForTrace() : "");
             SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionHelper.ConnectionString_Set|API> {0}, '{1}'", ObjectID, cstr);
         }
 
