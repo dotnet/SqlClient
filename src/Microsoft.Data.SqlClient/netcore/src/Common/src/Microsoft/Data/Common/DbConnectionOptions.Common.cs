@@ -96,44 +96,10 @@ namespace Microsoft.Data.Common
             internal const string UID = "uid";
         }
 
-        internal readonly bool HasPasswordKeyword;
-        internal readonly bool HasUserIdKeyword;
+        protected readonly string _usersConnectionString;
 
-        private readonly string _usersConnectionString;
-        private readonly Dictionary<string, string> _parsetable;
-        internal readonly NameValuePair _keyChain;
 
-        internal Dictionary<string, string> Parsetable
-        {
-            get { return _parsetable; }
-        }
 
-        public string UsersConnectionString(bool hidePassword) =>
-            UsersConnectionString(hidePassword, false);
-
-        internal string UsersConnectionStringForTrace() => UsersConnectionString(true, true);
-
-        private string UsersConnectionString(bool hidePassword, bool forceHidePassword)
-        {
-            string connectionString = _usersConnectionString;
-            if (HasPasswordKeyword && (forceHidePassword || (hidePassword && !HasPersistablePassword)))
-            {
-                ReplacePasswordPwd(out connectionString, false);
-            }
-            return connectionString ?? string.Empty;
-        }
-
-        internal bool HasPersistablePassword => HasPasswordKeyword ?
-            ConvertValueToBoolean(KEY.Persist_Security_Info, false) :
-            true; // no password means persistable password so we don't have to munge
-
-        public bool ConvertValueToBoolean(string keyName, bool defaultValue)
-        {
-            string value;
-            return _parsetable.TryGetValue(keyName, out value) ?
-                ConvertValueToBooleanInternal(keyName, value) :
-                defaultValue;
-        }
 
         internal static bool ConvertValueToBooleanInternal(string keyName, string stringValue)
         {
@@ -571,7 +537,7 @@ namespace Microsoft.Data.Common
         }
 #endif
 
-        private static NameValuePair ParseInternal(Dictionary<string, string> parsetable, string connectionString, bool buildChain, Dictionary<string, string> synonyms, bool firstKey)
+        protected static NameValuePair ParseInternal(Dictionary<string, string> parsetable, string connectionString, bool buildChain, Dictionary<string, string> synonyms, bool firstKey)
         {
             Debug.Assert(null != connectionString, "null connectionstring");
             StringBuilder buffer = new StringBuilder();
@@ -633,13 +599,13 @@ namespace Microsoft.Data.Common
             return keychain;
         }
 
-        internal NameValuePair ReplacePasswordPwd(out string constr, bool fakePassword)
+        internal NameValuePair ReplacePasswordPwd(NameValuePair keyChain, out string constr, bool fakePassword)
         {
             bool expanded = false;
             int copyPosition = 0;
             NameValuePair head = null, tail = null, next = null;
             StringBuilder builder = new StringBuilder(_usersConnectionString.Length);
-            for (NameValuePair current = _keyChain; null != current; current = current.Next)
+            for (NameValuePair current = keyChain; null != current; current = current.Next)
             {
                 if ((KEY.Password != current.Name) && (SYNONYM.Pwd != current.Name))
                 {
