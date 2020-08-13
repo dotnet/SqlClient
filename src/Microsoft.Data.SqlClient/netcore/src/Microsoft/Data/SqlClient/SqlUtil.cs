@@ -19,7 +19,8 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal static class AsyncHelper
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+    public static class AsyncHelper
     {
         internal static Task CreateContinuationTask(Task task, Action onSuccess, Action<Exception> onFailure = null)
         {
@@ -188,7 +189,7 @@ namespace Microsoft.Data.SqlClient
             );
         }
 
-        internal static void WaitForCompletion(Task task, int timeout, Action onTimeout = null, bool rethrowExceptions = true)
+        public static void WaitForCompletion(Task task, int timeout, Action onTimeout = null, bool rethrowExceptions = true)
         {
             try
             {
@@ -204,6 +205,7 @@ namespace Microsoft.Data.SqlClient
             }
             if (!task.IsCompleted)
             {
+                task.ContinueWith(_ => { }); //We're handling the error with onTimeout
                 if (onTimeout != null)
                 {
                     onTimeout();
@@ -225,6 +227,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
     }
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 
     internal static class SQL
     {
