@@ -17,10 +17,11 @@ using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common;
 
+[assembly: InternalsVisibleTo("FunctionalTests")]
+
 namespace Microsoft.Data.SqlClient
 {
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-    public static class AsyncHelper
+    internal static class AsyncHelper
     {
         internal static Task CreateContinuationTask(Task task, Action onSuccess, Action<Exception> onFailure = null)
         {
@@ -189,7 +190,7 @@ namespace Microsoft.Data.SqlClient
             );
         }
 
-        public static void WaitForCompletion(Task task, int timeout, Action onTimeout = null, bool rethrowExceptions = true)
+        internal static void WaitForCompletion(Task task, int timeout, Action onTimeout = null, bool rethrowExceptions = true)
         {
             try
             {
@@ -227,7 +228,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
     }
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 
     internal static class SQL
     {
