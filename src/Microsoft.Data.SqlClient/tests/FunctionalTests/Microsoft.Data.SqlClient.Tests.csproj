@@ -10,20 +10,20 @@
     <OutputPath>$(BinFolder)$(Configuration).$(Platform).$(AssemblyName)</OutputPath>
   </PropertyGroup>
   <ItemGroup Condition="!$(ReferenceType.Contains('NetStandard'))">
-    <Compile Include="AlwaysEncryptedTests\ConnectionStringBuilderShould.cs" />
-    <Compile Include="AlwaysEncryptedTests\DummyKeyStoreProvider.cs" />
-    <Compile Include="AlwaysEncryptedTests\ExceptionRegisterKeyStoreProvider.cs" />
     <Compile Include="AlwaysEncryptedTests\ExceptionsAlgorithmErrors.cs" />
     <Compile Include="AlwaysEncryptedTests\ExceptionsCertStore.cs" />
     <Compile Include="AlwaysEncryptedTests\SqlColumnEncryptionCertificateStoreProviderShould.cs" />
     <Compile Include="AlwaysEncryptedTests\SqlColumnEncryptionCngProviderShould.cs" />
     <Compile Include="AlwaysEncryptedTests\SqlColumnEncryptionCspProviderShould.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AlwaysEncryptedTests\ConnectionStringBuilderShould.cs" />
+    <Compile Include="AlwaysEncryptedTests\DummyKeyStoreProvider.cs" />
+    <Compile Include="AlwaysEncryptedTests\ExceptionRegisterKeyStoreProvider.cs" />
     <Compile Include="AlwaysEncryptedTests\SqlCommandShould.cs" />
     <Compile Include="AlwaysEncryptedTests\SqlConnectionShould.cs" />
     <Compile Include="AlwaysEncryptedTests\TestFixtures.cs" />
     <Compile Include="AlwaysEncryptedTests\Utility.cs" />
-  </ItemGroup>
-  <ItemGroup>
     <Compile Include="SqlCommandBuilderTest.cs" />
     <Compile Include="SqlBulkCopyTest.cs" />
     <Compile Include="SqlClientMetaDataCollectionNamesTest.cs" />
@@ -48,7 +48,6 @@
     <Compile Include="AmbientTransactionFailureTest.cs" />
     <Compile Include="SqlConnectionTest.RetrieveStatistics.cs" />
     <Compile Include="SqlMetaDataTest.cs" />
-    <Compile Include="SqlConnectionStringBuilderTest.cs" />
     <Compile Include="SerializeSqlTypesTest.cs" />
     <Compile Include="TestTdsServer.cs" />
   </ItemGroup>
@@ -60,6 +59,7 @@
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.1'">
     <PackageReference Include="System.Data.Odbc" Version="$(SystemDataOdbcVersion21)" />
+    <Compile Include="SqlConnectionStringBuilderTest.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' != 'netcoreapp2.1' AND '$(TargetGroup)' == 'netcoreapp'">
     <PackageReference Include="System.Data.Odbc" Version="$(SystemDataOdbcVersion)" />
