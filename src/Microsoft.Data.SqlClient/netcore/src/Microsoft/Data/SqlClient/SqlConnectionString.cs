@@ -538,6 +538,10 @@ namespace Microsoft.Data.SqlClient
             _enclaveAttestationUrl = connectionOptions._enclaveAttestationUrl;
             _attestationProtocol = connectionOptions._attestationProtocol;
 
+            HasPasswordKeyword = connectionOptions.HasPasswordKeyword;
+            HasUserIdKeyword = connectionOptions.HasUserIdKeyword;
+            _keyChain = connectionOptions._keyChain;
+
             ValidateValueLength(_dataSource, TdsEnums.MAXLEN_SERVERNAME, KEY.Data_Source);
         }
 
