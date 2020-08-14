@@ -206,7 +206,7 @@ namespace Microsoft.Data.SqlClient
             }
             if (!task.IsCompleted)
             {
-                task.ContinueWith(_ => { }); //We're handling the error with onTimeout
+                task.ContinueWith(_ => { }); //Ensure the task does not leave an unobserved exception
                 if (onTimeout != null)
                 {
                     onTimeout();
