@@ -60,6 +60,9 @@ namespace Microsoft.Data.SqlClient
         internal bool _suppressStateChangeForReconnection;
         private int _reconnectCount;
 
+        // Retry Logic
+        private ISqlRetryLogicProvider _retryLogicProvider;
+
         // diagnostics listener
         private static readonly SqlDiagnosticListener s_diagnosticListener = new SqlDiagnosticListener(SqlClientDiagnosticListenerExtensions.DiagnosticListenerName);
 
@@ -100,6 +103,24 @@ namespace Microsoft.Data.SqlClient
 
         private static readonly Action<object> s_openAsyncCancel = OpenAsyncCancel;
         private static readonly Action<Task<object>, object> s_openAsyncComplete = OpenAsyncComplete;
+
+        ///
+        public ISqlRetryLogicProvider RetryLogicProvider
+        {
+            get
+            {
+                if (_retryLogicProvider == null)
+                {
+                    //TODO: select the default retry logic if it was set in the connection string or a defined switch
+                    _retryLogicProvider = new Reliability.SqlNoneRetryLogicProvider();
+                }
+                return _retryLogicProvider;
+            }
+            set
+            {
+                _retryLogicProvider = value;
+            }
+        }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionKeyCacheTtl/*' />
         public static TimeSpan ColumnEncryptionKeyCacheTtl { get; set; } = TimeSpan.FromHours(2);
@@ -1137,8 +1158,7 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
-
-                    if (!TryOpen(null, overrides))
+                    if (!RetryLogicProvider.Execute<bool>(() => TryOpen(null, overrides)))
                     {
                         throw ADP.InternalError(ADP.InternalErrorCode.SynchronousConnectReturnedPending);
                     }
@@ -1391,8 +1411,13 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsync/*' />
         public override Task OpenAsync(CancellationToken cancellationToken)
         {
-            long scopeID = SqlClientEventSource.Log.PoolerScopeEnterEvent("<sc.SqlConnection.OpenAsync|API> {0}", ObjectID);
-            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlConnection.OpenAsync|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
+            return RetryLogicProvider.ExecuteAsync<Task>(() => InternalOpenAsync(cancellationToken), cancellationToken);
+        }
+
+        private Task InternalOpenAsync(CancellationToken cancellationToken)
+        {
+            long scopeID = SqlClientEventSource.Log.PoolerScopeEnterEvent("<sc.SqlConnection.InternalOpenAsync|API> {0}", ObjectID);
+            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlConnection.InternalOpenAsync|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
             try
             {
                 Guid operationId = s_diagnosticListener.WriteConnectionOpenBefore(this);
@@ -1412,7 +1437,7 @@ namespace Microsoft.Data.SqlClient
                         s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlErrorOpenConnection))
                     {
                         result.Task.ContinueWith(
-                            continuationAction: s_openAsyncComplete, 
+                            continuationAction: s_openAsyncComplete,
                             state: operationId, // connection is passed in TaskCompletionSource async state
                             scheduler: TaskScheduler.Default
                         );
@@ -1423,7 +1448,6 @@ namespace Microsoft.Data.SqlClient
                         result.SetCanceled();
                         return result.Task;
                     }
-
 
                     bool completed;
 
@@ -2013,7 +2037,7 @@ namespace Microsoft.Data.SqlClient
 
                     connection.RemoveWeakReference(obj);
                     return task;
-                }, 
+                },
                 state: Tuple.Create(this, value),
                 scheduler: TaskScheduler.Default
            ).Unwrap();

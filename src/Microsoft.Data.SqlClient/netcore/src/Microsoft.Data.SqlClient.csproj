@@ -709,6 +709,14 @@
     <Reference Include="System.Memory" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Microsoft\Data\Reliability\Common\ISqlRetryIntervalEnumerator.cs" />
+    <Compile Include="Microsoft\Data\Reliability\Common\ISqlRetryLogic.cs" />
+    <Compile Include="Microsoft\Data\Reliability\Common\ISqlRetryLogicProvider.cs" />
+    <Compile Include="Microsoft\Data\Reliability\SqlConfigurableRetryLogicProviders.cs" />
+    <Compile Include="Microsoft\Data\Reliability\Common\SqlRetryIntervalEnumerator.cs" />
+    <Compile Include="Microsoft\Data\Reliability\SqlRetryIntervalEnumerators.cs" />
+    <Compile Include="Microsoft\Data\Reliability\Common\SqlRetryLogicProvider.cs" />
+    <Compile Include="Microsoft\Data\Reliability\Common\SqlRetryLogic.cs" />
     <Compile Include="Microsoft\Data\SqlClient\AAsyncCallContext.cs" />
     <Compile Include="Resources\SR.Designer.cs">
       <DesignTime>True</DesignTime>
