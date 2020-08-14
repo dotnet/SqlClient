@@ -15,15 +15,21 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool>();
             AsyncHelper.WaitForCompletion(tcs.Task, 1); //Will time out as task uncompleted
-            tcs.SetException(new TimeoutException()); //Our task now completes with an error
+            tcs.SetException(new TimeoutException("Dummy timeout exception")); //Our task now completes with an error
+        }
+
+        private Exception UnwrapException(Exception e)
+        {
+            return e?.InnerException != null ? UnwrapException(e.InnerException) : e;
         }
 
         [Fact]
         public void WaitForCompletion_DoesNotCreateUnobservedException()
         {
             var unobservedExceptionHappenedEvent = new AutoResetEvent(false);
+            Exception unhandledException = null;
             EventHandler<UnobservedTaskExceptionEventArgs> handleUnobservedException = 
-                (o, a) => { unobservedExceptionHappenedEvent.Set(); };
+                (o, a) => { unhandledException = a.Exception; unobservedExceptionHappenedEvent.Set(); };
 
             TaskScheduler.UnobservedTaskException += handleUnobservedException;
 
@@ -34,7 +40,11 @@ namespace Microsoft.Data.SqlClient.Tests
                 GC.WaitForPendingFinalizers();
 
                 bool unobservedExceptionHappend = unobservedExceptionHappenedEvent.WaitOne(1);
-                Assert.False(unobservedExceptionHappend, "Did not expect an unobserved exception");
+                if (unobservedExceptionHappend) //Save doing string interpolation in the happy case
+                {
+                    var e = UnwrapException(unhandledException);
+                    Assert.False(true, $"Did not expect an unobserved exception, but found a {e?.GetType()} with message \"{e?.Message}\"");
+                }
             }
             finally
             {
