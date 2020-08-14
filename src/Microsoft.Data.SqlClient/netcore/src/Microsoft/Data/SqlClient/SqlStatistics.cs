@@ -291,11 +291,11 @@ namespace Microsoft.Data.SqlClient
                 if (array == null)
                     throw new ArgumentNullException(nameof(array));
                 if (array.Rank != 1)
-                    throw new ArgumentException(SR.Arg_RankMultiDimNotSupported);
+                    throw new ArgumentException(Strings.Arg_RankMultiDimNotSupported);
                 if (arrayIndex < 0)
-                    throw new ArgumentOutOfRangeException(nameof(arrayIndex), SR.ArgumentOutOfRange_NeedNonNegNum);
+                    throw new ArgumentOutOfRangeException(nameof(arrayIndex), Strings.ArgumentOutOfRange_NeedNonNegNum);
                 if (array.Length - arrayIndex < Count)
-                    throw new ArgumentException(SR.Arg_ArrayPlusOffTooSmall);
+                    throw new ArgumentException(Strings.Arg_ArrayPlusOffTooSmall);
             }
 
             private sealed class Collection : ICollection

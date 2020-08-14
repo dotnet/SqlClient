@@ -71,6 +71,8 @@ namespace Microsoft.Data.SqlClient
         internal int _inBytesUsed = 0;                   // number of bytes used in internal read buffer
         internal int _inBytesRead = 0;                   // number of bytes read into internal read buffer
         internal int _inBytesPacket = 0;                   // number of bytes left in packet
+        
+        internal int _spid;                                 // SPID of the current connection
 
         // Packet state variables
         internal byte _outputMessageType = 0;                   // tds header type
@@ -1131,6 +1133,8 @@ namespace Microsoft.Data.SqlClient
                                   (int)_partialHeaderBuffer[TdsEnums.HEADER_LEN_FIELD_OFFSET + 1]) - _inputHeaderLen;
 
                         _messageStatus = _partialHeaderBuffer[1];
+                        _spid = _partialHeaderBuffer[TdsEnums.SPID_OFFSET] << 8 |
+                                  _partialHeaderBuffer[TdsEnums.SPID_OFFSET + 1];
                     }
                     else
                     {
@@ -1166,8 +1170,10 @@ namespace Microsoft.Data.SqlClient
             {
                 // normal header processing...
                 _messageStatus = _inBuff[_inBytesUsed + 1];
-                _inBytesPacket = ((int)_inBuff[_inBytesUsed + TdsEnums.HEADER_LEN_FIELD_OFFSET] << 8 |
-                                              (int)_inBuff[_inBytesUsed + TdsEnums.HEADER_LEN_FIELD_OFFSET + 1]) - _inputHeaderLen;
+                _inBytesPacket = (_inBuff[_inBytesUsed + TdsEnums.HEADER_LEN_FIELD_OFFSET] << 8 |
+                                              _inBuff[_inBytesUsed + TdsEnums.HEADER_LEN_FIELD_OFFSET + 1]) - _inputHeaderLen;
+                _spid = _inBuff[_inBytesUsed + TdsEnums.SPID_OFFSET] << 8 |
+                                              _inBuff[_inBytesUsed + TdsEnums.SPID_OFFSET + 1];
                 _inBytesUsed += _inputHeaderLen;
 
                 AssertValidState();

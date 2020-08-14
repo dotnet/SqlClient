@@ -2499,6 +2499,9 @@
   <data name="SQL_InteractiveWithPassword" xml:space="preserve">
     <value>"Authentication=Active Directory Interactive" kann nicht mit den Schlüsselwörtern "Password" oder "PWD" für die Verbindungszeichenfolge verwendet werden.</value>
   </data>
+  <data name="SQL_DeviceFlowWithUsernamePassword" xml:space="preserve">
+    <value>"Authentication=Active Directory Device Code Flow" kann nicht mit den Schlüsselwörtern "User ID", "UID", "Password" oder "PWD" für die Verbindungszeichenfolge verwendet werden.</value>
+  </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
     <value>"Authentication=Active Directory Integrated" kann nicht verwendet werden, wenn die Eigenschaft "Credential" festgelegt wurde.</value>
   </data>
@@ -4559,5 +4562,17 @@
   </data>
   <data name="SQL_SettingCredentialWithInteractive" xml:space="preserve">
     <value>Die Eigenschaft "Credential" kann nicht festgelegt werden, wenn in der Verbindungszeichenfolge "Authentication=Active Directory Interactive" angegeben wurde.</value>
+  </data>
+  <data name="SqlConnection_ServerProcessId" xml:space="preserve">
+    <value>Die Serverprozess-ID (SPID) der aktiven Verbindung.</value>
+  </data>
+  <data name="SQL_Timeout_Active_Directory_DeviceFlow_Authentication" xml:space="preserve">
+    <value>Timeout bei der Authentifizierung per Active Directory-Gerätecodeflow. Der Benutzer hat zu lange nicht auf die Authentifizierungsanforderung reagiert.</value>
+  </data>
+  <data name="SQL_SettingCredentialWithDeviceFlow" xml:space="preserve">
+    <value>Die Eigenschaft "Credential" kann nicht festgelegt werden, wenn in der Verbindungszeichenfolge "Authentication=Active Directory Device Code Flow" angegeben wurde.</value>
+  </data>
+  <data name="SQL_SettingDeviceFlowWithCredential" xml:space="preserve">
+    <value>"Authentication=Active Directory Device Code Flow" kann nicht verwendet werden, wenn die Eigenschaft "Credential" festgelegt wurde.</value>
   </data>
 </root>

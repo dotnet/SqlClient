@@ -8,7 +8,7 @@ namespace Microsoft.Data.SqlClient.SNI
     {
         internal static string GetLocalDBConnectionString(string localDbInstance)
         {
-            throw new PlatformNotSupportedException(SR.LocalDBNotSupported); // No Registry support on UAP
+            throw new PlatformNotSupportedException(Strings.LocalDBNotSupported); // No Registry support on UAP
         }
     }
 }

@@ -14,7 +14,30 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         private static string s_tableName;
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsSupportedDataClassification))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsSupportedDataClassification))]
+        public static void TestDataClassificationResultSetRank()
+        {
+            s_tableName = DataTestUtility.GetUniqueNameForSqlServer("DC");
+            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlCommand sqlCommand = sqlConnection.CreateCommand())
+            {
+                try
+                {
+                    sqlConnection.Open();
+                    Assert.True(DataTestUtility.IsSupportedDataClassification());
+                    CreateTable(sqlCommand);
+                    AddSensitivity(sqlCommand, rankEnabled: true);
+                    InsertData(sqlCommand);
+                    RunTestsForServer(sqlCommand, rankEnabled: true);
+                }
+                finally
+                {
+                    DataTestUtility.DropTable(sqlConnection, s_tableName);
+                }
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsSupportedDataClassification))]
         public static void TestDataClassificationResultSet()
         {
             s_tableName = DataTestUtility.GetUniqueNameForSqlServer("DC");
@@ -26,6 +49,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     sqlConnection.Open();
                     Assert.True(DataTestUtility.IsSupportedDataClassification());
                     CreateTable(sqlCommand);
+                    AddSensitivity(sqlCommand);
+                    InsertData(sqlCommand);
                     RunTestsForServer(sqlCommand);
                 }
                 finally
@@ -35,16 +60,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        private static void RunTestsForServer(SqlCommand sqlCommand)
+        private static void RunTestsForServer(SqlCommand sqlCommand, bool rankEnabled = false)
         {
             sqlCommand.CommandText = "SELECT * FROM " + s_tableName;
             using (SqlDataReader reader = sqlCommand.ExecuteReader())
             {
-                VerifySensitivityClassification(reader);
+                VerifySensitivityClassification(reader, rankEnabled);
             }
         }
 
-        private static void VerifySensitivityClassification(SqlDataReader reader)
+        private static void VerifySensitivityClassification(SqlDataReader reader, bool rankEnabled = false)
         {
             if (null != reader.SensitivityClassification)
             {
@@ -69,8 +94,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             VerifyLabel(sp.Label);
                             VerifyInfoType(sp.InformationType, columnPos);
                         }
+                        if (rankEnabled)
+                        {
+                            if (columnPos == 1 || columnPos == 2)
+                            {
+                                Assert.True(sp.SensitivityRank == SensitivityRank.LOW);
+                            }
+                            else if (columnPos == 6 || columnPos == 7)
+                            {
+                                Assert.True(sp.SensitivityRank == SensitivityRank.MEDIUM);
+                            }
+                        }
+                        else
+                        {
+                            Assert.True(reader.SensitivityClassification.SensitivityRank == SensitivityRank.NOT_DEFINED);
+                        }
                     }
                 }
+                Assert.Equal(reader.SensitivityClassification.SensitivityRank, rankEnabled ? SensitivityRank.MEDIUM : SensitivityRank.NOT_DEFINED);
             }
         }
 
@@ -100,23 +141,50 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 + "[Phone] [nvarchar](30) MASKED WITH (FUNCTION = 'default()') NULL,"
                 + "[Fax] [nvarchar](30) MASKED WITH (FUNCTION = 'default()') NULL)";
             sqlCommand.ExecuteNonQuery();
+        }
 
-            sqlCommand.CommandText = "ADD SENSITIVITY CLASSIFICATION TO " + s_tableName
-                    + ".CompanyName WITH (LABEL='PII', LABEL_ID='L1', INFORMATION_TYPE='Company Name', INFORMATION_TYPE_ID='COMPANY')";
-            sqlCommand.ExecuteNonQuery();
+        private static void AddSensitivity(SqlCommand sqlCommand, bool rankEnabled = false)
+        {
+            if (rankEnabled)
+            {
+                sqlCommand.CommandText = "ADD SENSITIVITY CLASSIFICATION TO " + s_tableName
+                        + ".CompanyName WITH (LABEL='PII', LABEL_ID='L1', INFORMATION_TYPE='Company Name', INFORMATION_TYPE_ID='COMPANY', RANK=LOW)";
+                sqlCommand.ExecuteNonQuery();
 
-            sqlCommand.CommandText = "ADD SENSITIVITY CLASSIFICATION TO " + s_tableName
-                    + ".ContactName WITH (LABEL='PII', LABEL_ID='L1', INFORMATION_TYPE='Person Name', INFORMATION_TYPE_ID='NAME')";
-            sqlCommand.ExecuteNonQuery();
+                sqlCommand.CommandText = "ADD SENSITIVITY CLASSIFICATION TO " + s_tableName
+                        + ".ContactName WITH (LABEL='PII', LABEL_ID='L1', INFORMATION_TYPE='Person Name', INFORMATION_TYPE_ID='NAME', RANK=LOW)";
+                sqlCommand.ExecuteNonQuery();
 
-            sqlCommand.CommandText = "ADD SENSITIVITY CLASSIFICATION TO " + s_tableName
-                    + ".Phone WITH (LABEL='PII', LABEL_ID='L1', INFORMATION_TYPE='Contact Information', INFORMATION_TYPE_ID='CONTACT')";
-            sqlCommand.ExecuteNonQuery();
+                sqlCommand.CommandText = "ADD SENSITIVITY CLASSIFICATION TO " + s_tableName
+                        + ".Phone WITH (LABEL='PII', LABEL_ID='L1', INFORMATION_TYPE='Contact Information', INFORMATION_TYPE_ID='CONTACT', RANK=MEDIUM)";
+                sqlCommand.ExecuteNonQuery();
 
-            sqlCommand.CommandText = "ADD SENSITIVITY CLASSIFICATION TO " + s_tableName
-                    + ".Fax WITH (LABEL='PII', LABEL_ID='L1', INFORMATION_TYPE='Contact Information', INFORMATION_TYPE_ID='CONTACT')";
-            sqlCommand.ExecuteNonQuery();
+                sqlCommand.CommandText = "ADD SENSITIVITY CLASSIFICATION TO " + s_tableName
+                        + ".Fax WITH (LABEL='PII', LABEL_ID='L1', INFORMATION_TYPE='Contact Information', INFORMATION_TYPE_ID='CONTACT', RANK=MEDIUM)";
+                sqlCommand.ExecuteNonQuery();
+            }
+            else
+            {
+                sqlCommand.CommandText = "ADD SENSITIVITY CLASSIFICATION TO " + s_tableName
+                        + ".CompanyName WITH (LABEL='PII', LABEL_ID='L1', INFORMATION_TYPE='Company Name', INFORMATION_TYPE_ID='COMPANY')";
+                sqlCommand.ExecuteNonQuery();
 
+                sqlCommand.CommandText = "ADD SENSITIVITY CLASSIFICATION TO " + s_tableName
+                        + ".ContactName WITH (LABEL='PII', LABEL_ID='L1', INFORMATION_TYPE='Person Name', INFORMATION_TYPE_ID='NAME')";
+                sqlCommand.ExecuteNonQuery();
+
+                sqlCommand.CommandText = "ADD SENSITIVITY CLASSIFICATION TO " + s_tableName
+                        + ".Phone WITH (LABEL='PII', LABEL_ID='L1', INFORMATION_TYPE='Contact Information', INFORMATION_TYPE_ID='CONTACT')";
+                sqlCommand.ExecuteNonQuery();
+
+                sqlCommand.CommandText = "ADD SENSITIVITY CLASSIFICATION TO " + s_tableName
+                        + ".Fax WITH (LABEL='PII', LABEL_ID='L1', INFORMATION_TYPE='Contact Information', INFORMATION_TYPE_ID='CONTACT')";
+                sqlCommand.ExecuteNonQuery();
+            }
+        }
+
+        private static void InsertData(SqlCommand sqlCommand)
+        {
             // INSERT ROWS OF DATA
             sqlCommand.CommandText = "INSERT INTO " + s_tableName + " VALUES (@companyName, @contactName, @contactTitle, @city, @country, @phone, @fax)";
 
@@ -126,7 +194,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             sqlCommand.Parameters.AddWithValue("city", "London");
             sqlCommand.Parameters.AddWithValue("@country", "UK");
             sqlCommand.Parameters.AddWithValue("@phone", "(171) 555-2222");
-            sqlCommand.Parameters.AddWithValue("@fax", "");
+            sqlCommand.Parameters.AddWithValue("@fax", "(171) 554-2222");
             sqlCommand.ExecuteNonQuery();
 
             sqlCommand.Parameters.Clear();
@@ -136,7 +204,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             sqlCommand.Parameters.AddWithValue("city", "New Orleans");
             sqlCommand.Parameters.AddWithValue("@country", "USA");
             sqlCommand.Parameters.AddWithValue("@phone", "(100) 555-4822");
-            sqlCommand.Parameters.AddWithValue("@fax", "");
+            sqlCommand.Parameters.AddWithValue("@fax", "(100) 223-3243");
             sqlCommand.ExecuteNonQuery();
 
             sqlCommand.Parameters.Clear();
@@ -150,7 +218,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             sqlCommand.ExecuteNonQuery();
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsSupportedDataClassification))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsSupportedDataClassification))]
         public static void TestDataClassificationBulkCopy()
         {
             var data = new DataTable("Company");
@@ -177,14 +245,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             $" [CompanyId] [uniqueidentifier] NOT NULL," +
                             $" [CompanyName][nvarchar](255) NOT NULL," +
                             $" [Email] [nvarchar](50) NULL," +
-                            $" [CompanyType] [int] not null," +
-                            $" CONSTRAINT[PK_Company] PRIMARY KEY CLUSTERED (" +
-                            $"      [CompanyId] ASC" +
-                            $"      ) WITH(STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON[PRIMARY]" +
-                            $"  ) ON[PRIMARY]";
+                            $" [CompanyType] [int] not null)";
                         sqlCommand.ExecuteNonQuery();
-
-                        sqlCommand.CommandText = $"ADD SENSITIVITY CLASSIFICATION TO {tableName}.Email WITH (label = 'Confidential', label_id = 'c185460f-4e20-4b89-9876-ae95f07ba087', information_type = 'Contact Info', information_type_id = '5c503e21-22c6-81fa-620b-f369b8ec38d1');";
+                        sqlCommand.CommandText = $"ADD SENSITIVITY CLASSIFICATION TO {tableName}.CompanyName WITH (label = 'Confidential', label_id = 'c185460f-4e20-4b89-9876-ae95f07ba087', information_type = 'Contact Info', information_type_id = '5c503e21-22c6-81fa-620b-f369b8ec38d1');";
+                        sqlCommand.CommandText = $"ADD SENSITIVITY CLASSIFICATION TO {tableName}.Email WITH (label = 'Confidential', label_id = 'c185460f-4e20-4b89-9876-ae95f07ba087', information_type = 'Contact Info', information_type_id = '5c503e21-22c6-81fa-620b-f369b8ec38d1', rank = HIGH);";
                         sqlCommand.ExecuteNonQuery();
                     }
 

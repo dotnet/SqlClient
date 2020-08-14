@@ -4,6 +4,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Security;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -307,7 +308,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // test Passes with correct connection string.
             string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
             string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, removeKeys) +
-                $"Authentication=Active Directory Service Principal; User ID={DataTestUtility.AADServicePrincipalId}; Password={DataTestUtility.AADServicePrincipalSecret};";
+                $"Authentication=Active Directory Service Principal; User ID={DataTestUtility.AADServicePrincipalId}; PWD={DataTestUtility.AADServicePrincipalSecret};";
             ConnectAndDisconnect(connStr);
 
             // connection fails with expected error message.
@@ -320,7 +321,41 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Contains(expectedMessage, e.Message);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsIntegratedSecuritySetup), nameof(DataTestUtility.AreConnStringsSetup)) ]
+        [ConditionalFact(nameof(IsAADConnStringsSetup))]
+        public static void ActiveDirectoryDeviceCodeFlowWithUserIdMustFail()
+        {
+            // connection fails with expected error message.
+            string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
+            string connStrWithUID = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) +
+                "Authentication=Active Directory Device Code Flow; UID=someuser;";
+            ArgumentException e = Assert.Throws<ArgumentException>(() => ConnectAndDisconnect(connStrWithUID));
+
+            string expectedMessage = "Cannot use 'Authentication=Active Directory Device Code Flow' with 'User ID', 'UID', 'Password' or 'PWD' connection string keywords.";
+            Assert.Contains(expectedMessage, e.Message);
+        }
+
+        [ConditionalFact(nameof(IsAADConnStringsSetup))]
+        public static void ActiveDirectoryDeviceCodeFlowWithCredentialsMustFail()
+        {
+            // connection fails with expected error message.
+            string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
+            string connStrWithNoCred = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) +
+                "Authentication=Active Directory Device Code Flow;";
+
+            SecureString str = new SecureString();
+            foreach (char c in "hello")
+            {
+                str.AppendChar(c);
+            }
+            str.MakeReadOnly();
+            SqlCredential credential = new SqlCredential("someuser", str);
+            InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => ConnectAndDisconnect(connStrWithNoCred, credential));
+
+            string expectedMessage = "Cannot set the Credential property if 'Authentication=Active Directory Device Code Flow' has been specified in the connection string.";
+            Assert.Contains(expectedMessage, e.Message);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsIntegratedSecuritySetup), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ADInteractiveUsingSSPI()
         {
             // test Passes with correct connection string.

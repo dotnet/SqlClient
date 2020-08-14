@@ -29,5 +29,9 @@
             <summary>The authentication method uses Active Directory Service Principal. Use Active Directory Service Principal to connect to a SQL Database using the client ID and secret of a service principal identity.</summary>
             <value>5</value>
         </ActiveDirectoryServicePrincipal>
+        <ActiveDirectoryDeviceCodeFlow>
+            <summary>The authentication method uses Active Directory Device Code Flow. Use Active Directory Device Code Flow to connect to a SQL Database from devices and operating systems that do not provide a Web browser, using another device to perform interactive authentication.</summary>
+            <value>6</value>
+        </ActiveDirectoryDeviceCodeFlow>
     </members>
 </docs>

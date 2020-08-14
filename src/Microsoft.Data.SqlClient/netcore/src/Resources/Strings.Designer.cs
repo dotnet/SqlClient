@@ -22,14 +22,14 @@ namespace System {
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    internal class SR {
+    internal class Strings {
         
         private static global::System.Resources.ResourceManager resourceMan;
         
         private static global::System.Globalization.CultureInfo resourceCulture;
         
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
-        internal SR() {
+        internal Strings() {
         }
         
         /// <summary>
@@ -39,7 +39,7 @@ namespace System {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Microsoft.Data.SqlClient.Resources.SR", typeof(SR).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Microsoft.Data.SqlClient.Resources.Strings", typeof(Strings).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -1429,7 +1429,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Security Warning: The negotiated &apos;{0}&apos; is an insecured protocol and is supported for backward compatibility only. The recommended protocol is TLS 1.2 and later..
+        ///   Looks up a localized string similar to Security Warning: The negotiated {0} is an insecure protocol and is supported for backward compatibility only. The recommended protocol version is TLS 1.2 and later..
         /// </summary>
         internal static string SEC_ProtocolWarning {
             get {
@@ -2653,6 +2653,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Device Code Flow&apos; with &apos;User ID&apos;, &apos;UID&apos;, &apos;Password&apos; or &apos;PWD&apos; connection string keywords..
+        /// </summary>
+        internal static string SQL_DeviceFlowWithUsernamePassword {
+            get {
+                return ResourceManager.GetString("SQL_DeviceFlowWithUsernamePassword", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Internal Error.
         /// </summary>
         internal static string Sql_InternalError {
@@ -3058,6 +3067,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot set the Credential property if &apos;Authentication=Active Directory Device Code Flow&apos; has been specified in the connection string..
+        /// </summary>
+        internal static string SQL_SettingCredentialWithDeviceFlow {
+            get {
+                return ResourceManager.GetString("SQL_SettingCredentialWithDeviceFlow", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Integrated&apos;, if the Credential property has been set..
         /// </summary>
         internal static string SQL_SettingIntegratedWithCredential {
@@ -3072,6 +3090,15 @@ namespace System {
         internal static string SQL_SettingInteractiveWithCredential {
             get {
                 return ResourceManager.GetString("SQL_SettingInteractiveWithCredential", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Device Code Flow&apos;, if the Credential property has been set..
+        /// </summary>
+        internal static string SQL_SettingDeviceFlowWithCredential {
+            get {
+                return ResourceManager.GetString("SQL_SettingDeviceFlowWithCredential", resourceCulture);
             }
         }
         
@@ -3207,6 +3234,15 @@ namespace System {
         internal static string SQL_Timeout_Active_Directory_Interactive_Authentication {
             get {
                 return ResourceManager.GetString("SQL_Timeout_Active_Directory_Interactive_Authentication", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Active Directory Device Code Flow authentication timed out. The user took too long to respond to the authentication request..
+        /// </summary>
+        internal static string SQL_Timeout_Active_Directory_DeviceFlow_Authentication {
+            get {
+                return ResourceManager.GetString("SQL_Timeout_Active_Directory_DeviceFlow_Authentication", resourceCulture);
             }
         }
         

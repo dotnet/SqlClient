@@ -37,7 +37,6 @@ namespace Microsoft.Data.SqlClient
         {
             SqlConnectionString opt = (SqlConnectionString)options;
             SqlConnectionPoolKey key = (SqlConnectionPoolKey)poolKey;
-            SqlInternalConnection result = null;
             SessionData recoverySessionData = null;
 
             SqlConnection sqlOwningConnection = (SqlConnection)owningConnection;
@@ -131,8 +130,7 @@ namespace Microsoft.Data.SqlClient
                 opt = new SqlConnectionString(opt, instanceName, userInstance: false, setEnlistValue: null);
                 poolGroupProviderInfo = null; // null so we do not pass to constructor below...
             }
-            result = new SqlInternalConnectionTds(identity, opt, key.Credential, poolGroupProviderInfo, "", null, redirectedUserInstance, userOpt, recoverySessionData, applyTransientFaultHandling: applyTransientFaultHandling, key.AccessToken, pool);
-            return result;
+            return new SqlInternalConnectionTds(identity, opt, key.Credential, poolGroupProviderInfo, "", null, redirectedUserInstance, userOpt, recoverySessionData, applyTransientFaultHandling: applyTransientFaultHandling, key.AccessToken, pool);
         }
 
         protected override DbConnectionOptions CreateConnectionOptions(string connectionString, DbConnectionOptions previous)
@@ -173,9 +171,9 @@ namespace Microsoft.Data.SqlClient
                     connectionTimeout = int.MaxValue;
                 }
 
-                if (opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive)
+                if (opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive || opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)
                 {
-                    // interactive mode will always have pool's CreateTimeout = 10 x ConnectTimeout.
+                    // interactive/device code flow mode will always have pool's CreateTimeout = 10 x ConnectTimeout.
                     if (connectionTimeout >= Int32.MaxValue / 10)
                     {
                         connectionTimeout = Int32.MaxValue;
@@ -184,7 +182,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         connectionTimeout *= 10;
                     }
-                    SqlClientEventSource.Log.TraceEvent("<sc.SqlConnectionFactory.CreateConnectionPoolGroupOptions>Set connection pool CreateTimeout={0} when AD Interactive is in use.", connectionTimeout);
+                    SqlClientEventSource.Log.TraceEvent("<sc.SqlConnectionFactory.CreateConnectionPoolGroupOptions>Set connection pool CreateTimeout={0} when {1} is in use.", connectionTimeout, opt.Authentication);
                 }
                 poolingOptions = new DbConnectionPoolGroupOptions(
                                                 opt.IntegratedSecurity,
