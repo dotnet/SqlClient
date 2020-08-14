@@ -257,7 +257,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
     // Use this class as the fixture for AE tests to ensure only one platform-specific fixture
     // is created for each test class
-    public class PlatformSpecificTestContext
+    public class PlatformSpecificTestContext : IDisposable
     {
         private SQLSetupStrategy certStoreFixture = null;
         private SQLSetupStrategy akvFixture = null;
@@ -273,6 +273,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             {
                 akvFixture = new SQLSetupStrategyAzureKeyVault();
             }
+        }
+
+        public void Dispose()
+        {
+            Fixture.Dispose();
         }
     }
 }
