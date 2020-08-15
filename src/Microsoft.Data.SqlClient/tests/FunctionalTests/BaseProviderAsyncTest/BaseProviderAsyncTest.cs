@@ -121,17 +121,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             source = new CancellationTokenSource();
             Task.Factory.StartNew(() => { command.WaitForWaitingForCancel(); source.Cancel(); });
             Task result = command.ExecuteNonQueryAsync(source.Token);
-            Assert.True(result.IsFaulted, "Task result should be faulted");
+            Assert.True(result.Exception != null, "Task result should be faulted");
 
             source = new CancellationTokenSource();
             Task.Factory.StartNew(() => { command.WaitForWaitingForCancel(); source.Cancel(); });
             result = command.ExecuteReaderAsync(source.Token);
-            Assert.True(result.IsFaulted, "Task result should be faulted");
+            Assert.True(result.Exception != null, "Task result should be faulted");
 
             source = new CancellationTokenSource();
             Task.Factory.StartNew(() => { command.WaitForWaitingForCancel(); source.Cancel(); });
             result = command.ExecuteScalarAsync(source.Token);
-            Assert.True(result.IsFaulted, "Task result should be faulted");
+            Assert.True(result.Exception != null, "Task result should be faulted");
         }
 
         [Fact]
