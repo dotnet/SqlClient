@@ -38,7 +38,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("Encrypt = true")]
         [InlineData("Enlist = false")]
         [InlineData("Initial Catalog = Northwind; Failover Partner = randomserver.sys.local")]
-        [InlineData("Initial Catalog = Northwind")]
+        [InlineData("Initial Catalog = tempdb")]
         [InlineData("Integrated Security = true")]
         [InlineData("Trusted_Connection = false")]
         [InlineData("Max Pool Size = 50")]

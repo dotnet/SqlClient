@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net46;netcoreapp2.1;</TargetFrameworks>
+  </PropertyGroup>
+
+  <Target Name="CopyConfig" BeforeTargets="Compile">
+    <Copy SourceFiles="config.default.json" DestinationFiles="config.json" Condition="!Exists('config.json')" />
+  </Target>
+
+  <ItemGroup>
+    <Content Include="config.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>config.json</Link>
+    </Content>
+    <PackageReference Include="Newtonsoft.Json" Version="$(NewtonsoftJsonVersion)" />
+  </ItemGroup>
+
+</Project>

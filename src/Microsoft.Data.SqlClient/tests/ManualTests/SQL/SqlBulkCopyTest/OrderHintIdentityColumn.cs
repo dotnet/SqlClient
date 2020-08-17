@@ -14,20 +14,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly string sourceQueryTemplate = "SELECT CustomerId, CompanyName, ContactName FROM {0}";
         private static readonly string getRowCountQueryTemplate = "SELECT COUNT(*) FROM {0}";
 
-        public static void Test(string srcConstr, string dstTable)
+        public static void Test(string connStr, string dstTable)
         {
-            srcConstr = (new SqlConnectionStringBuilder(srcConstr) { InitialCatalog = "Northwind" }).ConnectionString;
-            string dstConstr = (new SqlConnectionStringBuilder(srcConstr)).ConnectionString;
             string sourceQuery = string.Format(sourceQueryTemplate, sourceTable);
             string initialQuery = string.Format(initialQueryTemplate, dstTable);
             string getRowCountQuery = string.Format(getRowCountQueryTemplate, sourceTable);
 
-            using (SqlConnection dstConn = new SqlConnection(dstConstr))
+            using (SqlConnection dstConn = new SqlConnection(connStr))
             using (SqlCommand dstCmd = dstConn.CreateCommand())
             {
                 dstConn.Open();
                 Helpers.TryExecute(dstCmd, initialQuery);
-                using (SqlConnection srcConn = new SqlConnection(srcConstr))
+                using (SqlConnection srcConn = new SqlConnection(connStr))
                 using (SqlCommand srcCmd = new SqlCommand(getRowCountQuery, srcConn))
                 {
                     srcConn.Open();

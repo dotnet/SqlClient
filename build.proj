@@ -40,6 +40,7 @@
     <ManualTests Include="**/ManualTests/SQL/UdtTest/UDTs/Shapes/Shapes.csproj" />
     <ManualTests Include="**/ManualTests/SQL/UdtTest/UDTs/Utf8String/Utf8String.csproj" />
     <ManualTests Include="**/tools/Microsoft.DotNet.XUnitExtensions/Microsoft.DotNet.XUnitExtensions.csproj" />
+    <ManualTests Include="**/tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj"/>
     <ManualTests Include="**/tools/CoreFx.Private.TestUtilities/CoreFx.Private.TestUtilities.csproj" />
     <ManualTests Include="**/ManualTests/Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" />
   </ItemGroup>

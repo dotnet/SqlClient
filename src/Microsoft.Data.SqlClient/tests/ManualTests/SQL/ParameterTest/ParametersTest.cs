@@ -250,7 +250,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void TestParametersWithDatatablesTVPInsert()
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
-            builder.InitialCatalog = "tempdb";
             int x = 4, y = 5;
 
             DataTable table = new DataTable { Columns = { { "x", typeof(int) }, { "y", typeof(int) } }, Rows = { { x, y } } };
