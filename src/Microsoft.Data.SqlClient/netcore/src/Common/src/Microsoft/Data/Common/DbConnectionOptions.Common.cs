@@ -12,7 +12,7 @@ using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data.Common
 {
-    partial class DbConnectionOptions
+    abstract partial class DbConnectionOptions
     {
 #if DEBUG
         /*private const string ConnectionStringPatternV1 =
@@ -98,8 +98,17 @@ namespace Microsoft.Data.Common
 
         protected readonly string _usersConnectionString;
 
+        public abstract string UsersConnectionString(bool hidePassword);
 
+        internal abstract string UsersConnectionStringForTrace();
+        public abstract bool IsEmpty { get;}
 
+        protected static bool ConvertValueToBoolean(Dictionary<string, string> parsetable, string keyName, bool defaultValue)
+        {
+	        return parsetable.TryGetValue(keyName, out string value) ?
+		        ConvertValueToBooleanInternal(keyName, value) :
+		        defaultValue;
+        }
 
         internal static bool ConvertValueToBooleanInternal(string keyName, string stringValue)
         {

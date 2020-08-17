@@ -5,7 +5,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Threading;
@@ -603,7 +602,7 @@ namespace Microsoft.Data.SqlClient
         internal TransactionBindingEnum TransactionBinding { get { return _transactionBinding; } }
 
         private bool HasPersistablePassword { get { return _hasPersistablePassword; } }
-        public bool IsEmpty => _keyChain == null;
+        public override bool IsEmpty => _keyChain == null;
 
         internal bool EnforceLocalHost
         {
@@ -626,6 +625,11 @@ namespace Microsoft.Data.SqlClient
                 return base.Expand();
             }
         }
+
+        public override string UsersConnectionString(bool hidePassword) =>
+	        UsersConnectionString(_keyChain, hidePassword, false);
+
+        internal override string UsersConnectionStringForTrace() => UsersConnectionString(_keyChain, true, true);
 
         private static bool CompareHostName(ref string host, string name, bool fixup)
         {
@@ -912,18 +916,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private static bool ConvertValueToBoolean(Dictionary<string, string> parsetable, string keyName, bool defaultValue)
-        {
-            return parsetable.TryGetValue(keyName, out string value) ?
-                ConvertValueToBooleanInternal(keyName, value) :
-                defaultValue;
-        }
-
-        public string UsersConnectionString(bool hidePassword) =>
-            UsersConnectionString(_keyChain, hidePassword, false);
-
-        internal string UsersConnectionStringForTrace() => UsersConnectionString(_keyChain, true, true);
-
         private string UsersConnectionString(NameValuePair keyChain, bool hidePassword, bool forceHidePassword)
         {
             string connectionString = _usersConnectionString;
@@ -932,44 +924,6 @@ namespace Microsoft.Data.SqlClient
                 ReplacePasswordPwd(keyChain, out connectionString, false);
             }
             return connectionString ?? string.Empty;
-        }
-
-        private static bool TryGetParsetableValue(Dictionary<string, string> parsetable, string key, out string value) => parsetable.TryGetValue(key, out value);
-
-        // same as Boolean, but with SSPI thrown in as valid yes
-        private bool ConvertValueToIntegratedSecurity(Dictionary<string, string> parsetable)
-        {
-            return parsetable.TryGetValue(KEY.Integrated_Security, out string value) && value != null ?
-                ConvertValueToIntegratedSecurityInternal(value) :
-                false;
-        }
-
-        private static int ConvertValueToInt32(Dictionary<string, string> parsetable, string keyName, int defaultValue)
-        {
-            return parsetable.TryGetValue(keyName, out string value) && value != null ?
-                ConvertToInt32Internal(keyName, value) :
-                defaultValue;
-        }
-
-        private static int ConvertToInt32Internal(string keyname, string stringValue)
-        {
-            try
-            {
-                return int.Parse(stringValue, NumberStyles.Integer, CultureInfo.InvariantCulture);
-            }
-            catch (FormatException e)
-            {
-                throw ADP.InvalidConnectionOptionValue(keyname, e);
-            }
-            catch (OverflowException e)
-            {
-                throw ADP.InvalidConnectionOptionValue(keyname, e);
-            }
-        }
-
-        private static string ConvertValueToString(Dictionary<string, string> parsetable, string keyName, string defaultValue)
-        {
-            return parsetable.TryGetValue(keyName, out string value) && value != null ? value : defaultValue;
         }
 
         private static bool ContainsKey(Dictionary<string, string> parsetable, string keyword)

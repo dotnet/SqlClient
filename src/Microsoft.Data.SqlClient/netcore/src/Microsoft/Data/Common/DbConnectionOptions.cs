@@ -27,6 +27,16 @@ namespace Microsoft.Data.Common
             _usersConnectionString = connectionOptions._usersConnectionString;            
         }
 
+        protected static bool TryGetParsetableValue(Dictionary<string, string> parsetable, string key, out string value) => parsetable.TryGetValue(key, out value);
+
+        // same as Boolean, but with SSPI thrown in as valid yes
+        protected bool ConvertValueToIntegratedSecurity(Dictionary<string, string> parsetable)
+        {
+	        return parsetable.TryGetValue(KEY.Integrated_Security, out string value) && value != null ?
+		        ConvertValueToIntegratedSecurityInternal(value) :
+		        false;
+        }
+
         internal bool ConvertValueToIntegratedSecurityInternal(string stringValue)
         {
             if (CompareInsensitiveInvariant(stringValue, "sspi") || CompareInsensitiveInvariant(stringValue, "true") || CompareInsensitiveInvariant(stringValue, "yes"))
@@ -45,6 +55,35 @@ namespace Microsoft.Data.Common
                     throw ADP.InvalidConnectionOptionValue(KEY.Integrated_Security);
                 }
             }
+        }
+
+        public int ConvertValueToInt32(Dictionary<string, string> parsetable, string keyName, int defaultValue)
+        {
+	        string value;
+	        return parsetable.TryGetValue(keyName, out value) && value != null ?
+		        ConvertToInt32Internal(keyName, value) :
+		        defaultValue;
+        }
+
+        internal static int ConvertToInt32Internal(string keyname, string stringValue)
+        {
+	        try
+	        {
+		        return int.Parse(stringValue, System.Globalization.NumberStyles.Integer, CultureInfo.InvariantCulture);
+	        }
+	        catch (FormatException e)
+	        {
+		        throw ADP.InvalidConnectionOptionValue(keyname, e);
+	        }
+	        catch (OverflowException e)
+	        {
+		        throw ADP.InvalidConnectionOptionValue(keyname, e);
+	        }
+        }
+
+        public string ConvertValueToString(Dictionary<string, string> parsetable, string keyName, string defaultValue)
+        {
+            return parsetable.TryGetValue(keyName, out string value) && value != null ? value : defaultValue;
         }
 
         protected internal virtual string Expand()
