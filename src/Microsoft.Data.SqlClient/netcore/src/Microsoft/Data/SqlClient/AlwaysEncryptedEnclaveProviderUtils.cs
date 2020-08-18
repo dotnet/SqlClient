@@ -62,7 +62,7 @@ namespace Microsoft.Data.SqlClient
         //     BCRYPT_RSAKEY_BLOB   header
         //     byte[ExponentSize]   publicExponent      
         //     byte[ModulusSize]    modulus             
-        private readonly struct RSAPublicKeyBlob
+        private sealed class RSAPublicKeyBlob
         {
             // Size of an RSA public key blob
             internal static readonly int Size = 539;
@@ -76,26 +76,6 @@ namespace Microsoft.Data.SqlClient
             internal static readonly int ModulusOffset = HeaderSize;
         }
 
-        // The ECC public key blob is structured as follows:
-        //     BCRYPT_ECCKEY_BLOB   header
-        //     byte[KeySize]        X     
-        //     byte[KeySize]        Y         
-        private readonly struct ECCPublicKeyBlob
-        {
-            // Size of an ECC public key blob
-            internal static readonly int Size = 104;
-            // Size of the BCRYPT_ECCKEY_BLOB header
-            internal static readonly int HeaderSize = 8;
-            // Size of each coordinate
-            internal static readonly int KeySize = (Size - HeaderSize) / 2;
-        }
-
-        // Magic numbers identifying blob types
-        private readonly struct KeyBlobMagicNumber
-        {
-            internal static readonly byte[] ECDHPublicP384 = new byte[] { 0x45, 0x43, 0x4b, 0x33 };
-        }
-
         // Extracts the public key's modulus and exponent from an RSA public key blob
         // and returns an RSAParameters object
         internal static RSAParameters RSAPublicKeyBlobToParams(byte[] keyBlob)
@@ -107,6 +87,26 @@ namespace Microsoft.Data.SqlClient
                 Exponent = keyBlob.Skip(RSAPublicKeyBlob.ExponentOffset).Take(RSAPublicKeyBlob.ExponentSize).ToArray(),
                 Modulus = keyBlob.Skip(RSAPublicKeyBlob.ModulusOffset).Take(RSAPublicKeyBlob.ModulusSize).ToArray()
             };
+        }
+
+        // The ECC public key blob is structured as follows:
+        //     BCRYPT_ECCKEY_BLOB   header
+        //     byte[KeySize]        X     
+        //     byte[KeySize]        Y         
+        private sealed class ECCPublicKeyBlob
+        {
+            // Size of an ECC public key blob
+            internal static readonly int Size = 104;
+            // Size of the BCRYPT_ECCKEY_BLOB header
+            internal static readonly int HeaderSize = 8;
+            // Size of each coordinate
+            internal static readonly int KeySize = (Size - HeaderSize) / 2;
+        }
+
+        // Magic numbers identifying blob types
+        private sealed class KeyBlobMagicNumber
+        {
+            internal static readonly byte[] ECDHPublicP384 = new byte[] { 0x45, 0x43, 0x4b, 0x33 };
         }
 
         // Extracts the public key's X and Y coordinates from an ECC public key blob
