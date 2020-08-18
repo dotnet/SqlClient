@@ -62,7 +62,7 @@ namespace Microsoft.Data.SqlClient
         //     BCRYPT_RSAKEY_BLOB   header
         //     byte[ExponentSize]   publicExponent      
         //     byte[ModulusSize]    modulus             
-        private sealed class RSAPublicKeyBlob
+        private readonly struct RSAPublicKeyBlob
         {
             // Size of an RSA public key blob
             internal static readonly int Size = 539;
@@ -93,7 +93,7 @@ namespace Microsoft.Data.SqlClient
         //     BCRYPT_ECCKEY_BLOB   header
         //     byte[KeySize]        X     
         //     byte[KeySize]        Y         
-        private sealed class ECCPublicKeyBlob
+        private readonly struct ECCPublicKeyBlob
         {
             // Size of an ECC public key blob
             internal static readonly int Size = 104;
@@ -104,7 +104,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Magic numbers identifying blob types
-        private sealed class KeyBlobMagicNumber
+        private readonly struct KeyBlobMagicNumber
         {
             internal static readonly byte[] ECDHPublicP384 = new byte[] { 0x45, 0x43, 0x4b, 0x33 };
         }
