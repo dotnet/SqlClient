@@ -104,6 +104,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Magic numbers identifying blob types
+        // https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-wcce/cba27df5-4880-4f95-a879-783f8657e53b
         private readonly struct KeyBlobMagicNumber
         {
             internal static readonly byte[] ECDHPublicP384 = new byte[] { 0x45, 0x43, 0x4b, 0x33 };
