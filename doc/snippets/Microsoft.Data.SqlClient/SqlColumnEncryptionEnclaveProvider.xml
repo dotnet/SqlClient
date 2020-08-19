@@ -19,7 +19,7 @@ the enclave attestation protocol as well as the logic for creating and caching e
         <CreateEnclaveSession>
             <param name="enclaveAttestationInfo">The information the provider uses to attest the enclave and generate a symmetric key for the session. The format of this information is specific to the enclave attestation protocol.</param>
             <param name="clientDiffieHellmanKey">A Diffie-Hellman algorithm object that encapsulates a client-side key pair.</param>
-            <param name="enclaveSessionParameters">The set of parameters required for enclave session.</param>
+            <param name="enclaveSessionParameters">The set of parameters required for an enclave session.</param>
             <param name="customData">The set of extra data needed for attestating the enclave.</param>
             <param name="customDataLength">The length of the extra data needed for attestating the enclave.</param>
             <param name="sqlEnclaveSession">The requested enclave session or <see langword="null" /> if the provider doesn't implement session caching.</param>
