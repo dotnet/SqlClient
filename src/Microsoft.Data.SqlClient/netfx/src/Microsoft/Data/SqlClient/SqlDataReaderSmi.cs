@@ -1324,7 +1324,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         for (int i = 0; i < md.Length; i++)
                         {
-                            SqlClientEventSource.Log.TraceEvent("<sc.SqlDataReaderSmi.ReaderEventSink.MetaDataAvailable|ADV> {0}, metaData[{1}] is {2}{3}", reader.ObjectID, i, md[i].GetType(), md[i].TraceString());
+                            SqlClientEventSource.Log.TraceEventExcluded("<sc.SqlDataReaderSmi.ReaderEventSink.MetaDataAvailable|ADV> {0}, metaData[{1}] is {2}{3}", reader.ObjectID, i, md[i].GetType(), md[i].TraceString());
                         }
                     }
                 }

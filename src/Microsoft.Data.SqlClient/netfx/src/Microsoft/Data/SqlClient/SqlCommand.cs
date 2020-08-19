@@ -368,7 +368,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         for (int i = 0; i < metaData.Length; i++)
                         {
-                            SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlCommand.CommandEventSink.ParametersAvailable|ADV> {0}, metaData[{1}] is {2}{3}", _command.ObjectID, i, metaData[i].GetType(), metaData[i].TraceString());
+                            SqlClientEventSource.Log.AdvancedTraceEventExcluded("<sc.SqlCommand.CommandEventSink.ParametersAvailable|ADV> {0}, metaData[{1}] is {2}{3}", _command.ObjectID, i, metaData[i].GetType(), metaData[i].TraceString());
                         }
                     }
                 }
@@ -381,7 +381,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (SqlClientEventSource.Log.IsAdvancedTraceOn())
                 {
-                    SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlCommand.CommandEventSink.ParameterAvailable|ADV> {0}, metaData[{1}] is {2}{ 3}", _command.ObjectID, ordinal, metaData.GetType(), metaData.TraceString());
+                    SqlClientEventSource.Log.AdvancedTraceEventExcluded("<sc.SqlCommand.CommandEventSink.ParameterAvailable|ADV> {0}, metaData[{1}] is {2}{ 3}", _command.ObjectID, ordinal, metaData.GetType(), metaData.TraceString());
                 }
                 Debug.Assert(SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.KatmaiVersion);
                 _command.OnParameterAvailableSmi(metaData, parameterValues, ordinal);

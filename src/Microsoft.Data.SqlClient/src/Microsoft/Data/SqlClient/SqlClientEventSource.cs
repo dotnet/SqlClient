@@ -285,6 +285,11 @@ namespace Microsoft.Data.SqlClient
                 Trace(string.Format(message, args0?.ToString() ?? "Null"));
             }
         }
+        [NonEvent]
+        internal void TraceEventExcluded<T0, T1>(string message, T0 args0, T1 args1)
+        {
+            Trace(string.Format(message, args0?.ToString() ?? "Null", args1?.ToString() ?? "Null"));
+        }
 
         [NonEvent]
         internal void TraceEvent<T0, T1>(string message, T0 args0, T1 args1)
@@ -305,12 +310,24 @@ namespace Microsoft.Data.SqlClient
         }
 
         [NonEvent]
+        internal void TraceEventExcluded<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
+        {
+            Trace(string.Format(message, args0?.ToString(), args1?.ToString(), args2?.ToString()));
+        }
+
+        [NonEvent]
         internal void TraceEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
         {
             if (Log.IsTraceEnabled())
             {
                 Trace(string.Format(message, args0?.ToString(), args1?.ToString(), args2?.ToString(), args3?.ToString()));
             }
+        }
+
+        [NonEvent]
+        internal void TraceEventExcluded<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
+        {
+            Trace(string.Format(message, args0?.ToString(), args1?.ToString(), args2?.ToString(), args3?.ToString()));
         }
 
         [NonEvent]
@@ -410,6 +427,12 @@ namespace Microsoft.Data.SqlClient
             {
                 NotificationTrace(string.Format(message, args0?.ToString(), args1?.ToString()));
             }
+        }
+
+        [NonEvent]
+        internal void NotificationTraceEventExcluded<T0, T1>(string message, T0 args0, T1 args1)
+        {
+            NotificationTrace(string.Format(message, args0?.ToString(), args1?.ToString()));
         }
 
         [NonEvent]
@@ -560,6 +583,13 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+
+        [NonEvent]
+        internal void AdvancedTraceEventExcluded<T0>(string message, T0 args0)
+        {
+            AdvancedTrace(string.Format(message, args0?.ToString()));
+        }
+
         [NonEvent]
         internal void AdvancedTraceEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
@@ -567,6 +597,12 @@ namespace Microsoft.Data.SqlClient
             {
                 AdvancedTrace(string.Format(message, args0?.ToString(), args1?.ToString()));
             }
+        }
+
+        [NonEvent]
+        internal void AdvancedTraceEventExcluded<T0, T1>(string message, T0 args0, T1 args1)
+        {
+            AdvancedTrace(string.Format(message, args0?.ToString(), args1?.ToString()));
         }
 
         [NonEvent]
@@ -579,12 +615,24 @@ namespace Microsoft.Data.SqlClient
         }
 
         [NonEvent]
+        internal void AdvancedTraceEventExcluded<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
+        {
+            AdvancedTrace(string.Format(message, args0?.ToString(), args1?.ToString(), args2?.ToString()));
+        }
+
+        [NonEvent]
         internal void AdvancedTraceEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
         {
             if (Log.IsAdvancedTraceOn())
             {
                 AdvancedTrace(string.Format(message, args0?.ToString(), args1?.ToString(), args2?.ToString(), args3?.ToString()));
             }
+        }
+
+        [NonEvent]
+        internal void AdvancedTraceEventExcluded<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
+        {
+            AdvancedTrace(string.Format(message, args0?.ToString(), args1?.ToString(), args2?.ToString(), args3?.ToString()));
         }
 
         [NonEvent]
@@ -674,12 +722,9 @@ namespace Microsoft.Data.SqlClient
 
         #region State Dump
         [NonEvent]
-        internal void StateDumpEvent<T0, T1>(string message, T0 args0, T1 args1)
+        internal void StateDumpEventExcluded<T0, T1>(string message, T0 args0, T1 args1)
         {
-            if (Log.IsStateDumpEnabled())
-            {
-                StateDump(string.Format(message, args0, args1));
-            }
+            StateDump(string.Format(message, args0, args1));
         }
         #endregion
 

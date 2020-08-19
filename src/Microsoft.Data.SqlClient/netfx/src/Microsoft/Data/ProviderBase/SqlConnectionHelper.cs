@@ -133,7 +133,7 @@ namespace Microsoft.Data.SqlClient
 
             if (SqlClientEventSource.Log.IsTraceEnabled())
             {
-                SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionHelper.ConnectionString_Set|API> {0}, '{1}'", ObjectID, (null != connectionOptions) ? connectionOptions.UsersConnectionStringForTrace() : "");
+                SqlClientEventSource.Log.TraceEventExcluded("<prov.DbConnectionHelper.ConnectionString_Set|API> {0}, '{1}'", ObjectID, (null != connectionOptions) ? connectionOptions.UsersConnectionStringForTrace() : "");
             }
         }
 

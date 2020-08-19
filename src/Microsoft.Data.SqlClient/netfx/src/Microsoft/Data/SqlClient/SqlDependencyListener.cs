@@ -576,7 +576,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                             {
                                 for (int i = 0; i < reader.FieldCount; i++)
                                 {
-                                    SqlClientEventSource.Log.NotificationTraceEvent("<sc.SqlConnectionContainer.ProcessNotificationResults|DEP> column: {0}, value: {1}", reader.GetName(i), reader.GetValue(i));
+                                    SqlClientEventSource.Log.NotificationTraceEventExcluded("<sc.SqlConnectionContainer.ProcessNotificationResults|DEP> column: {0}, value: {1}", reader.GetName(i), reader.GetValue(i));
                                 }
                             }
 #endif

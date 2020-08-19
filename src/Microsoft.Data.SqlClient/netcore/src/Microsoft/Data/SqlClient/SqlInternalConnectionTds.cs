@@ -2143,7 +2143,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (SqlClientEventSource.Log.IsTraceEnabled())
                         {
-                            SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.OnFedAuthInfo> {0}, " +
+                            SqlClientEventSource.Log.TraceEventExcluded("<sc.SqlInternalConnectionTds.OnFedAuthInfo> {0}, " +
                                "The expiration time is less than 10 mins, so trying to get new access token regardless of if an other thread is also trying to update it." +
                                "The expiration time is {1}. Current Time is {2}.", ObjectID, dbConnectionPoolAuthenticationContext.ExpirationTime.ToLongTimeString(), DateTime.UtcNow.ToLongTimeString());
                         }
@@ -2168,7 +2168,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (SqlClientEventSource.Log.IsAdvancedTraceOn())
                         {
-                            SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFedAuthInfo|ADV> {0}, " +
+                            SqlClientEventSource.Log.AdvancedTraceEventExcluded("<sc.SqlInternalConnectionTds.OnFedAuthInfo|ADV> {0}, " +
                                 "The authentication context needs a refresh.The expiration time is {1}. " +
                                 "Current Time is {2}.", ObjectID, dbConnectionPoolAuthenticationContext.ExpirationTime.ToLongTimeString(), DateTime.UtcNow.ToLongTimeString());
                         }
@@ -2251,7 +2251,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (SqlClientEventSource.Log.IsTraceEnabled())
                     {
-                        SqlClientEventSource.Log.TraceEvent("<sc.SqlInternalConnectionTds.TryGetFedAuthTokenLocked> {0}, " +
+                        SqlClientEventSource.Log.TraceEventExcluded("<sc.SqlInternalConnectionTds.TryGetFedAuthTokenLocked> {0}, " +
                                             "Acquired the lock to update the authentication context.The expiration time is {1}. " +
                                             "Current Time is {2}.", ObjectID, dbConnectionPoolAuthenticationContext.ExpirationTime.ToLongTimeString(), DateTime.UtcNow.ToLongTimeString());
                     }

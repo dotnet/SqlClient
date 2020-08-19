@@ -1422,7 +1422,7 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.AdvancedTraceEvent("<sc.TdsParser.Deactivate|ADV> {0} deactivating", ObjectID);
             if (SqlClientEventSource.Log.IsStateDumpEnabled())
             {
-                SqlClientEventSource.Log.StateDumpEvent("<sc.TdsParser.Deactivate|STATE> {0}, {1}", ObjectID, TraceString());
+                SqlClientEventSource.Log.StateDumpEventExcluded("<sc.TdsParser.Deactivate|STATE> {0}, {1}", ObjectID, TraceString());
             }
 
             if (MARSOn)
@@ -4145,7 +4145,7 @@ namespace Microsoft.Data.SqlClient
                 bool successfulRead = stateObj.TryReadByteArray(tokenData, 0, tokenLen, out totalRead);
                 if (SqlClientEventSource.Log.IsAdvancedTraceOn())
                 {
-                    SqlClientEventSource.Log.AdvancedTraceEvent("<sc.TdsParser.TryProcessFedAuthInfo|ADV> Read rest of FEDAUTHINFO token stream: {0}", BitConverter.ToString(tokenData, 0, totalRead));
+                    SqlClientEventSource.Log.AdvancedTraceEventExcluded("<sc.TdsParser.TryProcessFedAuthInfo|ADV> Read rest of FEDAUTHINFO token stream: {0}", BitConverter.ToString(tokenData, 0, totalRead));
                 }
                 if (!successfulRead || totalRead != tokenLen)
                 {
@@ -4172,7 +4172,7 @@ namespace Microsoft.Data.SqlClient
                     uint dataOffset = BitConverter.ToUInt32(tokenData, checked((int)(currentOptionOffset + 5)));
                     if (SqlClientEventSource.Log.IsAdvancedTraceOn())
                     {
-                        SqlClientEventSource.Log.AdvancedTraceEvent("<sc.TdsParser.TryProcessFedAuthInfo> FedAuthInfoOpt: ID={0}, DataLen={1}, Offset={2}", id, dataLen.ToString(CultureInfo.InvariantCulture), dataOffset.ToString(CultureInfo.InvariantCulture));
+                        SqlClientEventSource.Log.AdvancedTraceEventExcluded("<sc.TdsParser.TryProcessFedAuthInfo> FedAuthInfoOpt: ID={0}, DataLen={1}, Offset={2}", id, dataLen.ToString(CultureInfo.InvariantCulture), dataOffset.ToString(CultureInfo.InvariantCulture));
                     }
 
                     // offset is measured from optCount, so subtract to make offset measured
