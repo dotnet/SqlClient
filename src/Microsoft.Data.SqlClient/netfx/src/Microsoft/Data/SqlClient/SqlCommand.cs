@@ -2714,7 +2714,8 @@ namespace Microsoft.Data.SqlClient
 
                                 if (ShouldUseEnclaveBasedWorkflow && this.enclavePackage != null)
                                 {
-                                    EnclaveDelegate.Instance.InvalidateEnclaveSession(this._activeConnection.AttestationProtocol, this._activeConnection.Parser.EnclaveType, this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this.enclavePackage.EnclaveSession);
+                                    EnclaveSessionParameters enclaveSessionParameters= new EnclaveSessionParameters(this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this._activeConnection.Database);
+                                    EnclaveDelegate.Instance.InvalidateEnclaveSession(this._activeConnection.AttestationProtocol, this._activeConnection.Parser.EnclaveType, enclaveSessionParameters, this.enclavePackage.EnclaveSession);
                                 }
 
                                 try
@@ -4255,13 +4256,14 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlConnectionAttestationProtocol attestationProtocol = this._activeConnection.AttestationProtocol;
                 string enclaveType = this._activeConnection.Parser.EnclaveType;
-                string dataSource = this._activeConnection.DataSource;
-                string enclaveAttestationUrl = this._activeConnection.EnclaveAttestationUrl;
+
+                EnclaveSessionParameters enclaveSessionParameters= new EnclaveSessionParameters(this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this._activeConnection.Database);
+                
                 SqlEnclaveSession sqlEnclaveSession = null;
-                EnclaveDelegate.Instance.GetEnclaveSession(attestationProtocol, enclaveType, dataSource, enclaveAttestationUrl, true, out sqlEnclaveSession, out customData, out customDataLength);
+                EnclaveDelegate.Instance.GetEnclaveSession(attestationProtocol, enclaveType, enclaveSessionParameters, true, out sqlEnclaveSession, out customData, out customDataLength);
                 if (sqlEnclaveSession == null)
                 {
-                    this.enclaveAttestationParameters = EnclaveDelegate.Instance.GetAttestationParameters(attestationProtocol, enclaveType, enclaveAttestationUrl, customData, customDataLength);
+                    this.enclaveAttestationParameters = EnclaveDelegate.Instance.GetAttestationParameters(attestationProtocol, enclaveType, enclaveSessionParameters.AttestationUrl, customData, customDataLength);
                     serializedAttestatationParameters = EnclaveDelegate.Instance.GetSerializedAttestationParameters(this.enclaveAttestationParameters, enclaveType);
                 }
             }
@@ -4792,10 +4794,10 @@ namespace Microsoft.Data.SqlClient
 
                         SqlConnectionAttestationProtocol attestationProtocol = this._activeConnection.AttestationProtocol;
                         string enclaveType = this._activeConnection.Parser.EnclaveType;
-                        string dataSource = this._activeConnection.DataSource;
-                        string enclaveAttestationUrl = this._activeConnection.EnclaveAttestationUrl;
+                        
+                        EnclaveSessionParameters enclaveSessionParameters= new EnclaveSessionParameters(this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this._activeConnection.Database);
 
-                        EnclaveDelegate.Instance.CreateEnclaveSession(attestationProtocol, enclaveType, dataSource, enclaveAttestationUrl, attestationInfo, enclaveAttestationParameters, customData, customDataLength);
+                        EnclaveDelegate.Instance.CreateEnclaveSession(attestationProtocol, enclaveType, enclaveSessionParameters, attestationInfo, enclaveAttestationParameters, customData, customDataLength);
                         enclaveAttestationParameters = null;
                         attestationInfoRead = true;
                     }
@@ -4929,8 +4931,9 @@ namespace Microsoft.Data.SqlClient
 
                             if (ShouldUseEnclaveBasedWorkflow && this.enclavePackage != null)
                             {
+                                EnclaveSessionParameters enclaveSessionParameters= new EnclaveSessionParameters(this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this._activeConnection.Database);
                                 EnclaveDelegate.Instance.InvalidateEnclaveSession(this._activeConnection.AttestationProtocol, this._activeConnection.Parser.EnclaveType,
-                                    this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this.enclavePackage.EnclaveSession);
+                                    enclaveSessionParameters, this.enclavePackage.EnclaveSession);
                             }
 
                             return RunExecuteReader(cmdBehavior, runBehavior, returnStream, method, null, TdsParserStaticMethods.GetRemainingTimeout(timeout, firstAttemptStart), out task, out usedCache, async, inRetry: true);
@@ -4972,8 +4975,9 @@ namespace Microsoft.Data.SqlClient
 
                                 if (ShouldUseEnclaveBasedWorkflow && this.enclavePackage != null)
                                 {
+                                    EnclaveSessionParameters enclaveSessionParameters= new EnclaveSessionParameters(this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this._activeConnection.Database);
                                     EnclaveDelegate.Instance.InvalidateEnclaveSession(this._activeConnection.AttestationProtocol, this._activeConnection.Parser.EnclaveType,
-                                        this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this.enclavePackage.EnclaveSession);
+                                        enclaveSessionParameters, this.enclavePackage.EnclaveSession);
                                 }
 
                                 return RunExecuteReader(cmdBehavior, runBehavior, returnStream, method, null, TdsParserStaticMethods.GetRemainingTimeout(timeout, firstAttemptStart), out task, out usedCache, async, inRetry: true);
@@ -5116,9 +5120,9 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
+                EnclaveSessionParameters enclaveSessionParameters= new EnclaveSessionParameters(this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this._activeConnection.Database);
                 this.enclavePackage = EnclaveDelegate.Instance.GenerateEnclavePackage(attestationProtocol, keysToBeSentToEnclave,
-                    this.CommandText, enclaveType, this._activeConnection.DataSource,
-                    this._activeConnection.EnclaveAttestationUrl);
+                    this.CommandText, enclaveType, enclaveSessionParameters);
             }
             catch (EnclaveDelegate.RetryableEnclaveQueryExecutionException)
             {
