@@ -17,7 +17,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
 
             // For keys which allow enclave computation
             byte[] cmkSign = akvProvider.SignColumnMasterKeyMetadata(akvUrl, allowEnclaveComputations);
-            cmkSignStr = string.Concat("0x", BitConverter.ToString(cmkSign).Replace("-", string.Empty));
+            CmkSignStr = string.Concat("0x", BitConverter.ToString(cmkSign).Replace("-", string.Empty));
         }
     }
 }
