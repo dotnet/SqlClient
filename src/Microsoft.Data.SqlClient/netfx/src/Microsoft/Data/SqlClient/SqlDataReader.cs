@@ -1679,12 +1679,17 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (null != this.MetaData)
                     {
+
                         _metaData.schemaTable = BuildSchemaTable();
                         Debug.Assert(null != _metaData.schemaTable, "No schema information yet!");
                         // filter table?
                     }
                 }
-                return _metaData?.schemaTable ?? new DataTable();
+                if (null != _metaData)
+                {
+                    return _metaData.schemaTable;
+                }
+                return null;
             }
             finally
             {
