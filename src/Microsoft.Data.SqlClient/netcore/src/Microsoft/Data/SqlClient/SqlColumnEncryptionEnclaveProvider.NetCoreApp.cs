@@ -14,13 +14,12 @@ namespace Microsoft.Data.SqlClient
         /// Performs enclave attestation, generates a symmetric key for the session, creates a an enclave session and stores the session information in the cache.
         /// <param name="enclaveAttestationInfo">The information the provider uses to attest the enclave and generate a symmetric key for the session. The format of this information is specific to the enclave attestation protocol.</param>
         /// <param name="clientDiffieHellmanKey">A Diffie-Hellman algorithm object encapsulating a client-side key pair.</param>
-        /// <param name="attestationUrl">The endpoint of an attestation service for attesting the enclave.</param>
-        /// <param name="servername">The name of the SQL Server instance containing the enclave.</param>
+        /// <param name="enclaveSessionParameters">The set of parameters required for enclave session.</param>
         /// <param name="customData">The set of extra data needed for attestating the enclave.</param>
         /// <param name="customDataLength">The length of the extra data needed for attestating the enclave.</param>
         /// <param name="sqlEnclaveSession">The requested enclave session or null if the provider does not implement session caching.</param>
         /// <param name="counter">A counter that the enclave provider is expected to increment each time SqlClient retrieves the session from the cache. The purpose of this field is to prevent replay attacks.</param>
-        internal abstract void CreateEnclaveSession(byte[] enclaveAttestationInfo, ECDiffieHellmanCng clientDiffieHellmanKey, string attestationUrl, string servername, byte[] customData, int customDataLength,
+        internal abstract void CreateEnclaveSession(byte[] enclaveAttestationInfo, ECDiffieHellmanCng clientDiffieHellmanKey, EnclaveSessionParameters enclaveSessionParameters, byte[] customData, int customDataLength,
             out SqlEnclaveSession sqlEnclaveSession, out long counter);
     }
 }
