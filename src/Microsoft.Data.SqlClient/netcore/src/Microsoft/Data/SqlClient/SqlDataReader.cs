@@ -1454,7 +1454,7 @@ namespace Microsoft.Data.SqlClient
                         Debug.Assert(null != _metaData.schemaTable, "No schema information yet!");
                     }
                 }
-                return _metaData?.schemaTable ?? new DataTable();
+                return _metaData?.schemaTable;
             }
             finally
             {
