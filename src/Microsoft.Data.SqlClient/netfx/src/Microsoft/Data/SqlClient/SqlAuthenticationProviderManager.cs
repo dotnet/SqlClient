@@ -28,7 +28,11 @@ namespace Microsoft.Data.SqlClient
             SqlAuthenticationProviderConfigurationSection configurationSection = null;
             try
             {
-                configurationSection = (SqlAuthenticationProviderConfigurationSection)ConfigurationManager.GetSection(SqlAuthenticationProviderConfigurationSection.Name);
+                var section = ConfigurationManager.GetSection(SqlAuthenticationProviderConfigurationSection.Name);
+                if (((ConfigurationSection)section).GetType().FullName.Contains("Microsoft.Data.SqlClient.SqlAuthenticationProviderConfigurationSection"))
+                {
+                    configurationSection = (SqlAuthenticationProviderConfigurationSection)section;
+                }
             }
             catch (ConfigurationErrorsException e)
             {
