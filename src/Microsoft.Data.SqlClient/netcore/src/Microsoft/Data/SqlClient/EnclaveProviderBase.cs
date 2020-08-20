@@ -87,13 +87,13 @@ namespace Microsoft.Data.SqlClient
         protected static readonly MemoryCache ThreadRetryCache = new MemoryCache("ThreadRetryCache");
         #endregion
 
-        #region Public methods
+        #region protected methods
         // Helper method to get the enclave session from the cache if present
-        protected void GetEnclaveSessionHelper(string servername, string attestationUrl, bool shouldGenerateNonce, out SqlEnclaveSession sqlEnclaveSession, out long counter, out byte[] customData, out int customDataLength)
+        protected void GetEnclaveSessionHelper(EnclaveSessionParameters enclaveSessionParameters, bool shouldGenerateNonce, out SqlEnclaveSession sqlEnclaveSession, out long counter, out byte[] customData, out int customDataLength)
         {
             customData = null;
             customDataLength = 0;
-            sqlEnclaveSession = SessionCache.GetEnclaveSession(servername, attestationUrl, out counter);
+            sqlEnclaveSession = SessionCache.GetEnclaveSession(enclaveSessionParameters, out counter);
 
             if (sqlEnclaveSession == null)
             {
@@ -128,7 +128,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     // While the current thread is waiting for event to be signaled and in the meanwhile we already completed the attestation on different thread
                     // then we need to signal the event here
-                    sqlEnclaveSession = SessionCache.GetEnclaveSession(servername, attestationUrl, out counter);
+                    sqlEnclaveSession = SessionCache.GetEnclaveSession(enclaveSessionParameters, out counter);
                     if (sqlEnclaveSession != null && !sameThreadRetry)
                     {
                         lock (lockUpdateSessionLock)
@@ -194,21 +194,21 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Helper method to remove the enclave session from the cache
-        protected void InvalidateEnclaveSessionHelper(string servername, string attestationUrl, SqlEnclaveSession enclaveSessionToInvalidate)
+        protected void InvalidateEnclaveSessionHelper(EnclaveSessionParameters enclaveSessionParameters, SqlEnclaveSession enclaveSessionToInvalidate)
         {
-            SessionCache.InvalidateSession(servername, attestationUrl, enclaveSessionToInvalidate);
+            SessionCache.InvalidateSession(enclaveSessionParameters, enclaveSessionToInvalidate);
         }
 
         // Helper method for getting the enclave session from the session cache
-        protected SqlEnclaveSession GetEnclaveSessionFromCache(string attestationUrl, string servername, out long counter)
+        protected SqlEnclaveSession GetEnclaveSessionFromCache(EnclaveSessionParameters enclaveSessionParameters, out long counter)
         {
-            return SessionCache.GetEnclaveSession(servername, attestationUrl, out counter);
+            return SessionCache.GetEnclaveSession(enclaveSessionParameters, out counter);
         }
 
         // Helper method for adding the enclave session to the session cache
-        protected SqlEnclaveSession AddEnclaveSessionToCache(string attestationUrl, string servername, byte[] sharedSecret, long sessionId, out long counter)
+        protected SqlEnclaveSession AddEnclaveSessionToCache(EnclaveSessionParameters enclaveSessionParameters, byte[] sharedSecret, long sessionId, out long counter)
         {
-            return SessionCache.CreateSession(attestationUrl, servername, sharedSecret, sessionId, out counter);
+            return SessionCache.CreateSession(enclaveSessionParameters, sharedSecret, sessionId, out counter);
         }
     }
     #endregion
