@@ -220,7 +220,7 @@ namespace Microsoft.Data.SqlClient
     /// </summary>
     internal class SqlAuthenticationProviderConfigurationSection : ConfigurationSection
     {
-        public const string Name = "SqlClientAuthenticationProviders";
+        public const string Name = "SqlAuthenticationProviders";
 
         /// <summary>
         /// User-defined auth providers.
