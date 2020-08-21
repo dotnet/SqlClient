@@ -30,15 +30,15 @@ namespace Microsoft.Data.SqlClient
         // Gets the information that SqlClient subsequently uses to initiate the process of attesting the enclave and to establish a secure session with the enclave.
         internal override SqlEnclaveAttestationParameters GetAttestationParameters(string attestationUrl, byte[] customData, int customDataLength)
         {
-            ECDiffieHellmanCng clientDHKey = new ECDiffieHellmanCng(384);
-            clientDHKey.KeyDerivationFunction = ECDiffieHellmanKeyDerivationFunction.Hash;
-            clientDHKey.HashAlgorithm = CngAlgorithm.Sha256;
+            // The key derivation function and hash algorithm name are specified when key derivation is performed
+            ECDiffieHellman clientDHKey = ECDiffieHellman.Create();
+            clientDHKey.KeySize = 384;
 
             return new SqlEnclaveAttestationParameters(2, new byte[] { }, clientDHKey);
         }
 
         // When overridden in a derived class, performs enclave attestation, generates a symmetric key for the session, creates a an enclave session and stores the session information in the cache.
-        internal override void CreateEnclaveSession(byte[] attestationInfo, ECDiffieHellmanCng clientDHKey, EnclaveSessionParameters enclaveSessionParameters, byte[] customData, int customDataLength, out SqlEnclaveSession sqlEnclaveSession, out long counter)
+        internal override void CreateEnclaveSession(byte[] attestationInfo, ECDiffieHellman clientDHKey, EnclaveSessionParameters enclaveSessionParameters, byte[] customData, int customDataLength, out SqlEnclaveSession sqlEnclaveSession, out long counter)
         {
             ////for simulator: enclave does not send public key, and sends an empty attestation info
             //// The only non-trivial content it sends is the session setup info (DH pubkey of enclave)
@@ -84,8 +84,9 @@ namespace Microsoft.Data.SqlClient
                         Buffer.BlockCopy(attestationInfo, attestationInfoOffset, trustedModuleDHPublicKeySignature, 0,
                             checked((int)sizeOfTrustedModuleDHPublicKeySignatureBuffer));
 
-                        CngKey k = CngKey.Import(trustedModuleDHPublicKey, CngKeyBlobFormat.EccPublicBlob);
-                        byte[] sharedSecret = clientDHKey.DeriveKeyMaterial(k);
+                        ECParameters ecParams = KeyConverter.ECCPublicKeyBlobToParams(trustedModuleDHPublicKey);
+                        ECDiffieHellman enclaveDHKey = ECDiffieHellman.Create(ecParams);
+                        byte[] sharedSecret = clientDHKey.DeriveKeyFromHash(enclaveDHKey.PublicKey, HashAlgorithmName.SHA256);
                         long sessionId = BitConverter.ToInt64(enclaveSessionHandle, 0);
                         sqlEnclaveSession = AddEnclaveSessionToCache(enclaveSessionParameters, sharedSecret, sessionId, out counter);
                     }

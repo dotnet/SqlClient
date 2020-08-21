@@ -15,6 +15,7 @@
     <Compile Include="AlwaysEncryptedTests\SqlColumnEncryptionCertificateStoreProviderShould.cs" />
     <Compile Include="AlwaysEncryptedTests\SqlColumnEncryptionCngProviderShould.cs" />
     <Compile Include="AlwaysEncryptedTests\SqlColumnEncryptionCspProviderShould.cs" />
+    <Compile Include="SqlConnectionStringBuilderTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AlwaysEncryptedTests\ConnectionStringBuilderShould.cs" />
@@ -59,7 +60,6 @@
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.1'">
     <PackageReference Include="System.Data.Odbc" Version="$(SystemDataOdbcVersion21)" />
-    <Compile Include="SqlConnectionStringBuilderTest.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' != 'netcoreapp2.1' AND '$(TargetGroup)' == 'netcoreapp'">
     <PackageReference Include="System.Data.Odbc" Version="$(SystemDataOdbcVersion)" />

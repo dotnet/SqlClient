@@ -356,7 +356,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (!rsa.VerifyData(enclaveDHInfo.PublicKey, enclaveDHInfo.PublicKeySignature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1))
                 {
-								  	throw new ArgumentException(Strings.GetSharedSecretFailed);
+                    throw new ArgumentException(Strings.GetSharedSecretFailed);
                 }
             }
 
