@@ -114,7 +114,6 @@ namespace Microsoft.Data.SqlClient
         public SqlConnection(string connectionString) : this()
         {
             ConnectionString = connectionString;    // setting connection string first so that ConnectionOption is available
-            CacheConnectionStringProperties();
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctorConnectionStringCredential/*' />
@@ -157,7 +156,6 @@ namespace Microsoft.Data.SqlClient
             // else
             //      credential == null:  we should not set "Credential" as this will do additional validation check and
             //      checking pool groups which is not necessary. All necessary operation is already done by calling "ConnectionString = connectionString"
-            CacheConnectionStringProperties();
         }
 
         private SqlConnection(SqlConnection connection)
