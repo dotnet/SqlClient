@@ -309,7 +309,7 @@ namespace Microsoft.Data.SqlClient
                 Trace(string.Format(message, args0?.ToString() ?? NullStr));
             }
         }
-        
+
         [NonEvent]
         internal void TryTraceEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
@@ -365,7 +365,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsScopeEnabled())
             {
-                return ScopeEnter(string.Format(message, args0));
+                return ScopeEnter(string.Format(message, args0?.ToString() ?? NullStr));
             }
             return 0;
         }
@@ -505,7 +505,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsNotificationScopeEnabled())
             {
-                return NotificationScopeEnter(string.Format(message, args0?.ToString() ?? NullStr, args1.ToString() ?? NullStr, args2.ToString() ?? NullStr, args3.ToString() ?? NullStr));
+                return NotificationScopeEnter(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr));
             }
             return 0;
         }
@@ -526,7 +526,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsPoolerTraceEnabled())
             {
-                PoolerTrace(string.Format(message, args0.ToString() ?? NullStr));
+                PoolerTrace(string.Format(message, args0?.ToString() ?? NullStr));
             }
         }
 
@@ -535,7 +535,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsPoolerTraceEnabled())
             {
-                PoolerTrace(string.Format(message, args0.ToString() ?? NullStr, args1.ToString() ?? NullStr));
+                PoolerTrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr));
             }
         }
 
@@ -544,7 +544,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsPoolerTraceEnabled())
             {
-                PoolerTrace(string.Format(message, args0.ToString() ?? NullStr, args1.ToString() ?? NullStr, args2.ToString() ?? NullStr));
+                PoolerTrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr));
             }
         }
 
@@ -553,7 +553,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsPoolerTraceEnabled())
             {
-                PoolerTrace(string.Format(message, args0.ToString() ?? NullStr, args1.ToString() ?? NullStr, args2.ToString() ?? NullStr, args3.ToString() ?? NullStr));
+                PoolerTrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr));
             }
         }
         #endregion
@@ -564,7 +564,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsPoolerScopeEnabled())
             {
-                return PoolerScopeEnter(string.Format(message, args0.ToString() ?? NullStr));
+                return PoolerScopeEnter(string.Format(message, args0?.ToString() ?? NullStr));
             }
             return 0;
         }
@@ -585,25 +585,25 @@ namespace Microsoft.Data.SqlClient
         [NonEvent]
         internal void AdvancedTraceEvent<T0>(string message, T0 args0)
         {
-            AdvancedTrace(string.Format(message, args0.ToString() ?? NullStr));
+            AdvancedTrace(string.Format(message, args0?.ToString() ?? NullStr));
         }
 
         [NonEvent]
         internal void AdvancedTraceEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
-            AdvancedTrace(string.Format(message, args0.ToString() ?? NullStr, args1.ToString() ?? NullStr));
+            AdvancedTrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr));
         }
 
         [NonEvent]
         internal void AdvancedTraceEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
         {
-            AdvancedTrace(string.Format(message, args0.ToString() ?? NullStr, args1.ToString() ?? NullStr, args2.ToString() ?? NullStr));
+            AdvancedTrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr));
         }
 
         [NonEvent]
         internal void AdvancedTraceEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
         {
-            AdvancedTrace(string.Format(message, args0.ToString() ?? NullStr, args1.ToString() ?? NullStr, args2.ToString() ?? NullStr, args3.ToString() ?? NullStr));
+            AdvancedTrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr));
         }
         #endregion
 
@@ -622,7 +622,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsAdvancedTraceOn())
             {
-                AdvancedTrace(string.Format(message, args0.ToString() ?? NullStr));
+                AdvancedTrace(string.Format(message, args0?.ToString() ?? NullStr));
             }
         }
 
@@ -631,7 +631,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsAdvancedTraceOn())
             {
-                AdvancedTrace(string.Format(message, args0.ToString() ?? NullStr, args1.ToString() ?? NullStr));
+                AdvancedTrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr));
             }
         }
 
@@ -640,7 +640,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsAdvancedTraceOn())
             {
-                AdvancedTrace(string.Format(message, args0.ToString() ?? NullStr, args1.ToString() ?? NullStr, args2.ToString() ?? NullStr));
+                AdvancedTrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr));
             }
         }
 
@@ -649,7 +649,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsAdvancedTraceOn())
             {
-                AdvancedTrace(string.Format(message, args0.ToString() ?? NullStr, args1.ToString() ?? NullStr, args2.ToString() ?? NullStr, args3.ToString() ?? NullStr));
+                AdvancedTrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr));
             }
         }
 
@@ -658,7 +658,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsAdvancedTraceOn())
             {
-                AdvancedTrace(string.Format(message, args0.ToString() ?? NullStr, args1.ToString() ?? NullStr, args2.ToString() ?? NullStr, args3.ToString() ?? NullStr, args4.ToString() ?? NullStr, args5.ToString() ?? NullStr));
+                AdvancedTrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr, args4?.ToString() ?? NullStr, args5?.ToString() ?? NullStr));
             }
         }
 
@@ -667,7 +667,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsAdvancedTraceOn())
             {
-                AdvancedTrace(string.Format(message, args0.ToString() ?? NullStr, args1.ToString() ?? NullStr, args2.ToString() ?? NullStr, args3.ToString() ?? NullStr, args4.ToString() ?? NullStr, args5.ToString() ?? NullStr, args6.ToString() ?? NullStr, args7.ToString() ?? NullStr));
+                AdvancedTrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr, args4?.ToString() ?? NullStr, args5?.ToString() ?? NullStr, args6?.ToString() ?? NullStr, args7?.ToString() ?? NullStr));
             }
         }
 
@@ -676,7 +676,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsAdvancedTraceOn())
             {
-                return AdvancedScopeEnter(string.Format(message, args0.ToString() ?? NullStr));
+                return AdvancedScopeEnter(string.Format(message, args0?.ToString() ?? NullStr));
             }
             return 0;
         }
@@ -695,7 +695,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsAdvancedTraceOn())
             {
-                AdvancedTraceBin(string.Format(message, args0.ToString() ?? NullStr, args1.ToString() ?? NullStr));
+                AdvancedTraceBin(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr));
             }
         }
 
@@ -704,7 +704,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsAdvancedTraceOn())
             {
-                AdvancedTraceError(string.Format(message, args0.ToString() ?? NullStr, args1.ToString() ?? NullStr, args2.ToString() ?? NullStr, args3.ToString() ?? NullStr, args4.ToString() ?? NullStr));
+                AdvancedTraceError(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr, args4?.ToString() ?? NullStr));
             }
         }
         #endregion
@@ -742,9 +742,9 @@ namespace Microsoft.Data.SqlClient
 
         #region State Dump without if statements
         [NonEvent]
-        internal void StateDumpEventExcluded<T0, T1>(string message, T0 args0, T1 args1)
+        internal void StateDumpEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
-            StateDump(string.Format(message, args0.ToString() ?? NullStr, args1.ToString() ?? NullStr));
+            StateDump(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr));
         }
         #endregion
 
@@ -763,7 +763,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsSNITraceEnabled())
             {
-                SNITrace(string.Format(message, args0.ToString() ?? NullStr));
+                SNITrace(string.Format(message, args0?.ToString() ?? NullStr));
             }
         }
 
@@ -772,7 +772,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsSNITraceEnabled())
             {
-                SNITrace(string.Format(message, args0.ToString() ?? NullStr, args1.ToString() ?? NullStr));
+                SNITrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr));
             }
         }
 
@@ -781,7 +781,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsSNITraceEnabled())
             {
-                SNITrace(string.Format(message, args0.ToString() ?? NullStr, args1.ToString() ?? NullStr, args2.ToString() ?? NullStr));
+                SNITrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr));
             }
         }
 
@@ -790,7 +790,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsSNITraceEnabled())
             {
-                SNITrace(string.Format(message, args0.ToString() ?? NullStr, args1.ToString() ?? NullStr, args2.ToString() ?? NullStr, args3.ToString() ?? NullStr));
+                SNITrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr));
             }
         }
 
@@ -799,7 +799,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsSNITraceEnabled())
             {
-                SNITrace(string.Format(message, args0.ToString() ?? NullStr, args1.ToString() ?? NullStr, args2.ToString() ?? NullStr, args3.ToString() ?? NullStr, args4.ToString() ?? NullStr));
+                SNITrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr, args4?.ToString() ?? NullStr));
             }
         }
         #endregion
@@ -820,7 +820,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsSNIScopeEnabled())
             {
-                return SNIScopeEnter(string.Format(message, args0.ToString() ?? NullStr));
+                return SNIScopeEnter(string.Format(message, args0?.ToString() ?? NullStr));
             }
             return 0;
         }
@@ -830,7 +830,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsSNIScopeEnabled())
             {
-                return SNIScopeEnter(string.Format(message, args0.ToString() ?? NullStr, args1.ToString() ?? NullStr));
+                return SNIScopeEnter(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr));
             }
             return 0;
         }
@@ -840,7 +840,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsSNIScopeEnabled())
             {
-                return SNIScopeEnter(string.Format(message, args0.ToString() ?? NullStr, args1.ToString() ?? NullStr, args2.ToString() ?? NullStr));
+                return SNIScopeEnter(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr));
             }
             return 0;
         }
@@ -850,7 +850,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsSNIScopeEnabled())
             {
-                return SNIScopeEnter(string.Format(message, args0.ToString() ?? NullStr, args1.ToString() ?? NullStr, args2.ToString() ?? NullStr, args3.ToString() ?? NullStr));
+                return SNIScopeEnter(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr));
             }
             return 0;
         }

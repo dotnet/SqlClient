@@ -1049,7 +1049,7 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.Deactivate|ADV> {0} deactivating", ObjectID);
             if (SqlClientEventSource.Log.IsStateDumpEnabled())
             {
-                SqlClientEventSource.Log.StateDumpEventExcluded("<sc.TdsParser.Deactivate|STATE> {0} {1}", ObjectID, TraceString());
+                SqlClientEventSource.Log.StateDumpEvent("<sc.TdsParser.Deactivate|STATE> {0} {1}", ObjectID, TraceString());
             }
 
             if (MARSOn)
