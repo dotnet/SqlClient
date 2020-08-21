@@ -10,20 +10,20 @@
     <OutputPath>$(BinFolder)$(Configuration).$(Platform).$(AssemblyName)</OutputPath>
   </PropertyGroup>
   <ItemGroup Condition="!$(ReferenceType.Contains('NetStandard'))">
-    <Compile Include="AlwaysEncryptedTests\ConnectionStringBuilderShould.cs" />
-    <Compile Include="AlwaysEncryptedTests\DummyKeyStoreProvider.cs" />
-    <Compile Include="AlwaysEncryptedTests\ExceptionRegisterKeyStoreProvider.cs" />
     <Compile Include="AlwaysEncryptedTests\ExceptionsAlgorithmErrors.cs" />
     <Compile Include="AlwaysEncryptedTests\ExceptionsCertStore.cs" />
     <Compile Include="AlwaysEncryptedTests\SqlColumnEncryptionCertificateStoreProviderShould.cs" />
     <Compile Include="AlwaysEncryptedTests\SqlColumnEncryptionCngProviderShould.cs" />
     <Compile Include="AlwaysEncryptedTests\SqlColumnEncryptionCspProviderShould.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AlwaysEncryptedTests\ConnectionStringBuilderShould.cs" />
+    <Compile Include="AlwaysEncryptedTests\DummyKeyStoreProvider.cs" />
+    <Compile Include="AlwaysEncryptedTests\ExceptionRegisterKeyStoreProvider.cs" />
     <Compile Include="AlwaysEncryptedTests\SqlCommandShould.cs" />
     <Compile Include="AlwaysEncryptedTests\SqlConnectionShould.cs" />
     <Compile Include="AlwaysEncryptedTests\TestFixtures.cs" />
     <Compile Include="AlwaysEncryptedTests\Utility.cs" />
-  </ItemGroup>
-  <ItemGroup>
     <Compile Include="SqlCommandBuilderTest.cs" />
     <Compile Include="SqlBulkCopyTest.cs" />
     <Compile Include="SqlClientMetaDataCollectionNamesTest.cs" />

@@ -21,7 +21,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
             KeyPath = string.Concat(CertificateStoreLocation.ToString(), "/", CertificateStoreName.ToString(), "/", Thumbprint);
 
             byte[] cmkSign = certStoreProvider.SignColumnMasterKeyMetadata(KeyPath, allowEnclaveComputations);
-            cmkSignStr = string.Concat("0x", BitConverter.ToString(cmkSign).Replace("-", string.Empty));
+            CmkSignStr = string.Concat("0x", BitConverter.ToString(cmkSign).Replace("-", string.Empty));
         }
 
         public CspColumnMasterKey(string name, string providerName, string cspKeyPath, SqlColumnEncryptionKeyStoreProvider certStoreProvider, bool allowEnclaveComputations) : base(name)
@@ -29,7 +29,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
             KeyStoreProviderName = providerName;
             KeyPath = cspKeyPath;
             byte[] cmkSign = certStoreProvider.SignColumnMasterKeyMetadata(KeyPath, allowEnclaveComputations);
-            cmkSignStr = string.Concat("0x", BitConverter.ToString(cmkSign).Replace("-", string.Empty));
+            CmkSignStr = string.Concat("0x", BitConverter.ToString(cmkSign).Replace("-", string.Empty));
         }
 
     }

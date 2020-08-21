@@ -68,7 +68,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }            
         }
 
-        [PlatformSpecific(TestPlatforms.Windows)]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsEnclaveAzureDatabaseSetup))]
         public void ConnectToAzureDatabaseWithEnclave()
         {
