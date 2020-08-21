@@ -33,6 +33,11 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <!-- Contains common items shared between NetFx and NetCore -->
+  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetsWindows)' == 'true'">
+	<Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientEventSource.Windows.cs">
+	  <Link>Microsoft\Data\SqlClient\SqlClientEventSource.Windows.cs</Link>
+	</Compile>
+  </ItemGroup>
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS'">
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientEventSource.cs">
       <Link>Microsoft\Data\SqlClient\SqlClientEventSource.cs</Link>

@@ -56,8 +56,8 @@ Once the environment is setup properly, execute the desired set of commands belo
 ```
 
 ```bash
-> msbuild /t:BuildAllOSes
-# Builds the driver for all Operating Systems.
+> msbuild /t:BuildNetCoreAllOS
+# Builds the .NET Core driver for all Operating Systems.
 ```
 
 ## Building Tests

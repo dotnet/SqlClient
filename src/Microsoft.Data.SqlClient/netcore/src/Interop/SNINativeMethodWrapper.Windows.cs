@@ -304,7 +304,13 @@ namespace Microsoft.Data.SqlClient
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
         private static extern uint SNIWriteSyncOverAsync(SNIHandle pConn, [In] SNIPacket pPacket);
-        #endregion
+        
+        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern bool RegisterTraceProviderWrapper(int eventKeyword);
+        
+        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void UnregisterTraceProviderWrapper();
+	    #endregion
 
         internal static uint SniGetConnectionId(SNIHandle pConn, ref Guid connId)
         {
@@ -461,6 +467,18 @@ namespace Microsoft.Data.SqlClient
                 : IntPtr.Zero;
             native_consumerInfo.ConsumerKey = consumerInfo.key;
         }
+
+		internal static bool RegisterTraceProvider(int eventKeyword)
+		{
+			// Registers the TraceLogging provider, enabling it to generate events.
+			// Return true if enabled, otherwise false.
+			return RegisterTraceProviderWrapper(eventKeyword);
+		}
+
+		internal static void UnregisterTraceProvider()
+		{
+			UnregisterTraceProviderWrapper();
+		}
     }
 }
 
