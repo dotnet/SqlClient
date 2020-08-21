@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.TestFixtures.Setup;
@@ -251,6 +252,32 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     databaseObjects.ForEach(o => o.Drop(sqlConnection));
                 }
             }
+        }
+    }
+
+    // Use this class as the fixture for AE tests to ensure only one platform-specific fixture
+    // is created for each test class
+    public class PlatformSpecificTestContext : IDisposable
+    {
+        private SQLSetupStrategy certStoreFixture = null;
+        private SQLSetupStrategy akvFixture = null;
+        public SQLSetupStrategy Fixture => certStoreFixture ?? akvFixture;
+
+        public PlatformSpecificTestContext()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                certStoreFixture = new SQLSetupStrategyCertStoreProvider();
+            }
+            else
+            {
+                akvFixture = new SQLSetupStrategyAzureKeyVault();
+            }
+        }
+
+        public void Dispose()
+        {
+            Fixture.Dispose();
         }
     }
 }

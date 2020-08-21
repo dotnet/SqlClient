@@ -163,7 +163,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.Matches(errorMessage, ex2.Message);
         }
 
-        // [InlineData(true)] -> Enable with AE v2
+        [InlineData(true)] 
         [InlineData(false)]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void AkvStoreProviderVerifyFunctionWithInvalidSignature(bool fEnclaveEnabled)

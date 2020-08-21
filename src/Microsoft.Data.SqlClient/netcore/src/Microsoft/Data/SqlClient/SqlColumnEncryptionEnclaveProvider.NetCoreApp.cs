@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient
         /// <param name="customDataLength">The length of the extra data needed for attestating the enclave.</param>
         /// <param name="sqlEnclaveSession">The requested enclave session or null if the provider does not implement session caching.</param>
         /// <param name="counter">A counter that the enclave provider is expected to increment each time SqlClient retrieves the session from the cache. The purpose of this field is to prevent replay attacks.</param>
-        internal abstract void CreateEnclaveSession(byte[] enclaveAttestationInfo, ECDiffieHellmanCng clientDiffieHellmanKey, EnclaveSessionParameters enclaveSessionParameters, byte[] customData, int customDataLength,
+        internal abstract void CreateEnclaveSession(byte[] enclaveAttestationInfo, ECDiffieHellman clientDiffieHellmanKey, EnclaveSessionParameters enclaveSessionParameters, byte[] customData, int customDataLength,
             out SqlEnclaveSession sqlEnclaveSession, out long counter);
     }
 }
