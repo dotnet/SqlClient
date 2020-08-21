@@ -17,47 +17,47 @@
     <Copy SourceFiles="config.default.json" DestinationFiles="config.json" Condition="!Exists('config.json')" />
   </Target>
   <ItemGroup Condition="!$(ReferenceType.Contains('NetStandard'))">
-    <Compile Include="AlwaysEncrypted\AKVTests.cs" />
-    <Compile Include="AlwaysEncrypted\ApiShould.cs" />
-    <Compile Include="AlwaysEncrypted\BulkCopyAEErrorMessage.cs" />
-    <Compile Include="AlwaysEncrypted\BulkCopyAE.cs" />
-    <Compile Include="AlwaysEncrypted\ExceptionTestAKVStore.cs" />
     <Compile Include="AlwaysEncrypted\CoreCryptoTests.cs" />
-    <Compile Include="AlwaysEncrypted\End2EndSmokeTests.cs" />
     <Compile Include="AlwaysEncrypted\CspProviderExt.cs" />
     <Compile Include="AlwaysEncrypted\ConversionTests.cs" />
-    <Compile Include="AlwaysEncrypted\EnclaveAzureDatabaseTests.cs" />
-    <Compile Include="AlwaysEncrypted\SqlBulkCopyTruncation.cs" />
-    <Compile Include="AlwaysEncrypted\SqlNullValues.cs" />
     <Compile Include="AlwaysEncrypted\ExceptionsGenericError.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\BulkCopyAEErrorMessageTestTable.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\BulkCopyTruncationTables.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\SqlNullValuesTable.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\AKVTestTable.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ApiTestTable.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\BulkCopyAETestTable.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ColumnEncryptionKey.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ColumnMasterKey.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CryptoNativeBaselineReader.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CryptoVector.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\AkvColumnMasterKey.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CspColumnMasterKey.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CspProviderColumnMasterKey.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\DbObject.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ICreatable.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\IDroppable.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\SqlParameterPropertiesTable.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategy.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyAzureKeyVault.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyCertStoreProvider.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\Table.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CertificateUtility.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\DatabaseHelper.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CertificateUtilityWin.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyCspExt.cs" />
     <Compile Include="AlwaysEncrypted\TestTrustedMasterKeyPaths.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AlwaysEncrypted\AKVTests.cs" />
+    <Compile Include="AlwaysEncrypted\ApiShould.cs" />
+    <Compile Include="AlwaysEncrypted\BulkCopyAE.cs" />
+    <Compile Include="AlwaysEncrypted\BulkCopyAEErrorMessage.cs" />
+    <Compile Include="AlwaysEncrypted\EnclaveAzureDatabaseTests.cs" />
+    <Compile Include="AlwaysEncrypted\End2EndSmokeTests.cs" />
+    <Compile Include="AlwaysEncrypted\ExceptionTestAKVStore.cs" />
+    <Compile Include="AlwaysEncrypted\SqlBulkCopyTruncation.cs" />
+    <Compile Include="AlwaysEncrypted\SqlNullValues.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\DatabaseHelper.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategy.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyAzureKeyVault.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyCertStoreProvider.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\AKVTestTable.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ApiTestTable.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\BulkCopyAETestTable.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\BulkCopyAEErrorMessageTestTable.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\BulkCopyTruncationTables.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\SqlNullValuesTable.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\SqlParameterPropertiesTable.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\DbObject.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\Table.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ICreatable.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\IDroppable.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ColumnMasterKey.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ColumnEncryptionKey.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\AkvColumnMasterKey.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CspColumnMasterKey.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CertificateUtility.cs" />   
     <Compile Include="$(CommonTestPath)\System\Collections\DictionaryExtensions.cs">
       <Link>Common\System\Collections\DictionaryExtensions.cs</Link>
     </Compile>
@@ -278,7 +278,7 @@
     </ProjectReference>
     <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp' AND $(ReferenceType)=='Project'" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
     <ProjectReference Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
-    <ProjectReference Condition="!$(ReferenceType.Contains('NetStandard'))" Include="$(AddOnsPath)AzureKeyVaultProvider\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
+    <ProjectReference Include="$(AddOnsPath)AzureKeyVaultProvider\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
     <ProjectReference Condition="$(ReferenceType.Contains('NetStandard'))" Include="$(TestsPath)NSLibrary\Microsoft.Data.SqlClient.NSLibrary.csproj" />
     <PackageReference Condition="$(ReferenceType)=='Package'" Include="Microsoft.Data.SqlClient" Version="$(TestMicrosoftDataSqlClientVersion)" />
   </ItemGroup>

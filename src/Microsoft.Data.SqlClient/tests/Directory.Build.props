@@ -7,6 +7,7 @@
 
   <PropertyGroup>
     <TargetNetFxVersion Condition="'$(TargetNetFxVersion)' == ''">net46</TargetNetFxVersion>
+    <TargetNetCoreVersion Condition="'$(ReferenceType)' == 'NetStandard' AND $(TargetNetStandardVersion)=='netstandard2.1'">netcoreapp3.1</TargetNetCoreVersion>
     <TargetNetCoreVersion Condition="'$(TargetNetCoreVersion)' == ''">netcoreapp2.1</TargetNetCoreVersion>
     <ReferenceType Condition="'$(ReferenceType)'==''">Project</ReferenceType>
   </PropertyGroup>
@@ -15,20 +16,20 @@
     <!-- Set Default Target Framework when building for Debug and Release configurations. (Visual Studio) -->
     <When Condition="'$(TestTargetOS)' == '' AND ('$(Configuration)' == 'Debug' OR '$(Configuration)' == 'Release')">
       <PropertyGroup>
-        <TargetFramework>$(TargetNetCoreVersion)</TargetFramework>
+        <TargetFrameworks>$(TargetNetCoreVersion)</TargetFrameworks>
       </PropertyGroup>
     </When>
     <!-- Set Target Framework when TestTargetOS is not empty. (Command Line) -->
     <When Condition="'$(TestTargetOS)' != ''">
       <PropertyGroup>
-        <TargetFramework Condition="'$(TestTargetOS)' == 'Windowsnetcoreapp' OR '$(TestTargetOS)' == 'Unixnetcoreapp'">$(TargetNetCoreVersion)</TargetFramework>
-        <TargetFramework Condition="'$(TestTargetOS)' == 'Windowsnetfx'">$(TargetNetFxVersion)</TargetFramework>
+        <TargetFrameworks Condition="'$(TestTargetOS)' == 'Windowsnetcoreapp' OR '$(TestTargetOS)' == 'Unixnetcoreapp'">$(TargetNetCoreVersion)</TargetFrameworks>
+        <TargetFrameworks Condition="'$(TestTargetOS)' == 'Windowsnetfx'">$(TargetNetFxVersion)</TargetFrameworks>
       </PropertyGroup>
     </When>
     <!-- Set Target Framework when TestTargetOS is empty and Configuration is neither Debug nor Release. (Visual Studio) -->
     <Otherwise>
       <PropertyGroup>
-        <TargetFramework>$(Configuration.Split('-')[0])</TargetFramework>
+        <TargetFrameworks>$(Configuration.Split('-')[0])</TargetFrameworks>
       </PropertyGroup>
     </Otherwise>
   </Choose>
