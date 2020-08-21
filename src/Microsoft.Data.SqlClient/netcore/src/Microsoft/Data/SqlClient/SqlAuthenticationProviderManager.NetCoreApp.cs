@@ -117,7 +117,7 @@ namespace Microsoft.Data.SqlClient
             object section = ConfigurationManager.GetSection(name);
             if (null != section)
             {
-                if (((ConfigurationSection)section).GetType() == t)
+                if (section is ConfigurationSection configSection && configSection.GetType() == t)
                 {
                     return (T)section;
                 }
