@@ -1222,7 +1222,7 @@ namespace Microsoft.Data.SqlClient
         {
             WaitForPendingReconnection();
             SqlStatistics statistics = null;
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlConnection.BeginTransaction|API> {0}, iso={1}, transactionName='{2}'", ObjectID, (int)iso, (ADP.IsEmpty(transactionName) ? "None" : transactionName));
+            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlConnection.BeginTransaction|API> {0}, iso={1}, transactionName='{2}'", ObjectID, (int)iso, transactionName);
 
             try
             {

@@ -2359,7 +2359,7 @@ namespace Microsoft.Data.SqlClient
                             // It's also the user's chance to cause an exception.
                             _stateObj.BcpLock = true;
                             abortOperation = FireRowsCopiedEvent(_rowsCopied);
-                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlBulkCopy.WriteToServerInternal|{0}>", "INFO");
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlBulkCopy.WriteToServerInternal|INFO>");
 
                             // In case the target connection is closed accidentally.
                             if (ConnectionState.Open != _connection.State)

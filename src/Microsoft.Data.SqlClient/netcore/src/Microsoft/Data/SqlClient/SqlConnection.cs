@@ -924,7 +924,7 @@ namespace Microsoft.Data.SqlClient
         {
             WaitForPendingReconnection();
             SqlStatistics statistics = null;
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlConnection.BeginTransaction|API> {0}, iso={1}, transactionName='{2}'", ObjectID, (int)iso, (string.IsNullOrEmpty(transactionName) ? "None" : transactionName));
+            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlConnection.BeginTransaction|API> {0}, iso={1}, transactionName='{2}'", ObjectID, (int)iso, transactionName));
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
@@ -1850,7 +1850,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void OnInfoMessage(SqlInfoMessageEventArgs imevent, out bool notified)
         {
-            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlConnection.OnInfoMessage|API|INFO> {0}, Message='{1}'", ObjectID, (null != imevent) ? imevent.Message : "");
+            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlConnection.OnInfoMessage|API|INFO> {0}, Message='{1}'", ObjectID, imevent.Message);
             SqlInfoMessageEventHandler handler = InfoMessage;
             if (null != handler)
             {

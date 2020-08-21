@@ -764,7 +764,7 @@ namespace Microsoft.Data.SqlClient
                         int actIdSize = GUID_SIZE + sizeof(uint);
                         offset += actIdSize;
                         optionDataSize += actIdSize;
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.SendPreLoginHandshake|INFO> ClientConnectionID {0}, ActivityID {1}", _connHandler._clientConnectionId, actId);
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.SendPreLoginHandshake|INFO> ClientConnectionID {0}, ActivityID {1}", _connHandler?._clientConnectionId, actId);
                         break;
 
                     case (int)PreLoginOptions.FEDAUTHREQUIRED:

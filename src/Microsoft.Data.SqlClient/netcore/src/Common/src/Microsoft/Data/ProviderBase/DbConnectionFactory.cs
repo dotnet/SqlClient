@@ -195,7 +195,7 @@ namespace Microsoft.Data.ProviderBase
             // however, don't rebuild connectionOptions if no pooling is involved - let new connections do that work
             if (connectionPoolGroup.IsDisabled && (null != connectionPoolGroup.PoolGroupOptions))
             {
-                SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionFactory.GetConnectionPool|RES|INFO|CPOOL> {0}, DisabledPoolGroup={1}", ObjectID, connectionPoolGroup.ObjectID);
+                SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionFactory.GetConnectionPool|RES|INFO|CPOOL> {0}, DisabledPoolGroup={1}", ObjectID, connectionPoolGroup?.ObjectID);
 
                 // reusing existing pool option in case user originally used SetConnectionPoolOptions
                 DbConnectionPoolGroupOptions poolOptions = connectionPoolGroup.PoolGroupOptions;

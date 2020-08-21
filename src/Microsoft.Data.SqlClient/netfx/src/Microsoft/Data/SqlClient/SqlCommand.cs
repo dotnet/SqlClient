@@ -360,7 +360,7 @@ namespace Microsoft.Data.SqlClient
 
             internal override void ParametersAvailable(SmiParameterMetaData[] metaData, ITypedGettersV3 parameterValues)
             {
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlCommand.CommandEventSink.ParametersAvailable|ADV> {0} metaData.Length={1}.", _command.ObjectID, (null != metaData) ? metaData.Length : -1);
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlCommand.CommandEventSink.ParametersAvailable|ADV> {0} metaData.Length={1}.", _command.ObjectID, metaData?.Length);
 
                 if (SqlClientEventSource.Log.IsAdvancedTraceOn())
                 {
@@ -565,7 +565,7 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
                 _activeConnection = value; // UNDONE: Designers need this setter.  Should we block other scenarios?
-                SqlClientEventSource.Log.TryTraceEvent("<sc.SqlCommand.set_Connection|API> {0}, {1}", ObjectID, (null != value) ? value.ObjectID : -1);
+                SqlClientEventSource.Log.TryTraceEvent("<sc.SqlCommand.set_Connection|API> {0}, {1}", ObjectID, value.ObjectID);
             }
         }
 
