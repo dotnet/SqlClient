@@ -9,34 +9,23 @@ namespace Microsoft.Data.SqlClient
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlError.xml' path='docs/members[@name="SqlError"]/SqlError/*' />
     public sealed class SqlError
     {
-        private string _source = TdsEnums.SQL_PROVIDER_NAME;
-        private int _number;
-        private byte _state;
-        private byte _errorClass;
-        private string _server;
-        private string _message;
-        private string _procedure;
-        private int _lineNumber;
-        private int _win32ErrorCode;
-        private Exception _exception;
-
         internal SqlError(int infoNumber, byte errorState, byte errorClass, string server, string errorMessage, string procedure, int lineNumber, uint win32ErrorCode, Exception exception = null)
             : this(infoNumber, errorState, errorClass, server, errorMessage, procedure, lineNumber, exception)
         {
-            _win32ErrorCode = (int)win32ErrorCode;
+            Win32ErrorCode = (int)win32ErrorCode;
         }
 
         internal SqlError(int infoNumber, byte errorState, byte errorClass, string server, string errorMessage, string procedure, int lineNumber, Exception exception = null)
         {
-            _number = infoNumber;
-            _state = errorState;
-            _errorClass = errorClass;
-            _server = server;
-            _message = errorMessage;
-            _procedure = procedure;
-            _lineNumber = lineNumber;
-            _win32ErrorCode = 0;
-            _exception = exception;
+            Number = infoNumber;
+            State = errorState;
+            Class = errorClass;
+            Server = server;
+            Message = errorMessage;
+            Procedure = procedure;
+            LineNumber = lineNumber;
+            Win32ErrorCode = 0;
+            Exception = exception;
             if (errorClass != 0)
             {
                 SqlClientEventSource.Log.TraceEvent("<sc.SqlError.SqlError|ERR> infoNumber={0}, errorState={1}, errorClass={2}, errorMessage='{3}', procedure='{4}', lineNumber={5}", infoNumber, (int)errorState, (int)errorClass, errorMessage, procedure ?? "None", (int)lineNumber);
@@ -49,65 +38,35 @@ namespace Microsoft.Data.SqlClient
         // way back to SqlException.  If the user needs a call stack, they can obtain it on SqlException.
         public override string ToString()
         {
-            return typeof(SqlError).ToString() + ": " + _message; // since this is sealed so we can change GetType to typeof
+            return typeof(SqlError).ToString() + ": " + Message; // since this is sealed so we can change GetType to typeof
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlError.xml' path='docs/members[@name="SqlError"]/Source/*' />
-        public string Source
-        {
-            get { return _source; }
-        }
+        public string Source { get; private set; } = TdsEnums.SQL_PROVIDER_NAME;
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlError.xml' path='docs/members[@name="SqlError"]/Number/*' />
-        public int Number
-        {
-            get { return _number; }
-        }
+        public int Number { get; private set; }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlError.xml' path='docs/members[@name="SqlError"]/State/*' />
-        public byte State
-        {
-            get { return _state; }
-        }
+        public byte State { get; private set; }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlError.xml' path='docs/members[@name="SqlError"]/Class/*' />
-        public byte Class
-        {
-            get { return _errorClass; }
-        }
+        public byte Class { get; private set; }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlError.xml' path='docs/members[@name="SqlError"]/Server/*' />
-        public string Server
-        {
-            get { return _server; }
-        }
+        public string Server { get; private set; }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlError.xml' path='docs/members[@name="SqlError"]/Message/*' />
-        public string Message
-        {
-            get { return _message; }
-        }
+        public string Message { get; private set; }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlError.xml' path='docs/members[@name="SqlError"]/Procedure/*' />
-        public string Procedure
-        {
-            get { return _procedure; }
-        }
+        public string Procedure { get; private set; }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlError.xml' path='docs/members[@name="SqlError"]/LineNumber/*' />
-        public int LineNumber
-        {
-            get { return _lineNumber; }
-        }
+        public int LineNumber { get; private set; }
 
-        internal int Win32ErrorCode
-        {
-            get { return _win32ErrorCode; }
-        }
+        internal int Win32ErrorCode { get; private set; }
 
-        internal Exception Exception
-        {
-            get { return _exception; }
-        }
+        internal Exception Exception { get; private set; }
     }
 }
