@@ -15,7 +15,6 @@
     <Compile Include="AlwaysEncryptedTests\SqlColumnEncryptionCertificateStoreProviderShould.cs" />
     <Compile Include="AlwaysEncryptedTests\SqlColumnEncryptionCngProviderShould.cs" />
     <Compile Include="AlwaysEncryptedTests\SqlColumnEncryptionCspProviderShould.cs" />
-    <Compile Include="SqlConnectionStringBuilderTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AlwaysEncryptedTests\ConnectionStringBuilderShould.cs" />
@@ -49,6 +48,7 @@
     <Compile Include="AmbientTransactionFailureTest.cs" />
     <Compile Include="SqlConnectionTest.RetrieveStatistics.cs" />
     <Compile Include="SqlMetaDataTest.cs" />
+    <Compile Include="SqlConnectionStringBuilderTest.cs" />
     <Compile Include="SerializeSqlTypesTest.cs" />
     <Compile Include="TestTdsServer.cs" />
   </ItemGroup>
