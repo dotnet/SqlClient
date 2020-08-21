@@ -122,7 +122,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    SqlClientEventSource.Log.TraceEvent("Found a custom {0} configuration but it is not of type {0}.", t.Name);
+                    SqlClientEventSource.Log.TraceEvent("Found a custom {0} configuration but it is not of type {1}.", name, t.FullName);
                 }
             }
             return default;
