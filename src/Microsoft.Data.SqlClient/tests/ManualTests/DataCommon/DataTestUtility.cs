@@ -49,6 +49,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly bool IsDNSCachingSupportedCR = false;  // this is for the control ring
         public static readonly bool IsDNSCachingSupportedTR = false;  // this is for the tenant ring
 
+        public static readonly string EnclaveAzureDatabaseConnString = null;
+
         public const string UdtTestDbName = "UdtTestDb";
         public const string AKVKeyName = "TestSqlClientAzureKeyVaultProvider";
         private const string ManagedNetworkingAppContextSwitch = "Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows";
@@ -86,6 +88,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             public string DNSCachingServerTR = null;  // this is for the tenant ring
             public bool IsDNSCachingSupportedCR = false;  // this is for the control ring
             public bool IsDNSCachingSupportedTR = false;  // this is for the tenant ring
+            public string EnclaveAzureDatabaseConnString = null;
         }
 
         static DataTestUtility()
@@ -116,6 +119,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 DNSCachingServerTR = c.DNSCachingServerTR;
                 IsDNSCachingSupportedCR = c.IsDNSCachingSupportedCR;
                 IsDNSCachingSupportedTR = c.IsDNSCachingSupportedTR;
+
+                EnclaveAzureDatabaseConnString = c.EnclaveAzureDatabaseConnString;
 
                 if (TracingEnabled)
                 {
@@ -283,6 +288,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         public static bool IsDNSCachingSetup() => !string.IsNullOrEmpty(DNSCachingConnString);
+
+        public static bool IsEnclaveAzureDatabaseSetup()
+        {
+            return EnclaveEnabled && !string.IsNullOrEmpty(EnclaveAzureDatabaseConnString);
+        }  
 
         public static bool IsUdtTestDatabasePresent() => IsDatabasePresent(UdtTestDbName);
 
