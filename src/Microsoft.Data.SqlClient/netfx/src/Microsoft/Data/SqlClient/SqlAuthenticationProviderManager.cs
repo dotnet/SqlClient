@@ -39,7 +39,7 @@ namespace Microsoft.Data.SqlClient
             catch (ConfigurationErrorsException e)
             {
                 // Don't throw an error for invalid config files
-                SqlClientEventSource.Log.TraceEvent("Unable to load custom SqlAuthenticationProviders or SqlClientAuthenticationProvider. ConfigurationManager failed to load due to configuration errors: {0}", e);
+                SqlClientEventSource.Log.TraceEvent("Unable to load custom SqlAuthenticationProviders or SqlClientAuthenticationProviders. ConfigurationManager failed to load due to configuration errors: {0}", e);
             }
             Instance = new SqlAuthenticationProviderManager(configurationSection);
             Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryIntegrated, activeDirectoryAuthProvider);
@@ -68,7 +68,7 @@ namespace Microsoft.Data.SqlClient
 
             if (configSection == null)
             {
-                _sqlAuthLogger.LogInfo(_typeName, methodName, "Neither SqlClientAuthenticationProvider nor SqlAuthenticationProviders configuration section found.");
+                _sqlAuthLogger.LogInfo(_typeName, methodName, "Neither SqlClientAuthenticationProviders nor SqlAuthenticationProviders configuration section found.");
                 return;
             }
 
