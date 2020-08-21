@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## [Preview Release 2.1.0-preview1.20234.1] - 2020-08-21
 
 ### Added
-- Added support for Always Encrypted and Secure Enclaves on Unix for .NET Core 2.1+ and on all supported platforms with .NET Standard 2.1+ [#676](https://github.com/dotnet/SqlClient/pull/676)
+- Added support for Always Encrypted and Secure Enclaves on Unix for .NET Core 2.1+ and on all supported platforms for .NET Standard 2.1+ [#676](https://github.com/dotnet/SqlClient/pull/676)
 - Added support for Azure Active Directory Device Code Flow authentication [#597](https://github.com/dotnet/SqlClient/pull/597)
 - Added Sensitivity Rank support in Sensitivity Classification information [#626](https://github.com/dotnet/SqlClient/pull/626)
 - Added support to fetch `ServerProcessId` (SPID) information on active `SqlConnection` instance [#660](https://github.com/dotnet/SqlClient/pull/660)
