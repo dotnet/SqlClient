@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
-## [Preview Release 2.1.0-preview1.20234.1] - 2020-08-21
+## [Preview Release 2.1.0-preview1.20235.1] - 2020-08-21
 
 ### Added
 - Added support for Always Encrypted and Secure Enclaves on Unix for .NET Core 2.1+ and on all supported platforms for .NET Standard 2.1+ [#676](https://github.com/dotnet/SqlClient/pull/676)
