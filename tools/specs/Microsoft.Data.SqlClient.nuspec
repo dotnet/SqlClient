@@ -68,7 +68,7 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="5.6.0" />
       </group>
       <group targetFramework="netstandard2.1">
-        <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="2.0.0" exclude="Compile" />
+        <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="2.1.0" exclude="Compile" />
         <dependency id="Microsoft.Win32.Registry" version="4.7.0" exclude="Compile" />
         <dependency id="System.Buffers" version="4.5.1" exclude="Compile" />
         <dependency id="System.Memory" version="4.5.4" exclude="Compile" />
