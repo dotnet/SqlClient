@@ -2500,6 +2500,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Device Code Flow&apos; with &apos;User ID&apos;, &apos;UID&apos;, &apos;Password&apos; or &apos;PWD&apos; connection string keywords..
+        /// </summary>
+        internal static string SQL_DeviceFlowWithUsernamePassword {
+            get {
+                return ResourceManager.GetString("SQL_DeviceFlowWithUsernamePassword", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The duration spent while attempting to connect to this server was - [Pre-Login] initialization={0}; handshake={1}; [Login] initialization={2}; .
         /// </summary>
         internal static string SQL_Duration_Login_Begin {
@@ -2649,15 +2658,6 @@ namespace System {
         internal static string SQL_InteractiveWithPassword {
             get {
                 return ResourceManager.GetString("SQL_InteractiveWithPassword", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Device Code Flow&apos; with &apos;User ID&apos;, &apos;UID&apos;, &apos;Password&apos; or &apos;PWD&apos; connection string keywords..
-        /// </summary>
-        internal static string SQL_DeviceFlowWithUsernamePassword {
-            get {
-                return ResourceManager.GetString("SQL_DeviceFlowWithUsernamePassword", resourceCulture);
             }
         }
         
@@ -3049,6 +3049,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot set the Credential property if &apos;Authentication=Active Directory Device Code Flow&apos; has been specified in the connection string..
+        /// </summary>
+        internal static string SQL_SettingCredentialWithDeviceFlow {
+            get {
+                return ResourceManager.GetString("SQL_SettingCredentialWithDeviceFlow", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot set the Credential property if &apos;Authentication=Active Directory Integrated&apos; has been specified in the connection string..
         /// </summary>
         internal static string SQL_SettingCredentialWithIntegrated {
@@ -3067,11 +3076,11 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Cannot set the Credential property if &apos;Authentication=Active Directory Device Code Flow&apos; has been specified in the connection string..
+        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Device Code Flow&apos;, if the Credential property has been set..
         /// </summary>
-        internal static string SQL_SettingCredentialWithDeviceFlow {
+        internal static string SQL_SettingDeviceFlowWithCredential {
             get {
-                return ResourceManager.GetString("SQL_SettingCredentialWithDeviceFlow", resourceCulture);
+                return ResourceManager.GetString("SQL_SettingDeviceFlowWithCredential", resourceCulture);
             }
         }
         
@@ -3090,15 +3099,6 @@ namespace System {
         internal static string SQL_SettingInteractiveWithCredential {
             get {
                 return ResourceManager.GetString("SQL_SettingInteractiveWithCredential", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Device Code Flow&apos;, if the Credential property has been set..
-        /// </summary>
-        internal static string SQL_SettingDeviceFlowWithCredential {
-            get {
-                return ResourceManager.GetString("SQL_SettingDeviceFlowWithCredential", resourceCulture);
             }
         }
         
@@ -3229,20 +3229,20 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Active Directory Interactive authentication timed out. The user took too long to respond to the authentication request..
-        /// </summary>
-        internal static string SQL_Timeout_Active_Directory_Interactive_Authentication {
-            get {
-                return ResourceManager.GetString("SQL_Timeout_Active_Directory_Interactive_Authentication", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Active Directory Device Code Flow authentication timed out. The user took too long to respond to the authentication request..
         /// </summary>
         internal static string SQL_Timeout_Active_Directory_DeviceFlow_Authentication {
             get {
                 return ResourceManager.GetString("SQL_Timeout_Active_Directory_DeviceFlow_Authentication", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Active Directory Interactive authentication timed out. The user took too long to respond to the authentication request..
+        /// </summary>
+        internal static string SQL_Timeout_Active_Directory_Interactive_Authentication {
+            get {
+                return ResourceManager.GetString("SQL_Timeout_Active_Directory_Interactive_Authentication", resourceCulture);
             }
         }
         
