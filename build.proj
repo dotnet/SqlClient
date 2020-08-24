@@ -25,7 +25,7 @@
     <NetCoreDriver Include="**/netcore/**/Microsoft.Data.SqlClient*.csproj" />
     <AKVProvider Include="**/add-ons/**/AzureKeyVaultProvider/*.csproj" />
 
-    <FunctionalTests Include="**/NSLibrary/Microsoft.Data.SqlClient.NSLibrary.csproj" />
+    <FunctionalTests Condition="$(ReferenceType.Contains('NetStandard'))" Include="**/NSLibrary/Microsoft.Data.SqlClient.NSLibrary.csproj" />
     <FunctionalTests Include="**/tools/TDS/TDS/TDS.csproj" />
     <FunctionalTests Include="**/tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
     <FunctionalTests Include="**/tools/TDS/TDS.Servers/TDS.Servers.csproj" />
@@ -34,7 +34,7 @@
     <FunctionalTests Include="**/ManualTests/SQL/UdtTest/UDTs/Address/Address.csproj" />
     <FunctionalTests Include="**/Microsoft.Data.SqlClient.Tests.csproj" />
 
-    <ManualTests Include="**/NSLibrary/Microsoft.Data.SqlClient.NSLibrary.csproj" />
+    <ManualTests Condition="$(ReferenceType.Contains('NetStandard'))" Include="**/NSLibrary/Microsoft.Data.SqlClient.NSLibrary.csproj" />
     <ManualTests Include="**/ManualTests/SQL/UdtTest/UDTs/Address/Address.csproj" />
     <ManualTests Include="**/ManualTests/SQL/UdtTest/UDTs/Circle/Circle.csproj" />
     <ManualTests Include="**/ManualTests/SQL/UdtTest/UDTs/Shapes/Shapes.csproj" />
@@ -116,14 +116,14 @@
     <MSBuild Projects="@(AKVProvider)" Properties="TestTargetOS=$(TestOS)netfx;Platform=$(Platform);$(TestProjectProperties)" />
   </Target>
 
-  <Target Name="BuildAKVNetCore" Condition="!$(ReferenceType.Contains('NetStandard'))">
+  <Target Name="BuildAKVNetCore">
     <MSBuild Projects="@(AKVProvider)" Targets="restore" Properties="TestTargetOS=$(TestOS)netcoreapp" />
     <!-- Only build platform specific builds for Package reference types -->
     <MSBuild Projects="@(AKVProvider)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;" Condition="!$(ReferenceType.Contains('Package'))"/>
     <MSBuild Projects="@(AKVProvider)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=$(Platform);" Condition="$(ReferenceType.Contains('Package'))"/>
   </Target>
 
-  <Target Name="BuildAKVNetCoreAllOS" Condition="!$(ReferenceType.Contains('NetStandard'))">
+  <Target Name="BuildAKVNetCoreAllOS">
     <MSBuild Projects="@(AKVProvider)" Targets="restore" Properties="TestTargetOS=$(TestOS)netcoreapp" />
     <MSBuild Projects="@(AKVProvider)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=Unix;" RemoveProperties="TargetsWindows;TargetsUnix;" />
     <MSBuild Projects="@(AKVProvider)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=Windows_NT;" RemoveProperties="TargetsWindows;TargetsUnix;" Condition="'$(IsEnabledWindows)' == 'true'" />
