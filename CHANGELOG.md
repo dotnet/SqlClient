@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
-## [Stable Release 2.0.1] - 2020-08-21
+## [Stable Release 2.0.1] - 2020-08-25
 
 ### Added
 - Added support for a new Configuration Section "SqlClientAuthenticationProviders" (duplicate of existing "SqlAuthenticationProviders") to allow co-existence of configurations for both drivers, "System.Data.SqlClient" and "Microsoft.Data.SqlClient" [#701](https://github.com/dotnet/SqlClient/pull/701)
@@ -15,6 +15,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Fixed Enclave session cache issue with Azure Database [#628](https://github.com/dotnet/SqlClient/pull/628)
 - Reverted changes to return empty DataTable from GetSchemaTable to return null as before. [#697](https://github.com/dotnet/SqlClient/pull/697)
 - Fixed configuration section collision issue with System.Data.SqlClient type [#701](https://github.com/dotnet/SqlClient/pull/701)
+- Fixed blank error message [HTTP Provider] issues due to unexpected pre-login failures when using Native SNI. Fixed with Microsoft.Data.SqlClient.SNI v2.0.1 and Microsoft.Data.SqlClient.SNI.runtime v2.0.1 release versions.
+
 
 ## [Stable Release 2.0.0] - 2020-06-16
 
