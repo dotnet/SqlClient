@@ -65,7 +65,7 @@ namespace Microsoft.Data.SqlTypes
                 Int64 allocationSize
             )
         {
-            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlFileStream.ctor|API> {0} access={1} options={2} path='{3}'", ObjectID, (int)access, (int)options, path);
+            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlFileStream.ctor|API> {0} access={1} options={2} path='{3}'", ObjectID, (int)access, (int)options, path);
             try
             {
                 //-----------------------------------------------------------------
@@ -90,7 +90,7 @@ namespace Microsoft.Data.SqlTypes
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
             }
         }
 
@@ -713,7 +713,7 @@ namespace Microsoft.Data.SqlTypes
                 UnsafeNativeMethods.SetErrorModeWrapper(UnsafeNativeMethods.SEM_FAILCRITICALERRORS, out oldMode);
                 try
                 {
-                    SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlFileStream.OpenSqlFileStream|ADV> {0}, desiredAccess=0x{1}, allocationSize={2}, " +
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlFileStream.OpenSqlFileStream|ADV> {0}, desiredAccess=0x{1}, allocationSize={2}, " +
                        "fileAttributes=0x{3}, shareAccess=0x{4}, dwCreateDisposition=0x{5}, createOptions=0x{ dwCreateOptions}", ObjectID, (int)nDesiredAccess, allocationSize, 0, (int)shareAccess, dwCreateDisposition);
 
                     retval = UnsafeNativeMethods.NtCreateFile(out hFile, nDesiredAccess,

@@ -476,7 +476,7 @@ namespace Microsoft.Data.SqlClient
             string[] parts;
             try
             {
-                parts = MultipartIdentifier.ParseMultipartIdentifier(this.DestinationTableName, "[\"", "]\"", SR.SQL_BulkCopyDestinationTableName, true);
+                parts = MultipartIdentifier.ParseMultipartIdentifier(this.DestinationTableName, "[\"", "]\"", Strings.SQL_BulkCopyDestinationTableName, true);
             }
             catch (Exception e)
             {
@@ -553,8 +553,8 @@ namespace Microsoft.Data.SqlClient
         private Task<BulkCopySimpleResultSet> CreateAndExecuteInitialQueryAsync(out BulkCopySimpleResultSet result)
         {
             string TDSCommand = CreateInitialQuery();
-            SqlClientEventSource.Log.TraceEvent("<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|INFO> Initial Query: '{0}'", TDSCommand);
-            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|Info|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
+            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|INFO> Initial Query: '{0}'", TDSCommand);
+            SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|Info|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
             Task executeTask = _parser.TdsExecuteSQLBatch(TDSCommand, this.BulkCopyTimeout, null, _stateObj, sync: !_isAsyncBulkCopy, callerHasConnectionLock: true);
 
             if (executeTask == null)
@@ -597,7 +597,7 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.BulkLoadNoCollation();
             }
 
-            string[] parts = MultipartIdentifier.ParseMultipartIdentifier(this.DestinationTableName, "[\"", "]\"", SR.SQL_BulkCopyDestinationTableName, true);
+            string[] parts = MultipartIdentifier.ParseMultipartIdentifier(this.DestinationTableName, "[\"", "]\"", Strings.SQL_BulkCopyDestinationTableName, true);
             updateBulkCommandText.AppendFormat("insert bulk {0} (", ADP.BuildMultiPartName(parts));
             int nmatched = 0;  // Number of columns that match and are accepted
             int nrejected = 0; // Number of columns that match but were rejected
@@ -852,7 +852,7 @@ namespace Microsoft.Data.SqlClient
 
         private Task SubmitUpdateBulkCommand(string TDSCommand)
         {
-            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlBulkCopy.SubmitUpdateBulkCommand|Info|Correlation> ObjectID{0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
+            SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlBulkCopy.SubmitUpdateBulkCommand|Info|Correlation> ObjectID{0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
             Task executeTask = _parser.TdsExecuteSQLBatch(TDSCommand, this.BulkCopyTimeout, null, _stateObj, sync: !_isAsyncBulkCopy, callerHasConnectionLock: true);
 
             if (executeTask == null)
@@ -2265,7 +2265,7 @@ namespace Microsoft.Data.SqlClient
             return writeTask;
         }
 
-        private void RegisterForConnectionCloseNotification<T>(ref Task<T> outerTask)
+        private Task<T> RegisterForConnectionCloseNotification<T>(Task<T> outerTask)
         {
             SqlConnection connection = _connection;
             if (connection == null)
@@ -2274,7 +2274,7 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.ClosedConnectionError();
             }
 
-            connection.RegisterForConnectionCloseNotification<T>(ref outerTask, this, SqlReferenceCollection.BulkCopyTag);
+            return connection.RegisterForConnectionCloseNotification(outerTask, this, SqlReferenceCollection.BulkCopyTag);
         }
 
         // Runs a loop to copy all columns of a single row.
@@ -2359,7 +2359,7 @@ namespace Microsoft.Data.SqlClient
                             // It's also the user's chance to cause an exception.
                             _stateObj.BcpLock = true;
                             abortOperation = FireRowsCopiedEvent(_rowsCopied);
-                            SqlClientEventSource.Log.TraceEvent("<sc.SqlBulkCopy.WriteToServerInternal|{0}>", "INFO");
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlBulkCopy.WriteToServerInternal|INFO>");
 
                             // In case the target connection is closed accidentally.
                             if (ConnectionState.Open != _connection.State)
@@ -3057,7 +3057,7 @@ namespace Microsoft.Data.SqlClient
                 source = new TaskCompletionSource<object>(); // Creating the completion source/Task that we pass to application
                 resultTask = source.Task;
 
-                RegisterForConnectionCloseNotification(ref resultTask);
+                resultTask = RegisterForConnectionCloseNotification(resultTask);
             }
 
             if (_destinationTableName == null)

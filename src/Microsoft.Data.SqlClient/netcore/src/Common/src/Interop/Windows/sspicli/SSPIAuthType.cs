@@ -96,7 +96,7 @@ namespace System.Net
             if (status == 0 && qop == Interop.SspiCli.SECQOP_WRAP_NO_ENCRYPT)
             {
                 NetEventSource.Fail(this, $"Expected qop = 0, returned value = {qop}");
-                throw new InvalidOperationException(SR.net_auth_message_not_encrypted);
+                throw new InvalidOperationException(Strings.net_auth_message_not_encrypted);
             }
 
             return status;
@@ -156,7 +156,7 @@ namespace System.Net
                 }
                 else
                 {
-                    throw new ArgumentException(SRHelper.Format(SR.SSPIInvalidHandleType, handleType.FullName), nameof(handleType));
+                    throw new ArgumentException(StringsHelper.Format(Strings.SSPIInvalidHandleType, handleType.FullName), nameof(handleType));
                 }
             }
 

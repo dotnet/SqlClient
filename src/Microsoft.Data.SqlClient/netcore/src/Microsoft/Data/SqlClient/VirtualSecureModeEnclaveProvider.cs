@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (value < 1)
                 {
-                    throw new ArgumentException(SR.EnclaveRetrySleepInSecondsValueException);
+                    throw new ArgumentException(Strings.EnclaveRetrySleepInSecondsValueException);
                 }
 
                 enclaveRetrySleepInSeconds = value;
@@ -81,7 +81,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            throw new AlwaysEncryptedAttestationException(String.Format(SR.GetAttestationSigningCertificateRequestFailedFormat, url, exception.Message), exception);
+            throw new AlwaysEncryptedAttestationException(String.Format(Strings.GetAttestationSigningCertificateRequestFailedFormat, url, exception.Message), exception);
         }
 
         #endregion

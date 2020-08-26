@@ -53,7 +53,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else if (_alias != server)
                     {
-                        SqlClientEventSource.Log.TraceEvent("<sc.SqlConnectionPoolGroupProviderInfo|INFO> alias change detected. Clearing PoolGroup");
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.SqlConnectionPoolGroupProviderInfo|INFO> alias change detected. Clearing PoolGroup");
                         base.PoolGroup.Clear();
                         _alias = server;
                     }
@@ -66,7 +66,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (UseFailoverPartner != actualUseFailoverPartner)
             {
-                SqlClientEventSource.Log.TraceEvent("<sc.SqlConnectionPoolGroupProviderInfo|INFO> Failover detected. failover partner='{0}'. Clearing PoolGroup", actualFailoverPartner);
+                SqlClientEventSource.Log.TryTraceEvent("<sc.SqlConnectionPoolGroupProviderInfo|INFO> Failover detected. failover partner='{0}'. Clearing PoolGroup", actualFailoverPartner);
                 base.PoolGroup.Clear();
                 _useFailoverPartner = actualUseFailoverPartner;
             }

@@ -53,6 +53,7 @@ namespace Microsoft.Data.SqlClient
         // header constants
         public const int HEADER_LEN = 8;
         public const int HEADER_LEN_FIELD_OFFSET = 2;
+        public const int SPID_OFFSET = 4;
         public const int YUKON_HEADER_LEN = 12; //Yukon headers also include a MARS session id
         public const int MARS_ID_OFFSET = 8;
         public const int HEADERTYPE_QNOTIFICATION = 1;
@@ -249,6 +250,7 @@ namespace Microsoft.Data.SqlClient
         public const byte MSALWORKFLOW_ACTIVEDIRECTORYINTEGRATED = 0x02;
         public const byte MSALWORKFLOW_ACTIVEDIRECTORYINTERACTIVE = 0x03;
         public const byte MSALWORKFLOW_ACTIVEDIRECTORYSERVICEPRINCIPAL = 0x01; // Using the Password byte as that is the closest we have
+        public const byte MSALWORKFLOW_ACTIVEDIRECTORYDEVICECODEFLOW = 0x03; // Using the Interactive byte as that is the closest we have
 
         public enum ActiveDirectoryWorkflow : byte
         {
@@ -256,6 +258,7 @@ namespace Microsoft.Data.SqlClient
             Integrated = MSALWORKFLOW_ACTIVEDIRECTORYINTEGRATED,
             Interactive = MSALWORKFLOW_ACTIVEDIRECTORYINTERACTIVE,
             ServicePrincipal = MSALWORKFLOW_ACTIVEDIRECTORYSERVICEPRINCIPAL,
+            DeviceCodeFlow = MSALWORKFLOW_ACTIVEDIRECTORYDEVICECODEFLOW,
         }
 
         // The string used for username in the error message when Authentication = Active Directory Integrated with FedAuth is used, if authentication fails.
@@ -933,7 +936,8 @@ namespace Microsoft.Data.SqlClient
 
         // Data Classification constants
         internal const byte DATA_CLASSIFICATION_NOT_ENABLED = 0x00;
-        internal const byte MAX_SUPPORTED_DATA_CLASSIFICATION_VERSION = 0x01;
+        internal const byte DATA_CLASSIFICATION_VERSION_WITHOUT_RANK_SUPPORT = 0x01;
+        internal const byte DATA_CLASSIFICATION_VERSION_MAX_SUPPORTED = 0x02;
 
         // Needed for UapAot, since we cannot use Enum.GetName() on SniContext.
         // Enum.GetName() uses reflection, which is blocked on UapAot for internal types
@@ -1129,6 +1133,9 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryServicePrincipal/*'/>
         ActiveDirectoryServicePrincipal,
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryDeviceCodeFlow/*'/>
+        ActiveDirectoryDeviceCodeFlow,
     }
     // This enum indicates the state of TransparentNetworkIPResolution
     // The first attempt when TNIR is on should be sequential. If the first attempt failes next attempts should be parallel.

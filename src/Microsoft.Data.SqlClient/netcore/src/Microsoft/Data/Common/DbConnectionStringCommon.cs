@@ -103,10 +103,11 @@ namespace Microsoft.Data.Common
         const string ActiveDirectoryIntegratedString = "Active Directory Integrated";
         const string ActiveDirectoryInteractiveString = "Active Directory Interactive";
         const string ActiveDirectoryServicePrincipalString = "Active Directory Service Principal";
+        const string ActiveDirectoryDeviceCodeFlowString = "Active Directory Device Code Flow";
 
         internal static bool TryConvertToAuthenticationType(string value, out SqlAuthenticationMethod result)
         {
-            Debug.Assert(Enum.GetNames(typeof(SqlAuthenticationMethod)).Length == 6, "SqlAuthenticationMethod enum has changed, update needed");
+            Debug.Assert(Enum.GetNames(typeof(SqlAuthenticationMethod)).Length == 7, "SqlAuthenticationMethod enum has changed, update needed");
 
             bool isSuccess = false;
 
@@ -138,6 +139,12 @@ namespace Microsoft.Data.Common
                 || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal, CultureInfo.InvariantCulture)))
             {
                 result = SqlAuthenticationMethod.ActiveDirectoryServicePrincipal;
+                isSuccess = true;
+            }
+            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, ActiveDirectoryDeviceCodeFlowString)
+                || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, CultureInfo.InvariantCulture)))
+            {
+                result = SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow;
                 isSuccess = true;
             }
             else
@@ -486,6 +493,7 @@ namespace Microsoft.Data.Common
                 || value == SqlAuthenticationMethod.ActiveDirectoryIntegrated
                 || value == SqlAuthenticationMethod.ActiveDirectoryInteractive
                 || value == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
+                || value == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
                 || value == SqlAuthenticationMethod.NotSpecified;
         }
 
@@ -505,6 +513,8 @@ namespace Microsoft.Data.Common
                     return ActiveDirectoryInteractiveString;
                 case SqlAuthenticationMethod.ActiveDirectoryServicePrincipal:
                     return ActiveDirectoryServicePrincipalString;
+                case SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow:
+                    return ActiveDirectoryDeviceCodeFlowString;
                 default:
                     return null;
             }

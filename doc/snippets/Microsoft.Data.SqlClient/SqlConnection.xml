@@ -1096,6 +1096,11 @@ GO
   
  <see cref="P:Microsoft.Data.SqlClient.SqlConnection.ServerVersion" /> was called while the returned Task was not completed and the connection was not opened after a call to <see cref="M:Microsoft.Data.SqlClient.SqlConnection.OpenAsync(System.Threading.CancellationToken)" />.</exception>
         </ServerVersion>
+      <ServerProcessId>
+        <summary>Gets the server process Id (SPID) of the active connection.</summary>
+        <value>The server process Id (SPID) of the active connection.</value>
+        <remarks>Returns 0 if the connection is inactive on the client side.</remarks>
+      </ServerProcessId>
         <State>
             <summary>Indicates the state of the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> during the most recent network operation performed on the connection.</summary>
             <value>An <see cref="T:System.Data.ConnectionState" /> enumeration.</value>

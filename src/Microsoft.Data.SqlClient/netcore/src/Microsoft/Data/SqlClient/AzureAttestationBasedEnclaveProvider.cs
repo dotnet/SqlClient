@@ -65,33 +65,33 @@ namespace Microsoft.Data.SqlClient
         #region Internal methods
         // When overridden in a derived class, looks up an existing enclave session information in the enclave session cache.
         // If the enclave provider doesn't implement enclave session caching, this method is expected to return null in the sqlEnclaveSession parameter.
-        internal override void GetEnclaveSession(string servername, string attestationUrl, bool generateCustomData, out SqlEnclaveSession sqlEnclaveSession, out long counter, out byte[] customData, out int customDataLength)
+        internal override void GetEnclaveSession(EnclaveSessionParameters enclaveSessionParameters, bool generateCustomData, out SqlEnclaveSession sqlEnclaveSession, out long counter, out byte[] customData, out int customDataLength)
         {
-            GetEnclaveSessionHelper(servername, attestationUrl, generateCustomData, out sqlEnclaveSession, out counter, out customData, out customDataLength);
+            GetEnclaveSessionHelper(enclaveSessionParameters, generateCustomData, out sqlEnclaveSession, out counter, out customData, out customDataLength);
         }
 
         // Gets the information that SqlClient subsequently uses to initiate the process of attesting the enclave and to establish a secure session with the enclave.
         internal override SqlEnclaveAttestationParameters GetAttestationParameters(string attestationUrl, byte[] customData, int customDataLength)
         {
-            ECDiffieHellmanCng clientDHKey = new ECDiffieHellmanCng(DiffieHellmanKeySize);
-            clientDHKey.KeyDerivationFunction = ECDiffieHellmanKeyDerivationFunction.Hash;
-            clientDHKey.HashAlgorithm = CngAlgorithm.Sha256;
+            // The key derivation function and hash algorithm name are specified when key derivation is performed
+            ECDiffieHellman clientDHKey = ECDiffieHellman.Create();
+            clientDHKey.KeySize = DiffieHellmanKeySize;
             byte[] attestationParam = PrepareAttestationParameters(attestationUrl, customData, customDataLength);
             return new SqlEnclaveAttestationParameters(AzureBasedAttestationProtocolId, attestationParam, clientDHKey);
         }
 
         // When overridden in a derived class, performs enclave attestation, generates a symmetric key for the session, creates a an enclave session and stores the session information in the cache.
-        internal override void CreateEnclaveSession(byte[] attestationInfo, ECDiffieHellmanCng clientDHKey, string attestationUrl, string servername, byte[] customData, int customDataLength, out SqlEnclaveSession sqlEnclaveSession, out long counter)
+        internal override void CreateEnclaveSession(byte[] attestationInfo, ECDiffieHellman clientDHKey, EnclaveSessionParameters enclaveSessionParameters, byte[] customData, int customDataLength, out SqlEnclaveSession sqlEnclaveSession, out long counter)
         {
             sqlEnclaveSession = null;
             counter = 0;
             try
             {
                 ThreadRetryCache.Remove(Thread.CurrentThread.ManagedThreadId.ToString());
-                sqlEnclaveSession = GetEnclaveSessionFromCache(servername, attestationUrl, out counter);
+                sqlEnclaveSession = GetEnclaveSessionFromCache(enclaveSessionParameters, out counter);
                 if (sqlEnclaveSession == null)
                 {
-                    if (!string.IsNullOrEmpty(attestationUrl) && customData != null && customDataLength > 0)
+                    if (!string.IsNullOrEmpty(enclaveSessionParameters.AttestationUrl) && customData != null && customDataLength > 0)
                     {
                         byte[] nonce = customData;
 
@@ -101,17 +101,17 @@ namespace Microsoft.Data.SqlClient
                         AzureAttestationInfo attestInfo = new AzureAttestationInfo(attestationInfo);
 
                         // Validate the attestation info
-                        VerifyAzureAttestationInfo(attestationUrl, attestInfo.EnclaveType, attestInfo.AttestationToken.AttestationToken, attestInfo.Identity, nonce);
+                        VerifyAzureAttestationInfo(enclaveSessionParameters.AttestationUrl, attestInfo.EnclaveType, attestInfo.AttestationToken.AttestationToken, attestInfo.Identity, nonce);
 
                         // Set up shared secret and validate signature
                         byte[] sharedSecret = GetSharedSecret(attestInfo.Identity, nonce, attestInfo.EnclaveType, attestInfo.EnclaveDHInfo, clientDHKey);
 
                         // add session to cache
-                        sqlEnclaveSession = AddEnclaveSessionToCache(attestationUrl, servername, sharedSecret, attestInfo.SessionId, out counter);
+                        sqlEnclaveSession = AddEnclaveSessionToCache(enclaveSessionParameters, sharedSecret, attestInfo.SessionId, out counter);
                     }
                     else
                     {
-                        throw new AlwaysEncryptedAttestationException(SR.FailToCreateEnclaveSession);
+                        throw new AlwaysEncryptedAttestationException(Strings.FailToCreateEnclaveSession);
                     }
                 }
             }
@@ -126,9 +126,9 @@ namespace Microsoft.Data.SqlClient
         }
 
         // When overridden in a derived class, looks up and evicts an enclave session from the enclave session cache, if the provider implements session caching.
-        internal override void InvalidateEnclaveSession(string serverName, string enclaveAttestationUrl, SqlEnclaveSession enclaveSessionToInvalidate)
+        internal override void InvalidateEnclaveSession(EnclaveSessionParameters enclaveSessionParameters, SqlEnclaveSession enclaveSessionToInvalidate)
         {
-            InvalidateEnclaveSessionHelper(serverName, enclaveAttestationUrl, enclaveSessionToInvalidate);
+            InvalidateEnclaveSessionHelper(enclaveSessionParameters, enclaveSessionToInvalidate);
         }
         #endregion
 
@@ -215,7 +215,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 catch (Exception exception)
                 {
-                    throw new AlwaysEncryptedAttestationException(String.Format(SR.FailToParseAttestationInfo, exception.Message));
+                    throw new AlwaysEncryptedAttestationException(String.Format(Strings.FailToParseAttestationInfo, exception.Message));
                 }
             }
         }
@@ -277,7 +277,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                throw new AlwaysEncryptedAttestationException(SR.FailToCreateEnclaveSession);
+                throw new AlwaysEncryptedAttestationException(Strings.FailToCreateEnclaveSession);
             }
         }
 
@@ -313,7 +313,7 @@ namespace Microsoft.Data.SqlClient
 
             if (!isSignatureValid)
             {
-                throw new AlwaysEncryptedAttestationException(String.Format(SR.AttestationTokenSignatureValidationFailed, exceptionMessage));
+                throw new AlwaysEncryptedAttestationException(String.Format(Strings.AttestationTokenSignatureValidationFailed, exceptionMessage));
             }
 
             // Validate claims in the token
@@ -349,7 +349,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 catch (Exception exception)
                 {
-                    throw new AlwaysEncryptedAttestationException(String.Format(SR.GetAttestationTokenSigningKeysFailed, GetInnerMostExceptionMessage(exception)), exception);
+                    throw new AlwaysEncryptedAttestationException(String.Format(Strings.GetAttestationTokenSigningKeysFailed, GetInnerMostExceptionMessage(exception)), exception);
                 }
 
                 OpenIdConnectConfigurationCache.Add(url, openIdConnectConfig, DateTime.UtcNow.AddDays(1));
@@ -416,7 +416,7 @@ namespace Microsoft.Data.SqlClient
             }
             catch (SecurityTokenExpiredException securityException)
             {
-                throw new AlwaysEncryptedAttestationException(SR.ExpiredAttestationToken, securityException);
+                throw new AlwaysEncryptedAttestationException(Strings.ExpiredAttestationToken, securityException);
             }
             catch (SecurityTokenValidationException securityTokenException)
             {
@@ -428,7 +428,7 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception exception)
             {
-                throw new AlwaysEncryptedAttestationException(String.Format(SR.InvalidAttestationToken, GetInnerMostExceptionMessage(exception)));
+                throw new AlwaysEncryptedAttestationException(String.Format(Strings.InvalidAttestationToken, GetInnerMostExceptionMessage(exception)));
             }
 
             return isSignatureValid;
@@ -447,7 +447,7 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception argumentException)
             {
-                throw new AlwaysEncryptedAttestationException(SR.InvalidArgumentToSHA256, argumentException);
+                throw new AlwaysEncryptedAttestationException(Strings.InvalidArgumentToSHA256, argumentException);
             }
             return result;
         }
@@ -464,7 +464,7 @@ namespace Microsoft.Data.SqlClient
             }
             catch (ArgumentException argumentException)
             {
-                throw new AlwaysEncryptedAttestationException(String.Format(SR.FailToParseAttestationToken, argumentException.Message));
+                throw new AlwaysEncryptedAttestationException(String.Format(Strings.FailToParseAttestationToken, argumentException.Message));
             }
 
             // Get all the claims from the token
@@ -492,7 +492,7 @@ namespace Microsoft.Data.SqlClient
             bool hasClaim = claims.TryGetValue(claimName, out claimData);
             if (!hasClaim)
             {
-                throw new AlwaysEncryptedAttestationException(String.Format(SR.MissingClaimInAttestationToken, claimName));
+                throw new AlwaysEncryptedAttestationException(String.Format(Strings.MissingClaimInAttestationToken, claimName));
             }
 
             // Get the Base64Url of the actual data and compare it with claim
@@ -503,18 +503,18 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception)
             {
-                throw new AlwaysEncryptedAttestationException(SR.InvalidArgumentToBase64UrlDecoder);
+                throw new AlwaysEncryptedAttestationException(Strings.InvalidArgumentToBase64UrlDecoder);
             }
 
             bool hasValidClaim = String.Equals(encodedActualData, claimData, StringComparison.Ordinal);
             if (!hasValidClaim)
             {
-                throw new AlwaysEncryptedAttestationException(String.Format(SR.InvalidClaimInAttestationToken, claimName, claimData));
+                throw new AlwaysEncryptedAttestationException(String.Format(Strings.InvalidClaimInAttestationToken, claimName, claimData));
             }
         }
 
         // Derives the shared secret between the client and enclave.
-        private byte[] GetSharedSecret(EnclavePublicKey enclavePublicKey, byte[] nonce, EnclaveType enclaveType, EnclaveDiffieHellmanInfo enclaveDHInfo, ECDiffieHellmanCng clientDHKey)
+        private byte[] GetSharedSecret(EnclavePublicKey enclavePublicKey, byte[] nonce, EnclaveType enclaveType, EnclaveDiffieHellmanInfo enclaveDHInfo, ECDiffieHellman clientDHKey)
         {
             byte[] enclaveRsaPublicKey = enclavePublicKey.PublicKey;
 
@@ -529,17 +529,18 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Perform signature verification. The enclave's DiffieHellman public key was signed by the enclave's RSA public key.
-            CngKey cngkey = CngKey.Import(enclaveRsaPublicKey, CngKeyBlobFormat.GenericPublicBlob);
-            using (RSACng rsacng = new RSACng(cngkey))
+            RSAParameters rsaParams = KeyConverter.RSAPublicKeyBlobToParams(enclaveRsaPublicKey);
+            using (RSA rsa = RSA.Create(rsaParams))
             {
-                if (!rsacng.VerifyData(enclaveDHInfo.PublicKey, enclaveDHInfo.PublicKeySignature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1))
+                if (!rsa.VerifyData(enclaveDHInfo.PublicKey, enclaveDHInfo.PublicKeySignature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1))
                 {
-                    throw new ArgumentException(SR.GetSharedSecretFailed);
+                    throw new ArgumentException(Strings.GetSharedSecretFailed);
                 }
             }
 
-            CngKey key = CngKey.Import(enclaveDHInfo.PublicKey, CngKeyBlobFormat.GenericPublicBlob);
-            return clientDHKey.DeriveKeyMaterial(key);
+            ECParameters ecParams = KeyConverter.ECCPublicKeyBlobToParams(enclaveDHInfo.PublicKey);
+            ECDiffieHellman enclaveDHKey = ECDiffieHellman.Create(ecParams);
+            return clientDHKey.DeriveKeyFromHash(enclaveDHKey.PublicKey, HashAlgorithmName.SHA256);
         }
         #endregion
     }
