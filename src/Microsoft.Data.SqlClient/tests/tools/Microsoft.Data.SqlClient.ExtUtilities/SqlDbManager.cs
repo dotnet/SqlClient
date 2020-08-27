@@ -13,8 +13,8 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
 
         private const string DB_Northwind = "Northwind";
         private const string DB_Master = "master";
-        private const string NorthWindScriptPath = @"..\..\..\..\..\tools\testsql\createNorthwindDb.sql";
-        private const string ConfigPath = @"..\Microsoft.Data.SqlClient.TestUtilities\config.json";
+        private const string NorthWindScriptPath = @"../../../../../tools/testsql/createNorthwindDb.sql";
+        private const string ConfigPath = @"../Microsoft.Data.SqlClient.TestUtilities/config.json";
 
         private const string TCPConnectionString = "TCPConnectionString";
         private const string NPConnectionString = "NPConnectionString";
@@ -48,29 +48,31 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
                     if (!Utils.IsAzureSqlServer(builder.DataSource))
                     {
                         builder.InitialCatalog = DB_Master;
-                        using SqlConnection conn = new SqlConnection(builder.ConnectionString);
-                        SqlServer.Management.Smo.Server server = new SqlServer.Management.Smo.Server(new ServerConnection(conn));
-                        ServerConnection context = server.ConnectionContext;
+                        using(SqlConnection conn = new SqlConnection(builder.ConnectionString))
+                        {
+                            SqlServer.Management.Smo.Server server = new SqlServer.Management.Smo.Server(new ServerConnection(conn));
+                            ServerConnection context = server.ConnectionContext;
 
-                        if (args[0] == "CreateDatabase")
-                        {
-                            //Create a new database
-                            CreateDatabase(dbName, context);
-                            Console.WriteLine($"Database [{dbName}] created successfully in {builder.DataSource}");
+                            if (args[0] == "CreateDatabase")
+                            {
+                                //Create a new database
+                                CreateDatabase(dbName, context);
+                                Console.WriteLine($"Database [{dbName}] created successfully in {builder.DataSource}");
 
-                            // Update Config.json accordingly
-                            builder.InitialCatalog = dbName;
-                            UpdateConfig(activeConnString.Key, builder);
-                        }
-                        else if (args[0] == "DropDatabase")
-                        {
-                            // Drop Northwind for test run.
-                            DropIfExistsDatabase(dbName, context);
-                            Console.WriteLine($"Database [{dbName}] dropped successfully in {builder.DataSource}");
-                        }
-                        else
-                        {
-                            Console.WriteLine($"Utility '{args[0]}' not supported in {builder.DataSource}");
+                                // Update Config.json accordingly
+                                builder.InitialCatalog = dbName;
+                                UpdateConfig(activeConnString.Key, builder);
+                            }
+                            else if (args[0] == "DropDatabase")
+                            {
+                                // Drop Northwind for test run.
+                                DropIfExistsDatabase(dbName, context);
+                                Console.WriteLine($"Database [{dbName}] dropped successfully in {builder.DataSource}");
+                            }
+                            else
+                            {
+                                Console.WriteLine($"Utility '{args[0]}' not supported in {builder.DataSource}");
+                            }
                         }
                     }
                     else
@@ -96,10 +98,6 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
             if (!string.IsNullOrEmpty(s_configJson.TCPConnectionString))
             {
                 s_activeConnectionStrings.Add(TCPConnectionString, s_configJson.TCPConnectionString);
-            }
-            if (!string.IsNullOrEmpty(s_configJson.NPConnectionString))
-            {
-                s_activeConnectionStrings.Add(TCPConnectionString, s_configJson.NPConnectionString);
             }
             if (s_configJson.EnclaveEnabled)
             {

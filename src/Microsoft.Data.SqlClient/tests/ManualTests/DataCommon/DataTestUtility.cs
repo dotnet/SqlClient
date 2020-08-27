@@ -81,7 +81,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             DNSCachingServerTR = c.DNSCachingServerTR;
             IsDNSCachingSupportedCR = c.IsDNSCachingSupportedCR;
             IsDNSCachingSupportedTR = c.IsDNSCachingSupportedTR;
-			EnclaveAzureDatabaseConnString = c.EnclaveAzureDatabaseConnString;
+            EnclaveAzureDatabaseConnString = c.EnclaveAzureDatabaseConnString;
 
             if (TracingEnabled)
             {
@@ -252,7 +252,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool IsEnclaveAzureDatabaseSetup()
         {
             return EnclaveEnabled && !string.IsNullOrEmpty(EnclaveAzureDatabaseConnString);
-        }  
+        }
 
         public static bool IsUdtTestDatabasePresent() => IsDatabasePresent(UdtTestDbName);
 
