@@ -2,14 +2,13 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
 using System.Runtime.InteropServices;
 
-internal static partial class Interop
+namespace System
 {
-    internal static partial class Sys
+    public static partial class PlatformDetection
     {
-        [DllImport(Libraries.SystemNative, EntryPoint = "SystemNative_Listen")]
-        internal static extern Error Listen(SafeHandle socket, int backlog);
+        public static bool IsArmProcess => RuntimeInformation.ProcessArchitecture == Architecture.Arm;
+        public static bool IsNotArmProcess => !IsArmProcess;
     }
 }
