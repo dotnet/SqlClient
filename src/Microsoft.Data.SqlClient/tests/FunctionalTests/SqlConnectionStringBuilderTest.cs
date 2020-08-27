@@ -52,8 +52,10 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("PersistSecurityInfo = true")]
         [InlineData("Pooling = no")]
         [InlineData("Pooling = false")]
+#if netcoreapp // PoolBlockingPeriod is not supported in .NET Standard
         [InlineData("PoolBlockingPeriod = Auto")]
         [InlineData("PoolBlockingperiod = NeverBlock")]
+#endif
         [InlineData("Replication = true")]
         [InlineData("Transaction Binding = Explicit Unbind")]
         [InlineData("Trust Server Certificate = true")]

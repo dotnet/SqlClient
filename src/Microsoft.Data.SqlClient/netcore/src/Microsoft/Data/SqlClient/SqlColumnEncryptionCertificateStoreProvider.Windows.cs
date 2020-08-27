@@ -482,10 +482,11 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Encrypt the text using specified certificate.
+        /// Decrypt the data using specified certificate.
         /// </summary>
         /// <param name="cipherText">Text to decrypt.</param>
         /// <param name="certificate">Certificate object.</param>
+        /// <returns>Returns a decrypted blob or throws an exception if there are any errors.</returns>
         private byte[] RSADecrypt(byte[] cipherText, X509Certificate2 certificate)
         {
             Debug.Assert((cipherText != null) && (cipherText.Length != 0));
