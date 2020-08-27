@@ -142,7 +142,7 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
         {
             try
             {
-                string dropScript = $"IF EXISTS (select * from sys.databases where name = '{dbName}') BEGIN DROP DATABASE {dbName} END;";
+                string dropScript = $"IF EXISTS (select * from sys.databases where name = '{dbName}') BEGIN DROP DATABASE [{dbName}] END;";
                 context.ExecuteNonQuery(dropScript);
             }
             catch (Exception)

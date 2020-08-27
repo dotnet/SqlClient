@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     DataTestUtility.AssertEqualsWithDescription("col0", columnName, "Unexpected column name.");
 
                     string dataTypeName = (string)schemaTable.Rows[0][schemaTable.Columns["DataTypeName"]];
-                    DataTestUtility.AssertEqualsWithDescription($"{db}.sys.hierarchyid", dataTypeName, "Unexpected data type name.");
+                    DataTestUtility.AssertEqualsWithDescription($"{db}.sys.hierarchyid".ToUpper(), dataTypeName.ToUpper(), "Unexpected data type name.");
 
                     string udtAssemblyName = (string)schemaTable.Rows[0][schemaTable.Columns["UdtAssemblyQualifiedName"]];
                     Assert.True(udtAssemblyName?.StartsWith("Microsoft.SqlServer.Types.SqlHierarchyId"), "Unexpected UDT assembly name: " + udtAssemblyName);
