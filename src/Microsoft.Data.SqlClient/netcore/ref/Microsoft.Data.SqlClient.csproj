@@ -1,7 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <TargetFrameworks>netcoreapp2.1;netcoreapp3.1;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>netcoreapp2.1;netcoreapp3.1;netstandard2.0;netstandard2.1</TargetFrameworks>
+    <TargetFrameworks Condition="$(ReferenceType)=='NetStandard' AND $(TargetNetStandardVersion)=='netstandard2.1'">netstandard2.1</TargetFrameworks>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration)\$(AssemblyName)\ref\</IntermediateOutputPath>
     <OutputPath>$(BinFolder)$(Configuration)\$(AssemblyName)\ref\</OutputPath>
     <DocumentationFile>$(OutputPath)\$(TargetFramework)\Microsoft.Data.SqlClient.xml</DocumentationFile>
@@ -18,5 +19,11 @@
   <ItemGroup Condition="'$(TargetGroup)' == 'netcoreapp'">
     <Compile Include="Microsoft.Data.SqlClient.NetCoreApp.cs" />
     <PackageReference Include="System.Security.Cryptography.Cng" Version="$(SystemSecurityCryptographyCngVersion)" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetGroup)' == 'netstandard'">
+    <Compile Include="Microsoft.Data.SqlClient.NetStandard.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Identity.Client" Version="$(MicrosoftIdentityClientVersion)" />
   </ItemGroup>
 </Project>

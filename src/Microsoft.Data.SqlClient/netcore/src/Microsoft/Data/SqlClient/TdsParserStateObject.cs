@@ -89,6 +89,8 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal int _inBytesPacket;
 
+        internal int _spid;                                 // SPID of the current connection
+
         // Packet state variables
         internal byte _outputMessageType;                   // tds header type
         internal byte _messageStatus;                       // tds header status
@@ -540,8 +542,8 @@ namespace Microsoft.Data.SqlClient
                     return false;
                 }
 
-                SqlClientEventSource.Log.AdvancedTraceEvent("<sc.TdsParserStateObject.NullBitmap.Initialize|INFO|ADV> {0}, NBCROW bitmap received, column count = {1}", stateObj.ObjectID, columnsCount);
-                SqlClientEventSource.Log.AdvancedTraceBinEvent("<sc.TdsParserStateObject.NullBitmap.Initialize|INFO|ADV> NBCROW bitmap data: ", _nullBitmap, (ushort)_nullBitmap.Length);
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParserStateObject.NullBitmap.Initialize|INFO|ADV> {0}, NBCROW bitmap received, column count = {1}", stateObj.ObjectID, columnsCount);
+                SqlClientEventSource.Log.TryAdvancedTraceBinEvent("<sc.TdsParserStateObject.NullBitmap.Initialize|INFO|ADV> NBCROW bitmap data: ", _nullBitmap, (ushort)_nullBitmap.Length);
                 return true;
             }
 
@@ -871,7 +873,7 @@ namespace Microsoft.Data.SqlClient
         internal int DecrementPendingCallbacks(bool release)
         {
             int remaining = Interlocked.Decrement(ref _pendingCallbacks);
-            SqlClientEventSource.Log.AdvancedTraceEvent("<sc.TdsParserStateObject.DecrementPendingCallbacks|ADV> {0}, after decrementing _pendingCallbacks: {1}", ObjectID, _pendingCallbacks);
+            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParserStateObject.DecrementPendingCallbacks|ADV> {0}, after decrementing _pendingCallbacks: {1}", ObjectID, _pendingCallbacks);
             FreeGcHandle(remaining, release);
             // NOTE: TdsParserSessionPool may call DecrementPendingCallbacks on a TdsParserStateObject which is already disposed
             // This is not dangerous (since the stateObj is no longer in use), but we need to add a workaround in the assert for it
@@ -924,7 +926,7 @@ namespace Microsoft.Data.SqlClient
         internal int IncrementPendingCallbacks()
         {
             int remaining = Interlocked.Increment(ref _pendingCallbacks);
-            SqlClientEventSource.Log.AdvancedTraceEvent("<sc.TdsParserStateObject.IncrementPendingCallbacks|ADV> {0}, after incrementing _pendingCallbacks: {1}", ObjectID, _pendingCallbacks);
+            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParserStateObject.IncrementPendingCallbacks|ADV> {0}, after incrementing _pendingCallbacks: {1}", ObjectID, _pendingCallbacks);
             Debug.Assert(0 < remaining && remaining <= 3, $"_pendingCallbacks values is invalid after incrementing: {remaining}");
             return remaining;
         }
@@ -1019,6 +1021,8 @@ namespace Microsoft.Data.SqlClient
                                   (int)_partialHeaderBuffer[TdsEnums.HEADER_LEN_FIELD_OFFSET + 1]) - _inputHeaderLen;
 
                         _messageStatus = _partialHeaderBuffer[1];
+                        _spid = _partialHeaderBuffer[TdsEnums.SPID_OFFSET] << 8 |
+                                  _partialHeaderBuffer[TdsEnums.SPID_OFFSET + 1];
                     }
                     else
                     {
@@ -1052,8 +1056,10 @@ namespace Microsoft.Data.SqlClient
             {
                 // normal header processing...
                 _messageStatus = _inBuff[_inBytesUsed + 1];
-                _inBytesPacket = ((int)_inBuff[_inBytesUsed + TdsEnums.HEADER_LEN_FIELD_OFFSET] << 8 |
-                                              (int)_inBuff[_inBytesUsed + TdsEnums.HEADER_LEN_FIELD_OFFSET + 1]) - _inputHeaderLen;
+                _inBytesPacket = (_inBuff[_inBytesUsed + TdsEnums.HEADER_LEN_FIELD_OFFSET] << 8 |
+                                              _inBuff[_inBytesUsed + TdsEnums.HEADER_LEN_FIELD_OFFSET + 1]) - _inputHeaderLen;
+                _spid = _inBuff[_inBytesUsed + TdsEnums.SPID_OFFSET] << 8 |
+                                              _inBuff[_inBytesUsed + TdsEnums.SPID_OFFSET + 1];
                 _inBytesUsed += _inputHeaderLen;
 
                 AssertValidState();
@@ -1231,7 +1237,7 @@ namespace Microsoft.Data.SqlClient
                         int remainingData = _inBytesRead - _inBytesUsed;
                         if ((temp.Length < _inBytesUsed + remainingData) || (_inBuff.Length < remainingData))
                         {
-                            string errormessage = SRHelper.GetString(SR.SQL_InvalidInternalPacketSize) + ' ' + temp.Length + ", " + _inBytesUsed + ", " + remainingData + ", " + _inBuff.Length;
+                            string errormessage = StringsHelper.GetString(Strings.SQL_InvalidInternalPacketSize) + ' ' + temp.Length + ", " + _inBytesUsed + ", " + remainingData + ", " + _inBuff.Length;
                             throw SQL.InvalidInternalPacketSize(errormessage);
                         }
                         Buffer.BlockCopy(temp, _inBytesUsed, _inBuff, 0, remainingData);
@@ -2528,7 +2534,7 @@ namespace Microsoft.Data.SqlClient
                     if ((error != TdsEnums.SNI_SUCCESS) && (error != TdsEnums.SNI_WAIT_TIMEOUT))
                     {
                         // Connection is dead
-                        SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.IsConnectionAlive|Info> received error {0} on idle connection", (int)error);
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.IsConnectionAlive|Info> received error {0} on idle connection", (int)error);
                         isAlive = false;
                         if (throwOnException)
                         {
@@ -2700,7 +2706,7 @@ namespace Microsoft.Data.SqlClient
                     if (_inBuff.Length < dataSize)
                     {
                         Debug.Assert(true, "Unexpected dataSize on Read");
-                        throw SQL.InvalidInternalPacketSize(SRHelper.GetString(SR.SqlMisc_InvalidArraySizeMessage));
+                        throw SQL.InvalidInternalPacketSize(StringsHelper.GetString(Strings.SqlMisc_InvalidArraySizeMessage));
                     }
 
                     _lastSuccessfulIOTimer._value = DateTime.UtcNow.Ticks;
@@ -2917,7 +2923,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (sniError != TdsEnums.SNI_SUCCESS)
                 {
-                    SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.WriteAsyncCallback|Info> write async returned error code {0}", (int)sniError);
+                    SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.WriteAsyncCallback|Info> write async returned error code {0}", (int)sniError);
                     try
                     {
                         AddError(_parser.ProcessSNIError(this));
@@ -3407,7 +3413,7 @@ namespace Microsoft.Data.SqlClient
 
                         if (error != TdsEnums.SNI_SUCCESS)
                         {
-                            SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.WritePacket|Info> write async returned error code {0}", (int)error);
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.WritePacket|Info> write async returned error code {0}", (int)error);
                             AddError(_parser.ProcessSNIError(this));
                             ThrowExceptionAndWarning();
                         }
@@ -3442,7 +3448,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.WritePacket|Info> write async returned error code {0}", (int)sniError);
+                    SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.WritePacket|Info> write async returned error code {0}", (int)sniError);
                     AddError(_parser.ProcessSNIError(this));
                     ThrowExceptionAndWarning(callerHasConnectionLock);
                 }
@@ -3500,7 +3506,7 @@ namespace Microsoft.Data.SqlClient
                             uint sniError;
                             _parser._asyncWrite = false; // stop async write 
                             SNIWritePacket(attnPacket, out sniError, canAccumulate: false, callerHasConnectionLock: false);
-                            SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.SendAttention|{0}> Send Attention ASync.", "Info");
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.SendAttention|INFO> Send Attention ASync.");
                         }
                         finally
                         {
@@ -3522,8 +3528,8 @@ namespace Microsoft.Data.SqlClient
                     _attentionSending = false;
                 }
 
-                SqlClientEventSource.Log.AdvancedTraceBinEvent("<sc.TdsParser.WritePacket|INFO|ADV>  Packet sent", _outBuff, (ushort)_outBytesUsed);
-                SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.SendAttention|{0}> Attention sent to the server.", "Info");
+                SqlClientEventSource.Log.TryAdvancedTraceBinEvent("<sc.TdsParser.WritePacket|INFO|ADV>  Packet sent", _outBuff, (ushort)_outBytesUsed);
+                SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.SendAttention|INFO> Attention sent to the server.");
 
                 AssertValidState();
             }

@@ -89,7 +89,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Class/*' />
         public byte Class
         {
-            get { return Errors.Count > 0 ? this.Errors[0].Class : default; }
+            get { return Errors.Count > 0 ? Errors[0].Class : default; }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/LineNumber/*' />
@@ -125,7 +125,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Source/*' />
         override public string Source
         {
-            get { return Errors.Count > 0 ? Errors[0].Source : default; }
+            get { return TdsEnums.SQL_PROVIDER_NAME; }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/ToString/*' />

@@ -56,12 +56,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private bool TryGetResourceValue(string resourceName, object[] args, out object result)
         {
-#if netcoreapp
-            Type type = _resourceAssembly.GetType("System.SR");
-#else
-            Type type = _resourceAssembly.GetType("System.Strings");
-#endif
-            PropertyInfo info = type.GetProperty(resourceName, BindingFlags.NonPublic | BindingFlags.Static);
+            var type = _resourceAssembly.GetType("System.Strings");
+            var info = type.GetProperty(resourceName, BindingFlags.NonPublic | BindingFlags.Static);
 
             result = null;
             if (info != null)

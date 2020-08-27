@@ -51,7 +51,7 @@ namespace Microsoft.Data.SqlClient
         internal const int LocalDBInvalidSqlUserInstanceDllPath = 55;
         internal const int LocalDBFailedToLoadDll = 56;
         internal const int LocalDBBadRuntime = 57;
-		internal const int SniIP6AddrStringBufferLength = 48; // from SNI layer
+        internal const int SniIP6AddrStringBufferLength = 48; // from SNI layer
 
         internal static int SniMaxComposedSpnLength
         {
@@ -725,12 +725,12 @@ namespace Microsoft.Data.SqlClient
         {
             return SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_CONNID, out connId);
         }
-       
+
         internal static uint SniGetProviderNumber(SNIHandle pConn, ref ProviderEnum provNum)
         {
             return SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_PROVIDERNUM, out provNum);
         }
-     
+
         internal static uint SniGetConnectionPort(SNIHandle pConn, ref ushort portNum)
         {
             return SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_PEERPORT, out portNum);
@@ -812,7 +812,7 @@ namespace Microsoft.Data.SqlClient
                 clientConsumerInfo.DNSCacheInfo.wszCachedTcpIPv4 = cachedDNSInfo?.AddrIPv4;
                 clientConsumerInfo.DNSCacheInfo.wszCachedTcpIPv6 = cachedDNSInfo?.AddrIPv6;
                 clientConsumerInfo.DNSCacheInfo.wszCachedTcpPort = cachedDNSInfo?.Port;
-                
+
                 if (spnBuffer != null)
                 {
                     fixed (byte* pin_spnBuffer = &spnBuffer[0])
@@ -1074,6 +1074,32 @@ namespace Microsoft.Data.SqlClient
                 ? Marshal.GetFunctionPointerForDelegate(consumerInfo.writeDelegate)
                 : IntPtr.Zero;
             native_consumerInfo.ConsumerKey = consumerInfo.key;
+        }
+
+        internal static bool RegisterTraceProvider(int eventKeyword)
+        {
+            // Registers the TraceLogging provider, enabling it to generate events.
+            // Return true if enabled, otherwise false.
+            if (s_is64bitProcess)
+            {
+                return SNINativeManagedWrapperX64.RegisterTraceProviderWrapper(eventKeyword);
+            }
+            else
+            {
+                return SNINativeManagedWrapperX86.RegisterTraceProviderWrapper(eventKeyword);
+            }
+        }
+
+        internal static void UnregisterTraceProvider()
+        {
+            if (s_is64bitProcess)
+            {
+                SNINativeManagedWrapperX64.UnregisterTraceProviderWrapper();
+            }
+            else
+            {
+                SNINativeManagedWrapperX86.UnregisterTraceProviderWrapper();
+            }
         }
     }
 }

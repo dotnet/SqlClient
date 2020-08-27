@@ -276,8 +276,8 @@ namespace Microsoft.Data.SqlClient
 
             if (null != metaData && 0 < metaData.Length)
             {
-                metaDataReturn = new SmiExtendedMetaData[metaData.visibleColumns];
-
+                metaDataReturn = new SmiExtendedMetaData[metaData.VisibleColumnCount];
+                int returnIndex = 0;
                 for (int index = 0; index < metaData.Length; index++)
                 {
                     _SqlMetaData colMetaData = metaData[index];
@@ -316,7 +316,7 @@ namespace Microsoft.Data.SqlClient
                             length /= ADP.CharSize;
                         }
 
-                        metaDataReturn[index] =
+                        metaDataReturn[returnIndex] =
                             new SmiQueryMetaData(
                                 colMetaData.type,
                                 length,
@@ -344,6 +344,8 @@ namespace Microsoft.Data.SqlClient
                                 colMetaData.IsExpression,
                                 colMetaData.IsDifferentName,
                                 colMetaData.IsHidden);
+
+                        returnIndex += 1;
                     }
                 }
             }
@@ -406,7 +408,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     return 0;
                 }
-                return (md.visibleColumns);
+                return md.VisibleColumnCount;
             }
         }
 
@@ -842,7 +844,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/Close/*' />
         public override void Close()
         {
-            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlDataReader.Close|API> {0}", ObjectID);
+            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlDataReader.Close|API> {0}", ObjectID);
             SqlStatistics statistics = null;
             try
             {
@@ -925,7 +927,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlStatistics.StopTimer(statistics);
-                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
             }
         }
 
@@ -1139,31 +1141,6 @@ namespace Microsoft.Data.SqlClient
                     return false;
                 }
                 Debug.Assert(!ignored, "Parser read a row token while trying to read metadata");
-            }
-
-            // we hide hidden columns from the user so build an internal map
-            // that compacts all hidden columns from the array
-            if (null != _metaData)
-            {
-                if (_snapshot != null && object.ReferenceEquals(_snapshot._metadata, _metaData))
-                {
-                    _metaData = (_SqlMetaDataSet)_metaData.Clone();
-                }
-
-                _metaData.visibleColumns = 0;
-
-                Debug.Assert(null == _metaData.indexMap, "non-null metaData indexmap");
-                int[] indexMap = new int[_metaData.Length];
-                for (int i = 0; i < indexMap.Length; ++i)
-                {
-                    indexMap[i] = _metaData.visibleColumns;
-
-                    if (!(_metaData[i].IsHidden))
-                    {
-                        _metaData.visibleColumns++;
-                    }
-                }
-                _metaData.indexMap = indexMap;
             }
 
             return true;
@@ -1465,7 +1442,7 @@ namespace Microsoft.Data.SqlClient
         public override DataTable GetSchemaTable()
         {
             SqlStatistics statistics = null;
-            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlDataReader.GetSchemaTable|API> {0}", ObjectID);
+            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlDataReader.GetSchemaTable|API> {0}", ObjectID);
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
@@ -1477,12 +1454,12 @@ namespace Microsoft.Data.SqlClient
                         Debug.Assert(null != _metaData.schemaTable, "No schema information yet!");
                     }
                 }
-                return _metaData?.schemaTable ?? new DataTable();
+                return _metaData?.schemaTable;
             }
             finally
             {
                 SqlStatistics.StopTimer(statistics);
-                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
             }
         }
 
@@ -2621,11 +2598,11 @@ namespace Microsoft.Data.SqlClient
 
                 SetTimeout(_defaultTimeoutMilliseconds);
 
-                int copyLen = (values.Length < _metaData.visibleColumns) ? values.Length : _metaData.visibleColumns;
+                int copyLen = (values.Length < _metaData.VisibleColumnCount) ? values.Length : _metaData.VisibleColumnCount;
 
                 for (int i = 0; i < copyLen; i++)
                 {
-                    values[_metaData.indexMap[i]] = GetSqlValueInternal(i);
+                    values[i] = GetSqlValueInternal(_metaData.GetVisibleColumnIndex(i));
                 }
                 return copyLen;
             }
@@ -2964,7 +2941,7 @@ namespace Microsoft.Data.SqlClient
 
                 CheckMetaDataIsReady();
 
-                int copyLen = (values.Length < _metaData.visibleColumns) ? values.Length : _metaData.visibleColumns;
+                int copyLen = (values.Length < _metaData.VisibleColumnCount) ? values.Length : _metaData.VisibleColumnCount;
                 int maximumColumn = copyLen - 1;
 
                 SetTimeout(_defaultTimeoutMilliseconds);
@@ -2982,12 +2959,19 @@ namespace Microsoft.Data.SqlClient
                 for (int i = 0; i < copyLen; i++)
                 {
                     // Get the usable, TypeSystem-compatible value from the internal buffer
-                    values[_metaData.indexMap[i]] = GetValueFromSqlBufferInternal(_data[i], _metaData[i]);
+                    int fieldIndex = _metaData.GetVisibleColumnIndex(i);
+                    values[i] = GetValueFromSqlBufferInternal(_data[fieldIndex], _metaData[fieldIndex]);
 
                     // If this is sequential access, then we need to wipe the internal buffer
                     if ((sequentialAccess) && (i < maximumColumn))
                     {
-                        _data[i].Clear();
+                        _data[fieldIndex].Clear();
+                        if (fieldIndex > i && fieldIndex>0)
+                        {
+                            // if we jumped an index forward because of a hidden column see if the buffer before the 
+                            // current one was populated by the seek forward and clear it if it was
+                            _data[fieldIndex - 1].Clear();
+                        }
                     }
                 }
 
@@ -3259,7 +3243,7 @@ namespace Microsoft.Data.SqlClient
         private bool TryNextResult(out bool more)
         {
             SqlStatistics statistics = null;
-            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlDataReader.NextResult|API> {0}", ObjectID);
+            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlDataReader.NextResult|API> {0}", ObjectID);
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
@@ -3390,7 +3374,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlStatistics.StopTimer(statistics);
-                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
             }
         }
 
@@ -3420,7 +3404,7 @@ namespace Microsoft.Data.SqlClient
         private bool TryReadInternal(bool setTimeout, out bool more)
         {
             SqlStatistics statistics = null;
-            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlDataReader.Read|API> {0}", ObjectID);
+            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlDataReader.Read|API> {0}", ObjectID);
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
@@ -3573,7 +3557,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlStatistics.StopTimer(statistics);
-                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
             }
         }
 
@@ -3951,7 +3935,7 @@ namespace Microsoft.Data.SqlClient
                 // broken connection, so check state first.
                 if (parser.State == TdsParserState.OpenLoggedIn)
                 {
-                    SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlDataReader.RestoreServerSettings|Info|Correlation> ObjectID {0}, ActivityID '{1}'", ObjectID, ActivityCorrelator.Current);
+                    SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlDataReader.RestoreServerSettings|Info|Correlation> ObjectID {0}, ActivityID '{1}'", ObjectID, ActivityCorrelator.Current);
                     Task executeTask = parser.TdsExecuteSQLBatch(_resetOptionsString, (_command != null) ? _command.CommandTimeout : 0, null, stateObj, sync: true);
                     Debug.Assert(executeTask == null, "Shouldn't get a task when doing sync writes");
 
@@ -4256,7 +4240,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/NextResultAsync/*' />
         public override Task<bool> NextResultAsync(CancellationToken cancellationToken)
         {
-            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlDataReader.NextResultAsync|API> {0}", ObjectID);
+            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlDataReader.NextResultAsync|API> {0}", ObjectID);
             try
             {
                 TaskCompletionSource<bool> source = new TaskCompletionSource<bool>();
@@ -4297,7 +4281,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
             }
         }
 
@@ -4306,7 +4290,7 @@ namespace Microsoft.Data.SqlClient
             HasNextResultAsyncCallContext context = (HasNextResultAsyncCallContext)state;
             if (task != null)
             {
-                SqlClientEventSource.Log.TraceEvent("<sc.SqlDataReader.NextResultAsync> attempt retry {0}", ObjectID);
+                SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDataReader.NextResultAsync> attempt retry {0}", ObjectID);
                 context._reader.PrepareForAsyncContinuation();
             }
 
@@ -4591,7 +4575,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/ReadAsync/*' />
         public override Task<bool> ReadAsync(CancellationToken cancellationToken)
         {
-            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlDataReader.ReadAsync|API> {0}", ObjectID);
+            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlDataReader.ReadAsync|API> {0}", ObjectID);
             try
             {
                 if (IsClosed)
@@ -4725,7 +4709,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
             }
         }
 

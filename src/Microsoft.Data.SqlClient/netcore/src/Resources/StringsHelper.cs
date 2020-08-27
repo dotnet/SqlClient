@@ -9,21 +9,21 @@ using System.Threading;
 
 namespace System
 {
-    internal class SRHelper : SR
+    internal class StringsHelper : Strings
     {
-        static SRHelper loader = null;
+        static StringsHelper loader = null;
         ResourceManager resources;
 
-        internal SRHelper()
+        internal StringsHelper()
         {
-            resources = new ResourceManager("Microsoft.Data.SqlClient.Resources.SR", this.GetType().Assembly);
+            resources = new ResourceManager("Microsoft.Data.SqlClient.Resources.Strings", this.GetType().Assembly);
         }
 
-        private static SRHelper GetLoader()
+        private static StringsHelper GetLoader()
         {
             if (loader == null)
             {
-                SRHelper sr = new SRHelper();
+                StringsHelper sr = new StringsHelper();
                 Interlocked.CompareExchange(ref loader, sr, null);
             }
             return loader;
@@ -34,7 +34,7 @@ namespace System
         public static ResourceManager Resources => GetLoader().resources;
 
 
-        // This method is used to decide if we need to append the exception message parameters to the message when calling SR.Format. 
+        // This method is used to decide if we need to append the exception message parameters to the message when calling Strings.Format. 
         // by default it returns false.
         // Native code generators can replace the value this returns based on user input at the time of native code generation.
         // Marked as NoInlining because if this is used in an AoT compiled app that is not compiled into a single file, the user
@@ -48,13 +48,13 @@ namespace System
 
         public static string GetResourceString(string res)
         {
-            SRHelper sys = GetLoader();
+            StringsHelper sys = GetLoader();
             if (sys == null)
                 return null;
 
             // If "res" is a resource id, temp will not be null, "res" will contain the retrieved resource string.
             // If "res" is not a resource id, temp will be null.
-            string temp = sys.resources.GetString(res, SRHelper.Culture);
+            string temp = sys.resources.GetString(res, StringsHelper.Culture);
             if (temp != null)
                 res = temp;
 

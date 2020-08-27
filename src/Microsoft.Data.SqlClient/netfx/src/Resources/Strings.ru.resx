@@ -2499,6 +2499,9 @@
   <data name="SQL_InteractiveWithPassword" xml:space="preserve">
     <value>Невозможно использовать "Authentication=Active Directory Interactive" с ключевыми словами "Password" или "PWD" в строке подключения.</value>
   </data>
+  <data name="SQL_DeviceFlowWithUsernamePassword" xml:space="preserve">
+    <value>Невозможно использовать "Authentication=Active Directory Device Code Flow" с ключевыми словами строки подключения "User ID", "UID", "Password" или "PWD".</value>
+  </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
     <value>Не удается использовать "Authentication=Active Directory Integrated", если задано свойство "Credential".</value>
   </data>
@@ -4559,5 +4562,17 @@
   </data>
   <data name="SQL_SettingCredentialWithInteractive" xml:space="preserve">
     <value>Не удается задать свойство Credential, если в строке подключения указано Authentication=Active Directory Interactive.</value>
+  </data>
+  <data name="SqlConnection_ServerProcessId" xml:space="preserve">
+    <value>Идентификатор серверного процесса (SPID) активного подключения.</value>
+  </data>
+  <data name="SQL_Timeout_Active_Directory_DeviceFlow_Authentication" xml:space="preserve">
+    <value>Истекло время ожидания для проверки подлинности потока кода устройства Active Directory. Пользователь слишком долго не отвечал на запрос проверки подлинности.</value>
+  </data>
+  <data name="SQL_SettingCredentialWithDeviceFlow" xml:space="preserve">
+    <value>Не удается задать свойство Credential, если в строке подключения указано "Authentication=Active Directory Device Code Flow".</value>
+  </data>
+  <data name="SQL_SettingDeviceFlowWithCredential" xml:space="preserve">
+    <value>Невозможно использовать ", если задано свойство Credential.</value>
   </data>
 </root>

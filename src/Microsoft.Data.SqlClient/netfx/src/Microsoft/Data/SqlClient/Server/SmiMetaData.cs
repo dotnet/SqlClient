@@ -830,7 +830,7 @@ namespace Microsoft.Data.SqlClient.Server
                 }
             }
 
-            return String.Format(CultureInfo.InvariantCulture, "\n\t"
+            return string.Format(CultureInfo.InvariantCulture, "\n\t"
                                + "{0}            SqlDbType={1:g}\n\t"
                                + "{0}            MaxLength={2:d}\n\t"
                                + "{0}            Precision={3:d}\n\t"

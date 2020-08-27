@@ -97,12 +97,12 @@ namespace System.Net
 
         public int MakeSignature(SafeDeleteContext context, ref Interop.SspiCli.SecBufferDesc inputOutput, uint sequenceNumber)
         {
-            throw NotImplemented.ByDesignWithMessage(SR.net_MethodNotImplementedException);
+            throw NotImplemented.ByDesignWithMessage(Strings.net_MethodNotImplementedException);
         }
 
         public int VerifySignature(SafeDeleteContext context, ref Interop.SspiCli.SecBufferDesc inputOutput, uint sequenceNumber)
         {
-            throw NotImplemented.ByDesignWithMessage(SR.net_MethodNotImplementedException);
+            throw NotImplemented.ByDesignWithMessage(Strings.net_MethodNotImplementedException);
         }
 
         public unsafe int QueryContextChannelBinding(SafeDeleteContext phContext, Interop.SspiCli.ContextAttribute attribute, out SafeFreeContextBufferChannelBinding refHandle)
@@ -129,7 +129,7 @@ namespace System.Net
                 }
                 else
                 {
-                    throw new ArgumentException(System.SRHelper.Format(SR.SSPIInvalidHandleType, handleType.FullName), nameof(handleType));
+                    throw new ArgumentException(System.StringsHelper.Format(Strings.SSPIInvalidHandleType, handleType.FullName), nameof(handleType));
                 }
             }
             fixed (byte* bufferPtr = buffer)

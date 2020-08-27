@@ -8092,7 +8092,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Security Warning: The negotiated &apos;{0}&apos; is an insecured protocol and is supported for backward compatibility only. The recommended protocol is TLS 1.2 and later..
+        ///   Looks up a localized string similar to Security Warning: The negotiated {0} is an insecure protocol and is supported for backward compatibility only. The recommended protocol version is TLS 1.2 and later..
         /// </summary>
         internal static string SEC_ProtocolWarning {
             get {
@@ -9442,6 +9442,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Device Code Flow&apos; with &apos;User ID&apos;, &apos;UID&apos;, &apos;Password&apos; or &apos;PWD&apos; connection string keywords..
+        /// </summary>
+        internal static string SQL_DeviceFlowWithUsernamePassword {
+            get {
+                return ResourceManager.GetString("SQL_DeviceFlowWithUsernamePassword", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Internal Error.
         /// </summary>
         internal static string Sql_InternalError {
@@ -9919,6 +9928,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot set the Credential property if &apos;Authentication=Active Directory Device Code Flow&apos; has been specified in the connection string..
+        /// </summary>
+        internal static string SQL_SettingCredentialWithDeviceFlow {
+            get {
+                return ResourceManager.GetString("SQL_SettingCredentialWithDeviceFlow", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Integrated&apos;, if the Credential property has been set..
         /// </summary>
         internal static string SQL_SettingIntegratedWithCredential {
@@ -9933,6 +9951,15 @@ namespace System {
         internal static string SQL_SettingInteractiveWithCredential {
             get {
                 return ResourceManager.GetString("SQL_SettingInteractiveWithCredential", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Device Code Flow&apos;, if the Credential property has been set..
+        /// </summary>
+        internal static string SQL_SettingDeviceFlowWithCredential {
+            get {
+                return ResourceManager.GetString("SQL_SettingDeviceFlowWithCredential", resourceCulture);
             }
         }
         
@@ -10149,6 +10176,15 @@ namespace System {
         internal static string SQL_Timeout_Active_Directory_Interactive_Authentication {
             get {
                 return ResourceManager.GetString("SQL_Timeout_Active_Directory_Interactive_Authentication", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Active Directory Device Code Flow authentication timed out. The user took too long to respond to the authentication request..
+        /// </summary>
+        internal static string SQL_Timeout_Active_Directory_DeviceFlow_Authentication {
+            get {
+                return ResourceManager.GetString("SQL_Timeout_Active_Directory_DeviceFlow_Authentication", resourceCulture);
             }
         }
         
@@ -10536,6 +10572,15 @@ namespace System {
         internal static string SqlConnection_Replication {
             get {
                 return ResourceManager.GetString("SqlConnection_Replication", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Server Process Id (SPID) of the active connection..
+        /// </summary>
+        internal static string SqlConnection_ServerProcessId {
+            get {
+                return ResourceManager.GetString("SqlConnection_ServerProcessId", resourceCulture);
             }
         }
         
