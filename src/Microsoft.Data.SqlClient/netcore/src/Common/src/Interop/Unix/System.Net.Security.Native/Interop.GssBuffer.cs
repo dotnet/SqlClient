@@ -5,7 +5,6 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using Microsoft.Win32.SafeHandles;
 
 internal static partial class Interop
 {
@@ -32,7 +31,7 @@ internal static partial class Interop
                 int destinationAvailable = destination.Length - offset;  // amount of space in the given buffer
                 if (sourceLength > destinationAvailable)
                 {
-                    throw new NetSecurityNative.GssApiException(StringsHelper.Format(Strings.net_context_buffer_too_small, sourceLength, destinationAvailable));
+                    throw new GssApiException(StringsHelper.Format(Strings.net_context_buffer_too_small, sourceLength, destinationAvailable));
                 }
 
                 Marshal.Copy(_data, destination, offset, sourceLength);
@@ -56,7 +55,7 @@ internal static partial class Interop
             {
                 if (_data != IntPtr.Zero)
                 {
-                    Interop.NetSecurityNative.ReleaseGssBuffer(_data, _length);
+                    ReleaseGssBuffer(_data, _length);
                     _data = IntPtr.Zero;
                 }
 
