@@ -31,7 +31,7 @@ internal static partial class Interop
                 int destinationAvailable = destination.Length - offset;  // amount of space in the given buffer
                 if (sourceLength > destinationAvailable)
                 {
-                    throw new GssApiException(SRHelper.Format(Strings.net_context_buffer_too_small, sourceLength, destinationAvailable));
+                    throw new GssApiException(StringsHelper.Format(Strings.net_context_buffer_too_small, sourceLength, destinationAvailable));
                 }
 
                 Marshal.Copy(_data, destination, offset, sourceLength);
