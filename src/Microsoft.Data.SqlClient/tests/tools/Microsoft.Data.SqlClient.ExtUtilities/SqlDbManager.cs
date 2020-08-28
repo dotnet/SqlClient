@@ -178,7 +178,7 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
                 createScript = createScript.Replace(DB_Northwind, dbName);
                 context.ExecuteNonQuery(createScript);
             }
-            catch
+            catch (Exception)
             {
                 throw;
             }
