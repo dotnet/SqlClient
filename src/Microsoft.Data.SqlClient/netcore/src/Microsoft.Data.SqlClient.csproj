@@ -33,6 +33,11 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <!-- Contains common items shared between NetFx and NetCore -->
+  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetsWindows)' == 'true'">
+	<Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientEventSource.Windows.cs">
+	  <Link>Microsoft\Data\SqlClient\SqlClientEventSource.Windows.cs</Link>
+	</Compile>
+  </ItemGroup>
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS'">
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientEventSource.cs">
       <Link>Microsoft\Data\SqlClient\SqlClientEventSource.cs</Link>
@@ -144,12 +149,6 @@
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlAeadAes256CbcHmac256Factory.cs">
       <Link>Microsoft\Data\SqlClient\SqlAeadAes256CbcHmac256Factory.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlAes256CbcAlgorithm.cs">
-      <Link>Microsoft\Data\SqlClient\SqlAes256CbcAlgorithm.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlAes256CbcFactory.cs">
-      <Link>Microsoft\Data\SqlClient\SqlAes256CbcFactory.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlAuthenticationParameters.cs">
       <Link>Microsoft\Data\SqlClient\SqlAuthenticationParameters.cs</Link>
@@ -473,9 +472,6 @@
     </Compile>
     <Compile Include="$(CommonPath)\Interop\Windows\kernel32\Interop.DeviceIoControl.cs">
       <Link>Common\Interop\Windows\kernel32\Interop.DeviceIoControl.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\kernel32\Interop.FileOperations.cs">
-      <Link>Common\Interop\Windows\kernel32\Interop.FileOperations.cs</Link>
     </Compile>
     <Compile Include="$(CommonPath)\Interop\Windows\kernel32\Interop.IoControlTransferType.cs">
       <Link>Common\Interop\Windows\Kernel32\Interop.IoControlTransferType.cs</Link>
