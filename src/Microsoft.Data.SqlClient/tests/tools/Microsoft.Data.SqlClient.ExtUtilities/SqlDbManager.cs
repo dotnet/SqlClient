@@ -53,25 +53,29 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
                             SqlServer.Management.Smo.Server server = new SqlServer.Management.Smo.Server(new ServerConnection(conn));
                             ServerConnection context = server.ConnectionContext;
 
-                            if (args[0] == "CreateDatabase")
+                            // We do not create/drop database for HGS-VBS since SQL Server for AASVBS and HGSVBS connection strings is same.
+                            if (activeConnString.Key != TCPConnectionStringHGSVBS)
                             {
-                                //Create a new database
-                                CreateDatabase(dbName, context);
-                                Console.WriteLine($"Database [{dbName}] created successfully in {builder.DataSource}");
+                                if (args[0] == "CreateDatabase")
+                                {
+                                    //Create a new database
+                                    CreateDatabase(dbName, context);
+                                    Console.WriteLine($"Database [{dbName}] created successfully in {builder.DataSource}");
 
-                                // Update Config.json accordingly
-                                builder.InitialCatalog = dbName;
-                                UpdateConfig(activeConnString.Key, builder);
-                            }
-                            else if (args[0] == "DropDatabase")
-                            {
-                                // Drop Northwind for test run.
-                                DropIfExistsDatabase(dbName, context);
-                                Console.WriteLine($"Database [{dbName}] dropped successfully in {builder.DataSource}");
-                            }
-                            else
-                            {
-                                Console.WriteLine($"Utility '{args[0]}' not supported in {builder.DataSource}");
+                                    // Update Config.json accordingly
+                                    builder.InitialCatalog = dbName;
+                                    UpdateConfig(activeConnString.Key, builder);
+                                }
+                                else if (args[0] == "DropDatabase")
+                                {
+                                    // Drop Northwind for test run.
+                                    DropIfExistsDatabase(dbName, context);
+                                    Console.WriteLine($"Database [{dbName}] dropped successfully in {builder.DataSource}");
+                                }
+                                else
+                                {
+                                    Console.WriteLine($"Utility '{args[0]}' not supported in {builder.DataSource}");
+                                }
                             }
                         }
                     }
