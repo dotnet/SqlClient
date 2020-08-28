@@ -48,34 +48,39 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
                     if (!Utils.IsAzureSqlServer(builder.DataSource))
                     {
                         builder.InitialCatalog = DB_Master;
-                        using(SqlConnection conn = new SqlConnection(builder.ConnectionString))
+                        using (SqlConnection conn = new SqlConnection(builder.ConnectionString))
                         {
                             SqlServer.Management.Smo.Server server = new SqlServer.Management.Smo.Server(new ServerConnection(conn));
                             ServerConnection context = server.ConnectionContext;
 
-                            // We do not create/drop database for HGS-VBS since SQL Server for AASVBS and HGSVBS connection strings is same.
-                            if (activeConnString.Key != TCPConnectionStringHGSVBS)
+                            if (args[0] == "CreateDatabase")
                             {
-                                if (args[0] == "CreateDatabase")
+                                // We do not create database for HGS-VBS since SQL Server for AASVBS and HGSVBS connection strings is same.
+                                // Do not create database for NP connection string, since server is always same as TCP
+                                if (activeConnString.Key != TCPConnectionStringHGSVBS && activeConnString.Key != NPConnectionString)
                                 {
                                     //Create a new database
                                     CreateDatabase(dbName, context);
                                     Console.WriteLine($"Database [{dbName}] created successfully in {builder.DataSource}");
-
-                                    // Update Config.json accordingly
-                                    builder.InitialCatalog = dbName;
-                                    UpdateConfig(activeConnString.Key, builder);
                                 }
-                                else if (args[0] == "DropDatabase")
+                                // Update Config.json accordingly
+                                builder.InitialCatalog = dbName;
+                                UpdateConfig(activeConnString.Key, builder);
+                            }
+                            else if (args[0] == "DropDatabase")
+                            {
+                                // We do not drop database for HGS-VBS since SQL Server for AASVBS and HGSVBS connection strings is same.
+                                // Do not drop database for NP connection string, since server is always same as TCP
+                                if (activeConnString.Key != TCPConnectionStringHGSVBS && activeConnString.Key != NPConnectionString)
                                 {
                                     // Drop Northwind for test run.
                                     DropIfExistsDatabase(dbName, context);
                                     Console.WriteLine($"Database [{dbName}] dropped successfully in {builder.DataSource}");
                                 }
-                                else
-                                {
-                                    Console.WriteLine($"Utility '{args[0]}' not supported in {builder.DataSource}");
-                                }
+                            }
+                            else
+                            {
+                                Console.WriteLine($"Utility '{args[0]}' not supported in {builder.DataSource}");
                             }
                         }
                     }
@@ -102,6 +107,10 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
             if (!string.IsNullOrEmpty(s_configJson.TCPConnectionString))
             {
                 s_activeConnectionStrings.Add(TCPConnectionString, s_configJson.TCPConnectionString);
+            }
+            if (!string.IsNullOrEmpty(s_configJson.NPConnectionString))
+            {
+                s_activeConnectionStrings.Add(NPConnectionString, s_configJson.NPConnectionString);
             }
             if (s_configJson.EnclaveEnabled)
             {
@@ -149,9 +158,9 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
                 string dropScript = $"IF EXISTS (select * from sys.databases where name = '{dbName}') BEGIN DROP DATABASE [{dbName}] END;";
                 context.ExecuteNonQuery(dropScript);
             }
-            catch (Exception)
+            catch
             {
-                throw;
+                Console.WriteLine($"FAILED to drop database '{dbName}'");
             }
         }
 
