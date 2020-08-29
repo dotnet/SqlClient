@@ -12,14 +12,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly string initialQueryTemplate = "create table {0} (CustomerID nvarchar(50), CompanyName nvarchar(50), ContactName nvarchar(50))";
         private static readonly string sourceQueryTemplate = "SELECT CustomerID, CompanyName, ContactName FROM {0}";
 
-        public static void Test(string srcConstr, string dstTable)
+        public static void Test(string connStr, string dstTable)
         {
-            srcConstr = (new SqlConnectionStringBuilder(srcConstr) { InitialCatalog = "Northwind" }).ConnectionString;
-            string dstConstr = (new SqlConnectionStringBuilder(srcConstr)).ConnectionString;
             string initialQuery = string.Format(initialQueryTemplate, dstTable);
             string sourceQuery = string.Format(sourceQueryTemplate, sourceTable);
 
-            using (SqlConnection dstConn = new SqlConnection(dstConstr))
+            using (SqlConnection dstConn = new SqlConnection(connStr))
             using (SqlCommand dstCmd = dstConn.CreateCommand())
             {
                 dstConn.Open();
@@ -27,7 +25,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 dstCmd.Transaction = txn;
                 Helpers.TryExecute(dstCmd, initialQuery);
 
-                using (SqlConnection srcConn = new SqlConnection(srcConstr))
+                using (SqlConnection srcConn = new SqlConnection(connStr))
                 using (SqlCommand srcCmd = new SqlCommand(sourceQuery, srcConn))
                 {
                     srcConn.Open();
