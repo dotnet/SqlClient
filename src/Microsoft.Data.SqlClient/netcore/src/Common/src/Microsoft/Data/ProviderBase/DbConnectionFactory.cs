@@ -124,6 +124,7 @@ namespace Microsoft.Data.ProviderBase
             DbConnectionInternal newConnection = CreateConnection(connectionOptions, poolKey, poolGroupProviderInfo, null, owningConnection, userOptions);
             if (null != newConnection)
             {
+                SqlClientEventSource.Log.HardConnectRequest();
                 newConnection.MakeNonPooledObject(owningConnection);
             }
             SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionFactory.CreateNonPooledConnection|RES|CPOOL> {0}, Non-pooled database connection created.", ObjectID);
@@ -138,6 +139,7 @@ namespace Microsoft.Data.ProviderBase
             DbConnectionInternal newConnection = CreateConnection(options, poolKey, poolGroupProviderInfo, pool, owningObject, userOptions);
             if (null != newConnection)
             {
+                SqlClientEventSource.Log.HardConnectRequest();
                 newConnection.MakePooledConnection(pool);
             }
             SqlClientEventSource.Log.TraceEvent("<prov.DbConnectionFactory.CreatePooledConnection|RES|CPOOL> {0}, Pooled database connection created.", ObjectID);
@@ -281,6 +283,7 @@ namespace Microsoft.Data.ProviderBase
 
                         // lock prevents race condition with PruneConnectionPoolGroups
                         newConnectionPoolGroups.Add(key, newConnectionPoolGroup);
+                        SqlClientEventSource.Log.ActiveConnectionPoolGroupRequest();
                         connectionPoolGroup = newConnectionPoolGroup;
                         _connectionPoolGroups = newConnectionPoolGroups;
                     }
@@ -304,7 +307,7 @@ namespace Microsoft.Data.ProviderBase
         {
             // when debugging this method, expect multiple threads at the same time
             SqlClientEventSource.Log.AdvancedTraceEvent("<prov.DbConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> {0}", ObjectID);
-            
+
             // First, walk the pool release list and attempt to clear each
             // pool, when the pool is finally empty, we dispose of it.  If the
             // pool isn't empty, it's because there are active connections or
@@ -324,6 +327,7 @@ namespace Microsoft.Data.ProviderBase
                             {
                                 _poolsToRelease.Remove(pool);
                                 SqlClientEventSource.Log.AdvancedTraceEvent("<prov.DbConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> {0}, ReleasePool={1}", ObjectID, pool.ObjectID);
+                                SqlClientEventSource.Log.InactiveConnectionPoolRequest(false);
                             }
                         }
                     }
@@ -348,6 +352,7 @@ namespace Microsoft.Data.ProviderBase
                             {
                                 _poolGroupsToRelease.Remove(poolGroup);
                                 SqlClientEventSource.Log.AdvancedTraceEvent("<prov.DbConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> {0}, ReleasePoolGroup={1}", ObjectID, poolGroup.ObjectID);
+                                SqlClientEventSource.Log.InactiveConnectionPoolGroupRequest(false);
                             }
                         }
                     }
@@ -373,6 +378,7 @@ namespace Microsoft.Data.ProviderBase
                         // otherwise process entry which may move it from active to idle
                         if (entry.Value.Prune())
                         { // may add entries to _poolsToRelease
+                            SqlClientEventSource.Log.ActiveConnectionPoolGroupRequest(false);
                             QueuePoolGroupForRelease(entry.Value);
                         }
                         else
@@ -405,6 +411,7 @@ namespace Microsoft.Data.ProviderBase
                 }
                 _poolsToRelease.Add(pool);
             }
+            SqlClientEventSource.Log.InactiveConnectionPoolRequest();
         }
 
         internal void QueuePoolGroupForRelease(DbConnectionPoolGroup poolGroup)
@@ -416,6 +423,7 @@ namespace Microsoft.Data.ProviderBase
             {
                 _poolGroupsToRelease.Add(poolGroup);
             }
+            SqlClientEventSource.Log.InactiveConnectionPoolGroupRequest();
         }
 
         virtual protected DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, DbConnectionPool pool, DbConnection owningConnection, DbConnectionOptions userOptions)
