@@ -13,7 +13,7 @@ using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Identity.Client;
-using Newtonsoft.Json;
+using Microsoft.Data.SqlClient.TestUtilities;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -55,103 +55,62 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public const string AKVKeyName = "TestSqlClientAzureKeyVaultProvider";
         private const string ManagedNetworkingAppContextSwitch = "Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows";
 
-        private static readonly string[] AzureSqlServerEndpoints = {".database.windows.net",
-                                                                     ".database.cloudapi.de",
-                                                                     ".database.usgovcloudapi.net",
-                                                                     ".database.chinacloudapi.cn"};
-
         private static Dictionary<string, bool> AvailableDatabases;
         private static TraceEventListener TraceListener;
 
-        private class Config
-        {
-            public string TCPConnectionString = null;
-            public string NPConnectionString = null;
-            public string TCPConnectionStringHGSVBS = null;
-            public string TCPConnectionStringAASVBS = null;
-            public string TCPConnectionStringAASSGX = null;
-            public string AADAuthorityURL = null;
-            public string AADPasswordConnectionString = null;
-            public string AADServicePrincipalId = null;
-            public string AADServicePrincipalSecret = null;
-            public string AzureKeyVaultURL = null;
-            public string AzureKeyVaultClientId = null;
-            public string AzureKeyVaultClientSecret = null;
-            public bool EnclaveEnabled = false;
-            public bool TracingEnabled = false;
-            public bool SupportsIntegratedSecurity = false;
-            public bool SupportsLocalDb = false;
-            public bool SupportsFileStream = false;
-            public bool UseManagedSNIOnWindows = false;
-            public string DNSCachingConnString = null;
-            public string DNSCachingServerCR = null;  // this is for the control ring
-            public string DNSCachingServerTR = null;  // this is for the tenant ring
-            public bool IsDNSCachingSupportedCR = false;  // this is for the control ring
-            public bool IsDNSCachingSupportedTR = false;  // this is for the tenant ring
-            public string EnclaveAzureDatabaseConnString = null;
-        }
-
         static DataTestUtility()
         {
-            using (StreamReader r = new StreamReader("config.json"))
+            Config c = Config.Load();
+            NPConnectionString = c.NPConnectionString;
+            TCPConnectionString = c.TCPConnectionString;
+            TCPConnectionStringHGSVBS = c.TCPConnectionStringHGSVBS;
+            TCPConnectionStringAASVBS = c.TCPConnectionStringAASVBS;
+            TCPConnectionStringAASSGX = c.TCPConnectionStringAASSGX;
+            AADAuthorityURL = c.AADAuthorityURL;
+            AADPasswordConnectionString = c.AADPasswordConnectionString;
+            AADServicePrincipalId = c.AADServicePrincipalId;
+            AADServicePrincipalSecret = c.AADServicePrincipalSecret;
+            SupportsLocalDb = c.SupportsLocalDb;
+            SupportsIntegratedSecurity = c.SupportsIntegratedSecurity;
+            SupportsFileStream = c.SupportsFileStream;
+            EnclaveEnabled = c.EnclaveEnabled;
+            TracingEnabled = c.TracingEnabled;
+            UseManagedSNIOnWindows = c.UseManagedSNIOnWindows;
+            DNSCachingConnString = c.DNSCachingConnString;
+            DNSCachingServerCR = c.DNSCachingServerCR;
+            DNSCachingServerTR = c.DNSCachingServerTR;
+            IsDNSCachingSupportedCR = c.IsDNSCachingSupportedCR;
+            IsDNSCachingSupportedTR = c.IsDNSCachingSupportedTR;
+            EnclaveAzureDatabaseConnString = c.EnclaveAzureDatabaseConnString;
+
+            if (TracingEnabled)
             {
-                string json = r.ReadToEnd();
-                Config c = JsonConvert.DeserializeObject<Config>(json);
-
-                NPConnectionString = c.NPConnectionString;
-                TCPConnectionString = c.TCPConnectionString;
-                TCPConnectionStringHGSVBS = c.TCPConnectionStringHGSVBS;
-                TCPConnectionStringAASVBS = c.TCPConnectionStringAASVBS;
-                TCPConnectionStringAASSGX = c.TCPConnectionStringAASSGX;
-                AADAuthorityURL = c.AADAuthorityURL;
-                AADPasswordConnectionString = c.AADPasswordConnectionString;
-                AADServicePrincipalId = c.AADServicePrincipalId;
-                AADServicePrincipalSecret = c.AADServicePrincipalSecret;
-                SupportsLocalDb = c.SupportsLocalDb;
-                SupportsIntegratedSecurity = c.SupportsIntegratedSecurity;
-                SupportsFileStream = c.SupportsFileStream;
-                EnclaveEnabled = c.EnclaveEnabled;
-                TracingEnabled = c.TracingEnabled;
-                UseManagedSNIOnWindows = c.UseManagedSNIOnWindows;
-
-                DNSCachingConnString = c.DNSCachingConnString;
-                DNSCachingServerCR = c.DNSCachingServerCR;
-                DNSCachingServerTR = c.DNSCachingServerTR;
-                IsDNSCachingSupportedCR = c.IsDNSCachingSupportedCR;
-                IsDNSCachingSupportedTR = c.IsDNSCachingSupportedTR;
-
-                EnclaveAzureDatabaseConnString = c.EnclaveAzureDatabaseConnString;
-
-                if (TracingEnabled)
-                {
-                    TraceListener = new DataTestUtility.TraceEventListener();
-                }
-
-                if (UseManagedSNIOnWindows)
-                {
-                    AppContext.SetSwitch(ManagedNetworkingAppContextSwitch, true);
-                    Console.WriteLine($"App Context switch {ManagedNetworkingAppContextSwitch} enabled on {Environment.OSVersion}");
-                }
-
-                if (IsAADPasswordConnStrSetup() && IsAADAuthorityURLSetup())
-                {
-                    string username = RetrieveValueFromConnStr(AADPasswordConnectionString, new string[] { "User ID", "UID" });
-                    string password = RetrieveValueFromConnStr(AADPasswordConnectionString, new string[] { "Password", "PWD" });
-                    AADAccessToken = GenerateAccessToken(AADAuthorityURL, username, password);
-                }
-
-                string url = c.AzureKeyVaultURL;
-                Uri AKVBaseUri = null;
-                if (!string.IsNullOrEmpty(url) && Uri.TryCreate(url, UriKind.Absolute, out AKVBaseUri))
-                {
-                    AKVBaseUri = new Uri(AKVBaseUri, "/");
-                    AKVBaseUrl = AKVBaseUri.AbsoluteUri;
-                    AKVUrl = (new Uri(AKVBaseUri, $"/keys/{AKVKeyName}")).AbsoluteUri;
-                }
-
-                AKVClientId = c.AzureKeyVaultClientId;
-                AKVClientSecret = c.AzureKeyVaultClientSecret;
+                TraceListener = new DataTestUtility.TraceEventListener();
             }
+
+            if (UseManagedSNIOnWindows)
+            {
+                AppContext.SetSwitch(ManagedNetworkingAppContextSwitch, true);
+                Console.WriteLine($"App Context switch {ManagedNetworkingAppContextSwitch} enabled on {Environment.OSVersion}");
+            }
+
+            if (IsAADPasswordConnStrSetup() && IsAADAuthorityURLSetup())
+            {
+                string username = RetrieveValueFromConnStr(AADPasswordConnectionString, new string[] { "User ID", "UID" });
+                string password = RetrieveValueFromConnStr(AADPasswordConnectionString, new string[] { "Password", "PWD" });
+                AADAccessToken = GenerateAccessToken(AADAuthorityURL, username, password);
+            }
+
+            string url = c.AzureKeyVaultURL;
+            if (!string.IsNullOrEmpty(url) && Uri.TryCreate(url, UriKind.Absolute, out Uri AKVBaseUri))
+            {
+                AKVBaseUri = new Uri(AKVBaseUri, "/");
+                AKVBaseUrl = AKVBaseUri.AbsoluteUri;
+                AKVUrl = (new Uri(AKVBaseUri, $"/keys/{AKVKeyName}")).AbsoluteUri;
+            }
+
+            AKVClientId = c.AzureKeyVaultClientId;
+            AKVClientSecret = c.AzureKeyVaultClientSecret;
 
             if (EnclaveEnabled)
             {
@@ -206,6 +165,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
             }
         }
+
         private static string GenerateAccessToken(string authorityURL, string aADAuthUserID, string aADAuthPassword)
         {
             return AcquireTokenAsync(authorityURL, aADAuthUserID, aADAuthPassword).Result;
@@ -292,7 +252,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool IsEnclaveAzureDatabaseSetup()
         {
             return EnclaveEnabled && !string.IsNullOrEmpty(EnclaveAzureDatabaseConnString);
-        }  
+        }
 
         public static bool IsUdtTestDatabasePresent() => IsDatabasePresent(UdtTestDbName);
 
@@ -323,7 +283,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsNotAzureServer()
         {
-            return AreConnStringsSetup() ? !DataTestUtility.IsAzureSqlServer(new SqlConnectionStringBuilder((DataTestUtility.TCPConnectionString)).DataSource) : true;
+            return !AreConnStringsSetup() || !Utils.IsAzureSqlServer(new SqlConnectionStringBuilder((DataTestUtility.TCPConnectionString)).DataSource);
         }
 
         public static bool IsAKVSetupAvailable()
@@ -434,35 +394,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool IsAccessTokenSetup() => !string.IsNullOrEmpty(GetAccessToken());
 
         public static bool IsFileStreamSetup() => SupportsFileStream;
-
-        // This method assumes dataSource parameter is in TCP connection string format.
-        public static bool IsAzureSqlServer(string dataSource)
-        {
-            int i = dataSource.LastIndexOf(',');
-            if (i >= 0)
-            {
-                dataSource = dataSource.Substring(0, i);
-            }
-
-            i = dataSource.LastIndexOf('\\');
-            if (i >= 0)
-            {
-                dataSource = dataSource.Substring(0, i);
-            }
-
-            // trim redundant whitespace
-            dataSource = dataSource.Trim();
-
-            // check if servername end with any azure endpoints
-            for (i = 0; i < AzureSqlServerEndpoints.Length; i++)
-            {
-                if (dataSource.EndsWith(AzureSqlServerEndpoints[i], StringComparison.OrdinalIgnoreCase))
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
 
         private static bool CheckException<TException>(Exception ex, string exceptionMessage, bool innerExceptionMustBeNull) where TException : Exception
         {
