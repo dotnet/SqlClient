@@ -180,9 +180,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             TException ex = Assert.Throws<TException>(connectAction);
 
             // Some exception messages are different between Framework and Core
-#if netfx
-            Assert.Contains(expectedExceptionMessage, ex.Message);
-#endif
+            if (!PlatformDetection.IsFullFramework)
+            {
+                Assert.Contains(expectedExceptionMessage, ex.Message);
+            }
             Assert.True(exVerifier(ex), "FAILED Exception verifier failed on the exception.");
 
             return ex;
