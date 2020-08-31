@@ -1403,28 +1403,36 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
 
-            Span<byte> buffer = stackalloc byte[2];
+            byte[] buffer;
+            int offset;
             if (((_inBytesUsed + 2) > _inBytesRead) || (_inBytesPacket < 2))
             {
                 // If the char isn't fully in the buffer, or if it isn't fully in the packet,
                 // then use ReadByteArray since the logic is there to take care of that.
-                if (!TryReadByteArray(buffer, 2))
+
+                if (!TryReadByteArray(_bTmp, 2))
                 {
                     value = '\0';
                     return false;
                 }
+
+                buffer = _bTmp;
+                offset = 0;
             }
             else
             {
                 // The entire char is in the packet and in the buffer, so just return it
                 // and take care of the counters.
-                buffer = _inBuff.AsSpan(_inBytesUsed, 2);
+
+                buffer = _inBuff;
+                offset = _inBytesUsed;
+
                 _inBytesUsed += 2;
                 _inBytesPacket -= 2;
             }
 
             AssertValidState();
-            value = (char)((buffer[1] << 8) + buffer[0]);
+            value = (char)((buffer[offset + 1] << 8) + buffer[offset]);
             return true;
         }
 
@@ -1432,58 +1440,70 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
 
-            Span<byte> buffer = stackalloc byte[2];
+            byte[] buffer;
+            int offset;
             if (((_inBytesUsed + 2) > _inBytesRead) || (_inBytesPacket < 2))
             {
                 // If the int16 isn't fully in the buffer, or if it isn't fully in the packet,
                 // then use ReadByteArray since the logic is there to take care of that.
-                if (!TryReadByteArray(buffer, 2))
+
+                if (!TryReadByteArray(_bTmp, 2))
                 {
                     value = default;
                     return false;
                 }
+
+                buffer = _bTmp;
+                offset = 0;
             }
             else
             {
                 // The entire int16 is in the packet and in the buffer, so just return it
                 // and take care of the counters.
-                buffer = _inBuff.AsSpan(_inBytesUsed,2);
+
+                buffer = _inBuff;
+                offset = _inBytesUsed;
+
                 _inBytesUsed += 2;
                 _inBytesPacket -= 2;
             }
 
             AssertValidState();
-            value = (short)((buffer[1] << 8) + buffer[0]);
+            value = (short)((buffer[offset + 1] << 8) + buffer[offset]);
             return true;
         }
 
         internal bool TryReadInt32(out int value)
         {
             Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
-            Span<byte> buffer = stackalloc byte[4];
             if (((_inBytesUsed + 4) > _inBytesRead) || (_inBytesPacket < 4))
             {
                 // If the int isn't fully in the buffer, or if it isn't fully in the packet,
                 // then use ReadByteArray since the logic is there to take care of that.
-                if (!TryReadByteArray(buffer, 4))
+
+                if (!TryReadByteArray(_bTmp, 4))
                 {
                     value = 0;
                     return false;
                 }
+
+                AssertValidState();
+                value = BitConverter.ToInt32(_bTmp, 0);
+                return true;
             }
             else
             {
                 // The entire int is in the packet and in the buffer, so just return it
                 // and take care of the counters.
-                buffer = _inBuff.AsSpan(_inBytesUsed, 4);
+
+                value = BitConverter.ToInt32(_inBuff, _inBytesUsed);
+
                 _inBytesUsed += 4;
                 _inBytesPacket -= 4;
+
+                AssertValidState();
+                return true;
             }
-
-            AssertValidState();
-            value = (buffer[3] << 24) + (buffer[2] <<16) + (buffer[1] << 8) + buffer[0];
-            return true;
-
         }
 
         // This method is safe to call when doing async without snapshot
@@ -1539,28 +1559,36 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
 
-            Span<byte> buffer = stackalloc byte[2];
+            byte[] buffer;
+            int offset;
             if (((_inBytesUsed + 2) > _inBytesRead) || (_inBytesPacket < 2))
             {
                 // If the uint16 isn't fully in the buffer, or if it isn't fully in the packet,
                 // then use ReadByteArray since the logic is there to take care of that.
-                if (!TryReadByteArray(buffer, 2))
+
+                if (!TryReadByteArray(_bTmp, 2))
                 {
                     value = default;
                     return false;
                 }
+
+                buffer = _bTmp;
+                offset = 0;
             }
             else
             {
                 // The entire uint16 is in the packet and in the buffer, so just return it
                 // and take care of the counters.
-                buffer = _inBuff.AsSpan(_inBytesUsed, 2);
+
+                buffer = _inBuff;
+                offset = _inBytesUsed;
+
                 _inBytesUsed += 2;
                 _inBytesPacket -= 2;
             }
 
             AssertValidState();
-            value = (ushort)((buffer[1] << 8) + buffer[0]);
+            value = (ushort)((buffer[offset + 1] << 8) + buffer[offset]);
             return true;
         }
 
@@ -3599,8 +3627,8 @@ namespace Microsoft.Data.SqlClient
                 statistics.RequestNetworkServerTimer();
             }
         }
-
         [Conditional("DEBUG")]
+
         private void AssertValidState()
         {
             if (_inBytesUsed < 0 || _inBytesRead < 0)

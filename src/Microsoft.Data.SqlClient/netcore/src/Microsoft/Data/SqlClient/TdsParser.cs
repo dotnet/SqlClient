@@ -1619,47 +1619,45 @@ namespace Microsoft.Data.SqlClient
         {
             if (null == stateObj._bIntBytes)
             {
-                stateObj._bIntBytes = new byte[sizeof(int)];
+                stateObj._bIntBytes = new byte[4];
             }
             else
             {
-                Debug.Assert(sizeof(int) == stateObj._bIntBytes.Length);
+                Debug.Assert(4 == stateObj._bIntBytes.Length);
             }
 
-            WriteInt(stateObj._bIntBytes.AsSpan(), v);
-            return stateObj._bIntBytes;
+            int current = 0;
+            byte[] bytes = stateObj._bIntBytes;
+            bytes[current++] = (byte)(v & 0xff);
+            bytes[current++] = (byte)((v >> 8) & 0xff);
+            bytes[current++] = (byte)((v >> 16) & 0xff);
+            bytes[current++] = (byte)((v >> 24) & 0xff);
+            return bytes;
         }
 
+        //
+        // Takes an int and writes it as an int.
+        //
         internal void WriteInt(int v, TdsParserStateObject stateObj)
         {
-            Span<byte> buffer = stackalloc byte[sizeof(int)];
-            WriteInt(buffer, v);
             if ((stateObj._outBytesUsed + 4) > stateObj._outBuff.Length)
             {
                 // if all of the int doesn't fit into the buffer
-                for (int index = 0; index < sizeof(int); index++)
+                for (int shiftValue = 0; shiftValue < sizeof(int) * 8; shiftValue += 8)
                 {
-                    stateObj.WriteByte(buffer[index]);
+                    stateObj.WriteByte((byte)((v >> shiftValue) & 0xff));
                 }
             }
             else
             {
                 // all of the int fits into the buffer
-                buffer.CopyTo(stateObj._outBuff.AsSpan(stateObj._outBytesUsed, sizeof(int)));
+                // NOTE: We don't use a loop here for performance
+                stateObj._outBuff[stateObj._outBytesUsed] = (byte)(v & 0xff);
+                stateObj._outBuff[stateObj._outBytesUsed + 1] = (byte)((v >> 8) & 0xff);
+                stateObj._outBuff[stateObj._outBytesUsed + 2] = (byte)((v >> 16) & 0xff);
+                stateObj._outBuff[stateObj._outBytesUsed + 3] = (byte)((v >> 24) & 0xff);
                 stateObj._outBytesUsed += 4;
             }
-        }
-
-        internal static void WriteInt(Span<byte> buffer, int value)
-        {
-#if netcoreapp
-            BitConverter.TryWriteBytes(buffer, value);
-#else
-            buffer[0] = (byte)(value & 0xff);
-            buffer[1] = (byte)((value >> 8) & 0xff);
-            buffer[2] = (byte)((value >> 16) & 0xff);
-            buffer[3] = (byte)((value >> 24) & 0xff);
-#endif
         }
 
         //
